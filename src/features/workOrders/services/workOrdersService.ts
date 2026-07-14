@@ -15,9 +15,11 @@ import {
 
 const WORK_ORDERS_PATH = "/api/work-orders"
 
-export async function getWorkOrders(): Promise<WorkOrder[]> {
+export async function getWorkOrders(assetId?: string): Promise<WorkOrder[]> {
   try {
-    const response = await api.get<unknown>(WORK_ORDERS_PATH)
+    const response = await api.get<unknown>(WORK_ORDERS_PATH, {
+      params: assetId ? { assetId } : undefined,
+    })
     const parsed = workOrderListSchema.safeParse(response.data)
 
     if (!parsed.success) {

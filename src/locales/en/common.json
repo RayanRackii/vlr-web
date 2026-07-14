@@ -7,7 +7,8 @@
     "close": "Close",
     "cancel": "Cancel",
     "filter": "Filter",
-    "searchPlaceholder": "Search..."
+    "searchPlaceholder": "Search...",
+    "loading": "Loading..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -18,6 +19,7 @@
     "pmocPlans": "Plans",
     "pmocNew": "New Plan",
     "workOrders": "Work Orders",
+    "admin": "Super-Admin",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu"
   },
@@ -247,7 +249,71 @@
         "bulkCreateFailed": "Could not bulk-create assets.",
         "deleteFailed": "Could not delete the asset.",
         "invalidResponse": "Invalid API response.",
-        "invalidUnitsResponse": "Invalid units response."
+        "invalidUnitsResponse": "Invalid units response.",
+        "updateFailed": "Could not update the asset."
+      },
+      "flags": {
+        "rentable": "Rental",
+        "maintenance": "Maintenance"
+      }
+    },
+    "detail": {
+      "title": "Asset details",
+      "description": "Edit general data and configure modules based on asset flags.",
+      "tabs": {
+        "general": "General",
+        "rental": "Rental",
+        "maintenance": "Maintenance"
+      },
+      "fields": {
+        "name": "Name",
+        "tag": "Tag",
+        "unit": "Unit",
+        "category": "Category",
+        "location": "Location",
+        "status": "Status",
+        "isRentable": "Available for rental",
+        "requiresMaintenance": "Requires maintenance",
+        "rentalType": "Rental type",
+        "totalQuantity": "Total quantity"
+      },
+      "rentalTypes": {
+        "Location": "Location (court, pool)",
+        "Good": "Good (vest, ball)"
+      },
+      "actions": {
+        "save": "Save",
+        "saving": "Saving..."
+      },
+      "rental": {
+        "pricingTitle": "Pricing windows",
+        "pricingEmpty": "No pricing rules yet.",
+        "dayOfWeek": "Day of week",
+        "startTime": "Start",
+        "endTime": "End",
+        "pricePerHour": "Price per hour",
+        "addPricing": "Add pricing"
+      },
+      "days": {
+        "Sunday": "Sunday",
+        "Monday": "Monday",
+        "Tuesday": "Tuesday",
+        "Wednesday": "Wednesday",
+        "Thursday": "Thursday",
+        "Friday": "Friday",
+        "Saturday": "Saturday"
+      },
+      "maintenance": {
+        "title": "Work order / PMOC history",
+        "empty": "No work orders linked to this asset."
+      },
+      "errors": {
+        "loadFailed": "Could not load the asset.",
+        "updateFailed": "Could not update the asset.",
+        "invalidResponse": "Invalid API response.",
+        "pricingLoadFailed": "Could not load pricing.",
+        "pricingCreateFailed": "Could not create pricing.",
+        "pricingDeleteFailed": "Could not delete pricing."
       }
     }
   },
@@ -432,6 +498,66 @@
     "offline": {
       "title": "Offline Mode",
       "banner": "Offline Mode: Changes are being saved locally."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Super-Admin Panel",
+      "description": "Manage tenants, subdomains, and subscribed modules.",
+      "newClient": "New Client",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "taxId": "Document",
+      "noSubdomain": "No subdomain",
+      "noModules": "No active modules",
+      "emptyTitle": "No clients yet",
+      "emptyDescription": "Provision the first tenant using the onboarding wizard."
+    },
+    "modules": {
+      "Inventory": "Inventory",
+      "InventoryDescription": "Asset registry and control.",
+      "PMOC": "PMOC",
+      "PMOCDescription": "Maintenance plans and templates.",
+      "OS": "Work Orders",
+      "OSDescription": "Work order execution and tracking.",
+      "Rentals": "Rentals",
+      "RentalsDescription": "Locations, goods, and B2C reservations.",
+      "unknown": "Module"
+    },
+    "wizard": {
+      "title": "New client",
+      "stepLabel": "Step {{current}} of {{total}}",
+      "steps": {
+        "company": "Enter the company legal details.",
+        "identity": "Define the subdomain and brand identity.",
+        "modules": "Select the modules this client subscribed to.",
+        "summary": "Review the provisioning before finishing."
+      },
+      "fields": {
+        "legalName": "Legal name",
+        "taxId": "Tax ID / Document",
+        "subdomain": "Subdomain",
+        "logoUrl": "Logo URL (optional)"
+      },
+      "summary": {
+        "modules": "Modules",
+        "total": "Estimated monthly total",
+        "perMonth": "/mo",
+        "demoNote": "Illustrative UI pricing (R$ 199 per module)."
+      },
+      "actions": {
+        "back": "Back",
+        "next": "Continue",
+        "finish": "Finish",
+        "finishing": "Provisioning..."
+      },
+      "errors": {
+        "createFailed": "Could not provision the client."
+      }
+    },
+    "errors": {
+      "forbidden": "Access restricted to platform Super-Admins.",
+      "loadFailed": "Could not load clients."
     }
   }
 }

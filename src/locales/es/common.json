@@ -7,7 +7,8 @@
     "close": "Cerrar",
     "cancel": "Cancelar",
     "filter": "Filtrar",
-    "searchPlaceholder": "Buscar..."
+    "searchPlaceholder": "Buscar...",
+    "loading": "Cargando..."
   },
   "nav": {
     "dashboard": "Panel",
@@ -18,6 +19,7 @@
     "pmocPlans": "Planes",
     "pmocNew": "Nuevo Plan",
     "workOrders": "OT",
+    "admin": "Super-Admin",
     "menu": "Menú de navegación",
     "openMenu": "Abrir menú de navegación"
   },
@@ -247,7 +249,71 @@
         "bulkCreateFailed": "No se pudieron crear los activos en lote.",
         "deleteFailed": "No se pudo eliminar el activo.",
         "invalidResponse": "Respuesta inválida de la API.",
-        "invalidUnitsResponse": "Respuesta inválida al cargar unidades."
+        "invalidUnitsResponse": "Respuesta inválida al cargar unidades.",
+        "updateFailed": "No se pudo actualizar el activo."
+      },
+      "flags": {
+        "rentable": "Alquiler",
+        "maintenance": "Mantenimiento"
+      }
+    },
+    "detail": {
+      "title": "Detalles del activo",
+      "description": "Edite datos generales y configure módulos según las flags del activo.",
+      "tabs": {
+        "general": "General",
+        "rental": "Alquiler",
+        "maintenance": "Mantenimiento"
+      },
+      "fields": {
+        "name": "Nombre",
+        "tag": "Tag",
+        "unit": "Unidad",
+        "category": "Categoría",
+        "location": "Ubicación",
+        "status": "Estado",
+        "isRentable": "Disponible para alquiler",
+        "requiresMaintenance": "Requiere mantenimiento",
+        "rentalType": "Tipo de alquiler",
+        "totalQuantity": "Cantidad total"
+      },
+      "rentalTypes": {
+        "Location": "Local (cancha, piscina)",
+        "Good": "Bien (chaleco, pelota)"
+      },
+      "actions": {
+        "save": "Guardar",
+        "saving": "Guardando..."
+      },
+      "rental": {
+        "pricingTitle": "Franjas de precio",
+        "pricingEmpty": "No hay franjas registradas.",
+        "dayOfWeek": "Día de la semana",
+        "startTime": "Inicio",
+        "endTime": "Fin",
+        "pricePerHour": "Precio por hora",
+        "addPricing": "Agregar precio"
+      },
+      "days": {
+        "Sunday": "Domingo",
+        "Monday": "Lunes",
+        "Tuesday": "Martes",
+        "Wednesday": "Miércoles",
+        "Thursday": "Jueves",
+        "Friday": "Viernes",
+        "Saturday": "Sábado"
+      },
+      "maintenance": {
+        "title": "Historial de OT / PMOC",
+        "empty": "No hay órdenes vinculadas a este activo."
+      },
+      "errors": {
+        "loadFailed": "No se pudo cargar el activo.",
+        "updateFailed": "No se pudo actualizar el activo.",
+        "invalidResponse": "Respuesta inválida de la API.",
+        "pricingLoadFailed": "No se pudieron cargar los precios.",
+        "pricingCreateFailed": "No se pudo crear la franja de precio.",
+        "pricingDeleteFailed": "No se pudo eliminar la franja de precio."
       }
     }
   },
@@ -432,6 +498,66 @@
     "offline": {
       "title": "Modo Sin Conexión",
       "banner": "Modo Sin Conexión: Los cambios se están guardando localmente."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Panel Super-Admin",
+      "description": "Administre clientes (tenants), subdominios y módulos contratados.",
+      "newClient": "Nuevo Cliente",
+      "statusActive": "Activo",
+      "statusInactive": "Inactivo",
+      "taxId": "Documento",
+      "noSubdomain": "Sin subdominio",
+      "noModules": "Sin módulos activos",
+      "emptyTitle": "Aún no hay clientes",
+      "emptyDescription": "Registre el primer tenant con el asistente de onboarding."
+    },
+    "modules": {
+      "Inventory": "Inventario",
+      "InventoryDescription": "Registro y control de activos.",
+      "PMOC": "PMOC",
+      "PMOCDescription": "Planes de mantenimiento y plantillas.",
+      "OS": "Órdenes de Trabajo",
+      "OSDescription": "Ejecución y seguimiento de OT.",
+      "Rentals": "Alquileres",
+      "RentalsDescription": "Locales, bienes y reservas B2C.",
+      "unknown": "Módulo"
+    },
+    "wizard": {
+      "title": "Nuevo cliente",
+      "stepLabel": "Paso {{current}} de {{total}}",
+      "steps": {
+        "company": "Ingrese los datos legales de la empresa.",
+        "identity": "Defina el subdominio y la identidad visual.",
+        "modules": "Seleccione los módulos contratados.",
+        "summary": "Revise el aprovisionamiento antes de finalizar."
+      },
+      "fields": {
+        "legalName": "Razón social",
+        "taxId": "CUIT / Documento",
+        "subdomain": "Subdominio",
+        "logoUrl": "URL del logo (opcional)"
+      },
+      "summary": {
+        "modules": "Módulos",
+        "total": "Total mensual estimado",
+        "perMonth": "/mes",
+        "demoNote": "Precios ilustrativos de la interfaz (R$ 199 por módulo)."
+      },
+      "actions": {
+        "back": "Volver",
+        "next": "Continuar",
+        "finish": "Finalizar",
+        "finishing": "Aprovisionando..."
+      },
+      "errors": {
+        "createFailed": "No se pudo aprovisionar el cliente."
+      }
+    },
+    "errors": {
+      "forbidden": "Acceso restringido a Super-Admins de la plataforma.",
+      "loadFailed": "No se pudieron cargar los clientes."
     }
   }
 }

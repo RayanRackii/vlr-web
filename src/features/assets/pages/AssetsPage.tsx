@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
+import { AssetDetailDialog } from "@/features/assets/components/AssetDetailDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -118,6 +119,8 @@ export function AssetsPage() {
   const [deleteTagConfirm, setDeleteTagConfirm] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [detailAssetId, setDetailAssetId] = useState<string | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
 
   const formSchema = useMemo(
     () =>
@@ -268,6 +271,16 @@ export function AssetsPage() {
               <Badge variant={getStatusBadgeVariant(status)}>
                 {getStatusLabel(status, t)}
               </Badge>
+              {row.original.isRentable ? (
+                <Badge variant="outline">
+                  {t("assets.inventory.flags.rentable")}
+                </Badge>
+              ) : null}
+              {row.original.requiresMaintenance ? (
+                <Badge variant="outline">
+                  {t("assets.inventory.flags.maintenance")}
+                </Badge>
+              ) : null}
               {row.original.scheduledDeletionAt ? (
                 <Badge variant="destructive">
                   {t("assets.deletion.pendingBadge")}
@@ -293,7 +306,8 @@ export function AssetsPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  // Edit is a no-op for now.
+                  setDetailAssetId(row.original.id)
+                  setIsDetailOpen(true)
                 }}
               >
                 {t("assets.actions.edit")}
@@ -837,6 +851,22 @@ export function AssetsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AssetDetailDialog
+        assetId={detailAssetId}
+        open={isDetailOpen}
+        onOpenChange={(open) => {
+          setIsDetailOpen(open)
+          if (!open) {
+            setDetailAssetId(null)
+          }
+        }}
+        units={units}
+        categories={categories}
+        onUpdated={() => {
+          void loadPageData()
+        }}
+      />
     </div>
   )
 }

@@ -2,26 +2,43 @@ import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
   assetListSchema,
+  assetSchema,
   bulkCreateAssetsRequestSchema,
   bulkCreateAssetsResponseSchema,
   deleteAssetResultSchema,
+  updateAssetRequestSchema,
   type Asset,
   type BulkCreateAssetsRequest,
   type BulkCreateAssetsResponse,
   type DeleteAssetResult,
+  type UpdateAssetRequest,
 } from "@/features/assets/schemas/assetSchemas"
 
 const ASSETS_PATH = "/api/assets"
 
+function throwAssetsError(error: unknown, fallbackKey: string): never {
+  console.error(fallbackKey, error)
+  if (isAxiosError(error)) {
+    console.error(`${fallbackKey} response data`, error.response?.data)
+  }
+
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+
+  throw new Error(
+    parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+  )
+}
+
 export async function getAssets(): Promise<Asset[]> {
   try {
     const response = await api.get<unknown>(ASSETS_PATH)
-    const data = response.data
-    const parsed = assetListSchema.safeParse(data)
+    const parsed = assetListSchema.safeParse(response.data)
 
     if (!parsed.success) {
       console.error("getAssets Zod validation failed", {
-        data,
+        data: response.data,
         error: parsed.error.flatten(),
         issues: parsed.error.issues,
       })
@@ -30,21 +47,42 @@ export async function getAssets(): Promise<Asset[]> {
 
     return parsed.data
   } catch (error: unknown) {
-    console.error("getAssets failed", error)
-    if (isAxiosError(error)) {
-      console.error("getAssets response data", error.response?.data)
+    throwAssetsError(error, "assets.inventory.errors.loadFailed")
+  }
+}
+
+export async function getAssetById(id: string): Promise<Asset> {
+  try {
+    const response = await api.get<unknown>(`${ASSETS_PATH}/${id}`)
+    const parsed = assetSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("assets.inventory.errors.invalidResponse"))
     }
 
-    if (error instanceof Error && !isAxiosError(error)) {
-      throw error
+    return parsed.data
+  } catch (error: unknown) {
+    throwAssetsError(error, "assets.inventory.errors.loadFailed")
+  }
+}
+
+export async function updateAsset(
+  id: string,
+  data: UpdateAssetRequest,
+): Promise<Asset> {
+  const payload = updateAssetRequestSchema.parse(data)
+
+  try {
+    const response = await api.put<unknown>(`${ASSETS_PATH}/${id}`, payload)
+    const parsed = assetSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("assets.inventory.errors.invalidResponse"))
     }
 
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.inventory.errors.loadFailed"),
-      ),
-    )
+    return parsed.data
+  } catch (error: unknown) {
+    throwAssetsError(error, "assets.inventory.errors.updateFailed")
   }
 }
 
@@ -54,7 +92,10 @@ export async function bulkCreateAssets(
   const validatedPayload = bulkCreateAssetsRequestSchema.parse(data)
 
   try {
-    const response = await api.post<unknown>(`${ASSETS_PATH}/bulk`, validatedPayload)
+    const response = await api.post<unknown>(
+      `${ASSETS_PATH}/bulk`,
+      validatedPayload,
+    )
     const responseData = response.data
     const parsed = bulkCreateAssetsResponseSchema.safeParse(responseData)
 
@@ -69,21 +110,7 @@ export async function bulkCreateAssets(
 
     return parsed.data
   } catch (error: unknown) {
-    console.error("bulkCreateAssets failed", error)
-    if (isAxiosError(error)) {
-      console.error("bulkCreateAssets response data", error.response?.data)
-    }
-
-    if (error instanceof Error && !isAxiosError(error)) {
-      throw error
-    }
-
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.inventory.errors.bulkCreateFailed"),
-      ),
-    )
+    throwAssetsError(error, "assets.inventory.errors.bulkCreateFailed")
   }
 }
 
@@ -111,20 +138,6 @@ export async function deleteAsset(id: string): Promise<DeleteAssetResult> {
 
     return parsed.data
   } catch (error: unknown) {
-    console.error("deleteAsset failed", error)
-    if (isAxiosError(error)) {
-      console.error("deleteAsset response data", error.response?.data)
-    }
-
-    if (error instanceof Error && !isAxiosError(error)) {
-      throw error
-    }
-
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.inventory.errors.deleteFailed"),
-      ),
-    )
+    throwAssetsError(error, "assets.inventory.errors.deleteFailed")
   }
 }

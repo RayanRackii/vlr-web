@@ -7,7 +7,8 @@
     "close": "Fechar",
     "cancel": "Cancelar",
     "filter": "Filtrar",
-    "searchPlaceholder": "Buscar..."
+    "searchPlaceholder": "Buscar...",
+    "loading": "Carregando..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -18,6 +19,7 @@
     "pmocPlans": "Planos",
     "pmocNew": "Novo Plano",
     "workOrders": "OS",
+    "admin": "Super-Admin",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação"
   },
@@ -247,7 +249,71 @@
         "bulkCreateFailed": "Não foi possível criar os ativos em lote.",
         "deleteFailed": "Não foi possível excluir o ativo.",
         "invalidResponse": "Resposta inválida da API.",
-        "invalidUnitsResponse": "Resposta inválida ao carregar unidades."
+        "invalidUnitsResponse": "Resposta inválida ao carregar unidades.",
+        "updateFailed": "Não foi possível atualizar o ativo."
+      },
+      "flags": {
+        "rentable": "Aluguel",
+        "maintenance": "Manutenção"
+      }
+    },
+    "detail": {
+      "title": "Detalhes do ativo",
+      "description": "Edite dados gerais e configure módulos conforme as flags do ativo.",
+      "tabs": {
+        "general": "Geral",
+        "rental": "Aluguel",
+        "maintenance": "Manutenção"
+      },
+      "fields": {
+        "name": "Nome",
+        "tag": "Tag",
+        "unit": "Unidade",
+        "category": "Categoria",
+        "location": "Localização",
+        "status": "Status",
+        "isRentable": "Disponível para aluguel",
+        "requiresMaintenance": "Requer manutenção",
+        "rentalType": "Tipo de aluguel",
+        "totalQuantity": "Quantidade total"
+      },
+      "rentalTypes": {
+        "Location": "Local (quadra, piscina)",
+        "Good": "Bem (colete, bola)"
+      },
+      "actions": {
+        "save": "Salvar",
+        "saving": "Salvando..."
+      },
+      "rental": {
+        "pricingTitle": "Faixas de preço",
+        "pricingEmpty": "Nenhuma faixa cadastrada.",
+        "dayOfWeek": "Dia da semana",
+        "startTime": "Início",
+        "endTime": "Fim",
+        "pricePerHour": "Preço por hora",
+        "addPricing": "Adicionar preço"
+      },
+      "days": {
+        "Sunday": "Domingo",
+        "Monday": "Segunda",
+        "Tuesday": "Terça",
+        "Wednesday": "Quarta",
+        "Thursday": "Quinta",
+        "Friday": "Sexta",
+        "Saturday": "Sábado"
+      },
+      "maintenance": {
+        "title": "Histórico de OS / PMOC",
+        "empty": "Nenhuma ordem de serviço vinculada a este ativo."
+      },
+      "errors": {
+        "loadFailed": "Não foi possível carregar o ativo.",
+        "updateFailed": "Não foi possível atualizar o ativo.",
+        "invalidResponse": "Resposta inválida da API.",
+        "pricingLoadFailed": "Não foi possível carregar os preços.",
+        "pricingCreateFailed": "Não foi possível criar a faixa de preço.",
+        "pricingDeleteFailed": "Não foi possível remover a faixa de preço."
       }
     }
   },
@@ -432,6 +498,66 @@
     "offline": {
       "title": "Modo Offline",
       "banner": "Modo Offline: Alterações sendo salvas localmente."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Painel Super-Admin",
+      "description": "Gerencie clientes (tenants), subdomínios e módulos assinados.",
+      "newClient": "Novo Cliente",
+      "statusActive": "Ativo",
+      "statusInactive": "Inativo",
+      "taxId": "Documento",
+      "noSubdomain": "Sem subdomínio",
+      "noModules": "Nenhum módulo ativo",
+      "emptyTitle": "Nenhum cliente ainda",
+      "emptyDescription": "Cadastre o primeiro tenant com o assistente de onboarding."
+    },
+    "modules": {
+      "Inventory": "Inventário",
+      "InventoryDescription": "Cadastro e controle de ativos.",
+      "PMOC": "PMOC",
+      "PMOCDescription": "Planos de manutenção e templates.",
+      "OS": "Ordens de Serviço",
+      "OSDescription": "Execução e acompanhamento de OS.",
+      "Rentals": "Aluguéis",
+      "RentalsDescription": "Locais, bens e reservas B2C.",
+      "unknown": "Módulo"
+    },
+    "wizard": {
+      "title": "Novo cliente",
+      "stepLabel": "Etapa {{current}} de {{total}}",
+      "steps": {
+        "company": "Informe os dados legais da empresa.",
+        "identity": "Defina o subdomínio e a identidade visual.",
+        "modules": "Selecione os módulos que o cliente contratou.",
+        "summary": "Revise o provisionamento antes de finalizar."
+      },
+      "fields": {
+        "legalName": "Razão Social",
+        "taxId": "CNPJ / Documento",
+        "subdomain": "Subdomínio",
+        "logoUrl": "URL da Logo (opcional)"
+      },
+      "summary": {
+        "modules": "Módulos",
+        "total": "Total mensal estimado",
+        "perMonth": "/mês",
+        "demoNote": "Valores ilustrativos para demonstração da interface (R$ 199 por módulo)."
+      },
+      "actions": {
+        "back": "Voltar",
+        "next": "Continuar",
+        "finish": "Finalizar",
+        "finishing": "Provisionando..."
+      },
+      "errors": {
+        "createFailed": "Não foi possível provisionar o cliente."
+      }
+    },
+    "errors": {
+      "forbidden": "Acesso restrito a Super-Admins da plataforma.",
+      "loadFailed": "Não foi possível carregar os clientes."
     }
   }
 }

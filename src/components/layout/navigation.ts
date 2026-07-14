@@ -3,8 +3,11 @@ import {
   ClipboardList,
   ClipboardPen,
   LayoutDashboard,
+  Shield,
   Wrench,
 } from "lucide-react"
+
+import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -21,6 +24,7 @@ export type AppNavigationItem = {
     | "nav.assets"
     | "nav.pmoc"
     | "nav.workOrders"
+    | "nav.admin"
   to: string
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
@@ -69,12 +73,33 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   },
 ]
 
+export function useAppNavigationItems(): readonly AppNavigationItem[] {
+  const isPlatformAdmin = useIsPlatformAdmin()
+
+  if (!isPlatformAdmin) {
+    return appNavigationItems
+  }
+
+  return [
+    ...appNavigationItems,
+    {
+      labelKey: "nav.admin",
+      to: "/admin/dashboard",
+      icon: Shield,
+    },
+  ]
+}
+
 export function getPageTitleKey(
   pathname: string,
 ):
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
   | "app.name" {
+  if (pathname.startsWith("/admin")) {
+    return "nav.admin"
+  }
+
   if (pathname.startsWith("/os/")) {
     return "nav.workOrders"
   }

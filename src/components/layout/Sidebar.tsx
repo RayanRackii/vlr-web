@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { Separator } from "@/components/ui/separator"
 import {
-  appNavigationItems,
+  useAppNavigationItems,
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 import { cn } from "@/lib/utils"
@@ -93,6 +93,7 @@ function NavigationLink({
 
 export function Sidebar({ onNavigate, className }: SidebarProps) {
   const { t } = useTranslation()
+  const navigationItems = useAppNavigationItems()
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -105,7 +106,7 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
       <Separator />
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {appNavigationItems.map((item) => (
+        {navigationItems.map((item) => (
           <NavigationLink key={item.to} item={item} onNavigate={onNavigate} />
         ))}
       </nav>

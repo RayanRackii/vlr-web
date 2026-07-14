@@ -33,6 +33,16 @@ export const assetSchema = z.object({
   serialNumber: z.string().nullish(),
   installationDate: z.string().nullish(),
   status: assetStatusResponseSchema,
+  isRentable: z.boolean(),
+  requiresMaintenance: z.boolean(),
+  rentalConfig: z
+    .object({
+      rentalAssetId: z.string().uuid(),
+      type: z.enum(["Location", "Good"]),
+      totalQuantity: z.number().int(),
+      isActive: z.boolean(),
+    })
+    .nullish(),
   createdAt: z.string(),
   updatedAt: z.string().nullish(),
   scheduledDeletionAt: z.string().nullish(),
@@ -41,6 +51,23 @@ export const assetSchema = z.object({
 export type Asset = z.infer<typeof assetSchema>
 
 export const assetListSchema = z.array(assetSchema)
+
+export const updateAssetRequestSchema = z.object({
+  unitId: z.string().uuid(),
+  categoryId: z.string().uuid(),
+  name: z.string().trim().min(1),
+  tag: z.string().trim().min(1),
+  location: z.string().nullish(),
+  serialNumber: z.string().nullish(),
+  installationDate: z.string().nullish(),
+  status: assetStatusSchema,
+  isRentable: z.boolean(),
+  requiresMaintenance: z.boolean(),
+  rentalType: z.enum(["Location", "Good"]).default("Location"),
+  totalQuantity: z.number().int().min(1).default(1),
+})
+
+export type UpdateAssetRequest = z.infer<typeof updateAssetRequestSchema>
 
 export const deleteAssetResultSchema = z.object({
   permanentlyDeleted: z.boolean(),
@@ -56,6 +83,8 @@ export const bulkCreateAssetsRequestSchema = z.object({
   baseTag: z.string().trim().min(1),
   startNumber: z.number().int(),
   endNumber: z.number().int(),
+  isRentable: z.boolean().optional(),
+  requiresMaintenance: z.boolean().optional(),
 })
 
 export type BulkCreateAssetsRequest = z.infer<
