@@ -1,0 +1,437 @@
+{
+  "app": {
+    "name": "Platform",
+    "authenticatedArea": "Área autenticada"
+  },
+  "common": {
+    "close": "Fechar",
+    "cancel": "Cancelar",
+    "filter": "Filtrar",
+    "searchPlaceholder": "Buscar..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "assets": "Ativos",
+    "assetsInventory": "Inventário",
+    "assetsCategories": "Categorias",
+    "pmoc": "PMOC",
+    "pmocPlans": "Planos",
+    "pmocNew": "Novo Plano",
+    "workOrders": "OS",
+    "menu": "Menu de navegação",
+    "openMenu": "Abrir menu de navegação"
+  },
+  "account": {
+    "title": "Conta",
+    "userFallback": "Usuário",
+    "openMenu": "Abrir menu da conta",
+    "signOut": "Sair",
+    "signingOut": "Saindo..."
+  },
+  "theme": {
+    "toggle": "Alternar tema",
+    "light": "Claro",
+    "dark": "Escuro"
+  },
+  "language": {
+    "label": "Idioma",
+    "ptBR": "Português",
+    "en": "English",
+    "es": "Español"
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Centro de Comando",
+      "description": "Visão consolidada de ativos e ordens de serviço do mês."
+    },
+    "assets": {
+      "title": "Módulo de Ativos",
+      "description": "Cadastro de equipamentos e máquinas em construção."
+    },
+    "pmoc": {
+      "title": "Módulo de PMOC",
+      "description": "Planos de manutenção, operação e controle."
+    },
+    "workOrders": {
+      "title": "Módulo de OS",
+      "description": "Ordens de serviço geradas pelo PMOC ou criadas manualmente."
+    }
+  },
+  "dashboard": {
+    "title": "Centro de Comando",
+    "description": "Visão consolidada de ativos e ordens de serviço do mês.",
+    "kpi": {
+      "totalAssets": {
+        "title": "Total de Ativos",
+        "subtitle": "Máquinas registradas"
+      },
+      "workOrdersMonth": {
+        "title": "OS do Mês",
+        "subtitle": "Todas as ordens no mês atual"
+      },
+      "completionRate": {
+        "title": "Taxa de Conclusão",
+        "subtitle": "Concluídas sobre o total do mês"
+      },
+      "pendingWorkOrders": {
+        "title": "OS Pendentes",
+        "subtitle": "Aguardando início de execução"
+      }
+    },
+    "charts": {
+      "tooltip": {
+        "count": "Quantidade"
+      },
+      "workOrders": {
+        "title": "Status das Ordens de Serviço",
+        "description": "Distribuição das OS do mês atual.",
+        "pending": "Pendentes",
+        "inProgress": "Em Andamento",
+        "completed": "Concluídas"
+      },
+      "assets": {
+        "title": "Status dos Ativos",
+        "description": "Divisão do inventário por status operacional.",
+        "active": "Ativos",
+        "maintenance": "Em Manutenção",
+        "inactive": "Inativos",
+        "empty": "Nenhum ativo cadastrado ainda."
+      }
+    },
+    "errors": {
+      "unauthorized": "Sessão inválida. Faça login novamente.",
+      "loadFailed": "Não foi possível carregar o dashboard.",
+      "invalidResponse": "Resposta inválida da API."
+    }
+  },
+  "assets": {
+    "actions": {
+      "edit": "Editar",
+      "remove": "Remover"
+    },
+    "deletion": {
+      "title": "Confirmar exclusão",
+      "pendingBadge": "Exclusão Pendente",
+      "scheduleWarning": "Esta ação agendará a exclusão da categoria \"{{name}}\" e de todos os {{count}} ativos vinculados para daqui a 30 dias. Digite o nome da categoria para confirmar.",
+      "permanentWarning": "Este item já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
+      "assetScheduleWarning": "Esta ação agendará a exclusão do ativo \"{{tag}}\" para daqui a 30 dias. Digite a tag do ativo para confirmar.",
+      "assetPermanentWarning": "Este ativo já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
+      "confirmNameLabel": "Nome da categoria",
+      "confirmNamePlaceholder": "Digite o nome exatamente como aparece",
+      "confirm": "Confirmar Exclusão",
+      "deleting": "Excluindo...",
+      "scheduledSuccess": "Exclusão agendada com sucesso para daqui a 30 dias.",
+      "permanentSuccess": "Item excluído permanentemente."
+    },
+    "categories": {
+      "title": "Categorias de Ativos",
+      "description": "Matriz técnica dos equipamentos. Defina modelos e características herdadas pelos ativos físicos.",
+      "loading": "Carregando categorias...",
+      "empty": "Nenhuma categoria cadastrada ainda.",
+      "emptyValue": "—",
+      "status": {
+        "active": "Ativa"
+      },
+      "filters": {
+        "name": "Filtrar por nome",
+        "manufacturer": "Filtrar por fabricante",
+        "description": "Filtrar por descrição"
+      },
+      "actions": {
+        "new": "Nova Categoria",
+        "save": "Salvar",
+        "saving": "Salvando...",
+        "edit": "Editar",
+        "remove": "Remover",
+        "openMenu": "Abrir ações"
+      },
+      "columns": {
+        "name": "Nome",
+        "manufacturer": "Fabricante",
+        "description": "Descrição",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "dialog": {
+        "title": "Nova categoria",
+        "description": "Cadastre o modelo base que será usado pelos equipamentos físicos.",
+        "editTitle": "Editar categoria",
+        "editDescription": "Atualize os dados da categoria de ativos."
+      },
+      "form": {
+        "name": "Nome",
+        "namePlaceholder": "Ex: Ar-Condicionado Split 12k BTUs",
+        "manufacturer": "Fabricante",
+        "manufacturerPlaceholder": "Ex: Daikin",
+        "description": "Descrição",
+        "descriptionPlaceholder": "Detalhes técnicos opcionais"
+      },
+      "validation": {
+        "nameRequired": "O nome é obrigatório.",
+        "manufacturerRequired": "O fabricante é obrigatório."
+      },
+      "success": {
+        "created": "Categoria criada com sucesso.",
+        "updated": "Categoria atualizada com sucesso."
+      },
+      "errors": {
+        "unauthorized": "Sessão inválida. Faça login novamente.",
+        "loadFailed": "Não foi possível carregar as categorias.",
+        "createFailed": "Não foi possível criar a categoria.",
+        "updateFailed": "Não foi possível atualizar a categoria.",
+        "deleteFailed": "Não foi possível excluir a categoria.",
+        "invalidResponse": "Resposta inválida da API."
+      }
+    },
+    "inventory": {
+      "title": "Inventário de Ativos",
+      "description": "Equipamentos físicos do tenant. Crie vários ativos sequenciais em lote a partir de uma categoria.",
+      "loading": "Carregando inventário...",
+      "empty": "Nenhum ativo cadastrado ainda.",
+      "emptyValue": "—",
+      "filters": {
+        "category": "Categoria",
+        "tag": "Tag",
+        "location": "Localização",
+        "placeholder": "Filtrar..."
+      },
+      "actions": {
+        "bulkAdd": "Adicionar em Lote",
+        "create": "Criar",
+        "creating": "Criando..."
+      },
+      "columns": {
+        "tag": "Tag",
+        "category": "Categoria",
+        "location": "Localização",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "status": {
+        "Active": "Ativo",
+        "Inactive": "Inativo",
+        "Maintenance": "Manutenção"
+      },
+      "dialog": {
+        "title": "Adicionar ativos em lote",
+        "description": "Gere uma sequência de equipamentos com a mesma categoria e tags numeradas."
+      },
+      "form": {
+        "unit": "Unidade",
+        "unitPlaceholder": "Selecione a unidade",
+        "category": "Categoria",
+        "categoryPlaceholder": "Selecione a categoria",
+        "baseLocation": "Localização base",
+        "baseLocationPlaceholder": "Ex: Quarto",
+        "baseTag": "Tag base",
+        "baseTagPlaceholder": "Ex: AC-",
+        "startNumber": "Número inicial",
+        "endNumber": "Número final"
+      },
+      "validation": {
+        "unitRequired": "A unidade é obrigatória.",
+        "categoryRequired": "A categoria é obrigatória.",
+        "baseLocationRequired": "A localização base é obrigatória.",
+        "baseTagRequired": "A tag base é obrigatória.",
+        "startNumberRequired": "Informe o número inicial.",
+        "endNumberRequired": "Informe o número final.",
+        "rangeInvalid": "O número final deve ser maior ou igual ao inicial."
+      },
+      "success": {
+        "bulkCreated": "{{count}} ativo(s) criado(s) com sucesso."
+      },
+      "errors": {
+        "unauthorized": "Sessão inválida. Faça login novamente.",
+        "loadFailed": "Não foi possível carregar o inventário.",
+        "loadUnitsFailed": "Não foi possível carregar as unidades.",
+        "bulkCreateFailed": "Não foi possível criar os ativos em lote.",
+        "deleteFailed": "Não foi possível excluir o ativo.",
+        "invalidResponse": "Resposta inválida da API.",
+        "invalidUnitsResponse": "Resposta inválida ao carregar unidades."
+      }
+    }
+  },
+  "pmoc": {
+    "frequency": {
+      "Daily": "Diário",
+      "Weekly": "Semanal",
+      "Monthly": "Mensal",
+      "Quarterly": "Trimestral",
+      "Semiannual": "Semestral",
+      "Annual": "Anual"
+    },
+    "inputType": {
+      "Checkbox": "Checkbox",
+      "Text": "Texto",
+      "Number": "Número",
+      "Image": "Imagem",
+      "SingleChoice": "Escolha única"
+    },
+    "plans": {
+      "title": "Planos de Manutenção",
+      "description": "Defina checklists periódicas vinculadas às categorias de ativos.",
+      "loading": "Carregando planos...",
+      "empty": "Nenhum plano cadastrado ainda.",
+      "emptyValue": "—",
+      "actions": {
+        "new": "Novo Plano"
+      },
+      "columns": {
+        "name": "Nome do Plano",
+        "frequency": "Frequência",
+        "category": "Categoria Vinculada",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Ativo",
+        "inactive": "Inativo"
+      },
+      "errors": {
+        "unauthorized": "Sessão inválida. Faça login novamente.",
+        "loadFailed": "Não foi possível carregar os planos.",
+        "invalidResponse": "Resposta inválida da API.",
+        "createFailed": "Não foi possível criar o plano."
+      }
+    },
+    "create": {
+      "title": "Novo Plano de Manutenção",
+      "description": "Monte o checklist dinâmico com tarefas e tipos de entrada.",
+      "loading": "Carregando unidades e categorias...",
+      "sections": {
+        "main": "Dados principais",
+        "mainDescription": "Identifique o plano, a unidade, a frequência e a categoria alvo.",
+        "tasks": "Checklist de tarefas",
+        "tasksDescription": "Adicione as etapas que o técnico deverá preencher em campo."
+      },
+      "actions": {
+        "back": "Voltar",
+        "addTask": "Adicionar tarefa",
+        "removeTask": "Remover tarefa",
+        "save": "Salvar plano",
+        "saving": "Salvando..."
+      },
+      "form": {
+        "name": "Nome",
+        "namePlaceholder": "Ex: PMOC Split Mensal",
+        "description": "Descrição",
+        "descriptionPlaceholder": "Objetivo e escopo do plano",
+        "unit": "Unidade",
+        "unitPlaceholder": "Selecione a unidade",
+        "category": "Categoria do ativo",
+        "categoryPlaceholder": "Selecione a categoria",
+        "frequency": "Frequência",
+        "frequencyPlaceholder": "Selecione a frequência",
+        "status": "Status"
+      },
+      "tasks": {
+        "itemTitle": "Tarefa {{number}}",
+        "title": "Título",
+        "titlePlaceholder": "O que deve ser feito",
+        "inputType": "Tipo de entrada",
+        "isMandatory": "Obrigatório",
+        "min": "Mínimo",
+        "max": "Máximo"
+      },
+      "validation": {
+        "unitRequired": "A unidade é obrigatória.",
+        "nameRequired": "O nome é obrigatório.",
+        "frequencyRequired": "A frequência é obrigatória.",
+        "categoryRequired": "A categoria é obrigatória.",
+        "taskTitleRequired": "O título da tarefa é obrigatório.",
+        "tasksRequired": "Adicione pelo menos uma tarefa.",
+        "numberMinRequired": "Informe o valor mínimo.",
+        "numberMaxRequired": "Informe o valor máximo.",
+        "numberRangeInvalid": "O máximo deve ser maior ou igual ao mínimo."
+      },
+      "success": {
+        "created": "Plano criado com sucesso."
+      },
+      "errors": {
+        "unauthorized": "Sessão inválida. Faça login novamente.",
+        "loadLookupsFailed": "Não foi possível carregar unidades ou categorias.",
+        "createFailed": "Não foi possível criar o plano."
+      }
+    },
+    "templates": {
+      "importButton": "Importar Modelo Padrão (Normas/CREA)",
+      "dialogTitle": "Cardápio de Normas",
+      "dialogDescription": "Selecione um modelo regulatório para preencher o plano. Você poderá editar as tarefas antes de salvar.",
+      "loading": "Carregando modelos...",
+      "empty": "Nenhum modelo disponível para esta jurisdição.",
+      "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tarefas",
+      "importSuccess": "Modelo \"{{name}}\" importado. Revise e adapte as tarefas antes de salvar.",
+      "errors": {
+        "loadFailed": "Não foi possível carregar os modelos globais.",
+        "invalidResponse": "Resposta inválida da API de templates."
+      }
+    }
+  },
+  "workOrders": {
+    "title": "Ordens de Serviço",
+    "description": "Execute checklists em campo e acompanhe o status de cada OS.",
+    "loading": "Carregando ordens de serviço...",
+    "tabs": {
+      "Pending": "Pendentes",
+      "InProgress": "Em Andamento",
+      "Completed": "Concluídas"
+    },
+    "empty": {
+      "Pending": "Nenhuma OS pendente.",
+      "InProgress": "Nenhuma OS em andamento.",
+      "Completed": "Nenhuma OS concluída."
+    },
+    "columns": {
+      "id": "ID da OS",
+      "asset": "Ativo",
+      "origin": "Origem",
+      "scheduledDate": "Data Agendada",
+      "actions": "Ações"
+    },
+    "origin": {
+      "pmoc": "PMOC",
+      "manual": "Manual"
+    },
+    "status": {
+      "Pending": "Pendente",
+      "InProgress": "Em Andamento",
+      "Completed": "Concluída",
+      "Canceled": "Cancelada"
+    },
+    "actions": {
+      "execute": "Executar",
+      "view": "Visualizar"
+    },
+    "execution": {
+      "title": "Execução da OS",
+      "subtitle": "Ativo {{tag}} — {{name}}",
+      "loading": "Carregando OS...",
+      "back": "Voltar para lista",
+      "tasksTitle": "Checklist",
+      "tasksDescription": "Preencha cada tarefa conforme o tipo de entrada.",
+      "mandatory": "Obrigatória",
+      "checkboxHint": "Marque como concluído",
+      "textPlaceholder": "Descreva o resultado...",
+      "numberPlaceholder": "Informe o valor",
+      "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
+      "choicePlaceholder": "Selecione uma opção",
+      "imageUploadSoon": "Upload de Foto (Em Breve)",
+      "start": "Iniciar OS",
+      "complete": "Finalizar OS",
+      "startedSuccess": "OS iniciada com sucesso.",
+      "completedSuccess": "OS finalizada com sucesso.",
+      "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}"
+    },
+    "errors": {
+      "unauthorized": "Sessão inválida. Faça login novamente.",
+      "loadFailed": "Não foi possível carregar as ordens de serviço.",
+      "loadOneFailed": "Não foi possível carregar a ordem de serviço.",
+      "invalidResponse": "Resposta inválida da API.",
+      "updateTaskFailed": "Não foi possível salvar a resposta da tarefa.",
+      "updateStatusFailed": "Não foi possível atualizar o status da OS."
+    },
+    "offline": {
+      "title": "Modo Offline",
+      "banner": "Modo Offline: Alterações sendo salvas localmente."
+    }
+  }
+}

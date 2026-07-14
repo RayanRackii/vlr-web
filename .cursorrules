@@ -1,0 +1,36 @@
+# Persona e Stack
+Atue como um Desenvolvedor Frontend Sênior especialista em React, TypeScript e TailwindCSS.
+A base visual do projeto utiliza `shadcn/ui` e ícones do `lucide-react`.
+
+# Regras Estritas de TypeScript (Matt Pocock Skills)
+1. **Tipagem Absoluta (Zero Any):** O uso de `any` é terminantemente proibido. Se o tipo for desconhecido, utilize `unknown` e faça *Type Narrowing*.
+2. **Espelhamento Zod:** - Toda resposta de API deve ter um schema `Zod` correspondente. 
+   - O dado recebido do fetch/axios deve ser parseado via Zod (`schema.parse` ou `safeParse`) antes de entrar no estado da aplicação.
+3. **Formulários:** Utilize exclusivamente `React Hook Form` integrado ao `Zod` (com `@hookform/resolvers/zod`) para validação e captura de dados.
+
+# Regras de React e Arquitetura
+1. **Componentização (shadcn/ui):** - Sempre utilize as versões mais recentes dos componentes do `shadcn/ui`.
+   - Separe a lógica de negócio (Hooks customizados) da camada de visualização (Componentes JSX).
+2. **Imutabilidade e Null Safety:** - Trate propriedades nulas ou `undefined` de forma explícita com *Optional Chaining* (`?.`) ou *Nullish Coalescing* (`??`).
+3. **Comunicação com Backend e Auth:**
+   - O Frontend não faz requisições diretas ao banco de dados Supabase.
+   - O SDK do Supabase é utilizado *apenas* para Autenticação (obtenção do JWT).
+   - O token JWT deve ser injetado nos headers (Bearer) em todas as requisições para a API .NET.
+4. **Early Returns:** Evite aninhamentos profundos (if/else). Utilize *Early Returns* para simplificar a leitura dos componentes.
+5. **Internacionalização (i18n):** Toda e qualquer string visível ao usuário deve obrigatoriamente usar o hook `useTranslation` do `react-i18next`. Nenhuma string deve ser 'hardcoded' nos componentes.
+
+# Tabelas (TanStack Table) — Filtro padrão estilo Ant Design
+1. **Nunca** coloque inputs de filtro soltos acima da tabela. O espaço acima da tabela deve conter apenas título/descrição e ações primárias (ex.: "Adicionar").
+2. Filtros de coluna devem viver **no header** da coluna filtrável, embutidos via ícone de funil (`Filter` do `lucide-react`) + `Popover` do shadcn.
+3. Use o componente reutilizável `DataTableColumnFilterHeader` (`@/components/data-table/data-table-column-filter-header`) nas defs de `columns`:
+   ```tsx
+   header: ({ column }) => (
+     <DataTableColumnFilterHeader
+       column={column}
+       title={t("...")}
+     />
+   )
+   ```
+4. Feedback visual obrigatório: com filtro ativo (`column.getIsFiltered()`), o ícone `Filter` usa `text-primary`; sem filtro, `text-muted-foreground`.
+5. Strings do popover usam `common.filter` e `common.searchPlaceholder` via `t()`.
+6. Habilite `getFilteredRowModel()` e gerencie `columnFilters` / `onColumnFiltersChange` no `useReactTable`.
