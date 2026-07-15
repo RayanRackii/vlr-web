@@ -505,6 +505,8 @@
       "title": "Super-Admin Panel",
       "description": "Manage tenants, subdomains, and subscribed modules.",
       "newClient": "New Client",
+      "createSuccessTitle": "Client provisioned",
+      "createSuccess": "The tenant was created successfully.",
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "taxId": "Document",
@@ -533,6 +535,12 @@
         "modules": "Select the modules this client subscribed to.",
         "summary": "Review the provisioning before finishing."
       },
+      "stepShort": {
+        "1": "Company",
+        "2": "Identity",
+        "3": "Modules",
+        "4": "Summary"
+      },
       "fields": {
         "legalName": "Legal name",
         "taxId": "Tax ID / Document",
@@ -547,6 +555,7 @@
       },
       "actions": {
         "back": "Back",
+        "backToDashboard": "Back to dashboard",
         "next": "Continue",
         "finish": "Finish",
         "finishing": "Provisioning..."

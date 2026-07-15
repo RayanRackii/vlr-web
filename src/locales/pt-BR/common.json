@@ -505,6 +505,8 @@
       "title": "Painel Super-Admin",
       "description": "Gerencie clientes (tenants), subdomínios e módulos assinados.",
       "newClient": "Novo Cliente",
+      "createSuccessTitle": "Cliente provisionado",
+      "createSuccess": "O tenant foi criado com sucesso.",
       "statusActive": "Ativo",
       "statusInactive": "Inativo",
       "taxId": "Documento",
@@ -533,6 +535,12 @@
         "modules": "Selecione os módulos que o cliente contratou.",
         "summary": "Revise o provisionamento antes de finalizar."
       },
+      "stepShort": {
+        "1": "Empresa",
+        "2": "Identidade",
+        "3": "Módulos",
+        "4": "Resumo"
+      },
       "fields": {
         "legalName": "Razão Social",
         "taxId": "CNPJ / Documento",
@@ -547,6 +555,7 @@
       },
       "actions": {
         "back": "Voltar",
+        "backToDashboard": "Voltar ao painel",
         "next": "Continuar",
         "finish": "Finalizar",
         "finishing": "Provisionando..."

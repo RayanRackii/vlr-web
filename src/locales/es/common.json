@@ -505,6 +505,8 @@
       "title": "Panel Super-Admin",
       "description": "Administre clientes (tenants), subdominios y módulos contratados.",
       "newClient": "Nuevo Cliente",
+      "createSuccessTitle": "Cliente aprovisionado",
+      "createSuccess": "El tenant se creó correctamente.",
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "taxId": "Documento",
@@ -533,6 +535,12 @@
         "modules": "Seleccione los módulos contratados.",
         "summary": "Revise el aprovisionamiento antes de finalizar."
       },
+      "stepShort": {
+        "1": "Empresa",
+        "2": "Identidad",
+        "3": "Módulos",
+        "4": "Resumen"
+      },
       "fields": {
         "legalName": "Razón social",
         "taxId": "CUIT / Documento",
@@ -547,6 +555,7 @@
       },
       "actions": {
         "back": "Volver",
+        "backToDashboard": "Volver al panel",
         "next": "Continuar",
         "finish": "Finalizar",
         "finishing": "Aprovisionando..."

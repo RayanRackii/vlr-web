@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
+import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
@@ -21,6 +22,10 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route element={<PlatformAdminRoute />}>
+          <Route path="/admin/tenants/new" element={<NewTenantPage />} />
+        </Route>
+
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/ativos" element={<AssetsPage />} />
