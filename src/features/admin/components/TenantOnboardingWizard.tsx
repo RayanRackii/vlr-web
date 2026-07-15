@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Building2,
   Check,
+  CircleCheck,
   ClipboardList,
+  CircleAlert,
   Package,
   Tent,
   Wrench,
@@ -24,6 +26,7 @@ import {
   type TenantOnboardingFormValues,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -35,6 +38,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+
+const SUCCESS_REDIRECT_MS = 5000
 
 const STEP_COUNT = 4
 
@@ -65,6 +70,8 @@ export function TenantOnboardingWizard() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
+  const redirectTimeoutRef = useRef<number | null>(null)
   const baseDomain = useMemo(() => getTenantBaseDomain(), [])
 
   const form = useForm<TenantOnboardingFormValues>({
@@ -80,10 +87,23 @@ export function TenantOnboardingWizard() {
   })
 
   const isSubmitting = form.formState.isSubmitting
+  const isActionLocked = isSubmitting || isSubmitSuccess
   const values = form.watch()
   const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
 
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current !== null) {
+        window.clearTimeout(redirectTimeoutRef.current)
+      }
+    }
+  }, [])
+
   async function handleNext() {
+    if (isSubmitSuccess) {
+      return
+    }
+
     setSubmitError(null)
 
     if (step === 1) {
@@ -131,6 +151,10 @@ export function TenantOnboardingWizard() {
   }
 
   function handleBack() {
+    if (isSubmitSuccess) {
+      return
+    }
+
     setSubmitError(null)
     setStep((current) => Math.max(1, current - 1))
   }
@@ -149,6 +173,10 @@ export function TenantOnboardingWizard() {
   }
 
   async function handleFinish() {
+    if (isSubmitSuccess) {
+      return
+    }
+
     setSubmitError(null)
 
     const isValid = await form.trigger()
@@ -168,16 +196,18 @@ export function TenantOnboardingWizard() {
         activeModules: payload.activeModules,
       })
 
-      void navigate("/admin/dashboard", {
-        replace: true,
-        state: { tenantCreated: true },
-      })
+      setIsSubmitSuccess(true)
+
+      redirectTimeoutRef.current = window.setTimeout(() => {
+        void navigate("/admin/dashboard", { replace: true })
+      }, SUCCESS_REDIRECT_MS)
     } catch (error: unknown) {
       const message =
-        error instanceof Error
+        error instanceof Error && error.message.trim().length > 0
           ? error.message
           : t("admin.wizard.errors.createFailed")
       setSubmitError(message)
+      setIsSubmitSuccess(false)
     }
   }
 
@@ -420,17 +450,29 @@ export function TenantOnboardingWizard() {
             </div>
           ) : null}
 
+          {isSubmitSuccess ? (
+            <Alert>
+              <CircleCheck />
+              <AlertTitle>{t("admin.wizard.successTitle")}</AlertTitle>
+              <AlertDescription>
+                {t("admin.wizard.success")}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           {submitError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {submitError}
-            </p>
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertTitle>{t("admin.wizard.errorTitle")}</AlertTitle>
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
           ) : null}
 
           <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="ghost"
-              disabled={isSubmitting || step === 1}
+              disabled={isActionLocked || step === 1}
               onClick={handleBack}
             >
               {t("admin.wizard.actions.back")}
@@ -440,7 +482,7 @@ export function TenantOnboardingWizard() {
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSubmitting}
+                disabled={isActionLocked}
                 onClick={() => {
                   void navigate("/admin/dashboard")
                 }}
@@ -449,13 +491,17 @@ export function TenantOnboardingWizard() {
               </Button>
 
               {step < STEP_COUNT ? (
-                <Button type="button" onClick={() => void handleNext()}>
+                <Button
+                  type="button"
+                  disabled={isActionLocked}
+                  onClick={() => void handleNext()}
+                >
                   {t("admin.wizard.actions.next")}
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  disabled={isSubmitting}
+                  disabled={isActionLocked}
                   onClick={() => void handleFinish()}
                 >
                   {isSubmitting

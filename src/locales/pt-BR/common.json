@@ -505,8 +505,6 @@
       "title": "Painel Super-Admin",
       "description": "Gerencie clientes (tenants), subdomínios e módulos assinados.",
       "newClient": "Novo Cliente",
-      "createSuccessTitle": "Cliente provisionado",
-      "createSuccess": "O tenant foi criado com sucesso.",
       "statusActive": "Ativo",
       "statusInactive": "Inativo",
       "taxId": "Documento",
@@ -560,6 +558,9 @@
         "finish": "Finalizar",
         "finishing": "Provisionando..."
       },
+      "successTitle": "Sucesso",
+      "success": "Ambiente criado com sucesso!",
+      "errorTitle": "Erro",
       "errors": {
         "createFailed": "Não foi possível provisionar o cliente."
       }

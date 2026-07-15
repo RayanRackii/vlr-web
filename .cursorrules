@@ -34,3 +34,18 @@ A base visual do projeto utiliza `shadcn/ui` e ícones do `lucide-react`.
 4. Feedback visual obrigatório: com filtro ativo (`column.getIsFiltered()`), o ícone `Filter` usa `text-primary`; sem filtro, `text-muted-foreground`.
 5. Strings do popover usam `common.filter` e `common.searchPlaceholder` via `t()`.
 6. Habilite `getFilteredRowModel()` e gerencie `columnFilters` / `onColumnFiltersChange` no `useReactTable`.
+
+# Padrões de UI/UX e Formulários (Feedback de Ações)
+Sempre que implementar formulários, mutações de dados ou interações com a API (POST, PUT, DELETE), obedeça ESTRITAMENTE ao seguinte padrão de feedback de usuário:
+
+1. **Em caso de SUCESSO:**
+   - SEMPRE exiba um toast/banner de sucesso com uma mensagem clara sobre o que foi concluído.
+   - Desabilite o botão de ação/submit para evitar múltiplos cliques.
+   - SE a ação exigir um redirecionamento de página, NUNCA redirecione imediatamente. Adicione um atraso (`setTimeout`) de 3 a 5 segundos para que o usuário tenha tempo de ler a mensagem de sucesso. Lembre-se de limpar o timeout no desmonte do componente.
+   - SE a ação fechar um modal, o fechamento pode ser imediato após o toast.
+
+2. **Em caso de ERRO:**
+   - NUNCA redirecione o usuário, feche o modal ou limpe o formulário. O usuário deve permanecer no mesmo estado para corrigir o problema.
+   - SEMPRE exiba um toast/banner de erro.
+   - Extraia a mensagem de erro real vinda da resposta da API (ex: `error.response?.data?.message` ou equivalente via `parseApiError` / `getAxiosErrorPayload`) e exiba-a no toast. Evite mensagens genéricas como "Ocorreu um erro", a menos que a API não retorne detalhes.
+   - Mantenha os dados preenchidos no formulário e reabilite o botão de submit.

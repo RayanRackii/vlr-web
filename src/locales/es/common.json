@@ -505,8 +505,6 @@
       "title": "Panel Super-Admin",
       "description": "Administre clientes (tenants), subdominios y módulos contratados.",
       "newClient": "Nuevo Cliente",
-      "createSuccessTitle": "Cliente aprovisionado",
-      "createSuccess": "El tenant se creó correctamente.",
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "taxId": "Documento",
@@ -560,6 +558,9 @@
         "finish": "Finalizar",
         "finishing": "Aprovisionando..."
       },
+      "successTitle": "Éxito",
+      "success": "¡Ambiente creado con éxito!",
+      "errorTitle": "Error",
       "errors": {
         "createFailed": "No se pudo aprovisionar el cliente."
       }

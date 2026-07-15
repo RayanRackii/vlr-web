@@ -505,8 +505,6 @@
       "title": "Super-Admin Panel",
       "description": "Manage tenants, subdomains, and subscribed modules.",
       "newClient": "New Client",
-      "createSuccessTitle": "Client provisioned",
-      "createSuccess": "The tenant was created successfully.",
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "taxId": "Document",
@@ -560,6 +558,9 @@
         "finish": "Finish",
         "finishing": "Provisioning..."
       },
+      "successTitle": "Success",
+      "success": "Environment created successfully!",
+      "errorTitle": "Error",
       "errors": {
         "createFailed": "Could not provision the client."
       }

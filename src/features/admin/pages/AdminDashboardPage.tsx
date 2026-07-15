@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
-import { CircleCheck, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
 import { listAdminTenants } from "@/features/admin/services/adminTenantsService"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,10 +17,6 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isAxiosError } from "@/lib/api"
-
-type AdminDashboardLocationState = {
-  tenantCreated?: boolean
-}
 
 function TenantCardSkeleton() {
   return (
@@ -63,12 +58,10 @@ function moduleLabelKey(moduleName: string): string {
 export function AdminDashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const location = useLocation()
   const baseDomain = getTenantBaseDomain()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
@@ -96,31 +89,6 @@ export function AdminDashboardPage() {
     void loadTenants()
   }, [loadTenants])
 
-  useEffect(() => {
-    const state = location.state as AdminDashboardLocationState | null
-
-    if (!state?.tenantCreated) {
-      return
-    }
-
-    setSuccessMessage(t("admin.dashboard.createSuccess"))
-    void navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, location.state, navigate, t])
-
-  useEffect(() => {
-    if (!successMessage) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setSuccessMessage(null)
-    }, 5000)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [successMessage])
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -143,14 +111,6 @@ export function AdminDashboardPage() {
           {t("admin.dashboard.newClient")}
         </Button>
       </div>
-
-      {successMessage ? (
-        <Alert>
-          <CircleCheck />
-          <AlertTitle>{t("admin.dashboard.createSuccessTitle")}</AlertTitle>
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      ) : null}
 
       {loadError ? (
         <p className="text-sm text-destructive" role="alert">
