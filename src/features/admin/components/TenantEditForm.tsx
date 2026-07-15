@@ -24,6 +24,13 @@ import { updateAdminTenant } from "@/features/admin/services/adminTenantsService
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
   Form,
   FormControl,
   FormField,
@@ -128,9 +135,9 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-8">
+    <div className="mx-auto w-full max-w-2xl space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {t("admin.edit.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -138,162 +145,198 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
         </p>
       </div>
 
+      {isSubmitSuccess ? (
+        <Alert>
+          <CircleCheck />
+          <AlertTitle>{t("admin.edit.successTitle")}</AlertTitle>
+          <AlertDescription>{t("admin.edit.success")}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {submitError ? (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>{t("admin.edit.errorTitle")}</AlertTitle>
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <Form {...form}>
         <form
-          className="space-y-8"
+          className="space-y-6"
           onSubmit={(event) => {
             event.preventDefault()
             void form.handleSubmit(handleSubmit)()
           }}
         >
-          <section className="space-y-4">
-            <h2 className="text-sm font-medium">
-              {t("admin.wizard.stepShort.1")}
-            </h2>
-            <FormField
-              control={form.control}
-              name="legalName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.wizard.fields.legalName")}</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="organization" disabled={isActionLocked} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="taxId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.wizard.fields.taxId")}</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="off" disabled={isActionLocked} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">
+                {t("admin.edit.sections.basic")}
+              </CardTitle>
+              <CardDescription>
+                {t("admin.edit.sections.basicDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="legalName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.legalName")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="organization"
+                        disabled={isActionLocked}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="taxId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.taxId")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        disabled={isActionLocked}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-          <section className="space-y-4">
-            <h2 className="text-sm font-medium">
-              {t("admin.wizard.stepShort.2")}
-            </h2>
-            <FormField
-              control={form.control}
-              name="subdomain"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.wizard.fields.subdomain")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      autoComplete="off"
-                      placeholder="acme"
-                      disabled={isActionLocked}
-                      {...field}
-                      onChange={(event) => {
-                        field.onChange(
-                          event.target.value.toLowerCase().replace(/\s+/g, ""),
-                        )
-                      }}
-                    />
-                  </FormControl>
-                  <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
-                    {field.value
-                      ? `${field.value}.${baseDomain}`
-                      : `{subdomain}.${baseDomain}`}
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="logoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.wizard.fields.logoUrl")}</FormLabel>
-                  <FormControl>
-                    <Input type="url" placeholder="https://" disabled={isActionLocked} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">
+                {t("admin.edit.sections.identity")}
+              </CardTitle>
+              <CardDescription>
+                {t("admin.edit.sections.identityDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="subdomain"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.subdomain")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        placeholder="acme"
+                        disabled={isActionLocked}
+                        {...field}
+                        onChange={(event) => {
+                          field.onChange(
+                            event.target.value
+                              .toLowerCase()
+                              .replace(/\s+/g, ""),
+                          )
+                        }}
+                      />
+                    </FormControl>
+                    <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
+                      {field.value
+                        ? `${field.value}.${baseDomain}`
+                        : `{subdomain}.${baseDomain}`}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.logoUrl")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder="https://"
+                        disabled={isActionLocked}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-          <section className="space-y-4">
-            <h2 className="text-sm font-medium">
-              {t("admin.wizard.stepShort.3")}
-            </h2>
-            <FormField
-              control={form.control}
-              name="activeModules"
-              render={() => (
-                <FormItem>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {MODULE_KEYS.map((moduleKey) => {
-                      const Icon = MODULE_ICONS[moduleKey]
-                      const selected = values.activeModules.includes(moduleKey)
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">
+                {t("admin.edit.sections.modules")}
+              </CardTitle>
+              <CardDescription>
+                {t("admin.edit.sections.modulesDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="activeModules"
+                render={() => (
+                  <FormItem>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {MODULE_KEYS.map((moduleKey) => {
+                        const Icon = MODULE_ICONS[moduleKey]
+                        const selected = values.activeModules.includes(moduleKey)
 
-                      return (
-                        <button
-                          key={moduleKey}
-                          type="button"
-                          disabled={isActionLocked}
-                          onClick={() => {
-                            toggleModule(moduleKey)
-                          }}
-                          className={cn(
-                            "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
-                            selected
-                              ? "border-primary bg-primary/5 ring-1 ring-primary"
-                              : "border-border hover:border-primary/40 hover:bg-muted/40",
-                            isActionLocked && "pointer-events-none opacity-60",
-                          )}
-                        >
-                          {selected ? (
-                            <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
-                              <Check className="size-3" />
+                        return (
+                          <button
+                            key={moduleKey}
+                            type="button"
+                            disabled={isActionLocked}
+                            onClick={() => {
+                              toggleModule(moduleKey)
+                            }}
+                            className={cn(
+                              "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
+                              selected
+                                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                : "border-border hover:border-primary/40 hover:bg-muted/40",
+                              isActionLocked && "pointer-events-none opacity-60",
+                            )}
+                          >
+                            {selected ? (
+                              <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
+                                <Check className="size-3" />
+                              </span>
+                            ) : null}
+                            <Icon className="size-5 text-foreground" />
+                            <span className="text-sm font-medium">
+                              {t(`admin.modules.${moduleKey}`)}
                             </span>
-                          ) : null}
-                          <Icon className="size-5 text-foreground" />
-                          <span className="text-sm font-medium">
-                            {t(`admin.modules.${moduleKey}`)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {t(`admin.modules.${moduleKey}Description`)}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
+                            <span className="text-xs text-muted-foreground">
+                              {t(`admin.modules.${moduleKey}Description`)}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-          {isSubmitSuccess ? (
-            <Alert>
-              <CircleCheck />
-              <AlertTitle>{t("admin.edit.successTitle")}</AlertTitle>
-              <AlertDescription>{t("admin.edit.success")}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          {submitError ? (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertTitle>{t("admin.edit.errorTitle")}</AlertTitle>
-              <AlertDescription>{submitError}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

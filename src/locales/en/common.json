@@ -529,10 +529,18 @@
       "title": "Edit client",
       "description": "Update legal details, subdomain, and subscribed modules.",
       "successTitle": "Success",
-      "success": "Client updated successfully!",
+      "success": "Client updated!",
       "errorTitle": "Error",
+      "sections": {
+        "basic": "Basic Information",
+        "basicDescription": "Legal name and tax document for the company.",
+        "identity": "Subdomain & Branding",
+        "identityDescription": "Environment address and client logo.",
+        "modules": "Platform Modules",
+        "modulesDescription": "Select the active modules for this client."
+      },
       "actions": {
-        "save": "Save changes",
+        "save": "Save Changes",
         "saving": "Saving..."
       },
       "errors": {

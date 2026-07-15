@@ -529,10 +529,18 @@
       "title": "Editar cliente",
       "description": "Atualize os dados legais, subdomínio e módulos contratados.",
       "successTitle": "Sucesso",
-      "success": "Cliente atualizado com sucesso!",
+      "success": "Cliente atualizado!",
       "errorTitle": "Erro",
+      "sections": {
+        "basic": "Informações Básicas",
+        "basicDescription": "Razão social e documento fiscal da empresa.",
+        "identity": "Subdomínio e Identidade",
+        "identityDescription": "Endereço do ambiente e logo do cliente.",
+        "modules": "Módulos da Plataforma",
+        "modulesDescription": "Selecione os módulos ativos para este cliente."
+      },
       "actions": {
-        "save": "Salvar alterações",
+        "save": "Salvar Alterações",
         "saving": "Salvando..."
       },
       "errors": {
