@@ -25,6 +25,7 @@ export function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<PlatformAdminRoute />}>
           <Route path="/admin/tenants/new" element={<NewTenantPage />} />
+          <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
         </Route>
 
         <Route element={<MainLayout />}>
@@ -38,7 +39,6 @@ export function AppRoutes() {
 
           <Route element={<PlatformAdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
           </Route>
         </Route>
       </Route>

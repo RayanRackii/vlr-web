@@ -527,7 +527,20 @@
     },
     "edit": {
       "title": "Edit client",
-      "placeholder": "Edit page under construction (ID: {{id}})."
+      "description": "Update legal details, subdomain, and subscribed modules.",
+      "successTitle": "Success",
+      "success": "Client updated successfully!",
+      "errorTitle": "Error",
+      "actions": {
+        "save": "Save changes",
+        "saving": "Saving..."
+      },
+      "errors": {
+        "invalidId": "Invalid client identifier.",
+        "notFound": "Client not found.",
+        "loadFailed": "Could not load the client.",
+        "updateFailed": "Could not update the client."
+      }
     },
     "modules": {
       "Inventory": "Inventory",

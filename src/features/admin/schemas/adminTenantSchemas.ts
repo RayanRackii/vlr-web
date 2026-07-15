@@ -69,3 +69,35 @@ export const createTenantAdminRequestSchema = z.object({
 export type CreateTenantAdminRequest = z.infer<
   typeof createTenantAdminRequestSchema
 >
+
+export const updateTenantAdminRequestSchema = createTenantAdminRequestSchema
+
+export type UpdateTenantAdminRequest = z.infer<
+  typeof updateTenantAdminRequestSchema
+>
+
+const MODULE_NAME_TO_KEY: Record<string, ModuleKey> = {
+  inventory: "Inventory",
+  pmoc: "PMOC",
+  os: "OS",
+  rentals: "Rentals",
+}
+
+export function mapTenantModuleToKey(moduleName: string): ModuleKey | null {
+  return MODULE_NAME_TO_KEY[moduleName.toLowerCase()] ?? null
+}
+
+export function tenantAdminToFormValues(
+  tenant: TenantAdmin,
+): TenantOnboardingFormValues {
+  return {
+    legalName: tenant.legalName,
+    taxId: tenant.taxId,
+    subdomain: tenant.subdomain ?? "",
+    logoUrl: tenant.logoUrl ?? "",
+    activeModules: tenant.activeModules
+      .filter((module) => module.isActive)
+      .map((module) => mapTenantModuleToKey(module.moduleName))
+      .filter((moduleKey): moduleKey is ModuleKey => moduleKey !== null),
+  }
+}

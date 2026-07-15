@@ -527,7 +527,20 @@
     },
     "edit": {
       "title": "Editar cliente",
-      "placeholder": "Página de edição em construção (ID: {{id}})."
+      "description": "Atualize os dados legais, subdomínio e módulos contratados.",
+      "successTitle": "Sucesso",
+      "success": "Cliente atualizado com sucesso!",
+      "errorTitle": "Erro",
+      "actions": {
+        "save": "Salvar alterações",
+        "saving": "Salvando..."
+      },
+      "errors": {
+        "invalidId": "Identificador do cliente inválido.",
+        "notFound": "Cliente não encontrado.",
+        "loadFailed": "Não foi possível carregar o cliente.",
+        "updateFailed": "Não foi possível atualizar o cliente."
+      }
     },
     "modules": {
       "Inventory": "Inventário",
