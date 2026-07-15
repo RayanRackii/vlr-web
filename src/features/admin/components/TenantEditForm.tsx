@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Check,
-  CircleAlert,
-  CircleCheck,
   ClipboardList,
   Package,
   Tent,
@@ -12,6 +10,7 @@ import {
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
 import {
@@ -21,7 +20,6 @@ import {
   type TenantOnboardingFormValues,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -58,7 +56,6 @@ type TenantEditFormProps = {
 export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const redirectTimeoutRef = useRef<number | null>(null)
   const baseDomain = useMemo(() => getTenantBaseDomain(), [])
@@ -107,8 +104,6 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
       return
     }
 
-    setSubmitError(null)
-
     try {
       await updateAdminTenant(tenantId, {
         legalName: values.legalName.trim(),
@@ -116,6 +111,10 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
         subdomain: values.subdomain.trim().toLowerCase(),
         logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
         activeModules: values.activeModules,
+      })
+
+      toast.success(t("admin.edit.successTitle"), {
+        description: t("admin.edit.success"),
       })
 
       setIsSubmitSuccess(true)
@@ -129,7 +128,10 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
           ? error.message
           : t("admin.edit.errors.updateFailed")
 
-      setSubmitError(message)
+      toast.error(t("admin.edit.errorTitle"), {
+        description: message,
+      })
+
       setIsSubmitSuccess(false)
     }
   }
@@ -144,22 +146,6 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
           {t("admin.edit.description")}
         </p>
       </div>
-
-      {isSubmitSuccess ? (
-        <Alert>
-          <CircleCheck />
-          <AlertTitle>{t("admin.edit.successTitle")}</AlertTitle>
-          <AlertDescription>{t("admin.edit.success")}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      {submitError ? (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>{t("admin.edit.errorTitle")}</AlertTitle>
-          <AlertDescription>{submitError}</AlertDescription>
-        </Alert>
-      ) : null}
 
       <Form {...form}>
         <form
