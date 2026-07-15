@@ -511,7 +511,23 @@
       "noSubdomain": "No subdomain",
       "noModules": "No active modules",
       "emptyTitle": "No clients yet",
-      "emptyDescription": "Provision the first tenant using the onboarding wizard."
+      "emptyDescription": "Provision the first tenant using the onboarding wizard.",
+      "actions": {
+        "edit": "Edit client",
+        "delete": "Delete client"
+      },
+      "delete": {
+        "title": "Delete client",
+        "description": "Are you sure? This action is irreversible and will delete all data for this company.",
+        "confirm": "Continue",
+        "deleting": "Deleting...",
+        "success": "Client deleted successfully.",
+        "failed": "Could not delete the client."
+      }
+    },
+    "edit": {
+      "title": "Edit client",
+      "placeholder": "Edit page under construction (ID: {{id}})."
     },
     "modules": {
       "Inventory": "Inventory",

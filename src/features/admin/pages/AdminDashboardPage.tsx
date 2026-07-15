@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
-import { Plus } from "lucide-react"
+import { CircleCheck, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
-import { listAdminTenants } from "@/features/admin/services/adminTenantsService"
-import { Badge } from "@/components/ui/badge"
+import {
+  deleteAdminTenant,
+  listAdminTenants,
+} from "@/features/admin/services/adminTenantsService"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -62,6 +65,11 @@ export function AdminDashboardPage() {
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [tenantPendingDelete, setTenantPendingDelete] =
+    useState<TenantAdmin | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
@@ -89,6 +97,55 @@ export function AdminDashboardPage() {
     void loadTenants()
   }, [loadTenants])
 
+  useEffect(() => {
+    if (!successMessage) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage(null)
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [successMessage])
+
+  function handleDeleteDialogOpenChange(tenant: TenantAdmin, open: boolean) {
+    if (open) {
+      setTenantPendingDelete(tenant)
+      setDeleteError(null)
+      return
+    }
+
+    if (tenantPendingDelete?.id === tenant.id) {
+      setTenantPendingDelete(null)
+      setDeleteError(null)
+    }
+  }
+
+  async function handleConfirmDelete(tenant: TenantAdmin) {
+    setDeleteError(null)
+    setIsDeleting(true)
+
+    try {
+      await deleteAdminTenant(tenant.id)
+
+      setTenants((current) => current.filter((item) => item.id !== tenant.id))
+      setTenantPendingDelete(null)
+      setSuccessMessage(t("admin.dashboard.delete.success"))
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : t("admin.dashboard.delete.failed")
+
+      setDeleteError(message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -111,6 +168,18 @@ export function AdminDashboardPage() {
           {t("admin.dashboard.newClient")}
         </Button>
       </div>
+
+      {successMessage ? (
+        <div
+          role="status"
+          className="rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
+        >
+          <div className="flex items-start gap-3">
+            <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <p className="font-medium">{successMessage}</p>
+          </div>
+        </div>
+      ) : null}
 
       {loadError ? (
         <p className="text-sm text-destructive" role="alert">
@@ -140,45 +209,21 @@ export function AdminDashboardPage() {
       {!isLoading && tenants.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {tenants.map((tenant) => (
-            <Card key={tenant.id}>
-              <CardHeader className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{tenant.legalName}</CardTitle>
-                  <Badge variant={tenant.isActive ? "success" : "secondary"}>
-                    {tenant.isActive
-                      ? t("admin.dashboard.statusActive")
-                      : t("admin.dashboard.statusInactive")}
-                  </Badge>
-                </div>
-                <CardDescription className="font-mono text-xs">
-                  {tenant.subdomain
-                    ? `${tenant.subdomain}.${baseDomain}`
-                    : t("admin.dashboard.noSubdomain")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  {t("admin.dashboard.taxId")}: {tenant.taxId}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {tenant.activeModules.length === 0 ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t("admin.dashboard.noModules")}
-                    </span>
-                  ) : (
-                    tenant.activeModules.map((module) => (
-                      <Badge key={module.moduleName} variant="outline">
-                        {t(
-                          moduleLabelKey(
-                            module.moduleName,
-                          ) as "admin.modules.Inventory",
-                        )}
-                      </Badge>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <TenantAdminCard
+              key={tenant.id}
+              tenant={tenant}
+              baseDomain={baseDomain}
+              moduleLabelKey={moduleLabelKey}
+              isDeleting={isDeleting && tenantPendingDelete?.id === tenant.id}
+              deleteError={
+                tenantPendingDelete?.id === tenant.id ? deleteError : null
+              }
+              isDeleteDialogOpen={tenantPendingDelete?.id === tenant.id}
+              onDeleteDialogOpenChange={(open) => {
+                handleDeleteDialogOpenChange(tenant, open)
+              }}
+              onConfirmDelete={handleConfirmDelete}
+            />
           ))}
         </div>
       ) : null}

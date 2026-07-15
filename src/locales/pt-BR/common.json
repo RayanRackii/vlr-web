@@ -511,7 +511,23 @@
       "noSubdomain": "Sem subdomínio",
       "noModules": "Nenhum módulo ativo",
       "emptyTitle": "Nenhum cliente ainda",
-      "emptyDescription": "Cadastre o primeiro tenant com o assistente de onboarding."
+      "emptyDescription": "Cadastre o primeiro tenant com o assistente de onboarding.",
+      "actions": {
+        "edit": "Editar cliente",
+        "delete": "Excluir cliente"
+      },
+      "delete": {
+        "title": "Excluir cliente",
+        "description": "Você tem certeza? Esta ação é irreversível e excluirá todos os dados desta empresa.",
+        "confirm": "Continuar",
+        "deleting": "Excluindo...",
+        "success": "Cliente excluído com sucesso.",
+        "failed": "Não foi possível excluir o cliente."
+      }
+    },
+    "edit": {
+      "title": "Editar cliente",
+      "placeholder": "Página de edição em construção (ID: {{id}})."
     },
     "modules": {
       "Inventory": "Inventário",

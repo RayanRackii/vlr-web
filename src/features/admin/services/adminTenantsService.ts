@@ -12,6 +12,18 @@ export async function listAdminTenants(): Promise<TenantAdmin[]> {
   return tenantAdminListSchema.parse(response.data)
 }
 
+export async function deleteAdminTenant(tenantId: string): Promise<void> {
+  try {
+    await api.delete(`/api/admin/tenants/${tenantId}`)
+  } catch (error: unknown) {
+    const message = parseApiError(
+      getAxiosErrorPayload(error),
+      "Failed to delete tenant.",
+    )
+    throw new Error(message)
+  }
+}
+
 export async function createAdminTenant(
   payload: CreateTenantAdminRequest,
 ): Promise<TenantAdmin> {

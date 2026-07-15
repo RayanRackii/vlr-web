@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
+import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
@@ -37,6 +38,7 @@ export function AppRoutes() {
 
           <Route element={<PlatformAdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
           </Route>
         </Route>
       </Route>
