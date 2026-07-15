@@ -36,5 +36,5 @@ export function getTenantBaseDomain(): string {
     return configured.trim()
   }
 
-  return "vlr.com.br"
+  return "rolvix.com.br"
 }
