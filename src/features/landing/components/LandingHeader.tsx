@@ -2,6 +2,8 @@ import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
+import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
 
 const NAV_ITEMS = [
@@ -44,21 +46,33 @@ export function LandingHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void navigate("/login")
-            }}
-          >
-            {t("landing.header.login")}
-          </Button>
-          <Button type="button" size="sm" render={<a href="#pricing" />}>
-            {t("landing.header.cta")}
-            <ArrowRight data-icon="inline-end" />
-          </Button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
+
+          <div
+            className="mx-1 hidden h-5 w-px bg-border/50 sm:block"
+            aria-hidden="true"
+          />
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void navigate("/login")
+              }}
+            >
+              {t("landing.header.login")}
+            </Button>
+            <Button type="button" size="sm" render={<a href="#pricing" />}>
+              {t("landing.header.cta")}
+              <ArrowRight data-icon="inline-end" />
+            </Button>
+          </div>
         </div>
       </div>
     </header>
