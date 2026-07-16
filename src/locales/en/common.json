@@ -13,6 +13,18 @@
   "landing": {
     "scrollHint": "Scroll down ↓",
     "sectionEnd": "End of section",
+    "header": {
+      "brandAria": "Rolvix — home",
+      "navAria": "Primary navigation",
+      "login": "Log in",
+      "cta": "Get started",
+      "nav": {
+        "features": "Features",
+        "solutions": "Solutions",
+        "pricing": "Pricing",
+        "contact": "Contact"
+      }
+    },
     "features": {
       "sectionLabel": "Platform features",
       "tempo1": {

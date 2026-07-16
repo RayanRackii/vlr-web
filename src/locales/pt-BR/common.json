@@ -13,6 +13,18 @@
   "landing": {
     "scrollHint": "Role para baixo ↓",
     "sectionEnd": "Fim da seção",
+    "header": {
+      "brandAria": "Rolvix — página inicial",
+      "navAria": "Navegação principal",
+      "login": "Entrar",
+      "cta": "Começar agora",
+      "nav": {
+        "features": "Funcionalidades",
+        "solutions": "Soluções",
+        "pricing": "Preços",
+        "contact": "Contato"
+      }
+    },
     "features": {
       "sectionLabel": "Recursos da plataforma",
       "tempo1": {
