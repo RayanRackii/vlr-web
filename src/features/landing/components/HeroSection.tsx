@@ -40,7 +40,7 @@ const FLOATING_CARDS = [
   {
     type: "inventario",
     moduleKey: "inventory",
-    positionClassName: "bottom-[20%] left-[15%] hidden lg:block",
+    positionClassName: "bottom-[15%] left-[15%] hidden lg:block",
     cardClassName: "-rotate-6",
     duration: 5.2,
   },
@@ -77,7 +77,7 @@ function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
 
   return (
     <div
-      className="pointer-events-none absolute left-1/2 top-[72%] z-0 w-screen -translate-x-1/2 -translate-y-1/2 overflow-hidden opacity-60 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
+      className="pointer-events-none absolute left-1/2 top-[60%] z-0 w-screen -translate-x-1/2 -translate-y-1/2 overflow-hidden opacity-60 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
       aria-hidden="true"
     >
       <div
