@@ -10,6 +10,34 @@
     "searchPlaceholder": "Buscar...",
     "loading": "Carregando..."
   },
+  "landing": {
+    "scrollHint": "Role para baixo ↓",
+    "sectionEnd": "Fim da seção",
+    "features": {
+      "sectionLabel": "Recursos da plataforma",
+      "animationPlaceholder": "Área de Animação",
+      "tempo1": {
+        "eyebrow": "Tempo 1",
+        "title": "Operação unificada",
+        "description": "Centralize inventário, manutenção e reservas em um único hub multi-tenant."
+      },
+      "tempo2": {
+        "eyebrow": "Tempo 2",
+        "title": "Módulos sob demanda",
+        "description": "Ative apenas o que cada cliente precisa — PMOC, OS, aluguéis e mais."
+      },
+      "tempo3": {
+        "eyebrow": "Tempo 3",
+        "title": "Experiência por unidade",
+        "description": "Cada unidade opera com isolamento total e identidade própria."
+      },
+      "tempo4": {
+        "eyebrow": "Tempo 4",
+        "title": "Pronto para escalar",
+        "description": "Provisionamento rápido de novos clientes sem retrabalho operacional."
+      }
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "assets": "Ativos",

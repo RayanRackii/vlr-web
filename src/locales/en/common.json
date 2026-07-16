@@ -10,6 +10,34 @@
     "searchPlaceholder": "Search...",
     "loading": "Loading..."
   },
+  "landing": {
+    "scrollHint": "Scroll down ↓",
+    "sectionEnd": "End of section",
+    "features": {
+      "sectionLabel": "Platform features",
+      "animationPlaceholder": "Animation Area",
+      "tempo1": {
+        "eyebrow": "Beat 1",
+        "title": "Unified operations",
+        "description": "Centralize inventory, maintenance, and reservations in one multi-tenant hub."
+      },
+      "tempo2": {
+        "eyebrow": "Beat 2",
+        "title": "Modules on demand",
+        "description": "Enable only what each client needs — PMOC, work orders, rentals, and more."
+      },
+      "tempo3": {
+        "eyebrow": "Beat 3",
+        "title": "Per-unit experience",
+        "description": "Every unit runs fully isolated with its own identity."
+      },
+      "tempo4": {
+        "eyebrow": "Beat 4",
+        "title": "Built to scale",
+        "description": "Provision new clients quickly without operational rework."
+      }
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "assets": "Assets",

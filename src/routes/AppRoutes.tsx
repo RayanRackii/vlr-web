@@ -10,6 +10,7 @@ import { LoginPage } from "@/features/auth/LoginPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
+import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
@@ -19,6 +20,7 @@ import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
