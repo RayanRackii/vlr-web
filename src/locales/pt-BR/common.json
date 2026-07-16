@@ -50,6 +50,14 @@
         "multiUnit": "Multi-unidade",
         "notifications": "Notificações",
         "integrations": "Integrações"
+      },
+      "mockups": {
+        "compliant": "Conforme",
+        "todo": "Fazer",
+        "doing": "Fazendo",
+        "done": "Feito",
+        "payrollProcessed": "Folha de pagamento: processada",
+        "lowStock": "Estoque baixo"
       }
     },
     "features": {

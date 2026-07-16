@@ -6,7 +6,10 @@ import { useNavigate } from "react-router-dom"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ModuleMockupCard } from "@/features/landing/components/ModuleMockupCard"
+import {
+  ModuleMockupCard,
+  type ModuleMockupType,
+} from "@/features/landing/components/ModuleMockupCard"
 import { cn } from "@/lib/utils"
 
 const SOCIAL_AVATARS = [
@@ -17,65 +20,91 @@ const SOCIAL_AVATARS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&h=128&q=80",
 ] as const
 
-const MARQUEE_MODULE_KEYS = [
-  "hr",
-  "finance",
-  "pmoc",
-  "workOrder",
-  "inventory",
-  "rentals",
+const MARQUEE_MODULES = [
+  { type: "rh", productKey: "hr" },
+  { type: "financeiro", productKey: "finance" },
+  { type: "pmoc", productKey: "pmoc" },
+  { type: "os", productKey: "workOrder" },
+  { type: "inventario", productKey: "inventory" },
+  { type: "aluguel", productKey: "rentals" },
 ] as const
 
 const FLOATING_CARDS = [
   {
+    type: "pmoc",
     moduleKey: "pmoc",
-    className: "top-20 left-4 md:left-10 -rotate-6",
+    className: "top-16 left-4 hidden -rotate-6 md:block md:left-10",
     duration: 4,
   },
   {
+    type: "inventario",
     moduleKey: "inventory",
-    className: "bottom-32 left-2 md:left-5 rotate-12",
+    className: "bottom-20 left-2 hidden rotate-12 md:block md:left-5",
     duration: 5.2,
   },
   {
+    type: "financeiro",
     moduleKey: "finance",
-    className: "top-28 right-4 md:right-12 -rotate-3",
+    className: "top-24 right-4 hidden -rotate-3 md:block md:right-12",
     duration: 4.6,
   },
   {
+    type: "aluguel",
     moduleKey: "rentals",
-    className: "bottom-24 right-3 md:right-8 rotate-6",
+    className: "bottom-16 right-3 hidden rotate-6 md:block md:right-8",
     duration: 5.8,
   },
   {
+    type: "os",
     moduleKey: "workOrder",
-    className: "top-1/2 left-2 hidden -translate-y-1/2 -rotate-12 lg:block",
+    className: "top-[42%] -left-16 hidden -rotate-12 xl:block",
     duration: 6.2,
   },
   {
+    type: "rh",
     moduleKey: "hr",
-    className: "top-1/3 right-2 hidden -rotate-6 xl:block",
+    className: "top-[38%] -right-16 hidden rotate-6 xl:block",
     duration: 5,
   },
-] as const
+] as const satisfies readonly {
+  type: ModuleMockupType
+  moduleKey: string
+  className: string
+  duration: number
+}[]
 
-function HeroModuleMarquee({ titles }: { titles: string[] }) {
+type MarqueeModule = {
+  type: ModuleMockupType
+  title: string
+}
+
+function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
   const prefersReducedMotion = useReducedMotion()
-  const track = [...titles, ...titles]
 
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 overflow-hidden opacity-70"
+      className="pointer-events-none absolute left-0 top-1/2 z-0 w-full -translate-y-1/2 overflow-hidden opacity-60"
       aria-hidden="true"
     >
       <div
         className={cn(
-          "flex w-max gap-6 will-change-transform",
+          "flex w-max will-change-transform",
           !prefersReducedMotion && "animate-marquee-right motion-reduce:animate-none"
         )}
       >
-        {track.map((title, index) => (
-          <ModuleMockupCard key={`${title}-${index}`} title={title} />
+        {[0, 1].map((copyIndex) => (
+          <div
+            key={copyIndex}
+            className="flex shrink-0 gap-6 pr-6"
+          >
+            {modules.map((module) => (
+              <ModuleMockupCard
+                key={`${copyIndex}-${module.type}`}
+                type={module.type}
+                title={module.title}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
@@ -83,10 +112,12 @@ function HeroModuleMarquee({ titles }: { titles: string[] }) {
 }
 
 function FloatingModuleCard({
+  type,
   title,
   className,
   duration,
 }: {
+  type: ModuleMockupType
   title: string
   className: string
   duration: number
@@ -103,7 +134,11 @@ function FloatingModuleCard({
           : { duration, repeat: Infinity, ease: "easeInOut" }
       }
     >
-      <ModuleMockupCard title={title} className="scale-90 md:scale-100" />
+      <ModuleMockupCard
+        type={type}
+        title={title}
+        className="scale-90 md:scale-100"
+      />
     </motion.div>
   )
 }
@@ -112,38 +147,40 @@ export function HeroSection() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const marqueeTitles = useMemo(
+  const marqueeModules = useMemo(
     () =>
-      MARQUEE_MODULE_KEYS.map((key) =>
-        t(`landing.hero.products.${key}`)
-      ),
+      MARQUEE_MODULES.map((module) => ({
+        type: module.type,
+        title: t(`landing.hero.products.${module.productKey}`),
+      })),
     [t]
   )
 
   return (
     <section
       aria-labelledby="landing-hero-title"
-      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
+      className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden"
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,hsl(var(--primary)/0.08),transparent)]"
         aria-hidden="true"
       />
 
-      <HeroModuleMarquee titles={marqueeTitles} />
+      <HeroModuleMarquee modules={marqueeModules} />
 
       {FLOATING_CARDS.map((card) => (
         <FloatingModuleCard
           key={card.moduleKey}
+          type={card.type}
           title={t(`landing.hero.products.${card.moduleKey}`)}
           className={card.className}
           duration={card.duration}
         />
       ))}
 
-      <div className="relative z-20 mx-auto w-full max-w-5xl px-4 text-center">
+      <div className="absolute left-1/2 top-1/2 z-20 w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 px-4 text-center">
         <div
-          className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[28rem] w-[min(100%,42rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/60 blur-3xl"
+          className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[30rem] w-[min(100%,48rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/75 blur-3xl"
           aria-hidden="true"
         />
 

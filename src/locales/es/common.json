@@ -50,6 +50,14 @@
         "notifications": "Notificaciones",
         "integrations": "Integraciones"
       },
+      "mockups": {
+        "compliant": "Conforme",
+        "todo": "Por hacer",
+        "doing": "En curso",
+        "done": "Hecho",
+        "payrollProcessed": "Nómina: procesada",
+        "lowStock": "Stock bajo"
+      },
       "scrollLabel": "Descubra la plataforma"
     },
     "features": {
