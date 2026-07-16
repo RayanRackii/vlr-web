@@ -11,6 +11,15 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "marquee-right": {
+          from: { transform: "translateX(-50%)" },
+          to: { transform: "translateX(0)" },
+        },
+      },
+      animation: {
+        "marquee-right": "marquee-right 45s linear infinite",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
