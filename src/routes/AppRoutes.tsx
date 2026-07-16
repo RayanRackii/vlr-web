@@ -20,7 +20,8 @@ import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/landing" element={<LandingPage />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
@@ -45,7 +46,7 @@ export function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/onboarding" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

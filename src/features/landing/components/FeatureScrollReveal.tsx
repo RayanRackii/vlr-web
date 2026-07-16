@@ -19,6 +19,14 @@ import { cn } from "@/lib/utils"
 const FEATURE_KEYS = ["tempo1", "tempo2", "tempo3", "tempo4"] as const
 const FEATURE_COUNT = FEATURE_KEYS.length
 
+/** Âncoras alinhadas aos 4 tempos do scrollytelling (header → seções). */
+const FEATURE_SECTION_IDS = [
+  "features",
+  "solutions",
+  "platform",
+  "pricing",
+] as const
+
 export function FeatureScrollReveal() {
   const { t } = useTranslation()
   const leftColumnRef = useRef<HTMLDivElement>(null)
@@ -55,12 +63,14 @@ export function FeatureScrollReveal() {
       <div ref={leftColumnRef} className="w-1/2">
         {FEATURE_KEYS.map((key, index) => {
           const isActive = activeCard === index
+          const sectionId = FEATURE_SECTION_IDS[index]
 
           return (
             <div
               key={key}
+              id={sectionId}
               className={cn(
-                "flex h-screen items-center px-8 transition-opacity duration-300 md:px-12 lg:px-16",
+                "flex h-screen scroll-mt-16 items-center px-8 transition-opacity duration-300 md:px-12 lg:px-16",
                 isActive ? "opacity-100" : "opacity-30",
               )}
             >

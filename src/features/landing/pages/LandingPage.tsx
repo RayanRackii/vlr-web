@@ -11,37 +11,13 @@ export function LandingPage() {
       <LandingHeader />
 
       <main className="pt-16">
-        <div
-          id="features"
-          className="flex h-[40vh] items-center justify-center border-b border-border"
-        >
+        <div className="flex h-[30vh] items-center justify-center border-b border-border">
           <p className="text-sm text-muted-foreground">{t("landing.scrollHint")}</p>
         </div>
 
         <FeatureScrollReveal />
 
-        <div
-          id="solutions"
-          className="flex h-[20vh] items-center justify-center border-t border-border"
-        >
-          <p className="text-sm text-muted-foreground">
-            {t("landing.header.nav.solutions")}
-          </p>
-        </div>
-
-        <div
-          id="pricing"
-          className="flex h-[20vh] items-center justify-center border-t border-border"
-        >
-          <p className="text-sm text-muted-foreground">
-            {t("landing.header.nav.pricing")}
-          </p>
-        </div>
-
-        <div
-          id="contact"
-          className="flex h-[40vh] items-center justify-center border-t border-border"
-        >
+        <div className="flex h-[30vh] items-center justify-center border-t border-border">
           <p className="text-sm text-muted-foreground">{t("landing.sectionEnd")}</p>
         </div>
       </main>

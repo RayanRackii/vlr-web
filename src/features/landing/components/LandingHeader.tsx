@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 const NAV_ITEMS = [
   { href: "#features", labelKey: "landing.header.nav.features" },
   { href: "#solutions", labelKey: "landing.header.nav.solutions" },
+  { href: "#platform", labelKey: "landing.header.nav.platform" },
   { href: "#pricing", labelKey: "landing.header.nav.pricing" },
-  { href: "#contact", labelKey: "landing.header.nav.contact" },
 ] as const
 
 export function LandingHeader() {
@@ -19,7 +19,7 @@ export function LandingHeader() {
     <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
-          to="/landing"
+          to="/"
           className="flex items-center gap-1 text-2xl font-extrabold tracking-tighter text-foreground"
           aria-label={t("landing.header.brandAria")}
         >
@@ -55,7 +55,7 @@ export function LandingHeader() {
           >
             {t("landing.header.login")}
           </Button>
-          <Button type="button" size="sm" render={<a href="#contact" />}>
+          <Button type="button" size="sm" render={<a href="#pricing" />}>
             {t("landing.header.cta")}
             <ArrowRight data-icon="inline-end" />
           </Button>
