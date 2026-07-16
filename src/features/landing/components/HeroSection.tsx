@@ -33,43 +33,36 @@ const FLOATING_CARDS = [
   {
     type: "pmoc",
     moduleKey: "pmoc",
-    className: "top-16 left-4 hidden -rotate-6 md:block md:left-10",
+    positionClassName: "top-20 left-[7%] hidden md:block lg:left-[10%]",
+    cardClassName: "-rotate-12",
     duration: 4,
   },
   {
     type: "inventario",
     moduleKey: "inventory",
-    className: "bottom-20 left-2 hidden rotate-12 md:block md:left-5",
+    positionClassName: "bottom-16 left-[7%] hidden md:block lg:left-[10%]",
+    cardClassName: "-rotate-6",
     duration: 5.2,
   },
   {
     type: "financeiro",
     moduleKey: "finance",
-    className: "top-24 right-4 hidden -rotate-3 md:block md:right-12",
+    positionClassName: "top-24 right-[7%] hidden md:block lg:right-[10%]",
+    cardClassName: "rotate-6",
     duration: 4.6,
   },
   {
     type: "aluguel",
     moduleKey: "rentals",
-    className: "bottom-16 right-3 hidden rotate-6 md:block md:right-8",
+    positionClassName: "bottom-14 right-[7%] hidden md:block lg:right-[10%]",
+    cardClassName: "rotate-12",
     duration: 5.8,
-  },
-  {
-    type: "os",
-    moduleKey: "workOrder",
-    className: "top-[42%] -left-16 hidden -rotate-12 xl:block",
-    duration: 6.2,
-  },
-  {
-    type: "rh",
-    moduleKey: "hr",
-    className: "top-[38%] -right-16 hidden rotate-6 xl:block",
-    duration: 5,
   },
 ] as const satisfies readonly {
   type: ModuleMockupType
   moduleKey: string
-  className: string
+  positionClassName: string
+  cardClassName: string
   duration: number
 }[]
 
@@ -114,19 +107,21 @@ function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
 function FloatingModuleCard({
   type,
   title,
-  className,
+  positionClassName,
+  cardClassName,
   duration,
 }: {
   type: ModuleMockupType
   title: string
-  className: string
+  positionClassName: string
+  cardClassName: string
   duration: number
 }) {
   const prefersReducedMotion = useReducedMotion()
 
   return (
     <motion.div
-      className={cn("absolute z-10", className)}
+      className={cn("absolute z-10", positionClassName)}
       animate={prefersReducedMotion ? undefined : { y: [0, -15, 0] }}
       transition={
         prefersReducedMotion
@@ -137,7 +132,7 @@ function FloatingModuleCard({
       <ModuleMockupCard
         type={type}
         title={title}
-        className="scale-90 md:scale-100"
+        className={cn("scale-90", cardClassName)}
       />
     </motion.div>
   )
@@ -173,18 +168,18 @@ export function HeroSection() {
           key={card.moduleKey}
           type={card.type}
           title={t(`landing.hero.products.${card.moduleKey}`)}
-          className={card.className}
+          positionClassName={card.positionClassName}
+          cardClassName={card.cardClassName}
           duration={card.duration}
         />
       ))}
 
       <div className="absolute left-1/2 top-1/2 z-20 w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 px-4 text-center">
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[30rem] w-[min(100%,48rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/75 blur-3xl"
-          aria-hidden="true"
-        />
-
-        <div className="relative z-10 flex flex-col items-center">
+        <div className="relative isolate z-30 flex flex-col items-center">
+          <div
+            className="pointer-events-none absolute inset-0 z-[-1] scale-150 rounded-full bg-background/90 blur-[80px]"
+            aria-hidden="true"
+          />
           <div className="mb-8 flex flex-col items-center gap-3">
             <div className="flex items-center pl-2">
               {SOCIAL_AVATARS.map((src, index) => (
@@ -212,7 +207,7 @@ export function HeroSection() {
             className="max-w-5xl text-balance text-4xl font-extrabold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
           >
             {t("landing.hero.titlePrefix")}
-            <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
               {t("landing.hero.titleHighlight")}
             </span>
           </h1>
