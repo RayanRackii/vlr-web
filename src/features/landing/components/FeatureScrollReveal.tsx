@@ -4,25 +4,20 @@ import {
   motion,
   useMotionValueEvent,
   useScroll,
+  useTransform,
 } from "framer-motion"
 import { useTranslation } from "react-i18next"
 
 import {
-  ModulesHubMockup,
   ScaleReadyMockup,
   SmartOpsMockup,
   UnifiedProcessesMockup,
 } from "@/features/landing/components/FeatureUiMockups"
+import { StepOneGraphic } from "@/features/landing/components/StepOneGraphic"
 import { cn } from "@/lib/utils"
 
 const FEATURE_KEYS = ["tempo1", "tempo2", "tempo3", "tempo4"] as const
-
-const FEATURE_MOCKUPS = [
-  ModulesHubMockup,
-  UnifiedProcessesMockup,
-  SmartOpsMockup,
-  ScaleReadyMockup,
-] as const
+const FEATURE_COUNT = FEATURE_KEYS.length
 
 export function FeatureScrollReveal() {
   const { t } = useTranslation()
@@ -34,23 +29,29 @@ export function FeatureScrollReveal() {
     offset: ["start start", "end end"],
   })
 
+  /**
+   * Progresso 0→1 apenas dentro do card ativo.
+   * Ex.: global 0.125 (meio do 1º quarto) → local 0.5
+   */
+  const localProgress = useTransform(scrollYProgress, (latest) => {
+    const clamped = Math.min(Math.max(latest, 0), 0.999999)
+    return (clamped * FEATURE_COUNT) % 1
+  })
+
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const nextCard = Math.min(
-      FEATURE_KEYS.length - 1,
-      Math.floor(latest * FEATURE_KEYS.length),
+      FEATURE_COUNT - 1,
+      Math.floor(latest * FEATURE_COUNT),
     )
 
     setActiveCard((current) => (current === nextCard ? current : nextCard))
   })
-
-  const ActiveMockup = FEATURE_MOCKUPS[activeCard]
 
   return (
     <section
       aria-label={t("landing.features.sectionLabel")}
       className="relative flex w-full"
     >
-      {/* Left: scrolling feature copy — 4 × 100vh = 400vh scroll runway */}
       <div ref={leftColumnRef} className="w-1/2">
         {FEATURE_KEYS.map((key, index) => {
           const isActive = activeCard === index
@@ -79,7 +80,6 @@ export function FeatureScrollReveal() {
         })}
       </div>
 
-      {/* Right: sticky visual plane — system UI mockups cross-fade */}
       <div className="sticky top-0 flex h-screen w-1/2 items-center justify-center bg-muted/40 px-6 md:px-10">
         <div className="relative flex h-full w-full max-w-lg items-center justify-center">
           <AnimatePresence mode="wait">
@@ -91,7 +91,12 @@ export function FeatureScrollReveal() {
               exit={{ opacity: 0, y: -20, scale: 0.98 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-              <ActiveMockup />
+              {activeCard === 0 ? (
+                <StepOneGraphic localProgress={localProgress} />
+              ) : null}
+              {activeCard === 1 ? <UnifiedProcessesMockup /> : null}
+              {activeCard === 2 ? <SmartOpsMockup /> : null}
+              {activeCard === 3 ? <ScaleReadyMockup /> : null}
             </motion.div>
           </AnimatePresence>
         </div>

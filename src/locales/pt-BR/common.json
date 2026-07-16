@@ -43,6 +43,14 @@
           "os": "Ordens de Serviço",
           "rentals": "Aluguéis"
         },
+        "stepOne": {
+          "navDashboard": "Home",
+          "navAssets": "Ativos",
+          "navOrders": "OS",
+          "navSettings": "Ajustes",
+          "toastTitle": "Módulo ativado",
+          "toastBody": "Inventário disponível para este cliente."
+        },
         "processes": {
           "windowTitle": "Fluxo operacional",
           "stepAsset": "Cadastro de ativo",

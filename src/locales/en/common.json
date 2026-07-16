@@ -43,6 +43,14 @@
           "os": "Work Orders",
           "rentals": "Rentals"
         },
+        "stepOne": {
+          "navDashboard": "Home",
+          "navAssets": "Assets",
+          "navOrders": "WO",
+          "navSettings": "Settings",
+          "toastTitle": "Module enabled",
+          "toastBody": "Inventory is now available for this client."
+        },
         "processes": {
           "windowTitle": "Operations flow",
           "stepAsset": "Asset registry",
