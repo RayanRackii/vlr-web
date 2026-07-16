@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { FeatureScrollReveal } from "@/features/landing/components/FeatureScrollReveal"
+import { HeroSection } from "@/features/landing/components/HeroSection"
 import { LandingHeader } from "@/features/landing/components/LandingHeader"
 
 export function LandingPage() {
@@ -11,9 +12,7 @@ export function LandingPage() {
       <LandingHeader />
 
       <main className="pt-16">
-        <div className="flex h-[30vh] items-center justify-center border-b border-border">
-          <p className="text-sm text-muted-foreground">{t("landing.scrollHint")}</p>
-        </div>
+        <HeroSection />
 
         <FeatureScrollReveal />
 

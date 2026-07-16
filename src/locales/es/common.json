@@ -25,6 +25,14 @@
         "pricing": "Precios"
       }
     },
+    "hero": {
+      "badge": "✨ La nueva era de la gestión inteligente",
+      "title": "Todo lo que su negocio necesita. En una sola plataforma.",
+      "subtitle": "Abandone las hojas de cálculo y los sistemas fragmentados. Rolvix unifica inventario, alquileres, clientes y finanzas en un ecosistema perfecto y automatizado.",
+      "ctaPrimary": "Empezar gratis",
+      "ctaSecondary": "Hablar con ventas",
+      "scrollLabel": "Descubra la plataforma"
+    },
     "features": {
       "sectionLabel": "Funciones de la plataforma",
       "tempo1": {
