@@ -27,10 +27,29 @@
     },
     "hero": {
       "badge": "✨ The new era of intelligent management",
-      "title": "Everything your business needs. In one platform.",
+      "titlePrefix": "Your entire business in one ",
+      "titleHighlight": "unified platform",
       "subtitle": "Leave spreadsheets and fragmented systems behind. Rolvix unifies inventory, rentals, customers, and finance in one seamless, automated ecosystem.",
+      "socialProof": "Join dozens of operations leaders",
       "ctaPrimary": "Start for free",
       "ctaSecondary": "Talk to sales",
+      "products": {
+        "inventory": "Inventory",
+        "hr": "HR",
+        "pmoc": "PMOC",
+        "workOrder": "Work Orders",
+        "rentals": "Rentals",
+        "finance": "Finance",
+        "dashboardB2c": "B2C Dashboard",
+        "customerManagement": "Customer Management",
+        "maintenance": "Maintenance",
+        "documents": "Documents",
+        "reports": "Reports",
+        "reservations": "Reservations",
+        "multiUnit": "Multi-unit",
+        "notifications": "Notifications",
+        "integrations": "Integrations"
+      },
       "scrollLabel": "Discover the platform"
     },
     "features": {

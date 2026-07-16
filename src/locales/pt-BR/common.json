@@ -27,11 +27,30 @@
     },
     "hero": {
       "badge": "✨ A nova era da gestão inteligente",
-      "title": "Tudo o que o seu negócio precisa. Em uma única plataforma.",
+      "titlePrefix": "O seu negócio inteiro em uma ",
+      "titleHighlight": "única plataforma",
       "subtitle": "Abandone as planilhas e sistemas fragmentados. O Rolvix unifica seu inventário, aluguéis, clientes e financeiro em um ecossistema perfeito e automatizado.",
+      "socialProof": "Junte-se a dezenas de gestores",
       "ctaPrimary": "Começar gratuitamente",
       "ctaSecondary": "Falar com vendas",
-      "scrollLabel": "Descubra a plataforma"
+      "scrollLabel": "Descubra a plataforma",
+      "products": {
+        "inventory": "Inventário",
+        "hr": "RH",
+        "pmoc": "PMOC",
+        "workOrder": "Ordem de Serviço",
+        "rentals": "Aluguel",
+        "finance": "Financeiro",
+        "dashboardB2c": "Dashboard B2C",
+        "customerManagement": "Gestão de Clientes",
+        "maintenance": "Manutenção",
+        "documents": "Documentos",
+        "reports": "Relatórios",
+        "reservations": "Reservas",
+        "multiUnit": "Multi-unidade",
+        "notifications": "Notificações",
+        "integrations": "Integrações"
+      }
     },
     "features": {
       "sectionLabel": "Recursos da plataforma",
