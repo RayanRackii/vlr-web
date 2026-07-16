@@ -15,26 +15,53 @@
     "sectionEnd": "Fin de la sección",
     "features": {
       "sectionLabel": "Funciones de la plataforma",
-      "animationPlaceholder": "Área de Animación",
       "tempo1": {
-        "eyebrow": "Tiempo 1",
-        "title": "Operación unificada",
-        "description": "Centralice inventario, mantenimiento y reservas en un hub multi-tenant."
+        "eyebrow": "Paso 1",
+        "title": "Todo lo que su empresa necesita.",
+        "description": "Inventario, mantenimiento, OT y alquileres — módulos a medida en un solo hub."
       },
       "tempo2": {
-        "eyebrow": "Tiempo 2",
-        "title": "Módulos bajo demanda",
-        "description": "Active solo lo que cada cliente necesita: PMOC, OT, alquileres y más."
+        "eyebrow": "Paso 2",
+        "title": "Un sistema. Todos los procesos.",
+        "description": "Del activo a la orden de trabajo: un flujo continuo, sin herramientas paralelas."
       },
       "tempo3": {
-        "eyebrow": "Tiempo 3",
-        "title": "Experiencia por unidad",
-        "description": "Cada unidad opera con aislamiento total e identidad propia."
+        "eyebrow": "Paso 3",
+        "title": "Gestión inteligente y automatizada.",
+        "description": "Planes, alertas e indicadores que anticipan la operación — no solo la registran."
       },
       "tempo4": {
-        "eyebrow": "Tiempo 4",
-        "title": "Listo para escalar",
-        "description": "Aprovisionamiento rápido de nuevos clientes sin retrabajo operativo."
+        "eyebrow": "Paso 4",
+        "title": "Listo para escalar.",
+        "description": "Nuevos clientes y unidades en minutos, con aislamiento multi-tenant."
+      },
+      "mockups": {
+        "modules": {
+          "windowTitle": "Módulos",
+          "inventory": "Inventario",
+          "pmoc": "PMOC",
+          "os": "Órdenes de Trabajo",
+          "rentals": "Alquileres"
+        },
+        "processes": {
+          "windowTitle": "Flujo operativo",
+          "stepAsset": "Registro de activo",
+          "stepPlan": "Plan de mantenimiento",
+          "stepOrder": "Orden de trabajo",
+          "footer": "Todo conectado en un solo sistema"
+        },
+        "smart": {
+          "windowTitle": "Panel",
+          "badgeAuto": "Automático",
+          "badgeAlert": "Alerta"
+        },
+        "scale": {
+          "windowTitle": "Clientes",
+          "cta": "Nuevo cliente",
+          "tenantA": "Hotel Atlántico",
+          "tenantB": "Resort Verde",
+          "tenantC": "Plaza Business"
+        }
       }
     }
   },

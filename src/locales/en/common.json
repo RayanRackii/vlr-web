@@ -15,26 +15,53 @@
     "sectionEnd": "End of section",
     "features": {
       "sectionLabel": "Platform features",
-      "animationPlaceholder": "Animation Area",
       "tempo1": {
-        "eyebrow": "Beat 1",
-        "title": "Unified operations",
-        "description": "Centralize inventory, maintenance, and reservations in one multi-tenant hub."
+        "eyebrow": "Step 1",
+        "title": "Everything your company needs.",
+        "description": "Inventory, maintenance, work orders, and rentals — tailored modules in one hub."
       },
       "tempo2": {
-        "eyebrow": "Beat 2",
-        "title": "Modules on demand",
-        "description": "Enable only what each client needs — PMOC, work orders, rentals, and more."
+        "eyebrow": "Step 2",
+        "title": "One system. Every process.",
+        "description": "From asset to work order: a continuous flow, no parallel tools."
       },
       "tempo3": {
-        "eyebrow": "Beat 3",
-        "title": "Per-unit experience",
-        "description": "Every unit runs fully isolated with its own identity."
+        "eyebrow": "Step 3",
+        "title": "Smart, automated management.",
+        "description": "Plans, alerts, and metrics that anticipate operations — not just record them."
       },
       "tempo4": {
-        "eyebrow": "Beat 4",
-        "title": "Built to scale",
-        "description": "Provision new clients quickly without operational rework."
+        "eyebrow": "Step 4",
+        "title": "Ready to scale.",
+        "description": "New clients and units go live in minutes, with full multi-tenant isolation."
+      },
+      "mockups": {
+        "modules": {
+          "windowTitle": "Modules",
+          "inventory": "Inventory",
+          "pmoc": "PMOC",
+          "os": "Work Orders",
+          "rentals": "Rentals"
+        },
+        "processes": {
+          "windowTitle": "Operations flow",
+          "stepAsset": "Asset registry",
+          "stepPlan": "Maintenance plan",
+          "stepOrder": "Work order",
+          "footer": "Everything connected in one system"
+        },
+        "smart": {
+          "windowTitle": "Dashboard",
+          "badgeAuto": "Automatic",
+          "badgeAlert": "Alert"
+        },
+        "scale": {
+          "windowTitle": "Clients",
+          "cta": "New client",
+          "tenantA": "Atlantic Hotel",
+          "tenantB": "Green Resort",
+          "tenantC": "Plaza Business"
+        }
       }
     }
   },

@@ -1,16 +1,27 @@
 import { useRef, useState } from "react"
-import { useMotionValueEvent, useScroll } from "framer-motion"
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+} from "framer-motion"
 import { useTranslation } from "react-i18next"
 
+import {
+  ModulesHubMockup,
+  ScaleReadyMockup,
+  SmartOpsMockup,
+  UnifiedProcessesMockup,
+} from "@/features/landing/components/FeatureUiMockups"
 import { cn } from "@/lib/utils"
 
 const FEATURE_KEYS = ["tempo1", "tempo2", "tempo3", "tempo4"] as const
 
-const ACTIVE_PANEL_COLORS = [
-  "bg-red-500",
-  "bg-blue-500",
-  "bg-green-500",
-  "bg-yellow-400",
+const FEATURE_MOCKUPS = [
+  ModulesHubMockup,
+  UnifiedProcessesMockup,
+  SmartOpsMockup,
+  ScaleReadyMockup,
 ] as const
 
 export function FeatureScrollReveal() {
@@ -31,6 +42,8 @@ export function FeatureScrollReveal() {
 
     setActiveCard((current) => (current === nextCard ? current : nextCard))
   })
+
+  const ActiveMockup = FEATURE_MOCKUPS[activeCard]
 
   return (
     <section
@@ -66,17 +79,22 @@ export function FeatureScrollReveal() {
         })}
       </div>
 
-      {/* Right: sticky visual plane — color tracks activeCard */}
-      <div
-        className={cn(
-          "sticky top-0 flex h-screen w-1/2 items-center justify-center transition-colors duration-300",
-          ACTIVE_PANEL_COLORS[activeCard],
-        )}
-      >
-        <p className="text-sm font-medium text-white/90">
-          {t("landing.features.animationPlaceholder")} · {activeCard + 1}/
-          {FEATURE_KEYS.length}
-        </p>
+      {/* Right: sticky visual plane — system UI mockups cross-fade */}
+      <div className="sticky top-0 flex h-screen w-1/2 items-center justify-center bg-muted/40 px-6 md:px-10">
+        <div className="relative flex h-full w-full max-w-lg items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCard}
+              className="w-full"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ActiveMockup />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </section>
   )
