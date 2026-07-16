@@ -73,10 +73,11 @@ type MarqueeModule = {
 
 function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
   const prefersReducedMotion = useReducedMotion()
+  const repeatedModules = [...modules, ...modules, ...modules]
 
   return (
     <div
-      className="pointer-events-none absolute left-0 top-1/2 z-0 w-full -translate-y-1/2 overflow-hidden opacity-60"
+      className="pointer-events-none absolute left-1/2 top-1/2 z-0 w-screen -translate-x-1/2 -translate-y-1/2 overflow-hidden opacity-60 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
       aria-hidden="true"
     >
       <div
@@ -90,9 +91,9 @@ function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
             key={copyIndex}
             className="flex shrink-0 gap-6 pr-6"
           >
-            {modules.map((module) => (
+            {repeatedModules.map((module, moduleIndex) => (
               <ModuleMockupCard
-                key={`${copyIndex}-${module.type}`}
+                key={`${copyIndex}-${module.type}-${moduleIndex}`}
                 type={module.type}
                 title={module.title}
               />
@@ -174,7 +175,7 @@ export function HeroSection() {
         />
       ))}
 
-      <div className="absolute left-1/2 top-1/2 z-20 w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 px-4 text-center">
+      <div className="absolute left-1/2 top-[12%] z-20 w-full max-w-5xl -translate-x-1/2 px-4 text-center">
         <div className="relative isolate z-30 flex flex-col items-center">
           <div
             className="pointer-events-none absolute inset-0 z-[-1] scale-150 rounded-full bg-background/90 blur-[80px]"

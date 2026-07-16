@@ -18,7 +18,7 @@ export default {
         },
       },
       animation: {
-        "marquee-right": "marquee-right 45s linear infinite",
+        "marquee-right": "marquee-right 135s linear infinite",
       },
       colors: {
         background: "var(--background)",
