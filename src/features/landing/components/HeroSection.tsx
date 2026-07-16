@@ -33,28 +33,28 @@ const FLOATING_CARDS = [
   {
     type: "pmoc",
     moduleKey: "pmoc",
-    positionClassName: "top-20 left-[7%] hidden md:block lg:left-[10%]",
+    positionClassName: "top-[15%] left-[10%] hidden lg:block",
     cardClassName: "-rotate-12",
     duration: 4,
   },
   {
     type: "inventario",
     moduleKey: "inventory",
-    positionClassName: "bottom-16 left-[7%] hidden md:block lg:left-[10%]",
+    positionClassName: "bottom-[20%] left-[15%] hidden lg:block",
     cardClassName: "-rotate-6",
     duration: 5.2,
   },
   {
     type: "financeiro",
     moduleKey: "finance",
-    positionClassName: "top-24 right-[7%] hidden md:block lg:right-[10%]",
+    positionClassName: "top-[20%] right-[10%] hidden lg:block",
     cardClassName: "rotate-6",
     duration: 4.6,
   },
   {
     type: "aluguel",
     moduleKey: "rentals",
-    positionClassName: "bottom-14 right-[7%] hidden md:block lg:right-[10%]",
+    positionClassName: "bottom-[15%] right-[15%] hidden lg:block",
     cardClassName: "rotate-12",
     duration: 5.8,
   },
@@ -121,7 +121,7 @@ function FloatingModuleCard({
 
   return (
     <motion.div
-      className={cn("absolute z-10", positionClassName)}
+      className={cn("pointer-events-none absolute z-10", positionClassName)}
       animate={prefersReducedMotion ? undefined : { y: [0, -15, 0] }}
       transition={
         prefersReducedMotion
