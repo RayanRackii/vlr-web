@@ -6,6 +6,7 @@
   "common": {
     "close": "Close",
     "cancel": "Cancel",
+    "back": "Back",
     "filter": "Filter",
     "searchPlaceholder": "Search...",
     "loading": "Loading..."
@@ -208,6 +209,43 @@
         "maintenance": "Maintenance",
         "inactive": "Inactive",
         "empty": "No assets registered yet."
+      }
+    },
+    "role": {
+      "errors": {
+        "loadFailed": "Could not identify your access role."
+      }
+    },
+    "technician": {
+      "title": "My Work Orders",
+      "description": "Track and execute only the work orders assigned to you.",
+      "metrics": {
+        "assigned": "Active orders",
+        "pending": "Pending",
+        "inProgress": "In progress"
+      },
+      "nextOrders": {
+        "title": "Upcoming work",
+        "description": "Orders assigned to you that still require execution.",
+        "empty": "No work orders are currently assigned to you.",
+        "open": "Open order"
+      },
+      "errors": {
+        "loadFailed": "Could not load your work orders."
+      }
+    },
+    "client": {
+      "title": "Client Portal",
+      "description": "Track your tickets and rentals in one place.",
+      "tickets": {
+        "title": "Open tickets",
+        "description": "Requests that are still being handled.",
+        "empty": "No open tickets."
+      },
+      "rentals": {
+        "title": "Rentals",
+        "description": "Bookings and rentals linked to your profile.",
+        "empty": "No active rentals."
       }
     },
     "errors": {
@@ -577,6 +615,34 @@
       "execute": "Execute",
       "view": "View"
     },
+    "create": {
+      "action": "New work order",
+      "title": "New Work Order",
+      "description": "Choose the asset, date, and technician responsible for execution.",
+      "form": {
+        "asset": "Asset",
+        "assetPlaceholder": "Select an asset",
+        "technician": "Assigned technician",
+        "unassigned": "Unassigned",
+        "scheduledDate": "Scheduled date",
+        "task": "Initial task",
+        "taskPlaceholder": "E.g. Inspect equipment",
+        "notes": "Notes",
+        "notesPlaceholder": "Additional context for execution"
+      },
+      "validation": {
+        "assetRequired": "Select an asset.",
+        "dateRequired": "Enter the scheduled date.",
+        "taskRequired": "Enter at least one task."
+      },
+      "errors": {
+        "loadLookupsFailed": "Could not load assets and technicians.",
+        "createFailed": "Could not create the work order."
+      },
+      "success": "Work order created successfully.",
+      "submit": "Create work order",
+      "redirecting": "Work order created"
+    },
     "execution": {
       "title": "Work Order Execution",
       "subtitle": "Asset {{tag}} — {{name}}",
@@ -610,6 +676,12 @@
       "banner": "Offline Mode: Changes are being saved locally."
     }
   },
+  "users": {
+    "errors": {
+      "loadCurrent": "Could not load your access profile.",
+      "loadTechnicians": "Could not load technicians."
+    }
+  },
   "admin": {
     "dashboard": {
       "title": "Super-Admin Panel",
@@ -622,6 +694,11 @@
       "noModules": "No active modules",
       "emptyTitle": "No clients yet",
       "emptyDescription": "Provision the first tenant using the onboarding wizard.",
+      "metrics": {
+        "totalTenants": "Total tenants",
+        "activeTenants": "Active tenants",
+        "estimatedRevenue": "Estimated monthly revenue"
+      },
       "actions": {
         "edit": "Edit client",
         "delete": "Delete client"

@@ -22,8 +22,14 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/AuthContext"
+import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
+import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
+import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
+import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
+import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
 
 const ASSET_PIE_COLORS = [
@@ -56,6 +62,96 @@ function KpiSkeleton() {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation()
+  const isPlatformAdmin = useIsPlatformAdmin()
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [isRoleLoading, setIsRoleLoading] = useState(true)
+  const [roleError, setRoleError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isPlatformAdmin) {
+      setIsRoleLoading(false)
+      setRoleError(null)
+      return
+    }
+
+    let isActive = true
+
+    async function loadCurrentUser() {
+      setIsRoleLoading(true)
+      setRoleError(null)
+
+      try {
+        const profile = await getCurrentUser()
+        if (isActive) {
+          setCurrentUser(profile)
+        }
+      } catch (error: unknown) {
+        if (isActive) {
+          setRoleError(
+            error instanceof Error
+              ? error.message
+              : t("dashboard.role.errors.loadFailed"),
+          )
+        }
+      } finally {
+        if (isActive) {
+          setIsRoleLoading(false)
+        }
+      }
+    }
+
+    void loadCurrentUser()
+
+    return () => {
+      isActive = false
+    }
+  }, [isPlatformAdmin, t])
+
+  if (isPlatformAdmin || currentUser?.role === "SUPER_ADMIN") {
+    return <SuperAdminDashboard />
+  }
+
+  if (isRoleLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </div>
+    )
+  }
+
+  if (roleError || !currentUser) {
+    return (
+      <div
+        role="alert"
+        className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+      >
+        {roleError ?? t("dashboard.role.errors.loadFailed")}
+      </div>
+    )
+  }
+
+  if (
+    currentUser.role === "TECHNICIAN" ||
+    currentUser.role === "USER"
+  ) {
+    return <TechnicianDashboard />
+  }
+
+  if (currentUser.role === "CLIENT") {
+    return <ClientDashboard />
+  }
+
+  return <TenantAdminDashboard />
+}
+
+export function TenantAdminDashboard() {
   const { t } = useTranslation()
   const { session } = useAuth()
 

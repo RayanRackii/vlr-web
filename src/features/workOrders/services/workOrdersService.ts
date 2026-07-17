@@ -5,15 +5,39 @@ import {
   isNetworkConnectivityError,
 } from "@/lib/offlineSync"
 import {
+  createWorkOrderRequestSchema,
   updateWorkOrderStatusRequestSchema,
   updateWorkOrderTaskValueRequestSchema,
   workOrderListSchema,
   workOrderSchema,
+  type CreateWorkOrderRequest,
   type UpdateWorkOrderStatusRequest,
   type WorkOrder,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 
 const WORK_ORDERS_PATH = "/api/work-orders"
+
+export async function createWorkOrder(
+  data: CreateWorkOrderRequest,
+): Promise<WorkOrder> {
+  const payload = createWorkOrderRequestSchema.parse(data)
+
+  try {
+    const response = await api.post<unknown>(WORK_ORDERS_PATH, payload)
+    return workOrderSchema.parse(response.data)
+  } catch (error: unknown) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("workOrders.create.errors.createFailed"),
+      ),
+    )
+  }
+}
 
 export async function getWorkOrders(assetId?: string): Promise<WorkOrder[]> {
   try {

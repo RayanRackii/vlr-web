@@ -6,6 +6,7 @@
   "common": {
     "close": "Cerrar",
     "cancel": "Cancelar",
+    "back": "Volver",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando..."
@@ -208,6 +209,43 @@
         "maintenance": "En Mantenimiento",
         "inactive": "Inactivos",
         "empty": "Aún no hay activos registrados."
+      }
+    },
+    "role": {
+      "errors": {
+        "loadFailed": "No se pudo identificar su perfil de acceso."
+      }
+    },
+    "technician": {
+      "title": "Mis Órdenes de Trabajo",
+      "description": "Consulte y ejecute únicamente las órdenes asignadas a usted.",
+      "metrics": {
+        "assigned": "Órdenes activas",
+        "pending": "Pendientes",
+        "inProgress": "En curso"
+      },
+      "nextOrders": {
+        "title": "Próximas ejecuciones",
+        "description": "Órdenes asignadas a usted que aún requieren ejecución.",
+        "empty": "No tiene órdenes de trabajo asignadas.",
+        "open": "Abrir orden"
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar sus órdenes de trabajo."
+      }
+    },
+    "client": {
+      "title": "Portal del Cliente",
+      "description": "Consulte sus tickets y alquileres en un solo lugar.",
+      "tickets": {
+        "title": "Tickets abiertos",
+        "description": "Solicitudes que todavía están en atención.",
+        "empty": "No hay tickets abiertos."
+      },
+      "rentals": {
+        "title": "Alquileres",
+        "description": "Reservas y alquileres vinculados a su perfil.",
+        "empty": "No hay alquileres activos."
       }
     },
     "errors": {
@@ -577,6 +615,34 @@
       "execute": "Ejecutar",
       "view": "Ver"
     },
+    "create": {
+      "action": "Nueva OT",
+      "title": "Nueva Orden de Trabajo",
+      "description": "Defina el activo, la fecha y el técnico responsable de la ejecución.",
+      "form": {
+        "asset": "Activo",
+        "assetPlaceholder": "Seleccione un activo",
+        "technician": "Técnico responsable",
+        "unassigned": "Sin asignar",
+        "scheduledDate": "Fecha programada",
+        "task": "Tarea inicial",
+        "taskPlaceholder": "Ej.: Inspeccionar el equipo",
+        "notes": "Observaciones",
+        "notesPlaceholder": "Contexto adicional para la ejecución"
+      },
+      "validation": {
+        "assetRequired": "Seleccione un activo.",
+        "dateRequired": "Informe la fecha programada.",
+        "taskRequired": "Informe al menos una tarea."
+      },
+      "errors": {
+        "loadLookupsFailed": "No se pudieron cargar los activos y técnicos.",
+        "createFailed": "No se pudo crear la orden de trabajo."
+      },
+      "success": "Orden de trabajo creada correctamente.",
+      "submit": "Crear OT",
+      "redirecting": "OT creada"
+    },
     "execution": {
       "title": "Ejecución de OT",
       "subtitle": "Activo {{tag}} — {{name}}",
@@ -610,6 +676,12 @@
       "banner": "Modo Sin Conexión: Los cambios se están guardando localmente."
     }
   },
+  "users": {
+    "errors": {
+      "loadCurrent": "No se pudo cargar su perfil de acceso.",
+      "loadTechnicians": "No se pudieron cargar los técnicos."
+    }
+  },
   "admin": {
     "dashboard": {
       "title": "Panel Super-Admin",
@@ -622,6 +694,11 @@
       "noModules": "Sin módulos activos",
       "emptyTitle": "Aún no hay clientes",
       "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
+      "metrics": {
+        "totalTenants": "Total de tenants",
+        "activeTenants": "Tenants activos",
+        "estimatedRevenue": "Ingresos mensuales estimados"
+      },
       "actions": {
         "edit": "Editar cliente",
         "delete": "Eliminar cliente"

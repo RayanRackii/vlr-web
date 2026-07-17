@@ -8,7 +8,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye, LoaderCircle, Play } from "lucide-react"
+import { Eye, LoaderCircle, Play, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/AuthContext"
+import { getCurrentUser } from "@/features/users/services/usersService"
 import {
   type WorkOrder,
   type WorkOrderStatus,
@@ -227,11 +228,38 @@ function WorkOrdersTable({
 export function WorkOrdersPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
+  const navigate = useNavigate()
 
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<WorkOrderStatus>("Pending")
+  const [canCreateWorkOrder, setCanCreateWorkOrder] = useState(false)
+
+  useEffect(() => {
+    if (!session) {
+      setCanCreateWorkOrder(false)
+      return
+    }
+
+    let isActive = true
+
+    void getCurrentUser()
+      .then((profile) => {
+        if (isActive) {
+          setCanCreateWorkOrder(profile.role === "ADMIN")
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setCanCreateWorkOrder(false)
+        }
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [session])
 
   const loadWorkOrders = useCallback(async () => {
     if (!session) {
@@ -292,13 +320,26 @@ export function WorkOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("workOrders.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("workOrders.description")}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("workOrders.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("workOrders.description")}
+          </p>
+        </div>
+        {canCreateWorkOrder ? (
+          <Button
+            type="button"
+            onClick={() => {
+              void navigate("/os/nova")
+            }}
+          >
+            <Plus data-icon="inline-start" />
+            {t("workOrders.create.action")}
+          </Button>
+        ) : null}
       </div>
 
       {loadError !== null ? (

@@ -71,11 +71,19 @@ export const workOrderSchema = z.object({
   tenantId: z.string().uuid(),
   assetId: z.string().uuid(),
   maintenancePlanId: z.string().uuid().nullish(),
+  assignedUserId: z.string().uuid().nullish(),
   status: workOrderStatusResponseSchema,
   scheduledDate: z.string().min(1),
   completedDate: z.string().nullish(),
   notes: z.string().nullish(),
   asset: workOrderAssetSchema,
+  assignedUser: z
+    .object({
+      id: z.string().uuid(),
+      fullName: z.string(),
+      email: z.string(),
+    })
+    .nullish(),
   tasks: z.array(workOrderTaskSchema),
   createdAt: z.string(),
   updatedAt: z.string().nullish(),
@@ -84,6 +92,50 @@ export const workOrderSchema = z.object({
 export type WorkOrder = z.infer<typeof workOrderSchema>
 
 export const workOrderListSchema = z.array(workOrderSchema)
+
+export const createWorkOrderTaskRequestSchema = z.object({
+  planTaskId: z.string().uuid().nullish(),
+  title: z.string().trim().min(1),
+  inputType: taskInputTypeSchema,
+  isMandatory: z.boolean(),
+  order: z.number().int().nonnegative(),
+  configuration: z.string().nullish(),
+})
+
+export const createWorkOrderRequestSchema = z.object({
+  assetId: z.string().uuid(),
+  maintenancePlanId: z.string().uuid().nullish(),
+  assignedUserId: z.string().uuid().nullish(),
+  scheduledDate: z.string().min(1),
+  notes: z.string().trim().nullish(),
+  tasks: z.array(createWorkOrderTaskRequestSchema).min(1),
+})
+
+export type CreateWorkOrderRequest = z.infer<
+  typeof createWorkOrderRequestSchema
+>
+
+type CreateWorkOrderFormMessages = {
+  assetRequired: string
+  dateRequired: string
+  taskRequired: string
+}
+
+export function createWorkOrderFormSchema(
+  messages: CreateWorkOrderFormMessages,
+) {
+  return z.object({
+    assetId: z.string().uuid(messages.assetRequired),
+    assignedUserId: z.string().uuid().optional(),
+    scheduledDate: z.string().min(1, messages.dateRequired),
+    notes: z.string(),
+    taskTitle: z.string().trim().min(1, messages.taskRequired),
+  })
+}
+
+export type CreateWorkOrderFormValues = z.infer<
+  ReturnType<typeof createWorkOrderFormSchema>
+>
 
 export const updateWorkOrderTaskValueRequestSchema = z.object({
   value: z.string().nullish(),

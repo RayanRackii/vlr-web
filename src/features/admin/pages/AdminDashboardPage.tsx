@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react"
-import { CircleCheck, Plus } from "lucide-react"
+import { Building2, CircleCheck, CircleDollarSign, Plus, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
-import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
+import {
+  PRICE_PER_MODULE_BRL,
+  type TenantAdmin,
+} from "@/features/admin/schemas/adminTenantSchemas"
 import {
   deleteAdminTenant,
   listAdminTenants,
@@ -59,7 +62,7 @@ function moduleLabelKey(moduleName: string): string {
 }
 
 export function AdminDashboardPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const baseDomain = getTenantBaseDomain()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
@@ -70,6 +73,17 @@ export function AdminDashboardPage() {
     useState<TenantAdmin | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const activeTenantCount = tenants.filter((tenant) => tenant.isActive).length
+  const estimatedMonthlyRevenue = tenants.reduce(
+    (total, tenant) =>
+      total +
+      (tenant.isActive
+        ? tenant.activeModules.filter((module) => module.isActive).length *
+          PRICE_PER_MODULE_BRL
+        : 0),
+    0,
+  )
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
@@ -185,6 +199,50 @@ export function AdminDashboardPage() {
         <p className="text-sm text-destructive" role="alert">
           {loadError}
         </p>
+      ) : null}
+
+      {!isLoading && !loadError ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle className="text-sm">
+                {t("admin.dashboard.metrics.totalTenants")}
+              </CardTitle>
+              <Building2 className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold">{tenants.length}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle className="text-sm">
+                {t("admin.dashboard.metrics.activeTenants")}
+              </CardTitle>
+              <Power className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold">{activeTenantCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <CardTitle className="text-sm">
+                {t("admin.dashboard.metrics.estimatedRevenue")}
+              </CardTitle>
+              <CircleDollarSign className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold">
+                {new Intl.NumberFormat(i18n.language, {
+                  style: "currency",
+                  currency: "BRL",
+                  maximumFractionDigits: 0,
+                }).format(estimatedMonthlyRevenue)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       ) : null}
 
       {isLoading ? (

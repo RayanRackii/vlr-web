@@ -6,6 +6,7 @@
   "common": {
     "close": "Fechar",
     "cancel": "Cancelar",
+    "back": "Voltar",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Carregando..."
@@ -208,6 +209,43 @@
         "maintenance": "Em Manutenção",
         "inactive": "Inativos",
         "empty": "Nenhum ativo cadastrado ainda."
+      }
+    },
+    "role": {
+      "errors": {
+        "loadFailed": "Não foi possível identificar seu perfil de acesso."
+      }
+    },
+    "technician": {
+      "title": "Minhas Ordens de Serviço",
+      "description": "Acompanhe e execute somente as OS atribuídas a você.",
+      "metrics": {
+        "assigned": "OS ativas",
+        "pending": "Pendentes",
+        "inProgress": "Em andamento"
+      },
+      "nextOrders": {
+        "title": "Próximas execuções",
+        "description": "Ordens atribuídas a você que ainda precisam de execução.",
+        "empty": "Nenhuma ordem de serviço atribuída no momento.",
+        "open": "Abrir OS"
+      },
+      "errors": {
+        "loadFailed": "Não foi possível carregar suas ordens de serviço."
+      }
+    },
+    "client": {
+      "title": "Portal do Cliente",
+      "description": "Acompanhe seus chamados e locações em um único lugar.",
+      "tickets": {
+        "title": "Chamados abertos",
+        "description": "Solicitações que ainda estão em atendimento.",
+        "empty": "Nenhum chamado aberto."
+      },
+      "rentals": {
+        "title": "Locações",
+        "description": "Reservas e locações vinculadas ao seu cadastro.",
+        "empty": "Nenhuma locação ativa."
       }
     },
     "errors": {
@@ -577,6 +615,34 @@
       "execute": "Executar",
       "view": "Visualizar"
     },
+    "create": {
+      "action": "Nova OS",
+      "title": "Nova Ordem de Serviço",
+      "description": "Defina o ativo, a data e o técnico responsável pela execução.",
+      "form": {
+        "asset": "Ativo",
+        "assetPlaceholder": "Selecione um ativo",
+        "technician": "Técnico responsável",
+        "unassigned": "Não atribuído",
+        "scheduledDate": "Data agendada",
+        "task": "Tarefa inicial",
+        "taskPlaceholder": "Ex: Inspecionar equipamento",
+        "notes": "Observações",
+        "notesPlaceholder": "Contexto adicional para a execução"
+      },
+      "validation": {
+        "assetRequired": "Selecione um ativo.",
+        "dateRequired": "Informe a data agendada.",
+        "taskRequired": "Informe ao menos uma tarefa."
+      },
+      "errors": {
+        "loadLookupsFailed": "Não foi possível carregar ativos e técnicos.",
+        "createFailed": "Não foi possível criar a ordem de serviço."
+      },
+      "success": "Ordem de serviço criada com sucesso.",
+      "submit": "Criar OS",
+      "redirecting": "OS criada"
+    },
     "execution": {
       "title": "Execução da OS",
       "subtitle": "Ativo {{tag}} — {{name}}",
@@ -610,6 +676,12 @@
       "banner": "Modo Offline: Alterações sendo salvas localmente."
     }
   },
+  "users": {
+    "errors": {
+      "loadCurrent": "Não foi possível carregar seu perfil de acesso.",
+      "loadTechnicians": "Não foi possível carregar os técnicos."
+    }
+  },
   "admin": {
     "dashboard": {
       "title": "Painel Super-Admin",
@@ -622,6 +694,11 @@
       "noModules": "Nenhum módulo ativo",
       "emptyTitle": "Nenhum cliente ainda",
       "emptyDescription": "Cadastre o primeiro tenant com o assistente de onboarding.",
+      "metrics": {
+        "totalTenants": "Total de tenants",
+        "activeTenants": "Tenants ativos",
+        "estimatedRevenue": "Receita mensal estimada"
+      },
       "actions": {
         "edit": "Editar cliente",
         "delete": "Excluir cliente"

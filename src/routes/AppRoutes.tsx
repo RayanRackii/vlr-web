@@ -15,6 +15,7 @@ import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
+import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 
 export function AppRoutes() {
@@ -38,6 +39,7 @@ export function AppRoutes() {
           <Route path="/pmoc" element={<MaintenancePlansPage />} />
           <Route path="/pmoc/novo" element={<CreatePlanPage />} />
           <Route path="/os" element={<WorkOrdersPage />} />
+          <Route path="/os/nova" element={<CreateWorkOrderPage />} />
           <Route path="/os/:id" element={<WorkOrderExecutionPage />} />
 
           <Route element={<PlatformAdminRoute />}>
