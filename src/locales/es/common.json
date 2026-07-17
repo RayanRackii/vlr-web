@@ -61,12 +61,29 @@
       },
       "scrollLabel": "Descubra la plataforma"
     },
+    "bridge": {
+      "eyebrow": "Del caos al control",
+      "title": "Su operación en sintonía.",
+      "description": "Rolvix actúa como el sistema nervioso de su negocio. Recoge los cabos sueltos de su operación — lo que antes era una hoja de cálculo, un correo o un olvido — e integra todo en una inteligencia central, lista para entrar en acción.",
+      "hubLabel": "Rolvix",
+      "chaosLabel": "Datos dispersos",
+      "orderLabel": "Operación conectada",
+      "uncontrolled": "Sin control",
+      "connected": "Conectado al núcleo",
+      "sources": {
+        "spreadsheet": "Hoja de cálculo desactualizada",
+        "calendar": "Agenda perdida en el correo",
+        "email": "Correo sin historial"
+      }
+    },
     "features": {
       "sectionLabel": "Funciones de la plataforma",
       "tempo1": {
         "eyebrow": "Paso 1",
-        "title": "Todo lo que su empresa necesita.",
-        "description": "Inventario, mantenimiento, OT y alquileres — módulos a medida en un solo hub."
+        "title": "Deje de reaccionar. Empiece a prever.",
+        "description": "Gestionar activos con hojas de cálculo es confiar en la suerte. Pierde el historial, olvida las revisiones y termina pagando mucho más por reparaciones de emergencia. Su tiempo y el de su equipo no deberían gastarse solo apagando incendios.",
+        "description2": "Creamos un entorno en el que su operación se gestiona casi sola. Convertimos su inventario y el PMOC en un flujo de datos vivo. El sistema cruza la información y alerta a su equipo en el momento exacto en que una pieza necesita atención, antes de que la falla paralice su negocio.",
+        "description3": "Menos tiempo de máquina detenida, cumplimiento que lo protege de multas y una reducción drástica de los costos de mantenimiento. El resultado no es solo organización: es utilidad directa en la última línea de su balance financiero."
       },
       "tempo2": {
         "eyebrow": "Paso 2",
@@ -92,12 +109,27 @@
           "rentals": "Alquileres"
         },
         "stepOne": {
-          "navDashboard": "Inicio",
-          "navAssets": "Activos",
-          "navOrders": "OT",
-          "navSettings": "Ajustes",
-          "toastTitle": "Módulo activado",
-          "toastBody": "Inventario disponible para este cliente."
+          "active": "Activo",
+          "operational": "100% Operativo",
+          "assets": {
+            "airConditioner": "Aire acondicionado",
+            "generator": "Generador",
+            "hydraulicPump": "Bomba hidráulica"
+          },
+          "locations": {
+            "reception": "Recepción",
+            "engineRoom": "Sala de máquinas",
+            "lowerLevel": "Nivel inferior"
+          },
+          "pmoc": {
+            "title": "Plan de Mantenimiento",
+            "nextReviews": "Próximas revisiones",
+            "split": "Split Recepción",
+            "generator": "Generador principal",
+            "dateOne": "22 jul",
+            "dateTwo": "29 jul",
+            "scheduled": "Programada"
+          }
         },
         "processes": {
           "windowTitle": "Flujo operativo",

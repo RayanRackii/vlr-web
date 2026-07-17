@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 
 import { FeatureScrollReveal } from "@/features/landing/components/FeatureScrollReveal"
 import { HeroSection } from "@/features/landing/components/HeroSection"
+import { IntelligenceHubBridge } from "@/features/landing/components/IntelligenceHubBridge"
 import { LandingHeader } from "@/features/landing/components/LandingHeader"
 
 export function LandingPage() {
@@ -13,6 +14,8 @@ export function LandingPage() {
 
       <main className="pt-16">
         <HeroSection />
+
+        <IntelligenceHubBridge />
 
         <FeatureScrollReveal />
 

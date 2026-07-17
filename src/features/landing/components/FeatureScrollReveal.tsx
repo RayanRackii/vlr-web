@@ -58,57 +58,93 @@ export function FeatureScrollReveal() {
   return (
     <section
       aria-label={t("landing.features.sectionLabel")}
-      className="relative flex w-full"
+      className="relative w-full overflow-hidden"
     >
-      <div ref={leftColumnRef} className="w-1/2">
-        {FEATURE_KEYS.map((key, index) => {
-          const isActive = activeCard === index
-          const sectionId = FEATURE_SECTION_IDS[index]
+      <div className="mx-auto flex w-full max-w-7xl px-6 md:px-12 lg:px-24">
+        <div ref={leftColumnRef} className="w-[40%]">
+          {FEATURE_KEYS.map((key, index) => {
+            const isActive = activeCard === index
+            const sectionId = FEATURE_SECTION_IDS[index]
 
-          return (
-            <div
-              key={key}
-              id={sectionId}
-              className={cn(
-                "flex h-screen scroll-mt-16 items-center px-8 transition-opacity duration-300 md:px-12 lg:px-16",
-                isActive ? "opacity-100" : "opacity-30",
-              )}
-            >
-              <div className="max-w-md space-y-4">
-                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                  {t(`landing.features.${key}.eyebrow`)}
-                </p>
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                  {t(`landing.features.${key}.title`)}
-                </h2>
-                <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
-                  {t(`landing.features.${key}.description`)}
-                </p>
+            return (
+              <div
+                key={key}
+                id={sectionId}
+                className={cn(
+                  "flex h-screen scroll-mt-16 items-center bg-gradient-to-br from-primary/[0.04] via-background to-background transition-opacity duration-300",
+                  isActive ? "opacity-100" : "opacity-30",
+                )}
+              >
+                <div className="w-full max-w-xl pr-8">
+                  {index !== 0 ? (
+                    <p className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                      {t(`landing.features.${key}.eyebrow`)}
+                    </p>
+                  ) : null}
+                  <h2
+                    className={cn(
+                      "text-balance text-4xl font-bold tracking-tight text-foreground lg:text-5xl",
+                      index === 0 ? "mb-6" : "mb-4",
+                    )}
+                  >
+                    {t(`landing.features.${key}.title`)}
+                  </h2>
+                  <div
+                    className={cn(
+                      "max-w-xl font-normal text-muted-foreground",
+                      index === 0
+                        ? "text-lg leading-relaxed [&>p]:mb-6"
+                        : "text-base leading-relaxed md:text-lg",
+                    )}
+                  >
+                    <p>{t(`landing.features.${key}.description`)}</p>
+                    {index === 0 ? (
+                      <>
+                        <p>{t("landing.features.tempo1.description2")}</p>
+                        <p>{t("landing.features.tempo1.description3")}</p>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
 
-      <div className="sticky top-0 flex h-screen w-1/2 items-center justify-center bg-muted/40 px-6 md:px-10">
-        <div className="relative flex h-full w-full max-w-lg items-center justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCard}
-              className="w-full"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {activeCard === 0 ? (
-                <StepOneGraphic localProgress={localProgress} />
-              ) : null}
-              {activeCard === 1 ? <UnifiedProcessesMockup /> : null}
-              {activeCard === 2 ? <SmartOpsMockup /> : null}
-              {activeCard === 3 ? <ScaleReadyMockup /> : null}
-            </motion.div>
-          </AnimatePresence>
+        <div className="sticky top-0 flex h-screen w-[60%] items-center">
+          <div
+            className={cn(
+              "relative flex w-full items-center",
+              activeCard === 0 ? "justify-end" : "justify-center",
+            )}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCard}
+                  className={cn(
+                  "w-full",
+                  activeCard === 0
+                    ? "relative flex items-center justify-end"
+                    : "max-w-xl",
+                  )}
+                initial={
+                  activeCard === 0
+                    ? false
+                    : { opacity: 0, y: 20, scale: 0.95 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {activeCard === 0 ? (
+                  <StepOneGraphic localProgress={localProgress} />
+                ) : null}
+                {activeCard === 1 ? <UnifiedProcessesMockup /> : null}
+                {activeCard === 2 ? <SmartOpsMockup /> : null}
+                {activeCard === 3 ? <ScaleReadyMockup /> : null}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>

@@ -1,136 +1,318 @@
 import type { MotionValue } from "framer-motion"
-import { motion, useTransform } from "framer-motion"
+import { motion, useSpring, useTransform } from "framer-motion"
+import {
+  CalendarCheck,
+  Droplets,
+  MousePointer2,
+  ShieldCheck,
+  Wind,
+  Zap,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 type StepOneGraphicProps = {
   localProgress: MotionValue<number>
 }
 
-/**
- * Passo 1 — UI se montando em 4 micro-etapas ligadas ao scroll (useTransform).
- * 0–0.25 sidebar · 0.25–0.50 header · 0.50–0.75 gráficos · 0.75–1.0 notificação
- */
 export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
   const { t } = useTranslation()
 
-  const sidebarOpacity = useTransform(localProgress, [0, 0.25], [0, 1])
-  const sidebarX = useTransform(localProgress, [0, 0.25], [-16, 0])
+  const assetOneOpacity = useTransform(localProgress, [0, 0.1], [0, 1])
+  const assetOneX = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [0, -8, 0],
+  )
+  const assetOneY = useTransform(
+    localProgress,
+    [0, 0.1, 0.5, 0.62, 0.75],
+    [20, 0, 0, -7, 0],
+  )
+  const assetOneScale = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [1, 1.05, 1],
+  )
+  const assetTwoOpacity = useTransform(localProgress, [0.07, 0.18], [0, 1])
+  const assetTwoX = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [0, 5, 0],
+  )
+  const assetTwoY = useTransform(
+    localProgress,
+    [0.07, 0.18, 0.5, 0.62, 0.75],
+    [20, 0, 0, -9, 0],
+  )
+  const assetTwoScale = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [1, 1.04, 1],
+  )
+  const assetThreeOpacity = useTransform(localProgress, [0.14, 0.25], [0, 1])
+  const assetThreeX = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [0, 9, 0],
+  )
+  const assetThreeY = useTransform(
+    localProgress,
+    [0.14, 0.25, 0.5, 0.62, 0.75],
+    [20, 0, 0, 6, 0],
+  )
+  const assetThreeScale = useTransform(
+    localProgress,
+    [0.5, 0.62, 0.75],
+    [1, 1.05, 1],
+  )
 
-  const headerOpacity = useTransform(localProgress, [0.25, 0.5], [0, 1])
-  const headerY = useTransform(localProgress, [0.25, 0.5], [20, 0])
+  const cursorOpacity = useTransform(
+    localProgress,
+    [0.24, 0.28, 0.5, 0.56],
+    [0, 1, 1, 0],
+  )
+  const cursorX = useTransform(localProgress, [0.25, 0.5], [0, -325])
+  const cursorY = useTransform(localProgress, [0.25, 0.5], [0, -170])
+  const cursorScale = useTransform(
+    localProgress,
+    [0.25, 0.45, 0.5],
+    [1, 1, 0.9],
+  )
 
-  const chartsOpacity = useTransform(localProgress, [0.5, 0.75], [0, 1])
-  const chartsY = useTransform(localProgress, [0.5, 0.75], [20, 0])
+  const pmocOpacity = useTransform(localProgress, [0.5, 0.58], [0, 1])
+  const pmocScale = useTransform(localProgress, [0.5, 0.75], [0.16, 1])
+  const firstDataWidth = useTransform(
+    localProgress,
+    [0.75, 0.94],
+    ["0%", "100%"],
+  )
+  const secondDataWidth = useTransform(
+    localProgress,
+    [0.81, 1],
+    ["0%", "100%"],
+  )
 
-  const toastOpacity = useTransform(localProgress, [0.75, 1], [0, 1])
-  const toastY = useTransform(localProgress, [0.75, 1], [24, 0])
-  const toastScale = useTransform(localProgress, [0.75, 1], [0.94, 1])
+  const systemScale = useSpring(
+    useTransform(localProgress, [0.5, 0.62, 0.75], [1, 1.025, 1]),
+    { stiffness: 220, damping: 18 },
+  )
+  const systemGlowOpacity = useTransform(
+    localProgress,
+    [0.5, 0.6, 0.75],
+    [0, 0.7, 0],
+  )
 
-  const modules = [
-    t("landing.features.mockups.modules.inventory"),
-    t("landing.features.mockups.modules.pmoc"),
-    t("landing.features.mockups.modules.os"),
-    t("landing.features.mockups.modules.rentals"),
+  const complianceOpacity = useTransform(localProgress, [0.52, 0.64], [0, 1])
+  const complianceScaleTarget = useTransform(
+    localProgress,
+    [0.52, 0.68],
+    [0.7, 1],
+  )
+  const complianceScale = useSpring(complianceScaleTarget, {
+    stiffness: 280,
+    damping: 12,
+    mass: 0.7,
+  })
+  const glowOpacity = useTransform(
+    localProgress,
+    [0.52, 0.66, 1],
+    [0, 0.8, 0.35],
+  )
+
+  const assetAnimations = [
+    {
+      opacity: assetOneOpacity,
+      x: assetOneX,
+      y: assetOneY,
+      scale: assetOneScale,
+    },
+    {
+      opacity: assetTwoOpacity,
+      x: assetTwoX,
+      y: assetTwoY,
+      scale: assetTwoScale,
+    },
+    {
+      opacity: assetThreeOpacity,
+      x: assetThreeX,
+      y: assetThreeY,
+      scale: assetThreeScale,
+    },
   ] as const
 
-  const navItems = [
-    t("landing.features.mockups.stepOne.navDashboard"),
-    t("landing.features.mockups.stepOne.navAssets"),
-    t("landing.features.mockups.stepOne.navOrders"),
-    t("landing.features.mockups.stepOne.navSettings"),
+  const dataWidths = [firstDataWidth, secondDataWidth] as const
+
+  const assets = [
+    {
+      label: t("landing.features.mockups.stepOne.assets.airConditioner"),
+      location: t("landing.features.mockups.stepOne.locations.reception"),
+      Icon: Wind,
+      accent: "bg-sky-500/10 text-sky-600 dark:text-sky-300",
+    },
+    {
+      label: t("landing.features.mockups.stepOne.assets.generator"),
+      location: t("landing.features.mockups.stepOne.locations.engineRoom"),
+      Icon: Zap,
+      accent: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    },
+    {
+      label: t("landing.features.mockups.stepOne.assets.hydraulicPump"),
+      location: t("landing.features.mockups.stepOne.locations.lowerLevel"),
+      Icon: Droplets,
+      accent: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
+    },
+  ] as const
+
+  const pmocRows = [
+    {
+      asset: t("landing.features.mockups.stepOne.pmoc.split"),
+      date: t("landing.features.mockups.stepOne.pmoc.dateOne"),
+    },
+    {
+      asset: t("landing.features.mockups.stepOne.pmoc.generator"),
+      date: t("landing.features.mockups.stepOne.pmoc.dateTwo"),
+    },
   ] as const
 
   return (
-    <div className="relative mx-auto w-full max-w-md">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-        <div className="flex min-h-[320px]">
-          {/* 1 — Sidebar (base da UI) */}
-          <motion.aside
-            className="flex w-[72px] shrink-0 flex-col gap-2 border-r border-border bg-muted/50 p-2.5"
-            style={{ opacity: sidebarOpacity, x: sidebarX }}
-          >
+    <div className="relative w-[800px] max-w-none translate-x-12 lg:translate-x-24">
+      <motion.div
+        className="relative overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+        style={{ scale: systemScale }}
+      >
+        <motion.div
+          className="pointer-events-none absolute inset-0 z-30 rounded-2xl ring-2 ring-inset ring-emerald-400 shadow-[inset_0_0_32px_rgba(52,211,153,0.18)]"
+          style={{ opacity: systemGlowOpacity }}
+          aria-hidden="true"
+        />
+        <div className="flex min-h-[350px]">
+          <aside className="flex w-[68px] shrink-0 flex-col items-center gap-3 border-r border-border bg-muted/45 px-2 py-3">
             <div className="mb-2 size-8 rounded-lg bg-foreground/80" />
-            {navItems.map((label, index) => (
-              <div
-                key={label}
-                className="flex flex-col items-center gap-1 rounded-lg px-1 py-2"
-                title={label}
-              >
-                <div
-                  className={
-                    index === 0
-                      ? "size-7 rounded-md bg-foreground/70"
-                      : "size-7 rounded-md bg-muted-foreground/25"
-                  }
-                />
-                <span className="max-w-full truncate text-[8px] text-muted-foreground">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </motion.aside>
+            <div className="h-8 w-10 rounded-lg bg-foreground/15" />
+            <div className="h-8 w-10 rounded-lg bg-muted-foreground/15" />
+            <div className="h-8 w-10 rounded-lg bg-muted-foreground/15" />
+            <div className="h-8 w-10 rounded-lg bg-muted-foreground/15" />
+            <div className="mt-auto h-7 w-7 rounded-full bg-muted-foreground/20" />
+          </aside>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/* 2 — Header */}
-            <motion.header
-              className="flex items-center justify-between border-b border-border px-4 py-3"
-              style={{ opacity: headerOpacity, y: headerY }}
-            >
+          <div className="relative flex min-w-0 flex-1 flex-col">
+            <header className="flex h-[58px] items-center justify-between border-b border-border px-4">
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-foreground">
-                  {t("landing.features.mockups.modules.windowTitle")}
-                </p>
-                <div className="h-1.5 w-28 rounded-full bg-muted-foreground/25" />
+                <div className="h-2 w-28 rounded-full bg-foreground/20" />
+                <div className="h-1.5 w-20 rounded-full bg-muted-foreground/15" />
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-7 w-20 rounded-md bg-muted" />
-                <div className="size-7 rounded-full bg-muted-foreground/30" />
+                <div className="h-7 w-16 rounded-md bg-muted" />
+                <div className="size-7 rounded-full bg-muted-foreground/20" />
               </div>
-            </motion.header>
+            </header>
 
-            {/* 3 — Gráficos / cards de módulos */}
-            <motion.div
-              className="grid flex-1 grid-cols-2 gap-2.5 p-4"
-              style={{ opacity: chartsOpacity, y: chartsY }}
-            >
-              {modules.map((label, index) => (
-                <div
+            <div className="grid flex-1 grid-cols-1 gap-2.5 p-4 sm:grid-cols-3">
+              {assets.map(({ label, location, Icon, accent }, index) => (
+                <motion.div
                   key={label}
-                  className="rounded-xl border border-border bg-background p-3 shadow-sm"
+                  className="flex min-h-28 flex-col rounded-xl border border-border bg-background p-3 shadow-sm"
+                  style={assetAnimations[index]}
                 >
-                  <div className="mb-2 size-7 rounded-lg bg-muted" />
-                  <p className="text-xs font-medium text-foreground">{label}</p>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
-                    <div
-                      className="h-1.5 rounded-full bg-foreground/70"
-                      style={{ width: `${50 + index * 14}%` }}
-                    />
+                  <div
+                    className={`mb-3 grid size-8 place-items-center rounded-lg ${accent}`}
+                  >
+                    <Icon className="size-4" aria-hidden="true" />
                   </div>
-                </div>
+                  <p className="text-[11px] font-semibold text-foreground">
+                    {label}
+                  </p>
+                  <p className="mt-1 text-[9px] text-muted-foreground">
+                    {location}
+                  </p>
+                  <div className="mt-auto flex items-center gap-1 pt-3">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[8px] font-medium text-emerald-700 dark:text-emerald-300">
+                      {t("landing.features.mockups.stepOne.active")}
+                    </span>
+                  </div>
+                </motion.div>
               ))}
+            </div>
+
+            <motion.div
+              className="pointer-events-none absolute bottom-5 right-5 z-20 drop-shadow-md"
+              style={{
+                opacity: cursorOpacity,
+                x: cursorX,
+                y: cursorY,
+                scale: cursorScale,
+              }}
+              aria-hidden="true"
+            >
+              <MousePointer2 className="size-6 fill-background text-foreground" />
+            </motion.div>
+
+            <motion.div
+              className="absolute inset-x-4 top-[88px] z-10 origin-top-left overflow-hidden rounded-xl border border-border bg-card/95 shadow-xl backdrop-blur"
+              style={{ opacity: pmocOpacity, scale: pmocScale }}
+            >
+              <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <CalendarCheck
+                    className="size-3.5 text-primary"
+                    aria-hidden="true"
+                  />
+                  <p className="text-[10px] font-semibold text-foreground">
+                    {t("landing.features.mockups.stepOne.pmoc.title")}
+                  </p>
+                </div>
+                <span className="text-[8px] text-muted-foreground">
+                  {t("landing.features.mockups.stepOne.pmoc.nextReviews")}
+                </span>
+              </div>
+              <div className="divide-y divide-border">
+                {pmocRows.map((row, index) => (
+                  <div
+                    key={row.asset}
+                    className="px-3 py-2.5"
+                  >
+                    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
+                      <span className="text-[9px] font-medium text-foreground">
+                        {row.asset}
+                      </span>
+                      <span className="text-[8px] text-muted-foreground">
+                        {row.date}
+                      </span>
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[7px] font-semibold text-emerald-700 dark:text-emerald-300">
+                        {t("landing.features.mockups.stepOne.pmoc.scheduled")}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+                      <motion.div
+                        className="h-full rounded-full bg-emerald-500"
+                        style={{ width: dataWidths[index] }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           </div>
         </div>
-      </div>
 
-      {/* 4 — Notificação / pop-up final */}
-      <motion.div
-        className="absolute right-3 top-14 z-10 w-[200px] rounded-xl border border-border bg-card p-3 shadow-2xl"
-        style={{
-          opacity: toastOpacity,
-          y: toastY,
-          scale: toastScale,
-        }}
-      >
-        <div className="mb-2 flex items-center gap-2">
-          <span className="size-2 rounded-full bg-emerald-500" />
-          <p className="text-[11px] font-semibold text-foreground">
-            {t("landing.features.mockups.stepOne.toastTitle")}
-          </p>
-        </div>
-        <p className="text-[10px] leading-relaxed text-muted-foreground">
-          {t("landing.features.mockups.stepOne.toastBody")}
-        </p>
+        <motion.div
+          className="absolute right-3 top-3 z-20"
+          style={{
+            opacity: complianceOpacity,
+            scale: complianceScale,
+          }}
+        >
+          <motion.div
+            className="absolute inset-0 rounded-full bg-emerald-400 blur-xl"
+            style={{ opacity: glowOpacity }}
+            aria-hidden="true"
+          />
+          <div className="relative flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-[9px] font-bold text-emerald-700 shadow-lg shadow-emerald-500/20 backdrop-blur dark:text-emerald-300">
+            <ShieldCheck className="size-3.5" aria-hidden="true" />
+            {t("landing.features.mockups.stepOne.operational")}
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   )

@@ -61,12 +61,29 @@
         "lowStock": "Estoque baixo"
       }
     },
+    "bridge": {
+      "eyebrow": "Do caos ao controle",
+      "title": "Sua operação em sintonia.",
+      "description": "O Rolvix atua como o sistema nervoso do seu negócio. Ele coleta as pontas soltas da sua operação — o que antes era planilha, e-mail ou esquecimento — e integra tudo em uma inteligência central, pronta para ser executada.",
+      "hubLabel": "Rolvix",
+      "chaosLabel": "Dados dispersos",
+      "orderLabel": "Operação conectada",
+      "uncontrolled": "Sem controle",
+      "connected": "Conectado ao núcleo",
+      "sources": {
+        "spreadsheet": "Planilha desatualizada",
+        "calendar": "Agenda perdida no e-mail",
+        "email": "E-mail sem histórico"
+      }
+    },
     "features": {
       "sectionLabel": "Recursos da plataforma",
       "tempo1": {
         "eyebrow": "Passo 1",
-        "title": "Tudo o que sua empresa precisa.",
-        "description": "Inventário, manutenção, OS e aluguéis — módulos sob medida no mesmo hub."
+        "title": "Pare de reagir. Comece a prever.",
+        "description": "Gerenciar ativos por planilhas é contar com a sorte. Você perde o histórico, esquece as revisões e acaba pagando muito mais caro por consertos emergenciais. O seu tempo e o da sua equipe não deveriam ser gastos apenas apagando incêndios.",
+        "description2": "Nós criamos um ambiente onde a sua operação se gerencia quase sozinha. Transformamos o seu inventário e o PMOC em um fluxo de dados vivo. O sistema cruza as informações e alerta a sua equipe no momento exato em que uma peça precisa de atenção, antes que a falha paralise o seu negócio.",
+        "description3": "Menos tempo de máquina parada, conformidade garantida contra multas e uma redução drástica nos custos de manutenção. O resultado não é apenas organização, é lucro direto na última linha do seu balanço financeiro."
       },
       "tempo2": {
         "eyebrow": "Passo 2",
@@ -92,12 +109,27 @@
           "rentals": "Aluguéis"
         },
         "stepOne": {
-          "navDashboard": "Home",
-          "navAssets": "Ativos",
-          "navOrders": "OS",
-          "navSettings": "Ajustes",
-          "toastTitle": "Módulo ativado",
-          "toastBody": "Inventário disponível para este cliente."
+          "active": "Ativo",
+          "operational": "100% Operacional",
+          "assets": {
+            "airConditioner": "Ar-condicionado",
+            "generator": "Gerador",
+            "hydraulicPump": "Bomba hidráulica"
+          },
+          "locations": {
+            "reception": "Recepção",
+            "engineRoom": "Casa de máquinas",
+            "lowerLevel": "Pavimento inferior"
+          },
+          "pmoc": {
+            "title": "Plano de Manutenção",
+            "nextReviews": "Próximas revisões",
+            "split": "Split Recepção",
+            "generator": "Gerador principal",
+            "dateOne": "22 jul",
+            "dateTwo": "29 jul",
+            "scheduled": "Agendada"
+          }
         },
         "processes": {
           "windowTitle": "Fluxo operacional",

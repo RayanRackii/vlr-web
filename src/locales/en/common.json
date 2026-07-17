@@ -61,12 +61,29 @@
       },
       "scrollLabel": "Discover the platform"
     },
+    "bridge": {
+      "eyebrow": "From chaos to control",
+      "title": "Your operation in sync.",
+      "description": "Rolvix acts as the nervous system of your business. It gathers the loose ends of your operation — what used to be a spreadsheet, email, or oversight — and integrates everything into central intelligence, ready to be put into action.",
+      "hubLabel": "Rolvix",
+      "chaosLabel": "Scattered data",
+      "orderLabel": "Connected operation",
+      "uncontrolled": "Uncontrolled",
+      "connected": "Connected to the hub",
+      "sources": {
+        "spreadsheet": "Outdated spreadsheet",
+        "calendar": "Calendar lost in email",
+        "email": "Email with no history"
+      }
+    },
     "features": {
       "sectionLabel": "Platform features",
       "tempo1": {
         "eyebrow": "Step 1",
-        "title": "Everything your company needs.",
-        "description": "Inventory, maintenance, work orders, and rentals — tailored modules in one hub."
+        "title": "Stop reacting. Start predicting.",
+        "description": "Managing assets with spreadsheets is gambling. You lose history, forget reviews, and end up paying far more for emergency repairs. Your time and your team's time should not be spent only putting out fires.",
+        "description2": "We create an environment where operations nearly manage themselves. Your inventory and PMOC become a living data flow. The system cross-checks information and alerts your team the moment a part needs attention, before a failure can stop your business.",
+        "description3": "Less downtime, compliance that protects you from fines, and a sharp reduction in maintenance costs. The result is not just organization. It is profit on the last line of your financial statement."
       },
       "tempo2": {
         "eyebrow": "Step 2",
@@ -92,12 +109,27 @@
           "rentals": "Rentals"
         },
         "stepOne": {
-          "navDashboard": "Home",
-          "navAssets": "Assets",
-          "navOrders": "WO",
-          "navSettings": "Settings",
-          "toastTitle": "Module enabled",
-          "toastBody": "Inventory is now available for this client."
+          "active": "Active",
+          "operational": "100% Operational",
+          "assets": {
+            "airConditioner": "Air conditioner",
+            "generator": "Generator",
+            "hydraulicPump": "Hydraulic pump"
+          },
+          "locations": {
+            "reception": "Reception",
+            "engineRoom": "Engine room",
+            "lowerLevel": "Lower level"
+          },
+          "pmoc": {
+            "title": "Maintenance Plan",
+            "nextReviews": "Upcoming reviews",
+            "split": "Reception split",
+            "generator": "Main generator",
+            "dateOne": "Jul 22",
+            "dateTwo": "Jul 29",
+            "scheduled": "Scheduled"
+          }
         },
         "processes": {
           "windowTitle": "Operations flow",

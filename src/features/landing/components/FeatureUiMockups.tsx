@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { CalendarCheck, KeyRound } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
@@ -79,36 +80,78 @@ export function UnifiedProcessesMockup() {
 
   const steps = [
     t("landing.features.mockups.processes.stepAsset"),
-    t("landing.features.mockups.processes.stepPlan"),
     t("landing.features.mockups.processes.stepOrder"),
   ] as const
 
   return (
-    <MockShell title={t("landing.features.mockups.processes.windowTitle")}>
-      <div className="space-y-3">
-        {steps.map((label, index) => (
-          <div key={label} className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-semibold text-foreground shadow-sm">
-              {index + 1}
-            </div>
-            <div className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2.5 shadow-sm">
-              <p className="truncate text-xs font-medium text-foreground">
-                {label}
+    <div className="relative mx-auto h-[390px] w-full max-w-lg">
+      <div
+        className="pointer-events-none absolute inset-x-14 top-1/2 h-40 -translate-y-1/2 rounded-full bg-background/80 blur-3xl"
+        aria-hidden="true"
+      />
+
+      <div className="absolute inset-x-8 top-14 z-10">
+        <MockShell title={t("landing.features.mockups.processes.windowTitle")}>
+          <div className="space-y-4">
+            {steps.map((label, index) => (
+              <div key={label} className="flex items-center gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-semibold text-foreground shadow-sm">
+                  {index + 1}
+                </div>
+                <div className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-3 shadow-sm">
+                  <p className="truncate text-xs font-medium text-foreground">
+                    {label}
+                  </p>
+                  <div className="mt-2 h-1.5 w-3/4 rounded-full bg-muted" />
+                </div>
+              </div>
+            ))}
+            <div className="mt-1 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2">
+              <p className="text-[11px] text-muted-foreground">
+                {t("landing.features.mockups.processes.footer")}
               </p>
-              <div className="mt-1.5 h-1.5 w-3/4 rounded-full bg-muted" />
             </div>
-            {index < steps.length - 1 ? (
-              <div className="absolute" aria-hidden />
-            ) : null}
           </div>
-        ))}
-        <div className="mt-1 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2">
-          <p className="text-[11px] text-muted-foreground">
-            {t("landing.features.mockups.processes.footer")}
+        </MockShell>
+      </div>
+
+      <div className="absolute left-[8%] top-3 z-20 w-44 -rotate-3 rounded-xl border border-emerald-500/20 bg-card/95 p-3 shadow-xl backdrop-blur">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="grid size-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+            <CalendarCheck className="size-4" aria-hidden="true" />
+          </div>
+          <p className="text-[10px] font-semibold text-foreground">
+            {t("landing.features.mockups.processes.stepPlan")}
           </p>
         </div>
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full rounded-full bg-emerald-500/25" />
+          <div className="h-1.5 w-2/3 rounded-full bg-muted" />
+        </div>
       </div>
-    </MockShell>
+
+      <div className="absolute bottom-4 right-[8%] z-20 w-40 rotate-3 rounded-xl border border-sky-500/20 bg-card/95 p-3 shadow-xl backdrop-blur">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="grid size-8 place-items-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300">
+            <KeyRound className="size-4" aria-hidden="true" />
+          </div>
+          <p className="text-[10px] font-semibold text-foreground">
+            {t("landing.features.mockups.modules.rentals")}
+          </p>
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <span
+              key={index}
+              className={cn(
+                "h-3 rounded-sm bg-muted",
+                (index === 2 || index === 5) && "bg-sky-500/35",
+              )}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
