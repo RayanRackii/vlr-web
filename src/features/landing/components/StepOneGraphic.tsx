@@ -10,135 +10,153 @@ import {
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import {
+  STORY_EXIT_START,
+  type StoryParagraphWindow,
+} from "@/features/landing/components/StoryStep"
+
 type StepOneGraphicProps = {
-  localProgress: MotionValue<number>
+  progress: MotionValue<number>
+  windows: StoryParagraphWindow[]
+  reducedMotion?: boolean
 }
 
-export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
+export function StepOneGraphic({
+  progress,
+  windows,
+  reducedMotion = false,
+}: StepOneGraphicProps) {
   const { t } = useTranslation()
+  const pain = windows[0]!
+  const mechanism = windows[1]!
+  const result = windows[2]!
 
-  const assetOneOpacity = useTransform(localProgress, [0, 0.1], [0, 1])
-  const assetOneX = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [0, -8, 0],
+  // Parágrafo 2 → primeiro ativo; parágrafo 3 → demais + badge (antes do EXIT).
+  const assetOneOpacity = useTransform(
+    progress,
+    [mechanism.start, mechanism.peakStart],
+    [0, 1],
   )
+  const assetTwoOpacity = useTransform(
+    progress,
+    [result.start, result.peakStart],
+    [0, 1],
+  )
+  const assetThreeOpacity = useTransform(
+    progress,
+    [result.peakStart, Math.min(result.peakStart + 0.06, STORY_EXIT_START - 0.08)],
+    [0, 1],
+  )
+
   const assetOneY = useTransform(
-    localProgress,
-    [0, 0.1, 0.5, 0.62, 0.75],
-    [20, 0, 0, -7, 0],
+    progress,
+    [mechanism.start, mechanism.peakStart],
+    [16, 0],
   )
-  const assetOneScale = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [1, 1.05, 1],
-  )
-  const assetTwoOpacity = useTransform(localProgress, [0.07, 0.18], [0, 1])
-  const assetTwoX = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [0, 5, 0],
-  )
-  const assetTwoY = useTransform(
-    localProgress,
-    [0.07, 0.18, 0.5, 0.62, 0.75],
-    [20, 0, 0, -9, 0],
-  )
-  const assetTwoScale = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [1, 1.04, 1],
-  )
-  const assetThreeOpacity = useTransform(localProgress, [0.14, 0.25], [0, 1])
-  const assetThreeX = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [0, 9, 0],
-  )
+  const assetTwoY = useTransform(progress, [result.start, result.peakStart], [16, 0])
   const assetThreeY = useTransform(
-    localProgress,
-    [0.14, 0.25, 0.5, 0.62, 0.75],
-    [20, 0, 0, 6, 0],
-  )
-  const assetThreeScale = useTransform(
-    localProgress,
-    [0.5, 0.62, 0.75],
-    [1, 1.05, 1],
+    progress,
+    [result.peakStart, Math.min(result.peakStart + 0.06, STORY_EXIT_START - 0.08)],
+    [16, 0],
   )
 
   const cursorOpacity = useTransform(
-    localProgress,
-    [0.24, 0.28, 0.5, 0.56],
+    progress,
+    [
+      mechanism.peakStart,
+      mechanism.peakStart + 0.04,
+      mechanism.peakEnd,
+      result.start,
+    ],
     [0, 1, 1, 0],
   )
-  const cursorX = useTransform(localProgress, [0.25, 0.5], [0, -325])
-  const cursorY = useTransform(localProgress, [0.25, 0.5], [0, -170])
-  const cursorScale = useTransform(
-    localProgress,
-    [0.25, 0.45, 0.5],
-    [1, 1, 0.9],
+  const cursorX = useTransform(
+    progress,
+    [mechanism.peakStart, mechanism.peakEnd],
+    [40, -280],
+  )
+  const cursorY = useTransform(
+    progress,
+    [mechanism.peakStart, mechanism.peakEnd],
+    [20, -120],
   )
 
-  const pmocOpacity = useTransform(localProgress, [0.5, 0.58], [0, 1])
-  const pmocScale = useTransform(localProgress, [0.5, 0.75], [0.16, 1])
+  const pmocOpacity = useTransform(
+    progress,
+    [mechanism.peakEnd - 0.04, result.start],
+    [0, 1],
+  )
+  const pmocScale = useTransform(
+    progress,
+    [mechanism.peakEnd - 0.04, result.peakStart],
+    [0.92, 1],
+  )
   const firstDataWidth = useTransform(
-    localProgress,
-    [0.75, 0.94],
+    progress,
+    [result.start, result.peakStart],
     ["0%", "100%"],
   )
   const secondDataWidth = useTransform(
-    localProgress,
-    [0.81, 1],
+    progress,
+    [result.peakStart, Math.min(result.peakEnd, STORY_EXIT_START - 0.06)],
     ["0%", "100%"],
   )
 
   const systemScale = useSpring(
-    useTransform(localProgress, [0.5, 0.62, 0.75], [1, 1.025, 1]),
+    useTransform(
+      progress,
+      [mechanism.peakEnd, result.start, result.peakStart],
+      [1, 1.02, 1],
+    ),
     { stiffness: 220, damping: 18 },
   )
   const systemGlowOpacity = useTransform(
-    localProgress,
-    [0.5, 0.6, 0.75],
-    [0, 0.7, 0],
+    progress,
+    [mechanism.peakEnd, result.start, result.peakStart],
+    [0, 0.55, 0],
   )
 
-  const complianceOpacity = useTransform(localProgress, [0.52, 0.64], [0, 1])
+  // Badge coroa o parágrafo 3 e completa antes de qualquer fade de saída (0.9).
+  const badgeComplete = Math.min(result.peakEnd, STORY_EXIT_START - 0.04)
+  const complianceOpacity = useTransform(
+    progress,
+    [result.peakStart, badgeComplete, 1],
+    [0, 1, 1],
+  )
   const complianceScaleTarget = useTransform(
-    localProgress,
-    [0.52, 0.68],
-    [0.7, 1],
+    progress,
+    [result.peakStart, badgeComplete],
+    [0.85, 1],
   )
   const complianceScale = useSpring(complianceScaleTarget, {
     stiffness: 280,
-    damping: 12,
+    damping: 14,
     mass: 0.7,
   })
   const glowOpacity = useTransform(
-    localProgress,
-    [0.52, 0.66, 1],
-    [0, 0.8, 0.35],
+    progress,
+    [result.peakStart, badgeComplete, 1],
+    [0, 0.75, 0.4],
   )
 
-  const assetAnimations = [
-    {
-      opacity: assetOneOpacity,
-      x: assetOneX,
-      y: assetOneY,
-      scale: assetOneScale,
-    },
-    {
-      opacity: assetTwoOpacity,
-      x: assetTwoX,
-      y: assetTwoY,
-      scale: assetTwoScale,
-    },
-    {
-      opacity: assetThreeOpacity,
-      x: assetThreeX,
-      y: assetThreeY,
-      scale: assetThreeScale,
-    },
-  ] as const
+  // Shell fica sutil no parágrafo 1 (dor), sem itens.
+  const shellDim = useTransform(
+    progress,
+    [pain.start, pain.peakStart, mechanism.start],
+    [0.55, 0.7, 1],
+  )
+
+  const assetAnimations = reducedMotion
+    ? ([
+        { opacity: 1, y: 0 },
+        { opacity: 1, y: 0 },
+        { opacity: 1, y: 0 },
+      ] as const)
+    : ([
+        { opacity: assetOneOpacity, y: assetOneY },
+        { opacity: assetTwoOpacity, y: assetTwoY },
+        { opacity: assetThreeOpacity, y: assetThreeY },
+      ] as const)
 
   const dataWidths = [firstDataWidth, secondDataWidth] as const
 
@@ -175,14 +193,18 @@ export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
   ] as const
 
   return (
-    <div className="relative w-[800px] max-w-none translate-x-12 lg:translate-x-24">
+    <div className="relative w-full max-w-[720px] lg:max-w-[780px] lg:translate-x-6 xl:translate-x-10">
       <motion.div
         className="relative overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
-        style={{ scale: systemScale }}
+        style={
+          reducedMotion
+            ? undefined
+            : { scale: systemScale, opacity: shellDim }
+        }
       >
         <motion.div
-          className="pointer-events-none absolute inset-0 z-30 rounded-2xl ring-2 ring-inset ring-emerald-400 shadow-[inset_0_0_32px_rgba(52,211,153,0.18)]"
-          style={{ opacity: systemGlowOpacity }}
+          className="pointer-events-none absolute inset-0 z-30 rounded-2xl shadow-[inset_0_0_32px_rgba(52,211,153,0.18)] ring-2 ring-emerald-400 ring-inset"
+          style={{ opacity: reducedMotion ? 0 : systemGlowOpacity }}
           aria-hidden="true"
         />
         <div className="flex min-h-[350px]">
@@ -219,15 +241,15 @@ export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
                   >
                     <Icon className="size-4" aria-hidden="true" />
                   </div>
-                  <p className="text-[11px] font-semibold text-foreground">
+                  <p className="text-xs font-semibold leading-snug text-foreground">
                     {label}
                   </p>
-                  <p className="mt-1 text-[9px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] leading-snug text-foreground/65 dark:text-foreground/70">
                     {location}
                   </p>
-                  <div className="mt-auto flex items-center gap-1 pt-3">
+                  <div className="mt-auto flex items-center gap-1.5 pt-3">
                     <span className="size-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[8px] font-medium text-emerald-700 dark:text-emerald-300">
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                       {t("landing.features.mockups.stepOne.active")}
                     </span>
                   </div>
@@ -235,22 +257,23 @@ export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
               ))}
             </div>
 
-            <motion.div
-              className="pointer-events-none absolute bottom-5 right-5 z-20 drop-shadow-md"
-              style={{
-                opacity: cursorOpacity,
-                x: cursorX,
-                y: cursorY,
-                scale: cursorScale,
-              }}
-              aria-hidden="true"
-            >
-              <MousePointer2 className="size-6 fill-background text-foreground" />
-            </motion.div>
+            {!reducedMotion ? (
+              <motion.div
+                className="pointer-events-none absolute bottom-5 right-5 z-20 drop-shadow-md"
+                style={{ opacity: cursorOpacity, x: cursorX, y: cursorY }}
+                aria-hidden="true"
+              >
+                <MousePointer2 className="size-6 fill-background text-foreground" />
+              </motion.div>
+            ) : null}
 
             <motion.div
               className="absolute inset-x-4 top-[88px] z-10 origin-top-left overflow-hidden rounded-xl border border-border bg-card/95 shadow-xl backdrop-blur"
-              style={{ opacity: pmocOpacity, scale: pmocScale }}
+              style={
+                reducedMotion
+                  ? { opacity: 1, scale: 1 }
+                  : { opacity: pmocOpacity, scale: pmocScale }
+              }
             >
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -258,35 +281,34 @@ export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
                     className="size-3.5 text-primary"
                     aria-hidden="true"
                   />
-                  <p className="text-[10px] font-semibold text-foreground">
+                  <p className="text-[11px] font-semibold text-foreground">
                     {t("landing.features.mockups.stepOne.pmoc.title")}
                   </p>
                 </div>
-                <span className="text-[8px] text-muted-foreground">
+                <span className="text-[10px] text-foreground/65">
                   {t("landing.features.mockups.stepOne.pmoc.nextReviews")}
                 </span>
               </div>
               <div className="divide-y divide-border">
                 {pmocRows.map((row, index) => (
-                  <div
-                    key={row.asset}
-                    className="px-3 py-2.5"
-                  >
+                  <div key={row.asset} className="px-3 py-2.5">
                     <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
-                      <span className="text-[9px] font-medium text-foreground">
+                      <span className="text-[11px] font-medium text-foreground">
                         {row.asset}
                       </span>
-                      <span className="text-[8px] text-muted-foreground">
+                      <span className="text-[10px] text-foreground/65">
                         {row.date}
                       </span>
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[7px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                         {t("landing.features.mockups.stepOne.pmoc.scheduled")}
                       </span>
                     </div>
                     <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
                       <motion.div
                         className="h-full rounded-full bg-emerald-500"
-                        style={{ width: dataWidths[index] }}
+                        style={{
+                          width: reducedMotion ? "100%" : dataWidths[index],
+                        }}
                       />
                     </div>
                   </div>
@@ -298,17 +320,18 @@ export function StepOneGraphic({ localProgress }: StepOneGraphicProps) {
 
         <motion.div
           className="absolute right-3 top-3 z-20"
-          style={{
-            opacity: complianceOpacity,
-            scale: complianceScale,
-          }}
+          style={
+            reducedMotion
+              ? { opacity: 1, scale: 1 }
+              : { opacity: complianceOpacity, scale: complianceScale }
+          }
         >
           <motion.div
             className="absolute inset-0 rounded-full bg-emerald-400 blur-xl"
-            style={{ opacity: glowOpacity }}
+            style={{ opacity: reducedMotion ? 0.35 : glowOpacity }}
             aria-hidden="true"
           />
-          <div className="relative flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-[9px] font-bold text-emerald-700 shadow-lg shadow-emerald-500/20 backdrop-blur dark:text-emerald-300">
+          <div className="relative flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-700 shadow-lg shadow-emerald-500/20 backdrop-blur dark:text-emerald-300">
             <ShieldCheck className="size-3.5" aria-hidden="true" />
             {t("landing.features.mockups.stepOne.operational")}
           </div>

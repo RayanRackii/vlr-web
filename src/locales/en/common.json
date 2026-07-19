@@ -28,12 +28,13 @@
     },
     "hero": {
       "badge": "✨ The new era of intelligent management",
+      "eyebrow": "Built for operations that cannot stop.",
       "titlePrefix": "Your entire business in one ",
       "titleHighlight": "unified platform",
-      "subtitle": "Leave spreadsheets and fragmented systems behind. Rolvix unifies inventory, rentals, customers, and finance in one seamless, automated ecosystem.",
-      "socialProof": "Join dozens of operations leaders",
+      "subtitle": "No more lost spreadsheets and last-minute corrective maintenance. Rolvix centralizes PMOC, work orders, and assets in one flow — with compliance built in, without the manual grind.",
       "ctaPrimary": "Start for free",
-      "ctaSecondary": "Talk to sales",
+      "ctaMicrocopy": "No credit card required",
+      "ctaSecondary": "Talk to a specialist",
       "products": {
         "inventory": "Inventory",
         "hr": "HR",
@@ -87,18 +88,21 @@
       },
       "tempo2": {
         "eyebrow": "Step 2",
-        "title": "One system. Every process.",
-        "description": "From asset to work order: a continuous flow, no parallel tools."
+        "title": "One system. Everyone connected.",
+        "description": "The technician sees the wrong priority because nobody updated the board. The manager only learns a deadline slipped when the customer calls to complain. And whoever signs the checks sees all of it a month later, in a report that can no longer drive a decision.",
+        "description2": "In Rolvix, each person sees exactly what they need to do the job — no more, no less. The technician gets the right work order on their phone. The manager tracks every crew in real time. Decision-makers see the full picture without waiting on another spreadsheet.",
+        "description3": "The result is not just visibility — it is an operation that moves together, from the floor to the boardroom, without anyone asking \"so, where does this stand?\" again."
       },
       "tempo3": {
         "eyebrow": "Step 3",
-        "title": "Smart, automated management.",
-        "description": "Plans, alerts, and metrics that anticipate operations — not just record them."
+        "title": "Audits are not surprises. They are routine.",
+        "description": "Inspectors show up unannounced and the PMOC report is missing from a folder nobody remembers. Every missing record is not just a hassle — it is a fine waiting for the right date.",
+        "description2": "Rolvix logs each asset's history automatically: who did what, when, with which part, with photo and signature attached. Nothing depends on someone remembering to fill a spreadsheet.",
+        "description3": "On the next inspection visit, you do not chase paperwork — you export the report in seconds and show an operation that is current, without drama, without panic."
       },
-      "tempo4": {
-        "eyebrow": "Step 4",
-        "title": "Ready to scale.",
-        "description": "New clients and units go live in minutes, with full multi-tenant isolation."
+      "bridge": {
+        "text": "That is only the foundation. See how Rolvix fits your type of operation.",
+        "cta": "See solutions by segment"
       },
       "mockups": {
         "modules": {
@@ -131,6 +135,25 @@
             "scheduled": "Scheduled"
           }
         },
+        "stepTwo": {
+          "technician": "Technician",
+          "technicianDetail": "The right order on the phone, with clear priority.",
+          "manager": "Manager",
+          "managerDetail": "Crews and deadlines in real time — no status hunting.",
+          "director": "Leadership",
+          "directorDetail": "Full operational picture without waiting on a monthly report."
+        },
+        "stepThree": {
+          "title": "PMOC report",
+          "ref": "Ref. #2841",
+          "history": "History",
+          "historyLine": "Filter + cleaning · Jul 12 · Downtown unit",
+          "signature": "Responsible signature",
+          "signatureMeta": "Recorded at 2:22 PM",
+          "attachment": "Service photo",
+          "attachmentMeta": "Required attachment · 2 files",
+          "export": "Export report"
+        },
         "processes": {
           "windowTitle": "Operations flow",
           "stepAsset": "Asset registry",
@@ -151,6 +174,120 @@
           "tenantC": "Plaza Business"
         }
       }
+    },
+    "cta": {
+      "primary": "Start for free",
+      "secondary": "Talk to a specialist",
+      "microcopy": "No credit card · Live in minutes"
+    },
+    "solutions": {
+      "eyebrow": "Solutions",
+      "title": "Built for your operation — not a generic customer.",
+      "subtitle": "Pick the scenario that looks most like your day-to-day.",
+      "cards": {
+        "buildings": {
+          "for": "Built for buildings and condominiums",
+          "title": "Commercial buildings and condominiums",
+          "pain": "PMOC is mandatory, but nobody in the building has time to keep up.",
+          "cta": "See how it works for condominiums"
+        },
+        "multiUnit": {
+          "for": "Built for multi-unit networks",
+          "title": "Networks with multiple units",
+          "pain": "Every unit runs differently. Without a central system, you cannot tell which one is at risk.",
+          "cta": "See how it works for networks"
+        },
+        "industry": {
+          "for": "Built for industry",
+          "title": "Industry and plant",
+          "pain": "A stopped machine costs more than any maintenance plan you postponed.",
+          "cta": "See how it works for industry"
+        }
+      }
+    },
+    "platform": {
+      "eyebrow": "Platform",
+      "title": "Not just a maintenance app. The backbone of your operation.",
+      "subtitle": "Built to grow with you — isolated data and modules that turn on when you need them.",
+      "pillars": {
+        "isolation": {
+          "title": "Your data stays yours",
+          "body": "Every customer runs in an isolated space. No other tenant sees what belongs to your operation."
+        },
+        "modular": {
+          "title": "Grows at your pace",
+          "body": "Turn on what you need, when you need it — without switching systems when the operation changes size."
+        },
+        "solid": {
+          "title": "Serious enough to scale",
+          "body": "Role permissions, organized units, and auditable history — a base for operations that cannot improvise."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Pick a plan. Start without drama.",
+      "subtitle": "Clear trial, easy exit, no fine print hiding in the middle of the path.",
+      "cta": "Start now",
+      "reassurance": "Cancel anytime. Your data is yours.",
+      "faqTitle": "Questions that stall the decision",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "price": "Contact us",
+          "blurb": "Validate PMOC and work orders in one unit.",
+          "features": [
+            "1 unit",
+            "PMOC + Work Orders",
+            "Up to 5 users"
+          ]
+        },
+        "operations": {
+          "name": "Operations",
+          "price": "Contact us",
+          "blurb": "For teams that live on maintenance and compliance.",
+          "features": [
+            "Multiple units",
+            "Roles and permissions",
+            "History and report export",
+            "Priority support"
+          ]
+        },
+        "scale": {
+          "name": "Scale",
+          "price": "Contact us",
+          "blurb": "For networks that need central control.",
+          "features": [
+            "Unlimited units*",
+            "Guided onboarding",
+            "Dedicated SLA",
+            "Modules on demand"
+          ]
+        }
+      },
+      "faq": {
+        "card": {
+          "q": "Do I need a credit card to try it?",
+          "a": "No. You start the trial without a card and only decide later if it fits the operation."
+        },
+        "data": {
+          "q": "What happens to my data if I cancel?",
+          "a": "Your data stays yours. You can export what you need before closing — we do not hold your operation hostage to a spreadsheet."
+        },
+        "goLive": {
+          "q": "How long to go live?",
+          "a": "Lean operations go live in minutes. Larger networks get guided onboarding so history is not lost on the way."
+        }
+      }
+    },
+    "closing": {
+      "title": "Stop operating in the dark.",
+      "subtitle": "Every day without control is another outdated spreadsheet, another lost work order, another risk that only shows up when it is already late. Start now — or talk to someone who has helped operations like yours leave the blackout behind."
+    },
+    "footer": {
+      "tagline": "Asset ops, PMOC, and work orders in one flow.",
+      "rights": "All rights reserved.",
+      "contactPrompt": "Still have questions?"
     }
   },
   "nav": {

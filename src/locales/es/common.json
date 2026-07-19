@@ -28,12 +28,13 @@
     },
     "hero": {
       "badge": "✨ La nueva era de la gestión inteligente",
+      "eyebrow": "Hecho para operaciones que no pueden detenerse.",
       "titlePrefix": "Todo su negocio en una ",
       "titleHighlight": "única plataforma",
-      "subtitle": "Abandone las hojas de cálculo y los sistemas fragmentados. Rolvix unifica inventario, alquileres, clientes y finanzas en un ecosistema perfecto y automatizado.",
-      "socialProof": "Únase a decenas de gestores",
+      "subtitle": "Basta de hojas de cálculo perdidas y mantenimiento correctivo de última hora. Rolvix centraliza PMOC, órdenes de servicio y activos en un solo flujo — con conformidad garantizada, sin esfuerzo manual.",
       "ctaPrimary": "Empezar gratis",
-      "ctaSecondary": "Hablar con ventas",
+      "ctaMicrocopy": "Sin tarjeta de crédito",
+      "ctaSecondary": "Hablar con un especialista",
       "products": {
         "inventory": "Inventario",
         "hr": "RR. HH.",
@@ -87,18 +88,21 @@
       },
       "tempo2": {
         "eyebrow": "Paso 2",
-        "title": "Un sistema. Todos los procesos.",
-        "description": "Del activo a la orden de trabajo: un flujo continuo, sin herramientas paralelas."
+        "title": "Un sistema. Todos conectados.",
+        "description": "El técnico ve la prioridad equivocada porque nadie actualizó el tablero. El gestor solo se entera de que el plazo se venció cuando el cliente llama a reclamar. Y quien firma el cheque ve todo eso un mes después, en un informe que ya no sirve para decidir nada.",
+        "description2": "En Rolvix, cada persona ve exactamente lo que necesita para hacer su trabajo — ni más, ni menos. El técnico recibe la orden de servicio correcta, en el bolsillo. El gestor sigue a cada equipo en tiempo real. Quien decide ve el panorama completo, sin esperar ninguna hoja de cálculo.",
+        "description3": "El resultado no es solo visibilidad — es una operación que se mueve junta, del piso a la sala de dirección, sin que nadie pregunte \"y entonces, ¿cómo va esto?\" otra vez."
       },
       "tempo3": {
         "eyebrow": "Paso 3",
-        "title": "Gestión inteligente y automatizada.",
-        "description": "Planes, alertas e indicadores que anticipan la operación — no solo la registran."
+        "title": "La auditoría no es sorpresa. Es rutina.",
+        "description": "La inspección llegó sin avisar y el informe PMOC desapareció en una carpeta que nadie recuerda dónde quedó. Cada registro que falta no es solo un contratiempo — es una multa esperando la fecha correcta para ocurrir.",
+        "description2": "Rolvix registra el historial de cada activo automáticamente: quién hizo qué, cuándo, con qué pieza, con foto y firma adjuntas. Nada depende de que alguien recuerde completar la hoja de cálculo.",
+        "description3": "En la próxima visita del inspector, usted no corre detrás del papel — exporta el informe en segundos y muestra una operación al día, sin drama, sin susto."
       },
-      "tempo4": {
-        "eyebrow": "Paso 4",
-        "title": "Listo para escalar.",
-        "description": "Nuevos clientes y unidades en minutos, con aislamiento multi-tenant."
+      "bridge": {
+        "text": "Eso es solo la base. Vea cómo Rolvix encaja en su tipo de operación.",
+        "cta": "Ver soluciones por segmento"
       },
       "mockups": {
         "modules": {
@@ -149,8 +153,141 @@
           "tenantA": "Hotel Atlántico",
           "tenantB": "Resort Verde",
           "tenantC": "Plaza Business"
+        },
+        "stepTwo": {
+          "technician": "Técnico",
+          "technicianDetail": "La orden correcta en el celular, con prioridad clara.",
+          "manager": "Gestor",
+          "managerDetail": "Equipos y plazos en tiempo real, sin cazar el estado.",
+          "director": "Dirección",
+          "directorDetail": "Panorama de la operación sin esperar el informe mensual."
+        },
+        "stepThree": {
+          "title": "Informe PMOC",
+          "ref": "Ref. #2841",
+          "history": "Historial",
+          "historyLine": "Filtro + higiene · 12 jul · Unidad Centro",
+          "signature": "Firma del responsable",
+          "signatureMeta": "Registrada a las 14:22",
+          "attachment": "Foto del servicio",
+          "attachmentMeta": "Anexo obligatorio · 2 archivos",
+          "export": "Exportar informe"
         }
       }
+    },
+    "cta": {
+      "primary": "Empezar gratis",
+      "secondary": "Hablar con un especialista",
+      "microcopy": "Sin tarjeta de crédito · Configuración en minutos"
+    },
+    "solutions": {
+      "eyebrow": "Soluciones",
+      "title": "Hecho para su operación — no para un cliente genérico.",
+      "subtitle": "Elija el escenario que más se parece a su día a día.",
+      "cards": {
+        "buildings": {
+          "for": "Hecho para edificios y condominios",
+          "title": "Edificios comerciales y condominios",
+          "pain": "El PMOC es obligatorio, pero nadie en el condominio tiene tiempo de seguirlo.",
+          "cta": "Ver cómo funciona para condominios"
+        },
+        "multiUnit": {
+          "for": "Hecho para redes multi-sede",
+          "title": "Redes con múltiples unidades",
+          "pain": "Cada unidad opera distinto. Sin un sistema central, no sabe cuál está en riesgo.",
+          "cta": "Ver cómo funciona para redes"
+        },
+        "industry": {
+          "for": "Hecho para industria",
+          "title": "Industria y planta",
+          "pain": "Una máquina parada cuesta más que cualquier plan de mantenimiento que usted aplazó.",
+          "cta": "Ver cómo funciona para industria"
+        }
+      }
+    },
+    "platform": {
+      "eyebrow": "Plataforma",
+      "title": "No es solo una app de mantenimiento. Es la columna vertebral de su operación.",
+      "subtitle": "Hecha para crecer con usted — con datos aislados y módulos que se activan cuando los necesita.",
+      "pillars": {
+        "isolation": {
+          "title": "Sus datos, solo suyos",
+          "body": "Cada cliente opera en un espacio aislado. Ningún otro tenant ve lo que es de su operación."
+        },
+        "modular": {
+          "title": "Crece a su ritmo",
+          "body": "Active lo que necesita, cuando lo necesita — sin cambiar de sistema cuando la operación cambia de tamaño."
+        },
+        "solid": {
+          "title": "Lo bastante serio para escalar",
+          "body": "Permisos por rol, unidades organizadas e historial auditable — base para operaciones que no pueden improvisar."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Precios",
+      "title": "Elija el plan. Empiece sin drama.",
+      "subtitle": "Trial claro, salida fácil, sin letra chica escondida a mitad de camino.",
+      "cta": "Empezar ahora",
+      "reassurance": "Cancele cuando quiera. Sus datos son suyos.",
+      "faqTitle": "Preguntas que frenan la decisión",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "price": "A consultar",
+          "blurb": "Para validar PMOC y órdenes en una unidad.",
+          "features": [
+            "1 unidad",
+            "PMOC + Órdenes de servicio",
+            "Hasta 5 usuarios"
+          ]
+        },
+        "operations": {
+          "name": "Operaciones",
+          "price": "A consultar",
+          "blurb": "Para quien vive de mantenimiento y cumplimiento.",
+          "features": [
+            "Múltiples unidades",
+            "Roles y permisos",
+            "Historial y exportación de informes",
+            "Soporte prioritario"
+          ]
+        },
+        "scale": {
+          "name": "Escala",
+          "price": "A consultar",
+          "blurb": "Para redes que necesitan control central.",
+          "features": [
+            "Unidades ilimitadas*",
+            "Onboarding asistido",
+            "SLA dedicado",
+            "Módulos bajo demanda"
+          ]
+        }
+      },
+      "faq": {
+        "card": {
+          "q": "¿Necesito tarjeta de crédito para probar?",
+          "a": "No. Empieza el trial sin tarjeta y solo decide después si encaja en la operación."
+        },
+        "data": {
+          "q": "¿Qué pasa con mis datos si cancelo?",
+          "a": "Sus datos siguen siendo suyos. Puede exportar lo que necesite antes de cerrar — no retenemos su operación como rehén de una hoja de cálculo."
+        },
+        "goLive": {
+          "q": "¿Cuánto tarda poner en producción?",
+          "a": "Operaciones ágiles suben en minutos. Redes mayores pasan por un onboarding guiado para no perder historial en el camino."
+        }
+      }
+    },
+    "closing": {
+      "title": "Basta de operar a ciegas.",
+      "subtitle": "Cada día sin control es otra hoja desactualizada, otra orden de servicio perdida, otro riesgo que solo aparece cuando ya es tarde. Empiece ahora — o hable con quien ya ayudó a operaciones como la suya a salir del apagón."
+    },
+    "footer": {
+      "tagline": "Operación de activos, PMOC y órdenes en un solo flujo.",
+      "rights": "Todos los derechos reservados.",
+      "contactPrompt": "¿Todavía con dudas?"
     }
   },
   "nav": {

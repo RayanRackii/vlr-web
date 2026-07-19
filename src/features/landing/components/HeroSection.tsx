@@ -4,7 +4,6 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   ModuleMockupCard,
@@ -12,49 +11,43 @@ import {
 } from "@/features/landing/components/ModuleMockupCard"
 import { cn } from "@/lib/utils"
 
-const SOCIAL_AVATARS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=128&h=128&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&h=128&q=80",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=128&h=128&q=80",
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=128&h=128&q=80",
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&h=128&q=80",
-] as const
-
 const MARQUEE_MODULES = [
-  { type: "rh", productKey: "hr" },
-  { type: "financeiro", productKey: "finance" },
   { type: "pmoc", productKey: "pmoc" },
   { type: "os", productKey: "workOrder" },
   { type: "inventario", productKey: "inventory" },
   { type: "aluguel", productKey: "rentals" },
+  { type: "rh", productKey: "hr" },
+  { type: "financeiro", productKey: "finance" },
 ] as const
 
 const FLOATING_CARDS = [
   {
     type: "pmoc",
     moduleKey: "pmoc",
-    positionClassName: "top-[15%] left-[10%] hidden lg:block",
+    positionClassName: "top-[12%] left-[8%] hidden lg:block xl:left-[10%]",
     cardClassName: "-rotate-12",
     duration: 4,
   },
   {
     type: "inventario",
     moduleKey: "inventory",
-    positionClassName: "bottom-[15%] left-[15%] hidden lg:block",
+    positionClassName:
+      "bottom-[22%] left-[10%] hidden lg:block xl:bottom-[24%] xl:left-[14%]",
     cardClassName: "-rotate-6",
     duration: 5.2,
   },
   {
-    type: "financeiro",
-    moduleKey: "finance",
-    positionClassName: "top-[20%] right-[10%] hidden lg:block",
+    type: "os",
+    moduleKey: "workOrder",
+    positionClassName: "top-[14%] right-[8%] hidden lg:block xl:right-[10%]",
     cardClassName: "rotate-6",
     duration: 4.6,
   },
   {
     type: "aluguel",
     moduleKey: "rentals",
-    positionClassName: "bottom-[15%] right-[15%] hidden lg:block",
+    positionClassName:
+      "bottom-[22%] right-[10%] hidden lg:block xl:bottom-[24%] xl:right-[14%]",
     cardClassName: "rotate-12",
     duration: 5.8,
   },
@@ -65,6 +58,9 @@ const FLOATING_CARDS = [
   cardClassName: string
   duration: number
 }[]
+
+const MARQUEE_EDGE_FADE =
+  "linear-gradient(to right, transparent, black 10%, black 90%, transparent)"
 
 type MarqueeModule = {
   type: ModuleMockupType
@@ -77,31 +73,28 @@ function HeroModuleMarquee({ modules }: { modules: MarqueeModule[] }) {
 
   return (
     <div
-      className="pointer-events-none absolute left-1/2 top-[60%] z-0 w-screen -translate-x-1/2 -translate-y-1/2 overflow-hidden opacity-60"
+      className="pointer-events-none absolute inset-x-0 bottom-[max(1rem,2vh)] z-0 overflow-hidden max-lg:opacity-40 lg:opacity-55"
       style={{
-        maskImage:
-          "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-        WebkitMaskImage:
-          "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+        maskImage: MARQUEE_EDGE_FADE,
+        WebkitMaskImage: MARQUEE_EDGE_FADE,
       }}
       aria-hidden="true"
     >
       <div
         className={cn(
           "flex w-max will-change-transform",
-          !prefersReducedMotion && "animate-marquee-right motion-reduce:animate-none"
+          !prefersReducedMotion &&
+            "animate-marquee-right motion-reduce:animate-none",
         )}
       >
         {[0, 1].map((copyIndex) => (
-          <div
-            key={copyIndex}
-            className="flex shrink-0 gap-6 pr-6"
-          >
+          <div key={copyIndex} className="flex shrink-0 gap-6 pr-6">
             {repeatedModules.map((module, moduleIndex) => (
               <ModuleMockupCard
                 key={`${copyIndex}-${module.type}-${moduleIndex}`}
                 type={module.type}
                 title={module.title}
+                className="scale-[0.85] sm:scale-90 lg:scale-95"
               />
             ))}
           </div>
@@ -155,13 +148,13 @@ export function HeroSection() {
         type: module.type,
         title: t(`landing.hero.products.${module.productKey}`),
       })),
-    [t]
+    [t],
   )
 
   return (
     <section
       aria-labelledby="landing-hero-title"
-      className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden"
+      className="relative flex min-h-[calc(100vh-4rem)] w-full flex-col overflow-hidden"
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,hsl(var(--primary)/0.08),transparent)]"
@@ -181,33 +174,16 @@ export function HeroSection() {
         />
       ))}
 
-      <div className="absolute left-1/2 top-[8%] z-20 w-full max-w-5xl -translate-x-1/2 px-4 text-center">
-        <div className="relative isolate z-30 flex flex-col items-center">
+      <div className="relative z-20 mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pb-[clamp(7.5rem,20vh,13rem)] pt-[clamp(2rem,6vh,4.5rem)] text-center">
+        <div className="relative isolate z-30 flex w-full flex-col items-center">
           <div
             className="pointer-events-none absolute inset-0 z-[-1] scale-150 rounded-full bg-background/90 blur-[80px]"
             aria-hidden="true"
           />
-          <div className="mb-8 flex flex-col items-center gap-3">
-            <div className="flex items-center pl-2">
-              {SOCIAL_AVATARS.map((src, index) => (
-                <Avatar
-                  key={src}
-                  className={cn(
-                    "size-8 border-2 border-background",
-                    index > 0 && "-ml-2"
-                  )}
-                >
-                  <AvatarImage src={src} alt="" />
-                  <AvatarFallback className="text-[10px]">
-                    {String.fromCharCode(65 + index)}
-                  </AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("landing.hero.socialProof")}
-            </p>
-          </div>
+
+          <p className="mb-5 text-[13px] leading-snug text-muted-foreground md:text-sm">
+            {t("landing.hero.eyebrow")}
+          </p>
 
           <h1
             id="landing-hero-title"
@@ -219,29 +195,34 @@ export function HeroSection() {
             </span>
           </h1>
 
-          <h2 className="mt-8 max-w-3xl text-balance text-base font-normal leading-relaxed text-muted-foreground md:text-xl lg:text-2xl">
+          <h2 className="mt-6 max-w-3xl text-balance text-base font-normal leading-relaxed text-muted-foreground md:mt-8 md:text-xl lg:text-2xl">
             {t("landing.hero.subtitle")}
           </h2>
 
-          <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Button
-              type="button"
-              size="lg"
-              onClick={() => {
-                void navigate("/onboarding")
-              }}
-            >
-              {t("landing.hero.ctaPrimary")}
+          <div className="mt-8 flex flex-col items-center gap-2 sm:mt-10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => {
+                  void navigate("/onboarding")
+                }}
+              >
+              {t("landing.cta.primary")}
               <ArrowRight data-icon="inline-end" />
             </Button>
             <Button
               type="button"
               variant="outline"
               size="lg"
-              render={<a href="#pricing" />}
+              render={<a href="#contact" />}
             >
-              {t("landing.hero.ctaSecondary")}
+              {t("landing.cta.secondary")}
             </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("landing.cta.microcopy")}
+          </p>
           </div>
         </div>
       </div>

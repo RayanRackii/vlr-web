@@ -19,10 +19,9 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react"
-import { useCallback, useRef, useState, type RefObject } from "react"
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { useTranslation } from "react-i18next"
 
-import { BackgroundBeams } from "@/features/landing/components/BackgroundBeams"
 import { BlurFade } from "@/features/landing/components/BlurFade"
 import { HubSparkles } from "@/features/landing/components/HubSparkles"
 import { ProductionBeamLine } from "@/features/landing/components/ProductionBeamLine"
@@ -127,7 +126,6 @@ export function IntelligenceHubBridge() {
   const inventoryRef = useRef<HTMLDivElement>(null)
   const prefersReducedMotion = useReducedMotion()
   const isInView = useInView(containerRef, { amount: 0.1 })
-  const [isPlateau, setIsPlateau] = useState(false)
   const hubControls = useAnimationControls()
   const pmocControls = useAnimationControls()
   const workOrderControls = useAnimationControls()
@@ -138,41 +136,53 @@ export function IntelligenceHubBridge() {
     offset: ["start start", "end end"],
   })
 
+  const [hubPowered, setHubPowered] = useState(false)
+  const [isPlateau, setIsPlateau] = useState(false)
+
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    // Arm once beams are mostly drawn; keep running through the sustained plateau.
-    const nextIsPlateau = latest >= 0.4 && latest <= 0.95
+    // Cold intro, then power/plateau through the end of the pin (no trailing dead zone).
+    const nextPowered = latest >= 0.38
+    const nextIsPlateau = latest >= 0.62
+
+    setHubPowered((current) => (current === nextPowered ? current : nextPowered))
     setIsPlateau((current) =>
       current === nextIsPlateau ? current : nextIsPlateau,
     )
   })
 
-  // Both layers reuse the same curve: cold data enters, live data exits.
+  useEffect(() => {
+    const latest = scrollYProgress.get()
+    setHubPowered(latest >= 0.38)
+    setIsPlateau(latest >= 0.62)
+  }, [scrollYProgress])
+
+  // Story fills the whole pin: intro → beams → peak at the end (no exit hold).
   const chaosToHubProgress = useTransform(
     scrollYProgress,
-    [0.15, 0.45, 0.85, 1],
-    [0, 1, 1, 1],
+    [0, 0.1, 0.4, 1],
+    [0, 0, 1, 1],
   )
   const hubToOrderProgress = useTransform(
     scrollYProgress,
-    [0.35, 0.65, 0.85, 1],
-    [0, 1, 1, 1],
+    [0, 0.34, 0.58, 1],
+    [0, 0, 1, 1],
   )
 
-  // Chaos: “dead”, never invisible — opacity floor 0.55, blur ≤ 1.5px
+  // Chaos: readable at pin start, drifts toward a muted “dead” look.
   const chaosOpacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.5, 1],
-    [0.75, 0.6, 0.55, 0.55],
+    [0, 0.22, 0.55, 1],
+    [0.8, 0.65, 0.55, 0.55],
   )
   const chaosGrayscale = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.5, 1],
-    [0.55, 0.85, 1, 1],
+    [0, 0.22, 0.55, 1],
+    [0.45, 0.75, 1, 1],
   )
   const chaosBlur = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.5, 1],
-    [0, 1, 1.5, 1.5],
+    [0, 0.22, 0.55, 1],
+    [0, 0.8, 1.5, 1.5],
   )
   const chaosFilter = useTransform(
     [chaosGrayscale, chaosBlur],
@@ -180,73 +190,74 @@ export function IntelligenceHubBridge() {
       `grayscale(${String(grayscale)}) blur(${String(blur)}px)`,
   )
 
-  // Order modules: reveal 0.3→0.55 stagger, hold until 0.85
+  // Order modules stay ghosted until beams leave the hub.
   const orderOpacity = [
-    useTransform(scrollYProgress, [0.3, 0.48, 0.85, 1], [0.15, 1, 1, 1]),
-    useTransform(scrollYProgress, [0.34, 0.52, 0.85, 1], [0.15, 1, 1, 1]),
-    useTransform(scrollYProgress, [0.38, 0.55, 0.85, 1], [0.15, 1, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.36, 0.55, 1], [0.12, 0.12, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.4, 0.59, 1], [0.12, 0.12, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.44, 0.63, 1], [0.12, 0.12, 1, 1]),
   ] as const
   const orderFilter = [
     useTransform(
       scrollYProgress,
-      [0.3, 0.48, 0.85, 1],
+      [0, 0.36, 0.55, 1],
       [
-        "saturate(0.4) blur(6px)",
-        "saturate(1) blur(0px)",
+        "saturate(0.35) blur(7px)",
+        "saturate(0.35) blur(7px)",
         "saturate(1) blur(0px)",
         "saturate(1) blur(0px)",
       ],
     ),
     useTransform(
       scrollYProgress,
-      [0.34, 0.52, 0.85, 1],
+      [0, 0.4, 0.59, 1],
       [
-        "saturate(0.4) blur(6px)",
-        "saturate(1) blur(0px)",
+        "saturate(0.35) blur(7px)",
+        "saturate(0.35) blur(7px)",
         "saturate(1) blur(0px)",
         "saturate(1) blur(0px)",
       ],
     ),
     useTransform(
       scrollYProgress,
-      [0.38, 0.55, 0.85, 1],
+      [0, 0.44, 0.63, 1],
       [
-        "saturate(0.4) blur(6px)",
-        "saturate(1) blur(0px)",
+        "saturate(0.35) blur(7px)",
+        "saturate(0.35) blur(7px)",
         "saturate(1) blur(0px)",
         "saturate(1) blur(0px)",
       ],
     ),
   ] as const
   const orderScale = [
-    useTransform(scrollYProgress, [0.3, 0.48, 0.85, 1], [0.95, 1, 1, 1]),
-    useTransform(scrollYProgress, [0.34, 0.52, 0.85, 1], [0.95, 1, 1, 1]),
-    useTransform(scrollYProgress, [0.38, 0.55, 0.85, 1], [0.95, 1, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.36, 0.55, 1], [0.94, 0.94, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.4, 0.59, 1], [0.94, 0.94, 1, 1]),
+    useTransform(scrollYProgress, [0, 0.44, 0.63, 1], [0.94, 0.94, 1, 1]),
   ] as const
 
-  // Hub power-on: cold/neutral until the incoming data reaches the core.
+  // Hub power-on only after the cold intro — grey LED until then.
   const hubLightColor = useTransform(
     scrollYProgress,
-    [0.3, 0.4],
-    ["#94a3b8", "#10b981"],
+    [0, 0.34, 0.44],
+    ["#94a3b8", "#94a3b8", "#10b981"],
   )
   const hubLightShadow = useTransform(
     scrollYProgress,
-    [0.3, 0.4],
+    [0, 0.34, 0.44],
     [
+      "0 0 0 rgba(16,185,129,0)",
       "0 0 0 rgba(16,185,129,0)",
       "0 0 16px rgba(16,185,129,0.9)",
     ],
   )
   const hubGlowOpacity = useTransform(
     scrollYProgress,
-    [0.3, 0.4, 0.85, 1],
-    [0, 1, 1, 1],
+    [0, 0.34, 0.44, 1],
+    [0, 0, 1, 1],
   )
   const hubGlowScale = useTransform(
     scrollYProgress,
-    [0.3, 0.4, 0.85, 1],
-    [0.85, 1.15, 1.15, 1.15],
+    [0, 0.34, 0.44, 1],
+    [0.85, 0.85, 1.15, 1.15],
   )
 
   const nodeRefs: Record<HubNodeId, RefObject<HTMLDivElement | null>> = {
@@ -324,11 +335,9 @@ export function IntelligenceHubBridge() {
     <section
       ref={containerRef}
       aria-labelledby="landing-bridge-title"
-      className="relative h-[260vh] w-full"
+      className="relative h-[150vh] w-full"
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)]">
-        <BackgroundBeams />
-
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 md:px-12 lg:px-24">
           <BlurFade className="mx-auto max-w-4xl text-center">
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-primary md:text-sm">
@@ -347,9 +356,33 @@ export function IntelligenceHubBridge() {
 
           <div
             ref={diagramRef}
-            className="relative mx-auto mt-8 grid w-full max-w-6xl grid-cols-1 items-center gap-10 md:min-h-[420px] md:grid-cols-[minmax(0,1fr)_9rem_minmax(0,1fr)] md:gap-10 lg:gap-16"
+            className="relative isolate mx-auto mt-8 w-full max-w-6xl md:min-h-[420px]"
           >
-            <div className="relative z-[5] flex flex-col gap-6 md:gap-8">
+            <div className="pointer-events-none absolute inset-0 z-0 overflow-visible">
+              {CHAOS_NODES.map((sourceNode, index) => {
+                const destinationNode = ORDER_NODES[index]
+
+                return (
+                  <ProductionBeamLine
+                    key={`${sourceNode.id}-${destinationNode.id}`}
+                    containerRef={diagramRef}
+                    sourceRef={nodeRefs[sourceNode.id]}
+                    hubRef={hubRef}
+                    destinationRef={nodeRefs[destinationNode.id]}
+                    incomingProgress={chaosToHubProgress}
+                    outgoingProgress={hubToOrderProgress}
+                    outputColor={destinationNode.beamColor}
+                    startDelay={index * 420}
+                    active={isProductionActive}
+                    onProcess={pulseHub}
+                    onDeliver={deliveryCallbacks[index]}
+                  />
+                )
+              })}
+            </div>
+
+            <div className="relative z-10 grid w-full grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_9rem_minmax(0,1fr)] md:gap-10 lg:gap-16">
+            <div className="relative flex flex-col gap-6 md:gap-8">
               <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground md:text-left">
                 {t("landing.bridge.chaosLabel")}
               </p>
@@ -399,7 +432,7 @@ export function IntelligenceHubBridge() {
               })}
             </div>
 
-            <div className="relative z-20 flex flex-col items-center justify-center py-4">
+            <div className="relative flex flex-col items-center justify-center py-4">
               <HubGlow
                 opacity={hubGlowOpacity}
                 scale={hubGlowScale}
@@ -414,7 +447,7 @@ export function IntelligenceHubBridge() {
                   opacity: prefersReducedMotion ? 0.75 : hubGlowOpacity,
                 }}
                 animate={
-                  prefersReducedMotion
+                  prefersReducedMotion || !hubPowered
                     ? undefined
                     : { scale: [0.92, 1.12, 0.92] }
                 }
@@ -427,7 +460,7 @@ export function IntelligenceHubBridge() {
               />
               <motion.div
                 ref={hubRef}
-                className="relative grid size-32 place-items-center rounded-[2rem] border-2 bg-background text-foreground md:size-36"
+                className="relative grid size-32 place-items-center rounded-[2rem] border-2 border-slate-300 bg-background text-foreground md:size-36"
                 animate={prefersReducedMotion ? undefined : hubControls}
                 style={
                   prefersReducedMotion
@@ -476,7 +509,7 @@ export function IntelligenceHubBridge() {
               </motion.div>
             </div>
 
-            <div className="relative z-[5] grid gap-5">
+            <div className="relative grid gap-5">
               <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-primary md:text-left">
                 {t("landing.bridge.orderLabel")}
               </p>
@@ -521,27 +554,7 @@ export function IntelligenceHubBridge() {
                 )
               })}
             </div>
-
-            {CHAOS_NODES.map((sourceNode, index) => {
-              const destinationNode = ORDER_NODES[index]
-
-              return (
-                <ProductionBeamLine
-                  key={`${sourceNode.id}-${destinationNode.id}`}
-                  containerRef={diagramRef}
-                  sourceRef={nodeRefs[sourceNode.id]}
-                  hubRef={hubRef}
-                  destinationRef={nodeRefs[destinationNode.id]}
-                  incomingProgress={chaosToHubProgress}
-                  outgoingProgress={hubToOrderProgress}
-                  outputColor={destinationNode.beamColor}
-                  startDelay={index * 420}
-                  active={isProductionActive}
-                  onProcess={pulseHub}
-                  onDeliver={deliveryCallbacks[index]}
-                />
-              )
-            })}
+            </div>
           </div>
         </div>
       </div>

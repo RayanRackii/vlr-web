@@ -4,10 +4,12 @@ import {
   useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
+  useTransform,
   type MotionValue,
 } from "framer-motion"
 import {
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -37,12 +39,20 @@ type PathCoords = {
   endY: number
 }
 
+type GlowHead = {
+  x: number
+  y: number
+  opacity: number
+}
+
 const EMPTY_COORDS: PathCoords = {
   startX: 0,
   startY: 0,
   endX: 0,
   endY: 0,
 }
+
+const EMPTY_HEAD: GlowHead = { x: 0, y: 0, opacity: 0 }
 
 const wait = (duration: number) =>
   new Promise<void>((resolve) => {
@@ -76,6 +86,29 @@ function measurePath(
   }
 }
 
+function readHead(
+  pathElement: SVGPathElement | null,
+  progress: number,
+): GlowHead {
+  if (!pathElement) {
+    return EMPTY_HEAD
+  }
+
+  const totalLength = pathElement.getTotalLength()
+  if (totalLength <= 0) {
+    return EMPTY_HEAD
+  }
+
+  const clamped = Math.min(Math.max(progress, 0), 1)
+  const point = pathElement.getPointAtLength(clamped * totalLength)
+
+  return {
+    x: point.x,
+    y: point.y,
+    opacity: clamped <= 0.02 || clamped >= 0.98 ? 0 : 1,
+  }
+}
+
 export function ProductionBeamLine({
   containerRef,
   sourceRef,
@@ -90,6 +123,8 @@ export function ProductionBeamLine({
   onDeliver,
 }: ProductionBeamLineProps) {
   const prefersReducedMotion = useReducedMotion()
+  const coldGradientId = `beam-cold-${useId().replaceAll(":", "")}`
+  const liveGradientId = `beam-live-${useId().replaceAll(":", "")}`
   const ingestPathRef = useRef<SVGPathElement>(null)
   const emitPathRef = useRef<SVGPathElement>(null)
   const onProcessRef = useRef(onProcess)
@@ -100,6 +135,8 @@ export function ProductionBeamLine({
   const [phase, setPhase] = useState<ProductionPhase>("idle")
   const [ingestCoords, setIngestCoords] = useState<PathCoords>(EMPTY_COORDS)
   const [emitCoords, setEmitCoords] = useState<PathCoords>(EMPTY_COORDS)
+  const [ingestHead, setIngestHead] = useState<GlowHead>(EMPTY_HEAD)
+  const [emitHead, setEmitHead] = useState<GlowHead>(EMPTY_HEAD)
   const [packetPoint, setPacketPoint] = useState({ x: 0, y: 0 })
   const [packetScale, setPacketScale] = useState(1)
   const [packetOpacity, setPacketOpacity] = useState(0)
@@ -112,34 +149,109 @@ export function ProductionBeamLine({
   const emitPath = buildCurvePath(emitCoords)
 
   useLayoutEffect(() => {
-    const container = containerRef.current
-    const source = sourceRef.current
-    const hub = hubRef.current
-    const destination = destinationRef.current
-
-    if (!container || !source || !hub || !destination) {
-      return
-    }
+    let cancelled = false
+    let resizeObserver: ResizeObserver | undefined
+    let tries = 0
 
     const updatePaths = () => {
-      setIngestCoords(measurePath(container, source, hub))
-      setEmitCoords(measurePath(container, hub, destination))
+      const container = containerRef.current
+      const source = sourceRef.current
+      const hub = hubRef.current
+      const destination = destinationRef.current
+
+      if (!container || !source || !hub || !destination) {
+        return false
+      }
+
+      const nextIngest = measurePath(container, source, hub)
+      const nextEmit = measurePath(container, hub, destination)
+      const ingestReady =
+        Math.hypot(
+          nextIngest.endX - nextIngest.startX,
+          nextIngest.endY - nextIngest.startY,
+        ) > 8
+      const emitReady =
+        Math.hypot(
+          nextEmit.endX - nextEmit.startX,
+          nextEmit.endY - nextEmit.startY,
+        ) > 8
+
+      if (!ingestReady || !emitReady) {
+        return false
+      }
+
+      setIngestCoords(nextIngest)
+      setEmitCoords(nextEmit)
+      return true
     }
 
-    updatePaths()
+    const onWindowChange = () => {
+      updatePaths()
+    }
 
-    const resizeObserver = new ResizeObserver(updatePaths)
-    resizeObserver.observe(container)
-    resizeObserver.observe(source)
-    resizeObserver.observe(hub)
-    resizeObserver.observe(destination)
-    window.addEventListener("resize", updatePaths)
+    const armObservers = () => {
+      const container = containerRef.current
+      const source = sourceRef.current
+      const hub = hubRef.current
+      const destination = destinationRef.current
+
+      if (!container || !source || !hub || !destination) {
+        return
+      }
+
+      resizeObserver = new ResizeObserver(onWindowChange)
+      resizeObserver.observe(container)
+      resizeObserver.observe(source)
+      resizeObserver.observe(hub)
+      resizeObserver.observe(destination)
+      window.addEventListener("resize", onWindowChange)
+      window.addEventListener("scroll", onWindowChange, { passive: true })
+    }
+
+    const tryMeasure = () => {
+      if (cancelled) {
+        return
+      }
+
+      if (updatePaths()) {
+        armObservers()
+        return
+      }
+
+      tries += 1
+      if (tries < 40) {
+        window.requestAnimationFrame(tryMeasure)
+      }
+    }
+
+    tryMeasure()
 
     return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener("resize", updatePaths)
+      cancelled = true
+      resizeObserver?.disconnect()
+      window.removeEventListener("resize", onWindowChange)
+      window.removeEventListener("scroll", onWindowChange)
     }
   }, [containerRef, destinationRef, hubRef, sourceRef])
+
+  useMotionValueEvent(incomingProgress, "change", (latest) => {
+    setIngestHead(readHead(ingestPathRef.current, latest))
+  })
+
+  useMotionValueEvent(outgoingProgress, "change", (latest) => {
+    setEmitHead(readHead(emitPathRef.current, latest))
+  })
+
+  useLayoutEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setIngestHead(readHead(ingestPathRef.current, incomingProgress.get()))
+      setEmitHead(readHead(emitPathRef.current, outgoingProgress.get()))
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [emitPath, incomingProgress, ingestPath, outgoingProgress])
 
   useMotionValueEvent(packetProgress, "change", (latest) => {
     const currentPhase = phaseRef.current
@@ -219,7 +331,6 @@ export function ProductionBeamLine({
         packetProgress.set(0)
         setPacketOpacity(0.55)
         setPacketScale(0.55)
-        // Seed first emit position on the outgoing path immediately.
         const emitPathElement = emitPathRef.current
         if (emitPathElement) {
           const start = emitPathElement.getPointAtLength(0)
@@ -258,40 +369,91 @@ export function ProductionBeamLine({
     packetOpacity > 0.05
 
   const packetColor = phase === "emit" ? outputColor : "#64748b"
+  const showScrollHeads = !prefersReducedMotion && !active
+  const ingestOpacity = useTransform(incomingProgress, [0, 0.02, 1], [0, 1, 1])
+  const emitOpacity = useTransform(outgoingProgress, [0, 0.02, 1], [0, 1, 1])
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-0 overflow-visible"
+      className="pointer-events-none absolute inset-0 overflow-visible"
       aria-hidden="true"
     >
       <svg className="absolute inset-0 size-full overflow-visible">
+        <defs>
+          <linearGradient
+            id={coldGradientId}
+            gradientUnits="userSpaceOnUse"
+            x1={ingestCoords.startX}
+            y1={ingestCoords.startY}
+            x2={ingestCoords.endX}
+            y2={ingestCoords.endY}
+          >
+            <stop offset="0%" stopColor="#94A3B8" />
+            <stop offset="100%" stopColor="#64748B" />
+          </linearGradient>
+          <linearGradient
+            id={liveGradientId}
+            gradientUnits="userSpaceOnUse"
+            x1={emitCoords.startX}
+            y1={emitCoords.startY}
+            x2={emitCoords.endX}
+            y2={emitCoords.endY}
+          >
+            <stop offset="0%" stopColor="#10B981" />
+            <stop offset="100%" stopColor={outputColor} />
+          </linearGradient>
+        </defs>
+
+        {/* Only scroll-drawn beams — no static/dotted rail (avoids path spoilers). */}
         <motion.path
           ref={ingestPathRef}
           d={ingestPath}
           fill="none"
-          stroke="#64748b"
+          stroke={`url(#${coldGradientId})`}
           strokeLinecap="round"
           strokeWidth="3"
           style={{
             pathLength: prefersReducedMotion ? 1 : incomingProgress,
-            opacity: prefersReducedMotion ? 0.85 : incomingProgress,
-            filter: "drop-shadow(0 0 4px rgba(100,116,139,0.45))",
+            opacity: prefersReducedMotion ? 0.9 : ingestOpacity,
           }}
         />
         <motion.path
           ref={emitPathRef}
           d={emitPath}
           fill="none"
-          stroke={outputColor}
+          stroke={`url(#${liveGradientId})`}
           strokeLinecap="round"
           strokeWidth="3.5"
           style={{
             pathLength: prefersReducedMotion ? 1 : outgoingProgress,
-            opacity: prefersReducedMotion ? 0.9 : outgoingProgress,
-            filter: `drop-shadow(0 0 6px ${outputColor})`,
+            opacity: prefersReducedMotion ? 0.95 : emitOpacity,
           }}
         />
       </svg>
+
+      {showScrollHeads && ingestHead.opacity > 0 ? (
+        <div
+          className="absolute left-0 top-0 size-3 rounded-full will-change-transform"
+          style={{
+            backgroundColor: "#64748B",
+            opacity: ingestHead.opacity,
+            transform: `translate3d(${ingestHead.x}px, ${ingestHead.y}px, 0) translate(-50%, -50%)`,
+            boxShadow: "0 0 0 3px rgba(100,116,139,0.25), 0 0 16px 4px #64748B",
+          }}
+        />
+      ) : null}
+
+      {showScrollHeads && emitHead.opacity > 0 ? (
+        <div
+          className="absolute left-0 top-0 size-3.5 rounded-full will-change-transform"
+          style={{
+            backgroundColor: outputColor,
+            opacity: emitHead.opacity,
+            transform: `translate3d(${emitHead.x}px, ${emitHead.y}px, 0) translate(-50%, -50%)`,
+            boxShadow: `0 0 0 3px ${outputColor}40, 0 0 18px 5px ${outputColor}`,
+          }}
+        />
+      ) : null}
 
       {packetVisible ? (
         <div
