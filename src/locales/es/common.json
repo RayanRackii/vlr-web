@@ -11,6 +11,28 @@
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando..."
   },
+  "auth": {
+    "invite": {
+      "title": "Activar cuenta",
+      "welcome": "Bienvenido a Rolvix. Para activar su cuenta, defina una contraseña segura a continuación.",
+      "invalidLink": "El enlace de invitación no es válido o ha expirado.",
+      "passwordLabel": "Nueva contraseña",
+      "confirmPasswordLabel": "Confirmar nueva contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPasswordPlaceholder": "Repita la contraseña",
+      "submit": "Definir contraseña",
+      "submitting": "Guardando...",
+      "goToLogin": "Ir al inicio de sesión",
+      "toastSuccess": "¡Contraseña definida con éxito!",
+      "toastError": "No se pudo definir la contraseña. Inténtelo de nuevo.",
+      "validation": {
+        "passwordRequired": "Ingrese la nueva contraseña.",
+        "confirmRequired": "Confirme la nueva contraseña.",
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+        "mismatch": "Las contraseñas deben coincidir."
+      }
+    }
+  },
   "landing": {
     "scrollHint": "Desplácese hacia abajo ↓",
     "sectionEnd": "Fin de la sección",

@@ -11,6 +11,28 @@
     "searchPlaceholder": "Search...",
     "loading": "Loading..."
   },
+  "auth": {
+    "invite": {
+      "title": "Activate account",
+      "welcome": "Welcome to Rolvix. To activate your account, set a secure password below.",
+      "invalidLink": "Invite link is invalid or expired.",
+      "passwordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordPlaceholder": "Repeat the password",
+      "submit": "Set password",
+      "submitting": "Saving...",
+      "goToLogin": "Go to login",
+      "toastSuccess": "Password set successfully!",
+      "toastError": "Could not set the password. Please try again.",
+      "validation": {
+        "passwordRequired": "Enter a new password.",
+        "confirmRequired": "Confirm the new password.",
+        "passwordMin": "Password must be at least 8 characters.",
+        "mismatch": "Passwords must match."
+      }
+    }
+  },
   "landing": {
     "scrollHint": "Scroll down ↓",
     "sectionEnd": "End of section",

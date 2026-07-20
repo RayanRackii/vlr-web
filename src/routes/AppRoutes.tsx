@@ -7,6 +7,7 @@ import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
 import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { LoginPage } from "@/features/auth/LoginPage"
+import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
@@ -25,6 +26,7 @@ export function AppRoutes() {
       <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/invite" element={<SetPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<PlatformAdminRoute />}>
