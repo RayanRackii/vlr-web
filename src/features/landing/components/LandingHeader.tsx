@@ -5,12 +5,36 @@ import { Link, useNavigate } from "react-router-dom"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
+import {
+  MASTER_CHAPTER,
+  scrollToMasterChapter,
+} from "@/features/landing/components/masterScrollNav"
 
 const NAV_ITEMS = [
-  { href: "#features", labelKey: "landing.header.nav.features" },
-  { href: "#solutions", labelKey: "landing.header.nav.solutions" },
-  { href: "#platform", labelKey: "landing.header.nav.platform" },
-  { href: "#pricing", labelKey: "landing.header.nav.pricing" },
+  {
+    id: "features",
+    labelKey: "landing.header.nav.features",
+    kind: "chapter" as const,
+    chapterIndex: MASTER_CHAPTER.features,
+  },
+  {
+    id: "solutions",
+    labelKey: "landing.header.nav.solutions",
+    kind: "chapter" as const,
+    chapterIndex: MASTER_CHAPTER.solutions,
+  },
+  {
+    id: "platform",
+    labelKey: "landing.header.nav.platform",
+    kind: "chapter" as const,
+    chapterIndex: MASTER_CHAPTER.platform,
+  },
+  {
+    id: "pricing",
+    labelKey: "landing.header.nav.pricing",
+    kind: "anchor" as const,
+    href: "#pricing",
+  },
 ] as const
 
 export function LandingHeader() {
@@ -35,15 +59,28 @@ export function LandingHeader() {
           className="hidden items-center gap-6 md:flex"
           aria-label={t("landing.header.navAria")}
         >
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t(item.labelKey)}
-            </a>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.kind === "chapter" ? (
+              <button
+                key={item.id}
+                type="button"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => {
+                  scrollToMasterChapter(item.chapterIndex)
+                }}
+              >
+                {t(item.labelKey)}
+              </button>
+            ) : (
+              <a
+                key={item.id}
+                href={item.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t(item.labelKey)}
+              </a>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4">

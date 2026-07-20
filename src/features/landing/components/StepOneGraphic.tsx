@@ -91,6 +91,12 @@ export function StepOneGraphic({
     [mechanism.peakEnd - 0.04, result.peakStart],
     [0.92, 1],
   )
+  // Hide asset labels under the PMOC overlay to prevent text collision.
+  const assetsGridOpacity = useTransform(
+    pmocOpacity,
+    [0, 0.25, 0.55],
+    [1, 0.35, 0],
+  )
   const firstDataWidth = useTransform(
     progress,
     [result.start, result.peakStart],
@@ -229,11 +235,16 @@ export function StepOneGraphic({
               </div>
             </header>
 
-            <div className="grid flex-1 grid-cols-1 gap-2.5 p-4 sm:grid-cols-3">
+            <motion.div
+              className="grid flex-1 grid-cols-1 gap-2.5 p-4 sm:grid-cols-3"
+              style={
+                reducedMotion ? undefined : { opacity: assetsGridOpacity }
+              }
+            >
               {assets.map(({ label, location, Icon, accent }, index) => (
                 <motion.div
                   key={label}
-                  className="flex min-h-28 flex-col rounded-xl border border-border bg-background p-3 shadow-sm"
+                  className="flex min-h-28 min-w-0 flex-col rounded-xl border border-border bg-background p-3 shadow-sm"
                   style={assetAnimations[index]}
                 >
                   <div
@@ -241,21 +252,21 @@ export function StepOneGraphic({
                   >
                     <Icon className="size-4" aria-hidden="true" />
                   </div>
-                  <p className="text-xs font-semibold leading-snug text-foreground">
+                  <p className="truncate text-xs font-semibold leading-snug text-foreground">
                     {label}
                   </p>
-                  <p className="mt-1 text-[11px] leading-snug text-foreground/65 dark:text-foreground/70">
+                  <p className="mt-1 truncate text-[11px] leading-snug text-foreground/65 dark:text-foreground/70">
                     {location}
                   </p>
                   <div className="mt-auto flex items-center gap-1.5 pt-3">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                    <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
+                    <span className="truncate text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                       {t("landing.features.mockups.stepOne.active")}
                     </span>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {!reducedMotion ? (
               <motion.div
@@ -268,7 +279,7 @@ export function StepOneGraphic({
             ) : null}
 
             <motion.div
-              className="absolute inset-x-4 top-[88px] z-10 origin-top-left overflow-hidden rounded-xl border border-border bg-card/95 shadow-xl backdrop-blur"
+              className="absolute inset-x-4 top-[88px] bottom-4 z-10 origin-top-left overflow-hidden rounded-xl border border-border bg-background shadow-xl"
               style={
                 reducedMotion
                   ? { opacity: 1, scale: 1 }
@@ -292,14 +303,14 @@ export function StepOneGraphic({
               <div className="divide-y divide-border">
                 {pmocRows.map((row, index) => (
                   <div key={row.asset} className="px-3 py-2.5">
-                    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
-                      <span className="text-[11px] font-medium text-foreground">
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <span className="min-w-0 truncate text-[11px] font-medium text-foreground">
                         {row.asset}
                       </span>
-                      <span className="text-[10px] text-foreground/65">
+                      <span className="min-w-0 truncate text-center text-[10px] text-foreground/65">
                         {row.date}
                       </span>
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      <span className="justify-self-end truncate rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                         {t("landing.features.mockups.stepOne.pmoc.scheduled")}
                       </span>
                     </div>

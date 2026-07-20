@@ -335,7 +335,7 @@ export function IntelligenceHubBridge() {
     <section
       ref={containerRef}
       aria-labelledby="landing-bridge-title"
-      className="relative h-[150vh] w-full"
+      className="relative h-[170vh] w-full"
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)]">
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 md:px-12 lg:px-24">

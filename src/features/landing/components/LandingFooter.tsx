@@ -1,6 +1,11 @@
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import {
+  MASTER_CHAPTER,
+  scrollToMasterChapter,
+} from "@/features/landing/components/masterScrollNav"
+
 export function LandingFooter() {
   const { t } = useTranslation()
   const year = new Date().getFullYear()
@@ -18,15 +23,33 @@ export function LandingFooter() {
         </div>
 
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-foreground">
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              scrollToMasterChapter(MASTER_CHAPTER.features)
+            }}
+          >
             {t("landing.header.nav.features")}
-          </a>
-          <a href="#solutions" className="hover:text-foreground">
+          </button>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              scrollToMasterChapter(MASTER_CHAPTER.solutions)
+            }}
+          >
             {t("landing.header.nav.solutions")}
-          </a>
-          <a href="#platform" className="hover:text-foreground">
+          </button>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => {
+              scrollToMasterChapter(MASTER_CHAPTER.platform)
+            }}
+          >
             {t("landing.header.nav.platform")}
-          </a>
+          </button>
           <a href="#pricing" className="hover:text-foreground">
             {t("landing.header.nav.pricing")}
           </a>
