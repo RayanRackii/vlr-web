@@ -1,0 +1,44 @@
+---
+description: Arquitetura real do vlr-web — stack, estrutura de pastas, comunicação com API, estado
+alwaysApply: true
+---
+
+# Arquitetura do vlr-web
+
+React 19 + Vite 8 + TypeScript, `react-router-dom` 7 (`BrowserRouter`), Tailwind 3, **shadcn/ui estilo `base-nova`** (primitives `@base-ui/react`, ícones `lucide-react`), Framer Motion (landing), i18next (pt-BR/en/es), `next-themes` (dark/light).
+
+## Estrutura por features
+
+```
+src/
+  routes/AppRoutes.tsx        # todas as rotas
+  features/<feature>/         # pages/ components/ services/ schemas/ (Zod)
+  components/ui/              # shadcn
+  components/layout/          # MainLayout, Sidebar, guards, navigation.ts
+  contexts/AuthContext.tsx    # sessão Supabase
+  lib/                        # api.ts (Axios), supabase.ts, i18n, offlineSync
+```
+
+Alias `@/` → `src/`. Features: admin, assets, auth, dashboard, landing, onboarding, pmoc, users, workOrders.
+
+## Comunicação com a API
+
+- Axios singleton em `src/lib/api.ts`; base URL `VITE_API_URL` (fallback `http://localhost:5298`).
+- Interceptor injeta `Authorization: Bearer <access_token>` da sessão Supabase.
+- **Supabase é só auth** — nunca acessar o banco pelo SDK do Supabase.
+- Padrão de service: função → `api.get/post/...` → `schema.safeParse(response.data)` → throw com mensagem i18n.
+- Erros da API chegam como `{ error: string }`; usar `parseApiError` / `getAxiosErrorPayload`.
+
+## Estado
+
+- Sem TanStack Query, sem Zustand/Redux: cada page gerencia loading/error com `useEffect` + `useState` + services. Siga esse padrão, não introduza libs de estado sem decisão explícita.
+- Contextos globais: `AuthProvider` (session/user), `ThemeProvider`, i18n.
+- Papéis (`SUPER_ADMIN`, `ADMIN`, `TECHNICIAN`, `USER`, `CLIENT`) vêm de `GET /api/users/me`.
+- Platform admin: `useIsPlatformAdmin()` compara e-mail com `VITE_PLATFORM_ADMIN_EMAILS`.
+- Offline: `src/lib/offlineSync.ts` (IndexedDB via `idb-keyval`) enfileira PATCHes de tarefas de OS.
+
+## Áreas da aplicação
+
+- Público: `/` (landing), `/onboarding`, `/login`, `/invite` (stub).
+- Autenticado (`ProtectedRoute` + `MainLayout`): `/dashboard`, `/ativos`, `/ativos/categorias`, `/pmoc`, `/pmoc/novo`, `/os`, `/os/nova`, `/os/:id`.
+- Platform admin (`PlatformAdminRoute`): `/admin/dashboard`, `/admin/tenants/new`, `/admin/tenants/:id/edit`.

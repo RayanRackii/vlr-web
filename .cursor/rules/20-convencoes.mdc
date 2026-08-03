@@ -1,0 +1,43 @@
+---
+description: Convenções de TypeScript, formulários e Zod no vlr-web
+alwaysApply: true
+---
+
+# Convenções de Código — vlr-web
+
+Atue como desenvolvedor frontend sênior em React, TypeScript e Tailwind.
+
+## TypeScript
+
+1. **Zero `any`:** proibido. Tipo desconhecido → `unknown` + type narrowing.
+2. **Espelhamento Zod:** toda resposta de API tem schema Zod em `features/<feature>/schemas/`; parsear com `safeParse` antes de entrar no estado.
+3. **Null safety:** optional chaining (`?.`) e nullish coalescing (`??`) explícitos.
+4. **Early returns:** evite aninhamento profundo de if/else.
+
+## Componentes e formulários
+
+- shadcn/ui sempre nas versões mais recentes; lógica de negócio em hooks customizados, separada do JSX.
+- Formulários exclusivamente com React Hook Form + Zod (`@hookform/resolvers/zod`).
+
+## i18n (obrigatório)
+
+Toda string visível ao usuário usa `useTranslation` (`react-i18next`), com chaves em `src/locales/{pt-BR,en,es}/common.json`. Nada hardcoded. (Há violações legadas em LoginPage/OnboardingPage — não criar novas.)
+
+## Feedback de mutações (POST/PUT/DELETE)
+
+**Sucesso:**
+- Toast de sucesso claro (sonner); desabilitar o botão de submit contra duplo clique.
+- Se houver redirecionamento, aguardar 3–5s com `setTimeout` (limpar no unmount). Fechamento de modal pode ser imediato após o toast.
+
+**Erro:**
+- Nunca redirecionar, fechar modal ou limpar o formulário; usuário permanece para corrigir.
+- Toast com a mensagem real da API via `parseApiError` / `getAxiosErrorPayload`; evitar mensagens genéricas.
+- Reabilitar o submit.
+
+## Tabelas (TanStack Table)
+
+- Nenhum input de filtro solto acima da tabela; acima só título/descrição e ações primárias.
+- Filtros vivem no header da coluna via `DataTableColumnFilterHeader` (`@/components/data-table/data-table-column-filter-header`), ícone `Filter` + Popover.
+- Filtro ativo (`column.getIsFiltered()`) → ícone `text-primary`; inativo → `text-muted-foreground`.
+- Strings do popover: `common.filter` e `common.searchPlaceholder` via `t()`.
+- Habilitar `getFilteredRowModel()` e gerenciar `columnFilters` no `useReactTable`.
