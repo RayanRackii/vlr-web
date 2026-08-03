@@ -49,6 +49,9 @@ export const tenantAdminSchema = z.object({
   taxId: z.string(),
   subdomain: z.string().nullable(),
   logoUrl: z.string().nullable(),
+  primaryColor: z.string().nullable().optional(),
+  accentColor: z.string().nullable().optional(),
+  welcomeTagline: z.string().nullable().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
   activeModules: z.array(tenantModuleSchema),
@@ -63,6 +66,9 @@ export const createTenantAdminRequestSchema = z.object({
   taxId: z.string(),
   subdomain: z.string(),
   logoUrl: z.string().nullable().optional(),
+  primaryColor: z.string().nullable().optional(),
+  accentColor: z.string().nullable().optional(),
+  welcomeTagline: z.string().nullable().optional(),
   activeModules: z.array(z.string()).min(1),
 })
 

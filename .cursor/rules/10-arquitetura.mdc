@@ -39,6 +39,6 @@ Alias `@/` → `src/`. Features: admin, assets, auth, dashboard, landing, onboar
 
 ## Áreas da aplicação
 
-- Público: `/` (landing), `/onboarding`, `/login`, `/invite` (stub).
+- Público: `/` (landing), `/onboarding`, `/login`, `/invite` (stub), `/t/:subdomain` (portal B2C: login, register, verify-phone, app).
 - Autenticado (`ProtectedRoute` + `MainLayout`): `/dashboard`, `/ativos`, `/ativos/categorias`, `/pmoc`, `/pmoc/novo`, `/os`, `/os/nova`, `/os/:id`.
 - Platform admin (`PlatformAdminRoute`): `/admin/dashboard`, `/admin/tenants/new`, `/admin/tenants/:id/edit`.

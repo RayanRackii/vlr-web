@@ -15,6 +15,11 @@ import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
+import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
+import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
+import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
@@ -27,6 +32,13 @@ export function AppRoutes() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/invite" element={<SetPasswordPage />} />
+
+      <Route path="/t/:subdomain" element={<TenantPortalLayout />}>
+        <Route index element={<TenantPortalLoginPage />} />
+        <Route path="register" element={<TenantPortalRegisterPage />} />
+        <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+        <Route path="app" element={<TenantPortalHomePage />} />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<PlatformAdminRoute />}>

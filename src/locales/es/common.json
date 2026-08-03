@@ -33,6 +33,65 @@
       }
     }
   },
+  "tenantPortal": {
+    "defaultTagline": "Inicie sesión para reservar y recibir avisos.",
+    "errors": {
+      "title": "Portal no disponible",
+      "missingSubdomain": "Abra la dirección de la empresa (ej.: /t/club-tenis).",
+      "tenantNotFound": "Empresa no encontrada o inactiva."
+    },
+    "fields": {
+      "name": "Nombre completo",
+      "email": "Correo",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "cpf": "CPF",
+      "postalCode": "CEP",
+      "phone": "Celular",
+      "photo": "Foto de perfil",
+      "code": "Código SMS"
+    },
+    "validation": {
+      "passwordMismatch": "Las contraseñas deben coincidir."
+    },
+    "login": {
+      "title": "Entrar",
+      "subtitle": "Use el correo y la contraseña de su cuenta en esta empresa.",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "toastSuccess": "¡Sesión iniciada!",
+      "toastError": "No fue posible entrar.",
+      "noAccount": "¿Aún no tiene cuenta?",
+      "registerLink": "Regístrese"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "subtitle": "Registro exclusivo de esta empresa. El celular se verifica por SMS.",
+      "submit": "Continuar",
+      "submitting": "Guardando...",
+      "toastSuccess": "Cuenta creada. Confirme el SMS.",
+      "toastError": "No fue posible registrarse.",
+      "photoError": "No fue posible procesar la foto.",
+      "hasAccount": "¿Ya tiene cuenta?",
+      "loginLink": "Entrar"
+    },
+    "verify": {
+      "title": "Confirmar celular",
+      "subtitle": "Ingrese el código de 6 dígitos enviado por SMS (en desarrollo aparece en el log de la API).",
+      "submit": "Confirmar",
+      "submitting": "Verificando...",
+      "toastSuccess": "¡Celular verificado!",
+      "toastError": "Código inválido.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "app": {
+      "welcome": "Hola — {{name}}",
+      "signedInHint": "Está autenticado. La agenda de reservas llega en la próxima etapa.",
+      "signedOutHint": "Inicie sesión para continuar.",
+      "signOut": "Salir",
+      "goLogin": "Ir al inicio de sesión"
+    }
+  },
   "landing": {
     "scrollHint": "Desplácese hacia abajo ↓",
     "sectionEnd": "Fin de la sección",

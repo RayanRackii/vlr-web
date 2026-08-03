@@ -54,6 +54,9 @@ export async function createAdminTenant(
       taxId: body.taxId,
       subdomain: body.subdomain,
       logoUrl: body.logoUrl || null,
+      primaryColor: body.primaryColor || null,
+      accentColor: body.accentColor || null,
+      welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
     })
 
@@ -79,6 +82,9 @@ export async function updateAdminTenant(
       taxId: body.taxId,
       subdomain: body.subdomain,
       logoUrl: body.logoUrl || null,
+      primaryColor: body.primaryColor || null,
+      accentColor: body.accentColor || null,
+      welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
     })
 

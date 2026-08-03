@@ -1,31 +1,47 @@
 # ROADMAP — vlr-web
 
-Prioridade geral: entregar a experiência do módulo **Rentals** para o primeiro cliente (clube: avisos sobre estado das quadras + reserva de horários).
+Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `backend/ROADMAP.md`.
 
-## 1. Módulo de Aluguéis (feature `rentals/`)
+**Foco de produto agora:** portal B2C branded (primeira fatia entregue).  
+**Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
 
-Hoje só existe o cadastro de ativos alugáveis com grade de preços (aba Aluguel no `AssetDetailDialog`). Falta tudo de reservas:
+## 0. Disciplina
 
-- [ ] **Portal do cliente (B2C):** login por OTP (`POST /api/auth/customer/request-otp` + `verify-otp`, header `X-Tenant-Subdomain`), consulta de disponibilidade (`GET /api/reservations/availability`), criação de reserva (`POST /api/reservations`), minhas reservas.
-- [ ] **Calendário/agenda de quadras** com estados (livre, reservado, indisponível/manutenção).
-- [ ] **Admin do tenant:** listagem e gestão de reservas (confirmar depósito, cancelar), aviso de indisponibilidade de quadra (depende de endpoints novos — ver ROADMAP da vlr-api).
-- [ ] Substituir os cards stub do `ClientDashboard` (Chamados/Locações) por dados reais.
+Atualizar este arquivo em tarefas relevantes + **Histórico** se o plano mudar.
 
-## 2. Gating por módulos do tenant
+## 1. Portal do tenant — login + cadastro branded — EM ANDAMENTO
 
-- [ ] Sidebar dinâmica: `navigation.ts` é estático; filtrar itens pelos módulos ativos do tenant (a API precisa expor os módulos ativos, ex. em `/api/users/me`).
-- [ ] `ModuleGuard` nas rotas de cada módulo (tenant só com Rentals não deve ver PMOC/OS).
+- [x] Rotas `/t/:subdomain` (login, register, verify-phone, app).
+- [x] Shell branded (logo/cores/tagline via `GET .../branding`).
+- [x] Cadastro: foto, nome, e-mail, senha, CPF, CEP, celular (Zod + compressão de foto).
+- [x] Verificação SMS (código) + login e-mail/senha.
+- [ ] Host real `{subdomain}.rolvix.com.br` no DNS/Vercel (path `/t/:subdomain` serve em dev).
+- [ ] Campos de branding no wizard admin (API já pronta).
+- [ ] Agenda / reservas B2C (próxima fatia).
+- [ ] Admin B2B de reservas.
 
-## 3. Fluxo de convite
+## 2. Notificações — ADIADO no frontend
 
-- [ ] `submitInvitePassword` (`setPasswordService.ts`) é stub — integrar com o endpoint real quando existir no backend.
-- [ ] Remover a coleta de senha do onboarding público quando o fluxo de convite estiver completo (regra de ouro).
+SMS aparece no log Dev da API até haver provider real.
+
+## 3. Gating por módulos do tenant
+
+- [ ] Sidebar dinâmica + `ModuleGuard`.
+
+## 4. Fluxo de convite B2B
+
+- [ ] `submitInvitePassword` ainda stub.
 
 ## Dívidas técnicas conhecidas
 
-- Branding inconsistente: `index.html` title = "frontend", i18n `app.name` = "Platform", landing usa "Rolvix". Unificar para Rolvix.
-- Strings hardcoded em PT em `LoginPage`, `OnboardingPage`, `ProtectedRoute` (violam a regra de i18n).
-- `src/vite-env.d.ts` não tipa `VITE_PLATFORM_ADMIN_EMAILS` nem `VITE_TENANT_BASE_DOMAIN`.
-- Papel do usuário não fica no `AuthContext` (cada tela busca `/api/users/me`).
-- Sem TanStack Query — reavaliar se o cache local começar a doer.
-- Landing anuncia módulos futuros (RH, Financeiro) que não existem no app.
+- Branding inconsistente (`Platform` vs Rolvix).
+- Login/Onboarding B2B com strings hardcoded.
+- Landing anuncia módulos futuros.
+
+## Histórico
+
+| Data | Mudança |
+|------|---------|
+| 2026-08-03 | Portal elevado a próximo foco. |
+| 2026-08-03 | Login B2C = e-mail + senha. |
+| 2026-08-03 | **Executado:** feature `tenantPortal` (layout + login/register/verify + i18n). |

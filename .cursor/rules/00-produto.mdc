@@ -15,7 +15,16 @@ Chaves usadas no admin (`src/features/admin/schemas/adminTenantSchemas.ts`): `In
 
 ## Cliente atual e prioridade
 
-O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes sobre o estado das quadras e permitir **reserva de horários**. O módulo de **Aluguéis (Rentals)** é a prioridade — hoje o frontend só tem cadastro de ativos alugáveis com grade de preços; o portal de reservas do cliente ainda não existe.
+O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes sobre o estado das quadras e permitir **reserva de horários**. O módulo de **Aluguéis (Rentals)** é a prioridade.
+
+**Ordem do ciclo atual (ver CONTEXT.md + ROADMAP.md):**
+1. Resend + WhatsApp — etapa principal de infra, **adiada** (config Meta em andamento).
+2. **Próximo foco:** portal B2C branded — login **e-mail + senha** + cadastro (foto, nome, e-mail, senha, CPF, CEP, celular com SMS). Celular ≠ login. Branding do tenant (logo/cores/tagline).
+3. Demais itens (agenda admin, gating, convite).
+
+## ROADMAP (obrigatório)
+
+Em toda tarefa relevante: atualizar `ROADMAP.md`. Se a prioridade/escopo mudar, registrar na seção **Histórico** (data + o quê + por quê). Não apagar decisões sem rastreio.
 
 ## Regra de ouro de segurança
 

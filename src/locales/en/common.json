@@ -33,6 +33,65 @@
       }
     }
   },
+  "tenantPortal": {
+    "defaultTagline": "Sign in to book and get updates.",
+    "errors": {
+      "title": "Portal unavailable",
+      "missingSubdomain": "Open the company address (e.g. /t/tennis-club).",
+      "tenantNotFound": "Company not found or inactive."
+    },
+    "fields": {
+      "name": "Full name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "cpf": "CPF",
+      "postalCode": "Postal code (CEP)",
+      "phone": "Mobile phone",
+      "photo": "Profile photo",
+      "code": "SMS code"
+    },
+    "validation": {
+      "passwordMismatch": "Passwords must match."
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Use your email and password for this company.",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "toastSuccess": "Signed in!",
+      "toastError": "Could not sign in.",
+      "noAccount": "No account yet?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Registration is exclusive to this company. Mobile is verified by SMS.",
+      "submit": "Continue",
+      "submitting": "Saving...",
+      "toastSuccess": "Account created. Confirm the SMS.",
+      "toastError": "Could not register.",
+      "photoError": "Could not process the photo.",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "verify": {
+      "title": "Confirm phone",
+      "subtitle": "Enter the 6-digit SMS code (in development it is logged by the API).",
+      "submit": "Confirm",
+      "submitting": "Verifying...",
+      "toastSuccess": "Phone verified!",
+      "toastError": "Invalid code.",
+      "backToLogin": "Back to sign in"
+    },
+    "app": {
+      "welcome": "Hello — {{name}}",
+      "signedInHint": "You are signed in. Booking calendar comes next.",
+      "signedOutHint": "Sign in to continue.",
+      "signOut": "Sign out",
+      "goLogin": "Go to sign in"
+    }
+  },
   "landing": {
     "scrollHint": "Scroll down ↓",
     "sectionEnd": "End of section",

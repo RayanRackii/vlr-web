@@ -33,6 +33,65 @@
       }
     }
   },
+  "tenantPortal": {
+    "defaultTagline": "Entre para reservar e receber avisos.",
+    "errors": {
+      "title": "Portal indisponível",
+      "missingSubdomain": "Informe o endereço da empresa (ex.: /t/quadratenis).",
+      "tenantNotFound": "Empresa não encontrada ou inativa."
+    },
+    "fields": {
+      "name": "Nome completo",
+      "email": "E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "cpf": "CPF",
+      "postalCode": "CEP",
+      "phone": "Celular",
+      "photo": "Foto de perfil",
+      "code": "Código SMS"
+    },
+    "validation": {
+      "passwordMismatch": "As senhas precisam ser iguais."
+    },
+    "login": {
+      "title": "Entrar",
+      "subtitle": "Use o e-mail e a senha da sua conta nesta empresa.",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "toastSuccess": "Login realizado!",
+      "toastError": "Não foi possível entrar.",
+      "noAccount": "Ainda não tem conta?",
+      "registerLink": "Cadastre-se"
+    },
+    "register": {
+      "title": "Criar conta",
+      "subtitle": "Cadastro exclusivo desta empresa. O celular será verificado por SMS.",
+      "submit": "Continuar",
+      "submitting": "Salvando...",
+      "toastSuccess": "Conta criada. Confirme o SMS.",
+      "toastError": "Não foi possível cadastrar.",
+      "photoError": "Não foi possível processar a foto.",
+      "hasAccount": "Já tem conta?",
+      "loginLink": "Entrar"
+    },
+    "verify": {
+      "title": "Confirmar celular",
+      "subtitle": "Digite o código de 6 dígitos enviado por SMS (em desenvolvimento aparece no log da API).",
+      "submit": "Confirmar",
+      "submitting": "Verificando...",
+      "toastSuccess": "Celular verificado!",
+      "toastError": "Código inválido.",
+      "backToLogin": "Voltar ao login"
+    },
+    "app": {
+      "welcome": "Olá — {{name}}",
+      "signedInHint": "Você está autenticado. A agenda de reservas entra na próxima etapa.",
+      "signedOutHint": "Faça login para continuar.",
+      "signOut": "Sair",
+      "goLogin": "Ir para o login"
+    }
+  },
   "landing": {
     "scrollHint": "Role para baixo ↓",
     "sectionEnd": "Fim da seção",
