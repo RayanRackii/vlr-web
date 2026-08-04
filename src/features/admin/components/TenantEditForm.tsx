@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
+import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import {
   MODULE_KEYS,
   tenantOnboardingSchema,
@@ -419,6 +420,12 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <RegistrationFieldsManager tenantId={tenantId} />
             </CardContent>
           </Card>
 

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
@@ -17,10 +17,11 @@ import {
 import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import {
-  customerRegisterSchema,
-  type CustomerRegisterFormValues,
+  buildCustomerRegisterSchema,
+  type RegistrationField,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  fetchRegistrationSchema,
   fileToCompressedDataUrl,
   registerCustomer,
   tenantPortalPath,
@@ -31,58 +32,101 @@ export function TenantPortalRegisterPage() {
   const navigate = useNavigate()
   const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
   const [submitting, setSubmitting] = useState(false)
+  const [fields, setFields] = useState<RegistrationField[]>([])
+  const [schemaLoading, setSchemaLoading] = useState(true)
+  const [schemaError, setSchemaError] = useState<string | null>(null)
 
-  const form = useForm<CustomerRegisterFormValues>({
-    resolver: zodResolver(
-      customerRegisterSchema.refine(
-        (values) => values.password === values.confirmPassword,
-        {
-          message: t("tenantPortal.validation.passwordMismatch"),
-          path: ["confirmPassword"],
-        },
+  useEffect(() => {
+    let cancelled = false
+    setSchemaLoading(true)
+    void fetchRegistrationSchema(subdomain)
+      .then((schema) => {
+        if (!cancelled) {
+          setFields(schema.fields)
+          setSchemaError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSchemaError(t("tenantPortal.register.schemaError"))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSchemaLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [subdomain, t])
+
+  const schema = useMemo(
+    () =>
+      buildCustomerRegisterSchema(
+        fields,
+        t("tenantPortal.validation.passwordMismatch"),
       ),
-    ),
-    defaultValues: {
+    [fields, t],
+  )
+
+  const defaultValues = useMemo(() => {
+    const values: Record<string, unknown> = {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      cpf: "",
-      postalCode: "",
       phone: "",
-      photoDataUrl: "",
-    },
+    }
+    for (const field of fields) {
+      values[field.fieldKey] = field.fieldType === "boolean" ? false : ""
+    }
+    return values
+  }, [fields])
+
+  const form = useForm<Record<string, unknown>>({
+    // Dynamic schema includes core + tenant extras.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
+    values: defaultValues,
   })
 
-  async function onPhotoChange(file: File | undefined) {
+  async function onPhotoChange(fieldKey: string, file: File | undefined) {
     if (!file) {
-      form.setValue("photoDataUrl", "", { shouldValidate: true })
+      form.setValue(fieldKey, "", { shouldValidate: true })
       return
     }
     try {
       const dataUrl = await fileToCompressedDataUrl(file)
-      form.setValue("photoDataUrl", dataUrl, { shouldValidate: true })
+      form.setValue(fieldKey, dataUrl, { shouldValidate: true })
     } catch {
       toast.error(t("tenantPortal.register.photoError"))
     }
   }
 
-  async function onSubmit(values: CustomerRegisterFormValues) {
+  async function onSubmit(values: Record<string, unknown>) {
     setSubmitting(true)
     try {
+      const attributes: Record<string, string | number | boolean> = {}
+      for (const field of fields) {
+        const value = values[field.fieldKey]
+        if (value === undefined || value === null || value === "") {
+          continue
+        }
+        attributes[field.fieldKey] = value as string | number | boolean
+      }
+
       await registerCustomer(subdomain, {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        cpf: values.cpf,
-        postalCode: values.postalCode,
-        phone: values.phone,
-        photoUrl: values.photoDataUrl,
+        name: String(values.name ?? ""),
+        email: String(values.email ?? ""),
+        password: String(values.password ?? ""),
+        phone: String(values.phone ?? ""),
+        attributes,
       })
       toast.success(t("tenantPortal.register.toastSuccess"))
       void navigate(tenantPortalPath(subdomain, "verify-phone"), {
         replace: true,
-        state: { email: values.email },
+        state: { email: String(values.email ?? "") },
       })
     } catch (error) {
       toast.error(
@@ -93,6 +137,16 @@ export function TenantPortalRegisterPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (schemaLoading) {
+    return (
+      <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+    )
+  }
+
+  if (schemaError) {
+    return <p className="text-sm text-destructive">{schemaError}</p>
   }
 
   return (
@@ -112,30 +166,12 @@ export function TenantPortalRegisterPage() {
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          <FormItem>
-            <FormLabel>{t("tenantPortal.fields.photo")}</FormLabel>
-            <FormControl>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  void onPhotoChange(event.target.files?.[0])
-                }}
-              />
-            </FormControl>
-            <FormMessage>
-              {form.formState.errors.photoDataUrl?.message}
-            </FormMessage>
-          </FormItem>
-
           {(
             [
               ["name", "text", "name"],
               ["email", "email", "email"],
               ["password", "password", "new-password"],
               ["confirmPassword", "password", "new-password"],
-              ["cpf", "text", "off"],
-              ["postalCode", "text", "postal-code"],
               ["phone", "tel", "tel"],
             ] as const
           ).map(([name, type, autoComplete]) => (
@@ -151,7 +187,79 @@ export function TenantPortalRegisterPage() {
                       type={type}
                       autoComplete={autoComplete}
                       {...field}
+                      value={String(field.value ?? "")}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+
+          {fields.map((extra) => (
+            <FormField
+              key={extra.id}
+              control={form.control}
+              name={extra.fieldKey}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {extra.label}
+                    {extra.isRequired ? "" : ` (${t("common.optional")})`}
+                  </FormLabel>
+                  <FormControl>
+                    {extra.fieldType === "boolean" ? (
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(field.value)}
+                          onChange={(event) => {
+                            field.onChange(event.target.checked)
+                          }}
+                        />
+                        {extra.label}
+                      </label>
+                    ) : extra.fieldType === "photo" ? (
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          void onPhotoChange(
+                            extra.fieldKey,
+                            event.target.files?.[0],
+                          )
+                        }}
+                      />
+                    ) : extra.fieldType === "select" ? (
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                        value={String(field.value ?? "")}
+                        onChange={field.onChange}
+                      >
+                        <option value="">
+                          {t("tenantPortal.register.selectPlaceholder")}
+                        </option>
+                        {(extra.options ?? []).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        type={
+                          extra.fieldType === "number"
+                            ? "number"
+                            : extra.fieldType === "date"
+                              ? "date"
+                              : extra.fieldType === "email"
+                                ? "email"
+                                : "text"
+                        }
+                        {...field}
+                        value={String(field.value ?? "")}
+                      />
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

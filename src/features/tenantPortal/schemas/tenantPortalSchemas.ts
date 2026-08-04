@@ -11,6 +11,27 @@ export const tenantBrandingSchema = z.object({
 
 export type TenantBranding = z.infer<typeof tenantBrandingSchema>
 
+export const registrationFieldSchema = z.object({
+  id: z.string().uuid(),
+  fieldKey: z.string(),
+  label: z.string(),
+  fieldType: z.string(),
+  isRequired: z.boolean(),
+  sortOrder: z.number(),
+  options: z.array(z.string()).nullable().optional(),
+})
+
+export type RegistrationField = z.infer<typeof registrationFieldSchema>
+
+export const registrationSchemaResponseSchema = z.object({
+  coreFields: z.array(z.string()),
+  fields: z.array(registrationFieldSchema),
+})
+
+export type RegistrationSchemaResponse = z.infer<
+  typeof registrationSchemaResponseSchema
+>
+
 export const customerAuthProfileSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -20,6 +41,7 @@ export const customerAuthProfileSchema = z.object({
   createdAt: z.string(),
   phoneVerified: z.boolean(),
   photoUrl: z.string().nullable(),
+  extraAttributes: z.record(z.string(), z.string().nullable()).optional(),
 })
 
 export const authResponseSchema = z.object({
@@ -64,19 +86,11 @@ export function isValidCpf(raw: string): boolean {
   return Number(digits[10]) === digit2
 }
 
-export const customerRegisterSchema = z.object({
+const coreRegisterShape = {
   name: z.string().trim().min(2).max(200),
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
   confirmPassword: z.string().min(8).max(128),
-  cpf: z
-    .string()
-    .trim()
-    .refine((value) => isValidCpf(value), "Invalid CPF"),
-  postalCode: z
-    .string()
-    .trim()
-    .refine((value) => onlyDigits(value).length === 8, "Invalid CEP"),
   phone: z
     .string()
     .trim()
@@ -84,10 +98,76 @@ export const customerRegisterSchema = z.object({
       const digits = onlyDigits(value)
       return digits.length === 10 || digits.length === 11
     }, "Invalid phone"),
-  photoDataUrl: z.string().min(32).max(400_000),
-})
+}
 
-export type CustomerRegisterFormValues = z.infer<typeof customerRegisterSchema>
+export function buildCustomerRegisterSchema(
+  fields: RegistrationField[],
+  passwordMismatchMessage: string,
+) {
+  const extraShape: Record<string, z.ZodTypeAny> = {}
+
+  for (const field of fields) {
+    let schema: z.ZodTypeAny
+
+    switch (field.fieldType) {
+      case "boolean":
+        schema = z.boolean()
+        break
+      case "number":
+        schema = z.coerce.number()
+        break
+      case "cpf":
+        schema = z
+          .string()
+          .trim()
+          .refine((value) => isValidCpf(value), "Invalid CPF")
+        break
+      case "cep":
+        schema = z
+          .string()
+          .trim()
+          .refine((value) => onlyDigits(value).length === 8, "Invalid CEP")
+        break
+      case "photo":
+        schema = z.string().min(32).max(400_000)
+        break
+      case "email":
+        schema = z.string().trim().email()
+        break
+      case "select":
+        schema = z.string().trim().min(1)
+        if (field.options && field.options.length > 0) {
+          schema = z.enum(field.options as [string, ...string[]])
+        }
+        break
+      default:
+        schema = z.string().trim().min(1)
+    }
+
+    if (!field.isRequired) {
+      schema =
+        field.fieldType === "boolean"
+          ? z.boolean().optional()
+          : z.union([schema, z.literal("")]).optional()
+    }
+
+    extraShape[field.fieldKey] = schema
+  }
+
+  return z
+    .object({
+      ...coreRegisterShape,
+      ...extraShape,
+    })
+    .refine((values) => values.password === values.confirmPassword, {
+      message: passwordMismatchMessage,
+      path: ["confirmPassword"],
+    })
+}
+
+export type CustomerRegisterFormValues = z.infer<
+  ReturnType<typeof buildCustomerRegisterSchema>
+>
 
 export const customerLoginSchema = z.object({
   email: z.string().trim().email(),
@@ -102,3 +182,18 @@ export const verifyPhoneSchema = z.object({
 })
 
 export type VerifyPhoneFormValues = z.infer<typeof verifyPhoneSchema>
+
+export const FIELD_TYPE_OPTIONS = [
+  "text",
+  "email",
+  "phone",
+  "cpf",
+  "cep",
+  "boolean",
+  "number",
+  "select",
+  "photo",
+  "date",
+] as const
+
+export type FieldTypeOption = (typeof FIELD_TYPE_OPTIONS)[number]

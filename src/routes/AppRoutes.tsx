@@ -16,6 +16,7 @@ import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
@@ -74,6 +75,10 @@ export function AppRoutes() {
           <Route path="/os" element={<WorkOrdersPage />} />
           <Route path="/os/nova" element={<CreateWorkOrderPage />} />
           <Route path="/os/:id" element={<WorkOrderExecutionPage />} />
+          <Route
+            path="/configuracoes/cadastro"
+            element={<TenantRegistrationFieldsPage />}
+          />
 
           <Route element={<PlatformAdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   ClipboardList,
   ClipboardPen,
+  FormInput,
   LayoutDashboard,
   Shield,
   Wrench,
@@ -24,6 +25,7 @@ export type AppNavigationItem = {
     | "nav.assets"
     | "nav.pmoc"
     | "nav.workOrders"
+    | "nav.registrationFields"
     | "nav.admin"
   to: string
   icon: LucideIcon
@@ -70,6 +72,11 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.workOrders",
     to: "/os",
     icon: ClipboardPen,
+  },
+  {
+    labelKey: "nav.registrationFields",
+    to: "/configuracoes/cadastro",
+    icon: FormInput,
   },
 ]
 

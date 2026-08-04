@@ -1,9 +1,15 @@
+import { z } from "zod"
+
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import {
   authResponseSchema,
   registerResponseSchema,
+  registrationFieldSchema,
+  registrationSchemaResponseSchema,
   tenantBrandingSchema,
   type CustomerAuthResponse,
+  type RegistrationField,
+  type RegistrationSchemaResponse,
   type TenantBranding,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
@@ -99,24 +105,33 @@ export async function fetchTenantBranding(
   return parsed.data
 }
 
+export async function fetchRegistrationSchema(
+  subdomain: string,
+): Promise<RegistrationSchemaResponse> {
+  const response = await api.get(
+    `/api/public/tenants/${subdomain}/registration-schema`,
+  )
+  const parsed = registrationSchemaResponseSchema.safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid registration schema payload.")
+  }
+  return parsed.data
+}
+
 export async function registerCustomer(
   subdomain: string,
   body: {
     name: string
     email: string
     password: string
-    cpf: string
-    postalCode: string
     phone: string
-    photoUrl: string
+    attributes?: Record<string, string | number | boolean>
   },
 ): Promise<{ customerId: string; requiresPhoneVerification: boolean }> {
   try {
-    const response = await api.post(
-      "/api/auth/customer/register",
-      body,
-      { headers: subdomainHeaders(subdomain) },
-    )
+    const response = await api.post("/api/auth/customer/register", body, {
+      headers: subdomainHeaders(subdomain),
+    })
     const parsed = registerResponseSchema.safeParse(response.data)
     if (!parsed.success) {
       throw new Error("Invalid register response.")
@@ -125,6 +140,74 @@ export async function registerCustomer(
   } catch (error) {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), "Could not register."),
+    )
+  }
+}
+
+export async function listTenantRegistrationFields(): Promise<
+  RegistrationField[]
+> {
+  const response = await api.get("/api/registration-fields")
+  const parsed = z.array(registrationFieldSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid registration fields payload.")
+  }
+  return parsed.data
+}
+
+export async function listAdminRegistrationFields(
+  tenantId: string,
+): Promise<RegistrationField[]> {
+  const response = await api.get(
+    `/api/admin/tenants/${tenantId}/registration-fields`,
+  )
+  const parsed = z.array(registrationFieldSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid registration fields payload.")
+  }
+  return parsed.data
+}
+
+export async function createRegistrationField(
+  body: {
+    fieldKey: string
+    label: string
+    fieldType: string
+    isRequired: boolean
+    sortOrder: number
+    options?: string[] | null
+  },
+  tenantId?: string,
+): Promise<RegistrationField> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/registration-fields`
+    : "/api/registration-fields"
+  try {
+    const response = await api.post(url, body)
+    const parsed = registrationFieldSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid create field response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not create field."),
+    )
+  }
+}
+
+export async function deleteRegistrationField(
+  fieldId: string,
+  tenantId?: string,
+): Promise<void> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/registration-fields/${fieldId}`
+    : `/api/registration-fields/${fieldId}`
+  try {
+    await api.delete(url)
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not delete field."),
     )
   }
 }

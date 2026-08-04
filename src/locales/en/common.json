@@ -7,6 +7,8 @@
     "close": "Close",
     "cancel": "Cancel",
     "back": "Back",
+    "delete": "Delete",
+    "optional": "optional",
     "filter": "Filter",
     "searchPlaceholder": "Search...",
     "loading": "Loading..."
@@ -72,6 +74,8 @@
       "toastSuccess": "Account created. Confirm the SMS.",
       "toastError": "Could not register.",
       "photoError": "Could not process the photo.",
+      "schemaError": "Could not load this company's registration form.",
+      "selectPlaceholder": "Select...",
       "hasAccount": "Already have an account?",
       "loginLink": "Sign in"
     },
@@ -380,6 +384,7 @@
     "pmocPlans": "Plans",
     "pmocNew": "New Plan",
     "workOrders": "Work Orders",
+    "registrationFields": "Portal registration",
     "admin": "Super-Admin",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu"
@@ -933,6 +938,23 @@
     }
   },
   "admin": {
+    "registrationFields": {
+      "title": "Registration fields (portal)",
+      "description": "Besides name, email, password and phone, define extra fields for this client (e.g. CPF, photo, hasLuggage).",
+      "empty": "No extra fields. Registration will use only the core fields.",
+      "fieldKey": "Key (e.g. cpf, hasLuggage)",
+      "label": "Displayed label",
+      "required": "Required",
+      "optionsPlaceholder": "Select options, comma-separated",
+      "add": "Add field",
+      "createSuccess": "Field added.",
+      "createError": "Could not add the field.",
+      "deleteSuccess": "Field removed.",
+      "deleteError": "Could not remove the field.",
+      "loadError": "Could not load fields.",
+      "tenantPageTitle": "Registration form",
+      "tenantPageDescription": "Configure extra B2C portal fields for this company."
+    },
     "dashboard": {
       "title": "Super-Admin Panel",
       "description": "Manage tenants, subdomains, and subscribed modules.",

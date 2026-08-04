@@ -7,6 +7,8 @@
     "close": "Fechar",
     "cancel": "Cancelar",
     "back": "Voltar",
+    "delete": "Excluir",
+    "optional": "opcional",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Carregando..."
@@ -72,6 +74,8 @@
       "toastSuccess": "Conta criada. Confirme o SMS.",
       "toastError": "Não foi possível cadastrar.",
       "photoError": "Não foi possível processar a foto.",
+      "schemaError": "Não foi possível carregar o formulário desta empresa.",
+      "selectPlaceholder": "Selecione...",
       "hasAccount": "Já tem conta?",
       "loginLink": "Entrar"
     },
@@ -380,6 +384,7 @@
     "pmocPlans": "Planos",
     "pmocNew": "Novo Plano",
     "workOrders": "OS",
+    "registrationFields": "Cadastro portal",
     "admin": "Super-Admin",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação"
@@ -933,6 +938,23 @@
     }
   },
   "admin": {
+    "registrationFields": {
+      "title": "Campos do cadastro (portal)",
+      "description": "Além de nome, e-mail, senha e celular, defina campos extras deste cliente (ex.: CPF, foto, tem bagagem).",
+      "empty": "Nenhum campo extra. O cadastro usará só os campos mínimos.",
+      "fieldKey": "Chave (ex.: cpf, temBagagem)",
+      "label": "Rótulo exibido",
+      "required": "Obrigatório",
+      "optionsPlaceholder": "Opções do select, separadas por vírgula",
+      "add": "Adicionar campo",
+      "createSuccess": "Campo adicionado.",
+      "createError": "Não foi possível adicionar o campo.",
+      "deleteSuccess": "Campo removido.",
+      "deleteError": "Não foi possível remover o campo.",
+      "loadError": "Não foi possível carregar os campos.",
+      "tenantPageTitle": "Formulário de cadastro",
+      "tenantPageDescription": "Configure os campos extras do portal B2C desta empresa."
+    },
     "dashboard": {
       "title": "Painel Super-Admin",
       "description": "Gerencie clientes (tenants), subdomínios e módulos assinados.",
