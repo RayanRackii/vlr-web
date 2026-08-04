@@ -33,6 +33,14 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 - [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
 - [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
 
+## 3.5. Agenda por Slots (Rentals genérico)
+
+Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
+
+- [ ] Admin: occupancy kinds + weekly templates + publish/edit day
+- [ ] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual)
+- [ ] Layout canvas (mapa de rentables) admin + picker B2C
+
 ## 4. Gating B2B por módulos
 
 - [ ] Sidebar B2B filtrada por `tenant_modules` + `ModuleGuard`.
@@ -57,3 +65,4 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 | 2026-08-04 | **Executado:** shell B2C (AppShell) + menu dinâmico multi-item; admin de menu. |
 | 2026-08-04 | Header Rolvix no portal B2C (sem Features/Pricing); default idioma pt-BR no portal. |
 | 2026-08-04 | **Executado:** branding `LogoSvg` (admin + portal sanitizado); `getTenantBaseDomain` unificado em `lib/tenantDomain`. |
+| 2026-08-04 | Agenda slots: backend iniciado; FE admin/B2C slot UX + layout canvas pendentes. |

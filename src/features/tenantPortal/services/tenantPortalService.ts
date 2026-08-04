@@ -431,6 +431,12 @@ const rentalAssetSchema = z.object({
   type: z.string(),
   totalQuantity: z.number(),
   isActive: z.boolean(),
+  schedulePolicy: z.string().optional(),
+  openTime: z.string().nullable().optional(),
+  closeTime: z.string().nullable().optional(),
+  allowedDurationMinutes: z.string().nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
+  categoryName: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().nullable().optional(),
 })
