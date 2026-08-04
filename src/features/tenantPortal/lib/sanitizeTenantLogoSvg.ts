@@ -1,9 +1,10 @@
 import DOMPurify from "dompurify"
+import type { Config } from "dompurify"
 
-const SVG_PROFILE = {
+const SVG_PROFILE: Config = {
   USE_PROFILES: { svg: true, svgFilters: true },
   ADD_TAGS: ["use"],
-} as const
+}
 
 /** Sanitize tenant brand SVG for safe inline render. */
 export function sanitizeTenantLogoSvg(raw: string | null | undefined): string | null {
