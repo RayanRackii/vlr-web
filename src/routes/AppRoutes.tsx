@@ -18,6 +18,7 @@ import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
 import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
@@ -39,6 +40,7 @@ export function AppRoutes() {
           <Route path="register" element={<TenantPortalRegisterPage />} />
           <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
           <Route path="app" element={<TenantPortalHomePage />} />
+          <Route path="agenda" element={<TenantPortalAgendaPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -58,6 +60,7 @@ export function AppRoutes() {
         <Route path="register" element={<TenantPortalRegisterPage />} />
         <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
         <Route path="app" element={<TenantPortalHomePage />} />
+        <Route path="agenda" element={<TenantPortalAgendaPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>

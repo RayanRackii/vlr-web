@@ -90,10 +90,32 @@
     },
     "app": {
       "welcome": "Hello — {{name}}",
-      "signedInHint": "You are signed in. Booking calendar comes next.",
+      "signedInHint": "You are signed in. Book a time slot on the schedule.",
       "signedOutHint": "Sign in to continue.",
       "signOut": "Sign out",
-      "goLogin": "Go to sign in"
+      "goLogin": "Go to sign in",
+      "goAgenda": "Open schedule"
+    },
+    "agenda": {
+      "title": "Schedule",
+      "subtitle": "Check availability and book a time slot.",
+      "court": "Court / space",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "check": "Check availability",
+      "reserve": "Book",
+      "reserving": "Booking...",
+      "available": "Available. Estimate: R$ {{amount}}",
+      "unavailable": "Slot unavailable.",
+      "availabilityError": "Could not check availability.",
+      "reserveSuccess": "Reservation created!",
+      "reserveError": "Could not create the reservation.",
+      "loadError": "Could not load the schedule.",
+      "myReservations": "My reservations",
+      "empty": "No reservations yet.",
+      "noAssets": "No courts configured",
+      "backHome": "Back"
     }
   },
   "landing": {

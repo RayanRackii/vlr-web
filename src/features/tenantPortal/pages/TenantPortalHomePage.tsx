@@ -26,17 +26,27 @@ export function TenantPortalHomePage() {
           : t("tenantPortal.app.signedOutHint")}
       </p>
       {signedIn ? (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={() => {
-            clearCustomerSession()
-            window.location.assign(tenantPortalPath(subdomain))
-          }}
-        >
-          {t("tenantPortal.app.signOut")}
-        </Button>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            className="w-full"
+            style={{ backgroundColor: primary }}
+            render={<Link to={tenantPortalPath(subdomain, "agenda")} />}
+          >
+            {t("tenantPortal.app.goAgenda")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              clearCustomerSession()
+              window.location.assign(tenantPortalPath(subdomain))
+            }}
+          >
+            {t("tenantPortal.app.signOut")}
+          </Button>
+        </div>
       ) : (
         <Button
           type="button"

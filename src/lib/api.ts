@@ -28,7 +28,14 @@ export const api = axios.create({
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const { data } = await supabase.auth.getSession()
-  const accessToken = data.session?.access_token
+  const supabaseToken = data.session?.access_token
+  const customerToken =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("rolvix.customer.token")
+      : null
+
+  // B2B Supabase session wins when present; otherwise B2C customer JWT.
+  const accessToken = supabaseToken ?? customerToken
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`

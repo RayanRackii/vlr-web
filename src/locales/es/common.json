@@ -90,10 +90,32 @@
     },
     "app": {
       "welcome": "Hola — {{name}}",
-      "signedInHint": "Está autenticado. La agenda de reservas llega en la próxima etapa.",
+      "signedInHint": "Está autenticado. Reserve un horario en la agenda.",
       "signedOutHint": "Inicie sesión para continuar.",
       "signOut": "Salir",
-      "goLogin": "Ir al inicio de sesión"
+      "goLogin": "Ir al inicio de sesión",
+      "goAgenda": "Abrir agenda"
+    },
+    "agenda": {
+      "title": "Agenda",
+      "subtitle": "Consulte disponibilidad y reserve un horario.",
+      "court": "Cancha / espacio",
+      "date": "Fecha",
+      "start": "Inicio",
+      "end": "Fin",
+      "check": "Verificar disponibilidad",
+      "reserve": "Reservar",
+      "reserving": "Reservando...",
+      "available": "Disponible. Estimación: R$ {{amount}}",
+      "unavailable": "Horario no disponible.",
+      "availabilityError": "No se pudo verificar la disponibilidad.",
+      "reserveSuccess": "¡Reserva creada!",
+      "reserveError": "No se pudo crear la reserva.",
+      "loadError": "No se pudo cargar la agenda.",
+      "myReservations": "Mis reservas",
+      "empty": "Aún no hay reservas.",
+      "noAssets": "No hay canchas configuradas",
+      "backHome": "Volver"
     }
   },
   "landing": {

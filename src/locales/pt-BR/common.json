@@ -90,10 +90,32 @@
     },
     "app": {
       "welcome": "Olá — {{name}}",
-      "signedInHint": "Você está autenticado. A agenda de reservas entra na próxima etapa.",
+      "signedInHint": "Você está autenticado. Reserve horários na agenda.",
       "signedOutHint": "Faça login para continuar.",
       "signOut": "Sair",
-      "goLogin": "Ir para o login"
+      "goLogin": "Ir para o login",
+      "goAgenda": "Abrir agenda"
+    },
+    "agenda": {
+      "title": "Agenda",
+      "subtitle": "Consulte disponibilidade e reserve um horário.",
+      "court": "Quadra / espaço",
+      "date": "Data",
+      "start": "Início",
+      "end": "Fim",
+      "check": "Verificar disponibilidade",
+      "reserve": "Reservar",
+      "reserving": "Reservando...",
+      "available": "Disponível. Estimativa: R$ {{amount}}",
+      "unavailable": "Horário indisponível.",
+      "availabilityError": "Não foi possível verificar disponibilidade.",
+      "reserveSuccess": "Reserva criada!",
+      "reserveError": "Não foi possível criar a reserva.",
+      "loadError": "Não foi possível carregar a agenda.",
+      "myReservations": "Minhas reservas",
+      "empty": "Nenhuma reserva ainda.",
+      "noAssets": "Nenhuma quadra cadastrada",
+      "backHome": "Voltar"
     }
   },
   "landing": {

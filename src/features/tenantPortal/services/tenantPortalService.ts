@@ -61,7 +61,12 @@ export function isTenantHostMode(): boolean {
   return getHostTenantSubdomain() !== null
 }
 
-export type TenantPortalSegment = "" | "register" | "verify-phone" | "app"
+export type TenantPortalSegment =
+  | ""
+  | "register"
+  | "verify-phone"
+  | "app"
+  | "agenda"
 
 /**
  * Portal URLs: on host mode → `/`, `/register`, …;
@@ -288,4 +293,131 @@ export async function fileToCompressedDataUrl(file: File): Promise<string> {
   context.drawImage(bitmap, 0, 0, width, height)
   bitmap.close()
   return canvas.toDataURL("image/jpeg", 0.72)
+}
+
+const rentalAssetSchema = z.object({
+  id: z.string().uuid(),
+  assetId: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  unitId: z.string().uuid(),
+  name: z.string(),
+  type: z.string(),
+  totalQuantity: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
+})
+
+export type PortalRentalAsset = z.infer<typeof rentalAssetSchema>
+
+const availabilitySchema = z.object({
+  isAvailable: z.boolean(),
+  requestedQuantity: z.number(),
+  availableQuantity: z.number(),
+  estimatedTotalAmount: z.number().nullable(),
+  reason: z.string().nullable(),
+})
+
+const reservationSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  unitId: z.string().uuid(),
+  customerId: z.string().uuid(),
+  customerName: z.string(),
+  customerWhatsApp: z.string(),
+  startDateTime: z.string(),
+  endDateTime: z.string(),
+  status: z.string(),
+  totalAmount: z.number(),
+  depositPaid: z.number(),
+  createdAt: z.string(),
+  items: z.array(
+    z.object({
+      id: z.string().uuid(),
+      assetId: z.string().uuid(),
+      rentalAssetId: z.string().uuid(),
+      assetName: z.string(),
+      quantity: z.number(),
+      unitPrice: z.number(),
+      subTotal: z.number(),
+    }),
+  ),
+})
+
+export type PortalReservation = z.infer<typeof reservationSchema>
+
+export async function fetchPortalRentalAssets(
+  subdomain: string,
+): Promise<PortalRentalAsset[]> {
+  const response = await api.get(
+    `/api/public/tenants/${subdomain}/rental-assets`,
+  )
+  const parsed = z.array(rentalAssetSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid rental assets payload.")
+  }
+  return parsed.data
+}
+
+export async function checkPortalAvailability(
+  subdomain: string,
+  query: {
+    assetId: string
+    date: string
+    startTime: string
+    endTime: string
+    quantity?: number
+  },
+) {
+  try {
+    const response = await api.get("/api/reservations/availability", {
+      params: query,
+      headers: subdomainHeaders(subdomain),
+    })
+    const parsed = availabilitySchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid availability payload.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not check availability."),
+    )
+  }
+}
+
+export async function createPortalReservation(body: {
+  unitId: string
+  date: string
+  startTime: string
+  endTime: string
+  items: { assetId: string; quantity: number }[]
+}): Promise<PortalReservation> {
+  try {
+    const response = await api.post("/api/reservations", body)
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid reservation payload.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not create reservation."),
+    )
+  }
+}
+
+export async function listMyPortalReservations(): Promise<PortalReservation[]> {
+  try {
+    const response = await api.get("/api/reservations/mine")
+    const parsed = z.array(reservationSchema).safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid reservations payload.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not load reservations."),
+    )
+  }
 }
