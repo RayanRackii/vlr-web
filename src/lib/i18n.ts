@@ -10,6 +10,11 @@ export const supportedLanguages = ["pt-BR", "en", "es"] as const
 
 export type SupportedLanguage = (typeof supportedLanguages)[number]
 
+const cachedLng =
+  typeof window !== "undefined"
+    ? window.localStorage.getItem("i18nextLng")
+    : null
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -20,24 +25,21 @@ void i18n
       es: { common: esCommon },
     },
     fallbackLng: "pt-BR",
+    // Honor a saved choice; otherwise lock first paint to pt-BR (no browser EN/ES).
+    ...(cachedLng ? {} : { lng: "pt-BR" }),
     supportedLngs: [...supportedLanguages],
-    nonExplicitSupportedLngs: true,
+    // Do NOT set nonExplicitSupportedLngs: true — i18next 26 breaks pt-BR lookup when
+    // only regional codes (pt-BR) are listed (returns raw keys).
     defaultNS: "common",
     ns: ["common"],
     interpolation: {
       escapeValue: false,
     },
-    // First visit (no localStorage) always lands on pt-BR — do not follow browser EN/ES.
     detection: {
       order: ["localStorage"],
       caches: ["localStorage"],
       lookupLocalStorage: "i18nextLng",
     },
   })
-
-// If nothing was cached yet, lock default to Brazilian Portuguese.
-if (!window.localStorage.getItem("i18nextLng")) {
-  void i18n.changeLanguage("pt-BR")
-}
 
 export default i18n

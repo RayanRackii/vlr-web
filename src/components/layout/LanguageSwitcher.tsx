@@ -29,8 +29,12 @@ export function LanguageSwitcher() {
   const { t, i18n } = useTranslation()
 
   const currentLanguage =
-    supportedLanguages.find((language) => i18n.language.startsWith(language)) ??
-    "pt-BR"
+    supportedLanguages.find(
+      (language) =>
+        i18n.resolvedLanguage === language
+        || i18n.language === language
+        || i18n.language.startsWith(`${language}-`),
+    ) ?? "pt-BR"
 
   const currentShortLabel =
     languageOptions.find((option) => option.code === currentLanguage)
