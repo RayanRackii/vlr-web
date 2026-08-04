@@ -25,7 +25,10 @@ import {
   verifyPhoneSchema,
   type VerifyPhoneFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
-import { verifyCustomerPhone } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  tenantPortalPath,
+  verifyCustomerPhone,
+} from "@/features/tenantPortal/services/tenantPortalService"
 
 export function TenantPortalVerifyPhonePage() {
   const { t } = useTranslation()
@@ -52,7 +55,7 @@ export function TenantPortalVerifyPhonePage() {
     try {
       await verifyCustomerPhone(subdomain, values)
       toast.success(t("tenantPortal.verify.toastSuccess"))
-      void navigate(`/t/${subdomain}/app`, { replace: true })
+      void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -120,7 +123,11 @@ export function TenantPortalVerifyPhonePage() {
       </Form>
 
       <p className="text-center text-sm text-muted-foreground">
-        <Link to={`/t/${subdomain}`} className="underline" style={{ color: primary }}>
+        <Link
+          to={tenantPortalPath(subdomain)}
+          className="underline"
+          style={{ color: primary }}
+        >
           {t("tenantPortal.verify.backToLogin")}
         </Link>
       </p>

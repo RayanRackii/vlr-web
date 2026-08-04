@@ -18,17 +18,17 @@ export function getTenantBaseDomain(): string {
   return "rolvix.com.br"
 }
 
-/** Resolves tenant slug from host (`x.rolvix.com.br`) or path `/t/:subdomain`. */
-export function resolveTenantSubdomain(pathname: string): string | null {
-  const pathMatch = pathname.match(/^\/t\/([a-z0-9-]+)(?:\/|$)/i)
-  if (pathMatch?.[1]) {
-    return pathMatch[1].toLowerCase()
-  }
-
+/** Tenant slug from hostname only (`ficc.rolvix.com.br` → `ficc`). */
+export function getHostTenantSubdomain(): string | null {
   const host = window.location.hostname.toLowerCase()
   const base = getTenantBaseDomain()
 
-  if (host === base || host === `www.${base}` || host === "localhost" || host === "127.0.0.1") {
+  if (
+    host === base ||
+    host === `www.${base}` ||
+    host === "localhost" ||
+    host === "127.0.0.1"
+  ) {
     return null
   }
 
@@ -39,7 +39,7 @@ export function resolveTenantSubdomain(pathname: string): string | null {
     }
   }
 
-  // Local wildcard: quadratenis.localhost
+  // Local wildcard: ficc.localhost
   if (host.endsWith(".localhost")) {
     const slug = host.slice(0, -".localhost".length)
     if (slug.length > 0 && !slug.includes(".")) {
@@ -48,6 +48,40 @@ export function resolveTenantSubdomain(pathname: string): string | null {
   }
 
   return null
+}
+
+/** True when the app is served on `{subdomain}.{baseDomain}` (not apex). */
+export function isTenantHostMode(): boolean {
+  return getHostTenantSubdomain() !== null
+}
+
+export type TenantPortalSegment = "" | "register" | "verify-phone" | "app"
+
+/**
+ * Portal URLs: on host mode → `/`, `/register`, …;
+ * on apex/dev path mode → `/t/{subdomain}`, `/t/{subdomain}/register`, …
+ */
+export function tenantPortalPath(
+  subdomain: string,
+  segment: TenantPortalSegment = "",
+): string {
+  if (isTenantHostMode()) {
+    return segment.length > 0 ? `/${segment}` : "/"
+  }
+
+  return segment.length > 0
+    ? `/t/${subdomain}/${segment}`
+    : `/t/${subdomain}`
+}
+
+/** Resolves tenant slug from host (`x.rolvix.com.br`) or path `/t/:subdomain`. */
+export function resolveTenantSubdomain(pathname: string): string | null {
+  const pathMatch = pathname.match(/^\/t\/([a-z0-9-]+)(?:\/|$)/i)
+  if (pathMatch?.[1]) {
+    return pathMatch[1].toLowerCase()
+  }
+
+  return getHostTenantSubdomain()
 }
 
 function subdomainHeaders(subdomain: string): Record<string, string> {

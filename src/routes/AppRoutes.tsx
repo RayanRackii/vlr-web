@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { MainLayout } from "@/components/layout/MainLayout"
@@ -20,11 +21,29 @@ import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortal
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
+import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 
 export function AppRoutes() {
+  const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
+
+  // Host mode: ficc.rolvix.com.br → portal branded (sem landing).
+  if (hostSubdomain) {
+    return (
+      <Routes>
+        <Route element={<TenantPortalLayout />}>
+          <Route index element={<TenantPortalLoginPage />} />
+          <Route path="register" element={<TenantPortalRegisterPage />} />
+          <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+          <Route path="app" element={<TenantPortalHomePage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    )
+  }
+
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />

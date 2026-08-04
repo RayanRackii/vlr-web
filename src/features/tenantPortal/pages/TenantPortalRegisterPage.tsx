@@ -23,6 +23,7 @@ import {
 import {
   fileToCompressedDataUrl,
   registerCustomer,
+  tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function TenantPortalRegisterPage() {
@@ -79,7 +80,7 @@ export function TenantPortalRegisterPage() {
         photoUrl: values.photoDataUrl,
       })
       toast.success(t("tenantPortal.register.toastSuccess"))
-      void navigate(`/t/${subdomain}/verify-phone`, {
+      void navigate(tenantPortalPath(subdomain, "verify-phone"), {
         replace: true,
         state: { email: values.email },
       })
@@ -174,7 +175,7 @@ export function TenantPortalRegisterPage() {
       <p className="text-center text-sm text-muted-foreground">
         {t("tenantPortal.register.hasAccount")}{" "}
         <Link
-          to={`/t/${subdomain}`}
+          to={tenantPortalPath(subdomain)}
           className="font-medium underline"
           style={{ color: primary }}
         >

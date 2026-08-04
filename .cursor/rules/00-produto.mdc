@@ -33,5 +33,6 @@ Em toda tarefa relevante: atualizar `ROADMAP.md`. Se a prioridade/escopo mudar, 
 ## Ecossistema
 
 - **Este repo (`vlr-web`):** React + Vite, deploy na **Vercel** (SPA rewrite em `vercel.json`).
+- **Hosts:** `rolvix.com.br` / `www` → landing + app B2B. `{subdomain}.rolvix.com.br` → portal B2C branded (login em `/`). Em apex/dev, path `/t/:subdomain` também funciona.
 - **API (`vlr-api`):** repo separado, .NET 10 no **Railway** (`VITE_API_URL`).
 - **Supabase:** somente autenticação no frontend (JWT); dados sempre via API .NET.

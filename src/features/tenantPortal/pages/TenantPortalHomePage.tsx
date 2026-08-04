@@ -6,6 +6,7 @@ import type { TenantPortalOutletContext } from "@/features/tenantPortal/componen
 import {
   clearCustomerSession,
   getCustomerAccessToken,
+  tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function TenantPortalHomePage() {
@@ -31,7 +32,7 @@ export function TenantPortalHomePage() {
           className="w-full"
           onClick={() => {
             clearCustomerSession()
-            window.location.assign(`/t/${subdomain}`)
+            window.location.assign(tenantPortalPath(subdomain))
           }}
         >
           {t("tenantPortal.app.signOut")}
@@ -41,7 +42,7 @@ export function TenantPortalHomePage() {
           type="button"
           className="w-full"
           style={{ backgroundColor: primary }}
-          render={<Link to={`/t/${subdomain}`} />}
+          render={<Link to={tenantPortalPath(subdomain)} />}
         >
           {t("tenantPortal.app.goLogin")}
         </Button>

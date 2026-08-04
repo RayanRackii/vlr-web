@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, Outlet, useParams } from "react-router-dom"
+import { Outlet, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import {
   fetchTenantBranding,
+  getTenantBaseDomain,
   resolveTenantSubdomain,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
@@ -82,9 +83,12 @@ export function TenantPortalLayout() {
         <div className="max-w-md space-y-3 text-center">
           <h1 className="text-xl font-semibold">{t("tenantPortal.errors.title")}</h1>
           <p className="text-sm text-muted-foreground">{error}</p>
-          <Link to="/" className="text-sm text-primary underline">
+          <a
+            href={`https://${getTenantBaseDomain()}/`}
+            className="text-sm text-primary underline"
+          >
             Rolvix
-          </Link>
+          </a>
         </div>
       </main>
     )

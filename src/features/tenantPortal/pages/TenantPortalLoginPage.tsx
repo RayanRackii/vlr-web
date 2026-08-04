@@ -20,7 +20,10 @@ import {
   customerLoginSchema,
   type CustomerLoginFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
-import { loginCustomer } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  loginCustomer,
+  tenantPortalPath,
+} from "@/features/tenantPortal/services/tenantPortalService"
 
 export function TenantPortalLoginPage() {
   const { t } = useTranslation()
@@ -38,7 +41,7 @@ export function TenantPortalLoginPage() {
     try {
       await loginCustomer(subdomain, values)
       toast.success(t("tenantPortal.login.toastSuccess"))
-      void navigate(`/t/${subdomain}/app`, { replace: true })
+      void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -107,7 +110,7 @@ export function TenantPortalLoginPage() {
       <p className="text-center text-sm text-muted-foreground">
         {t("tenantPortal.login.noAccount")}{" "}
         <Link
-          to={`/t/${subdomain}/register`}
+          to={tenantPortalPath(subdomain, "register")}
           className="font-medium underline"
           style={{ color: primary }}
         >
