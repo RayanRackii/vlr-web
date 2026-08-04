@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, Navigate, useOutletContext } from "react-router-dom"
+import { Navigate, useOutletContext, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   checkPortalAvailability,
   createPortalReservation,
@@ -26,8 +26,17 @@ function todayIsoDate(): string {
 
 export function TenantPortalAgendaPage() {
   const { t } = useTranslation()
-  const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const { menuItemId } = useParams<{ menuItemId?: string }>()
+  const { subdomain, primary, menu } =
+    useOutletContext<CustomerAppOutletContext>()
   const signedIn = getCustomerAccessToken() !== null
+
+  const menuItem = useMemo(
+    () => menu.find((item) => item.id === menuItemId) ?? null,
+    [menu, menuItemId],
+  )
+
+  const lockedAssetId = menuItem?.assetId ?? null
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>([])
@@ -56,7 +65,13 @@ export function TenantPortalAgendaPage() {
         }
         setAssets(assetList)
         setMine(reservations)
-        if (assetList[0]) {
+
+        if (lockedAssetId) {
+          const match = assetList.find(
+            (asset) => asset.assetId === lockedAssetId,
+          )
+          setAssetId(match?.assetId ?? lockedAssetId)
+        } else if (assetList[0]) {
           setAssetId(assetList[0].assetId)
         }
       })
@@ -76,13 +91,18 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [signedIn, subdomain, t])
+  }, [signedIn, subdomain, t, lockedAssetId])
 
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
   }
 
+  if (menuItemId && !menuItem) {
+    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
+  }
+
   const selected = assets.find((asset) => asset.assetId === assetId)
+  const title = menuItem?.label ?? t("tenantPortal.agenda.title")
 
   async function onCheckAvailability() {
     if (!assetId) {
@@ -144,9 +164,9 @@ export function TenantPortalAgendaPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">{t("tenantPortal.agenda.title")}</h2>
+        <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.agenda.subtitle")}
         </p>
@@ -162,6 +182,7 @@ export function TenantPortalAgendaPage() {
               <select
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
                 value={assetId}
+                disabled={Boolean(lockedAssetId)}
                 onChange={(event) => {
                   setAssetId(event.target.value)
                   setAvailabilityHint(null)
@@ -170,11 +191,16 @@ export function TenantPortalAgendaPage() {
                 {assets.length === 0 ? (
                   <option value="">{t("tenantPortal.agenda.noAssets")}</option>
                 ) : (
-                  assets.map((asset) => (
-                    <option key={asset.assetId} value={asset.assetId}>
-                      {asset.name}
-                    </option>
-                  ))
+                  assets
+                    .filter(
+                      (asset) =>
+                        !lockedAssetId || asset.assetId === lockedAssetId,
+                    )
+                    .map((asset) => (
+                      <option key={asset.assetId} value={asset.assetId}>
+                        {asset.name}
+                      </option>
+                    ))
                 )}
               </select>
             </label>
@@ -260,7 +286,9 @@ export function TenantPortalAgendaPage() {
                     className="rounded-md border border-border px-3 py-2 text-sm"
                   >
                     <p className="font-medium">
-                      {reservation.items.map((item) => item.assetName).join(", ")}
+                      {reservation.items
+                        .map((item) => item.assetName)
+                        .join(", ")}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(reservation.startDateTime).toLocaleString()} →{" "}
@@ -274,16 +302,6 @@ export function TenantPortalAgendaPage() {
           </div>
         </>
       )}
-
-      <p className="text-center text-sm">
-        <Link
-          to={tenantPortalPath(subdomain, "app")}
-          className="underline"
-          style={{ color: primary }}
-        >
-          {t("tenantPortal.agenda.backHome")}
-        </Link>
-      </p>
     </div>
   )
 }

@@ -116,6 +116,11 @@
       "empty": "Aún no hay reservas.",
       "noAssets": "No hay canchas configuradas",
       "backHome": "Volver"
+    },
+    "menu": {
+      "empty": "No hay módulos disponibles.",
+      "emptyTitle": "Aún no hay nada aquí",
+      "emptyDescription": "El administrador del club aún no configuró ítems de menú para el portal."
     }
   },
   "landing": {
@@ -407,6 +412,7 @@
     "pmocNew": "Nuevo Plan",
     "workOrders": "OT",
     "registrationFields": "Registro portal",
+    "moduleMenu": "Menú del portal",
     "admin": "Super-Admin",
     "menu": "Menú de navegación",
     "openMenu": "Abrir menú de navegación"
@@ -976,6 +982,23 @@
       "loadError": "No se pudieron cargar los campos.",
       "tenantPageTitle": "Formulario de registro",
       "tenantPageDescription": "Configure los campos extra del portal B2C de esta empresa."
+    },
+    "moduleMenu": {
+      "title": "Ítems del menú (portal B2C)",
+      "description": "Varios ítems por módulo, con el nombre que el cliente ve en la barra lateral (ej.: Alquilar cancha de tenis).",
+      "empty": "Sin ítems de menú. El portal autenticado no tendrá opciones hasta que cree uno.",
+      "add": "Nuevo ítem",
+      "labelPlaceholder": "Ej.: Alquilar cancha de tenis",
+      "anyAsset": "Cualquier cancha / asset (agenda general)",
+      "create": "Agregar ítem",
+      "inactive": "inactivo",
+      "createSuccess": "Ítem agregado.",
+      "createError": "No se pudo agregar el ítem.",
+      "deleteSuccess": "Ítem eliminado.",
+      "deleteError": "No se pudo eliminar el ítem.",
+      "loadError": "No se pudo cargar el menú.",
+      "tenantPageTitle": "Menú del portal",
+      "tenantPageDescription": "Defina lo que el cliente ve en la barra lateral tras iniciar sesión."
     },
     "dashboard": {
       "title": "Panel Super-Admin",

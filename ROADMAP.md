@@ -2,7 +2,7 @@
 
 Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `backend/ROADMAP.md`.
 
-**Foco de produto agora:** **agenda B2C** no portal do tenant.  
+**Foco de produto agora:** **shell B2C compartilhado** (sidebar) + menu dinâmico do tenant.  
 **Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
 
 ## 0. Disciplina
@@ -13,42 +13,29 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 
 ## 1. Registro dinâmico por tenant — FEITO (código)
 
-Decisões (2026-08-03):
-- Quem configura: **superadmin (platform)** e **admin do clube (tenant)**.
-- Ir **direto** ao formulário dinâmico (sem versão fixa intermediária).
-- Campos mínimos fixos (auth): **nome, e-mail, senha, celular**.
-- Extras (CPF, CEP, foto, “tem bagagem”, etc.) vêm do **schema do tenant**; FICC = caso de uso opcional.
-- Extras **não** precisam ser filtráveis; índice de listagem = **nome**.
+- [x] `/register` dinâmico + UI admin de campos.
+- [ ] Confirmar migration + deploy FE/BE.
 
-- [x] Tela `/register` no host do tenant monta campos a partir de `GET .../registration-schema`.
-- [x] UI admin (platform em editar tenant + tenant em `/configuracoes/cadastro`) para CRUD dos campos extras.
-- [ ] Confirmar migration aplicada no Railway + deploy FE/BE (seed FICC cpf/cep/photo vem da migration BE).
+## 2. Shell B2C + menu multi-item — FEITO (código)
 
-## 2. Agenda B2C — EM ANDAMENTO
-
-- [x] Rota `agenda` no host do tenant e em `/t/:subdomain/agenda`.
-- [x] Listar assets públicos, checar disponibilidade, criar reserva, listar minhas reservas.
-- [x] CTA “Abrir agenda” na home autenticada.
+- [x] `AppShell` compartilhado com B2B `MainLayout`.
+- [x] Pós-login: `CustomerAppLayout` com sidebar dos itens de `GET .../menu`.
+- [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
+- [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
+- [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
 - [ ] UX de calendário/slots (hoje: data + hora manual).
 - [ ] Admin B2B de reservas.
 
-## 3. Portal do tenant — login + shell branded
+## 3. Portal branding / host
 
-- [x] Rotas `/t/:subdomain` e host `{subdomain}.rolvix.com.br` → login branded.
-- [x] Shell branding (logo/cores/tagline).
-- [x] Login e-mail/senha + verify-phone.
-- [x] Campos de branding no wizard/edit admin.
+- [x] Host `{subdomain}.rolvix.com.br` + path `/t/:subdomain`.
 - [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
 
-## 4. Notificações — ADIADO no frontend
+## 4. Gating B2B por módulos
 
-SMS aparece no log Dev da API até haver provider real.
+- [ ] Sidebar B2B filtrada por `tenant_modules` + `ModuleGuard`.
 
-## 5. Gating por módulos do tenant
-
-- [ ] Sidebar dinâmica + `ModuleGuard`.
-
-## 6. Fluxo de convite B2B
+## 5. Fluxo de convite B2B
 
 - [ ] `submitInvitePassword` ainda stub.
 
@@ -62,11 +49,6 @@ SMS aparece no log Dev da API até haver provider real.
 
 | Data | Mudança |
 |------|---------|
-| 2026-08-03 | Portal elevado a próximo foco. |
-| 2026-08-03 | Login B2C = e-mail + senha. |
-| 2026-08-03 | **Executado:** feature `tenantPortal` (layout + login/register/verify + i18n). |
-| 2026-08-03 | **Executado:** host `{subdomain}.rolvix.com.br` serve portal em `/`. |
-| 2026-08-03 | **Executado:** branding no wizard/edit admin. Disciplina “como testar”. |
-| 2026-08-03 | **Prioridade:** registro dinâmico por tenant (mínimo nome/e-mail/senha/celular; extras via schema). Agenda adiada. |
-| 2026-08-03 | **Executado:** register dinâmico + UI de campos (platform/tenant). |
-| 2026-08-04 | Agenda B2C no portal (assets + disponibilidade + reserve + mine); i18n pt/en/es. |
+| 2026-08-03 | Portal + registro dinâmico. |
+| 2026-08-04 | Agenda B2C inicial. |
+| 2026-08-04 | **Executado:** shell B2C (AppShell) + menu dinâmico multi-item; admin de menu. |

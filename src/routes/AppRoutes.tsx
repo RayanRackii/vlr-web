@@ -7,6 +7,8 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
 import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
+import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
+import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
@@ -16,7 +18,7 @@ import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
-import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
+import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
@@ -39,8 +41,11 @@ export function AppRoutes() {
           <Route index element={<TenantPortalLoginPage />} />
           <Route path="register" element={<TenantPortalRegisterPage />} />
           <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+        </Route>
+        <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
           <Route path="agenda" element={<TenantPortalAgendaPage />} />
+          <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -55,12 +60,17 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/invite" element={<SetPasswordPage />} />
 
-      <Route path="/t/:subdomain" element={<TenantPortalLayout />}>
-        <Route index element={<TenantPortalLoginPage />} />
-        <Route path="register" element={<TenantPortalRegisterPage />} />
-        <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
-        <Route path="app" element={<TenantPortalHomePage />} />
-        <Route path="agenda" element={<TenantPortalAgendaPage />} />
+      <Route path="/t/:subdomain">
+        <Route element={<TenantPortalLayout />}>
+          <Route index element={<TenantPortalLoginPage />} />
+          <Route path="register" element={<TenantPortalRegisterPage />} />
+          <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+        </Route>
+        <Route element={<CustomerAppLayout />}>
+          <Route path="app" element={<TenantPortalHomePage />} />
+          <Route path="agenda" element={<TenantPortalAgendaPage />} />
+          <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute />}>
@@ -82,6 +92,7 @@ export function AppRoutes() {
             path="/configuracoes/cadastro"
             element={<TenantRegistrationFieldsPage />}
           />
+          <Route path="/configuracoes/menu" element={<TenantModuleMenuPage />} />
 
           <Route element={<PlatformAdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

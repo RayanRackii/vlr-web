@@ -23,6 +23,18 @@ export const registrationFieldSchema = z.object({
 
 export type RegistrationField = z.infer<typeof registrationFieldSchema>
 
+export const moduleMenuItemSchema = z.object({
+  id: z.string().uuid(),
+  moduleName: z.string(),
+  label: z.string(),
+  sortOrder: z.number(),
+  isActive: z.boolean(),
+  rentalAssetId: z.string().uuid().nullable().optional(),
+  assetId: z.string().uuid().nullable().optional(),
+})
+
+export type ModuleMenuItem = z.infer<typeof moduleMenuItemSchema>
+
 export const registrationSchemaResponseSchema = z.object({
   coreFields: z.array(z.string()),
   fields: z.array(registrationFieldSchema),

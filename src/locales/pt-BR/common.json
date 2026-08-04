@@ -116,6 +116,11 @@
       "empty": "Nenhuma reserva ainda.",
       "noAssets": "Nenhuma quadra cadastrada",
       "backHome": "Voltar"
+    },
+    "menu": {
+      "empty": "Nenhum módulo disponível.",
+      "emptyTitle": "Nada por aqui ainda",
+      "emptyDescription": "O administrador do clube ainda não configurou itens de menu para o portal."
     }
   },
   "landing": {
@@ -407,6 +412,7 @@
     "pmocNew": "Novo Plano",
     "workOrders": "OS",
     "registrationFields": "Cadastro portal",
+    "moduleMenu": "Menu do portal",
     "admin": "Super-Admin",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação"
@@ -976,6 +982,23 @@
       "loadError": "Não foi possível carregar os campos.",
       "tenantPageTitle": "Formulário de cadastro",
       "tenantPageDescription": "Configure os campos extras do portal B2C desta empresa."
+    },
+    "moduleMenu": {
+      "title": "Itens do menu (portal B2C)",
+      "description": "Vários itens por módulo, com o nome que o cliente vê na sidebar (ex.: Alugar quadra de tênis).",
+      "empty": "Nenhum item de menu. O portal autenticado ficará sem opções até você criar um.",
+      "add": "Novo item",
+      "labelPlaceholder": "Ex.: Alugar quadra de tênis",
+      "anyAsset": "Qualquer quadra / asset (agenda geral)",
+      "create": "Adicionar item",
+      "inactive": "inativo",
+      "createSuccess": "Item adicionado.",
+      "createError": "Não foi possível adicionar o item.",
+      "deleteSuccess": "Item removido.",
+      "deleteError": "Não foi possível remover o item.",
+      "loadError": "Não foi possível carregar o menu.",
+      "tenantPageTitle": "Menu do portal",
+      "tenantPageDescription": "Defina o que o cliente vê na sidebar após o login."
     },
     "dashboard": {
       "title": "Painel Super-Admin",

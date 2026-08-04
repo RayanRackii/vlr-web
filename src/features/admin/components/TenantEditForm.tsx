@@ -14,6 +14,7 @@ import { toast } from "sonner"
 
 import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
+import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import {
   MODULE_KEYS,
   tenantOnboardingSchema,
@@ -426,6 +427,15 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
           <Card>
             <CardContent className="pt-6">
               <RegistrationFieldsManager tenantId={tenantId} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <ModuleMenuItemsManager
+                tenantId={tenantId}
+                subdomain={values.subdomain}
+              />
             </CardContent>
           </Card>
 

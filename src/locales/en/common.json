@@ -116,6 +116,11 @@
       "empty": "No reservations yet.",
       "noAssets": "No courts configured",
       "backHome": "Back"
+    },
+    "menu": {
+      "empty": "No modules available.",
+      "emptyTitle": "Nothing here yet",
+      "emptyDescription": "The club admin has not configured portal menu items yet."
     }
   },
   "landing": {
@@ -407,6 +412,7 @@
     "pmocNew": "New Plan",
     "workOrders": "Work Orders",
     "registrationFields": "Portal registration",
+    "moduleMenu": "Portal menu",
     "admin": "Super-Admin",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu"
@@ -976,6 +982,23 @@
       "loadError": "Could not load fields.",
       "tenantPageTitle": "Registration form",
       "tenantPageDescription": "Configure extra B2C portal fields for this company."
+    },
+    "moduleMenu": {
+      "title": "Menu items (B2C portal)",
+      "description": "Multiple items per module, with the label customers see in the sidebar (e.g. Rent tennis court).",
+      "empty": "No menu items. The signed-in portal will have no options until you add one.",
+      "add": "New item",
+      "labelPlaceholder": "e.g. Rent tennis court",
+      "anyAsset": "Any court / asset (general schedule)",
+      "create": "Add item",
+      "inactive": "inactive",
+      "createSuccess": "Item added.",
+      "createError": "Could not add the item.",
+      "deleteSuccess": "Item removed.",
+      "deleteError": "Could not remove the item.",
+      "loadError": "Could not load the menu.",
+      "tenantPageTitle": "Portal menu",
+      "tenantPageDescription": "Define what customers see in the sidebar after sign-in."
     },
     "dashboard": {
       "title": "Super-Admin Panel",

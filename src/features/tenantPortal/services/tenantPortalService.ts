@@ -3,11 +3,13 @@ import { z } from "zod"
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import {
   authResponseSchema,
+  moduleMenuItemSchema,
   registerResponseSchema,
   registrationFieldSchema,
   registrationSchemaResponseSchema,
   tenantBrandingSchema,
   type CustomerAuthResponse,
+  type ModuleMenuItem,
   type RegistrationField,
   type RegistrationSchemaResponse,
   type TenantBranding,
@@ -15,6 +17,7 @@ import {
 
 const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
+const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
 
 export function getTenantBaseDomain(): string {
   const configured = import.meta.env.VITE_TENANT_BASE_DOMAIN
@@ -67,6 +70,7 @@ export type TenantPortalSegment =
   | "verify-phone"
   | "app"
   | "agenda"
+  | `agenda/${string}`
 
 /**
  * Portal URLs: on host mode → `/`, `/register`, …;
@@ -83,6 +87,13 @@ export function tenantPortalPath(
   return segment.length > 0
     ? `/t/${subdomain}/${segment}`
     : `/t/${subdomain}`
+}
+
+export function menuItemAgendaPath(
+  subdomain: string,
+  menuItemId: string,
+): string {
+  return tenantPortalPath(subdomain, `agenda/${menuItemId}`)
 }
 
 /** Resolves tenant slug from host (`x.rolvix.com.br`) or path `/t/:subdomain`. */
@@ -231,7 +242,11 @@ export async function verifyCustomerPhone(
     if (!parsed.success) {
       throw new Error("Invalid verify-phone response.")
     }
-    persistCustomerSession(parsed.data.token, subdomain)
+    persistCustomerSession(
+      parsed.data.token,
+      subdomain,
+      parsed.data.customer.email ?? parsed.data.customer.name,
+    )
     return parsed.data
   } catch (error) {
     throw new Error(
@@ -254,7 +269,11 @@ export async function loginCustomer(
     if (!parsed.success) {
       throw new Error("Invalid login response.")
     }
-    persistCustomerSession(parsed.data.token, subdomain)
+    persistCustomerSession(
+      parsed.data.token,
+      subdomain,
+      parsed.data.customer.email ?? parsed.data.customer.name,
+    )
     return parsed.data
   } catch (error) {
     throw new Error(
@@ -263,18 +282,133 @@ export async function loginCustomer(
   }
 }
 
-export function persistCustomerSession(token: string, subdomain: string): void {
+export function persistCustomerSession(
+  token: string,
+  subdomain: string,
+  label?: string,
+): void {
   window.localStorage.setItem(CUSTOMER_TOKEN_KEY, token)
   window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain)
+  if (label && label.trim().length > 0) {
+    window.localStorage.setItem(CUSTOMER_LABEL_KEY, label.trim())
+  }
 }
 
 export function clearCustomerSession(): void {
   window.localStorage.removeItem(CUSTOMER_TOKEN_KEY)
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_KEY)
+  window.localStorage.removeItem(CUSTOMER_LABEL_KEY)
 }
 
 export function getCustomerAccessToken(): string | null {
   return window.localStorage.getItem(CUSTOMER_TOKEN_KEY)
+}
+
+export function getCustomerLabel(): string | null {
+  return window.localStorage.getItem(CUSTOMER_LABEL_KEY)
+}
+
+export async function fetchTenantMenu(
+  subdomain: string,
+): Promise<ModuleMenuItem[]> {
+  const response = await api.get(`/api/public/tenants/${subdomain}/menu`)
+  const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid menu payload.")
+  }
+  return parsed.data
+}
+
+export async function listTenantModuleMenuItems(): Promise<ModuleMenuItem[]> {
+  const response = await api.get("/api/module-menu-items")
+  const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid module menu items payload.")
+  }
+  return parsed.data
+}
+
+export async function listAdminModuleMenuItems(
+  tenantId: string,
+): Promise<ModuleMenuItem[]> {
+  const response = await api.get(
+    `/api/admin/tenants/${tenantId}/module-menu-items`,
+  )
+  const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error("Invalid module menu items payload.")
+  }
+  return parsed.data
+}
+
+export async function createModuleMenuItem(
+  body: {
+    moduleName: string
+    label: string
+    sortOrder: number
+    isActive: boolean
+    rentalAssetId?: string | null
+  },
+  tenantId?: string,
+): Promise<ModuleMenuItem> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/module-menu-items`
+    : "/api/module-menu-items"
+  try {
+    const response = await api.post(url, body)
+    const parsed = moduleMenuItemSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid create menu item response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not create menu item."),
+    )
+  }
+}
+
+export async function updateModuleMenuItem(
+  itemId: string,
+  body: {
+    label: string
+    sortOrder: number
+    isActive: boolean
+    rentalAssetId?: string | null
+  },
+  tenantId?: string,
+): Promise<ModuleMenuItem> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/module-menu-items/${itemId}`
+    : `/api/module-menu-items/${itemId}`
+  try {
+    const response = await api.put(url, body)
+    const parsed = moduleMenuItemSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid update menu item response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not update menu item."),
+    )
+  }
+}
+
+export async function deleteModuleMenuItem(
+  itemId: string,
+  tenantId?: string,
+): Promise<void> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/module-menu-items/${itemId}`
+    : `/api/module-menu-items/${itemId}`
+  try {
+    await api.delete(url)
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not delete menu item."),
+    )
+  }
 }
 
 export async function fileToCompressedDataUrl(file: File): Promise<string> {

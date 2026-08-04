@@ -1,62 +1,35 @@
+import { Navigate, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Link, useOutletContext } from "react-router-dom"
 
-import { Button } from "@/components/ui/button"
-import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
-import {
-  clearCustomerSession,
-  getCustomerAccessToken,
-  tenantPortalPath,
-} from "@/features/tenantPortal/services/tenantPortalService"
+import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { menuItemAgendaPath } from "@/features/tenantPortal/services/tenantPortalService"
 
+/** Redirects to the first B2C menu item (or empty state). */
 export function TenantPortalHomePage() {
   const { t } = useTranslation()
-  const { subdomain, branding, primary } =
-    useOutletContext<TenantPortalOutletContext>()
-  const signedIn = getCustomerAccessToken() !== null
+  const { subdomain, menu } = useOutletContext<CustomerAppOutletContext>()
+
+  const firstRentals = menu.find(
+    (item) => item.moduleName.toLowerCase() === "rentals",
+  )
+
+  if (firstRentals) {
+    return (
+      <Navigate
+        to={menuItemAgendaPath(subdomain, firstRentals.id)}
+        replace
+      />
+    )
+  }
 
   return (
-    <div className="space-y-4 text-center">
+    <div className="mx-auto max-w-lg space-y-2 py-10 text-center">
       <h2 className="text-lg font-semibold">
-        {t("tenantPortal.app.welcome", { name: branding.displayName })}
+        {t("tenantPortal.menu.emptyTitle")}
       </h2>
       <p className="text-sm text-muted-foreground">
-        {signedIn
-          ? t("tenantPortal.app.signedInHint")
-          : t("tenantPortal.app.signedOutHint")}
+        {t("tenantPortal.menu.emptyDescription")}
       </p>
-      {signedIn ? (
-        <div className="space-y-2">
-          <Button
-            type="button"
-            className="w-full"
-            style={{ backgroundColor: primary }}
-            render={<Link to={tenantPortalPath(subdomain, "agenda")} />}
-          >
-            {t("tenantPortal.app.goAgenda")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              clearCustomerSession()
-              window.location.assign(tenantPortalPath(subdomain))
-            }}
-          >
-            {t("tenantPortal.app.signOut")}
-          </Button>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          className="w-full"
-          style={{ backgroundColor: primary }}
-          render={<Link to={tenantPortalPath(subdomain)} />}
-        >
-          {t("tenantPortal.app.goLogin")}
-        </Button>
-      )}
     </div>
   )
 }

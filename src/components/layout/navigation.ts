@@ -4,6 +4,7 @@ import {
   ClipboardPen,
   FormInput,
   LayoutDashboard,
+  MenuSquare,
   Shield,
   Wrench,
 } from "lucide-react"
@@ -26,6 +27,7 @@ export type AppNavigationItem = {
     | "nav.pmoc"
     | "nav.workOrders"
     | "nav.registrationFields"
+    | "nav.moduleMenu"
     | "nav.admin"
   to: string
   icon: LucideIcon
@@ -77,6 +79,11 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
     icon: FormInput,
+  },
+  {
+    labelKey: "nav.moduleMenu",
+    to: "/configuracoes/menu",
+    icon: MenuSquare,
   },
 ]
 
