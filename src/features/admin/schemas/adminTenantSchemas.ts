@@ -52,9 +52,40 @@ export const step3Schema = z.object({
   activeModules: z.array(z.enum(MODULE_KEYS)).min(1),
 })
 
+export const stepAdminInviteSchema = z
+  .object({
+    adminFullName: z.string().trim().max(200),
+    adminEmail: z.string().trim().max(320),
+  })
+  .superRefine((value, ctx) => {
+    const name = value.adminFullName
+    const email = value.adminEmail
+    const anyFilled = name.length > 0 || email.length > 0
+    if (!anyFilled) {
+      return
+    }
+
+    if (name.length < 2) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["adminFullName"],
+        message: "Admin name is required when inviting",
+      })
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["adminEmail"],
+        message: "Valid admin email is required when inviting",
+      })
+    }
+  })
+
 export const tenantOnboardingSchema = step1Schema
   .merge(step2Schema)
   .merge(step3Schema)
+  .merge(stepAdminInviteSchema)
 
 export type TenantOnboardingFormValues = z.infer<typeof tenantOnboardingSchema>
 
@@ -90,6 +121,8 @@ export const createTenantAdminRequestSchema = z.object({
   accentColor: z.string().nullable().optional(),
   welcomeTagline: z.string().nullable().optional(),
   activeModules: z.array(z.string()).min(1),
+  adminFullName: z.string().nullable().optional(),
+  adminEmail: z.string().nullable().optional(),
 })
 
 export type CreateTenantAdminRequest = z.infer<
@@ -128,6 +161,8 @@ export function tenantAdminToFormValues(
       .filter((module) => module.isActive)
       .map((module) => mapTenantModuleToKey(module.moduleName))
       .filter((moduleKey): moduleKey is ModuleKey => moduleKey !== null),
+    adminFullName: "",
+    adminEmail: "",
   }
 }
 

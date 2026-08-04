@@ -58,6 +58,8 @@ export async function createAdminTenant(
       accentColor: body.accentColor || null,
       welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
+      adminFullName: body.adminFullName || null,
+      adminEmail: body.adminEmail || null,
     })
 
     return tenantAdminSchema.parse(response.data)

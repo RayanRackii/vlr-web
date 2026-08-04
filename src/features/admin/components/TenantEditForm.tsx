@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
+import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
 import {
   MODULE_KEYS,
   tenantOnboardingSchema,
@@ -423,6 +424,12 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <TenantUsersManager tenantId={tenantId} />
             </CardContent>
           </Card>
 

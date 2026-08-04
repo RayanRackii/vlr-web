@@ -1,26 +1,30 @@
 import { z } from "zod"
 
+import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+
 const setPasswordResponseSchema = z.object({
-  ok: z.literal(true),
+  userId: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  email: z.string(),
 })
 
 export type SetPasswordResponse = z.infer<typeof setPasswordResponseSchema>
 
-/**
- * Placeholder until the invite token endpoint is wired to the .NET API.
- * Validates a successful shape so the page already follows the Zod seam.
- */
 export async function submitInvitePassword(input: {
   token: string
   password: string
 }): Promise<SetPasswordResponse> {
-  await new Promise<void>((resolve) => {
-    window.setTimeout(resolve, 900)
-  })
-
-  if (input.token.trim().length === 0 || input.password.length < 8) {
-    throw new Error("INVALID_INVITE")
+  try {
+    const response = await api.post<unknown>("/api/invites/accept", {
+      token: input.token,
+      password: input.password,
+    })
+    return setPasswordResponseSchema.parse(response.data)
+  } catch (error: unknown) {
+    const message = parseApiError(
+      getAxiosErrorPayload(error),
+      "INVALID_INVITE",
+    )
+    throw new Error(message)
   }
-
-  return setPasswordResponseSchema.parse({ ok: true })
 }

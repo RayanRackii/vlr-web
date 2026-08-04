@@ -47,7 +47,9 @@ Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
 
 ## 5. Fluxo de convite B2B
 
-- [ ] `submitInvitePassword` ainda stub.
+- [x] Wizard + edit tenant: convidar admin (sem senha)
+- [x] `submitInvitePassword` → `POST /api/invites/accept`
+- [ ] Onboarding público ainda coleta senha (legado)
 
 ## Dívidas técnicas conhecidas
 
@@ -66,3 +68,4 @@ Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
 | 2026-08-04 | Header Rolvix no portal B2C (sem Features/Pricing); default idioma pt-BR no portal. |
 | 2026-08-04 | **Executado:** branding `LogoSvg` (admin + portal sanitizado); `getTenantBaseDomain` unificado em `lib/tenantDomain`. |
 | 2026-08-04 | Agenda slots: backend iniciado; FE admin/B2C slot UX + layout canvas pendentes. |
+| 2026-08-04 | Convite admin do tenant no wizard/edit + accept real em `/invite`. |

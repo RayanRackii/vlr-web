@@ -1057,6 +1057,29 @@
         "updateFailed": "Could not update the client."
       }
     },
+    "users": {
+      "title": "Project users",
+      "description": "Invite admins by email (they set their own password) or promote existing users.",
+      "fullName": "Full name",
+      "email": "Email",
+      "inviteAdmin": "Invite admin",
+      "inviteSent": "Invite sent.",
+      "inviteError": "Could not send the invite.",
+      "loadError": "Could not load users.",
+      "activeUsers": "Active users",
+      "noUsers": "No users yet.",
+      "pendingInvites": "Pending invites",
+      "noInvites": "No pending invites.",
+      "makeAdmin": "Make admin",
+      "promoted": "User promoted to admin.",
+      "promoteError": "Could not promote the user.",
+      "resend": "Resend",
+      "resent": "Invite resent.",
+      "resendError": "Could not resend.",
+      "revoke": "Revoke",
+      "revoked": "Invite revoked.",
+      "revokeError": "Could not revoke."
+    },
     "modules": {
       "Inventory": "Inventory",
       "InventoryDescription": "Asset registry and control.",
@@ -1075,13 +1098,18 @@
         "company": "Enter the company legal details.",
         "identity": "Define the subdomain and brand identity.",
         "modules": "Select the modules this client subscribed to.",
+        "admin": "Invite the project’s initial admin (without setting a password).",
         "summary": "Review the provisioning before finishing."
       },
       "stepShort": {
         "1": "Company",
         "2": "Identity",
         "3": "Modules",
-        "4": "Summary"
+        "4": "Admin",
+        "5": "Summary"
+      },
+      "admin": {
+        "hint": "Optional. We email them a link to set their own password."
       },
       "fields": {
         "legalName": "Legal name",
@@ -1092,10 +1120,14 @@
         "primaryColor": "Primary color",
         "accentColor": "Accent color",
         "welcomeTagline": "Welcome tagline (optional)",
-        "welcomeTaglinePlaceholder": "e.g. Book your court in a few taps"
+        "welcomeTaglinePlaceholder": "e.g. Book your court in a few taps",
+        "adminFullName": "Admin name",
+        "adminFullNamePlaceholder": "e.g. Jane Smith",
+        "adminEmail": "Admin email"
       },
       "summary": {
         "modules": "Modules",
+        "admin": "Project admin",
         "total": "Estimated monthly total",
         "perMonth": "/mo",
         "demoNote": "Illustrative UI pricing (R$ 199 per module)."

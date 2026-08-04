@@ -1057,6 +1057,29 @@
         "updateFailed": "No se pudo actualizar el cliente."
       }
     },
+    "users": {
+      "title": "Usuarios del proyecto",
+      "description": "Invite admins por correo (ellos definen su contraseña) o promueva usuarios existentes.",
+      "fullName": "Nombre completo",
+      "email": "Correo",
+      "inviteAdmin": "Invitar admin",
+      "inviteSent": "Invitación enviada.",
+      "inviteError": "No se pudo enviar la invitación.",
+      "loadError": "No se pudieron cargar los usuarios.",
+      "activeUsers": "Usuarios activos",
+      "noUsers": "Aún no hay usuarios.",
+      "pendingInvites": "Invitaciones pendientes",
+      "noInvites": "No hay invitaciones pendientes.",
+      "makeAdmin": "Hacer admin",
+      "promoted": "Usuario promovido a admin.",
+      "promoteError": "No se pudo promover al usuario.",
+      "resend": "Reenviar",
+      "resent": "Invitación reenviada.",
+      "resendError": "No se pudo reenviar.",
+      "revoke": "Revocar",
+      "revoked": "Invitación revocada.",
+      "revokeError": "No se pudo revocar."
+    },
     "modules": {
       "Inventory": "Inventario",
       "InventoryDescription": "Registro y control de activos.",
@@ -1075,13 +1098,18 @@
         "company": "Ingrese los datos legales de la empresa.",
         "identity": "Defina el subdominio y la identidad visual.",
         "modules": "Seleccione los módulos contratados.",
+        "admin": "Invite al administrador inicial del proyecto (sin definir contraseña).",
         "summary": "Revise el aprovisionamiento antes de finalizar."
       },
       "stepShort": {
         "1": "Empresa",
         "2": "Identidad",
         "3": "Módulos",
-        "4": "Resumen"
+        "4": "Admin",
+        "5": "Resumen"
+      },
+      "admin": {
+        "hint": "Opcional. Enviaremos un correo para que defina su propia contraseña."
       },
       "fields": {
         "legalName": "Razón social",
@@ -1092,10 +1120,14 @@
         "primaryColor": "Color primario",
         "accentColor": "Color de acento",
         "welcomeTagline": "Frase de bienvenida (opcional)",
-        "welcomeTaglinePlaceholder": "Ej.: Reserva tu cancha en pocos toques"
+        "welcomeTaglinePlaceholder": "Ej.: Reserva tu cancha en pocos toques",
+        "adminFullName": "Nombre del admin",
+        "adminFullNamePlaceholder": "Ej.: María Silva",
+        "adminEmail": "Correo del admin"
       },
       "summary": {
         "modules": "Módulos",
+        "admin": "Admin del proyecto",
         "total": "Total mensual estimado",
         "perMonth": "/mes",
         "demoNote": "Precios ilustrativos de la interfaz (R$ 199 por módulo)."

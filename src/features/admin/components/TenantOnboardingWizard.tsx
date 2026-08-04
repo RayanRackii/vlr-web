@@ -21,6 +21,7 @@ import {
   step1Schema,
   step2Schema,
   step3Schema,
+  stepAdminInviteSchema,
   tenantOnboardingSchema,
   type ModuleKey,
   type TenantOnboardingFormValues,
@@ -43,7 +44,7 @@ import { cn } from "@/lib/utils"
 
 const SUCCESS_REDIRECT_MS = 5000
 
-const STEP_COUNT = 4
+const STEP_COUNT = 5
 
 const MODULE_ICONS = {
   Inventory: Package,
@@ -56,6 +57,7 @@ const STEP_TITLE_KEYS = [
   "admin.wizard.steps.company",
   "admin.wizard.steps.identity",
   "admin.wizard.steps.modules",
+  "admin.wizard.steps.admin",
   "admin.wizard.steps.summary",
 ] as const
 
@@ -87,6 +89,8 @@ export function TenantOnboardingWizard() {
       accentColor: "#14B8A6",
       welcomeTagline: "",
       activeModules: [],
+      adminFullName: "",
+      adminEmail: "",
     },
     mode: "onTouched",
   })
@@ -161,6 +165,21 @@ export function TenantOnboardingWizard() {
       }
 
       setStep(4)
+      return
+    }
+
+    if (step === 4) {
+      const parsed = stepAdminInviteSchema.safeParse({
+        adminFullName: form.getValues("adminFullName"),
+        adminEmail: form.getValues("adminEmail"),
+      })
+
+      if (!parsed.success) {
+        await form.trigger(["adminFullName", "adminEmail"])
+        return
+      }
+
+      setStep(5)
     }
   }
 
@@ -208,6 +227,8 @@ export function TenantOnboardingWizard() {
         subdomain: payload.subdomain.trim().toLowerCase(),
         ...toTenantBrandingPayload(payload),
         activeModules: payload.activeModules,
+        adminFullName: payload.adminFullName.trim() || null,
+        adminEmail: payload.adminEmail.trim() || null,
       })
 
       setIsSubmitSuccess(true)
@@ -252,7 +273,7 @@ export function TenantOnboardingWizard() {
           ))}
         </div>
 
-        <ol className="hidden gap-2 sm:grid sm:grid-cols-4">
+        <ol className="hidden gap-2 sm:grid sm:grid-cols-5">
           {STEP_TITLE_KEYS.map((titleKey, index) => {
             const stepNumber = index + 1
             const isActive = stepNumber === step
@@ -509,6 +530,49 @@ export function TenantOnboardingWizard() {
           ) : null}
 
           {step === 4 ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t("admin.wizard.admin.hint")}
+              </p>
+              <FormField
+                control={form.control}
+                name="adminFullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.adminFullName")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="name"
+                        placeholder={t("admin.wizard.fields.adminFullNamePlaceholder")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.wizard.fields.adminEmail")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        autoComplete="email"
+                        placeholder="admin@empresa.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          ) : null}
+
+          {step === 5 ? (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <div className="flex items-start gap-3">
                 <Building2 className="mt-0.5 size-4 text-muted-foreground" />
@@ -556,6 +620,16 @@ export function TenantOnboardingWizard() {
                   </div>
                 </div>
               </div>
+
+              {(values.adminEmail || values.adminFullName) ? (
+                <div className="border-t border-border pt-3">
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t("admin.wizard.summary.admin")}
+                  </p>
+                  <p className="text-sm">{values.adminFullName || "—"}</p>
+                  <p className="text-xs text-muted-foreground">{values.adminEmail}</p>
+                </div>
+              ) : null}
 
               <div className="border-t border-border pt-3">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
