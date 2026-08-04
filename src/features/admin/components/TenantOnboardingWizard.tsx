@@ -3,9 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Building2,
   Check,
-  CircleCheck,
   ClipboardList,
-  CircleAlert,
   Package,
   Tent,
   Wrench,
@@ -28,7 +26,6 @@ import {
   toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -41,6 +38,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 const SUCCESS_REDIRECT_MS = 5000
 
@@ -73,7 +71,6 @@ export function TenantOnboardingWizard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [isFinishing, setIsFinishing] = useState(false)
   const redirectTimeoutRef = useRef<number | null>(null)
@@ -110,11 +107,9 @@ export function TenantOnboardingWizard() {
   }, [])
 
   async function handleNext() {
-    if (isSubmitSuccess) {
+    if (isSubmitSuccess || isFinishing) {
       return
     }
-
-    setSubmitError(null)
 
     if (step === 1) {
       const parsed = step1Schema.safeParse({
@@ -185,11 +180,10 @@ export function TenantOnboardingWizard() {
   }
 
   function handleBack() {
-    if (isSubmitSuccess) {
+    if (isSubmitSuccess || isFinishing) {
       return
     }
 
-    setSubmitError(null)
     setStep((current) => Math.max(1, current - 1))
   }
 
@@ -214,7 +208,6 @@ export function TenantOnboardingWizard() {
 
     finishInFlightRef.current = true
     setIsFinishing(true)
-    setSubmitError(null)
 
     const isValid = await form.trigger()
 
@@ -237,6 +230,10 @@ export function TenantOnboardingWizard() {
         adminEmail: payload.adminEmail.trim() || null,
       })
 
+      toast.success(t("admin.wizard.successTitle"), {
+        description: t("admin.wizard.success"),
+      })
+
       setIsSubmitSuccess(true)
 
       redirectTimeoutRef.current = window.setTimeout(() => {
@@ -247,7 +244,11 @@ export function TenantOnboardingWizard() {
         error instanceof Error && error.message.trim().length > 0
           ? error.message
           : t("admin.wizard.errors.createFailed")
-      setSubmitError(message)
+
+      toast.error(t("admin.wizard.errorTitle"), {
+        description: message,
+      })
+
       setIsSubmitSuccess(false)
       finishInFlightRef.current = false
       setIsFinishing(false)
@@ -672,24 +673,6 @@ export function TenantOnboardingWizard() {
                 {t("admin.wizard.summary.demoNote")}
               </p>
             </div>
-          ) : null}
-
-          {isSubmitSuccess ? (
-            <Alert>
-              <CircleCheck />
-              <AlertTitle>{t("admin.wizard.successTitle")}</AlertTitle>
-              <AlertDescription>
-                {t("admin.wizard.success")}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          {submitError ? (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertTitle>{t("admin.wizard.errorTitle")}</AlertTitle>
-              <AlertDescription>{submitError}</AlertDescription>
-            </Alert>
           ) : null}
 
           <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
