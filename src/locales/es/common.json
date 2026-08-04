@@ -37,6 +37,9 @@
   },
   "tenantPortal": {
     "defaultTagline": "Inicie sesión para reservar y recibir avisos.",
+    "header": {
+      "ctaRegister": "Registrarse"
+    },
     "errors": {
       "title": "Portal no disponible",
       "missingSubdomain": "Abra la dirección de la empresa (ej.: /t/club-tenis).",
@@ -1084,7 +1087,8 @@
         "legalName": "Razón social",
         "taxId": "CUIT / Documento",
         "subdomain": "Subdominio",
-        "logoUrl": "URL del logo (opcional)",
+        "logoSvg": "Logo SVG (opcional)",
+        "logoSvgSet": "Logo SVG definido",
         "primaryColor": "Color primario",
         "accentColor": "Color de acento",
         "welcomeTagline": "Frase de bienvenida (opcional)",

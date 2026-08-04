@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
-import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
+import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   MODULE_KEYS,
   PRICE_PER_MODULE_BRL,
@@ -38,6 +38,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 const SUCCESS_REDIRECT_MS = 5000
@@ -81,7 +82,7 @@ export function TenantOnboardingWizard() {
       legalName: "",
       taxId: "",
       subdomain: "",
-      logoUrl: "",
+      logoSvg: "",
       primaryColor: "#0F766E",
       accentColor: "#14B8A6",
       welcomeTagline: "",
@@ -128,7 +129,7 @@ export function TenantOnboardingWizard() {
     if (step === 2) {
       const parsed = step2Schema.safeParse({
         subdomain: form.getValues("subdomain"),
-        logoUrl: form.getValues("logoUrl"),
+        logoSvg: form.getValues("logoSvg"),
         primaryColor: form.getValues("primaryColor"),
         accentColor: form.getValues("accentColor"),
         welcomeTagline: form.getValues("welcomeTagline"),
@@ -137,7 +138,7 @@ export function TenantOnboardingWizard() {
       if (!parsed.success) {
         await form.trigger([
           "subdomain",
-          "logoUrl",
+          "logoSvg",
           "primaryColor",
           "accentColor",
           "welcomeTagline",
@@ -347,12 +348,17 @@ export function TenantOnboardingWizard() {
               />
               <FormField
                 control={form.control}
-                name="logoUrl"
+                name="logoSvg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.logoUrl")}</FormLabel>
+                    <FormLabel>{t("admin.wizard.fields.logoSvg")}</FormLabel>
                     <FormControl>
-                      <Input type="url" placeholder="https://" {...field} />
+                      <Textarea
+                        rows={5}
+                        className="font-mono text-xs"
+                        placeholder="<svg ...>...</svg>"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -514,9 +520,9 @@ export function TenantOnboardingWizard() {
                   <p className="font-mono text-xs text-muted-foreground">
                     {values.subdomain}.{baseDomain}
                   </p>
-                  {values.logoUrl ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {values.logoUrl}
+                  {values.logoSvg ? (
+                    <p className="text-xs text-muted-foreground">
+                      {t("admin.wizard.fields.logoSvgSet")}
                     </p>
                   ) : null}
                   {values.welcomeTagline ? (

@@ -158,7 +158,8 @@ export function CustomerAppLayout() {
       sidebar={({ onNavigate }) => (
         <CustomerSidebar
           brandLabel={branding.displayName}
-          logoUrl={branding.logoUrl}
+          logoSvg={branding.logoSvg}
+          primaryColor={branding.primaryColor}
           items={navItems}
           onNavigate={onNavigate}
         />

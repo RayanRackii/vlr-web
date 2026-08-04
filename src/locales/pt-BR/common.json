@@ -37,6 +37,9 @@
   },
   "tenantPortal": {
     "defaultTagline": "Entre para reservar e receber avisos.",
+    "header": {
+      "ctaRegister": "Cadastrar"
+    },
     "errors": {
       "title": "Portal indisponível",
       "missingSubdomain": "Informe o endereço da empresa (ex.: /t/quadratenis).",
@@ -1084,7 +1087,8 @@
         "legalName": "Razão Social",
         "taxId": "CNPJ / Documento",
         "subdomain": "Subdomínio",
-        "logoUrl": "URL da Logo (opcional)",
+        "logoSvg": "Logo SVG (opcional)",
+        "logoSvgSet": "Logo SVG definido",
         "primaryColor": "Cor primária",
         "accentColor": "Cor de destaque",
         "welcomeTagline": "Frase de boas-vindas (opcional)",

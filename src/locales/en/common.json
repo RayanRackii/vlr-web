@@ -37,6 +37,9 @@
   },
   "tenantPortal": {
     "defaultTagline": "Sign in to book and get updates.",
+    "header": {
+      "ctaRegister": "Register"
+    },
     "errors": {
       "title": "Portal unavailable",
       "missingSubdomain": "Open the company address (e.g. /t/tennis-club).",
@@ -1084,7 +1087,8 @@
         "legalName": "Legal name",
         "taxId": "Tax ID / Document",
         "subdomain": "Subdomain",
-        "logoUrl": "Logo URL (optional)",
+        "logoSvg": "Logo SVG (optional)",
+        "logoSvgSet": "Logo SVG set",
         "primaryColor": "Primary color",
         "accentColor": "Accent color",
         "welcomeTagline": "Welcome tagline (optional)",

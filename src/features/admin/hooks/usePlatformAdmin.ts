@@ -28,13 +28,3 @@ export function useIsPlatformAdmin(): boolean {
     return parseAdminEmails().includes(email)
   }, [user?.email])
 }
-
-export function getTenantBaseDomain(): string {
-  const configured = import.meta.env.VITE_TENANT_BASE_DOMAIN
-
-  if (typeof configured === "string" && configured.trim().length > 0) {
-    return configured.trim()
-  }
-
-  return "rolvix.com.br"
-}

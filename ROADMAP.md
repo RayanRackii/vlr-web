@@ -29,7 +29,9 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 ## 3. Portal branding / host
 
 - [x] Host `{subdomain}.rolvix.com.br` + path `/t/:subdomain`.
+- [x] Marca via **`LogoSvg`** (admin textarea + `TenantLogoMark` + DOMPurify); sem `logoUrl` no produto.
 - [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
+- [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
 
 ## 4. Gating B2B por módulos
 
@@ -44,6 +46,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 - Branding inconsistente (`Platform` vs Rolvix).
 - Login/Onboarding B2B com strings hardcoded.
 - Landing anuncia módulos futuros.
+- Ver `docs/code-hygiene-findings.md` (sweep 2026-08-04).
 
 ## Histórico
 
@@ -52,3 +55,5 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 | 2026-08-03 | Portal + registro dinâmico. |
 | 2026-08-04 | Agenda B2C inicial. |
 | 2026-08-04 | **Executado:** shell B2C (AppShell) + menu dinâmico multi-item; admin de menu. |
+| 2026-08-04 | Header Rolvix no portal B2C (sem Features/Pricing); default idioma pt-BR no portal. |
+| 2026-08-04 | **Executado:** branding `LogoSvg` (admin + portal sanitizado); `getTenantBaseDomain` unificado em `lib/tenantDomain`. |

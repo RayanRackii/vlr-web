@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
@@ -15,7 +16,8 @@ export type CustomerNavItem = {
 
 type CustomerSidebarProps = {
   brandLabel: string
-  logoUrl?: string | null
+  logoSvg?: string | null
+  primaryColor?: string | null
   items: readonly CustomerNavItem[]
   onNavigate?: () => void
   className?: string
@@ -23,7 +25,8 @@ type CustomerSidebarProps = {
 
 export function CustomerSidebar({
   brandLabel,
-  logoUrl,
+  logoSvg,
+  primaryColor,
   items,
   onNavigate,
   className,
@@ -33,13 +36,13 @@ export function CustomerSidebar({
   return (
     <div className={cn("flex h-full flex-col", className)}>
       <div className="flex h-14 items-center gap-2 px-4">
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt=""
-            className="size-7 rounded-md object-cover"
-          />
-        ) : null}
+        <TenantLogoMark
+          logoSvg={logoSvg}
+          displayName={brandLabel}
+          primaryColor={primaryColor}
+          size="sm"
+          className="mx-0 shrink-0"
+        />
         <span className="truncate text-sm font-semibold tracking-tight">
           {brandLabel}
         </span>

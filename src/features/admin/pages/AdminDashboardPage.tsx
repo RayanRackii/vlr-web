@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
-import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
+import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   PRICE_PER_MODULE_BRL,
   type TenantAdmin,

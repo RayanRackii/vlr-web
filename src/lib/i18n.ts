@@ -21,15 +21,23 @@ void i18n
     },
     fallbackLng: "pt-BR",
     supportedLngs: [...supportedLanguages],
+    nonExplicitSupportedLngs: true,
     defaultNS: "common",
     ns: ["common"],
     interpolation: {
       escapeValue: false,
     },
+    // First visit (no localStorage) always lands on pt-BR — do not follow browser EN/ES.
     detection: {
-      order: ["localStorage", "navigator"],
+      order: ["localStorage"],
       caches: ["localStorage"],
+      lookupLocalStorage: "i18nextLng",
     },
   })
+
+// If nothing was cached yet, lock default to Brazilian Portuguese.
+if (!window.localStorage.getItem("i18nextLng")) {
+  void i18n.changeLanguage("pt-BR")
+}
 
 export default i18n

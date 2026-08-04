@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
   moduleMenuItemSchema,
@@ -18,14 +19,6 @@ import {
 const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
-
-export function getTenantBaseDomain(): string {
-  const configured = import.meta.env.VITE_TENANT_BASE_DOMAIN
-  if (typeof configured === "string" && configured.trim().length > 0) {
-    return configured.trim().toLowerCase()
-  }
-  return "rolvix.com.br"
-}
 
 /** Tenant slug from hostname only (`ficc.rolvix.com.br` → `ficc`). */
 export function getHostTenantSubdomain(): string | null {

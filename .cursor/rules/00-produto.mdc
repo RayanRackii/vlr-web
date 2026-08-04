@@ -19,7 +19,7 @@ O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes 
 
 **Ordem do ciclo atual (ver CONTEXT.md + ROADMAP.md):**
 1. Resend + WhatsApp — etapa principal de infra, **adiada** (config Meta em andamento).
-2. **Próximo foco:** portal B2C branded — login **e-mail + senha** + cadastro (foto, nome, e-mail, senha, CPF, CEP, celular com SMS). Celular ≠ login. Branding do tenant (logo/cores/tagline).
+2. **Próximo foco:** portal B2C branded — login **e-mail + senha** + cadastro (foto, nome, e-mail, senha, CPF, CEP, celular com SMS). Celular ≠ login. Branding do tenant (**`LogoSvg`** sanitizado + cores/tagline; sem URL de imagem).
 3. Demais itens (agenda admin, gating, convite).
 
 ## ROADMAP (obrigatório)

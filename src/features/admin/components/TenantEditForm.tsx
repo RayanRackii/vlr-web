@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
-import { getTenantBaseDomain } from "@/features/admin/hooks/usePlatformAdmin"
+import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import {
@@ -40,6 +40,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 const SUCCESS_REDIRECT_MS = 5000
@@ -247,14 +248,15 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
               />
               <FormField
                 control={form.control}
-                name="logoUrl"
+                name="logoSvg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.logoUrl")}</FormLabel>
+                    <FormLabel>{t("admin.wizard.fields.logoSvg")}</FormLabel>
                     <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://"
+                      <Textarea
+                        rows={6}
+                        className="font-mono text-xs"
+                        placeholder='<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>'
                         disabled={isActionLocked}
                         {...field}
                       />

@@ -19,12 +19,15 @@ export const step2Schema = z.object({
     .min(2)
     .max(63)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid subdomain"),
-  logoUrl: z
+  logoSvg: z
     .string()
     .trim()
+    .max(100_000)
     .refine(
-      (value) => value.length === 0 || z.string().url().safeParse(value).success,
-      "Invalid URL",
+      (value) =>
+        value.length === 0
+        || value.toLowerCase().includes("<svg"),
+      "Logo must be SVG markup",
     ),
   primaryColor: z
     .string()
@@ -65,7 +68,7 @@ export const tenantAdminSchema = z.object({
   legalName: z.string(),
   taxId: z.string(),
   subdomain: z.string().nullable(),
-  logoUrl: z.string().nullable(),
+  logoSvg: z.string().nullable().optional(),
   primaryColor: z.string().nullable().optional(),
   accentColor: z.string().nullable().optional(),
   welcomeTagline: z.string().nullable().optional(),
@@ -82,7 +85,7 @@ export const createTenantAdminRequestSchema = z.object({
   legalName: z.string(),
   taxId: z.string(),
   subdomain: z.string(),
-  logoUrl: z.string().nullable().optional(),
+  logoSvg: z.string().nullable().optional(),
   primaryColor: z.string().nullable().optional(),
   accentColor: z.string().nullable().optional(),
   welcomeTagline: z.string().nullable().optional(),
@@ -117,7 +120,7 @@ export function tenantAdminToFormValues(
     legalName: tenant.legalName,
     taxId: tenant.taxId,
     subdomain: tenant.subdomain ?? "",
-    logoUrl: tenant.logoUrl ?? "",
+    logoSvg: tenant.logoSvg ?? "",
     primaryColor: tenant.primaryColor ?? "",
     accentColor: tenant.accentColor ?? "",
     welcomeTagline: tenant.welcomeTagline ?? "",
@@ -138,7 +141,7 @@ function normalizeOptionalHex(value: string | null | undefined): string | null {
 
 export function toTenantBrandingPayload(values: TenantOnboardingFormValues) {
   return {
-    logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
+    logoSvg: values.logoSvg?.trim() ? values.logoSvg.trim() : null,
     primaryColor: normalizeOptionalHex(values.primaryColor),
     accentColor: normalizeOptionalHex(values.accentColor),
     welcomeTagline: values.welcomeTagline?.trim()

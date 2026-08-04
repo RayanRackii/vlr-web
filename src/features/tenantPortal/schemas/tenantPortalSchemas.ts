@@ -3,7 +3,7 @@ import { z } from "zod"
 export const tenantBrandingSchema = z.object({
   subdomain: z.string(),
   displayName: z.string(),
-  logoUrl: z.string().nullable(),
+  logoSvg: z.string().nullable().optional(),
   primaryColor: z.string().nullable(),
   accentColor: z.string().nullable(),
   welcomeTagline: z.string().nullable(),
