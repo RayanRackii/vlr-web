@@ -75,7 +75,9 @@ export function TenantOnboardingWizard() {
   const [step, setStep] = useState(1)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
+  const [isFinishing, setIsFinishing] = useState(false)
   const redirectTimeoutRef = useRef<number | null>(null)
+  const finishInFlightRef = useRef(false)
   const baseDomain = useMemo(() => getTenantBaseDomain(), [])
 
   const form = useForm<TenantOnboardingFormValues>({
@@ -95,8 +97,7 @@ export function TenantOnboardingWizard() {
     mode: "onTouched",
   })
 
-  const isSubmitting = form.formState.isSubmitting
-  const isActionLocked = isSubmitting || isSubmitSuccess
+  const isActionLocked = isFinishing || isSubmitSuccess
   const values = form.watch()
   const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
 
@@ -206,15 +207,20 @@ export function TenantOnboardingWizard() {
   }
 
   async function handleFinish() {
-    if (isSubmitSuccess) {
+    // Sync guard: blocks double-click before React re-renders disabled state.
+    if (finishInFlightRef.current || isSubmitSuccess) {
       return
     }
 
+    finishInFlightRef.current = true
+    setIsFinishing(true)
     setSubmitError(null)
 
     const isValid = await form.trigger()
 
     if (!isValid) {
+      finishInFlightRef.current = false
+      setIsFinishing(false)
       return
     }
 
@@ -243,6 +249,8 @@ export function TenantOnboardingWizard() {
           : t("admin.wizard.errors.createFailed")
       setSubmitError(message)
       setIsSubmitSuccess(false)
+      finishInFlightRef.current = false
+      setIsFinishing(false)
     }
   }
 
@@ -720,7 +728,7 @@ export function TenantOnboardingWizard() {
                   disabled={isActionLocked}
                   onClick={() => void handleFinish()}
                 >
-                  {isSubmitting
+                  {isFinishing
                     ? t("admin.wizard.actions.finishing")
                     : t("admin.wizard.actions.finish")}
                 </Button>
