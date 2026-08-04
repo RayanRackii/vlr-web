@@ -26,6 +26,23 @@ export const step2Schema = z.object({
       (value) => value.length === 0 || z.string().url().safeParse(value).success,
       "Invalid URL",
     ),
+  primaryColor: z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        value.length === 0 || /^#?[0-9A-Fa-f]{6}$/.test(value),
+      "Invalid hex color",
+    ),
+  accentColor: z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        value.length === 0 || /^#?[0-9A-Fa-f]{6}$/.test(value),
+      "Invalid hex color",
+    ),
+  welcomeTagline: z.string().trim().max(120),
 })
 
 export const step3Schema = z.object({
@@ -101,9 +118,31 @@ export function tenantAdminToFormValues(
     taxId: tenant.taxId,
     subdomain: tenant.subdomain ?? "",
     logoUrl: tenant.logoUrl ?? "",
+    primaryColor: tenant.primaryColor ?? "",
+    accentColor: tenant.accentColor ?? "",
+    welcomeTagline: tenant.welcomeTagline ?? "",
     activeModules: tenant.activeModules
       .filter((module) => module.isActive)
       .map((module) => mapTenantModuleToKey(module.moduleName))
       .filter((moduleKey): moduleKey is ModuleKey => moduleKey !== null),
+  }
+}
+
+function normalizeOptionalHex(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ""
+  if (trimmed.length === 0) {
+    return null
+  }
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`
+}
+
+export function toTenantBrandingPayload(values: TenantOnboardingFormValues) {
+  return {
+    logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
+    primaryColor: normalizeOptionalHex(values.primaryColor),
+    accentColor: normalizeOptionalHex(values.accentColor),
+    welcomeTagline: values.welcomeTagline?.trim()
+      ? values.welcomeTagline.trim()
+      : null,
   }
 }

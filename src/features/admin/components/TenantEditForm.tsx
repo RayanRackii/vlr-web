@@ -18,6 +18,7 @@ import {
   tenantOnboardingSchema,
   type ModuleKey,
   type TenantOnboardingFormValues,
+  toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { Button } from "@/components/ui/button"
@@ -109,7 +110,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
         legalName: values.legalName.trim(),
         taxId: values.taxId.trim(),
         subdomain: values.subdomain.trim().toLowerCase(),
-        logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
+        ...toTenantBrandingPayload(values),
         activeModules: values.activeModules,
       })
 
@@ -253,6 +254,105 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                         type="url"
                         placeholder="https://"
                         disabled={isActionLocked}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="primaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("admin.wizard.fields.primaryColor")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            className="h-9 w-12 cursor-pointer p-1"
+                            disabled={isActionLocked}
+                            value={
+                              field.value?.startsWith("#")
+                                ? field.value
+                                : field.value
+                                  ? `#${field.value}`
+                                  : "#0F766E"
+                            }
+                            onChange={(event) => {
+                              field.onChange(event.target.value.toUpperCase())
+                            }}
+                          />
+                          <Input
+                            autoComplete="off"
+                            placeholder="#0F766E"
+                            disabled={isActionLocked}
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="accentColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("admin.wizard.fields.accentColor")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            className="h-9 w-12 cursor-pointer p-1"
+                            disabled={isActionLocked}
+                            value={
+                              field.value?.startsWith("#")
+                                ? field.value
+                                : field.value
+                                  ? `#${field.value}`
+                                  : "#14B8A6"
+                            }
+                            onChange={(event) => {
+                              field.onChange(event.target.value.toUpperCase())
+                            }}
+                          />
+                          <Input
+                            autoComplete="off"
+                            placeholder="#14B8A6"
+                            disabled={isActionLocked}
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="welcomeTagline"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("admin.wizard.fields.welcomeTagline")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        maxLength={120}
+                        disabled={isActionLocked}
+                        placeholder={t(
+                          "admin.wizard.fields.welcomeTaglinePlaceholder",
+                        )}
                         {...field}
                       />
                     </FormControl>

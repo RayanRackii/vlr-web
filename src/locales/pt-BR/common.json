@@ -972,7 +972,7 @@
         "basic": "Informações Básicas",
         "basicDescription": "Razão social e documento fiscal da empresa.",
         "identity": "Subdomínio e Identidade",
-        "identityDescription": "Endereço do ambiente e logo do cliente.",
+        "identityDescription": "Endereço do ambiente, logo, cores e frase do portal.",
         "modules": "Módulos da Plataforma",
         "modulesDescription": "Selecione os módulos ativos para este cliente."
       },
@@ -1017,7 +1017,11 @@
         "legalName": "Razão Social",
         "taxId": "CNPJ / Documento",
         "subdomain": "Subdomínio",
-        "logoUrl": "URL da Logo (opcional)"
+        "logoUrl": "URL da Logo (opcional)",
+        "primaryColor": "Cor primária",
+        "accentColor": "Cor de destaque",
+        "welcomeTagline": "Frase de boas-vindas (opcional)",
+        "welcomeTaglinePlaceholder": "Ex.: Reserve sua quadra em poucos toques"
       },
       "summary": {
         "modules": "Módulos",

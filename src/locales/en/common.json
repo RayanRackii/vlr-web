@@ -972,7 +972,7 @@
         "basic": "Basic Information",
         "basicDescription": "Legal name and tax document for the company.",
         "identity": "Subdomain & Branding",
-        "identityDescription": "Environment address and client logo.",
+        "identityDescription": "Environment address, logo, colors, and portal tagline.",
         "modules": "Platform Modules",
         "modulesDescription": "Select the active modules for this client."
       },
@@ -1017,7 +1017,11 @@
         "legalName": "Legal name",
         "taxId": "Tax ID / Document",
         "subdomain": "Subdomain",
-        "logoUrl": "Logo URL (optional)"
+        "logoUrl": "Logo URL (optional)",
+        "primaryColor": "Primary color",
+        "accentColor": "Accent color",
+        "welcomeTagline": "Welcome tagline (optional)",
+        "welcomeTaglinePlaceholder": "e.g. Book your court in a few taps"
       },
       "summary": {
         "modules": "Modules",

@@ -24,6 +24,7 @@ import {
   tenantOnboardingSchema,
   type ModuleKey,
   type TenantOnboardingFormValues,
+  toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -81,6 +82,9 @@ export function TenantOnboardingWizard() {
       taxId: "",
       subdomain: "",
       logoUrl: "",
+      primaryColor: "#0F766E",
+      accentColor: "#14B8A6",
+      welcomeTagline: "",
       activeModules: [],
     },
     mode: "onTouched",
@@ -125,10 +129,19 @@ export function TenantOnboardingWizard() {
       const parsed = step2Schema.safeParse({
         subdomain: form.getValues("subdomain"),
         logoUrl: form.getValues("logoUrl"),
+        primaryColor: form.getValues("primaryColor"),
+        accentColor: form.getValues("accentColor"),
+        welcomeTagline: form.getValues("welcomeTagline"),
       })
 
       if (!parsed.success) {
-        await form.trigger(["subdomain", "logoUrl"])
+        await form.trigger([
+          "subdomain",
+          "logoUrl",
+          "primaryColor",
+          "accentColor",
+          "welcomeTagline",
+        ])
         return
       }
 
@@ -192,7 +205,7 @@ export function TenantOnboardingWizard() {
         legalName: payload.legalName.trim(),
         taxId: payload.taxId.trim(),
         subdomain: payload.subdomain.trim().toLowerCase(),
-        logoUrl: payload.logoUrl?.trim() ? payload.logoUrl.trim() : null,
+        ...toTenantBrandingPayload(payload),
         activeModules: payload.activeModules,
       })
 
@@ -345,6 +358,100 @@ export function TenantOnboardingWizard() {
                   </FormItem>
                 )}
               />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="primaryColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("admin.wizard.fields.primaryColor")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            className="h-9 w-12 cursor-pointer p-1"
+                            value={
+                              field.value?.startsWith("#")
+                                ? field.value
+                                : field.value
+                                  ? `#${field.value}`
+                                  : "#0F766E"
+                            }
+                            onChange={(event) => {
+                              field.onChange(event.target.value.toUpperCase())
+                            }}
+                          />
+                          <Input
+                            autoComplete="off"
+                            placeholder="#0F766E"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="accentColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("admin.wizard.fields.accentColor")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            className="h-9 w-12 cursor-pointer p-1"
+                            value={
+                              field.value?.startsWith("#")
+                                ? field.value
+                                : field.value
+                                  ? `#${field.value}`
+                                  : "#14B8A6"
+                            }
+                            onChange={(event) => {
+                              field.onChange(event.target.value.toUpperCase())
+                            }}
+                          />
+                          <Input
+                            autoComplete="off"
+                            placeholder="#14B8A6"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="welcomeTagline"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("admin.wizard.fields.welcomeTagline")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        maxLength={120}
+                        placeholder={t(
+                          "admin.wizard.fields.welcomeTaglinePlaceholder",
+                        )}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           ) : null}
 
@@ -412,6 +519,35 @@ export function TenantOnboardingWizard() {
                       {values.logoUrl}
                     </p>
                   ) : null}
+                  {values.welcomeTagline ? (
+                    <p className="text-xs text-muted-foreground">
+                      {values.welcomeTagline}
+                    </p>
+                  ) : null}
+                  <div className="flex items-center gap-2 pt-1">
+                    {values.primaryColor ? (
+                      <span
+                        className="inline-block size-4 rounded-full border border-border"
+                        style={{
+                          backgroundColor: values.primaryColor.startsWith("#")
+                            ? values.primaryColor
+                            : `#${values.primaryColor}`,
+                        }}
+                        title={t("admin.wizard.fields.primaryColor")}
+                      />
+                    ) : null}
+                    {values.accentColor ? (
+                      <span
+                        className="inline-block size-4 rounded-full border border-border"
+                        style={{
+                          backgroundColor: values.accentColor.startsWith("#")
+                            ? values.accentColor
+                            : `#${values.accentColor}`,
+                        }}
+                        title={t("admin.wizard.fields.accentColor")}
+                      />
+                    ) : null}
+                  </div>
                 </div>
               </div>
 

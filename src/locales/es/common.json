@@ -972,7 +972,7 @@
         "basic": "Información Básica",
         "basicDescription": "Razón social y documento fiscal de la empresa.",
         "identity": "Subdominio e Identidad",
-        "identityDescription": "Dirección del ambiente y logo del cliente.",
+        "identityDescription": "Dirección del ambiente, logo, colores y frase del portal.",
         "modules": "Módulos de la Plataforma",
         "modulesDescription": "Seleccione los módulos activos para este cliente."
       },
@@ -1017,7 +1017,11 @@
         "legalName": "Razón social",
         "taxId": "CUIT / Documento",
         "subdomain": "Subdominio",
-        "logoUrl": "URL del logo (opcional)"
+        "logoUrl": "URL del logo (opcional)",
+        "primaryColor": "Color primario",
+        "accentColor": "Color de acento",
+        "welcomeTagline": "Frase de bienvenida (opcional)",
+        "welcomeTaglinePlaceholder": "Ej.: Reserva tu cancha en pocos toques"
       },
       "summary": {
         "modules": "Módulos",
