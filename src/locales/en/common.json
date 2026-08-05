@@ -1023,7 +1023,8 @@
       },
       "actions": {
         "edit": "Edit client",
-        "delete": "Delete client"
+        "delete": "Delete client",
+        "openEnvironment": "Open environment"
       },
       "delete": {
         "title": "Delete client",
@@ -1196,6 +1197,10 @@
     "errors": {
       "forbidden": "Access restricted to platform Super-Admins.",
       "loadFailed": "Could not load clients."
+    },
+    "support": {
+      "banner": "Support mode · {{tenant}} — you are operating as this client’s admin.",
+      "exit": "Leave environment"
     }
   }
 }

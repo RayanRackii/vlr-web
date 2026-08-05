@@ -1,8 +1,9 @@
-import { Pencil, Trash2 } from "lucide-react"
+import { ExternalLink, Pencil, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
+import { openSupportTenantEnvironment } from "@/features/admin/support/supportTenantSession"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -62,6 +63,23 @@ export function TenantAdminCard({
             </Badge>
 
             <div className="flex gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={!tenant.isActive}
+                aria-label={t("admin.dashboard.actions.openEnvironment")}
+                title={t("admin.dashboard.actions.openEnvironment")}
+                onClick={() => {
+                  openSupportTenantEnvironment({
+                    id: tenant.id,
+                    legalName: tenant.legalName,
+                  })
+                }}
+              >
+                <ExternalLink className="size-4 text-muted-foreground transition-colors hover:text-foreground" />
+              </Button>
+
               <Button
                 type="button"
                 variant="ghost"

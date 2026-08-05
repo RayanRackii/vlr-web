@@ -1023,7 +1023,8 @@
       },
       "actions": {
         "edit": "Editar cliente",
-        "delete": "Eliminar cliente"
+        "delete": "Eliminar cliente",
+        "openEnvironment": "Abrir entorno"
       },
       "delete": {
         "title": "Eliminar cliente",
@@ -1196,6 +1197,10 @@
     "errors": {
       "forbidden": "Acceso restringido a Super-Admins de la plataforma.",
       "loadFailed": "No se pudieron cargar los clientes."
+    },
+    "support": {
+      "banner": "Modo soporte · {{tenant}} — está operando como admin de este cliente.",
+      "exit": "Salir del entorno"
     }
   }
 }

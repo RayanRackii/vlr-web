@@ -28,6 +28,7 @@ export type AppShellProps = {
   userLabel: string
   initials: string
   onSignOut: () => void | Promise<void>
+  banner?: ReactNode
   children: ReactNode
 }
 
@@ -37,6 +38,7 @@ export function AppShell({
   userLabel,
   initials,
   onSignOut,
+  banner = null,
   children,
 }: AppShellProps) {
   const { t } = useTranslation()
@@ -154,6 +156,8 @@ export function AppShell({
             </DropdownMenu>
           </div>
         </header>
+
+        {banner}
 
         <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>

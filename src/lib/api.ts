@@ -2,6 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { z } from "zod"
 
 import { supabase } from "@/lib/supabase"
+import { getSupportTenantIdForApi } from "@/features/admin/support/supportTenantSession"
 
 const DEFAULT_API_BASE_URL = "http://localhost:5298"
 
@@ -39,6 +40,15 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
+  }
+
+  const supportTenantId = getSupportTenantIdForApi()
+  const requestUrl = config.url ?? ""
+  const isPlatformAdminApi =
+    requestUrl.includes("/api/admin/") || requestUrl.startsWith("admin/")
+
+  if (supportTenantId && !isPlatformAdminApi) {
+    config.headers["X-Support-Tenant-Id"] = supportTenantId
   }
 
   return config

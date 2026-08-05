@@ -50,6 +50,7 @@ Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
 - [x] Wizard + edit tenant: convidar admin (sem senha)
 - [x] `submitInvitePassword` → `POST /api/invites/accept`
 - [x] Super-Admin `/admin/users` — lista global com filtro nome/tenant + exclusão
+- [x] Modo suporte: Abrir ambiente do tenant em nova aba (`X-Support-Tenant-Id`)
 - [ ] Onboarding público ainda coleta senha (legado)
 
 ## Dívidas técnicas conhecidas
