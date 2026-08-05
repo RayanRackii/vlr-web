@@ -23,7 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
-import { useSupportTenant } from "@/features/admin/support/SupportTenantProvider"
+import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
@@ -65,13 +65,13 @@ function KpiSkeleton() {
 export function DashboardPage() {
   const { t } = useTranslation()
   const isPlatformAdmin = useIsPlatformAdmin()
-  const { isSupportMode } = useSupportTenant()
+  const { isInTenantEnvironment } = usePlatformTenantSession()
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isRoleLoading, setIsRoleLoading] = useState(true)
   const [roleError, setRoleError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (isPlatformAdmin && !isSupportMode) {
+    if (isPlatformAdmin && !isInTenantEnvironment) {
       setIsRoleLoading(false)
       setRoleError(null)
       return
@@ -108,13 +108,13 @@ export function DashboardPage() {
     return () => {
       isActive = false
     }
-  }, [isPlatformAdmin, isSupportMode, t])
+  }, [isPlatformAdmin, isInTenantEnvironment, t])
 
-  if (isPlatformAdmin && !isSupportMode) {
+  if (isPlatformAdmin && !isInTenantEnvironment) {
     return <SuperAdminDashboard />
   }
 
-  if (isPlatformAdmin && isSupportMode) {
+  if (isPlatformAdmin && isInTenantEnvironment) {
     return <TenantAdminDashboard />
   }
 

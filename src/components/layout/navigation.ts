@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
-import { useSupportTenant } from "@/features/admin/support/SupportTenantProvider"
+import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -92,9 +92,9 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
 
 export function useAppNavigationItems(): readonly AppNavigationItem[] {
   const isPlatformAdmin = useIsPlatformAdmin()
-  const { isSupportMode } = useSupportTenant()
+  const { isInTenantEnvironment } = usePlatformTenantSession()
 
-  if (isPlatformAdmin && isSupportMode) {
+  if (isPlatformAdmin && isInTenantEnvironment) {
     return appNavigationItems
   }
 
@@ -102,7 +102,6 @@ export function useAppNavigationItems(): readonly AppNavigationItem[] {
     return appNavigationItems
   }
 
-  // Super-Admins have no tenant product — only platform ops surfaces.
   return [
     {
       labelKey: "nav.dashboard",

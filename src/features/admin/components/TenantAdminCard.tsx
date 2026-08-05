@@ -1,9 +1,15 @@
 import { ExternalLink, Pencil, Trash2 } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
-import { openSupportTenantEnvironment } from "@/features/admin/support/supportTenantSession"
+import {
+  refreshAuthSession,
+  writeActiveTenantLabel,
+} from "@/features/admin/hooks/usePlatformTenantSession"
+import { enterTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -48,6 +54,29 @@ export function TenantAdminCard({
 }: TenantAdminCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [isEntering, setIsEntering] = useState(false)
+
+  async function handleOpenEnvironment() {
+    if (isEntering || !tenant.isActive) {
+      return
+    }
+
+    setIsEntering(true)
+    try {
+      const result = await enterTenantEnvironment(tenant.id)
+      writeActiveTenantLabel(result.legalName)
+      await refreshAuthSession()
+      void navigate("/dashboard", { replace: true })
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : t("admin.support.enterFailed")
+      toast.error(t("admin.support.enterErrorTitle"), { description: message })
+    } finally {
+      setIsEntering(false)
+    }
+  }
 
   return (
     <Card>
@@ -67,14 +96,11 @@ export function TenantAdminCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                disabled={!tenant.isActive}
+                disabled={!tenant.isActive || isEntering}
                 aria-label={t("admin.dashboard.actions.openEnvironment")}
                 title={t("admin.dashboard.actions.openEnvironment")}
                 onClick={() => {
-                  openSupportTenantEnvironment({
-                    id: tenant.id,
-                    legalName: tenant.legalName,
-                  })
+                  void handleOpenEnvironment()
                 }}
               >
                 <ExternalLink className="size-4 text-muted-foreground transition-colors hover:text-foreground" />

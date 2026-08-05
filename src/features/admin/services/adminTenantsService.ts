@@ -8,6 +8,7 @@ import {
   type UpdateTenantAdminRequest,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { z } from "zod"
 
 export async function listAdminTenants(): Promise<TenantAdmin[]> {
   const response = await api.get<unknown>("/api/admin/tenants")
@@ -42,6 +43,46 @@ export async function deleteAdminTenant(tenantId: string): Promise<void> {
 }
 
 export const deleteTenant = deleteAdminTenant
+
+const enterTenantEnvironmentSchema = z.object({
+  tenantId: z.string().uuid(),
+  legalName: z.string(),
+})
+
+export type EnterTenantEnvironmentResult = z.infer<
+  typeof enterTenantEnvironmentSchema
+>
+
+export async function enterTenantEnvironment(
+  tenantId: string,
+): Promise<EnterTenantEnvironmentResult> {
+  try {
+    const response = await api.post<unknown>(
+      `/api/admin/tenants/${tenantId}/enter`,
+    )
+    return enterTenantEnvironmentSchema.parse(response.data)
+  } catch (error: unknown) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        "Failed to enter tenant environment.",
+      ),
+    )
+  }
+}
+
+export async function exitTenantEnvironment(): Promise<void> {
+  try {
+    await api.post("/api/admin/tenants/exit")
+  } catch (error: unknown) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        "Failed to leave tenant environment.",
+      ),
+    )
+  }
+}
 
 export async function createAdminTenant(
   payload: CreateTenantAdminRequest,

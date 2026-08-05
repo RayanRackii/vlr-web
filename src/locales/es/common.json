@@ -1199,8 +1199,14 @@
       "loadFailed": "No se pudieron cargar los clientes."
     },
     "support": {
-      "banner": "Modo soporte · {{tenant}} — está operando como admin de este cliente.",
-      "exit": "Salir del entorno"
+      "banner": "Entorno · {{tenant}} — ha iniciado sesión como admin de este cliente.",
+      "tenantFallback": "cliente",
+      "exit": "Volver a la plataforma",
+      "exiting": "Saliendo...",
+      "exitErrorTitle": "Error",
+      "exitFailed": "No se pudo volver a la plataforma.",
+      "enterErrorTitle": "Error",
+      "enterFailed": "No se pudo abrir el entorno."
     }
   }
 }

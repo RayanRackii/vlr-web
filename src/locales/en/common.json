@@ -1199,8 +1199,14 @@
       "loadFailed": "Could not load clients."
     },
     "support": {
-      "banner": "Support mode · {{tenant}} — you are operating as this client’s admin.",
-      "exit": "Leave environment"
+      "banner": "Environment · {{tenant}} — you are signed in as this client’s admin.",
+      "tenantFallback": "client",
+      "exit": "Back to platform",
+      "exiting": "Leaving...",
+      "exitErrorTitle": "Error",
+      "exitFailed": "Could not return to the platform.",
+      "enterErrorTitle": "Error",
+      "enterFailed": "Could not open the environment."
     }
   }
 }
