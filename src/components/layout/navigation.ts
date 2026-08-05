@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   ClipboardList,
@@ -11,6 +12,7 @@ import {
 
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { getCurrentUser } from "@/features/users/services/usersService"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -35,6 +37,8 @@ export type AppNavigationItem = {
   to: string
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
+  /** Canonical tenant module keys that unlock this item. Empty = always visible. */
+  modules?: readonly string[]
 }
 
 export const appNavigationItems: readonly AppNavigationItem[] = [
@@ -47,6 +51,7 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.assets",
     to: "/ativos",
     icon: Wrench,
+    modules: ["inventory"],
     children: [
       {
         labelKey: "nav.assetsInventory",
@@ -62,6 +67,7 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.pmoc",
     to: "/pmoc",
     icon: ClipboardList,
+    modules: ["pmoc"],
     children: [
       {
         labelKey: "nav.pmocPlans",
@@ -77,53 +83,109 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.workOrders",
     to: "/os",
     icon: ClipboardPen,
+    modules: ["os"],
   },
   {
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
     icon: FormInput,
+    modules: ["rentals"],
   },
   {
     labelKey: "nav.moduleMenu",
     to: "/configuracoes/menu",
     icon: MenuSquare,
+    modules: ["rentals"],
   },
 ]
+
+function filterByActiveModules(
+  items: readonly AppNavigationItem[],
+  activeModules: readonly string[],
+): AppNavigationItem[] {
+  const enabled = new Set(
+    activeModules.map((module) => module.trim().toLowerCase()),
+  )
+
+  return items.filter((item) => {
+    if (!item.modules || item.modules.length === 0) {
+      return true
+    }
+
+    return item.modules.some((module) => enabled.has(module))
+  })
+}
 
 export function useAppNavigationItems(): readonly AppNavigationItem[] {
   const isPlatformAdmin = useIsPlatformAdmin()
   const { isInTenantEnvironment } = usePlatformTenantSession()
+  const [activeModules, setActiveModules] = useState<string[] | null>(null)
 
-  if (isPlatformAdmin && isInTenantEnvironment) {
-    return appNavigationItems
-  }
+  const needsProductNav = !isPlatformAdmin || isInTenantEnvironment
 
-  if (!isPlatformAdmin) {
-    return appNavigationItems
-  }
+  useEffect(() => {
+    if (!needsProductNav) {
+      setActiveModules(null)
+      return
+    }
 
-  return [
-    {
-      labelKey: "nav.dashboard",
-      to: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      labelKey: "nav.admin",
-      to: "/admin/dashboard",
-      icon: Shield,
-      children: [
+    let cancelled = false
+
+    void getCurrentUser()
+      .then((profile) => {
+        if (!cancelled) {
+          setActiveModules(profile.activeModules ?? [])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setActiveModules([])
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [needsProductNav, isInTenantEnvironment])
+
+  return useMemo(() => {
+    if (isPlatformAdmin && !isInTenantEnvironment) {
+      return [
         {
-          labelKey: "nav.adminTenants",
+          labelKey: "nav.dashboard",
+          to: "/dashboard",
+          icon: LayoutDashboard,
+        },
+        {
+          labelKey: "nav.admin",
           to: "/admin/dashboard",
+          icon: Shield,
+          children: [
+            {
+              labelKey: "nav.adminTenants",
+              to: "/admin/dashboard",
+            },
+            {
+              labelKey: "nav.adminUsers",
+              to: "/admin/users",
+            },
+          ],
         },
+      ]
+    }
+
+    if (activeModules === null) {
+      return [
         {
-          labelKey: "nav.adminUsers",
-          to: "/admin/users",
+          labelKey: "nav.dashboard",
+          to: "/dashboard",
+          icon: LayoutDashboard,
         },
-      ],
-    },
-  ]
+      ]
+    }
+
+    return filterByActiveModules(appNavigationItems, activeModules)
+  }, [activeModules, isInTenantEnvironment, isPlatformAdmin])
 }
 
 export function getPageTitleKey(

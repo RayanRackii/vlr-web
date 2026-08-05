@@ -28,6 +28,7 @@ import {
   type SetPasswordFormValues,
 } from "@/features/auth/setPasswordSchema"
 import { submitInvitePassword } from "@/features/auth/setPasswordService"
+import { supabase } from "@/lib/supabase"
 
 export function SetPasswordPage() {
   const { t } = useTranslation()
@@ -65,17 +66,27 @@ export function SetPasswordPage() {
     }
 
     try {
-      await submitInvitePassword({
+      const accepted = await submitInvitePassword({
         token,
+        password: values.password,
+      })
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: accepted.email,
         password: values.password,
       })
 
       toast.success(t("auth.invite.toastSuccess"))
       form.reset()
 
+      if (signInError === null) {
+        void navigate("/dashboard", { replace: true })
+        return
+      }
+
       const timeoutId = window.setTimeout(() => {
         void navigate("/login", { replace: true })
-      }, 3000)
+      }, 1500)
 
       setRedirectTimeoutId(timeoutId)
     } catch {

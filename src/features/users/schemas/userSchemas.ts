@@ -15,6 +15,8 @@ export const currentUserSchema = z.object({
   fullName: z.string(),
   email: z.string(),
   role: applicationRoleSchema,
+  tenantId: z.string().uuid().nullish(),
+  activeModules: z.array(z.string()).default([]),
 })
 
 export type CurrentUser = z.infer<typeof currentUserSchema>
