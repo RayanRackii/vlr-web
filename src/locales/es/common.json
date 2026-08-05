@@ -1027,11 +1027,18 @@
       },
       "delete": {
         "title": "Eliminar cliente",
-        "description": "¿Está seguro? Esta acción es irreversible y eliminará todos los datos de esta empresa.",
+        "description": "¿Está seguro? Esta acción es irreversible y eliminará la empresa con todas las unidades, roles, usuarios y datos operativos vinculados.",
         "confirm": "Continuar",
         "deleting": "Eliminando...",
         "success": "Cliente eliminado con éxito.",
-        "failed": "No se pudo eliminar el cliente."
+        "failed": "No se pudo eliminar el cliente.",
+        "errors": {
+          "hasUsers": "No se puede eliminar: este cliente aún tiene usuarios.",
+          "hasUnits": "No se puede eliminar: este cliente aún tiene unidades.",
+          "hasRoles": "No se puede eliminar: este cliente aún tiene roles.",
+          "linkedData": "No se puede eliminar: este cliente aún tiene datos vinculados.",
+          "notFound": "Cliente no encontrado."
+        }
       }
     },
     "edit": {

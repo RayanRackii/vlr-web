@@ -1027,11 +1027,18 @@
       },
       "delete": {
         "title": "Excluir cliente",
-        "description": "Você tem certeza? Esta ação é irreversível e excluirá todos os dados desta empresa.",
+        "description": "Você tem certeza? Esta ação é irreversível e excluirá a empresa com todas as unidades, papéis, usuários e dados operacionais vinculados.",
         "confirm": "Continuar",
         "deleting": "Excluindo...",
         "success": "Cliente excluído com sucesso.",
-        "failed": "Não foi possível excluir o cliente."
+        "failed": "Não foi possível excluir o cliente.",
+        "errors": {
+          "hasUsers": "Não é possível excluir: ainda há usuários neste cliente.",
+          "hasUnits": "Não é possível excluir: ainda há unidades neste cliente.",
+          "hasRoles": "Não é possível excluir: ainda há papéis neste cliente.",
+          "linkedData": "Não é possível excluir: ainda existem dados vinculados a este cliente.",
+          "notFound": "Cliente não encontrado."
+        }
       }
     },
     "edit": {

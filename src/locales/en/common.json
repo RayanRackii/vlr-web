@@ -1027,11 +1027,18 @@
       },
       "delete": {
         "title": "Delete client",
-        "description": "Are you sure? This action is irreversible and will delete all data for this company.",
+        "description": "Are you sure? This action is irreversible and will delete the company with all linked units, roles, users, and operational data.",
         "confirm": "Continue",
         "deleting": "Deleting...",
         "success": "Client deleted successfully.",
-        "failed": "Could not delete the client."
+        "failed": "Could not delete the client.",
+        "errors": {
+          "hasUsers": "Cannot delete: this client still has users.",
+          "hasUnits": "Cannot delete: this client still has units.",
+          "hasRoles": "Cannot delete: this client still has roles.",
+          "linkedData": "Cannot delete: this client still has linked data.",
+          "notFound": "Client not found."
+        }
       }
     },
     "edit": {

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isAxiosError } from "@/lib/api"
+import type { TFunction } from "i18next"
 
 function TenantCardSkeleton() {
   return (
@@ -37,6 +38,34 @@ function TenantCardSkeleton() {
       </CardContent>
     </Card>
   )
+}
+
+function mapTenantDeleteError(message: string, t: TFunction): string {
+  const normalized = message.toLowerCase()
+
+  if (normalized.includes("has users")) {
+    return t("admin.dashboard.delete.errors.hasUsers")
+  }
+
+  if (normalized.includes("has units")) {
+    return t("admin.dashboard.delete.errors.hasUnits")
+  }
+
+  if (normalized.includes("has roles")) {
+    return t("admin.dashboard.delete.errors.hasRoles")
+  }
+
+  if (normalized.includes("linked data")) {
+    return t("admin.dashboard.delete.errors.linkedData")
+  }
+
+  if (normalized.includes("not found")) {
+    return t("admin.dashboard.delete.errors.notFound")
+  }
+
+  return message.trim().length > 0
+    ? message
+    : t("admin.dashboard.delete.failed")
 }
 
 function moduleLabelKey(moduleName: string): string {
@@ -151,7 +180,7 @@ export function AdminDashboardPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error && error.message.trim().length > 0
-          ? error.message
+          ? mapTenantDeleteError(error.message, t)
           : t("admin.dashboard.delete.failed")
 
       setDeleteError(message)
