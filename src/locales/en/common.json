@@ -417,6 +417,8 @@
     "registrationFields": "Portal registration",
     "moduleMenu": "Portal menu",
     "admin": "Super-Admin",
+    "adminTenants": "Clients",
+    "adminUsers": "Users",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu"
   },
@@ -1079,6 +1081,44 @@
       "revoke": "Revoke",
       "revoked": "Invite revoked.",
       "revokeError": "Could not revoke."
+    },
+    "platformUsers": {
+      "title": "Platform users",
+      "description": "View and manage all B2B users across every tenant.",
+      "filters": {
+        "name": "Name",
+        "namePlaceholder": "Filter by name...",
+        "tenant": "Client",
+        "tenantPlaceholder": "All clients",
+        "allTenants": "All clients"
+      },
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "tenant": "Client",
+        "roles": "Roles",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "emptyTitle": "No users found",
+      "emptyDescription": "Adjust the filters or invite users from a client.",
+      "actions": {
+        "delete": "Delete user"
+      },
+      "delete": {
+        "title": "Delete user",
+        "description": "Delete {{name}} from {{tenant}}? Their auth account will also be removed. This cannot be undone.",
+        "confirm": "Continue",
+        "deleting": "Deleting...",
+        "successTitle": "Success",
+        "success": "User deleted.",
+        "failed": "Could not delete the user."
+      },
+      "errors": {
+        "loadFailed": "Could not load users."
+      }
     },
     "modules": {
       "Inventory": "Inventory",

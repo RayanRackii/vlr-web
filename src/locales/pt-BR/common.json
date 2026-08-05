@@ -417,6 +417,8 @@
     "registrationFields": "Cadastro portal",
     "moduleMenu": "Menu do portal",
     "admin": "Super-Admin",
+    "adminTenants": "Clientes",
+    "adminUsers": "Usuários",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação"
   },
@@ -1079,6 +1081,44 @@
       "revoke": "Revogar",
       "revoked": "Convite revogado.",
       "revokeError": "Não foi possível revogar."
+    },
+    "platformUsers": {
+      "title": "Usuários da plataforma",
+      "description": "Visualize e gerencie todos os usuários B2B de todos os tenants.",
+      "filters": {
+        "name": "Nome",
+        "namePlaceholder": "Filtrar por nome...",
+        "tenant": "Cliente",
+        "tenantPlaceholder": "Todos os clientes",
+        "allTenants": "Todos os clientes"
+      },
+      "columns": {
+        "name": "Nome",
+        "email": "E-mail",
+        "tenant": "Cliente",
+        "roles": "Papéis",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "statusActive": "Ativo",
+      "statusInactive": "Inativo",
+      "emptyTitle": "Nenhum usuário encontrado",
+      "emptyDescription": "Ajuste os filtros ou cadastre usuários via convite no cliente.",
+      "actions": {
+        "delete": "Excluir usuário"
+      },
+      "delete": {
+        "title": "Excluir usuário",
+        "description": "Excluir {{name}} de {{tenant}}? A conta de autenticação também será removida. Esta ação é irreversível.",
+        "confirm": "Continuar",
+        "deleting": "Excluindo...",
+        "successTitle": "Sucesso",
+        "success": "Usuário excluído.",
+        "failed": "Não foi possível excluir o usuário."
+      },
+      "errors": {
+        "loadFailed": "Não foi possível carregar os usuários."
+      }
     },
     "modules": {
       "Inventory": "Inventário",

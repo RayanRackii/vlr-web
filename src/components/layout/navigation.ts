@@ -17,6 +17,8 @@ export type AppNavigationChildItem = {
     | "nav.assetsCategories"
     | "nav.pmocPlans"
     | "nav.pmocNew"
+    | "nav.adminTenants"
+    | "nav.adminUsers"
   to: string
 }
 
@@ -100,6 +102,16 @@ export function useAppNavigationItems(): readonly AppNavigationItem[] {
       labelKey: "nav.admin",
       to: "/admin/dashboard",
       icon: Shield,
+      children: [
+        {
+          labelKey: "nav.adminTenants",
+          to: "/admin/dashboard",
+        },
+        {
+          labelKey: "nav.adminUsers",
+          to: "/admin/users",
+        },
+      ],
     },
   ]
 }
@@ -110,8 +122,12 @@ export function getPageTitleKey(
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
   | "app.name" {
+  if (pathname.startsWith("/admin/users")) {
+    return "nav.adminUsers"
+  }
+
   if (pathname.startsWith("/admin")) {
-    return "nav.admin"
+    return "nav.adminTenants"
   }
 
   if (pathname.startsWith("/os/")) {

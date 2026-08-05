@@ -417,6 +417,8 @@
     "registrationFields": "Registro portal",
     "moduleMenu": "Menú del portal",
     "admin": "Super-Admin",
+    "adminTenants": "Clientes",
+    "adminUsers": "Usuarios",
     "menu": "Menú de navegación",
     "openMenu": "Abrir menú de navegación"
   },
@@ -1079,6 +1081,44 @@
       "revoke": "Revocar",
       "revoked": "Invitación revocada.",
       "revokeError": "No se pudo revocar."
+    },
+    "platformUsers": {
+      "title": "Usuarios de la plataforma",
+      "description": "Visualice y gestione todos los usuarios B2B de todos los tenants.",
+      "filters": {
+        "name": "Nombre",
+        "namePlaceholder": "Filtrar por nombre...",
+        "tenant": "Cliente",
+        "tenantPlaceholder": "Todos los clientes",
+        "allTenants": "Todos los clientes"
+      },
+      "columns": {
+        "name": "Nombre",
+        "email": "Correo",
+        "tenant": "Cliente",
+        "roles": "Roles",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "statusActive": "Activo",
+      "statusInactive": "Inactivo",
+      "emptyTitle": "No se encontraron usuarios",
+      "emptyDescription": "Ajuste los filtros o invite usuarios desde un cliente.",
+      "actions": {
+        "delete": "Eliminar usuario"
+      },
+      "delete": {
+        "title": "Eliminar usuario",
+        "description": "¿Eliminar a {{name}} de {{tenant}}? Su cuenta de autenticación también se eliminará. Esta acción es irreversible.",
+        "confirm": "Continuar",
+        "deleting": "Eliminando...",
+        "successTitle": "Éxito",
+        "success": "Usuario eliminado.",
+        "failed": "No se pudo eliminar el usuario."
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar los usuarios."
+      }
     },
     "modules": {
       "Inventory": "Inventario",
