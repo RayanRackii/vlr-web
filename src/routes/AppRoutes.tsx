@@ -11,6 +11,7 @@ import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
 import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
 import { LoginPage } from "@/features/auth/LoginPage"
+import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
@@ -59,6 +60,7 @@ export function AppRoutes() {
       <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/invite" element={<SetPasswordPage />} />
 
       <Route path="/t/:subdomain">

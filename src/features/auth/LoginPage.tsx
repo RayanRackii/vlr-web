@@ -1,5 +1,6 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 
@@ -29,6 +30,8 @@ function getLoginErrorMessage(error: AuthError): string {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [isSendingReset, setIsSendingReset] = useState(false)
+  const [resetInfo, setResetInfo] = useState<string | null>(null)
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -41,6 +44,7 @@ export function LoginPage() {
   const isSubmitting = form.formState.isSubmitting
 
   async function onSubmit(values: LoginFormValues) {
+    setResetInfo(null)
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
@@ -52,6 +56,37 @@ export function LoginPage() {
     }
 
     void navigate("/dashboard")
+  }
+
+  async function onForgotPassword() {
+    setResetInfo(null)
+    form.clearErrors("root")
+
+    const email = form.getValues("email").trim()
+    const emailValid = await form.trigger("email")
+    if (!emailValid || email.length === 0) {
+      return
+    }
+
+    setIsSendingReset(true)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error !== null) {
+        form.setError("root", {
+          message: "Não foi possível enviar o e-mail de reset. Tente novamente.",
+        })
+        return
+      }
+
+      setResetInfo(
+        "Se existir uma conta com este e-mail, enviamos um link para redefinir a senha.",
+      )
+    } finally {
+      setIsSendingReset(false)
+    }
   }
 
   return (
@@ -116,8 +151,29 @@ export function LoginPage() {
             </p>
           ) : null}
 
+          {resetInfo ? (
+            <p
+              role="status"
+              className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+            >
+              {resetInfo}
+            </p>
+          ) : null}
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Entrando..." : "Entrar"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            disabled={isSubmitting || isSendingReset}
+            onClick={() => {
+              void onForgotPassword()
+            }}
+          >
+            {isSendingReset ? "Enviando..." : "Esqueci a senha"}
           </Button>
         </form>
       </Form>
