@@ -1,11 +1,16 @@
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { ZodError } from "zod"
 import {
   assetFamilyListSchema,
   type AssetFamily,
 } from "@/features/assets/schemas/assetFamilySchemas"
 
 function throwFamiliesError(error: unknown, fallback: string): never {
+  if (error instanceof ZodError) {
+    throw new Error(fallback)
+  }
+
   if (error instanceof Error && !isAxiosError(error)) {
     throw error
   }

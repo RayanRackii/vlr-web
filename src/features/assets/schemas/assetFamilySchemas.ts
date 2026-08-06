@@ -1,5 +1,13 @@
 import { z } from "zod"
 
+/** Guid-shaped id (API may seed non-RFC variant bits; do not use z.string().uuid()). */
+const guidLikeSchema = z
+  .string()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+    "Invalid id",
+  )
+
 export const assetFamilyFieldSchema = z.object({
   key: z.string().min(1),
   type: z.enum(["text", "number", "boolean"]).or(z.string()),
@@ -10,7 +18,7 @@ export const assetFamilyFieldSchema = z.object({
 export type AssetFamilyField = z.infer<typeof assetFamilyFieldSchema>
 
 export const assetFamilySchema = z.object({
-  id: z.string().uuid(),
+  id: guidLikeSchema,
   key: z.string().min(1),
   label: z.string().min(1),
   fields: z.array(assetFamilyFieldSchema).default([]),
