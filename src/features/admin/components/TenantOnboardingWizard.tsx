@@ -198,6 +198,15 @@ export function TenantOnboardingWizard() {
     }
 
     if (step === 4) {
+      if (families.length === 0) {
+        toast.error(t("admin.wizard.errorTitle"), {
+          description:
+            familiesError
+            ?? t("admin.wizard.errors.familiesLoadFailed"),
+        })
+        return
+      }
+
       const parsed = stepFamiliesSchema.safeParse({
         assetFamilyKeys: form.getValues("assetFamilyKeys"),
       })

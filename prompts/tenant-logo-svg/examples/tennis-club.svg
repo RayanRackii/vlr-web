@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <pattern id="strings" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="12" y2="0" stroke="#cbd5e1" stroke-width="1.5" />
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#cbd5e1" stroke-width="1.5" />
+    </pattern>
+    <filter id="drop-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="15" stdDeviation="12" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <g id="court">
+    <polygon points="80,480 520,480 380,180 220,180" fill="#bae6fd" stroke="#7dd3fc" stroke-width="4" stroke-linejoin="round" />
+    <polygon points="110,460 490,460 370,195 230,195" fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" />
+    <line x1="151" y1="370" x2="449" y2="370" stroke="#ffffff" stroke-width="4" />
+    <line x1="205" y1="250" x2="395" y2="250" stroke="#ffffff" stroke-width="4" />
+    <line x1="300" y1="250" x2="300" y2="370" stroke="#ffffff" stroke-width="4" />
+    <line x1="175" y1="300" x2="425" y2="300" stroke="#38bdf8" stroke-width="4" />
+    <rect x="175" y="275" width="250" height="25" fill="#ffffff" opacity="0.5" />
+    <line x1="170" y1="275" x2="430" y2="275" stroke="#ffffff" stroke-width="5" stroke-linecap="round" />
+    <rect x="167" y="270" width="8" height="35" fill="#64748b" rx="3" />
+    <rect x="425" y="270" width="8" height="35" fill="#64748b" rx="3" />
+  </g>
+
+  <path d="M 180 480 Q 280 420 370 280" fill="none" stroke="#f0f9ff" stroke-width="24" stroke-linecap="round" opacity="0.8" />
+  <path d="M 230 510 Q 320 460 400 330" fill="none" stroke="#e0f2fe" stroke-width="12" stroke-linecap="round" opacity="0.9" />
+
+  <g id="racket" transform="translate(300, 350) rotate(45) translate(-300, -350)" filter="url(#drop-shadow)">
+    <rect x="282" y="390" width="36" height="120" rx="4" fill="#1e293b" />
+    <rect x="282" y="385" width="36" height="8" fill="#ef4444" />
+    <path d="M 282 405 L 318 415 M 282 425 L 318 435 M 282 445 L 318 455 M 282 465 L 318 475 M 282 485 L 318 495 M 282 505 L 318 515" stroke="#334155" stroke-width="3" />
+    <rect x="278" y="505" width="44" height="15" rx="4" fill="#0f172a" />
+    <line x1="262" y1="298" x2="288" y2="395" stroke="#0ea5e9" stroke-width="16" stroke-linecap="round" />
+    <line x1="338" y1="298" x2="312" y2="395" stroke="#0ea5e9" stroke-width="16" stroke-linecap="round" />
+    <path d="M 255 292 Q 300 315 345 292" fill="none" stroke="#0ea5e9" stroke-width="16" stroke-linecap="round" />
+    <path d="M 258 288 Q 300 308 342 288" fill="none" stroke="#1e293b" stroke-width="4" stroke-linecap="round" />
+    <ellipse cx="300" cy="200" rx="78" ry="108" fill="url(#strings)" />
+    <ellipse cx="300" cy="200" rx="80" ry="110" fill="none" stroke="#0ea5e9" stroke-width="16" />
+    <ellipse cx="300" cy="200" rx="72" ry="102" fill="none" stroke="#1e293b" stroke-width="3" />
+    <path d="M 230 147 A 80 110 0 0 1 370 147" fill="none" stroke="#1e293b" stroke-width="16" stroke-linecap="round" />
+  </g>
+
+  <g id="ball-group" transform="translate(415, 230)">
+    <g stroke="#334155" stroke-width="5" stroke-linecap="round">
+      <line x1="28" y1="-28" x2="45" y2="-45" />
+      <line x1="38" y1="0" x2="60" y2="-5" />
+      <line x1="28" y1="28" x2="45" y2="45" />
+    </g>
+    <g stroke="#84cc16" stroke-width="4" stroke-linecap="round" opacity="0.6">
+      <line x1="-35" y1="-15" x2="-60" y2="-5" />
+      <line x1="-40" y1="5" x2="-70" y2="15" />
+      <line x1="-30" y1="20" x2="-50" y2="30" />
+    </g>
+    <ellipse cx="4" cy="10" rx="32" ry="32" fill="#000000" opacity="0.15" />
+    <circle cx="0" cy="0" r="32" fill="#a3e635" stroke="#4d7c0f" stroke-width="3" />
+    <path d="M -20 -20 Q -5 0 -20 20" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+    <path d="M 20 -20 Q 5 0 20 20" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  </g>
+</svg>
