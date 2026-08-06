@@ -412,8 +412,8 @@
   "nav": {
     "dashboard": "Panel",
     "assets": "Activos",
-    "assetsInventory": "Inventario",
-    "assetsCategories": "Categorías",
+    "assetsInventory": "Recursos",
+    "assetsCategories": "Tipos",
     "pmoc": "PMOC",
     "pmocPlans": "Planes",
     "pmocNew": "Nuevo Plan",
@@ -555,11 +555,11 @@
     "deletion": {
       "title": "Confirmar eliminación",
       "pendingBadge": "Eliminación pendiente",
-      "scheduleWarning": "Esta acción programará la eliminación de la categoría \"{{name}}\" y de todos los {{count}} activos vinculados dentro de 30 días. Escriba el nombre de la categoría para confirmar.",
+      "scheduleWarning": "Esta acción programará la eliminación del tipo \"{{name}}\" y de todos los {{count}} recursos vinculados dentro de 30 días. Escriba el nombre del tipo para confirmar.",
       "permanentWarning": "Este elemento ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
-      "assetScheduleWarning": "Esta acción programará la eliminación del activo \"{{tag}}\" dentro de 30 días. Escriba la tag del activo para confirmar.",
-      "assetPermanentWarning": "Este activo ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
-      "confirmNameLabel": "Nombre de la categoría",
+      "assetScheduleWarning": "Esta acción programará la eliminación del recurso \"{{tag}}\" dentro de 30 días. Escriba la tag para confirmar.",
+      "assetPermanentWarning": "Este recurso ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
+      "confirmNameLabel": "Nombre del tipo",
       "confirmNamePlaceholder": "Escriba el nombre exactamente como aparece",
       "confirm": "Confirmar eliminación",
       "deleting": "Eliminando...",
@@ -567,13 +567,25 @@
       "permanentSuccess": "Elemento eliminado permanentemente."
     },
     "categories": {
-      "title": "Categorías de Activos",
-      "description": "Matriz técnica de los equipos. Defina modelos y características heredadas por los activos físicos.",
-      "loading": "Cargando categorías...",
-      "empty": "Aún no hay categorías registradas.",
+      "title": {
+        "rentals": "Tipos de recurso",
+        "maintenance": "Tipos de equipo",
+        "generic": "Tipos"
+      },
+      "description": {
+        "rentals": "Tipos para agrupar recursos (ej.: Cancha, Contenedor, Sala).",
+        "maintenance": "Tipos de equipo (ej.: Split, Caldera).",
+        "generic": "Tipos usados para clasificar sus recursos."
+      },
+      "loading": "Cargando tipos...",
+      "empty": {
+        "rentals": "Aún no hay tipos — cree el primero (ej.: Cancha o Contenedor).",
+        "maintenance": "Aún no hay tipos — cree el primero (ej.: Split).",
+        "generic": "Aún no hay tipos registrados."
+      },
       "emptyValue": "—",
       "status": {
-        "active": "Activa"
+        "active": "Activo"
       },
       "filters": {
         "name": "Filtrar por nombre",
@@ -581,7 +593,7 @@
         "description": "Filtrar por descripción"
       },
       "actions": {
-        "new": "Nueva Categoría",
+        "new": "Nuevo tipo",
         "save": "Guardar",
         "saving": "Guardando...",
         "edit": "Editar",
@@ -596,56 +608,88 @@
         "actions": "Acciones"
       },
       "dialog": {
-        "title": "Nueva categoría",
-        "description": "Registre el modelo base que usarán los equipos físicos.",
-        "editTitle": "Editar categoría",
-        "editDescription": "Actualice los datos de la categoría de activos."
+        "title": {
+          "rentals": "Nuevo tipo",
+          "maintenance": "Nuevo tipo",
+          "generic": "Nuevo tipo"
+        },
+        "description": {
+          "rentals": "Defina un tipo para agrupar recursos reservables (ej.: Cancha de tenis).",
+          "maintenance": "Registre el modelo base que usarán los equipos.",
+          "generic": "Registre un tipo para clasificar sus recursos."
+        },
+        "editTitle": "Editar tipo",
+        "editDescription": "Actualice los datos de este tipo."
       },
       "form": {
         "name": "Nombre",
-        "namePlaceholder": "Ej: Aire acondicionado Split 12k BTU",
+        "namePlaceholder": {
+          "rentals": "Ej.: Cancha, Contenedor, Sala",
+          "maintenance": "Ej.: Aire acondicionado Split 12k BTU",
+          "generic": "Ej.: Tipo de recurso"
+        },
         "manufacturer": "Fabricante",
-        "manufacturerPlaceholder": "Ej: Daikin",
+        "manufacturerPlaceholder": "Ej.: Daikin (opcional en muchos casos)",
         "description": "Descripción",
-        "descriptionPlaceholder": "Detalles técnicos opcionales"
+        "descriptionPlaceholder": "Detalles opcionales"
       },
       "validation": {
         "nameRequired": "El nombre es obligatorio.",
         "manufacturerRequired": "El fabricante es obligatorio."
       },
       "success": {
-        "created": "Categoría creada con éxito.",
-        "updated": "Categoría actualizada con éxito."
+        "created": "Tipo creado con éxito.",
+        "updated": "Tipo actualizado con éxito."
       },
       "errors": {
         "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
-        "loadFailed": "No se pudieron cargar las categorías.",
-        "createFailed": "No se pudo crear la categoría.",
-        "updateFailed": "No se pudo actualizar la categoría.",
-        "deleteFailed": "No se pudo eliminar la categoría.",
+        "loadFailed": "No se pudieron cargar los tipos.",
+        "createFailed": "No se pudo crear el tipo.",
+        "updateFailed": "No se pudo actualizar el tipo.",
+        "deleteFailed": "No se pudo eliminar el tipo.",
         "invalidResponse": "Respuesta inválida de la API."
       }
     },
     "inventory": {
-      "title": "Inventario de Activos",
-      "description": "Equipos físicos del tenant. Cree varios activos secuenciales en lote a partir de una categoría.",
-      "loading": "Cargando inventario...",
-      "empty": "Aún no hay activos registrados.",
+      "title": {
+        "rentals": "Recursos",
+        "maintenance": "Recursos",
+        "generic": "Recursos"
+      },
+      "description": {
+        "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
+        "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
+        "generic": "Registre los recursos de este negocio y organícelos por tipo."
+      },
+      "loading": "Cargando recursos...",
+      "empty": {
+        "rentals": "Aún no hay recursos registrados.",
+        "maintenance": "Aún no hay recursos registrados.",
+        "generic": "Aún no hay recursos registrados."
+      },
+      "emptyNoTypes": {
+        "rentals": "Antes de registrar recursos, defina los tipos (ej.: Cancha, Contenedor).",
+        "maintenance": "Antes de registrar recursos, defina los tipos de equipo.",
+        "generic": "Antes de registrar recursos, defina los tipos."
+      },
+      "emptyNoTypesCta": "Crear tipos",
+      "emptyWithTypesCta": "Agregar recursos",
       "emptyValue": "—",
+      "typeLabel": "Tipo",
       "filters": {
-        "category": "Categoría",
+        "category": "Tipo",
         "tag": "Tag",
         "location": "Ubicación",
         "placeholder": "Filtrar..."
       },
       "actions": {
-        "bulkAdd": "Agregar en Lote",
+        "bulkAdd": "Agregar en lote",
         "create": "Crear",
         "creating": "Creando..."
       },
       "columns": {
         "tag": "Tag",
-        "category": "Categoría",
+        "category": "Tipo",
         "location": "Ubicación",
         "status": "Estado",
         "actions": "Acciones"
@@ -656,24 +700,40 @@
         "Maintenance": "Mantenimiento"
       },
       "dialog": {
-        "title": "Agregar activos en lote",
-        "description": "Genere una secuencia de equipos con la misma categoría y tags numerados."
+        "title": {
+          "rentals": "Agregar recursos en lote",
+          "maintenance": "Agregar recursos en lote",
+          "generic": "Agregar recursos en lote"
+        },
+        "description": {
+          "rentals": "Genere una secuencia con el mismo tipo y tags numerados (ej.: Cancha-01, Cancha-02).",
+          "maintenance": "Genere una secuencia de equipos con el mismo tipo y tags numerados.",
+          "generic": "Genere una secuencia de recursos con el mismo tipo y tags numerados."
+        }
       },
       "form": {
         "unit": "Unidad",
         "unitPlaceholder": "Seleccione la unidad",
-        "category": "Categoría",
-        "categoryPlaceholder": "Seleccione la categoría",
+        "category": "Tipo",
+        "categoryPlaceholder": "Seleccione el tipo",
         "baseLocation": "Ubicación base",
-        "baseLocationPlaceholder": "Ej: Habitación",
+        "baseLocationPlaceholder": {
+          "rentals": "Ej.: Bloque A",
+          "maintenance": "Ej.: Sala técnica",
+          "generic": "Ej.: Área 1"
+        },
         "baseTag": "Tag base",
-        "baseTagPlaceholder": "Ej: AC-",
+        "baseTagPlaceholder": {
+          "rentals": "Ej.: C-",
+          "maintenance": "Ej.: AC-",
+          "generic": "Ej.: R-"
+        },
         "startNumber": "Número inicial",
         "endNumber": "Número final"
       },
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
-        "categoryRequired": "La categoría es obligatoria.",
+        "categoryRequired": "El tipo es obligatorio.",
         "baseLocationRequired": "La ubicación base es obligatoria.",
         "baseTagRequired": "El tag base es obligatorio.",
         "startNumberRequired": "Ingrese el número inicial.",
@@ -681,17 +741,17 @@
         "rangeInvalid": "El número final debe ser mayor o igual al inicial."
       },
       "success": {
-        "bulkCreated": "{{count}} activo(s) creado(s) con éxito."
+        "bulkCreated": "{{count}} recurso(s) creado(s) con éxito."
       },
       "errors": {
         "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
-        "loadFailed": "No se pudo cargar el inventario.",
+        "loadFailed": "No se pudieron cargar los recursos.",
         "loadUnitsFailed": "No se pudieron cargar las unidades.",
-        "bulkCreateFailed": "No se pudieron crear los activos en lote.",
-        "deleteFailed": "No se pudo eliminar el activo.",
+        "bulkCreateFailed": "No se pudieron crear los recursos en lote.",
+        "deleteFailed": "No se pudo eliminar el recurso.",
         "invalidResponse": "Respuesta inválida de la API.",
         "invalidUnitsResponse": "Respuesta inválida al cargar unidades.",
-        "updateFailed": "No se pudo actualizar el activo."
+        "updateFailed": "No se pudo actualizar el recurso."
       },
       "flags": {
         "rentable": "Alquiler",
@@ -699,8 +759,16 @@
       }
     },
     "detail": {
-      "title": "Detalles del activo",
-      "description": "Edite datos generales y configure módulos según las flags del activo.",
+      "title": {
+        "rentals": "Detalles del recurso",
+        "maintenance": "Detalles del recurso",
+        "generic": "Detalles del recurso"
+      },
+      "description": {
+        "rentals": "Edite los datos generales e indique si el recurso puede reservarse.",
+        "maintenance": "Edite los datos generales y las flags de mantenimiento.",
+        "generic": "Edite los datos generales de este recurso."
+      },
       "tabs": {
         "general": "General",
         "rental": "Alquiler",
@@ -710,17 +778,17 @@
         "name": "Nombre",
         "tag": "Tag",
         "unit": "Unidad",
-        "category": "Categoría",
+        "category": "Tipo",
         "location": "Ubicación",
         "status": "Estado",
-        "isRentable": "Disponible para alquiler",
+        "isRentable": "Disponible para reserva / alquiler",
         "requiresMaintenance": "Requiere mantenimiento",
         "rentalType": "Tipo de alquiler",
         "totalQuantity": "Cantidad total"
       },
       "rentalTypes": {
-        "Location": "Local (cancha, piscina)",
-        "Good": "Bien (chaleco, pelota)"
+        "Location": "Espacio (cancha, sala, pista)",
+        "Good": "Bien (chaleco, pelota, contenedor)"
       },
       "actions": {
         "save": "Guardar",

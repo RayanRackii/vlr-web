@@ -47,6 +47,12 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [ ] Sidebar B2B filtrada por `tenant_modules` + `ModuleGuard`.
 
+## 4.5. UX de Ativos (fundação)
+
+- [x] Nav Recursos / Tipos; empty state guia criar tipos primeiro.
+- [x] Copy por tom de módulo (`rentals` | `maintenance` | `generic`) via `useAssetCopyTone`.
+- [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
+
 ## 5. Fluxo de convite B2B
 
 - [x] Wizard + edit tenant: convidar admin (sem senha)
@@ -76,3 +82,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-05 | **Executado (com API):** Abrir ambiente / Voltar; `/admin/users`; nav por `activeModules`; reset password B2B. |
 | 2026-08-06 | **Docs:** `CONTEXT.md` espelho neste repo; `AGENTS.md`; rules apontam para paths deste repo + irmão `vlr-api` (não monorepo). |
 | 2026-08-06 | **Executado:** agenda B2C por Slot (`slots/book`) + admin mínimo de escala (seed templates + publish day). |
+| 2026-08-06 | **Executado:** UX Ativos — Recursos/Tipos, empty states, copy por módulo (`useAssetCopyTone`). |

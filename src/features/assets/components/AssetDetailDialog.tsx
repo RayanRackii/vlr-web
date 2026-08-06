@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Asset, AssetStatus } from "@/features/assets/schemas/assetSchemas"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import {
   getAssetById,
   updateAsset,
@@ -112,6 +113,7 @@ export function AssetDetailDialog({
   onUpdated,
 }: AssetDetailDialogProps) {
   const { t } = useTranslation()
+  const { tTone } = useAssetCopyTone()
   const [asset, setAsset] = useState<Asset | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -301,8 +303,10 @@ export function AssetDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t("assets.detail.title")}</DialogTitle>
-          <DialogDescription>{t("assets.detail.description")}</DialogDescription>
+          <DialogTitle>{tTone("assets.detail.title")}</DialogTitle>
+          <DialogDescription>
+            {tTone("assets.detail.description")}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

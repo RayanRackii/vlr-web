@@ -11,9 +11,11 @@ import {
 import { CircleCheck, Layers, LoaderCircle, MoreHorizontal } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { AssetDetailDialog } from "@/features/assets/components/AssetDetailDialog"
+import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -105,7 +107,9 @@ function getStatusLabel(
 
 export function AssetsPage() {
   const { t } = useTranslation()
+  const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
+  const navigate = useNavigate()
 
   const [assets, setAssets] = useState<Asset[]>([])
   const [categories, setCategories] = useState<AssetCategory[]>([])
@@ -465,14 +469,18 @@ export function AssetsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {t("assets.inventory.title")}
+            {tTone("assets.inventory.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t("assets.inventory.description")}
+            {tTone("assets.inventory.description")}
           </p>
         </div>
 
-        <Button type="button" onClick={openBulkDialog}>
+        <Button
+          type="button"
+          onClick={openBulkDialog}
+          disabled={categories.length === 0}
+        >
           <Layers data-icon="inline-start" />
           {t("assets.inventory.actions.bulkAdd")}
         </Button>
@@ -532,7 +540,28 @@ export function AssetsPage() {
             {!isLoading && filteredRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {t("assets.inventory.empty")}
+                  <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-2">
+                    <p className="text-sm text-muted-foreground">
+                      {categories.length === 0
+                        ? tTone("assets.inventory.emptyNoTypes")
+                        : tTone("assets.inventory.empty")}
+                    </p>
+                    {categories.length === 0 ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          void navigate("/ativos/categorias")
+                        }}
+                      >
+                        {t("assets.inventory.emptyNoTypesCta")}
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="outline" onClick={openBulkDialog}>
+                        {t("assets.inventory.emptyWithTypesCta")}
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : null}
@@ -558,9 +587,9 @@ export function AssetsPage() {
       <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="gap-4 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("assets.inventory.dialog.title")}</DialogTitle>
+            <DialogTitle>{tTone("assets.inventory.dialog.title")}</DialogTitle>
             <DialogDescription>
-              {t("assets.inventory.dialog.description")}
+              {tTone("assets.inventory.dialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -664,7 +693,7 @@ export function AssetsPage() {
                     <FormControl>
                       <Input
                         autoComplete="off"
-                        placeholder={t(
+                        placeholder={tTone(
                           "assets.inventory.form.baseLocationPlaceholder",
                         )}
                         {...field}
@@ -684,7 +713,7 @@ export function AssetsPage() {
                     <FormControl>
                       <Input
                         autoComplete="off"
-                        placeholder={t(
+                        placeholder={tTone(
                           "assets.inventory.form.baseTagPlaceholder",
                         )}
                         {...field}

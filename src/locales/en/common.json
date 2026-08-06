@@ -412,8 +412,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "assets": "Assets",
-    "assetsInventory": "Inventory",
-    "assetsCategories": "Categories",
+    "assetsInventory": "Resources",
+    "assetsCategories": "Types",
     "pmoc": "PMOC",
     "pmocPlans": "Plans",
     "pmocNew": "New Plan",
@@ -555,11 +555,11 @@
     "deletion": {
       "title": "Confirm deletion",
       "pendingBadge": "Pending Deletion",
-      "scheduleWarning": "This will schedule deletion of category \"{{name}}\" and all {{count}} linked assets in 30 days. Type the category name to confirm.",
+      "scheduleWarning": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
       "permanentWarning": "This item is already scheduled for deletion. Do you want to permanently delete it now?",
-      "assetScheduleWarning": "This will schedule deletion of asset \"{{tag}}\" in 30 days. Type the asset tag to confirm.",
-      "assetPermanentWarning": "This asset is already scheduled for deletion. Do you want to permanently delete it now?",
-      "confirmNameLabel": "Category name",
+      "assetScheduleWarning": "This will schedule deletion of resource \"{{tag}}\" in 30 days. Type the tag to confirm.",
+      "assetPermanentWarning": "This resource is already scheduled for deletion. Do you want to permanently delete it now?",
+      "confirmNameLabel": "Type name",
       "confirmNamePlaceholder": "Type the name exactly as shown",
       "confirm": "Confirm Deletion",
       "deleting": "Deleting...",
@@ -567,10 +567,22 @@
       "permanentSuccess": "Item permanently deleted."
     },
     "categories": {
-      "title": "Asset Categories",
-      "description": "Technical matrix for equipment. Define models and characteristics inherited by physical assets.",
-      "loading": "Loading categories...",
-      "empty": "No categories registered yet.",
+      "title": {
+        "rentals": "Resource types",
+        "maintenance": "Equipment types",
+        "generic": "Types"
+      },
+      "description": {
+        "rentals": "Types used to group resources (e.g. Court, Dumpster, Room).",
+        "maintenance": "Equipment types (e.g. Split AC, Boiler).",
+        "generic": "Types used to classify your resources."
+      },
+      "loading": "Loading types...",
+      "empty": {
+        "rentals": "No types yet — create the first one (e.g. Court or Dumpster).",
+        "maintenance": "No types yet — create the first one (e.g. Split AC).",
+        "generic": "No types registered yet."
+      },
       "emptyValue": "—",
       "status": {
         "active": "Active"
@@ -581,7 +593,7 @@
         "description": "Filter by description"
       },
       "actions": {
-        "new": "New Category",
+        "new": "New type",
         "save": "Save",
         "saving": "Saving...",
         "edit": "Edit",
@@ -596,56 +608,88 @@
         "actions": "Actions"
       },
       "dialog": {
-        "title": "New category",
-        "description": "Register the base model that physical equipment will use.",
-        "editTitle": "Edit category",
-        "editDescription": "Update the asset category details."
+        "title": {
+          "rentals": "New type",
+          "maintenance": "New type",
+          "generic": "New type"
+        },
+        "description": {
+          "rentals": "Define a type to group bookable resources (e.g. Tennis court).",
+          "maintenance": "Register the base model used by equipment.",
+          "generic": "Register a type to classify your resources."
+        },
+        "editTitle": "Edit type",
+        "editDescription": "Update this type."
       },
       "form": {
         "name": "Name",
-        "namePlaceholder": "e.g. Split Air Conditioner 12k BTU",
+        "namePlaceholder": {
+          "rentals": "e.g. Court, Dumpster, Room",
+          "maintenance": "e.g. Split Air Conditioner 12k BTU",
+          "generic": "e.g. Resource type"
+        },
         "manufacturer": "Manufacturer",
-        "manufacturerPlaceholder": "e.g. Daikin",
+        "manufacturerPlaceholder": "e.g. Daikin (optional in many cases)",
         "description": "Description",
-        "descriptionPlaceholder": "Optional technical details"
+        "descriptionPlaceholder": "Optional details"
       },
       "validation": {
         "nameRequired": "Name is required.",
         "manufacturerRequired": "Manufacturer is required."
       },
       "success": {
-        "created": "Category created successfully.",
-        "updated": "Category updated successfully."
+        "created": "Type created successfully.",
+        "updated": "Type updated successfully."
       },
       "errors": {
         "unauthorized": "Invalid session. Please sign in again.",
-        "loadFailed": "Could not load categories.",
-        "createFailed": "Could not create the category.",
-        "updateFailed": "Could not update the category.",
-        "deleteFailed": "Could not delete the category.",
+        "loadFailed": "Could not load types.",
+        "createFailed": "Could not create the type.",
+        "updateFailed": "Could not update the type.",
+        "deleteFailed": "Could not delete the type.",
         "invalidResponse": "Invalid API response."
       }
     },
     "inventory": {
-      "title": "Asset Inventory",
-      "description": "Physical equipment for the tenant. Bulk-create sequential assets from a category.",
-      "loading": "Loading inventory...",
-      "empty": "No assets registered yet.",
+      "title": {
+        "rentals": "Resources",
+        "maintenance": "Resources",
+        "generic": "Resources"
+      },
+      "description": {
+        "rentals": "Resources you offer (spaces, goods…). Register each one and mark what can be booked.",
+        "maintenance": "Site equipment and installations. Use types to organize and link maintenance.",
+        "generic": "Register this business’s resources and organize them by type."
+      },
+      "loading": "Loading resources...",
+      "empty": {
+        "rentals": "No resources registered yet.",
+        "maintenance": "No resources registered yet.",
+        "generic": "No resources registered yet."
+      },
+      "emptyNoTypes": {
+        "rentals": "Before adding resources, define types (e.g. Court, Dumpster).",
+        "maintenance": "Before adding resources, define equipment types.",
+        "generic": "Before adding resources, define types."
+      },
+      "emptyNoTypesCta": "Create types",
+      "emptyWithTypesCta": "Add resources",
       "emptyValue": "—",
+      "typeLabel": "Type",
       "filters": {
-        "category": "Category",
+        "category": "Type",
         "tag": "Tag",
         "location": "Location",
         "placeholder": "Filter..."
       },
       "actions": {
-        "bulkAdd": "Bulk Add",
+        "bulkAdd": "Bulk add",
         "create": "Create",
         "creating": "Creating..."
       },
       "columns": {
         "tag": "Tag",
-        "category": "Category",
+        "category": "Type",
         "location": "Location",
         "status": "Status",
         "actions": "Actions"
@@ -656,24 +700,40 @@
         "Maintenance": "Maintenance"
       },
       "dialog": {
-        "title": "Bulk add assets",
-        "description": "Generate a sequence of equipment with the same category and numbered tags."
+        "title": {
+          "rentals": "Bulk add resources",
+          "maintenance": "Bulk add resources",
+          "generic": "Bulk add resources"
+        },
+        "description": {
+          "rentals": "Generate a sequence with the same type and numbered tags (e.g. Court-01, Court-02).",
+          "maintenance": "Generate a sequence of equipment with the same type and numbered tags.",
+          "generic": "Generate a sequence of resources with the same type and numbered tags."
+        }
       },
       "form": {
         "unit": "Unit",
         "unitPlaceholder": "Select a unit",
-        "category": "Category",
-        "categoryPlaceholder": "Select a category",
+        "category": "Type",
+        "categoryPlaceholder": "Select a type",
         "baseLocation": "Base location",
-        "baseLocationPlaceholder": "e.g. Room",
+        "baseLocationPlaceholder": {
+          "rentals": "e.g. Block A",
+          "maintenance": "e.g. Plant room",
+          "generic": "e.g. Area 1"
+        },
         "baseTag": "Base tag",
-        "baseTagPlaceholder": "e.g. AC-",
+        "baseTagPlaceholder": {
+          "rentals": "e.g. C-",
+          "maintenance": "e.g. AC-",
+          "generic": "e.g. R-"
+        },
         "startNumber": "Start number",
         "endNumber": "End number"
       },
       "validation": {
         "unitRequired": "Unit is required.",
-        "categoryRequired": "Category is required.",
+        "categoryRequired": "Type is required.",
         "baseLocationRequired": "Base location is required.",
         "baseTagRequired": "Base tag is required.",
         "startNumberRequired": "Enter the start number.",
@@ -681,17 +741,17 @@
         "rangeInvalid": "End number must be greater than or equal to start number."
       },
       "success": {
-        "bulkCreated": "{{count}} asset(s) created successfully."
+        "bulkCreated": "{{count}} resource(s) created successfully."
       },
       "errors": {
         "unauthorized": "Invalid session. Please sign in again.",
-        "loadFailed": "Could not load inventory.",
+        "loadFailed": "Could not load resources.",
         "loadUnitsFailed": "Could not load units.",
-        "bulkCreateFailed": "Could not bulk-create assets.",
-        "deleteFailed": "Could not delete the asset.",
+        "bulkCreateFailed": "Could not bulk-create resources.",
+        "deleteFailed": "Could not delete the resource.",
         "invalidResponse": "Invalid API response.",
         "invalidUnitsResponse": "Invalid units response.",
-        "updateFailed": "Could not update the asset."
+        "updateFailed": "Could not update the resource."
       },
       "flags": {
         "rentable": "Rental",
@@ -699,8 +759,16 @@
       }
     },
     "detail": {
-      "title": "Asset details",
-      "description": "Edit general data and configure modules based on asset flags.",
+      "title": {
+        "rentals": "Resource details",
+        "maintenance": "Resource details",
+        "generic": "Resource details"
+      },
+      "description": {
+        "rentals": "Edit general data and mark whether this resource can be booked.",
+        "maintenance": "Edit general data and maintenance flags.",
+        "generic": "Edit general data for this resource."
+      },
       "tabs": {
         "general": "General",
         "rental": "Rental",
@@ -710,17 +778,17 @@
         "name": "Name",
         "tag": "Tag",
         "unit": "Unit",
-        "category": "Category",
+        "category": "Type",
         "location": "Location",
         "status": "Status",
-        "isRentable": "Available for rental",
+        "isRentable": "Available for booking / rental",
         "requiresMaintenance": "Requires maintenance",
         "rentalType": "Rental type",
         "totalQuantity": "Total quantity"
       },
       "rentalTypes": {
-        "Location": "Location (court, pool)",
-        "Good": "Good (vest, ball)"
+        "Location": "Space (court, room, track)",
+        "Good": "Good (vest, ball, dumpster)"
       },
       "actions": {
         "save": "Save",

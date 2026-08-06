@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { isAxiosError } from "@/lib/api"
 import {
   createAssetCategoryFormSchema,
@@ -64,6 +65,7 @@ import {
 
 export function AssetCategoriesPage() {
   const { t } = useTranslation()
+  const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
 
   const [categories, setCategories] = useState<AssetCategory[]>([])
@@ -404,10 +406,10 @@ export function AssetCategoriesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {t("assets.categories.title")}
+            {tTone("assets.categories.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t("assets.categories.description")}
+            {tTone("assets.categories.description")}
           </p>
         </div>
 
@@ -477,7 +479,7 @@ export function AssetCategoriesPage() {
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {t("assets.categories.empty")}
+                    {tTone("assets.categories.empty")}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -506,12 +508,12 @@ export function AssetCategoriesPage() {
             <DialogTitle>
               {editingId
                 ? t("assets.categories.dialog.editTitle")
-                : t("assets.categories.dialog.title")}
+                : tTone("assets.categories.dialog.title")}
             </DialogTitle>
             <DialogDescription>
               {editingId
                 ? t("assets.categories.dialog.editDescription")
-                : t("assets.categories.dialog.description")}
+                : tTone("assets.categories.dialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -532,7 +534,7 @@ export function AssetCategoriesPage() {
                       <FormControl>
                         <Input
                           autoComplete="off"
-                          placeholder={t(
+                          placeholder={tTone(
                             "assets.categories.form.namePlaceholder",
                           )}
                           {...field}

@@ -412,8 +412,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "assets": "Ativos",
-    "assetsInventory": "Inventário",
-    "assetsCategories": "Categorias",
+    "assetsInventory": "Recursos",
+    "assetsCategories": "Tipos",
     "pmoc": "PMOC",
     "pmocPlans": "Planos",
     "pmocNew": "Novo Plano",
@@ -555,11 +555,11 @@
     "deletion": {
       "title": "Confirmar exclusão",
       "pendingBadge": "Exclusão Pendente",
-      "scheduleWarning": "Esta ação agendará a exclusão da categoria \"{{name}}\" e de todos os {{count}} ativos vinculados para daqui a 30 dias. Digite o nome da categoria para confirmar.",
+      "scheduleWarning": "Esta ação agendará a exclusão do tipo \"{{name}}\" e de todos os {{count}} recursos vinculados para daqui a 30 dias. Digite o nome do tipo para confirmar.",
       "permanentWarning": "Este item já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
-      "assetScheduleWarning": "Esta ação agendará a exclusão do ativo \"{{tag}}\" para daqui a 30 dias. Digite a tag do ativo para confirmar.",
-      "assetPermanentWarning": "Este ativo já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
-      "confirmNameLabel": "Nome da categoria",
+      "assetScheduleWarning": "Esta ação agendará a exclusão do recurso \"{{tag}}\" para daqui a 30 dias. Digite a tag para confirmar.",
+      "assetPermanentWarning": "Este recurso já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
+      "confirmNameLabel": "Nome do tipo",
       "confirmNamePlaceholder": "Digite o nome exatamente como aparece",
       "confirm": "Confirmar Exclusão",
       "deleting": "Excluindo...",
@@ -567,13 +567,25 @@
       "permanentSuccess": "Item excluído permanentemente."
     },
     "categories": {
-      "title": "Categorias de Ativos",
-      "description": "Matriz técnica dos equipamentos. Defina modelos e características herdadas pelos ativos físicos.",
-      "loading": "Carregando categorias...",
-      "empty": "Nenhuma categoria cadastrada ainda.",
+      "title": {
+        "rentals": "Tipos de recurso",
+        "maintenance": "Tipos de equipamento",
+        "generic": "Tipos"
+      },
+      "description": {
+        "rentals": "Tipos para agrupar recursos (ex.: Quadra, Caçamba, Sala).",
+        "maintenance": "Tipos de equipamento (ex.: Split, Caldeira).",
+        "generic": "Tipos usados para classificar seus recursos."
+      },
+      "loading": "Carregando tipos...",
+      "empty": {
+        "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Caçamba).",
+        "maintenance": "Nenhum tipo ainda — crie o primeiro (ex.: Split).",
+        "generic": "Nenhum tipo cadastrado ainda."
+      },
       "emptyValue": "—",
       "status": {
-        "active": "Ativa"
+        "active": "Ativo"
       },
       "filters": {
         "name": "Filtrar por nome",
@@ -581,7 +593,7 @@
         "description": "Filtrar por descrição"
       },
       "actions": {
-        "new": "Nova Categoria",
+        "new": "Novo tipo",
         "save": "Salvar",
         "saving": "Salvando...",
         "edit": "Editar",
@@ -596,56 +608,88 @@
         "actions": "Ações"
       },
       "dialog": {
-        "title": "Nova categoria",
-        "description": "Cadastre o modelo base que será usado pelos equipamentos físicos.",
-        "editTitle": "Editar categoria",
-        "editDescription": "Atualize os dados da categoria de ativos."
+        "title": {
+          "rentals": "Novo tipo",
+          "maintenance": "Novo tipo",
+          "generic": "Novo tipo"
+        },
+        "description": {
+          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Quadra de tênis).",
+          "maintenance": "Cadastre o modelo base usado pelos equipamentos.",
+          "generic": "Cadastre um tipo para classificar seus recursos."
+        },
+        "editTitle": "Editar tipo",
+        "editDescription": "Atualize os dados deste tipo."
       },
       "form": {
         "name": "Nome",
-        "namePlaceholder": "Ex: Ar-Condicionado Split 12k BTUs",
+        "namePlaceholder": {
+          "rentals": "Ex.: Quadra, Caçamba, Sala",
+          "maintenance": "Ex.: Ar-condicionado Split 12k BTUs",
+          "generic": "Ex.: Tipo do recurso"
+        },
         "manufacturer": "Fabricante",
-        "manufacturerPlaceholder": "Ex: Daikin",
+        "manufacturerPlaceholder": "Ex.: Daikin (opcional em muitos casos)",
         "description": "Descrição",
-        "descriptionPlaceholder": "Detalhes técnicos opcionais"
+        "descriptionPlaceholder": "Detalhes opcionais"
       },
       "validation": {
         "nameRequired": "O nome é obrigatório.",
         "manufacturerRequired": "O fabricante é obrigatório."
       },
       "success": {
-        "created": "Categoria criada com sucesso.",
-        "updated": "Categoria atualizada com sucesso."
+        "created": "Tipo criado com sucesso.",
+        "updated": "Tipo atualizado com sucesso."
       },
       "errors": {
         "unauthorized": "Sessão inválida. Faça login novamente.",
-        "loadFailed": "Não foi possível carregar as categorias.",
-        "createFailed": "Não foi possível criar a categoria.",
-        "updateFailed": "Não foi possível atualizar a categoria.",
-        "deleteFailed": "Não foi possível excluir a categoria.",
+        "loadFailed": "Não foi possível carregar os tipos.",
+        "createFailed": "Não foi possível criar o tipo.",
+        "updateFailed": "Não foi possível atualizar o tipo.",
+        "deleteFailed": "Não foi possível excluir o tipo.",
         "invalidResponse": "Resposta inválida da API."
       }
     },
     "inventory": {
-      "title": "Inventário de Ativos",
-      "description": "Equipamentos físicos do tenant. Crie vários ativos sequenciais em lote a partir de uma categoria.",
-      "loading": "Carregando inventário...",
-      "empty": "Nenhum ativo cadastrado ainda.",
+      "title": {
+        "rentals": "Recursos",
+        "maintenance": "Recursos",
+        "generic": "Recursos"
+      },
+      "description": {
+        "rentals": "Recursos que você oferece (espaços, bens…). Cadastre cada um e marque o que pode ser reservado.",
+        "maintenance": "Equipamentos e instalações do site. Use tipos para organizar e vincular manutenção.",
+        "generic": "Cadastre os recursos deste negócio e organize-os por tipo."
+      },
+      "loading": "Carregando recursos...",
+      "empty": {
+        "rentals": "Nenhum recurso cadastrado ainda.",
+        "maintenance": "Nenhum recurso cadastrado ainda.",
+        "generic": "Nenhum recurso cadastrado ainda."
+      },
+      "emptyNoTypes": {
+        "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Quadra, Caçamba).",
+        "maintenance": "Antes de cadastrar recursos, defina os tipos de equipamento.",
+        "generic": "Antes de cadastrar recursos, defina os tipos."
+      },
+      "emptyNoTypesCta": "Criar tipos",
+      "emptyWithTypesCta": "Adicionar recursos",
       "emptyValue": "—",
+      "typeLabel": "Tipo",
       "filters": {
-        "category": "Categoria",
+        "category": "Tipo",
         "tag": "Tag",
         "location": "Localização",
         "placeholder": "Filtrar..."
       },
       "actions": {
-        "bulkAdd": "Adicionar em Lote",
+        "bulkAdd": "Adicionar em lote",
         "create": "Criar",
         "creating": "Criando..."
       },
       "columns": {
         "tag": "Tag",
-        "category": "Categoria",
+        "category": "Tipo",
         "location": "Localização",
         "status": "Status",
         "actions": "Ações"
@@ -656,24 +700,40 @@
         "Maintenance": "Manutenção"
       },
       "dialog": {
-        "title": "Adicionar ativos em lote",
-        "description": "Gere uma sequência de equipamentos com a mesma categoria e tags numeradas."
+        "title": {
+          "rentals": "Adicionar recursos em lote",
+          "maintenance": "Adicionar recursos em lote",
+          "generic": "Adicionar recursos em lote"
+        },
+        "description": {
+          "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Quadra-01, Quadra-02).",
+          "maintenance": "Gere uma sequência de equipamentos com o mesmo tipo e tags numeradas.",
+          "generic": "Gere uma sequência de recursos com o mesmo tipo e tags numeradas."
+        }
       },
       "form": {
         "unit": "Unidade",
         "unitPlaceholder": "Selecione a unidade",
-        "category": "Categoria",
-        "categoryPlaceholder": "Selecione a categoria",
+        "category": "Tipo",
+        "categoryPlaceholder": "Selecione o tipo",
         "baseLocation": "Localização base",
-        "baseLocationPlaceholder": "Ex: Quarto",
+        "baseLocationPlaceholder": {
+          "rentals": "Ex.: Bloco A",
+          "maintenance": "Ex.: Sala técnica",
+          "generic": "Ex.: Área 1"
+        },
         "baseTag": "Tag base",
-        "baseTagPlaceholder": "Ex: AC-",
+        "baseTagPlaceholder": {
+          "rentals": "Ex.: Q-",
+          "maintenance": "Ex.: AC-",
+          "generic": "Ex.: R-"
+        },
         "startNumber": "Número inicial",
         "endNumber": "Número final"
       },
       "validation": {
         "unitRequired": "A unidade é obrigatória.",
-        "categoryRequired": "A categoria é obrigatória.",
+        "categoryRequired": "O tipo é obrigatório.",
         "baseLocationRequired": "A localização base é obrigatória.",
         "baseTagRequired": "A tag base é obrigatória.",
         "startNumberRequired": "Informe o número inicial.",
@@ -681,17 +741,17 @@
         "rangeInvalid": "O número final deve ser maior ou igual ao inicial."
       },
       "success": {
-        "bulkCreated": "{{count}} ativo(s) criado(s) com sucesso."
+        "bulkCreated": "{{count}} recurso(s) criado(s) com sucesso."
       },
       "errors": {
         "unauthorized": "Sessão inválida. Faça login novamente.",
-        "loadFailed": "Não foi possível carregar o inventário.",
+        "loadFailed": "Não foi possível carregar os recursos.",
         "loadUnitsFailed": "Não foi possível carregar as unidades.",
-        "bulkCreateFailed": "Não foi possível criar os ativos em lote.",
-        "deleteFailed": "Não foi possível excluir o ativo.",
+        "bulkCreateFailed": "Não foi possível criar os recursos em lote.",
+        "deleteFailed": "Não foi possível excluir o recurso.",
         "invalidResponse": "Resposta inválida da API.",
         "invalidUnitsResponse": "Resposta inválida ao carregar unidades.",
-        "updateFailed": "Não foi possível atualizar o ativo."
+        "updateFailed": "Não foi possível atualizar o recurso."
       },
       "flags": {
         "rentable": "Aluguel",
@@ -699,8 +759,16 @@
       }
     },
     "detail": {
-      "title": "Detalhes do ativo",
-      "description": "Edite dados gerais e configure módulos conforme as flags do ativo.",
+      "title": {
+        "rentals": "Detalhes do recurso",
+        "maintenance": "Detalhes do recurso",
+        "generic": "Detalhes do recurso"
+      },
+      "description": {
+        "rentals": "Edite os dados gerais e indique se o recurso pode ser reservado.",
+        "maintenance": "Edite os dados gerais e as flags de manutenção.",
+        "generic": "Edite os dados gerais deste recurso."
+      },
       "tabs": {
         "general": "Geral",
         "rental": "Aluguel",
@@ -710,17 +778,17 @@
         "name": "Nome",
         "tag": "Tag",
         "unit": "Unidade",
-        "category": "Categoria",
+        "category": "Tipo",
         "location": "Localização",
         "status": "Status",
-        "isRentable": "Disponível para aluguel",
+        "isRentable": "Disponível para reserva / aluguel",
         "requiresMaintenance": "Requer manutenção",
         "rentalType": "Tipo de aluguel",
         "totalQuantity": "Quantidade total"
       },
       "rentalTypes": {
-        "Location": "Local (quadra, piscina)",
-        "Good": "Bem (colete, bola)"
+        "Location": "Espaço (quadra, sala, pista)",
+        "Good": "Bem (colete, bola, caçamba)"
       },
       "actions": {
         "save": "Salvar",
