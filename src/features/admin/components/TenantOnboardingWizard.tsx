@@ -4,9 +4,12 @@ import {
   Building2,
   Check,
   ClipboardList,
+  Layers,
   Package,
   Tent,
   Wrench,
+  Zap,
+  type LucideIcon,
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -54,6 +57,17 @@ const MODULE_ICONS = {
   Rentals: Tent,
 } as const
 
+const FAMILY_ICONS: Record<string, LucideIcon> = {
+  spaces: Tent,
+  electrical: Zap,
+  goods: Package,
+  generic: Layers,
+}
+
+function familyIcon(key: string): LucideIcon {
+  return FAMILY_ICONS[key] ?? Layers
+}
+
 const STEP_TITLE_KEYS = [
   "admin.wizard.steps.company",
   "admin.wizard.steps.identity",
@@ -72,7 +86,7 @@ function formatCurrencyBRL(value: number): string {
 }
 
 export function TenantOnboardingWizard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
@@ -431,17 +445,25 @@ export function TenantOnboardingWizard() {
                   <FormItem>
                     <FormLabel>{t("admin.wizard.fields.subdomain")}</FormLabel>
                     <FormControl>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          autoComplete="off"
-                          className="font-mono"
-                          {...field}
-                        />
-                        <span className="shrink-0 text-sm text-muted-foreground">
-                          .{baseDomain}
-                        </span>
-                      </div>
+                      <Input
+                        autoComplete="off"
+                        className="font-mono"
+                        placeholder="acme"
+                        {...field}
+                        onChange={(event) => {
+                          field.onChange(
+                            event.target.value
+                              .toLowerCase()
+                              .replace(/\s+/g, ""),
+                          )
+                        }}
+                      />
                     </FormControl>
+                    <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
+                      {field.value
+                        ? `${field.value}.${baseDomain}`
+                        : `{subdomain}.${baseDomain}`}
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -455,7 +477,9 @@ export function TenantOnboardingWizard() {
                     <FormControl>
                       <Textarea
                         autoComplete="off"
+                        rows={5}
                         className="min-h-24 font-mono text-xs"
+                        placeholder='<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>'
                         {...field}
                       />
                     </FormControl>
@@ -626,6 +650,11 @@ export function TenantOnboardingWizard() {
                       const selected = values.assetFamilyKeys.includes(
                         family.key,
                       )
+                      const Icon = familyIcon(family.key)
+                      const descriptionKey = `admin.wizard.families.descriptions.${family.key}`
+                      const description = i18n.exists(descriptionKey)
+                        ? t(descriptionKey)
+                        : null
 
                       return (
                         <button
@@ -646,14 +675,15 @@ export function TenantOnboardingWizard() {
                               <Check className="size-3" />
                             </span>
                           ) : null}
+                          <Icon className="size-5 text-foreground" />
                           <span className="text-sm font-medium">
                             {family.label}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {t("admin.wizard.families.fieldCount", {
-                              count: family.fields.length,
-                            })}
-                          </span>
+                          {description ? (
+                            <span className="text-xs text-muted-foreground">
+                              {description}
+                            </span>
+                          ) : null}
                         </button>
                       )
                     })}

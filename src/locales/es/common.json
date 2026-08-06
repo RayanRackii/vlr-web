@@ -1238,7 +1238,12 @@
       },
       "families": {
         "hint": "Elija al menos una familia de recursos. Define los formularios de activos.",
-        "fieldCount": "{{count}} campos extra"
+        "descriptions": {
+          "spaces": "Canchas, salas y espacios reservables.",
+          "electrical": "Equipos e instalaciones eléctricas.",
+          "goods": "Bienes, contenedores e ítems físicos.",
+          "generic": "Recursos sin categoría específica."
+        }
       },
       "admin": {
         "hint": "Opcional. Enviaremos un correo para que defina su propia contraseña."

@@ -3,9 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Check,
   ClipboardList,
+  Layers,
   Package,
   Tent,
   Wrench,
+  Zap,
+  type LucideIcon,
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -55,13 +58,24 @@ const MODULE_ICONS = {
   Rentals: Tent,
 } as const
 
+const FAMILY_ICONS: Record<string, LucideIcon> = {
+  spaces: Tent,
+  electrical: Zap,
+  goods: Package,
+  generic: Layers,
+}
+
+function familyIcon(key: string): LucideIcon {
+  return FAMILY_ICONS[key] ?? Layers
+}
+
 type TenantEditFormProps = {
   tenantId: string
   initialValues: TenantOnboardingFormValues
 }
 
 export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [families, setFamilies] = useState<AssetFamily[]>([])
@@ -486,6 +500,11 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                         const selected = values.assetFamilyKeys.includes(
                           family.key,
                         )
+                        const Icon = familyIcon(family.key)
+                        const descriptionKey = `admin.wizard.families.descriptions.${family.key}`
+                        const description = i18n.exists(descriptionKey)
+                          ? t(descriptionKey)
+                          : null
 
                         return (
                           <button
@@ -508,14 +527,15 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                                 <Check className="size-3" />
                               </span>
                             ) : null}
+                            <Icon className="size-5 text-foreground" />
                             <span className="text-sm font-medium">
                               {family.label}
                             </span>
-                            <span className="text-xs text-muted-foreground">
-                              {t("admin.wizard.families.fieldCount", {
-                                count: family.fields.length,
-                              })}
-                            </span>
+                            {description ? (
+                              <span className="text-xs text-muted-foreground">
+                                {description}
+                              </span>
+                            ) : null}
                           </button>
                         )
                       })}

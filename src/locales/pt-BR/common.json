@@ -1274,7 +1274,12 @@
       },
       "families": {
         "hint": "Escolha ao menos uma família de recursos. Isso define os formulários de cadastro de ativos.",
-        "fieldCount": "{{count}} campos extras"
+        "descriptions": {
+          "spaces": "Quadras, salas e espaços reserváveis.",
+          "electrical": "Equipamentos e instalações elétricas.",
+          "goods": "Bens, caçambas e itens físicos.",
+          "generic": "Recursos sem categoria específica."
+        }
       },
       "admin": {
         "hint": "Opcional. Enviaremos um e-mail para a pessoa definir a própria senha (regra de ouro)."

@@ -1238,7 +1238,12 @@
       },
       "families": {
         "hint": "Pick at least one asset family. This drives asset registration forms.",
-        "fieldCount": "{{count}} extra fields"
+        "descriptions": {
+          "spaces": "Courts, rooms, and bookable spaces.",
+          "electrical": "Electrical equipment and installations.",
+          "goods": "Goods, dumpsters, and physical items.",
+          "generic": "Resources without a specific category."
+        }
       },
       "admin": {
         "hint": "Optional. We email them a link to set their own password."
