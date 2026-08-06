@@ -7,6 +7,7 @@
     "close": "Cerrar",
     "cancel": "Cancelar",
     "back": "Volver",
+    "edit": "Editar",
     "delete": "Eliminar",
     "optional": "opcional",
     "filter": "Filtrar",
@@ -421,6 +422,7 @@
     "registrationFields": "Registro portal",
     "moduleMenu": "Menú del portal",
     "schedule": "Escala / agenda",
+    "reservations": "Reservas",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuarios",
@@ -448,7 +450,7 @@
   "pages": {
     "dashboard": {
       "title": "Centro de Comando",
-      "description": "Vista consolidada de activos y órdenes de trabajo del mes."
+      "description": "Indicadores según los módulos y familias activos en este entorno."
     },
     "assets": {
       "title": "Módulo de Activos",
@@ -465,23 +467,126 @@
   },
   "dashboard": {
     "title": "Centro de Comando",
-    "description": "Vista consolidada de activos y órdenes de trabajo del mes.",
+    "description": "Indicadores según los módulos y familias activos en este entorno.",
+    "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
+    "sections": {
+      "customers": {
+        "title": "Clientes del portal",
+        "description": "Inicios de sesión en el portal B2C ({subdominio}.rolvix.com.br)."
+      },
+      "assets": {
+        "title": "Recursos",
+        "description": "Inventario y distribución por familia."
+      },
+      "rentals": {
+        "title": "Alquileres",
+        "description": "Reservas, ocupación de slots e ingresos reservados."
+      },
+      "workOrders": {
+        "title": "Órdenes de trabajo",
+        "description": "Volumen y estado de las OT del mes."
+      },
+      "pmoc": {
+        "title": "PMOC",
+        "description": "Planes activos y OT generadas por plan."
+      },
+      "maintenance": {
+        "title": "Mantenimiento",
+        "description": "Activos en mantenimiento y OT abiertas."
+      }
+    },
     "kpi": {
+      "loggedInToday": {
+        "title": "Conectados hoy",
+        "subtitle": "Clientes con login en el día"
+      },
+      "loggedInWeek": {
+        "title": "Última semana",
+        "subtitle": "Conectados en los últimos 7 días"
+      },
+      "loggedInMonth": {
+        "title": "Último mes",
+        "subtitle": "Conectados en los últimos 30 días"
+      },
+      "totalCustomers": {
+        "title": "Clientes registrados",
+        "subtitle": "Total en el portal de este tenant"
+      },
       "totalAssets": {
-        "title": "Total de Activos",
-        "subtitle": "Máquinas registradas"
+        "title": "Total de recursos",
+        "subtitle": "Registrados en el inventario"
+      },
+      "activeAssets": {
+        "title": "Activos",
+        "subtitle": "Estado operativo activo"
+      },
+      "maintenanceAssets": {
+        "title": "En mantenimiento",
+        "subtitle": "Recursos no disponibles"
+      },
+      "inactiveAssets": {
+        "title": "Inactivos",
+        "subtitle": "Fuera de operación"
       },
       "workOrdersMonth": {
-        "title": "OT del Mes",
+        "title": "OT del mes",
         "subtitle": "Todas las órdenes del mes actual"
       },
       "completionRate": {
-        "title": "Tasa de Conclusión",
+        "title": "Tasa de conclusión",
         "subtitle": "Completadas sobre el total del mes"
       },
       "pendingWorkOrders": {
-        "title": "OT Pendientes",
+        "title": "OT pendientes",
         "subtitle": "Esperando inicio de ejecución"
+      },
+      "inProgressWorkOrders": {
+        "title": "OT en curso",
+        "subtitle": "En ejecución este mes"
+      },
+      "reservationsToday": {
+        "title": "Reservas hoy",
+        "subtitle": "{{pending}} pendientes · {{confirmed}} confirmadas"
+      },
+      "confirmationRate": {
+        "title": "Tasa de confirmación",
+        "subtitle": "Confirmadas vs canceladas (7 días)"
+      },
+      "slotsToday": {
+        "title": "Slots hoy",
+        "subtitle": "{{booked}} ocupados · {{available}} libres"
+      },
+      "reservedRevenue": {
+        "title": "Ingresos reservados",
+        "subtitle": "Pending + confirmed del mes"
+      },
+      "rentableSpaces": {
+        "title": "Espacios alquilables",
+        "subtitle": "Familia spaces + alquilable"
+      },
+      "rentableGoods": {
+        "title": "Bienes alquilables",
+        "subtitle": "Familia goods + alquilable"
+      },
+      "activePlans": {
+        "title": "Planes activos",
+        "subtitle": "Planes de mantenimiento PMOC"
+      },
+      "pmocWorkOrders": {
+        "title": "OT de planes (mes)",
+        "subtitle": "Generadas a partir de planes"
+      },
+      "electricalAssets": {
+        "title": "Equipos eléctricos",
+        "subtitle": "Familia electrical"
+      },
+      "assetsInMaintenance": {
+        "title": "En mantenimiento",
+        "subtitle": "Activos con estado mantenimiento"
+      },
+      "openMaintenanceOrders": {
+        "title": "OT abiertas",
+        "subtitle": "Pendientes o en curso"
       }
     },
     "charts": {
@@ -489,19 +594,24 @@
         "count": "Cantidad"
       },
       "workOrders": {
-        "title": "Estado de las Órdenes de Trabajo",
+        "title": "Estado de las órdenes de trabajo",
         "description": "Distribución de OT del mes actual.",
         "pending": "Pendientes",
-        "inProgress": "En Curso",
+        "inProgress": "En curso",
         "completed": "Completadas"
       },
       "assets": {
-        "title": "Estado de los Activos",
+        "title": "Estado de los recursos",
         "description": "División del inventario por estado operativo.",
         "active": "Activos",
-        "maintenance": "En Mantenimiento",
+        "maintenance": "En mantenimiento",
         "inactive": "Inactivos",
-        "empty": "Aún no hay activos registrados."
+        "empty": "Aún no hay recursos registrados."
+      },
+      "families": {
+        "title": "Por familia",
+        "description": "Conteo en las familias activas del tenant.",
+        "empty": "Ninguna familia activa."
       }
     },
     "role": {
@@ -1303,13 +1413,13 @@
   "rentals": {
     "schedule": {
       "title": "Escala / agenda",
-      "description": "Defina la grilla semanal (templates) y publique los horarios del día para el portal B2C.",
+      "description": "Tipos de ocupación, grilla semanal (templates) y publicación del día para el portal B2C.",
       "rentable": "Espacio / bien",
       "date": "Fecha",
       "seedTemplates": "Crear grilla estándar (dom–sáb, 08–22)",
       "publishDay": "Publicar día",
       "templatesTitle": "Templates semanales ({{count}})",
-      "templatesEmpty": "Sin templates. Use “Crear grilla estándar” para generar celdas de 1h.",
+      "templatesEmpty": "Sin templates. Use el formulario o “Crear grilla estándar”.",
       "templatesHint": "Templates activos de este espacio. Publique un día para materializar slots.",
       "dayTitle": "Slots del día",
       "dayEmpty": "Sin slots en este día. Publique la escala después de crear templates.",
@@ -1318,7 +1428,74 @@
       "seedSuccess": "{{count}} templates creados.",
       "seedError": "No se pudo crear la grilla estándar.",
       "publishSuccess": "{{count}} slots creados en este día.",
-      "publishError": "No se pudo publicar el día."
+      "publishError": "No se pudo publicar el día.",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "days": {
+        "Sunday": "Domingo",
+        "Monday": "Lunes",
+        "Tuesday": "Martes",
+        "Wednesday": "Miércoles",
+        "Thursday": "Jueves",
+        "Friday": "Viernes",
+        "Saturday": "Sábado"
+      },
+      "kinds": {
+        "title": "Tipos de ocupación",
+        "description": "Definen si el horario es reservable (ej.: Abierto, Clase, Cerrado).",
+        "empty": "Sin tipos aún — los valores por defecto se crean en la primera carga.",
+        "key": "Clave",
+        "label": "Nombre",
+        "color": "Color",
+        "sortOrder": "Orden",
+        "bookable": "Reservable por el cliente",
+        "notBookable": "No reservable",
+        "blocksCapacity": "Bloquea capacidad",
+        "saveCreate": "Crear tipo",
+        "saveEdit": "Guardar tipo",
+        "validation": "Indique clave y nombre.",
+        "createSuccess": "Tipo creado.",
+        "updateSuccess": "Tipo actualizado.",
+        "saveError": "No se pudo guardar el tipo."
+      },
+      "templates": {
+        "dayOfWeek": "Día de la semana",
+        "kind": "Tipo de ocupación",
+        "start": "Inicio",
+        "end": "Fin",
+        "label": "Etiqueta (opcional)",
+        "saveCreate": "Añadir template",
+        "saveEdit": "Guardar template",
+        "validation": "Seleccione el espacio y el tipo de ocupación.",
+        "createSuccess": "Template creado.",
+        "updateSuccess": "Template actualizado.",
+        "deleteSuccess": "Template eliminado.",
+        "saveError": "No se pudo guardar el template.",
+        "deleteError": "No se pudo eliminar el template."
+      }
+    },
+    "reservations": {
+      "title": "Reservas",
+      "description": "Confirme depósitos y cancele reservas del portal B2C.",
+      "date": "Fecha",
+      "status": "Estado",
+      "statusAll": "Todos",
+      "empty": "Ninguna reserva con este filtro.",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "loadError": "No se pudieron cargar las reservas.",
+      "confirmSuccess": "Reserva confirmada.",
+      "confirmError": "No se pudo confirmar la reserva.",
+      "cancelSuccess": "Reserva cancelada.",
+      "cancelError": "No se pudo cancelar la reserva.",
+      "statuses": {
+        "PendingDeposit": "Esperando depósito",
+        "Confirmed": "Confirmada",
+        "Canceled": "Cancelada",
+        "Completed": "Completada"
+      }
     }
   }
 }

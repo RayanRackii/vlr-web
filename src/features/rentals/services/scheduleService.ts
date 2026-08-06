@@ -66,7 +66,7 @@ const rentalAssetSchema = z.object({
 
 export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>
 
-const DAY_NAMES = [
+export const DAY_NAMES = [
   "Sunday",
   "Monday",
   "Tuesday",
@@ -76,8 +76,32 @@ const DAY_NAMES = [
   "Saturday",
 ] as const
 
+export type DayOfWeekName = (typeof DAY_NAMES)[number]
+
 function padTime(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00:00`
+}
+
+/** Normalize HTML time (`HH:MM`) or API time to `HH:MM:SS`. */
+export function normalizeScheduleTime(value: string): string {
+  const trimmed = value.trim()
+  if (/^\d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+    return trimmed
+  }
+  if (/^\d{2}:\d{2}$/.test(trimmed)) {
+    return `${trimmed}:00`
+  }
+  return trimmed
+}
+
+export type UpsertOccupancyKindInput = {
+  key: string
+  label: string
+  colorHex?: string | null
+  isBookableByCustomer: boolean
+  blocksCapacity: boolean
+  sortOrder: number
+  isActive: boolean
 }
 
 export async function listOccupancyKinds(): Promise<OccupancyKind[]> {
@@ -87,6 +111,47 @@ export async function listOccupancyKinds(): Promise<OccupancyKind[]> {
     throw new Error("Invalid occupancy kinds payload.")
   }
   return parsed.data
+}
+
+export async function createOccupancyKind(
+  body: UpsertOccupancyKindInput,
+): Promise<OccupancyKind> {
+  try {
+    const response = await api.post("/api/occupancy-kinds", {
+      ...body,
+      colorHex: body.colorHex || null,
+    })
+    const parsed = occupancyKindSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid create occupancy kind response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not create occupancy kind."),
+    )
+  }
+}
+
+export async function updateOccupancyKind(
+  id: string,
+  body: UpsertOccupancyKindInput,
+): Promise<OccupancyKind> {
+  try {
+    const response = await api.put(`/api/occupancy-kinds/${id}`, {
+      ...body,
+      colorHex: body.colorHex || null,
+    })
+    const parsed = occupancyKindSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid update occupancy kind response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not update occupancy kind."),
+    )
+  }
 }
 
 export async function listScheduleTemplates(
@@ -114,6 +179,8 @@ export async function createScheduleTemplate(body: {
   try {
     const response = await api.post("/api/schedule/templates", {
       ...body,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
       isActive: body.isActive ?? true,
     })
     const parsed = scheduleTemplateSchema.safeParse(response.data)
@@ -124,6 +191,47 @@ export async function createScheduleTemplate(body: {
   } catch (error) {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), "Could not create template."),
+    )
+  }
+}
+
+export async function updateScheduleTemplate(
+  id: string,
+  body: {
+    rentalAssetId: string
+    dayOfWeek: string
+    startTime: string
+    endTime: string
+    occupancyKindId: string
+    label?: string | null
+    isActive?: boolean
+  },
+): Promise<ScheduleTemplate> {
+  try {
+    const response = await api.put(`/api/schedule/templates/${id}`, {
+      ...body,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
+      isActive: body.isActive ?? true,
+    })
+    const parsed = scheduleTemplateSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid update template response.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not update template."),
+    )
+  }
+}
+
+export async function deleteScheduleTemplate(id: string): Promise<void> {
+  try {
+    await api.delete(`/api/schedule/templates/${id}`)
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not delete template."),
     )
   }
 }

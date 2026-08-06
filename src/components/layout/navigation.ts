@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
+  CalendarCheck,
   CalendarClock,
   ClipboardList,
   ClipboardPen,
@@ -35,6 +36,7 @@ export type AppNavigationItem = {
     | "nav.registrationFields"
     | "nav.moduleMenu"
     | "nav.schedule"
+    | "nav.reservations"
     | "nav.admin"
   to: string
   icon: LucideIcon
@@ -103,6 +105,12 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     labelKey: "nav.schedule",
     to: "/configuracoes/agenda",
     icon: CalendarClock,
+    modules: ["rentals"],
+  },
+  {
+    labelKey: "nav.reservations",
+    to: "/configuracoes/reservas",
+    icon: CalendarCheck,
     modules: ["rentals"],
   },
 ]

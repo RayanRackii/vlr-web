@@ -20,6 +20,7 @@ import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
@@ -98,6 +99,10 @@ export function AppRoutes() {
           />
           <Route path="/configuracoes/menu" element={<TenantModuleMenuPage />} />
           <Route path="/configuracoes/agenda" element={<SchedulePage />} />
+          <Route
+            path="/configuracoes/reservas"
+            element={<ReservationsPage />}
+          />
 
           <Route element={<PlatformAdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

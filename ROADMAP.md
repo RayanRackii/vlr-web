@@ -25,7 +25,12 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
 - [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
-- [ ] Admin B2B de reservas.
+- [x] Admin B2B de reservas.
+
+## 2.5. Dashboard B2B dinâmico — FEITO (código)
+
+- [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).
+- [x] i18n pt-BR / en / es.
 
 ## 3. Portal branding / host
 
@@ -39,7 +44,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
-- [ ] Admin completo: occupancy kinds CRUD + weekly template editor fino
+- [x] Admin completo: occupancy kinds CRUD + weekly template editor fino
 - [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
 - [ ] Layout canvas (mapa de rentables) admin + picker B2C
 
@@ -86,3 +91,6 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-06 | **Executado:** agenda B2C por Slot (`slots/book`) + admin mínimo de escala (seed templates + publish day). |
 | 2026-08-06 | **Executado:** UX Ativos — Recursos/Tipos, empty states, copy por módulo (`useAssetCopyTone`). |
 | 2026-08-06 | **Executado:** famílias de Asset no wizard/edit + forms dinâmicos + copy por família. |
+| 2026-08-06 | **Executado:** Admin B2B de reservas em `/configuracoes/reservas` (listar / confirmar / cancelar). |
+| 2026-08-06 | **Executado:** Dashboard B2B dinâmico por módulo (KPIs de login B2C + seções condicionais). |
+| 2026-08-06 | **Executado:** Admin agenda completo — kinds CRUD + editor de templates em `/configuracoes/agenda`. |
