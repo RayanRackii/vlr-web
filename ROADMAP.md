@@ -51,6 +51,8 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Nav Recursos / Tipos; empty state guia criar tipos primeiro.
 - [x] Copy por tom de módulo (`rentals` | `maintenance` | `generic`) via `useAssetCopyTone`.
+- [x] Famílias no wizard/edit tenant + formulários dinâmicos por `fieldSchema`.
+- [x] Copy preferindo famílias ativas do tenant (`spaces` / `goods` / `electrical` …).
 - [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
 
 ## 5. Fluxo de convite B2B
@@ -83,3 +85,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-06 | **Docs:** `CONTEXT.md` espelho neste repo; `AGENTS.md`; rules apontam para paths deste repo + irmão `vlr-api` (não monorepo). |
 | 2026-08-06 | **Executado:** agenda B2C por Slot (`slots/book`) + admin mínimo de escala (seed templates + publish day). |
 | 2026-08-06 | **Executado:** UX Ativos — Recursos/Tipos, empty states, copy por módulo (`useAssetCopyTone`). |
+| 2026-08-06 | **Executado:** famílias de Asset no wizard/edit + forms dinâmicos + copy por família. |

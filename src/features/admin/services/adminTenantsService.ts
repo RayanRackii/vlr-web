@@ -99,6 +99,7 @@ export async function createAdminTenant(
       accentColor: body.accentColor || null,
       welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
+      assetFamilyKeys: body.assetFamilyKeys,
       adminFullName: body.adminFullName || null,
       adminEmail: body.adminEmail || null,
     })
@@ -129,6 +130,7 @@ export async function updateAdminTenant(
       accentColor: body.accentColor || null,
       welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
+      assetFamilyKeys: body.assetFamilyKeys,
     })
 
     return tenantAdminSchema.parse(response.data)

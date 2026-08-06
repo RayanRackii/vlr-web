@@ -84,9 +84,6 @@ export function AssetCategoriesPage() {
     () =>
       createAssetCategoryFormSchema({
         nameRequired: t("assets.categories.validation.nameRequired"),
-        manufacturerRequired: t(
-          "assets.categories.validation.manufacturerRequired",
-        ),
       }),
     [t],
   )
@@ -335,18 +332,27 @@ export function AssetCategoriesPage() {
     }
 
     try {
+      const manufacturer =
+        values.manufacturer && values.manufacturer.trim().length > 0
+          ? values.manufacturer.trim()
+          : undefined
+      const description =
+        values.description && values.description.trim().length > 0
+          ? values.description.trim()
+          : undefined
+
       if (editingId) {
         await updateCategory(editingId, {
           name: values.name,
-          manufacturer: values.manufacturer,
-          description: values.description,
+          manufacturer,
+          description,
         })
         setSuccessMessage(t("assets.categories.success.updated"))
       } else {
         await createCategory({
           name: values.name,
-          manufacturer: values.manufacturer,
-          description: values.description,
+          manufacturer,
+          description,
         })
         setSuccessMessage(t("assets.categories.success.created"))
       }

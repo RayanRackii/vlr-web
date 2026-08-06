@@ -28,7 +28,7 @@ export type DeleteAssetCategoryResult = z.infer<
 
 export const createAssetCategoryRequestSchema = z.object({
   name: z.string().trim().min(1),
-  manufacturer: z.string().trim().min(1),
+  manufacturer: z.string().trim().optional(),
   description: z.string().trim().optional(),
 })
 
@@ -38,11 +38,10 @@ export type CreateAssetCategoryRequest = z.infer<
 
 export function createAssetCategoryFormSchema(messages: {
   nameRequired: string
-  manufacturerRequired: string
 }) {
   return z.object({
     name: z.string().trim().min(1, messages.nameRequired),
-    manufacturer: z.string().trim().min(1, messages.manufacturerRequired),
+    manufacturer: z.string().trim().optional(),
     description: z.string().trim().optional(),
   })
 }

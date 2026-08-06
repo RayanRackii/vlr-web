@@ -628,8 +628,8 @@
           "maintenance": "e.g. Split Air Conditioner 12k BTU",
           "generic": "e.g. Resource type"
         },
-        "manufacturer": "Manufacturer",
-        "manufacturerPlaceholder": "e.g. Daikin (optional in many cases)",
+        "manufacturer": "Manufacturer (optional)",
+        "manufacturerPlaceholder": "e.g. Daikin — leave blank if not applicable",
         "description": "Description",
         "descriptionPlaceholder": "Optional details"
       },
@@ -716,6 +716,8 @@
         "unitPlaceholder": "Select a unit",
         "category": "Type",
         "categoryPlaceholder": "Select a type",
+        "family": "Family",
+        "familyPlaceholder": "Select a family",
         "baseLocation": "Base location",
         "baseLocationPlaceholder": {
           "rentals": "e.g. Block A",
@@ -734,6 +736,7 @@
       "validation": {
         "unitRequired": "Unit is required.",
         "categoryRequired": "Type is required.",
+        "familyRequired": "Family is required.",
         "baseLocationRequired": "Base location is required.",
         "baseTagRequired": "Base tag is required.",
         "startNumberRequired": "Enter the start number.",
@@ -1127,7 +1130,9 @@
         "identity": "Subdomain & Branding",
         "identityDescription": "Environment address, logo, colors, and portal tagline.",
         "modules": "Platform Modules",
-        "modulesDescription": "Select the active modules for this client."
+        "modulesDescription": "Select the active modules for this client.",
+        "families": "Asset families",
+        "familiesDescription": "Which resource types this client registers (spaces, electrical, goods…)."
       },
       "actions": {
         "save": "Save Changes",
@@ -1219,6 +1224,7 @@
         "company": "Enter the company legal details.",
         "identity": "Define the subdomain and brand identity.",
         "modules": "Select the modules this client subscribed to.",
+        "families": "What kinds of resources do you work with?",
         "admin": "Invite the project’s initial admin (without setting a password).",
         "summary": "Review the provisioning before finishing."
       },
@@ -1226,8 +1232,13 @@
         "1": "Company",
         "2": "Identity",
         "3": "Modules",
-        "4": "Admin",
-        "5": "Summary"
+        "4": "Resources",
+        "5": "Admin",
+        "6": "Summary"
+      },
+      "families": {
+        "hint": "Pick at least one asset family. This drives asset registration forms.",
+        "fieldCount": "{{count}} extra fields"
       },
       "admin": {
         "hint": "Optional. We email them a link to set their own password."
@@ -1248,6 +1259,7 @@
       },
       "summary": {
         "modules": "Modules",
+        "families": "Asset families",
         "admin": "Project admin",
         "total": "Estimated monthly total",
         "perMonth": "/mo",
@@ -1264,7 +1276,8 @@
       "success": "Environment created successfully!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "Could not provision the client."
+        "createFailed": "Could not provision the client.",
+        "familiesLoadFailed": "Could not load asset families."
       }
     },
     "errors": {

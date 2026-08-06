@@ -24,6 +24,8 @@ import {
   toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
+import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -62,6 +64,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
+  const [families, setFamilies] = useState<AssetFamily[]>([])
   const redirectTimeoutRef = useRef<number | null>(null)
   const baseDomain = useMemo(() => getTenantBaseDomain(), [])
 
@@ -78,6 +81,24 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   useEffect(() => {
     form.reset(initialValues)
   }, [form, initialValues])
+
+  useEffect(() => {
+    let cancelled = false
+    void listAssetFamilyCatalog()
+      .then((catalog) => {
+        if (!cancelled) {
+          setFamilies(catalog)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFamilies([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -104,6 +125,23 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
     )
   }
 
+  function toggleFamily(familyKey: string) {
+    if (isActionLocked) {
+      return
+    }
+
+    const current = form.getValues("assetFamilyKeys")
+    const exists = current.includes(familyKey)
+
+    form.setValue(
+      "assetFamilyKeys",
+      exists
+        ? current.filter((item) => item !== familyKey)
+        : [...current, familyKey],
+      { shouldDirty: true, shouldValidate: true },
+    )
+  }
+
   async function handleSubmit(values: TenantOnboardingFormValues) {
     if (isSubmitSuccess) {
       return
@@ -116,6 +154,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
         subdomain: values.subdomain.trim().toLowerCase(),
         ...toTenantBrandingPayload(values),
         activeModules: values.activeModules,
+        assetFamilyKeys: values.assetFamilyKeys,
       })
 
       toast.success(t("admin.edit.successTitle"), {
@@ -415,6 +454,67 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {t(`admin.modules.${moduleKey}Description`)}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">
+                {t("admin.edit.sections.families")}
+              </CardTitle>
+              <CardDescription>
+                {t("admin.edit.sections.familiesDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="assetFamilyKeys"
+                render={() => (
+                  <FormItem>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {families.map((family) => {
+                        const selected = values.assetFamilyKeys.includes(
+                          family.key,
+                        )
+
+                        return (
+                          <button
+                            key={family.id}
+                            type="button"
+                            disabled={isActionLocked}
+                            onClick={() => {
+                              toggleFamily(family.key)
+                            }}
+                            className={cn(
+                              "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
+                              selected
+                                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                : "border-border hover:border-primary/40 hover:bg-muted/40",
+                              isActionLocked && "pointer-events-none opacity-60",
+                            )}
+                          >
+                            {selected ? (
+                              <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
+                                <Check className="size-3" />
+                              </span>
+                            ) : null}
+                            <span className="text-sm font-medium">
+                              {family.label}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {t("admin.wizard.families.fieldCount", {
+                                count: family.fields.length,
+                              })}
                             </span>
                           </button>
                         )

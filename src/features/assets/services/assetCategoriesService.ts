@@ -55,7 +55,7 @@ export async function createCategory(
   try {
     const response = await api.post<unknown>(ASSET_CATEGORIES_PATH, {
       name: validatedPayload.name,
-      manufacturer: validatedPayload.manufacturer,
+      manufacturer: validatedPayload.manufacturer || null,
       description: validatedPayload.description || null,
     })
     const data = response.data
@@ -99,7 +99,7 @@ export async function updateCategory(
   try {
     const response = await api.put<unknown>(`${ASSET_CATEGORIES_PATH}/${id}`, {
       name: validatedPayload.name,
-      manufacturer: validatedPayload.manufacturer,
+      manufacturer: validatedPayload.manufacturer || null,
       description: validatedPayload.description || null,
     })
     const data = response.data

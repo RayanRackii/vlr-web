@@ -569,17 +569,26 @@
     "categories": {
       "title": {
         "rentals": "Tipos de recurso",
+        "spaces": "Tipos de espaço",
+        "goods": "Tipos de bem",
+        "electrical": "Tipos de equipamento",
         "maintenance": "Tipos de equipamento",
         "generic": "Tipos"
       },
       "description": {
         "rentals": "Tipos para agrupar recursos (ex.: Quadra, Caçamba, Sala).",
+        "spaces": "Tipos de espaço (ex.: Quadra, Sala, Court).",
+        "goods": "Tipos de bem (ex.: Caçamba, Equipamento móvel).",
+        "electrical": "Tipos elétricos (ex.: Quadro, Split, Transformador).",
         "maintenance": "Tipos de equipamento (ex.: Split, Caldeira).",
         "generic": "Tipos usados para classificar seus recursos."
       },
       "loading": "Carregando tipos...",
       "empty": {
         "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Caçamba).",
+        "spaces": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Sala).",
+        "goods": "Nenhum tipo ainda — crie o primeiro (ex.: Caçamba).",
+        "electrical": "Nenhum tipo ainda — crie o primeiro (ex.: Quadro elétrico).",
         "maintenance": "Nenhum tipo ainda — crie o primeiro (ex.: Split).",
         "generic": "Nenhum tipo cadastrado ainda."
       },
@@ -610,11 +619,17 @@
       "dialog": {
         "title": {
           "rentals": "Novo tipo",
+          "spaces": "Novo tipo de espaço",
+          "goods": "Novo tipo de bem",
+          "electrical": "Novo tipo elétrico",
           "maintenance": "Novo tipo",
           "generic": "Novo tipo"
         },
         "description": {
           "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Quadra de tênis).",
+          "spaces": "Defina um tipo de espaço (ex.: Quadra de tênis, Sala).",
+          "goods": "Defina um tipo de bem (ex.: Caçamba).",
+          "electrical": "Cadastre o modelo base dos equipamentos elétricos.",
           "maintenance": "Cadastre o modelo base usado pelos equipamentos.",
           "generic": "Cadastre um tipo para classificar seus recursos."
         },
@@ -625,11 +640,14 @@
         "name": "Nome",
         "namePlaceholder": {
           "rentals": "Ex.: Quadra, Caçamba, Sala",
+          "spaces": "Ex.: Quadra, Sala",
+          "goods": "Ex.: Caçamba",
+          "electrical": "Ex.: Quadro elétrico, Split",
           "maintenance": "Ex.: Ar-condicionado Split 12k BTUs",
           "generic": "Ex.: Tipo do recurso"
         },
-        "manufacturer": "Fabricante",
-        "manufacturerPlaceholder": "Ex.: Daikin (opcional em muitos casos)",
+        "manufacturer": "Fabricante (opcional)",
+        "manufacturerPlaceholder": "Ex.: Daikin — deixe em branco se não se aplicar",
         "description": "Descrição",
         "descriptionPlaceholder": "Detalhes opcionais"
       },
@@ -653,22 +671,34 @@
     "inventory": {
       "title": {
         "rentals": "Recursos",
+        "spaces": "Espaços",
+        "goods": "Bens",
+        "electrical": "Equipamentos elétricos",
         "maintenance": "Recursos",
         "generic": "Recursos"
       },
       "description": {
         "rentals": "Recursos que você oferece (espaços, bens…). Cadastre cada um e marque o que pode ser reservado.",
+        "spaces": "Espaços alugáveis (quadras, salas…). Cadastre cada um e marque o que pode ser reservado.",
+        "goods": "Bens e itens (caçambas…). Cadastre cada um e organize por tipo.",
+        "electrical": "Equipamentos elétricos do site. Use tipos e atributos (voltagem, fabricante).",
         "maintenance": "Equipamentos e instalações do site. Use tipos para organizar e vincular manutenção.",
         "generic": "Cadastre os recursos deste negócio e organize-os por tipo."
       },
       "loading": "Carregando recursos...",
       "empty": {
         "rentals": "Nenhum recurso cadastrado ainda.",
+        "spaces": "Nenhum espaço cadastrado ainda.",
+        "goods": "Nenhum bem cadastrado ainda.",
+        "electrical": "Nenhum equipamento elétrico cadastrado ainda.",
         "maintenance": "Nenhum recurso cadastrado ainda.",
         "generic": "Nenhum recurso cadastrado ainda."
       },
       "emptyNoTypes": {
         "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Quadra, Caçamba).",
+        "spaces": "Antes de cadastrar espaços, defina os tipos (ex.: Quadra, Sala).",
+        "goods": "Antes de cadastrar bens, defina os tipos (ex.: Caçamba).",
+        "electrical": "Antes de cadastrar equipamentos, defina os tipos elétricos.",
         "maintenance": "Antes de cadastrar recursos, defina os tipos de equipamento.",
         "generic": "Antes de cadastrar recursos, defina os tipos."
       },
@@ -702,11 +732,17 @@
       "dialog": {
         "title": {
           "rentals": "Adicionar recursos em lote",
+          "spaces": "Adicionar espaços em lote",
+          "goods": "Adicionar bens em lote",
+          "electrical": "Adicionar equipamentos em lote",
           "maintenance": "Adicionar recursos em lote",
           "generic": "Adicionar recursos em lote"
         },
         "description": {
           "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Quadra-01, Quadra-02).",
+          "spaces": "Gere uma sequência de espaços com o mesmo tipo e tags numeradas (ex.: Quadra-01).",
+          "goods": "Gere uma sequência de bens com o mesmo tipo e tags numeradas.",
+          "electrical": "Gere uma sequência de equipamentos elétricos com tags numeradas.",
           "maintenance": "Gere uma sequência de equipamentos com o mesmo tipo e tags numeradas.",
           "generic": "Gere uma sequência de recursos com o mesmo tipo e tags numeradas."
         }
@@ -716,6 +752,8 @@
         "unitPlaceholder": "Selecione a unidade",
         "category": "Tipo",
         "categoryPlaceholder": "Selecione o tipo",
+        "family": "Família",
+        "familyPlaceholder": "Selecione a família",
         "baseLocation": "Localização base",
         "baseLocationPlaceholder": {
           "rentals": "Ex.: Bloco A",
@@ -734,6 +772,7 @@
       "validation": {
         "unitRequired": "A unidade é obrigatória.",
         "categoryRequired": "O tipo é obrigatório.",
+        "familyRequired": "A família é obrigatória.",
         "baseLocationRequired": "A localização base é obrigatória.",
         "baseTagRequired": "A tag base é obrigatória.",
         "startNumberRequired": "Informe o número inicial.",
@@ -1127,7 +1166,9 @@
         "identity": "Subdomínio e Identidade",
         "identityDescription": "Endereço do ambiente, logo, cores e frase do portal.",
         "modules": "Módulos da Plataforma",
-        "modulesDescription": "Selecione os módulos ativos para este cliente."
+        "modulesDescription": "Selecione os módulos ativos para este cliente.",
+        "families": "Famílias de recursos",
+        "familiesDescription": "Quais tipos de recursos este cliente cadastra (espaços, elétricos, bens…)."
       },
       "actions": {
         "save": "Salvar Alterações",
@@ -1219,6 +1260,7 @@
         "company": "Informe os dados legais da empresa.",
         "identity": "Defina o subdomínio e a identidade visual.",
         "modules": "Selecione os módulos que o cliente contratou.",
+        "families": "Quais recursos você trabalha?",
         "admin": "Convide o administrador inicial do projeto (sem definir senha).",
         "summary": "Revise o provisionamento antes de finalizar."
       },
@@ -1226,8 +1268,13 @@
         "1": "Empresa",
         "2": "Identidade",
         "3": "Módulos",
-        "4": "Admin",
-        "5": "Resumo"
+        "4": "Recursos",
+        "5": "Admin",
+        "6": "Resumo"
+      },
+      "families": {
+        "hint": "Escolha ao menos uma família de recursos. Isso define os formulários de cadastro de ativos.",
+        "fieldCount": "{{count}} campos extras"
       },
       "admin": {
         "hint": "Opcional. Enviaremos um e-mail para a pessoa definir a própria senha (regra de ouro)."
@@ -1248,6 +1295,7 @@
       },
       "summary": {
         "modules": "Módulos",
+        "families": "Famílias de recursos",
         "admin": "Admin do projeto",
         "total": "Total mensal estimado",
         "perMonth": "/mês",
@@ -1264,7 +1312,8 @@
       "success": "Ambiente criado com sucesso!",
       "errorTitle": "Erro",
       "errors": {
-        "createFailed": "Não foi possível provisionar o cliente."
+        "createFailed": "Não foi possível provisionar o cliente.",
+        "familiesLoadFailed": "Não foi possível carregar as famílias de recursos."
       }
     },
     "errors": {

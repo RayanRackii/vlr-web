@@ -628,8 +628,8 @@
           "maintenance": "Ej.: Aire acondicionado Split 12k BTU",
           "generic": "Ej.: Tipo de recurso"
         },
-        "manufacturer": "Fabricante",
-        "manufacturerPlaceholder": "Ej.: Daikin (opcional en muchos casos)",
+        "manufacturer": "Fabricante (opcional)",
+        "manufacturerPlaceholder": "Ej.: Daikin — déjelo vacío si no aplica",
         "description": "Descripción",
         "descriptionPlaceholder": "Detalles opcionales"
       },
@@ -716,6 +716,8 @@
         "unitPlaceholder": "Seleccione la unidad",
         "category": "Tipo",
         "categoryPlaceholder": "Seleccione el tipo",
+        "family": "Familia",
+        "familyPlaceholder": "Seleccione la familia",
         "baseLocation": "Ubicación base",
         "baseLocationPlaceholder": {
           "rentals": "Ej.: Bloque A",
@@ -734,6 +736,7 @@
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
         "categoryRequired": "El tipo es obligatorio.",
+        "familyRequired": "La familia es obligatoria.",
         "baseLocationRequired": "La ubicación base es obligatoria.",
         "baseTagRequired": "El tag base es obligatorio.",
         "startNumberRequired": "Ingrese el número inicial.",
@@ -1127,7 +1130,9 @@
         "identity": "Subdominio e Identidad",
         "identityDescription": "Dirección del ambiente, logo, colores y frase del portal.",
         "modules": "Módulos de la Plataforma",
-        "modulesDescription": "Seleccione los módulos activos para este cliente."
+        "modulesDescription": "Seleccione los módulos activos para este cliente.",
+        "families": "Familias de recursos",
+        "familiesDescription": "Qué tipos de recursos registra este cliente (espacios, eléctricos, bienes…)."
       },
       "actions": {
         "save": "Guardar Cambios",
@@ -1219,6 +1224,7 @@
         "company": "Ingrese los datos legales de la empresa.",
         "identity": "Defina el subdominio y la identidad visual.",
         "modules": "Seleccione los módulos contratados.",
+        "families": "¿Con qué tipos de recursos trabaja?",
         "admin": "Invite al administrador inicial del proyecto (sin definir contraseña).",
         "summary": "Revise el aprovisionamiento antes de finalizar."
       },
@@ -1226,8 +1232,13 @@
         "1": "Empresa",
         "2": "Identidad",
         "3": "Módulos",
-        "4": "Admin",
-        "5": "Resumen"
+        "4": "Recursos",
+        "5": "Admin",
+        "6": "Resumen"
+      },
+      "families": {
+        "hint": "Elija al menos una familia de recursos. Define los formularios de activos.",
+        "fieldCount": "{{count}} campos extra"
       },
       "admin": {
         "hint": "Opcional. Enviaremos un correo para que defina su propia contraseña."
@@ -1248,6 +1259,7 @@
       },
       "summary": {
         "modules": "Módulos",
+        "families": "Familias de recursos",
         "admin": "Admin del proyecto",
         "total": "Total mensual estimado",
         "perMonth": "/mes",
@@ -1264,7 +1276,8 @@
       "success": "¡Ambiente creado con éxito!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "No se pudo aprovisionar el cliente."
+        "createFailed": "No se pudo aprovisionar el cliente.",
+        "familiesLoadFailed": "No se pudieron cargar las familias de recursos."
       }
     },
     "errors": {

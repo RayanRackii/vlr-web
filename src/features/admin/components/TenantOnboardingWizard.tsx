@@ -20,12 +20,15 @@ import {
   step2Schema,
   step3Schema,
   stepAdminInviteSchema,
+  stepFamiliesSchema,
   tenantOnboardingSchema,
   type ModuleKey,
   type TenantOnboardingFormValues,
   toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
+import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -42,7 +45,7 @@ import { toast } from "sonner"
 
 const SUCCESS_REDIRECT_MS = 5000
 
-const STEP_COUNT = 5
+const STEP_COUNT = 6
 
 const MODULE_ICONS = {
   Inventory: Package,
@@ -55,6 +58,7 @@ const STEP_TITLE_KEYS = [
   "admin.wizard.steps.company",
   "admin.wizard.steps.identity",
   "admin.wizard.steps.modules",
+  "admin.wizard.steps.families",
   "admin.wizard.steps.admin",
   "admin.wizard.steps.summary",
 ] as const
@@ -73,6 +77,8 @@ export function TenantOnboardingWizard() {
   const [step, setStep] = useState(1)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [isFinishing, setIsFinishing] = useState(false)
+  const [families, setFamilies] = useState<AssetFamily[]>([])
+  const [familiesError, setFamiliesError] = useState<string | null>(null)
   const redirectTimeoutRef = useRef<number | null>(null)
   const finishInFlightRef = useRef(false)
   const baseDomain = useMemo(() => getTenantBaseDomain(), [])
@@ -88,6 +94,7 @@ export function TenantOnboardingWizard() {
       accentColor: "#14B8A6",
       welcomeTagline: "",
       activeModules: [],
+      assetFamilyKeys: [],
       adminFullName: "",
       adminEmail: "",
     },
@@ -97,6 +104,32 @@ export function TenantOnboardingWizard() {
   const isActionLocked = isFinishing || isSubmitSuccess
   const values = form.watch()
   const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
+
+  useEffect(() => {
+    let cancelled = false
+
+    void listAssetFamilyCatalog()
+      .then((catalog) => {
+        if (!cancelled) {
+          setFamilies(catalog)
+          setFamiliesError(null)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setFamilies([])
+          setFamiliesError(
+            error instanceof Error
+              ? error.message
+              : t("admin.wizard.errors.familiesLoadFailed"),
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [t])
 
   useEffect(() => {
     return () => {
@@ -165,6 +198,20 @@ export function TenantOnboardingWizard() {
     }
 
     if (step === 4) {
+      const parsed = stepFamiliesSchema.safeParse({
+        assetFamilyKeys: form.getValues("assetFamilyKeys"),
+      })
+
+      if (!parsed.success) {
+        await form.trigger(["assetFamilyKeys"])
+        return
+      }
+
+      setStep(5)
+      return
+    }
+
+    if (step === 5) {
       const parsed = stepAdminInviteSchema.safeParse({
         adminFullName: form.getValues("adminFullName"),
         adminEmail: form.getValues("adminEmail"),
@@ -175,7 +222,7 @@ export function TenantOnboardingWizard() {
         return
       }
 
-      setStep(5)
+      setStep(6)
     }
   }
 
@@ -200,8 +247,20 @@ export function TenantOnboardingWizard() {
     )
   }
 
+  function toggleFamily(familyKey: string) {
+    const current = form.getValues("assetFamilyKeys")
+    const exists = current.includes(familyKey)
+
+    form.setValue(
+      "assetFamilyKeys",
+      exists
+        ? current.filter((item) => item !== familyKey)
+        : [...current, familyKey],
+      { shouldDirty: true, shouldValidate: true },
+    )
+  }
+
   async function handleFinish() {
-    // Sync guard: blocks double-click before React re-renders disabled state.
     if (finishInFlightRef.current || isSubmitSuccess) {
       return
     }
@@ -226,6 +285,7 @@ export function TenantOnboardingWizard() {
         subdomain: payload.subdomain.trim().toLowerCase(),
         ...toTenantBrandingPayload(payload),
         activeModules: payload.activeModules,
+        assetFamilyKeys: payload.assetFamilyKeys,
         adminFullName: payload.adminFullName.trim() || null,
         adminEmail: payload.adminEmail.trim() || null,
       })
@@ -255,6 +315,14 @@ export function TenantOnboardingWizard() {
     }
   }
 
+  const familyLabelByKey = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const family of families) {
+      map.set(family.key, family.label)
+    }
+    return map
+  }, [families])
+
   return (
     <div className="mx-auto w-full max-w-xl space-y-8">
       <div className="space-y-3">
@@ -282,7 +350,7 @@ export function TenantOnboardingWizard() {
           ))}
         </div>
 
-        <ol className="hidden gap-2 sm:grid sm:grid-cols-5">
+        <ol className="hidden gap-2 sm:grid sm:grid-cols-6">
           {STEP_TITLE_KEYS.map((titleKey, index) => {
             const stepNumber = index + 1
             const isActive = stepNumber === step
@@ -300,7 +368,7 @@ export function TenantOnboardingWizard() {
                       : "border-transparent text-muted-foreground/70",
                 )}
               >
-                {t(`admin.wizard.stepShort.${stepNumber}` as const)}
+                {t(`admin.wizard.stepShort.${stepNumber}`)}
               </li>
             )
           })}
@@ -354,24 +422,17 @@ export function TenantOnboardingWizard() {
                   <FormItem>
                     <FormLabel>{t("admin.wizard.fields.subdomain")}</FormLabel>
                     <FormControl>
-                      <Input
-                        autoComplete="off"
-                        placeholder="acme"
-                        {...field}
-                        onChange={(event) => {
-                          field.onChange(
-                            event.target.value
-                              .toLowerCase()
-                              .replace(/\s+/g, ""),
-                          )
-                        }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          autoComplete="off"
+                          className="font-mono"
+                          {...field}
+                        />
+                        <span className="shrink-0 text-sm text-muted-foreground">
+                          .{baseDomain}
+                        </span>
+                      </div>
                     </FormControl>
-                    <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
-                      {field.value
-                        ? `${field.value}.${baseDomain}`
-                        : `{subdomain}.${baseDomain}`}
-                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -384,9 +445,8 @@ export function TenantOnboardingWizard() {
                     <FormLabel>{t("admin.wizard.fields.logoSvg")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        rows={5}
-                        className="font-mono text-xs"
-                        placeholder="<svg ...>...</svg>"
+                        autoComplete="off"
+                        className="min-h-24 font-mono text-xs"
                         {...field}
                       />
                     </FormControl>
@@ -405,9 +465,10 @@ export function TenantOnboardingWizard() {
                       </FormLabel>
                       <FormControl>
                         <div className="flex items-center gap-2">
-                          <Input
+                          <input
                             type="color"
-                            className="h-9 w-12 cursor-pointer p-1"
+                            aria-label={t("admin.wizard.fields.primaryColor")}
+                            className="size-9 cursor-pointer rounded border border-border bg-transparent p-0"
                             value={
                               field.value?.startsWith("#")
                                 ? field.value
@@ -440,9 +501,10 @@ export function TenantOnboardingWizard() {
                       </FormLabel>
                       <FormControl>
                         <div className="flex items-center gap-2">
-                          <Input
+                          <input
                             type="color"
-                            className="h-9 w-12 cursor-pointer p-1"
+                            aria-label={t("admin.wizard.fields.accentColor")}
+                            className="size-9 cursor-pointer rounded border border-border bg-transparent p-0"
                             value={
                               field.value?.startsWith("#")
                                 ? field.value
@@ -539,6 +601,61 @@ export function TenantOnboardingWizard() {
           ) : null}
 
           {step === 4 ? (
+            <FormField
+              control={form.control}
+              name="assetFamilyKeys"
+              render={() => (
+                <FormItem>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    {t("admin.wizard.families.hint")}
+                  </p>
+                  {familiesError ? (
+                    <p className="mb-3 text-sm text-destructive">{familiesError}</p>
+                  ) : null}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {families.map((family) => {
+                      const selected = values.assetFamilyKeys.includes(
+                        family.key,
+                      )
+
+                      return (
+                        <button
+                          key={family.id}
+                          type="button"
+                          onClick={() => {
+                            toggleFamily(family.key)
+                          }}
+                          className={cn(
+                            "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
+                            selected
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40 hover:bg-muted/40",
+                          )}
+                        >
+                          {selected ? (
+                            <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
+                              <Check className="size-3" />
+                            </span>
+                          ) : null}
+                          <span className="text-sm font-medium">
+                            {family.label}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {t("admin.wizard.families.fieldCount", {
+                              count: family.fields.length,
+                            })}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : null}
+
+          {step === 5 ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 {t("admin.wizard.admin.hint")}
@@ -552,7 +669,9 @@ export function TenantOnboardingWizard() {
                     <FormControl>
                       <Input
                         autoComplete="name"
-                        placeholder={t("admin.wizard.fields.adminFullNamePlaceholder")}
+                        placeholder={t(
+                          "admin.wizard.fields.adminFullNamePlaceholder",
+                        )}
                         {...field}
                       />
                     </FormControl>
@@ -581,7 +700,7 @@ export function TenantOnboardingWizard() {
             </div>
           ) : null}
 
-          {step === 5 ? (
+          {step === 6 ? (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <div className="flex items-start gap-3">
                 <Building2 className="mt-0.5 size-4 text-muted-foreground" />
@@ -603,40 +722,18 @@ export function TenantOnboardingWizard() {
                       {values.welcomeTagline}
                     </p>
                   ) : null}
-                  <div className="flex items-center gap-2 pt-1">
-                    {values.primaryColor ? (
-                      <span
-                        className="inline-block size-4 rounded-full border border-border"
-                        style={{
-                          backgroundColor: values.primaryColor.startsWith("#")
-                            ? values.primaryColor
-                            : `#${values.primaryColor}`,
-                        }}
-                        title={t("admin.wizard.fields.primaryColor")}
-                      />
-                    ) : null}
-                    {values.accentColor ? (
-                      <span
-                        className="inline-block size-4 rounded-full border border-border"
-                        style={{
-                          backgroundColor: values.accentColor.startsWith("#")
-                            ? values.accentColor
-                            : `#${values.accentColor}`,
-                        }}
-                        title={t("admin.wizard.fields.accentColor")}
-                      />
-                    ) : null}
-                  </div>
                 </div>
               </div>
 
-              {(values.adminEmail || values.adminFullName) ? (
+              {values.adminEmail || values.adminFullName ? (
                 <div className="border-t border-border pt-3">
                   <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {t("admin.wizard.summary.admin")}
                   </p>
                   <p className="text-sm">{values.adminFullName || "—"}</p>
-                  <p className="text-xs text-muted-foreground">{values.adminEmail}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {values.adminEmail}
+                  </p>
                 </div>
               ) : null}
 
@@ -655,6 +752,19 @@ export function TenantOnboardingWizard() {
                         {formatCurrencyBRL(PRICE_PER_MODULE_BRL)}
                         {t("admin.wizard.summary.perMonth")}
                       </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="border-t border-border pt-3">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("admin.wizard.summary.families")}
+                </p>
+                <ul className="space-y-1">
+                  {values.assetFamilyKeys.map((key) => (
+                    <li key={key} className="text-sm">
+                      {familyLabelByKey.get(key) ?? key}
                     </li>
                   ))}
                 </ul>

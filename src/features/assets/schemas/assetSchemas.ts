@@ -27,6 +27,10 @@ export const assetSchema = z.object({
   tenantId: z.string().uuid(),
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
+  familyId: z.string().uuid(),
+  attributes: z
+    .record(z.string(), z.string().nullable())
+    .default({}),
   name: z.string().min(1),
   tag: z.string().min(1),
   location: z.string().nullish(),
@@ -55,6 +59,8 @@ export const assetListSchema = z.array(assetSchema)
 export const updateAssetRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
+  familyId: z.string().uuid(),
+  attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
   tag: z.string().trim().min(1),
   location: z.string().nullish(),
@@ -79,6 +85,8 @@ export type DeleteAssetResult = z.infer<typeof deleteAssetResultSchema>
 export const bulkCreateAssetsRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
+  familyId: z.string().uuid(),
+  attributes: z.record(z.string(), z.string().nullable()).default({}),
   baseLocationName: z.string().trim().min(1),
   baseTag: z.string().trim().min(1),
   startNumber: z.number().int(),
@@ -103,6 +111,7 @@ export type BulkCreateAssetsResponse = z.infer<
 export function createBulkCreateAssetsFormSchema(messages: {
   unitRequired: string
   categoryRequired: string
+  familyRequired: string
   baseLocationRequired: string
   baseTagRequired: string
   startNumberRequired: string
@@ -119,6 +128,11 @@ export function createBulkCreateAssetsFormSchema(messages: {
         .string()
         .min(1, messages.categoryRequired)
         .uuid(messages.categoryRequired),
+      familyId: z
+        .string()
+        .min(1, messages.familyRequired)
+        .uuid(messages.familyRequired),
+      attributes: z.record(z.string(), z.string()),
       baseLocationName: z.string().trim().min(1, messages.baseLocationRequired),
       baseTag: z.string().trim().min(1, messages.baseTagRequired),
       startNumber: z

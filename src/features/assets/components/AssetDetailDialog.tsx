@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle, Trash2 } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -35,7 +35,15 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Asset, AssetStatus } from "@/features/assets/schemas/assetSchemas"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
+import {
+  attributesToPayload,
+  buildAttributesZodSchema,
+  emptyAttributesFromFields,
+  type AssetFamily,
+  type AssetFamilyField,
+} from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import { listActiveAssetFamilies } from "@/features/assets/services/assetFamiliesService"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import {
   getAssetById,
@@ -64,6 +72,8 @@ const generalFormSchema = z.object({
   tag: z.string().trim().min(1),
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
+  familyId: z.string().uuid(),
+  attributes: z.record(z.string(), z.string()),
   location: z.string().optional(),
   serialNumber: z.string().optional(),
   status: z.enum(["Active", "Inactive", "Maintenance"]),
@@ -74,6 +84,20 @@ const generalFormSchema = z.object({
 })
 
 type GeneralFormValues = z.infer<typeof generalFormSchema>
+
+function attributesFromAsset(
+  fields: readonly AssetFamilyField[],
+  stored: Record<string, string | null> | undefined,
+): Record<string, string> {
+  const values = emptyAttributesFromFields(fields)
+  for (const field of fields) {
+    const raw = stored?.[field.key]
+    if (raw != null) {
+      values[field.key] = raw
+    }
+  }
+  return values
+}
 
 const pricingFormSchema = z.object({
   dayOfWeek: z.enum([
@@ -115,6 +139,7 @@ export function AssetDetailDialog({
   const { t } = useTranslation()
   const { tTone } = useAssetCopyTone()
   const [asset, setAsset] = useState<Asset | null>(null)
+  const [families, setFamilies] = useState<AssetFamily[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -128,6 +153,8 @@ export function AssetDetailDialog({
       tag: "",
       unitId: "",
       categoryId: "",
+      familyId: "",
+      attributes: {},
       location: "",
       serialNumber: "",
       status: "Active",
@@ -137,6 +164,12 @@ export function AssetDetailDialog({
       totalQuantity: 1,
     },
   })
+
+  const selectedFamilyId = generalForm.watch("familyId")
+  const selectedFamily = useMemo(
+    () => families.find((family) => family.id === selectedFamilyId),
+    [families, selectedFamilyId],
+  )
 
   const pricingForm = useForm<PricingFormValues>({
     resolver: zodResolver(pricingFormSchema),
@@ -162,13 +195,23 @@ export function AssetDetailDialog({
     setLoadError(null)
 
     try {
-      const loaded = await getAssetById(assetId)
+      const [loaded, loadedFamilies] = await Promise.all([
+        getAssetById(assetId),
+        listActiveAssetFamilies(),
+      ])
+      setFamilies(loadedFamilies)
+
+      const family =
+        loadedFamilies.find((item) => item.id === loaded.familyId) ?? null
+
       setAsset(loaded)
       generalForm.reset({
         name: loaded.name,
         tag: loaded.tag,
         unitId: loaded.unitId,
         categoryId: loaded.categoryId,
+        familyId: loaded.familyId,
+        attributes: attributesFromAsset(family?.fields ?? [], loaded.attributes),
         location: loaded.location ?? "",
         serialNumber: loaded.serialNumber ?? "",
         status: loaded.status as AssetStatus,
@@ -214,12 +257,30 @@ export function AssetDetailDialog({
       return
     }
 
+    const family = families.find((item) => item.id === values.familyId)
+    const attributeValidation = buildAttributesZodSchema(
+      family?.fields ?? [],
+      { required: t("common.required", { defaultValue: "Required" }) },
+    ).safeParse(values.attributes)
+
+    if (!attributeValidation.success) {
+      for (const issue of attributeValidation.error.issues) {
+        const key = issue.path[0]
+        if (typeof key === "string") {
+          generalForm.setError(`attributes.${key}`, { message: issue.message })
+        }
+      }
+      return
+    }
+
     setSaveError(null)
 
     try {
       const updated = await updateAsset(asset.id, {
         unitId: values.unitId,
         categoryId: values.categoryId,
+        familyId: values.familyId,
+        attributes: attributesToPayload(family?.fields ?? [], values.attributes),
         name: values.name,
         tag: values.tag,
         location: values.location || null,
@@ -446,6 +507,57 @@ export function AssetDetailDialog({
                     />
                     <FormField
                       control={generalForm.control}
+                      name="familyId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {t("assets.detail.fields.family", {
+                              defaultValue: "Family",
+                            })}
+                          </FormLabel>
+                          <Select
+                            modal={false}
+                            value={field.value}
+                            onValueChange={(value) => {
+                              field.onChange(value)
+                              const family = families.find(
+                                (item) => item.id === value,
+                              )
+                              generalForm.setValue(
+                                "attributes",
+                                emptyAttributesFromFields(family?.fields ?? []),
+                                { shouldValidate: true },
+                              )
+                            }}
+                            items={families.map((family) => ({
+                              value: family.id,
+                              label: family.label,
+                            }))}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue
+                                  placeholder={t(
+                                    "assets.detail.fields.familyPlaceholder",
+                                    { defaultValue: "Select a family" },
+                                  )}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {families.map((family) => (
+                                <SelectItem key={family.id} value={family.id}>
+                                  {family.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={generalForm.control}
                       name="location"
                       render={({ field }) => (
                         <FormItem>
@@ -510,6 +622,51 @@ export function AssetDetailDialog({
                       )}
                     />
                   </div>
+
+                  {selectedFamily && selectedFamily.fields.length > 0 ? (
+                    <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
+                      {selectedFamily.fields.map((familyField) => (
+                        <FormField
+                          key={familyField.key}
+                          control={generalForm.control}
+                          name={`attributes.${familyField.key}`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {familyField.label ?? familyField.key}
+                                {!familyField.required
+                                  ? ` (${t("common.optional")})`
+                                  : null}
+                              </FormLabel>
+                              <FormControl>
+                                {familyField.type === "boolean" ? (
+                                  <Switch
+                                    checked={field.value === "true"}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked ? "true" : "false")
+                                    }}
+                                  />
+                                ) : (
+                                  <Input
+                                    type={
+                                      familyField.type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    value={String(field.value ?? "")}
+                                    onChange={(event) => {
+                                      field.onChange(event.target.value)
+                                    }}
+                                  />
+                                )}
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
 
                   <div className="grid gap-4 rounded-lg border border-border p-3 sm:grid-cols-2">
                     <FormField

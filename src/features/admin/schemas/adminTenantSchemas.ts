@@ -52,6 +52,10 @@ export const step3Schema = z.object({
   activeModules: z.array(z.enum(MODULE_KEYS)).min(1),
 })
 
+export const stepFamiliesSchema = z.object({
+  assetFamilyKeys: z.array(z.string().min(1)).min(1),
+})
+
 export const stepAdminInviteSchema = z
   .object({
     adminFullName: z.string().trim().max(200),
@@ -85,6 +89,7 @@ export const stepAdminInviteSchema = z
 export const tenantOnboardingSchema = step1Schema
   .merge(step2Schema)
   .merge(step3Schema)
+  .merge(stepFamiliesSchema)
   .merge(stepAdminInviteSchema)
 
 export type TenantOnboardingFormValues = z.infer<typeof tenantOnboardingSchema>
@@ -106,6 +111,7 @@ export const tenantAdminSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   activeModules: z.array(tenantModuleSchema),
+  assetFamilyKeys: z.array(z.string()).default([]),
 })
 
 export const tenantAdminListSchema = z.array(tenantAdminSchema)
@@ -121,6 +127,7 @@ export const createTenantAdminRequestSchema = z.object({
   accentColor: z.string().nullable().optional(),
   welcomeTagline: z.string().nullable().optional(),
   activeModules: z.array(z.string()).min(1),
+  assetFamilyKeys: z.array(z.string()).min(1),
   adminFullName: z.string().nullable().optional(),
   adminEmail: z.string().nullable().optional(),
 })
@@ -129,7 +136,10 @@ export type CreateTenantAdminRequest = z.infer<
   typeof createTenantAdminRequestSchema
 >
 
-export const updateTenantAdminRequestSchema = createTenantAdminRequestSchema
+export const updateTenantAdminRequestSchema = createTenantAdminRequestSchema.omit({
+  adminFullName: true,
+  adminEmail: true,
+})
 
 export type UpdateTenantAdminRequest = z.infer<
   typeof updateTenantAdminRequestSchema
@@ -161,6 +171,7 @@ export function tenantAdminToFormValues(
       .filter((module) => module.isActive)
       .map((module) => mapTenantModuleToKey(module.moduleName))
       .filter((moduleKey): moduleKey is ModuleKey => moduleKey !== null),
+    assetFamilyKeys: tenant.assetFamilyKeys ?? [],
     adminFullName: "",
     adminEmail: "",
   }

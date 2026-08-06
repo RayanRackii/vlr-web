@@ -65,7 +65,14 @@ import {
   type BulkCreateAssetsFormValues,
 } from "@/features/assets/schemas/assetSchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import {
+  attributesToPayload,
+  buildAttributesZodSchema,
+  emptyAttributesFromFields,
+  type AssetFamily,
+} from "@/features/assets/schemas/assetFamilySchemas"
 import { getCategories } from "@/features/assets/services/assetCategoriesService"
+import { listActiveAssetFamilies } from "@/features/assets/services/assetFamiliesService"
 import {
   bulkCreateAssets,
   deleteAsset,
@@ -73,6 +80,7 @@ import {
 } from "@/features/assets/services/assetsService"
 import { getUnits } from "@/features/assets/services/unitsService"
 import { isAxiosError } from "@/lib/api"
+import { Switch } from "@/components/ui/switch"
 
 type AssetTableRow = Asset & {
   categoryName: string
@@ -114,6 +122,7 @@ export function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [units, setUnits] = useState<Unit[]>([])
+  const [families, setFamilies] = useState<AssetFamily[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -131,6 +140,9 @@ export function AssetsPage() {
       createBulkCreateAssetsFormSchema({
         unitRequired: t("assets.inventory.validation.unitRequired"),
         categoryRequired: t("assets.inventory.validation.categoryRequired"),
+        familyRequired: t("assets.inventory.validation.familyRequired", {
+          defaultValue: "Family is required.",
+        }),
         baseLocationRequired: t(
           "assets.inventory.validation.baseLocationRequired",
         ),
@@ -149,12 +161,20 @@ export function AssetsPage() {
     defaultValues: {
       unitId: "",
       categoryId: "",
+      familyId: "",
+      attributes: {},
       baseLocationName: "",
       baseTag: "",
       startNumber: 1,
       endNumber: 1,
     },
   })
+
+  const selectedFamilyId = form.watch("familyId")
+  const selectedFamily = useMemo(
+    () => families.find((family) => family.id === selectedFamilyId),
+    [families, selectedFamilyId],
+  )
 
   const loadPageData = useCallback(async () => {
     if (!session) {
@@ -167,15 +187,18 @@ export function AssetsPage() {
     setLoadError(null)
 
     try {
-      const [assetsData, categoriesData, unitsData] = await Promise.all([
-        getAssets(),
-        getCategories(),
-        getUnits(),
-      ])
+      const [assetsData, categoriesData, unitsData, familiesData] =
+        await Promise.all([
+          getAssets(),
+          getCategories(),
+          getUnits(),
+          listActiveAssetFamilies(),
+        ])
 
       setAssets(assetsData)
       setCategories(categoriesData)
       setUnits(unitsData)
+      setFamilies(familiesData)
     } catch (error: unknown) {
       console.error("AssetsPage loadPageData failed", error)
       if (isAxiosError(error)) {
@@ -356,6 +379,8 @@ export function AssetsPage() {
       form.reset({
         unitId: units[0]?.id ?? "",
         categoryId: "",
+        familyId: families[0]?.id ?? "",
+        attributes: emptyAttributesFromFields(families[0]?.fields ?? []),
         baseLocationName: "",
         baseTag: "",
         startNumber: 1,
@@ -378,6 +403,8 @@ export function AssetsPage() {
     form.reset({
       unitId: units[0]?.id ?? "",
       categoryId: "",
+      familyId: families[0]?.id ?? "",
+      attributes: emptyAttributesFromFields(families[0]?.fields ?? []),
       baseLocationName: "",
       baseTag: "",
       startNumber: 1,
@@ -394,10 +421,28 @@ export function AssetsPage() {
       return
     }
 
+    const family = families.find((item) => item.id === values.familyId)
+    const attributeValidation = buildAttributesZodSchema(
+      family?.fields ?? [],
+      { required: t("common.required", { defaultValue: "Required" }) },
+    ).safeParse(values.attributes)
+
+    if (!attributeValidation.success) {
+      for (const issue of attributeValidation.error.issues) {
+        const key = issue.path[0]
+        if (typeof key === "string") {
+          form.setError(`attributes.${key}`, { message: issue.message })
+        }
+      }
+      return
+    }
+
     try {
       const result = await bulkCreateAssets({
         unitId: values.unitId,
         categoryId: values.categoryId,
+        familyId: values.familyId,
+        attributes: attributesToPayload(family?.fields ?? [], values.attributes),
         baseLocationName: values.baseLocationName,
         baseTag: values.baseTag,
         startNumber: values.startNumber,
@@ -479,7 +524,7 @@ export function AssetsPage() {
         <Button
           type="button"
           onClick={openBulkDialog}
-          disabled={categories.length === 0}
+          disabled={categories.length === 0 || families.length === 0}
         >
           <Layers data-icon="inline-start" />
           {t("assets.inventory.actions.bulkAdd")}
@@ -681,6 +726,104 @@ export function AssetsPage() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="familyId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("assets.inventory.form.family", {
+                        defaultValue: "Family",
+                      })}
+                    </FormLabel>
+                    <Select
+                      modal={false}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        const family = families.find((item) => item.id === value)
+                        form.setValue(
+                          "attributes",
+                          emptyAttributesFromFields(family?.fields ?? []),
+                          { shouldValidate: true },
+                        )
+                      }}
+                      value={field.value}
+                      items={families.map((family) => ({
+                        value: family.id.toString(),
+                        label: family.label,
+                      }))}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t(
+                              "assets.inventory.form.familyPlaceholder",
+                              { defaultValue: "Select a family" },
+                            )}
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {families.map((family) => (
+                          <SelectItem
+                            key={family.id}
+                            value={family.id.toString()}
+                          >
+                            {family.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {selectedFamily && selectedFamily.fields.length > 0 ? (
+                <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
+                  {selectedFamily.fields.map((familyField) => (
+                    <FormField
+                      key={familyField.key}
+                      control={form.control}
+                      name={`attributes.${familyField.key}`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {familyField.label ?? familyField.key}
+                            {!familyField.required
+                              ? ` (${t("common.optional")})`
+                              : null}
+                          </FormLabel>
+                          <FormControl>
+                            {familyField.type === "boolean" ? (
+                              <Switch
+                                checked={field.value === "true"}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked ? "true" : "false")
+                                }}
+                              />
+                            ) : (
+                              <Input
+                                type={
+                                  familyField.type === "number"
+                                    ? "number"
+                                    : "text"
+                                }
+                                value={String(field.value ?? "")}
+                                onChange={(event) => {
+                                  field.onChange(event.target.value)
+                                }}
+                              />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              ) : null}
 
               <FormField
                 control={form.control}
