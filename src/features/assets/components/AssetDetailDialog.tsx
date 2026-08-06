@@ -39,6 +39,7 @@ import {
   attributesToPayload,
   buildAttributesZodSchema,
   emptyAttributesFromFields,
+  guidLikeIdSchema,
   type AssetFamily,
   type AssetFamilyField,
 } from "@/features/assets/schemas/assetFamilySchemas"
@@ -72,7 +73,7 @@ const generalFormSchema = z.object({
   tag: z.string().trim().min(1),
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
-  familyId: z.string().uuid(),
+  familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string()),
   location: z.string().optional(),
   serialNumber: z.string().optional(),

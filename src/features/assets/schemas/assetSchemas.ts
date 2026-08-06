@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
+
 export const assetStatusSchema = z.enum(["Active", "Inactive", "Maintenance"])
 
 export type AssetStatus = z.infer<typeof assetStatusSchema>
@@ -27,7 +29,7 @@ export const assetSchema = z.object({
   tenantId: z.string().uuid(),
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
-  familyId: z.string().uuid(),
+  familyId: guidLikeIdSchema,
   attributes: z
     .record(z.string(), z.string().nullable())
     .default({}),
@@ -59,7 +61,7 @@ export const assetListSchema = z.array(assetSchema)
 export const updateAssetRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
-  familyId: z.string().uuid(),
+  familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
   tag: z.string().trim().min(1),
@@ -85,7 +87,7 @@ export type DeleteAssetResult = z.infer<typeof deleteAssetResultSchema>
 export const bulkCreateAssetsRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
-  familyId: z.string().uuid(),
+  familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   baseLocationName: z.string().trim().min(1),
   baseTag: z.string().trim().min(1),
@@ -131,7 +133,10 @@ export function createBulkCreateAssetsFormSchema(messages: {
       familyId: z
         .string()
         .min(1, messages.familyRequired)
-        .uuid(messages.familyRequired),
+        .regex(
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+          messages.familyRequired,
+        ),
       attributes: z.record(z.string(), z.string()),
       baseLocationName: z.string().trim().min(1, messages.baseLocationRequired),
       baseTag: z.string().trim().min(1, messages.baseTagRequired),

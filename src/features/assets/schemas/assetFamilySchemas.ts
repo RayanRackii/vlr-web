@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 /** Guid-shaped id (API may seed non-RFC variant bits; do not use z.string().uuid()). */
-const guidLikeSchema = z
+export const guidLikeIdSchema = z
   .string()
   .regex(
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
@@ -18,7 +18,7 @@ export const assetFamilyFieldSchema = z.object({
 export type AssetFamilyField = z.infer<typeof assetFamilyFieldSchema>
 
 export const assetFamilySchema = z.object({
-  id: guidLikeSchema,
+  id: guidLikeIdSchema,
   key: z.string().min(1),
   label: z.string().min(1),
   fields: z.array(assetFamilyFieldSchema).default([]),
