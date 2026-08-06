@@ -7,34 +7,38 @@ alwaysApply: true
 
 O Rolvix é um **SaaS modular multi-tenant** de gestão operacional. Cada empresa (tenant) contrata apenas os módulos de que precisa; módulos podem ser adicionados/removidos/alterados por tenant sem afetar os demais.
 
+Leia primeiro [`CONTEXT.md`](../../CONTEXT.md) e [`AGENTS.md`](../../AGENTS.md).
+
 ## Módulos da plataforma
 
 Chaves usadas no admin (`src/features/admin/schemas/adminTenantSchemas.ts`): `Inventory`, `PMOC`, `OS`, `Rentals` (backend normaliza para `inventory`, `pmoc`, `os`, `rentals`, `maintenance`).
 
-**Meta de arquitetura:** a sidebar e as rotas do app autenticado devem ser dinâmicas conforme os módulos ativos do tenant (hoje o menu é estático — ver ROADMAP.md). Toda feature nova de módulo deve nascer preparada para esse gating.
+**Meta de arquitetura:** a sidebar e as rotas do app autenticado devem respeitar os módulos ativos do tenant (`activeModules` / `tenant_modules`). Nav Super-Admin em modo plataforma ≠ nav de produto dentro do tenant. Toda feature nova de módulo deve nascer preparada para esse gating.
 
 ## Cliente atual e prioridade
 
 O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes sobre o estado das quadras e permitir **reserva de horários**. O módulo de **Aluguéis (Rentals)** é a prioridade.
 
-**Ordem do ciclo atual (ver CONTEXT.md + ROADMAP.md):**
-1. Resend + WhatsApp — etapa principal de infra, **adiada** (config Meta em andamento).
-2. **Próximo foco:** agenda B2C por **Slot** (não hora manual) + admin de templates/kinds/layout; APIs já no backend.
-3. Demais itens (gating, convite).
+**Ordem do ciclo atual (ver `CONTEXT.md` + `ROADMAP.md`):**
+1. Resend + WhatsApp — **adiada** (config Meta em andamento).
+2. Portal B2C branded — shell, login e-mail+senha, menu dinâmico em código; fechar DNS/deploy.
+3. **Próximo salto de produto:** agenda B2C por **Slot** + admin de templates/kinds/layout (APIs no `vlr-api`).
+4. Demais: gating B2B restante, admin de reservas, onboarding legado.
 
 ## ROADMAP (obrigatório)
 
-1. Em toda tarefa relevante: atualizar `ROADMAP.md`. Se a prioridade/escopo mudar, registrar na seção **Histórico** (data + o quê + por quê). Não apagar decisões sem rastreio.
-2. Ao **encerrar** uma tarefa (ou ao responder após progresso relevante), descrever no chat o **próximo passo previsto** lendo os roadmaps — **frontend** (`frontend/vlr-web/ROADMAP.md` ou este `ROADMAP.md`) **e** **backend** (`backend/vlr-api/ROADMAP.md`). Incluir os dois lados mesmo quando a sessão for só neste repo.
-3. Em toda etapa concluída, descrever no chat **como testar** a funcionalidade entregue: passos concretos de UI (ex.: “abra `ficc.rolvix.com.br`, faça login, arraste o mouse…”) e/ou como invocar o back (ex.: “clique em Finalizar no wizard admin → a API grava `primaryColor`”). Sem jargão vago.
+1. Em toda tarefa relevante: atualizar `ROADMAP.md` **neste repo**. Se a prioridade/escopo mudar, registrar na seção **Histórico**.
+2. Ao **encerrar** uma tarefa, descrever no chat o **próximo passo previsto** deste `ROADMAP.md` **e** do `ROADMAP.md` do repo irmão **`vlr-api`**.
+3. Em toda etapa concluída, descrever **como testar** (UI concreta e/ou endpoint disparado).
+4. Glossário/beachhead: atualizar este `CONTEXT.md` **e** o canônico em `vlr-api`.
 
 ## Regra de ouro de segurança
 
-**Administradores nunca definem a senha de outros usuários.** O fluxo alvo é convite por token: link `/invite?token=` onde o próprio usuário define a senha. A tela `/invite` existe mas o service é stub; o onboarding público que coleta senha do admin é temporário.
+**Administradores nunca definem a senha de outros usuários.** Fluxo: convite por token → `/invite?token=` → `POST /api/invites/accept` (API real). Onboarding público que ainda coleta senha do admin é legado.
 
 ## Ecossistema
 
 - **Este repo (`vlr-web`):** React + Vite, deploy na **Vercel** (SPA rewrite em `vercel.json`).
-- **Hosts:** `rolvix.com.br` / `www` → landing + app B2B. `{subdomain}.rolvix.com.br` → portal B2C branded (login em `/`). Em apex/dev, path `/t/:subdomain` também funciona.
-- **API (`vlr-api`):** repo separado, .NET 10 no **Railway** (`VITE_API_URL`).
-- **Supabase:** somente autenticação no frontend (JWT); dados sempre via API .NET.
+- **Hosts:** `rolvix.com.br` / `www` → landing + app B2B. `{subdomain}.rolvix.com.br` → portal B2C branded. Em apex/dev, path `/t/:subdomain` também funciona.
+- **API (`vlr-api`):** repo Git **separado**, .NET 10 no **Railway** (`VITE_API_URL`).
+- **Supabase:** somente autenticação B2B no frontend (JWT); dados sempre via API .NET. B2C usa JWT `Customer` da API.

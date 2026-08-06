@@ -1,15 +1,16 @@
 # ROADMAP — vlr-web
 
-Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `backend/ROADMAP.md`.
+Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `ROADMAP.md` do repo irmão **`vlr-api`**.
 
-**Foco de produto agora:** **shell B2C compartilhado** (sidebar) + menu dinâmico do tenant.  
+**Foco de produto agora:** portal B2C estável + **agenda por Slot** (APIs no `vlr-api`; UX aqui).  
 **Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
 
 ## 0. Disciplina
 
 1. Atualizar este arquivo em tarefas relevantes + **Histórico** se o plano mudar.
-2. Ao encerrar uma tarefa (ou após progresso relevante), o agente deve descrever no chat o **próximo passo previsto** deste roadmap **e** do `backend/vlr-api/ROADMAP.md`.
+2. Ao encerrar uma tarefa (ou após progresso relevante), o agente deve descrever no chat o **próximo passo previsto** deste roadmap **e** do `ROADMAP.md` do **`vlr-api`**.
 3. Em toda etapa concluída, descrever no chat **como testar** (passos de UI e/ou como disparar o back).
+4. Ordem de leitura do agente: `AGENTS.md` → `CONTEXT.md` → este arquivo → `.cursor/rules/`.
 
 ## 1. Registro dinâmico por tenant — FEITO (código)
 
@@ -35,7 +36,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e `bac
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
-Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
+Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [ ] Admin: occupancy kinds + weekly templates + publish/edit day
 - [ ] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual)
@@ -58,7 +59,7 @@ Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
 - Branding inconsistente (`Platform` vs Rolvix).
 - Login/Onboarding B2B com strings hardcoded.
 - Landing anuncia módulos futuros.
-- Ver `docs/code-hygiene-findings.md` (sweep 2026-08-04).
+- Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
 ## Histórico
 
@@ -71,3 +72,5 @@ Backend API pronta (ver `backend/ROADMAP` §2.6). Frontend:
 | 2026-08-04 | **Executado:** branding `LogoSvg` (admin + portal sanitizado); `getTenantBaseDomain` unificado em `lib/tenantDomain`. |
 | 2026-08-04 | Agenda slots: backend iniciado; FE admin/B2C slot UX + layout canvas pendentes. |
 | 2026-08-04 | Convite admin do tenant no wizard/edit + accept real em `/invite`. |
+| 2026-08-05 | **Executado (com API):** Abrir ambiente / Voltar; `/admin/users`; nav por `activeModules`; reset password B2B. |
+| 2026-08-06 | **Docs:** `CONTEXT.md` espelho neste repo; `AGENTS.md`; rules apontam para paths deste repo + irmão `vlr-api` (não monorepo). |

@@ -1,0 +1,151 @@
+# Contexto Global e Diretrizes do Projeto (Rolvix — SaaS Modular B2B)
+
+> **Espelho (repo `vlr-web`).** Fonte canônica de glossário/beachhead: `CONTEXT.md` no repo **`vlr-api`**. Ao mudar Language ou beachhead, atualize **os dois**.
+
+## 1. Visão Global (O "Hub" Corporativo)
+Você atua como Arquiteto de Software e Desenvolvedor Full-Stack Sênior. O sistema é a plataforma **Rolvix**: um SaaS B2B modular e multi-tenant. O Core é agnóstico ao negócio: Tenants, Users, Units, Roles e Permissions. Sobre o Core, "Módulos" são aplicativos ativáveis por tenant.
+
+### Beachhead atual (prioridade de execução)
+O primeiro cliente pagante é um **clube** que precisa (1) avisar clientes sobre o estado das quadras e (2) permitir **reserva de horários**. O módulo **Rentals** (`rentals`) é o foco. Não expandir RH, Financeiro, Estoque etc. enquanto o beachhead não estiver operacional.
+
+**Ordem de etapas (ciclo atual):**
+1. **Resend + WhatsApp (Meta)** — **adiada** (config externa); não bloquear o beachhead.
+2. **Portal B2C branded** — shell, login e-mail+senha, register dinâmico e menu multi-item já em código; fechar DNS/deploy.
+3. **Agenda por Slot** — admin (kinds/templates/dia) + B2C book por `slotId` (APIs no `vlr-api`; UX neste repo). Ver `ROADMAP.md` §3.5.
+4. Demais: gating B2B por módulos, admin de reservas, onboarding legado.
+
+Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
+
+### Portal B2C do Tenant
+
+**Objetivo:** ambiente exclusivo por empresa em `{subdomain}.rolvix.com.br` (também `/t/:subdomain` em apex/dev).
+
+**UX:**
+- Login branded (`LogoSvg`, cores, trade name).
+- Cadastro no mesmo shell; Customer só daquele Tenant.
+
+**Campos de cadastro (beachhead):** foto, nome, e-mail (login), senha, CPF, CEP, celular (SMS = prova de posse, **não** autentica).
+
+**Auth B2C:** login = e-mail + senha → JWT `Customer`. OTP-only por telefone é legado a aposentar.
+
+**Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto.
+
+**Validações BR:** CPF/CEP no front para UX; API é autoridade. SMS enfileirado (nunca síncrono na request).
+
+## Language
+
+**Tenant**:
+The customer organization that subscribes to and is isolated within the platform.
+_Avoid_: Company, account, empresa (in code)
+
+**User**:
+A person who accesses the platform on behalf of a Tenant (B2B). Authentication is handled externally (Supabase Auth); the platform stores the profile and authorization data.
+_Avoid_: Employee, account holder
+
+**Customer**:
+An end consumer registered exclusively under one Tenant (B2C). Logs in with email + password. Profile also includes name, CPF, postal address (via CEP), SMS-verified mobile (for WhatsApp notifications, not login), and optional photo. Not a platform User (B2B).
+_Avoid_: Client, member, sócio (in code)
+
+**Unit**:
+A physical or logical site belonging to a Tenant, such as a hotel property, club facility, or branch. Module data must always reference a Unit when the domain requires site scope.
+_Avoid_: Branch, site, location, unidade (in code)
+
+**Role**:
+A named bundle of Permissions scoped to a single Tenant. Users receive capabilities through Role assignments.
+_Avoid_: Profile, group
+
+**Permission**:
+A global, system-defined capability key (for example, `pmoc.work_orders.read`) that Roles grant to Users. The catalog is shared across all Tenants.
+_Avoid_: Right, privilege (in code)
+
+**Reservation**:
+A booking of one Rentable by a Customer for a concrete time window, owned by a Tenant. Prefer linking to a Slot when the tenant uses slot schedules.
+_Avoid_: Booking, appointment, agendamento (in code)
+
+**Rentable**:
+Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label).
+_Avoid_: Court-only language in the module core; Quadra as the only product shape
+
+**ResourceCategory**:
+A Tenant-defined label for grouping Rentables (for example padel, society, tennis, meeting room, van). Used for filters, legends, and layout meaning — not a hard-coded enum in the platform.
+_Avoid_: Fixed platform enum of sport types
+
+**OccupancyKind**:
+A Tenant-defined kind of time occupancy on a Rentable (for example Open, Closed, Lesson, Event). Controls whether Customers may book that cell and whether it blocks capacity. Catalog is per Tenant, not a global closed set.
+_Avoid_: Hard-coded Lesson/Open/Closed-only enums as the only kinds
+
+**Slot**:
+One dated occupancy cell on one Rentable: date + start + end + OccupancyKind. The operational unit of a published schedule day. Duration is whatever the admin defined (1h, 2h, 3h, …).
+_Avoid_: Free-typed start/end as the only booking path for slot-mode tenants
+
+**ScheduleTemplate**:
+The default weekly pattern of Slots (or open-hours rules) used to materialize each Schedule Day. Weekly template is the default authoring mode; a single day can still be edited after publish.
+_Avoid_: Forcing admins to rebuild every day from scratch as the only path
+
+**ScheduleDay**:
+The concrete set of Slots for one calendar date (optionally per Unit). Published from templates and/or edited manually for that date.
+_Avoid_: Treating the weekly template itself as the live bookings grid
+
+**OpenHours**:
+A schedule policy where a Rentable is continuously available between open and close times; bookable windows are derived from that interval (and allowed durations), without requiring the admin to draw every cell.
+_Avoid_: Forcing explicit Slot drawing when the tenant only needs “18:00–00:00 all open”
+
+**Layout**:
+A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map rather than only from a list. Multiple Layouts are allowed (different venues or views).
+_Avoid_: Hard-coding a single FICC court map in the product
+
+**Subdomain**:
+The tenant-owned URL slug used to resolve which Tenant a public B2C request belongs to (for example `clube-x` → `clube-x.rolvix.com.br`). It is identity routing, not the branded experience itself.
+_Avoid_: custom domain (until real custom hostnames are supported), slug alone without tenant resolution
+
+## 2. Dinâmica de Módulos e Customização
+- **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B deve filtrar por `activeModules` / `tenant_modules` (parcialmente feito; ver ROADMAP).
+- **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
+- **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`.
+- **Subdomain** = roteamento + branding; o portal é a UI B2C.
+
+## 3. Mapa mental (o que este repo renderiza)
+
+```
+B2B (rolvix.com.br)     → Users / Super-Admin / módulos operacionais
+B2C ({sub}.rolvix.com.br) → Customers / login-register / agenda Rentals
+```
+
+API e domínio vivem em **`vlr-api`**. Este repo **nunca** acessa Postgres via Supabase SDK — só Auth B2B.
+
+**Dois repositórios Git:**
+```
+vlr-web (este repo)                 vlr-api (repo irmão)
+├── CONTEXT.md  ← espelho           ├── CONTEXT.md  ← canônico
+├── ROADMAP.md                      ├── ROADMAP.md
+├── AGENTS.md                       ├── docs/adr|sessions|runbooks
+├── docs/sessions/                  └── …
+├── .cursor/rules/
+└── src/
+```
+
+## 4. Fases (resumo para o FE)
+- Fase 1.5 notificações reais — **adiada**.
+- Fase 2a PMOC/OS/Inventário — base entregue.
+- Fase 2b Rentals beachhead — **foco**: portal estável + agenda por Slot + admin de reservas.
+- Não antecipar módulos futuros (RH, Financeiro, …).
+
+## 5. Idioma e nomenclatura
+- Código: **Inglês**. UI: Português via i18n.
+- React/TS: componentes `PascalCase`; funções/hooks `camelCase`. Zero `any`. Zod espelha DTOs da API.
+
+## 6. Stack deste repo
+- React + Vite, shadcn/ui, Tailwind. Deploy **Vercel**.
+- `VITE_API_URL` → `vlr-api` (Railway). JWT Bearer (Supabase B2B ou Customer JWT B2C).
+- Hosts: apex = landing + app B2B; `{subdomain}.rolvix.com.br` = portal B2C.
+
+## 7. Disciplina do agente
+1. Atualizar este `ROADMAP.md` em toda tarefa relevante (+ Histórico se o plano mudar).
+2. Ao encerrar, descrever próximo passo deste roadmap **e** o do `vlr-api`.
+3. Em etapa concluída: **como testar** (UI concreta e/ou endpoint).
+4. Mudança de glossário/beachhead → este arquivo **e** `CONTEXT.md` do `vlr-api`.
+
+## 8. Antes de implementar
+1. Respeita beachhead (Rentals / clube) e a ordem (WA adiada → portal → slots)?
+2. Respeita `.cursor/rules` deste repo?
+3. Atualizei o `ROADMAP.md`?
