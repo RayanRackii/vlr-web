@@ -554,3 +554,91 @@ export async function listMyPortalReservations(): Promise<PortalReservation[]> {
     )
   }
 }
+
+const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
+
+const scheduleSlotSchema = z.object({
+  id: z.string().uuid(),
+  rentalAssetId: z.string().uuid(),
+  assetName: z.string(),
+  date: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  occupancyKindId: z.string().uuid(),
+  occupancyKindKey: z.string(),
+  occupancyKindLabel: z.string(),
+  occupancyKindColorHex: z.string().nullable().optional(),
+  isBookableByCustomer: z.boolean(),
+  label: z.string().nullable().optional(),
+  status: z.string(),
+  reservationId: z.string().uuid().nullable().optional(),
+  isDerived: z.boolean(),
+})
+
+const dayScheduleSchema = z.object({
+  date: z.string(),
+  slots: z.array(scheduleSlotSchema),
+})
+
+export type PortalScheduleSlot = z.infer<typeof scheduleSlotSchema>
+export type PortalDaySchedule = z.infer<typeof dayScheduleSchema>
+
+export function isBookablePersistedSlot(slot: PortalScheduleSlot): boolean {
+  return (
+    slot.isBookableByCustomer &&
+    !slot.isDerived &&
+    slot.id !== EMPTY_SLOT_ID &&
+    slot.status.toLowerCase() === "available"
+  )
+}
+
+export function formatScheduleTime(value: string): string {
+  return value.length >= 5 ? value.slice(0, 5) : value
+}
+
+export async function fetchPublicScheduleDay(
+  subdomain: string,
+  date: string,
+  rentalAssetId?: string,
+): Promise<PortalDaySchedule> {
+  try {
+    const response = await api.get(
+      `/api/public/tenants/${subdomain}/schedule/days/${date}`,
+      {
+        params: rentalAssetId ? { rentalAssetId } : undefined,
+      },
+    )
+    const parsed = dayScheduleSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid schedule day payload.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not load schedule day."),
+    )
+  }
+}
+
+export async function bookPortalSlot(body: {
+  slotId: string
+  unitId: string
+  quantity?: number
+}): Promise<PortalReservation> {
+  try {
+    const response = await api.post("/api/schedule/slots/book", {
+      slotId: body.slotId,
+      unitId: body.unitId,
+      quantity: body.quantity ?? 1,
+    })
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error("Invalid reservation payload.")
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), "Could not book slot."),
+    )
+  }
+}

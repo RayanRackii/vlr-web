@@ -24,7 +24,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
 - [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
-- [ ] UX de calendário/slots (hoje: data + hora manual).
+- [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
 - [ ] Admin B2B de reservas.
 
 ## 3. Portal branding / host
@@ -38,8 +38,9 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
-- [ ] Admin: occupancy kinds + weekly templates + publish/edit day
-- [ ] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual)
+- [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
+- [ ] Admin completo: occupancy kinds CRUD + weekly template editor fino
+- [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
 - [ ] Layout canvas (mapa de rentables) admin + picker B2C
 
 ## 4. Gating B2B por módulos
@@ -74,3 +75,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-04 | Convite admin do tenant no wizard/edit + accept real em `/invite`. |
 | 2026-08-05 | **Executado (com API):** Abrir ambiente / Voltar; `/admin/users`; nav por `activeModules`; reset password B2B. |
 | 2026-08-06 | **Docs:** `CONTEXT.md` espelho neste repo; `AGENTS.md`; rules apontam para paths deste repo + irmão `vlr-api` (não monorepo). |
+| 2026-08-06 | **Executado:** agenda B2C por Slot (`slots/book`) + admin mínimo de escala (seed templates + publish day). |

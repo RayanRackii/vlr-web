@@ -102,16 +102,20 @@
     "agenda": {
       "title": "Schedule",
       "subtitle": "Check availability and book a time slot.",
+      "subtitleSlots": "Pick an available slot from today's published schedule.",
       "court": "Court / space",
       "date": "Date",
       "start": "Start",
       "end": "End",
       "check": "Check availability",
       "reserve": "Book",
+      "reserveSlot": "Book slot",
       "reserving": "Booking...",
       "available": "Available. Estimate: R$ {{amount}}",
       "unavailable": "Slot unavailable.",
       "availabilityError": "Could not check availability.",
+      "slotsError": "Could not load slots for this day.",
+      "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
       "reserveSuccess": "Reservation created!",
       "reserveError": "Could not create the reservation.",
       "loadError": "Could not load the schedule.",
@@ -416,6 +420,7 @@
     "workOrders": "Work Orders",
     "registrationFields": "Portal registration",
     "moduleMenu": "Portal menu",
+    "schedule": "Schedule",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
     "adminUsers": "Users",
@@ -1207,6 +1212,27 @@
       "exitFailed": "Could not return to the platform.",
       "enterErrorTitle": "Error",
       "enterFailed": "Could not open the environment."
+    }
+  },
+  "rentals": {
+    "schedule": {
+      "title": "Schedule",
+      "description": "Define the weekly template grid and publish day slots for the B2C portal.",
+      "rentable": "Space / good",
+      "date": "Date",
+      "seedTemplates": "Create default grid (Sun–Sat, 08–22)",
+      "publishDay": "Publish day",
+      "templatesTitle": "Weekly templates ({{count}})",
+      "templatesEmpty": "No templates yet. Use “Create default grid” to generate 1-hour cells.",
+      "templatesHint": "Active templates for this rentable. Publish a day to materialize slots.",
+      "dayTitle": "Day slots",
+      "dayEmpty": "No slots on this day. Publish after creating templates.",
+      "noAssets": "No active rentables. Mark an asset as rentable under Assets.",
+      "loadError": "Could not load the schedule.",
+      "seedSuccess": "{{count}} templates created.",
+      "seedError": "Could not create the default grid.",
+      "publishSuccess": "{{count}} slots created for this day.",
+      "publishError": "Could not publish the day."
     }
   }
 }

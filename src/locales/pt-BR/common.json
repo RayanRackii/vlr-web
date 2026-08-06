@@ -102,16 +102,20 @@
     "agenda": {
       "title": "Agenda",
       "subtitle": "Consulte disponibilidade e reserve um horário.",
+      "subtitleSlots": "Escolha um horário disponível na escala do dia.",
       "court": "Quadra / espaço",
       "date": "Data",
       "start": "Início",
       "end": "Fim",
       "check": "Verificar disponibilidade",
       "reserve": "Reservar",
+      "reserveSlot": "Reservar horário",
       "reserving": "Reservando...",
       "available": "Disponível. Estimativa: R$ {{amount}}",
       "unavailable": "Horário indisponível.",
       "availabilityError": "Não foi possível verificar disponibilidade.",
+      "slotsError": "Não foi possível carregar os horários do dia.",
+      "noSlots": "Nenhum horário disponível nesta data. O clube ainda pode não ter publicado a escala.",
       "reserveSuccess": "Reserva criada!",
       "reserveError": "Não foi possível criar a reserva.",
       "loadError": "Não foi possível carregar a agenda.",
@@ -416,6 +420,7 @@
     "workOrders": "OS",
     "registrationFields": "Cadastro portal",
     "moduleMenu": "Menu do portal",
+    "schedule": "Escala / agenda",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuários",
@@ -1207,6 +1212,27 @@
       "exitFailed": "Não foi possível voltar à plataforma.",
       "enterErrorTitle": "Erro",
       "enterFailed": "Não foi possível abrir o ambiente."
+    }
+  },
+  "rentals": {
+    "schedule": {
+      "title": "Escala / agenda",
+      "description": "Defina a grade semanal (templates) e publique os horários do dia para o portal B2C.",
+      "rentable": "Espaço / bem",
+      "date": "Data",
+      "seedTemplates": "Criar grade padrão (seg–dom, 08–22)",
+      "publishDay": "Publicar dia",
+      "templatesTitle": "Templates semanais ({{count}})",
+      "templatesEmpty": "Nenhum template. Use “Criar grade padrão” para gerar horários de 1h.",
+      "templatesHint": "Templates ativos deste espaço. Publique um dia para materializar slots.",
+      "dayTitle": "Slots do dia",
+      "dayEmpty": "Nenhum slot neste dia. Publique a escala após criar templates.",
+      "noAssets": "Nenhum rentable ativo. Marque um ativo como alugável em Ativos.",
+      "loadError": "Não foi possível carregar a escala.",
+      "seedSuccess": "{{count}} templates criados.",
+      "seedError": "Não foi possível criar a grade padrão.",
+      "publishSuccess": "{{count}} slots criados neste dia.",
+      "publishError": "Não foi possível publicar o dia."
     }
   }
 }

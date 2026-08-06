@@ -102,16 +102,20 @@
     "agenda": {
       "title": "Agenda",
       "subtitle": "Consulte disponibilidad y reserve un horario.",
+      "subtitleSlots": "Elija un horario disponible en la escala del día.",
       "court": "Cancha / espacio",
       "date": "Fecha",
       "start": "Inicio",
       "end": "Fin",
       "check": "Verificar disponibilidad",
       "reserve": "Reservar",
+      "reserveSlot": "Reservar horario",
       "reserving": "Reservando...",
       "available": "Disponible. Estimación: R$ {{amount}}",
       "unavailable": "Horario no disponible.",
       "availabilityError": "No se pudo verificar la disponibilidad.",
+      "slotsError": "No se pudieron cargar los horarios del día.",
+      "noSlots": "No hay horarios disponibles en esta fecha. Es posible que el club aún no haya publicado la escala.",
       "reserveSuccess": "¡Reserva creada!",
       "reserveError": "No se pudo crear la reserva.",
       "loadError": "No se pudo cargar la agenda.",
@@ -416,6 +420,7 @@
     "workOrders": "OT",
     "registrationFields": "Registro portal",
     "moduleMenu": "Menú del portal",
+    "schedule": "Escala / agenda",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuarios",
@@ -1207,6 +1212,27 @@
       "exitFailed": "No se pudo volver a la plataforma.",
       "enterErrorTitle": "Error",
       "enterFailed": "No se pudo abrir el entorno."
+    }
+  },
+  "rentals": {
+    "schedule": {
+      "title": "Escala / agenda",
+      "description": "Defina la grilla semanal (templates) y publique los horarios del día para el portal B2C.",
+      "rentable": "Espacio / bien",
+      "date": "Fecha",
+      "seedTemplates": "Crear grilla estándar (dom–sáb, 08–22)",
+      "publishDay": "Publicar día",
+      "templatesTitle": "Templates semanales ({{count}})",
+      "templatesEmpty": "Sin templates. Use “Crear grilla estándar” para generar celdas de 1h.",
+      "templatesHint": "Templates activos de este espacio. Publique un día para materializar slots.",
+      "dayTitle": "Slots del día",
+      "dayEmpty": "Sin slots en este día. Publique la escala después de crear templates.",
+      "noAssets": "No hay rentables activos. Marque un activo como alquilable en Activos.",
+      "loadError": "No se pudo cargar la escala.",
+      "seedSuccess": "{{count}} templates creados.",
+      "seedError": "No se pudo crear la grilla estándar.",
+      "publishSuccess": "{{count}} slots creados en este día.",
+      "publishError": "No se pudo publicar el día."
     }
   }
 }
