@@ -22,7 +22,7 @@ export const createTenantRequestSchema = z.object({
   adminPassword: z
     .string()
     .min(8, "A senha deve ter no mínimo 8 caracteres."),
-  isTrial: z.boolean().default(true),
+  isTrial: z.boolean(),
 })
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>

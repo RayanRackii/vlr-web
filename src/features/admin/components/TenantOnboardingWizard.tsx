@@ -349,7 +349,7 @@ export function TenantOnboardingWizard() {
 
   const panelSteps = useMemo(
     () =>
-      STEP_TITLE_KEYS.map((titleKey, index) => ({
+      STEP_TITLE_KEYS.map((_, index) => ({
         id: `step-${index + 1}`,
         label: t(`admin.wizard.stepShort.${index + 1}`),
       })),
