@@ -7,12 +7,49 @@
     "close": "Cerrar",
     "cancel": "Cancelar",
     "back": "Volver",
+    "next": "Siguiente",
     "edit": "Editar",
     "delete": "Eliminar",
     "optional": "opcional",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando..."
+  },
+  "trial": {
+    "banner": {
+      "active": "Prueba: {{days}} día(s) restante(s). WhatsApp desactivado; hasta 10 activos y 20 usuarios.",
+      "readOnly": "Prueba finalizada — solo lectura. Los datos se eliminarán en {{days}} día(s). Suscríbase para continuar."
+    },
+    "readOnlyHint": "Cuenta en solo lectura tras el fin de la prueba.",
+    "onboarding": {
+      "title": "Comience su prueba gratis",
+      "description": "14 días completos, luego solo lectura hasta el día 30. Sin WhatsApp; hasta 10 activos y 20 usuarios.",
+      "steps": {
+        "company": "Empresa",
+        "admin": "Administrador",
+        "review": "Revisión"
+      },
+      "fields": {
+        "legalName": "Razón social",
+        "taxId": "CNPJ/CPF",
+        "headquarters": "Nombre de la unidad matriz",
+        "adminName": "Nombre del administrador",
+        "adminEmail": "Correo del administrador",
+        "adminPhone": "Celular",
+        "adminPassword": "Contraseña"
+      },
+      "subdomainHint": "El subdominio del portal se genera automáticamente a partir del nombre (4 caracteres).",
+      "subdomainPreview": "Subdominio previsto",
+      "reviewLimits": "Límites de la prueba: 10 activos, 20 usuarios, notificaciones solo por correo.",
+      "finish": "Crear cuenta de prueba",
+      "submitting": "Creando...",
+      "successTitle": "¡Cuenta creada!",
+      "successBody": "Será redirigido al inicio de sesión en breve.",
+      "successSubdomain": "Su subdominio: {{subdomain}}",
+      "errors": {
+        "failed": "No se pudo completar el registro. Inténtelo de nuevo."
+      }
+    }
   },
   "auth": {
     "invite": {
@@ -793,6 +830,7 @@
         "placeholder": "Filtrar..."
       },
       "actions": {
+        "add": "Agregar",
         "bulkAdd": "Agregar en lote",
         "create": "Crear",
         "creating": "Creando..."
@@ -860,6 +898,7 @@
         "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
         "loadFailed": "No se pudieron cargar los recursos.",
         "loadUnitsFailed": "No se pudieron cargar las unidades.",
+        "createFailed": "No se pudo crear el recurso.",
         "bulkCreateFailed": "No se pudieron crear los recursos en lote.",
         "deleteFailed": "No se pudo eliminar el recurso.",
         "invalidResponse": "Respuesta inválida de la API.",
@@ -869,6 +908,27 @@
       "flags": {
         "rentable": "Alquiler",
         "maintenance": "Mantenimiento"
+      }
+    },
+    "wizard": {
+      "title": {
+        "create": "Agregar recurso",
+        "bulk": "Agregar recursos en lote",
+        "edit": "Editar recurso"
+      },
+      "steps": {
+        "general": "General",
+        "capabilities": "Capacidades",
+        "pricing": "Precios",
+        "review": "Revisión"
+      },
+      "next": "Siguiente",
+      "back": "Atrás",
+      "finish": "Finalizar",
+      "success": {
+        "create": "Recurso creado con éxito.",
+        "bulk": "Recursos creados con éxito.",
+        "update": "Recurso actualizado con éxito."
       }
     },
     "detail": {
@@ -1453,6 +1513,19 @@
         "bookable": "Reservable por el cliente",
         "notBookable": "No reservable",
         "blocksCapacity": "Bloquea capacidad",
+        "placeholders": {
+          "key": "ej.: open, lesson",
+          "label": "ej.: Abierto, Clase"
+        },
+        "help": {
+          "key": "Identificador interno estable (ej.: open). No cambia después de crearlo; use minúsculas sin espacios.",
+          "label": "Texto que ve el equipo y el portal (ej.: Abierto). Puede renombrarlo después sin romper la clave.",
+          "color": "Color para distinguir este tipo en la agenda y en las listas de horarios.",
+          "sortOrder": "Posición en la lista: el número menor aparece primero (ej.: 10, 20, 30).",
+          "bookable": "Si está marcado, el cliente del portal puede reservar horarios con este tipo.",
+          "blocksCapacity": "Si está marcado, el horario ocupa el espacio e impide otra reserva en el mismo intervalo.",
+          "active": "Los tipos inactivos no aparecen al crear templates nuevos (los ya existentes siguen)."
+        },
         "saveCreate": "Crear tipo",
         "saveEdit": "Guardar tipo",
         "validation": "Indique clave y nombre.",

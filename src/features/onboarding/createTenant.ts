@@ -17,6 +17,8 @@ export async function createTenant(
       ...validatedPayload,
       tradeName: validatedPayload.tradeName || null,
       headquartersUnitCode: validatedPayload.headquartersUnitCode || null,
+      adminPhone: validatedPayload.adminPhone,
+      isTrial: validatedPayload.isTrial ?? true,
     })
 
     const parsedResponse = createTenantResponseSchema.safeParse(response.data)

@@ -5,11 +5,13 @@ import {
   assetSchema,
   bulkCreateAssetsRequestSchema,
   bulkCreateAssetsResponseSchema,
+  createAssetRequestSchema,
   deleteAssetResultSchema,
   updateAssetRequestSchema,
   type Asset,
   type BulkCreateAssetsRequest,
   type BulkCreateAssetsResponse,
+  type CreateAssetRequest,
   type DeleteAssetResult,
   type UpdateAssetRequest,
 } from "@/features/assets/schemas/assetSchemas"
@@ -63,6 +65,23 @@ export async function getAssetById(id: string): Promise<Asset> {
     return parsed.data
   } catch (error: unknown) {
     throwAssetsError(error, "assets.inventory.errors.loadFailed")
+  }
+}
+
+export async function createAsset(data: CreateAssetRequest): Promise<Asset> {
+  const payload = createAssetRequestSchema.parse(data)
+
+  try {
+    const response = await api.post<unknown>(ASSETS_PATH, payload)
+    const parsed = assetSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("assets.inventory.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    throwAssetsError(error, "assets.inventory.errors.createFailed")
   }
 }
 

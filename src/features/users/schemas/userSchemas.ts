@@ -18,6 +18,11 @@ export const currentUserSchema = z.object({
   tenantId: z.string().uuid().nullish(),
   activeModules: z.array(z.string()).default([]),
   activeAssetFamilies: z.array(z.string()).default([]),
+  isTrial: z.boolean().default(false),
+  trialEndsAt: z.string().nullable().optional(),
+  trialPurgeAt: z.string().nullable().optional(),
+  isTrialReadOnly: z.boolean().default(false),
+  notificationsEmailOnly: z.boolean().default(false),
 })
 
 export type CurrentUser = z.infer<typeof currentUserSchema>

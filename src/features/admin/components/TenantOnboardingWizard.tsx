@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -346,8 +347,17 @@ export function TenantOnboardingWizard() {
     return map
   }, [families])
 
+  const panelSteps = useMemo(
+    () =>
+      STEP_TITLE_KEYS.map((titleKey, index) => ({
+        id: `step-${index + 1}`,
+        label: t(`admin.wizard.stepShort.${index + 1}`),
+      })),
+    [t],
+  )
+
   return (
-    <div className="mx-auto w-full max-w-xl space-y-8">
+    <div className="mx-auto w-full max-w-3xl space-y-8">
       <div className="space-y-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -361,41 +371,15 @@ export function TenantOnboardingWizard() {
           </p>
         </div>
 
-        <div className="flex gap-1.5" aria-hidden="true">
-          {Array.from({ length: STEP_COUNT }, (_, index) => (
-            <div
-              key={index}
-              className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors",
-                index + 1 <= step ? "bg-primary" : "bg-muted",
-              )}
-            />
-          ))}
-        </div>
-
-        <ol className="hidden gap-2 sm:grid sm:grid-cols-6">
-          {STEP_TITLE_KEYS.map((titleKey, index) => {
-            const stepNumber = index + 1
-            const isActive = stepNumber === step
-            const isDone = stepNumber < step
-
-            return (
-              <li
-                key={titleKey}
-                className={cn(
-                  "rounded-md border px-2 py-1.5 text-center text-[11px] leading-tight",
-                  isActive
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : isDone
-                      ? "border-border text-muted-foreground"
-                      : "border-transparent text-muted-foreground/70",
-                )}
-              >
-                {t(`admin.wizard.stepShort.${stepNumber}`)}
-              </li>
-            )
-          })}
-        </ol>
+        <WizardPanelsStepper
+          steps={panelSteps}
+          currentIndex={step - 1}
+          onStepClick={(index) => {
+            if (!isActionLocked && index < step - 1) {
+              setStep(index + 1)
+            }
+          }}
+        />
       </div>
 
       <Form {...form}>

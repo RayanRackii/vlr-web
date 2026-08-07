@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { AppShell } from "@/components/layout/AppShell"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { TrialBanner } from "@/components/layout/TrialBanner"
 import {
   getEmailInitials,
   getPageTitleKey,
@@ -60,7 +61,9 @@ export function MainLayout() {
       userLabel={userEmail}
       initials={initials}
       banner={
-        isInTenantEnvironment ? (
+        <>
+          <TrialBanner />
+          {isInTenantEnvironment ? (
           <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 dark:text-amber-100">
             <p className="min-w-0 truncate">
               {t("admin.support.banner", {
@@ -82,7 +85,8 @@ export function MainLayout() {
                 : t("admin.support.exit")}
             </Button>
           </div>
-        ) : null
+          ) : null}
+        </>
       }
       onSignOut={async () => {
         writeActiveTenantLabel(null)

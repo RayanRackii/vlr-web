@@ -77,6 +77,25 @@ export const updateAssetRequestSchema = z.object({
 
 export type UpdateAssetRequest = z.infer<typeof updateAssetRequestSchema>
 
+export const createAssetRequestSchema = z.object({
+  unitId: z.string().uuid(),
+  categoryId: z.string().uuid(),
+  familyId: guidLikeIdSchema,
+  attributes: z.record(z.string(), z.string().nullable()).default({}),
+  name: z.string().trim().min(1),
+  tag: z.string().trim().min(1),
+  location: z.string().nullish(),
+  serialNumber: z.string().nullish(),
+  installationDate: z.string().nullish(),
+  status: assetStatusSchema.default("Active"),
+  isRentable: z.boolean().default(false),
+  requiresMaintenance: z.boolean().default(false),
+  rentalType: z.enum(["Location", "Good"]).default("Location"),
+  totalQuantity: z.number().int().min(1).default(1),
+})
+
+export type CreateAssetRequest = z.infer<typeof createAssetRequestSchema>
+
 export const deleteAssetResultSchema = z.object({
   permanentlyDeleted: z.boolean(),
   asset: assetSchema.nullish(),

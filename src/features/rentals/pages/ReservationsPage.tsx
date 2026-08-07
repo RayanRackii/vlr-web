@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import {
   cancelAdminReservation,
   confirmAdminReservation,
@@ -25,6 +26,7 @@ function todayIsoDate(): string {
 
 export function ReservationsPage() {
   const { t } = useTranslation()
+  const { isTrialReadOnly } = useTrialStatus()
   const [date, setDate] = useState(todayIsoDate())
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
@@ -100,6 +102,12 @@ export function ReservationsPage() {
         </p>
       </div>
 
+      {isTrialReadOnly ? (
+        <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
+          {t("trial.readOnlyHint")}
+        </p>
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1 text-sm">
           <span>{t("rentals.reservations.date")}</span>
@@ -168,7 +176,7 @@ export function ReservationsPage() {
                     <Button
                       type="button"
                       size="sm"
-                      disabled={busy}
+                      disabled={busy || isTrialReadOnly}
                       onClick={() => {
                         void onConfirm(row.id)
                       }}
@@ -181,7 +189,7 @@ export function ReservationsPage() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      disabled={busy}
+                      disabled={busy || isTrialReadOnly}
                       onClick={() => {
                         void onCancel(row.id)
                       }}

@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { CircleHelp } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   createOccupancyKind,
   createScheduleTemplate,
@@ -62,6 +69,40 @@ function emptyTemplateDraft(kindId: string): TemplateDraft {
     label: "",
     isActive: true,
   }
+}
+
+function FieldHelp({ text }: { text: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        type="button"
+        className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={text}
+      >
+        <CircleHelp className="size-3.5" aria-hidden />
+      </PopoverTrigger>
+      <PopoverContent align="start" side="top" className="w-64 p-3 text-xs leading-relaxed">
+        <PopoverDescription className="text-xs text-muted-foreground">
+          {text}
+        </PopoverDescription>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function FieldLabel({
+  label,
+  help,
+}: {
+  label: string
+  help: string
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {label}
+      <FieldHelp text={help} />
+    </span>
+  )
 }
 
 export function SchedulePage() {
@@ -478,10 +519,14 @@ export function SchedulePage() {
 
         <div className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2">
           <label className="space-y-1 text-sm">
-            <span>{t("rentals.schedule.kinds.key")}</span>
+            <FieldLabel
+              label={t("rentals.schedule.kinds.key")}
+              help={t("rentals.schedule.kinds.help.key")}
+            />
             <Input
               value={kindForm.key}
               disabled={Boolean(editingKindId)}
+              placeholder={t("rentals.schedule.kinds.placeholders.key")}
               onChange={(event) => {
                 setKindForm((current) => ({
                   ...current,
@@ -491,9 +536,13 @@ export function SchedulePage() {
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span>{t("rentals.schedule.kinds.label")}</span>
+            <FieldLabel
+              label={t("rentals.schedule.kinds.label")}
+              help={t("rentals.schedule.kinds.help.label")}
+            />
             <Input
               value={kindForm.label}
+              placeholder={t("rentals.schedule.kinds.placeholders.label")}
               onChange={(event) => {
                 setKindForm((current) => ({
                   ...current,
@@ -503,7 +552,10 @@ export function SchedulePage() {
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span>{t("rentals.schedule.kinds.color")}</span>
+            <FieldLabel
+              label={t("rentals.schedule.kinds.color")}
+              help={t("rentals.schedule.kinds.help.color")}
+            />
             <Input
               type="color"
               value={kindForm.colorHex || "#22c55e"}
@@ -516,7 +568,10 @@ export function SchedulePage() {
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span>{t("rentals.schedule.kinds.sortOrder")}</span>
+            <FieldLabel
+              label={t("rentals.schedule.kinds.sortOrder")}
+              help={t("rentals.schedule.kinds.help.sortOrder")}
+            />
             <Input
               type="number"
               value={kindForm.sortOrder}
@@ -539,7 +594,10 @@ export function SchedulePage() {
                 }))
               }}
             />
-            {t("rentals.schedule.kinds.bookable")}
+            <FieldLabel
+              label={t("rentals.schedule.kinds.bookable")}
+              help={t("rentals.schedule.kinds.help.bookable")}
+            />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -552,7 +610,10 @@ export function SchedulePage() {
                 }))
               }}
             />
-            {t("rentals.schedule.kinds.blocksCapacity")}
+            <FieldLabel
+              label={t("rentals.schedule.kinds.blocksCapacity")}
+              help={t("rentals.schedule.kinds.help.blocksCapacity")}
+            />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -565,7 +626,10 @@ export function SchedulePage() {
                 }))
               }}
             />
-            {t("rentals.schedule.active")}
+            <FieldLabel
+              label={t("rentals.schedule.active")}
+              help={t("rentals.schedule.kinds.help.active")}
+            />
           </label>
           <div className="flex flex-wrap gap-2 sm:col-span-2">
             <Button

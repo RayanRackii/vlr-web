@@ -15,9 +15,14 @@ export const createTenantRequestSchema = z.object({
     .trim()
     .min(1, "E-mail é obrigatório.")
     .email("Informe um e-mail válido."),
+  adminPhone: z
+    .string()
+    .trim()
+    .min(10, "Informe um celular válido com DDD."),
   adminPassword: z
     .string()
     .min(8, "A senha deve ter no mínimo 8 caracteres."),
+  isTrial: z.boolean().default(true),
 })
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>
@@ -28,6 +33,7 @@ export const createTenantResponseSchema = z.object({
   adminUserId: z.string().uuid(),
   superAdminRoleId: z.string().uuid(),
   supabaseAuthId: z.string().min(1),
+  subdomain: z.string().nullable().optional(),
 })
 
 export type CreateTenantResponse = z.infer<typeof createTenantResponseSchema>
