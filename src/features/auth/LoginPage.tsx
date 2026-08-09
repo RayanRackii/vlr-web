@@ -18,6 +18,7 @@ import {
   loginSchema,
   type LoginFormValues,
 } from "@/features/auth/loginSchema"
+import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
 import { supabase } from "@/lib/supabase"
 
 function getLoginErrorMessage(error: AuthError): string {
@@ -70,20 +71,15 @@ export function LoginPage() {
 
     setIsSendingReset(true)
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const message = await requestPasswordReset(email)
+      setResetInfo(message)
+    } catch (error) {
+      form.setError("root", {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível enviar o e-mail de reset. Tente novamente.",
       })
-
-      if (error !== null) {
-        form.setError("root", {
-          message: "Não foi possível enviar o e-mail de reset. Tente novamente.",
-        })
-        return
-      }
-
-      setResetInfo(
-        "Se existir uma conta com este e-mail, enviamos um link para redefinir a senha.",
-      )
     } finally {
       setIsSendingReset(false)
     }

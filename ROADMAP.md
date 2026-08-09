@@ -66,6 +66,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] `submitInvitePassword` → `POST /api/invites/accept`
 - [x] Super-Admin `/admin/users` — lista global com filtro nome/tenant + exclusão
 - [x] Modo suporte: Abrir ambiente = login real (membership + `tenant_id` JWT); Voltar limpa metadata
+- [x] Esqueci a senha → `POST /api/auth/forgot-password` (e-mail Rolvix/Resend); `/reset-password` inalterado
 - [ ] Onboarding público ainda coleta senha (legado)
 
 ## Dívidas técnicas conhecidas
@@ -95,3 +96,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-06 | **Executado:** Dashboard B2B dinâmico por módulo (KPIs de login B2C + seções condicionais). |
 | 2026-08-06 | **Executado:** Admin agenda completo — kinds CRUD + editor de templates em `/configuracoes/agenda`. |
 | 2026-08-06 | **Executado:** WizardPanelsStepper compartilhado; AssetWizard create/edit/lote; onboarding trial público; banner trial + UX read-only. |
+| 2026-08-09 | **Executado:** login “Esqueci a senha” chama API (Resend/Rolvix) em vez do e-mail genérico do Supabase. |
