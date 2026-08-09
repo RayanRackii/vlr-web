@@ -1,6 +1,7 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -36,8 +37,12 @@ function getResetErrorMessage(error: AuthError): string {
   return "Não foi possível atualizar a senha. Tente novamente."
 }
 
+type GateState = "loading" | "ready" | "invalid"
+
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const [gate, setGate] = useState<GateState>("loading")
+  const [gateError, setGateError] = useState<string | null>(null)
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -48,6 +53,62 @@ export function ResetPasswordPage() {
   })
 
   const isSubmitting = form.formState.isSubmitting
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function establishRecoverySession() {
+      const params = new URLSearchParams(window.location.search)
+      const tokenHash = params.get("token_hash")
+      const type = params.get("type")
+
+      if (tokenHash && type === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        })
+
+        if (cancelled) {
+          return
+        }
+
+        if (error !== null) {
+          setGate("invalid")
+          setGateError(
+            "Link inválido ou expirado. Solicite um novo reset na tela de login.",
+          )
+          return
+        }
+
+        // Drop secrets from the address bar after establishing the session.
+        window.history.replaceState({}, document.title, "/reset-password")
+        setGate("ready")
+        return
+      }
+
+      // Legacy hash flow (Supabase verify → #access_token=…).
+      const { data } = await supabase.auth.getSession()
+      if (cancelled) {
+        return
+      }
+
+      if (data.session) {
+        setGate("ready")
+        return
+      }
+
+      setGate("invalid")
+      setGateError(
+        "Link inválido ou expirado. Solicite um novo reset na tela de login.",
+      )
+    }
+
+    void establishRecoverySession()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function onSubmit(values: ResetPasswordFormValues) {
     const { error } = await supabase.auth.updateUser({
@@ -60,6 +121,30 @@ export function ResetPasswordPage() {
     }
 
     void navigate("/dashboard", { replace: true })
+  }
+
+  if (gate === "loading") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-4 p-6">
+        <p className="text-sm text-muted-foreground">Validando link…</p>
+      </main>
+    )
+  }
+
+  if (gate === "invalid") {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-6 p-6">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Nova senha</h1>
+          <p className="text-sm text-destructive" role="alert">
+            {gateError}
+          </p>
+        </header>
+        <Button type="button" render={<Link to="/login" />}>
+          Voltar ao login
+        </Button>
+      </main>
+    )
   }
 
   return (
