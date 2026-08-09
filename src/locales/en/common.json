@@ -706,6 +706,12 @@
       "permanentWarning": "This item is already scheduled for deletion. Do you want to permanently delete it now?",
       "assetScheduleWarning": "This will schedule deletion of resource \"{{tag}}\" in 30 days. Type the tag to confirm.",
       "assetPermanentWarning": "This resource is already scheduled for deletion. Do you want to permanently delete it now?",
+      "bulkTitle": "Bulk deletion",
+      "bulkWarning": "You selected {{count}} resource(s): {{scheduled}} will be scheduled for deletion in 30 days; {{permanent}} already pending will be permanently deleted.",
+      "bulkConfirmPhrase": "DELETE",
+      "bulkConfirmLabel": "Type {{phrase}} to confirm",
+      "bulkSuccess": "{{total}} resource(s) processed ({{scheduled}} scheduled, {{permanent}} permanent).",
+      "bulkPartialSuccess": "Partial: {{scheduled}} scheduled, {{permanent}} permanent, {{failed}} failed.",
       "confirmNameLabel": "Type name",
       "confirmNamePlaceholder": "Type the name exactly as shown",
       "confirm": "Confirm Deletion",
@@ -832,6 +838,10 @@
       "actions": {
         "add": "Add",
         "bulkAdd": "Bulk add",
+        "bulkDelete": "Bulk delete",
+        "bulkDeleteCount": "Bulk delete ({{count}})",
+        "selectAll": "Select all",
+        "selectRow": "Select {{tag}}",
         "create": "Create",
         "creating": "Creating..."
       },

@@ -706,6 +706,12 @@
       "permanentWarning": "Este item já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
       "assetScheduleWarning": "Esta ação agendará a exclusão do recurso \"{{tag}}\" para daqui a 30 dias. Digite a tag para confirmar.",
       "assetPermanentWarning": "Este recurso já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
+      "bulkTitle": "Exclusão em lote",
+      "bulkWarning": "Você selecionou {{count}} recurso(s): {{scheduled}} serão agendados para exclusão em 30 dias; {{permanent}} já pendentes serão excluídos permanentemente.",
+      "bulkConfirmPhrase": "EXCLUIR",
+      "bulkConfirmLabel": "Digite {{phrase}} para confirmar",
+      "bulkSuccess": "{{total}} recurso(s) processados ({{scheduled}} agendados, {{permanent}} permanentes).",
+      "bulkPartialSuccess": "Parcial: {{scheduled}} agendados, {{permanent}} permanentes, {{failed}} falharam.",
       "confirmNameLabel": "Nome do tipo",
       "confirmNamePlaceholder": "Digite o nome exatamente como aparece",
       "confirm": "Confirmar Exclusão",
@@ -862,6 +868,10 @@
       "actions": {
         "add": "Adicionar",
         "bulkAdd": "Adicionar em lote",
+        "bulkDelete": "Excluir em lote",
+        "bulkDeleteCount": "Excluir em lote ({{count}})",
+        "selectAll": "Selecionar todos",
+        "selectRow": "Selecionar {{tag}}",
         "create": "Criar",
         "creating": "Criando..."
       },

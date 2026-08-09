@@ -706,6 +706,12 @@
       "permanentWarning": "Este elemento ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
       "assetScheduleWarning": "Esta acción programará la eliminación del recurso \"{{tag}}\" dentro de 30 días. Escriba la tag para confirmar.",
       "assetPermanentWarning": "Este recurso ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
+      "bulkTitle": "Eliminación en lote",
+      "bulkWarning": "Seleccionó {{count}} recurso(s): {{scheduled}} se programarán para eliminación en 30 días; {{permanent}} ya pendientes se eliminarán permanentemente.",
+      "bulkConfirmPhrase": "ELIMINAR",
+      "bulkConfirmLabel": "Escriba {{phrase}} para confirmar",
+      "bulkSuccess": "{{total}} recurso(s) procesados ({{scheduled}} programados, {{permanent}} permanentes).",
+      "bulkPartialSuccess": "Parcial: {{scheduled}} programados, {{permanent}} permanentes, {{failed}} fallaron.",
       "confirmNameLabel": "Nombre del tipo",
       "confirmNamePlaceholder": "Escriba el nombre exactamente como aparece",
       "confirm": "Confirmar eliminación",
@@ -832,6 +838,10 @@
       "actions": {
         "add": "Agregar",
         "bulkAdd": "Agregar en lote",
+        "bulkDelete": "Eliminar en lote",
+        "bulkDeleteCount": "Eliminar en lote ({{count}})",
+        "selectAll": "Seleccionar todos",
+        "selectRow": "Seleccionar {{tag}}",
         "create": "Crear",
         "creating": "Creando..."
       },

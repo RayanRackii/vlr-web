@@ -6,8 +6,9 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type RowSelectionState,
 } from "@tanstack/react-table"
-import { CircleCheck, Layers, LoaderCircle, MoreHorizontal, Plus } from "lucide-react"
+import { CircleCheck, Layers, LoaderCircle, MoreHorizontal, Plus, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -105,8 +106,11 @@ export function AssetsPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [assetToDelete, setAssetToDelete] = useState<AssetTableRow | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [deleteTagConfirm, setDeleteTagConfirm] = useState("")
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [wizardMode, setWizardMode] = useState<WizardMode | null>(null)
@@ -199,6 +203,40 @@ export function AssetsPage() {
 
   const columns = useMemo<ColumnDef<AssetTableRow>[]>(
     () => [
+      {
+        id: "select",
+        enableColumnFilter: false,
+        enableSorting: false,
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            aria-label={t("assets.inventory.actions.selectAll")}
+            checked={table.getIsAllPageRowsSelected()}
+            ref={(element) => {
+              if (element) {
+                element.indeterminate =
+                  table.getIsSomePageRowsSelected() &&
+                  !table.getIsAllPageRowsSelected()
+              }
+            }}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+            disabled={isTrialReadOnly}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            aria-label={t("assets.inventory.actions.selectRow", {
+              tag: row.original.tag,
+            })}
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+            disabled={isTrialReadOnly}
+          />
+        ),
+      },
       {
         accessorKey: "tag",
         header: ({ column }) => (
@@ -310,17 +348,34 @@ export function AssetsPage() {
     columns,
     state: {
       columnFilters,
+      rowSelection,
     },
+    getRowId: (row) => row.id,
+    enableRowSelection: !isTrialReadOnly,
+    onRowSelectionChange: setRowSelection,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
 
   const filteredRows = table.getFilteredRowModel().rows
+  const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
+  const selectedCount = selectedRows.length
+  const scheduleCount = selectedRows.filter(
+    (asset) => asset.scheduledDeletionAt == null,
+  ).length
+  const permanentCount = selectedRows.filter(
+    (asset) => asset.scheduledDeletionAt != null,
+  ).length
   const isHardDelete = assetToDelete?.scheduledDeletionAt != null
   const canConfirmDelete =
     assetToDelete !== null &&
     (isHardDelete || deleteTagConfirm === assetToDelete.tag)
+  const bulkConfirmPhrase = t("assets.deletion.bulkConfirmPhrase")
+  const needsBulkConfirmPhrase = scheduleCount > 0
+  const canConfirmBulkDelete =
+    selectedCount > 0 &&
+    (!needsBulkConfirmPhrase || bulkDeleteConfirm === bulkConfirmPhrase)
   const canOpenWizard =
     categories.length > 0 && families.length > 0 && !isTrialReadOnly
 
@@ -331,6 +386,24 @@ export function AssetsPage() {
       setDeleteError(null)
       setIsDeleting(false)
     }
+  }
+
+  function handleBulkDeleteOpenChange(open: boolean) {
+    setBulkDeleteOpen(open)
+    if (!open) {
+      setBulkDeleteConfirm("")
+      setDeleteError(null)
+      setIsDeleting(false)
+    }
+  }
+
+  function openBulkDeleteDialog() {
+    if (selectedCount === 0 || isTrialReadOnly) {
+      return
+    }
+    setBulkDeleteConfirm("")
+    setDeleteError(null)
+    setBulkDeleteOpen(true)
   }
 
   function handleWizardOpenChange(open: boolean) {
@@ -378,6 +451,69 @@ export function AssetsPage() {
     }
   }
 
+  async function handleBulkDeleteConfirm() {
+    if (!session || !canConfirmBulkDelete || selectedCount === 0) {
+      return
+    }
+
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      const results = await Promise.allSettled(
+        selectedRows.map((asset) => deleteAsset(asset.id)),
+      )
+
+      let scheduled = 0
+      let permanent = 0
+      let failed = 0
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          if (result.value.permanentlyDeleted) {
+            permanent += 1
+          } else {
+            scheduled += 1
+          }
+        } else {
+          failed += 1
+        }
+      }
+
+      handleBulkDeleteOpenChange(false)
+      setRowSelection({})
+
+      if (failed === 0) {
+        setSuccessMessage(
+          t("assets.deletion.bulkSuccess", {
+            scheduled,
+            permanent,
+            total: scheduled + permanent,
+          }),
+        )
+      } else {
+        setSuccessMessage(
+          t("assets.deletion.bulkPartialSuccess", {
+            scheduled,
+            permanent,
+            failed,
+          }),
+        )
+      }
+
+      await loadPageData()
+    } catch (error: unknown) {
+      console.error("AssetsPage handleBulkDeleteConfirm failed", error)
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("assets.inventory.errors.deleteFailed")
+      setDeleteError(message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -411,6 +547,21 @@ export function AssetsPage() {
           >
             <Layers data-icon="inline-start" />
             {t("assets.inventory.actions.bulkAdd")}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => {
+              openBulkDeleteDialog()
+            }}
+            disabled={selectedCount === 0 || isTrialReadOnly}
+          >
+            <Trash2 data-icon="inline-start" />
+            {selectedCount > 0
+              ? t("assets.inventory.actions.bulkDeleteCount", {
+                  count: selectedCount,
+                })
+              : t("assets.inventory.actions.bulkDelete")}
           </Button>
         </div>
       </div>
@@ -509,7 +660,10 @@ export function AssetsPage() {
 
             {!isLoading
               ? filteredRows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="whitespace-normal">
                         {flexRender(
@@ -585,6 +739,73 @@ export function AssetsPage() {
               disabled={!canConfirmDelete || isDeleting}
               onClick={() => {
                 void handleDeleteConfirm()
+              }}
+            >
+              {isDeleting
+                ? t("assets.deletion.deleting")
+                : t("assets.deletion.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkDeleteOpen} onOpenChange={handleBulkDeleteOpenChange}>
+        <DialogContent className="gap-4 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("assets.deletion.bulkTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("assets.deletion.bulkWarning", {
+                count: selectedCount,
+                scheduled: scheduleCount,
+                permanent: permanentCount,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          {needsBulkConfirmPhrase ? (
+            <div className="space-y-2">
+              <label
+                htmlFor="bulk-delete-confirm"
+                className="text-sm font-medium"
+              >
+                {t("assets.deletion.bulkConfirmLabel", {
+                  phrase: bulkConfirmPhrase,
+                })}
+              </label>
+              <Input
+                id="bulk-delete-confirm"
+                autoComplete="off"
+                value={bulkDeleteConfirm}
+                placeholder={bulkConfirmPhrase}
+                onChange={(event) => {
+                  setBulkDeleteConfirm(event.target.value)
+                }}
+              />
+            </div>
+          ) : null}
+
+          {deleteError !== null ? (
+            <p role="alert" className="text-sm text-destructive">
+              {deleteError}
+            </p>
+          ) : null}
+
+          <DialogFooter className="-mx-0 -mb-0 border-t-0 bg-transparent p-0 sm:justify-end sm:pr-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                handleBulkDeleteOpenChange(false)
+              }}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!canConfirmBulkDelete || isDeleting}
+              onClick={() => {
+                void handleBulkDeleteConfirm()
               }}
             >
               {isDeleting
