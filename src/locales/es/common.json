@@ -998,14 +998,19 @@
         "tag": "Código corto único (ej.: C-01).",
         "location": "Dónde está en el sitio (bloque, ala). Opcional.",
         "status": "Activo = disponible; Inactivo = oculto; Mantenimiento = fuera de servicio.",
-        "baseLocation": "Prefijo de ubicación aplicado a todos los ítems del lote.",
+        "baseLocation": "Ubicación aplicada por igual a todos los ítems del lote (sin numeración).",
         "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: C- + 01).",
         "startNumber": "Primer número de la secuencia generada.",
         "endNumber": "Último número de la secuencia (inclusive).",
         "requiresMaintenance": "Si está activo, el recurso entra en mantenimiento/PMOC/OS.",
         "isRentable": "Si está activo, el recurso se puede reservar en alquiler/agenda.",
+        "requiresMaintenanceHint": "Este recurso podrá vincularse a planes PMOC y órdenes de servicio.",
         "rentalType": "Espacio (cancha/sala) o bien (equipo prestado).",
         "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica."
+      },
+      "toggle": {
+        "on": "Activado",
+        "off": "Desactivado"
       },
       "steps": {
         "general": "General",

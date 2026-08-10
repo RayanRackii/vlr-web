@@ -1052,31 +1052,46 @@ export function AssetWizard({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-3 text-left hover:bg-muted/40"
+                    aria-pressed={form.requiresMaintenance}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                      form.requiresMaintenance
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:bg-muted/40",
+                    )}
                     onClick={() => {
                       patchForm({
                         requiresMaintenance: !form.requiresMaintenance,
                       })
                     }}
                   >
-                    <FieldLabel
-                      label={t("assets.detail.fields.requiresMaintenance")}
-                      help={t("assets.wizard.help.requiresMaintenance")}
-                      className="pointer-events-none"
-                    />
+                    <div className="min-w-0 space-y-1">
+                      <FieldLabel
+                        label={t("assets.detail.fields.requiresMaintenance")}
+                        help={t("assets.wizard.help.requiresMaintenance")}
+                        className="pointer-events-auto"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {form.requiresMaintenance
+                          ? t("assets.wizard.toggle.on")
+                          : t("assets.wizard.toggle.off")}
+                      </p>
+                    </div>
                     <Switch
                       checked={form.requiresMaintenance}
-                      onCheckedChange={(checked) => {
-                        patchForm({ requiresMaintenance: checked })
-                      }}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                      }}
+                      tabIndex={-1}
+                      className="pointer-events-none"
                     />
                   </button>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-3 text-left hover:bg-muted/40"
+                    aria-pressed={form.isRentable}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                      form.isRentable
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-card hover:bg-muted/40",
+                    )}
                     onClick={() => {
                       const next = !form.isRentable
                       patchForm({ isRentable: next })
@@ -1087,27 +1102,31 @@ export function AssetWizard({
                       }
                     }}
                   >
-                    <FieldLabel
-                      label={t("assets.detail.fields.isRentable")}
-                      help={t("assets.wizard.help.isRentable")}
-                      className="pointer-events-none"
-                    />
+                    <div className="min-w-0 space-y-1">
+                      <FieldLabel
+                        label={t("assets.detail.fields.isRentable")}
+                        help={t("assets.wizard.help.isRentable")}
+                        className="pointer-events-auto"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {form.isRentable
+                          ? t("assets.wizard.toggle.on")
+                          : t("assets.wizard.toggle.off")}
+                      </p>
+                    </div>
                     <Switch
                       checked={form.isRentable}
-                      onCheckedChange={(checked) => {
-                        patchForm({ isRentable: checked })
-                        if (!checked) {
-                          setPricings((prev) =>
-                            prev.filter((row) => Boolean(row.id)),
-                          )
-                        }
-                      }}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                      }}
+                      tabIndex={-1}
+                      className="pointer-events-none"
                     />
                   </button>
                 </div>
+
+                {form.requiresMaintenance ? (
+                  <p className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                    {t("assets.wizard.help.requiresMaintenanceHint")}
+                  </p>
+                ) : null}
 
                 {form.isRentable ? (
                   <div className="grid gap-3 sm:grid-cols-2">

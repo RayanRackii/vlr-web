@@ -1034,14 +1034,19 @@
         "tag": "Código curto único para identificar o recurso (ex.: Q-01).",
         "location": "Onde fica no site (bloco, ala, referência). Opcional.",
         "status": "Ativo = disponível; Inativo = oculto; Manutenção = fora de operação.",
-        "baseLocation": "Prefixo de localização aplicado a todos os itens do lote.",
+        "baseLocation": "Localização aplicada igualmente a todos os itens do lote (sem numeração).",
         "baseTag": "Prefixo da tag; o número da faixa é acrescentado (ex.: Q- + 01).",
         "startNumber": "Primeiro número da sequência gerada no lote.",
         "endNumber": "Último número da sequência (inclusive).",
         "requiresMaintenance": "Se ligado, o recurso entra no fluxo de manutenção/PMOC/OS.",
         "isRentable": "Se ligado, o recurso pode ser reservado no módulo de aluguel/agenda.",
+        "requiresMaintenanceHint": "Este recurso poderá ser vinculado a planos PMOC e ordens de serviço.",
         "rentalType": "Espaço (quadra/sala) ou bem (equipamento emprestado).",
         "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica."
+      },
+      "toggle": {
+        "on": "Ativado",
+        "off": "Desativado"
       },
       "steps": {
         "general": "Geral",

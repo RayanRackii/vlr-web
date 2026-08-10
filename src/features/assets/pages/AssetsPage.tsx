@@ -243,6 +243,7 @@ export function AssetsPage() {
           <DataTableColumnFilterHeader
             column={column}
             title={t("assets.inventory.columns.tag")}
+            className="flex items-center justify-center gap-2"
           />
         ),
       },
@@ -252,6 +253,7 @@ export function AssetsPage() {
           <DataTableColumnFilterHeader
             column={column}
             title={t("assets.inventory.columns.category")}
+            className="flex items-center justify-center gap-2"
           />
         ),
       },
@@ -261,6 +263,7 @@ export function AssetsPage() {
           <DataTableColumnFilterHeader
             column={column}
             title={t("assets.inventory.columns.location")}
+            className="flex items-center justify-center gap-2"
           />
         ),
         cell: ({ getValue }) => {
@@ -275,7 +278,7 @@ export function AssetsPage() {
           const status = row.original.status
 
           return (
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
               <Badge variant={getStatusBadgeVariant(status)}>
                 {getStatusLabel(status, t)}
               </Badge>
@@ -599,7 +602,7 @@ export function AssetsPage() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-center">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -665,7 +668,10 @@ export function AssetsPage() {
                     data-state={row.getIsSelected() ? "selected" : undefined}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="whitespace-normal">
+                      <TableCell
+                        key={cell.id}
+                        className="whitespace-normal text-center"
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),

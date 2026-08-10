@@ -15,6 +15,10 @@ export function FieldHelp({ text }: { text: string }) {
         type="button"
         className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={text}
+        onClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
       >
         <CircleHelp className="size-3.5" aria-hidden />
       </PopoverTrigger>

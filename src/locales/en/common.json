@@ -998,14 +998,19 @@
         "tag": "Short unique code for the resource (e.g. C-01).",
         "location": "Where it is on site (block, wing). Optional.",
         "status": "Active = available; Inactive = hidden; Maintenance = out of service.",
-        "baseLocation": "Location prefix applied to every item in the batch.",
+        "baseLocation": "Location applied equally to every item in the batch (no numbering).",
         "baseTag": "Tag prefix; the range number is appended (e.g. C- + 01).",
         "startNumber": "First number in the generated sequence.",
         "endNumber": "Last number in the sequence (inclusive).",
         "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
         "isRentable": "When on, the resource can be booked in rentals/schedule.",
+        "requiresMaintenanceHint": "This resource can be linked to PMOC plans and work orders.",
         "rentalType": "Space (court/room) or good (loaned equipment).",
         "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity."
+      },
+      "toggle": {
+        "on": "On",
+        "off": "Off"
       },
       "steps": {
         "general": "General",

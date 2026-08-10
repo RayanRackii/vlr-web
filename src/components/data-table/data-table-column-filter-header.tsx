@@ -13,18 +13,24 @@ import {
 type DataTableColumnFilterHeaderProps<TData> = {
   column: Column<TData, unknown>
   title: string
+  className?: string
 }
 
 export function DataTableColumnFilterHeader<TData>({
   column,
   title,
+  className,
 }: DataTableColumnFilterHeaderProps<TData>) {
   const { t } = useTranslation()
   const isFiltered = column.getIsFiltered()
   const filterValue = column.getFilterValue()
 
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div
+      className={
+        className ?? "flex items-center justify-between gap-2"
+      }
+    >
       <span>{title}</span>
       <Popover>
         <PopoverTrigger
