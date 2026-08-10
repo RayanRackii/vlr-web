@@ -8,6 +8,7 @@ import {
   type UpdateTenantAdminRequest,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 import { z } from "zod"
 
 export async function listAdminTenants(): Promise<TenantAdmin[]> {
@@ -22,7 +23,7 @@ export async function getAdminTenant(tenantId: string): Promise<TenantAdmin> {
   } catch (error: unknown) {
     const message = parseApiError(
       getAxiosErrorPayload(error),
-      "Failed to load tenant.",
+      i18n.t("apiErrors.loadTenant"),
     )
     throw new Error(message)
   }
@@ -36,7 +37,7 @@ export async function deleteAdminTenant(tenantId: string): Promise<void> {
   } catch (error: unknown) {
     const message = parseApiError(
       getAxiosErrorPayload(error),
-      "Failed to delete tenant.",
+      i18n.t("apiErrors.deleteTenant"),
     )
     throw new Error(message)
   }
@@ -65,7 +66,7 @@ export async function enterTenantEnvironment(
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        "Failed to enter tenant environment.",
+        i18n.t("apiErrors.enterTenant"),
       ),
     )
   }
@@ -78,7 +79,7 @@ export async function exitTenantEnvironment(): Promise<void> {
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        "Failed to leave tenant environment.",
+        i18n.t("apiErrors.exitTenant"),
       ),
     )
   }
@@ -108,7 +109,7 @@ export async function createAdminTenant(
   } catch (error: unknown) {
     const message = parseApiError(
       getAxiosErrorPayload(error),
-      "Failed to create tenant.",
+      i18n.t("apiErrors.createTenant"),
     )
     throw new Error(message)
   }
@@ -137,7 +138,7 @@ export async function updateAdminTenant(
   } catch (error: unknown) {
     const message = parseApiError(
       getAxiosErrorPayload(error),
-      "Failed to update tenant.",
+      i18n.t("apiErrors.updateTenant"),
     )
     throw new Error(message)
   }

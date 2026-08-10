@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 const occupancyKindSchema = z.object({
   id: z.string().uuid(),
@@ -108,7 +109,7 @@ export async function listOccupancyKinds(): Promise<OccupancyKind[]> {
   const response = await api.get("/api/occupancy-kinds")
   const parsed = z.array(occupancyKindSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid occupancy kinds payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -123,12 +124,12 @@ export async function createOccupancyKind(
     })
     const parsed = occupancyKindSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid create occupancy kind response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not create occupancy kind."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createOccupancyKind")),
     )
   }
 }
@@ -144,12 +145,12 @@ export async function updateOccupancyKind(
     })
     const parsed = occupancyKindSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid update occupancy kind response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not update occupancy kind."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.updateOccupancyKind")),
     )
   }
 }
@@ -162,7 +163,7 @@ export async function listScheduleTemplates(
   })
   const parsed = z.array(scheduleTemplateSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid schedule templates payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -185,12 +186,12 @@ export async function createScheduleTemplate(body: {
     })
     const parsed = scheduleTemplateSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid create template response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not create template."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createTemplate")),
     )
   }
 }
@@ -216,12 +217,12 @@ export async function updateScheduleTemplate(
     })
     const parsed = scheduleTemplateSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid update template response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not update template."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.updateTemplate")),
     )
   }
 }
@@ -231,7 +232,7 @@ export async function deleteScheduleTemplate(id: string): Promise<void> {
     await api.delete(`/api/schedule/templates/${id}`)
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not delete template."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.deleteTemplate")),
     )
   }
 }
@@ -247,12 +248,12 @@ export async function publishScheduleDay(body: {
     })
     const created = z.object({ created: z.number() }).safeParse(response.data)
     if (!created.success) {
-      throw new Error("Invalid publish response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return created.data.created
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not publish day."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.publishDay")),
     )
   }
 }
@@ -266,7 +267,7 @@ export async function fetchAdminScheduleDay(
   })
   const parsed = dayScheduleSchema.safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid schedule day payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -275,7 +276,7 @@ export async function listAdminRentalAssets(): Promise<AdminRentalAsset[]> {
   const response = await api.get("/api/rental-assets")
   const parsed = z.array(rentalAssetSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid rental assets payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -300,7 +301,7 @@ export async function seedDefaultHourlyTemplates(
     ) ?? kinds.find((kind) => kind.isBookableByCustomer && kind.isActive)
 
   if (!openKind) {
-    throw new Error("No bookable occupancy kind found. Create an Open kind first.")
+    throw new Error(i18n.t("apiErrors.noBookableKind"))
   }
 
   const existingKeys = new Set(

@@ -11,9 +11,55 @@
     "edit": "Edit",
     "delete": "Delete",
     "optional": "optional",
+    "required": "Please fill in the required fields.",
     "filter": "Filter",
     "searchPlaceholder": "Search...",
     "loading": "Loading..."
+  },
+  "apiErrors": {
+    "invalidResponse": "Invalid API response.",
+    "loadUsers": "Could not load users.",
+    "deleteUser": "Could not delete user.",
+    "loadTenantUsers": "Could not load tenant users.",
+    "sendInvite": "Could not send invite.",
+    "resendInvite": "Could not resend invite.",
+    "revokeInvite": "Could not revoke invite.",
+    "promoteUser": "Could not update user role.",
+    "loadTenant": "Could not load tenant.",
+    "deleteTenant": "Could not delete tenant.",
+    "enterTenant": "Could not enter tenant environment.",
+    "exitTenant": "Could not leave tenant environment.",
+    "createTenant": "Could not create tenant.",
+    "updateTenant": "Could not update tenant.",
+    "loadReservations": "Could not load reservations.",
+    "confirmReservation": "Could not confirm reservation.",
+    "cancelReservation": "Could not cancel reservation.",
+    "createOccupancyKind": "Could not create occupancy kind.",
+    "updateOccupancyKind": "Could not update occupancy kind.",
+    "createTemplate": "Could not create template.",
+    "updateTemplate": "Could not update template.",
+    "deleteTemplate": "Could not delete template.",
+    "publishDay": "Could not publish day.",
+    "noBookableKind": "No bookable occupancy kind found. Create an Open kind first.",
+    "register": "Could not complete registration.",
+    "createField": "Could not create field.",
+    "deleteField": "Could not delete field.",
+    "verifyPhone": "Could not verify phone.",
+    "signIn": "Could not sign in.",
+    "createMenuItem": "Could not create menu item.",
+    "updateMenuItem": "Could not update menu item.",
+    "deleteMenuItem": "Could not delete menu item.",
+    "checkAvailability": "Could not check availability.",
+    "createReservation": "Could not create reservation.",
+    "loadScheduleDay": "Could not load schedule day.",
+    "bookSlot": "Could not book slot.",
+    "processImage": "Could not process image.",
+    "loadAssetFamilies": "Could not load asset families.",
+    "loadOccupancyKinds": "Could not load occupancy kinds.",
+    "loadTemplates": "Could not load templates.",
+    "loadAssets": "Could not load assets.",
+    "loadMenu": "Could not load menu.",
+    "invalidPayload": "Invalid data received from the API."
   },
   "trial": {
     "banner": {
@@ -71,6 +117,12 @@
         "passwordMin": "Password must be at least 8 characters.",
         "mismatch": "Passwords must match."
       }
+    },
+    "login": {
+      "invalidCredentials": "Invalid email or password.",
+      "failed": "Could not sign in. Please try again.",
+      "resetSent": "If an account exists for this email, we sent a password reset link.",
+      "resetFailed": "Could not send the reset email. Please try again."
     }
   },
   "tenantPortal": {
@@ -925,6 +977,9 @@
         "create": "Add resource",
         "bulk": "Bulk add resources",
         "edit": "Edit resource"
+      },
+      "familyFields": {
+        "capacity": "Capacity"
       },
       "steps": {
         "general": "General",

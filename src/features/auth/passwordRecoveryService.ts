@@ -1,4 +1,5 @@
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 export async function requestPasswordReset(email: string): Promise<string> {
   try {
@@ -6,15 +7,12 @@ export async function requestPasswordReset(email: string): Promise<string> {
       "/api/auth/forgot-password",
       { email },
     )
-    return (
-      response.data.message ??
-      "Se existir uma conta com este e-mail, enviamos um link para redefinir a senha."
-    )
+    return response.data.message ?? i18n.t("auth.login.resetSent")
   } catch (error) {
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        "Não foi possível enviar o e-mail de reset. Tente novamente.",
+        i18n.t("auth.login.resetFailed"),
       ),
     )
   }

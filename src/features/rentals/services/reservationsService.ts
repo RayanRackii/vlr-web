@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 export const reservationStatuses = [
   "PendingDeposit",
@@ -60,12 +61,12 @@ export async function listAdminReservations(
     })
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid reservations payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not load reservations."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),
     )
   }
 }
@@ -77,14 +78,14 @@ export async function confirmAdminReservation(
     const response = await api.post(`/api/reservations/${id}/confirm`)
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid confirm response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        "Could not confirm reservation.",
+        i18n.t("apiErrors.confirmReservation"),
       ),
     )
   }
@@ -97,14 +98,14 @@ export async function cancelAdminReservation(
     const response = await api.post(`/api/reservations/${id}/cancel`)
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid cancel response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        "Could not cancel reservation.",
+        i18n.t("apiErrors.cancelReservation"),
       ),
     )
   }

@@ -578,9 +578,9 @@ export function AssetWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-4 sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{t(titleKey)}</DialogTitle>
+      <DialogContent className="gap-5 border-border/80 bg-card sm:max-w-3xl">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
         </DialogHeader>
 
         <WizardPanelsStepper
@@ -819,7 +819,10 @@ export function AssetWizard({
                     {selectedFamily.fields.map((familyField) => (
                       <div key={familyField.key} className="space-y-2">
                         <Label>
-                          {familyField.label ?? familyField.key}
+                          {t(`assets.wizard.familyFields.${familyField.key}`, {
+                            defaultValue:
+                              familyField.label ?? familyField.key,
+                          })}
                           {!familyField.required
                             ? ` (${t("common.optional")})`
                             : null}

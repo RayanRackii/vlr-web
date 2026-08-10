@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,15 +22,19 @@ import {
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
 import { supabase } from "@/lib/supabase"
 
-function getLoginErrorMessage(error: AuthError): string {
+function getLoginErrorMessage(
+  error: AuthError,
+  t: (key: string) => string,
+): string {
   if (error.message === "Invalid login credentials") {
-    return "E-mail ou senha inválidos."
+    return t("auth.login.invalidCredentials")
   }
 
-  return "Não foi possível entrar. Tente novamente."
+  return t("auth.login.failed")
 }
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
@@ -52,7 +57,7 @@ export function LoginPage() {
     })
 
     if (error !== null) {
-      form.setError("root", { message: getLoginErrorMessage(error) })
+      form.setError("root", { message: getLoginErrorMessage(error, t) })
       return
     }
 
@@ -78,7 +83,7 @@ export function LoginPage() {
         message:
           error instanceof Error
             ? error.message
-            : "Não foi possível enviar o e-mail de reset. Tente novamente.",
+            : t("auth.login.resetFailed"),
       })
     } finally {
       setIsSendingReset(false)

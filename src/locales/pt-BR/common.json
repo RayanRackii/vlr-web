@@ -11,9 +11,55 @@
     "edit": "Editar",
     "delete": "Excluir",
     "optional": "opcional",
+    "required": "Preencha os campos obrigatórios.",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Carregando..."
+  },
+  "apiErrors": {
+    "invalidResponse": "Resposta inválida da API.",
+    "loadUsers": "Não foi possível carregar os usuários.",
+    "deleteUser": "Não foi possível excluir o usuário.",
+    "loadTenantUsers": "Não foi possível carregar os usuários do cliente.",
+    "sendInvite": "Não foi possível enviar o convite.",
+    "resendInvite": "Não foi possível reenviar o convite.",
+    "revokeInvite": "Não foi possível revogar o convite.",
+    "promoteUser": "Não foi possível atualizar o papel do usuário.",
+    "loadTenant": "Não foi possível carregar o cliente.",
+    "deleteTenant": "Não foi possível excluir o cliente.",
+    "enterTenant": "Não foi possível abrir o ambiente do cliente.",
+    "exitTenant": "Não foi possível sair do ambiente do cliente.",
+    "createTenant": "Não foi possível criar o cliente.",
+    "updateTenant": "Não foi possível atualizar o cliente.",
+    "loadReservations": "Não foi possível carregar as reservas.",
+    "confirmReservation": "Não foi possível confirmar a reserva.",
+    "cancelReservation": "Não foi possível cancelar a reserva.",
+    "createOccupancyKind": "Não foi possível criar o tipo de ocupação.",
+    "updateOccupancyKind": "Não foi possível atualizar o tipo de ocupação.",
+    "createTemplate": "Não foi possível criar o template.",
+    "updateTemplate": "Não foi possível atualizar o template.",
+    "deleteTemplate": "Não foi possível excluir o template.",
+    "publishDay": "Não foi possível publicar o dia.",
+    "noBookableKind": "Nenhum tipo reservável encontrado. Crie um tipo Aberto primeiro.",
+    "register": "Não foi possível concluir o cadastro.",
+    "createField": "Não foi possível criar o campo.",
+    "deleteField": "Não foi possível excluir o campo.",
+    "verifyPhone": "Não foi possível verificar o celular.",
+    "signIn": "Não foi possível entrar.",
+    "createMenuItem": "Não foi possível criar o item de menu.",
+    "updateMenuItem": "Não foi possível atualizar o item de menu.",
+    "deleteMenuItem": "Não foi possível excluir o item de menu.",
+    "checkAvailability": "Não foi possível verificar a disponibilidade.",
+    "createReservation": "Não foi possível criar a reserva.",
+    "loadScheduleDay": "Não foi possível carregar a agenda do dia.",
+    "bookSlot": "Não foi possível reservar o horário.",
+    "processImage": "Não foi possível processar a imagem.",
+    "loadAssetFamilies": "Não foi possível carregar as famílias de ativos.",
+    "loadOccupancyKinds": "Não foi possível carregar os tipos de ocupação.",
+    "loadTemplates": "Não foi possível carregar os templates.",
+    "loadAssets": "Não foi possível carregar os ativos.",
+    "loadMenu": "Não foi possível carregar o menu.",
+    "invalidPayload": "Dados inválidos recebidos da API."
   },
   "trial": {
     "banner": {
@@ -71,6 +117,12 @@
         "passwordMin": "A senha deve ter no mínimo 8 caracteres.",
         "mismatch": "As senhas precisam ser iguais."
       }
+    },
+    "login": {
+      "invalidCredentials": "E-mail ou senha inválidos.",
+      "failed": "Não foi possível entrar. Tente novamente.",
+      "resetSent": "Se existir uma conta com este e-mail, enviamos um link para redefinir a senha.",
+      "resetFailed": "Não foi possível enviar o e-mail de reset. Tente novamente."
     }
   },
   "tenantPortal": {
@@ -961,6 +1013,9 @@
         "create": "Adicionar recurso",
         "bulk": "Adicionar recursos em lote",
         "edit": "Editar recurso"
+      },
+      "familyFields": {
+        "capacity": "Capacidade"
       },
       "steps": {
         "general": "Geral",

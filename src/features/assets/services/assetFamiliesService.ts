@@ -23,12 +23,7 @@ export async function listAssetFamilyCatalog(): Promise<AssetFamily[]> {
     const response = await api.get<unknown>("/api/asset-families")
     return assetFamilyListSchema.parse(response.data)
   } catch (error: unknown) {
-    throwFamiliesError(
-      error,
-      i18n.t("admin.wizard.errors.familiesLoadFailed", {
-        defaultValue: "Failed to load asset families.",
-      }),
-    )
+    throwFamiliesError(error, i18n.t("apiErrors.loadAssetFamilies"))
   }
 }
 
@@ -37,11 +32,6 @@ export async function listActiveAssetFamilies(): Promise<AssetFamily[]> {
     const response = await api.get<unknown>("/api/asset-families/active")
     return assetFamilyListSchema.parse(response.data)
   } catch (error: unknown) {
-    throwFamiliesError(
-      error,
-      i18n.t("assets.inventory.errors.familiesLoadFailed", {
-        defaultValue: "Failed to load asset families.",
-      }),
-    )
+    throwFamiliesError(error, i18n.t("apiErrors.loadAssetFamilies"))
   }
 }

@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
@@ -109,7 +110,7 @@ export async function fetchTenantBranding(
   const response = await api.get(`/api/public/tenants/${subdomain}/branding`)
   const parsed = tenantBrandingSchema.safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid branding payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -122,7 +123,7 @@ export async function fetchRegistrationSchema(
   )
   const parsed = registrationSchemaResponseSchema.safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid registration schema payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -143,12 +144,12 @@ export async function registerCustomer(
     })
     const parsed = registerResponseSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid register response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not register."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.register")),
     )
   }
 }
@@ -159,7 +160,7 @@ export async function listTenantRegistrationFields(): Promise<
   const response = await api.get("/api/registration-fields")
   const parsed = z.array(registrationFieldSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid registration fields payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -172,7 +173,7 @@ export async function listAdminRegistrationFields(
   )
   const parsed = z.array(registrationFieldSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid registration fields payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -195,12 +196,12 @@ export async function createRegistrationField(
     const response = await api.post(url, body)
     const parsed = registrationFieldSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid create field response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not create field."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createField")),
     )
   }
 }
@@ -216,7 +217,7 @@ export async function deleteRegistrationField(
     await api.delete(url)
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not delete field."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.deleteField")),
     )
   }
 }
@@ -233,7 +234,7 @@ export async function verifyCustomerPhone(
     )
     const parsed = authResponseSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid verify-phone response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     persistCustomerSession(
       parsed.data.token,
@@ -243,7 +244,7 @@ export async function verifyCustomerPhone(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not verify phone."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyPhone")),
     )
   }
 }
@@ -260,7 +261,7 @@ export async function loginCustomer(
     )
     const parsed = authResponseSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid login response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     persistCustomerSession(
       parsed.data.token,
@@ -270,7 +271,7 @@ export async function loginCustomer(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not sign in."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.signIn")),
     )
   }
 }
@@ -307,7 +308,7 @@ export async function fetchTenantMenu(
   const response = await api.get(`/api/public/tenants/${subdomain}/menu`)
   const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid menu payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -316,7 +317,7 @@ export async function listTenantModuleMenuItems(): Promise<ModuleMenuItem[]> {
   const response = await api.get("/api/module-menu-items")
   const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid module menu items payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -329,7 +330,7 @@ export async function listAdminModuleMenuItems(
   )
   const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid module menu items payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -351,12 +352,12 @@ export async function createModuleMenuItem(
     const response = await api.post(url, body)
     const parsed = moduleMenuItemSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid create menu item response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not create menu item."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createMenuItem")),
     )
   }
 }
@@ -378,12 +379,12 @@ export async function updateModuleMenuItem(
     const response = await api.put(url, body)
     const parsed = moduleMenuItemSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid update menu item response.")
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not update menu item."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.updateMenuItem")),
     )
   }
 }
@@ -399,7 +400,7 @@ export async function deleteModuleMenuItem(
     await api.delete(url)
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not delete menu item."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.deleteMenuItem")),
     )
   }
 }
@@ -415,7 +416,7 @@ export async function fileToCompressedDataUrl(file: File): Promise<string> {
   canvas.height = height
   const context = canvas.getContext("2d")
   if (!context) {
-    throw new Error("Could not process image.")
+    throw new Error(i18n.t("apiErrors.processImage"))
   }
   context.drawImage(bitmap, 0, 0, width, height)
   bitmap.close()
@@ -487,7 +488,7 @@ export async function fetchPortalRentalAssets(
   )
   const parsed = z.array(rentalAssetSchema).safeParse(response.data)
   if (!parsed.success) {
-    throw new Error("Invalid rental assets payload.")
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
 }
@@ -509,12 +510,12 @@ export async function checkPortalAvailability(
     })
     const parsed = availabilitySchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid availability payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not check availability."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.checkAvailability")),
     )
   }
 }
@@ -530,12 +531,12 @@ export async function createPortalReservation(body: {
     const response = await api.post("/api/reservations", body)
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid reservation payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not create reservation."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createReservation")),
     )
   }
 }
@@ -545,12 +546,12 @@ export async function listMyPortalReservations(): Promise<PortalReservation[]> {
     const response = await api.get("/api/reservations/mine")
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid reservations payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not load reservations."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),
     )
   }
 }
@@ -610,12 +611,12 @@ export async function fetchPublicScheduleDay(
     )
     const parsed = dayScheduleSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid schedule day payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not load schedule day."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadScheduleDay")),
     )
   }
 }
@@ -633,12 +634,12 @@ export async function bookPortalSlot(body: {
     })
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
-      throw new Error("Invalid reservation payload.")
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Could not book slot."),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.bookSlot")),
     )
   }
 }

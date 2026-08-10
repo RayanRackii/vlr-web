@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 const tenantUserSchema = z.object({
   id: z.string().uuid(),
@@ -42,7 +43,10 @@ export async function listTenantUsers(
     return tenantUsersBundleSchema.parse(response.data)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to load users."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.loadTenantUsers"),
+      ),
     )
   }
 }
@@ -63,7 +67,10 @@ export async function inviteTenantUser(
     return tenantInviteSchema.parse(response.data)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to send invite."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.sendInvite"),
+      ),
     )
   }
 }
@@ -76,7 +83,10 @@ export async function resendTenantInvite(
     await api.post(`/api/admin/tenants/${tenantId}/invites/${inviteId}/resend`)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to resend invite."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.resendInvite"),
+      ),
     )
   }
 }
@@ -89,7 +99,10 @@ export async function revokeTenantInvite(
     await api.post(`/api/admin/tenants/${tenantId}/invites/${inviteId}/revoke`)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to revoke invite."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.revokeInvite"),
+      ),
     )
   }
 }
@@ -105,7 +118,10 @@ export async function promoteTenantUser(
     })
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to promote user."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.promoteUser"),
+      ),
     )
   }
 }

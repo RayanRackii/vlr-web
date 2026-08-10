@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 const platformUserSchema = z.object({
   id: z.string().uuid(),
@@ -36,7 +37,10 @@ export async function listPlatformUsers(
     return platformUserListSchema.parse(response.data)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to load users."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.loadUsers"),
+      ),
     )
   }
 }
@@ -46,7 +50,10 @@ export async function deletePlatformUser(userId: string): Promise<void> {
     await api.delete(`/api/admin/users/${userId}`)
   } catch (error: unknown) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), "Failed to delete user."),
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.deleteUser"),
+      ),
     )
   }
 }
