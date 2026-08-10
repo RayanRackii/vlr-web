@@ -947,11 +947,15 @@
         "unitRequired": "Unit is required.",
         "categoryRequired": "Type is required.",
         "familyRequired": "Family is required.",
+        "nameRequired": "Name is required.",
+        "tagRequired": "Tag is required.",
         "baseLocationRequired": "Base location is required.",
         "baseTagRequired": "Base tag is required.",
         "startNumberRequired": "Enter the start number.",
         "endNumberRequired": "Enter the end number.",
-        "rangeInvalid": "End number must be greater than or equal to start number."
+        "rangeInvalid": "End number must be greater than or equal to start number.",
+        "quantityRequired": "Enter a valid quantity (minimum 1).",
+        "pricingRequired": "Add at least one valid price band."
       },
       "success": {
         "bulkCreated": "{{count}} resource(s) created successfully."
@@ -981,6 +985,28 @@
       "familyFields": {
         "capacity": "Capacity"
       },
+      "placeholders": {
+        "name": "e.g. Court 1 — indoor",
+        "tag": "e.g. C-01",
+        "location": "e.g. Block A, ground floor"
+      },
+      "help": {
+        "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
+        "category": "Resource type (e.g. Tennis court). Define types under Assets → Types.",
+        "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
+        "name": "Friendly name shown in the schedule and lists.",
+        "tag": "Short unique code for the resource (e.g. C-01).",
+        "location": "Where it is on site (block, wing). Optional.",
+        "status": "Active = available; Inactive = hidden; Maintenance = out of service.",
+        "baseLocation": "Location prefix applied to every item in the batch.",
+        "baseTag": "Tag prefix; the range number is appended (e.g. C- + 01).",
+        "startNumber": "First number in the generated sequence.",
+        "endNumber": "Last number in the sequence (inclusive).",
+        "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
+        "isRentable": "When on, the resource can be booked in rentals/schedule.",
+        "rentalType": "Space (court/room) or good (loaned equipment).",
+        "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity."
+      },
       "steps": {
         "general": "General",
         "capabilities": "Capabilities",
@@ -995,6 +1021,9 @@
         "bulk": "Resources created successfully.",
         "update": "Resource updated successfully."
       }
+    },
+    "units": {
+      "matrizDefault": "Headquarters"
     },
     "detail": {
       "title": {

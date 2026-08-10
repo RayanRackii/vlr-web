@@ -10,15 +10,11 @@ export type WizardPanelStep = {
 type WizardPanelsStepperProps = {
   steps: readonly WizardPanelStep[]
   currentIndex: number
-  /** 0-based indices that may be clicked (typically completed steps). */
   onStepClick?: (index: number) => void
   className?: string
 }
 
-/**
- * Horizontal panels stepper with chevron separators (no vertical dividers).
- * Uses theme primary for current/complete states.
- */
+/** Horizontal step list — no vertical dividers or absolute SVG chevrons. */
 export function WizardPanelsStepper({
   steps,
   currentIndex,
@@ -28,12 +24,9 @@ export function WizardPanelsStepper({
   return (
     <nav
       aria-label="Progress"
-      className={cn(
-        "overflow-hidden rounded-lg border border-border bg-muted/40",
-        className,
-      )}
+      className={cn("rounded-lg border border-border bg-muted/30 p-1", className)}
     >
-      <ol className="flex items-stretch overflow-x-auto">
+      <ol className="flex flex-wrap items-center gap-1">
         {steps.map((step, index) => {
           const status =
             index < currentIndex
@@ -45,14 +38,7 @@ export function WizardPanelsStepper({
           const isLast = index === steps.length - 1
 
           return (
-            <li
-              key={step.id}
-              className={cn(
-                "relative flex min-w-0 flex-1 items-stretch",
-                status === "current" && "bg-primary/10",
-                status === "complete" && "bg-primary/5",
-              )}
-            >
+            <li key={step.id} className="flex min-w-0 flex-1 items-center gap-1">
               <button
                 type="button"
                 disabled={!clickable}
@@ -63,24 +49,26 @@ export function WizardPanelsStepper({
                   }
                 }}
                 className={cn(
-                  "flex w-full min-w-[7.5rem] items-center gap-2.5 px-3 py-3 text-left text-sm sm:gap-3 sm:px-4",
+                  "flex w-full min-w-[6.5rem] items-center gap-2 rounded-md px-2.5 py-2.5 text-left text-sm",
+                  status === "current" && "bg-primary/10",
+                  status === "complete" && "bg-primary/5",
                   clickable && "cursor-pointer hover:bg-primary/10",
                   !clickable && "cursor-default",
                 )}
               >
                 <span
                   className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
+                    "flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums",
                     status === "complete" &&
                       "bg-primary text-primary-foreground",
                     status === "current" &&
-                      "bg-primary text-primary-foreground ring-4 ring-primary/15",
+                      "bg-primary text-primary-foreground",
                     status === "upcoming" &&
                       "border border-border bg-card text-muted-foreground",
                   )}
                 >
                   {status === "complete" ? (
-                    <Check className="size-4" aria-hidden strokeWidth={2.5} />
+                    <Check className="size-3.5" aria-hidden strokeWidth={2.5} />
                   ) : (
                     String(index + 1).padStart(2, "0")
                   )}
@@ -96,14 +84,12 @@ export function WizardPanelsStepper({
                   {step.label}
                 </span>
               </button>
-
               {!isLast ? (
-                <span
+                <ChevronRight
+                  className="size-4 shrink-0 text-muted-foreground/40"
                   aria-hidden
-                  className="flex shrink-0 items-center self-center pr-1 text-muted-foreground/50"
-                >
-                  <ChevronRight className="size-4" strokeWidth={1.75} />
-                </span>
+                  strokeWidth={1.75}
+                />
               ) : null}
             </li>
           )

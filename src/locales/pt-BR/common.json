@@ -983,11 +983,15 @@
         "unitRequired": "A unidade é obrigatória.",
         "categoryRequired": "O tipo é obrigatório.",
         "familyRequired": "A família é obrigatória.",
+        "nameRequired": "O nome é obrigatório.",
+        "tagRequired": "A tag é obrigatória.",
         "baseLocationRequired": "A localização base é obrigatória.",
         "baseTagRequired": "A tag base é obrigatória.",
         "startNumberRequired": "Informe o número inicial.",
         "endNumberRequired": "Informe o número final.",
-        "rangeInvalid": "O número final deve ser maior ou igual ao inicial."
+        "rangeInvalid": "O número final deve ser maior ou igual ao inicial.",
+        "quantityRequired": "Informe uma quantidade válida (mínimo 1).",
+        "pricingRequired": "Adicione ao menos uma faixa de preço válida."
       },
       "success": {
         "bulkCreated": "{{count}} recurso(s) criado(s) com sucesso."
@@ -1017,6 +1021,28 @@
       "familyFields": {
         "capacity": "Capacidade"
       },
+      "placeholders": {
+        "name": "Ex.: Quadra 1 — coberta",
+        "tag": "Ex.: Q-01",
+        "location": "Ex.: Bloco A, piso térreo"
+      },
+      "help": {
+        "unit": "Local físico deste recurso (sede, filial). Criada automaticamente no cadastro do cliente; gestão de unidades virá depois.",
+        "category": "Tipo/classificação do recurso (ex.: Quadra de tênis). Defina tipos em Ativos → Tipos.",
+        "family": "Família de atributos (espaços, bens, elétricos…). Controla campos extras do formulário.",
+        "name": "Nome amigável exibido na agenda e nas listas.",
+        "tag": "Código curto único para identificar o recurso (ex.: Q-01).",
+        "location": "Onde fica no site (bloco, ala, referência). Opcional.",
+        "status": "Ativo = disponível; Inativo = oculto; Manutenção = fora de operação.",
+        "baseLocation": "Prefixo de localização aplicado a todos os itens do lote.",
+        "baseTag": "Prefixo da tag; o número da faixa é acrescentado (ex.: Q- + 01).",
+        "startNumber": "Primeiro número da sequência gerada no lote.",
+        "endNumber": "Último número da sequência (inclusive).",
+        "requiresMaintenance": "Se ligado, o recurso entra no fluxo de manutenção/PMOC/OS.",
+        "isRentable": "Se ligado, o recurso pode ser reservado no módulo de aluguel/agenda.",
+        "rentalType": "Espaço (quadra/sala) ou bem (equipamento emprestado).",
+        "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica."
+      },
       "steps": {
         "general": "Geral",
         "capabilities": "Capacidades",
@@ -1031,6 +1057,9 @@
         "bulk": "Recursos criados com sucesso.",
         "update": "Recurso atualizado com sucesso."
       }
+    },
+    "units": {
+      "matrizDefault": "Matriz"
     },
     "detail": {
       "title": {

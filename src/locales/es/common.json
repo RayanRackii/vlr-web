@@ -947,11 +947,15 @@
         "unitRequired": "La unidad es obligatoria.",
         "categoryRequired": "El tipo es obligatorio.",
         "familyRequired": "La familia es obligatoria.",
+        "nameRequired": "El nombre es obligatorio.",
+        "tagRequired": "El tag es obligatorio.",
         "baseLocationRequired": "La ubicación base es obligatoria.",
         "baseTagRequired": "El tag base es obligatorio.",
         "startNumberRequired": "Ingrese el número inicial.",
         "endNumberRequired": "Ingrese el número final.",
-        "rangeInvalid": "El número final debe ser mayor o igual al inicial."
+        "rangeInvalid": "El número final debe ser mayor o igual al inicial.",
+        "quantityRequired": "Ingrese una cantidad válida (mínimo 1).",
+        "pricingRequired": "Agregue al menos una franja de precio válida."
       },
       "success": {
         "bulkCreated": "{{count}} recurso(s) creado(s) con éxito."
@@ -981,6 +985,28 @@
       "familyFields": {
         "capacity": "Capacidad"
       },
+      "placeholders": {
+        "name": "Ej.: Cancha 1 — cubierta",
+        "tag": "Ej.: C-01",
+        "location": "Ej.: Bloque A, planta baja"
+      },
+      "help": {
+        "unit": "Sitio físico de este recurso (sede, sucursal). Se crea automáticamente al registrar el cliente; la gestión de unidades vendrá después.",
+        "category": "Tipo del recurso (ej.: Cancha de tenis). Defina tipos en Activos → Tipos.",
+        "family": "Familia de atributos (espacios, bienes, eléctricos…). Controla campos extra del formulario.",
+        "name": "Nombre amigable mostrado en la agenda y listas.",
+        "tag": "Código corto único (ej.: C-01).",
+        "location": "Dónde está en el sitio (bloque, ala). Opcional.",
+        "status": "Activo = disponible; Inactivo = oculto; Mantenimiento = fuera de servicio.",
+        "baseLocation": "Prefijo de ubicación aplicado a todos los ítems del lote.",
+        "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: C- + 01).",
+        "startNumber": "Primer número de la secuencia generada.",
+        "endNumber": "Último número de la secuencia (inclusive).",
+        "requiresMaintenance": "Si está activo, el recurso entra en mantenimiento/PMOC/OS.",
+        "isRentable": "Si está activo, el recurso se puede reservar en alquiler/agenda.",
+        "rentalType": "Espacio (cancha/sala) o bien (equipo prestado).",
+        "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica."
+      },
       "steps": {
         "general": "General",
         "capabilities": "Capacidades",
@@ -995,6 +1021,9 @@
         "bulk": "Recursos creados con éxito.",
         "update": "Recurso actualizado con éxito."
       }
+    },
+    "units": {
+      "matrizDefault": "Matriz"
     },
     "detail": {
       "title": {
