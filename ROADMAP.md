@@ -99,3 +99,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-09 | **Executado:** login “Esqueci a senha” chama API (Resend/Rolvix) em vez do e-mail genérico do Supabase. |
 | 2026-08-09 | **Fix:** `/reset-password` valida `token_hash` via `verifyOtp` (link do e-mail aponta para o front, não para `supabase.co/verify`). |
 | 2026-08-09 | **Executado:** exclusão em lote de ativos (checkbox + soft/hard via DELETE existente). |
+| 2026-08-10 | **Docs:** PlatformAdmin não lista/conta como usuário do tenant (API). |

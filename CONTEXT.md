@@ -109,7 +109,7 @@ _Avoid_: custom domain (until real custom hostnames are supported), slug alone w
 ## 2. Dinâmica de Módulos e Customização
 - **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B deve filtrar por `activeModules` / `tenant_modules` (parcialmente feito; ver ROADMAP).
 - **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
-- **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`.
+- **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`. E-mails `PlatformAdmin` não aparecem/contam como usuários do tenant e não podem ser excluídos pela UI de users.
 - **Subdomain** = roteamento + branding; o portal é a UI B2C.
 
 ## 3. Mapa mental (o que este repo renderiza)
