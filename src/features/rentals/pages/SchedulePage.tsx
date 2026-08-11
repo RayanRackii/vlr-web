@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DailyAgendaTab } from "@/features/rentals/components/schedule/DailyAgendaTab"
+import { cn } from "@/lib/utils"
 import { OccupancyKindSheet } from "@/features/rentals/components/schedule/OccupancyKindSheet"
 import { OccupancyKindsTab } from "@/features/rentals/components/schedule/OccupancyKindsTab"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
@@ -323,8 +323,14 @@ export function SchedulePage() {
 
   const loading = loadingAssets || loadingDay
 
+  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
+  ]
+
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 p-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {t("rentals.schedule.title")}
@@ -334,27 +340,33 @@ export function SchedulePage() {
         </p>
       </div>
 
-      <Tabs
-        value={tab}
-        onValueChange={(value) => {
-          if (value === "daily" || value === "templates" || value === "kinds") {
-            setTab(value)
-          }
-        }}
-      >
-        <TabsList className="w-full max-w-xl sm:w-auto">
-          <TabsTrigger value="daily">
-            {t("rentals.schedule.tabs.daily")}
-          </TabsTrigger>
-          <TabsTrigger value="templates">
-            {t("rentals.schedule.tabs.templates")}
-          </TabsTrigger>
-          <TabsTrigger value="kinds">
-            {t("rentals.schedule.tabs.kinds")}
-          </TabsTrigger>
-        </TabsList>
+      <div className="border-b border-border">
+        <nav className="-mb-px flex space-x-8" aria-label={t("nav.menu")}>
+          {tabItems.map((item) => {
+            const isActive = tab === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setTab(item.id)
+                }}
+                className={cn(
+                  "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                )}
+              >
+                {t(item.labelKey)}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
 
-        <TabsContent value="daily" className="mt-6">
+      <div className="mt-8">
+        {tab === "daily" ? (
           <DailyAgendaTab
             assets={assets}
             rentalAssetId={rentalAssetId}
@@ -373,9 +385,9 @@ export function SchedulePage() {
               void onSeedTemplates()
             }}
           />
-        </TabsContent>
+        ) : null}
 
-        <TabsContent value="templates" className="mt-6">
+        {tab === "templates" ? (
           <WeeklyTemplatesTab
             assets={assets}
             rentalAssetId={rentalAssetId}
@@ -402,9 +414,9 @@ export function SchedulePage() {
               void onSeedTemplates()
             }}
           />
-        </TabsContent>
+        ) : null}
 
-        <TabsContent value="kinds" className="mt-6">
+        {tab === "kinds" ? (
           <OccupancyKindsTab
             kinds={kinds}
             loading={loadingKinds}
@@ -419,8 +431,8 @@ export function SchedulePage() {
               setKindSheetOpen(true)
             }}
           />
-        </TabsContent>
-      </Tabs>
+        ) : null}
+      </div>
 
       <OccupancyKindSheet
         open={kindSheetOpen}

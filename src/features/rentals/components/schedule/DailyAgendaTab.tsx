@@ -53,10 +53,12 @@ export function DailyAgendaTab({
   const slotsEmpty = !day || day.slots.length === 0
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 rounded-lg border border-border bg-muted/40 p-4 sm:grid-cols-2">
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium">{t("rentals.schedule.rentable")}</span>
+    <div className="flex w-full flex-col gap-8">
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-end">
+        <label className="min-w-0 flex-1 space-y-1.5 text-sm">
+          <span className="font-medium text-foreground">
+            {t("rentals.schedule.rentable")}
+          </span>
           <select
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             value={rentalAssetId}
@@ -72,8 +74,10 @@ export function DailyAgendaTab({
             ))}
           </select>
         </label>
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium">{t("rentals.schedule.date")}</span>
+        <label className="w-full space-y-1.5 text-sm sm:max-w-[14rem]">
+          <span className="font-medium text-foreground">
+            {t("rentals.schedule.date")}
+          </span>
           <Input
             type="date"
             value={date}
@@ -82,19 +86,6 @@ export function DailyAgendaTab({
             }}
           />
         </label>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-medium">{t("rentals.schedule.dayTitle")}</h2>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={busy || readOnly || !rentalAssetId}
-          onClick={onPublish}
-        >
-          {t("rentals.schedule.publishDay")}
-        </Button>
       </div>
 
       {loading ? (
@@ -120,18 +111,50 @@ export function DailyAgendaTab({
               <Button
                 type="button"
                 variant="outline"
+                disabled={busy || readOnly || !rentalAssetId}
+                onClick={onSeedTemplates}
+              >
+                {t("rentals.schedule.seedTemplates")}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || readOnly || !rentalAssetId}
+                onClick={onPublish}
+              >
+                {t("rentals.schedule.publishDay")}
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-medium">{t("rentals.schedule.dayTitle")}</h2>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
                 size="sm"
                 disabled={busy || readOnly || !rentalAssetId}
                 onClick={onSeedTemplates}
               >
                 {t("rentals.schedule.seedTemplates")}
               </Button>
-            ) : null
-          }
-        />
-      ) : day ? (
-        <DaySlotsTimeline day={day} />
-      ) : null}
+              <Button
+                type="button"
+                size="sm"
+                disabled={busy || readOnly || !rentalAssetId}
+                onClick={onPublish}
+              >
+                {t("rentals.schedule.publishDay")}
+              </Button>
+            </div>
+          </div>
+          {day ? <DaySlotsTimeline day={day} /> : null}
+        </div>
+      )}
     </div>
   )
 }
