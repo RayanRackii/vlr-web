@@ -1578,16 +1578,22 @@
   "rentals": {
     "schedule": {
       "title": "Schedule",
-      "description": "Occupancy kinds, weekly templates, and day publish for the B2C portal.",
+      "description": "Day operations, weekly templates, and occupancy kinds for the B2C portal.",
       "rentable": "Space / good",
       "date": "Date",
       "seedTemplates": "Create default grid (Sun–Sat, 08–22)",
       "publishDay": "Publish day",
+      "publishFromTemplate": "Create schedule from template",
       "templatesTitle": "Weekly templates ({{count}})",
       "templatesEmpty": "No templates yet. Use the form or “Create default grid”.",
+      "templatesEmptyTitle": "No weekly templates",
+      "templatesEmptyDescription": "Define this rentable’s default grid or generate the starter hourly grid.",
       "templatesHint": "Active templates for this rentable. Publish a day to materialize slots.",
       "dayTitle": "Day slots",
       "dayEmpty": "No slots on this day. Publish after creating templates.",
+      "dayEmptyTitle": "No schedule defined for this day",
+      "dayEmptyDescription": "Publish from weekly templates to materialize slots.",
+      "dayEmptyNoTemplates": "No templates yet. Create the default grid, then publish the day.",
       "noAssets": "No active rentables. Mark an asset as rentable under Assets.",
       "loadError": "Could not load the schedule.",
       "seedSuccess": "{{count}} templates created.",
@@ -1598,6 +1604,11 @@
       "inactive": "Inactive",
       "activate": "Activate",
       "deactivate": "Deactivate",
+      "tabs": {
+        "daily": "Daily agenda",
+        "templates": "Weekly templates",
+        "kinds": "Occupancy kinds"
+      },
       "days": {
         "Sunday": "Sunday",
         "Monday": "Monday",
@@ -1609,8 +1620,9 @@
       },
       "kinds": {
         "title": "Occupancy kinds",
-        "description": "Define whether a time cell is bookable (e.g. Open, Lesson, Closed).",
+        "description": "Tenant catalog: whether a time cell is bookable (e.g. Open, Lesson, Closed).",
         "empty": "No kinds yet — defaults are created on first load.",
+        "emptyTitle": "No occupancy kinds",
         "key": "Key",
         "label": "Name",
         "color": "Color",

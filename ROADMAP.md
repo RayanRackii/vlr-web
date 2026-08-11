@@ -46,6 +46,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
 - [x] Admin completo: occupancy kinds CRUD + weekly template editor fino
 - [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
+- [x] UX admin Escala/Agenda: abas Agenda diária / Templates / Tipos + Sheet forms + timeline de slots
 - [ ] Layout canvas (mapa de rentables) admin + picker B2C
 
 ## 4. Gating B2B por módulos
@@ -103,3 +104,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-09 | **Executado:** exclusão em lote de ativos (checkbox + soft/hard via DELETE existente). |
 | 2026-08-10 | **Docs:** PlatformAdmin não lista/conta como usuário do tenant (API). |
 | 2026-08-11 | **UX:** sidebar B2B em Visão geral / Pessoas & portal / Operação; primary `#1E293B`. |
+| 2026-08-11 | **UX:** Escala/Agenda em 3 abas (diária default, templates, kinds) + Sheets + empty states. |

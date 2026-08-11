@@ -1578,16 +1578,22 @@
   "rentals": {
     "schedule": {
       "title": "Escala / agenda",
-      "description": "Tipos de ocupación, grilla semanal (templates) y publicación del día para el portal B2C.",
+      "description": "Operación del día, templates semanales y tipos de ocupación para el portal B2C.",
       "rentable": "Espacio / bien",
       "date": "Fecha",
       "seedTemplates": "Crear grilla estándar (dom–sáb, 08–22)",
       "publishDay": "Publicar día",
+      "publishFromTemplate": "Crear grilla a partir del template",
       "templatesTitle": "Templates semanales ({{count}})",
       "templatesEmpty": "Sin templates. Use el formulario o “Crear grilla estándar”.",
+      "templatesEmptyTitle": "Sin templates semanales",
+      "templatesEmptyDescription": "Defina la grilla estándar de este espacio o genere la grilla horaria inicial.",
       "templatesHint": "Templates activos de este espacio. Publique un día para materializar slots.",
       "dayTitle": "Slots del día",
       "dayEmpty": "Sin slots en este día. Publique la escala después de crear templates.",
+      "dayEmptyTitle": "Ninguna grilla definida para este día",
+      "dayEmptyDescription": "Publique desde los templates semanales para materializar los slots.",
+      "dayEmptyNoTemplates": "Aún no hay templates. Cree la grilla estándar y luego publique el día.",
       "noAssets": "No hay rentables activos. Marque un activo como alquilable en Activos.",
       "loadError": "No se pudo cargar la escala.",
       "seedSuccess": "{{count}} templates creados.",
@@ -1598,6 +1604,11 @@
       "inactive": "Inactivo",
       "activate": "Activar",
       "deactivate": "Desactivar",
+      "tabs": {
+        "daily": "Agenda diaria",
+        "templates": "Templates semanales",
+        "kinds": "Tipos de ocupación"
+      },
       "days": {
         "Sunday": "Domingo",
         "Monday": "Lunes",
@@ -1609,8 +1620,9 @@
       },
       "kinds": {
         "title": "Tipos de ocupación",
-        "description": "Definen si el horario es reservable (ej.: Abierto, Clase, Cerrado).",
+        "description": "Catálogo del tenant: definen si el horario es reservable (ej.: Abierto, Clase, Cerrado).",
         "empty": "Sin tipos aún — los valores por defecto se crean en la primera carga.",
+        "emptyTitle": "Sin tipos de ocupación",
         "key": "Clave",
         "label": "Nombre",
         "color": "Color",
