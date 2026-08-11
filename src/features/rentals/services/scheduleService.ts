@@ -61,11 +61,23 @@ const rentalAssetSchema = z.object({
   assetId: z.string().uuid(),
   name: z.string(),
   isActive: z.boolean(),
-  schedulePolicy: z.string().optional(),
+  schedulePolicy: z.enum(["SlotGrid", "OpenHours"]).optional().default("SlotGrid"),
+  openTime: z.string().nullable().optional(),
+  closeTime: z.string().nullable().optional(),
+  allowedDurationMinutes: z.string().nullable().optional(),
   unitId: z.string().uuid(),
 })
 
 export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>
+
+export type SchedulePolicy = "SlotGrid" | "OpenHours"
+
+export type UpdateSchedulePolicyInput = {
+  schedulePolicy: SchedulePolicy
+  openTime?: string | null
+  closeTime?: string | null
+  allowedDurationMinutes?: string | null
+}
 
 export const DAY_NAMES = [
   "Sunday",
@@ -78,10 +90,6 @@ export const DAY_NAMES = [
 ] as const
 
 export type DayOfWeekName = (typeof DAY_NAMES)[number]
-
-function padTime(hour: number): string {
-  return `${String(hour).padStart(2, "0")}:00:00`
-}
 
 /** Normalize HTML time (`HH:MM`) or API time to `HH:MM:SS`. */
 export function normalizeScheduleTime(value: string): string {
@@ -281,57 +289,73 @@ export async function listAdminRentalAssets(): Promise<AdminRentalAsset[]> {
   return parsed.data
 }
 
+export async function updateRentalSchedulePolicy(
+  rentalAssetId: string,
+  body: UpdateSchedulePolicyInput,
+): Promise<AdminRentalAsset> {
+  try {
+    const response = await api.put(
+      `/api/rental-assets/${rentalAssetId}/schedule-policy`,
+      {
+        schedulePolicy: body.schedulePolicy,
+        openTime: body.openTime
+          ? normalizeScheduleTime(body.openTime).slice(0, 8)
+          : null,
+        closeTime: body.closeTime
+          ? normalizeScheduleTime(body.closeTime).slice(0, 8)
+          : null,
+        allowedDurationMinutes: body.allowedDurationMinutes ?? null,
+      },
+    )
+    const parsed = rentalAssetSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.updateSchedulePolicy"),
+      ),
+    )
+  }
+}
+
 /**
- * Seeds Mon–Sun hourly Open templates (08:00–22:00) when missing for the rentable.
+ * Seeds Sun–Sat hourly Open templates (default 08:00–22:00) in one API call.
  */
 export async function seedDefaultHourlyTemplates(
   rentalAssetId: string,
+  options?: {
+    openTime?: string
+    closeTime?: string
+    slotMinutes?: number
+  },
 ): Promise<number> {
-  const [kinds, existing] = await Promise.all([
-    listOccupancyKinds(),
-    listScheduleTemplates(rentalAssetId),
-  ])
-
-  const openKind =
-    kinds.find(
-      (kind) =>
-        kind.key.toLowerCase() === "open" &&
-        kind.isActive &&
-        kind.isBookableByCustomer,
-    ) ?? kinds.find((kind) => kind.isBookableByCustomer && kind.isActive)
-
-  if (!openKind) {
-    throw new Error(i18n.t("apiErrors.noBookableKind"))
-  }
-
-  const existingKeys = new Set(
-    existing.map(
-      (row) =>
-        `${row.dayOfWeek}|${row.startTime.slice(0, 5)}|${row.endTime.slice(0, 5)}`,
-    ),
-  )
-
-  let created = 0
-  for (const dayOfWeek of DAY_NAMES) {
-    for (let hour = 8; hour < 22; hour += 1) {
-      const startTime = padTime(hour)
-      const endTime = padTime(hour + 1)
-      const key = `${dayOfWeek}|${startTime.slice(0, 5)}|${endTime.slice(0, 5)}`
-      if (existingKeys.has(key)) {
-        continue
-      }
-      await createScheduleTemplate({
-        rentalAssetId,
-        dayOfWeek,
-        startTime,
-        endTime,
-        occupancyKindId: openKind.id,
-      })
-      created += 1
+  try {
+    const response = await api.post("/api/schedule/templates/seed-default", {
+      rentalAssetId,
+      openTime: options?.openTime
+        ? normalizeScheduleTime(options.openTime).slice(0, 8)
+        : "08:00:00",
+      closeTime: options?.closeTime
+        ? normalizeScheduleTime(options.closeTime).slice(0, 8)
+        : "22:00:00",
+      slotMinutes: options?.slotMinutes ?? 60,
+    })
+    const parsed = z
+      .object({ created: z.number(), skipped: z.number() })
+      .safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
     }
+    return parsed.data.created
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.seedTemplates")),
+    )
   }
-
-  return created
 }
 
 export function formatScheduleTime(value: string): string {

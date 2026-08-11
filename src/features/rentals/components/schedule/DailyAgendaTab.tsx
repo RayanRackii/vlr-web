@@ -1,13 +1,16 @@
 import { CalendarDays } from "lucide-react"
+import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DaySlotsTimeline } from "@/features/rentals/components/schedule/DaySlotsTimeline"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
+import { SchedulePolicyPanel } from "@/features/rentals/components/schedule/SchedulePolicyPanel"
 import type {
   AdminDaySchedule,
   AdminRentalAsset,
+  UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
 
 type DailyAgendaTabProps = {
@@ -23,6 +26,7 @@ type DailyAgendaTabProps = {
   onDateChange: (date: string) => void
   onPublish: () => void
   onSeedTemplates: () => void
+  onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
 }
 
 export function DailyAgendaTab({
@@ -38,8 +42,16 @@ export function DailyAgendaTab({
   onDateChange,
   onPublish,
   onSeedTemplates,
+  onSavePolicy,
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
+
+  const selectedAsset = useMemo(
+    () => assets.find((asset) => asset.id === rentalAssetId) ?? null,
+    [assets, rentalAssetId],
+  )
+
+  const isOpenHours = (selectedAsset?.schedulePolicy ?? "SlotGrid") === "OpenHours"
 
   if (assets.length === 0) {
     return (
@@ -69,7 +81,9 @@ export function DailyAgendaTab({
             {assets.map((asset) => (
               <option key={asset.id} value={asset.id}>
                 {asset.name}
-                {asset.schedulePolicy ? ` (${asset.schedulePolicy})` : ""}
+                {asset.schedulePolicy === "OpenHours"
+                  ? ` (${t("rentals.schedule.policy.openHours")})`
+                  : ""}
               </option>
             ))}
           </select>
@@ -88,26 +102,60 @@ export function DailyAgendaTab({
         </label>
       </div>
 
+      <SchedulePolicyPanel
+        asset={selectedAsset}
+        busy={busy}
+        readOnly={readOnly}
+        onSave={onSavePolicy}
+        onSeedSlotGrid={onSeedTemplates}
+      />
+
       {loading ? (
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : slotsEmpty ? (
         <ScheduleEmptyState
           icon={CalendarDays}
-          title={t("rentals.schedule.dayEmptyTitle")}
+          title={
+            isOpenHours
+              ? t("rentals.schedule.dayEmptyOpenHoursTitle")
+              : t("rentals.schedule.dayEmptyTitle")
+          }
           description={
-            hasTemplates
-              ? t("rentals.schedule.dayEmptyDescription")
-              : t("rentals.schedule.dayEmptyNoTemplates")
+            isOpenHours
+              ? t("rentals.schedule.dayEmptyOpenHoursDescription")
+              : hasTemplates
+                ? t("rentals.schedule.dayEmptyDescription")
+                : t("rentals.schedule.dayEmptyNoTemplates")
           }
           actionLabel={
-            hasTemplates
-              ? t("rentals.schedule.publishFromTemplate")
-              : t("rentals.schedule.seedTemplates")
+            isOpenHours
+              ? t("rentals.schedule.policy.saveOpenHours")
+              : hasTemplates
+                ? t("rentals.schedule.publishFromTemplate")
+                : t("rentals.schedule.seedTemplates")
           }
           actionDisabled={busy || readOnly || !rentalAssetId}
-          onAction={hasTemplates ? onPublish : onSeedTemplates}
+          onAction={
+            isOpenHours
+              ? () => {
+                  void onSavePolicy({
+                    schedulePolicy: "OpenHours",
+                    openTime: selectedAsset?.openTime
+                      ? selectedAsset.openTime.slice(0, 5)
+                      : "08:00",
+                    closeTime: selectedAsset?.closeTime
+                      ? selectedAsset.closeTime.slice(0, 5)
+                      : "22:00",
+                    allowedDurationMinutes:
+                      selectedAsset?.allowedDurationMinutes ?? "60",
+                  })
+                }
+              : hasTemplates
+                ? onPublish
+                : onSeedTemplates
+          }
           secondaryAction={
-            hasTemplates ? (
+            !isOpenHours && hasTemplates ? (
               <Button
                 type="button"
                 variant="outline"
@@ -116,7 +164,7 @@ export function DailyAgendaTab({
               >
                 {t("rentals.schedule.seedTemplates")}
               </Button>
-            ) : (
+            ) : !isOpenHours ? (
               <Button
                 type="button"
                 variant="outline"
@@ -125,32 +173,38 @@ export function DailyAgendaTab({
               >
                 {t("rentals.schedule.publishDay")}
               </Button>
-            )
+            ) : null
           }
         />
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-medium">{t("rentals.schedule.dayTitle")}</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={busy || readOnly || !rentalAssetId}
-                onClick={onSeedTemplates}
-              >
-                {t("rentals.schedule.seedTemplates")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy || readOnly || !rentalAssetId}
-                onClick={onPublish}
-              >
-                {t("rentals.schedule.publishDay")}
-              </Button>
-            </div>
+            {!isOpenHours ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || readOnly || !rentalAssetId}
+                  onClick={onSeedTemplates}
+                >
+                  {t("rentals.schedule.seedTemplates")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={busy || readOnly || !rentalAssetId}
+                  onClick={onPublish}
+                >
+                  {t("rentals.schedule.publishDay")}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {t("rentals.schedule.policy.derivedSlotsHint")}
+              </p>
+            )}
           </div>
           {day ? <DaySlotsTimeline day={day} /> : null}
         </div>

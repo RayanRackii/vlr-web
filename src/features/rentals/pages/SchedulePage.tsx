@@ -21,11 +21,13 @@ import {
   publishScheduleDay,
   seedDefaultHourlyTemplates,
   updateOccupancyKind,
+  updateRentalSchedulePolicy,
   updateScheduleTemplate,
   type AdminDaySchedule,
   type AdminRentalAsset,
   type OccupancyKind,
   type ScheduleTemplate,
+  type UpdateSchedulePolicyInput,
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
@@ -298,6 +300,34 @@ export function SchedulePage() {
     }
   }
 
+  async function onSavePolicy(input: UpdateSchedulePolicyInput) {
+    if (!rentalAssetId) {
+      return
+    }
+    setBusy(true)
+    try {
+      const updated = await updateRentalSchedulePolicy(rentalAssetId, input)
+      setAssets((current) =>
+        current.map((asset) => (asset.id === updated.id ? updated : asset)),
+      )
+      toast.success(
+        input.schedulePolicy === "OpenHours"
+          ? t("rentals.schedule.policy.saveOpenHoursSuccess")
+          : t("rentals.schedule.policy.saveSlotGridSuccess"),
+      )
+      await refreshDay()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("rentals.schedule.policy.saveError"),
+      )
+      throw error
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function onPublish() {
     if (!rentalAssetId || !date) {
       return
@@ -384,6 +414,7 @@ export function SchedulePage() {
             onSeedTemplates={() => {
               void onSeedTemplates()
             }}
+            onSavePolicy={onSavePolicy}
           />
         ) : null}
 
