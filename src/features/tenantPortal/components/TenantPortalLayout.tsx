@@ -68,7 +68,7 @@ export function TenantPortalLayout() {
     }
   }, [subdomain, t])
 
-  const primary = branding?.primaryColor ?? "#0F766E"
+  const primary = branding?.primaryColor ?? "#1E293B"
   const accent = branding?.accentColor ?? primary
 
   if (loading) {

@@ -45,12 +45,39 @@ export type AppNavigationItem = {
   modules?: readonly string[]
 }
 
-export const appNavigationItems: readonly AppNavigationItem[] = [
+export type AppNavigationSectionTitleKey =
+  | "nav.sections.overview"
+  | "nav.sections.peoplePortal"
+  | "nav.sections.operations"
+  | "nav.sections.platform"
+
+export type AppNavigationSection = {
+  titleKey: AppNavigationSectionTitleKey
+  items: readonly AppNavigationItem[]
+}
+
+const overviewItem: AppNavigationItem = {
+  labelKey: "nav.dashboard",
+  to: "/dashboard",
+  icon: LayoutDashboard,
+}
+
+const peoplePortalItems: readonly AppNavigationItem[] = [
   {
-    labelKey: "nav.dashboard",
-    to: "/dashboard",
-    icon: LayoutDashboard,
+    labelKey: "nav.registrationFields",
+    to: "/configuracoes/cadastro",
+    icon: FormInput,
+    modules: ["rentals"],
   },
+  {
+    labelKey: "nav.moduleMenu",
+    to: "/configuracoes/menu",
+    icon: MenuSquare,
+    modules: ["rentals"],
+  },
+]
+
+const operationsItems: readonly AppNavigationItem[] = [
   {
     labelKey: "nav.assets",
     to: "/ativos",
@@ -90,18 +117,6 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     modules: ["os"],
   },
   {
-    labelKey: "nav.registrationFields",
-    to: "/configuracoes/cadastro",
-    icon: FormInput,
-    modules: ["rentals"],
-  },
-  {
-    labelKey: "nav.moduleMenu",
-    to: "/configuracoes/menu",
-    icon: MenuSquare,
-    modules: ["rentals"],
-  },
-  {
     labelKey: "nav.schedule",
     to: "/configuracoes/agenda",
     icon: CalendarClock,
@@ -113,6 +128,13 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
     icon: CalendarCheck,
     modules: ["rentals"],
   },
+]
+
+/** Flat catalog used for title resolution and module filtering helpers. */
+export const appNavigationItems: readonly AppNavigationItem[] = [
+  overviewItem,
+  ...peoplePortalItems,
+  ...operationsItems,
 ]
 
 function filterByActiveModules(
@@ -132,7 +154,36 @@ function filterByActiveModules(
   })
 }
 
-export function useAppNavigationItems(): readonly AppNavigationItem[] {
+function buildProductSections(
+  activeModules: readonly string[],
+): AppNavigationSection[] {
+  const sections: AppNavigationSection[] = [
+    {
+      titleKey: "nav.sections.overview",
+      items: [overviewItem],
+    },
+  ]
+
+  const people = filterByActiveModules(peoplePortalItems, activeModules)
+  if (people.length > 0) {
+    sections.push({
+      titleKey: "nav.sections.peoplePortal",
+      items: people,
+    })
+  }
+
+  const operations = filterByActiveModules(operationsItems, activeModules)
+  if (operations.length > 0) {
+    sections.push({
+      titleKey: "nav.sections.operations",
+      items: operations,
+    })
+  }
+
+  return sections
+}
+
+export function useAppNavigationSections(): readonly AppNavigationSection[] {
   const isPlatformAdmin = useIsPlatformAdmin()
   const { isInTenantEnvironment } = usePlatformTenantSession()
   const [activeModules, setActiveModules] = useState<string[] | null>(null)
@@ -168,22 +219,26 @@ export function useAppNavigationItems(): readonly AppNavigationItem[] {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
-          labelKey: "nav.dashboard",
-          to: "/dashboard",
-          icon: LayoutDashboard,
+          titleKey: "nav.sections.overview",
+          items: [overviewItem],
         },
         {
-          labelKey: "nav.admin",
-          to: "/admin/dashboard",
-          icon: Shield,
-          children: [
+          titleKey: "nav.sections.platform",
+          items: [
             {
-              labelKey: "nav.adminTenants",
+              labelKey: "nav.admin",
               to: "/admin/dashboard",
-            },
-            {
-              labelKey: "nav.adminUsers",
-              to: "/admin/users",
+              icon: Shield,
+              children: [
+                {
+                  labelKey: "nav.adminTenants",
+                  to: "/admin/dashboard",
+                },
+                {
+                  labelKey: "nav.adminUsers",
+                  to: "/admin/users",
+                },
+              ],
             },
           ],
         },
@@ -193,14 +248,13 @@ export function useAppNavigationItems(): readonly AppNavigationItem[] {
     if (activeModules === null) {
       return [
         {
-          labelKey: "nav.dashboard",
-          to: "/dashboard",
-          icon: LayoutDashboard,
+          titleKey: "nav.sections.overview",
+          items: [overviewItem],
         },
       ]
     }
 
-    return filterByActiveModules(appNavigationItems, activeModules)
+    return buildProductSections(activeModules)
   }, [activeModules, isInTenantEnvironment, isPlatformAdmin])
 }
 

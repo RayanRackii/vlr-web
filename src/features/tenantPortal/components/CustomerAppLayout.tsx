@@ -151,7 +151,7 @@ export function CustomerAppLayout() {
   )
   const pageTitle = activeItem?.label ?? branding.displayName
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
-  const primary = branding.primaryColor ?? "#0F766E"
+  const primary = branding.primaryColor ?? "#1E293B"
 
   return (
     <AppShell

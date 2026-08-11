@@ -27,7 +27,7 @@ export function TenantLogoMark({
   size = "lg",
 }: TenantLogoMarkProps) {
   const safeSvg = sanitizeTenantLogoSvg(logoSvg)
-  const primary = primaryColor ?? "#0F766E"
+  const primary = primaryColor ?? "#1E293B"
 
   if (safeSvg) {
     return (

@@ -516,7 +516,13 @@
     "adminTenants": "Clients",
     "adminUsers": "Users",
     "menu": "Navigation menu",
-    "openMenu": "Open navigation menu"
+    "openMenu": "Open navigation menu",
+    "sections": {
+      "overview": "Overview",
+      "peoplePortal": "People & portal",
+      "operations": "Operations",
+      "platform": "Platform"
+    }
   },
   "account": {
     "title": "Account",

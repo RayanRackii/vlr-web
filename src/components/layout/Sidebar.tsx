@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { Separator } from "@/components/ui/separator"
 import {
-  useAppNavigationItems,
+  useAppNavigationSections,
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 import { cn } from "@/lib/utils"
@@ -93,7 +93,7 @@ function NavigationLink({
 
 export function Sidebar({ onNavigate, className }: SidebarProps) {
   const { t } = useTranslation()
-  const navigationItems = useAppNavigationItems()
+  const navigationSections = useAppNavigationSections()
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -105,9 +105,20 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
 
       <Separator />
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
-        {navigationItems.map((item) => (
-          <NavigationLink key={item.to} item={item} onNavigate={onNavigate} />
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+        {navigationSections.map((section) => (
+          <div key={section.titleKey} className="flex flex-col gap-1">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t(section.titleKey)}
+            </p>
+            {section.items.map((item) => (
+              <NavigationLink
+                key={`${section.titleKey}-${item.to}`}
+                item={item}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
         ))}
       </nav>
     </div>

@@ -50,7 +50,9 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 ## 4. Gating B2B por módulos
 
-- [ ] Sidebar B2B filtrada por `tenant_modules` + `ModuleGuard`.
+- [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
+- [ ] `ModuleGuard` nas rotas + listagem de Users B2B do tenant em **Pessoas & portal**.
+- [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
 ## 4.5. UX de Ativos (fundação)
 
@@ -100,3 +102,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-09 | **Fix:** `/reset-password` valida `token_hash` via `verifyOtp` (link do e-mail aponta para o front, não para `supabase.co/verify`). |
 | 2026-08-09 | **Executado:** exclusão em lote de ativos (checkbox + soft/hard via DELETE existente). |
 | 2026-08-10 | **Docs:** PlatformAdmin não lista/conta como usuário do tenant (API). |
+| 2026-08-11 | **UX:** sidebar B2B em Visão geral / Pessoas & portal / Operação; primary `#1E293B`. |

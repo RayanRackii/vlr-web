@@ -339,7 +339,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#0F766E"
+                                  : "#1E293B"
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -347,7 +347,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#0F766E"
+                            placeholder="#1E293B"
                             disabled={isActionLocked}
                             {...field}
                           />

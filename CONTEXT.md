@@ -107,7 +107,8 @@ The tenant-owned URL slug used to resolve which Tenant a public B2C request belo
 _Avoid_: custom domain (until real custom hostnames are supported), slug alone without tenant resolution
 
 ## 2. Dinâmica de Módulos e Customização
-- **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B deve filtrar por `activeModules` / `tenant_modules` (parcialmente feito; ver ROADMAP).
+- **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B filtra a sidebar por `activeModules` em seções **Visão geral** / **Pessoas & portal** / **Operação** (parcial; `ModuleGuard` + Users do tenant ainda no ROADMAP).
+- **Chrome B2B:** primary da shell `#1E293B` (slate). Branding do portal B2C continua por tenant (`PrimaryColor`).
 - **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
 - **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`. E-mails `PlatformAdmin` não aparecem/contam como usuários do tenant e não podem ser excluídos pela UI de users.
 - **Subdomain** = roteamento + branding; o portal é a UI B2C.

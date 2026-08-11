@@ -105,7 +105,7 @@ export function TenantOnboardingWizard() {
       taxId: "",
       subdomain: "",
       logoSvg: "",
-      primaryColor: "#0F766E",
+      primaryColor: "#1E293B",
       accentColor: "#14B8A6",
       welcomeTagline: "",
       activeModules: [],
@@ -491,7 +491,7 @@ export function TenantOnboardingWizard() {
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#0F766E"
+                                  : "#1E293B"
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -499,7 +499,7 @@ export function TenantOnboardingWizard() {
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#0F766E"
+                            placeholder="#1E293B"
                             {...field}
                           />
                         </div>

@@ -13,7 +13,7 @@ Leia primeiro [`CONTEXT.md`](../../CONTEXT.md) e [`AGENTS.md`](../../AGENTS.md).
 
 Chaves usadas no admin (`src/features/admin/schemas/adminTenantSchemas.ts`): `Inventory`, `PMOC`, `OS`, `Rentals` (backend normaliza para `inventory`, `pmoc`, `os`, `rentals`, `maintenance`).
 
-**Meta de arquitetura:** a sidebar e as rotas do app autenticado devem respeitar os módulos ativos do tenant (`activeModules` / `tenant_modules`). Nav Super-Admin em modo plataforma ≠ nav de produto dentro do tenant. Toda feature nova de módulo deve nascer preparada para esse gating.
+**Meta de arquitetura:** a sidebar e as rotas do app autenticado devem respeitar os módulos ativos do tenant (`activeModules` / `tenant_modules`). Nav de produto no tenant usa seções **Visão geral** / **Pessoas & portal** / **Operação** (não misturar com console Super-Admin). Nav Super-Admin em modo plataforma ≠ nav de produto dentro do tenant. Toda feature nova de módulo deve nascer preparada para esse gating.
 
 ## Cliente atual e prioridade
 
