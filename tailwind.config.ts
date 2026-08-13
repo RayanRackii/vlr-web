@@ -16,9 +16,18 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-50%)" },
         },
+        "skeleton-shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
+        "top-progress": {
+          "0%": { transform: "scaleX(0.12)" },
+          "100%": { transform: "scaleX(0.92)" },
+        },
       },
       animation: {
         "marquee-right": "marquee-right 135s linear infinite",
+        "skeleton-shimmer": "skeleton-shimmer 1.35s ease-in-out infinite",
+        "top-progress": "top-progress 0.9s ease-out forwards",
       },
       colors: {
         background: "var(--background)",

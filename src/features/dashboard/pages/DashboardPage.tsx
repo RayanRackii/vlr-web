@@ -55,13 +55,13 @@ function formatMoney(amount: number): string {
 
 function KpiSkeleton() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="min-h-[7.5rem]">
+      <CardHeader className="pb-2">
         <Skeleton className="h-4 w-28" />
       </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="h-3 w-36" />
+      <CardContent className="space-y-3">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-3 w-40 max-w-full" />
       </CardContent>
     </Card>
   )

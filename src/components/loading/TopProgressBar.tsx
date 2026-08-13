@@ -72,7 +72,7 @@ export function TopProgressBar() {
       <div
         className={cn(
           "h-full w-full origin-left bg-primary transition-transform duration-200 ease-out",
-          active ? "scale-x-100 animate-[top-progress_0.9s_ease-out_forwards]" : "scale-x-0",
+          active ? "scale-x-100 animate-top-progress" : "scale-x-0",
         )}
       />
     </div>
