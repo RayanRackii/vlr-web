@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react"
+import { Loader2 } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useOutletContext, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalAgendaSlotsSkeleton } from "@/features/tenantPortal/components/PortalAgendaSlotsSkeleton"
 import {
   bookPortalSlot,
   createPortalReservation,
@@ -26,6 +28,10 @@ function todayIsoDate(): string {
   const month = String(now.getMonth() + 1).padStart(2, "0")
   const day = String(now.getDate()).padStart(2, "0")
   return `${now.getFullYear()}-${month}-${day}`
+}
+
+function slotsCacheKey(rentalAssetId: string, date: string): string {
+  return `${rentalAssetId}|${date}`
 }
 
 export function TenantPortalAgendaPage() {
@@ -50,10 +56,14 @@ export function TenantPortalAgendaPage() {
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [slotsLoading, setSlotsLoading] = useState(false)
+  const [showSlotsSkeleton, setShowSlotsSkeleton] = useState(false)
   const [startTime, setStartTime] = useState("09:00")
   const [endTime, setEndTime] = useState("10:00")
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  const loadedSlotKeysRef = useRef(new Set<string>())
+  const slotsCacheRef = useRef(new Map<string, PortalScheduleSlot[]>())
 
   useEffect(() => {
     if (!signedIn) {
@@ -111,16 +121,32 @@ export function TenantPortalAgendaPage() {
     if (!signedIn || !rentalAssetId || !date || !useSlotGrid) {
       setSlots([])
       setSelectedSlotId(null)
+      setShowSlotsSkeleton(false)
+      setSlotsLoading(false)
       return
     }
 
+    const key = slotsCacheKey(rentalAssetId, date)
+    const known = loadedSlotKeysRef.current.has(key)
+    const cached = slotsCacheRef.current.get(key)
+
     let cancelled = false
     setSlotsLoading(true)
+    setShowSlotsSkeleton(!known)
     setSelectedSlotId(null)
+
+    if (cached !== undefined) {
+      setSlots(cached)
+    } else if (!known) {
+      setSlots([])
+    }
+
     void fetchPublicScheduleDay(subdomain, date, rentalAssetId)
       .then((day) => {
         if (!cancelled) {
           setSlots(day.slots)
+          loadedSlotKeysRef.current.add(key)
+          slotsCacheRef.current.set(key, day.slots)
         }
       })
       .catch((error) => {
@@ -136,6 +162,7 @@ export function TenantPortalAgendaPage() {
       .finally(() => {
         if (!cancelled) {
           setSlotsLoading(false)
+          setShowSlotsSkeleton(false)
         }
       })
 
@@ -155,6 +182,8 @@ export function TenantPortalAgendaPage() {
   const title = menuItem?.label ?? t("tenantPortal.agenda.title")
   const bookableSlots = slots.filter(isBookablePersistedSlot)
   const lockedSelect = Boolean(lockedAssetId || lockedRentalAssetId)
+  const showInlineRefresh =
+    slotsLoading && !showSlotsSkeleton && slots.length > 0
 
   async function onReserveSlot() {
     if (!selected || !selectedSlotId) {
@@ -174,6 +203,9 @@ export function TenantPortalAgendaPage() {
       ])
       setMine(reservations)
       setSlots(day.slots)
+      const key = slotsCacheKey(rentalAssetId, date)
+      loadedSlotKeysRef.current.add(key)
+      slotsCacheRef.current.set(key, day.slots)
       setSelectedSlotId(null)
     } catch (error) {
       toast.error(
@@ -273,15 +305,23 @@ export function TenantPortalAgendaPage() {
 
             {useSlotGrid ? (
               <div className="space-y-3">
-                {slotsLoading ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("common.loading")}
-                  </p>
-                ) : bookableSlots.length === 0 ? (
+                {showInlineRefresh ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Loader2 className="size-3 animate-spin" aria-hidden />
+                    {t("common.refreshing")}
+                  </span>
+                ) : null}
+
+                {showSlotsSkeleton ? (
+                  <div role="status" aria-live="polite">
+                    <p className="sr-only">{t("common.loading")}</p>
+                    <PortalAgendaSlotsSkeleton />
+                  </div>
+                ) : bookableSlots.length === 0 && !slotsLoading ? (
                   <p className="text-sm text-muted-foreground">
                     {t("tenantPortal.agenda.noSlots")}
                   </p>
-                ) : (
+                ) : bookableSlots.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {bookableSlots.map((slot) => {
                       const active = selectedSlotId === slot.id
@@ -289,7 +329,8 @@ export function TenantPortalAgendaPage() {
                         <button
                           key={slot.id}
                           type="button"
-                          className="rounded-md border px-3 py-2 text-left text-sm transition-colors"
+                          disabled={submitting}
+                          className="rounded-md border px-3 py-2 text-left text-sm transition-colors disabled:opacity-60"
                           style={{
                             borderColor: active
                               ? primary
@@ -313,21 +354,21 @@ export function TenantPortalAgendaPage() {
                       )
                     })}
                   </div>
-                )}
+                ) : null}
 
-                <Button
+                <LoadingButton
                   type="button"
                   className="w-full sm:w-auto"
                   style={{ backgroundColor: primary }}
-                  disabled={!selectedSlotId || submitting}
+                  loading={submitting}
+                  loadingLabel={t("tenantPortal.agenda.reserving")}
+                  disabled={!selectedSlotId}
                   onClick={() => {
                     void onReserveSlot()
                   }}
                 >
-                  {submitting
-                    ? t("tenantPortal.agenda.reserving")
-                    : t("tenantPortal.agenda.reserveSlot")}
-                </Button>
+                  {t("tenantPortal.agenda.reserveSlot")}
+                </LoadingButton>
               </div>
             ) : (
               <div className="space-y-3">
@@ -337,6 +378,7 @@ export function TenantPortalAgendaPage() {
                     <Input
                       type="time"
                       value={startTime}
+                      disabled={submitting}
                       onChange={(event) => {
                         setStartTime(event.target.value)
                       }}
@@ -347,25 +389,26 @@ export function TenantPortalAgendaPage() {
                     <Input
                       type="time"
                       value={endTime}
+                      disabled={submitting}
                       onChange={(event) => {
                         setEndTime(event.target.value)
                       }}
                     />
                   </label>
                 </div>
-                <Button
+                <LoadingButton
                   type="button"
                   className="w-full sm:w-auto"
                   style={{ backgroundColor: primary }}
-                  disabled={!rentalAssetId || submitting}
+                  loading={submitting}
+                  loadingLabel={t("tenantPortal.agenda.reserving")}
+                  disabled={!rentalAssetId}
                   onClick={() => {
                     void onReserveManual()
                   }}
                 >
-                  {submitting
-                    ? t("tenantPortal.agenda.reserving")
-                    : t("tenantPortal.agenda.reserve")}
-                </Button>
+                  {t("tenantPortal.agenda.reserve")}
+                </LoadingButton>
               </div>
             )}
           </div>

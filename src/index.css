@@ -91,3 +91,18 @@
     @apply scroll-smooth font-sans;
   }
 }
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes top-progress {
+  0% {
+    transform: scaleX(0.12);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}

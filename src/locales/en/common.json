@@ -14,7 +14,8 @@
     "required": "Please fill in the required fields.",
     "filter": "Filter",
     "searchPlaceholder": "Search...",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "refreshing": "Updating..."
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",

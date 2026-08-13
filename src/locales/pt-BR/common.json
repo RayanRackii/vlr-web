@@ -14,7 +14,8 @@
     "required": "Preencha os campos obrigatórios.",
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "refreshing": "Atualizando..."
   },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",

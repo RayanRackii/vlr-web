@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
+import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import {
   formatScheduleTime,
   type AdminRentalAsset,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils"
 type SchedulePolicyPanelProps = {
   asset: AdminRentalAsset | null
   busy: boolean
+  busyAction: ScheduleBusyAction
   readOnly: boolean
   onSave: (input: UpdateSchedulePolicyInput) => Promise<void>
   onSeedSlotGrid: () => void
@@ -29,6 +31,7 @@ function toTimeInput(value: string | null | undefined, fallback: string): string
 export function SchedulePolicyPanel({
   asset,
   busy,
+  busyAction,
   readOnly,
   onSave,
   onSeedSlotGrid,
@@ -143,9 +146,10 @@ export function SchedulePolicyPanel({
               }}
             />
           </label>
-          <Button
+          <LoadingButton
             type="button"
             disabled={busy || readOnly}
+            loading={busyAction === "policy"}
             onClick={() => {
               void onSave({
                 schedulePolicy: "OpenHours",
@@ -156,13 +160,14 @@ export function SchedulePolicyPanel({
             }}
           >
             {t("rentals.schedule.policy.saveOpenHours")}
-          </Button>
+          </LoadingButton>
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <Button
+          <LoadingButton
             type="button"
             disabled={busy || readOnly}
+            loading={busyAction === "seed" || busyAction === "policy"}
             onClick={() => {
               void onSave({
                 schedulePolicy: "SlotGrid",
@@ -179,11 +184,12 @@ export function SchedulePolicyPanel({
             }}
           >
             {t("rentals.schedule.seedTemplates")}
-          </Button>
-          <Button
+          </LoadingButton>
+          <LoadingButton
             type="button"
             variant="outline"
             disabled={busy || readOnly}
+            loading={busyAction === "policy"}
             onClick={() => {
               void onSave({
                 schedulePolicy: "SlotGrid",
@@ -194,7 +200,7 @@ export function SchedulePolicyPanel({
             }}
           >
             {t("rentals.schedule.policy.saveSlotGrid")}
-          </Button>
+          </LoadingButton>
           <p className="text-xs text-muted-foreground">
             {t("rentals.schedule.policy.slotGridSeedHint")}
           </p>

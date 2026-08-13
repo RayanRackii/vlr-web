@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { cn } from "@/lib/utils"
 
 type ScheduleEmptyStateProps = {
@@ -11,6 +11,7 @@ type ScheduleEmptyStateProps = {
   actionLabel?: string
   onAction?: () => void
   actionDisabled?: boolean
+  actionLoading?: boolean
   secondaryAction?: ReactNode
   className?: string
 }
@@ -22,6 +23,7 @@ export function ScheduleEmptyState({
   actionLabel,
   onAction,
   actionDisabled = false,
+  actionLoading = false,
   secondaryAction,
   className,
 }: ScheduleEmptyStateProps) {
@@ -42,14 +44,15 @@ export function ScheduleEmptyState({
         ) : null}
       </div>
       {actionLabel && onAction ? (
-        <Button
+        <LoadingButton
           type="button"
           disabled={actionDisabled}
+          loading={actionLoading}
           onClick={onAction}
           className="mt-1"
         >
           {actionLabel}
-        </Button>
+        </LoadingButton>
       ) : null}
       {secondaryAction}
     </div>

@@ -3,6 +3,8 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
+import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import {
   DAY_NAMES,
@@ -17,6 +19,8 @@ type WeeklyTemplatesTabProps = {
   templates: readonly ScheduleTemplate[]
   loading: boolean
   busy: boolean
+  busyAction: ScheduleBusyAction
+  busyTargetId: string | null
   readOnly: boolean
   onRentalAssetChange: (id: string) => void
   onAdd: () => void
@@ -32,6 +36,8 @@ export function WeeklyTemplatesTab({
   templates,
   loading,
   busy,
+  busyAction,
+  busyTargetId,
   readOnly,
   onRentalAssetChange,
   onAdd,
@@ -87,15 +93,16 @@ export function WeeklyTemplatesTab({
           </select>
         </label>
         <div className="flex flex-wrap gap-2">
-          <Button
+          <LoadingButton
             type="button"
             variant="outline"
             size="sm"
+            loading={busyAction === "seed"}
             disabled={busy || readOnly || !rentalAssetId}
             onClick={onSeedTemplates}
           >
             {t("rentals.schedule.seedTemplates")}
-          </Button>
+          </LoadingButton>
           <Button
             type="button"
             size="sm"
@@ -122,15 +129,16 @@ export function WeeklyTemplatesTab({
           actionDisabled={busy || readOnly || !rentalAssetId}
           onAction={onAdd}
           secondaryAction={
-            <Button
+            <LoadingButton
               type="button"
               variant="outline"
               size="sm"
+              loading={busyAction === "seed"}
               disabled={busy || readOnly || !rentalAssetId}
               onClick={onSeedTemplates}
             >
               {t("rentals.schedule.seedTemplates")}
-            </Button>
+            </LoadingButton>
           }
         />
       ) : (
@@ -181,10 +189,14 @@ export function WeeklyTemplatesTab({
                         >
                           {t("common.edit")}
                         </Button>
-                        <Button
+                        <LoadingButton
                           type="button"
                           size="sm"
                           variant="outline"
+                          loading={
+                            busyAction === "templateToggle" &&
+                            busyTargetId === row.id
+                          }
                           disabled={busy || readOnly}
                           onClick={() => {
                             onToggleActive(row)
@@ -193,18 +205,22 @@ export function WeeklyTemplatesTab({
                           {row.isActive
                             ? t("rentals.schedule.deactivate")
                             : t("rentals.schedule.activate")}
-                        </Button>
-                        <Button
+                        </LoadingButton>
+                        <LoadingButton
                           type="button"
                           size="sm"
                           variant="destructive"
+                          loading={
+                            busyAction === "templateDelete" &&
+                            busyTargetId === row.id
+                          }
                           disabled={busy || readOnly}
                           onClick={() => {
                             onDelete(row.id)
                           }}
                         >
                           {t("common.delete")}
-                        </Button>
+                        </LoadingButton>
                       </div>
                     </li>
                   ))}

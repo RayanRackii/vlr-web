@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Sheet,
   SheetContent,
@@ -11,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import {
   emptyTemplateDraft,
   type TemplateDraft,
@@ -29,6 +31,7 @@ type TemplateSheetProps = {
   kinds: readonly OccupancyKind[]
   defaultKindId: string
   busy: boolean
+  busyAction: ScheduleBusyAction
   readOnly: boolean
   onSubmit: (values: TemplateDraft) => Promise<boolean>
 }
@@ -40,6 +43,7 @@ export function TemplateSheet({
   kinds,
   defaultKindId,
   busy,
+  busyAction,
   readOnly,
   onSubmit,
 }: TemplateSheetProps) {
@@ -211,8 +215,9 @@ export function TemplateSheet({
           >
             {t("common.cancel")}
           </Button>
-          <Button
+          <LoadingButton
             type="button"
+            loading={busyAction === "template"}
             disabled={busy || readOnly}
             onClick={() => {
               void onSubmit(draft).then((ok) => {
@@ -225,7 +230,7 @@ export function TemplateSheet({
             {editing
               ? t("rentals.schedule.templates.saveEdit")
               : t("rentals.schedule.templates.saveCreate")}
-          </Button>
+          </LoadingButton>
         </SheetFooter>
       </SheetContent>
     </Sheet>

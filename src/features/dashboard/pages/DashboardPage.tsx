@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Bar,
   BarChart,
@@ -222,43 +222,63 @@ export function DashboardPage() {
 export function TenantAdminDashboard() {
   const { t } = useTranslation()
   const { session } = useAuth()
+  const userId = session?.user?.id ?? null
 
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const loadMetrics = useCallback(async () => {
-    if (!session) {
-      setLoadError(t("dashboard.errors.unauthorized"))
-      setIsLoading(false)
-      return
-    }
+  useEffect(() => {
+    let cancelled = false
 
-    setIsLoading(true)
-    setLoadError(null)
-
-    try {
-      const data = await getDashboardMetrics()
-      setMetrics(data)
-    } catch (error: unknown) {
-      console.error("DashboardPage loadMetrics failed", error)
-      if (isAxiosError(error)) {
-        console.error("DashboardPage loadMetrics response", error.response?.data)
+    async function loadMetrics() {
+      if (!userId) {
+        if (!cancelled) {
+          setLoadError(t("dashboard.errors.unauthorized"))
+          setIsLoading(false)
+        }
+        return
       }
 
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : t("dashboard.errors.loadFailed"),
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }, [session, t])
+      if (!cancelled) {
+        setLoadError(null)
+        setIsLoading(true)
+      }
 
-  useEffect(() => {
+      try {
+        const data = await getDashboardMetrics()
+        if (!cancelled) {
+          setMetrics(data)
+        }
+      } catch (error: unknown) {
+        console.error("DashboardPage loadMetrics failed", error)
+        if (isAxiosError(error)) {
+          console.error(
+            "DashboardPage loadMetrics response",
+            error.response?.data,
+          )
+        }
+
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : t("dashboard.errors.loadFailed"),
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
     void loadMetrics()
-  }, [loadMetrics])
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, t])
 
   const workOrderChartData = useMemo(() => {
     if (!metrics?.workOrders) {

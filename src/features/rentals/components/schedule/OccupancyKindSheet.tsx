@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Sheet,
   SheetContent,
@@ -210,8 +211,9 @@ export function OccupancyKindSheet({
           >
             {t("common.cancel")}
           </Button>
-          <Button
+          <LoadingButton
             type="button"
+            loading={busy}
             disabled={busy || readOnly}
             onClick={() => {
               void onSubmit(form).then((ok) => {
@@ -224,7 +226,7 @@ export function OccupancyKindSheet({
             {editing
               ? t("rentals.schedule.kinds.saveEdit")
               : t("rentals.schedule.kinds.saveCreate")}
-          </Button>
+          </LoadingButton>
         </SheetFooter>
       </SheetContent>
     </Sheet>

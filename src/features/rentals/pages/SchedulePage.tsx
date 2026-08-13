@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { DailyAgendaTab } from "@/features/rentals/components/schedule/DailyAgendaTab"
-import { cn } from "@/lib/utils"
+import {
+  DailyAgendaTab,
+  type ScheduleBusyAction,
+} from "@/features/rentals/components/schedule/DailyAgendaTab"
 import { OccupancyKindSheet } from "@/features/rentals/components/schedule/OccupancyKindSheet"
 import { OccupancyKindsTab } from "@/features/rentals/components/schedule/OccupancyKindsTab"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
@@ -31,8 +33,13 @@ import {
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
+import { cn } from "@/lib/utils"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
+
+function dayCacheKey(rentalAssetId: string, date: string): string {
+  return `${rentalAssetId}|${date}`
+}
 
 export function SchedulePage() {
   const { t } = useTranslation()
@@ -48,7 +55,13 @@ export function SchedulePage() {
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
   const [loadingDay, setLoadingDay] = useState(false)
+  const [showDaySkeleton, setShowDaySkeleton] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [busyAction, setBusyAction] = useState<ScheduleBusyAction>(null)
+  const [busyTargetId, setBusyTargetId] = useState<string | null>(null)
+
+  const loadedDayKeysRef = useRef(new Set<string>())
+  const dayCacheRef = useRef(new Map<string, AdminDaySchedule | null>())
 
   const [kindSheetOpen, setKindSheetOpen] = useState(false)
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
@@ -63,6 +76,18 @@ export function SchedulePage() {
       "",
     [kinds],
   )
+
+  function beginBusy(action: Exclude<ScheduleBusyAction, null>, targetId?: string) {
+    setBusy(true)
+    setBusyAction(action)
+    setBusyTargetId(targetId ?? null)
+  }
+
+  function endBusy() {
+    setBusy(false)
+    setBusyAction(null)
+    setBusyTargetId(null)
+  }
 
   const loadKinds = useCallback(async () => {
     setLoadingKinds(true)
@@ -120,23 +145,40 @@ export function SchedulePage() {
     if (!rentalAssetId || !date) {
       return
     }
+    const key = dayCacheKey(rentalAssetId, date)
     const [templateList, daySchedule] = await Promise.all([
       listScheduleTemplates(rentalAssetId),
       fetchAdminScheduleDay(date, rentalAssetId),
     ])
     setTemplates(templateList)
     setDay(daySchedule)
+    loadedDayKeysRef.current.add(key)
+    dayCacheRef.current.set(key, daySchedule)
   }, [date, rentalAssetId])
 
   useEffect(() => {
     if (!rentalAssetId || !date) {
       setTemplates([])
       setDay(null)
+      setShowDaySkeleton(false)
+      setLoadingDay(false)
       return
     }
 
+    const key = dayCacheKey(rentalAssetId, date)
+    const known = loadedDayKeysRef.current.has(key)
+    const cached = dayCacheRef.current.get(key)
+
     let cancelled = false
     setLoadingDay(true)
+    setShowDaySkeleton(!known)
+
+    if (cached !== undefined) {
+      setDay(cached)
+    } else if (!known) {
+      setDay(null)
+    }
+
     void Promise.all([
       listScheduleTemplates(rentalAssetId),
       fetchAdminScheduleDay(date, rentalAssetId),
@@ -147,6 +189,8 @@ export function SchedulePage() {
         }
         setTemplates(templateList)
         setDay(daySchedule)
+        loadedDayKeysRef.current.add(key)
+        dayCacheRef.current.set(key, daySchedule)
       })
       .catch((error) => {
         if (!cancelled) {
@@ -160,6 +204,7 @@ export function SchedulePage() {
       .finally(() => {
         if (!cancelled) {
           setLoadingDay(false)
+          setShowDaySkeleton(false)
         }
       })
 
@@ -175,7 +220,7 @@ export function SchedulePage() {
       toast.error(t("rentals.schedule.kinds.validation"))
       return false
     }
-    setBusy(true)
+    beginBusy("kind")
     try {
       if (editingKind) {
         await updateOccupancyKind(editingKind.id, values)
@@ -194,7 +239,7 @@ export function SchedulePage() {
       )
       return false
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
@@ -203,7 +248,7 @@ export function SchedulePage() {
       toast.error(t("rentals.schedule.templates.validation"))
       return false
     }
-    setBusy(true)
+    beginBusy("template")
     try {
       const body = {
         rentalAssetId,
@@ -231,12 +276,12 @@ export function SchedulePage() {
       )
       return false
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
   async function onToggleTemplateActive(row: ScheduleTemplate) {
-    setBusy(true)
+    beginBusy("templateToggle", row.id)
     try {
       await updateScheduleTemplate(row.id, {
         rentalAssetId: row.rentalAssetId,
@@ -255,12 +300,12 @@ export function SchedulePage() {
           : t("rentals.schedule.templates.saveError"),
       )
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
   async function onDeleteTemplate(id: string) {
-    setBusy(true)
+    beginBusy("templateDelete", id)
     try {
       await deleteScheduleTemplate(id)
       toast.success(t("rentals.schedule.templates.deleteSuccess"))
@@ -276,7 +321,7 @@ export function SchedulePage() {
           : t("rentals.schedule.templates.deleteError"),
       )
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
@@ -284,7 +329,7 @@ export function SchedulePage() {
     if (!rentalAssetId) {
       return
     }
-    setBusy(true)
+    beginBusy("seed")
     try {
       const created = await seedDefaultHourlyTemplates(rentalAssetId)
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
@@ -296,7 +341,7 @@ export function SchedulePage() {
           : t("rentals.schedule.seedError"),
       )
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
@@ -304,7 +349,7 @@ export function SchedulePage() {
     if (!rentalAssetId) {
       return
     }
-    setBusy(true)
+    beginBusy("policy")
     try {
       const updated = await updateRentalSchedulePolicy(rentalAssetId, input)
       setAssets((current) =>
@@ -324,7 +369,7 @@ export function SchedulePage() {
       )
       throw error
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
 
@@ -332,7 +377,7 @@ export function SchedulePage() {
     if (!rentalAssetId || !date) {
       return
     }
-    setBusy(true)
+    beginBusy("publish")
     try {
       const created = await publishScheduleDay({
         date,
@@ -347,11 +392,9 @@ export function SchedulePage() {
           : t("rentals.schedule.publishError"),
       )
     } finally {
-      setBusy(false)
+      endBusy()
     }
   }
-
-  const loading = loadingAssets || loadingDay
 
   const tabItems: { id: ScheduleTab; labelKey: string }[] = [
     { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
@@ -402,8 +445,12 @@ export function SchedulePage() {
             rentalAssetId={rentalAssetId}
             date={date}
             day={day}
-            loading={loading}
+            loading={loadingAssets || loadingDay}
+            showSkeleton={
+              !loadingAssets && showDaySkeleton && Boolean(rentalAssetId)
+            }
             busy={busy}
+            busyAction={busyAction}
             readOnly={isTrialReadOnly}
             hasTemplates={templates.length > 0}
             onRentalAssetChange={setRentalAssetId}
@@ -423,8 +470,10 @@ export function SchedulePage() {
             assets={assets}
             rentalAssetId={rentalAssetId}
             templates={templates}
-            loading={loading}
+            loading={loadingAssets || loadingDay}
             busy={busy}
+            busyAction={busyAction}
+            busyTargetId={busyTargetId}
             readOnly={isTrialReadOnly}
             onRentalAssetChange={setRentalAssetId}
             onAdd={() => {
@@ -491,6 +540,7 @@ export function SchedulePage() {
         kinds={kinds}
         defaultKindId={defaultKindId}
         busy={busy}
+        busyAction={busyAction}
         readOnly={isTrialReadOnly}
         onSubmit={handleSaveTemplate}
       />
