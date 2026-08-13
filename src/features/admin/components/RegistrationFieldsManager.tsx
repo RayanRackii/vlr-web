@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import {
   FIELD_TYPE_OPTIONS,
@@ -124,7 +125,7 @@ export function RegistrationFieldsManager({
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : fields.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {t("admin.registrationFields.empty")}
@@ -150,17 +151,17 @@ export function RegistrationFieldsManager({
                     : ` · ${t("common.optional")}`}
                 </p>
               </div>
-              <Button
+              <LoadingButton
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={saving}
+                loading={saving}
                 onClick={() => {
                   void handleDelete(field.id)
                 }}
               >
                 {t("common.delete")}
-              </Button>
+              </LoadingButton>
             </li>
           ))}
         </ul>
@@ -214,16 +215,17 @@ export function RegistrationFieldsManager({
             }}
           />
         ) : null}
-        <Button
+        <LoadingButton
           type="button"
           className="sm:col-span-2"
-          disabled={saving || fieldKey.trim().length < 2 || label.trim().length < 1}
+          loading={saving}
+          disabled={fieldKey.trim().length < 2 || label.trim().length < 1}
           onClick={() => {
             void handleCreate()
           }}
         >
           {t("admin.registrationFields.add")}
-        </Button>
+        </LoadingButton>
       </div>
     </div>
   )

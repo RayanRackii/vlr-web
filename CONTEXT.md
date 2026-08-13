@@ -151,6 +151,7 @@ vlr-web (este repo)                 vlr-api (repo irmão)
 - React + Vite, shadcn/ui, Tailwind. Deploy **Vercel**.
 - `VITE_API_URL` → `vlr-api` (Railway). JWT Bearer (Supabase B2B ou Customer JWT B2C).
 - Hosts: apex = landing + app B2B; `{subdomain}.rolvix.com.br` = portal B2C.
+- **Loading (produto):** Skeleton shimmer (default) na 1ª carga; `LoadingButton` em ações pontuais; `TopProgressBar` nas navegações React Router (delay ~250ms). Não sobrepor indicadores para o mesmo evento.
 
 ## 7. Disciplina do agente
 1. Atualizar este `ROADMAP.md` em toda tarefa relevante (+ Histórico se o plano mudar).

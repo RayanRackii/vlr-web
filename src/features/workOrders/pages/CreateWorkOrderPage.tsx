@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, LoaderCircle } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Card,
   CardContent,
@@ -353,21 +354,15 @@ export function CreateWorkOrderPage() {
               />
 
               <div className="flex justify-end">
-                <Button
+                <LoadingButton
                   type="submit"
-                  disabled={
-                    isLoadingLookups ||
-                    form.formState.isSubmitting ||
-                    isSubmitted
-                  }
+                  loading={form.formState.isSubmitting}
+                  disabled={isLoadingLookups || isSubmitted}
                 >
-                  {form.formState.isSubmitting ? (
-                    <LoaderCircle className="animate-spin" />
-                  ) : null}
                   {isSubmitted
                     ? t("workOrders.create.redirecting")
                     : t("workOrders.create.submit")}
-                </Button>
+                </LoadingButton>
               </div>
             </form>
           </Form>

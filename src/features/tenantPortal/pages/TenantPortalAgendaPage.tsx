@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Navigate, useOutletContext, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
+import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -256,7 +257,7 @@ export function TenantPortalAgendaPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <FormSkeleton fields={4} />
       ) : (
         <>
           <div className="space-y-3">

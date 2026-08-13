@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { MODULE_KEYS } from "@/features/admin/schemas/adminTenantSchemas"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
@@ -159,7 +160,7 @@ export function ModuleMenuItemsManager({
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : (
         <ul className="space-y-2">
           {items.length === 0 ? (
@@ -182,17 +183,17 @@ export function ModuleMenuItemsManager({
                       : ""}
                   </p>
                 </div>
-                <Button
+                <LoadingButton
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={saving}
+                  loading={saving}
                   onClick={() => {
                     void handleDelete(item.id)
                   }}
                 >
                   {t("common.delete")}
-                </Button>
+                </LoadingButton>
               </li>
             ))
           )}
@@ -238,15 +239,16 @@ export function ModuleMenuItemsManager({
             ))}
           </select>
         ) : null}
-        <Button
+        <LoadingButton
           type="button"
-          disabled={saving || label.trim().length === 0}
+          loading={saving}
+          disabled={label.trim().length === 0}
           onClick={() => {
             void handleCreate()
           }}
         >
           {t("admin.moduleMenu.create")}
-        </Button>
+        </LoadingButton>
       </div>
     </div>
   )

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import {
@@ -139,7 +140,7 @@ export function ReservationsPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {t("rentals.reservations.empty")}
@@ -150,7 +151,6 @@ export function ReservationsPage() {
             const canConfirm = row.status === "PendingDeposit"
             const canCancel =
               row.status === "PendingDeposit" || row.status === "Confirmed"
-            const busy = busyId === row.id
 
             return (
               <li
@@ -173,29 +173,31 @@ export function ReservationsPage() {
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   {canConfirm ? (
-                    <Button
+                    <LoadingButton
                       type="button"
                       size="sm"
-                      disabled={busy || isTrialReadOnly}
+                      loading={busyId === row.id}
+                      disabled={isTrialReadOnly}
                       onClick={() => {
                         void onConfirm(row.id)
                       }}
                     >
                       {t("rentals.reservations.confirm")}
-                    </Button>
+                    </LoadingButton>
                   ) : null}
                   {canCancel ? (
-                    <Button
+                    <LoadingButton
                       type="button"
                       size="sm"
                       variant="outline"
-                      disabled={busy || isTrialReadOnly}
+                      loading={busyId === row.id}
+                      disabled={isTrialReadOnly}
                       onClick={() => {
                         void onCancel(row.id)
                       }}
                     >
                       {t("rentals.reservations.cancel")}
-                    </Button>
+                    </LoadingButton>
                   ) : null}
                 </div>
               </li>

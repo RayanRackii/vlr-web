@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -7,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Card,
   CardContent,
@@ -176,23 +176,14 @@ export function SetPasswordPage() {
                     )}
                   />
 
-                  <Button
+                  <LoadingButton
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
+                    loading={isSubmitting}
+                    loadingLabel={t("auth.invite.submitting")}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2
-                          className="size-4 animate-spin"
-                          aria-hidden="true"
-                        />
-                        {t("auth.invite.submitting")}
-                      </>
-                    ) : (
-                      t("auth.invite.submit")
-                    )}
-                  </Button>
+                    {t("auth.invite.submit")}
+                  </LoadingButton>
                 </form>
               </Form>
             )}

@@ -11,7 +11,8 @@ import {
   type TenantInvite,
   type TenantUser,
 } from "@/features/admin/services/tenantUsersService"
-import { Button } from "@/components/ui/button"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -98,19 +99,20 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
-        <Button
+        <LoadingButton
           type="button"
-          disabled={busy || fullName.trim().length < 2 || !email.includes("@")}
+          loading={busy}
+          disabled={fullName.trim().length < 2 || !email.includes("@")}
           onClick={() => {
             void handleInvite()
           }}
         >
           {t("admin.users.inviteAdmin")}
-        </Button>
+        </LoadingButton>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -147,11 +149,11 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
                           </Badge>
                         ))}
                         {!isAdmin ? (
-                          <Button
+                          <LoadingButton
                             type="button"
                             size="sm"
                             variant="outline"
-                            disabled={busy}
+                            loading={busy}
                             onClick={() => {
                               void (async () => {
                                 setBusy(true)
@@ -176,7 +178,7 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
                             }}
                           >
                             {t("admin.users.makeAdmin")}
-                          </Button>
+                          </LoadingButton>
                         ) : null}
                       </div>
                     </li>
@@ -210,11 +212,11 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button
+                      <LoadingButton
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={busy}
+                        loading={busy}
                         onClick={() => {
                           void (async () => {
                             setBusy(true)
@@ -235,12 +237,12 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
                         }}
                       >
                         {t("admin.users.resend")}
-                      </Button>
-                      <Button
+                      </LoadingButton>
+                      <LoadingButton
                         type="button"
                         size="sm"
                         variant="ghost"
-                        disabled={busy}
+                        loading={busy}
                         onClick={() => {
                           void (async () => {
                             setBusy(true)
@@ -261,7 +263,7 @@ export function TenantUsersManager({ tenantId }: TenantUsersManagerProps) {
                         }}
                       >
                         {t("admin.users.revoke")}
-                      </Button>
+                      </LoadingButton>
                     </div>
                   </li>
                 ))}

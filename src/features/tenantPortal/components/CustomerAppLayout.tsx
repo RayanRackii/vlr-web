@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import {
@@ -116,7 +117,7 @@ export function CustomerAppLayout() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} className="w-full max-w-md" />
       </main>
     )
   }

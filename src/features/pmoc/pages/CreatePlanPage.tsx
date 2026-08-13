@@ -6,6 +6,7 @@ import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Dialog,
   DialogContent,
@@ -779,19 +780,13 @@ export function CreatePlanPage() {
               >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
-                  <>
-                    <LoaderCircle
-                      data-icon="inline-start"
-                      className="animate-spin"
-                    />
-                    {t("pmoc.create.actions.saving")}
-                  </>
-                ) : (
-                  t("pmoc.create.actions.save")
-                )}
-              </Button>
+              <LoadingButton
+                type="submit"
+                loading={form.formState.isSubmitting}
+                loadingLabel={t("pmoc.create.actions.saving")}
+              >
+                {t("pmoc.create.actions.save")}
+              </LoadingButton>
             </div>
           </form>
         </Form>

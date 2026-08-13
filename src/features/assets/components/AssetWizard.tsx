@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Dialog,
   DialogContent,
@@ -1435,18 +1436,16 @@ export function AssetWizard({
           </Button>
           <div className="flex gap-2">
             {isLastStep ? (
-              <Button
+              <LoadingButton
                 type="button"
-                disabled={isLoading || isSubmitting || readOnly}
+                loading={isSubmitting}
+                disabled={isLoading || readOnly}
                 onClick={() => {
                   void handleSubmit()
                 }}
               >
-                {isSubmitting ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : null}
                 {t("assets.wizard.finish")}
-              </Button>
+              </LoadingButton>
             ) : (
               <Button
                 type="button"

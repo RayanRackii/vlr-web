@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -207,9 +208,14 @@ export function ResetPasswordPage() {
             </p>
           ) : null}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : "Salvar senha"}
-          </Button>
+          <LoadingButton
+            type="submit"
+            className="w-full"
+            loading={isSubmitting}
+            loadingLabel="Salvando..."
+          >
+            Salvar senha
+          </LoadingButton>
         </form>
       </Form>
     </main>

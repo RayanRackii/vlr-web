@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -140,9 +141,7 @@ export function TenantPortalRegisterPage() {
   }
 
   if (schemaLoading) {
-    return (
-      <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-    )
+    return <FormSkeleton fields={5} />
   }
 
   if (schemaError) {
@@ -267,16 +266,15 @@ export function TenantPortalRegisterPage() {
             />
           ))}
 
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full"
-            disabled={submitting}
+            loading={submitting}
+            loadingLabel={t("tenantPortal.register.submitting")}
             style={{ backgroundColor: primary }}
           >
-            {submitting
-              ? t("tenantPortal.register.submitting")
-              : t("tenantPortal.register.submit")}
-          </Button>
+            {t("tenantPortal.register.submit")}
+          </LoadingButton>
         </form>
       </Form>
 

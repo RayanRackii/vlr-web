@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -94,16 +94,15 @@ export function TenantPortalLoginPage() {
               </FormItem>
             )}
           />
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full"
-            disabled={submitting}
+            loading={submitting}
+            loadingLabel={t("tenantPortal.login.submitting")}
             style={{ backgroundColor: primary }}
           >
-            {submitting
-              ? t("tenantPortal.login.submitting")
-              : t("tenantPortal.login.submit")}
-          </Button>
+            {t("tenantPortal.login.submit")}
+          </LoadingButton>
         </form>
       </Form>
 

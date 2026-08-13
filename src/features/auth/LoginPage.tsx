@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -161,21 +161,28 @@ export function LoginPage() {
             </p>
           ) : null}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Entrando..." : "Entrar"}
-          </Button>
+          <LoadingButton
+            type="submit"
+            className="w-full"
+            loading={isSubmitting}
+            loadingLabel="Entrando..."
+          >
+            Entrar
+          </LoadingButton>
 
-          <Button
+          <LoadingButton
             type="button"
             variant="ghost"
             className="w-full"
-            disabled={isSubmitting || isSendingReset}
+            loading={isSendingReset}
+            loadingLabel="Enviando..."
+            disabled={isSubmitting}
             onClick={() => {
               void onForgotPassword()
             }}
           >
-            {isSendingReset ? "Enviando..." : "Esqueci a senha"}
-          </Button>
+            Esqueci a senha
+          </LoadingButton>
         </form>
       </Form>
     </main>

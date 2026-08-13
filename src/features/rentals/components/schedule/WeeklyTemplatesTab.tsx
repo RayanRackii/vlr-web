@@ -2,6 +2,7 @@ import { CalendarRange } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
@@ -119,7 +120,7 @@ export function WeeklyTemplatesTab({
       </p>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : templates.length === 0 ? (
         <ScheduleEmptyState
           icon={CalendarRange}

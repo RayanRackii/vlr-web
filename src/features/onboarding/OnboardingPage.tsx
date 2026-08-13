@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -334,17 +335,17 @@ export function OnboardingPage() {
                 {t("common.next")}
               </Button>
             ) : (
-              <Button
+              <LoadingButton
                 type="button"
-                disabled={showSuccessAlert || isSubmitting}
+                loading={isSubmitting}
+                loadingLabel={t("trial.onboarding.submitting")}
+                disabled={showSuccessAlert}
                 onClick={() => {
                   void onFinish()
                 }}
               >
-                {isSubmitting
-                  ? t("trial.onboarding.submitting")
-                  : t("trial.onboarding.finish")}
-              </Button>
+                {t("trial.onboarding.finish")}
+              </LoadingButton>
             )}
           </div>
         </form>

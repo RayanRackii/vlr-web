@@ -8,13 +8,15 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { CircleCheck, LoaderCircle, MoreHorizontal, Plus } from "lucide-react"
+import { CircleCheck, MoreHorizontal, Plus } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
+import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Dialog,
   DialogContent,
@@ -466,17 +468,7 @@ export function AssetCategoriesPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    <span className="inline-flex items-center gap-2 text-muted-foreground">
-                      <LoaderCircle className="size-4 animate-spin" />
-                      {t("assets.categories.loading")}
-                    </span>
-                  </TableCell>
-                </TableRow>
+                <TableRowsSkeleton columns={columns.length} />
               ) : null}
 
               {!isLoading && table.getRowModel().rows.length === 0 ? (
@@ -612,11 +604,13 @@ export function AssetCategoriesPage() {
                 >
                   {t("common.cancel")}
                 </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting
-                    ? t("assets.categories.actions.saving")
-                    : t("assets.categories.actions.save")}
-                </Button>
+                <LoadingButton
+                  type="submit"
+                  loading={form.formState.isSubmitting}
+                  loadingLabel={t("assets.categories.actions.saving")}
+                >
+                  {t("assets.categories.actions.save")}
+                </LoadingButton>
               </DialogFooter>
             </form>
           </Form>

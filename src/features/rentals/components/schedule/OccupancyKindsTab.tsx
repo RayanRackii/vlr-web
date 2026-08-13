@@ -1,6 +1,7 @@
 import { Tags } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import type { OccupancyKind } from "@/features/rentals/services/scheduleService"
@@ -41,7 +42,7 @@ export function OccupancyKindsTab({
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <PageContentSkeleton rows={3} />
       ) : kinds.length === 0 ? (
         <ScheduleEmptyState
           icon={Tags}

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom"
 import {
   ArrowLeft,
   CircleCheck,
-  LoaderCircle,
   Play,
   WifiOff,
 } from "lucide-react"
@@ -13,6 +12,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
   Select,
   SelectContent,
@@ -399,12 +400,7 @@ export function WorkOrderExecutionPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircle className="size-4 animate-spin" />
-        {t("workOrders.execution.loading")}
-      </div>
-    )
+    return <PageContentSkeleton rows={5} />
   }
 
   if (!workOrder) {
@@ -587,45 +583,31 @@ export function WorkOrderExecutionPage() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 p-4 sm:flex-row sm:justify-end">
           {workOrder.status === "Pending" ? (
-            <Button
+            <LoadingButton
               type="button"
-              disabled={isUpdatingStatus}
+              loading={isUpdatingStatus}
               onClick={() => {
                 void handleStart()
               }}
             >
-              {isUpdatingStatus ? (
-                <LoaderCircle
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              ) : (
-                <Play data-icon="inline-start" />
-              )}
+              <Play data-icon="inline-start" />
               {t("workOrders.execution.start")}
-            </Button>
+            </LoadingButton>
           ) : null}
 
           {workOrder.status === "Pending" ||
           workOrder.status === "InProgress" ? (
-            <Button
+            <LoadingButton
               type="button"
               variant="default"
-              disabled={isUpdatingStatus}
+              loading={isUpdatingStatus}
               onClick={() => {
                 void handleComplete()
               }}
             >
-              {isUpdatingStatus ? (
-                <LoaderCircle
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              ) : (
-                <CircleCheck data-icon="inline-start" />
-              )}
+              <CircleCheck data-icon="inline-start" />
               {t("workOrders.execution.complete")}
-            </Button>
+            </LoadingButton>
           ) : null}
         </div>
       </div>

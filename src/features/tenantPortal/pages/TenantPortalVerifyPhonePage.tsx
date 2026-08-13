@@ -10,7 +10,7 @@ import {
 } from "react-router-dom"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
@@ -109,16 +109,15 @@ export function TenantPortalVerifyPhonePage() {
               </FormItem>
             )}
           />
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full"
-            disabled={submitting}
+            loading={submitting}
+            loadingLabel={t("tenantPortal.verify.submitting")}
             style={{ backgroundColor: primary }}
           >
-            {submitting
-              ? t("tenantPortal.verify.submitting")
-              : t("tenantPortal.verify.submit")}
-          </Button>
+            {t("tenantPortal.verify.submit")}
+          </LoadingButton>
         </form>
       </Form>
 

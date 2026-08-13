@@ -48,7 +48,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
 - [x] UX admin Escala/Agenda: abas Agenda diária / Templates / Tipos + Sheet forms + timeline de slots
 - [x] Política OpenHours na Agenda diária + seed SlotGrid via `POST .../templates/seed-default` (1 request)
-- [x] Padrões de loading (agenda admin + book B2C): Skeleton shimmer 1ª carga; `LoadingButton` em Publish/template/book; `TopProgressBar` (React Router, delay ~250ms)
+- [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [ ] Layout canvas (mapa de rentables) admin + picker B2C
 
 ## 4. Gating B2B por módulos
@@ -109,3 +109,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-11 | **UX:** Escala/Agenda em 3 abas (diária default, templates, kinds) + Sheets + empty states. |
 | 2026-08-11 | **Executado:** OpenHours admin + seed bulk `templates/seed-default` (API + FE); docs CONTEXT. |
 | 2026-08-13 | **Executado:** 3 padrões de loading na agenda (Skeleton shimmer / LoadingButton / TopProgressBar React Router). |
+| 2026-08-13 | **Executado:** loading patterns estendidos a toda a app (Skeleton default=shimmer, tabelas/listas, LoadingButton em auth/portal/admin/assets/OS/PMOC). |

@@ -8,11 +8,12 @@ import {
   type ColumnFiltersState,
   type RowSelectionState,
 } from "@tanstack/react-table"
-import { CircleCheck, Layers, LoaderCircle, MoreHorizontal, Plus, Trash2 } from "lucide-react"
+import { CircleCheck, Layers, MoreHorizontal, Plus, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
+import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AssetWizard } from "@/features/assets/components/AssetWizard"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
@@ -616,14 +617,7 @@ export function AssetsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <LoaderCircle className="size-4 animate-spin" />
-                    {t("assets.inventory.loading")}
-                  </span>
-                </TableCell>
-              </TableRow>
+              <TableRowsSkeleton columns={columns.length} />
             ) : null}
 
             {!isLoading && filteredRows.length === 0 ? (

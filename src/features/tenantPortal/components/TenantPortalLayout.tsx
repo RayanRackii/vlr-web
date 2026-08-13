@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Outlet, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
@@ -81,7 +82,7 @@ export function TenantPortalLayout() {
           />
         ) : null}
         <main className="flex min-h-screen items-center justify-center p-6 pt-24">
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+          <PageContentSkeleton rows={2} className="w-full max-w-md" />
         </main>
       </div>
     )

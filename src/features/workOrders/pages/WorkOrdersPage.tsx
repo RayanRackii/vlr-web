@@ -8,10 +8,11 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye, LoaderCircle, Play, Plus } from "lucide-react"
+import { Eye, Play, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
+import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -187,14 +188,7 @@ function WorkOrdersTable({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                <span className="inline-flex items-center gap-2 text-muted-foreground">
-                  <LoaderCircle className="size-4 animate-spin" />
-                  {t("workOrders.loading")}
-                </span>
-              </TableCell>
-            </TableRow>
+            <TableRowsSkeleton columns={columns.length} />
           ) : null}
 
           {!isLoading && filteredRows.length === 0 ? (
