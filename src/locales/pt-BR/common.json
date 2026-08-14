@@ -520,6 +520,7 @@
     "adminUsers": "Usuários",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação",
+    "loading": "Carregando menu de navegação",
     "sections": {
       "overview": "Visão geral",
       "peoplePortal": "Pessoas & portal",

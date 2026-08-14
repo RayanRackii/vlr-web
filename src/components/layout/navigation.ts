@@ -56,6 +56,11 @@ export type AppNavigationSection = {
   items: readonly AppNavigationItem[]
 }
 
+export type AppNavigationState = {
+  sections: readonly AppNavigationSection[]
+  isLoading: boolean
+}
+
 const overviewItem: AppNavigationItem = {
   labelKey: "nav.dashboard",
   to: "/dashboard",
@@ -183,7 +188,7 @@ function buildProductSections(
   return sections
 }
 
-export function useAppNavigationSections(): readonly AppNavigationSection[] {
+export function useAppNavigationSections(): AppNavigationState {
   const isPlatformAdmin = useIsPlatformAdmin()
   const { isInTenantEnvironment } = usePlatformTenantSession()
   const [activeModules, setActiveModules] = useState<string[] | null>(null)
@@ -215,7 +220,7 @@ export function useAppNavigationSections(): readonly AppNavigationSection[] {
     }
   }, [needsProductNav, isInTenantEnvironment])
 
-  return useMemo(() => {
+  const sections = useMemo<readonly AppNavigationSection[]>(() => {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
@@ -256,6 +261,11 @@ export function useAppNavigationSections(): readonly AppNavigationSection[] {
 
     return buildProductSections(activeModules)
   }, [activeModules, isInTenantEnvironment, isPlatformAdmin])
+
+  return {
+    sections,
+    isLoading: needsProductNav && activeModules === null,
+  }
 }
 
 export function getPageTitleKey(

@@ -7,6 +7,7 @@ import {
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type SidebarProps = {
   onNavigate?: () => void
@@ -91,9 +92,44 @@ function NavigationLink({
   )
 }
 
+function SidebarNavigationSkeleton({ label }: { label: string }) {
+  return (
+    <div
+      className="flex flex-col gap-5"
+      aria-label={label}
+      role="status"
+    >
+      {[2, 4].map((itemCount, sectionIndex) => (
+        <div key={itemCount} className="flex flex-col gap-2 px-3">
+          <Skeleton
+            className={cn("h-2.5", sectionIndex === 0 ? "w-24" : "w-16")}
+          />
+          {Array.from({ length: itemCount }, (_, itemIndex) => (
+            <div
+              key={itemIndex}
+              className="flex h-8 items-center gap-2"
+              aria-hidden
+            >
+              <Skeleton className="size-4 shrink-0 rounded-sm" />
+              <Skeleton
+                className={cn(
+                  "h-3",
+                  itemIndex % 2 === 0 ? "w-28" : "w-20",
+                )}
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+      <span className="sr-only">{label}</span>
+    </div>
+  )
+}
+
 export function Sidebar({ onNavigate, className }: SidebarProps) {
   const { t } = useTranslation()
-  const navigationSections = useAppNavigationSections()
+  const { sections: navigationSections, isLoading } =
+    useAppNavigationSections()
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -105,7 +141,10 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
 
       <Separator />
 
-      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+      <nav
+        className="flex flex-1 flex-col gap-5 overflow-y-auto p-3"
+        aria-busy={isLoading}
+      >
         {navigationSections.map((section) => (
           <div key={section.titleKey} className="flex flex-col gap-1">
             <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -120,6 +159,9 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
             ))}
           </div>
         ))}
+        {isLoading ? (
+          <SidebarNavigationSkeleton label={t("nav.loading")} />
+        ) : null}
       </nav>
     </div>
   )

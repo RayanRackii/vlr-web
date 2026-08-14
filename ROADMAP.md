@@ -54,6 +54,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 ## 4. Gating B2B por módulos
 
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
+- [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
 - [ ] `ModuleGuard` nas rotas + listagem de Users B2B do tenant em **Pessoas & portal**.
 - [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
@@ -110,3 +111,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-11 | **Executado:** OpenHours admin + seed bulk `templates/seed-default` (API + FE); docs CONTEXT. |
 | 2026-08-13 | **Executado:** 3 padrões de loading na agenda (Skeleton shimmer / LoadingButton / TopProgressBar React Router). |
 | 2026-08-13 | **Executado:** loading patterns estendidos a toda a app (Skeleton default=shimmer, tabelas/listas, LoadingButton em auth/portal/admin/assets/OS/PMOC). |
+| 2026-08-14 | **UX:** skeleton shimmer na sidebar durante carregamento da navegação por módulos. |
