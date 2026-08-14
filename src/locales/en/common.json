@@ -1588,6 +1588,8 @@
       "selectedCount": "{{selected}} of {{total}}",
       "selectAll": "Select all",
       "clearSelection": "Clear",
+      "filterRentables": "Filter spaces or goods...",
+      "noMatchingRentables": "No spaces or goods found.",
       "noneSelectedTitle": "No space selected",
       "noneSelectedDescription": "Check one or more spaces to view and configure the day’s schedule.",
       "slotCount": "{{count}} time slots",

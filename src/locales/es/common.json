@@ -1588,6 +1588,8 @@
       "selectedCount": "{{selected}} de {{total}}",
       "selectAll": "Seleccionar todos",
       "clearSelection": "Limpiar",
+      "filterRentables": "Filtrar espacios o bienes...",
+      "noMatchingRentables": "No se encontraron espacios ni bienes.",
       "noneSelectedTitle": "Ningún espacio seleccionado",
       "noneSelectedDescription": "Marque uno o más espacios para ver y configurar la agenda del día.",
       "slotCount": "{{count}} horarios",

@@ -22,8 +22,8 @@ O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes 
 **Ordem do ciclo atual (ver `CONTEXT.md` + `ROADMAP.md`):**
 1. Resend + WhatsApp — **adiada** (config Meta em andamento).
 2. Portal B2C branded — shell, login e-mail+senha, menu dinâmico em código; fechar DNS/deploy.
-3. **Próximo salto de produto:** agenda B2C por **Slot** + admin de templates/kinds/layout (APIs no `vlr-api`).
-4. Demais: gating B2B restante, admin de reservas, onboarding legado.
+3. Agenda por Slot (admin + B2C) **em código**; próximo salto visual: canvas de Layout.
+4. Demais: gating B2B restante (`ModuleGuard`), onboarding legado, depósito.
 
 ## ROADMAP (obrigatório)
 

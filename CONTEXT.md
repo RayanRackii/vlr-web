@@ -102,6 +102,10 @@ _Avoid_: Forcing explicit Slot drawing when the tenant only needs “18:00–00:
 Schedule policy that authors the week as explicit **ScheduleTemplate** cells, then **PublishDay** materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
 _Avoid_: N client-side POSTs per hour×day as the product path
 
+**Admin Daily Agenda UX**:
+Responsive two-column workspace: filters, Rentable multi-selection, date and schedule policy on the left; grouped per-Rentable agendas on the right. The Rentable list has a local name filter. Policy options are accessible pressed-state cards with an explicit selected indicator.
+_Avoid_: Compressing controls and agenda into one narrow centered column; ambiguous policy cards without visible selection
+
 **Layout**:
 A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map rather than only from a list. Multiple Layouts are allowed (different venues or views).
 _Avoid_: Hard-coding a single FICC court map in the product

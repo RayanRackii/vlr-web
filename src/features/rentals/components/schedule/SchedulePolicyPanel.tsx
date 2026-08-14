@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -127,7 +128,7 @@ function SchedulePolicyPanelForm({
         ) : null}
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2">
         {(
           [
             {
@@ -147,18 +148,27 @@ function SchedulePolicyPanelForm({
             <button
               key={option.id}
               type="button"
+              aria-pressed={active}
               disabled={busy || readOnly}
               onClick={() => {
                 setPolicy(option.id)
               }}
               className={cn(
-                "rounded-lg border px-3 py-3 text-left transition-colors",
+                "rounded-lg border px-3 py-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                 active
-                  ? "border-primary bg-primary/5"
+                  ? "border-primary bg-primary/10 ring-1 ring-primary/20"
                   : "border-border hover:border-primary/40",
               )}
             >
-              <p className="text-sm font-medium">{option.title}</p>
+              <span className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium">{option.title}</span>
+                {active ? (
+                  <CheckCircle2
+                    className="size-4 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                ) : null}
+              </span>
               <p className="mt-1 text-xs text-muted-foreground">{option.hint}</p>
             </button>
           )
@@ -166,8 +176,8 @@ function SchedulePolicyPanelForm({
       </div>
 
       {policy === "OpenHours" ? (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <label className="min-w-0 flex-1 space-y-1.5 text-sm">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.openTime")}</span>
             <Input
               type="time"
@@ -178,7 +188,7 @@ function SchedulePolicyPanelForm({
               }}
             />
           </label>
-          <label className="min-w-0 flex-1 space-y-1.5 text-sm">
+          <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.closeTime")}</span>
             <Input
               type="time"
@@ -189,7 +199,7 @@ function SchedulePolicyPanelForm({
               }}
             />
           </label>
-          <label className="w-full space-y-1.5 text-sm sm:max-w-[8rem]">
+          <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">
               {t("rentals.schedule.policy.slotMinutes")}
             </span>
@@ -206,6 +216,7 @@ function SchedulePolicyPanelForm({
           </label>
           <LoadingButton
             type="button"
+            className="w-full self-end"
             disabled={busy || readOnly}
             loading={busyAction === "policy"}
             onClick={() => {
@@ -223,9 +234,10 @@ function SchedulePolicyPanelForm({
       ) : null}
 
       {policy === "SlotGrid" ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="space-y-2">
           <LoadingButton
             type="button"
+            className="w-full"
             disabled={busy || readOnly}
             loading={busyAction === "seed" || busyAction === "policy"}
             onClick={() => {
@@ -248,6 +260,7 @@ function SchedulePolicyPanelForm({
           <LoadingButton
             type="button"
             variant="outline"
+            className="w-full"
             disabled={busy || readOnly}
             loading={busyAction === "policy"}
             onClick={() => {
