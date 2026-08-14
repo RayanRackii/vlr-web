@@ -16,6 +16,10 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import {
+  ROLVIX_ACCENT_COLOR,
+  ROLVIX_PRIMARY_COLOR,
+} from "@/lib/brandColors"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
@@ -340,7 +344,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#1E293B"
+                                  : ROLVIX_PRIMARY_COLOR
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -348,7 +352,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#1E293B"
+                            placeholder={ROLVIX_PRIMARY_COLOR}
                             disabled={isActionLocked}
                             {...field}
                           />
@@ -377,7 +381,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#14B8A6"
+                                  : ROLVIX_ACCENT_COLOR
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -385,7 +389,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#14B8A6"
+                            placeholder={ROLVIX_ACCENT_COLOR}
                             disabled={isActionLocked}
                             {...field}
                           />

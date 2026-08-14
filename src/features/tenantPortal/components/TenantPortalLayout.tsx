@@ -3,6 +3,12 @@ import { Outlet, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import {
+  ROLVIX_ACCENT_COLOR,
+  ROLVIX_COMPLEMENTARY_COLOR,
+  ROLVIX_PRIMARY_COLOR,
+  tenantBrandGradient,
+} from "@/lib/brandColors"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
@@ -69,8 +75,12 @@ export function TenantPortalLayout() {
     }
   }, [subdomain, t])
 
-  const primary = branding?.primaryColor ?? "#1E293B"
-  const accent = branding?.accentColor ?? primary
+  const primary = branding?.primaryColor ?? ROLVIX_PRIMARY_COLOR
+  const accent = branding?.accentColor ?? ROLVIX_ACCENT_COLOR
+  const complementary =
+    branding?.primaryColor || branding?.accentColor
+      ? accent
+      : ROLVIX_COMPLEMENTARY_COLOR
 
   if (loading) {
     return (
@@ -122,7 +132,7 @@ export function TenantPortalLayout() {
       <main
         className="relative flex min-h-screen w-full items-center justify-center p-6 pt-24"
         style={{
-          background: `radial-gradient(ellipse 80% 55% at 50% 0%, ${primary}22, transparent)`,
+          background: tenantBrandGradient(primary, accent, complementary),
         }}
       >
         <div className="w-full max-w-md space-y-6">

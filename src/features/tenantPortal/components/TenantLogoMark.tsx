@@ -1,4 +1,5 @@
 import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenantLogoSvg"
+import { ROLVIX_PRIMARY_COLOR } from "@/lib/brandColors"
 import { cn } from "@/lib/utils"
 
 type TenantLogoMarkProps = {
@@ -27,7 +28,7 @@ export function TenantLogoMark({
   size = "lg",
 }: TenantLogoMarkProps) {
   const safeSvg = sanitizeTenantLogoSvg(logoSvg)
-  const primary = primaryColor ?? "#1E293B"
+  const primary = primaryColor ?? ROLVIX_PRIMARY_COLOR
 
   if (safeSvg) {
     return (

@@ -17,6 +17,10 @@ import { useNavigate } from "react-router-dom"
 
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
+  ROLVIX_ACCENT_COLOR,
+  ROLVIX_PRIMARY_COLOR,
+} from "@/lib/brandColors"
+import {
   MODULE_KEYS,
   PRICE_PER_MODULE_BRL,
   step1Schema,
@@ -105,8 +109,8 @@ export function TenantOnboardingWizard() {
       taxId: "",
       subdomain: "",
       logoSvg: "",
-      primaryColor: "#1E293B",
-      accentColor: "#14B8A6",
+      primaryColor: ROLVIX_PRIMARY_COLOR,
+      accentColor: ROLVIX_ACCENT_COLOR,
       welcomeTagline: "",
       activeModules: [],
       assetFamilyKeys: [],
@@ -491,7 +495,7 @@ export function TenantOnboardingWizard() {
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#1E293B"
+                                  : ROLVIX_PRIMARY_COLOR
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -499,7 +503,7 @@ export function TenantOnboardingWizard() {
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#1E293B"
+                            placeholder={ROLVIX_PRIMARY_COLOR}
                             {...field}
                           />
                         </div>
@@ -527,7 +531,7 @@ export function TenantOnboardingWizard() {
                                 ? field.value
                                 : field.value
                                   ? `#${field.value}`
-                                  : "#14B8A6"
+                                  : ROLVIX_ACCENT_COLOR
                             }
                             onChange={(event) => {
                               field.onChange(event.target.value.toUpperCase())
@@ -535,7 +539,7 @@ export function TenantOnboardingWizard() {
                           />
                           <Input
                             autoComplete="off"
-                            placeholder="#14B8A6"
+                            placeholder={ROLVIX_ACCENT_COLOR}
                             {...field}
                           />
                         </div>

@@ -10,7 +10,8 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 1. Atualizar este arquivo em tarefas relevantes + **Histórico** se o plano mudar.
 2. Ao encerrar uma tarefa (ou após progresso relevante), o agente deve descrever no chat o **próximo passo previsto** deste roadmap **e** do `ROADMAP.md` do **`vlr-api`**.
 3. Em toda etapa concluída, descrever no chat **como testar** (passos de UI e/ou como disparar o back).
-4. Ordem de leitura do agente: `AGENTS.md` → `CONTEXT.md` → este arquivo → `.cursor/rules/`.
+4. Entregas relevantes de produto/incidentes também atualizam o diário canônico em `vlr-api/docs/sessions/` (um consolidado por data ou período; não duplicar no frontend).
+5. Ordem de leitura do agente: `AGENTS.md` → `CONTEXT.md` → este arquivo → `.cursor/rules/`.
 
 ## 1. Registro dinâmico por tenant — FEITO (código)
 
@@ -48,6 +49,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
 - [x] UX admin Escala/Agenda: abas Agenda diária / Templates / Tipos + Sheet forms + timeline de slots
 - [x] Política OpenHours na Agenda diária + seed SlotGrid via `POST .../templates/seed-default` (1 request)
+- [x] Agenda multi-espaço: seletor múltiplo, política em lote, agenda agrupada; UI **Horário padrão** / **Grade personalizada** (domínio OpenHours/SlotGrid permanece no código)
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [ ] Layout canvas (mapa de rentables) admin + picker B2C
 
@@ -112,3 +114,5 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-13 | **Executado:** 3 padrões de loading na agenda (Skeleton shimmer / LoadingButton / TopProgressBar React Router). |
 | 2026-08-13 | **Executado:** loading patterns estendidos a toda a app (Skeleton default=shimmer, tabelas/listas, LoadingButton em auth/portal/admin/assets/OS/PMOC). |
 | 2026-08-14 | **UX:** skeleton shimmer na sidebar durante carregamento da navegação por módulos. |
+| 2026-08-14 | **Executado:** Agenda multi-espaço (seleção em lote + agenda agrupada) e copy Horário padrão / Grade personalizada. |
+| 2026-08-14 | **Branding:** paleta Rolvix atualizada para steel blue (`#4D6A92` / `#5A8FA0` / `#A2C6E9`), gradientes suaves e novos defaults de tenant; cores já salvas por tenant permanecem personalizadas. |

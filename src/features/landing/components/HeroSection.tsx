@@ -157,7 +157,7 @@ export function HeroSection() {
       className="relative flex min-h-[calc(100vh-4rem)] w-full flex-col overflow-hidden"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,hsl(var(--primary)/0.08),transparent)]"
+        className="pointer-events-none absolute inset-0 [background:var(--brand-gradient)]"
         aria-hidden="true"
       />
 
@@ -190,7 +190,7 @@ export function HeroSection() {
             className="max-w-5xl text-balance text-4xl font-extrabold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
           >
             {t("landing.hero.titlePrefix")}
-            <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--brand-primary)] via-[var(--brand-accent)] to-[var(--brand-complementary)] bg-clip-text text-transparent">
               {t("landing.hero.titleHighlight")}
             </span>
           </h1>

@@ -95,7 +95,7 @@ export function SetPasswordPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,hsl(var(--primary)/0.08),transparent)] p-6">
+    <main className="relative flex min-h-screen w-full items-center justify-center p-6 [background:var(--brand-gradient)]">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link

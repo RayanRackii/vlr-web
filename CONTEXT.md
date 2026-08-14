@@ -28,7 +28,7 @@ Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
 
 **Auth B2C:** login = e-mail + senha → JWT `Customer`. OTP-only por telefone é legado a aposentar.
 
-**Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto.
+**Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto. Novos tenants partem da paleta Rolvix (`#4D6A92` / `#5A8FA0`); valores salvos por tenant continuam soberanos no login e app B2C.
 
 **Validações BR:** CPF/CEP no front para UX; API é autoridade. SMS enfileirado (nunca síncrono na request).
 
@@ -95,11 +95,11 @@ The concrete set of Slots for one calendar date (optionally per Unit). Published
 _Avoid_: Treating the weekly template itself as the live bookings grid
 
 **OpenHours**:
-A schedule policy where a Rentable is continuously available between open and close times; bookable windows are derived from that interval (and allowed durations), without requiring the admin to draw every cell. Prefer this for the common club case (~08:00–22:00). Admin: `PUT /api/rental-assets/{id}/schedule-policy`.
+A schedule policy where a Rentable is continuously available between open and close times; bookable windows are derived from that interval (and allowed durations), without requiring the admin to draw every cell. Prefer this for the common club case (~08:00–22:00). Admin: `PUT /api/rental-assets/{id}/schedule-policy` (one) or `PUT /api/rental-assets/schedule-policy` (bulk, transactional — invalid ID aborts all). **UI copy: Horário padrão** — never show `OpenHours` or “80%” in the product UI.
 _Avoid_: Forcing explicit Slot drawing when the tenant only needs “18:00–00:00 all open”; seeding dozens of identical SlotGrid templates when OpenHours fits
 
 **SlotGrid**:
-Schedule policy that authors the week as explicit **ScheduleTemplate** cells, then **PublishDay** materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default`.
+Schedule policy that authors the week as explicit **ScheduleTemplate** cells, then **PublishDay** materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
 _Avoid_: N client-side POSTs per hour×day as the product path
 
 **Layout**:
@@ -112,7 +112,7 @@ _Avoid_: custom domain (until real custom hostnames are supported), slug alone w
 
 ## 2. Dinâmica de Módulos e Customização
 - **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B filtra a sidebar por `activeModules` em seções **Visão geral** / **Pessoas & portal** / **Operação** (parcial; `ModuleGuard` + Users do tenant ainda no ROADMAP).
-- **Chrome B2B:** primary da shell `#1E293B` (slate). Branding do portal B2C continua por tenant (`PrimaryColor`).
+- **Chrome B2B / landing Rolvix:** paleta padrão `#4D6A92` (primary), `#5A8FA0` (accent) e `#A2C6E9` (complementary), com gradiente azul suave em superfícies de destaque. O portal B2C continua personalizado por tenant (`PrimaryColor` / `AccentColor`); a paleta Rolvix é apenas fallback e default de novos cadastros.
 - **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
 - **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`. E-mails `PlatformAdmin` não aparecem/contam como usuários do tenant e não podem ser excluídos pela UI de users.
 - **Subdomain** = roteamento + branding; o portal é a UI B2C.

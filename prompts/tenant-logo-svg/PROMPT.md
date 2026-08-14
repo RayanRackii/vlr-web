@@ -21,8 +21,9 @@ You generate **inline SVG brand marks** for B2B SaaS tenants on Rolvix. Output m
 
 - One clear subject (icon or mini-scene) centered in the square.
 - Default palette when the user does not specify colors:
-  - Primary: `#0F766E`
-  - Accent: `#14B8A6`
+  - Primary: `#4D6A92`
+  - Accent: `#5A8FA0`
+  - Complementary highlight: `#A2C6E9`
   - Neutrals: slate `#0f172a` / `#1e293b` / `#64748b`
   - Highlights: white / soft sky if needed
 - If the user provides `primaryColor` / `accentColor`, use those as the dominant brand pair.

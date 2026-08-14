@@ -7,18 +7,16 @@ import {
 import { cn } from "@/lib/utils"
 
 type DaySlotsTimelineProps = {
-  day: AdminDaySchedule
+  slots: AdminDaySchedule["slots"]
 }
 
-export function DaySlotsTimeline({ day }: DaySlotsTimelineProps) {
+export function DaySlotsTimeline({ slots }: DaySlotsTimelineProps) {
   const { t } = useTranslation()
-  const slots = [...day.slots].sort((a, b) =>
-    a.startTime.localeCompare(b.startTime),
-  )
+  const ordered = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime))
 
   return (
     <ol className="relative space-y-3 border-l border-border pl-6">
-      {slots.map((slot) => {
+      {ordered.map((slot) => {
         const accent = slot.occupancyKindColorHex?.trim() || undefined
 
         return (

@@ -652,7 +652,7 @@ export function TenantAdminDashboard() {
                   />
                   <Bar
                     dataKey="value"
-                    fill="hsl(var(--primary))"
+                    fill="var(--primary)"
                     radius={[6, 6, 0, 0]}
                     name={t("dashboard.charts.tooltip.count")}
                   />

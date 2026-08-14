@@ -163,12 +163,30 @@ export async function updateOccupancyKind(
   }
 }
 
+function rentableQueryPath(
+  path: string,
+  rentalAssetId?: string,
+  rentalAssetIds?: readonly string[],
+): string {
+  const params = new URLSearchParams()
+  if (rentalAssetIds && rentalAssetIds.length > 0) {
+    for (const id of rentalAssetIds) {
+      params.append("rentalAssetIds", id)
+    }
+  } else if (rentalAssetId) {
+    params.set("rentalAssetId", rentalAssetId)
+  }
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
+
 export async function listScheduleTemplates(
   rentalAssetId?: string,
+  rentalAssetIds?: readonly string[],
 ): Promise<ScheduleTemplate[]> {
-  const response = await api.get("/api/schedule/templates", {
-    params: rentalAssetId ? { rentalAssetId } : undefined,
-  })
+  const response = await api.get(
+    rentableQueryPath("/api/schedule/templates", rentalAssetId, rentalAssetIds),
+  )
   const parsed = z.array(scheduleTemplateSchema).safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -248,11 +266,13 @@ export async function deleteScheduleTemplate(id: string): Promise<void> {
 export async function publishScheduleDay(body: {
   date: string
   rentalAssetId?: string | null
+  rentalAssetIds?: readonly string[]
 }): Promise<number> {
   try {
     const response = await api.post("/api/schedule/days/publish", {
       date: body.date,
       rentalAssetId: body.rentalAssetId ?? null,
+      rentalAssetIds: body.rentalAssetIds ?? null,
     })
     const created = z.object({ created: z.number() }).safeParse(response.data)
     if (!created.success) {
@@ -268,11 +288,11 @@ export async function publishScheduleDay(body: {
 
 export async function fetchAdminScheduleDay(
   date: string,
-  rentalAssetId?: string,
+  rentalAssetIds?: readonly string[],
 ): Promise<AdminDaySchedule> {
-  const response = await api.get(`/api/schedule/days/${date}`, {
-    params: rentalAssetId ? { rentalAssetId } : undefined,
-  })
+  const response = await api.get(
+    rentableQueryPath(`/api/schedule/days/${date}`, undefined, rentalAssetIds),
+  )
   const parsed = dayScheduleSchema.safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -296,16 +316,7 @@ export async function updateRentalSchedulePolicy(
   try {
     const response = await api.put(
       `/api/rental-assets/${rentalAssetId}/schedule-policy`,
-      {
-        schedulePolicy: body.schedulePolicy,
-        openTime: body.openTime
-          ? normalizeScheduleTime(body.openTime).slice(0, 8)
-          : null,
-        closeTime: body.closeTime
-          ? normalizeScheduleTime(body.closeTime).slice(0, 8)
-          : null,
-        allowedDurationMinutes: body.allowedDurationMinutes ?? null,
-      },
+      toSchedulePolicyBody(body),
     )
     const parsed = rentalAssetSchema.safeParse(response.data)
     if (!parsed.success) {
@@ -322,20 +333,64 @@ export async function updateRentalSchedulePolicy(
   }
 }
 
+export async function updateRentalSchedulePolicyBulk(
+  rentalAssetIds: readonly string[],
+  body: UpdateSchedulePolicyInput,
+): Promise<AdminRentalAsset[]> {
+  try {
+    const response = await api.put("/api/rental-assets/schedule-policy", {
+      rentalAssetIds,
+      ...toSchedulePolicyBody(body),
+    })
+    const parsed = z
+      .object({
+        updated: z.number(),
+        items: z.array(rentalAssetSchema),
+      })
+      .safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data.items
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.updateSchedulePolicy"),
+      ),
+    )
+  }
+}
+
+function toSchedulePolicyBody(body: UpdateSchedulePolicyInput) {
+  return {
+    schedulePolicy: body.schedulePolicy,
+    openTime: body.openTime
+      ? normalizeScheduleTime(body.openTime).slice(0, 8)
+      : null,
+    closeTime: body.closeTime
+      ? normalizeScheduleTime(body.closeTime).slice(0, 8)
+      : null,
+    allowedDurationMinutes: body.allowedDurationMinutes ?? null,
+  }
+}
+
 /**
  * Seeds Sun–Sat hourly Open templates (default 08:00–22:00) in one API call.
  */
 export async function seedDefaultHourlyTemplates(
-  rentalAssetId: string,
+  rentalAssetIds: string | readonly string[],
   options?: {
     openTime?: string
     closeTime?: string
     slotMinutes?: number
   },
 ): Promise<number> {
+  const ids = typeof rentalAssetIds === "string" ? [rentalAssetIds] : [...rentalAssetIds]
   try {
     const response = await api.post("/api/schedule/templates/seed-default", {
-      rentalAssetId,
+      rentalAssetId: ids.length === 1 ? ids[0] : undefined,
+      rentalAssetIds: ids,
       openTime: options?.openTime
         ? normalizeScheduleTime(options.openTime).slice(0, 8)
         : "08:00:00",

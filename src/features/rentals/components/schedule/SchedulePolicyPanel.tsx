@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type SchedulePolicyPanelProps = {
-  asset: AdminRentalAsset | null
+  assets: readonly AdminRentalAsset[]
   busy: boolean
   busyAction: ScheduleBusyAction
   readOnly: boolean
@@ -28,35 +28,78 @@ function toTimeInput(value: string | null | undefined, fallback: string): string
   return formatScheduleTime(value)
 }
 
+function durationInput(asset: AdminRentalAsset): string {
+  return asset.allowedDurationMinutes?.split(",")[0]?.trim() || "60"
+}
+
+function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
+  if (assets.length <= 1) {
+    return false
+  }
+  const policies = new Set(
+    assets.map((asset) => asset.schedulePolicy ?? "SlotGrid"),
+  )
+  return policies.size > 1
+}
+
 export function SchedulePolicyPanel({
-  asset,
+  assets,
   busy,
   busyAction,
   readOnly,
   onSave,
   onSeedSlotGrid,
 }: SchedulePolicyPanelProps) {
-  const { t } = useTranslation()
-  const [policy, setPolicy] = useState<SchedulePolicy>("SlotGrid")
-  const [openTime, setOpenTime] = useState("08:00")
-  const [closeTime, setCloseTime] = useState("22:00")
-  const [durationMinutes, setDurationMinutes] = useState("60")
-
-  useEffect(() => {
-    if (!asset) {
-      return
-    }
-    setPolicy(asset.schedulePolicy ?? "SlotGrid")
-    setOpenTime(toTimeInput(asset.openTime, "08:00"))
-    setCloseTime(toTimeInput(asset.closeTime, "22:00"))
-    setDurationMinutes(
-      asset.allowedDurationMinutes?.split(",")[0]?.trim() || "60",
+  const mixed = useMemo(() => isMixedPolicy(assets), [assets])
+  const selectionKey = assets
+    .map(
+      (asset) =>
+        `${asset.id}:${asset.schedulePolicy ?? "SlotGrid"}:${asset.openTime ?? ""}:${asset.closeTime ?? ""}:${asset.allowedDurationMinutes ?? ""}`,
     )
-  }, [asset])
+    .sort()
+    .join("|")
 
-  if (!asset) {
+  if (assets.length === 0) {
     return null
   }
+
+  return (
+    <SchedulePolicyPanelForm
+      key={selectionKey}
+      assets={assets}
+      mixed={mixed}
+      busy={busy}
+      busyAction={busyAction}
+      readOnly={readOnly}
+      onSave={onSave}
+      onSeedSlotGrid={onSeedSlotGrid}
+    />
+  )
+}
+
+function SchedulePolicyPanelForm({
+  assets,
+  mixed,
+  busy,
+  busyAction,
+  readOnly,
+  onSave,
+  onSeedSlotGrid,
+}: SchedulePolicyPanelProps & { mixed: boolean }) {
+  const { t } = useTranslation()
+  const first = assets[0]
+  const [policy, setPolicy] = useState<SchedulePolicy | null>(
+    mixed ? null : (first?.schedulePolicy ?? "SlotGrid"),
+  )
+  const [openTime, setOpenTime] = useState(
+    toTimeInput(first?.openTime, "08:00"),
+  )
+  const [closeTime, setCloseTime] = useState(
+    toTimeInput(first?.closeTime, "22:00"),
+  )
+  const [durationMinutes, setDurationMinutes] = useState(
+    first ? durationInput(first) : "60",
+  )
 
   return (
     <div className="space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm">
@@ -67,6 +110,21 @@ export function SchedulePolicyPanel({
         <p className="text-sm text-muted-foreground">
           {t("rentals.schedule.policy.description")}
         </p>
+        {mixed ? (
+          <p className="rounded-md bg-muted px-3 py-2 text-sm text-foreground">
+            <span className="font-medium">
+              {t("rentals.schedule.policy.mixedTitle")}
+            </span>{" "}
+            {t("rentals.schedule.policy.mixedDescription")}
+          </p>
+        ) : null}
+        {assets.length > 1 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("rentals.schedule.policy.applyToSelected", {
+              count: assets.length,
+            })}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
@@ -162,7 +220,9 @@ export function SchedulePolicyPanel({
             {t("rentals.schedule.policy.saveOpenHours")}
           </LoadingButton>
         </div>
-      ) : (
+      ) : null}
+
+      {policy === "SlotGrid" ? (
         <div className="flex flex-wrap items-center gap-2">
           <LoadingButton
             type="button"
@@ -205,7 +265,7 @@ export function SchedulePolicyPanel({
             {t("rentals.schedule.policy.slotGridSeedHint")}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

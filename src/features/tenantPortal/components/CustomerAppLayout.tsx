@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
+import { ROLVIX_PRIMARY_COLOR } from "@/lib/brandColors"
 import {
   CustomerSidebar,
   iconForModule,
@@ -152,7 +153,7 @@ export function CustomerAppLayout() {
   )
   const pageTitle = activeItem?.label ?? branding.displayName
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
-  const primary = branding.primaryColor ?? "#1E293B"
+  const primary = branding.primaryColor ?? ROLVIX_PRIMARY_COLOR
 
   return (
     <AppShell
