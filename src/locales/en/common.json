@@ -44,6 +44,7 @@
     "seedTemplates": "Could not create the default grid.",
     "updateSchedulePolicy": "Could not update the schedule policy.",
     "applyDailyOccurrence": "Could not update this day’s time slot.",
+    "applyWeeklyRule": "Could not apply the weekly rule.",
     "noBookableKind": "No bookable occupancy kind found. Create an Open kind first.",
     "register": "Could not complete registration.",
     "createField": "Could not create field.",
@@ -1584,6 +1585,7 @@
     "schedule": {
       "title": "Schedule",
       "description": "Operations for a specific day and recurring weekly setup for spaces.",
+      "descriptionOperational": "View occupancy, adjust a single day, and configure weekly rules for spaces and goods.",
       "rentable": "Space / good",
       "rentables": "Spaces / goods",
       "selectedCount": "{{selected}} of {{total}}",
@@ -1595,7 +1597,17 @@
       "noneSelectedDescription": "Check one or more spaces to view the day’s schedule.",
       "slotCount": "{{count}} time slots",
       "date": "Date",
-      "dayOnlyBanner": "Card changes apply only to {{date}}. Weekly rules live under Weekly setup.",
+      "toolbar": {
+        "today": "Today",
+        "prev": "Previous day",
+        "next": "Next day",
+        "resources": "Spaces / goods · {{selected}} of {{total}}"
+      },
+      "grid": {
+        "empty": "Empty time slot",
+        "noSelection": "Select one or more spaces / goods to view the grid."
+      },
+      "dayOnlyBanner": "Changes in this grid apply only to {{date}}. Weekly rules live under Weekly setup.",
       "seedTemplates": "Create default grid (Sun–Sat, 08–22)",
       "publishDay": "Apply grid to this day",
       "publishFromTemplate": "Create schedule from template",
@@ -1624,6 +1636,11 @@
       "activate": "Activate",
       "deactivate": "Deactivate",
       "occurrence": {
+        "editTitle": "Edit time slot",
+        "applyScope": "Apply change to",
+        "onlyThisDay": "Only this day",
+        "entireRecurrence": "Entire recurrence",
+        "entireRecurrenceDisabledHint": "Standard hours are changed in Weekly setup.",
         "sheetTitle": "This day’s time slot",
         "sheetDescription": "Changes here affect only {{date}}, not the weekly rule.",
         "dayOnlyHint": "Saving creates an adjustment for {{date}} only.",
@@ -1668,6 +1685,12 @@
         "saveError": "Could not save the schedule setup.",
         "derivedSlotsHint": "Intervals generated automatically from standard hours (no need to publish the day)."
       },
+      "weeklyRule": {
+        "title": "Create weekly rule",
+        "days": "Days of week",
+        "apply": "Apply rule",
+        "success": "Weekly rule applied to {{count}} time slots."
+      },
       "tabs": {
         "daily": "Day agenda",
         "templates": "Weekly setup",
@@ -1689,6 +1712,8 @@
         "emptyTitle": "No occupancy kinds",
         "key": "Key",
         "label": "Name",
+        "descriptionField": "Description",
+        "iconKey": "Icon",
         "color": "Color",
         "sortOrder": "Sort order",
         "bookable": "Bookable by customer",
@@ -1701,6 +1726,8 @@
         "help": {
           "key": "Stable internal id (e.g. open). Does not change after creation; use lowercase with no spaces.",
           "label": "Text staff and the portal see (e.g. Open). You can rename it later without breaking the key.",
+          "description": "Explain when this occupancy kind should be used.",
+          "iconKey": "Safe icon used to identify this kind in the interface.",
           "color": "Color used to tell this kind apart on the schedule and time lists.",
           "sortOrder": "List position: lower numbers appear first (e.g. 10, 20, 30).",
           "bookable": "If checked, portal customers can book slots with this kind.",

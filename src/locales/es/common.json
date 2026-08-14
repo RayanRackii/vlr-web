@@ -44,6 +44,7 @@
     "seedTemplates": "No se pudo crear la grilla estándar.",
     "updateSchedulePolicy": "No se pudo actualizar la política de escala.",
     "applyDailyOccurrence": "No se pudo actualizar el horario de este día.",
+    "applyWeeklyRule": "No se pudo aplicar la regla semanal.",
     "noBookableKind": "No hay tipo reservable. Cree un tipo Abierto primero.",
     "register": "No se pudo completar el registro.",
     "createField": "No se pudo crear el campo.",
@@ -1584,6 +1585,7 @@
     "schedule": {
       "title": "Escala / agenda",
       "description": "Operación de un día concreto y configuración semanal recurrente de los espacios.",
+      "descriptionOperational": "Visualice la ocupación, ajuste un día y configure reglas semanales para espacios y bienes.",
       "rentable": "Espacio / bien",
       "rentables": "Espacios / bienes",
       "selectedCount": "{{selected}} de {{total}}",
@@ -1595,7 +1597,17 @@
       "noneSelectedDescription": "Marque uno o más espacios para ver la agenda del día.",
       "slotCount": "{{count}} horarios",
       "date": "Fecha",
-      "dayOnlyBanner": "Los cambios en las tarjetas valen solo para {{date}}. La regla semanal está en Configuración semanal.",
+      "toolbar": {
+        "today": "Hoy",
+        "prev": "Día anterior",
+        "next": "Día siguiente",
+        "resources": "Espacios / bienes · {{selected}} de {{total}}"
+      },
+      "grid": {
+        "empty": "Horario vacío",
+        "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla."
+      },
+      "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. La regla semanal está en Configuración semanal.",
       "seedTemplates": "Crear grilla estándar (dom–sáb, 08–22)",
       "publishDay": "Aplicar grilla en este día",
       "publishFromTemplate": "Crear grilla a partir del template",
@@ -1624,6 +1636,11 @@
       "activate": "Activar",
       "deactivate": "Desactivar",
       "occurrence": {
+        "editTitle": "Editar horario",
+        "applyScope": "Aplicar cambio en",
+        "onlyThisDay": "Solo este día",
+        "entireRecurrence": "Toda la recurrencia",
+        "entireRecurrenceDisabledHint": "Los horarios estándar se cambian en la configuración semanal.",
         "sheetTitle": "Horario de este día",
         "sheetDescription": "Los cambios aquí afectan solo a {{date}}, no a la regla semanal.",
         "dayOnlyHint": "Guardar crea un ajuste solo para {{date}}.",
@@ -1668,6 +1685,12 @@
         "saveError": "No se pudo guardar la configuración de horarios.",
         "derivedSlotsHint": "Intervalos generados automáticamente a partir del horario estándar (no hace falta publicar el día)."
       },
+      "weeklyRule": {
+        "title": "Crear regla semanal",
+        "days": "Días de la semana",
+        "apply": "Aplicar regla",
+        "success": "Regla semanal aplicada a {{count}} horarios."
+      },
       "tabs": {
         "daily": "Agenda del día",
         "templates": "Configuración semanal",
@@ -1689,6 +1712,8 @@
         "emptyTitle": "Sin tipos de ocupación",
         "key": "Clave",
         "label": "Nombre",
+        "descriptionField": "Descripción",
+        "iconKey": "Ícono",
         "color": "Color",
         "sortOrder": "Orden",
         "bookable": "Reservable por el cliente",
@@ -1701,6 +1726,8 @@
         "help": {
           "key": "Identificador interno estable (ej.: open). No cambia después de crearlo; use minúsculas sin espacios.",
           "label": "Texto que ve el equipo y el portal (ej.: Abierto). Puede renombrarlo después sin romper la clave.",
+          "description": "Explique cuándo se debe usar este tipo de ocupación.",
+          "iconKey": "Ícono seguro usado para identificar este tipo en la interfaz.",
           "color": "Color para distinguir este tipo en la agenda y en las listas de horarios.",
           "sortOrder": "Posición en la lista: el número menor aparece primero (ej.: 10, 20, 30).",
           "bookable": "Si está marcado, el cliente del portal puede reservar horarios con este tipo.",

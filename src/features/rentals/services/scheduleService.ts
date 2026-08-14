@@ -7,7 +7,9 @@ const occupancyKindSchema = z.object({
   id: z.string().uuid(),
   key: z.string(),
   label: z.string(),
+  description: z.string().nullable().optional(),
   colorHex: z.string().nullable().optional(),
+  iconKey: z.string().nullable().optional(),
   isBookableByCustomer: z.boolean(),
   blocksCapacity: z.boolean(),
   sortOrder: z.number(),
@@ -48,6 +50,9 @@ const scheduleSlotSchema = z.object({
   reservationId: z.string().uuid().nullable().optional(),
   isDerived: z.boolean(),
   source: z.enum(["WeeklyDefault", "DailyOverride"]).default("WeeklyDefault"),
+  sourceTemplateId: z.string().uuid().nullable().optional(),
+  schedulePolicy: z.enum(["SlotGrid", "OpenHours"]).default("SlotGrid"),
+  supportsEntireRecurrence: z.boolean().default(false),
 })
 
 const dayScheduleSchema = z.object({
@@ -62,6 +67,8 @@ export type DailyOccurrenceAction =
   | "Update"
   | "MakeUnavailable"
   | "RestoreWeeklyDefault"
+
+export type OccurrenceEditScope = "OnlyThisDay" | "EntireRecurrence"
 
 export const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -119,7 +126,9 @@ export function normalizeScheduleTime(value: string): string {
 export type UpsertOccupancyKindInput = {
   key: string
   label: string
+  description?: string | null
   colorHex?: string | null
+  iconKey?: string | null
   isBookableByCustomer: boolean
   blocksCapacity: boolean
   sortOrder: number
@@ -141,7 +150,9 @@ export async function createOccupancyKind(
   try {
     const response = await api.post("/api/occupancy-kinds", {
       ...body,
+      description: body.description || null,
       colorHex: body.colorHex || null,
+      iconKey: body.iconKey || null,
     })
     const parsed = occupancyKindSchema.safeParse(response.data)
     if (!parsed.success) {
@@ -162,7 +173,9 @@ export async function updateOccupancyKind(
   try {
     const response = await api.put(`/api/occupancy-kinds/${id}`, {
       ...body,
+      description: body.description || null,
       colorHex: body.colorHex || null,
+      iconKey: body.iconKey || null,
     })
     const parsed = occupancyKindSchema.safeParse(response.data)
     if (!parsed.success) {
@@ -327,6 +340,7 @@ export async function applyDailyOccurrence(body: {
   startTime: string
   endTime: string
   action: DailyOccurrenceAction
+  scope?: OccurrenceEditScope
   occupancyKindId?: string | null
   label?: string | null
 }): Promise<AdminDaySlot> {
@@ -338,6 +352,7 @@ export async function applyDailyOccurrence(body: {
       startTime: normalizeScheduleTime(body.startTime),
       endTime: normalizeScheduleTime(body.endTime),
       action: body.action,
+      scope: body.scope ?? "OnlyThisDay",
       occupancyKindId: body.occupancyKindId ?? null,
       label: body.label ?? null,
     })
@@ -351,6 +366,48 @@ export async function applyDailyOccurrence(body: {
       parseApiError(
         getAxiosErrorPayload(error),
         i18n.t("apiErrors.applyDailyOccurrence"),
+      ),
+    )
+  }
+}
+
+export async function applyWeeklyRule(body: {
+  rentalAssetIds: readonly string[]
+  daysOfWeek: readonly string[]
+  openTime: string
+  closeTime: string
+  slotMinutes: number
+  occupancyKindId: string
+  label?: string | null
+  isActive?: boolean
+}): Promise<{ created: number; updated: number; skipped: number }> {
+  try {
+    const response = await api.post("/api/schedule/templates/apply-weekly-rule", {
+      rentalAssetIds: body.rentalAssetIds,
+      daysOfWeek: body.daysOfWeek,
+      openTime: normalizeScheduleTime(body.openTime),
+      closeTime: normalizeScheduleTime(body.closeTime),
+      slotMinutes: body.slotMinutes,
+      occupancyKindId: body.occupancyKindId,
+      label: body.label ?? null,
+      isActive: body.isActive ?? true,
+    })
+    const parsed = z
+      .object({
+        created: z.number(),
+        updated: z.number(),
+        skipped: z.number(),
+      })
+      .safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.applyWeeklyRule"),
       ),
     )
   }

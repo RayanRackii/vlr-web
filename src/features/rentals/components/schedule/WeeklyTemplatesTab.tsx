@@ -1,9 +1,10 @@
 import { CalendarRange } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
@@ -13,15 +14,27 @@ import {
   DAY_NAMES,
   formatScheduleTime,
   type AdminRentalAsset,
+  type OccupancyKind,
   type ScheduleTemplate,
   type UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
+
+export type WeeklyRuleDraft = {
+  rentalAssetIds: readonly string[]
+  daysOfWeek: readonly string[]
+  openTime: string
+  closeTime: string
+  slotMinutes: number
+  occupancyKindId: string
+}
 
 type WeeklyTemplatesTabProps = {
   assets: readonly AdminRentalAsset[]
   selectedRentalAssetIds: readonly string[]
   rentalAssetId: string
   templates: readonly ScheduleTemplate[]
+  kinds: readonly OccupancyKind[]
+  defaultKindId: string
   loading: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
@@ -36,6 +49,7 @@ type WeeklyTemplatesTabProps = {
   onSeedSelected: () => void
   onSeedTemplates: () => void
   onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
+  onApplyWeeklyRule: (draft: WeeklyRuleDraft) => Promise<boolean>
 }
 
 export function WeeklyTemplatesTab({
@@ -43,6 +57,8 @@ export function WeeklyTemplatesTab({
   selectedRentalAssetIds,
   rentalAssetId,
   templates,
+  kinds,
+  defaultKindId,
   loading,
   busy,
   busyAction,
@@ -57,6 +73,7 @@ export function WeeklyTemplatesTab({
   onSeedSelected,
   onSeedTemplates,
   onSavePolicy,
+  onApplyWeeklyRule,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
 
@@ -65,6 +82,18 @@ export function WeeklyTemplatesTab({
       assets.filter((asset) => selectedRentalAssetIds.includes(asset.id)),
     [assets, selectedRentalAssetIds],
   )
+  const [days, setDays] = useState<string[]>([
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+  ])
+  const [openTime, setOpenTime] = useState("08:00")
+  const [closeTime, setCloseTime] = useState("22:00")
+  const [slotMinutes, setSlotMinutes] = useState(60)
+  const [occupancyKindId, setOccupancyKindId] = useState(defaultKindId)
+  const ruleKindId = occupancyKindId || defaultKindId
 
   const templatesByDay = useMemo(() => {
     const map = new Map<string, ScheduleTemplate[]>()
@@ -113,9 +142,117 @@ export function WeeklyTemplatesTab({
           />
         ) : null}
 
-        <p className="px-1 text-xs text-muted-foreground">
-          {t("rentals.schedule.weeklyConfigHint")}
-        </p>
+        <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div>
+            <h2 className="text-sm font-semibold">
+              {t("rentals.schedule.weeklyRule.title")}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("rentals.schedule.weeklyConfigHint")}
+            </p>
+          </div>
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium">
+              {t("rentals.schedule.weeklyRule.days")}
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              {DAY_NAMES.map((dayName) => {
+                const checked = days.includes(dayName)
+                return (
+                  <label key={dayName} className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={checked}
+                      disabled={busy || readOnly}
+                      onChange={() =>
+                        setDays((current) =>
+                          checked
+                            ? current.filter((day) => day !== dayName)
+                            : [...current, dayName],
+                        )
+                      }
+                    />
+                    {t(`rentals.schedule.days.${dayName}`)}
+                  </label>
+                )
+              })}
+            </div>
+          </fieldset>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1 text-xs">
+              <span>{t("rentals.schedule.policy.openTime")}</span>
+              <Input
+                type="time"
+                value={openTime}
+                disabled={busy || readOnly}
+                onChange={(event) => setOpenTime(event.target.value)}
+              />
+            </label>
+            <label className="space-y-1 text-xs">
+              <span>{t("rentals.schedule.policy.closeTime")}</span>
+              <Input
+                type="time"
+                value={closeTime}
+                disabled={busy || readOnly}
+                onChange={(event) => setCloseTime(event.target.value)}
+              />
+            </label>
+          </div>
+          <label className="block space-y-1 text-xs">
+            <span>{t("rentals.schedule.policy.slotMinutes")}</span>
+            <Input
+              type="number"
+              min={15}
+              step={15}
+              value={slotMinutes}
+              disabled={busy || readOnly}
+              onChange={(event) => setSlotMinutes(Number(event.target.value))}
+            />
+          </label>
+          <label className="block space-y-1 text-xs">
+            <span>{t("rentals.schedule.templates.kind")}</span>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              value={ruleKindId}
+              disabled={busy || readOnly}
+              onChange={(event) => setOccupancyKindId(event.target.value)}
+            >
+              {kinds.filter((kind) => kind.isActive).map((kind) => (
+                <option key={kind.id} value={kind.id}>
+                  {kind.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <LoadingButton
+            type="button"
+            className="w-full"
+            loading={busyAction === "weeklyRule"}
+            disabled={
+              busy ||
+              readOnly ||
+              selectedRentalAssetIds.length === 0 ||
+              days.length === 0 ||
+              !ruleKindId ||
+              !openTime ||
+              !closeTime ||
+              slotMinutes < 1
+            }
+            onClick={() => {
+              void onApplyWeeklyRule({
+                rentalAssetIds: selectedRentalAssetIds,
+                daysOfWeek: days,
+                openTime,
+                closeTime,
+                slotMinutes,
+                occupancyKindId: ruleKindId,
+              })
+            }}
+          >
+            {t("rentals.schedule.weeklyRule.apply")}
+          </LoadingButton>
+        </div>
       </aside>
 
       <section className="min-w-0 space-y-6">

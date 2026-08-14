@@ -1,18 +1,26 @@
-import { CalendarDays } from "lucide-react"
+import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { DaySlotsTimeline } from "@/features/rentals/components/schedule/DaySlotsTimeline"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  DayResourceGrid,
+  type DayResourceGridCellPayload,
+} from "@/features/rentals/components/schedule/DayResourceGrid"
 import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
+import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import type {
   AdminDaySchedule,
-  AdminDaySlot,
   AdminRentalAsset,
-  ScheduleTemplate,
 } from "@/features/rentals/services/scheduleService"
 
 export type ScheduleBusyAction =
@@ -26,6 +34,7 @@ export type ScheduleBusyAction =
   | "slotUpdate"
   | "slotUnavailable"
   | "slotRestore"
+  | "weeklyRule"
   | null
 
 type DailyAgendaTabProps = {
@@ -33,10 +42,7 @@ type DailyAgendaTabProps = {
   selectedRentalAssetIds: readonly string[]
   date: string
   day: AdminDaySchedule | null
-  templates: readonly ScheduleTemplate[]
-  /** True while fetching day data. */
   loading: boolean
-  /** First paint for this day/unit with no slots yet → shimmer skeleton. */
   showSkeleton: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
@@ -45,15 +51,14 @@ type DailyAgendaTabProps = {
   onSelectedRentalAssetIdsChange: (ids: string[]) => void
   onDateChange: (date: string) => void
   onPublish: () => void
-  onSlotClick: (slot: AdminDaySlot) => void
+  onSlotOrCellClick: (payload: DayResourceGridCellPayload) => void
+  onGoWeeklySetup?: () => void
 }
 
-function formatDisplayDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-")
-  if (!year || !month || !day) {
-    return isoDate
-  }
-  return `${day}/${month}/${year}`
+function addDays(isoDate: string, amount: number): string {
+  const date = new Date(`${isoDate}T12:00:00`)
+  date.setDate(date.getDate() + amount)
+  return date.toISOString().slice(0, 10)
 }
 
 export function DailyAgendaTab({
@@ -61,7 +66,6 @@ export function DailyAgendaTab({
   selectedRentalAssetIds,
   date,
   day,
-  templates,
   loading,
   showSkeleton,
   busy,
@@ -71,7 +75,8 @@ export function DailyAgendaTab({
   onSelectedRentalAssetIdsChange,
   onDateChange,
   onPublish,
-  onSlotClick,
+  onSlotOrCellClick,
+  onGoWeeklySetup,
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
 
@@ -96,50 +101,86 @@ export function DailyAgendaTab({
 
   const showInlineRefresh = loading && !showSkeleton && day !== null
   const hasSelection = selectedAssets.length > 0
-  const dateLabel = formatDisplayDate(date)
 
   return (
-    <div className="grid w-full items-start gap-8 lg:grid-cols-[minmax(19rem,23rem)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
-      <aside className="space-y-4 lg:sticky lg:top-6">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <RentableMultiSelect
-            assets={assets}
-            selectedIds={selectedRentalAssetIds}
-            onChange={onSelectedRentalAssetIdsChange}
-          />
+    <div className="w-full space-y-4">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
+        <div className="flex items-center">
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            aria-label={t("rentals.schedule.toolbar.prev")}
+            onClick={() => onDateChange(addDays(date, -1))}
+          >
+            <ChevronLeft aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => onDateChange(todayIsoDate())}
+          >
+            {t("rentals.schedule.toolbar.today")}
+          </Button>
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            aria-label={t("rentals.schedule.toolbar.next")}
+            onClick={() => onDateChange(addDays(date, 1))}
+          >
+            <ChevronRight aria-hidden />
+          </Button>
         </div>
-
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <label className="block space-y-1.5 text-sm">
-            <span className="font-medium text-foreground">
-              {t("rentals.schedule.date")}
-            </span>
-            <Input
-              type="date"
-              value={date}
-              onChange={(event) => {
-                onDateChange(event.target.value)
-              }}
+        <Input
+          type="date"
+          value={date}
+          className="w-auto"
+          onChange={(event) => onDateChange(event.target.value)}
+        />
+        <Popover>
+          <PopoverTrigger
+            render={<Button type="button" variant="outline" size="sm" />}
+          >
+            <SlidersHorizontal aria-hidden />
+            {t("rentals.schedule.toolbar.resources", {
+              selected: selectedRentalAssetIds.length,
+              total: assets.length,
+            })}
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-80 p-4">
+            <RentableMultiSelect
+              assets={assets}
+              selectedIds={selectedRentalAssetIds}
+              onChange={onSelectedRentalAssetIdsChange}
             />
-            {hasSlotGrid ? (
-              <LoadingButton
-                type="button"
-                className="mt-3 w-full"
-                loading={busyAction === "publish"}
-                disabled={busy || readOnly}
-                onClick={onPublish}
-              >
-                {t("rentals.schedule.publishDay")}
-              </LoadingButton>
-            ) : null}
-          </label>
-          <p className="mt-3 text-xs text-muted-foreground">
-            {t("rentals.schedule.dayOnlyBanner", { date: dateLabel })}
-          </p>
-        </div>
-      </aside>
+          </PopoverContent>
+        </Popover>
+        {hasSlotGrid ? (
+          <LoadingButton
+            type="button"
+            size="sm"
+            className="ml-auto"
+            loading={busyAction === "publish"}
+            disabled={busy || readOnly}
+            onClick={onPublish}
+          >
+            {t("rentals.schedule.publishDay")}
+          </LoadingButton>
+        ) : null}
+      </div>
 
-      <section className="min-w-0 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+        <span>{t("rentals.schedule.dayOnlyBanner", { date })}</span>
+        {onGoWeeklySetup ? (
+          <Button type="button" variant="link" size="xs" onClick={onGoWeeklySetup}>
+            {t("rentals.schedule.tabs.templates")}
+          </Button>
+        ) : null}
+      </div>
+
+      <section className="min-w-0">
         {showInlineRefresh ? (
           <p className="sr-only" role="status" aria-live="polite">
             {t("common.refreshing")}
@@ -148,75 +189,22 @@ export function DailyAgendaTab({
         {!hasSelection ? (
           <ScheduleEmptyState
             icon={CalendarDays}
-            title={t("rentals.schedule.noneSelectedTitle")}
-            description={t("rentals.schedule.noneSelectedDescription")}
+            title={t("rentals.schedule.grid.noSelection")}
           />
         ) : showSkeleton ? (
-          <div
-            className="rounded-xl border border-border bg-card p-5 shadow-sm"
-            role="status"
-            aria-live="polite"
-          >
+          <div role="status" aria-live="polite">
             <p className="sr-only">{t("common.loading")}</p>
-            <ScheduleDaySlotsSkeleton />
+            <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />
           </div>
         ) : (
-          <div className="space-y-4">
-            {selectedAssets.map((asset) => {
-              const slots =
-                day?.slots.filter(
-                  (slot) => slot.rentalAssetId === asset.id,
-                ) ?? []
-              const isOpenHours =
-                (asset.schedulePolicy ?? "SlotGrid") === "OpenHours"
-              const hasTemplates = templates.some(
-                (row) => row.rentalAssetId === asset.id,
-              )
-
-              return (
-                <article
-                  key={asset.id}
-                  className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-                    <h3 className="text-sm font-medium text-foreground">
-                      {asset.name}
-                    </h3>
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      {t("rentals.schedule.slotCount", {
-                        count: slots.length,
-                      })}
-                    </span>
-                  </div>
-                  {slots.length === 0 ? (
-                    <ScheduleEmptyState
-                      icon={CalendarDays}
-                      className="px-4 py-8"
-                      title={
-                        isOpenHours
-                          ? t("rentals.schedule.dayEmptyOpenHoursTitle")
-                          : t("rentals.schedule.dayEmptyTitle")
-                      }
-                      description={
-                        isOpenHours
-                          ? t("rentals.schedule.dayEmptyOpenHoursDescription")
-                          : hasTemplates
-                            ? t("rentals.schedule.dayEmptyDescription")
-                            : t("rentals.schedule.dayEmptyNoTemplates")
-                      }
-                    />
-                  ) : (
-                    <DaySlotsTimeline
-                      slots={slots}
-                      readOnly={readOnly}
-                      busyTargetKey={busyTargetKey}
-                      onSlotClick={onSlotClick}
-                    />
-                  )}
-                </article>
-              )
-            })}
-          </div>
+          <DayResourceGrid
+            assets={selectedAssets}
+            slots={day?.slots ?? []}
+            date={date}
+            busyTargetKey={busyTargetKey}
+            readOnly={readOnly}
+            onCellClick={onSlotOrCellClick}
+          />
         )}
       </section>
     </div>

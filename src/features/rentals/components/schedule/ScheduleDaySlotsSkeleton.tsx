@@ -1,30 +1,48 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
 type ScheduleDaySlotsSkeletonProps = {
-  /** Approximate number of slot rows to mirror the list. */
   rows?: number
+  columns?: number
 }
 
-/** Structural skeleton for admin day slot cards. */
 export function ScheduleDaySlotsSkeleton({
-  rows = 6,
+  rows = 8,
+  columns = 4,
 }: ScheduleDaySlotsSkeletonProps) {
   return (
-    <ul className="space-y-3" aria-hidden>
-      {Array.from({ length: rows }, (_, index) => (
-        <li key={index}>
-          <div className="rounded-lg border border-border bg-background px-4 py-3">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton variant="shimmer" className="h-4 w-36" />
-                <Skeleton variant="shimmer" className="h-3 w-48" />
-                <Skeleton variant="shimmer" className="h-3 w-28" />
-              </div>
-              <Skeleton variant="shimmer" className="h-5 w-16 rounded-md" />
-            </div>
+    <div
+      className="min-h-[420px] overflow-hidden rounded-xl border border-border bg-background"
+      aria-hidden
+    >
+      <div
+        className="grid h-12 border-b border-border"
+        style={{ gridTemplateColumns: `76px repeat(${columns}, minmax(180px, 1fr))` }}
+      >
+        <div className="border-r border-border" />
+        {Array.from({ length: columns }, (_, index) => (
+          <div key={index} className="flex items-center border-r border-border px-3">
+            <Skeleton variant="shimmer" className="h-4 w-28" />
           </div>
-        </li>
+        ))}
+      </div>
+      {Array.from({ length: rows }, (_, row) => (
+        <div
+          key={row}
+          className="grid h-14 border-b border-border/70"
+          style={{ gridTemplateColumns: `76px repeat(${columns}, minmax(180px, 1fr))` }}
+        >
+          <div className="flex justify-end border-r border-border px-2 pt-2">
+            <Skeleton variant="shimmer" className="h-3 w-10" />
+          </div>
+          {Array.from({ length: columns }, (_, column) => (
+            <div key={column} className="border-r border-border/70 p-1">
+              {(row + column) % 3 === 0 ? (
+                <Skeleton variant="shimmer" className="h-full w-full rounded-md" />
+              ) : null}
+            </div>
+          ))}
+        </div>
       ))}
-    </ul>
+    </div>
   )
 }

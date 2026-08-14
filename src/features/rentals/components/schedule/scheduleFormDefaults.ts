@@ -11,7 +11,9 @@ export function emptyKindForm(): UpsertOccupancyKindInput {
   return {
     key: "",
     label: "",
+    description: "",
     colorHex: "#22c55e",
+    iconKey: "circle-check",
     isBookableByCustomer: true,
     blocksCapacity: true,
     sortOrder: 100,

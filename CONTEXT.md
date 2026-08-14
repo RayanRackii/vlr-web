@@ -103,16 +103,16 @@ Schedule policy that authors the week as explicit **ScheduleTemplate** cells, th
 _Avoid_: N client-side POSTs per hour×day as the product path
 
 **Admin Daily Agenda UX**:
-Responsive two-column workspace: filters, Rentable multi-selection and date on the left; grouped per-Rentable day occurrences on the right. Cards are clickable day occurrences. Weekly setup holds Horário padrão / Grade personalizada and fine weekday templates. Cards show Weekly default vs This day's adjustment.
-_Avoid_: Mixing weekly policy editors into the day agenda; treating a day card click as a weekly template edit
+Operational resource grid with compact toolbar and a virtualized time × resource matrix. Cells open a contextual drawer (day override vs SlotGrid recurrence). Weekly setup holds policy, seed and bulk weekly rules. Copy is generic for spaces/goods across modules.
+_Avoid_: Vertical per-resource card stacks; sports-specific labels; mixing weekly editors into the day grid
 
 **Day occurrence**:
-A dated Slot (or OpenHours-derived window). Admin adjusts kind/label, makes unavailable, or restores the weekly default for that single date. Booked slots redirect to reservations.
-_Avoid_: Editing all future weekdays from the day agenda
+Dated Slot or OpenHours-derived window. Day-only edits vs EntireRecurrence (SlotGrid templates + safe future cascade). OpenHours window edits stay in Weekly setup.
+_Avoid_: Editing all future weekdays from an OpenHours cell drawer
 
 **Day read path**:
-Loading a day issues exactly two parallel requests: the day's Slots and the templates for that weekday (`GET /api/schedule/templates?dayOfWeek=`). Day overrides use `POST /api/schedule/slots/daily-occurrence`. Results stay cached per sorted Rentable ID set + date.
-_Avoid_: One request per selected Rentable; fetching the whole week of templates to render a single day
+Two parallel requests for day slots + weekday templates; overrides via `daily-occurrence`; weekly grids via `apply-weekly-rule`. Cache by sorted resource IDs + date.
+_Avoid_: One request per selected resource; fetching the whole week of templates for a single day
 
 **Layout**:
 A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map rather than only from a list. Multiple Layouts are allowed (different venues or views).

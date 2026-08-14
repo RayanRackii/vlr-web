@@ -120,3 +120,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-14 | **Refino Agenda:** cabeçalho centralizado, maior respiro entre colunas, remoção da faixa redundante da agenda e copy explícita de recorrência por dia da semana. |
 | 2026-08-14 | **Perf Agenda:** templates do dia pedidos com `dayOfWeek` (payload ~7x menor); correção principal de lentidão foi no `vlr-api` (fim do N+1 na derivação de horários). |
 | 2026-08-14 | **UX Agenda:** cards diários clicáveis (ajuste/indisponibilizar/restaurar só na data); abas Agenda do dia vs Configuração semanal; política/seed movidos para a config semanal. |
+| 2026-08-14 | **Redesign Agenda:** grade virtualizada tempo × recursos, toolbar compacta, drawer com escopo diário/recorrente e construtor de regra semanal em lote. |

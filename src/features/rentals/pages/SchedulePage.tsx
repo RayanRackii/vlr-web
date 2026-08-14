@@ -6,6 +6,7 @@ import {
   DailyAgendaTab,
   type ScheduleBusyAction,
 } from "@/features/rentals/components/schedule/DailyAgendaTab"
+import type { DayResourceGridCellPayload } from "@/features/rentals/components/schedule/DayResourceGrid"
 import {
   DaySlotSheet,
   type DaySlotDraft,
@@ -16,8 +17,10 @@ import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFor
 import type { TemplateDraft } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import { TemplateSheet } from "@/features/rentals/components/schedule/TemplateSheet"
 import { WeeklyTemplatesTab } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
+import type { WeeklyRuleDraft } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
 import {
   applyDailyOccurrence,
+  applyWeeklyRule,
   createOccupancyKind,
   createScheduleTemplate,
   deleteScheduleTemplate,
@@ -35,6 +38,7 @@ import {
   type AdminDaySlot,
   type AdminRentalAsset,
   type OccupancyKind,
+  type OccurrenceEditScope,
   type ScheduleTemplate,
   type UpdateSchedulePolicyInput,
   type UpsertOccupancyKindInput,
@@ -44,25 +48,8 @@ import { cn } from "@/lib/utils"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
 
-const WEEKDAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const
-
 function dayCacheKey(rentalAssetIds: readonly string[], date: string): string {
   return `${[...rentalAssetIds].sort().join(",")}|${date}`
-}
-
-/** Maps an ISO date to the .NET DayOfWeek name expected by the templates endpoint. */
-function weekdayName(date: string): string | undefined {
-  const parsed = new Date(`${date}T00:00:00`)
-  const index = parsed.getDay()
-  return Number.isNaN(index) ? undefined : WEEKDAY_NAMES[index]
 }
 
 function mergeAssets(
@@ -89,7 +76,6 @@ export function SchedulePage() {
   const [date, setDate] = useState(todayIsoDate())
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
-  const [dayTemplates, setDayTemplates] = useState<ScheduleTemplate[]>([])
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
@@ -108,7 +94,8 @@ export function SchedulePage() {
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
   const [slotSheetOpen, setSlotSheetOpen] = useState(false)
-  const [editingSlot, setEditingSlot] = useState<AdminDaySlot | null>(null)
+  const [editingCell, setEditingCell] =
+    useState<DayResourceGridCellPayload | null>(null)
 
   const defaultKindId = useMemo(
     () =>
@@ -193,11 +180,7 @@ export function SchedulePage() {
       return
     }
     const key = dayCacheKey(selectedRentalAssetIds, date)
-    const [templateList, daySchedule] = await Promise.all([
-      listScheduleTemplates(undefined, selectedRentalAssetIds, weekdayName(date)),
-      fetchAdminScheduleDay(date, selectedRentalAssetIds),
-    ])
-    setDayTemplates(templateList)
+    const daySchedule = await fetchAdminScheduleDay(date, selectedRentalAssetIds)
     setDay(daySchedule)
     loadedDayKeysRef.current.add(key)
     dayCacheRef.current.set(key, daySchedule)
@@ -214,7 +197,6 @@ export function SchedulePage() {
 
   useEffect(() => {
     if (selectedRentalAssetIds.length === 0 || !date) {
-      setDayTemplates([])
       setDay(null)
       setShowDaySkeleton(false)
       setLoadingDay(false)
@@ -235,15 +217,11 @@ export function SchedulePage() {
       setDay(null)
     }
 
-    void Promise.all([
-      listScheduleTemplates(undefined, selectedRentalAssetIds, weekdayName(date)),
-      fetchAdminScheduleDay(date, selectedRentalAssetIds),
-    ])
-      .then(([templateList, daySchedule]) => {
+    void fetchAdminScheduleDay(date, selectedRentalAssetIds)
+      .then((daySchedule) => {
         if (cancelled) {
           return
         }
-        setDayTemplates(templateList)
         setDay(daySchedule)
         loadedDayKeysRef.current.add(key)
         dayCacheRef.current.set(key, daySchedule)
@@ -498,6 +476,29 @@ export function SchedulePage() {
     }
   }
 
+  async function onApplyWeeklyRule(draft: WeeklyRuleDraft): Promise<boolean> {
+    beginBusy("weeklyRule")
+    try {
+      const result = await applyWeeklyRule(draft)
+      toast.success(
+        t("rentals.schedule.weeklyRule.success", {
+          count: result.created + result.updated,
+        }),
+      )
+      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      return true
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("apiErrors.applyWeeklyRule"),
+      )
+      return false
+    } finally {
+      endBusy()
+    }
+  }
+
   function slotBusyKey(slot: AdminDaySlot): string {
     return `${slot.rentalAssetId}|${slot.startTime}|${slot.id}`
   }
@@ -506,21 +507,24 @@ export function SchedulePage() {
     action: "Update" | "MakeUnavailable" | "RestoreWeeklyDefault",
     busyAction: Exclude<ScheduleBusyAction, null>,
     draft?: DaySlotDraft,
+    scope: OccurrenceEditScope = "OnlyThisDay",
   ): Promise<boolean> {
-    if (!editingSlot) {
+    if (!editingCell) {
       return false
     }
-    beginBusy(busyAction, slotBusyKey(editingSlot))
+    const slot = editingCell.slot
+    beginBusy(busyAction, slot ? slotBusyKey(slot) : undefined)
     try {
       await applyDailyOccurrence({
-        slotId: editingSlot.id,
-        rentalAssetId: editingSlot.rentalAssetId,
-        date: editingSlot.date,
-        startTime: formatScheduleTime(editingSlot.startTime),
-        endTime: formatScheduleTime(editingSlot.endTime),
+        slotId: slot?.id ?? null,
+        rentalAssetId: editingCell.rentalAssetId,
+        date: editingCell.date,
+        startTime: formatScheduleTime(editingCell.startTime),
+        endTime: formatScheduleTime(editingCell.endTime),
         action,
-        occupancyKindId: draft?.occupancyKindId ?? editingSlot.occupancyKindId,
-        label: draft?.label ?? editingSlot.label ?? null,
+        scope,
+        occupancyKindId: draft?.occupancyKindId ?? slot?.occupancyKindId ?? defaultKindId,
+        label: draft?.label ?? slot?.label ?? null,
       })
       toast.success(
         action === "Update"
@@ -550,14 +554,14 @@ export function SchedulePage() {
   ]
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("rentals.schedule.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t("rentals.schedule.description")}
+            {t("rentals.schedule.descriptionOperational")}
           </p>
         </div>
 
@@ -597,7 +601,6 @@ export function SchedulePage() {
             selectedRentalAssetIds={selectedRentalAssetIds}
             date={date}
             day={day}
-            templates={dayTemplates}
             loading={loadingAssets || loadingDay}
             showSkeleton={
               !loadingAssets &&
@@ -613,8 +616,9 @@ export function SchedulePage() {
             onPublish={() => {
               void onPublish()
             }}
-            onSlotClick={(slot) => {
-              setEditingSlot(slot)
+            onGoWeeklySetup={() => setTab("templates")}
+            onSlotOrCellClick={(target) => {
+              setEditingCell(target)
               setSlotSheetOpen(true)
             }}
           />
@@ -628,6 +632,8 @@ export function SchedulePage() {
             templates={templates.filter(
               (row) => row.rentalAssetId === templateRentalAssetId,
             )}
+            kinds={kinds}
+            defaultKindId={defaultKindId}
             loading={loadingAssets}
             busy={busy}
             busyAction={busyAction}
@@ -656,6 +662,7 @@ export function SchedulePage() {
               void onSeedTemplateAsset()
             }}
             onSavePolicy={onSavePolicy}
+            onApplyWeeklyRule={onApplyWeeklyRule}
           />
         ) : null}
 
@@ -713,21 +720,28 @@ export function SchedulePage() {
         onOpenChange={(open) => {
           setSlotSheetOpen(open)
           if (!open) {
-            setEditingSlot(null)
+            setEditingCell(null)
           }
         }}
-        slot={editingSlot}
+        target={editingCell}
         kinds={kinds}
+        defaultKindId={defaultKindId}
         busy={busy}
         busyAction={busyAction}
         readOnly={isTrialReadOnly}
-        onSave={(draft) => handleSlotAction("Update", "slotUpdate", draft)}
-        onMakeUnavailable={() =>
-          handleSlotAction("MakeUnavailable", "slotUnavailable")
+        onSave={(draft, scope) =>
+          handleSlotAction("Update", "slotUpdate", draft, scope)
+        }
+        onMakeUnavailable={(scope) =>
+          handleSlotAction("MakeUnavailable", "slotUnavailable", undefined, scope)
         }
         onRestoreWeeklyDefault={() =>
           handleSlotAction("RestoreWeeklyDefault", "slotRestore")
         }
+        onGoWeeklySetup={() => {
+          setSlotSheetOpen(false)
+          setTab("templates")
+        }}
       />
     </div>
   )

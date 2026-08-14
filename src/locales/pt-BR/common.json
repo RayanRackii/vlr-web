@@ -44,6 +44,7 @@
     "seedTemplates": "Não foi possível criar a grade padrão.",
     "updateSchedulePolicy": "Não foi possível atualizar a política de escala.",
     "applyDailyOccurrence": "Não foi possível atualizar o horário deste dia.",
+    "applyWeeklyRule": "Não foi possível aplicar a regra semanal.",
     "noBookableKind": "Nenhum tipo reservável encontrado. Crie um tipo Aberto primeiro.",
     "register": "Não foi possível concluir o cadastro.",
     "createField": "Não foi possível criar o campo.",
@@ -1620,6 +1621,7 @@
     "schedule": {
       "title": "Escala / agenda",
       "description": "Operação de um dia específico e configuração semanal recorrente dos espaços.",
+      "descriptionOperational": "Visualize a ocupação, ajuste um dia e configure regras semanais para seus espaços e bens.",
       "rentable": "Espaço / bem",
       "rentables": "Espaços / bens",
       "selectedCount": "{{selected}} de {{total}}",
@@ -1631,7 +1633,17 @@
       "noneSelectedDescription": "Marque um ou mais espaços para ver a agenda do dia.",
       "slotCount": "{{count}} horários",
       "date": "Data",
-      "dayOnlyBanner": "Alterações nos cards valem somente para {{date}}. A regra semanal fica em Configuração semanal.",
+      "toolbar": {
+        "today": "Hoje",
+        "prev": "Dia anterior",
+        "next": "Próximo dia",
+        "resources": "Espaços / bens · {{selected}} de {{total}}"
+      },
+      "grid": {
+        "empty": "Horário vazio",
+        "noSelection": "Selecione um ou mais espaços / bens para ver a grade."
+      },
+      "dayOnlyBanner": "Alterações nesta grade valem somente para {{date}}. A regra semanal fica em Configuração semanal.",
       "seedTemplates": "Criar grade padrão (seg–dom, 08–22)",
       "publishDay": "Aplicar grade neste dia",
       "publishFromTemplate": "Criar grade a partir do template",
@@ -1660,6 +1672,11 @@
       "activate": "Ativar",
       "deactivate": "Desativar",
       "occurrence": {
+        "editTitle": "Editar horário",
+        "applyScope": "Aplicar alteração em",
+        "onlyThisDay": "Somente este dia",
+        "entireRecurrence": "Toda a recorrência",
+        "entireRecurrenceDisabledHint": "Horários padrão são alterados na configuração semanal.",
         "sheetTitle": "Horário deste dia",
         "sheetDescription": "Mudanças aqui afetam somente {{date}}, não a regra semanal.",
         "dayOnlyHint": "Salvar cria um ajuste só para {{date}}.",
@@ -1704,6 +1721,12 @@
         "saveError": "Não foi possível salvar a configuração dos horários.",
         "derivedSlotsHint": "Intervalos gerados automaticamente a partir do horário padrão (não é preciso publicar o dia)."
       },
+      "weeklyRule": {
+        "title": "Criar regra semanal",
+        "days": "Dias da semana",
+        "apply": "Aplicar regra",
+        "success": "Regra semanal aplicada a {{count}} horários."
+      },
       "tabs": {
         "daily": "Agenda do dia",
         "templates": "Configuração semanal",
@@ -1725,6 +1748,8 @@
         "emptyTitle": "Nenhum tipo de ocupação",
         "key": "Chave",
         "label": "Nome",
+        "descriptionField": "Descrição",
+        "iconKey": "Ícone",
         "color": "Cor",
         "sortOrder": "Ordem",
         "bookable": "Reservável pelo cliente",
@@ -1737,6 +1762,8 @@
         "help": {
           "key": "Identificador interno estável (ex.: open). Não muda depois de criado; use minúsculas sem espaços.",
           "label": "Texto que a equipe e o portal veem (ex.: Aberto). Pode renomear depois sem quebrar a chave.",
+          "description": "Explique quando este tipo deve ser usado.",
+          "iconKey": "Ícone seguro usado para identificar o tipo na interface.",
           "color": "Cor usada para distinguir este tipo na agenda e nas listas de horários.",
           "sortOrder": "Posição na lista: número menor aparece primeiro (ex.: 10, 20, 30).",
           "bookable": "Se marcado, o cliente do portal pode reservar horários com este tipo.",
