@@ -117,3 +117,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-14 | **Executado:** Agenda multi-espaço (seleção em lote + agenda agrupada) e copy Horário padrão / Grade personalizada. Diário canônico no `vlr-api`: `docs/sessions/2026-08-14-product-delivery-log.md`. |
 | 2026-08-14 | **Branding:** paleta Rolvix atualizada para steel blue (`#4D6A92` / `#5A8FA0` / `#A2C6E9`), gradientes suaves e novos defaults de tenant; cores já salvas por tenant permanecem personalizadas. |
 | 2026-08-14 | **UX Agenda:** workspace responsivo em duas colunas; busca local de espaços/bens nos controles à esquerda, agendas agrupadas à direita e cards de política com estado selecionado explícito. |
+| 2026-08-14 | **Refino Agenda:** cabeçalho centralizado, maior respiro entre colunas, remoção da faixa redundante da agenda e copy explícita de recorrência por dia da semana. |

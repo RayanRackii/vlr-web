@@ -480,38 +480,43 @@ export function SchedulePage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("rentals.schedule.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("rentals.schedule.description")}
-        </p>
-      </div>
+      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("rentals.schedule.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("rentals.schedule.description")}
+          </p>
+        </div>
 
-      <div className="border-b border-border">
-        <nav className="-mb-px flex space-x-8" aria-label={t("nav.menu")}>
-          {tabItems.map((item) => {
-            const isActive = tab === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setTab(item.id)
-                }}
-                className={cn(
-                  "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                )}
-              >
-                {t(item.labelKey)}
-              </button>
-            )
-          })}
-        </nav>
+        <div className="border-b border-border">
+          <nav
+            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
+            aria-label={t("nav.menu")}
+          >
+            {tabItems.map((item) => {
+              const isActive = tab === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setTab(item.id)
+                  }}
+                  className={cn(
+                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                  )}
+                >
+                  {t(item.labelKey)}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
       </div>
 
       <div className="mt-8">

@@ -87,7 +87,7 @@ One dated occupancy cell on one Rentable: date + start + end + OccupancyKind. Th
 _Avoid_: Free-typed start/end as the only booking path for slot-mode tenants
 
 **ScheduleTemplate**:
-The default weekly pattern of Slots (or open-hours rules) used to materialize each Schedule Day. Weekly template is the default authoring mode; a single day can still be edited after publish.
+The default weekly pattern of Slots (or open-hours rules) used to materialize each Schedule Day. Each template belongs to a `DayOfWeek` and recurs on every occurrence of that weekday (all Mondays, all Tuesdays, etc.); it is not tied to one calendar date. A single day can still be edited after publish.
 _Avoid_: Forcing admins to rebuild every day from scratch as the only path
 
 **ScheduleDay**:
