@@ -6,6 +6,10 @@ import {
   DailyAgendaTab,
   type ScheduleBusyAction,
 } from "@/features/rentals/components/schedule/DailyAgendaTab"
+import {
+  DaySlotSheet,
+  type DaySlotDraft,
+} from "@/features/rentals/components/schedule/DaySlotSheet"
 import { OccupancyKindSheet } from "@/features/rentals/components/schedule/OccupancyKindSheet"
 import { OccupancyKindsTab } from "@/features/rentals/components/schedule/OccupancyKindsTab"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
@@ -13,10 +17,12 @@ import type { TemplateDraft } from "@/features/rentals/components/schedule/sched
 import { TemplateSheet } from "@/features/rentals/components/schedule/TemplateSheet"
 import { WeeklyTemplatesTab } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
 import {
+  applyDailyOccurrence,
   createOccupancyKind,
   createScheduleTemplate,
   deleteScheduleTemplate,
   fetchAdminScheduleDay,
+  formatScheduleTime,
   listAdminRentalAssets,
   listOccupancyKinds,
   listScheduleTemplates,
@@ -26,6 +32,7 @@ import {
   updateRentalSchedulePolicyBulk,
   updateScheduleTemplate,
   type AdminDaySchedule,
+  type AdminDaySlot,
   type AdminRentalAsset,
   type OccupancyKind,
   type ScheduleTemplate,
@@ -37,8 +44,25 @@ import { cn } from "@/lib/utils"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
 
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const
+
 function dayCacheKey(rentalAssetIds: readonly string[], date: string): string {
   return `${[...rentalAssetIds].sort().join(",")}|${date}`
+}
+
+/** Maps an ISO date to the .NET DayOfWeek name expected by the templates endpoint. */
+function weekdayName(date: string): string | undefined {
+  const parsed = new Date(`${date}T00:00:00`)
+  const index = parsed.getDay()
+  return Number.isNaN(index) ? undefined : WEEKDAY_NAMES[index]
 }
 
 function mergeAssets(
@@ -83,6 +107,8 @@ export function SchedulePage() {
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
+  const [slotSheetOpen, setSlotSheetOpen] = useState(false)
+  const [editingSlot, setEditingSlot] = useState<AdminDaySlot | null>(null)
 
   const defaultKindId = useMemo(
     () =>
@@ -168,7 +194,7 @@ export function SchedulePage() {
     }
     const key = dayCacheKey(selectedRentalAssetIds, date)
     const [templateList, daySchedule] = await Promise.all([
-      listScheduleTemplates(undefined, selectedRentalAssetIds),
+      listScheduleTemplates(undefined, selectedRentalAssetIds, weekdayName(date)),
       fetchAdminScheduleDay(date, selectedRentalAssetIds),
     ])
     setDayTemplates(templateList)
@@ -210,7 +236,7 @@ export function SchedulePage() {
     }
 
     void Promise.all([
-      listScheduleTemplates(undefined, selectedRentalAssetIds),
+      listScheduleTemplates(undefined, selectedRentalAssetIds, weekdayName(date)),
       fetchAdminScheduleDay(date, selectedRentalAssetIds),
     ])
       .then(([templateList, daySchedule]) => {
@@ -472,6 +498,51 @@ export function SchedulePage() {
     }
   }
 
+  function slotBusyKey(slot: AdminDaySlot): string {
+    return `${slot.rentalAssetId}|${slot.startTime}|${slot.id}`
+  }
+
+  async function handleSlotAction(
+    action: "Update" | "MakeUnavailable" | "RestoreWeeklyDefault",
+    busyAction: Exclude<ScheduleBusyAction, null>,
+    draft?: DaySlotDraft,
+  ): Promise<boolean> {
+    if (!editingSlot) {
+      return false
+    }
+    beginBusy(busyAction, slotBusyKey(editingSlot))
+    try {
+      await applyDailyOccurrence({
+        slotId: editingSlot.id,
+        rentalAssetId: editingSlot.rentalAssetId,
+        date: editingSlot.date,
+        startTime: formatScheduleTime(editingSlot.startTime),
+        endTime: formatScheduleTime(editingSlot.endTime),
+        action,
+        occupancyKindId: draft?.occupancyKindId ?? editingSlot.occupancyKindId,
+        label: draft?.label ?? editingSlot.label ?? null,
+      })
+      toast.success(
+        action === "Update"
+          ? t("rentals.schedule.occurrence.updateSuccess")
+          : action === "MakeUnavailable"
+            ? t("rentals.schedule.occurrence.unavailableSuccess")
+            : t("rentals.schedule.occurrence.restoreSuccess"),
+      )
+      await refreshDay()
+      return true
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("rentals.schedule.occurrence.saveError"),
+      )
+      return false
+    } finally {
+      endBusy()
+    }
+  }
+
   const tabItems: { id: ScheduleTab; labelKey: string }[] = [
     { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
     { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
@@ -535,22 +606,24 @@ export function SchedulePage() {
             }
             busy={busy}
             busyAction={busyAction}
+            busyTargetKey={busyTargetId}
             readOnly={isTrialReadOnly}
             onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
             onDateChange={setDate}
             onPublish={() => {
               void onPublish()
             }}
-            onSeedTemplates={() => {
-              void onSeedSelected()
+            onSlotClick={(slot) => {
+              setEditingSlot(slot)
+              setSlotSheetOpen(true)
             }}
-            onSavePolicy={onSavePolicy}
           />
         ) : null}
 
         {tab === "templates" ? (
           <WeeklyTemplatesTab
             assets={assets}
+            selectedRentalAssetIds={selectedRentalAssetIds}
             rentalAssetId={templateRentalAssetId}
             templates={templates.filter(
               (row) => row.rentalAssetId === templateRentalAssetId,
@@ -560,6 +633,7 @@ export function SchedulePage() {
             busyAction={busyAction}
             busyTargetId={busyTargetId}
             readOnly={isTrialReadOnly}
+            onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
             onRentalAssetChange={setTemplateRentalAssetId}
             onAdd={() => {
               setEditingTemplate(null)
@@ -575,9 +649,13 @@ export function SchedulePage() {
             onDelete={(id) => {
               void onDeleteTemplate(id)
             }}
+            onSeedSelected={() => {
+              void onSeedSelected()
+            }}
             onSeedTemplates={() => {
               void onSeedTemplateAsset()
             }}
+            onSavePolicy={onSavePolicy}
           />
         ) : null}
 
@@ -628,6 +706,28 @@ export function SchedulePage() {
         busyAction={busyAction}
         readOnly={isTrialReadOnly}
         onSubmit={handleSaveTemplate}
+      />
+
+      <DaySlotSheet
+        open={slotSheetOpen}
+        onOpenChange={(open) => {
+          setSlotSheetOpen(open)
+          if (!open) {
+            setEditingSlot(null)
+          }
+        }}
+        slot={editingSlot}
+        kinds={kinds}
+        busy={busy}
+        busyAction={busyAction}
+        readOnly={isTrialReadOnly}
+        onSave={(draft) => handleSlotAction("Update", "slotUpdate", draft)}
+        onMakeUnavailable={() =>
+          handleSlotAction("MakeUnavailable", "slotUnavailable")
+        }
+        onRestoreWeeklyDefault={() =>
+          handleSlotAction("RestoreWeeklyDefault", "slotRestore")
+        }
       />
     </div>
   )

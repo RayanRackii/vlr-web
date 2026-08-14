@@ -103,8 +103,16 @@ Schedule policy that authors the week as explicit **ScheduleTemplate** cells, th
 _Avoid_: N client-side POSTs per hour×day as the product path
 
 **Admin Daily Agenda UX**:
-Responsive two-column workspace: filters, Rentable multi-selection, date and schedule policy on the left; grouped per-Rentable agendas on the right. The Rentable list has a local name filter. Policy options are accessible pressed-state cards with an explicit selected indicator.
-_Avoid_: Compressing controls and agenda into one narrow centered column; ambiguous policy cards without visible selection
+Responsive two-column workspace: filters, Rentable multi-selection and date on the left; grouped per-Rentable day occurrences on the right. Cards are clickable day occurrences. Weekly setup holds Horário padrão / Grade personalizada and fine weekday templates. Cards show Weekly default vs This day's adjustment.
+_Avoid_: Mixing weekly policy editors into the day agenda; treating a day card click as a weekly template edit
+
+**Day occurrence**:
+A dated Slot (or OpenHours-derived window). Admin adjusts kind/label, makes unavailable, or restores the weekly default for that single date. Booked slots redirect to reservations.
+_Avoid_: Editing all future weekdays from the day agenda
+
+**Day read path**:
+Loading a day issues exactly two parallel requests: the day's Slots and the templates for that weekday (`GET /api/schedule/templates?dayOfWeek=`). Day overrides use `POST /api/schedule/slots/daily-occurrence`. Results stay cached per sorted Rentable ID set + date.
+_Avoid_: One request per selected Rentable; fetching the whole week of templates to render a single day
 
 **Layout**:
 A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map rather than only from a list. Multiple Layouts are allowed (different venues or views).

@@ -47,6 +47,7 @@ const scheduleSlotSchema = z.object({
   status: z.string(),
   reservationId: z.string().uuid().nullable().optional(),
   isDerived: z.boolean(),
+  source: z.enum(["WeeklyDefault", "DailyOverride"]).default("WeeklyDefault"),
 })
 
 const dayScheduleSchema = z.object({
@@ -55,6 +56,18 @@ const dayScheduleSchema = z.object({
 })
 
 export type AdminDaySchedule = z.infer<typeof dayScheduleSchema>
+export type AdminDaySlot = AdminDaySchedule["slots"][number]
+
+export type DailyOccurrenceAction =
+  | "Update"
+  | "MakeUnavailable"
+  | "RestoreWeeklyDefault"
+
+export const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
+
+export function isPersistedSlotId(id: string | null | undefined): boolean {
+  return Boolean(id && id !== EMPTY_SLOT_ID)
+}
 
 const rentalAssetSchema = z.object({
   id: z.string().uuid(),
@@ -183,10 +196,17 @@ function rentableQueryPath(
 export async function listScheduleTemplates(
   rentalAssetId?: string,
   rentalAssetIds?: readonly string[],
+  dayOfWeek?: string,
 ): Promise<ScheduleTemplate[]> {
-  const response = await api.get(
-    rentableQueryPath("/api/schedule/templates", rentalAssetId, rentalAssetIds),
+  const basePath = rentableQueryPath(
+    "/api/schedule/templates",
+    rentalAssetId,
+    rentalAssetIds,
   )
+  const path = dayOfWeek
+    ? `${basePath}${basePath.includes("?") ? "&" : "?"}dayOfWeek=${dayOfWeek}`
+    : basePath
+  const response = await api.get(path)
   const parsed = z.array(scheduleTemplateSchema).safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -298,6 +318,42 @@ export async function fetchAdminScheduleDay(
     throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
+}
+
+export async function applyDailyOccurrence(body: {
+  slotId?: string | null
+  rentalAssetId: string
+  date: string
+  startTime: string
+  endTime: string
+  action: DailyOccurrenceAction
+  occupancyKindId?: string | null
+  label?: string | null
+}): Promise<AdminDaySlot> {
+  try {
+    const response = await api.post("/api/schedule/slots/daily-occurrence", {
+      slotId: isPersistedSlotId(body.slotId) ? body.slotId : null,
+      rentalAssetId: body.rentalAssetId,
+      date: body.date,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
+      action: body.action,
+      occupancyKindId: body.occupancyKindId ?? null,
+      label: body.label ?? null,
+    })
+    const parsed = scheduleSlotSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.applyDailyOccurrence"),
+      ),
+    )
+  }
 }
 
 export async function listAdminRentalAssets(): Promise<AdminRentalAsset[]> {

@@ -8,12 +8,11 @@ import { DaySlotsTimeline } from "@/features/rentals/components/schedule/DaySlot
 import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
-import { SchedulePolicyPanel } from "@/features/rentals/components/schedule/SchedulePolicyPanel"
 import type {
   AdminDaySchedule,
+  AdminDaySlot,
   AdminRentalAsset,
   ScheduleTemplate,
-  UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
 
 export type ScheduleBusyAction =
@@ -24,6 +23,9 @@ export type ScheduleBusyAction =
   | "templateDelete"
   | "templateToggle"
   | "kind"
+  | "slotUpdate"
+  | "slotUnavailable"
+  | "slotRestore"
   | null
 
 type DailyAgendaTabProps = {
@@ -38,12 +40,20 @@ type DailyAgendaTabProps = {
   showSkeleton: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
+  busyTargetKey: string | null
   readOnly: boolean
   onSelectedRentalAssetIdsChange: (ids: string[]) => void
   onDateChange: (date: string) => void
   onPublish: () => void
-  onSeedTemplates: () => void
-  onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
+  onSlotClick: (slot: AdminDaySlot) => void
+}
+
+function formatDisplayDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-")
+  if (!year || !month || !day) {
+    return isoDate
+  }
+  return `${day}/${month}/${year}`
 }
 
 export function DailyAgendaTab({
@@ -56,12 +66,12 @@ export function DailyAgendaTab({
   showSkeleton,
   busy,
   busyAction,
+  busyTargetKey,
   readOnly,
   onSelectedRentalAssetIdsChange,
   onDateChange,
   onPublish,
-  onSeedTemplates,
-  onSavePolicy,
+  onSlotClick,
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
 
@@ -86,6 +96,7 @@ export function DailyAgendaTab({
 
   const showInlineRefresh = loading && !showSkeleton && day !== null
   const hasSelection = selectedAssets.length > 0
+  const dateLabel = formatDisplayDate(date)
 
   return (
     <div className="grid w-full items-start gap-8 lg:grid-cols-[minmax(19rem,23rem)_minmax(0,1fr)] lg:gap-10 xl:gap-14">
@@ -122,18 +133,10 @@ export function DailyAgendaTab({
               </LoadingButton>
             ) : null}
           </label>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t("rentals.schedule.dayOnlyBanner", { date: dateLabel })}
+          </p>
         </div>
-
-        {hasSelection ? (
-          <SchedulePolicyPanel
-            assets={selectedAssets}
-            busy={busy}
-            busyAction={busyAction}
-            readOnly={readOnly}
-            onSave={onSavePolicy}
-            onSeedSlotGrid={onSeedTemplates}
-          />
-        ) : null}
       </aside>
 
       <section className="min-w-0 space-y-4">
@@ -158,59 +161,62 @@ export function DailyAgendaTab({
             <ScheduleDaySlotsSkeleton />
           </div>
         ) : (
-          <>
-            <div className="space-y-4">
-              {selectedAssets.map((asset) => {
-                const slots =
-                  day?.slots.filter(
-                    (slot) => slot.rentalAssetId === asset.id,
-                  ) ?? []
-                const isOpenHours =
-                  (asset.schedulePolicy ?? "SlotGrid") === "OpenHours"
-                const hasTemplates = templates.some(
-                  (row) => row.rentalAssetId === asset.id,
-                )
+          <div className="space-y-4">
+            {selectedAssets.map((asset) => {
+              const slots =
+                day?.slots.filter(
+                  (slot) => slot.rentalAssetId === asset.id,
+                ) ?? []
+              const isOpenHours =
+                (asset.schedulePolicy ?? "SlotGrid") === "OpenHours"
+              const hasTemplates = templates.some(
+                (row) => row.rentalAssetId === asset.id,
+              )
 
-                return (
-                  <article
-                    key={asset.id}
-                    className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-                      <h3 className="text-sm font-medium text-foreground">
-                        {asset.name}
-                      </h3>
-                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                        {t("rentals.schedule.slotCount", {
-                          count: slots.length,
-                        })}
-                      </span>
-                    </div>
-                    {slots.length === 0 ? (
-                      <ScheduleEmptyState
-                        icon={CalendarDays}
-                        className="px-4 py-8"
-                        title={
-                          isOpenHours
-                            ? t("rentals.schedule.dayEmptyOpenHoursTitle")
-                            : t("rentals.schedule.dayEmptyTitle")
-                        }
-                        description={
-                          isOpenHours
-                            ? t("rentals.schedule.dayEmptyOpenHoursDescription")
-                            : hasTemplates
-                              ? t("rentals.schedule.dayEmptyDescription")
-                              : t("rentals.schedule.dayEmptyNoTemplates")
-                        }
-                      />
-                    ) : (
-                      <DaySlotsTimeline slots={slots} />
-                    )}
-                  </article>
-                )
-              })}
-            </div>
-          </>
+              return (
+                <article
+                  key={asset.id}
+                  className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                    <h3 className="text-sm font-medium text-foreground">
+                      {asset.name}
+                    </h3>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      {t("rentals.schedule.slotCount", {
+                        count: slots.length,
+                      })}
+                    </span>
+                  </div>
+                  {slots.length === 0 ? (
+                    <ScheduleEmptyState
+                      icon={CalendarDays}
+                      className="px-4 py-8"
+                      title={
+                        isOpenHours
+                          ? t("rentals.schedule.dayEmptyOpenHoursTitle")
+                          : t("rentals.schedule.dayEmptyTitle")
+                      }
+                      description={
+                        isOpenHours
+                          ? t("rentals.schedule.dayEmptyOpenHoursDescription")
+                          : hasTemplates
+                            ? t("rentals.schedule.dayEmptyDescription")
+                            : t("rentals.schedule.dayEmptyNoTemplates")
+                      }
+                    />
+                  ) : (
+                    <DaySlotsTimeline
+                      slots={slots}
+                      readOnly={readOnly}
+                      busyTargetKey={busyTargetKey}
+                      onSlotClick={onSlotClick}
+                    />
+                  )}
+                </article>
+              )
+            })}
+          </div>
         )}
       </section>
     </div>
