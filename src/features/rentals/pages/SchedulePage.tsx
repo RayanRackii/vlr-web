@@ -168,6 +168,10 @@ export function SchedulePage() {
           )
           return valid.length > 0 ? valid : assetList.map((asset) => asset.id)
         })
+        if (assetList.length > 0) {
+          setLoadingDay(true)
+          setShowDaySkeleton(true)
+        }
       })
       .catch((error) => {
         toast.error(
@@ -616,9 +620,8 @@ export function SchedulePage() {
             day={day}
             loading={loadingAssets || loadingDay}
             showSkeleton={
-              !loadingAssets &&
-              showDaySkeleton &&
-              selectedRentalAssetIds.length > 0
+              loadingAssets ||
+              (showDaySkeleton && selectedRentalAssetIds.length > 0)
             }
             busy={busy}
             busyAction={busyAction}
@@ -647,9 +650,8 @@ export function SchedulePage() {
             defaultKindId={defaultKindId}
             loading={loadingAssets || loadingTemplates}
             showSkeleton={
-              !loadingAssets &&
-              showTemplateSkeleton &&
-              selectedRentalAssetIds.length > 0
+              loadingAssets ||
+              (showTemplateSkeleton && selectedRentalAssetIds.length > 0)
             }
             busy={busy}
             busyAction={busyAction}

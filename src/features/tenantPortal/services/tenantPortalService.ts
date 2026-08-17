@@ -432,6 +432,7 @@ const rentalAssetSchema = z.object({
   type: z.string(),
   totalQuantity: z.number(),
   isActive: z.boolean(),
+  requiresDeposit: z.boolean().optional().default(true),
   schedulePolicy: z.string().optional(),
   openTime: z.string().nullable().optional(),
   closeTime: z.string().nullable().optional(),

@@ -18,7 +18,10 @@ import { RentableMultiSelect } from "@/features/rentals/components/schedule/Rent
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
-import { occupancyFromDaySlot } from "@/features/rentals/components/schedule/scheduleGridModel"
+import {
+  occupancyFromDaySlot,
+  resolveScheduleSurface,
+} from "@/features/rentals/components/schedule/scheduleGridModel"
 import type {
   AdminDaySchedule,
   AdminRentalAsset,
@@ -96,7 +99,23 @@ export function DailyAgendaTab({
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
   )
 
-  if (assets.length === 0) {
+  const surface = resolveScheduleSurface({
+    loading,
+    showSkeleton,
+    assetCount: assets.length,
+    selectedCount: selectedAssets.length,
+  })
+
+  if (surface === "page-skeleton") {
+    return (
+      <div role="status" aria-live="polite">
+        <p className="sr-only">{t("common.loading")}</p>
+        <ScheduleDaySlotsSkeleton />
+      </div>
+    )
+  }
+
+  if (surface === "no-assets") {
     return (
       <ScheduleEmptyState
         icon={CalendarDays}
@@ -105,8 +124,7 @@ export function DailyAgendaTab({
     )
   }
 
-  const showInlineRefresh = loading && !showSkeleton && day !== null
-  const hasSelection = selectedAssets.length > 0
+  const showInlineRefresh = loading && surface === "grid" && day !== null
 
   return (
     <div className="w-full space-y-4">
@@ -192,12 +210,12 @@ export function DailyAgendaTab({
             {t("common.refreshing")}
           </p>
         ) : null}
-        {!hasSelection ? (
+        {surface === "no-selection" ? (
           <ScheduleEmptyState
             icon={CalendarDays}
             title={t("rentals.schedule.grid.noSelection")}
           />
-        ) : showSkeleton ? (
+        ) : surface === "grid-skeleton" ? (
           <div role="status" aria-live="polite">
             <p className="sr-only">{t("common.loading")}</p>
             <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />

@@ -7,6 +7,7 @@ import {
   ClipboardPen,
   FormInput,
   LayoutDashboard,
+  Map,
   MenuSquare,
   Shield,
   Wrench,
@@ -36,6 +37,7 @@ export type AppNavigationItem = {
     | "nav.registrationFields"
     | "nav.moduleMenu"
     | "nav.schedule"
+    | "nav.layout"
     | "nav.reservations"
     | "nav.admin"
   to: string
@@ -125,6 +127,12 @@ const operationsItems: readonly AppNavigationItem[] = [
     labelKey: "nav.schedule",
     to: "/configuracoes/agenda",
     icon: CalendarClock,
+    modules: ["rentals"],
+  },
+  {
+    labelKey: "nav.layout",
+    to: "/configuracoes/layout",
+    icon: Map,
     modules: ["rentals"],
   },
   {

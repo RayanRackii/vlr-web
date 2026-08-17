@@ -27,6 +27,7 @@ import type { WeeklyRuleDraft } from "@/features/rentals/components/schedule/Wee
 import {
   buildWeeklyGridOccupancies,
   isOpenHoursOccupancyId,
+  resolveScheduleSurface,
   shiftWeekday,
   todayWeekdayName,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
@@ -108,7 +109,23 @@ export function WeeklyTemplatesTab({
     [kinds, selectedAssets, templates, weekday],
   )
 
-  if (assets.length === 0) {
+  const surface = resolveScheduleSurface({
+    loading,
+    showSkeleton,
+    assetCount: assets.length,
+    selectedCount: selectedAssets.length,
+  })
+
+  if (surface === "page-skeleton") {
+    return (
+      <div role="status" aria-live="polite">
+        <p className="sr-only">{t("common.loading")}</p>
+        <ScheduleDaySlotsSkeleton />
+      </div>
+    )
+  }
+
+  if (surface === "no-assets") {
     return (
       <ScheduleEmptyState
         icon={CalendarRange}
@@ -117,7 +134,7 @@ export function WeeklyTemplatesTab({
     )
   }
 
-  const showInlineRefresh = loading && !showSkeleton
+  const showInlineRefresh = loading && surface === "grid"
   const hasSelection = selectedAssets.length > 0
 
   return (
@@ -230,12 +247,12 @@ export function WeeklyTemplatesTab({
             {t("common.refreshing")}
           </p>
         ) : null}
-        {!hasSelection ? (
+        {!hasSelection || surface === "no-selection" ? (
           <ScheduleEmptyState
             icon={CalendarRange}
             title={t("rentals.schedule.grid.noSelection")}
           />
-        ) : showSkeleton ? (
+        ) : surface === "grid-skeleton" ? (
           <div role="status" aria-live="polite">
             <p className="sr-only">{t("common.loading")}</p>
             <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />

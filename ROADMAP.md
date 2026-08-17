@@ -51,7 +51,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Política OpenHours na Agenda diária + seed SlotGrid via `POST .../templates/seed-default` (1 request)
 - [x] Agenda multi-espaço: seletor múltiplo, política em lote, agenda agrupada; UI **Horário padrão** / **Grade personalizada** (domínio OpenHours/SlotGrid permanece no código)
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
-- [ ] Layout canvas (mapa de rentables) admin + picker B2C
+- [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 
 ## 4. Gating B2B por módulos
 
@@ -66,6 +66,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Copy por tom de módulo (`rentals` | `maintenance` | `generic`) via `useAssetCopyTone`.
 - [x] Famílias no wizard/edit tenant + formulários dinâmicos por `fieldSchema`.
 - [x] Copy preferindo famílias ativas do tenant (`spaces` / `goods` / `electrical` …).
+- [x] Wizard: “É necessário pagamento prévio?” (`requiresDeposit` / `RequiresDeposit`) em todo rentable.
 - [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
 
 ## 5. Fluxo de convite B2B
@@ -122,3 +123,5 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-14 | **UX Agenda:** cards diários clicáveis (ajuste/indisponibilizar/restaurar só na data); abas Agenda do dia vs Configuração semanal; política/seed movidos para a config semanal. |
 | 2026-08-14 | **Redesign Agenda:** grade virtualizada tempo × recursos, toolbar compacta, drawer com escopo diário/recorrente e construtor de regra semanal em lote. |
 | 2026-08-17 | **Configuração semanal:** mesma grade tempo × recursos da Agenda do dia, navegação por dia da semana e horários padrão visíveis em todas as colunas selecionadas. |
+| 2026-08-17 | **Cadastro de rentable:** flag “É necessário pagamento prévio?”; sem a flag, a reserva B2C já nasce confirmada. |
+| 2026-08-17 | **Layout:** página em Operação para posicionar espaços; portal reserva com data + horário e mapa/grade (indisponíveis visíveis, não clicáveis). |

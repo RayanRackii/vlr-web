@@ -47,6 +47,7 @@ export const assetSchema = z.object({
       type: z.enum(["Location", "Good"]),
       totalQuantity: z.number().int(),
       isActive: z.boolean(),
+      requiresDeposit: z.boolean().optional().default(true),
     })
     .nullish(),
   createdAt: z.string(),
@@ -73,6 +74,7 @@ export const updateAssetRequestSchema = z.object({
   requiresMaintenance: z.boolean(),
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
+  requiresDeposit: z.boolean().default(true),
 })
 
 export type UpdateAssetRequest = z.infer<typeof updateAssetRequestSchema>
@@ -92,6 +94,7 @@ export const createAssetRequestSchema = z.object({
   requiresMaintenance: z.boolean().default(false),
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
+  requiresDeposit: z.boolean().default(true),
 })
 
 export type CreateAssetRequest = z.infer<typeof createAssetRequestSchema>
@@ -114,6 +117,7 @@ export const bulkCreateAssetsRequestSchema = z.object({
   endNumber: z.number().int(),
   isRentable: z.boolean().optional(),
   requiresMaintenance: z.boolean().optional(),
+  requiresDeposit: z.boolean().optional().default(true),
 })
 
 export type BulkCreateAssetsRequest = z.infer<

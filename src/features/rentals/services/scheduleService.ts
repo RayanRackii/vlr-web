@@ -81,6 +81,7 @@ const rentalAssetSchema = z.object({
   assetId: z.string().uuid(),
   name: z.string(),
   isActive: z.boolean(),
+  requiresDeposit: z.boolean().optional().default(true),
   schedulePolicy: z.enum(["SlotGrid", "OpenHours"]).optional().default("SlotGrid"),
   openTime: z.string().nullable().optional(),
   closeTime: z.string().nullable().optional(),

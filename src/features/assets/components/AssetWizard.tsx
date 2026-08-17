@@ -96,6 +96,7 @@ type WizardFormState = {
   endNumber: number
   requiresMaintenance: boolean
   isRentable: boolean
+  requiresDeposit: boolean
   rentalType: "Location" | "Good"
   totalQuantity: number
 }
@@ -159,6 +160,7 @@ function emptyForm(defaults?: {
     endNumber: 1,
     requiresMaintenance: false,
     isRentable: false,
+    requiresDeposit: true,
     rentalType: "Location",
     totalQuantity: 1,
   }
@@ -283,6 +285,7 @@ export function AssetWizard({
         endNumber: 1,
         requiresMaintenance: asset.requiresMaintenance,
         isRentable: asset.isRentable,
+        requiresDeposit: asset.rentalConfig?.requiresDeposit ?? true,
         rentalType: asset.rentalConfig?.type ?? "Location",
         totalQuantity: asset.rentalConfig?.totalQuantity ?? 1,
       })
@@ -545,6 +548,7 @@ export function AssetWizard({
           requiresMaintenance: form.requiresMaintenance,
           rentalType: form.rentalType,
           totalQuantity: form.totalQuantity,
+          requiresDeposit: form.requiresDeposit,
         })
         if (form.isRentable) {
           await applyPricingsToAsset(asset.id)
@@ -562,6 +566,7 @@ export function AssetWizard({
           endNumber: form.endNumber,
           isRentable: form.isRentable,
           requiresMaintenance: form.requiresMaintenance,
+          requiresDeposit: form.requiresDeposit,
         })
         if (form.isRentable) {
           for (const asset of result.assets) {
@@ -588,6 +593,7 @@ export function AssetWizard({
           requiresMaintenance: form.requiresMaintenance,
           rentalType: form.rentalType,
           totalQuantity: form.totalQuantity,
+          requiresDeposit: form.requiresDeposit,
         })
         if (form.isRentable) {
           await applyPricingsToAsset(loadedAsset.id)
@@ -1130,7 +1136,39 @@ export function AssetWizard({
                 ) : null}
 
                 {form.isRentable ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      aria-pressed={form.requiresDeposit}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                        form.requiresDeposit
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-card hover:bg-muted/40",
+                      )}
+                      onClick={() => {
+                        patchForm({ requiresDeposit: !form.requiresDeposit })
+                      }}
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <FieldLabel
+                          label={t("assets.detail.fields.requiresDeposit")}
+                          help={t("assets.wizard.help.requiresDeposit")}
+                          className="pointer-events-auto"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {form.requiresDeposit
+                            ? t("assets.wizard.toggle.on")
+                            : t("assets.wizard.toggle.off")}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={form.requiresDeposit}
+                        tabIndex={-1}
+                        className="pointer-events-none"
+                      />
+                    </button>
+                    <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
                       <FieldLabel
                         label={t("assets.detail.fields.rentalType")}
@@ -1190,6 +1228,7 @@ export function AssetWizard({
                           })
                         }}
                       />
+                    </div>
                     </div>
                   </div>
                 ) : null}
@@ -1400,6 +1439,14 @@ export function AssetWizard({
                 </p>
                 {form.isRentable ? (
                   <>
+                    <p>
+                      <span className="text-muted-foreground">
+                        {t("assets.detail.fields.requiresDeposit")}:{" "}
+                      </span>
+                      {form.requiresDeposit
+                        ? t("common.yes", { defaultValue: "Yes" })
+                        : t("common.no", { defaultValue: "No" })}
+                    </p>
                     <p>
                       <span className="text-muted-foreground">
                         {t("assets.detail.fields.rentalType")}:{" "}

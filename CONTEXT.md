@@ -66,6 +66,10 @@ _Avoid_: Booking, appointment, agendamento (in code)
 Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label).
 _Avoid_: Court-only language in the module core; Quadra as the only product shape
 
+**RequiresDeposit**:
+Rentable-level flag: a Customer booking waits for admin payment confirmation before becoming Confirmed. Default on. Not a per-window pricing setting.
+_Avoid_: needPayment; assuming every booking waits for deposit
+
 **Asset**:
 A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`.
 _Avoid_: One physical table per use case; dynamic per-tenant tables
@@ -119,8 +123,8 @@ Two parallel requests for day slots + weekday templates; overrides via `daily-oc
 _Avoid_: One request per selected resource; fetching the whole week of templates for a single day
 
 **Layout**:
-A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map rather than only from a list. Multiple Layouts are allowed (different venues or views).
-_Avoid_: Hard-coding a single FICC court map in the product
+A Tenant-authored visual arrangement of Rentables on a 2D canvas (positions and sizes) so Customers pick a resource from a map after choosing date and time. Unavailable Rentables stay visible and disabled. If no Layout is active, the picker falls back to a grid of all Rentables. Multiple Layouts are allowed (different venues or views).
+_Avoid_: Hard-coding a single FICC court map; hiding unavailable Rentables; requiring court-first selection as the only path
 
 **Subdomain**:
 The tenant-owned URL slug used to resolve which Tenant a public B2C request belongs to (for example `clube-x` → `clube-x.rolvix.com.br`). It is identity routing, not the branded experience itself.

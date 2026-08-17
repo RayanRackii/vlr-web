@@ -8,6 +8,31 @@ import {
   type ScheduleTemplate,
 } from "@/features/rentals/services/scheduleService"
 
+export type ScheduleSurface =
+  | "page-skeleton"
+  | "no-assets"
+  | "no-selection"
+  | "grid-skeleton"
+  | "grid"
+
+export function resolveScheduleSurface(input: {
+  loading: boolean
+  showSkeleton: boolean
+  assetCount: number
+  selectedCount: number
+}): ScheduleSurface {
+  if (input.assetCount === 0) {
+    return input.loading || input.showSkeleton ? "page-skeleton" : "no-assets"
+  }
+  if (input.selectedCount === 0) {
+    return "no-selection"
+  }
+  if (input.showSkeleton) {
+    return "grid-skeleton"
+  }
+  return "grid"
+}
+
 export type ScheduleGridOccupancy = {
   id: string
   rentalAssetId: string

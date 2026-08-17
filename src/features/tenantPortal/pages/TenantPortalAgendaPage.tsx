@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useOutletContext, useParams } from "react-router-dom"
 import { toast } from "sonner"
@@ -7,8 +7,17 @@ import { toast } from "sonner"
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
+import {
+  autoPlaceItems,
+  canBookViaSlotId,
+  findSlotAtStart,
+  isCustomerBookableSlot,
+  listDistinctStartTimes,
+  pickCustomerLayout,
+} from "@/features/rentals/components/layout/layoutCanvasModel"
+import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import { PortalAgendaSlotsSkeleton } from "@/features/tenantPortal/components/PortalAgendaSlotsSkeleton"
 import {
   bookPortalSlot,
   createPortalReservation,
@@ -16,7 +25,6 @@ import {
   fetchPublicScheduleDay,
   formatScheduleTime,
   getCustomerAccessToken,
-  isBookablePersistedSlot,
   listMyPortalReservations,
   tenantPortalPath,
   type PortalRentalAsset,
@@ -29,10 +37,6 @@ function todayIsoDate(): string {
   const month = String(now.getMonth() + 1).padStart(2, "0")
   const day = String(now.getDate()).padStart(2, "0")
   return `${now.getFullYear()}-${month}-${day}`
-}
-
-function slotsCacheKey(rentalAssetId: string, date: string): string {
-  return `${rentalAssetId}|${date}`
 }
 
 export function TenantPortalAgendaPage() {
@@ -52,19 +56,38 @@ export function TenantPortalAgendaPage() {
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>([])
-  const [rentalAssetId, setRentalAssetId] = useState("")
-  const [date, setDate] = useState(todayIsoDate())
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
-  const [slotsLoading, setSlotsLoading] = useState(false)
-  const [showSlotsSkeleton, setShowSlotsSkeleton] = useState(false)
-  const [startTime, setStartTime] = useState("09:00")
-  const [endTime, setEndTime] = useState("10:00")
+  const [date, setDate] = useState(todayIsoDate())
+  const [startTime, setStartTime] = useState("")
+  const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
+    string | null
+  >(null)
   const [loading, setLoading] = useState(true)
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [layoutItems, setLayoutItems] = useState<
+    {
+      rentalAssetId: string
+      xPercent: number
+      yPercent: number
+      widthPercent: number
+      heightPercent: number
+      zIndex: number
+    }[]
+  >([])
+  const [hasAuthoredLayout, setHasAuthoredLayout] = useState(false)
 
-  const loadedSlotKeysRef = useRef(new Set<string>())
-  const slotsCacheRef = useRef(new Map<string, PortalScheduleSlot[]>())
+  const visibleAssets = useMemo(() => {
+    return assets.filter((asset) => {
+      if (lockedRentalAssetId) {
+        return asset.id === lockedRentalAssetId
+      }
+      if (lockedAssetId) {
+        return asset.assetId === lockedAssetId
+      }
+      return true
+    })
+  }, [assets, lockedAssetId, lockedRentalAssetId])
 
   useEffect(() => {
     if (!signedIn) {
@@ -76,23 +99,44 @@ export function TenantPortalAgendaPage() {
     void Promise.all([
       fetchPortalRentalAssets(subdomain),
       listMyPortalReservations(),
+      fetchPublicRentalLayouts(subdomain),
     ])
-      .then(([assetList, reservations]) => {
+      .then(([assetList, reservations, layouts]) => {
         if (cancelled) {
           return
         }
         setAssets(assetList)
         setMine(reservations)
 
-        if (lockedRentalAssetId) {
-          setRentalAssetId(lockedRentalAssetId)
-        } else if (lockedAssetId) {
-          const match = assetList.find(
-            (asset) => asset.assetId === lockedAssetId,
+        const visibleIds = new Set(
+          assetList
+            .filter((asset) => {
+              if (lockedRentalAssetId) {
+                return asset.id === lockedRentalAssetId
+              }
+              if (lockedAssetId) {
+                return asset.assetId === lockedAssetId
+              }
+              return true
+            })
+            .map((asset) => asset.id),
+        )
+        const layout = pickCustomerLayout(layouts, visibleIds)
+        if (layout) {
+          setHasAuthoredLayout(true)
+          setLayoutItems(
+            layout.items.map((item) => ({
+              rentalAssetId: item.rentalAssetId,
+              xPercent: item.xPercent,
+              yPercent: item.yPercent,
+              widthPercent: item.widthPercent,
+              heightPercent: item.heightPercent,
+              zIndex: item.zIndex,
+            })),
           )
-          setRentalAssetId(match?.id ?? "")
-        } else if (assetList[0]) {
-          setRentalAssetId(assetList[0].id)
+        } else {
+          setHasAuthoredLayout(false)
+          setLayoutItems(autoPlaceItems([...visibleIds]))
         }
       })
       .catch((error) => {
@@ -113,42 +157,29 @@ export function TenantPortalAgendaPage() {
     }
   }, [signedIn, subdomain, t, lockedAssetId, lockedRentalAssetId])
 
-  const selected = assets.find((asset) => asset.id === rentalAssetId)
-  const useSlotGrid =
-    !selected?.schedulePolicy ||
-    selected.schedulePolicy.toLowerCase() === "slotgrid"
-
   useEffect(() => {
-    if (!signedIn || !rentalAssetId || !date || !useSlotGrid) {
+    if (!signedIn || !date) {
       setSlots([])
-      setSelectedSlotId(null)
-      setShowSlotsSkeleton(false)
-      setSlotsLoading(false)
       return
     }
 
-    const key = slotsCacheKey(rentalAssetId, date)
-    const known = loadedSlotKeysRef.current.has(key)
-    const cached = slotsCacheRef.current.get(key)
-
     let cancelled = false
     setSlotsLoading(true)
-    setShowSlotsSkeleton(!known)
-    setSelectedSlotId(null)
-
-    if (cached !== undefined) {
-      setSlots(cached)
-    } else if (!known) {
-      setSlots([])
-    }
-
-    void fetchPublicScheduleDay(subdomain, date, rentalAssetId)
+    setSelectedRentalAssetId(null)
+    void fetchPublicScheduleDay(subdomain, date)
       .then((day) => {
-        if (!cancelled) {
-          setSlots(day.slots)
-          loadedSlotKeysRef.current.add(key)
-          slotsCacheRef.current.set(key, day.slots)
+        if (cancelled) {
+          return
         }
+        const bookable = day.slots.filter(isCustomerBookableSlot)
+        setSlots(bookable)
+        const times = listDistinctStartTimes(bookable)
+        setStartTime((current) => {
+          if (current && times.some((time) => time.startTime === current)) {
+            return current
+          }
+          return times[0]?.startTime ?? ""
+        })
       })
       .catch((error) => {
         if (!cancelled) {
@@ -163,14 +194,29 @@ export function TenantPortalAgendaPage() {
       .finally(() => {
         if (!cancelled) {
           setSlotsLoading(false)
-          setShowSlotsSkeleton(false)
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [signedIn, subdomain, rentalAssetId, date, useSlotGrid, t])
+  }, [signedIn, subdomain, date, t])
+
+  const timeWindows = useMemo(() => listDistinctStartTimes(slots), [slots])
+  const placedIds = useMemo(
+    () => new Set(layoutItems.map((item) => item.rentalAssetId)),
+    [layoutItems],
+  )
+  const unplacedAssets = visibleAssets.filter(
+    (asset) => !placedIds.has(asset.id),
+  )
+
+  const selectedSlot = selectedRentalAssetId
+    ? findSlotAtStart(slots, selectedRentalAssetId, startTime)
+    : undefined
+  const selectedAsset = visibleAssets.find(
+    (asset) => asset.id === selectedRentalAssetId,
+  )
 
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
@@ -181,33 +227,37 @@ export function TenantPortalAgendaPage() {
   }
 
   const title = menuItem?.label ?? t("tenantPortal.agenda.title")
-  const bookableSlots = slots.filter(isBookablePersistedSlot)
-  const lockedSelect = Boolean(lockedAssetId || lockedRentalAssetId)
-  const showInlineRefresh =
-    slotsLoading && !showSlotsSkeleton && slots.length > 0
 
-  async function onReserveSlot() {
-    if (!selected || !selectedSlotId) {
+  async function onReserve() {
+    if (!selectedAsset || !selectedSlot) {
       return
     }
     setSubmitting(true)
     try {
-      await bookPortalSlot({
-        slotId: selectedSlotId,
-        unitId: selected.unitId,
-        quantity: 1,
-      })
+      if (canBookViaSlotId(selectedSlot)) {
+        await bookPortalSlot({
+          slotId: selectedSlot.id,
+          unitId: selectedAsset.unitId,
+          quantity: 1,
+        })
+      } else {
+        await createPortalReservation({
+          unitId: selectedAsset.unitId,
+          date,
+          startTime: selectedSlot.startTime.slice(0, 5),
+          endTime: selectedSlot.endTime.slice(0, 5),
+          items: [{ assetId: selectedAsset.assetId, quantity: 1 }],
+        })
+      }
       toast.success(t("tenantPortal.agenda.reserveSuccess"))
       const [reservations, day] = await Promise.all([
         listMyPortalReservations(),
-        fetchPublicScheduleDay(subdomain, date, rentalAssetId),
+        fetchPublicScheduleDay(subdomain, date),
       ])
       setMine(reservations)
-      setSlots(day.slots)
-      const key = slotsCacheKey(rentalAssetId, date)
-      loadedSlotKeysRef.current.add(key)
-      slotsCacheRef.current.set(key, day.slots)
-      setSelectedSlotId(null)
+      const bookable = day.slots.filter(isCustomerBookableSlot)
+      setSlots(bookable)
+      setSelectedRentalAssetId(null)
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -219,40 +269,23 @@ export function TenantPortalAgendaPage() {
     }
   }
 
-  async function onReserveManual() {
-    if (!selected) {
-      return
-    }
-    setSubmitting(true)
-    try {
-      await createPortalReservation({
-        unitId: selected.unitId,
-        date,
-        startTime,
-        endTime,
-        items: [{ assetId: selected.assetId, quantity: 1 }],
-      })
-      toast.success(t("tenantPortal.agenda.reserveSuccess"))
-      setMine(await listMyPortalReservations())
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("tenantPortal.agenda.reserveError"),
-      )
-    } finally {
-      setSubmitting(false)
+  function spaceState(rentalAssetId: string) {
+    const slot = startTime
+      ? findSlotAtStart(slots, rentalAssetId, startTime)
+      : undefined
+    return {
+      available: Boolean(slot),
+      disabled: !slot,
+      selected: selectedRentalAssetId === rentalAssetId,
     }
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-sm text-muted-foreground">
-          {useSlotGrid
-            ? t("tenantPortal.agenda.subtitleSlots")
-            : t("tenantPortal.agenda.subtitle")}
+          {t("tenantPortal.agenda.subtitlePicker")}
         </p>
       </div>
 
@@ -260,40 +293,8 @@ export function TenantPortalAgendaPage() {
         <FormSkeleton fields={4} />
       ) : (
         <>
-          <div className="space-y-3">
-            <label className="block space-y-1 text-sm">
-              <span>{t("tenantPortal.agenda.court")}</span>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                value={rentalAssetId}
-                disabled={lockedSelect}
-                onChange={(event) => {
-                  setRentalAssetId(event.target.value)
-                }}
-              >
-                {assets.length === 0 ? (
-                  <option value="">{t("tenantPortal.agenda.noAssets")}</option>
-                ) : (
-                  assets
-                    .filter((asset) => {
-                      if (lockedRentalAssetId) {
-                        return asset.id === lockedRentalAssetId
-                      }
-                      if (lockedAssetId) {
-                        return asset.assetId === lockedAssetId
-                      }
-                      return true
-                    })
-                    .map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.name}
-                      </option>
-                    ))
-                )}
-              </select>
-            </label>
-
-            <label className="block space-y-1 text-sm sm:max-w-xs">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1 text-sm">
               <span>{t("tenantPortal.agenda.date")}</span>
               <Input
                 type="date"
@@ -303,116 +304,135 @@ export function TenantPortalAgendaPage() {
                 }}
               />
             </label>
-
-            {useSlotGrid ? (
-              <div className="space-y-3">
-                {showInlineRefresh ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <Loader2 className="size-3 animate-spin" aria-hidden />
-                    {t("common.refreshing")}
-                  </span>
-                ) : null}
-
-                {showSlotsSkeleton ? (
-                  <div role="status" aria-live="polite">
-                    <p className="sr-only">{t("common.loading")}</p>
-                    <PortalAgendaSlotsSkeleton />
-                  </div>
-                ) : bookableSlots.length === 0 && !slotsLoading ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("tenantPortal.agenda.noSlots")}
-                  </p>
-                ) : bookableSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {bookableSlots.map((slot) => {
-                      const active = selectedSlotId === slot.id
-                      return (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          disabled={submitting}
-                          className="rounded-md border px-3 py-2 text-left text-sm transition-colors disabled:opacity-60"
-                          style={{
-                            borderColor: active
-                              ? primary
-                              : slot.occupancyKindColorHex ?? undefined,
-                            backgroundColor: active
-                              ? `${primary}18`
-                              : undefined,
-                          }}
-                          onClick={() => {
-                            setSelectedSlotId(slot.id)
-                          }}
-                        >
-                          <span className="font-medium">
-                            {formatScheduleTime(slot.startTime)} –{" "}
-                            {formatScheduleTime(slot.endTime)}
-                          </span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            {slot.occupancyKindLabel}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : null}
-
-                <LoadingButton
-                  type="button"
-                  className="w-full sm:w-auto"
-                  style={{ backgroundColor: primary }}
-                  loading={submitting}
-                  loadingLabel={t("tenantPortal.agenda.reserving")}
-                  disabled={!selectedSlotId}
-                  onClick={() => {
-                    void onReserveSlot()
-                  }}
-                >
-                  {t("tenantPortal.agenda.reserveSlot")}
-                </LoadingButton>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm">
-                    <span>{t("tenantPortal.agenda.start")}</span>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      disabled={submitting}
-                      onChange={(event) => {
-                        setStartTime(event.target.value)
-                      }}
-                    />
-                  </label>
-                  <label className="space-y-1 text-sm">
-                    <span>{t("tenantPortal.agenda.end")}</span>
-                    <Input
-                      type="time"
-                      value={endTime}
-                      disabled={submitting}
-                      onChange={(event) => {
-                        setEndTime(event.target.value)
-                      }}
-                    />
-                  </label>
-                </div>
-                <LoadingButton
-                  type="button"
-                  className="w-full sm:w-auto"
-                  style={{ backgroundColor: primary }}
-                  loading={submitting}
-                  loadingLabel={t("tenantPortal.agenda.reserving")}
-                  disabled={!rentalAssetId}
-                  onClick={() => {
-                    void onReserveManual()
-                  }}
-                >
-                  {t("tenantPortal.agenda.reserve")}
-                </LoadingButton>
-              </div>
-            )}
+            <label className="space-y-1 text-sm">
+              <span>{t("tenantPortal.agenda.time")}</span>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                value={startTime}
+                disabled={slotsLoading || timeWindows.length === 0}
+                onChange={(event) => {
+                  setStartTime(event.target.value)
+                  setSelectedRentalAssetId(null)
+                }}
+              >
+                {timeWindows.length === 0 ? (
+                  <option value="">
+                    {t("tenantPortal.agenda.noTimes")}
+                  </option>
+                ) : (
+                  timeWindows.map((window) => (
+                    <option key={window.startTime} value={window.startTime}>
+                      {formatScheduleTime(window.startTime)} –{" "}
+                      {formatScheduleTime(window.endTime)}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
           </div>
+
+          {slotsLoading ? (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" aria-hidden />
+              {t("common.refreshing")}
+            </span>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-3 rounded-sm border border-emerald-500/70 bg-emerald-100 dark:bg-emerald-950" />
+              {t("tenantPortal.agenda.legendAvailable")}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-3 rounded-sm border border-border bg-muted" />
+              {t("tenantPortal.agenda.legendUnavailable")}
+            </span>
+          </div>
+
+          {visibleAssets.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.noAssets")}
+            </p>
+          ) : (
+            <LayoutCanvasBoard
+              mode="pick"
+              items={layoutItems.map((item) => {
+                const asset = assets.find(
+                  (candidate) => candidate.id === item.rentalAssetId,
+                )
+                const inVisibleSet = visibleAssets.some(
+                  (candidate) => candidate.id === item.rentalAssetId,
+                )
+                const state = spaceState(item.rentalAssetId)
+                const disabled = !inVisibleSet || state.disabled
+                return {
+                  key: item.rentalAssetId,
+                  rentalAssetId: item.rentalAssetId,
+                  label: asset?.name ?? item.rentalAssetId,
+                  xPercent: item.xPercent,
+                  yPercent: item.yPercent,
+                  widthPercent: item.widthPercent,
+                  heightPercent: item.heightPercent,
+                  zIndex: item.zIndex,
+                  available: inVisibleSet && state.available,
+                  disabled,
+                  selected: inVisibleSet && state.selected,
+                }
+              })}
+              onSelect={setSelectedRentalAssetId}
+            />
+          )}
+
+          {hasAuthoredLayout && unplacedAssets.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                {t("tenantPortal.agenda.unplaced")}
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {unplacedAssets.map((asset) => {
+                  const state = spaceState(asset.id)
+                  return (
+                    <button
+                      key={asset.id}
+                      type="button"
+                      disabled={state.disabled || submitting}
+                      aria-pressed={state.selected}
+                      className="rounded-lg border px-3 py-4 text-sm font-medium disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
+                      style={
+                        state.disabled
+                          ? undefined
+                          : {
+                              borderColor: state.selected ? primary : undefined,
+                              backgroundColor: state.selected
+                                ? `${primary}22`
+                                : undefined,
+                            }
+                      }
+                      onClick={() => {
+                        setSelectedRentalAssetId(asset.id)
+                      }}
+                    >
+                      {asset.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <LoadingButton
+            type="button"
+            className="w-full sm:w-auto"
+            style={{ backgroundColor: primary }}
+            loading={submitting}
+            loadingLabel={t("tenantPortal.agenda.reserving")}
+            disabled={!selectedSlot}
+            onClick={() => {
+              void onReserve()
+            }}
+          >
+            {t("tenantPortal.agenda.reserveSlot")}
+          </LoadingButton>
 
           <div className="space-y-2 border-t border-border pt-4">
             <h3 className="text-sm font-medium">
@@ -437,7 +457,9 @@ export function TenantPortalAgendaPage() {
                     <p className="text-xs text-muted-foreground">
                       {new Date(reservation.startDateTime).toLocaleString()} →{" "}
                       {new Date(reservation.endDateTime).toLocaleTimeString()} ·{" "}
-                      {reservation.status}
+                      {t(`rentals.reservations.statuses.${reservation.status}`, {
+                        defaultValue: reservation.status,
+                      })}
                     </p>
                   </li>
                 ))}
