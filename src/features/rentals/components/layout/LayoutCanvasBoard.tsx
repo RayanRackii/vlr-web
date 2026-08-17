@@ -1,7 +1,13 @@
-import { useRef, useState, type PointerEvent } from "react"
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react"
 
 import { cn } from "@/lib/utils"
-import { clampPercent } from "@/features/rentals/components/layout/layoutCanvasModel"
+import {
+  clampAspectRatio,
+  clampCanvasWidthPercent,
+  clampPercent,
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_CANVAS_WIDTH_PERCENT,
+} from "@/features/rentals/components/layout/layoutCanvasModel"
 
 export type CanvasBoardItem = {
   key: string
@@ -17,11 +23,30 @@ export type CanvasBoardItem = {
   disabled?: boolean
 }
 
-type DragKind = "move" | "resize"
+type TileDrag = {
+  kind: "move" | "resize"
+  rentalAssetId: string
+  offsetX: number
+  offsetY: number
+  startX: number
+  startY: number
+  startW: number
+  startH: number
+}
+
+type FrameDrag = {
+  startX: number
+  startY: number
+  startWidthPx: number
+  startHeightPx: number
+  hostWidthPx: number
+}
 
 type LayoutCanvasBoardProps = {
   items: readonly CanvasBoardItem[]
   mode: "edit" | "pick"
+  aspectRatio?: number
+  canvasWidthPercent?: number
   className?: string
   onMove?: (rentalAssetId: string, xPercent: number, yPercent: number) => void
   onResize?: (
@@ -31,23 +56,34 @@ type LayoutCanvasBoardProps = {
   ) => void
   onSelect?: (rentalAssetId: string) => void
   onRemove?: (rentalAssetId: string) => void
+  onFrameResize?: (aspectRatio: number, widthPercent: number) => void
 }
 
 export function LayoutCanvasBoard({
   items,
   mode,
+  aspectRatio = DEFAULT_ASPECT_RATIO,
+  canvasWidthPercent = DEFAULT_CANVAS_WIDTH_PERCENT,
   className,
   onMove,
   onResize,
   onSelect,
   onRemove,
+  onFrameResize,
 }: LayoutCanvasBoardProps) {
+  const hostRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
-  const dragOffsetRef = useRef({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState<{
-    rentalAssetId: string
-    kind: DragKind
-  } | null>(null)
+  const itemsRef = useRef(items)
+  const tileDragRef = useRef<TileDrag | null>(null)
+  const frameDragRef = useRef<FrameDrag | null>(null)
+  const onMoveRef = useRef(onMove)
+  const onResizeRef = useRef(onResize)
+  const onFrameResizeRef = useRef(onFrameResize)
+
+  itemsRef.current = items
+  onMoveRef.current = onMove
+  onResizeRef.current = onResize
+  onFrameResizeRef.current = onFrameResize
 
   function clientToPercent(clientX: number, clientY: number) {
     const rect = boardRef.current?.getBoundingClientRect()
@@ -60,147 +96,198 @@ export function LayoutCanvasBoard({
     }
   }
 
-  function handlePointerDown(
-    event: PointerEvent<HTMLElement>,
+  useEffect(() => {
+    function onPointerMove(event: PointerEvent) {
+      const tileDrag = tileDragRef.current
+      if (tileDrag) {
+        const point = clientToPercent(event.clientX, event.clientY)
+        if (tileDrag.kind === "move") {
+          onMoveRef.current?.(
+            tileDrag.rentalAssetId,
+            clampPercent(point.x - tileDrag.offsetX, tileDrag.startW),
+            clampPercent(point.y - tileDrag.offsetY, tileDrag.startH),
+          )
+          return
+        }
+        onResizeRef.current?.(
+          tileDrag.rentalAssetId,
+          Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX)),
+          Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY)),
+        )
+        return
+      }
+
+      const frameDrag = frameDragRef.current
+      if (!frameDrag || !onFrameResizeRef.current) {
+        return
+      }
+      const deltaX = event.clientX - frameDrag.startX
+      const deltaY = event.clientY - frameDrag.startY
+      const nextWidthPx = Math.max(80, frameDrag.startWidthPx + deltaX)
+      const nextHeightPx = Math.max(80, frameDrag.startHeightPx + deltaY)
+      const nextAspect = clampAspectRatio(nextWidthPx / nextHeightPx)
+      const nextWidthPercent = clampCanvasWidthPercent(
+        (nextWidthPx / Math.max(1, frameDrag.hostWidthPx)) * 100,
+      )
+      onFrameResizeRef.current(nextAspect, nextWidthPercent)
+    }
+
+    function onPointerUp() {
+      tileDragRef.current = null
+      frameDragRef.current = null
+    }
+
+    window.addEventListener("pointermove", onPointerMove)
+    window.addEventListener("pointerup", onPointerUp)
+    window.addEventListener("pointercancel", onPointerUp)
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove)
+      window.removeEventListener("pointerup", onPointerUp)
+      window.removeEventListener("pointercancel", onPointerUp)
+    }
+  }, [])
+
+  function startTileDrag(
+    event: ReactPointerEvent<HTMLElement>,
     item: CanvasBoardItem,
-    kind: DragKind,
+    kind: TileDrag["kind"],
   ) {
     if (mode !== "edit") {
       return
     }
     event.preventDefault()
     event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
     const point = clientToPercent(event.clientX, event.clientY)
-    dragOffsetRef.current = {
-      x: point.x - item.xPercent,
-      y: point.y - item.yPercent,
+    tileDragRef.current = {
+      kind,
+      rentalAssetId: item.rentalAssetId,
+      offsetX: point.x - item.xPercent,
+      offsetY: point.y - item.yPercent,
+      startX: item.xPercent,
+      startY: item.yPercent,
+      startW: item.widthPercent,
+      startH: item.heightPercent,
     }
-    setDragging({ rentalAssetId: item.rentalAssetId, kind })
   }
 
-  function handlePointerMove(
-    event: PointerEvent<HTMLElement>,
-    item: CanvasBoardItem,
-  ) {
-    if (!dragging || dragging.rentalAssetId !== item.rentalAssetId) {
+  function startFrameDrag(event: ReactPointerEvent<HTMLElement>) {
+    if (mode !== "edit" || !onFrameResize) {
       return
     }
-    const point = clientToPercent(event.clientX, event.clientY)
-    if (dragging.kind === "move") {
-      onMove?.(
-        item.rentalAssetId,
-        clampPercent(point.x - dragOffsetRef.current.x, item.widthPercent),
-        clampPercent(point.y - dragOffsetRef.current.y, item.heightPercent),
-      )
+    event.preventDefault()
+    event.stopPropagation()
+    const board = boardRef.current?.getBoundingClientRect()
+    const host = hostRef.current?.getBoundingClientRect()
+    if (!board || !host) {
       return
     }
-    onResize?.(
-      item.rentalAssetId,
-      Math.min(
-        100 - item.xPercent,
-        Math.max(12, point.x - item.xPercent),
-      ),
-      Math.min(
-        100 - item.yPercent,
-        Math.max(12, point.y - item.yPercent),
-      ),
-    )
-  }
-
-  function handlePointerUp(event: PointerEvent<HTMLElement>) {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
+    frameDragRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidthPx: board.width,
+      startHeightPx: board.height,
+      hostWidthPx: host.width,
     }
-    setDragging(null)
   }
 
   return (
-    <div
-      ref={boardRef}
-      className={cn(
-        "relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border bg-muted/30",
-        className,
-      )}
-    >
-      {items.map((item) => {
-        const unavailable = mode === "pick" && item.disabled
-        const clickable = mode === "pick" && !unavailable
-        return (
-          <div
-            key={item.key}
-            role={mode === "pick" ? "button" : undefined}
-            tabIndex={clickable ? 0 : undefined}
-            aria-pressed={mode === "pick" ? item.selected : undefined}
-            aria-disabled={unavailable || undefined}
-            className={cn(
-              "absolute flex items-center justify-center rounded-lg border px-1.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:text-sm",
-              mode === "edit" &&
-                "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
-              clickable &&
-                !item.selected &&
-                "cursor-pointer border-emerald-500/70 bg-emerald-100 text-emerald-950 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-50",
-              item.selected &&
-                "border-primary bg-primary/20 text-foreground ring-2 ring-primary",
-              unavailable &&
-                "cursor-not-allowed border-border bg-muted text-muted-foreground",
-            )}
-            style={{
-              left: `${item.xPercent}%`,
-              top: `${item.yPercent}%`,
-              width: `${item.widthPercent}%`,
-              height: `${item.heightPercent}%`,
-              zIndex: item.zIndex + 1,
-            }}
-            onPointerDown={(event) => {
-              handlePointerDown(event, item, "move")
-            }}
-            onPointerMove={(event) => {
-              handlePointerMove(event, item)
-            }}
-            onPointerUp={handlePointerUp}
-            onClick={() => {
-              if (clickable) {
-                onSelect?.(item.rentalAssetId)
-              }
-            }}
-            onKeyDown={(event) => {
-              if (clickable && (event.key === "Enter" || event.key === " ")) {
-                event.preventDefault()
-                onSelect?.(item.rentalAssetId)
-              }
-            }}
-          >
-            <span className="line-clamp-3 break-words px-3">{item.label}</span>
-            {mode === "edit" && onRemove ? (
-              <button
-                type="button"
-                aria-label="remove"
-                className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive"
-                onPointerDown={(event) => {
-                  event.stopPropagation()
+    <div ref={hostRef} className="min-w-0">
+      <div
+        className="relative"
+        style={{ width: `${canvasWidthPercent}%` }}
+      >
+        <div
+          ref={boardRef}
+          className={cn(
+            "relative w-full overflow-hidden rounded-xl border border-border bg-muted/30",
+            className,
+          )}
+          style={{ aspectRatio: String(aspectRatio) }}
+        >
+          {items.map((item) => {
+            const unavailable = mode === "pick" && item.disabled
+            const clickable = mode === "pick" && !unavailable
+            return (
+              <div
+                key={item.key}
+                role={mode === "pick" ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                aria-pressed={mode === "pick" ? item.selected : undefined}
+                aria-disabled={unavailable || undefined}
+                className={cn(
+                  "absolute flex items-center justify-center rounded-lg border px-1.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:text-sm",
+                  mode === "edit" &&
+                    "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                  clickable &&
+                    !item.selected &&
+                    "cursor-pointer border-emerald-500/70 bg-emerald-100 text-emerald-950 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-50",
+                  item.selected &&
+                    "border-primary bg-primary/20 text-foreground ring-2 ring-primary",
+                  unavailable &&
+                    "cursor-not-allowed border-border bg-muted text-muted-foreground",
+                )}
+                style={{
+                  left: `${item.xPercent}%`,
+                  top: `${item.yPercent}%`,
+                  width: `${item.widthPercent}%`,
+                  height: `${item.heightPercent}%`,
+                  zIndex: item.zIndex + 1,
                 }}
-                onClick={(event) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  onRemove(item.rentalAssetId)
+                onPointerDown={(event) => {
+                  startTileDrag(event, item, "move")
+                }}
+                onClick={() => {
+                  if (clickable) {
+                    onSelect?.(item.rentalAssetId)
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (clickable && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault()
+                    onSelect?.(item.rentalAssetId)
+                  }
                 }}
               >
-                ×
-              </button>
-            ) : null}
-            {mode === "edit" ? (
-              <span
-                aria-hidden
-                className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70"
-                onPointerDown={(event) => {
-                  handlePointerDown(event, item, "resize")
-                }}
-              />
-            ) : null}
-          </div>
-        )
-      })}
+                <span className="line-clamp-3 break-words px-3">{item.label}</span>
+                {mode === "edit" && onRemove ? (
+                  <button
+                    type="button"
+                    aria-label="remove"
+                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive"
+                    onPointerDown={(event) => {
+                      event.stopPropagation()
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onRemove(item.rentalAssetId)
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                {mode === "edit" ? (
+                  <span
+                    aria-hidden
+                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70"
+                    onPointerDown={(event) => {
+                      startTileDrag(event, item, "resize")
+                    }}
+                  />
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+        {mode === "edit" && onFrameResize ? (
+          <button
+            type="button"
+            aria-label="resize-canvas"
+            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
+            onPointerDown={startFrameDrag}
+          />
+        ) : null}
+      </div>
     </div>
   )
 }

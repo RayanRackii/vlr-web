@@ -7,11 +7,11 @@ const layoutItemSchema = z.object({
   id: z.string().uuid(),
   rentalAssetId: z.string().uuid(),
   assetName: z.string(),
-  xPercent: z.number(),
-  yPercent: z.number(),
-  widthPercent: z.number(),
-  heightPercent: z.number(),
-  zIndex: z.number(),
+  xPercent: z.coerce.number(),
+  yPercent: z.coerce.number(),
+  widthPercent: z.coerce.number(),
+  heightPercent: z.coerce.number(),
+  zIndex: z.coerce.number(),
 })
 
 const layoutSchema = z.object({
@@ -19,6 +19,8 @@ const layoutSchema = z.object({
   unitId: z.string().uuid().nullable().optional(),
   name: z.string(),
   isActive: z.boolean(),
+  aspectRatio: z.coerce.number().optional().default(1.6),
+  widthPercent: z.coerce.number().optional().default(100),
   items: z.array(layoutItemSchema),
 })
 
@@ -38,6 +40,8 @@ export type UpsertRentalLayoutInput = {
   unitId?: string | null
   name: string
   isActive: boolean
+  aspectRatio: number
+  widthPercent: number
   items: readonly UpsertRentalLayoutItemInput[]
 }
 

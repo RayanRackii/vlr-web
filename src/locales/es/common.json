@@ -1794,6 +1794,8 @@
       "paletteHelp": "Haga clic para colocar en el mapa. Arrastre para posicionar; la esquina inferior cambia el tamaño.",
       "paletteEmpty": "Todos los espacios ya están en el mapa.",
       "clickToRemove": "Use × en el bloque para quitarlo del mapa.",
+      "resizeCanvasHelp": "Arrastre la esquina del mapa (cuadrado inferior derecho) para cambiar el tamaño del layout.",
+      "organize": "Organizar solo",
       "save": "Guardar layout",
       "loadError": "No se pudieron cargar los layouts.",
       "saveError": "No se pudo guardar el layout.",

@@ -1,9 +1,9 @@
-export const LAYOUT_CANVAS_COLUMNS = 3
-export const DEFAULT_ITEM_WIDTH = 28
-export const DEFAULT_ITEM_HEIGHT = 26
-export const DEFAULT_GAP_X = 4
-export const DEFAULT_GAP_Y = 6
-export const DEFAULT_ORIGIN = 4
+export const DEFAULT_ASPECT_RATIO = 1.6
+export const MIN_ASPECT_RATIO = 0.7
+export const MAX_ASPECT_RATIO = 2.8
+export const DEFAULT_CANVAS_WIDTH_PERCENT = 100
+export const MIN_CANVAS_WIDTH_PERCENT = 50
+export const MAX_CANVAS_WIDTH_PERCENT = 100
 
 export const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -31,29 +31,91 @@ export function clampPercent(value: number, size = 0): number {
   return Math.min(100 - size, Math.max(0, rounded))
 }
 
-export function autoPlaceItems(
+export function clampAspectRatio(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) {
+    return DEFAULT_ASPECT_RATIO
+  }
+  return Math.min(
+    MAX_ASPECT_RATIO,
+    Math.max(MIN_ASPECT_RATIO, Math.round(value * 100) / 100),
+  )
+}
+
+export function clampCanvasWidthPercent(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) {
+    return DEFAULT_CANVAS_WIDTH_PERCENT
+  }
+  return Math.min(
+    MAX_CANVAS_WIDTH_PERCENT,
+    Math.max(MIN_CANVAS_WIDTH_PERCENT, Math.round(value)),
+  )
+}
+
+export function fitPlacement(item: LayoutPlacement): LayoutPlacement {
+  const widthPercent = Math.min(100, Math.max(8, item.widthPercent))
+  const heightPercent = Math.min(100, Math.max(8, item.heightPercent))
+  return {
+    ...item,
+    widthPercent,
+    heightPercent,
+    xPercent: clampPercent(item.xPercent, widthPercent),
+    yPercent: clampPercent(item.yPercent, heightPercent),
+  }
+}
+
+export function preferredColumnCount(count: number): number {
+  if (count <= 1) {
+    return 1
+  }
+  if (count <= 4) {
+    return 2
+  }
+  if (count <= 9) {
+    return 3
+  }
+  if (count <= 16) {
+    return 4
+  }
+  return Math.ceil(Math.sqrt(count))
+}
+
+/** Same-size tiles, equal gaps, filling the canvas. */
+export function arrangeEvenly(
   rentalAssetIds: readonly string[],
+  columns?: number,
 ): LayoutPlacement[] {
+  const count = rentalAssetIds.length
+  if (count === 0) {
+    return []
+  }
+
+  const cols = Math.max(1, columns ?? preferredColumnCount(count))
+  const rows = Math.ceil(count / cols)
+  const margin = 4
+  const gap = 4
+  const widthPercent =
+    Math.round(((100 - margin * 2 - gap * (cols - 1)) / cols) * 10) / 10
+  const heightPercent =
+    Math.round(((100 - margin * 2 - gap * (rows - 1)) / rows) * 10) / 10
+
   return rentalAssetIds.map((rentalAssetId, index) => {
-    const col = index % LAYOUT_CANVAS_COLUMNS
-    const row = Math.floor(index / LAYOUT_CANVAS_COLUMNS)
-    const widthPercent = DEFAULT_ITEM_WIDTH
-    const heightPercent = DEFAULT_ITEM_HEIGHT
-    return {
+    const col = index % cols
+    const row = Math.floor(index / cols)
+    return fitPlacement({
       rentalAssetId,
-      xPercent: clampPercent(
-        DEFAULT_ORIGIN + col * (widthPercent + DEFAULT_GAP_X),
-        widthPercent,
-      ),
-      yPercent: clampPercent(
-        DEFAULT_ORIGIN + row * (heightPercent + DEFAULT_GAP_Y),
-        heightPercent,
-      ),
+      xPercent: margin + col * (widthPercent + gap),
+      yPercent: margin + row * (heightPercent + gap),
       widthPercent,
       heightPercent,
       zIndex: index,
-    }
+    })
   })
+}
+
+export function autoPlaceItems(
+  rentalAssetIds: readonly string[],
+): LayoutPlacement[] {
+  return arrangeEvenly(rentalAssetIds)
 }
 
 export function pickCustomerLayout<T extends LayoutLike>(

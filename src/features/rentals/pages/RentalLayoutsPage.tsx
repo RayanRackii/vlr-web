@@ -9,7 +9,11 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Switch } from "@/components/ui/switch"
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import {
+  arrangeEvenly,
   autoPlaceItems,
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_CANVAS_WIDTH_PERCENT,
+  fitPlacement,
   type LayoutPlacement,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
@@ -45,6 +49,10 @@ export function RentalLayoutsPage() {
   const [name, setName] = useState("")
   const [isActive, setIsActive] = useState(true)
   const [placements, setPlacements] = useState<LayoutPlacement[]>([])
+  const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO)
+  const [canvasWidthPercent, setCanvasWidthPercent] = useState(
+    DEFAULT_CANVAS_WIDTH_PERCENT,
+  )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -64,6 +72,15 @@ export function RentalLayoutsPage() {
     [assets],
   )
 
+  function applyLayout(layout: RentalLayout) {
+    setSelectedId(layout.id)
+    setName(layout.name)
+    setIsActive(layout.isActive)
+    setPlacements(placementsFromLayout(layout).map(fitPlacement))
+    setAspectRatio(layout.aspectRatio)
+    setCanvasWidthPercent(layout.widthPercent)
+  }
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -75,15 +92,14 @@ export function RentalLayoutsPage() {
       setAssets(assetList)
       const first = layoutList[0]
       if (first) {
-        setSelectedId(first.id)
-        setName(first.name)
-        setIsActive(first.isActive)
-        setPlacements(placementsFromLayout(first))
+        applyLayout(first)
       } else {
         setSelectedId("")
         setName("")
         setIsActive(true)
         setPlacements([])
+        setAspectRatio(DEFAULT_ASPECT_RATIO)
+        setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
       }
     } catch (error) {
       toast.error(
@@ -104,6 +120,8 @@ export function RentalLayoutsPage() {
     setSelectedId("new")
     setName(t("rentals.layout.defaultName"))
     setIsActive(true)
+    setAspectRatio(DEFAULT_ASPECT_RATIO)
+    setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
     setPlacements(autoPlaceItems(assets.map((asset) => asset.id)))
   }
 
@@ -112,10 +130,13 @@ export function RentalLayoutsPage() {
     if (!layout) {
       return
     }
-    setSelectedId(id)
-    setName(layout.name)
-    setIsActive(layout.isActive)
-    setPlacements(placementsFromLayout(layout))
+    applyLayout(layout)
+  }
+
+  function organizeEvenly() {
+    setPlacements(
+      arrangeEvenly(placements.map((item) => item.rentalAssetId)),
+    )
   }
 
   function patchPlacement(
@@ -124,7 +145,9 @@ export function RentalLayoutsPage() {
   ) {
     setPlacements((current) =>
       current.map((item) =>
-        item.rentalAssetId === rentalAssetId ? { ...item, ...patch } : item,
+        item.rentalAssetId === rentalAssetId
+          ? fitPlacement({ ...item, ...patch })
+          : item,
       ),
     )
   }
@@ -159,18 +182,27 @@ export function RentalLayoutsPage() {
       const payload = {
         name: name.trim(),
         isActive,
-        items: placements,
+        aspectRatio,
+        widthPercent: canvasWidthPercent,
+        items: placements.map(fitPlacement),
       }
       if (selectedId === "new" || selectedId === "") {
         const created = await createRentalLayout(payload)
         toast.success(t("rentals.layout.createSuccess"))
-        const next = await listRentalLayouts()
-        setLayouts(next)
-        setSelectedId(created.id)
+        setLayouts((current) => {
+          const without = current.filter((item) => item.id !== created.id)
+          return [...without, created].sort((left, right) =>
+            left.name.localeCompare(right.name),
+          )
+        })
+        applyLayout(created)
       } else {
-        await updateRentalLayout(selectedId, payload)
+        const updated = await updateRentalLayout(selectedId, payload)
         toast.success(t("rentals.layout.updateSuccess"))
-        setLayouts(await listRentalLayouts())
+        setLayouts((current) =>
+          current.map((item) => (item.id === updated.id ? updated : item)),
+        )
+        applyLayout(updated)
       }
     } catch (error) {
       toast.error(
@@ -292,6 +324,8 @@ export function RentalLayoutsPage() {
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <LayoutCanvasBoard
                   mode="edit"
+                  aspectRatio={aspectRatio}
+                  canvasWidthPercent={canvasWidthPercent}
                   items={placements.map((item) => ({
                     key: item.rentalAssetId,
                     rentalAssetId: item.rentalAssetId,
@@ -308,7 +342,14 @@ export function RentalLayoutsPage() {
                     patchPlacement(rentalAssetId, { xPercent, yPercent })
                   }}
                   onResize={(rentalAssetId, widthPercent, heightPercent) => {
-                    patchPlacement(rentalAssetId, { widthPercent, heightPercent })
+                    patchPlacement(rentalAssetId, {
+                      widthPercent,
+                      heightPercent,
+                    })
+                  }}
+                  onFrameResize={(nextAspect, nextWidth) => {
+                    setAspectRatio(nextAspect)
+                    setCanvasWidthPercent(nextWidth)
                   }}
                   onRemove={isTrialReadOnly ? undefined : removeAsset}
                 />
@@ -345,6 +386,9 @@ export function RentalLayoutsPage() {
                   <p className="text-xs text-muted-foreground">
                     {t("rentals.layout.clickToRemove")}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("rentals.layout.resizeCanvasHelp")}
+                  </p>
                 </div>
               </div>
 
@@ -359,6 +403,14 @@ export function RentalLayoutsPage() {
                 >
                   {t("rentals.layout.save")}
                 </LoadingButton>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving || isTrialReadOnly || placements.length === 0}
+                  onClick={organizeEvenly}
+                >
+                  {t("rentals.layout.organize")}
+                </Button>
                 {selectedLayout ? (
                   <Button
                     type="button"

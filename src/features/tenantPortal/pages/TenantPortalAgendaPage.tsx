@@ -11,6 +11,8 @@ import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCa
 import {
   autoPlaceItems,
   canBookViaSlotId,
+  DEFAULT_ASPECT_RATIO,
+  DEFAULT_CANVAS_WIDTH_PERCENT,
   findSlotAtStart,
   isCustomerBookableSlot,
   listDistinctStartTimes,
@@ -76,6 +78,10 @@ export function TenantPortalAgendaPage() {
     }[]
   >([])
   const [hasAuthoredLayout, setHasAuthoredLayout] = useState(false)
+  const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO)
+  const [canvasWidthPercent, setCanvasWidthPercent] = useState(
+    DEFAULT_CANVAS_WIDTH_PERCENT,
+  )
 
   const visibleAssets = useMemo(() => {
     return assets.filter((asset) => {
@@ -124,6 +130,8 @@ export function TenantPortalAgendaPage() {
         const layout = pickCustomerLayout(layouts, visibleIds)
         if (layout) {
           setHasAuthoredLayout(true)
+          setAspectRatio(layout.aspectRatio)
+          setCanvasWidthPercent(layout.widthPercent)
           setLayoutItems(
             layout.items.map((item) => ({
               rentalAssetId: item.rentalAssetId,
@@ -136,6 +144,8 @@ export function TenantPortalAgendaPage() {
           )
         } else {
           setHasAuthoredLayout(false)
+          setAspectRatio(DEFAULT_ASPECT_RATIO)
+          setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
           setLayoutItems(autoPlaceItems([...visibleIds]))
         }
       })
@@ -356,6 +366,8 @@ export function TenantPortalAgendaPage() {
           ) : (
             <LayoutCanvasBoard
               mode="pick"
+              aspectRatio={aspectRatio}
+              canvasWidthPercent={canvasWidthPercent}
               items={layoutItems.map((item) => {
                 const asset = assets.find(
                   (candidate) => candidate.id === item.rentalAssetId,

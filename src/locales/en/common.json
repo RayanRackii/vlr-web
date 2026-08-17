@@ -1794,6 +1794,8 @@
       "paletteHelp": "Click to place on the map. Drag to move; the bottom corner resizes.",
       "paletteEmpty": "Every space is already on the map.",
       "clickToRemove": "Use × on a block to remove it from the map.",
+      "resizeCanvasHelp": "Drag the map corner (square at the bottom right) to resize the layout.",
+      "organize": "Auto arrange",
       "save": "Save layout",
       "loadError": "Could not load layouts.",
       "saveError": "Could not save the layout.",
