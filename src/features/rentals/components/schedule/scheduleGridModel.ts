@@ -6,6 +6,7 @@ import {
   type DayOfWeekName,
   type OccupancyKind,
   type ScheduleTemplate,
+  EMPTY_SLOT_ID,
 } from "@/features/rentals/services/scheduleService"
 
 export type ScheduleSurface =
@@ -85,9 +86,21 @@ export function shiftWeekday(
   return DAY_NAMES[next] ?? "Monday"
 }
 
+export function occupancyIdFromSlot(slot: {
+  id: string
+  isDerived: boolean
+  rentalAssetId: string
+  startTime: string
+}): string {
+  if (slot.isDerived || slot.id === EMPTY_SLOT_ID) {
+    return `derived:${slot.rentalAssetId}:${formatScheduleTime(slot.startTime)}`
+  }
+  return slot.id
+}
+
 export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy {
   return {
-    id: slot.id,
+    id: occupancyIdFromSlot(slot),
     rentalAssetId: slot.rentalAssetId,
     startTime: slot.startTime,
     endTime: slot.endTime,

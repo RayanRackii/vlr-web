@@ -46,7 +46,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
 - [x] Admin completo: occupancy kinds CRUD + weekly template editor fino
-- [x] B2C agenda: listar slots do dia / book por `slotId` (em vez de hora manual no SlotGrid)
+- [x] B2C agenda: listar slots do dia (inclui SlotGrid derivado da grade semanal) / book por `slotId` ou create-reservation
 - [x] UX admin Escala/Agenda: abas Agenda diária / Templates / Tipos + Sheet forms + timeline de slots
 - [x] Política OpenHours na Agenda diária + seed SlotGrid via `POST .../templates/seed-default` (1 request)
 - [x] Agenda multi-espaço: seletor múltiplo, política em lote, agenda agrupada; UI **Horário padrão** / **Grade personalizada** (domínio OpenHours/SlotGrid permanece no código)
@@ -126,3 +126,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-17 | **Cadastro de rentable:** flag “É necessário pagamento prévio?”; sem a flag, a reserva B2C já nasce confirmada. |
 | 2026-08-17 | **Layout:** página em Operação para posicionar espaços; portal reserva com data + horário e mapa/grade (indisponíveis visíveis, não clicáveis). |
 | 2026-08-17 | **Layout:** redimensionar o mapa; organizar espaços em grade igual; save estável. |
+| 2026-08-17 | **Fix escala:** grade semanal vira horários reserváveis no portal sem “Aplicar grade neste dia”; grade admin maior, sem scroll interno no dia típico. |

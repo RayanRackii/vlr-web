@@ -20,6 +20,7 @@ import { ScheduleEmptyState } from "@/features/rentals/components/schedule/Sched
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import {
   occupancyFromDaySlot,
+  occupancyIdFromSlot,
   resolveScheduleSurface,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
 import type {
@@ -228,8 +229,9 @@ export function DailyAgendaTab({
             readOnly={readOnly}
             onCellClick={(cell) => {
               const slot = cell.occupancy
-                ? (day?.slots.find((item) => item.id === cell.occupancy?.id) ??
-                  null)
+                ? (day?.slots.find(
+                    (item) => occupancyIdFromSlot(item) === cell.occupancy?.id,
+                  ) ?? null)
                 : null
               onSlotOrCellClick({
                 rentalAssetId: cell.rentalAssetId,

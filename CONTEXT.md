@@ -95,20 +95,20 @@ The default weekly pattern of Slots (or open-hours rules) used to materialize ea
 _Avoid_: Forcing admins to rebuild every day from scratch as the only path
 
 **ScheduleDay**:
-The concrete set of Slots for one calendar date (optionally per Unit). Published from templates and/or edited manually for that date.
-_Avoid_: Treating the weekly template itself as the live bookings grid
+The concrete set of bookable windows for one calendar date (optionally per Unit). Includes persisted Slot rows plus unpublished SlotGrid cells derived from that weekday’s templates. PublishDay still materializes Slot rows for dated exceptions.
+_Avoid_: Requiring PublishDay before customers can book a weekly grid; treating the weekly editor itself as the B2C booking UI
 
 **OpenHours**:
 A schedule policy where a Rentable is continuously available between open and close times; bookable windows are derived from that interval (and allowed durations), without requiring the admin to draw every cell. Prefer this for the common club case (~08:00–22:00). Admin: `PUT /api/rental-assets/{id}/schedule-policy` (one) or `PUT /api/rental-assets/schedule-policy` (bulk, transactional — invalid ID aborts all). **UI copy: Horário padrão** — never show `OpenHours` or “80%” in the product UI.
 _Avoid_: Forcing explicit Slot drawing when the tenant only needs “18:00–00:00 all open”; seeding dozens of identical SlotGrid templates when OpenHours fits
 
 **SlotGrid**:
-Schedule policy that authors the week as explicit **ScheduleTemplate** cells, then **PublishDay** materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
-_Avoid_: N client-side POSTs per hour×day as the product path
+Schedule policy that authors the week as explicit **ScheduleTemplate** cells. Day reads derive unpublished bookable windows from that weekday’s templates; **PublishDay** optionally materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
+_Avoid_: N client-side POSTs per hour×day as the product path; empty B2C days after seed because publish was skipped
 
 **Admin Daily Agenda UX**:
-Operational resource grid with compact toolbar and a virtualized time × resource matrix. Cells open a contextual drawer (day override vs SlotGrid recurrence). Copy is generic for spaces/goods across modules.
-_Avoid_: Vertical per-resource card stacks; sports-specific labels; mixing weekly editors into the day grid
+Operational resource grid with compact toolbar and a content-sized time × resource matrix (columns fill width; height follows the day’s hours). Cells open a contextual drawer (day override vs SlotGrid recurrence). Copy is generic for spaces/goods across modules.
+_Avoid_: Vertical per-resource card stacks; sports-specific labels; mixing weekly editors into the day grid; a clipped inner scroll for a typical club day
 
 **Weekly setup UX**:
 Same time × resource matrix as Day agenda, navigated by weekday instead of calendar date. OpenHours columns show the derived repeating windows; SlotGrid columns show that weekday’s templates. Empty cells create a template; OpenHours cells open schedule setup (the whole window, not one hour). Policy, seed and bulk weekly rules stay in compact toolbar sheets.
@@ -119,7 +119,7 @@ Dated Slot or OpenHours-derived window. Day-only edits vs EntireRecurrence (Slot
 _Avoid_: Editing all future weekdays from an OpenHours cell drawer
 
 **Day read path**:
-Two parallel requests for day slots + weekday templates; overrides via `daily-occurrence`; weekly grids via `apply-weekly-rule`. Cache by sorted resource IDs + date.
+Two parallel requests for day slots + weekday templates; unpublished SlotGrid hours come from the day payload (derived). Overrides via `daily-occurrence`; weekly grids via `apply-weekly-rule`. Cache by sorted resource IDs + date. B2C books derived SlotGrid windows via create-reservation until a Slot row exists.
 _Avoid_: One request per selected resource; fetching the whole week of templates for a single day
 
 **Layout**:

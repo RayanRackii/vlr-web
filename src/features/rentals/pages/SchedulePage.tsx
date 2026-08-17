@@ -19,7 +19,7 @@ import { TemplateSheet } from "@/features/rentals/components/schedule/TemplateSh
 import { WeeklyTemplatesTab } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
 import type { WeeklyGridCellPayload } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
 import type { WeeklyRuleDraft } from "@/features/rentals/components/schedule/WeeklyRuleSheet"
-import { todayWeekdayName } from "@/features/rentals/components/schedule/scheduleGridModel"
+import { occupancyIdFromSlot, todayWeekdayName } from "@/features/rentals/components/schedule/scheduleGridModel"
 import {
   applyDailyOccurrence,
   applyWeeklyRule,
@@ -28,6 +28,7 @@ import {
   deleteScheduleTemplate,
   fetchAdminScheduleDay,
   formatScheduleTime,
+  isPersistedSlotId,
   listAdminRentalAssets,
   listOccupancyKinds,
   listScheduleTemplates,
@@ -517,7 +518,7 @@ export function SchedulePage() {
   }
 
   function slotBusyKey(slot: AdminDaySlot): string {
-    return slot.id
+    return occupancyIdFromSlot(slot)
   }
 
   async function handleSlotAction(
@@ -533,7 +534,7 @@ export function SchedulePage() {
     beginBusy(busyAction, slot ? slotBusyKey(slot) : undefined)
     try {
       await applyDailyOccurrence({
-        slotId: slot?.id ?? null,
+        slotId: slot && isPersistedSlotId(slot.id) ? slot.id : null,
         rentalAssetId: editingCell.rentalAssetId,
         date: editingCell.date,
         startTime: formatScheduleTime(editingCell.startTime),
@@ -571,7 +572,7 @@ export function SchedulePage() {
   ]
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
