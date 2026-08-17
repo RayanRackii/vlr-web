@@ -103,8 +103,12 @@ Schedule policy that authors the week as explicit **ScheduleTemplate** cells, th
 _Avoid_: N client-side POSTs per hour×day as the product path
 
 **Admin Daily Agenda UX**:
-Operational resource grid with compact toolbar and a virtualized time × resource matrix. Cells open a contextual drawer (day override vs SlotGrid recurrence). Weekly setup holds policy, seed and bulk weekly rules. Copy is generic for spaces/goods across modules.
+Operational resource grid with compact toolbar and a virtualized time × resource matrix. Cells open a contextual drawer (day override vs SlotGrid recurrence). Copy is generic for spaces/goods across modules.
 _Avoid_: Vertical per-resource card stacks; sports-specific labels; mixing weekly editors into the day grid
+
+**Weekly setup UX**:
+Same time × resource matrix as Day agenda, navigated by weekday instead of calendar date. OpenHours columns show the derived repeating windows; SlotGrid columns show that weekday’s templates. Empty cells create a template; OpenHours cells open schedule setup (the whole window, not one hour). Policy, seed and bulk weekly rules stay in compact toolbar sheets.
+_Avoid_: A one-resource dropdown plus empty-state card; a left-hand form column that hides the matrix
 
 **Day occurrence**:
 Dated Slot or OpenHours-derived window. Day-only edits vs EntireRecurrence (SlotGrid templates + safe future cascade). OpenHours window edits stay in Weekly setup.

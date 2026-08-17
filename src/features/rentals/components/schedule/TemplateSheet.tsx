@@ -28,24 +28,32 @@ type TemplateSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   editing: ScheduleTemplate | null
+  assetName?: string
+  lockDayOfWeek?: boolean
+  defaults?: Partial<TemplateDraft>
   kinds: readonly OccupancyKind[]
   defaultKindId: string
   busy: boolean
   busyAction: ScheduleBusyAction
   readOnly: boolean
   onSubmit: (values: TemplateDraft) => Promise<boolean>
+  onDelete?: () => void
 }
 
 export function TemplateSheet({
   open,
   onOpenChange,
   editing,
+  assetName,
+  lockDayOfWeek = false,
+  defaults,
   kinds,
   defaultKindId,
   busy,
   busyAction,
   readOnly,
   onSubmit,
+  onDelete,
 }: TemplateSheetProps) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<TemplateDraft>(
@@ -67,12 +75,23 @@ export function TemplateSheet({
       })
       return
     }
-    setDraft(emptyTemplateDraft(defaultKindId))
-  }, [defaultKindId, editing, open])
+    setDraft({
+      ...emptyTemplateDraft(defaultKindId),
+      ...defaults,
+    })
+  }, [
+    defaultKindId,
+    defaults?.dayOfWeek,
+    defaults?.endTime,
+    defaults?.occupancyKindId,
+    defaults?.startTime,
+    editing,
+    open,
+  ])
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
+      <SheetContent side="right" className="w-full sm:max-w-[420px]">
         <SheetHeader>
           <SheetTitle>
             {editing
@@ -80,7 +99,10 @@ export function TemplateSheet({
               : t("rentals.schedule.templates.saveCreate")}
           </SheetTitle>
           <SheetDescription>
-            {t("rentals.schedule.templatesHint")}
+            {assetName ? (
+              <span className="block font-medium text-foreground">{assetName}</span>
+            ) : null}
+            {t("rentals.schedule.weeklyCellHint")}
           </SheetDescription>
         </SheetHeader>
 
@@ -92,7 +114,7 @@ export function TemplateSheet({
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               value={draft.dayOfWeek}
-              disabled={readOnly || busy}
+              disabled={readOnly || busy || lockDayOfWeek}
               onChange={(event) => {
                 setDraft((current) => ({
                   ...current,
@@ -202,6 +224,20 @@ export function TemplateSheet({
             />
             {t("rentals.schedule.active")}
           </label>
+
+          {editing && onDelete ? (
+            <LoadingButton
+              type="button"
+              variant="destructive"
+              loading={busyAction === "templateDelete"}
+              disabled={busy || readOnly}
+              onClick={() => {
+                onDelete()
+              }}
+            >
+              {t("common.delete")}
+            </LoadingButton>
+          ) : null}
         </div>
 
         <SheetFooter>

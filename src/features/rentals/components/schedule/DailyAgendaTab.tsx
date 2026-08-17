@@ -18,6 +18,7 @@ import { RentableMultiSelect } from "@/features/rentals/components/schedule/Rent
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
+import { occupancyFromDaySlot } from "@/features/rentals/components/schedule/scheduleGridModel"
 import type {
   AdminDaySchedule,
   AdminRentalAsset,
@@ -84,6 +85,11 @@ export function DailyAgendaTab({
     () =>
       assets.filter((asset) => selectedRentalAssetIds.includes(asset.id)),
     [assets, selectedRentalAssetIds],
+  )
+
+  const occupancies = useMemo(
+    () => (day?.slots ?? []).map(occupancyFromDaySlot),
+    [day],
   )
 
   const hasSlotGrid = selectedAssets.some(
@@ -199,11 +205,24 @@ export function DailyAgendaTab({
         ) : (
           <DayResourceGrid
             assets={selectedAssets}
-            slots={day?.slots ?? []}
-            date={date}
+            occupancies={occupancies}
             busyTargetKey={busyTargetKey}
             readOnly={readOnly}
-            onCellClick={onSlotOrCellClick}
+            onCellClick={(cell) => {
+              const slot = cell.occupancy
+                ? (day?.slots.find((item) => item.id === cell.occupancy?.id) ??
+                  null)
+                : null
+              onSlotOrCellClick({
+                rentalAssetId: cell.rentalAssetId,
+                assetName: cell.assetName,
+                date,
+                startTime: cell.startTime,
+                endTime: cell.endTime,
+                occupancy: cell.occupancy,
+                slot,
+              })
+            }}
           />
         )}
       </section>

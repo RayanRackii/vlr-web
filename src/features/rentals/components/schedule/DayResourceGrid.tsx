@@ -2,76 +2,47 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import { useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 
-import type {
-  AdminDaySlot,
-  AdminRentalAsset,
-} from "@/features/rentals/services/scheduleService"
+import {
+  durationValues,
+  formatMinutesAsTime,
+  gcd,
+  timeToMinutes,
+  type ScheduleGridOccupancy,
+} from "@/features/rentals/components/schedule/scheduleGridModel"
+import type { AdminDaySlot, AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { cn } from "@/lib/utils"
+
+export type { ScheduleGridOccupancy }
 
 const TIME_COLUMN_WIDTH = 76
 const RESOURCE_COLUMN_WIDTH = 220
 const HEADER_HEIGHT = 48
 const ROW_HEIGHT = 54
 
-export type DayResourceGridCellPayload = {
+export type ScheduleGridCellPayload = {
   rentalAssetId: string
   assetName: string
-  date: string
   startTime: string
   endTime: string
+  occupancy: ScheduleGridOccupancy | null
+}
+
+export type DayResourceGridCellPayload = ScheduleGridCellPayload & {
+  date: string
   slot: AdminDaySlot | null
 }
 
 type DayResourceGridProps = {
   assets: readonly AdminRentalAsset[]
-  slots: readonly AdminDaySlot[]
-  date: string
+  occupancies: readonly ScheduleGridOccupancy[]
   busyTargetKey: string | null
   readOnly: boolean
-  onCellClick: (payload: DayResourceGridCellPayload) => void
-}
-
-function timeToMinutes(value: string): number {
-  const [hours = "0", minutes = "0"] = value.split(":")
-  return Number(hours) * 60 + Number(minutes)
-}
-
-function minutesToTime(value: number): string {
-  const hours = Math.floor(value / 60)
-  const minutes = value % 60
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
-}
-
-function gcd(a: number, b: number): number {
-  let left = Math.abs(a)
-  let right = Math.abs(b)
-  while (right) {
-    ;[left, right] = [right, left % right]
-  }
-  return left
-}
-
-function durationValues(asset: AdminRentalAsset): number[] {
-  return (asset.allowedDurationMinutes ?? "")
-    .split(",")
-    .map(Number)
-    .filter((value) => Number.isFinite(value) && value > 0)
-}
-
-function statusKey(slot: AdminDaySlot): "available" | "booked" | "unavailable" {
-  if (slot.status === "Booked" || slot.reservationId) {
-    return "booked"
-  }
-  if (slot.status === "Cancelled" || !slot.isBookableByCustomer) {
-    return "unavailable"
-  }
-  return "available"
+  onCellClick: (payload: ScheduleGridCellPayload) => void
 }
 
 export function DayResourceGrid({
   assets,
-  slots,
-  date,
+  occupancies,
   busyTargetKey,
   readOnly,
   onCellClick,
@@ -80,8 +51,8 @@ export function DayResourceGrid({
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const axis = useMemo(() => {
-    const starts = slots.map((slot) => timeToMinutes(slot.startTime))
-    const ends = slots.map((slot) => timeToMinutes(slot.endTime))
+    const starts = occupancies.map((item) => timeToMinutes(item.startTime))
+    const ends = occupancies.map((item) => timeToMinutes(item.endTime))
     const assetStarts = assets
       .map((asset) => asset.openTime && timeToMinutes(asset.openTime))
       .filter((value): value is number => typeof value === "number")
@@ -89,8 +60,8 @@ export function DayResourceGrid({
       .map((asset) => asset.closeTime && timeToMinutes(asset.closeTime))
       .filter((value): value is number => typeof value === "number")
     const durations = [
-      ...slots.map(
-        (slot) => timeToMinutes(slot.endTime) - timeToMinutes(slot.startTime),
+      ...occupancies.map(
+        (item) => timeToMinutes(item.endTime) - timeToMinutes(item.startTime),
       ),
       ...assets.flatMap(durationValues),
     ].filter((value) => value > 0)
@@ -98,12 +69,14 @@ export function DayResourceGrid({
     const step = Math.min(60, Math.max(15, rawStep || 60))
     const observedStarts = [...starts, ...assetStarts]
     const observedEnds = [...ends, ...assetEnds]
-    const start = Math.floor(
-      (observedStarts.length > 0 ? Math.min(...observedStarts) : 8 * 60) / step,
-    ) * step
-    const end = Math.ceil(
-      (observedEnds.length > 0 ? Math.max(...observedEnds) : 22 * 60) / step,
-    ) * step
+    const start =
+      Math.floor(
+        (observedStarts.length > 0 ? Math.min(...observedStarts) : 8 * 60) / step,
+      ) * step
+    const end =
+      Math.ceil(
+        (observedEnds.length > 0 ? Math.max(...observedEnds) : 22 * 60) / step,
+      ) * step
     return {
       start,
       end,
@@ -113,7 +86,7 @@ export function DayResourceGrid({
         (_, index) => start + index * step,
       ),
     }
-  }, [assets, slots])
+  }, [assets, occupancies])
 
   const rowVirtualizer = useVirtualizer({
     count: axis.rows.length,
@@ -130,15 +103,15 @@ export function DayResourceGrid({
     paddingStart: TIME_COLUMN_WIDTH,
   })
 
-  const slotsByAsset = useMemo(() => {
-    const grouped = new Map<string, AdminDaySlot[]>()
-    for (const slot of slots) {
-      const list = grouped.get(slot.rentalAssetId) ?? []
-      list.push(slot)
-      grouped.set(slot.rentalAssetId, list)
+  const occupanciesByAsset = useMemo(() => {
+    const grouped = new Map<string, ScheduleGridOccupancy[]>()
+    for (const item of occupancies) {
+      const list = grouped.get(item.rentalAssetId) ?? []
+      list.push(item)
+      grouped.set(item.rentalAssetId, list)
     }
     return grouped
-  }, [slots])
+  }, [occupancies])
 
   if (assets.length === 0) {
     return (
@@ -209,23 +182,23 @@ export function DayResourceGrid({
                 className="sticky left-0 z-20 flex h-full items-start justify-end border-r border-border bg-background px-2 pt-2 text-xs tabular-nums text-muted-foreground"
                 style={{ width: TIME_COLUMN_WIDTH }}
               >
-                {minutesToTime(rowStart)}
+                {formatMinutesAsTime(rowStart)}
               </div>
               {columnVirtualizer.getVirtualItems().map((column) => {
                 const asset = assets[column.index]
-                const assetSlots = slotsByAsset.get(asset.id) ?? []
-                const coveringSlots = assetSlots.filter((slot) => {
-                  const start = timeToMinutes(slot.startTime)
-                  const end = timeToMinutes(slot.endTime)
+                const assetItems = occupanciesByAsset.get(asset.id) ?? []
+                const covering = assetItems.filter((item) => {
+                  const start = timeToMinutes(item.startTime)
+                  const end = timeToMinutes(item.endTime)
                   return start < rowEnd && end > rowStart
                 })
-                const startingSlots = coveringSlots.filter(
-                  (slot) =>
+                const starting = covering.filter(
+                  (item) =>
                     Math.floor(
-                      (timeToMinutes(slot.startTime) - axis.start) / axis.step,
+                      (timeToMinutes(item.startTime) - axis.start) / axis.step,
                     ) === row.index,
                 )
-                const isCovered = coveringSlots.length > 0
+                const isCovered = covering.length > 0
                 return (
                   <div
                     key={asset.id}
@@ -237,16 +210,15 @@ export function DayResourceGrid({
                       <button
                         type="button"
                         disabled={readOnly}
-                        aria-label={`${asset.name}, ${minutesToTime(rowStart)}–${minutesToTime(rowEnd)}`}
+                        aria-label={`${asset.name}, ${formatMinutesAsTime(rowStart)}–${formatMinutesAsTime(rowEnd)}`}
                         className="h-full w-full rounded-md border border-dashed border-transparent text-left transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
                         onClick={() =>
                           onCellClick({
                             rentalAssetId: asset.id,
                             assetName: asset.name,
-                            date,
-                            startTime: minutesToTime(rowStart),
-                            endTime: minutesToTime(rowEnd),
-                            slot: null,
+                            startTime: formatMinutesAsTime(rowStart),
+                            endTime: formatMinutesAsTime(rowEnd),
+                            occupancy: null,
                           })
                         }
                       >
@@ -255,31 +227,29 @@ export function DayResourceGrid({
                         </span>
                       </button>
                     ) : null}
-                    {startingSlots.map((slot, stackIndex) => {
-                      const slotStart = timeToMinutes(slot.startTime)
+                    {starting.map((item, stackIndex) => {
+                      const itemStart = timeToMinutes(item.startTime)
                       const overlapIndex =
-                        assetSlots.filter(
+                        assetItems.filter(
                           (other) =>
-                            other.id !== slot.id &&
-                            timeToMinutes(other.startTime) < slotStart &&
-                            timeToMinutes(other.endTime) > slotStart,
+                            other.id !== item.id &&
+                            timeToMinutes(other.startTime) < itemStart &&
+                            timeToMinutes(other.endTime) > itemStart,
                         ).length + stackIndex
                       const rows = Math.max(
                         1,
                         Math.ceil(
-                          (timeToMinutes(slot.endTime) -
-                            timeToMinutes(slot.startTime)) /
+                          (timeToMinutes(item.endTime) -
+                            timeToMinutes(item.startTime)) /
                             axis.step,
                         ),
                       )
-                      const status = statusKey(slot)
-                      const busyKey = `${slot.rentalAssetId}|${slot.startTime}|${slot.id}`
                       return (
                         <button
-                          key={slot.id}
+                          key={item.id}
                           type="button"
-                          disabled={readOnly || busyTargetKey === busyKey}
-                          aria-label={`${asset.name}, ${slot.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${status}`)}`}
+                          disabled={readOnly || busyTargetKey === item.id}
+                          aria-label={`${asset.name}, ${item.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${item.status}`)}`}
                           className={cn(
                             "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                             overlapIndex > 0 && "translate-x-2",
@@ -290,31 +260,35 @@ export function DayResourceGrid({
                             height: rows * ROW_HEIGHT - 8,
                             zIndex: 5 + overlapIndex,
                             borderColor:
-                              slot.occupancyKindColorHex ?? "var(--border)",
-                            backgroundColor: slot.occupancyKindColorHex
-                              ? `${slot.occupancyKindColorHex}20`
+                              item.occupancyKindColorHex ?? "var(--border)",
+                            backgroundColor: item.occupancyKindColorHex
+                              ? `${item.occupancyKindColorHex}20`
                               : "var(--muted)",
                           }}
                           onClick={() =>
                             onCellClick({
                               rentalAssetId: asset.id,
                               assetName: asset.name,
-                              date,
-                              startTime: slot.startTime,
-                              endTime: slot.endTime,
-                              slot,
+                              startTime: item.startTime,
+                              endTime: item.endTime,
+                              occupancy: item,
                             })
                           }
                         >
                           <span className="block truncate text-xs font-semibold">
-                            {slot.label || slot.occupancyKindLabel}
+                            {item.label || item.occupancyKindLabel}
                           </span>
                           <span className="mt-1 inline-flex rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
-                            {t(`rentals.schedule.occurrence.status.${status}`)}
+                            {t(`rentals.schedule.occurrence.status.${item.status}`)}
                           </span>
-                          {slot.source === "DailyOverride" ? (
+                          {item.badge === "dailyOverride" ? (
                             <span className="ml-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
                               {t("rentals.schedule.occurrence.source.dailyOverride")}
+                            </span>
+                          ) : null}
+                          {item.badge === "inactive" ? (
+                            <span className="ml-1 inline-flex rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              {t("rentals.schedule.inactive")}
                             </span>
                           ) : null}
                         </button>

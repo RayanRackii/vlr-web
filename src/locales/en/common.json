@@ -1601,6 +1601,8 @@
         "today": "Today",
         "prev": "Previous day",
         "next": "Next day",
+        "prevWeekday": "Previous weekday",
+        "nextWeekday": "Next weekday",
         "resources": "Spaces / goods · {{selected}} of {{total}}"
       },
       "grid": {
@@ -1608,6 +1610,11 @@
         "noSelection": "Select one or more spaces / goods to view the grid."
       },
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. Weekly rules live under Weekly setup.",
+      "weeklyBanner": "This grid is the rule for every {{day}}. Day agenda only changes one date.",
+      "weeklyCellHint": "The change applies to this weekday on all future dates.",
+      "weekly": {
+        "configureHours": "Configure hours"
+      },
       "seedTemplates": "Create default grid (Sun–Sat, 08–22)",
       "publishDay": "Apply grid to this day",
       "publishFromTemplate": "Create schedule from template",
@@ -1679,7 +1686,7 @@
         "slotMinutes": "Duration (min)",
         "saveOpenHours": "Save standard hours",
         "saveSlotGrid": "Use custom grid",
-        "slotGridSeedHint": "The default grid starts every day alike. Customize each weekday in the templates on the right.",
+        "slotGridSeedHint": "The default grid starts every day alike. Customize each weekday in the grid below.",
         "saveOpenHoursSuccess": "Standard hours saved. The day’s intervals appear automatically.",
         "saveSlotGridSuccess": "Custom grid is active.",
         "saveError": "Could not save the schedule setup.",
@@ -1689,6 +1696,7 @@
         "title": "Create weekly rule",
         "days": "Days of week",
         "apply": "Apply rule",
+        "sheetHint": "Expands the selected spaces, checked weekdays and intervals in a single apply.",
         "success": "Weekly rule applied to {{count}} time slots."
       },
       "tabs": {

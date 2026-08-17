@@ -1601,6 +1601,8 @@
         "today": "Hoy",
         "prev": "Día anterior",
         "next": "Día siguiente",
+        "prevWeekday": "Día semanal anterior",
+        "nextWeekday": "Siguiente día semanal",
         "resources": "Espacios / bienes · {{selected}} de {{total}}"
       },
       "grid": {
@@ -1608,6 +1610,11 @@
         "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla."
       },
       "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. La regla semanal está en Configuración semanal.",
+      "weeklyBanner": "Esta grilla es la regla de todos los {{day}}. La Agenda del día solo cambia una fecha.",
+      "weeklyCellHint": "El cambio vale para este día semanal, en todas las fechas futuras.",
+      "weekly": {
+        "configureHours": "Configurar horarios"
+      },
       "seedTemplates": "Crear grilla estándar (dom–sáb, 08–22)",
       "publishDay": "Aplicar grilla en este día",
       "publishFromTemplate": "Crear grilla a partir del template",
@@ -1679,7 +1686,7 @@
         "slotMinutes": "Duración (min)",
         "saveOpenHours": "Guardar horario estándar",
         "saveSlotGrid": "Usar grilla personalizada",
-        "slotGridSeedHint": "La grilla estándar inicia todos los días iguales. Personalice cada día en los templates a la derecha.",
+        "slotGridSeedHint": "La grilla estándar inicia todos los días iguales. Personalice cada día semanal en la grilla de abajo.",
         "saveOpenHoursSuccess": "Horario estándar guardado. Los intervalos del día aparecen automáticamente.",
         "saveSlotGridSuccess": "Grilla personalizada activa.",
         "saveError": "No se pudo guardar la configuración de horarios.",
@@ -1689,6 +1696,7 @@
         "title": "Crear regla semanal",
         "days": "Días de la semana",
         "apply": "Aplicar regla",
+        "sheetHint": "Expande los espacios seleccionados, los días marcados y los intervalos en una sola aplicación.",
         "success": "Regla semanal aplicada a {{count}} horarios."
       },
       "tabs": {

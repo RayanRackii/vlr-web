@@ -1637,6 +1637,8 @@
         "today": "Hoje",
         "prev": "Dia anterior",
         "next": "Próximo dia",
+        "prevWeekday": "Dia da semana anterior",
+        "nextWeekday": "Próximo dia da semana",
         "resources": "Espaços / bens · {{selected}} de {{total}}"
       },
       "grid": {
@@ -1644,6 +1646,11 @@
         "noSelection": "Selecione um ou mais espaços / bens para ver a grade."
       },
       "dayOnlyBanner": "Alterações nesta grade valem somente para {{date}}. A regra semanal fica em Configuração semanal.",
+      "weeklyBanner": "Esta grade é a regra de todas as {{day}}. A Agenda do dia só altera uma data.",
+      "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
+      "weekly": {
+        "configureHours": "Configurar horários"
+      },
       "seedTemplates": "Criar grade padrão (seg–dom, 08–22)",
       "publishDay": "Aplicar grade neste dia",
       "publishFromTemplate": "Criar grade a partir do template",
@@ -1715,7 +1722,7 @@
         "slotMinutes": "Duração (min)",
         "saveOpenHours": "Salvar horário padrão",
         "saveSlotGrid": "Usar grade personalizada",
-        "slotGridSeedHint": "A grade padrão inicia todos os dias iguais. Personalize cada dia da semana nos templates à direita.",
+        "slotGridSeedHint": "A grade padrão inicia todos os dias iguais. Personalize cada dia da semana na grade abaixo.",
         "saveOpenHoursSuccess": "Horário padrão salvo. Os intervalos do dia aparecem automaticamente.",
         "saveSlotGridSuccess": "Grade personalizada ativa.",
         "saveError": "Não foi possível salvar a configuração dos horários.",
@@ -1725,6 +1732,7 @@
         "title": "Criar regra semanal",
         "days": "Dias da semana",
         "apply": "Aplicar regra",
+        "sheetHint": "Expande os espaços selecionados, os dias marcados e os intervalos em uma única aplicação.",
         "success": "Regra semanal aplicada a {{count}} horários."
       },
       "tabs": {

@@ -18,6 +18,7 @@ type SchedulePolicyPanelProps = {
   busy: boolean
   busyAction: ScheduleBusyAction
   readOnly: boolean
+  embedded?: boolean
   onSave: (input: UpdateSchedulePolicyInput) => Promise<void>
   onSeedSlotGrid: () => void
 }
@@ -48,6 +49,7 @@ export function SchedulePolicyPanel({
   busy,
   busyAction,
   readOnly,
+  embedded,
   onSave,
   onSeedSlotGrid,
 }: SchedulePolicyPanelProps) {
@@ -72,6 +74,7 @@ export function SchedulePolicyPanel({
       busy={busy}
       busyAction={busyAction}
       readOnly={readOnly}
+      embedded={embedded}
       onSave={onSave}
       onSeedSlotGrid={onSeedSlotGrid}
     />
@@ -84,6 +87,7 @@ function SchedulePolicyPanelForm({
   busy,
   busyAction,
   readOnly,
+  embedded = false,
   onSave,
   onSeedSlotGrid,
 }: SchedulePolicyPanelProps & { mixed: boolean }) {
@@ -103,14 +107,17 @@ function SchedulePolicyPanelForm({
   )
 
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm">
-      <div className="space-y-1">
-        <h2 className="text-sm font-medium">
-          {t("rentals.schedule.policy.title")}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t("rentals.schedule.policy.description")}
-        </p>
+    <div className={embedded ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm"}>
+      {embedded ? null : (
+        <div className="space-y-1">
+          <h2 className="text-sm font-medium">
+            {t("rentals.schedule.policy.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("rentals.schedule.policy.description")}
+          </p>
+        </div>
+      )}
         {mixed ? (
           <p className="rounded-md bg-muted px-3 py-2 text-sm text-foreground">
             <span className="font-medium">
@@ -126,7 +133,6 @@ function SchedulePolicyPanelForm({
             })}
           </p>
         ) : null}
-      </div>
 
       <div className="grid gap-2">
         {(
