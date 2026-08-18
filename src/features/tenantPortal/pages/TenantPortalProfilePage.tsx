@@ -121,6 +121,8 @@ export function TenantPortalProfilePage() {
     defaultValues: { name: "" },
   })
 
+  const loadGenerationRef = useRef(0)
+
   function applyProfile(next: CustomerProfile) {
     setProfile(next)
     form.reset({ name: next.name })
@@ -131,36 +133,37 @@ export function TenantPortalProfilePage() {
     }
   }
 
-  useEffect(() => {
-    let cancelled = false
+  async function loadProfile() {
+    const generation = ++loadGenerationRef.current
     setLoading(true)
+    setLoadError(null)
 
-    void fetchCustomerProfile()
-      .then((data) => {
-        if (cancelled) {
-          return
-        }
-        applyProfile(data)
-        setLoadError(null)
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return
-        }
-        setLoadError(
-          error instanceof Error
-            ? error.message
-            : t("tenantPortal.profile.loadError"),
-        )
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      })
+    try {
+      const data = await fetchCustomerProfile()
+      if (generation !== loadGenerationRef.current) {
+        return
+      }
+      applyProfile(data)
+    } catch (error: unknown) {
+      if (generation !== loadGenerationRef.current) {
+        return
+      }
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : t("tenantPortal.profile.loadError"),
+      )
+    } finally {
+      if (generation === loadGenerationRef.current) {
+        setLoading(false)
+      }
+    }
+  }
 
+  useEffect(() => {
+    void loadProfile()
     return () => {
-      cancelled = true
+      loadGenerationRef.current += 1
     }
     // Apply once on mount; language change should not refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch on mount only
@@ -198,7 +201,13 @@ export function TenantPortalProfilePage() {
       }
 
       const updated = await updateCustomerProfile(body)
-      applyProfile(updated)
+      let next = updated
+      try {
+        next = await fetchCustomerProfile()
+      } catch {
+        // PATCH already succeeded; keep that payload if GET refresh fails.
+      }
+      applyProfile(next)
       toast.success(t("tenantPortal.profile.saved"))
     } catch (error) {
       toast.error(
@@ -217,10 +226,19 @@ export function TenantPortalProfilePage() {
 
   if (loadError || !profile) {
     return (
-      <div className="mx-auto w-full max-w-lg py-6">
+      <div className="mx-auto w-full max-w-lg space-y-4 py-6">
         <p className="text-sm text-destructive">
           {loadError ?? t("tenantPortal.profile.loadError")}
         </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            void loadProfile()
+          }}
+        >
+          {t("tenantPortal.profile.retry")}
+        </Button>
       </div>
     )
   }

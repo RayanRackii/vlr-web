@@ -243,6 +243,7 @@
       "saved": "Profile updated.",
       "saveError": "Could not save the profile.",
       "loadError": "Could not load the profile.",
+      "retry": "Try again",
       "readOnly": "read-only",
       "photoChange": "Change photo",
       "photoRemove": "Remove photo",

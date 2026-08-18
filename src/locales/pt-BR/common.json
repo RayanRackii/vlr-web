@@ -243,6 +243,7 @@
       "saved": "Perfil atualizado.",
       "saveError": "Não foi possível salvar o perfil.",
       "loadError": "Não foi possível carregar o perfil.",
+      "retry": "Tentar novamente",
       "readOnly": "somente leitura",
       "photoChange": "Alterar foto",
       "photoRemove": "Remover foto",
