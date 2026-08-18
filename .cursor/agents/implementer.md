@@ -41,6 +41,10 @@ Local overrides (take precedence over the skill where they conflict):
 
 Follow the Git Work Policy in `AGENTS.md` strictly. Do not restate it here.
 
+One active writer per working tree: do not edit concurrently with `ui-implementer`. Sequential only.
+
+If this change updates a fact already summarized in a context pack: update canonical docs/code **first**, then the pack. Do not invent agent-feedback files for every issue; only when the parent/user confirms a reusable learning.
+
 ## Do not
 
 Redesign an approved feature without need; invent an ADR; expand scope “while we’re here”; add unsolicited enforcement; mix unrelated refactors; merge; change production.

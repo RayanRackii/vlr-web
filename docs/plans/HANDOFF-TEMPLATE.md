@@ -15,6 +15,16 @@ Status: draft | approved | blocked (`USER_DECISION_REQUIRED`)
 
 ADRs de domínio: `vlr-api/docs/adr/`.
 
+## Architecture route (optional)
+
+- architect
+- deep-architect (only if explicitly approved)
+
+## Execution route (optional)
+
+- implementer
+- ui-implementer
+
 ## Confirmed decisions
 
 ## Invariants that must not break

@@ -54,13 +54,29 @@ Adapte só se a branch já existir por motivo conhecido. Working tree suja por t
 
 ## Roteamento multi-agent
 
-Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores de responsabilidade — não copiam produto, arquitetura, convenções nem o corpo dos skills.
+Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-1. **architect** — incerteza, arquitetura e domínio. Read-only. Devolve handoff/spec ao parent (não grava sozinho `docs/plans`).
-2. **implementer** — implementação com objetivo definido (instrução local do usuário **ou** spec aprovada). Segue esta Git Work Policy.
-3. **reviewer** — review independente do diff real da branch contra `origin/develop` (Standards × Spec). Read-only. O parent executa `git fetch --prune origin` **antes** de delegar; o reviewer não faz fetch.
+O parent/orchestrator é **Grok 4.6**. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, motivo, ação do usuário) e **pare**. Não simule o papel.
 
-Tarefa trivial/localizada: pular architect. Tarefa arquitetural ou cross-cutting: architect → Human Decision Gate se necessário → spec materializada em `docs/plans` → implementer → reviewer.
+Um writer ativo por working tree: **implementer** (Grok) **ou** **ui-implementer** (Kimi), nunca os dois editando ao mesmo tempo. Sequência ok.
+
+1. **architect** (`glm-5.2`, readonly) — arquitetura padrão. Investigação focada. Não chama Fable; se excepcional, devolve `FABLE_ESCALATION_RECOMMENDED`.
+2. **deep-architect** (`claude-fable-5`, readonly) — só após autorização **explícita** do usuário **nesta** conversa, com o dossier do GLM. Silêncio não autoriza.
+3. **implementer** (`grok-4.6`, write) — implementação geral (API, auth, estado, regras, TypeScript estrutural). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
+4. **ui-implementer** (`kimi-k3`, write) — visual/layout/UX/browser, **somente** quando isso for central. Não altera contrato/domínio/auth por conta própria.
+5. **reviewer** (`grok-4.6`, readonly) — Standards × Spec no diff `origin/develop...HEAD`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
+
+Tarefa trivial/localizada: pular architect. Tarefa arquitetural: architect → Human Decision Gate e/ou escalada Fable se o usuário autorizar → spec em `docs/plans` → Grok e/ou Kimi (sequencial) → reviewer.
+
+Prompt cache do provider ≠ memória do projeto ≠ context pack. Nenhuma decisão do fluxo depende de cache hit.
+
+## Context packs
+
+[`docs/context-packs/`](./docs/context-packs/) — packs **frontend-specific** só. Domínio compartilhado é canônico em `vlr-api/docs/context-packs/`. **Não** é fonte da verdade. Comece pelo INDEX local e, se o assunto for domínio, pelo INDEX da API. Canônico vence pack. Pack stale → `CONTEXT_PACK_STALE`. Atualize pack **depois** da fonte canônica.
+
+## Agent feedback
+
+Histórico canônico: **`vlr-api/docs/agent-feedback/`** (não duplicar aqui). **Não** é rule até promotion. Não carregar incidents no início de toda tarefa; use o INDEX da API. Reviewer readonly devolve `AGENT_FEEDBACK_RECOMMENDED`.
 
 ## Handoffs (`docs/plans`)
 

@@ -52,6 +52,10 @@ For architectural work that should have had a handoff and did not, missing spec 
 
 Implement a fix; edit files; commit; push; merge; “approve because it compiled”; rediscover product on your own.
 
+## Agent feedback
+
+Do **not** read `vlr-api/docs/agent-feedback/incidents/**` by default. If a reusable agent-system failure appears (including Kimi changing business logic on a visual task, or silent model fallback), emit `AGENT_FEEDBACK_RECOMMENDED` (observed, expected, impact, prevention, suggested promotion). Do not write the file yourself. Canonical location is `vlr-api/docs/agent-feedback/`.
+
 ## Output
 
 Prioritized findings only (Critical / High / Medium), split **Standards** vs **Spec**.
