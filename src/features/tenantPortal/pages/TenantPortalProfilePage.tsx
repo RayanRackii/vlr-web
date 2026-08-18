@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Camera, CircleAlert, Lock, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -7,6 +8,7 @@ import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -30,6 +32,7 @@ import {
   updateCustomerProfile,
   type UpdateCustomerProfileRequest,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { cn } from "@/lib/utils"
 
 function normalizePhotoUrl(value: string | null): string | null {
   if (value == null || value.trim().length === 0) {
@@ -83,14 +86,18 @@ function formatProfileAddress(profile: CustomerProfile): string | null {
 function ReadOnlyValue({
   label,
   value,
+  className,
 }: {
   label: string
   value: string
+  className?: string
 }) {
   return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium">{label}</p>
-      <p className="text-sm text-muted-foreground">{value}</p>
+    <div className={cn("space-y-1.5", className)}>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm break-words">
+        {value}
+      </p>
     </div>
   )
 }
@@ -221,15 +228,22 @@ export function TenantPortalProfilePage() {
   }
 
   if (loading) {
-    return <PageContentSkeleton rows={4} className="mx-auto w-full max-w-lg" />
+    return <PageContentSkeleton rows={4} className="mx-auto w-full max-w-xl" />
   }
 
   if (loadError || !profile) {
+    const genericLoadError = t("tenantPortal.profile.loadError")
     return (
-      <div className="mx-auto w-full max-w-lg space-y-4 py-6">
-        <p className="text-sm text-destructive">
-          {loadError ?? t("tenantPortal.profile.loadError")}
-        </p>
+      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 py-16 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+          <CircleAlert className="size-6 text-destructive" aria-hidden />
+        </span>
+        <div className="space-y-1">
+          <p className="text-sm font-medium">{genericLoadError}</p>
+          {loadError && loadError !== genericLoadError ? (
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+          ) : null}
+        </div>
         <Button
           type="button"
           variant="outline"
@@ -248,9 +262,16 @@ export function TenantPortalProfilePage() {
   const email = profile.email?.trim() ?? ""
   const phone = profile.phone?.trim() ?? ""
   const cpf = profile.cpf?.trim() ?? ""
+  const displayName =
+    watchedName.trim().length > 0 ? watchedName.trim() : profile.name
+  const hasReadOnlyFields =
+    email.length > 0 ||
+    phone.length > 0 ||
+    cpf.length > 0 ||
+    address !== null
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-6">
+    <div className="mx-auto w-full max-w-xl space-y-6">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold tracking-tight">
           {t("tenantPortal.profile.title")}
@@ -262,50 +283,76 @@ export function TenantPortalProfilePage() {
 
       <Form {...form}>
         <form
-          className="space-y-5"
+          className="space-y-6"
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          <div className="space-y-3">
-            <p className="text-sm font-medium">{t("tenantPortal.fields.photo")}</p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Avatar className="size-16" size="lg">
+          <section
+            aria-label={t("tenantPortal.fields.photo")}
+            className="rounded-xl border border-border bg-card p-5 shadow-sm"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+              <Avatar className="size-20">
                 {photoPreview ? (
                   <AvatarImage src={photoPreview} alt="" />
                 ) : null}
-                <AvatarFallback>
-                  {nameInitials(watchedName || profile.name)}
+                <AvatarFallback className="text-xl">
+                  {nameInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1 space-y-2">
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
+
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="truncate text-base font-semibold">
+                  {displayName}
+                </p>
+                {photoPreview ? null : (
+                  <p className="text-xs text-muted-foreground">
+                    {t("tenantPortal.profile.photoNone")}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   disabled={saving}
-                  aria-label={t("tenantPortal.profile.photoChange")}
-                  onChange={(event) => {
-                    void onPhotoFileChange(event.target.files?.[0])
+                  onClick={() => {
+                    fileInputRef.current?.click()
                   }}
-                />
+                >
+                  <Camera aria-hidden />
+                  {t("tenantPortal.profile.photoChange")}
+                </Button>
                 {photoPreview ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     disabled={saving}
+                    className="text-muted-foreground"
                     onClick={onRemovePhoto}
                   >
+                    <Trash2 aria-hidden />
                     {t("tenantPortal.profile.photoRemove")}
                   </Button>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    {t("tenantPortal.profile.photoNone")}
-                  </p>
-                )}
+                ) : null}
               </div>
             </div>
-          </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              disabled={saving}
+              className="hidden"
+              aria-label={t("tenantPortal.profile.photoChange")}
+              onChange={(event) => {
+                void onPhotoFileChange(event.target.files?.[0])
+              }}
+            />
+          </section>
 
           <FormField
             control={form.control}
@@ -326,43 +373,63 @@ export function TenantPortalProfilePage() {
             )}
           />
 
-          {email.length > 0 ? (
-            <ReadOnlyValue
-              label={`${t("tenantPortal.fields.email")} (${t("tenantPortal.profile.readOnly")})`}
-              value={email}
-            />
+          {hasReadOnlyFields ? (
+            <section className="space-y-4 border-t border-border pt-6">
+              <div className="flex items-center gap-2">
+                <Lock
+                  className="size-3.5 text-muted-foreground"
+                  aria-hidden
+                />
+                <h2 className="text-sm font-medium">
+                  {t("tenantPortal.profile.sections.account")}
+                </h2>
+                <Badge variant="secondary" className="font-normal">
+                  {t("tenantPortal.profile.readOnly")}
+                </Badge>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {email.length > 0 ? (
+                  <ReadOnlyValue
+                    label={t("tenantPortal.fields.email")}
+                    value={email}
+                  />
+                ) : null}
+                {phone.length > 0 ? (
+                  <ReadOnlyValue
+                    label={t("tenantPortal.fields.phone")}
+                    value={phone}
+                  />
+                ) : null}
+                {cpf.length > 0 ? (
+                  <ReadOnlyValue
+                    label={t("tenantPortal.fields.cpf")}
+                    value={cpf}
+                  />
+                ) : null}
+                {address ? (
+                  <ReadOnlyValue
+                    label={t("tenantPortal.profile.address")}
+                    value={address}
+                    className="sm:col-span-2"
+                  />
+                ) : null}
+              </div>
+            </section>
           ) : null}
 
-          {phone.length > 0 ? (
-            <ReadOnlyValue
-              label={`${t("tenantPortal.fields.phone")} (${t("tenantPortal.profile.readOnly")})`}
-              value={phone}
-            />
-          ) : null}
-
-          {cpf.length > 0 ? (
-            <ReadOnlyValue
-              label={`${t("tenantPortal.fields.cpf")} (${t("tenantPortal.profile.readOnly")})`}
-              value={cpf}
-            />
-          ) : null}
-
-          {address ? (
-            <ReadOnlyValue
-              label={`${t("tenantPortal.profile.address")} (${t("tenantPortal.profile.readOnly")})`}
-              value={address}
-            />
-          ) : null}
-
-          <LoadingButton
-            type="submit"
-            loading={saving}
-            disabled={saving}
-            loadingLabel={t("tenantPortal.profile.saving")}
-            style={{ backgroundColor: primary }}
-          >
-            {t("tenantPortal.profile.save")}
-          </LoadingButton>
+          <div className="flex justify-end">
+            <LoadingButton
+              type="submit"
+              loading={saving}
+              disabled={saving}
+              loadingLabel={t("tenantPortal.profile.saving")}
+              className="w-full sm:w-auto"
+              style={{ backgroundColor: primary }}
+            >
+              {t("tenantPortal.profile.save")}
+            </LoadingButton>
+          </div>
         </form>
       </Form>
     </div>

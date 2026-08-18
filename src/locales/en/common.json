@@ -249,6 +249,9 @@
       "photoRemove": "Remove photo",
       "photoNone": "No photo",
       "address": "Address",
+      "sections": {
+        "account": "Account details"
+      },
       "validation": {
         "nameMin": "Name must be at least 2 characters.",
         "nameMax": "Name can be at most 200 characters."
