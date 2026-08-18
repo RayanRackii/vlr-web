@@ -131,3 +131,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-18 | **Wizard de recursos:** passo Operação; presets de preço; formulário não zera ao mudar de passo. |
 | 2026-08-18 | **Docs:** fundação multi-agent (architect / implementer / reviewer), Human Decision Gate, Git Work Policy e `docs/plans`. |
 | 2026-08-18 | **Docs:** GLM architect padrão; Fable só com aprovação; Kimi ui-implementer; context-packs FE. |
+| 2026-08-18 | **Docs:** ids de subagent disambiguados (`web-implementer`, `web-reviewer`, `ui-implementer`); architects canônicos no `vlr-api`. |

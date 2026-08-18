@@ -17,12 +17,12 @@ ADRs de domínio: `vlr-api/docs/adr/`.
 
 ## Architecture route (optional)
 
-- architect
-- deep-architect (only if explicitly approved)
+- rolvix-architect (defined in vlr-api)
+- rolvix-deep-architect (only if explicitly approved)
 
 ## Execution route (optional)
 
-- implementer
+- web-implementer
 - ui-implementer
 
 ## Confirmed decisions

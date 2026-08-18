@@ -11,7 +11,7 @@ ADRs de domínio (ex.: slots) vivem em **`vlr-api/docs/adr/`**.
 ## Repos
 - **Este:** `vlr-web` (React + Vite, Vercel).
 - **Irmão:** `vlr-api` (.NET 10, Railway) — API e domínio.
-- Não versionar docs na pasta pai do workspace local.
+- Workspace Cursor pretendido: roots `backend` + `frontend` (dois Git repos, **não** monorepo). O diretório pai no disco não precisa ser workspace root.
 
 ## Ao concluir trabalho
 - Atualizar `ROADMAP.md` (checks + Histórico se o plano mudou).
@@ -56,17 +56,24 @@ Adapte só se a branch já existir por motivo conhecido. Working tree suja por t
 
 Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-O parent/orchestrator é **Grok 4.6**. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, motivo, ação do usuário) e **pare**. Não simule o papel.
+O parent/orchestrator é **Grok 4.6**. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
 
-Um writer ativo por working tree: **implementer** (Grok) **ou** **ui-implementer** (Kimi), nunca os dois editando ao mesmo tempo. Sequência ok.
+Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
-1. **architect** (`glm-5.2`, readonly) — arquitetura padrão. Investigação focada. Não chama Fable; se excepcional, devolve `FABLE_ESCALATION_RECOMMENDED`.
-2. **deep-architect** (`claude-fable-5`, readonly) — só após autorização **explícita** do usuário **nesta** conversa, com o dossier do GLM. Silêncio não autoriza.
-3. **implementer** (`grok-4.6`, write) — implementação geral (API, auth, estado, regras, TypeScript estrutural). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
+1. **rolvix-architect** (`glm-5.2`, readonly) — arquitetura do Rolvix (API + web).
+2. **rolvix-deep-architect** (`claude-fable-5`, readonly) — Fable só com autorização **explícita** nesta conversa.
+
+Ownership de implementação **neste** repo:
+
+3. **web-implementer** (`grok-4.6`, write) — engenharia frontend geral (React, TypeScript, API, Zod, auth, estado, forms, routing, i18n técnico). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
 4. **ui-implementer** (`kimi-k3`, write) — visual/layout/UX/browser, **somente** quando isso for central. Não altera contrato/domínio/auth por conta própria.
-5. **reviewer** (`grok-4.6`, readonly) — Standards × Spec no diff `origin/develop...HEAD`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
+5. **web-reviewer** (`grok-4.6`, readonly) — Standards × Spec no diff `origin/develop...HEAD` de `vlr-web`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
 
-Tarefa trivial/localizada: pular architect. Tarefa arquitetural: architect → Human Decision Gate e/ou escalada Fable se o usuário autorizar → spec em `docs/plans` → Grok e/ou Kimi (sequencial) → reviewer.
+Um writer ativo por working tree: `web-implementer` **ou** `ui-implementer`, nunca os dois ao mesmo tempo neste repo. Sequência ok. Paralelo com `api-implementer` só no outro repo, e só se a spec não exigir ordem API→UI.
+
+Cross-repo: `rolvix-architect` → uma spec → `api-implementer` **e** `web-implementer` / `ui-implementer` → `api-reviewer` **e** `web-reviewer`.
+
+Tarefa trivial/localizada neste repo: pular architect. Tarefa arquitetural: `rolvix-architect` → spec → writers deste repo → `web-reviewer`.
 
 Prompt cache do provider ≠ memória do projeto ≠ context pack. Nenhuma decisão do fluxo depende de cache hit.
 
@@ -88,10 +95,8 @@ Specs só deste repo: [`docs/plans/`](./docs/plans/). Não substituem `ROADMAP.m
 
 Nome: `YYYY-MM-DD-descricao-curta.md`. Spec com decisão humana pendente **não** está pronta para implementar.
 
-## Workspace skills
+## User-level skills
 
-Procedimentos locais (fora deste Git), referidos **por nome**: `grilling`, `domain-modeling`, `implement`, `tdd`, `code-review`.
+Required user-level Cursor skills (descoberta do Cursor, tipicamente `~/.agents/skills/`): `grilling`, `domain-modeling`, `implement`, `tdd`, `code-review`.
 
-Fallback de arquivo, relativo à raiz deste repo: `../.agents/skills/<skill>/SKILL.md`.
-
-Agents apontam para esses skills; não duplicam o corpo. Se a skill esperada não estiver no workspace, não improvisar cópia — informar.
+Agents referem skills **por nome**. Não duplicar o corpo. Não usar caminhos de workspace (`C:\Free\...`, `../.agents/...`). Se a skill não for descoberta, parar e informar — não improvisar cópia.
