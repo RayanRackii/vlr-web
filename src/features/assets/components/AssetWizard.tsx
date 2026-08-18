@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { LoaderCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -25,6 +25,14 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { cn } from "@/lib/utils"
+import {
+  emptyPricingEditor,
+  expandPricingEditor,
+  isPricingEditorValid,
+  pricingEditorFromRows,
+  type PricingEditorState,
+} from "@/features/assets/components/assetWizardPricing"
+import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
   attributesToPayload,
@@ -63,24 +71,6 @@ export type AssetWizardProps = {
   readOnly?: boolean
 }
 
-type DayOfWeek =
-  | "Sunday"
-  | "Monday"
-  | "Tuesday"
-  | "Wednesday"
-  | "Thursday"
-  | "Friday"
-  | "Saturday"
-
-type PricingDraft = {
-  localKey: string
-  id?: string
-  dayOfWeek: DayOfWeek
-  startTime: string
-  endTime: string
-  pricePerHour: number
-}
-
 type WizardFormState = {
   name: string
   tag: string
@@ -100,16 +90,6 @@ type WizardFormState = {
   rentalType: "Location" | "Good"
   totalQuantity: number
 }
-
-const DAYS: readonly DayOfWeek[] = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-]
 
 type FieldErrorKey =
   | "unitId"
@@ -134,10 +114,6 @@ function displayUnitName(name: string, translate: (key: string) => string): stri
 
 function fieldInvalidClass(invalid: boolean): string {
   return invalid ? "border-destructive focus-visible:border-destructive" : ""
-}
-
-function newLocalKey(): string {
-  return crypto.randomUUID()
 }
 
 function emptyForm(defaults?: {
@@ -180,16 +156,6 @@ function attributesFromAsset(
   return values
 }
 
-function emptyPricingDraft(): PricingDraft {
-  return {
-    localKey: newLocalKey(),
-    dayOfWeek: "Monday",
-    startTime: "08:00",
-    endTime: "18:00",
-    pricePerHour: 0,
-  }
-}
-
 export function AssetWizard({
   mode,
   open,
@@ -204,7 +170,7 @@ export function AssetWizard({
   const { t } = useTranslation()
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<WizardFormState>(() => emptyForm())
-  const [pricings, setPricings] = useState<PricingDraft[]>([])
+  const [pricing, setPricing] = useState<PricingEditorState>(emptyPricingEditor)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loadedAsset, setLoadedAsset] = useState<Asset | null>(null)
@@ -220,7 +186,7 @@ export function AssetWizard({
   const steps = useMemo(() => {
     const base = [
       { id: "general", label: t("assets.wizard.steps.general") },
-      { id: "capabilities", label: t("assets.wizard.steps.capabilities") },
+      { id: "operation", label: t("assets.wizard.steps.operation") },
     ]
     if (form.isRentable) {
       base.push({ id: "pricing", label: t("assets.wizard.steps.pricing") })
@@ -248,7 +214,7 @@ export function AssetWizard({
         attributes: emptyAttributesFromFields(firstFamily?.fields ?? []),
       }),
     )
-    setPricings([])
+    setPricing(emptyPricingEditor())
     setStepIndex(0)
     setLoadedAsset(null)
     setIsLoading(false)
@@ -292,18 +258,18 @@ export function AssetWizard({
 
       if (asset.isRentable) {
         const rows = await getAssetPricings(asset.id)
-        setPricings(
-          rows.map((row) => ({
-            localKey: row.id,
-            id: row.id,
-            dayOfWeek: row.dayOfWeek as DayOfWeek,
-            startTime: row.startTime.slice(0, 5),
-            endTime: row.endTime.slice(0, 5),
-            pricePerHour: row.pricePerHour,
-          })),
+        setPricing(
+          pricingEditorFromRows(
+            rows.map((row) => ({
+              dayOfWeek: row.dayOfWeek,
+              startTime: row.startTime.slice(0, 5),
+              endTime: row.endTime.slice(0, 5),
+              pricePerHour: row.pricePerHour,
+            })),
+          ),
         )
       } else {
-        setPricings([])
+        setPricing(emptyPricingEditor())
       }
     } catch (error: unknown) {
       toast.error(
@@ -317,12 +283,20 @@ export function AssetWizard({
     }
   }, [assetId, families, onOpenChange, t])
 
+  const sessionOpenRef = useRef(false)
+
   useEffect(() => {
     if (!open) {
+      sessionOpenRef.current = false
       return
     }
 
+    if (sessionOpenRef.current) {
+      return
+    }
+    sessionOpenRef.current = true
     setStepIndex(0)
+    setFieldErrors({})
 
     if (mode === "edit") {
       void loadEditAsset()
@@ -455,14 +429,7 @@ export function AssetWizard({
   }
 
   function validatePricing(): boolean {
-    for (const row of pricings) {
-      if (!row.startTime || !row.endTime || row.pricePerHour < 0) {
-        markErrors(["pricing"])
-        toast.error(t("assets.inventory.validation.pricingRequired"))
-        return false
-      }
-    }
-    if (pricings.length < 1) {
+    if (!isPricingEditorValid(pricing)) {
       markErrors(["pricing"])
       toast.error(t("assets.inventory.validation.pricingRequired"))
       return false
@@ -479,7 +446,7 @@ export function AssetWizard({
     switch (currentStepId) {
       case "general":
         return validateGeneral()
-      case "capabilities":
+      case "operation":
         return validateCapabilities()
       case "pricing":
         return validatePricing()
@@ -500,11 +467,16 @@ export function AssetWizard({
   }
 
   async function applyPricingsToAsset(targetAssetId: string) {
-    const drafts = form.isRentable ? pricings : []
-    for (const draft of drafts) {
-      if (draft.id) {
-        continue
-      }
+    if (!form.isRentable) {
+      return
+    }
+
+    const existing = await getAssetPricings(targetAssetId)
+    for (const row of existing) {
+      await deleteAssetPricing(targetAssetId, row.id)
+    }
+
+    for (const draft of expandPricingEditor(pricing)) {
       await createAssetPricing(targetAssetId, {
         dayOfWeek: draft.dayOfWeek,
         startTime: draft.startTime,
@@ -614,33 +586,6 @@ export function AssetWizard({
     }
   }
 
-  async function handleRemovePricing(draft: PricingDraft) {
-    if (draft.id && loadedAsset) {
-      try {
-        await deleteAssetPricing(loadedAsset.id, draft.id)
-      } catch (error: unknown) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : t("assets.detail.errors.pricingDeleteFailed"),
-        )
-        return
-      }
-    }
-    setPricings((prev) => prev.filter((row) => row.localKey !== draft.localKey))
-  }
-
-  function updatePricing(
-    localKey: string,
-    patch: Partial<Omit<PricingDraft, "localKey" | "id">>,
-  ) {
-    setPricings((prev) =>
-      prev.map((row) =>
-        row.localKey === localKey ? { ...row, ...patch } : row,
-      ),
-    )
-  }
-
   const unitName = displayUnitName(
     units.find((unit) => unit.id === form.unitId)?.name ?? form.unitId,
     t,
@@ -651,7 +596,19 @@ export function AssetWizard({
   const familyLabel = selectedFamily?.label ?? form.familyId
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      disablePointerDismissal
+      onOpenChange={(next, details) => {
+        if (
+          !next &&
+          (details.reason === "outside-press" || details.reason === "focus-out")
+        ) {
+          return
+        }
+        onOpenChange(next)
+      }}
+    >
       <DialogContent className="gap-5 border-border/80 bg-card sm:max-w-3xl">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
@@ -1054,7 +1011,7 @@ export function AssetWizard({
               </div>
             ) : null}
 
-            {currentStepId === "capabilities" ? (
+            {currentStepId === "operation" ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
@@ -1102,11 +1059,6 @@ export function AssetWizard({
                     onClick={() => {
                       const next = !form.isRentable
                       patchForm({ isRentable: next })
-                      if (!next) {
-                        setPricings((prev) =>
-                          prev.filter((row) => Boolean(row.id)),
-                        )
-                      }
                     }}
                   >
                     <div className="min-w-0 space-y-1">
@@ -1236,119 +1188,21 @@ export function AssetWizard({
             ) : null}
 
             {currentStepId === "pricing" ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium">
-                    {t("assets.detail.rental.pricingTitle")}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setPricings((prev) => [...prev, emptyPricingDraft()])
-                    }}
-                  >
-                    <Plus className="size-4" />
-                    {t("assets.detail.rental.addPricing")}
-                  </Button>
-                </div>
-
-                {pricings.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("assets.detail.rental.pricingEmpty")}
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {pricings.map((row) => (
-                      <li
-                        key={row.localKey}
-                        className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_auto_auto_auto_auto]"
-                      >
-                        <div className="space-y-1">
-                          <Label>{t("assets.detail.rental.dayOfWeek")}</Label>
-                          <Select
-                            modal={false}
-                            value={row.dayOfWeek}
-                            onValueChange={(value) => {
-                              if (value) {
-                                updatePricing(row.localKey, {
-                                  dayOfWeek: value as DayOfWeek,
-                                })
-                              }
-                            }}
-                            items={DAYS.map((day) => ({
-                              value: day,
-                              label: t(`assets.detail.days.${day}`),
-                            }))}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {DAYS.map((day) => (
-                                <SelectItem key={day} value={day}>
-                                  {t(`assets.detail.days.${day}`)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label>{t("assets.detail.rental.startTime")}</Label>
-                          <Input
-                            type="time"
-                            value={row.startTime}
-                            onChange={(event) => {
-                              updatePricing(row.localKey, {
-                                startTime: event.target.value,
-                              })
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label>{t("assets.detail.rental.endTime")}</Label>
-                          <Input
-                            type="time"
-                            value={row.endTime}
-                            onChange={(event) => {
-                              updatePricing(row.localKey, {
-                                endTime: event.target.value,
-                              })
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label>{t("assets.detail.rental.pricePerHour")}</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={row.pricePerHour}
-                            onChange={(event) => {
-                              updatePricing(row.localKey, {
-                                pricePerHour: event.target.valueAsNumber,
-                              })
-                            }}
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => {
-                              void handleRemovePricing(row)
-                            }}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              <AssetWizardPricingStep
+                pricing={pricing}
+                invalid={Boolean(fieldErrors.pricing)}
+                onChange={(patch) => {
+                  setPricing((prev) => ({ ...prev, ...patch }))
+                  setFieldErrors((prev) => {
+                    if (!prev.pricing) {
+                      return prev
+                    }
+                    const next = { ...prev }
+                    delete next.pricing
+                    return next
+                  })
+                }}
+              />
             ) : null}
 
             {currentStepId === "review" ? (
@@ -1463,7 +1317,11 @@ export function AssetWizard({
                       <span className="text-muted-foreground">
                         {t("assets.detail.rental.pricingTitle")}:{" "}
                       </span>
-                      {pricings.length}
+                      {t(
+                        `assets.wizard.pricing.patterns.${pricing.pattern}.title`,
+                      )}
+                      {" · "}
+                      {pricing.startTime}–{pricing.endTime}
                     </p>
                   </>
                 ) : null}

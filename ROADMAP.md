@@ -67,6 +67,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Famílias no wizard/edit tenant + formulários dinâmicos por `fieldSchema`.
 - [x] Copy preferindo famílias ativas do tenant (`spaces` / `goods` / `electrical` …).
 - [x] Wizard: “É necessário pagamento prévio?” (`requiresDeposit` / `RequiresDeposit`) em todo rentable.
+- [x] Wizard: passo Operação; preços por preset (todos os dias / fim de semana / por dia); estado preservado entre passos
 - [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
 
 ## 5. Fluxo de convite B2B
@@ -127,3 +128,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-17 | **Layout:** página em Operação para posicionar espaços; portal reserva com data + horário e mapa/grade (indisponíveis visíveis, não clicáveis). |
 | 2026-08-17 | **Layout:** redimensionar o mapa; organizar espaços em grade igual; save estável. |
 | 2026-08-17 | **Fix escala:** grade semanal vira horários reserváveis no portal sem “Aplicar grade neste dia”; grade admin maior, sem scroll interno no dia típico. |
+| 2026-08-18 | **Wizard de recursos:** passo Operação; presets de preço; formulário não zera ao mudar de passo. |

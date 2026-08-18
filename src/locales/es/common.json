@@ -1037,9 +1037,35 @@
       },
       "steps": {
         "general": "General",
-        "capabilities": "Capacidades",
+        "operation": "Operación",
+        "capabilities": "Operación",
         "pricing": "Precios",
         "review": "Revisión"
+      },
+      "pricing": {
+        "patternLabel": "Cómo se repite el precio en la semana",
+        "everydayPrice": "Precio por hora",
+        "everydayPriceHelp": "El mismo valor vale todos los días, en el intervalo de abajo.",
+        "weekdayPrice": "Precio en días laborables",
+        "weekdayPriceHelp": "Lunes a viernes, en el intervalo de abajo.",
+        "weekendPrice": "Precio de fin de semana",
+        "weekendPriceHelp": "Sábado y domingo, en el mismo intervalo.",
+        "perDayPrices": "Precio por día",
+        "perDayPricesHelp": "Un valor por cada día de la semana, en el mismo horario.",
+        "patterns": {
+          "sameEveryDay": {
+            "title": "Mismo precio todos los días",
+            "hint": "Un valor y un horario para toda la semana."
+          },
+          "weekendSpecial": {
+            "title": "Precio especial el fin de semana",
+            "hint": "Un valor de lunes a viernes y otro el sábado y domingo."
+          },
+          "perDay": {
+            "title": "Definir un precio específico por día",
+            "hint": "Ajuste el valor de cada día de la semana."
+          }
+        }
       },
       "next": "Siguiente",
       "back": "Atrás",
