@@ -43,7 +43,7 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 - [x] Menu da conta via AppShell `profileTo` (B2B `MainLayout` sem o item)
 - [x] `GET`/`PATCH /api/customers/me` (nome + foto via file picker; `safeParse` em schema separado do login)
 - [x] Erro de carga: botão Tentar novamente (re-GET), sem sair do layout; sucesso recarrega via GET
-- FOLLOW_UP (fora deste MVP): e-mail, telefone, CPF, senha B2C, CEP/endereço, ExtraAttributes
+- FOLLOW_UP (fora deste MVP): e-mail com verificação; telefone com SMS; CPF; senha B2C (troca/recuperação); CEP/endereço; ExtraAttributes. Upload de foto **não** aberto — cadastro já comprime e persiste `PhotoUrl`.
 
 ## 3. Portal branding / host
 
@@ -146,3 +146,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-18 | **Docs:** ids de subagent disambiguados (`web-implementer`, `web-reviewer`, `ui-implementer`); architects canônicos no `vlr-api`. |
 | 2026-08-18 | **Executado:** Meu Perfil B2C — `/app/perfil` + menu da conta (`profileTo`); GET/PATCH `/api/customers/me` (nome + foto). |
 | 2026-08-18 | **Fix:** Meu Perfil — retry no erro de GET (permanece no layout); refresh GET após PATCH. |
+| 2026-08-18 | **UX:** Meu Perfil — cartão de identidade, foto por botão (sem input nativo), dados somente leitura agrupados. |
