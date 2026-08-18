@@ -28,6 +28,7 @@ import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPor
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
+import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
@@ -49,6 +50,7 @@ export function AppRoutes() {
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
+          <Route path="app/perfil" element={<TenantPortalProfilePage />} />
           <Route path="agenda" element={<TenantPortalAgendaPage />} />
           <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
         </Route>
@@ -74,6 +76,7 @@ export function AppRoutes() {
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
+          <Route path="app/perfil" element={<TenantPortalProfilePage />} />
           <Route path="agenda" element={<TenantPortalAgendaPage />} />
           <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
         </Route>

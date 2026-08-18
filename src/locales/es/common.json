@@ -67,6 +67,8 @@
     "saveLayout": "No se pudo guardar el layout.",
     "deleteLayout": "No se pudo eliminar el layout.",
     "loadMenu": "No se pudo cargar el menú.",
+    "loadCustomerProfile": "No se pudo cargar el perfil.",
+    "updateCustomerProfile": "No se pudo actualizar el perfil.",
     "invalidPayload": "Datos inválidos recibidos de la API."
   },
   "trial": {
@@ -232,6 +234,24 @@
       "empty": "No hay módulos disponibles.",
       "emptyTitle": "Aún no hay nada aquí",
       "emptyDescription": "El administrador del club aún no configuró ítems de menú para el portal."
+    },
+    "profile": {
+      "title": "Mi perfil",
+      "subtitle": "Actualice su nombre y foto. El correo, el celular y el CPF no se pueden cambiar aquí.",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "saved": "Perfil actualizado.",
+      "saveError": "No se pudo guardar el perfil.",
+      "loadError": "No se pudo cargar el perfil.",
+      "readOnly": "solo lectura",
+      "photoChange": "Cambiar foto",
+      "photoRemove": "Quitar foto",
+      "photoNone": "Sin foto",
+      "address": "Dirección",
+      "validation": {
+        "nameMin": "El nombre debe tener al menos 2 caracteres.",
+        "nameMax": "El nombre puede tener como máximo 200 caracteres."
+      }
     }
   },
   "landing": {
@@ -542,6 +562,7 @@
   },
   "account": {
     "title": "Cuenta",
+    "profile": "Mi perfil",
     "userFallback": "Usuario",
     "openMenu": "Abrir menú de la cuenta",
     "signOut": "Salir",

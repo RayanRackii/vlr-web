@@ -67,6 +67,8 @@
     "saveLayout": "Could not save the layout.",
     "deleteLayout": "Could not delete the layout.",
     "loadMenu": "Could not load menu.",
+    "loadCustomerProfile": "Could not load the profile.",
+    "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API."
   },
   "trial": {
@@ -232,6 +234,24 @@
       "empty": "No modules available.",
       "emptyTitle": "Nothing here yet",
       "emptyDescription": "The club admin has not configured portal menu items yet."
+    },
+    "profile": {
+      "title": "My Profile",
+      "subtitle": "Update your name and photo. Email, phone and CPF cannot be changed here.",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Profile updated.",
+      "saveError": "Could not save the profile.",
+      "loadError": "Could not load the profile.",
+      "readOnly": "read-only",
+      "photoChange": "Change photo",
+      "photoRemove": "Remove photo",
+      "photoNone": "No photo",
+      "address": "Address",
+      "validation": {
+        "nameMin": "Name must be at least 2 characters.",
+        "nameMax": "Name can be at most 200 characters."
+      }
     }
   },
   "landing": {
@@ -542,6 +562,7 @@
   },
   "account": {
     "title": "Account",
+    "profile": "My Profile",
     "userFallback": "User",
     "openMenu": "Open account menu",
     "signOut": "Sign out",

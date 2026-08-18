@@ -56,6 +56,43 @@ export const customerAuthProfileSchema = z.object({
   extraAttributes: z.record(z.string(), z.string().nullable()).optional(),
 })
 
+/** Full B2C profile (`GET`/`PATCH /api/customers/me`). Separate from login `customerAuthProfileSchema`. */
+export const customerProfileSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  name: z.string(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  cpf: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  addressStreet: z.string().nullable(),
+  addressNeighborhood: z.string().nullable(),
+  addressCity: z.string().nullable(),
+  addressState: z.string().nullable(),
+  photoUrl: z.string().nullable(),
+  createdAt: z.string(),
+  phoneVerified: z.boolean(),
+  extraAttributes: z
+    .record(z.string(), z.string().nullable())
+    .nullable()
+    .optional(),
+})
+
+export type CustomerProfile = z.infer<typeof customerProfileSchema>
+
+export function buildCustomerProfileFormSchema(messages: {
+  nameMin: string
+  nameMax: string
+}) {
+  return z.object({
+    name: z.string().trim().min(2, messages.nameMin).max(200, messages.nameMax),
+  })
+}
+
+export type CustomerProfileFormValues = {
+  name: string
+}
+
 export const authResponseSchema = z.object({
   token: z.string(),
   customer: customerAuthProfileSchema,
