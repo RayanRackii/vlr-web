@@ -33,6 +33,18 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).
 - [x] i18n pt-BR / en / es.
 
+## 2.9. Meu Perfil B2C — FEITO (código)
+
+Spec (canônica no `vlr-api`): `docs/plans/active/2026-08-18-b2c-meu-perfil.md`. Branch `feat/customer-profile`.
+
+Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidade (e-mail/telefone/CPF/senha) somente leitura.
+
+- [x] Página `/app/perfil` (host) e `/t/:subdomain/app/perfil` (path) em `CustomerAppLayout`
+- [x] Menu da conta via AppShell `profileTo` (B2B `MainLayout` sem o item)
+- [x] `GET`/`PATCH /api/customers/me` (nome + foto via file picker; `safeParse` em schema separado do login)
+- [x] Erro de carga: botão Tentar novamente (re-GET), sem sair do layout; sucesso recarrega via GET
+- FOLLOW_UP (fora deste MVP): e-mail com verificação; telefone com SMS; CPF; senha B2C (troca/recuperação); CEP/endereço; ExtraAttributes. Upload de foto **não** aberto — cadastro já comprime e persiste `PhotoUrl`.
+
 ## 3. Portal branding / host
 
 - [x] Host `{subdomain}.rolvix.com.br` + path `/t/:subdomain`.
@@ -132,3 +144,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-18 | **Docs:** fundação multi-agent (architect / implementer / reviewer), Human Decision Gate, Git Work Policy e `docs/plans`. |
 | 2026-08-18 | **Docs:** GLM architect padrão; Fable só com aprovação; Kimi ui-implementer; context-packs FE. |
 | 2026-08-18 | **Docs:** ids de subagent disambiguados (`web-implementer`, `web-reviewer`, `ui-implementer`); architects canônicos no `vlr-api`. |
+| 2026-08-18 | **Executado:** Meu Perfil B2C — `/app/perfil` + menu da conta (`profileTo`); GET/PATCH `/api/customers/me` (nome + foto). |
+| 2026-08-18 | **Fix:** Meu Perfil — retry no erro de GET (permanece no layout); refresh GET após PATCH. |
+| 2026-08-18 | **UX:** Meu Perfil — cartão de identidade, foto por botão (sem input nativo), dados somente leitura agrupados. |
+| 2026-08-19 | **Fix:** Meu Perfil — bloqueia salvar enquanto a foto recém-selecionada ainda está sendo comprimida. |

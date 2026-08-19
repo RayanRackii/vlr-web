@@ -151,7 +151,11 @@ export function CustomerAppLayout() {
       location.pathname === item.to ||
       location.pathname.startsWith(`${item.to}/`),
   )
-  const pageTitle = activeItem?.label ?? branding.displayName
+  const profileTo = tenantPortalPath(subdomain, "app/perfil")
+  const isProfilePage = location.pathname === profileTo
+  const pageTitle = isProfilePage
+    ? t("tenantPortal.profile.title")
+    : (activeItem?.label ?? branding.displayName)
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
   const primary = branding.primaryColor ?? ROLVIX_PRIMARY_COLOR
 
@@ -169,6 +173,7 @@ export function CustomerAppLayout() {
       pageTitle={pageTitle}
       userLabel={userLabel}
       initials={getEmailInitials(userLabel)}
+      profileTo={profileTo}
       onSignOut={() => {
         clearCustomerSession()
         window.location.assign(tenantPortalPath(subdomain))

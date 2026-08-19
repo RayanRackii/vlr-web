@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react"
-import { LogOut, Menu } from "lucide-react"
+import { CircleUser, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { Link } from "react-router-dom"
 
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
@@ -28,6 +29,8 @@ export type AppShellProps = {
   userLabel: string
   initials: string
   onSignOut: () => void | Promise<void>
+  /** When set, account menu shows Meu Perfil above Sign out. Omit for B2B. */
+  profileTo?: string
   banner?: ReactNode
   children: ReactNode
 }
@@ -38,6 +41,7 @@ export function AppShell({
   userLabel,
   initials,
   onSignOut,
+  profileTo,
   banner = null,
   children,
 }: AppShellProps) {
@@ -137,6 +141,19 @@ export function AppShell({
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
+
+                {profileTo ? (
+                  <>
+                    <DropdownMenuItem
+                      nativeButton={false}
+                      render={<Link to={profileTo} />}
+                    >
+                      <CircleUser />
+                      <span>{t("account.profile")}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : null}
 
                 <DropdownMenuItem
                   variant="destructive"

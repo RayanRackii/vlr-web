@@ -5,12 +5,14 @@ import i18n from "@/lib/i18n"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
+  customerProfileSchema,
   moduleMenuItemSchema,
   registerResponseSchema,
   registrationFieldSchema,
   registrationSchemaResponseSchema,
   tenantBrandingSchema,
   type CustomerAuthResponse,
+  type CustomerProfile,
   type ModuleMenuItem,
   type RegistrationField,
   type RegistrationSchemaResponse,
@@ -63,6 +65,7 @@ export type TenantPortalSegment =
   | "register"
   | "verify-phone"
   | "app"
+  | "app/perfil"
   | "agenda"
   | `agenda/${string}`
 
@@ -403,6 +406,61 @@ export async function deleteModuleMenuItem(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.deleteMenuItem")),
     )
   }
+}
+
+export type UpdateCustomerProfileRequest = {
+  name?: string
+  photoUrl?: string | null
+}
+
+export async function fetchCustomerProfile(): Promise<CustomerProfile> {
+  let response
+  try {
+    response = await api.get("/api/customers/me")
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.loadCustomerProfile"),
+      ),
+    )
+  }
+
+  const parsed = customerProfileSchema.safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
+  }
+  return parsed.data
+}
+
+export async function updateCustomerProfile(
+  body: UpdateCustomerProfileRequest,
+): Promise<CustomerProfile> {
+  const payload: UpdateCustomerProfileRequest = {}
+  if (body.name !== undefined) {
+    payload.name = body.name
+  }
+  if (body.photoUrl !== undefined) {
+    payload.photoUrl = body.photoUrl
+  }
+
+  let response
+  try {
+    response = await api.patch("/api/customers/me", payload)
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.updateCustomerProfile"),
+      ),
+    )
+  }
+
+  const parsed = customerProfileSchema.safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error(i18n.t("apiErrors.invalidResponse"))
+  }
+  return parsed.data
 }
 
 export async function fileToCompressedDataUrl(file: File): Promise<string> {
