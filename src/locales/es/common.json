@@ -246,6 +246,7 @@
       "retry": "Intentar de nuevo",
       "readOnly": "solo lectura",
       "photoChange": "Cambiar foto",
+      "photoProcessing": "Procesando foto...",
       "photoRemove": "Quitar foto",
       "photoNone": "Sin foto",
       "address": "Dirección",

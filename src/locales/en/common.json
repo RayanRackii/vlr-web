@@ -246,6 +246,7 @@
       "retry": "Try again",
       "readOnly": "read-only",
       "photoChange": "Change photo",
+      "photoProcessing": "Processing photo...",
       "photoRemove": "Remove photo",
       "photoNone": "No photo",
       "address": "Address",

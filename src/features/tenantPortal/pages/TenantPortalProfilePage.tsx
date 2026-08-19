@@ -110,6 +110,7 @@ export function TenantPortalProfilePage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [photoProcessing, setPhotoProcessing] = useState(false)
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoDirty, setPhotoDirty] = useState(false)
@@ -129,12 +130,17 @@ export function TenantPortalProfilePage() {
   })
 
   const loadGenerationRef = useRef(0)
+  const photoCompressGenerationRef = useRef(0)
+  const photoProcessingRef = useRef(false)
 
   function applyProfile(next: CustomerProfile) {
     setProfile(next)
     form.reset({ name: next.name })
     setPhotoPreview(normalizePhotoUrl(next.photoUrl))
     setPhotoDirty(false)
+    photoProcessingRef.current = false
+    setPhotoProcessing(false)
+    photoCompressGenerationRef.current += 1
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -180,16 +186,34 @@ export function TenantPortalProfilePage() {
     if (!file) {
       return
     }
+
+    const generation = ++photoCompressGenerationRef.current
+    photoProcessingRef.current = true
+    setPhotoProcessing(true)
     try {
       const dataUrl = await fileToCompressedDataUrl(file)
+      if (generation !== photoCompressGenerationRef.current) {
+        return
+      }
       setPhotoPreview(dataUrl)
       setPhotoDirty(true)
     } catch {
+      if (generation !== photoCompressGenerationRef.current) {
+        return
+      }
       toast.error(t("tenantPortal.register.photoError"))
+    } finally {
+      if (generation === photoCompressGenerationRef.current) {
+        photoProcessingRef.current = false
+        setPhotoProcessing(false)
+      }
     }
   }
 
   function onRemovePhoto() {
+    photoCompressGenerationRef.current += 1
+    photoProcessingRef.current = false
+    setPhotoProcessing(false)
     setPhotoPreview(null)
     setPhotoDirty(true)
     if (fileInputRef.current) {
@@ -198,6 +222,10 @@ export function TenantPortalProfilePage() {
   }
 
   async function onSubmit(values: CustomerProfileFormValues) {
+    if (photoProcessingRef.current) {
+      return
+    }
+
     setSaving(true)
     try {
       const body: UpdateCustomerProfileRequest = {
@@ -317,7 +345,7 @@ export function TenantPortalProfilePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={saving}
+                  disabled={saving || photoProcessing}
                   onClick={() => {
                     fileInputRef.current?.click()
                   }}
@@ -330,7 +358,7 @@ export function TenantPortalProfilePage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    disabled={saving}
+                    disabled={saving || photoProcessing}
                     className="text-muted-foreground"
                     onClick={onRemovePhoto}
                   >
@@ -345,7 +373,7 @@ export function TenantPortalProfilePage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              disabled={saving}
+              disabled={saving || photoProcessing}
               className="hidden"
               aria-label={t("tenantPortal.profile.photoChange")}
               onChange={(event) => {
@@ -421,9 +449,13 @@ export function TenantPortalProfilePage() {
           <div className="flex justify-end">
             <LoadingButton
               type="submit"
-              loading={saving}
-              disabled={saving}
-              loadingLabel={t("tenantPortal.profile.saving")}
+              loading={saving || photoProcessing}
+              disabled={saving || photoProcessing}
+              loadingLabel={
+                photoProcessing && !saving
+                  ? t("tenantPortal.profile.photoProcessing")
+                  : t("tenantPortal.profile.saving")
+              }
               className="w-full sm:w-auto"
               style={{ backgroundColor: primary }}
             >
