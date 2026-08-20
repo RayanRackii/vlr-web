@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
-import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
   customerProfileSchema,
@@ -81,9 +81,73 @@ export function tenantPortalPath(
     return segment.length > 0 ? `/${segment}` : "/"
   }
 
-  return segment.length > 0
-    ? `/t/${subdomain}/${segment}`
-    : `/t/${subdomain}`
+  return tenantPortalPathMode(subdomain, segment)
+}
+
+/** Path-mode portal path (`/t/:subdomain/...`), regardless of the current host. */
+export function tenantPortalPathMode(
+  subdomain: string,
+  segment: TenantPortalSegment = "",
+): string {
+  const slug = subdomain.trim().toLowerCase()
+  return segment.length > 0 ? `/t/${slug}/${segment}` : `/t/${slug}`
+}
+
+export type TenantPortalHrefOptions = {
+  origin?: string
+  hostname?: string
+}
+
+/**
+ * Absolute tenant portal URL.
+ * Product domains → `https://{subdomain}.{baseDomain}/{segment}` (host-mode).
+ * Preview, localhost, and other origins → `{origin}/t/{subdomain}/{segment}` (path-mode).
+ */
+export function tenantPortalHref(
+  subdomain: string,
+  segment: TenantPortalSegment = "",
+  options?: TenantPortalHrefOptions,
+): string {
+  const slug = subdomain.trim().toLowerCase()
+  const segmentPath = segment.length > 0 ? `/${segment}` : ""
+
+  const hostname =
+    options?.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : "localhost")
+  const origin =
+    options?.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173")
+
+  if (isProductHostname(hostname)) {
+    const base = getTenantBaseDomain()
+    return `https://${slug}.${base}${segmentPath}`
+  }
+
+  const path = tenantPortalPathMode(slug, segment)
+  return `${origin.replace(/\/+$/, "")}${path}`
+}
+
+/** Placeholder for empty subdomain fields in admin forms. */
+export function tenantPortalHrefPlaceholder(
+  options?: TenantPortalHrefOptions,
+): string {
+  const hostname =
+    options?.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : "localhost")
+  const origin =
+    options?.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173")
+  const base = getTenantBaseDomain()
+
+  if (isProductHostname(hostname)) {
+    return `{subdomain}.${base}`
+  }
+
+  return `${origin.replace(/\/+$/, "")}/t/{subdomain}`
 }
 
 export function menuItemAgendaPath(
