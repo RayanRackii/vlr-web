@@ -5,6 +5,9 @@ import { supabase } from "@/lib/supabase"
 
 const DEFAULT_API_BASE_URL = "http://localhost:5298"
 
+/** Must match `CUSTOMER_TOKEN_KEY` in tenantPortalService. */
+const CUSTOMER_TOKEN_STORAGE_KEY = "rolvix.customer.token"
+
 const apiErrorSchema = z.object({
   error: z.string(),
 })
@@ -19,23 +22,37 @@ export function getApiBaseUrl(): string {
   return DEFAULT_API_BASE_URL
 }
 
-export const api = axios.create({
-  baseURL: getApiBaseUrl(),
-  headers: {
-    "Content-Type": "application/json",
-  },
-})
+function createApiClient() {
+  return axios.create({
+    baseURL: getApiBaseUrl(),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+}
+
+/** B2B panel: Supabase session JWT only. */
+export const api = createApiClient()
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const { data } = await supabase.auth.getSession()
-  const supabaseToken = data.session?.access_token
-  const customerToken =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("rolvix.customer.token")
-      : null
+  const accessToken = data.session?.access_token
 
-  // B2B Supabase session wins when present; otherwise B2C customer JWT.
-  const accessToken = supabaseToken ?? customerToken
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`
+  }
+
+  return config
+})
+
+/** B2C tenant portal: Customer JWT only (localStorage). */
+export const customerApi = createApiClient()
+
+customerApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const accessToken =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem(CUSTOMER_TOKEN_STORAGE_KEY)
+      : null
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
