@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
-import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   PRICE_PER_MODULE_BRL,
   type TenantAdmin,
@@ -93,7 +92,6 @@ function moduleLabelKey(moduleName: string): string {
 export function AdminDashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const baseDomain = getTenantBaseDomain()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -299,7 +297,6 @@ export function AdminDashboardPage() {
             <TenantAdminCard
               key={tenant.id}
               tenant={tenant}
-              baseDomain={baseDomain}
               moduleLabelKey={moduleLabelKey}
               isDeleting={isDeleting && tenantPendingDelete?.id === tenant.id}
               deleteError={
