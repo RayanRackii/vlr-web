@@ -13,6 +13,7 @@ import {
   autoPlaceItems,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
+  fitLayoutToContent,
   fitPlacement,
   type LayoutPlacement,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
@@ -137,6 +138,17 @@ export function RentalLayoutsPage() {
     setPlacements(
       arrangeEvenly(placements.map((item) => item.rentalAssetId)),
     )
+  }
+
+  function fitToContent() {
+    const fitted = fitLayoutToContent(
+      placements,
+      aspectRatio,
+      canvasWidthPercent,
+    )
+    setPlacements(fitted.placements)
+    setAspectRatio(fitted.aspectRatio)
+    setCanvasWidthPercent(fitted.widthPercent)
   }
 
   function patchPlacement(
@@ -410,6 +422,14 @@ export function RentalLayoutsPage() {
                   onClick={organizeEvenly}
                 >
                   {t("rentals.layout.organize")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving || isTrialReadOnly || placements.length === 0}
+                  onClick={fitToContent}
+                >
+                  {t("rentals.layout.fitToContent")}
                 </Button>
                 {selectedLayout ? (
                   <Button

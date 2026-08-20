@@ -64,6 +64,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Agenda multi-espaço: seletor múltiplo, política em lote, agenda agrupada; UI **Horário padrão** / **Grade personalizada** (domínio OpenHours/SlotGrid permanece no código)
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
+- [x] Layout: handle Sul (só altura), Fit to Content, B2C mobile `md` = 100% da largura
 
 ## 4. Gating B2B por módulos
 
@@ -149,3 +150,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-18 | **UX:** Meu Perfil — cartão de identidade, foto por botão (sem input nativo), dados somente leitura agrupados. |
 | 2026-08-19 | **Fix:** Meu Perfil — bloqueia salvar enquanto a foto recém-selecionada ainda está sendo comprimida. |
 | 2026-08-20 | **Docs:** protocolo Git multi-machine no `AGENTS.md` (Session Bootstrap, Task Checkpoint, Session Handoff). |
+| 2026-08-20 | **Fix Layout:** handle Sul (altura sem mudar largura), Ajustar ao conteúdo, portal B2C full-width abaixo do `md` Tailwind. |

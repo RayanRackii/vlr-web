@@ -4,6 +4,8 @@ export const MAX_ASPECT_RATIO = 2.8
 export const DEFAULT_CANVAS_WIDTH_PERCENT = 100
 export const MIN_CANVAS_WIDTH_PERCENT = 50
 export const MAX_CANVAS_WIDTH_PERCENT = 100
+/** Same inset used by “Organizar sozinho” and Fit to Content. */
+export const LAYOUT_CONTENT_MARGIN_PERCENT = 4
 
 export const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
 
@@ -91,8 +93,8 @@ export function arrangeEvenly(
 
   const cols = Math.max(1, columns ?? preferredColumnCount(count))
   const rows = Math.ceil(count / cols)
-  const margin = 4
-  const gap = 4
+  const margin = LAYOUT_CONTENT_MARGIN_PERCENT
+  const gap = LAYOUT_CONTENT_MARGIN_PERCENT
   const widthPercent =
     Math.round(((100 - margin * 2 - gap * (cols - 1)) / cols) * 10) / 10
   const heightPercent =
@@ -116,6 +118,70 @@ export function autoPlaceItems(
   rentalAssetIds: readonly string[],
 ): LayoutPlacement[] {
   return arrangeEvenly(rentalAssetIds)
+}
+
+export type FitLayoutToContentResult = {
+  placements: LayoutPlacement[]
+  aspectRatio: number
+  widthPercent: number
+}
+
+/**
+ * Tight-crop the canvas around placed items.
+ *
+ * Items are percent-of-canvas, so shrinking the frame alone cannot remove
+ * empty space (tiles would scale with the board). This action therefore
+ * remaps item percents so the padded bounding box becomes the full canvas,
+ * then updates `aspectRatio` / `widthPercent` to keep the cluster’s visual
+ * shape. zIndex is preserved. No-op when there are no items.
+ */
+export function fitLayoutToContent(
+  placements: readonly LayoutPlacement[],
+  aspectRatio: number,
+  widthPercent: number,
+): FitLayoutToContentResult {
+  if (placements.length === 0) {
+    return {
+      placements: [],
+      aspectRatio: clampAspectRatio(aspectRatio),
+      widthPercent: clampCanvasWidthPercent(widthPercent),
+    }
+  }
+
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+
+  for (const item of placements) {
+    minX = Math.min(minX, item.xPercent)
+    minY = Math.min(minY, item.yPercent)
+    maxX = Math.max(maxX, item.xPercent + item.widthPercent)
+    maxY = Math.max(maxY, item.yPercent + item.heightPercent)
+  }
+
+  const contentW = Math.max(maxX - minX, 0.1)
+  const contentH = Math.max(maxY - minY, 0.1)
+  const sourceX = minX - LAYOUT_CONTENT_MARGIN_PERCENT
+  const sourceY = minY - LAYOUT_CONTENT_MARGIN_PERCENT
+  const sourceW = contentW + LAYOUT_CONTENT_MARGIN_PERCENT * 2
+  const sourceH = contentH + LAYOUT_CONTENT_MARGIN_PERCENT * 2
+
+  const nextPlacements = placements.map((item) =>
+    fitPlacement({
+      ...item,
+      xPercent: ((item.xPercent - sourceX) / sourceW) * 100,
+      yPercent: ((item.yPercent - sourceY) / sourceH) * 100,
+      widthPercent: (item.widthPercent / sourceW) * 100,
+      heightPercent: (item.heightPercent / sourceH) * 100,
+    }),
+  )
+
+  return {
+    placements: nextPlacements,
+    aspectRatio: clampAspectRatio(aspectRatio * (sourceW / sourceH)),
+    widthPercent: clampCanvasWidthPercent(widthPercent * (sourceW / 100)),
+  }
 }
 
 export function pickCustomerLayout<T extends LayoutLike>(

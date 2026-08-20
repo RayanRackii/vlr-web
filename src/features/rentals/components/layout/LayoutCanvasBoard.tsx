@@ -1,4 +1,10 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react"
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import {
@@ -34,11 +40,16 @@ type TileDrag = {
   startH: number
 }
 
+type FrameAxis = "south" | "east" | "corner"
+
 type FrameDrag = {
+  axis: FrameAxis
   startX: number
   startY: number
   startWidthPx: number
   startHeightPx: number
+  startAspectRatio: number
+  startWidthPercent: number
   hostWidthPx: number
 }
 
@@ -71,6 +82,7 @@ export function LayoutCanvasBoard({
   onRemove,
   onFrameResize,
 }: LayoutCanvasBoardProps) {
+  const { t } = useTranslation()
   const hostRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const itemsRef = useRef(items)
@@ -123,6 +135,22 @@ export function LayoutCanvasBoard({
       }
       const deltaX = event.clientX - frameDrag.startX
       const deltaY = event.clientY - frameDrag.startY
+      if (frameDrag.axis === "south") {
+        const nextHeightPx = Math.max(80, frameDrag.startHeightPx + deltaY)
+        const nextAspect = clampAspectRatio(
+          frameDrag.startWidthPx / nextHeightPx,
+        )
+        onFrameResizeRef.current(nextAspect, frameDrag.startWidthPercent)
+        return
+      }
+      if (frameDrag.axis === "east") {
+        const nextWidthPx = Math.max(80, frameDrag.startWidthPx + deltaX)
+        const nextWidthPercent = clampCanvasWidthPercent(
+          (nextWidthPx / Math.max(1, frameDrag.hostWidthPx)) * 100,
+        )
+        onFrameResizeRef.current(frameDrag.startAspectRatio, nextWidthPercent)
+        return
+      }
       const nextWidthPx = Math.max(80, frameDrag.startWidthPx + deltaX)
       const nextHeightPx = Math.max(80, frameDrag.startHeightPx + deltaY)
       const nextAspect = clampAspectRatio(nextWidthPx / nextHeightPx)
@@ -170,7 +198,10 @@ export function LayoutCanvasBoard({
     }
   }
 
-  function startFrameDrag(event: ReactPointerEvent<HTMLElement>) {
+  function startFrameDrag(
+    event: ReactPointerEvent<HTMLElement>,
+    axis: FrameAxis,
+  ) {
     if (mode !== "edit" || !onFrameResize) {
       return
     }
@@ -182,10 +213,13 @@ export function LayoutCanvasBoard({
       return
     }
     frameDragRef.current = {
+      axis,
       startX: event.clientX,
       startY: event.clientY,
       startWidthPx: board.width,
       startHeightPx: board.height,
+      startAspectRatio: aspectRatio,
+      startWidthPercent: canvasWidthPercent,
       hostWidthPx: host.width,
     }
   }
@@ -193,8 +227,18 @@ export function LayoutCanvasBoard({
   return (
     <div ref={hostRef} className="min-w-0">
       <div
-        className="relative"
-        style={{ width: `${canvasWidthPercent}%` }}
+        className={cn(
+          "relative",
+          // Tailwind default `md` (768px): phones full-width; tablet+ honor persisted width.
+          mode === "pick" && "w-full md:w-[var(--layout-canvas-width)]",
+        )}
+        style={
+          mode === "pick"
+            ? ({
+                "--layout-canvas-width": `${canvasWidthPercent}%`,
+              } as CSSProperties)
+            : { width: `${canvasWidthPercent}%` }
+        }
       >
         <div
           ref={boardRef}
@@ -280,12 +324,35 @@ export function LayoutCanvasBoard({
           })}
         </div>
         {mode === "edit" && onFrameResize ? (
-          <button
-            type="button"
-            aria-label="resize-canvas"
-            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
-            onPointerDown={startFrameDrag}
-          />
+          <>
+            <button
+              type="button"
+              aria-label={t("rentals.layout.resizeHandleSouth")}
+              data-layout-resize="south"
+              className="absolute bottom-0 left-1/2 z-20 size-5 -translate-x-1/2 translate-y-1/2 cursor-s-resize rounded-sm border border-primary bg-background shadow-sm"
+              onPointerDown={(event) => {
+                startFrameDrag(event, "south")
+              }}
+            />
+            <button
+              type="button"
+              aria-label={t("rentals.layout.resizeHandleEast")}
+              data-layout-resize="east"
+              className="absolute top-1/2 right-0 z-20 size-5 translate-x-1/2 -translate-y-1/2 cursor-e-resize rounded-sm border border-primary bg-background shadow-sm"
+              onPointerDown={(event) => {
+                startFrameDrag(event, "east")
+              }}
+            />
+            <button
+              type="button"
+              aria-label={t("rentals.layout.resizeHandleCorner")}
+              data-layout-resize="corner"
+              className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
+              onPointerDown={(event) => {
+                startFrameDrag(event, "corner")
+              }}
+            />
+          </>
         ) : null}
       </div>
     </div>
