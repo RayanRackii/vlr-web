@@ -1,6 +1,11 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import {
+  api,
+  customerApi,
+  getAxiosErrorPayload,
+  parseApiError,
+} from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
 import {
@@ -480,7 +485,7 @@ export type UpdateCustomerProfileRequest = {
 export async function fetchCustomerProfile(): Promise<CustomerProfile> {
   let response
   try {
-    response = await api.get("/api/customers/me")
+    response = await customerApi.get("/api/customers/me")
   } catch (error) {
     throw new Error(
       parseApiError(
@@ -510,7 +515,7 @@ export async function updateCustomerProfile(
 
   let response
   try {
-    response = await api.patch("/api/customers/me", payload)
+    response = await customerApi.patch("/api/customers/me", payload)
   } catch (error) {
     throw new Error(
       parseApiError(
@@ -651,7 +656,7 @@ export async function createPortalReservation(body: {
   items: { assetId: string; quantity: number }[]
 }): Promise<PortalReservation> {
   try {
-    const response = await api.post("/api/reservations", body)
+    const response = await customerApi.post("/api/reservations", body)
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -666,7 +671,7 @@ export async function createPortalReservation(body: {
 
 export async function listMyPortalReservations(): Promise<PortalReservation[]> {
   try {
-    const response = await api.get("/api/reservations/mine")
+    const response = await customerApi.get("/api/reservations/mine")
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -750,7 +755,7 @@ export async function bookPortalSlot(body: {
   quantity?: number
 }): Promise<PortalReservation> {
   try {
-    const response = await api.post("/api/schedule/slots/book", {
+    const response = await customerApi.post("/api/schedule/slots/book", {
       slotId: body.slotId,
       unitId: body.unitId,
       quantity: body.quantity ?? 1,
