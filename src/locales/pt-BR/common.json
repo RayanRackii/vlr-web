@@ -1206,7 +1206,8 @@
         "invalidResponse": "Resposta inválida da API.",
         "pricingLoadFailed": "Não foi possível carregar os preços.",
         "pricingCreateFailed": "Não foi possível criar a faixa de preço.",
-        "pricingDeleteFailed": "Não foi possível remover a faixa de preço."
+        "pricingDeleteFailed": "Não foi possível remover a faixa de preço.",
+        "pricingBulkFailed": "Não foi possível aplicar os preços em lote."
       }
     }
   },

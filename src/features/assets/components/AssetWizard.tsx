@@ -54,8 +54,7 @@ import {
   updateAsset,
 } from "@/features/assets/services/assetsService"
 import {
-  createAssetPricing,
-  deleteAssetPricing,
+  bulkApplyAssetPricings,
   getAssetPricings,
 } from "@/features/assets/services/rentalPricingService"
 
@@ -466,28 +465,6 @@ export function AssetWizard({
     setStepIndex((prev) => Math.max(prev - 1, 0))
   }
 
-  async function applyPricingsToAsset(targetAssetId: string) {
-    if (!form.isRentable) {
-      return
-    }
-
-    const existing = await getAssetPricings(targetAssetId)
-    for (const row of existing) {
-      await deleteAssetPricing(targetAssetId, row.id)
-    }
-
-    for (const draft of expandPricingEditor(pricing)) {
-      await createAssetPricing(targetAssetId, {
-        dayOfWeek: draft.dayOfWeek,
-        startTime: draft.startTime,
-        endTime: draft.endTime,
-        pricePerHour: draft.pricePerHour,
-        requiresDeposit: false,
-        depositPercentage: 0,
-      })
-    }
-  }
-
   async function handleSubmit() {
     if (readOnly) {
       return
@@ -506,6 +483,17 @@ export function AssetWizard({
         form.attributes,
       )
 
+      const pricingRows = form.isRentable
+        ? expandPricingEditor(pricing).map((draft) => ({
+            dayOfWeek: draft.dayOfWeek,
+            startTime: draft.startTime,
+            endTime: draft.endTime,
+            pricePerHour: draft.pricePerHour,
+            requiresDeposit: false,
+            depositPercentage: 0,
+          }))
+        : null
+
       if (mode === "create") {
         const asset = await createAsset({
           unitId: form.unitId,
@@ -522,8 +510,12 @@ export function AssetWizard({
           totalQuantity: form.totalQuantity,
           requiresDeposit: form.requiresDeposit,
         })
-        if (form.isRentable) {
-          await applyPricingsToAsset(asset.id)
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: [asset.id],
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.create"))
       } else if (mode === "bulk") {
@@ -540,10 +532,12 @@ export function AssetWizard({
           requiresMaintenance: form.requiresMaintenance,
           requiresDeposit: form.requiresDeposit,
         })
-        if (form.isRentable) {
-          for (const asset of result.assets) {
-            await applyPricingsToAsset(asset.id)
-          }
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: result.assets.map((asset) => asset.id),
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.bulk"))
       } else {
@@ -567,8 +561,12 @@ export function AssetWizard({
           totalQuantity: form.totalQuantity,
           requiresDeposit: form.requiresDeposit,
         })
-        if (form.isRentable) {
-          await applyPricingsToAsset(loadedAsset.id)
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: [loadedAsset.id],
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.update"))
       }

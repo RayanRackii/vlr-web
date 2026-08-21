@@ -1,17 +1,17 @@
 import { z } from "zod"
 
+import {
+  bulkApplyPricingsRequestSchema,
+  bulkApplyPricingsResponseSchema,
+  bulkPricingRowSchema,
+  dayOfWeekSchema,
+  type BulkApplyPricingsRequest,
+  type BulkApplyPricingsResponse,
+} from "@/features/assets/schemas/assetSchemas"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 
-const dayOfWeekSchema = z.enum([
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-])
+export { dayOfWeekSchema }
 
 const dayOfWeekByIndex = [
   "Sunday",
@@ -51,14 +51,7 @@ export type RentalPricing = z.infer<typeof rentalPricingSchema>
 
 export const rentalPricingListSchema = z.array(rentalPricingSchema)
 
-export const createRentalPricingSchema = z.object({
-  dayOfWeek: dayOfWeekSchema,
-  startTime: z.string().min(1),
-  endTime: z.string().min(1),
-  pricePerHour: z.number().nonnegative(),
-  requiresDeposit: z.boolean(),
-  depositPercentage: z.number().min(0).max(100),
-})
+export const createRentalPricingSchema = bulkPricingRowSchema
 
 export type CreateRentalPricingRequest = z.infer<typeof createRentalPricingSchema>
 
@@ -129,6 +122,34 @@ export async function deleteAssetPricing(
       parseApiError(
         getAxiosErrorPayload(error),
         i18n.t("assets.detail.errors.pricingDeleteFailed"),
+      ),
+    )
+  }
+}
+
+export async function bulkApplyAssetPricings(
+  data: BulkApplyPricingsRequest,
+): Promise<BulkApplyPricingsResponse> {
+  const payload = bulkApplyPricingsRequestSchema.parse(data)
+
+  try {
+    const response = await api.post<unknown>("/api/assets/pricing-bulk", payload)
+    const parsed = bulkApplyPricingsResponseSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("assets.detail.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("assets.detail.errors.pricingBulkFailed"),
       ),
     )
   }

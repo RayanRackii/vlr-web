@@ -133,6 +133,46 @@ export type BulkCreateAssetsResponse = z.infer<
   typeof bulkCreateAssetsResponseSchema
 >
 
+export const dayOfWeekSchema = z.enum([
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+])
+
+export const bulkPricingRowSchema = z.object({
+  dayOfWeek: dayOfWeekSchema,
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  pricePerHour: z.number().nonnegative(),
+  requiresDeposit: z.boolean(),
+  depositPercentage: z.number().min(0).max(100),
+})
+
+export type BulkPricingRow = z.infer<typeof bulkPricingRowSchema>
+
+export const bulkApplyPricingsRequestSchema = z.object({
+  assetIds: z.array(z.string().uuid()).min(1).max(1000),
+  pricings: z.array(bulkPricingRowSchema).max(100),
+  replace: z.boolean(),
+})
+
+export type BulkApplyPricingsRequest = z.infer<
+  typeof bulkApplyPricingsRequestSchema
+>
+
+export const bulkApplyPricingsResponseSchema = z.object({
+  appliedAssetCount: z.number().int().nonnegative(),
+  pricingsCreated: z.number().int().nonnegative(),
+})
+
+export type BulkApplyPricingsResponse = z.infer<
+  typeof bulkApplyPricingsResponseSchema
+>
+
 export function createBulkCreateAssetsFormSchema(messages: {
   unitRequired: string
   categoryRequired: string
