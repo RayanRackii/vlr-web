@@ -50,8 +50,9 @@ parent
   ├─ implementer
   ├─ build / test
   ├─ reviewer
+  ├─ PR
   ├─ Merge Risk Gate (dossier GLM ± Fable)
-  ├─ PR → approve → merge em develop (quando os gates passarem)
+  ├─ approve → merge em develop (quando os gates passarem)
   └─ git checkpoint
 ```
 
@@ -63,7 +64,7 @@ Detecção por **evento**, não por adivinhar se uma janela do Cursor abriu ou v
 | Depois de implementação concluída e validada | Automatic Task Checkpoint |
 | Usuário indica parar / trocar de PC / encerrar sessão | Explicit Session Handoff |
 
-Fluxo: pedido do usuário → parent → Git bootstrap **uma vez** → agentes → implementação → review → Merge Risk Gate → PR → merge em `develop` (se os gates passarem) → checkpoint.
+Fluxo: pedido do usuário → parent → Git bootstrap **uma vez** → agentes → implementação → review → PR → Merge Risk Gate → merge em `develop` (se os gates passarem) → checkpoint.
 
 ### Automatic Session Bootstrap
 
@@ -163,7 +164,7 @@ Neste repo: `web-implementer` ou `ui-implementer` (um writer por working tree) �
 
 Merge Risk Gate: GLM prepara dossier compacto. Fable (`rolvix-deep-architect` no `vlr-api`) é **obrigatório** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `FABLE_MERGE_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
 
-Merge automático só `feature|fix|refactor|test|chore` → `develop` após todos os gates. Nunca `main`/PROD. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
+Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates. Nunca `main`/PROD. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
 
 Testes: se houver infra, adicionar regressão automática; senão `TEST_INFRASTRUCTURE_MISSING`. Auth/tenant/contrato de API compartilhado não devem depender só de build.
 
