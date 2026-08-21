@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { publicApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 
 const setPasswordResponseSchema = z.object({
   userId: z.string().uuid(),
@@ -15,7 +15,7 @@ export async function submitInvitePassword(input: {
   password: string
 }): Promise<SetPasswordResponse> {
   try {
-    const response = await api.post<unknown>("/api/invites/accept", {
+    const response = await publicApi.post<unknown>("/api/invites/accept", {
       token: input.token,
       password: input.password,
     })

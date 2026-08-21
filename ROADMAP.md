@@ -150,4 +150,5 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-19 | **Fix:** Meu Perfil — bloqueia salvar enquanto a foto recém-selecionada ainda está sendo comprimida. |
 | 2026-08-20 | **Docs:** protocolo Git multi-machine no `AGENTS.md` (Session Bootstrap, Task Checkpoint, Session Handoff). |
 | 2026-08-21 | **Docs:** Autonomous Delivery neste repo (ciclo até merge em `develop`); contrato Fable canônico no `vlr-api`. |
+| 2026-08-21 | **Fix F-09:** `publicApi` sem Authorization para endpoints AllowAnonymous do portal/onboarding. |
 | 2026-08-21 | **Fix F-07:** 401 autenticado no `customerApi` limpa só a sessão B2C e volta ao login do tenant. |

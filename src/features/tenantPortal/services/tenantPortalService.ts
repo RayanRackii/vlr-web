@@ -3,6 +3,7 @@ import { z } from "zod"
 import {
   api,
   customerApi,
+  publicApi,
   getAxiosErrorPayload,
   parseApiError,
 } from "@/lib/api"
@@ -179,7 +180,7 @@ function subdomainHeaders(subdomain: string): Record<string, string> {
 export async function fetchTenantBranding(
   subdomain: string,
 ): Promise<TenantBranding> {
-  const response = await api.get(`/api/public/tenants/${subdomain}/branding`)
+  const response = await publicApi.get(`/api/public/tenants/${subdomain}/branding`)
   const parsed = tenantBrandingSchema.safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -190,7 +191,7 @@ export async function fetchTenantBranding(
 export async function fetchRegistrationSchema(
   subdomain: string,
 ): Promise<RegistrationSchemaResponse> {
-  const response = await api.get(
+  const response = await publicApi.get(
     `/api/public/tenants/${subdomain}/registration-schema`,
   )
   const parsed = registrationSchemaResponseSchema.safeParse(response.data)
@@ -211,7 +212,7 @@ export async function registerCustomer(
   },
 ): Promise<{ customerId: string; requiresPhoneVerification: boolean }> {
   try {
-    const response = await api.post("/api/auth/customer/register", body, {
+    const response = await publicApi.post("/api/auth/customer/register", body, {
       headers: subdomainHeaders(subdomain),
     })
     const parsed = registerResponseSchema.safeParse(response.data)
@@ -299,7 +300,7 @@ export async function verifyCustomerPhone(
   body: { email: string; code: string },
 ): Promise<CustomerAuthResponse> {
   try {
-    const response = await api.post(
+    const response = await publicApi.post(
       "/api/auth/customer/verify-phone",
       body,
       { headers: subdomainHeaders(subdomain) },
@@ -326,7 +327,7 @@ export async function loginCustomer(
   body: { email: string; password: string },
 ): Promise<CustomerAuthResponse> {
   try {
-    const response = await api.post(
+    const response = await publicApi.post(
       "/api/auth/customer/login",
       body,
       { headers: subdomainHeaders(subdomain) },
@@ -377,7 +378,7 @@ export function getCustomerLabel(): string | null {
 export async function fetchTenantMenu(
   subdomain: string,
 ): Promise<ModuleMenuItem[]> {
-  const response = await api.get(`/api/public/tenants/${subdomain}/menu`)
+  const response = await publicApi.get(`/api/public/tenants/${subdomain}/menu`)
   const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -611,7 +612,7 @@ export type PortalReservation = z.infer<typeof reservationSchema>
 export async function fetchPortalRentalAssets(
   subdomain: string,
 ): Promise<PortalRentalAsset[]> {
-  const response = await api.get(
+  const response = await publicApi.get(
     `/api/public/tenants/${subdomain}/rental-assets`,
   )
   const parsed = z.array(rentalAssetSchema).safeParse(response.data)
@@ -632,7 +633,7 @@ export async function checkPortalAvailability(
   },
 ) {
   try {
-    const response = await api.get("/api/reservations/availability", {
+    const response = await publicApi.get("/api/reservations/availability", {
       params: query,
       headers: subdomainHeaders(subdomain),
     })
@@ -731,7 +732,7 @@ export async function fetchPublicScheduleDay(
   rentalAssetId?: string,
 ): Promise<PortalDaySchedule> {
   try {
-    const response = await api.get(
+    const response = await publicApi.get(
       `/api/public/tenants/${subdomain}/schedule/days/${date}`,
       {
         params: rentalAssetId ? { rentalAssetId } : undefined,
