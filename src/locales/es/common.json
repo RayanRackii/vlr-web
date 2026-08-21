@@ -1170,7 +1170,8 @@
         "invalidResponse": "Respuesta inválida de la API.",
         "pricingLoadFailed": "No se pudieron cargar los precios.",
         "pricingCreateFailed": "No se pudo crear la franja de precio.",
-        "pricingDeleteFailed": "No se pudo eliminar la franja de precio."
+        "pricingDeleteFailed": "No se pudo eliminar la franja de precio.",
+        "pricingBulkFailed": "No se pudieron aplicar los precios en lote."
       }
     }
   },

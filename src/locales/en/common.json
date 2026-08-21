@@ -1170,7 +1170,8 @@
         "invalidResponse": "Invalid API response.",
         "pricingLoadFailed": "Could not load pricing.",
         "pricingCreateFailed": "Could not create pricing.",
-        "pricingDeleteFailed": "Could not delete pricing."
+        "pricingDeleteFailed": "Could not delete pricing.",
+        "pricingBulkFailed": "Could not apply bulk pricing."
       }
     }
   },
