@@ -24,7 +24,7 @@ Agentes podem decidir detalhes técnicos locais, reversíveis e já cobertos por
 
 Se surgir uma dúvida cuja resposta possa afetar arquitetura, modelo de domínio, outra funcionalidade, contrato frontend/backend, compatibilidade retroativa, autenticação/autorização, isolamento multi-tenant, segurança, dados persistidos ou comportamento em produção, o agente **não assume**.
 
-Deve parar, explicar a decisão necessária, apresentar alternativas relevantes, recomendar uma opção com motivo e pedir decisão ao usuário antes de continuar.
+Deve parar, explicar a decisão necessária, apresentar alternativas relevantes, recomendar uma opção com motivo e pedir decisão ao usuário antes de continuar. Depois da escolha, o parent retoma o [Autonomous Delivery Workflow](#autonomous-delivery-workflow) sozinho.
 
 Regra: *Escalate uncertainty, not implementation.*
 
@@ -34,9 +34,9 @@ Uma implementação = uma branch própria + N commits + uma review.
 
 **Base:** `develop`. Nunca implementar, commitar ou fazer push diretamente em `main` ou `develop`.
 
-**Branches:** `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `chore/<slug>`. Mudança cross-repo usa o **mesmo nome** em `vlr-api` e `vlr-web`.
+**Branches:** `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `test/<slug>`, `chore/<slug>`. Mudança cross-repo usa o **mesmo nome** em `vlr-api` e `vlr-web`.
 
-`main` permanece PROD-ready. `develop` permanece integration/DEV. Implementação só em `feat` / `fix` / `refactor` / `chore`.
+`main` permanece PROD-ready. `develop` permanece integration/DEV. Implementação só em `feat` / `fix` / `refactor` / `test` / `chore`.
 
 O usuário trabalha nos mesmos repos a partir de mais de um computador. Nenhum agente pode assumir que a branch local, os refs `origin/*` locais, os commits locais ou a working tree representam o estado remoto atual.
 
@@ -45,9 +45,14 @@ O usuário trabalha nos mesmos repos a partir de mais de um computador. Nenhum a
 ```
 parent
   ├─ git bootstrap
-  ├─ architect
+  ├─ classify risk / Human Decision Gate
+  ├─ architect (se necessário)
   ├─ implementer
+  ├─ build / test
   ├─ reviewer
+  ├─ PR
+  ├─ Merge Risk Gate (dossier GLM ± Fable)
+  ├─ approve → merge em develop (quando os gates passarem)
   └─ git checkpoint
 ```
 
@@ -59,7 +64,7 @@ Detecção por **evento**, não por adivinhar se uma janela do Cursor abriu ou v
 | Depois de implementação concluída e validada | Automatic Task Checkpoint |
 | Usuário indica parar / trocar de PC / encerrar sessão | Explicit Session Handoff |
 
-Fluxo: pedido do usuário → parent → Git bootstrap **uma vez** → agentes → implementação → review/validação → Git checkpoint.
+Fluxo: pedido do usuário → parent → Git bootstrap **uma vez** → agentes → implementação → review → PR → Merge Risk Gate → merge em `develop` (se os gates passarem) → checkpoint.
 
 ### Automatic Session Bootstrap
 
@@ -108,7 +113,7 @@ git log -5 --oneline
 
 e verifica: branch atual, working tree, commits locais, commits ainda não no remote, tracking.
 
-Se a implementação estiver concluída, validada, numa branch `feat` / `fix` / `refactor` / `chore`, e as regras deste arquivo permitirem: **commit** e **push da branch**. Trabalho completo e validado não deve ficar só numa máquina.
+Se a implementação estiver concluída, validada, numa branch `feat` / `fix` / `refactor` / `test` / `chore`, e as regras deste arquivo permitirem: **commit**, **push**, e o restante do [Autonomous Delivery Workflow](#autonomous-delivery-workflow). Trabalho completo e validado não deve ficar só numa máquina.
 
 Não commitar código incompleto só para "limpar" a máquina. Trabalho incompleto deve ser reportado como incompleto.
 
@@ -147,18 +152,34 @@ Se não estiver seguro continuar noutro PC, dizer o motivo explicitamente.
 
 **O implementer pode autonomamente** (na feature branch, depois do Session Bootstrap do parent nesta tarefa): consultar status; editar; stage controlado; commits (incluindo vários coerentes); push da feature branch; configurar upstream.
 
-**O implementer NÃO pode autonomamente:** trabalhar/commitar/push em `main` ou `develop`; force push; merge automático; rebase automático; `reset --hard`; stash silencioso; `clean`; deploy de produção; alterar dados, segredos ou infraestrutura de produção; iniciar um segundo Session Bootstrap (`fetch` + sync de `develop` + criar branch) na mesma tarefa.
+**O implementer NÃO pode autonomamente:** trabalhar/commitar/push em `main` ou `develop`; force push; merge; rebase automático; `reset --hard`; stash silencioso; `clean`; deploy de produção; alterar dados, segredos ou infraestrutura de produção; iniciar um segundo Session Bootstrap (`fetch` + sync de `develop` + criar branch) na mesma tarefa. PR, aprovação e merge em `develop` são do **parent**, depois dos gates.
+
+## Autonomous Delivery Workflow
+
+Canônico (contrato Fable, blockers, squash-aware, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
+
+O parent é dono do ciclo técnico completo. O usuário não precisa pedir branch/commit/push/PR/review/approve/merge. “MR” = Pull Request.
+
+Neste repo: `web-implementer` ou `ui-implementer` (um writer por working tree) → `npm`/Vite build → `web-reviewer` em `origin/develop...HEAD` depois do parent `git fetch origin --prune`. Critical = 0, High = 0. Medium corrigido ou justificado como non-blocking.
+
+Merge Risk Gate: GLM prepara dossier compacto. Fable (`rolvix-deep-architect` no `vlr-api`) é **obrigatório** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `FABLE_MERGE_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
+
+Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates. Nunca `main`/PROD. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
+
+Testes: se houver infra, adicionar regressão automática; senão `TEST_INFRASTRUCTURE_MISSING`. Auth/tenant/contrato de API compartilhado não devem depender só de build.
+
+Fila: `READY` / `IN_PROGRESS` / `BLOCKED_HUMAN` / `BLOCKED_TECHNICAL` / `PR_OPEN` / `MERGE_REVIEW` / `MERGED_DEVELOP` / `VALIDATION_REQUIRED`. Task bloqueada não encerra o sprint.
 
 ## Roteamento multi-agent
 
 Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-O parent/orchestrator é **Grok 4.6**. Coordena Git (Session Bootstrap, Task Checkpoint, Session Handoff — ver Git Work Policy). Subagentes não repetem `git fetch` na mesma tarefa. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
+O parent/orchestrator é **Grok 4.6**. Dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, `web-reviewer`, PR, merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
 
 Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
-1. **rolvix-architect** (`glm-5.2`, readonly) — arquitetura do Rolvix (API + web).
-2. **rolvix-deep-architect** (`claude-fable-5`, readonly) — Fable só com autorização **explícita** nesta conversa.
+1. **rolvix-architect** (`glm-5.2`, readonly) — arquitetura do Rolvix (API + web); Merge Review Dossier.
+2. **rolvix-deep-architect** (`claude-fable-5`, readonly) — arquitetura profunda com aprovação explícita **ou** Merge Risk Gate quando o `AGENTS.md` da API o tornar obrigatório.
 
 Ownership de implementação **neste** repo:
 

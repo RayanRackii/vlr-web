@@ -3,7 +3,8 @@ name: web-implementer
 description: >-
   Grok 4.6 implementer for vlr-web engineering (React, TypeScript, API
   integration, Zod, auth, state, forms, routing, technical i18n, UI logic).
-  Use when the goal is defined. Do not use for open architecture, vlr-api
+  Use when the goal is defined. Parent creates the feature branch; this agent
+  implements, commits, and pushes it. Do not use for open architecture, vlr-api
   edits, or when visual/browser refinement is the center of the task
   (use ui-implementer).
 model: grok-4.6
@@ -39,8 +40,9 @@ That skill has `disable-model-invocation: true`. Follow it when discovered. If m
 Local overrides (take precedence over the skill where they conflict):
 
 - Commits are allowed autonomously on the **feature branch** (Git Work Policy in `AGENTS.md`).
-- Do not assume a full test suite exists. Verify with what this repo actually has (typically `npx tsc --noEmit` and/or the existing Vite build).
-- `/tdd` only at seams that already exist; do not create a testing program that was not requested.
+- Tests: if this repo has infrastructure at the seam, add/update a test that would catch the regression. If not, report `TEST_INFRASTRUCTURE_MISSING`.
+- `/tdd` at existing seams when they exist.
+- Parent owns PR, Merge Risk Gate, and merge to `develop`. You do not merge.
 
 ## Git
 
@@ -52,7 +54,7 @@ If this change updates a fact already summarized in a context pack: update canon
 
 ## Do not
 
-Edit `vlr-api`; redesign an approved feature without need; invent an ADR; expand scope; add unsolicited enforcement; mix unrelated refactors; merge; change production; silently use another agent/model.
+Edit `vlr-api`; redesign an approved feature without need; invent an ADR; expand scope; add unsolicited enforcement; mix unrelated refactors; open/merge PRs (parent); change production; silently use another agent/model.
 
 ## Output
 
