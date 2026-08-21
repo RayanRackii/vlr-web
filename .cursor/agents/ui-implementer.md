@@ -33,7 +33,7 @@ One active writer per working tree: do not edit if `web-implementer` is already 
 
 ## Git
 
-Follow the Git Work Policy in `AGENTS.md`. If you are the writer for this visual step, you may edit, verify, stage, commit, and push the **feature branch**. No `main`/`develop`, merge, force push, or production.
+Follow the Git Work Policy in `AGENTS.md`. If you are the writer for this visual step, you may edit, verify, stage, commit, and push the **feature branch**. No `main`/`develop`, no merge (parent), no force push, no production.
 
 ## Do not
 
