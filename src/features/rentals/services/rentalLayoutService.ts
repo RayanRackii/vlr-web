@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { api, publicApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 
 const layoutItemSchema = z.object({
@@ -107,7 +107,7 @@ export async function fetchPublicRentalLayouts(
   subdomain: string,
 ): Promise<RentalLayout[]> {
   try {
-    const response = await api.get(
+    const response = await publicApi.get(
       `/api/public/tenants/${subdomain}/rental-layouts`,
     )
     const parsed = z.array(layoutSchema).safeParse(response.data)
