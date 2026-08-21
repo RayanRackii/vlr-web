@@ -5,7 +5,7 @@ import {
   type CreateTenantRequest,
   type CreateTenantResponse,
 } from "@/features/onboarding/createTenantSchema"
-import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
+import { publicApi, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 
 export async function createTenant(
   payload: CreateTenantRequest,
@@ -13,7 +13,7 @@ export async function createTenant(
   const validatedPayload = createTenantRequestSchema.parse(payload)
 
   try {
-    const response = await api.post<unknown>("/api/onboarding/tenants", {
+    const response = await publicApi.post<unknown>("/api/onboarding/tenants", {
       ...validatedPayload,
       tradeName: validatedPayload.tradeName || null,
       headquartersUnitCode: validatedPayload.headquartersUnitCode || null,

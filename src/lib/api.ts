@@ -31,6 +31,9 @@ function createApiClient() {
   })
 }
 
+/** AllowAnonymous portal/onboarding calls. Never attaches Authorization. */
+export const publicApi = createApiClient()
+
 /** B2B panel: Supabase session JWT only. */
 export const api = createApiClient()
 

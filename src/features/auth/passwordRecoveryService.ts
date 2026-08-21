@@ -1,9 +1,9 @@
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { publicApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 
 export async function requestPasswordReset(email: string): Promise<string> {
   try {
-    const response = await api.post<{ message: string }>(
+    const response = await publicApi.post<{ message: string }>(
       "/api/auth/forgot-password",
       { email },
     )
