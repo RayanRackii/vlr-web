@@ -29,11 +29,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { tenantPortalHref } from "@/features/tenantPortal/services/tenantPortalService"
 import { cn } from "@/lib/utils"
 
 type TenantAdminCardProps = {
   tenant: TenantAdmin
-  baseDomain: string
   moduleLabelKey: (moduleName: string) => string
   isDeleting: boolean
   deleteError: string | null
@@ -44,7 +44,6 @@ type TenantAdminCardProps = {
 
 export function TenantAdminCard({
   tenant,
-  baseDomain,
   moduleLabelKey,
   isDeleting,
   deleteError,
@@ -179,7 +178,7 @@ export function TenantAdminCard({
 
         <CardDescription className="font-mono text-xs">
           {tenant.subdomain
-            ? `${tenant.subdomain}.${baseDomain}`
+            ? tenantPortalHref(tenant.subdomain)
             : t("admin.dashboard.noSubdomain")}
         </CardDescription>
       </CardHeader>

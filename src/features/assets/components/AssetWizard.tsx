@@ -42,9 +42,11 @@ import {
   type AssetFamily,
   type AssetFamilyField,
 } from "@/features/assets/schemas/assetFamilySchemas"
-import type {
-  Asset,
-  AssetStatus,
+import {
+  toApiTimeOnly,
+  toHtmlTimeInput,
+  type Asset,
+  type AssetStatus,
 } from "@/features/assets/schemas/assetSchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import {
@@ -54,8 +56,7 @@ import {
   updateAsset,
 } from "@/features/assets/services/assetsService"
 import {
-  createAssetPricing,
-  deleteAssetPricing,
+  bulkApplyAssetPricings,
   getAssetPricings,
 } from "@/features/assets/services/rentalPricingService"
 
@@ -87,6 +88,8 @@ type WizardFormState = {
   requiresMaintenance: boolean
   isRentable: boolean
   requiresDeposit: boolean
+  queueEnabled: boolean
+  queueOpeningTime: string
   rentalType: "Location" | "Good"
   totalQuantity: number
 }
@@ -102,6 +105,7 @@ type FieldErrorKey =
   | "startNumber"
   | "endNumber"
   | "totalQuantity"
+  | "queueOpeningTime"
   | "attributes"
   | "pricing"
 
@@ -137,8 +141,27 @@ function emptyForm(defaults?: {
     requiresMaintenance: false,
     isRentable: false,
     requiresDeposit: true,
+    queueEnabled: false,
+    queueOpeningTime: "",
     rentalType: "Location",
     totalQuantity: 1,
+  }
+}
+
+function queueWriteFields(form: WizardFormState): {
+  queueEnabled: boolean
+  queueOpeningTime: string | null
+} {
+  if (
+    !form.isRentable ||
+    form.rentalType !== "Location" ||
+    !form.queueEnabled
+  ) {
+    return { queueEnabled: false, queueOpeningTime: null }
+  }
+  return {
+    queueEnabled: true,
+    queueOpeningTime: toApiTimeOnly(form.queueOpeningTime),
   }
 }
 
@@ -197,6 +220,8 @@ export function AssetWizard({
 
   const currentStepId = steps[stepIndex]?.id ?? "general"
   const isLastStep = stepIndex >= steps.length - 1
+  const isBulkLocation = mode === "bulk" && form.rentalType === "Location"
+  const isBulkGood = mode === "bulk" && form.rentalType === "Good"
 
   const titleKey =
     mode === "create"
@@ -252,6 +277,12 @@ export function AssetWizard({
         requiresMaintenance: asset.requiresMaintenance,
         isRentable: asset.isRentable,
         requiresDeposit: asset.rentalConfig?.requiresDeposit ?? true,
+        queueEnabled:
+          asset.rentalConfig?.type === "Location" &&
+          (asset.rentalConfig?.queueEnabled ?? false),
+        queueOpeningTime: toHtmlTimeInput(
+          asset.rentalConfig?.queueOpeningTime,
+        ),
         rentalType: asset.rentalConfig?.type ?? "Location",
         totalQuantity: asset.rentalConfig?.totalQuantity ?? 1,
       })
@@ -370,18 +401,25 @@ export function AssetWizard({
       if (!form.baseTag.trim()) {
         errors.push("baseTag")
       }
-      if (!Number.isFinite(form.startNumber)) {
-        errors.push("startNumber")
-      }
-      if (!Number.isFinite(form.endNumber)) {
-        errors.push("endNumber")
-      }
-      if (
-        Number.isFinite(form.startNumber) &&
-        Number.isFinite(form.endNumber) &&
-        form.startNumber > form.endNumber
+      if (form.rentalType === "Location") {
+        if (!Number.isFinite(form.startNumber)) {
+          errors.push("startNumber")
+        }
+        if (!Number.isFinite(form.endNumber)) {
+          errors.push("endNumber")
+        }
+        if (
+          Number.isFinite(form.startNumber) &&
+          Number.isFinite(form.endNumber) &&
+          form.startNumber > form.endNumber
+        ) {
+          errors.push("startNumber", "endNumber")
+        }
+      } else if (
+        form.totalQuantity < 1 ||
+        !Number.isFinite(form.totalQuantity)
       ) {
-        errors.push("startNumber", "endNumber")
+        errors.push("totalQuantity")
       }
     } else {
       if (!form.name.trim()) {
@@ -403,7 +441,11 @@ export function AssetWizard({
 
     if (errors.length > 0) {
       markErrors(errors)
-      toast.error(t("common.required"))
+      toast.error(
+        errors.includes("totalQuantity") && mode === "bulk"
+          ? t("assets.inventory.validation.stockQuantityRequired")
+          : t("common.required"),
+      )
       return false
     }
 
@@ -415,14 +457,27 @@ export function AssetWizard({
     if (!form.isRentable) {
       return true
     }
-    if (form.totalQuantity < 1 || !Number.isFinite(form.totalQuantity)) {
+    if (
+      mode !== "bulk" &&
+      (form.totalQuantity < 1 || !Number.isFinite(form.totalQuantity))
+    ) {
       markErrors(["totalQuantity"])
       toast.error(t("assets.inventory.validation.quantityRequired"))
+      return false
+    }
+    if (
+      form.rentalType === "Location" &&
+      form.queueEnabled &&
+      !toApiTimeOnly(form.queueOpeningTime)
+    ) {
+      markErrors(["queueOpeningTime"])
+      toast.error(t("assets.inventory.validation.queueOpeningTimeRequired"))
       return false
     }
     setFieldErrors((prev) => {
       const next = { ...prev }
       delete next.totalQuantity
+      delete next.queueOpeningTime
       return next
     })
     return true
@@ -466,28 +521,6 @@ export function AssetWizard({
     setStepIndex((prev) => Math.max(prev - 1, 0))
   }
 
-  async function applyPricingsToAsset(targetAssetId: string) {
-    if (!form.isRentable) {
-      return
-    }
-
-    const existing = await getAssetPricings(targetAssetId)
-    for (const row of existing) {
-      await deleteAssetPricing(targetAssetId, row.id)
-    }
-
-    for (const draft of expandPricingEditor(pricing)) {
-      await createAssetPricing(targetAssetId, {
-        dayOfWeek: draft.dayOfWeek,
-        startTime: draft.startTime,
-        endTime: draft.endTime,
-        pricePerHour: draft.pricePerHour,
-        requiresDeposit: false,
-        depositPercentage: 0,
-      })
-    }
-  }
-
   async function handleSubmit() {
     if (readOnly) {
       return
@@ -506,6 +539,17 @@ export function AssetWizard({
         form.attributes,
       )
 
+      const pricingRows = form.isRentable
+        ? expandPricingEditor(pricing).map((draft) => ({
+            dayOfWeek: draft.dayOfWeek,
+            startTime: draft.startTime,
+            endTime: draft.endTime,
+            pricePerHour: draft.pricePerHour,
+            requiresDeposit: false,
+            depositPercentage: 0,
+          }))
+        : null
+
       if (mode === "create") {
         const asset = await createAsset({
           unitId: form.unitId,
@@ -521,9 +565,14 @@ export function AssetWizard({
           rentalType: form.rentalType,
           totalQuantity: form.totalQuantity,
           requiresDeposit: form.requiresDeposit,
+          ...queueWriteFields(form),
         })
-        if (form.isRentable) {
-          await applyPricingsToAsset(asset.id)
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: [asset.id],
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.create"))
       } else if (mode === "bulk") {
@@ -534,16 +583,21 @@ export function AssetWizard({
           attributes,
           baseLocationName: form.baseLocationName.trim(),
           baseTag: form.baseTag.trim(),
-          startNumber: form.startNumber,
-          endNumber: form.endNumber,
+          startNumber: isBulkLocation ? form.startNumber : null,
+          endNumber: isBulkLocation ? form.endNumber : null,
+          rentalType: form.rentalType,
+          totalQuantity: isBulkGood ? form.totalQuantity : 1,
           isRentable: form.isRentable,
           requiresMaintenance: form.requiresMaintenance,
           requiresDeposit: form.requiresDeposit,
+          ...queueWriteFields(form),
         })
-        if (form.isRentable) {
-          for (const asset of result.assets) {
-            await applyPricingsToAsset(asset.id)
-          }
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: result.assets.map((asset) => asset.id),
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.bulk"))
       } else {
@@ -566,9 +620,14 @@ export function AssetWizard({
           rentalType: form.rentalType,
           totalQuantity: form.totalQuantity,
           requiresDeposit: form.requiresDeposit,
+          ...queueWriteFields(form),
         })
-        if (form.isRentable) {
-          await applyPricingsToAsset(loadedAsset.id)
+        if (pricingRows) {
+          await bulkApplyAssetPricings({
+            assetIds: [loadedAsset.id],
+            pricings: pricingRows,
+            replace: true,
+          })
         }
         toast.success(t("assets.wizard.success.update"))
       }
@@ -776,6 +835,56 @@ export function AssetWizard({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2 sm:col-span-2">
                       <FieldLabel
+                        label={t("assets.detail.fields.rentalType")}
+                        help={t("assets.wizard.help.rentalType")}
+                      />
+                      <Select
+                        modal={false}
+                        value={form.rentalType}
+                        onValueChange={(value) => {
+                          if (value === "Location" || value === "Good") {
+                            setForm((prev) => ({
+                              ...prev,
+                              rentalType: value,
+                              ...(value === "Good"
+                                ? { queueEnabled: false, queueOpeningTime: "" }
+                                : {}),
+                            }))
+                            setFieldErrors((prev) => {
+                              const next = { ...prev }
+                              delete next.startNumber
+                              delete next.endNumber
+                              delete next.totalQuantity
+                              return next
+                            })
+                          }
+                        }}
+                        items={[
+                          {
+                            value: "Location",
+                            label: t("assets.detail.rentalTypes.Location"),
+                          },
+                          {
+                            value: "Good",
+                            label: t("assets.detail.rentalTypes.Good"),
+                          },
+                        ]}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Location">
+                            {t("assets.detail.rentalTypes.Location")}
+                          </SelectItem>
+                          <SelectItem value="Good">
+                            {t("assets.detail.rentalTypes.Good")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <FieldLabel
                         label={t("assets.inventory.form.baseLocation")}
                         help={t("assets.wizard.help.baseLocation")}
                         required
@@ -814,46 +923,99 @@ export function AssetWizard({
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <FieldLabel
-                        label={t("assets.inventory.form.startNumber")}
-                        help={t("assets.wizard.help.startNumber")}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        value={form.startNumber}
-                        aria-invalid={fieldErrors.startNumber || undefined}
-                        className={fieldInvalidClass(
-                          Boolean(fieldErrors.startNumber),
-                        )}
-                        onChange={(event) => {
-                          patchForm({
-                            startNumber: event.target.valueAsNumber,
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <FieldLabel
-                        label={t("assets.inventory.form.endNumber")}
-                        help={t("assets.wizard.help.endNumber")}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        value={form.endNumber}
-                        aria-invalid={fieldErrors.endNumber || undefined}
-                        className={fieldInvalidClass(
-                          Boolean(fieldErrors.endNumber),
-                        )}
-                        onChange={(event) => {
-                          patchForm({
-                            endNumber: event.target.valueAsNumber,
-                          })
-                        }}
-                      />
-                    </div>
+                    {isBulkGood ? (
+                      <div className="space-y-2 sm:col-span-2">
+                        <FieldLabel
+                          label={t("assets.inventory.form.stockQuantity")}
+                          help={t("assets.wizard.help.stockQuantity")}
+                          required
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          value={form.totalQuantity}
+                          aria-invalid={fieldErrors.totalQuantity || undefined}
+                          className={fieldInvalidClass(
+                            Boolean(fieldErrors.totalQuantity),
+                          )}
+                          onChange={(event) => {
+                            patchForm({
+                              totalQuantity: event.target.valueAsNumber,
+                            })
+                          }}
+                        />
+                        {fieldErrors.totalQuantity ? (
+                          <p className="text-xs text-destructive">
+                            {t(
+                              "assets.inventory.validation.stockQuantityRequired",
+                            )}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <FieldLabel
+                            label={t("assets.inventory.form.startNumber")}
+                            help={t("assets.wizard.help.startNumber")}
+                            required
+                          />
+                          <Input
+                            type="number"
+                            value={form.startNumber}
+                            aria-invalid={
+                              fieldErrors.startNumber || undefined
+                            }
+                            className={fieldInvalidClass(
+                              Boolean(fieldErrors.startNumber),
+                            )}
+                            onChange={(event) => {
+                              patchForm({
+                                startNumber: event.target.valueAsNumber,
+                              })
+                            }}
+                          />
+                          {fieldErrors.startNumber ? (
+                            <p className="text-xs text-destructive">
+                              {form.startNumber > form.endNumber
+                                ? t("assets.inventory.validation.rangeInvalid")
+                                : t(
+                                    "assets.inventory.validation.startNumberRequired",
+                                  )}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <FieldLabel
+                            label={t("assets.inventory.form.endNumber")}
+                            help={t("assets.wizard.help.endNumber")}
+                            required
+                          />
+                          <Input
+                            type="number"
+                            value={form.endNumber}
+                            aria-invalid={fieldErrors.endNumber || undefined}
+                            className={fieldInvalidClass(
+                              Boolean(fieldErrors.endNumber),
+                            )}
+                            onChange={(event) => {
+                              patchForm({
+                                endNumber: event.target.valueAsNumber,
+                              })
+                            }}
+                          />
+                          {fieldErrors.endNumber ? (
+                            <p className="text-xs text-destructive">
+                              {form.startNumber > form.endNumber
+                                ? t("assets.inventory.validation.rangeInvalid")
+                                : t(
+                                    "assets.inventory.validation.endNumberRequired",
+                                  )}
+                            </p>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1120,6 +1282,74 @@ export function AssetWizard({
                         className="pointer-events-none"
                       />
                     </button>
+                    {form.rentalType === "Location" ? (
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          aria-pressed={form.queueEnabled}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                            form.queueEnabled
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-card hover:bg-muted/40",
+                          )}
+                          onClick={() => {
+                            const next = !form.queueEnabled
+                            patchForm({
+                              queueEnabled: next,
+                              queueOpeningTime: next
+                                ? form.queueOpeningTime
+                                : "",
+                            })
+                          }}
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <FieldLabel
+                              label={t("assets.detail.fields.queueEnabled")}
+                              help={t("assets.wizard.help.queueEnabled")}
+                              className="pointer-events-auto"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              {form.queueEnabled
+                                ? t("assets.wizard.toggle.on")
+                                : t("assets.wizard.toggle.off")}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={form.queueEnabled}
+                            tabIndex={-1}
+                            className="pointer-events-none"
+                          />
+                        </button>
+                        {form.queueEnabled ? (
+                          <div className="space-y-2">
+                            <FieldLabel
+                              label={t(
+                                "assets.detail.fields.queueOpeningTime",
+                              )}
+                              help={t("assets.wizard.help.queueOpeningTime")}
+                              required
+                            />
+                            <Input
+                              type="time"
+                              value={form.queueOpeningTime}
+                              aria-invalid={
+                                fieldErrors.queueOpeningTime || undefined
+                              }
+                              className={fieldInvalidClass(
+                                Boolean(fieldErrors.queueOpeningTime),
+                              )}
+                              onChange={(event) => {
+                                patchForm({
+                                  queueOpeningTime: event.target.value,
+                                })
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {mode !== "bulk" ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
                       <FieldLabel
@@ -1130,9 +1360,15 @@ export function AssetWizard({
                         modal={false}
                         value={form.rentalType}
                         onValueChange={(value) => {
-                          if (value) {
+                          if (value === "Location" || value === "Good") {
                             patchForm({
-                              rentalType: value as "Location" | "Good",
+                              rentalType: value,
+                              ...(value === "Good"
+                                ? {
+                                    queueEnabled: false,
+                                    queueOpeningTime: "",
+                                  }
+                                : {}),
                             })
                           }
                         }}
@@ -1182,6 +1418,7 @@ export function AssetWizard({
                       />
                     </div>
                     </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -1229,6 +1466,12 @@ export function AssetWizard({
                   <>
                     <p>
                       <span className="text-muted-foreground">
+                        {t("assets.detail.fields.rentalType")}:{" "}
+                      </span>
+                      {t(`assets.detail.rentalTypes.${form.rentalType}`)}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">
                         {t("assets.inventory.form.baseLocation")}:{" "}
                       </span>
                       {form.baseLocationName}
@@ -1239,13 +1482,22 @@ export function AssetWizard({
                       </span>
                       {form.baseTag}
                     </p>
-                    <p>
-                      <span className="text-muted-foreground">
-                        {t("assets.inventory.form.startNumber")}–
-                        {t("assets.inventory.form.endNumber")}:{" "}
-                      </span>
-                      {form.startNumber}–{form.endNumber}
-                    </p>
+                    {isBulkGood ? (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.stockQuantity")}:{" "}
+                        </span>
+                        {form.totalQuantity}
+                      </p>
+                    ) : (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.inventory.form.startNumber")}–
+                          {t("assets.inventory.form.endNumber")}:{" "}
+                        </span>
+                        {form.startNumber}–{form.endNumber}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1301,6 +1553,29 @@ export function AssetWizard({
                         ? t("common.yes", { defaultValue: "Yes" })
                         : t("common.no", { defaultValue: "No" })}
                     </p>
+                    {form.rentalType === "Location" ? (
+                      <>
+                        <p>
+                          <span className="text-muted-foreground">
+                            {t("assets.detail.fields.queueEnabled")}:{" "}
+                          </span>
+                          {form.queueEnabled
+                            ? t("common.yes", { defaultValue: "Yes" })
+                            : t("common.no", { defaultValue: "No" })}
+                        </p>
+                        {form.queueEnabled ? (
+                          <p>
+                            <span className="text-muted-foreground">
+                              {t("assets.detail.fields.queueOpeningTime")}:{" "}
+                            </span>
+                            {form.queueOpeningTime ||
+                              t("assets.inventory.emptyValue")}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {mode !== "bulk" ? (
+                      <>
                     <p>
                       <span className="text-muted-foreground">
                         {t("assets.detail.fields.rentalType")}:{" "}
@@ -1313,6 +1588,8 @@ export function AssetWizard({
                       </span>
                       {form.totalQuantity}
                     </p>
+                      </>
+                    ) : null}
                     <p>
                       <span className="text-muted-foreground">
                         {t("assets.detail.rental.pricingTitle")}:{" "}

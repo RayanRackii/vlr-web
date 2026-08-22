@@ -15,7 +15,10 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
-import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import {
+  tenantPortalHref,
+  tenantPortalHrefPlaceholder,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import {
   ROLVIX_ACCENT_COLOR,
   ROLVIX_PRIMARY_COLOR,
@@ -100,7 +103,7 @@ export function TenantOnboardingWizard() {
   const [familiesError, setFamiliesError] = useState<string | null>(null)
   const redirectTimeoutRef = useRef<number | null>(null)
   const finishInFlightRef = useRef(false)
-  const baseDomain = useMemo(() => getTenantBaseDomain(), [])
+  const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
   const form = useForm<TenantOnboardingFormValues>({
     resolver: zodResolver(tenantOnboardingSchema),
@@ -449,8 +452,8 @@ export function TenantOnboardingWizard() {
                     </FormControl>
                     <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
                       {field.value
-                        ? `${field.value}.${baseDomain}`
-                        : `{subdomain}.${baseDomain}`}
+                        ? tenantPortalHref(field.value)
+                        : portalUrlPlaceholder}
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -737,7 +740,7 @@ export function TenantOnboardingWizard() {
                     {t("admin.wizard.fields.taxId")}: {values.taxId}
                   </p>
                   <p className="font-mono text-xs text-muted-foreground">
-                    {values.subdomain}.{baseDomain}
+                    {tenantPortalHref(values.subdomain)}
                   </p>
                   {values.logoSvg ? (
                     <p className="text-xs text-muted-foreground">

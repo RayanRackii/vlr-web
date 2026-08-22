@@ -58,6 +58,9 @@
     "createReservation": "Could not create reservation.",
     "loadScheduleDay": "Could not load schedule day.",
     "bookSlot": "Could not book slot.",
+    "loadQueue": "Could not load the waiting queue.",
+    "joinQueue": "Could not join the waiting queue.",
+    "leaveQueue": "Could not leave the waiting queue.",
     "processImage": "Could not process image.",
     "loadAssetFamilies": "Could not load asset families.",
     "loadOccupancyKinds": "Could not load occupancy kinds.",
@@ -67,6 +70,8 @@
     "saveLayout": "Could not save the layout.",
     "deleteLayout": "Could not delete the layout.",
     "loadMenu": "Could not load menu.",
+    "loadCustomerProfile": "Could not load the profile.",
+    "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API."
   },
   "trial": {
@@ -226,12 +231,57 @@
       "myReservations": "My reservations",
       "empty": "No reservations yet.",
       "noAssets": "No spaces configured",
-      "backHome": "Back"
+      "backHome": "Back",
+      "queue": {
+        "closed": "The queue opens at {{waitingRoom}} and reservations open at {{opensAt}}.",
+        "closedFallback": "The reservation queue is not open yet.",
+        "join": "Join the queue",
+        "joining": "Joining...",
+        "inQueue": "You are in the queue",
+        "position": "Your position: {{position}}",
+        "ahead": "{{count}} ahead of you",
+        "leave": "Leave the queue",
+        "leaving": "Leaving...",
+        "yourTurn": "Your turn",
+        "countdown": "Time left: {{time}}",
+        "expired": "Your time is up",
+        "rejoin": "Join the queue again",
+        "errors": {
+          "QUEUE_REQUIRED": "You need to be in the queue to book this space.",
+          "QUEUE_WAITING": "Wait for your turn in the queue to book.",
+          "QUEUE_TURN_EXPIRED": "Your turn has ended.",
+          "QUEUE_TURN_ALREADY_USED": "You already used this turn to book.",
+          "QUEUE_WAITING_ROOM_CLOSED": "The queue is not open yet."
+        }
+      }
     },
     "menu": {
       "empty": "No modules available.",
       "emptyTitle": "Nothing here yet",
       "emptyDescription": "The club admin has not configured portal menu items yet."
+    },
+    "profile": {
+      "title": "My Profile",
+      "subtitle": "Update your name and photo. Email, phone and CPF cannot be changed here.",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Profile updated.",
+      "saveError": "Could not save the profile.",
+      "loadError": "Could not load the profile.",
+      "retry": "Try again",
+      "readOnly": "read-only",
+      "photoChange": "Change photo",
+      "photoProcessing": "Processing photo...",
+      "photoRemove": "Remove photo",
+      "photoNone": "No photo",
+      "address": "Address",
+      "sections": {
+        "account": "Account details"
+      },
+      "validation": {
+        "nameMin": "Name must be at least 2 characters.",
+        "nameMax": "Name can be at most 200 characters."
+      }
     }
   },
   "landing": {
@@ -542,6 +592,7 @@
   },
   "account": {
     "title": "Account",
+    "profile": "My Profile",
     "userFallback": "User",
     "openMenu": "Open account menu",
     "signOut": "Sign out",
@@ -963,7 +1014,8 @@
           "generic": "e.g. R-"
         },
         "startNumber": "Start number",
-        "endNumber": "End number"
+        "endNumber": "End number",
+        "stockQuantity": "Stock quantity"
       },
       "validation": {
         "unitRequired": "Unit is required.",
@@ -977,7 +1029,9 @@
         "endNumberRequired": "Enter the end number.",
         "rangeInvalid": "End number must be greater than or equal to start number.",
         "quantityRequired": "Enter a valid quantity (minimum 1).",
-        "pricingRequired": "Add at least one valid price band."
+        "stockQuantityRequired": "Enter a valid stock quantity (minimum 1).",
+        "pricingRequired": "Add at least one valid price band.",
+        "queueOpeningTimeRequired": "Enter the reservation queue opening time."
       },
       "success": {
         "bulkCreated": "{{count}} resource(s) created successfully."
@@ -1027,9 +1081,12 @@
         "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
         "isRentable": "When on, the resource can be booked in rentals/schedule.",
         "requiresDeposit": "When on, the booking waits for admin payment confirmation. When off, it is confirmed immediately and holds the time slot.",
+        "queueEnabled": "When on, customers join a FIFO queue to book this space at opening time. Off by default.",
+        "queueOpeningTime": "Time of day when reservations open (Brasília timezone). The waiting room opens 30 minutes earlier.",
         "requiresMaintenanceHint": "This resource can be linked to PMOC plans and work orders.",
         "rentalType": "Space (court/room) or good (loaned equipment).",
-        "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity."
+        "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity.",
+        "stockQuantity": "How many units of this good. The batch creates one resource with this stock, not numbered items."
       },
       "toggle": {
         "on": "On",
@@ -1070,6 +1127,9 @@
       "next": "Next",
       "back": "Back",
       "finish": "Finish",
+      "review": {
+        "stockQuantity": "Stock quantity"
+      },
       "success": {
         "create": "Resource created successfully.",
         "bulk": "Resources created successfully.",
@@ -1104,6 +1164,8 @@
         "status": "Status",
         "isRentable": "Available for booking / rental",
         "requiresDeposit": "Is prior payment required?",
+        "queueEnabled": "Reservation queue",
+        "queueOpeningTime": "Reservation queue opening time",
         "requiresMaintenance": "Requires maintenance",
         "rentalType": "Rental type",
         "totalQuantity": "Total quantity"
@@ -1144,7 +1206,8 @@
         "invalidResponse": "Invalid API response.",
         "pricingLoadFailed": "Could not load pricing.",
         "pricingCreateFailed": "Could not create pricing.",
-        "pricingDeleteFailed": "Could not delete pricing."
+        "pricingDeleteFailed": "Could not delete pricing.",
+        "pricingBulkFailed": "Could not apply bulk pricing."
       }
     }
   },

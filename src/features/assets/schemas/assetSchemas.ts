@@ -48,6 +48,8 @@ export const assetSchema = z.object({
       totalQuantity: z.number().int(),
       isActive: z.boolean(),
       requiresDeposit: z.boolean().optional().default(true),
+      queueEnabled: z.boolean().optional().default(false),
+      queueOpeningTime: z.string().nullish().transform((value) => value || null),
     })
     .nullish(),
   createdAt: z.string(),
@@ -75,6 +77,8 @@ export const updateAssetRequestSchema = z.object({
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
   requiresDeposit: z.boolean().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type UpdateAssetRequest = z.infer<typeof updateAssetRequestSchema>
@@ -95,6 +99,8 @@ export const createAssetRequestSchema = z.object({
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
   requiresDeposit: z.boolean().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type CreateAssetRequest = z.infer<typeof createAssetRequestSchema>
@@ -113,11 +119,15 @@ export const bulkCreateAssetsRequestSchema = z.object({
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   baseLocationName: z.string().trim().min(1),
   baseTag: z.string().trim().min(1),
-  startNumber: z.number().int(),
-  endNumber: z.number().int(),
+  startNumber: z.number().int().nullish(),
+  endNumber: z.number().int().nullish(),
+  rentalType: z.enum(["Location", "Good"]).default("Location"),
+  totalQuantity: z.number().int().min(1).default(1),
   isRentable: z.boolean().optional(),
   requiresMaintenance: z.boolean().optional(),
   requiresDeposit: z.boolean().optional().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type BulkCreateAssetsRequest = z.infer<
@@ -133,6 +143,46 @@ export type BulkCreateAssetsResponse = z.infer<
   typeof bulkCreateAssetsResponseSchema
 >
 
+export const dayOfWeekSchema = z.enum([
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+])
+
+export const bulkPricingRowSchema = z.object({
+  dayOfWeek: dayOfWeekSchema,
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  pricePerHour: z.number().nonnegative(),
+  requiresDeposit: z.boolean(),
+  depositPercentage: z.number().min(0).max(100),
+})
+
+export type BulkPricingRow = z.infer<typeof bulkPricingRowSchema>
+
+export const bulkApplyPricingsRequestSchema = z.object({
+  assetIds: z.array(z.string().uuid()).min(1).max(1000),
+  pricings: z.array(bulkPricingRowSchema).max(100),
+  replace: z.boolean(),
+})
+
+export type BulkApplyPricingsRequest = z.infer<
+  typeof bulkApplyPricingsRequestSchema
+>
+
+export const bulkApplyPricingsResponseSchema = z.object({
+  appliedAssetCount: z.number().int().nonnegative(),
+  pricingsCreated: z.number().int().nonnegative(),
+})
+
+export type BulkApplyPricingsResponse = z.infer<
+  typeof bulkApplyPricingsResponseSchema
+>
+
 export function createBulkCreateAssetsFormSchema(messages: {
   unitRequired: string
   categoryRequired: string
@@ -142,6 +192,7 @@ export function createBulkCreateAssetsFormSchema(messages: {
   startNumberRequired: string
   endNumberRequired: string
   rangeInvalid: string
+  stockQuantityRequired: string
 }) {
   return z
     .object({
@@ -163,19 +214,57 @@ export function createBulkCreateAssetsFormSchema(messages: {
       attributes: z.record(z.string(), z.string()),
       baseLocationName: z.string().trim().min(1, messages.baseLocationRequired),
       baseTag: z.string().trim().min(1, messages.baseTagRequired),
+      rentalType: z.enum(["Location", "Good"]).default("Location"),
+      totalQuantity: z
+        .number({ error: messages.stockQuantityRequired })
+        .int(messages.stockQuantityRequired)
+        .min(1, messages.stockQuantityRequired)
+        .default(1),
       startNumber: z
         .number({ error: messages.startNumberRequired })
-        .int(messages.startNumberRequired),
+        .int(messages.startNumberRequired)
+        .optional(),
       endNumber: z
         .number({ error: messages.endNumberRequired })
-        .int(messages.endNumberRequired),
+        .int(messages.endNumberRequired)
+        .optional(),
     })
-    .refine((values) => values.startNumber <= values.endNumber, {
-      message: messages.rangeInvalid,
-      path: ["endNumber"],
-    })
+    .refine(
+      (values) =>
+        values.startNumber == null ||
+        values.endNumber == null ||
+        values.startNumber <= values.endNumber,
+      {
+        message: messages.rangeInvalid,
+        path: ["endNumber"],
+      },
+    )
 }
 
 export type BulkCreateAssetsFormValues = z.infer<
   ReturnType<typeof createBulkCreateAssetsFormSchema>
 >
+
+/** HTML `type="time"` value (`HH:mm`) from API TimeOnly (`HH:mm:ss`). */
+export function toHtmlTimeInput(value: string | null | undefined): string {
+  if (!value) {
+    return ""
+  }
+  const match = /^(\d{2}:\d{2})/.exec(value)
+  return match?.[1] ?? ""
+}
+
+/** Persist TimeOnly as `HH:mm:ss`, or null when empty. */
+export function toApiTimeOnly(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ""
+  if (!trimmed) {
+    return null
+  }
+  if (/^\d{2}:\d{2}:\d{2}/.test(trimmed)) {
+    return trimmed.slice(0, 8)
+  }
+  if (/^\d{2}:\d{2}$/.test(trimmed)) {
+    return `${trimmed}:00`
+  }
+  return trimmed
+}

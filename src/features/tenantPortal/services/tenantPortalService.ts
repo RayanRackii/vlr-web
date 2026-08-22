@@ -1,16 +1,25 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import {
+  api,
+  customerApi,
+  publicApi,
+  getAxiosErrorPayload,
+  isAxiosError,
+  parseApiError,
+} from "@/lib/api"
 import i18n from "@/lib/i18n"
-import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
+  customerProfileSchema,
   moduleMenuItemSchema,
   registerResponseSchema,
   registrationFieldSchema,
   registrationSchemaResponseSchema,
   tenantBrandingSchema,
   type CustomerAuthResponse,
+  type CustomerProfile,
   type ModuleMenuItem,
   type RegistrationField,
   type RegistrationSchemaResponse,
@@ -63,6 +72,7 @@ export type TenantPortalSegment =
   | "register"
   | "verify-phone"
   | "app"
+  | "app/perfil"
   | "agenda"
   | `agenda/${string}`
 
@@ -78,9 +88,73 @@ export function tenantPortalPath(
     return segment.length > 0 ? `/${segment}` : "/"
   }
 
-  return segment.length > 0
-    ? `/t/${subdomain}/${segment}`
-    : `/t/${subdomain}`
+  return tenantPortalPathMode(subdomain, segment)
+}
+
+/** Path-mode portal path (`/t/:subdomain/...`), regardless of the current host. */
+export function tenantPortalPathMode(
+  subdomain: string,
+  segment: TenantPortalSegment = "",
+): string {
+  const slug = subdomain.trim().toLowerCase()
+  return segment.length > 0 ? `/t/${slug}/${segment}` : `/t/${slug}`
+}
+
+export type TenantPortalHrefOptions = {
+  origin?: string
+  hostname?: string
+}
+
+/**
+ * Absolute tenant portal URL.
+ * Product domains → `https://{subdomain}.{baseDomain}/{segment}` (host-mode).
+ * Preview, localhost, and other origins → `{origin}/t/{subdomain}/{segment}` (path-mode).
+ */
+export function tenantPortalHref(
+  subdomain: string,
+  segment: TenantPortalSegment = "",
+  options?: TenantPortalHrefOptions,
+): string {
+  const slug = subdomain.trim().toLowerCase()
+  const segmentPath = segment.length > 0 ? `/${segment}` : ""
+
+  const hostname =
+    options?.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : "localhost")
+  const origin =
+    options?.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173")
+
+  if (isProductHostname(hostname)) {
+    const base = getTenantBaseDomain()
+    return `https://${slug}.${base}${segmentPath}`
+  }
+
+  const path = tenantPortalPathMode(slug, segment)
+  return `${origin.replace(/\/+$/, "")}${path}`
+}
+
+/** Placeholder for empty subdomain fields in admin forms. */
+export function tenantPortalHrefPlaceholder(
+  options?: TenantPortalHrefOptions,
+): string {
+  const hostname =
+    options?.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : "localhost")
+  const origin =
+    options?.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173")
+  const base = getTenantBaseDomain()
+
+  if (isProductHostname(hostname)) {
+    return `{subdomain}.${base}`
+  }
+
+  return `${origin.replace(/\/+$/, "")}/t/{subdomain}`
 }
 
 export function menuItemAgendaPath(
@@ -107,7 +181,7 @@ function subdomainHeaders(subdomain: string): Record<string, string> {
 export async function fetchTenantBranding(
   subdomain: string,
 ): Promise<TenantBranding> {
-  const response = await api.get(`/api/public/tenants/${subdomain}/branding`)
+  const response = await publicApi.get(`/api/public/tenants/${subdomain}/branding`)
   const parsed = tenantBrandingSchema.safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -118,7 +192,7 @@ export async function fetchTenantBranding(
 export async function fetchRegistrationSchema(
   subdomain: string,
 ): Promise<RegistrationSchemaResponse> {
-  const response = await api.get(
+  const response = await publicApi.get(
     `/api/public/tenants/${subdomain}/registration-schema`,
   )
   const parsed = registrationSchemaResponseSchema.safeParse(response.data)
@@ -139,7 +213,7 @@ export async function registerCustomer(
   },
 ): Promise<{ customerId: string; requiresPhoneVerification: boolean }> {
   try {
-    const response = await api.post("/api/auth/customer/register", body, {
+    const response = await publicApi.post("/api/auth/customer/register", body, {
       headers: subdomainHeaders(subdomain),
     })
     const parsed = registerResponseSchema.safeParse(response.data)
@@ -227,7 +301,7 @@ export async function verifyCustomerPhone(
   body: { email: string; code: string },
 ): Promise<CustomerAuthResponse> {
   try {
-    const response = await api.post(
+    const response = await publicApi.post(
       "/api/auth/customer/verify-phone",
       body,
       { headers: subdomainHeaders(subdomain) },
@@ -254,7 +328,7 @@ export async function loginCustomer(
   body: { email: string; password: string },
 ): Promise<CustomerAuthResponse> {
   try {
-    const response = await api.post(
+    const response = await publicApi.post(
       "/api/auth/customer/login",
       body,
       { headers: subdomainHeaders(subdomain) },
@@ -305,7 +379,7 @@ export function getCustomerLabel(): string | null {
 export async function fetchTenantMenu(
   subdomain: string,
 ): Promise<ModuleMenuItem[]> {
-  const response = await api.get(`/api/public/tenants/${subdomain}/menu`)
+  const response = await publicApi.get(`/api/public/tenants/${subdomain}/menu`)
   const parsed = z.array(moduleMenuItemSchema).safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -405,6 +479,61 @@ export async function deleteModuleMenuItem(
   }
 }
 
+export type UpdateCustomerProfileRequest = {
+  name?: string
+  photoUrl?: string | null
+}
+
+export async function fetchCustomerProfile(): Promise<CustomerProfile> {
+  let response
+  try {
+    response = await customerApi.get("/api/customers/me")
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.loadCustomerProfile"),
+      ),
+    )
+  }
+
+  const parsed = customerProfileSchema.safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
+  }
+  return parsed.data
+}
+
+export async function updateCustomerProfile(
+  body: UpdateCustomerProfileRequest,
+): Promise<CustomerProfile> {
+  const payload: UpdateCustomerProfileRequest = {}
+  if (body.name !== undefined) {
+    payload.name = body.name
+  }
+  if (body.photoUrl !== undefined) {
+    payload.photoUrl = body.photoUrl
+  }
+
+  let response
+  try {
+    response = await customerApi.patch("/api/customers/me", payload)
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.updateCustomerProfile"),
+      ),
+    )
+  }
+
+  const parsed = customerProfileSchema.safeParse(response.data)
+  if (!parsed.success) {
+    throw new Error(i18n.t("apiErrors.invalidResponse"))
+  }
+  return parsed.data
+}
+
 export async function fileToCompressedDataUrl(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file)
   const maxSide = 512
@@ -433,6 +562,12 @@ const rentalAssetSchema = z.object({
   totalQuantity: z.number(),
   isActive: z.boolean(),
   requiresDeposit: z.boolean().optional().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
   schedulePolicy: z.string().optional(),
   openTime: z.string().nullable().optional(),
   closeTime: z.string().nullable().optional(),
@@ -484,7 +619,7 @@ export type PortalReservation = z.infer<typeof reservationSchema>
 export async function fetchPortalRentalAssets(
   subdomain: string,
 ): Promise<PortalRentalAsset[]> {
-  const response = await api.get(
+  const response = await publicApi.get(
     `/api/public/tenants/${subdomain}/rental-assets`,
   )
   const parsed = z.array(rentalAssetSchema).safeParse(response.data)
@@ -505,7 +640,7 @@ export async function checkPortalAvailability(
   },
 ) {
   try {
-    const response = await api.get("/api/reservations/availability", {
+    const response = await publicApi.get("/api/reservations/availability", {
       params: query,
       headers: subdomainHeaders(subdomain),
     })
@@ -529,7 +664,7 @@ export async function createPortalReservation(body: {
   items: { assetId: string; quantity: number }[]
 }): Promise<PortalReservation> {
   try {
-    const response = await api.post("/api/reservations", body)
+    const response = await customerApi.post("/api/reservations", body)
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -544,7 +679,7 @@ export async function createPortalReservation(body: {
 
 export async function listMyPortalReservations(): Promise<PortalReservation[]> {
   try {
-    const response = await api.get("/api/reservations/mine")
+    const response = await customerApi.get("/api/reservations/mine")
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -604,7 +739,7 @@ export async function fetchPublicScheduleDay(
   rentalAssetId?: string,
 ): Promise<PortalDaySchedule> {
   try {
-    const response = await api.get(
+    const response = await publicApi.get(
       `/api/public/tenants/${subdomain}/schedule/days/${date}`,
       {
         params: rentalAssetId ? { rentalAssetId } : undefined,
@@ -628,7 +763,7 @@ export async function bookPortalSlot(body: {
   quantity?: number
 }): Promise<PortalReservation> {
   try {
-    const response = await api.post("/api/schedule/slots/book", {
+    const response = await customerApi.post("/api/schedule/slots/book", {
       slotId: body.slotId,
       unitId: body.unitId,
       quantity: body.quantity ?? 1,
@@ -642,5 +777,153 @@ export async function bookPortalSlot(body: {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.bookSlot")),
     )
+  }
+}
+
+export const RESERVATION_QUEUE_ERROR_CODES = [
+  "QUEUE_REQUIRED",
+  "QUEUE_WAITING",
+  "QUEUE_TURN_EXPIRED",
+  "QUEUE_TURN_ALREADY_USED",
+  "QUEUE_WAITING_ROOM_CLOSED",
+] as const
+
+export type ReservationQueueErrorCode =
+  (typeof RESERVATION_QUEUE_ERROR_CODES)[number]
+
+export const reservationQueueTicketStatusSchema = z.enum([
+  "Waiting",
+  "Active",
+  "Completed",
+  "Expired",
+  "Cancelled",
+])
+
+export const reservationQueuePhaseSchema = z.enum([
+  "Closed",
+  "WaitingRoom",
+  "Open",
+])
+
+const reservationQueueTicketSchema = z.object({
+  id: z.string().uuid(),
+  status: reservationQueueTicketStatusSchema,
+  sequence: z.coerce.number(),
+  position: z.coerce.number().int(),
+  joinedAt: z.string(),
+  turnStartedAt: z.string().nullable().optional().default(null),
+  turnExpiresAt: z.string().nullable().optional().default(null),
+  completedReservationId: z.string().uuid().nullable().optional().default(null),
+})
+
+export const reservationQueueStatusSchema = z.object({
+  rentalAssetId: z.string().uuid(),
+  queueEnabled: z.boolean(),
+  openingDate: z.string().nullable().optional().default(null),
+  opensAt: z.string().nullable().optional().default(null),
+  waitingRoomOpensAt: z.string().nullable().optional().default(null),
+  serverNow: z.string(),
+  phase: reservationQueuePhaseSchema,
+  waitingCount: z.coerce.number().int().nonnegative().optional().default(0),
+  aheadCount: z.coerce.number().int().nonnegative().optional().default(0),
+  myTicket: reservationQueueTicketSchema.nullable().optional().default(null),
+})
+
+export type ReservationQueueTicket = z.infer<typeof reservationQueueTicketSchema>
+export type ReservationQueueStatus = z.infer<typeof reservationQueueStatusSchema>
+
+function isReservationQueueErrorCode(
+  value: string,
+): value is ReservationQueueErrorCode {
+  return (RESERVATION_QUEUE_ERROR_CODES as readonly string[]).includes(value)
+}
+
+export function getReservationQueueErrorCode(
+  error: unknown,
+): ReservationQueueErrorCode | null {
+  const fromPayload = parseApiError(getAxiosErrorPayload(error), "")
+  if (isReservationQueueErrorCode(fromPayload)) {
+    return fromPayload
+  }
+  if (error instanceof Error && isReservationQueueErrorCode(error.message)) {
+    return error.message
+  }
+  return null
+}
+
+export function isLocationQueueEnabled(
+  asset: PortalRentalAsset | null | undefined,
+): boolean {
+  return asset?.type === "Location" && asset.queueEnabled === true
+}
+
+async function parseQueueStatusResponse(
+  data: unknown,
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  const parsed = reservationQueueStatusSchema.safeParse(data)
+  if (parsed.success) {
+    return parsed.data
+  }
+  return fetchReservationQueue(rentalAssetId)
+}
+
+export async function fetchReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.get(
+      `/api/rental-assets/${rentalAssetId}/queue`,
+    )
+    const parsed = reservationQueueStatusSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
+  } catch (error) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    const code = getReservationQueueErrorCode(error)
+    throw new Error(
+      code ??
+        parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadQueue")),
+    )
+  }
+}
+
+function throwQueueMutationError(error: unknown, fallbackKey: string): never {
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+  const code = getReservationQueueErrorCode(error)
+  throw new Error(
+    code ?? parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+  )
+}
+
+export async function joinReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.post(
+      `/api/rental-assets/${rentalAssetId}/queue/join`,
+    )
+    return parseQueueStatusResponse(response.data, rentalAssetId)
+  } catch (error) {
+    throwQueueMutationError(error, "apiErrors.joinQueue")
+  }
+}
+
+export async function leaveReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.post(
+      `/api/rental-assets/${rentalAssetId}/queue/leave`,
+    )
+    return parseQueueStatusResponse(response.data, rentalAssetId)
+  } catch (error) {
+    throwQueueMutationError(error, "apiErrors.leaveQueue")
   }
 }

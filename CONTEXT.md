@@ -63,15 +63,35 @@ A booking of one Rentable by a Customer for a concrete time window, owned by a T
 _Avoid_: Booking, appointment, agendamento (in code)
 
 **Rentable**:
-Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label).
-_Avoid_: Court-only language in the module core; Quadra as the only product shape
+Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label). Bulk create: Location yields N assets (one per number in the range, quantity 1 each); Good yields one asset whose stock is `TotalQuantity`.
+_Avoid_: Court-only language in the module core; Quadra as the only product shape; treating bulk Good as N serialized individual goods
 
 **RequiresDeposit**:
 Rentable-level flag: a Customer booking waits for admin payment confirmation before becoming Confirmed. Default on. Not a per-window pricing setting.
 _Avoid_: needPayment; assuming every booking waits for deposit
 
+**WaitingQueue**:
+Optional per-Location FIFO waiting room for B2C reservation opening. Off by default (`queueEnabled` false) so booking is unchanged. When on, Customers cannot book that Location without an Active ticket for the current daily opening session. B2B/admin booking is not queued. Goods cannot enable the queue.
+_Avoid_: tenant-global queue; queue for Goods; per-slot queue sessions; WebSocket as the MVP transport
+
+**QueueSession**:
+One daily opening for one Location: `(TenantId, RentalAssetId, OpeningDate)` where OpeningDate is the civil date of T in America/Sao_Paulo. T is QueueOpeningTime that day, not a slot start. Waiting room opens at T−30 minutes. Not per slot.
+_Avoid_: one session per Slot; using the Customer's local timezone as the session key
+
+**QueueTicket**:
+A Customer's place in a QueueSession (Waiting, Active, Completed, Expired, Cancelled). Sequence is assigned server-side under lock (FIFO). At most one Waiting/Active ticket per Customer per session. Join is idempotent. Reconnect returns the same ticket.
+_Avoid_: client-assigned order; restarting a 90s turn locally on refresh
+
+**QueueOpeningTime**:
+Time-of-day (`TimeOnly`) when reservations open for that Location (example 07:30). Required when `queueEnabled` is true. Distinct from OpenHours open/close (operating hours). Stored on the Rentable; ignored when the queue is off.
+_Avoid_: treating OpenTime as reservation opening; a booking horizon as a substitute for T
+
+**Turn**:
+The Active ticket's 90-second server lease (`TurnExpiresAt`). During the turn the Customer may pick any currently bookable slot on that Location and complete one reservation. Timeout expires the ticket and promotes the next Waiting. Remaining time comes from server timestamps, never a restarted local timer.
+_Avoid_: restarting 90s on reconnect; consuming the ticket on a failed booking validation while the turn is still valid
+
 **Asset**:
-A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows.
+A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows. Bulk create follows rental type: Location = N entities with numbered tags; Good = one entity with stock quantity.
 _Avoid_: One physical table per use case; dynamic per-tenant tables; asking the admin to type seven identical price rows as the default path
 
 **AssetFamily**:
@@ -83,19 +103,19 @@ A Tenant-defined label for grouping Rentables (for example padel, society, tenni
 _Avoid_: Fixed platform enum of sport types
 
 **OccupancyKind**:
-A Tenant-defined kind of time occupancy on a Rentable (for example Open, Closed, Lesson, Event). Controls whether Customers may book that cell and whether it blocks capacity. Catalog is per Tenant, not a global closed set.
-_Avoid_: Hard-coded Lesson/Open/Closed-only enums as the only kinds
+A Tenant-defined kind of time occupancy on a Rentable (for example Open, Closed, Lesson, Event). Controls whether Customers may book that cell and whether it blocks capacity. Catalog is per Tenant, not a global closed set. When several kinds cover the same weekday interval, a higher-precedence kind occupies the overlap on unpublished days (Closed over Lesson over Open; a custom kind that blocks capacity sits with Lesson).
+_Avoid_: Hard-coded Lesson/Open/Closed-only enums as the only kinds; last-write-wins between overlapping templates
 
 **Slot**:
 One dated occupancy cell on one Rentable: date + start + end + OccupancyKind. The operational unit of a published schedule day. Duration is whatever the admin defined (1h, 2h, 3h, …).
 _Avoid_: Free-typed start/end as the only booking path for slot-mode tenants
 
 **ScheduleTemplate**:
-The default weekly pattern of Slots (or open-hours rules) used to materialize each Schedule Day. Each template belongs to a `DayOfWeek` and recurs on every occurrence of that weekday (all Mondays, all Tuesdays, etc.); it is not tied to one calendar date. A single day can still be edited after publish.
-_Avoid_: Forcing admins to rebuild every day from scratch as the only path
+The default weekly pattern of Slots (or open-hours rules) used to materialize each Schedule Day. Each template belongs to a `DayOfWeek` and recurs on every occurrence of that weekday (all Mondays, all Tuesdays, etc.); it is not tied to one calendar date. A single day can still be edited after publish. Different OccupancyKinds may overlap on the same Rentable and weekday (Open 08:00–22:00 plus Lesson 18:00–19:00). The same kind cannot overlap itself, and the same interval+kind cannot be stored twice. Weekly apply matches an existing row by that full interval and kind, not by start time alone.
+_Avoid_: Forcing admins to rebuild every day from scratch as the only path; treating start time alone as the identity of a weekly row
 
 **ScheduleDay**:
-The concrete set of bookable windows for one calendar date (optionally per Unit). Includes persisted Slot rows plus unpublished SlotGrid cells derived from that weekday’s templates. PublishDay still materializes Slot rows for dated exceptions.
+The concrete set of bookable windows for one calendar date (optionally per Unit). Includes persisted Slot rows plus unpublished SlotGrid cells derived from that weekday’s templates (overlapping kinds are split; the higher-precedence kind occupies the overlap). **PublishDay** still gap-fills Slot rows for dated exceptions and EntireRecurrence cascade without wiping a day that already has slots.
 _Avoid_: Requiring PublishDay before customers can book a weekly grid; treating the weekly editor itself as the B2C booking UI
 
 **OpenHours**:
@@ -103,7 +123,7 @@ A schedule policy where a Rentable is continuously available between open and cl
 _Avoid_: Forcing explicit Slot drawing when the tenant only needs “18:00–00:00 all open”; seeding dozens of identical SlotGrid templates when OpenHours fits
 
 **SlotGrid**:
-Schedule policy that authors the week as explicit **ScheduleTemplate** cells. Day reads derive unpublished bookable windows from that weekday’s templates; **PublishDay** optionally materializes **Slot** rows. Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
+Schedule policy that authors the week as explicit **ScheduleTemplate** cells. Day reads derive unpublished bookable windows from that weekday’s templates, splitting overlapping kinds so the higher-precedence kind wins the shared interval; **PublishDay** optionally materializes **Slot** rows for exceptions and recurrence cascade (gap-fill by rentable + start; existing slots including Booked stay). Use for fine exceptions (lesson blocks, closed mornings). Default grid seed is a **single** API call: `POST /api/schedule/templates/seed-default` (`rentalAssetIds` for a set). Day query/publish accept the same ID list. **UI copy: Grade personalizada** — never show `SlotGrid` in the product UI. Fine edits stay per rentable on Weekly templates.
 _Avoid_: N client-side POSTs per hour×day as the product path; empty B2C days after seed because publish was skipped
 
 **Admin Daily Agenda UX**:

@@ -15,7 +15,10 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
-import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import {
+  tenantPortalHref,
+  tenantPortalHrefPlaceholder,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import {
   ROLVIX_ACCENT_COLOR,
   ROLVIX_PRIMARY_COLOR,
@@ -85,7 +88,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [families, setFamilies] = useState<AssetFamily[]>([])
   const redirectTimeoutRef = useRef<number | null>(null)
-  const baseDomain = useMemo(() => getTenantBaseDomain(), [])
+  const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
   const form = useForm<TenantOnboardingFormValues>({
     resolver: zodResolver(tenantOnboardingSchema),
@@ -298,8 +301,8 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                     </FormControl>
                     <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
                       {field.value
-                        ? `${field.value}.${baseDomain}`
-                        : `{subdomain}.${baseDomain}`}
+                        ? tenantPortalHref(field.value)
+                        : portalUrlPlaceholder}
                     </p>
                     <FormMessage />
                   </FormItem>
