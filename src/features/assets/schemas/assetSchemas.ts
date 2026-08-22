@@ -113,8 +113,10 @@ export const bulkCreateAssetsRequestSchema = z.object({
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   baseLocationName: z.string().trim().min(1),
   baseTag: z.string().trim().min(1),
-  startNumber: z.number().int(),
-  endNumber: z.number().int(),
+  startNumber: z.number().int().nullish(),
+  endNumber: z.number().int().nullish(),
+  rentalType: z.enum(["Location", "Good"]).default("Location"),
+  totalQuantity: z.number().int().min(1).default(1),
   isRentable: z.boolean().optional(),
   requiresMaintenance: z.boolean().optional(),
   requiresDeposit: z.boolean().optional().default(true),
@@ -182,6 +184,7 @@ export function createBulkCreateAssetsFormSchema(messages: {
   startNumberRequired: string
   endNumberRequired: string
   rangeInvalid: string
+  stockQuantityRequired: string
 }) {
   return z
     .object({
@@ -203,17 +206,31 @@ export function createBulkCreateAssetsFormSchema(messages: {
       attributes: z.record(z.string(), z.string()),
       baseLocationName: z.string().trim().min(1, messages.baseLocationRequired),
       baseTag: z.string().trim().min(1, messages.baseTagRequired),
+      rentalType: z.enum(["Location", "Good"]).default("Location"),
+      totalQuantity: z
+        .number({ error: messages.stockQuantityRequired })
+        .int(messages.stockQuantityRequired)
+        .min(1, messages.stockQuantityRequired)
+        .default(1),
       startNumber: z
         .number({ error: messages.startNumberRequired })
-        .int(messages.startNumberRequired),
+        .int(messages.startNumberRequired)
+        .optional(),
       endNumber: z
         .number({ error: messages.endNumberRequired })
-        .int(messages.endNumberRequired),
+        .int(messages.endNumberRequired)
+        .optional(),
     })
-    .refine((values) => values.startNumber <= values.endNumber, {
-      message: messages.rangeInvalid,
-      path: ["endNumber"],
-    })
+    .refine(
+      (values) =>
+        values.startNumber == null ||
+        values.endNumber == null ||
+        values.startNumber <= values.endNumber,
+      {
+        message: messages.rangeInvalid,
+        path: ["endNumber"],
+      },
+    )
 }
 
 export type BulkCreateAssetsFormValues = z.infer<

@@ -1025,7 +1025,8 @@
           "generic": "Ex.: R-"
         },
         "startNumber": "Número inicial",
-        "endNumber": "Número final"
+        "endNumber": "Número final",
+        "stockQuantity": "Quantidade em estoque"
       },
       "validation": {
         "unitRequired": "A unidade é obrigatória.",
@@ -1039,6 +1040,7 @@
         "endNumberRequired": "Informe o número final.",
         "rangeInvalid": "O número final deve ser maior ou igual ao inicial.",
         "quantityRequired": "Informe uma quantidade válida (mínimo 1).",
+        "stockQuantityRequired": "Informe uma quantidade em estoque válida (mínimo 1).",
         "pricingRequired": "Adicione ao menos uma faixa de preço válida."
       },
       "success": {
@@ -1091,7 +1093,8 @@
         "requiresDeposit": "Se ligado, a reserva espera a confirmação de pagamento no admin. Se desligado, a reserva já nasce confirmada e ocupa o horário.",
         "requiresMaintenanceHint": "Este recurso poderá ser vinculado a planos PMOC e ordens de serviço.",
         "rentalType": "Espaço (quadra/sala) ou bem (equipamento emprestado).",
-        "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica."
+        "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica.",
+        "stockQuantity": "Quantidade deste bem. O lote cria um único recurso com este estoque, sem gerar itens numerados."
       },
       "toggle": {
         "on": "Ativado",
@@ -1132,6 +1135,9 @@
       "next": "Próximo",
       "back": "Voltar",
       "finish": "Concluir",
+      "review": {
+        "stockQuantity": "Quantidade em estoque"
+      },
       "success": {
         "create": "Recurso criado com sucesso.",
         "bulk": "Recursos criados com sucesso.",

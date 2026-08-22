@@ -989,7 +989,8 @@
           "generic": "Ej.: R-"
         },
         "startNumber": "Número inicial",
-        "endNumber": "Número final"
+        "endNumber": "Número final",
+        "stockQuantity": "Cantidad en stock"
       },
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
@@ -1003,6 +1004,7 @@
         "endNumberRequired": "Ingrese el número final.",
         "rangeInvalid": "El número final debe ser mayor o igual al inicial.",
         "quantityRequired": "Ingrese una cantidad válida (mínimo 1).",
+        "stockQuantityRequired": "Ingrese una cantidad en stock válida (mínimo 1).",
         "pricingRequired": "Agregue al menos una franja de precio válida."
       },
       "success": {
@@ -1055,7 +1057,8 @@
         "requiresDeposit": "Si está activo, la reserva espera la confirmación de pago del administrador. Si está desactivado, nace confirmada y ocupa el horario.",
         "requiresMaintenanceHint": "Este recurso podrá vincularse a planes PMOC y órdenes de servicio.",
         "rentalType": "Espacio (cancha/sala) o bien (equipo prestado).",
-        "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica."
+        "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica.",
+        "stockQuantity": "Cantidad de este bien. El lote crea un único recurso con este stock, no ítems numerados."
       },
       "toggle": {
         "on": "Activado",
@@ -1096,6 +1099,9 @@
       "next": "Siguiente",
       "back": "Atrás",
       "finish": "Finalizar",
+      "review": {
+        "stockQuantity": "Cantidad en stock"
+      },
       "success": {
         "create": "Recurso creado con éxito.",
         "bulk": "Recursos creados con éxito.",
