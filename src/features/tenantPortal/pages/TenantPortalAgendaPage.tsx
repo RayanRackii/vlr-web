@@ -20,6 +20,7 @@ import {
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
   bookPortalSlot,
   createPortalReservation,
@@ -27,6 +28,8 @@ import {
   fetchPublicScheduleDay,
   formatScheduleTime,
   getCustomerAccessToken,
+  getReservationQueueErrorCode,
+  isLocationQueueEnabled,
   listMyPortalReservations,
   tenantPortalPath,
   type PortalRentalAsset,
@@ -227,6 +230,11 @@ export function TenantPortalAgendaPage() {
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
   )
+  const queueEnabled = isLocationQueueEnabled(selectedAsset)
+  const queue = useReservationQueue({
+    rentalAssetId: selectedRentalAssetId,
+    enabled: queueEnabled,
+  })
 
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
@@ -269,6 +277,15 @@ export function TenantPortalAgendaPage() {
       setSlots(bookable)
       setSelectedRentalAssetId(null)
     } catch (error) {
+      if (queue.applyBookingError(error)) {
+        const code = getReservationQueueErrorCode(error)
+        toast.error(
+          code
+            ? t(`tenantPortal.agenda.queue.errors.${code}`)
+            : t("tenantPortal.agenda.reserveError"),
+        )
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
@@ -432,19 +449,109 @@ export function TenantPortalAgendaPage() {
             </div>
           ) : null}
 
+          {queue.view.kind === "closed" ? (
+            <p className="rounded-lg border border-border px-3 py-3 text-sm text-muted-foreground">
+              {queue.view.waitingRoomTime && queue.view.opensTime
+                ? t("tenantPortal.agenda.queue.closed", {
+                    waitingRoom: queue.view.waitingRoomTime,
+                    opensAt: queue.view.opensTime,
+                  })
+                : t("tenantPortal.agenda.queue.closedFallback")}
+            </p>
+          ) : null}
+
+          {queue.view.kind === "join" ? (
+            <div className="rounded-lg border border-border px-3 py-3">
+              <LoadingButton
+                type="button"
+                variant="outline"
+                loading={queue.joining}
+                loadingLabel={t("tenantPortal.agenda.queue.joining")}
+                onClick={() => {
+                  void queue.join()
+                }}
+              >
+                {t("tenantPortal.agenda.queue.join")}
+              </LoadingButton>
+            </div>
+          ) : null}
+
+          {queue.view.kind === "waiting" ? (
+            <div className="space-y-2 rounded-lg border border-border px-3 py-3 text-sm">
+              <p className="font-medium">
+                {t("tenantPortal.agenda.queue.inQueue")}
+              </p>
+              <p>
+                {t("tenantPortal.agenda.queue.position", {
+                  position: queue.view.position,
+                })}
+              </p>
+              <p className="text-muted-foreground">
+                {t("tenantPortal.agenda.queue.ahead", {
+                  count: queue.view.aheadCount,
+                })}
+              </p>
+              <LoadingButton
+                type="button"
+                variant="outline"
+                loading={queue.leaving}
+                loadingLabel={t("tenantPortal.agenda.queue.leaving")}
+                onClick={() => {
+                  void queue.leave()
+                }}
+              >
+                {t("tenantPortal.agenda.queue.leave")}
+              </LoadingButton>
+            </div>
+          ) : null}
+
+          {queue.view.kind === "active" ? (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-3 text-sm">
+              <p className="font-medium">
+                {t("tenantPortal.agenda.queue.yourTurn")}
+              </p>
+              <p className="tabular-nums text-muted-foreground">
+                {t("tenantPortal.agenda.queue.countdown", {
+                  time: queue.view.countdown,
+                })}
+              </p>
+            </div>
+          ) : null}
+
+          {queue.view.kind === "expired" ? (
+            <div className="space-y-2 rounded-lg border border-border px-3 py-3 text-sm">
+              <p className="font-medium">
+                {t("tenantPortal.agenda.queue.expired")}
+              </p>
+              <LoadingButton
+                type="button"
+                variant="outline"
+                loading={queue.joining}
+                loadingLabel={t("tenantPortal.agenda.queue.joining")}
+                onClick={() => {
+                  void queue.join()
+                }}
+              >
+                {t("tenantPortal.agenda.queue.rejoin")}
+              </LoadingButton>
+            </div>
+          ) : null}
+
+          {queue.hideReserveUi ? null : (
           <LoadingButton
             type="button"
             className="w-full sm:w-auto"
             style={{ backgroundColor: primary }}
             loading={submitting}
             loadingLabel={t("tenantPortal.agenda.reserving")}
-            disabled={!selectedSlot}
+            disabled={!selectedSlot || !queue.canReserve}
             onClick={() => {
               void onReserve()
             }}
           >
             {t("tenantPortal.agenda.reserveSlot")}
           </LoadingButton>
+          )}
 
           <div className="space-y-2 border-t border-border pt-4">
             <h3 className="text-sm font-medium">

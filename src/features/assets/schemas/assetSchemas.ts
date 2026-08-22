@@ -48,6 +48,8 @@ export const assetSchema = z.object({
       totalQuantity: z.number().int(),
       isActive: z.boolean(),
       requiresDeposit: z.boolean().optional().default(true),
+      queueEnabled: z.boolean().optional().default(false),
+      queueOpeningTime: z.string().nullish().transform((value) => value || null),
     })
     .nullish(),
   createdAt: z.string(),
@@ -75,6 +77,8 @@ export const updateAssetRequestSchema = z.object({
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
   requiresDeposit: z.boolean().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type UpdateAssetRequest = z.infer<typeof updateAssetRequestSchema>
@@ -95,6 +99,8 @@ export const createAssetRequestSchema = z.object({
   rentalType: z.enum(["Location", "Good"]).default("Location"),
   totalQuantity: z.number().int().min(1).default(1),
   requiresDeposit: z.boolean().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type CreateAssetRequest = z.infer<typeof createAssetRequestSchema>
@@ -120,6 +126,8 @@ export const bulkCreateAssetsRequestSchema = z.object({
   isRentable: z.boolean().optional(),
   requiresMaintenance: z.boolean().optional(),
   requiresDeposit: z.boolean().optional().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional().default(null),
 })
 
 export type BulkCreateAssetsRequest = z.infer<
@@ -236,3 +244,27 @@ export function createBulkCreateAssetsFormSchema(messages: {
 export type BulkCreateAssetsFormValues = z.infer<
   ReturnType<typeof createBulkCreateAssetsFormSchema>
 >
+
+/** HTML `type="time"` value (`HH:mm`) from API TimeOnly (`HH:mm:ss`). */
+export function toHtmlTimeInput(value: string | null | undefined): string {
+  if (!value) {
+    return ""
+  }
+  const match = /^(\d{2}:\d{2})/.exec(value)
+  return match?.[1] ?? ""
+}
+
+/** Persist TimeOnly as `HH:mm:ss`, or null when empty. */
+export function toApiTimeOnly(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ""
+  if (!trimmed) {
+    return null
+  }
+  if (/^\d{2}:\d{2}:\d{2}/.test(trimmed)) {
+    return trimmed.slice(0, 8)
+  }
+  if (/^\d{2}:\d{2}$/.test(trimmed)) {
+    return `${trimmed}:00`
+  }
+  return trimmed
+}

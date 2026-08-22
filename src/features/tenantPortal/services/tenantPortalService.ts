@@ -5,6 +5,7 @@ import {
   customerApi,
   publicApi,
   getAxiosErrorPayload,
+  isAxiosError,
   parseApiError,
 } from "@/lib/api"
 import i18n from "@/lib/i18n"
@@ -561,6 +562,12 @@ const rentalAssetSchema = z.object({
   totalQuantity: z.number(),
   isActive: z.boolean(),
   requiresDeposit: z.boolean().optional().default(true),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
   schedulePolicy: z.string().optional(),
   openTime: z.string().nullable().optional(),
   closeTime: z.string().nullable().optional(),
@@ -770,5 +777,153 @@ export async function bookPortalSlot(body: {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.bookSlot")),
     )
+  }
+}
+
+export const RESERVATION_QUEUE_ERROR_CODES = [
+  "QUEUE_REQUIRED",
+  "QUEUE_WAITING",
+  "QUEUE_TURN_EXPIRED",
+  "QUEUE_TURN_ALREADY_USED",
+  "QUEUE_WAITING_ROOM_CLOSED",
+] as const
+
+export type ReservationQueueErrorCode =
+  (typeof RESERVATION_QUEUE_ERROR_CODES)[number]
+
+export const reservationQueueTicketStatusSchema = z.enum([
+  "Waiting",
+  "Active",
+  "Completed",
+  "Expired",
+  "Cancelled",
+])
+
+export const reservationQueuePhaseSchema = z.enum([
+  "Closed",
+  "WaitingRoom",
+  "Open",
+])
+
+const reservationQueueTicketSchema = z.object({
+  id: z.string().uuid(),
+  status: reservationQueueTicketStatusSchema,
+  sequence: z.coerce.number(),
+  position: z.coerce.number().int(),
+  joinedAt: z.string(),
+  turnStartedAt: z.string().nullable().optional().default(null),
+  turnExpiresAt: z.string().nullable().optional().default(null),
+  completedReservationId: z.string().uuid().nullable().optional().default(null),
+})
+
+export const reservationQueueStatusSchema = z.object({
+  rentalAssetId: z.string().uuid(),
+  queueEnabled: z.boolean(),
+  openingDate: z.string().nullable().optional().default(null),
+  opensAt: z.string().nullable().optional().default(null),
+  waitingRoomOpensAt: z.string().nullable().optional().default(null),
+  serverNow: z.string(),
+  phase: reservationQueuePhaseSchema,
+  waitingCount: z.coerce.number().int().nonnegative().optional().default(0),
+  aheadCount: z.coerce.number().int().nonnegative().optional().default(0),
+  myTicket: reservationQueueTicketSchema.nullable().optional().default(null),
+})
+
+export type ReservationQueueTicket = z.infer<typeof reservationQueueTicketSchema>
+export type ReservationQueueStatus = z.infer<typeof reservationQueueStatusSchema>
+
+function isReservationQueueErrorCode(
+  value: string,
+): value is ReservationQueueErrorCode {
+  return (RESERVATION_QUEUE_ERROR_CODES as readonly string[]).includes(value)
+}
+
+export function getReservationQueueErrorCode(
+  error: unknown,
+): ReservationQueueErrorCode | null {
+  const fromPayload = parseApiError(getAxiosErrorPayload(error), "")
+  if (isReservationQueueErrorCode(fromPayload)) {
+    return fromPayload
+  }
+  if (error instanceof Error && isReservationQueueErrorCode(error.message)) {
+    return error.message
+  }
+  return null
+}
+
+export function isLocationQueueEnabled(
+  asset: PortalRentalAsset | null | undefined,
+): boolean {
+  return asset?.type === "Location" && asset.queueEnabled === true
+}
+
+async function parseQueueStatusResponse(
+  data: unknown,
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  const parsed = reservationQueueStatusSchema.safeParse(data)
+  if (parsed.success) {
+    return parsed.data
+  }
+  return fetchReservationQueue(rentalAssetId)
+}
+
+export async function fetchReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.get(
+      `/api/rental-assets/${rentalAssetId}/queue`,
+    )
+    const parsed = reservationQueueStatusSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
+  } catch (error) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    const code = getReservationQueueErrorCode(error)
+    throw new Error(
+      code ??
+        parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadQueue")),
+    )
+  }
+}
+
+function throwQueueMutationError(error: unknown, fallbackKey: string): never {
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+  const code = getReservationQueueErrorCode(error)
+  throw new Error(
+    code ?? parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+  )
+}
+
+export async function joinReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.post(
+      `/api/rental-assets/${rentalAssetId}/queue/join`,
+    )
+    return parseQueueStatusResponse(response.data, rentalAssetId)
+  } catch (error) {
+    throwQueueMutationError(error, "apiErrors.joinQueue")
+  }
+}
+
+export async function leaveReservationQueue(
+  rentalAssetId: string,
+): Promise<ReservationQueueStatus> {
+  try {
+    const response = await customerApi.post(
+      `/api/rental-assets/${rentalAssetId}/queue/leave`,
+    )
+    return parseQueueStatusResponse(response.data, rentalAssetId)
+  } catch (error) {
+    throwQueueMutationError(error, "apiErrors.leaveQueue")
   }
 }
