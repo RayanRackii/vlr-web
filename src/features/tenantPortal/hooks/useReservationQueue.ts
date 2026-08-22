@@ -97,10 +97,14 @@ export function useReservationQueue(options: {
   const [leaving, setLeaving] = useState(false)
   const loadErrorToasted = useRef(false)
   const expireRefreshed = useRef(false)
+  const fetchGeneration = useRef(0)
+  const mutating = useRef(false)
 
   const applyStatus = useCallback((next: ReservationQueueStatus) => {
+    const received = Date.now()
     setStatus(next)
-    setReceivedAtMs(Date.now())
+    setReceivedAtMs(received)
+    setNowMs(received)
   }, [])
 
   const refresh = useCallback(async () => {
@@ -108,15 +112,20 @@ export function useReservationQueue(options: {
       setStatus(null)
       return
     }
+    const generation = ++fetchGeneration.current
     try {
       const next = await fetchReservationQueue(rentalAssetId)
+      if (generation !== fetchGeneration.current) {
+        return
+      }
       applyStatus(next)
       loadErrorToasted.current = false
     } catch (error) {
-      if (!loadErrorToasted.current) {
-        loadErrorToasted.current = true
-        toastQueueFailure(error, t("apiErrors.loadQueue"), t)
+      if (generation !== fetchGeneration.current || loadErrorToasted.current) {
+        return
       }
+      loadErrorToasted.current = true
+      toastQueueFailure(error, t("apiErrors.loadQueue"), t)
     }
   }, [applyStatus, enabled, rentalAssetId, t])
 
@@ -124,6 +133,8 @@ export function useReservationQueue(options: {
     setStatus(null)
     loadErrorToasted.current = false
     expireRefreshed.current = false
+    mutating.current = false
+    fetchGeneration.current += 1
   }, [rentalAssetId, enabled])
 
   useEffect(() => {
@@ -136,17 +147,31 @@ export function useReservationQueue(options: {
     let intervalId: number | null = null
 
     async function load() {
+      if (mutating.current) {
+        return
+      }
+      const generation = ++fetchGeneration.current
       try {
         const next = await fetchReservationQueue(assetId)
-        if (!cancelled) {
-          applyStatus(next)
-          loadErrorToasted.current = false
+        if (
+          cancelled
+          || mutating.current
+          || generation !== fetchGeneration.current
+        ) {
+          return
         }
+        applyStatus(next)
+        loadErrorToasted.current = false
       } catch (error) {
-        if (!cancelled && !loadErrorToasted.current) {
-          loadErrorToasted.current = true
-          toastQueueFailure(error, t("apiErrors.loadQueue"), t)
+        if (
+          cancelled
+          || generation !== fetchGeneration.current
+          || loadErrorToasted.current
+        ) {
+          return
         }
+        loadErrorToasted.current = true
+        toastQueueFailure(error, t("apiErrors.loadQueue"), t)
       }
     }
 
@@ -275,6 +300,8 @@ export function useReservationQueue(options: {
     if (!rentalAssetId) {
       return
     }
+    mutating.current = true
+    fetchGeneration.current += 1
     setJoining(true)
     try {
       const next = await joinReservationQueue(rentalAssetId)
@@ -283,6 +310,7 @@ export function useReservationQueue(options: {
       toastQueueFailure(error, t("apiErrors.joinQueue"), t)
       void refresh()
     } finally {
+      mutating.current = false
       setJoining(false)
     }
   }, [applyStatus, refresh, rentalAssetId, t])
@@ -291,6 +319,8 @@ export function useReservationQueue(options: {
     if (!rentalAssetId) {
       return
     }
+    mutating.current = true
+    fetchGeneration.current += 1
     setLeaving(true)
     try {
       const next = await leaveReservationQueue(rentalAssetId)
@@ -299,6 +329,7 @@ export function useReservationQueue(options: {
       toastQueueFailure(error, t("apiErrors.leaveQueue"), t)
       void refresh()
     } finally {
+      mutating.current = false
       setLeaving(false)
     }
   }, [applyStatus, refresh, rentalAssetId, t])
