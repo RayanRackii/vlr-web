@@ -63,15 +63,15 @@ A booking of one Rentable by a Customer for a concrete time window, owned by a T
 _Avoid_: Booking, appointment, agendamento (in code)
 
 **Rentable**:
-Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label).
-_Avoid_: Court-only language in the module core; Quadra as the only product shape
+Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label). Bulk create: Location yields N assets (one per number in the range, quantity 1 each); Good yields one asset whose stock is `TotalQuantity`.
+_Avoid_: Court-only language in the module core; Quadra as the only product shape; treating bulk Good as N serialized individual goods
 
 **RequiresDeposit**:
 Rentable-level flag: a Customer booking waits for admin payment confirmation before becoming Confirmed. Default on. Not a per-window pricing setting.
 _Avoid_: needPayment; assuming every booking waits for deposit
 
 **Asset**:
-A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows.
+A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows. Bulk create follows rental type: Location = N entities with numbered tags; Good = one entity with stock quantity.
 _Avoid_: One physical table per use case; dynamic per-tenant tables; asking the admin to type seven identical price rows as the default path
 
 **AssetFamily**:

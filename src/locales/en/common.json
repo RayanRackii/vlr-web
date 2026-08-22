@@ -989,7 +989,8 @@
           "generic": "e.g. R-"
         },
         "startNumber": "Start number",
-        "endNumber": "End number"
+        "endNumber": "End number",
+        "stockQuantity": "Stock quantity"
       },
       "validation": {
         "unitRequired": "Unit is required.",
@@ -1003,6 +1004,7 @@
         "endNumberRequired": "Enter the end number.",
         "rangeInvalid": "End number must be greater than or equal to start number.",
         "quantityRequired": "Enter a valid quantity (minimum 1).",
+        "stockQuantityRequired": "Enter a valid stock quantity (minimum 1).",
         "pricingRequired": "Add at least one valid price band."
       },
       "success": {
@@ -1055,7 +1057,8 @@
         "requiresDeposit": "When on, the booking waits for admin payment confirmation. When off, it is confirmed immediately and holds the time slot.",
         "requiresMaintenanceHint": "This resource can be linked to PMOC plans and work orders.",
         "rentalType": "Space (court/room) or good (loaned equipment).",
-        "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity."
+        "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity.",
+        "stockQuantity": "How many units of this good. The batch creates one resource with this stock, not numbered items."
       },
       "toggle": {
         "on": "On",
@@ -1096,6 +1099,9 @@
       "next": "Next",
       "back": "Back",
       "finish": "Finish",
+      "review": {
+        "stockQuantity": "Stock quantity"
+      },
       "success": {
         "create": "Resource created successfully.",
         "bulk": "Resources created successfully.",

@@ -196,6 +196,8 @@ export function AssetWizard({
 
   const currentStepId = steps[stepIndex]?.id ?? "general"
   const isLastStep = stepIndex >= steps.length - 1
+  const isBulkLocation = mode === "bulk" && form.rentalType === "Location"
+  const isBulkGood = mode === "bulk" && form.rentalType === "Good"
 
   const titleKey =
     mode === "create"
@@ -369,18 +371,25 @@ export function AssetWizard({
       if (!form.baseTag.trim()) {
         errors.push("baseTag")
       }
-      if (!Number.isFinite(form.startNumber)) {
-        errors.push("startNumber")
-      }
-      if (!Number.isFinite(form.endNumber)) {
-        errors.push("endNumber")
-      }
-      if (
-        Number.isFinite(form.startNumber) &&
-        Number.isFinite(form.endNumber) &&
-        form.startNumber > form.endNumber
+      if (form.rentalType === "Location") {
+        if (!Number.isFinite(form.startNumber)) {
+          errors.push("startNumber")
+        }
+        if (!Number.isFinite(form.endNumber)) {
+          errors.push("endNumber")
+        }
+        if (
+          Number.isFinite(form.startNumber) &&
+          Number.isFinite(form.endNumber) &&
+          form.startNumber > form.endNumber
+        ) {
+          errors.push("startNumber", "endNumber")
+        }
+      } else if (
+        form.totalQuantity < 1 ||
+        !Number.isFinite(form.totalQuantity)
       ) {
-        errors.push("startNumber", "endNumber")
+        errors.push("totalQuantity")
       }
     } else {
       if (!form.name.trim()) {
@@ -402,7 +411,11 @@ export function AssetWizard({
 
     if (errors.length > 0) {
       markErrors(errors)
-      toast.error(t("common.required"))
+      toast.error(
+        errors.includes("totalQuantity") && mode === "bulk"
+          ? t("assets.inventory.validation.stockQuantityRequired")
+          : t("common.required"),
+      )
       return false
     }
 
@@ -414,7 +427,10 @@ export function AssetWizard({
     if (!form.isRentable) {
       return true
     }
-    if (form.totalQuantity < 1 || !Number.isFinite(form.totalQuantity)) {
+    if (
+      mode !== "bulk" &&
+      (form.totalQuantity < 1 || !Number.isFinite(form.totalQuantity))
+    ) {
       markErrors(["totalQuantity"])
       toast.error(t("assets.inventory.validation.quantityRequired"))
       return false
@@ -526,8 +542,10 @@ export function AssetWizard({
           attributes,
           baseLocationName: form.baseLocationName.trim(),
           baseTag: form.baseTag.trim(),
-          startNumber: form.startNumber,
-          endNumber: form.endNumber,
+          startNumber: isBulkLocation ? form.startNumber : null,
+          endNumber: isBulkLocation ? form.endNumber : null,
+          rentalType: form.rentalType,
+          totalQuantity: isBulkGood ? form.totalQuantity : 1,
           isRentable: form.isRentable,
           requiresMaintenance: form.requiresMaintenance,
           requiresDeposit: form.requiresDeposit,
@@ -774,6 +792,53 @@ export function AssetWizard({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2 sm:col-span-2">
                       <FieldLabel
+                        label={t("assets.detail.fields.rentalType")}
+                        help={t("assets.wizard.help.rentalType")}
+                      />
+                      <Select
+                        modal={false}
+                        value={form.rentalType}
+                        onValueChange={(value) => {
+                          if (value === "Location" || value === "Good") {
+                            setForm((prev) => ({
+                              ...prev,
+                              rentalType: value,
+                            }))
+                            setFieldErrors((prev) => {
+                              const next = { ...prev }
+                              delete next.startNumber
+                              delete next.endNumber
+                              delete next.totalQuantity
+                              return next
+                            })
+                          }
+                        }}
+                        items={[
+                          {
+                            value: "Location",
+                            label: t("assets.detail.rentalTypes.Location"),
+                          },
+                          {
+                            value: "Good",
+                            label: t("assets.detail.rentalTypes.Good"),
+                          },
+                        ]}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Location">
+                            {t("assets.detail.rentalTypes.Location")}
+                          </SelectItem>
+                          <SelectItem value="Good">
+                            {t("assets.detail.rentalTypes.Good")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <FieldLabel
                         label={t("assets.inventory.form.baseLocation")}
                         help={t("assets.wizard.help.baseLocation")}
                         required
@@ -812,46 +877,99 @@ export function AssetWizard({
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <FieldLabel
-                        label={t("assets.inventory.form.startNumber")}
-                        help={t("assets.wizard.help.startNumber")}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        value={form.startNumber}
-                        aria-invalid={fieldErrors.startNumber || undefined}
-                        className={fieldInvalidClass(
-                          Boolean(fieldErrors.startNumber),
-                        )}
-                        onChange={(event) => {
-                          patchForm({
-                            startNumber: event.target.valueAsNumber,
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <FieldLabel
-                        label={t("assets.inventory.form.endNumber")}
-                        help={t("assets.wizard.help.endNumber")}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        value={form.endNumber}
-                        aria-invalid={fieldErrors.endNumber || undefined}
-                        className={fieldInvalidClass(
-                          Boolean(fieldErrors.endNumber),
-                        )}
-                        onChange={(event) => {
-                          patchForm({
-                            endNumber: event.target.valueAsNumber,
-                          })
-                        }}
-                      />
-                    </div>
+                    {isBulkGood ? (
+                      <div className="space-y-2 sm:col-span-2">
+                        <FieldLabel
+                          label={t("assets.inventory.form.stockQuantity")}
+                          help={t("assets.wizard.help.stockQuantity")}
+                          required
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          value={form.totalQuantity}
+                          aria-invalid={fieldErrors.totalQuantity || undefined}
+                          className={fieldInvalidClass(
+                            Boolean(fieldErrors.totalQuantity),
+                          )}
+                          onChange={(event) => {
+                            patchForm({
+                              totalQuantity: event.target.valueAsNumber,
+                            })
+                          }}
+                        />
+                        {fieldErrors.totalQuantity ? (
+                          <p className="text-xs text-destructive">
+                            {t(
+                              "assets.inventory.validation.stockQuantityRequired",
+                            )}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <FieldLabel
+                            label={t("assets.inventory.form.startNumber")}
+                            help={t("assets.wizard.help.startNumber")}
+                            required
+                          />
+                          <Input
+                            type="number"
+                            value={form.startNumber}
+                            aria-invalid={
+                              fieldErrors.startNumber || undefined
+                            }
+                            className={fieldInvalidClass(
+                              Boolean(fieldErrors.startNumber),
+                            )}
+                            onChange={(event) => {
+                              patchForm({
+                                startNumber: event.target.valueAsNumber,
+                              })
+                            }}
+                          />
+                          {fieldErrors.startNumber ? (
+                            <p className="text-xs text-destructive">
+                              {form.startNumber > form.endNumber
+                                ? t("assets.inventory.validation.rangeInvalid")
+                                : t(
+                                    "assets.inventory.validation.startNumberRequired",
+                                  )}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="space-y-2">
+                          <FieldLabel
+                            label={t("assets.inventory.form.endNumber")}
+                            help={t("assets.wizard.help.endNumber")}
+                            required
+                          />
+                          <Input
+                            type="number"
+                            value={form.endNumber}
+                            aria-invalid={fieldErrors.endNumber || undefined}
+                            className={fieldInvalidClass(
+                              Boolean(fieldErrors.endNumber),
+                            )}
+                            onChange={(event) => {
+                              patchForm({
+                                endNumber: event.target.valueAsNumber,
+                              })
+                            }}
+                          />
+                          {fieldErrors.endNumber ? (
+                            <p className="text-xs text-destructive">
+                              {form.startNumber > form.endNumber
+                                ? t("assets.inventory.validation.rangeInvalid")
+                                : t(
+                                    "assets.inventory.validation.endNumberRequired",
+                                  )}
+                            </p>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1118,6 +1236,7 @@ export function AssetWizard({
                         className="pointer-events-none"
                       />
                     </button>
+                    {mode !== "bulk" ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
                       <FieldLabel
@@ -1180,6 +1299,7 @@ export function AssetWizard({
                       />
                     </div>
                     </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -1227,6 +1347,12 @@ export function AssetWizard({
                   <>
                     <p>
                       <span className="text-muted-foreground">
+                        {t("assets.detail.fields.rentalType")}:{" "}
+                      </span>
+                      {t(`assets.detail.rentalTypes.${form.rentalType}`)}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">
                         {t("assets.inventory.form.baseLocation")}:{" "}
                       </span>
                       {form.baseLocationName}
@@ -1237,13 +1363,22 @@ export function AssetWizard({
                       </span>
                       {form.baseTag}
                     </p>
-                    <p>
-                      <span className="text-muted-foreground">
-                        {t("assets.inventory.form.startNumber")}–
-                        {t("assets.inventory.form.endNumber")}:{" "}
-                      </span>
-                      {form.startNumber}–{form.endNumber}
-                    </p>
+                    {isBulkGood ? (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.stockQuantity")}:{" "}
+                        </span>
+                        {form.totalQuantity}
+                      </p>
+                    ) : (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.inventory.form.startNumber")}–
+                          {t("assets.inventory.form.endNumber")}:{" "}
+                        </span>
+                        {form.startNumber}–{form.endNumber}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -1299,6 +1434,8 @@ export function AssetWizard({
                         ? t("common.yes", { defaultValue: "Yes" })
                         : t("common.no", { defaultValue: "No" })}
                     </p>
+                    {mode !== "bulk" ? (
+                      <>
                     <p>
                       <span className="text-muted-foreground">
                         {t("assets.detail.fields.rentalType")}:{" "}
@@ -1311,6 +1448,8 @@ export function AssetWizard({
                       </span>
                       {form.totalQuantity}
                     </p>
+                      </>
+                    ) : null}
                     <p>
                       <span className="text-muted-foreground">
                         {t("assets.detail.rental.pricingTitle")}:{" "}
