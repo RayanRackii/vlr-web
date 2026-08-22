@@ -65,6 +65,15 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 
+### 3.6. Fila de reservas (WaitingQueue)
+
+Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branch `feat/reservation-waiting-queue`. Feature-detect `queueEnabled === true`.
+
+- [x] Admin wizard Operação (Location): toggle fila (default off) + horário de abertura; persistir em create/update/bulk
+- [x] B2C agenda: poll GET queue 4s (pausa se a aba estiver oculta); Closed / WaitingRoom / Waiting / Active 90s / Expired
+- [x] Reserva continua em `bookPortalSlot` / `createPortalReservation`; 409 `QUEUE_*` muda o estado da fila
+- [ ] Validar E2E com a API na mesma branch (merge API first)
+
 ## 4. Gating B2B por módulos
 
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
@@ -80,6 +89,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Copy preferindo famílias ativas do tenant (`spaces` / `goods` / `electrical` …).
 - [x] Wizard: “É necessário pagamento prévio?” (`requiresDeposit` / `RequiresDeposit`) em todo rentable.
 - [x] Wizard: passo Operação; preços por preset (todos os dias / fim de semana / por dia); estado preservado entre passos
+- [x] Wizard Location: “Fila de reservas” + horário de abertura (`queueEnabled` / `queueOpeningTime`); oculto para Good
 - [x] F-16: lote — tipo Location gera N recursos numerados; tipo Good gera um recurso com quantidade em estoque (sem toggle extra)
 - [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
 
@@ -156,3 +166,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-21 | **Fix F-03:** wizard aplica preços de aluguel em um único POST `/api/assets/pricing-bulk` (`replace: true`). |
 | 2026-08-22 | **F-10 (espelho):** templates semanais podem sobrepor OccupancyKinds diferentes; precedência Closed > Lesson > Open na grade inédita; glossário alinhado ao `vlr-api`. |
 | 2026-08-22 | **Fix F-16:** wizard de lote envia `rentalType` + `totalQuantity`; Location usa faixa start/end (N entidades); Good usa estoque num único recurso. |
+| 2026-08-22 | **Executado:** fila opcional por Location (default off). Admin: toggle + horário no wizard. B2C: poll 4s, sala T−30, turno 90s FIFO. Sem fila = UX igual. **Como testar:** (1) Location com fila desligada — portal reserva como hoje. (2) Ligar fila 07:30 no wizard → portal: antes da sala de espera não entra; na sala entra e não reserva; após abertura o 1º Active reserva um horário em 90s. (3) 2º cliente vê posição 2. (4) Refresh mantém posição/tempo. (5) Após expirar, “Entrar novamente na fila”. |

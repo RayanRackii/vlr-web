@@ -58,6 +58,9 @@
     "createReservation": "No se pudo crear la reserva.",
     "loadScheduleDay": "No se pudo cargar la agenda del día.",
     "bookSlot": "No se pudo reservar el horario.",
+    "loadQueue": "No se pudo cargar la fila.",
+    "joinQueue": "No se pudo entrar en la fila.",
+    "leaveQueue": "No se pudo salir de la fila.",
     "processImage": "No se pudo procesar la imagen.",
     "loadAssetFamilies": "No se pudieron cargar las familias de activos.",
     "loadOccupancyKinds": "No se pudieron cargar los tipos de ocupación.",
@@ -228,7 +231,29 @@
       "myReservations": "Mis reservas",
       "empty": "Aún no hay reservas.",
       "noAssets": "No hay espacios configurados",
-      "backHome": "Volver"
+      "backHome": "Volver",
+      "queue": {
+        "closed": "La fila abre a las {{waitingRoom}} y las reservas a las {{opensAt}}.",
+        "closedFallback": "La fila de reservas aún no está abierta.",
+        "join": "Entrar en la fila",
+        "joining": "Entrando...",
+        "inQueue": "Estás en la fila",
+        "position": "Tu posición: {{position}}",
+        "ahead": "{{count}} por delante",
+        "leave": "Salir de la fila",
+        "leaving": "Saliendo...",
+        "yourTurn": "Tu turno",
+        "countdown": "Tiempo restante: {{time}}",
+        "expired": "Se acabó tu tiempo",
+        "rejoin": "Entrar de nuevo en la fila",
+        "errors": {
+          "QUEUE_REQUIRED": "Debes estar en la fila para reservar este espacio.",
+          "QUEUE_WAITING": "Espera tu turno en la fila para reservar.",
+          "QUEUE_TURN_EXPIRED": "Tu turno ha terminado.",
+          "QUEUE_TURN_ALREADY_USED": "Ya usaste este turno para reservar.",
+          "QUEUE_WAITING_ROOM_CLOSED": "La fila aún no está abierta."
+        }
+      }
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -1005,7 +1030,8 @@
         "rangeInvalid": "El número final debe ser mayor o igual al inicial.",
         "quantityRequired": "Ingrese una cantidad válida (mínimo 1).",
         "stockQuantityRequired": "Ingrese una cantidad en stock válida (mínimo 1).",
-        "pricingRequired": "Agregue al menos una franja de precio válida."
+        "pricingRequired": "Agregue al menos una franja de precio válida.",
+        "queueOpeningTimeRequired": "Indique la hora de apertura de la fila de reservas."
       },
       "success": {
         "bulkCreated": "{{count}} recurso(s) creado(s) con éxito."
@@ -1055,6 +1081,8 @@
         "requiresMaintenance": "Si está activo, el recurso entra en mantenimiento/PMOC/OS.",
         "isRentable": "Si está activo, el recurso se puede reservar en alquiler/agenda.",
         "requiresDeposit": "Si está activo, la reserva espera la confirmación de pago del administrador. Si está desactivado, nace confirmada y ocupa el horario.",
+        "queueEnabled": "Si está activo, los clientes entran en una fila FIFO para reservar este espacio a la hora de apertura. Desactivado por defecto.",
+        "queueOpeningTime": "Hora del día en que abren las reservas (zona de Brasilia). La sala de espera abre 30 minutos antes.",
         "requiresMaintenanceHint": "Este recurso podrá vincularse a planes PMOC y órdenes de servicio.",
         "rentalType": "Espacio (cancha/sala) o bien (equipo prestado).",
         "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica.",
@@ -1136,6 +1164,8 @@
         "status": "Estado",
         "isRentable": "Disponible para reserva / alquiler",
         "requiresDeposit": "¿Es necesario un pago previo?",
+        "queueEnabled": "Fila de reservas",
+        "queueOpeningTime": "Hora de apertura de la fila de reservas",
         "requiresMaintenance": "Requiere mantenimiento",
         "rentalType": "Tipo de alquiler",
         "totalQuantity": "Cantidad total"

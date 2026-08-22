@@ -58,6 +58,9 @@
     "createReservation": "Could not create reservation.",
     "loadScheduleDay": "Could not load schedule day.",
     "bookSlot": "Could not book slot.",
+    "loadQueue": "Could not load the waiting queue.",
+    "joinQueue": "Could not join the waiting queue.",
+    "leaveQueue": "Could not leave the waiting queue.",
     "processImage": "Could not process image.",
     "loadAssetFamilies": "Could not load asset families.",
     "loadOccupancyKinds": "Could not load occupancy kinds.",
@@ -228,7 +231,29 @@
       "myReservations": "My reservations",
       "empty": "No reservations yet.",
       "noAssets": "No spaces configured",
-      "backHome": "Back"
+      "backHome": "Back",
+      "queue": {
+        "closed": "The queue opens at {{waitingRoom}} and reservations open at {{opensAt}}.",
+        "closedFallback": "The reservation queue is not open yet.",
+        "join": "Join the queue",
+        "joining": "Joining...",
+        "inQueue": "You are in the queue",
+        "position": "Your position: {{position}}",
+        "ahead": "{{count}} ahead of you",
+        "leave": "Leave the queue",
+        "leaving": "Leaving...",
+        "yourTurn": "Your turn",
+        "countdown": "Time left: {{time}}",
+        "expired": "Your time is up",
+        "rejoin": "Join the queue again",
+        "errors": {
+          "QUEUE_REQUIRED": "You need to be in the queue to book this space.",
+          "QUEUE_WAITING": "Wait for your turn in the queue to book.",
+          "QUEUE_TURN_EXPIRED": "Your turn has ended.",
+          "QUEUE_TURN_ALREADY_USED": "You already used this turn to book.",
+          "QUEUE_WAITING_ROOM_CLOSED": "The queue is not open yet."
+        }
+      }
     },
     "menu": {
       "empty": "No modules available.",
@@ -1005,7 +1030,8 @@
         "rangeInvalid": "End number must be greater than or equal to start number.",
         "quantityRequired": "Enter a valid quantity (minimum 1).",
         "stockQuantityRequired": "Enter a valid stock quantity (minimum 1).",
-        "pricingRequired": "Add at least one valid price band."
+        "pricingRequired": "Add at least one valid price band.",
+        "queueOpeningTimeRequired": "Enter the reservation queue opening time."
       },
       "success": {
         "bulkCreated": "{{count}} resource(s) created successfully."
@@ -1055,6 +1081,8 @@
         "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
         "isRentable": "When on, the resource can be booked in rentals/schedule.",
         "requiresDeposit": "When on, the booking waits for admin payment confirmation. When off, it is confirmed immediately and holds the time slot.",
+        "queueEnabled": "When on, customers join a FIFO queue to book this space at opening time. Off by default.",
+        "queueOpeningTime": "Time of day when reservations open (Brasília timezone). The waiting room opens 30 minutes earlier.",
         "requiresMaintenanceHint": "This resource can be linked to PMOC plans and work orders.",
         "rentalType": "Space (court/room) or good (loaned equipment).",
         "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity.",
@@ -1136,6 +1164,8 @@
         "status": "Status",
         "isRentable": "Available for booking / rental",
         "requiresDeposit": "Is prior payment required?",
+        "queueEnabled": "Reservation queue",
+        "queueOpeningTime": "Reservation queue opening time",
         "requiresMaintenance": "Requires maintenance",
         "rentalType": "Rental type",
         "totalQuantity": "Total quantity"
