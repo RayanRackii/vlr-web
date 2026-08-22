@@ -153,3 +153,4 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 | 2026-08-21 | **Fix F-09:** `publicApi` sem Authorization para endpoints AllowAnonymous do portal/onboarding. |
 | 2026-08-21 | **Fix F-07:** 401 autenticado no `customerApi` limpa só a sessão B2C e volta ao login do tenant. |
 | 2026-08-21 | **Fix F-03:** wizard aplica preços de aluguel em um único POST `/api/assets/pricing-bulk` (`replace: true`). |
+| 2026-08-22 | **F-10 (espelho):** templates semanais podem sobrepor OccupancyKinds diferentes; precedência Closed > Lesson > Open na grade inédita; glossário alinhado ao `vlr-api`. |
