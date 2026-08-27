@@ -78,7 +78,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
 - [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
-- [ ] `ModuleGuard` nas rotas + listagem de Users B2B do tenant em **Pessoas & portal**.
+- [x] `PermissionRoute` nas rotas de produto (módulo **e** permissão) + página **Pessoas e acesso** (`/pessoas-e-acesso`) com usuários e funções.
 - [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
 ## 4.5. UX de Ativos (fundação)
@@ -167,3 +167,4 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 | 2026-08-22 | **F-10 (espelho):** templates semanais podem sobrepor OccupancyKinds diferentes; precedência Closed > Lesson > Open na grade inédita; glossário alinhado ao `vlr-api`. |
 | 2026-08-22 | **Fix F-16:** wizard de lote envia `rentalType` + `totalQuantity`; Location usa faixa start/end (N entidades); Good usa estoque num único recurso. |
 | 2026-08-22 | **Executado:** fila opcional por Location (default off). Admin: toggle + horário no wizard. B2C: poll 4s, sala T−30, turno 90s FIFO. Sem fila = UX igual. **Como testar:** (1) Location com fila desligada — portal reserva como hoje. (2) Ligar fila 07:30 no wizard → portal: antes da sala de espera não entra; na sala entra e não reserva; após abertura o 1º Active reserva um horário em 90s. (3) 2º cliente vê posição 2. (4) Refresh mantém posição/tempo. (5) Após expirar, “Entrar novamente na fila”. Merge API first. Follow-up: testes FE do hook quando houver runner. |
+| 2026-08-27 | **Executado (código):** Tenant RBAC v1 no B2B — `GET /users/me` com `roles[]`/`permissions[]`, `usePermissions`/`Can`/`PermissionRoute`, nav por módulo+permissão, página **Pessoas e acesso**, funções Admin/User/personalizada. Vitest adicionado (`npm run test`). Dashboard mantém branching legado por `role`. |

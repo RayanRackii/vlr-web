@@ -577,6 +577,7 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "peopleAccess": "Pessoas e acesso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuários",
@@ -1461,7 +1462,162 @@
   "users": {
     "errors": {
       "loadCurrent": "Não foi possível carregar seu perfil de acesso.",
-      "loadTechnicians": "Não foi possível carregar os técnicos."
+      "loadTechnicians": "Não foi possível carregar os técnicos.",
+      "invalidResponse": "Resposta inválida da API."
+    }
+  },
+  "accessDenied": {
+    "title": "Acesso negado",
+    "description": "Você não tem permissão para ver esta página."
+  },
+  "rbac": {
+    "errors": {
+      "PRIVILEGE_ESCALATION_BLOCKED": "Você não pode atribuir um perfil de acesso com mais permissões do que as suas.",
+      "LAST_ADMIN_PROTECTED": "Não é possível remover o último administrador ativo deste ambiente.",
+      "ROLE_IN_USE": "Esta função está em uso e não pode ser excluída.",
+      "CANNOT_MODIFY_SYSTEM_ROLE": "Funções de sistema não podem ser renomeadas nem ter as permissões reduzidas desta forma.",
+      "CANNOT_DELETE_SYSTEM_ROLE": "Funções de sistema não podem ser excluídas.",
+      "CANNOT_ASSIGN_SUPERADMIN": "Não é possível atribuir a função SuperAdmin neste ambiente.",
+      "FORBIDDEN": "Você não tem permissão para esta ação."
+    }
+  },
+  "peopleAccess": {
+    "title": "Pessoas e acesso",
+    "description": "Gerencie usuários do ambiente e os perfis de acesso (funções e permissões).",
+    "tabs": {
+      "users": "Usuários",
+      "roles": "Funções e permissões"
+    },
+    "role": "Função",
+    "permissions": "Permissões",
+    "accessProfile": "Perfil de acesso",
+    "moduleInactive": "Módulo não ativo para este tenant",
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "badges": {
+      "system": "Sistema",
+      "custom": "Personalizada"
+    },
+    "modules": {
+      "core": "Geral",
+      "inventory": "Inventário",
+      "pmoc": "PMOC",
+      "os": "Ordens de serviço",
+      "rentals": "Reservas"
+    },
+    "resources": {
+      "dashboard": "Dashboard",
+      "users": "Usuários",
+      "roles": "Funções",
+      "units": "Unidades",
+      "registration_fields": "Cadastro do portal",
+      "module_menu": "Menu do portal",
+      "assets": "Recursos",
+      "categories": "Tipos",
+      "families": "Famílias",
+      "plans": "Planos",
+      "templates": "Modelos",
+      "work_orders": "Ordens de serviço",
+      "reservations": "Reservas",
+      "schedule": "Agenda",
+      "pricing": "Preços",
+      "layouts": "Layouts",
+      "occupancy_kinds": "Tipos de ocupação"
+    },
+    "catalog": {
+      "core.dashboard.read": "Ver dashboard",
+      "core.users.read": "Ver usuários",
+      "core.users.invite": "Convidar usuários",
+      "core.users.assign_roles": "Atribuir funções",
+      "core.roles.read": "Ver funções",
+      "core.roles.manage": "Gerenciar funções",
+      "core.units.read": "Ver unidades",
+      "core.registration_fields.read": "Ver campos de cadastro",
+      "core.registration_fields.write": "Editar campos de cadastro",
+      "core.module_menu.read": "Ver menu do portal",
+      "core.module_menu.write": "Editar menu do portal",
+      "inventory.assets.read": "Ver recursos",
+      "inventory.assets.write": "Editar recursos",
+      "inventory.categories.read": "Ver tipos",
+      "inventory.categories.write": "Editar tipos",
+      "inventory.families.read": "Ver famílias",
+      "pmoc.plans.read": "Ver planos PMOC",
+      "pmoc.plans.write": "Editar planos PMOC",
+      "pmoc.templates.read": "Ver modelos PMOC",
+      "os.work_orders.read": "Ver ordens de serviço",
+      "os.work_orders.create": "Criar ordens de serviço",
+      "os.work_orders.execute": "Executar ordens de serviço",
+      "os.work_orders.assign": "Atribuir ordens de serviço",
+      "rentals.reservations.read": "Ver reservas",
+      "rentals.reservations.confirm": "Confirmar reservas",
+      "rentals.reservations.cancel": "Cancelar reservas",
+      "rentals.schedule.read": "Ver agenda",
+      "rentals.schedule.write": "Editar agenda",
+      "rentals.assets.read": "Ver recursos de aluguel",
+      "rentals.assets.write": "Editar política de escala",
+      "rentals.pricing.read": "Ver preços",
+      "rentals.pricing.write": "Editar preços",
+      "rentals.pricing.bulk_write": "Editar preços em lote",
+      "rentals.layouts.read": "Ver layouts",
+      "rentals.layouts.write": "Editar layouts",
+      "rentals.occupancy_kinds.read": "Ver tipos de ocupação",
+      "rentals.occupancy_kinds.write": "Editar tipos de ocupação"
+    },
+    "users": {
+      "description": "Convide pessoas e atribua uma ou mais funções.",
+      "invite": "Convidar usuário",
+      "inviteTitle": "Convidar usuário",
+      "inviteDescription": "O convite é enviado por e-mail. Escolha ao menos uma função.",
+      "fullName": "Nome",
+      "email": "E-mail",
+      "sendInvite": "Enviar convite",
+      "assign": "Atribuir funções",
+      "assignTitle": "Atribuir funções",
+      "assignDescription": "Defina as funções de {{name}}.",
+      "saveRoles": "Salvar funções",
+      "empty": "Nenhum usuário neste ambiente.",
+      "noRoles": "Nenhuma função atribuída"
+    },
+    "roles": {
+      "description": "Funções de sistema e perfis personalizados deste ambiente.",
+      "create": "Nova função",
+      "createTitle": "Nova função",
+      "editTitle": "Perfil de acesso",
+      "editorDescription": "Defina o nome e as permissões desta função.",
+      "adminReadonly": "A função Admin do sistema é somente leitura. As permissões acompanham o catálogo do tenant.",
+      "descriptionLabel": "Descrição",
+      "view": "Ver permissões",
+      "save": "Salvar",
+      "empty": "Nenhuma função visível.",
+      "deleteTitle": "Excluir função",
+      "deleteDescription": "Excluir a função {{name}}? Só é possível se ela não estiver atribuída a ninguém."
+    },
+    "validation": {
+      "fullNameRequired": "Informe o nome.",
+      "emailInvalid": "Informe um e-mail válido.",
+      "rolesRequired": "Selecione ao menos uma função.",
+      "roleNameRequired": "Informe o nome da função."
+    },
+    "toasts": {
+      "inviteSuccess": "Convite enviado.",
+      "assignSuccess": "Funções atualizadas.",
+      "roleCreated": "Função criada.",
+      "roleUpdated": "Função atualizada.",
+      "roleDeleted": "Função excluída."
+    },
+    "errors": {
+      "invalidResponse": "Resposta inválida da API.",
+      "loadUsers": "Não foi possível carregar os usuários.",
+      "loadRoles": "Não foi possível carregar as funções.",
+      "loadRole": "Não foi possível carregar a função.",
+      "loadPermissions": "Não foi possível carregar as permissões.",
+      "invite": "Não foi possível enviar o convite.",
+      "assignRoles": "Não foi possível atribuir as funções.",
+      "createRole": "Não foi possível criar a função.",
+      "updateRole": "Não foi possível atualizar a função.",
+      "deleteRole": "Não foi possível excluir a função."
     }
   },
   "admin": {
