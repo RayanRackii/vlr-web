@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   CalendarCheck,
@@ -10,12 +10,14 @@ import {
   Map,
   MenuSquare,
   Shield,
+  Users,
   Wrench,
 } from "lucide-react"
 
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
-import { getCurrentUser } from "@/features/users/services/usersService"
+import { hasPermission } from "@/features/users/permissions/hasPermission"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -26,11 +28,13 @@ export type AppNavigationChildItem = {
     | "nav.adminTenants"
     | "nav.adminUsers"
   to: string
+  permission?: string
 }
 
 export type AppNavigationItem = {
   labelKey:
     | "nav.dashboard"
+    | "nav.peopleAccess"
     | "nav.assets"
     | "nav.pmoc"
     | "nav.workOrders"
@@ -45,6 +49,7 @@ export type AppNavigationItem = {
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
   modules?: readonly string[]
+  permission?: string
 }
 
 export type AppNavigationSectionTitleKey =
@@ -67,20 +72,29 @@ const overviewItem: AppNavigationItem = {
   labelKey: "nav.dashboard",
   to: "/dashboard",
   icon: LayoutDashboard,
+  permission: "core.dashboard.read",
 }
 
 const peoplePortalItems: readonly AppNavigationItem[] = [
+  {
+    labelKey: "nav.peopleAccess",
+    to: "/pessoas-e-acesso",
+    icon: Users,
+    permission: "core.users.read",
+  },
   {
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
     icon: FormInput,
     modules: ["rentals"],
+    permission: "core.registration_fields.read",
   },
   {
     labelKey: "nav.moduleMenu",
     to: "/configuracoes/menu",
     icon: MenuSquare,
     modules: ["rentals"],
+    permission: "core.module_menu.read",
   },
 ]
 
@@ -94,10 +108,12 @@ const operationsItems: readonly AppNavigationItem[] = [
       {
         labelKey: "nav.assetsInventory",
         to: "/ativos",
+        permission: "inventory.assets.read",
       },
       {
         labelKey: "nav.assetsCategories",
         to: "/ativos/categorias",
+        permission: "inventory.categories.read",
       },
     ],
   },
@@ -110,10 +126,12 @@ const operationsItems: readonly AppNavigationItem[] = [
       {
         labelKey: "nav.pmocPlans",
         to: "/pmoc",
+        permission: "pmoc.plans.read",
       },
       {
         labelKey: "nav.pmocNew",
         to: "/pmoc/novo",
+        permission: "pmoc.plans.write",
       },
     ],
   },
@@ -122,24 +140,28 @@ const operationsItems: readonly AppNavigationItem[] = [
     to: "/os",
     icon: ClipboardPen,
     modules: ["os"],
+    permission: "os.work_orders.read",
   },
   {
     labelKey: "nav.schedule",
     to: "/configuracoes/agenda",
     icon: CalendarClock,
     modules: ["rentals"],
+    permission: "rentals.schedule.read",
   },
   {
     labelKey: "nav.layout",
     to: "/configuracoes/layout",
     icon: Map,
     modules: ["rentals"],
+    permission: "rentals.layouts.read",
   },
   {
     labelKey: "nav.reservations",
     to: "/configuracoes/reservas",
     icon: CalendarCheck,
     modules: ["rentals"],
+    permission: "rentals.reservations.read",
   },
 ]
 
@@ -150,34 +172,78 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...operationsItems,
 ]
 
-function filterByActiveModules(
-  items: readonly AppNavigationItem[],
+function moduleIsEnabled(
+  modules: readonly string[] | undefined,
   activeModules: readonly string[],
-): AppNavigationItem[] {
+): boolean {
+  if (!modules || modules.length === 0) {
+    return true
+  }
+
   const enabled = new Set(
     activeModules.map((module) => module.trim().toLowerCase()),
   )
 
-  return items.filter((item) => {
-    if (!item.modules || item.modules.length === 0) {
-      return true
+  return modules.some((module) => enabled.has(module))
+}
+
+export function filterNavigationItemsByAccess(
+  items: readonly AppNavigationItem[],
+  activeModules: readonly string[],
+  permissions: readonly string[],
+): AppNavigationItem[] {
+  return items.flatMap((item) => {
+    if (!moduleIsEnabled(item.modules, activeModules)) {
+      return []
     }
 
-    return item.modules.some((module) => enabled.has(module))
+    if (item.children && item.children.length > 0) {
+      const children = item.children.filter((child) => {
+        if (!child.permission) {
+          return true
+        }
+
+        return hasPermission(permissions, child.permission)
+      })
+
+      if (children.length === 0) {
+        return []
+      }
+
+      return [{ ...item, children }]
+    }
+
+    if (item.permission && !hasPermission(permissions, item.permission)) {
+      return []
+    }
+
+    return [item]
   })
 }
 
 function buildProductSections(
   activeModules: readonly string[],
+  permissions: readonly string[],
 ): AppNavigationSection[] {
-  const sections: AppNavigationSection[] = [
-    {
-      titleKey: "nav.sections.overview",
-      items: [overviewItem],
-    },
-  ]
+  const sections: AppNavigationSection[] = []
 
-  const people = filterByActiveModules(peoplePortalItems, activeModules)
+  const overview = filterNavigationItemsByAccess(
+    [overviewItem],
+    activeModules,
+    permissions,
+  )
+  if (overview.length > 0) {
+    sections.push({
+      titleKey: "nav.sections.overview",
+      items: overview,
+    })
+  }
+
+  const people = filterNavigationItemsByAccess(
+    peoplePortalItems,
+    activeModules,
+    permissions,
+  )
   if (people.length > 0) {
     sections.push({
       titleKey: "nav.sections.peoplePortal",
@@ -185,7 +251,11 @@ function buildProductSections(
     })
   }
 
-  const operations = filterByActiveModules(operationsItems, activeModules)
+  const operations = filterNavigationItemsByAccess(
+    operationsItems,
+    activeModules,
+    permissions,
+  )
   if (operations.length > 0) {
     sections.push({
       titleKey: "nav.sections.operations",
@@ -199,34 +269,9 @@ function buildProductSections(
 export function useAppNavigationSections(): AppNavigationState {
   const isPlatformAdmin = useIsPlatformAdmin()
   const { isInTenantEnvironment } = usePlatformTenantSession()
-  const [activeModules, setActiveModules] = useState<string[] | null>(null)
+  const { activeModules, permissions, isLoading } = usePermissions()
 
   const needsProductNav = !isPlatformAdmin || isInTenantEnvironment
-
-  useEffect(() => {
-    if (!needsProductNav) {
-      setActiveModules(null)
-      return
-    }
-
-    let cancelled = false
-
-    void getCurrentUser()
-      .then((profile) => {
-        if (!cancelled) {
-          setActiveModules(profile.activeModules ?? [])
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setActiveModules([])
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [needsProductNav, isInTenantEnvironment])
 
   const sections = useMemo<readonly AppNavigationSection[]>(() => {
     if (isPlatformAdmin && !isInTenantEnvironment) {
@@ -258,7 +303,7 @@ export function useAppNavigationSections(): AppNavigationState {
       ]
     }
 
-    if (activeModules === null) {
+    if (isLoading) {
       return [
         {
           titleKey: "nav.sections.overview",
@@ -267,12 +312,18 @@ export function useAppNavigationSections(): AppNavigationState {
       ]
     }
 
-    return buildProductSections(activeModules)
-  }, [activeModules, isInTenantEnvironment, isPlatformAdmin])
+    return buildProductSections(activeModules, permissions)
+  }, [
+    activeModules,
+    isInTenantEnvironment,
+    isLoading,
+    isPlatformAdmin,
+    permissions,
+  ])
 
   return {
     sections,
-    isLoading: needsProductNav && activeModules === null,
+    isLoading: needsProductNav && isLoading,
   }
 }
 
@@ -292,6 +343,10 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/os/")) {
     return "nav.workOrders"
+  }
+
+  if (pathname.startsWith("/pessoas-e-acesso")) {
+    return "nav.peopleAccess"
   }
 
   for (const item of appNavigationItems) {

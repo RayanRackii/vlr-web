@@ -577,6 +577,7 @@
     "schedule": "Schedule",
     "layout": "Layout",
     "reservations": "Reservations",
+    "peopleAccess": "People and access",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
     "adminUsers": "Users",
@@ -1425,7 +1426,162 @@
   "users": {
     "errors": {
       "loadCurrent": "Could not load your access profile.",
-      "loadTechnicians": "Could not load technicians."
+      "loadTechnicians": "Could not load technicians.",
+      "invalidResponse": "Invalid API response."
+    }
+  },
+  "accessDenied": {
+    "title": "Access denied",
+    "description": "You do not have permission to view this page."
+  },
+  "rbac": {
+    "errors": {
+      "PRIVILEGE_ESCALATION_BLOCKED": "You cannot assign an access profile with more permissions than your own.",
+      "LAST_ADMIN_PROTECTED": "The last active administrator in this environment cannot be removed.",
+      "ROLE_IN_USE": "This access profile is in use and cannot be deleted.",
+      "CANNOT_MODIFY_SYSTEM_ROLE": "System access profiles cannot be renamed or reduced this way.",
+      "CANNOT_DELETE_SYSTEM_ROLE": "System access profiles cannot be deleted.",
+      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this environment.",
+      "FORBIDDEN": "You do not have permission for this action."
+    }
+  },
+  "peopleAccess": {
+    "title": "People and access",
+    "description": "Manage people in this environment and their access profiles (functions and permissions).",
+    "tabs": {
+      "users": "Users",
+      "roles": "Functions and permissions"
+    },
+    "role": "Function",
+    "permissions": "Permissions",
+    "accessProfile": "Access profile",
+    "moduleInactive": "Module is not active for this tenant",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "badges": {
+      "system": "System",
+      "custom": "Custom"
+    },
+    "modules": {
+      "core": "General",
+      "inventory": "Inventory",
+      "pmoc": "PMOC",
+      "os": "Work orders",
+      "rentals": "Reservations"
+    },
+    "resources": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "roles": "Functions",
+      "units": "Units",
+      "registration_fields": "Portal registration",
+      "module_menu": "Portal menu",
+      "assets": "Resources",
+      "categories": "Types",
+      "families": "Families",
+      "plans": "Plans",
+      "templates": "Templates",
+      "work_orders": "Work orders",
+      "reservations": "Reservations",
+      "schedule": "Schedule",
+      "pricing": "Pricing",
+      "layouts": "Layouts",
+      "occupancy_kinds": "Occupancy kinds"
+    },
+    "catalog": {
+      "core.dashboard.read": "View dashboard",
+      "core.users.read": "View users",
+      "core.users.invite": "Invite users",
+      "core.users.assign_roles": "Assign functions",
+      "core.roles.read": "View functions",
+      "core.roles.manage": "Manage functions",
+      "core.units.read": "View units",
+      "core.registration_fields.read": "View registration fields",
+      "core.registration_fields.write": "Edit registration fields",
+      "core.module_menu.read": "View portal menu",
+      "core.module_menu.write": "Edit portal menu",
+      "inventory.assets.read": "View resources",
+      "inventory.assets.write": "Edit resources",
+      "inventory.categories.read": "View types",
+      "inventory.categories.write": "Edit types",
+      "inventory.families.read": "View families",
+      "pmoc.plans.read": "View PMOC plans",
+      "pmoc.plans.write": "Edit PMOC plans",
+      "pmoc.templates.read": "View PMOC templates",
+      "os.work_orders.read": "View work orders",
+      "os.work_orders.create": "Create work orders",
+      "os.work_orders.execute": "Execute work orders",
+      "os.work_orders.assign": "Assign work orders",
+      "rentals.reservations.read": "View reservations",
+      "rentals.reservations.confirm": "Confirm reservations",
+      "rentals.reservations.cancel": "Cancel reservations",
+      "rentals.schedule.read": "View schedule",
+      "rentals.schedule.write": "Edit schedule",
+      "rentals.assets.read": "View rental resources",
+      "rentals.assets.write": "Edit schedule policy",
+      "rentals.pricing.read": "View pricing",
+      "rentals.pricing.write": "Edit pricing",
+      "rentals.pricing.bulk_write": "Bulk-edit pricing",
+      "rentals.layouts.read": "View layouts",
+      "rentals.layouts.write": "Edit layouts",
+      "rentals.occupancy_kinds.read": "View occupancy kinds",
+      "rentals.occupancy_kinds.write": "Edit occupancy kinds"
+    },
+    "users": {
+      "description": "Invite people and assign one or more functions.",
+      "invite": "Invite user",
+      "inviteTitle": "Invite user",
+      "inviteDescription": "The invite is sent by email. Choose at least one function.",
+      "fullName": "Name",
+      "email": "Email",
+      "sendInvite": "Send invite",
+      "assign": "Assign functions",
+      "assignTitle": "Assign functions",
+      "assignDescription": "Set the functions for {{name}}.",
+      "saveRoles": "Save functions",
+      "empty": "No users in this environment.",
+      "noRoles": "No function assigned"
+    },
+    "roles": {
+      "description": "System functions and custom access profiles for this environment.",
+      "create": "New function",
+      "createTitle": "New function",
+      "editTitle": "Access profile",
+      "editorDescription": "Set the name and permissions for this function.",
+      "adminReadonly": "The system Admin function is read-only. Permissions follow the tenant catalog.",
+      "descriptionLabel": "Description",
+      "view": "View permissions",
+      "save": "Save",
+      "empty": "No visible functions.",
+      "deleteTitle": "Delete function",
+      "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
+    },
+    "validation": {
+      "fullNameRequired": "Enter a name.",
+      "emailInvalid": "Enter a valid email.",
+      "rolesRequired": "Select at least one function.",
+      "roleNameRequired": "Enter the function name."
+    },
+    "toasts": {
+      "inviteSuccess": "Invite sent.",
+      "assignSuccess": "Functions updated.",
+      "roleCreated": "Function created.",
+      "roleUpdated": "Function updated.",
+      "roleDeleted": "Function deleted."
+    },
+    "errors": {
+      "invalidResponse": "Invalid API response.",
+      "loadUsers": "Could not load users.",
+      "loadRoles": "Could not load functions.",
+      "loadRole": "Could not load the function.",
+      "loadPermissions": "Could not load permissions.",
+      "invite": "Could not send the invite.",
+      "assignRoles": "Could not assign functions.",
+      "createRole": "Could not create the function.",
+      "updateRole": "Could not update the function.",
+      "deleteRole": "Could not delete the function."
     }
   },
   "admin": {
