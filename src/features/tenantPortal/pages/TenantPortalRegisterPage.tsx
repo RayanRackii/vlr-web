@@ -6,6 +6,7 @@ import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
@@ -19,6 +20,11 @@ import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import {
   buildCustomerRegisterSchema,
+  formatCnpjMask,
+  formatCpfMask,
+  isReservedRegisterFieldKey,
+  onlyDigits,
+  type CustomerType,
   type RegistrationField,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
@@ -67,6 +73,10 @@ export function TenantPortalRegisterPage() {
       buildCustomerRegisterSchema(
         fields,
         t("tenantPortal.validation.passwordMismatch"),
+        {
+          invalidCpf: t("tenantPortal.validation.invalidCpf"),
+          invalidCnpj: t("tenantPortal.validation.invalidCnpj"),
+        },
       ),
     [fields, t],
   )
@@ -78,8 +88,13 @@ export function TenantPortalRegisterPage() {
       password: "",
       confirmPassword: "",
       phone: "",
+      customerType: "Individual",
+      document: "",
     }
     for (const field of fields) {
+      if (isReservedRegisterFieldKey(field.fieldKey)) {
+        continue
+      }
       values[field.fieldKey] = field.fieldType === "boolean" ? false : ""
     }
     return values
@@ -110,6 +125,9 @@ export function TenantPortalRegisterPage() {
     try {
       const attributes: Record<string, string | number | boolean> = {}
       for (const field of fields) {
+        if (isReservedRegisterFieldKey(field.fieldKey)) {
+          continue
+        }
         const value = values[field.fieldKey]
         if (value === undefined || value === null || value === "") {
           continue
@@ -122,6 +140,9 @@ export function TenantPortalRegisterPage() {
         email: String(values.email ?? ""),
         password: String(values.password ?? ""),
         phone: String(values.phone ?? ""),
+        customerType:
+          values.customerType === "Company" ? "Company" : "Individual",
+        document: onlyDigits(String(values.document ?? "")),
         attributes,
       })
       toast.success(t("tenantPortal.register.toastSuccess"))
@@ -195,7 +216,83 @@ export function TenantPortalRegisterPage() {
             />
           ))}
 
-          {fields.map((extra) => (
+          <FormField
+            control={form.control}
+            name="customerType"
+            render={({ field }) => {
+              const current: CustomerType =
+                field.value === "Company" ? "Company" : "Individual"
+              return (
+                <FormItem>
+                  <FormLabel>{t("tenantPortal.fields.customerType")}</FormLabel>
+                  <FormControl>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={current === "Individual" ? "default" : "outline"}
+                        onClick={() => {
+                          field.onChange("Individual")
+                          form.setValue("document", "")
+                        }}
+                      >
+                        {t("tenantPortal.fields.individual")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={current === "Company" ? "default" : "outline"}
+                        onClick={() => {
+                          field.onChange("Company")
+                          form.setValue("document", "")
+                        }}
+                      >
+                        {t("tenantPortal.fields.company")}
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
+          />
+
+          <FormField
+            control={form.control}
+            name="document"
+            render={({ field }) => {
+              const customerType =
+                form.watch("customerType") === "Company"
+                  ? "Company"
+                  : "Individual"
+              return (
+                <FormItem>
+                  <FormLabel>
+                    {customerType === "Company"
+                      ? t("tenantPortal.fields.cnpj")
+                      : t("tenantPortal.fields.cpf")}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={String(field.value ?? "")}
+                      onChange={(event) => {
+                        const next =
+                          customerType === "Company"
+                            ? formatCnpjMask(event.target.value)
+                            : formatCpfMask(event.target.value)
+                        field.onChange(next)
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
+          />
+
+          {fields
+            .filter((extra) => !isReservedRegisterFieldKey(extra.fieldKey))
+            .map((extra) => (
             <FormField
               key={extra.id}
               control={form.control}

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   filterNavigationItemsByAccess,
+  appNavigationItems,
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 
@@ -66,6 +67,41 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible).toHaveLength(1)
     expect(visible[0]?.children?.map((child) => child.to)).toEqual([
       "/ativos/categorias",
+    ])
+  })
+
+  it("hides Catalogo & Pedidos when the catalog module is off", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      [
+        "catalog.products.read",
+        "catalog.orders.read",
+        "catalog.notifications.read",
+      ],
+    )
+
+    expect(
+      visible.some(
+        (item) =>
+          item.labelKey === "nav.catalog" ||
+          item.to.startsWith("/catalogo"),
+      ),
+    ).toBe(false)
+  })
+
+  it("shows catalog children when the catalog module is on and permissions match", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["catalog"],
+      ["catalog.products.read", "catalog.orders.read"],
+    )
+
+    const catalog = visible.find((item) => item.labelKey === "nav.catalog")
+    expect(catalog).toBeDefined()
+    expect(catalog?.children?.map((child) => child.to)).toEqual([
+      "/catalogo/produtos",
+      "/catalogo/pedidos",
     ])
   })
 })

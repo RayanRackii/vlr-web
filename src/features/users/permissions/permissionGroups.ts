@@ -17,7 +17,14 @@ export type PermissionModuleGroup = {
   resources: PermissionResourceGroup[]
 }
 
-const MODULE_ORDER = ["core", "inventory", "pmoc", "os", "rentals"] as const
+export const MODULE_ORDER = [
+  "core",
+  "inventory",
+  "pmoc",
+  "os",
+  "rentals",
+  "catalog",
+] as const
 
 export function normalizeModuleKey(
   moduleKey: string | null | undefined,

@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const MODULE_KEYS = ["Inventory", "PMOC", "OS", "Rentals"] as const
+export const MODULE_KEYS = ["Inventory", "PMOC", "OS", "Rentals", "Catalog"] as const
 
 export type ModuleKey = (typeof MODULE_KEYS)[number]
 
@@ -150,6 +150,7 @@ const MODULE_NAME_TO_KEY: Record<string, ModuleKey> = {
   pmoc: "PMOC",
   os: "OS",
   rentals: "Rentals",
+  catalog: "Catalog",
 }
 
 export function mapTenantModuleToKey(moduleName: string): ModuleKey | null {
