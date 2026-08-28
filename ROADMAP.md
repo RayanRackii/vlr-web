@@ -102,6 +102,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
 - [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
 - [x] CustomerAppLayout.modulePath para `catalog`
+- [ ] Live smoke DEV após ativação humana do módulo `catalog` no tenant de teste (API DEV já tem a migration aplicada; PROD não)
 
 ## 5. Fluxo de convite B2B
 
@@ -179,3 +180,4 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-08-22 | **Executado:** fila opcional por Location (default off). Admin: toggle + horário no wizard. B2C: poll 4s, sala T−30, turno 90s FIFO. Sem fila = UX igual. **Como testar:** (1) Location com fila desligada — portal reserva como hoje. (2) Ligar fila 07:30 no wizard → portal: antes da sala de espera não entra; na sala entra e não reserva; após abertura o 1º Active reserva um horário em 90s. (3) 2º cliente vê posição 2. (4) Refresh mantém posição/tempo. (5) Após expirar, “Entrar novamente na fila”. Merge API first. Follow-up: testes FE do hook quando houver runner. |
 | 2026-08-28 | **Iniciado:** Catalog & Orders v1 (cross-repo). Spec no `vlr-api`. Branch `feat/catalog-orders`. |
 | 2026-08-28 | **Review-fix:** cart B2C aponta para `/catalogo/carrinho`; i18n de eventos e peopleAccess do módulo catalog. |
+| 2026-08-28 | **DEV:** schema Catalog aplicado na API (`20260828175423`); módulo ainda inativo. Smoke vivo pausado em Human Gate. PROD não tocado. |
