@@ -72,7 +72,29 @@
     "loadMenu": "No se pudo cargar el menú.",
     "loadCustomerProfile": "No se pudo cargar el perfil.",
     "updateCustomerProfile": "No se pudo actualizar el perfil.",
-    "invalidPayload": "Datos inválidos recibidos de la API."
+    "invalidPayload": "Datos inválidos recibidos de la API.",
+    "loadCatalogProducts": "No se pudieron cargar los productos.",
+    "loadCatalogProduct": "No se pudo cargar el producto.",
+    "saveCatalogProduct": "No se pudo guardar el producto.",
+    "updateCatalogProductStatus": "No se pudo actualizar el estado del producto.",
+    "uploadCatalogFile": "No se pudo enviar el archivo.",
+    "deleteCatalogFile": "No se pudo eliminar el archivo.",
+    "loadCatalogFileUrl": "No se pudo abrir el archivo.",
+    "loadProductRequests": "No se pudieron cargar las solicitudes.",
+    "loadCatalogOrders": "No se pudieron cargar los pedidos.",
+    "loadCatalogOrder": "No se pudo cargar el pedido.",
+    "transitionCatalogOrder": "No se pudo actualizar el pedido.",
+    "loadCatalogNotifications": "No se pudieron cargar las notificaciones.",
+    "resendCatalogNotification": "No se pudo reenviar la notificación.",
+    "loadCatalogChannels": "No se pudieron cargar los canales.",
+    "saveCatalogChannel": "No se pudo guardar el canal.",
+    "loadPortalCatalog": "No se pudo cargar el catálogo.",
+    "loadPortalCatalogProduct": "No se pudo cargar el producto.",
+    "submitPortalOrder": "No se pudo enviar el pedido.",
+    "loadPortalOrders": "No se pudieron cargar sus pedidos.",
+    "loadPortalOrder": "No se pudo cargar el pedido.",
+    "cancelPortalOrder": "No se pudo cancelar el pedido.",
+    "submitProductRequest": "No se pudo enviar la solicitud."
   },
   "trial": {
     "banner": {
@@ -157,10 +179,16 @@
       "postalCode": "CEP",
       "phone": "Celular",
       "photo": "Foto de perfil",
-      "code": "Código SMS"
+      "code": "Código SMS",
+      "customerType": "Tipo de cuenta",
+      "individual": "Persona física",
+      "company": "Empresa",
+      "cnpj": "CNPJ"
     },
     "validation": {
-      "passwordMismatch": "Las contraseñas deben coincidir."
+      "passwordMismatch": "Las contraseñas deben coincidir.",
+      "invalidCpf": "CPF inválido.",
+      "invalidCnpj": "CNPJ inválido."
     },
     "login": {
       "title": "Entrar",
@@ -262,7 +290,7 @@
     },
     "profile": {
       "title": "Mi perfil",
-      "subtitle": "Actualice su nombre y foto. El correo, el celular y el CPF no se pueden cambiar aquí.",
+      "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -281,6 +309,194 @@
       "validation": {
         "nameMin": "El nombre debe tener al menos 2 caracteres.",
         "nameMax": "El nombre puede tener como máximo 200 caracteres."
+      }
+    },
+    "catalog": {
+      "navCatalog": "Catálogo",
+      "navOrders": "Pedidos",
+      "title": "Catálogo",
+      "subtitle": "Productos disponibles para solicitar.",
+      "searchPlaceholder": "Buscar por nombre o código",
+      "empty": "No hay productos activos en este momento.",
+      "priceOnRequest": "Bajo consulta",
+      "quantity": "Cantidad",
+      "addToCart": "Agregar",
+      "addedToCart": "Agregado al carrito.",
+      "cartCount": "Carrito ({{count}})",
+      "cartTitle": "Carrito",
+      "cartEmpty": "Su carrito está vacío.",
+      "checkout": "Revisar pedido",
+      "checkoutHint": "Confirme las cantidades. Se usarán los precios del servidor.",
+      "customerNote": "Nota",
+      "submitOrder": "Enviar pedido",
+      "submitting": "Enviando...",
+      "orderSubmitted": "Pedido enviado.",
+      "requestCta": "Solicitar producto",
+      "requestTitle": "Solicitar producto",
+      "requestSubtitle": "Describa lo que necesita. No hay lista de seguimiento en esta versión.",
+      "requestDescription": "Descripción",
+      "requestNote": "Nota",
+      "requestFiles": "Archivos",
+      "requestFilesCount": "{{count}} archivo(s)",
+      "requestSubmit": "Enviar solicitud",
+      "requestSubmitted": "Solicitud enviada.",
+      "ordersTitle": "Mis pedidos",
+      "ordersSubtitle": "Siga el estado de sus pedidos.",
+      "ordersEmpty": "Todavía no ha hecho pedidos.",
+      "cancelOrder": "Cancelar pedido",
+      "cancelling": "Cancelando...",
+      "orderCancelled": "Pedido cancelado."
+    }
+  },
+  "catalog": {
+    "retry": "Intentar de nuevo",
+    "priceOnRequest": "Bajo consulta",
+    "status": {
+      "Requested": "Solicitado",
+      "Approved": "Aprobado",
+      "Preparing": "En preparación",
+      "Ready": "Listo",
+      "Completed": "Completado",
+      "Rejected": "Rechazado",
+      "Cancelled": "Cancelado"
+    },
+    "actor": {
+      "Customer": "Cliente",
+      "B2BUser": "Equipo",
+      "System": "Sistema"
+    },
+    "channels": {
+      "InApp": "En la app",
+      "Email": "Correo",
+      "WhatsApp": "WhatsApp",
+      "Sms": "SMS"
+    },
+    "deliveryStatus": {
+      "Queued": "En cola",
+      "Sent": "Enviado",
+      "Delivered": "Entregado",
+      "Failed": "Falló"
+    },
+    "recipient": {
+      "Customer": "Cliente",
+      "B2BUser": "Usuario"
+    },
+    "events": {
+      "catalog.order.created": "Pedido creado",
+      "catalog.order.approved": "Pedido aprobado",
+      "catalog.order.preparing": "Pedido en preparación",
+      "catalog.order.ready": "Pedido listo",
+      "catalog.order.rejected": "Pedido rechazado",
+      "catalog.order.cancelled_by_supplier": "Pedido cancelado por el proveedor"
+    },
+    "products": {
+      "title": "Productos",
+      "subtitle": "Gestione los productos del catálogo de este ambiente.",
+      "create": "Nuevo producto",
+      "createTitle": "Nuevo producto",
+      "editTitle": "Editar producto",
+      "dialogDescription": "Precio vacío significa bajo consulta.",
+      "empty": "Ningún producto aún.",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "invalidPrice": "Informe un precio válido o déjelo vacío.",
+      "toastCreated": "Producto creado.",
+      "toastUpdated": "Producto actualizado.",
+      "toastActivated": "Producto activado.",
+      "toastDeactivated": "Producto desactivado.",
+      "toastFileUploaded": "Archivo enviado.",
+      "toastFileDeleted": "Archivo eliminado.",
+      "columns": {
+        "name": "Nombre",
+        "code": "Código",
+        "price": "Precio",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "form": {
+        "name": "Nombre",
+        "code": "Código",
+        "description": "Descripción",
+        "price": "Precio",
+        "currency": "Moneda"
+      },
+      "files": {
+        "title": "Archivos",
+        "customerVisible": "Visible al cliente",
+        "internal": "Interno (B2B)",
+        "open": "Abrir"
+      }
+    },
+    "requests": {
+      "title": "Solicitudes de producto",
+      "subtitle": "Pedidos de ítems que aún no están en el catálogo (solo lectura).",
+      "empty": "Ninguna solicitud.",
+      "columns": {
+        "description": "Descripción",
+        "quantity": "Cant.",
+        "note": "Nota",
+        "createdAt": "Creado"
+      }
+    },
+    "orders": {
+      "title": "Pedidos",
+      "subtitle": "Apruebe, prepare y complete pedidos de clientes.",
+      "empty": "Ningún pedido.",
+      "view": "Ver",
+      "total": "Total",
+      "items": "Ítems",
+      "timeline": "Historial",
+      "customerNote": "Nota del cliente",
+      "rejectedReason": "Motivo del rechazo",
+      "cancelledReason": "Motivo de la cancelación",
+      "toastUpdated": "Pedido actualizado.",
+      "saving": "Guardando...",
+      "columns": {
+        "number": "Número",
+        "customer": "Cliente",
+        "status": "Estado",
+        "total": "Total",
+        "createdAt": "Creado",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "approve": "Aprobar",
+        "preparing": "Preparar",
+        "ready": "Marcar listo",
+        "complete": "Completar",
+        "reject": "Rechazar",
+        "cancel": "Cancelar"
+      },
+      "reason": {
+        "rejectTitle": "Rechazar pedido",
+        "cancelTitle": "Cancelar pedido",
+        "required": "El motivo es obligatorio. El cliente se notifica solo si los canales externos están activos.",
+        "label": "Motivo",
+        "confirm": "Confirmar"
+      }
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "subtitle": "Entregas y canales por evento del catálogo.",
+      "channelsTitle": "Canales por evento",
+      "channelsSubtitle": "Correo, WhatsApp y SMS empiezan desactivados. SMS no está disponible en esta versión.",
+      "smsUnavailable": "El canal SMS no está disponible.",
+      "empty": "Ninguna entrega.",
+      "resend": "Reenviar",
+      "toastResent": "Reenvío en cola.",
+      "toastChannelSaved": "Canal actualizado.",
+      "toggleChannel": "Activar {{channel}} para {{event}}",
+      "columns": {
+        "event": "Evento",
+        "channel": "Canal",
+        "recipient": "Destinatario",
+        "status": "Estado",
+        "createdAt": "Creado",
+        "actions": "Acciones"
       }
     }
   },
@@ -577,6 +793,10 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "catalog": "Catálogo y pedidos",
+    "catalogProducts": "Productos",
+    "catalogOrders": "Pedidos",
+    "catalogNotifications": "Notificaciones",
     "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
@@ -1753,6 +1973,8 @@
       "OSDescription": "Ejecución y seguimiento de OT.",
       "Rentals": "Alquileres",
       "RentalsDescription": "Locales, bienes y reservas B2C.",
+      "Catalog": "Catálogo y pedidos",
+      "CatalogDescription": "Productos, pedidos y notificaciones B2C.",
       "unknown": "Módulo"
     },
     "wizard": {

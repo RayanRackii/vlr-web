@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import i18n from "@/lib/i18n"
 import {
   groupPermissionsByModule,
+  MODULE_ORDER,
   resolvePermissionRouteAccess,
 } from "@/features/users/permissions/permissionGroups"
 import {
@@ -44,6 +45,10 @@ describe("permission grouping", () => {
     expect(groups[0]?.moduleInactive).toBe(false)
     expect(groups[1]?.moduleInactive).toBe(false)
     expect(groups[2]?.moduleInactive).toBe(true)
+  })
+
+  it("includes catalog in MODULE_ORDER", () => {
+    expect(MODULE_ORDER).toContain("catalog")
   })
 })
 

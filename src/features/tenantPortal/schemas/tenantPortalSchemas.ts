@@ -44,12 +44,19 @@ export type RegistrationSchemaResponse = z.infer<
   typeof registrationSchemaResponseSchema
 >
 
+export const customerTypeSchema = z.enum(["Individual", "Company"])
+
+export type CustomerType = z.infer<typeof customerTypeSchema>
+
 export const customerAuthProfileSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
   name: z.string(),
   phone: z.string().nullable(),
   email: z.string().nullable(),
+  customerType: customerTypeSchema.optional(),
+  document: z.string().nullable().optional(),
+  cpf: z.string().nullable().optional(),
   createdAt: z.string(),
   phoneVerified: z.boolean(),
   photoUrl: z.string().nullable(),
@@ -63,6 +70,8 @@ export const customerProfileSchema = z.object({
   name: z.string(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
+  customerType: customerTypeSchema,
+  document: z.string().nullable(),
   cpf: z.string().nullable(),
   postalCode: z.string().nullable(),
   addressStreet: z.string().nullable(),
@@ -105,7 +114,7 @@ export const registerResponseSchema = z.object({
   requiresPhoneVerification: z.boolean(),
 })
 
-function onlyDigits(value: string): string {
+export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "")
 }
 
@@ -135,6 +144,109 @@ export function isValidCpf(raw: string): boolean {
   return Number(digits[10]) === digit2
 }
 
+/** CNPJ check digits (Brazilian algorithm). */
+export function isValidCnpj(raw: string): boolean {
+  const digits = onlyDigits(raw)
+  if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) {
+    return false
+  }
+
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+
+  let sum = 0
+  for (let i = 0; i < 12; i += 1) {
+    sum += Number(digits[i]) * (weights1[i] ?? 0)
+  }
+  let remainder = sum % 11
+  const digit1 = remainder < 2 ? 0 : 11 - remainder
+  if (Number(digits[12]) !== digit1) {
+    return false
+  }
+
+  sum = 0
+  for (let i = 0; i < 13; i += 1) {
+    sum += Number(digits[i]) * (weights2[i] ?? 0)
+  }
+  remainder = sum % 11
+  const digit2 = remainder < 2 ? 0 : 11 - remainder
+  return Number(digits[13]) === digit2
+}
+
+export function formatCpfMask(raw: string): string {
+  const digits = onlyDigits(raw).slice(0, 11)
+  const part1 = digits.slice(0, 3)
+  const part2 = digits.slice(3, 6)
+  const part3 = digits.slice(6, 9)
+  const part4 = digits.slice(9, 11)
+  if (digits.length <= 3) {
+    return part1
+  }
+  if (digits.length <= 6) {
+    return `${part1}.${part2}`
+  }
+  if (digits.length <= 9) {
+    return `${part1}.${part2}.${part3}`
+  }
+  return `${part1}.${part2}.${part3}-${part4}`
+}
+
+export function formatCnpjMask(raw: string): string {
+  const digits = onlyDigits(raw).slice(0, 14)
+  const part1 = digits.slice(0, 2)
+  const part2 = digits.slice(2, 5)
+  const part3 = digits.slice(5, 8)
+  const part4 = digits.slice(8, 12)
+  const part5 = digits.slice(12, 14)
+  if (digits.length <= 2) {
+    return part1
+  }
+  if (digits.length <= 5) {
+    return `${part1}.${part2}`
+  }
+  if (digits.length <= 8) {
+    return `${part1}.${part2}.${part3}`
+  }
+  if (digits.length <= 12) {
+    return `${part1}.${part2}.${part3}/${part4}`
+  }
+  return `${part1}.${part2}.${part3}/${part4}-${part5}`
+}
+
+export function formatCustomerDocument(
+  customerType: CustomerType | undefined,
+  document: string | null | undefined,
+  cpf: string | null | undefined,
+): string | null {
+  const raw = document ?? cpf ?? ""
+  const digits = onlyDigits(raw)
+  if (digits.length === 0) {
+    return null
+  }
+  if (customerType === "Company" || digits.length === 14) {
+    return formatCnpjMask(digits)
+  }
+  if (digits.length === 11) {
+    return formatCpfMask(digits)
+  }
+  return digits
+}
+
+const CORE_REGISTER_FIELD_KEYS = new Set([
+  "name",
+  "email",
+  "password",
+  "confirmPassword",
+  "phone",
+  "customerType",
+  "document",
+  "cpf",
+])
+
+export function isReservedRegisterFieldKey(fieldKey: string): boolean {
+  return CORE_REGISTER_FIELD_KEYS.has(fieldKey)
+}
+
 const coreRegisterShape = {
   name: z.string().trim().min(2).max(200),
   email: z.string().trim().email(),
@@ -147,15 +259,25 @@ const coreRegisterShape = {
       const digits = onlyDigits(value)
       return digits.length === 10 || digits.length === 11
     }, "Invalid phone"),
+  customerType: customerTypeSchema,
+  document: z.string().trim().min(1),
 }
 
 export function buildCustomerRegisterSchema(
   fields: RegistrationField[],
   passwordMismatchMessage: string,
+  documentMessages?: {
+    invalidCpf: string
+    invalidCnpj: string
+  },
 ) {
   const extraShape: Record<string, z.ZodTypeAny> = {}
 
   for (const field of fields) {
+    if (isReservedRegisterFieldKey(field.fieldKey)) {
+      continue
+    }
+
     let schema: z.ZodTypeAny
 
     switch (field.fieldType) {
@@ -169,7 +291,19 @@ export function buildCustomerRegisterSchema(
         schema = z
           .string()
           .trim()
-          .refine((value) => isValidCpf(value), "Invalid CPF")
+          .refine(
+            (value) => isValidCpf(value),
+            documentMessages?.invalidCpf ?? "Invalid CPF",
+          )
+        break
+      case "cnpj":
+        schema = z
+          .string()
+          .trim()
+          .refine(
+            (value) => isValidCnpj(value),
+            documentMessages?.invalidCnpj ?? "Invalid CNPJ",
+          )
         break
       case "cep":
         schema = z
@@ -208,9 +342,30 @@ export function buildCustomerRegisterSchema(
       ...coreRegisterShape,
       ...extraShape,
     })
-    .refine((values) => values.password === values.confirmPassword, {
-      message: passwordMismatchMessage,
-      path: ["confirmPassword"],
+    .superRefine((values, ctx) => {
+      if (values.password !== values.confirmPassword) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["confirmPassword"],
+          message: passwordMismatchMessage,
+        })
+      }
+
+      if (values.customerType === "Individual" && !isValidCpf(values.document)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["document"],
+          message: documentMessages?.invalidCpf ?? "Invalid CPF",
+        })
+      }
+
+      if (values.customerType === "Company" && !isValidCnpj(values.document)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["document"],
+          message: documentMessages?.invalidCnpj ?? "Invalid CNPJ",
+        })
+      }
     })
 }
 
@@ -237,6 +392,7 @@ export const FIELD_TYPE_OPTIONS = [
   "email",
   "phone",
   "cpf",
+  "cnpj",
   "cep",
   "boolean",
   "number",

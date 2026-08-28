@@ -1,5 +1,4 @@
-import type { LucideIcon } from "lucide-react"
-import { CalendarDays } from "lucide-react"
+import { CalendarDays, Package, ShoppingBag, type LucideIcon } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -93,7 +92,13 @@ export function iconForModule(moduleName: string): LucideIcon {
   switch (moduleName.toLowerCase()) {
     case "rentals":
       return CalendarDays
+    case "catalog":
+    case "catalogo":
+    case "catálogo":
+    case "orders":
+    case "pedidos":
+      return ShoppingBag
     default:
-      return CalendarDays
+      return Package
   }
 }

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Map,
   MenuSquare,
+  Package,
   Shield,
   Users,
   Wrench,
@@ -27,6 +28,9 @@ export type AppNavigationChildItem = {
     | "nav.pmocNew"
     | "nav.adminTenants"
     | "nav.adminUsers"
+    | "nav.catalogProducts"
+    | "nav.catalogOrders"
+    | "nav.catalogNotifications"
   to: string
   permission?: string
 }
@@ -44,6 +48,7 @@ export type AppNavigationItem = {
     | "nav.layout"
     | "nav.reservations"
     | "nav.admin"
+    | "nav.catalog"
   to: string
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
@@ -162,6 +167,29 @@ const operationsItems: readonly AppNavigationItem[] = [
     icon: CalendarCheck,
     modules: ["rentals"],
     permission: "rentals.reservations.read",
+  },
+  {
+    labelKey: "nav.catalog",
+    to: "/catalogo/produtos",
+    icon: Package,
+    modules: ["catalog"],
+    children: [
+      {
+        labelKey: "nav.catalogProducts",
+        to: "/catalogo/produtos",
+        permission: "catalog.products.read",
+      },
+      {
+        labelKey: "nav.catalogOrders",
+        to: "/catalogo/pedidos",
+        permission: "catalog.orders.read",
+      },
+      {
+        labelKey: "nav.catalogNotifications",
+        to: "/catalogo/notificacoes",
+        permission: "catalog.notifications.read",
+      },
+    ],
   },
 ]
 
@@ -339,6 +367,18 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/admin")) {
     return "nav.adminTenants"
+  }
+
+  if (pathname.startsWith("/catalogo/notificacoes")) {
+    return "nav.catalogNotifications"
+  }
+
+  if (pathname.startsWith("/catalogo/pedidos")) {
+    return "nav.catalogOrders"
+  }
+
+  if (pathname.startsWith("/catalogo")) {
+    return "nav.catalogProducts"
   }
 
   if (pathname.startsWith("/os/")) {

@@ -32,6 +32,16 @@ import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPorta
 import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
+import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
+import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
+import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
+import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
+import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
+import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
+import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
+import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
+import { PortalProductRequestPage } from "@/features/catalog/pages/PortalProductRequestPage"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
@@ -55,6 +65,12 @@ export function AppRoutes() {
           <Route path="app/perfil" element={<TenantPortalProfilePage />} />
           <Route path="agenda" element={<TenantPortalAgendaPage />} />
           <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
+          <Route path="catalogo" element={<PortalCatalogPage />} />
+          <Route path="catalogo/carrinho" element={<PortalCartPage />} />
+          <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
+          <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
+          <Route path="pedidos" element={<PortalOrdersPage />} />
+          <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -81,6 +97,12 @@ export function AppRoutes() {
           <Route path="app/perfil" element={<TenantPortalProfilePage />} />
           <Route path="agenda" element={<TenantPortalAgendaPage />} />
           <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
+          <Route path="catalogo" element={<PortalCatalogPage />} />
+          <Route path="catalogo/carrinho" element={<PortalCartPage />} />
+          <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
+          <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
+          <Route path="pedidos" element={<PortalOrdersPage />} />
+          <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />
         </Route>
       </Route>
 
@@ -162,6 +184,30 @@ export function AppRoutes() {
             <Route
               path="/configuracoes/reservas"
               element={<ReservationsPage />}
+            />
+          </Route>
+          <Route
+            element={<PermissionRoute permission="catalog.products.read" />}
+          >
+            <Route path="/catalogo/produtos" element={<CatalogProductsPage />} />
+          </Route>
+          <Route
+            element={<PermissionRoute permission="catalog.orders.read" />}
+          >
+            <Route path="/catalogo/pedidos" element={<CatalogOrdersPage />} />
+            <Route
+              path="/catalogo/pedidos/:orderId"
+              element={<CatalogOrderDetailPage />}
+            />
+          </Route>
+          <Route
+            element={
+              <PermissionRoute permission="catalog.notifications.read" />
+            }
+          >
+            <Route
+              path="/catalogo/notificacoes"
+              element={<CatalogNotificationsPage />}
             />
           </Route>
           <Route element={<PermissionRoute permission="core.users.read" />}>
