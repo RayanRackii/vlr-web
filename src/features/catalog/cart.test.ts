@@ -57,8 +57,8 @@ describe("catalog cart helpers", () => {
   })
 
   it("keys session storage by tenant and customer", () => {
-    expect(catalogCartStorageKey("FICC", "cust-1")).toBe(
-      "rolvix.catalog.cart.ficc.cust-1",
+    expect(catalogCartStorageKey("acme-club", "cust-1")).toBe(
+      "rolvix.catalog.cart.acme-club.cust-1",
     )
   })
 

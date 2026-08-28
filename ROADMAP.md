@@ -97,11 +97,11 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch `feat/catalog-orders`.
 
-- [ ] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
-- [ ] B2B: Produtos, Pedidos, Notificações (`/catalogo/*`)
-- [ ] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
-- [ ] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
-- [ ] CustomerAppLayout.modulePath para `catalog`
+- [x] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
+- [x] B2B: Produtos, Pedidos, Notificações (`/catalogo/*`)
+- [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
+- [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
+- [x] CustomerAppLayout.modulePath para `catalog`
 
 ## 5. Fluxo de convite B2B
 
@@ -178,3 +178,4 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-08-22 | **Fix F-16:** wizard de lote envia `rentalType` + `totalQuantity`; Location usa faixa start/end (N entidades); Good usa estoque num único recurso. |
 | 2026-08-22 | **Executado:** fila opcional por Location (default off). Admin: toggle + horário no wizard. B2C: poll 4s, sala T−30, turno 90s FIFO. Sem fila = UX igual. **Como testar:** (1) Location com fila desligada — portal reserva como hoje. (2) Ligar fila 07:30 no wizard → portal: antes da sala de espera não entra; na sala entra e não reserva; após abertura o 1º Active reserva um horário em 90s. (3) 2º cliente vê posição 2. (4) Refresh mantém posição/tempo. (5) Após expirar, “Entrar novamente na fila”. Merge API first. Follow-up: testes FE do hook quando houver runner. |
 | 2026-08-28 | **Iniciado:** Catalog & Orders v1 (cross-repo). Spec no `vlr-api`. Branch `feat/catalog-orders`. |
+| 2026-08-28 | **Review-fix:** cart B2C aponta para `/catalogo/carrinho`; i18n de eventos e peopleAccess do módulo catalog. |

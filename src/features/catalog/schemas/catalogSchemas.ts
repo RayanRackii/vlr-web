@@ -233,6 +233,19 @@ export const CATALOG_EVENT_TYPES = [
 
 export type CatalogEventType = (typeof CATALOG_EVENT_TYPES)[number]
 
+const CATALOG_EVENT_I18N_KEYS: Record<CatalogEventType, string> = {
+  "catalog.order.created": "catalog.events.orderCreated",
+  "catalog.order.approved": "catalog.events.orderApproved",
+  "catalog.order.preparing": "catalog.events.orderPreparing",
+  "catalog.order.ready": "catalog.events.orderReady",
+  "catalog.order.rejected": "catalog.events.orderRejected",
+  "catalog.order.cancelled_by_supplier": "catalog.events.orderCancelledBySupplier",
+}
+
+export function catalogEventI18nKey(eventType: string): string {
+  return CATALOG_EVENT_I18N_KEYS[eventType as CatalogEventType] ?? eventType
+}
+
 export const NOTIFICATION_CHANNELS = [
   "InApp",
   "Email",

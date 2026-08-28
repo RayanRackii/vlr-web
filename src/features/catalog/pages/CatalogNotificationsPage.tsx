@@ -28,6 +28,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   CATALOG_EVENT_TYPES,
   NOTIFICATION_CHANNELS,
+  catalogEventI18nKey,
   formatCatalogDate,
   type CatalogChannelConfig,
   type CatalogNotificationDelivery,
@@ -159,7 +160,7 @@ export function CatalogNotificationsPage() {
           />
         ),
         cell: ({ row }) =>
-          t(`catalog.events.${row.original.eventType}`, {
+          t(catalogEventI18nKey(row.original.eventType), {
             defaultValue: row.original.eventType,
           }),
       },
@@ -286,7 +287,7 @@ export function CatalogNotificationsPage() {
               {CATALOG_EVENT_TYPES.map((eventType) => (
                 <TableRow key={eventType}>
                   <TableCell>
-                    {t(`catalog.events.${eventType}`, {
+                    {t(catalogEventI18nKey(eventType), {
                       defaultValue: eventType,
                     })}
                   </TableCell>
@@ -309,7 +310,7 @@ export function CatalogNotificationsPage() {
                             loading
                           }
                           aria-label={t("catalog.notifications.toggleChannel", {
-                            event: t(`catalog.events.${eventType}`, {
+                            event: t(catalogEventI18nKey(eventType), {
                               defaultValue: eventType,
                             }),
                             channel: t(`catalog.channels.${channel}`),

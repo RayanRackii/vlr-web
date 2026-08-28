@@ -86,7 +86,7 @@ export function PortalCatalogPage() {
           <Button
             type="button"
             variant="outline"
-            render={<Link to={tenantPortalPath(subdomain, "pedidos")} />}
+            render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
           >
             <ShoppingBag data-icon="inline-start" />
             {t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}

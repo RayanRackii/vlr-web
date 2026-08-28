@@ -382,12 +382,12 @@
       "B2BUser": "User"
     },
     "events": {
-      "catalog.order.created": "Order created",
-      "catalog.order.approved": "Order approved",
-      "catalog.order.preparing": "Order preparing",
-      "catalog.order.ready": "Order ready",
-      "catalog.order.rejected": "Order rejected",
-      "catalog.order.cancelled_by_supplier": "Order cancelled by supplier"
+      "orderCreated": "Order created",
+      "orderApproved": "Order approved",
+      "orderPreparing": "Order preparing",
+      "orderReady": "Order ready",
+      "orderRejected": "Order rejected",
+      "orderCancelledBySupplier": "Order cancelled by supplier"
     },
     "products": {
       "title": "Products",
@@ -1689,7 +1689,8 @@
       "inventory": "Inventory",
       "pmoc": "PMOC",
       "os": "Work orders",
-      "rentals": "Reservations"
+      "rentals": "Reservations",
+      "catalog": "Catalog & Orders"
     },
     "resources": {
       "dashboard": "Dashboard",
@@ -1708,7 +1709,10 @@
       "schedule": "Schedule",
       "pricing": "Pricing",
       "layouts": "Layouts",
-      "occupancy_kinds": "Occupancy kinds"
+      "occupancy_kinds": "Occupancy kinds",
+      "products": "Products",
+      "orders": "Orders",
+      "notifications": "Notifications"
     },
     "catalog": {
       "core.dashboard.read": "View dashboard",
@@ -1747,7 +1751,21 @@
       "rentals.layouts.read": "View layouts",
       "rentals.layouts.write": "Edit layouts",
       "rentals.occupancy_kinds.read": "View occupancy kinds",
-      "rentals.occupancy_kinds.write": "Edit occupancy kinds"
+      "rentals.occupancy_kinds.write": "Edit occupancy kinds",
+      "catalog": {
+        "products": {
+          "read": "View catalog products",
+          "manage": "Manage catalog products"
+        },
+        "orders": {
+          "read": "View catalog orders",
+          "manage": "Manage catalog orders"
+        },
+        "notifications": {
+          "read": "View catalog notifications",
+          "resend": "Resend catalog notifications"
+        }
+      }
     },
     "users": {
       "description": "Invite people and assign one or more functions.",

@@ -382,12 +382,12 @@
       "B2BUser": "Usuario"
     },
     "events": {
-      "catalog.order.created": "Pedido creado",
-      "catalog.order.approved": "Pedido aprobado",
-      "catalog.order.preparing": "Pedido en preparación",
-      "catalog.order.ready": "Pedido listo",
-      "catalog.order.rejected": "Pedido rechazado",
-      "catalog.order.cancelled_by_supplier": "Pedido cancelado por el proveedor"
+      "orderCreated": "Pedido creado",
+      "orderApproved": "Pedido aprobado",
+      "orderPreparing": "Pedido en preparación",
+      "orderReady": "Pedido listo",
+      "orderRejected": "Pedido rechazado",
+      "orderCancelledBySupplier": "Pedido cancelado por el proveedor"
     },
     "products": {
       "title": "Productos",
@@ -1689,7 +1689,8 @@
       "inventory": "Inventario",
       "pmoc": "PMOC",
       "os": "Órdenes de servicio",
-      "rentals": "Reservas"
+      "rentals": "Reservas",
+      "catalog": "Catálogo y pedidos"
     },
     "resources": {
       "dashboard": "Panel",
@@ -1708,7 +1709,10 @@
       "schedule": "Agenda",
       "pricing": "Precios",
       "layouts": "Layouts",
-      "occupancy_kinds": "Tipos de ocupación"
+      "occupancy_kinds": "Tipos de ocupación",
+      "products": "Productos",
+      "orders": "Pedidos",
+      "notifications": "Notificaciones"
     },
     "catalog": {
       "core.dashboard.read": "Ver panel",
@@ -1747,7 +1751,21 @@
       "rentals.layouts.read": "Ver layouts",
       "rentals.layouts.write": "Editar layouts",
       "rentals.occupancy_kinds.read": "Ver tipos de ocupación",
-      "rentals.occupancy_kinds.write": "Editar tipos de ocupación"
+      "rentals.occupancy_kinds.write": "Editar tipos de ocupación",
+      "catalog": {
+        "products": {
+          "read": "Ver productos del catálogo",
+          "manage": "Gestionar productos del catálogo"
+        },
+        "orders": {
+          "read": "Ver pedidos del catálogo",
+          "manage": "Gestionar pedidos del catálogo"
+        },
+        "notifications": {
+          "read": "Ver notificaciones del catálogo",
+          "resend": "Reenviar notificaciones del catálogo"
+        }
+      }
     },
     "users": {
       "description": "Invite personas y asigne una o más funciones.",
