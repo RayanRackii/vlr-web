@@ -72,7 +72,29 @@
     "loadMenu": "No se pudo cargar el menú.",
     "loadCustomerProfile": "No se pudo cargar el perfil.",
     "updateCustomerProfile": "No se pudo actualizar el perfil.",
-    "invalidPayload": "Datos inválidos recibidos de la API."
+    "invalidPayload": "Datos inválidos recibidos de la API.",
+    "loadCatalogProducts": "No se pudieron cargar los productos.",
+    "loadCatalogProduct": "No se pudo cargar el producto.",
+    "saveCatalogProduct": "No se pudo guardar el producto.",
+    "updateCatalogProductStatus": "No se pudo actualizar el estado del producto.",
+    "uploadCatalogFile": "No se pudo enviar el archivo.",
+    "deleteCatalogFile": "No se pudo eliminar el archivo.",
+    "loadCatalogFileUrl": "No se pudo abrir el archivo.",
+    "loadProductRequests": "No se pudieron cargar las solicitudes.",
+    "loadCatalogOrders": "No se pudieron cargar los pedidos.",
+    "loadCatalogOrder": "No se pudo cargar el pedido.",
+    "transitionCatalogOrder": "No se pudo actualizar el pedido.",
+    "loadCatalogNotifications": "No se pudieron cargar las notificaciones.",
+    "resendCatalogNotification": "No se pudo reenviar la notificación.",
+    "loadCatalogChannels": "No se pudieron cargar los canales.",
+    "saveCatalogChannel": "No se pudo guardar el canal.",
+    "loadPortalCatalog": "No se pudo cargar el catálogo.",
+    "loadPortalCatalogProduct": "No se pudo cargar el producto.",
+    "submitPortalOrder": "No se pudo enviar el pedido.",
+    "loadPortalOrders": "No se pudieron cargar sus pedidos.",
+    "loadPortalOrder": "No se pudo cargar el pedido.",
+    "cancelPortalOrder": "No se pudo cancelar el pedido.",
+    "submitProductRequest": "No se pudo enviar la solicitud."
   },
   "trial": {
     "banner": {
@@ -157,10 +179,16 @@
       "postalCode": "CEP",
       "phone": "Celular",
       "photo": "Foto de perfil",
-      "code": "Código SMS"
+      "code": "Código SMS",
+      "customerType": "Tipo de cuenta",
+      "individual": "Persona física",
+      "company": "Empresa",
+      "cnpj": "CNPJ"
     },
     "validation": {
-      "passwordMismatch": "Las contraseñas deben coincidir."
+      "passwordMismatch": "Las contraseñas deben coincidir.",
+      "invalidCpf": "CPF inválido.",
+      "invalidCnpj": "CNPJ inválido."
     },
     "login": {
       "title": "Entrar",
@@ -262,7 +290,7 @@
     },
     "profile": {
       "title": "Mi perfil",
-      "subtitle": "Actualice su nombre y foto. El correo, el celular y el CPF no se pueden cambiar aquí.",
+      "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -281,6 +309,194 @@
       "validation": {
         "nameMin": "El nombre debe tener al menos 2 caracteres.",
         "nameMax": "El nombre puede tener como máximo 200 caracteres."
+      }
+    },
+    "catalog": {
+      "navCatalog": "Catálogo",
+      "navOrders": "Pedidos",
+      "title": "Catálogo",
+      "subtitle": "Productos disponibles para solicitar.",
+      "searchPlaceholder": "Buscar por nombre o código",
+      "empty": "No hay productos activos en este momento.",
+      "priceOnRequest": "Bajo consulta",
+      "quantity": "Cantidad",
+      "addToCart": "Agregar",
+      "addedToCart": "Agregado al carrito.",
+      "cartCount": "Carrito ({{count}})",
+      "cartTitle": "Carrito",
+      "cartEmpty": "Su carrito está vacío.",
+      "checkout": "Revisar pedido",
+      "checkoutHint": "Confirme las cantidades. Se usarán los precios del servidor.",
+      "customerNote": "Nota",
+      "submitOrder": "Enviar pedido",
+      "submitting": "Enviando...",
+      "orderSubmitted": "Pedido enviado.",
+      "requestCta": "Solicitar producto",
+      "requestTitle": "Solicitar producto",
+      "requestSubtitle": "Describa lo que necesita. No hay lista de seguimiento en esta versión.",
+      "requestDescription": "Descripción",
+      "requestNote": "Nota",
+      "requestFiles": "Archivos",
+      "requestFilesCount": "{{count}} archivo(s)",
+      "requestSubmit": "Enviar solicitud",
+      "requestSubmitted": "Solicitud enviada.",
+      "ordersTitle": "Mis pedidos",
+      "ordersSubtitle": "Siga el estado de sus pedidos.",
+      "ordersEmpty": "Todavía no ha hecho pedidos.",
+      "cancelOrder": "Cancelar pedido",
+      "cancelling": "Cancelando...",
+      "orderCancelled": "Pedido cancelado."
+    }
+  },
+  "catalog": {
+    "retry": "Intentar de nuevo",
+    "priceOnRequest": "Bajo consulta",
+    "status": {
+      "Requested": "Solicitado",
+      "Approved": "Aprobado",
+      "Preparing": "En preparación",
+      "Ready": "Listo",
+      "Completed": "Completado",
+      "Rejected": "Rechazado",
+      "Cancelled": "Cancelado"
+    },
+    "actor": {
+      "Customer": "Cliente",
+      "B2BUser": "Equipo",
+      "System": "Sistema"
+    },
+    "channels": {
+      "InApp": "En la app",
+      "Email": "Correo",
+      "WhatsApp": "WhatsApp",
+      "Sms": "SMS"
+    },
+    "deliveryStatus": {
+      "Queued": "En cola",
+      "Sent": "Enviado",
+      "Delivered": "Entregado",
+      "Failed": "Falló"
+    },
+    "recipient": {
+      "Customer": "Cliente",
+      "B2BUser": "Usuario"
+    },
+    "events": {
+      "orderCreated": "Pedido creado",
+      "orderApproved": "Pedido aprobado",
+      "orderPreparing": "Pedido en preparación",
+      "orderReady": "Pedido listo",
+      "orderRejected": "Pedido rechazado",
+      "orderCancelledBySupplier": "Pedido cancelado por el proveedor"
+    },
+    "products": {
+      "title": "Productos",
+      "subtitle": "Gestione los productos del catálogo de este ambiente.",
+      "create": "Nuevo producto",
+      "createTitle": "Nuevo producto",
+      "editTitle": "Editar producto",
+      "dialogDescription": "Precio vacío significa bajo consulta.",
+      "empty": "Ningún producto aún.",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "invalidPrice": "Informe un precio válido o déjelo vacío.",
+      "toastCreated": "Producto creado.",
+      "toastUpdated": "Producto actualizado.",
+      "toastActivated": "Producto activado.",
+      "toastDeactivated": "Producto desactivado.",
+      "toastFileUploaded": "Archivo enviado.",
+      "toastFileDeleted": "Archivo eliminado.",
+      "columns": {
+        "name": "Nombre",
+        "code": "Código",
+        "price": "Precio",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "form": {
+        "name": "Nombre",
+        "code": "Código",
+        "description": "Descripción",
+        "price": "Precio",
+        "currency": "Moneda"
+      },
+      "files": {
+        "title": "Archivos",
+        "customerVisible": "Visible al cliente",
+        "internal": "Interno (B2B)",
+        "open": "Abrir"
+      }
+    },
+    "requests": {
+      "title": "Solicitudes de producto",
+      "subtitle": "Pedidos de ítems que aún no están en el catálogo (solo lectura).",
+      "empty": "Ninguna solicitud.",
+      "columns": {
+        "description": "Descripción",
+        "quantity": "Cant.",
+        "note": "Nota",
+        "createdAt": "Creado"
+      }
+    },
+    "orders": {
+      "title": "Pedidos",
+      "subtitle": "Apruebe, prepare y complete pedidos de clientes.",
+      "empty": "Ningún pedido.",
+      "view": "Ver",
+      "total": "Total",
+      "items": "Ítems",
+      "timeline": "Historial",
+      "customerNote": "Nota del cliente",
+      "rejectedReason": "Motivo del rechazo",
+      "cancelledReason": "Motivo de la cancelación",
+      "toastUpdated": "Pedido actualizado.",
+      "saving": "Guardando...",
+      "columns": {
+        "number": "Número",
+        "customer": "Cliente",
+        "status": "Estado",
+        "total": "Total",
+        "createdAt": "Creado",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "approve": "Aprobar",
+        "preparing": "Preparar",
+        "ready": "Marcar listo",
+        "complete": "Completar",
+        "reject": "Rechazar",
+        "cancel": "Cancelar"
+      },
+      "reason": {
+        "rejectTitle": "Rechazar pedido",
+        "cancelTitle": "Cancelar pedido",
+        "required": "El motivo es obligatorio. El cliente se notifica solo si los canales externos están activos.",
+        "label": "Motivo",
+        "confirm": "Confirmar"
+      }
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "subtitle": "Entregas y canales por evento del catálogo.",
+      "channelsTitle": "Canales por evento",
+      "channelsSubtitle": "Correo, WhatsApp y SMS empiezan desactivados. SMS no está disponible en esta versión.",
+      "smsUnavailable": "El canal SMS no está disponible.",
+      "empty": "Ninguna entrega.",
+      "resend": "Reenviar",
+      "toastResent": "Reenvío en cola.",
+      "toastChannelSaved": "Canal actualizado.",
+      "toggleChannel": "Activar {{channel}} para {{event}}",
+      "columns": {
+        "event": "Evento",
+        "channel": "Canal",
+        "recipient": "Destinatario",
+        "status": "Estado",
+        "createdAt": "Creado",
+        "actions": "Acciones"
       }
     }
   },
@@ -577,6 +793,11 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "catalog": "Catálogo y pedidos",
+    "catalogProducts": "Productos",
+    "catalogOrders": "Pedidos",
+    "catalogNotifications": "Notificaciones",
+    "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuarios",
@@ -1425,7 +1646,180 @@
   "users": {
     "errors": {
       "loadCurrent": "No se pudo cargar su perfil de acceso.",
-      "loadTechnicians": "No se pudieron cargar los técnicos."
+      "loadTechnicians": "No se pudieron cargar los técnicos.",
+      "invalidResponse": "Respuesta inválida de la API."
+    }
+  },
+  "accessDenied": {
+    "title": "Acceso denegado",
+    "description": "No tiene permiso para ver esta página."
+  },
+  "rbac": {
+    "errors": {
+      "PRIVILEGE_ESCALATION_BLOCKED": "No puede asignar un perfil de acceso con más permisos que los suyos.",
+      "LAST_ADMIN_PROTECTED": "No se puede quitar al último administrador activo de este entorno.",
+      "ROLE_IN_USE": "Esta función está en uso y no se puede eliminar.",
+      "CANNOT_MODIFY_SYSTEM_ROLE": "Las funciones de sistema no se pueden renombrar ni reducir de esta forma.",
+      "CANNOT_DELETE_SYSTEM_ROLE": "Las funciones de sistema no se pueden eliminar.",
+      "CANNOT_ASSIGN_SUPERADMIN": "No se puede asignar la función SuperAdmin en este entorno.",
+      "FORBIDDEN": "No tiene permiso para esta acción."
+    }
+  },
+  "peopleAccess": {
+    "title": "Personas y acceso",
+    "description": "Gestione usuarios del entorno y los perfiles de acceso (funciones y permisos).",
+    "tabs": {
+      "users": "Usuarios",
+      "roles": "Funciones y permisos"
+    },
+    "role": "Función",
+    "permissions": "Permisos",
+    "accessProfile": "Perfil de acceso",
+    "moduleInactive": "Módulo no activo para este tenant",
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "badges": {
+      "system": "Sistema",
+      "custom": "Personalizada"
+    },
+    "modules": {
+      "core": "General",
+      "inventory": "Inventario",
+      "pmoc": "PMOC",
+      "os": "Órdenes de servicio",
+      "rentals": "Reservas",
+      "catalog": "Catálogo y pedidos"
+    },
+    "resources": {
+      "dashboard": "Panel",
+      "users": "Usuarios",
+      "roles": "Funciones",
+      "units": "Unidades",
+      "registration_fields": "Registro del portal",
+      "module_menu": "Menú del portal",
+      "assets": "Recursos",
+      "categories": "Tipos",
+      "families": "Familias",
+      "plans": "Planes",
+      "templates": "Plantillas",
+      "work_orders": "Órdenes de servicio",
+      "reservations": "Reservas",
+      "schedule": "Agenda",
+      "pricing": "Precios",
+      "layouts": "Layouts",
+      "occupancy_kinds": "Tipos de ocupación",
+      "products": "Productos",
+      "orders": "Pedidos",
+      "notifications": "Notificaciones"
+    },
+    "catalog": {
+      "core.dashboard.read": "Ver panel",
+      "core.users.read": "Ver usuarios",
+      "core.users.invite": "Invitar usuarios",
+      "core.users.assign_roles": "Asignar funciones",
+      "core.roles.read": "Ver funciones",
+      "core.roles.manage": "Gestionar funciones",
+      "core.units.read": "Ver unidades",
+      "core.registration_fields.read": "Ver campos de registro",
+      "core.registration_fields.write": "Editar campos de registro",
+      "core.module_menu.read": "Ver menú del portal",
+      "core.module_menu.write": "Editar menú del portal",
+      "inventory.assets.read": "Ver recursos",
+      "inventory.assets.write": "Editar recursos",
+      "inventory.categories.read": "Ver tipos",
+      "inventory.categories.write": "Editar tipos",
+      "inventory.families.read": "Ver familias",
+      "pmoc.plans.read": "Ver planes PMOC",
+      "pmoc.plans.write": "Editar planes PMOC",
+      "pmoc.templates.read": "Ver plantillas PMOC",
+      "os.work_orders.read": "Ver órdenes de servicio",
+      "os.work_orders.create": "Crear órdenes de servicio",
+      "os.work_orders.execute": "Ejecutar órdenes de servicio",
+      "os.work_orders.assign": "Asignar órdenes de servicio",
+      "rentals.reservations.read": "Ver reservas",
+      "rentals.reservations.confirm": "Confirmar reservas",
+      "rentals.reservations.cancel": "Cancelar reservas",
+      "rentals.schedule.read": "Ver agenda",
+      "rentals.schedule.write": "Editar agenda",
+      "rentals.assets.read": "Ver recursos de alquiler",
+      "rentals.assets.write": "Editar política de escala",
+      "rentals.pricing.read": "Ver precios",
+      "rentals.pricing.write": "Editar precios",
+      "rentals.pricing.bulk_write": "Editar precios en lote",
+      "rentals.layouts.read": "Ver layouts",
+      "rentals.layouts.write": "Editar layouts",
+      "rentals.occupancy_kinds.read": "Ver tipos de ocupación",
+      "rentals.occupancy_kinds.write": "Editar tipos de ocupación",
+      "catalog": {
+        "products": {
+          "read": "Ver productos del catálogo",
+          "manage": "Gestionar productos del catálogo"
+        },
+        "orders": {
+          "read": "Ver pedidos del catálogo",
+          "manage": "Gestionar pedidos del catálogo"
+        },
+        "notifications": {
+          "read": "Ver notificaciones del catálogo",
+          "resend": "Reenviar notificaciones del catálogo"
+        }
+      }
+    },
+    "users": {
+      "description": "Invite personas y asigne una o más funciones.",
+      "invite": "Invitar usuario",
+      "inviteTitle": "Invitar usuario",
+      "inviteDescription": "La invitación se envía por e-mail. Elija al menos una función.",
+      "fullName": "Nombre",
+      "email": "E-mail",
+      "sendInvite": "Enviar invitación",
+      "assign": "Asignar funciones",
+      "assignTitle": "Asignar funciones",
+      "assignDescription": "Defina las funciones de {{name}}.",
+      "saveRoles": "Guardar funciones",
+      "empty": "Ningún usuario en este entorno.",
+      "noRoles": "Ninguna función asignada"
+    },
+    "roles": {
+      "description": "Funciones de sistema y perfiles personalizados de este entorno.",
+      "create": "Nueva función",
+      "createTitle": "Nueva función",
+      "editTitle": "Perfil de acceso",
+      "editorDescription": "Defina el nombre y los permisos de esta función.",
+      "adminReadonly": "La función Admin del sistema es de solo lectura. Los permisos siguen el catálogo del tenant.",
+      "descriptionLabel": "Descripción",
+      "view": "Ver permisos",
+      "save": "Guardar",
+      "empty": "Ninguna función visible.",
+      "deleteTitle": "Eliminar función",
+      "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
+    },
+    "validation": {
+      "fullNameRequired": "Informe el nombre.",
+      "emailInvalid": "Informe un e-mail válido.",
+      "rolesRequired": "Seleccione al menos una función.",
+      "roleNameRequired": "Informe el nombre de la función."
+    },
+    "toasts": {
+      "inviteSuccess": "Invitación enviada.",
+      "assignSuccess": "Funciones actualizadas.",
+      "roleCreated": "Función creada.",
+      "roleUpdated": "Función actualizada.",
+      "roleDeleted": "Función eliminada."
+    },
+    "errors": {
+      "invalidResponse": "Respuesta inválida de la API.",
+      "loadUsers": "No se pudieron cargar los usuarios.",
+      "loadRoles": "No se pudieron cargar las funciones.",
+      "loadRole": "No se pudo cargar la función.",
+      "loadPermissions": "No se pudieron cargar los permisos.",
+      "invite": "No se pudo enviar la invitación.",
+      "assignRoles": "No se pudieron asignar las funciones.",
+      "createRole": "No se pudo crear la función.",
+      "updateRole": "No se pudo actualizar la función.",
+      "deleteRole": "No se pudo eliminar la función."
     }
   },
   "admin": {
@@ -1597,6 +1991,8 @@
       "OSDescription": "Ejecución y seguimiento de OT.",
       "Rentals": "Alquileres",
       "RentalsDescription": "Locales, bienes y reservas B2C.",
+      "Catalog": "Catálogo y pedidos",
+      "CatalogDescription": "Productos, pedidos y notificaciones B2C.",
       "unknown": "Módulo"
     },
     "wizard": {

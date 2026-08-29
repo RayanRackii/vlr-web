@@ -43,8 +43,8 @@ A person who accesses the platform on behalf of a Tenant (B2B). Authentication i
 _Avoid_: Employee, account holder
 
 **Customer**:
-An end consumer registered exclusively under one Tenant (B2C). Logs in with email + password. Profile also includes name, CPF, postal address (via CEP), SMS-verified mobile (for WhatsApp notifications, not login), and optional photo. Not a platform User (B2B).
-_Avoid_: Client, member, sócio (in code)
+An end consumer registered exclusively under one Tenant (B2C). Logs in with email + password. `CustomerType` is Individual (CPF) or Company (CNPJ). One account holds one document (`Document`, digits only). Profile also includes name, postal address (via CEP), SMS-verified mobile (for WhatsApp notifications, not login), and optional photo. Not a platform User (B2B). Not an Organization.
+_Avoid_: Client, member, sócio (in code); OrganizationMember; using Tenant.TaxId as the Customer document
 
 **Unit**:
 A physical or logical site belonging to a Tenant, such as a hotel property, club facility, or branch. Module data must always reference a Unit when the domain requires site scope.
@@ -89,6 +89,26 @@ _Avoid_: treating OpenTime as reservation opening; a booking horizon as a substi
 **Turn**:
 The Active ticket's 90-second server lease (`TurnExpiresAt`). During the turn the Customer may pick any currently bookable slot on that Location and complete one reservation. Timeout expires the ticket and promotes the next Waiting. Remaining time comes from server timestamps, never a restarted local timer.
 _Avoid_: restarting 90s on reconnect; consuming the ticket on a failed booking validation while the turn is still valid
+
+**CustomerType**:
+Individual (natural person, CPF) or Company (legal person, CNPJ) on a Customer. The Customer is the account. One Customer = one CPF or one CNPJ.
+_Avoid_: Organization; OrganizationMember; CompanyUsers
+
+**Document**:
+Digits-only CPF (11) or CNPJ (14) on Customer. Distinct from Tenant.TaxId. Legacy column Cpf remains in v1.
+_Avoid_: TaxId as the Customer document
+
+**CatalogProduct**:
+A tenant-owned product offered to that tenant's Customers. Not Asset and not Rentable.
+_Avoid_: Product (bare); linking to Asset in v1
+
+**CatalogOrder**:
+A Customer request for CatalogProducts with quantities. Not a payment and not a Reservation.
+_Avoid_: Order (bare); persisted Cart
+
+**ProductRequest**:
+A Customer request for something not in the catalog. Does not auto-create a CatalogProduct.
+_Avoid_: Suggestion; Lead
 
 **Asset**:
 A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows. Bulk create follows rental type: Location = N entities with numbered tags; Good = one entity with stock quantity.

@@ -6,38 +6,27 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import { ROLVIX_PRIMARY_COLOR } from "@/lib/brandColors"
-import {
-  CustomerSidebar,
-  iconForModule,
-} from "@/features/tenantPortal/components/CustomerSidebar"
-import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
-import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import type {
+  ModuleMenuItem,
+  TenantBranding,
+} from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
   clearCustomerSession,
   fetchTenantBranding,
   fetchTenantMenu,
   getCustomerAccessToken,
   getCustomerLabel,
-  menuItemAgendaPath,
   resolveTenantSubdomain,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { buildCustomerNavItems } from "@/features/catalog/customerNav"
 
 export type CustomerAppOutletContext = {
   subdomain: string
   branding: TenantBranding
   primary: string
   menu: ModuleMenuItem[]
-}
-
-function modulePath(
-  subdomain: string,
-  item: ModuleMenuItem,
-): string | null {
-  if (item.moduleName.toLowerCase() === "rentals") {
-    return menuItemAgendaPath(subdomain, item.id)
-  }
-  return null
 }
 
 export function CustomerAppLayout() {
@@ -131,20 +120,7 @@ export function CustomerAppLayout() {
     )
   }
 
-  const navItems = menu
-    .map((item) => {
-      const to = modulePath(subdomain, item)
-      if (!to) {
-        return null
-      }
-      return {
-        id: item.id,
-        label: item.label,
-        to,
-        icon: iconForModule(item.moduleName),
-      }
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null)
+  const navItems = buildCustomerNavItems(subdomain, menu, t)
 
   const activeItem = navItems.find(
     (item) =>

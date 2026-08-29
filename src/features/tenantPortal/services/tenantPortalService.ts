@@ -29,6 +29,7 @@ import {
 const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
+const CUSTOMER_ID_KEY = "rolvix.customer.id"
 
 /** Tenant slug from hostname only (`ficc.rolvix.com.br` → `ficc`). */
 export function getHostTenantSubdomain(): string | null {
@@ -75,6 +76,10 @@ export type TenantPortalSegment =
   | "app/perfil"
   | "agenda"
   | `agenda/${string}`
+  | "catalogo"
+  | `catalogo/${string}`
+  | "pedidos"
+  | `pedidos/${string}`
 
 /**
  * Portal URLs: on host mode → `/`, `/register`, …;
@@ -209,6 +214,8 @@ export async function registerCustomer(
     email: string
     password: string
     phone: string
+    customerType: "Individual" | "Company"
+    document: string
     attributes?: Record<string, string | number | boolean>
   },
 ): Promise<{ customerId: string; requiresPhoneVerification: boolean }> {
@@ -314,6 +321,7 @@ export async function verifyCustomerPhone(
       parsed.data.token,
       subdomain,
       parsed.data.customer.email ?? parsed.data.customer.name,
+      parsed.data.customer.id,
     )
     return parsed.data
   } catch (error) {
@@ -341,6 +349,7 @@ export async function loginCustomer(
       parsed.data.token,
       subdomain,
       parsed.data.customer.email ?? parsed.data.customer.name,
+      parsed.data.customer.id,
     )
     return parsed.data
   } catch (error) {
@@ -354,11 +363,15 @@ export function persistCustomerSession(
   token: string,
   subdomain: string,
   label?: string,
+  customerId?: string,
 ): void {
   window.localStorage.setItem(CUSTOMER_TOKEN_KEY, token)
   window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain)
   if (label && label.trim().length > 0) {
     window.localStorage.setItem(CUSTOMER_LABEL_KEY, label.trim())
+  }
+  if (customerId && customerId.trim().length > 0) {
+    window.localStorage.setItem(CUSTOMER_ID_KEY, customerId.trim())
   }
 }
 
@@ -366,6 +379,7 @@ export function clearCustomerSession(): void {
   window.localStorage.removeItem(CUSTOMER_TOKEN_KEY)
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_KEY)
   window.localStorage.removeItem(CUSTOMER_LABEL_KEY)
+  window.localStorage.removeItem(CUSTOMER_ID_KEY)
 }
 
 export function getCustomerAccessToken(): string | null {
@@ -374,6 +388,41 @@ export function getCustomerAccessToken(): string | null {
 
 export function getCustomerLabel(): string | null {
   return window.localStorage.getItem(CUSTOMER_LABEL_KEY)
+}
+
+export function getCustomerId(): string | null {
+  const stored = window.localStorage.getItem(CUSTOMER_ID_KEY)
+  if (stored && stored.trim().length > 0) {
+    return stored
+  }
+
+  return decodeCustomerIdFromToken(getCustomerAccessToken())
+}
+
+function decodeCustomerIdFromToken(token: string | null): string | null {
+  if (!token) {
+    return null
+  }
+
+  const parts = token.split(".")
+  const payloadPart = parts[1]
+  if (!payloadPart) {
+    return null
+  }
+
+  try {
+    const padded = payloadPart.replace(/-/g, "+").replace(/_/g, "/")
+    const json = window.atob(padded)
+    const parsed: unknown = JSON.parse(json)
+    if (typeof parsed !== "object" || parsed === null) {
+      return null
+    }
+    const record = parsed as Record<string, unknown>
+    const customerId = record.customer_id
+    return typeof customerId === "string" ? customerId : null
+  } catch {
+    return null
+  }
 }
 
 export async function fetchTenantMenu(

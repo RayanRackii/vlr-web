@@ -2,24 +2,17 @@ import { Navigate, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import { menuItemAgendaPath } from "@/features/tenantPortal/services/tenantPortalService"
+import { buildCustomerNavItems } from "@/features/catalog/customerNav"
 
 /** Redirects to the first B2C menu item (or empty state). */
 export function TenantPortalHomePage() {
   const { t } = useTranslation()
   const { subdomain, menu } = useOutletContext<CustomerAppOutletContext>()
 
-  const firstRentals = menu.find(
-    (item) => item.moduleName.toLowerCase() === "rentals",
-  )
+  const first = buildCustomerNavItems(subdomain, menu, t)[0]
 
-  if (firstRentals) {
-    return (
-      <Navigate
-        to={menuItemAgendaPath(subdomain, firstRentals.id)}
-        replace
-      />
-    )
+  if (first) {
+    return <Navigate to={first.to} replace />
   }
 
   return (

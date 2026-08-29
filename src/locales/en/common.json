@@ -72,7 +72,29 @@
     "loadMenu": "Could not load menu.",
     "loadCustomerProfile": "Could not load the profile.",
     "updateCustomerProfile": "Could not update the profile.",
-    "invalidPayload": "Invalid data received from the API."
+    "invalidPayload": "Invalid data received from the API.",
+    "loadCatalogProducts": "Could not load products.",
+    "loadCatalogProduct": "Could not load the product.",
+    "saveCatalogProduct": "Could not save the product.",
+    "updateCatalogProductStatus": "Could not update the product status.",
+    "uploadCatalogFile": "Could not upload the file.",
+    "deleteCatalogFile": "Could not delete the file.",
+    "loadCatalogFileUrl": "Could not open the file.",
+    "loadProductRequests": "Could not load product requests.",
+    "loadCatalogOrders": "Could not load orders.",
+    "loadCatalogOrder": "Could not load the order.",
+    "transitionCatalogOrder": "Could not update the order.",
+    "loadCatalogNotifications": "Could not load notifications.",
+    "resendCatalogNotification": "Could not resend the notification.",
+    "loadCatalogChannels": "Could not load notification channels.",
+    "saveCatalogChannel": "Could not save the channel.",
+    "loadPortalCatalog": "Could not load the catalog.",
+    "loadPortalCatalogProduct": "Could not load the product.",
+    "submitPortalOrder": "Could not submit the order.",
+    "loadPortalOrders": "Could not load your orders.",
+    "loadPortalOrder": "Could not load the order.",
+    "cancelPortalOrder": "Could not cancel the order.",
+    "submitProductRequest": "Could not submit the product request."
   },
   "trial": {
     "banner": {
@@ -157,10 +179,16 @@
       "postalCode": "Postal code (CEP)",
       "phone": "Mobile phone",
       "photo": "Profile photo",
-      "code": "SMS code"
+      "code": "SMS code",
+      "customerType": "Account type",
+      "individual": "Individual",
+      "company": "Company",
+      "cnpj": "CNPJ"
     },
     "validation": {
-      "passwordMismatch": "Passwords must match."
+      "passwordMismatch": "Passwords must match.",
+      "invalidCpf": "Invalid CPF.",
+      "invalidCnpj": "Invalid CNPJ."
     },
     "login": {
       "title": "Sign in",
@@ -262,7 +290,7 @@
     },
     "profile": {
       "title": "My Profile",
-      "subtitle": "Update your name and photo. Email, phone and CPF cannot be changed here.",
+      "subtitle": "Update your name and photo. Email, phone, account type and document cannot be changed here.",
       "save": "Save",
       "saving": "Saving...",
       "saved": "Profile updated.",
@@ -281,6 +309,194 @@
       "validation": {
         "nameMin": "Name must be at least 2 characters.",
         "nameMax": "Name can be at most 200 characters."
+      }
+    },
+    "catalog": {
+      "navCatalog": "Catalog",
+      "navOrders": "Orders",
+      "title": "Catalog",
+      "subtitle": "Products available to request.",
+      "searchPlaceholder": "Search by name or code",
+      "empty": "No active products right now.",
+      "priceOnRequest": "On request",
+      "quantity": "Quantity",
+      "addToCart": "Add",
+      "addedToCart": "Added to cart.",
+      "cartCount": "Cart ({{count}})",
+      "cartTitle": "Cart",
+      "cartEmpty": "Your cart is empty.",
+      "checkout": "Review order",
+      "checkoutHint": "Confirm quantities. Server prices will be used.",
+      "customerNote": "Note",
+      "submitOrder": "Submit order",
+      "submitting": "Submitting...",
+      "orderSubmitted": "Order submitted.",
+      "requestCta": "Request a product",
+      "requestTitle": "Request a product",
+      "requestSubtitle": "Describe what you need. There is no tracking list in this version.",
+      "requestDescription": "Description",
+      "requestNote": "Note",
+      "requestFiles": "Files",
+      "requestFilesCount": "{{count}} file(s)",
+      "requestSubmit": "Submit request",
+      "requestSubmitted": "Request submitted.",
+      "ordersTitle": "My orders",
+      "ordersSubtitle": "Track the status of your orders.",
+      "ordersEmpty": "You have not placed any orders yet.",
+      "cancelOrder": "Cancel order",
+      "cancelling": "Cancelling...",
+      "orderCancelled": "Order cancelled."
+    }
+  },
+  "catalog": {
+    "retry": "Try again",
+    "priceOnRequest": "On request",
+    "status": {
+      "Requested": "Requested",
+      "Approved": "Approved",
+      "Preparing": "Preparing",
+      "Ready": "Ready",
+      "Completed": "Completed",
+      "Rejected": "Rejected",
+      "Cancelled": "Cancelled"
+    },
+    "actor": {
+      "Customer": "Customer",
+      "B2BUser": "Staff",
+      "System": "System"
+    },
+    "channels": {
+      "InApp": "In-app",
+      "Email": "Email",
+      "WhatsApp": "WhatsApp",
+      "Sms": "SMS"
+    },
+    "deliveryStatus": {
+      "Queued": "Queued",
+      "Sent": "Sent",
+      "Delivered": "Delivered",
+      "Failed": "Failed"
+    },
+    "recipient": {
+      "Customer": "Customer",
+      "B2BUser": "User"
+    },
+    "events": {
+      "orderCreated": "Order created",
+      "orderApproved": "Order approved",
+      "orderPreparing": "Order preparing",
+      "orderReady": "Order ready",
+      "orderRejected": "Order rejected",
+      "orderCancelledBySupplier": "Order cancelled by supplier"
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "Manage this environment's catalog products.",
+      "create": "New product",
+      "createTitle": "New product",
+      "editTitle": "Edit product",
+      "dialogDescription": "Leave price empty for on-request items.",
+      "empty": "No products yet.",
+      "save": "Save",
+      "saving": "Saving...",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "invalidPrice": "Enter a valid price or leave it empty.",
+      "toastCreated": "Product created.",
+      "toastUpdated": "Product updated.",
+      "toastActivated": "Product activated.",
+      "toastDeactivated": "Product deactivated.",
+      "toastFileUploaded": "File uploaded.",
+      "toastFileDeleted": "File deleted.",
+      "columns": {
+        "name": "Name",
+        "code": "Code",
+        "price": "Price",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "form": {
+        "name": "Name",
+        "code": "Code",
+        "description": "Description",
+        "price": "Price",
+        "currency": "Currency"
+      },
+      "files": {
+        "title": "Files",
+        "customerVisible": "Customer visible",
+        "internal": "Internal (B2B)",
+        "open": "Open"
+      }
+    },
+    "requests": {
+      "title": "Product requests",
+      "subtitle": "Requests for items not yet in the catalog (read only).",
+      "empty": "No requests.",
+      "columns": {
+        "description": "Description",
+        "quantity": "Qty",
+        "note": "Note",
+        "createdAt": "Created"
+      }
+    },
+    "orders": {
+      "title": "Orders",
+      "subtitle": "Approve, prepare, and complete customer orders.",
+      "empty": "No orders.",
+      "view": "View",
+      "total": "Total",
+      "items": "Items",
+      "timeline": "History",
+      "customerNote": "Customer note",
+      "rejectedReason": "Rejection reason",
+      "cancelledReason": "Cancellation reason",
+      "toastUpdated": "Order updated.",
+      "saving": "Saving...",
+      "columns": {
+        "number": "Number",
+        "customer": "Customer",
+        "status": "Status",
+        "total": "Total",
+        "createdAt": "Created",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "preparing": "Prepare",
+        "ready": "Mark ready",
+        "complete": "Complete",
+        "reject": "Reject",
+        "cancel": "Cancel"
+      },
+      "reason": {
+        "rejectTitle": "Reject order",
+        "cancelTitle": "Cancel order",
+        "required": "A reason is required. The customer is notified only when external channels are enabled.",
+        "label": "Reason",
+        "confirm": "Confirm"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Catalog deliveries and channels per event.",
+      "channelsTitle": "Channels per event",
+      "channelsSubtitle": "Email, WhatsApp, and SMS start off. SMS is not available in this version.",
+      "smsUnavailable": "The SMS channel is not available.",
+      "empty": "No deliveries.",
+      "resend": "Resend",
+      "toastResent": "Resend queued.",
+      "toastChannelSaved": "Channel updated.",
+      "toggleChannel": "Enable {{channel}} for {{event}}",
+      "columns": {
+        "event": "Event",
+        "channel": "Channel",
+        "recipient": "Recipient",
+        "status": "Status",
+        "createdAt": "Created",
+        "actions": "Actions"
       }
     }
   },
@@ -577,6 +793,11 @@
     "schedule": "Schedule",
     "layout": "Layout",
     "reservations": "Reservations",
+    "catalog": "Catalog & Orders",
+    "catalogProducts": "Products",
+    "catalogOrders": "Orders",
+    "catalogNotifications": "Notifications",
+    "peopleAccess": "People and access",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
     "adminUsers": "Users",
@@ -1425,7 +1646,180 @@
   "users": {
     "errors": {
       "loadCurrent": "Could not load your access profile.",
-      "loadTechnicians": "Could not load technicians."
+      "loadTechnicians": "Could not load technicians.",
+      "invalidResponse": "Invalid API response."
+    }
+  },
+  "accessDenied": {
+    "title": "Access denied",
+    "description": "You do not have permission to view this page."
+  },
+  "rbac": {
+    "errors": {
+      "PRIVILEGE_ESCALATION_BLOCKED": "You cannot assign an access profile with more permissions than your own.",
+      "LAST_ADMIN_PROTECTED": "The last active administrator in this environment cannot be removed.",
+      "ROLE_IN_USE": "This access profile is in use and cannot be deleted.",
+      "CANNOT_MODIFY_SYSTEM_ROLE": "System access profiles cannot be renamed or reduced this way.",
+      "CANNOT_DELETE_SYSTEM_ROLE": "System access profiles cannot be deleted.",
+      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this environment.",
+      "FORBIDDEN": "You do not have permission for this action."
+    }
+  },
+  "peopleAccess": {
+    "title": "People and access",
+    "description": "Manage people in this environment and their access profiles (functions and permissions).",
+    "tabs": {
+      "users": "Users",
+      "roles": "Functions and permissions"
+    },
+    "role": "Function",
+    "permissions": "Permissions",
+    "accessProfile": "Access profile",
+    "moduleInactive": "Module is not active for this tenant",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "badges": {
+      "system": "System",
+      "custom": "Custom"
+    },
+    "modules": {
+      "core": "General",
+      "inventory": "Inventory",
+      "pmoc": "PMOC",
+      "os": "Work orders",
+      "rentals": "Reservations",
+      "catalog": "Catalog & Orders"
+    },
+    "resources": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "roles": "Functions",
+      "units": "Units",
+      "registration_fields": "Portal registration",
+      "module_menu": "Portal menu",
+      "assets": "Resources",
+      "categories": "Types",
+      "families": "Families",
+      "plans": "Plans",
+      "templates": "Templates",
+      "work_orders": "Work orders",
+      "reservations": "Reservations",
+      "schedule": "Schedule",
+      "pricing": "Pricing",
+      "layouts": "Layouts",
+      "occupancy_kinds": "Occupancy kinds",
+      "products": "Products",
+      "orders": "Orders",
+      "notifications": "Notifications"
+    },
+    "catalog": {
+      "core.dashboard.read": "View dashboard",
+      "core.users.read": "View users",
+      "core.users.invite": "Invite users",
+      "core.users.assign_roles": "Assign functions",
+      "core.roles.read": "View functions",
+      "core.roles.manage": "Manage functions",
+      "core.units.read": "View units",
+      "core.registration_fields.read": "View registration fields",
+      "core.registration_fields.write": "Edit registration fields",
+      "core.module_menu.read": "View portal menu",
+      "core.module_menu.write": "Edit portal menu",
+      "inventory.assets.read": "View resources",
+      "inventory.assets.write": "Edit resources",
+      "inventory.categories.read": "View types",
+      "inventory.categories.write": "Edit types",
+      "inventory.families.read": "View families",
+      "pmoc.plans.read": "View PMOC plans",
+      "pmoc.plans.write": "Edit PMOC plans",
+      "pmoc.templates.read": "View PMOC templates",
+      "os.work_orders.read": "View work orders",
+      "os.work_orders.create": "Create work orders",
+      "os.work_orders.execute": "Execute work orders",
+      "os.work_orders.assign": "Assign work orders",
+      "rentals.reservations.read": "View reservations",
+      "rentals.reservations.confirm": "Confirm reservations",
+      "rentals.reservations.cancel": "Cancel reservations",
+      "rentals.schedule.read": "View schedule",
+      "rentals.schedule.write": "Edit schedule",
+      "rentals.assets.read": "View rental resources",
+      "rentals.assets.write": "Edit schedule policy",
+      "rentals.pricing.read": "View pricing",
+      "rentals.pricing.write": "Edit pricing",
+      "rentals.pricing.bulk_write": "Bulk-edit pricing",
+      "rentals.layouts.read": "View layouts",
+      "rentals.layouts.write": "Edit layouts",
+      "rentals.occupancy_kinds.read": "View occupancy kinds",
+      "rentals.occupancy_kinds.write": "Edit occupancy kinds",
+      "catalog": {
+        "products": {
+          "read": "View catalog products",
+          "manage": "Manage catalog products"
+        },
+        "orders": {
+          "read": "View catalog orders",
+          "manage": "Manage catalog orders"
+        },
+        "notifications": {
+          "read": "View catalog notifications",
+          "resend": "Resend catalog notifications"
+        }
+      }
+    },
+    "users": {
+      "description": "Invite people and assign one or more functions.",
+      "invite": "Invite user",
+      "inviteTitle": "Invite user",
+      "inviteDescription": "The invite is sent by email. Choose at least one function.",
+      "fullName": "Name",
+      "email": "Email",
+      "sendInvite": "Send invite",
+      "assign": "Assign functions",
+      "assignTitle": "Assign functions",
+      "assignDescription": "Set the functions for {{name}}.",
+      "saveRoles": "Save functions",
+      "empty": "No users in this environment.",
+      "noRoles": "No function assigned"
+    },
+    "roles": {
+      "description": "System functions and custom access profiles for this environment.",
+      "create": "New function",
+      "createTitle": "New function",
+      "editTitle": "Access profile",
+      "editorDescription": "Set the name and permissions for this function.",
+      "adminReadonly": "The system Admin function is read-only. Permissions follow the tenant catalog.",
+      "descriptionLabel": "Description",
+      "view": "View permissions",
+      "save": "Save",
+      "empty": "No visible functions.",
+      "deleteTitle": "Delete function",
+      "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
+    },
+    "validation": {
+      "fullNameRequired": "Enter a name.",
+      "emailInvalid": "Enter a valid email.",
+      "rolesRequired": "Select at least one function.",
+      "roleNameRequired": "Enter the function name."
+    },
+    "toasts": {
+      "inviteSuccess": "Invite sent.",
+      "assignSuccess": "Functions updated.",
+      "roleCreated": "Function created.",
+      "roleUpdated": "Function updated.",
+      "roleDeleted": "Function deleted."
+    },
+    "errors": {
+      "invalidResponse": "Invalid API response.",
+      "loadUsers": "Could not load users.",
+      "loadRoles": "Could not load functions.",
+      "loadRole": "Could not load the function.",
+      "loadPermissions": "Could not load permissions.",
+      "invite": "Could not send the invite.",
+      "assignRoles": "Could not assign functions.",
+      "createRole": "Could not create the function.",
+      "updateRole": "Could not update the function.",
+      "deleteRole": "Could not delete the function."
     }
   },
   "admin": {
@@ -1597,6 +1991,8 @@
       "OSDescription": "Work order execution and tracking.",
       "Rentals": "Rentals",
       "RentalsDescription": "Locations, goods, and B2C reservations.",
+      "Catalog": "Catalog & Orders",
+      "CatalogDescription": "Products, orders, and B2C notifications.",
       "unknown": "Module"
     },
     "wizard": {

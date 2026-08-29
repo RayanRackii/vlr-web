@@ -34,6 +34,8 @@ function toCanonicalModule(moduleKey: string): string {
       return "pmoc"
     case "OS":
       return "os"
+    case "Catalog":
+      return "catalog"
     default:
       return moduleKey.toLowerCase()
   }
