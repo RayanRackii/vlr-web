@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Layers,
   Package,
+  ShoppingBag,
   Tent,
   Wrench,
   Zap,
@@ -63,6 +64,7 @@ const MODULE_ICONS = {
   PMOC: ClipboardList,
   OS: Wrench,
   Rentals: Tent,
+  Catalog: ShoppingBag,
 } as const
 
 const FAMILY_ICONS: Record<string, LucideIcon> = {

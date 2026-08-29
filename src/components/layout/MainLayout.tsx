@@ -12,6 +12,7 @@ import {
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
+import { PermissionProvider } from "@/features/users/permissions/PermissionContext"
 import {
   refreshAuthSession,
   usePlatformTenantSession,
@@ -20,7 +21,7 @@ import {
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { supabase } from "@/lib/supabase"
 
-export function MainLayout() {
+function MainLayoutShell() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -99,5 +100,13 @@ export function MainLayout() {
     >
       <Outlet />
     </AppShell>
+  )
+}
+
+export function MainLayout() {
+  return (
+    <PermissionProvider>
+      <MainLayoutShell />
+    </PermissionProvider>
   )
 }

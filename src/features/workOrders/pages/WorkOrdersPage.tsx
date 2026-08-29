@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/AuthContext"
-import { getCurrentUser } from "@/features/users/services/usersService"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   type WorkOrder,
   type WorkOrderStatus,
@@ -222,38 +222,14 @@ function WorkOrdersTable({
 export function WorkOrdersPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
+  const { can } = usePermissions()
   const navigate = useNavigate()
 
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<WorkOrderStatus>("Pending")
-  const [canCreateWorkOrder, setCanCreateWorkOrder] = useState(false)
-
-  useEffect(() => {
-    if (!session) {
-      setCanCreateWorkOrder(false)
-      return
-    }
-
-    let isActive = true
-
-    void getCurrentUser()
-      .then((profile) => {
-        if (isActive) {
-          setCanCreateWorkOrder(profile.role === "ADMIN")
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setCanCreateWorkOrder(false)
-        }
-      })
-
-    return () => {
-      isActive = false
-    }
-  }, [session])
+  const canCreateWorkOrder = can("os.work_orders.create")
 
   const loadWorkOrders = useCallback(async () => {
     if (!session) {

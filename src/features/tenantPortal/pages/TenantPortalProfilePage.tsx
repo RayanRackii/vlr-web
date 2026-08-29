@@ -23,6 +23,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   buildCustomerProfileFormSchema,
+  formatCustomerDocument,
   type CustomerProfile,
   type CustomerProfileFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
@@ -289,13 +290,21 @@ export function TenantPortalProfilePage() {
   const address = formatProfileAddress(profile)
   const email = profile.email?.trim() ?? ""
   const phone = profile.phone?.trim() ?? ""
-  const cpf = profile.cpf?.trim() ?? ""
+  const documentLabel = formatCustomerDocument(
+    profile.customerType,
+    profile.document,
+    profile.cpf,
+  )
+  const customerTypeLabel =
+    profile.customerType === "Company"
+      ? t("tenantPortal.fields.company")
+      : t("tenantPortal.fields.individual")
   const displayName =
     watchedName.trim().length > 0 ? watchedName.trim() : profile.name
   const hasReadOnlyFields =
     email.length > 0 ||
     phone.length > 0 ||
-    cpf.length > 0 ||
+    documentLabel !== null ||
     address !== null
 
   return (
@@ -429,10 +438,18 @@ export function TenantPortalProfilePage() {
                     value={phone}
                   />
                 ) : null}
-                {cpf.length > 0 ? (
+                <ReadOnlyValue
+                  label={t("tenantPortal.fields.customerType")}
+                  value={customerTypeLabel}
+                />
+                {documentLabel ? (
                   <ReadOnlyValue
-                    label={t("tenantPortal.fields.cpf")}
-                    value={cpf}
+                    label={
+                      profile.customerType === "Company"
+                        ? t("tenantPortal.fields.cnpj")
+                        : t("tenantPortal.fields.cpf")
+                    }
+                    value={documentLabel}
                   />
                 ) : null}
                 {address ? (

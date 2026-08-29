@@ -78,7 +78,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
 - [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
-- [ ] `ModuleGuard` nas rotas + listagem de Users B2B do tenant em **Pessoas & portal**.
+- [x] `PermissionRoute` nas rotas de produto (módulo **e** permissão) + página **Pessoas e acesso** (`/pessoas-e-acesso`) com usuários e funções.
 - [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
 ## 4.5. UX de Ativos (fundação)
@@ -92,6 +92,16 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wizard Location: “Fila de reservas” + horário de abertura (`queueEnabled` / `queueOpeningTime`); oculto para Good
 - [x] F-16: lote — tipo Location gera N recursos numerados; tipo Good gera um recurso com quantidade em estoque (sem toggle extra)
 - [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
+
+## 6. Catalog & Orders v1 — EM ANDAMENTO
+
+Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch `feat/catalog-orders`.
+
+- [x] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
+- [x] B2B: Produtos, Pedidos, Notificações (`/catalogo/*`)
+- [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
+- [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
+- [x] CustomerAppLayout.modulePath para `catalog`
 
 ## 5. Fluxo de convite B2B
 
@@ -167,3 +177,5 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 | 2026-08-22 | **F-10 (espelho):** templates semanais podem sobrepor OccupancyKinds diferentes; precedência Closed > Lesson > Open na grade inédita; glossário alinhado ao `vlr-api`. |
 | 2026-08-22 | **Fix F-16:** wizard de lote envia `rentalType` + `totalQuantity`; Location usa faixa start/end (N entidades); Good usa estoque num único recurso. |
 | 2026-08-22 | **Executado:** fila opcional por Location (default off). Admin: toggle + horário no wizard. B2C: poll 4s, sala T−30, turno 90s FIFO. Sem fila = UX igual. **Como testar:** (1) Location com fila desligada — portal reserva como hoje. (2) Ligar fila 07:30 no wizard → portal: antes da sala de espera não entra; na sala entra e não reserva; após abertura o 1º Active reserva um horário em 90s. (3) 2º cliente vê posição 2. (4) Refresh mantém posição/tempo. (5) Após expirar, “Entrar novamente na fila”. Merge API first. Follow-up: testes FE do hook quando houver runner. |
+| 2026-08-28 | **Iniciado:** Catalog & Orders v1 (cross-repo). Spec no `vlr-api`. Branch `feat/catalog-orders`. |
+| 2026-08-28 | **Review-fix:** cart B2C aponta para `/catalogo/carrinho`; i18n de eventos e peopleAccess do módulo catalog. |
