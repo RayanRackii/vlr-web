@@ -303,6 +303,26 @@ export async function deleteRegistrationField(
   }
 }
 
+export async function resendCustomerPhoneVerification(
+  subdomain: string,
+  body: { email: string },
+): Promise<void> {
+  try {
+    await publicApi.post(
+      "/api/auth/customer/resend-verification",
+      { email: body.email },
+      { headers: subdomainHeaders(subdomain) },
+    )
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.resendPhoneVerification"),
+      ),
+    )
+  }
+}
+
 export async function verifyCustomerPhone(
   subdomain: string,
   body: { email: string; code: string },

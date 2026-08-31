@@ -50,6 +50,7 @@
     "createField": "Não foi possível criar o campo.",
     "deleteField": "Não foi possível excluir o campo.",
     "verifyPhone": "Não foi possível verificar o celular.",
+    "resendPhoneVerification": "Não foi possível reenviar o código.",
     "signIn": "Não foi possível entrar.",
     "createMenuItem": "Não foi possível criar o item de menu.",
     "updateMenuItem": "Não foi possível atualizar o item de menu.",
@@ -215,9 +216,12 @@
     },
     "verify": {
       "title": "Confirmar celular",
-      "subtitle": "Digite o código de 6 dígitos enviado por SMS (em desenvolvimento aparece no log da API).",
+      "subtitle": "Digite o código de 6 dígitos enviado por SMS para o celular usado no cadastro.",
       "submit": "Confirmar",
       "submitting": "Verificando...",
+      "resend": "Reenviar código",
+      "resendSubmitting": "Reenviando...",
+      "resendToastSuccess": "Novo código enviado por SMS.",
       "toastSuccess": "Celular verificado!",
       "toastError": "Código inválido.",
       "backToLogin": "Voltar ao login"
