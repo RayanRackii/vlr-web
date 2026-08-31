@@ -36,13 +36,13 @@ export function TenantPortalVerifyPhonePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const locationState =
+    typeof location.state === "object" && location.state !== null
+      ? (location.state as { email?: unknown; verificationSendFailed?: unknown })
+      : null
   const emailFromState =
-    typeof location.state === "object"
-    && location.state !== null
-    && "email" in location.state
-    && typeof (location.state as { email?: unknown }).email === "string"
-      ? (location.state as { email: string }).email
-      : ""
+    typeof locationState?.email === "string" ? locationState.email : ""
+  const verificationSendFailed = locationState?.verificationSendFailed === true
 
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
@@ -98,6 +98,17 @@ export function TenantPortalVerifyPhonePage() {
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.verify.subtitle")}
         </p>
+        {verificationSendFailed ? (
+          <p
+            className="text-sm text-amber-800 dark:text-amber-200"
+            role="status"
+          >
+            <span className="font-medium">
+              {t("tenantPortal.verify.sendFailedTitle")}{" "}
+            </span>
+            {t("tenantPortal.verify.sendFailedBody")}
+          </p>
+        ) : null}
       </div>
 
       <Form {...form}>

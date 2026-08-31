@@ -30,7 +30,7 @@ Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
 
 **Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto. Novos tenants partem da paleta Rolvix (`#4D6A92` / `#5A8FA0`); valores salvos por tenant continuam soberanos no login e app B2C.
 
-**Validações BR:** CPF/CEP no front para UX; API é autoridade. Verificação de celular no cadastro é Twilio Verify (API). SMS de catálogo/notificação continua enfileirado (nunca síncrono na request).
+**Validações BR:** CPF/CEP no front para UX; API é autoridade. Verificação de celular no cadastro é Twilio Verify (API). Cadastro B2C pendente (celular ainda não verificado) retoma em `/verify-phone` se o envio do SMS falhar. SMS de catálogo/notificação continua enfileirado (nunca síncrono na request).
 
 ## Language
 

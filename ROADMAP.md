@@ -180,3 +180,4 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-08-28 | **Iniciado:** Catalog & Orders v1 (cross-repo). Spec no `vlr-api`. Branch `feat/catalog-orders`. |
 | 2026-08-28 | **Review-fix:** cart B2C aponta para `/catalogo/carrinho`; i18n de eventos e peopleAccess do módulo catalog. |
 | 2026-08-31 | **Executado:** B2C verify-phone resend via Twilio Verify API; subtitle no longer mentions API log. |
+| 2026-08-31 | **Fix:** cadastro B2C pendente navega para `/verify-phone` se o SMS falhar (`verificationStarted` / 503 legado); banner + Reenviar código. |

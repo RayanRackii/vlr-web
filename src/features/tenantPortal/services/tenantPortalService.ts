@@ -15,6 +15,7 @@ import {
   customerProfileSchema,
   moduleMenuItemSchema,
   registerResponseSchema,
+  type RegisterCustomerResponse,
   registrationFieldSchema,
   registrationSchemaResponseSchema,
   tenantBrandingSchema,
@@ -207,6 +208,15 @@ export async function fetchRegistrationSchema(
   return parsed.data
 }
 
+/** Well-known nil UUID. Used when a legacy 503 has no customerId; the page navigates by email. */
+const NIL_CUSTOMER_ID = "00000000-0000-0000-0000-000000000000"
+
+const LEGACY_REGISTER_SEND_FAILED: RegisterCustomerResponse = {
+  customerId: NIL_CUSTOMER_ID,
+  requiresPhoneVerification: true,
+  verificationStarted: false,
+}
+
 export async function registerCustomer(
   subdomain: string,
   body: {
@@ -218,7 +228,7 @@ export async function registerCustomer(
     document: string
     attributes?: Record<string, string | number | boolean>
   },
-): Promise<{ customerId: string; requiresPhoneVerification: boolean }> {
+): Promise<RegisterCustomerResponse> {
   try {
     const response = await publicApi.post("/api/auth/customer/register", body, {
       headers: subdomainHeaders(subdomain),
@@ -229,6 +239,12 @@ export async function registerCustomer(
     }
     return parsed.data
   } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 503) {
+      return LEGACY_REGISTER_SEND_FAILED
+    }
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.register")),
     )
