@@ -26,6 +26,7 @@ import {
   type VerifyPhoneFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  resendCustomerPhoneVerification,
   tenantPortalPath,
   verifyCustomerPhone,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -35,15 +36,16 @@ export function TenantPortalVerifyPhonePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const locationState =
+    typeof location.state === "object" && location.state !== null
+      ? (location.state as { email?: unknown; verificationSendFailed?: unknown })
+      : null
   const emailFromState =
-    typeof location.state === "object"
-    && location.state !== null
-    && "email" in location.state
-    && typeof (location.state as { email?: unknown }).email === "string"
-      ? (location.state as { email: string }).email
-      : ""
+    typeof locationState?.email === "string" ? locationState.email : ""
+  const verificationSendFailed = locationState?.verificationSendFailed === true
 
   const [submitting, setSubmitting] = useState(false)
+  const [resending, setResending] = useState(false)
 
   const form = useForm<VerifyPhoneFormValues>({
     resolver: zodResolver(verifyPhoneSchema),
@@ -67,6 +69,28 @@ export function TenantPortalVerifyPhonePage() {
     }
   }
 
+  async function onResend() {
+    const emailValid = await form.trigger("email")
+    if (!emailValid) {
+      return
+    }
+
+    const email = form.getValues("email")
+    setResending(true)
+    try {
+      await resendCustomerPhoneVerification(subdomain, { email })
+      toast.success(t("tenantPortal.verify.resendToastSuccess"))
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("apiErrors.resendPhoneVerification"),
+      )
+    } finally {
+      setResending(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="space-y-1">
@@ -74,6 +98,17 @@ export function TenantPortalVerifyPhonePage() {
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.verify.subtitle")}
         </p>
+        {verificationSendFailed ? (
+          <p
+            className="text-sm text-amber-800 dark:text-amber-200"
+            role="status"
+          >
+            <span className="font-medium">
+              {t("tenantPortal.verify.sendFailedTitle")}{" "}
+            </span>
+            {t("tenantPortal.verify.sendFailedBody")}
+          </p>
+        ) : null}
       </div>
 
       <Form {...form}>
@@ -114,9 +149,23 @@ export function TenantPortalVerifyPhonePage() {
             className="w-full"
             loading={submitting}
             loadingLabel={t("tenantPortal.verify.submitting")}
+            disabled={resending}
             style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.verify.submit")}
+          </LoadingButton>
+          <LoadingButton
+            type="button"
+            variant="outline"
+            className="w-full"
+            loading={resending}
+            loadingLabel={t("tenantPortal.verify.resendSubmitting")}
+            disabled={submitting}
+            onClick={() => {
+              void onResend()
+            }}
+          >
+            {t("tenantPortal.verify.resend")}
           </LoadingButton>
         </form>
       </Form>

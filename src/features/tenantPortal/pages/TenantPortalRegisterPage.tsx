@@ -135,9 +135,10 @@ export function TenantPortalRegisterPage() {
         attributes[field.fieldKey] = value as string | number | boolean
       }
 
-      await registerCustomer(subdomain, {
+      const email = String(values.email ?? "")
+      const data = await registerCustomer(subdomain, {
         name: String(values.name ?? ""),
-        email: String(values.email ?? ""),
+        email,
         password: String(values.password ?? ""),
         phone: String(values.phone ?? ""),
         customerType:
@@ -145,10 +146,15 @@ export function TenantPortalRegisterPage() {
         document: onlyDigits(String(values.document ?? "")),
         attributes,
       })
-      toast.success(t("tenantPortal.register.toastSuccess"))
+      const verificationSendFailed = !data.verificationStarted
+      if (verificationSendFailed) {
+        toast.warning(t("tenantPortal.register.pendingContinue"))
+      } else {
+        toast.success(t("tenantPortal.register.toastSuccess"))
+      }
       void navigate(tenantPortalPath(subdomain, "verify-phone"), {
         replace: true,
-        state: { email: String(values.email ?? "") },
+        state: { email, verificationSendFailed },
       })
     } catch (error) {
       toast.error(
