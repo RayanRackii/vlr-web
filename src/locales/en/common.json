@@ -207,6 +207,7 @@
       "submit": "Continue",
       "submitting": "Saving...",
       "toastSuccess": "Account created. Confirm the SMS.",
+      "pendingContinue": "Account saved. SMS was not sent — resend the code on the next screen.",
       "toastError": "Could not register.",
       "photoError": "Could not process the photo.",
       "schemaError": "Could not load this company's registration form.",
@@ -224,6 +225,8 @@
       "resendToastSuccess": "A new code was sent by SMS.",
       "toastSuccess": "Phone verified!",
       "toastError": "Invalid code.",
+      "sendFailedTitle": "Account created, but the SMS was not sent.",
+      "sendFailedBody": "Your account exists (or is pending), but the verification code could not be sent. Use Resend code to try again.",
       "backToLogin": "Back to sign in"
     },
     "app": {

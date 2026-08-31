@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { buildCustomerRegisterSchema } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import {
+  buildCustomerRegisterSchema,
+  registerResponseSchema,
+} from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
 const CORE = {
   name: "Ana Silva",
@@ -60,5 +63,29 @@ describe("buildCustomerRegisterSchema PF/PJ", () => {
         true,
       )
     }
+  })
+})
+
+describe("registerResponseSchema", () => {
+  const customerId = "11111111-1111-4111-8111-111111111111"
+
+  it("accepts a register response with verificationStarted", () => {
+    const parsed = registerResponseSchema.safeParse({
+      customerId,
+      requiresPhoneVerification: true,
+      verificationStarted: false,
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.verificationStarted).toBe(false)
+    }
+  })
+
+  it("rejects a register response without verificationStarted", () => {
+    const parsed = registerResponseSchema.safeParse({
+      customerId,
+      requiresPhoneVerification: true,
+    })
+    expect(parsed.success).toBe(false)
   })
 })

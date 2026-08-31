@@ -112,7 +112,10 @@ export type CustomerAuthResponse = z.infer<typeof authResponseSchema>
 export const registerResponseSchema = z.object({
   customerId: z.string().uuid(),
   requiresPhoneVerification: z.boolean(),
+  verificationStarted: z.boolean(),
 })
+
+export type RegisterCustomerResponse = z.infer<typeof registerResponseSchema>
 
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "")

@@ -207,6 +207,7 @@
       "submit": "Continuar",
       "submitting": "Salvando...",
       "toastSuccess": "Conta criada. Confirme o SMS.",
+      "pendingContinue": "Conta salva. O SMS não foi enviado — reenvie o código na próxima tela.",
       "toastError": "Não foi possível cadastrar.",
       "photoError": "Não foi possível processar a foto.",
       "schemaError": "Não foi possível carregar o formulário desta empresa.",
@@ -224,6 +225,8 @@
       "resendToastSuccess": "Novo código enviado por SMS.",
       "toastSuccess": "Celular verificado!",
       "toastError": "Código inválido.",
+      "sendFailedTitle": "Conta criada, mas o SMS não foi enviado.",
+      "sendFailedBody": "Sua conta já existe (ou ficou pendente), mas o código não pôde ser enviado. Use Reenviar código para tentar de novo.",
       "backToLogin": "Voltar ao login"
     },
     "app": {

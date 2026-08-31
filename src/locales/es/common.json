@@ -207,6 +207,7 @@
       "submit": "Continuar",
       "submitting": "Guardando...",
       "toastSuccess": "Cuenta creada. Confirme el SMS.",
+      "pendingContinue": "Cuenta guardada. El SMS no se envió — reenvíe el código en la siguiente pantalla.",
       "toastError": "No fue posible registrarse.",
       "photoError": "No fue posible procesar la foto.",
       "schemaError": "No se pudo cargar el formulario de esta empresa.",
@@ -224,6 +225,8 @@
       "resendToastSuccess": "Se envió un nuevo código por SMS.",
       "toastSuccess": "¡Celular verificado!",
       "toastError": "Código inválido.",
+      "sendFailedTitle": "Cuenta creada, pero el SMS no se envió.",
+      "sendFailedBody": "Su cuenta ya existe (o quedó pendiente), pero no se pudo enviar el código. Use Reenviar código para intentarlo de nuevo.",
       "backToLogin": "Volver al inicio de sesión"
     },
     "app": {
