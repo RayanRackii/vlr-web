@@ -26,6 +26,7 @@ import {
   type VerifyPhoneFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  resendCustomerPhoneVerification,
   tenantPortalPath,
   verifyCustomerPhone,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -44,6 +45,7 @@ export function TenantPortalVerifyPhonePage() {
       : ""
 
   const [submitting, setSubmitting] = useState(false)
+  const [resending, setResending] = useState(false)
 
   const form = useForm<VerifyPhoneFormValues>({
     resolver: zodResolver(verifyPhoneSchema),
@@ -64,6 +66,28 @@ export function TenantPortalVerifyPhonePage() {
       )
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function onResend() {
+    const emailValid = await form.trigger("email")
+    if (!emailValid) {
+      return
+    }
+
+    const email = form.getValues("email")
+    setResending(true)
+    try {
+      await resendCustomerPhoneVerification(subdomain, { email })
+      toast.success(t("tenantPortal.verify.resendToastSuccess"))
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("apiErrors.resendPhoneVerification"),
+      )
+    } finally {
+      setResending(false)
     }
   }
 
@@ -114,9 +138,23 @@ export function TenantPortalVerifyPhonePage() {
             className="w-full"
             loading={submitting}
             loadingLabel={t("tenantPortal.verify.submitting")}
+            disabled={resending}
             style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.verify.submit")}
+          </LoadingButton>
+          <LoadingButton
+            type="button"
+            variant="outline"
+            className="w-full"
+            loading={resending}
+            loadingLabel={t("tenantPortal.verify.resendSubmitting")}
+            disabled={submitting}
+            onClick={() => {
+              void onResend()
+            }}
+          >
+            {t("tenantPortal.verify.resend")}
           </LoadingButton>
         </form>
       </Form>

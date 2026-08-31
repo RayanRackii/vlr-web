@@ -24,13 +24,13 @@ Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
 - Login branded (`LogoSvg`, cores, trade name).
 - Cadastro no mesmo shell; Customer só daquele Tenant.
 
-**Campos de cadastro (beachhead):** foto, nome, e-mail (login), senha, CPF, CEP, celular (SMS = prova de posse, **não** autentica).
+**Campos de cadastro (beachhead):** foto, nome, e-mail (login), senha, CPF, CEP, celular (SMS via Twilio Verify = prova de posse, **não** autentica).
 
 **Auth B2C:** login = e-mail + senha → JWT `Customer`. OTP-only por telefone é legado a aposentar.
 
 **Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto. Novos tenants partem da paleta Rolvix (`#4D6A92` / `#5A8FA0`); valores salvos por tenant continuam soberanos no login e app B2C.
 
-**Validações BR:** CPF/CEP no front para UX; API é autoridade. SMS enfileirado (nunca síncrono na request).
+**Validações BR:** CPF/CEP no front para UX; API é autoridade. Verificação de celular no cadastro é Twilio Verify (API). SMS de catálogo/notificação continua enfileirado (nunca síncrono na request).
 
 ## Language
 

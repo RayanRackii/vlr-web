@@ -50,6 +50,7 @@
     "createField": "Could not create field.",
     "deleteField": "Could not delete field.",
     "verifyPhone": "Could not verify phone.",
+    "resendPhoneVerification": "Could not resend the verification code.",
     "signIn": "Could not sign in.",
     "createMenuItem": "Could not create menu item.",
     "updateMenuItem": "Could not update menu item.",
@@ -215,9 +216,12 @@
     },
     "verify": {
       "title": "Confirm phone",
-      "subtitle": "Enter the 6-digit SMS code (in development it is logged by the API).",
+      "subtitle": "Enter the 6-digit code sent by SMS to the phone used at registration.",
       "submit": "Confirm",
       "submitting": "Verifying...",
+      "resend": "Resend code",
+      "resendSubmitting": "Resending...",
+      "resendToastSuccess": "A new code was sent by SMS.",
       "toastSuccess": "Phone verified!",
       "toastError": "Invalid code.",
       "backToLogin": "Back to sign in"
