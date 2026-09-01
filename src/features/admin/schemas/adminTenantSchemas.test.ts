@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   createTenantOnboardingSchemas,
+  isTenantOnboardingStepValid,
   tenantOnboardingMessagesFromT,
   toCreateTenantAdminRequest,
   type TenantOnboardingFormValues,
@@ -63,6 +64,78 @@ describe("tenant onboarding validation messages", () => {
     expect(result.success).toBe(false)
     expect(messagesFound).toContain(i18n.t("admin.wizard.validation.adminEmailInvalid"))
     expect(messagesFound.join(" ")).not.toContain("Invalid input")
+  })
+})
+
+const emptyWizardValues: TenantOnboardingFormValues = {
+  legalName: "",
+  taxId: "",
+  subdomain: "",
+  logoSvg: "",
+  primaryColor: "",
+  accentColor: "",
+  welcomeTagline: "",
+  activeModules: [],
+  assetFamilyKeys: [],
+  adminFullName: "",
+  adminEmail: "",
+}
+
+const completeWizardValues: TenantOnboardingFormValues = {
+  legalName: "Clube Acme",
+  taxId: "12345",
+  subdomain: "acme",
+  logoSvg: "",
+  primaryColor: "#4D6A92",
+  accentColor: "",
+  welcomeTagline: "",
+  activeModules: ["Rentals"],
+  assetFamilyKeys: ["spaces"],
+  adminFullName: "",
+  adminEmail: "",
+}
+
+describe("isTenantOnboardingStepValid", () => {
+  it("rejects an empty step 1", () => {
+    expect(isTenantOnboardingStepValid(1, emptyWizardValues, schemas)).toBe(
+      false,
+    )
+  })
+
+  it("rejects step 4 when no families are selected", () => {
+    expect(isTenantOnboardingStepValid(4, emptyWizardValues, schemas)).toBe(
+      false,
+    )
+  })
+
+  it("treats step 4 as invalid when the catalog is unavailable", () => {
+    expect(
+      isTenantOnboardingStepValid(4, completeWizardValues, schemas, {
+        familiesAvailable: false,
+      }),
+    ).toBe(false)
+  })
+
+  it("accepts step 5 when both admin invite fields are blank", () => {
+    expect(isTenantOnboardingStepValid(5, emptyWizardValues, schemas)).toBe(
+      true,
+    )
+  })
+
+  it("uses the full schema on step 6", () => {
+    expect(isTenantOnboardingStepValid(6, emptyWizardValues, schemas)).toBe(
+      false,
+    )
+    expect(isTenantOnboardingStepValid(6, completeWizardValues, schemas)).toBe(
+      true,
+    )
+    expect(
+      isTenantOnboardingStepValid(
+        6,
+        { ...completeWizardValues, legalName: "" },
+        schemas,
+      ),
+    ).toBe(false)
   })
 })
 

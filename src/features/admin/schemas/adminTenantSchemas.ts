@@ -151,9 +151,66 @@ export function createTenantOnboardingSchemas(
   }
 }
 
-export type TenantOnboardingFormValues = z.infer<
-  ReturnType<typeof createTenantOnboardingSchemas>["tenantOnboardingSchema"]
+export type TenantOnboardingSchemas = ReturnType<
+  typeof createTenantOnboardingSchemas
 >
+
+export type TenantOnboardingFormValues = z.infer<
+  TenantOnboardingSchemas["tenantOnboardingSchema"]
+>
+
+export function isTenantOnboardingStepValid(
+  step: number,
+  values: TenantOnboardingFormValues,
+  schemas: TenantOnboardingSchemas,
+  options?: { familiesAvailable?: boolean },
+): boolean {
+  if (step === 1) {
+    return schemas.step1Schema.safeParse({
+      legalName: values.legalName,
+      taxId: values.taxId,
+    }).success
+  }
+
+  if (step === 2) {
+    return schemas.step2Schema.safeParse({
+      subdomain: values.subdomain,
+      logoSvg: values.logoSvg,
+      primaryColor: values.primaryColor,
+      accentColor: values.accentColor,
+      welcomeTagline: values.welcomeTagline,
+    }).success
+  }
+
+  if (step === 3) {
+    return schemas.step3Schema.safeParse({
+      activeModules: values.activeModules,
+    }).success
+  }
+
+  if (step === 4) {
+    if (options?.familiesAvailable === false) {
+      return false
+    }
+
+    return schemas.stepFamiliesSchema.safeParse({
+      assetFamilyKeys: values.assetFamilyKeys,
+    }).success
+  }
+
+  if (step === 5) {
+    return schemas.stepAdminInviteSchema.safeParse({
+      adminFullName: values.adminFullName,
+      adminEmail: values.adminEmail,
+    }).success
+  }
+
+  if (step === 6) {
+    return schemas.tenantOnboardingSchema.safeParse(values).success
+  }
+
+  return false
+}
 
 export const {
   step1Schema,

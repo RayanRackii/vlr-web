@@ -29,6 +29,7 @@ import {
   PRICE_PER_MODULE_BRL,
   createTenantOnboardingSchemas,
   tenantOnboardingMessagesFromT,
+  isTenantOnboardingStepValid,
   type ModuleKey,
   type TenantOnboardingFormValues,
   toCreateTenantAdminRequest,
@@ -37,6 +38,7 @@ import { createAdminTenant } from "@/features/admin/services/adminTenantsService
 import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -138,6 +140,13 @@ export function TenantOnboardingWizard() {
   const isActionLocked = isFinishing || isSubmitSuccess
   const values = form.watch()
   const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
+  const familiesAvailable = families.length > 0
+  const isCurrentStepValid = isTenantOnboardingStepValid(
+    step,
+    values,
+    schemas,
+    { familiesAvailable },
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -172,6 +181,14 @@ export function TenantOnboardingWizard() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (step !== 4) {
+      return
+    }
+
+    void form.trigger("assetFamilyKeys")
+  }, [step, form])
 
   async function handleNext() {
     if (isSubmitSuccess || isFinishing) {
@@ -862,23 +879,25 @@ export function TenantOnboardingWizard() {
               </Button>
 
               {step < STEP_COUNT ? (
-                <Button
+                <FormPrimaryButton
                   type="button"
+                  isValid={isCurrentStepValid}
                   disabled={isActionLocked}
                   onClick={() => void handleNext()}
                 >
                   {t("admin.wizard.actions.next")}
-                </Button>
+                </FormPrimaryButton>
               ) : (
-                <Button
+                <FormPrimaryButton
                   type="button"
-                  disabled={isActionLocked}
+                  isValid={isCurrentStepValid}
+                  loading={isFinishing}
+                  loadingLabel={t("admin.wizard.actions.finishing")}
+                  disabled={isSubmitSuccess}
                   onClick={() => void handleFinish()}
                 >
-                  {isFinishing
-                    ? t("admin.wizard.actions.finishing")
-                    : t("admin.wizard.actions.finish")}
-                </Button>
+                  {t("admin.wizard.actions.finish")}
+                </FormPrimaryButton>
               )}
             </CardFooter>
           </Card>
