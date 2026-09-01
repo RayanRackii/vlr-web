@@ -39,7 +39,7 @@ import { updateAdminTenant } from "@/features/admin/services/adminTenantsService
 import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -599,14 +599,15 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
             >
               {t("common.cancel")}
             </Button>
-            <LoadingButton
+            <FormPrimaryButton
               type="submit"
+              isValid={schemas.tenantOnboardingSchema.safeParse(values).success}
               loading={isSubmitting}
               loadingLabel={t("admin.edit.actions.saving")}
-              disabled={isActionLocked}
+              disabled={isSubmitSuccess}
             >
               {t("admin.edit.actions.save")}
-            </LoadingButton>
+            </FormPrimaryButton>
           </div>
         </form>
       </Form>

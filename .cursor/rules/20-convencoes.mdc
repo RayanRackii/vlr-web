@@ -18,6 +18,9 @@ Atue como desenvolvedor frontend sênior em React, TypeScript e Tailwind.
 
 - shadcn/ui sempre nas versões mais recentes; lógica de negócio em hooks customizados, separada do JSX.
 - Formulários exclusivamente com React Hook Form + Zod (`@hookform/resolvers/zod`).
+- **Validity gate:** se restrições conhecidas no cliente (Zod do passo/formulário atual) estão inválidas, a ação primária (Continuar, Salvar, Criar, Finalizar, Confirmar) fica **desabilitada**. Use `FormPrimaryButton` com `isValid` via `safeParse` nos valores observados (`form.watch` / `useWatch`). Em wizard multi-passo **não** use `formState.isValid` do formulário inteiro — passos futuros ainda vazios invalidariam o atual.
+- Erros só-servidor (unicidade, provider externo) **não** desabilitam a primária. A validação no submit permanece; toast de erro; o usuário fica no formulário; reabilitar o submit.
+- Back/Cancel nunca são gated por validade. Loading/submitting bloqueia clique duplicado na primária. Visual indisponível: `disabled:opacity-50` já existente no `Button`.
 
 ## i18n (obrigatório)
 
