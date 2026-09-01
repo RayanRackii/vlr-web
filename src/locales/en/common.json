@@ -2003,7 +2003,7 @@
       "unknown": "Module"
     },
     "wizard": {
-      "title": "New client",
+      "title": "Register a new company",
       "stepLabel": "Step {{current}} of {{total}}",
       "steps": {
         "company": "Enter the company legal details.",
@@ -2015,11 +2015,11 @@
       },
       "stepShort": {
         "1": "Company",
-        "2": "Identity",
+        "2": "Identification",
         "3": "Modules",
         "4": "Resources",
-        "5": "Admin",
-        "6": "Summary"
+        "5": "Administrator",
+        "6": "Review"
       },
       "families": {
         "hint": "Pick at least one asset family. This drives asset registration forms.",
@@ -2068,6 +2068,23 @@
       "errors": {
         "createFailed": "Could not provision the client.",
         "familiesLoadFailed": "Could not load asset families."
+      },
+      "stepperAriaLabel": "Company registration steps",
+      "validation": {
+        "legalNameMin": "Enter the legal name (at least 2 characters).",
+        "legalNameMax": "Legal name must be at most 200 characters.",
+        "taxIdMin": "Enter the tax ID (at least 5 characters).",
+        "taxIdMax": "Tax ID must be at most 20 characters.",
+        "subdomainMin": "Subdomain must be at least 2 characters.",
+        "subdomainMax": "Subdomain must be at most 63 characters.",
+        "subdomainFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club).",
+        "logoSvgInvalid": "The logo must be SVG markup (include <svg).",
+        "hexColorInvalid": "Enter a valid hex color (e.g. #1E293B).",
+        "welcomeTaglineMax": "Welcome tagline must be at most 120 characters.",
+        "modulesMin": "Select at least one module.",
+        "familiesMin": "Select at least one resource family.",
+        "adminNameRequired": "Enter the administrator name (at least 2 characters) to send the invite.",
+        "adminEmailInvalid": "Enter a valid email to send the invite."
       }
     },
     "errors": {

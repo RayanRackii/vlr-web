@@ -181,3 +181,23 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-08-28 | **Review-fix:** cart B2C aponta para `/catalogo/carrinho`; i18n de eventos e peopleAccess do módulo catalog. |
 | 2026-08-31 | **Executado:** B2C verify-phone resend via Twilio Verify API; subtitle no longer mentions API log. |
 | 2026-08-31 | **Fix:** cadastro B2C pendente navega para `/verify-phone` se o SMS falhar (`verificationStarted` / 503 legado); banner + Reenviar código. |
+| 2026-09-01 | **Executado:** SuperAdmin company wizard redesign (shell 1200px, stepper vertical/compact, ações à direita); `/admin` redireciona para `/admin/dashboard`; detecção SuperAdmin via `GET /api/users/me` (`SUPER_ADMIN`) com fallback de e-mail `VITE_PLATFORM_ADMIN_EMAILS`. |
+| 2026-09-01 | **Fix:** SuperAdmin wizard Recursos agora carrega o catálogo de famílias da plataforma em `GET /api/admin/asset-families` (não mais o endpoint B2B tenant-scoped). |
+| 2026-09-01 | **Fix:** validity gate — Continuar/Finalizar do wizard de empresa (e Salvar no edit) desabilitados enquanto o passo/schema cliente for inválido; Back/Cancel livres; erros só-servidor no submit. Wrapper `FormPrimaryButton`. Outras telas: FOLLOWUP. |
+
+### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
+
+| Superfície | Classificação |
+|---|---|
+| Wizard empresa / TenantEditForm | VALIDITY_GATE_APPLICABLE (**este PR**) |
+| Login / reset / set-password | VALIDITY_GATE_APPLICABLE |
+| Portal login / register / verify / profile | VALIDITY_GATE_APPLICABLE |
+| OnboardingPage (legado) | VALIDITY_GATE_APPLICABLE |
+| AssetWizard | VALIDITY_GATE_APPLICABLE |
+| CreateWorkOrder / CreatePlan | VALIDITY_GATE_APPLICABLE |
+| AssetCategories | VALIDITY_GATE_APPLICABLE |
+| People users / roles | VALIDITY_GATE_APPLICABLE (e-mail único = SERVER_VALIDATION_ONLY) |
+| Catalog product form / cart / product request | VALIDITY_GATE_APPLICABLE |
+| Reservations confirm / cancel | SPECIAL_CASE |
+| Delete dialogs | SPECIAL_CASE |
+| Credenciais erradas / unicidade / provider externo | SERVER_VALIDATION_ONLY |

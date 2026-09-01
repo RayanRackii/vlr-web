@@ -29,16 +29,17 @@ import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuIt
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
 import {
   MODULE_KEYS,
-  tenantOnboardingSchema,
+  createTenantOnboardingSchemas,
+  tenantOnboardingMessagesFromT,
   type ModuleKey,
   type TenantOnboardingFormValues,
   toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -92,8 +93,17 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   const redirectTimeoutRef = useRef<number | null>(null)
   const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
+  const validationMessages = useMemo(
+    () => tenantOnboardingMessagesFromT((key) => t(key)),
+    [t],
+  )
+  const schemas = useMemo(
+    () => createTenantOnboardingSchemas(validationMessages),
+    [validationMessages],
+  )
+
   const form = useForm<TenantOnboardingFormValues>({
-    resolver: zodResolver(tenantOnboardingSchema),
+    resolver: zodResolver(schemas.tenantOnboardingSchema),
     defaultValues: initialValues,
     mode: "onTouched",
   })
@@ -108,7 +118,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
 
   useEffect(() => {
     let cancelled = false
-    void listAssetFamilyCatalog()
+    void listAdminAssetFamilyCatalog()
       .then((catalog) => {
         if (!cancelled) {
           setFamilies(catalog)
@@ -589,14 +599,15 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
             >
               {t("common.cancel")}
             </Button>
-            <LoadingButton
+            <FormPrimaryButton
               type="submit"
+              isValid={schemas.tenantOnboardingSchema.safeParse(values).success}
               loading={isSubmitting}
               loadingLabel={t("admin.edit.actions.saving")}
-              disabled={isActionLocked}
+              disabled={isSubmitSuccess}
             >
               {t("admin.edit.actions.save")}
-            </LoadingButton>
+            </FormPrimaryButton>
           </div>
         </form>
       </Form>

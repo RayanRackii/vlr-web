@@ -27,20 +27,23 @@ import {
 import {
   MODULE_KEYS,
   PRICE_PER_MODULE_BRL,
-  step1Schema,
-  step2Schema,
-  step3Schema,
-  stepAdminInviteSchema,
-  stepFamiliesSchema,
-  tenantOnboardingSchema,
+  createTenantOnboardingSchemas,
+  tenantOnboardingMessagesFromT,
+  isTenantOnboardingStepValid,
   type ModuleKey,
   type TenantOnboardingFormValues,
-  toTenantBrandingPayload,
+  toCreateTenantAdminRequest,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -107,8 +110,17 @@ export function TenantOnboardingWizard() {
   const finishInFlightRef = useRef(false)
   const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
+  const validationMessages = useMemo(
+    () => tenantOnboardingMessagesFromT((key) => t(key)),
+    [t],
+  )
+  const schemas = useMemo(
+    () => createTenantOnboardingSchemas(validationMessages),
+    [validationMessages],
+  )
+
   const form = useForm<TenantOnboardingFormValues>({
-    resolver: zodResolver(tenantOnboardingSchema),
+    resolver: zodResolver(schemas.tenantOnboardingSchema),
     defaultValues: {
       legalName: "",
       taxId: "",
@@ -128,11 +140,18 @@ export function TenantOnboardingWizard() {
   const isActionLocked = isFinishing || isSubmitSuccess
   const values = form.watch()
   const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
+  const familiesAvailable = families.length > 0
+  const isCurrentStepValid = isTenantOnboardingStepValid(
+    step,
+    values,
+    schemas,
+    { familiesAvailable },
+  )
 
   useEffect(() => {
     let cancelled = false
 
-    void listAssetFamilyCatalog()
+    void listAdminAssetFamilyCatalog()
       .then((catalog) => {
         if (!cancelled) {
           setFamilies(catalog)
@@ -163,13 +182,21 @@ export function TenantOnboardingWizard() {
     }
   }, [])
 
+  useEffect(() => {
+    if (step !== 4) {
+      return
+    }
+
+    void form.trigger("assetFamilyKeys")
+  }, [step, form])
+
   async function handleNext() {
     if (isSubmitSuccess || isFinishing) {
       return
     }
 
     if (step === 1) {
-      const parsed = step1Schema.safeParse({
+      const parsed = schemas.step1Schema.safeParse({
         legalName: form.getValues("legalName"),
         taxId: form.getValues("taxId"),
       })
@@ -184,7 +211,7 @@ export function TenantOnboardingWizard() {
     }
 
     if (step === 2) {
-      const parsed = step2Schema.safeParse({
+      const parsed = schemas.step2Schema.safeParse({
         subdomain: form.getValues("subdomain"),
         logoSvg: form.getValues("logoSvg"),
         primaryColor: form.getValues("primaryColor"),
@@ -208,7 +235,7 @@ export function TenantOnboardingWizard() {
     }
 
     if (step === 3) {
-      const parsed = step3Schema.safeParse({
+      const parsed = schemas.step3Schema.safeParse({
         activeModules: form.getValues("activeModules"),
       })
 
@@ -231,7 +258,7 @@ export function TenantOnboardingWizard() {
         return
       }
 
-      const parsed = stepFamiliesSchema.safeParse({
+      const parsed = schemas.stepFamiliesSchema.safeParse({
         assetFamilyKeys: form.getValues("assetFamilyKeys"),
       })
 
@@ -245,7 +272,7 @@ export function TenantOnboardingWizard() {
     }
 
     if (step === 5) {
-      const parsed = stepAdminInviteSchema.safeParse({
+      const parsed = schemas.stepAdminInviteSchema.safeParse({
         adminFullName: form.getValues("adminFullName"),
         adminEmail: form.getValues("adminEmail"),
       })
@@ -309,19 +336,10 @@ export function TenantOnboardingWizard() {
       return
     }
 
-    const payload = form.getValues()
+    const payload = toCreateTenantAdminRequest(form.getValues())
 
     try {
-      await createAdminTenant({
-        legalName: payload.legalName.trim(),
-        taxId: payload.taxId.trim(),
-        subdomain: payload.subdomain.trim().toLowerCase(),
-        ...toTenantBrandingPayload(payload),
-        activeModules: payload.activeModules,
-        assetFamilyKeys: payload.assetFamilyKeys,
-        adminFullName: payload.adminFullName.trim() || null,
-        adminEmail: payload.adminEmail.trim() || null,
-      })
+      await createAdminTenant(payload)
 
       toast.success(t("admin.wizard.successTitle"), {
         description: t("admin.wizard.success"),
@@ -365,31 +383,49 @@ export function TenantOnboardingWizard() {
     [t],
   )
 
-  return (
-    <div className="mx-auto w-full max-w-3xl space-y-8">
-      <div className="space-y-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("admin.wizard.stepLabel", { current: step, total: STEP_COUNT })}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            {t("admin.wizard.title")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(STEP_TITLE_KEYS[step - 1])}
-          </p>
-        </div>
+  const handleStepClick = (index: number) => {
+    if (!isActionLocked && index < step - 1) {
+      setStep(index + 1)
+    }
+  }
 
-        <WizardPanelsStepper
-          steps={panelSteps}
-          currentIndex={step - 1}
-          onStepClick={(index) => {
-            if (!isActionLocked && index < step - 1) {
-              setStep(index + 1)
-            }
-          }}
-        />
+  return (
+    <div className="mx-auto w-full space-y-8 lg:space-y-10">
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("admin.wizard.stepLabel", { current: step, total: STEP_COUNT })}
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          {t("admin.wizard.title")}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t(STEP_TITLE_KEYS[step - 1])}
+        </p>
       </div>
+
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-center lg:gap-8">
+        <aside className="hidden w-[260px] shrink-0 lg:block">
+          <WizardPanelsStepper
+            variant="vertical"
+            testId="company-wizard-stepper"
+            ariaLabel={t("admin.wizard.stepperAriaLabel")}
+            steps={panelSteps}
+            currentIndex={step - 1}
+            onStepClick={handleStepClick}
+          />
+        </aside>
+
+        <div className="flex w-full min-w-0 max-w-[760px] flex-col gap-4">
+          <div className="lg:hidden">
+            <WizardPanelsStepper
+              variant="compact"
+              testId="company-wizard-stepper"
+              ariaLabel={t("admin.wizard.stepperAriaLabel")}
+              steps={panelSteps}
+              currentIndex={step - 1}
+              onStepClick={handleStepClick}
+            />
+          </div>
 
       <Form {...form}>
         <form
@@ -398,6 +434,8 @@ export function TenantOnboardingWizard() {
             event.preventDefault()
           }}
         >
+          <Card className="gap-0 py-0 shadow-sm">
+            <CardContent className="space-y-6 px-6 py-6 md:px-8 md:py-8">
           {step === 1 ? (
             <div className="space-y-4">
               <FormField
@@ -817,7 +855,9 @@ export function TenantOnboardingWizard() {
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-2 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+            </CardContent>
+
+            <CardFooter className="flex flex-wrap justify-end gap-2 border-t border-border px-6 py-4 md:px-8">
             <Button
               type="button"
               variant="ghost"
@@ -827,7 +867,6 @@ export function TenantOnboardingWizard() {
               {t("admin.wizard.actions.back")}
             </Button>
 
-            <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -840,28 +879,32 @@ export function TenantOnboardingWizard() {
               </Button>
 
               {step < STEP_COUNT ? (
-                <Button
+                <FormPrimaryButton
                   type="button"
+                  isValid={isCurrentStepValid}
                   disabled={isActionLocked}
                   onClick={() => void handleNext()}
                 >
                   {t("admin.wizard.actions.next")}
-                </Button>
+                </FormPrimaryButton>
               ) : (
-                <Button
+                <FormPrimaryButton
                   type="button"
-                  disabled={isActionLocked}
+                  isValid={isCurrentStepValid}
+                  loading={isFinishing}
+                  loadingLabel={t("admin.wizard.actions.finishing")}
+                  disabled={isSubmitSuccess}
                   onClick={() => void handleFinish()}
                 >
-                  {isFinishing
-                    ? t("admin.wizard.actions.finishing")
-                    : t("admin.wizard.actions.finish")}
-                </Button>
+                  {t("admin.wizard.actions.finish")}
+                </FormPrimaryButton>
               )}
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         </form>
       </Form>
+        </div>
+      </div>
     </div>
   )
 }
