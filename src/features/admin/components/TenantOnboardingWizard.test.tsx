@@ -4,18 +4,18 @@ import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { TenantOnboardingWizard } from "@/features/admin/components/TenantOnboardingWizard"
-import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/features/assets/services/assetFamiliesService", () => ({
-  listAssetFamilyCatalog: vi.fn(),
+  listAdminAssetFamilyCatalog: vi.fn(),
 }))
 
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
   createAdminTenant: vi.fn(),
 }))
 
-const listFamiliesMock = vi.mocked(listAssetFamilyCatalog)
+const listFamiliesMock = vi.mocked(listAdminAssetFamilyCatalog)
 
 function renderWizard() {
   return render(

@@ -34,7 +34,7 @@ import {
   toCreateTenantAdminRequest,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { listAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { Button } from "@/components/ui/button"
 import {
@@ -142,7 +142,7 @@ export function TenantOnboardingWizard() {
   useEffect(() => {
     let cancelled = false
 
-    void listAssetFamilyCatalog()
+    void listAdminAssetFamilyCatalog()
       .then((catalog) => {
         if (!cancelled) {
           setFamilies(catalog)

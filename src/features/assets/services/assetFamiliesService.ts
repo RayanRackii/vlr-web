@@ -18,6 +18,15 @@ function throwFamiliesError(error: unknown, fallback: string): never {
   throw new Error(parseApiError(getAxiosErrorPayload(error), fallback))
 }
 
+export async function listAdminAssetFamilyCatalog(): Promise<AssetFamily[]> {
+  try {
+    const response = await api.get<unknown>("/api/admin/asset-families")
+    return assetFamilyListSchema.parse(response.data)
+  } catch (error: unknown) {
+    throwFamiliesError(error, i18n.t("apiErrors.loadAssetFamilies"))
+  }
+}
+
 export async function listAssetFamilyCatalog(): Promise<AssetFamily[]> {
   try {
     const response = await api.get<unknown>("/api/asset-families")
