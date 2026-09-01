@@ -215,6 +215,10 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<PlatformAdminRoute />}>
+            <Route
+              path="/admin"
+              element={<Navigate to="/admin/dashboard" replace />}
+            />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
           </Route>

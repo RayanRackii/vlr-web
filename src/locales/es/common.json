@@ -2003,7 +2003,7 @@
       "unknown": "Módulo"
     },
     "wizard": {
-      "title": "Nuevo cliente",
+      "title": "Registrar nueva empresa",
       "stepLabel": "Paso {{current}} de {{total}}",
       "steps": {
         "company": "Ingrese los datos legales de la empresa.",
@@ -2015,11 +2015,11 @@
       },
       "stepShort": {
         "1": "Empresa",
-        "2": "Identidad",
+        "2": "Identificación",
         "3": "Módulos",
         "4": "Recursos",
-        "5": "Admin",
-        "6": "Resumen"
+        "5": "Administrador",
+        "6": "Revisión"
       },
       "families": {
         "hint": "Elija al menos una familia de recursos. Define los formularios de activos.",
@@ -2068,6 +2068,23 @@
       "errors": {
         "createFailed": "No se pudo aprovisionar el cliente.",
         "familiesLoadFailed": "No se pudieron cargar las familias de recursos."
+      },
+      "stepperAriaLabel": "Pasos del registro de la empresa",
+      "validation": {
+        "legalNameMin": "Ingrese la razón social (mínimo 2 caracteres).",
+        "legalNameMax": "La razón social debe tener como máximo 200 caracteres.",
+        "taxIdMin": "Ingrese el documento (mínimo 5 caracteres).",
+        "taxIdMax": "El documento debe tener como máximo 20 caracteres.",
+        "subdomainMin": "El subdominio debe tener al menos 2 caracteres.",
+        "subdomainMax": "El subdominio debe tener como máximo 63 caracteres.",
+        "subdomainFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o acme-club).",
+        "logoSvgInvalid": "El logo debe ser un markup SVG (incluir <svg).",
+        "hexColorInvalid": "Ingrese un color hexadecimal válido (ej.: #1E293B).",
+        "welcomeTaglineMax": "La frase de bienvenida debe tener como máximo 120 caracteres.",
+        "modulesMin": "Seleccione al menos un módulo.",
+        "familiesMin": "Seleccione al menos una familia de recursos.",
+        "adminNameRequired": "Ingrese el nombre del administrador (mínimo 2 caracteres) para enviar la invitación.",
+        "adminEmailInvalid": "Ingrese un correo válido para enviar la invitación."
       }
     },
     "errors": {

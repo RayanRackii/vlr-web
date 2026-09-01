@@ -6,93 +6,165 @@ export type ModuleKey = (typeof MODULE_KEYS)[number]
 
 export const PRICE_PER_MODULE_BRL = 199
 
-export const step1Schema = z.object({
-  legalName: z.string().trim().min(2).max(200),
-  taxId: z.string().trim().min(5).max(20),
-})
+const SUBDOMAIN_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const HEX_COLOR_PATTERN = /^#?[0-9A-Fa-f]{6}$/
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export const step2Schema = z.object({
-  subdomain: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(2)
-    .max(63)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid subdomain"),
-  logoSvg: z
-    .string()
-    .trim()
-    .max(100_000)
-    .refine(
-      (value) =>
-        value.length === 0
-        || value.toLowerCase().includes("<svg"),
-      "Logo must be SVG markup",
-    ),
-  primaryColor: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        value.length === 0 || /^#?[0-9A-Fa-f]{6}$/.test(value),
-      "Invalid hex color",
-    ),
-  accentColor: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        value.length === 0 || /^#?[0-9A-Fa-f]{6}$/.test(value),
-      "Invalid hex color",
-    ),
-  welcomeTagline: z.string().trim().max(120),
-})
+export type TenantOnboardingValidationMessages = {
+  legalNameMin: string
+  legalNameMax: string
+  taxIdMin: string
+  taxIdMax: string
+  subdomainMin: string
+  subdomainMax: string
+  subdomainFormat: string
+  logoSvgInvalid: string
+  hexColorInvalid: string
+  welcomeTaglineMax: string
+  modulesMin: string
+  familiesMin: string
+  adminNameRequired: string
+  adminEmailInvalid: string
+}
 
-export const step3Schema = z.object({
-  activeModules: z.array(z.enum(MODULE_KEYS)).min(1),
-})
+export function tenantOnboardingMessagesFromT(
+  t: (key: string) => string,
+): TenantOnboardingValidationMessages {
+  return {
+    legalNameMin: t("admin.wizard.validation.legalNameMin"),
+    legalNameMax: t("admin.wizard.validation.legalNameMax"),
+    taxIdMin: t("admin.wizard.validation.taxIdMin"),
+    taxIdMax: t("admin.wizard.validation.taxIdMax"),
+    subdomainMin: t("admin.wizard.validation.subdomainMin"),
+    subdomainMax: t("admin.wizard.validation.subdomainMax"),
+    subdomainFormat: t("admin.wizard.validation.subdomainFormat"),
+    logoSvgInvalid: t("admin.wizard.validation.logoSvgInvalid"),
+    hexColorInvalid: t("admin.wizard.validation.hexColorInvalid"),
+    welcomeTaglineMax: t("admin.wizard.validation.welcomeTaglineMax"),
+    modulesMin: t("admin.wizard.validation.modulesMin"),
+    familiesMin: t("admin.wizard.validation.familiesMin"),
+    adminNameRequired: t("admin.wizard.validation.adminNameRequired"),
+    adminEmailInvalid: t("admin.wizard.validation.adminEmailInvalid"),
+  }
+}
 
-export const stepFamiliesSchema = z.object({
-  assetFamilyKeys: z.array(z.string().min(1)).min(1),
-})
-
-export const stepAdminInviteSchema = z
-  .object({
-    adminFullName: z.string().trim().max(200),
-    adminEmail: z.string().trim().max(320),
-  })
-  .superRefine((value, ctx) => {
-    const name = value.adminFullName
-    const email = value.adminEmail
-    const anyFilled = name.length > 0 || email.length > 0
-    if (!anyFilled) {
-      return
-    }
-
-    if (name.length < 2) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["adminFullName"],
-        message: "Admin name is required when inviting",
-      })
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["adminEmail"],
-        message: "Valid admin email is required when inviting",
-      })
-    }
+export function createTenantOnboardingSchemas(
+  messages: TenantOnboardingValidationMessages,
+) {
+  const step1Schema = z.object({
+    legalName: z
+      .string()
+      .trim()
+      .min(2, messages.legalNameMin)
+      .max(200, messages.legalNameMax),
+    taxId: z
+      .string()
+      .trim()
+      .min(5, messages.taxIdMin)
+      .max(20, messages.taxIdMax),
   })
 
-export const tenantOnboardingSchema = step1Schema
-  .merge(step2Schema)
-  .merge(step3Schema)
-  .merge(stepFamiliesSchema)
-  .merge(stepAdminInviteSchema)
+  const step2Schema = z.object({
+    subdomain: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(2, messages.subdomainMin)
+      .max(63, messages.subdomainMax)
+      .regex(SUBDOMAIN_PATTERN, messages.subdomainFormat),
+    logoSvg: z
+      .string()
+      .trim()
+      .max(100_000)
+      .refine(
+        (value) => value.length === 0 || value.toLowerCase().includes("<svg"),
+        messages.logoSvgInvalid,
+      ),
+    primaryColor: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value.length === 0 || HEX_COLOR_PATTERN.test(value),
+        messages.hexColorInvalid,
+      ),
+    accentColor: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value.length === 0 || HEX_COLOR_PATTERN.test(value),
+        messages.hexColorInvalid,
+      ),
+    welcomeTagline: z.string().trim().max(120, messages.welcomeTaglineMax),
+  })
 
-export type TenantOnboardingFormValues = z.infer<typeof tenantOnboardingSchema>
+  const step3Schema = z.object({
+    activeModules: z.array(z.enum(MODULE_KEYS)).min(1, messages.modulesMin),
+  })
+
+  const stepFamiliesSchema = z.object({
+    assetFamilyKeys: z.array(z.string().min(1)).min(1, messages.familiesMin),
+  })
+
+  const stepAdminInviteSchema = z
+    .object({
+      adminFullName: z.string().trim().max(200),
+      adminEmail: z.string().trim().max(320),
+    })
+    .superRefine((value, ctx) => {
+      const name = value.adminFullName
+      const email = value.adminEmail
+      const anyFilled = name.length > 0 || email.length > 0
+      if (!anyFilled) {
+        return
+      }
+
+      if (name.length < 2) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["adminFullName"],
+          message: messages.adminNameRequired,
+        })
+      }
+
+      if (!EMAIL_PATTERN.test(email)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["adminEmail"],
+          message: messages.adminEmailInvalid,
+        })
+      }
+    })
+
+  const tenantOnboardingSchema = step1Schema
+    .merge(step2Schema)
+    .merge(step3Schema)
+    .merge(stepFamiliesSchema)
+    .merge(stepAdminInviteSchema)
+
+  return {
+    step1Schema,
+    step2Schema,
+    step3Schema,
+    stepFamiliesSchema,
+    stepAdminInviteSchema,
+    tenantOnboardingSchema,
+  }
+}
+
+export type TenantOnboardingFormValues = z.infer<
+  ReturnType<typeof createTenantOnboardingSchemas>["tenantOnboardingSchema"]
+>
+
+export const {
+  step1Schema,
+  step2Schema,
+  step3Schema,
+  stepFamiliesSchema,
+  stepAdminInviteSchema,
+  tenantOnboardingSchema,
+} = createTenantOnboardingSchemas(
+  tenantOnboardingMessagesFromT((key) => key),
+)
 
 export const tenantModuleSchema = z.object({
   moduleName: z.string(),
@@ -194,5 +266,20 @@ export function toTenantBrandingPayload(values: TenantOnboardingFormValues) {
     welcomeTagline: values.welcomeTagline?.trim()
       ? values.welcomeTagline.trim()
       : null,
+  }
+}
+
+export function toCreateTenantAdminRequest(
+  values: TenantOnboardingFormValues,
+): CreateTenantAdminRequest {
+  return {
+    legalName: values.legalName.trim(),
+    taxId: values.taxId.trim(),
+    subdomain: values.subdomain.trim().toLowerCase(),
+    ...toTenantBrandingPayload(values),
+    activeModules: values.activeModules,
+    assetFamilyKeys: values.assetFamilyKeys,
+    adminFullName: values.adminFullName.trim() || null,
+    adminEmail: values.adminEmail.trim() || null,
   }
 }
