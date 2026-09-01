@@ -29,7 +29,8 @@ import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuIt
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
 import {
   MODULE_KEYS,
-  tenantOnboardingSchema,
+  createTenantOnboardingSchemas,
+  tenantOnboardingMessagesFromT,
   type ModuleKey,
   type TenantOnboardingFormValues,
   toTenantBrandingPayload,
@@ -92,8 +93,17 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
   const redirectTimeoutRef = useRef<number | null>(null)
   const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
+  const validationMessages = useMemo(
+    () => tenantOnboardingMessagesFromT((key) => t(key)),
+    [t],
+  )
+  const schemas = useMemo(
+    () => createTenantOnboardingSchemas(validationMessages),
+    [validationMessages],
+  )
+
   const form = useForm<TenantOnboardingFormValues>({
-    resolver: zodResolver(tenantOnboardingSchema),
+    resolver: zodResolver(schemas.tenantOnboardingSchema),
     defaultValues: initialValues,
     mode: "onTouched",
   })

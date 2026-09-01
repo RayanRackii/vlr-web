@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useAuth } from "@/contexts/AuthContext"
-import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
+import { usePlatformAdminState } from "@/features/admin/hooks/usePlatformAdmin"
 
 type PlatformAdminRouteProps = {
   children?: ReactNode
@@ -12,9 +12,9 @@ type PlatformAdminRouteProps = {
 export function PlatformAdminRoute({ children }: PlatformAdminRouteProps) {
   const { t } = useTranslation()
   const { user, isLoading } = useAuth()
-  const isPlatformAdmin = useIsPlatformAdmin()
+  const { isPlatformAdmin, isResolving } = usePlatformAdminState()
 
-  if (isLoading) {
+  if (isLoading || isResolving) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
