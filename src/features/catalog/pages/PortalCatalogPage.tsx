@@ -59,8 +59,8 @@ export function PortalCatalogPage() {
   }, 300)
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-6">
-      <header className="space-y-3">
+    <div className="mx-auto w-full max-w-[1440px] space-y-4">
+      <header className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">
             {t("tenantPortal.catalog.title")}
@@ -91,6 +91,7 @@ export function PortalCatalogPage() {
         <Input
           value={search}
           placeholder={t("tenantPortal.catalog.searchPlaceholder")}
+          className="max-w-md"
           onChange={(event) => {
             const value = event.target.value
             setSearch(value)
@@ -110,7 +111,7 @@ export function PortalCatalogPage() {
           {t("tenantPortal.catalog.empty")}
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => {
             const qty = quantities[product.id] ?? 1
             return (

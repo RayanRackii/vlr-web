@@ -209,7 +209,7 @@ export function CatalogProductImageGallery({
               variant="secondary"
               size="icon"
               className={cn(
-                "pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                "pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-sm ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
                 hideArrowsUntilHover &&
                   "md:pointer-events-none md:opacity-0 md:transition-opacity md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:focus-visible:pointer-events-auto md:focus-visible:opacity-100",
               )}
@@ -227,7 +227,7 @@ export function CatalogProductImageGallery({
               variant="secondary"
               size="icon"
               className={cn(
-                "pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                "pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-sm ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
                 hideArrowsUntilHover &&
                   "md:pointer-events-none md:opacity-0 md:transition-opacity md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:focus-visible:pointer-events-auto md:focus-visible:opacity-100",
               )}

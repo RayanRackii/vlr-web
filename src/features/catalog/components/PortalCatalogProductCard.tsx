@@ -44,11 +44,11 @@ export function PortalCatalogProductCard({
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <article className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
       {images.length === 0 ? (
         <Link
           to={detailTo}
-          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-xl bg-muted text-muted-foreground"
+          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-lg bg-muted text-muted-foreground"
           aria-label={t("tenantPortal.catalog.noImage")}
         >
           <ImageOff aria-hidden className="size-8" />
@@ -57,7 +57,7 @@ export function PortalCatalogProductCard({
         <CatalogProductImageGallery
           images={images}
           alt={product.name}
-          frameClassName="aspect-[4/3] w-full rounded-t-xl"
+          frameClassName="aspect-[4/3] w-full rounded-t-lg"
           controlsVisibility="hover"
           imageLinkTo={detailTo}
         />
@@ -69,23 +69,27 @@ export function PortalCatalogProductCard({
         <p className="min-h-4 text-xs text-muted-foreground">
           {product.code ?? "\u00a0"}
         </p>
-        <h2 className="min-h-[2.5rem] font-medium leading-snug line-clamp-2">
+        <h2 className="min-h-[2.75rem] font-medium leading-snug line-clamp-2">
           {product.name}
         </h2>
-        {product.price == null ? (
-          <Badge variant="warning">
-            {t("tenantPortal.catalog.priceOnRequest")}
-          </Badge>
-        ) : (
-          <p className="text-sm font-medium text-foreground">{priceLabel}</p>
-        )}
+        <div className="flex min-h-6 items-center">
+          {product.price == null ? (
+            <Badge variant="warning">
+              {t("tenantPortal.catalog.priceOnRequest")}
+            </Badge>
+          ) : (
+            <p className="text-base font-semibold tracking-tight text-foreground">
+              {priceLabel}
+            </p>
+          )}
+        </div>
       </Link>
       <div className="mt-auto flex flex-col gap-2 p-3 pt-2">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="outline"
-            size="icon-sm"
+            size="icon"
             aria-label={t("tenantPortal.catalog.quantityDecrease")}
             disabled={quantity <= 1}
             onClick={() => {
@@ -97,7 +101,7 @@ export function PortalCatalogProductCard({
           <Input
             type="number"
             min={1}
-            className="h-7 w-12 px-1 text-center"
+            className="h-8 min-w-0 flex-1 px-1 text-center"
             value={quantity}
             aria-label={t("tenantPortal.catalog.quantity")}
             onChange={(event) => {
@@ -107,7 +111,7 @@ export function PortalCatalogProductCard({
           <Button
             type="button"
             variant="outline"
-            size="icon-sm"
+            size="icon"
             aria-label={t("tenantPortal.catalog.quantityIncrease")}
             onClick={() => {
               onQuantityChange(quantity + 1)
@@ -118,7 +122,7 @@ export function PortalCatalogProductCard({
         </div>
         <LoadingButton
           type="button"
-          className="w-full text-primary-foreground"
+          className="w-full text-primary-foreground hover:opacity-90"
           style={{ backgroundColor: primary }}
           onClick={onAdd}
         >
