@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
@@ -113,5 +114,26 @@ describe("CatalogProductImageGallery", () => {
     expect(
       screen.queryByText("Não foi possível carregar a imagem"),
     ).not.toBeInTheDocument()
+  })
+
+  it("wraps only the image in imageLinkTo, not the carousel controls", () => {
+    render(
+      <MemoryRouter>
+        <CatalogProductImageGallery
+          images={[first, second]}
+          alt="Cadeira"
+          imageLinkTo="/t/clube/catalogo/1"
+        />
+      </MemoryRouter>,
+    )
+
+    const imageLink = screen.getByRole("img").closest("a")
+    expect(imageLink).toHaveAttribute("href", "/t/clube/catalogo/1")
+    expect(imageLink).not.toContainElement(
+      screen.getByRole("button", { name: "Próxima imagem" }),
+    )
+    expect(imageLink).not.toContainElement(
+      screen.getByRole("button", { name: "Imagem anterior" }),
+    )
   })
 })

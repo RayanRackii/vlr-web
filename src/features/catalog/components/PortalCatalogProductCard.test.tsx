@@ -67,7 +67,18 @@ describe("PortalCatalogProductCard", () => {
     expect(screen.getByLabelText("Sem imagem")).toBeInTheDocument()
   })
 
-  it("does not show next or previous controls for a single image", () => {
+  it("puts the zero-image placeholder inside a link to the product detail", () => {
+    renderCard()
+
+    const expected = tenantPortalPath(SUBDOMAIN, `catalogo/${PRODUCT_ID}`)
+    const placeholderLink = screen.getByRole("link", { name: "Sem imagem" })
+    expect(placeholderLink).toHaveAttribute("href", expected)
+    expect(placeholderLink).not.toContainElement(
+      screen.getByRole("heading", { name: "Cadeira de praia" }),
+    )
+  })
+
+  it("wraps a single image in a detail link without next or previous controls", () => {
     renderCard({
       product: product({
         files: [
@@ -82,9 +93,14 @@ describe("PortalCatalogProductCard", () => {
       }),
     })
 
-    expect(
-      screen.getByRole("img", { name: "Cadeira de praia" }),
-    ).toHaveAttribute("src", "https://cdn.example/cadeira.jpg")
+    const expected = tenantPortalPath(SUBDOMAIN, `catalogo/${PRODUCT_ID}`)
+    const img = screen.getByRole("img", { name: "Cadeira de praia" })
+    expect(img).toHaveAttribute("src", "https://cdn.example/cadeira.jpg")
+    const imageLink = img.closest("a")
+    expect(imageLink).toHaveAttribute("href", expected)
+    expect(imageLink).not.toContainElement(
+      screen.getByRole("heading", { name: "Cadeira de praia" }),
+    )
     expect(
       screen.queryByRole("button", { name: "Imagem anterior" }),
     ).not.toBeInTheDocument()
@@ -119,9 +135,18 @@ describe("PortalCatalogProductCard", () => {
     renderCard()
 
     const expected = tenantPortalPath(SUBDOMAIN, `catalogo/${PRODUCT_ID}`)
-    expect(screen.getByRole("link", { name: /Cadeira de praia/ })).toHaveAttribute(
-      "href",
-      expected,
-    )
+    expect(
+      screen.getByRole("heading", { name: "Cadeira de praia" }).closest("a"),
+    ).toHaveAttribute("href", expected)
+  })
+
+  it("does not wrap Adicionar in a product link", () => {
+    renderCard()
+
+    const add = screen.getByRole("button", { name: "Adicionar" })
+    expect(add.closest("a")).toBeNull()
+    expect(
+      screen.queryByRole("link", { name: "Adicionar" }),
+    ).not.toBeInTheDocument()
   })
 })

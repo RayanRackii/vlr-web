@@ -45,40 +45,40 @@ export function PortalCatalogProductCard({
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
+      {images.length === 0 ? (
+        <Link
+          to={detailTo}
+          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-xl bg-muted text-muted-foreground"
+          aria-label={t("tenantPortal.catalog.noImage")}
+        >
+          <ImageOff aria-hidden className="size-8" />
+        </Link>
+      ) : (
+        <CatalogProductImageGallery
+          images={images}
+          alt={product.name}
+          frameClassName="aspect-[4/3] w-full rounded-t-xl"
+          controlsVisibility="hover"
+          imageLinkTo={detailTo}
+        />
+      )}
       <Link
         to={detailTo}
-        className="flex min-h-0 flex-1 flex-col text-inherit no-underline"
+        className="flex flex-1 flex-col gap-1 px-3 pt-3 text-inherit no-underline"
       >
-        {images.length === 0 ? (
-          <div
-            className="flex aspect-[4/3] w-full items-center justify-center rounded-t-xl bg-muted text-muted-foreground"
-            aria-label={t("tenantPortal.catalog.noImage")}
-          >
-            <ImageOff aria-hidden className="size-8" />
-          </div>
+        <p className="min-h-4 text-xs text-muted-foreground">
+          {product.code ?? "\u00a0"}
+        </p>
+        <h2 className="min-h-[2.5rem] font-medium leading-snug line-clamp-2">
+          {product.name}
+        </h2>
+        {product.price == null ? (
+          <Badge variant="warning">
+            {t("tenantPortal.catalog.priceOnRequest")}
+          </Badge>
         ) : (
-          <CatalogProductImageGallery
-            images={images}
-            alt={product.name}
-            frameClassName="aspect-[4/3] w-full rounded-t-xl"
-            controlsVisibility="hover"
-          />
+          <p className="text-sm font-medium text-foreground">{priceLabel}</p>
         )}
-        <div className="flex flex-1 flex-col gap-1 px-3 pt-3">
-          <p className="min-h-4 text-xs text-muted-foreground">
-            {product.code ?? "\u00a0"}
-          </p>
-          <h2 className="min-h-[2.5rem] font-medium leading-snug line-clamp-2">
-            {product.name}
-          </h2>
-          {product.price == null ? (
-            <Badge variant="warning">
-              {t("tenantPortal.catalog.priceOnRequest")}
-            </Badge>
-          ) : (
-            <p className="text-sm font-medium text-foreground">{priceLabel}</p>
-          )}
-        </div>
       </Link>
       <div className="mt-auto flex flex-col gap-2 p-3 pt-2">
         <div className="flex items-center gap-1">

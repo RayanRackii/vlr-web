@@ -1,5 +1,6 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -16,10 +17,24 @@ type CatalogProductImageGalleryProps = {
   frameClassName?: string
   /** Arrow controls: always visible, or hidden until hover/focus on md+. Default always. */
   controlsVisibility?: "always" | "hover"
+  /** When set, wraps only the img / broken fallback in a Link. Controls stay siblings. */
+  imageLinkTo?: string
 }
 
 function stopParentNavigation(event: { stopPropagation: () => void }) {
   event.stopPropagation()
+}
+
+function wrapGalleryMedia(imageLinkTo: string | undefined, media: ReactNode) {
+  if (imageLinkTo == null || imageLinkTo.length === 0) {
+    return media
+  }
+
+  return (
+    <Link to={imageLinkTo} className="block h-full w-full">
+      {media}
+    </Link>
+  )
 }
 
 export function CatalogProductImageGallery({
@@ -28,6 +43,7 @@ export function CatalogProductImageGallery({
   className,
   frameClassName,
   controlsVisibility = "always",
+  imageLinkTo,
 }: CatalogProductImageGalleryProps) {
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
@@ -143,26 +159,29 @@ export function CatalogProductImageGallery({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {isBroken ? (
-          <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-muted-foreground">
-            {t("catalog.products.gallery.broken")}
-          </div>
-        ) : (
-          <img
-            src={current.url}
-            alt={alt}
-            draggable={false}
-            className={cn(
-              "h-full w-full object-contain object-center",
-              isLoaded ? "opacity-100" : "opacity-0",
-            )}
-            onLoad={() => {
-              markLoaded(current.id)
-            }}
-            onError={() => {
-              markFailed(current.id)
-            }}
-          />
+        {wrapGalleryMedia(
+          imageLinkTo,
+          isBroken ? (
+            <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-muted-foreground">
+              {t("catalog.products.gallery.broken")}
+            </div>
+          ) : (
+            <img
+              src={current.url}
+              alt={alt}
+              draggable={false}
+              className={cn(
+                "h-full w-full object-contain object-center",
+                isLoaded ? "opacity-100" : "opacity-0",
+              )}
+              onLoad={() => {
+                markLoaded(current.id)
+              }}
+              onError={() => {
+                markFailed(current.id)
+              }}
+            />
+          ),
         )}
 
         {isCarousel ? (
