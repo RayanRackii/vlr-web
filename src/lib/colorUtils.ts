@@ -12,6 +12,22 @@ const NAMED_COLORS: Record<string, string> = {
   white: "#ffffff",
   navy: "#000080",
   maroon: "#800000",
+  red: "#ff0000",
+  green: "#008000",
+  blue: "#0000ff",
+  yellow: "#ffff00",
+  orange: "#ffa500",
+  purple: "#800080",
+  gray: "#808080",
+  grey: "#808080",
+  silver: "#c0c0c0",
+  lime: "#00ff00",
+  aqua: "#00ffff",
+  cyan: "#00ffff",
+  magenta: "#ff00ff",
+  fuchsia: "#ff00ff",
+  teal: "#008080",
+  olive: "#808000",
 }
 
 export function parseCssHex(raw: string | null | undefined): Rgb | null {

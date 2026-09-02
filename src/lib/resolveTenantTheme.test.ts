@@ -141,6 +141,18 @@ describe("resolveTenantTheme", () => {
     expect(tokens.pageBackgroundBase).toBe("#000000")
   })
 
+  it("accepts a named navy SVG fill as the dark canvas base", () => {
+    const tokens = resolveTenantTheme({
+      primaryColor: DARK_BRAND,
+      secondaryColor: CYAN,
+      logoBackgroundColor: "navy",
+      logoBackgroundIsDark: true,
+      resolvedTheme: "dark",
+    })
+
+    expect(tokens.pageBackgroundBase.toLowerCase()).toBe("#000080")
+  })
+
   it("uses an exact #101820 logo background as the dark canvas base", () => {
     const tokens = resolveTenantTheme({
       primaryColor: DARK_BRAND,
