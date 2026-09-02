@@ -91,7 +91,6 @@ export function PortalCatalogPage() {
         <Input
           value={search}
           placeholder={t("tenantPortal.catalog.searchPlaceholder")}
-          className="max-w-md"
           onChange={(event) => {
             const value = event.target.value
             setSearch(value)
