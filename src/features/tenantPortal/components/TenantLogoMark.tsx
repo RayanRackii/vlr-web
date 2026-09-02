@@ -57,17 +57,17 @@ export function TenantLogoMark({
     return (
       <div
         className={cn(
-          "mx-auto flex items-center justify-center overflow-hidden text-foreground",
-          "[&_svg]:h-full [&_svg]:w-full [&_svg]:max-h-full [&_svg]:max-w-full [&_svg]:object-contain",
+          "mx-auto flex items-center justify-center text-foreground",
+          "[&_svg]:h-full [&_svg]:w-full [&_svg]:max-h-full [&_svg]:max-w-full",
           size === "lg" ? "h-28 w-28 max-w-[240px] sm:h-32 sm:w-32" : "size-8 max-w-8",
           surface === "light" &&
             (size === "lg"
-              ? "rounded-xl bg-neutral-100 p-2"
-              : "rounded-md bg-neutral-100 p-0.5"),
+              ? "overflow-hidden rounded-xl bg-neutral-100 p-2"
+              : "overflow-hidden rounded-md bg-neutral-100 p-0.5"),
           surface === "neutral" &&
             (size === "lg"
-              ? "rounded-xl bg-neutral-300/90 p-2"
-              : "rounded-md bg-neutral-300/90 p-0.5"),
+              ? "overflow-hidden rounded-xl bg-neutral-300/90 p-2"
+              : "overflow-hidden rounded-md bg-neutral-300/90 p-0.5"),
           className,
         )}
         data-logo-surface={surface}

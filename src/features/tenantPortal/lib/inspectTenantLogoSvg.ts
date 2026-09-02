@@ -96,7 +96,7 @@ export function inspectTenantLogoSvg(
     const candidates = [
       ...Array.from(svg.querySelectorAll("rect")),
       ...Array.from(svg.querySelectorAll("path")),
-    ]
+    ].filter((element) => isPaintedContent(element))
 
     let best: { ratio: number; fill: string } | null = null
 
@@ -133,6 +133,12 @@ export function inspectTenantLogoSvg(
   } catch {
     return EMPTY_INSPECTION
   }
+}
+
+function isPaintedContent(element: Element): boolean {
+  return element.closest(
+    "defs, mask, clipPath, pattern, symbol, linearGradient, radialGradient",
+  ) == null
 }
 
 function inspectionFromFill(fill: string): TenantLogoBackgroundInspection {

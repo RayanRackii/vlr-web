@@ -69,6 +69,14 @@ describe("inspectTenantLogoSvg", () => {
     })
   })
 
+  it("ignores covering rects that live inside defs", () => {
+    const mark = svg(
+      `<defs><rect id="bg" width="600" height="600" fill="#000000" /></defs><circle cx="300" cy="300" r="80" fill="#22d3ee" />`,
+    )
+
+    expect(inspectTenantLogoSvg(mark).hasEmbeddedBackground).toBe(false)
+  })
+
   it("ignores transparent fills even when the rect covers the viewBox", () => {
     const mark = svg(
       `<rect width="600" height="600" fill="none" /><circle cx="300" cy="300" r="80" fill="#22d3ee" />`,
