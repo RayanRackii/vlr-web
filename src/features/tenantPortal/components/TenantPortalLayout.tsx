@@ -3,12 +3,7 @@ import { Outlet, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import {
-  ROLVIX_ACCENT_COLOR,
-  ROLVIX_COMPLEMENTARY_COLOR,
-  ROLVIX_PRIMARY_COLOR,
-  tenantBrandGradient,
-} from "@/lib/brandColors"
+import { useTenantThemeStyle } from "@/lib/useTenantTheme"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
@@ -75,12 +70,10 @@ export function TenantPortalLayout() {
     }
   }, [subdomain, t])
 
-  const primary = branding?.primaryColor ?? ROLVIX_PRIMARY_COLOR
-  const accent = branding?.accentColor ?? ROLVIX_ACCENT_COLOR
-  const complementary =
-    branding?.primaryColor || branding?.accentColor
-      ? accent
-      : ROLVIX_COMPLEMENTARY_COLOR
+  const { tokens, style: themeStyle } = useTenantThemeStyle(
+    branding?.primaryColor,
+    branding?.accentColor,
+  )
 
   if (loading) {
     return (
@@ -124,17 +117,12 @@ export function TenantPortalLayout() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-foreground" style={themeStyle}>
       <TenantPortalChromeHeader
         subdomain={subdomain}
         portalBasePath={portalBasePath}
       />
-      <main
-        className="relative flex min-h-screen w-full items-center justify-center p-6 pt-24"
-        style={{
-          background: tenantBrandGradient(primary, accent, complementary),
-        }}
-      >
+      <main className="relative flex min-h-screen w-full items-center justify-center p-6 pt-24">
         <div className="w-full max-w-md space-y-6">
           <div className="space-y-4 text-center">
             <TenantLogoMark
@@ -144,7 +132,7 @@ export function TenantPortalLayout() {
               size="lg"
             />
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                 {branding.displayName}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -154,10 +142,16 @@ export function TenantPortalLayout() {
           </div>
 
           <div
-            className="rounded-xl border border-border/80 bg-card p-6 shadow-sm"
-            style={{ borderTopColor: accent, borderTopWidth: 3 }}
+            className="rounded-xl border p-6 shadow-sm"
+            style={{
+              backgroundColor: tokens.surface,
+              borderColor: tokens.border,
+              borderTopColor: tokens.accent,
+              borderTopWidth: 3,
+              color: tokens.text,
+            }}
           >
-            <Outlet context={{ subdomain, branding, primary }} />
+            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
           </div>
         </div>
       </main>

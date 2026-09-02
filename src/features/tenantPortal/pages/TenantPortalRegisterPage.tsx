@@ -37,7 +37,7 @@ import {
 export function TenantPortalRegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const { subdomain } = useOutletContext<TenantPortalOutletContext>()
   const [submitting, setSubmitting] = useState(false)
   const [fields, setFields] = useState<RegistrationField[]>([])
   const [schemaLoading, setSchemaLoading] = useState(true)
@@ -374,7 +374,6 @@ export function TenantPortalRegisterPage() {
             className="w-full"
             loading={submitting}
             loadingLabel={t("tenantPortal.register.submitting")}
-            style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.register.submit")}
           </LoadingButton>
@@ -385,8 +384,7 @@ export function TenantPortalRegisterPage() {
         {t("tenantPortal.register.hasAccount")}{" "}
         <Link
           to={tenantPortalPath(subdomain)}
-          className="font-medium underline"
-          style={{ color: primary }}
+          className="font-medium text-primary underline"
         >
           {t("tenantPortal.register.loginLink")}
         </Link>

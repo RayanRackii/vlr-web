@@ -35,7 +35,7 @@ export function TenantPortalVerifyPhonePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const { subdomain } = useOutletContext<TenantPortalOutletContext>()
   const locationState =
     typeof location.state === "object" && location.state !== null
       ? (location.state as { email?: unknown; verificationSendFailed?: unknown })
@@ -150,7 +150,6 @@ export function TenantPortalVerifyPhonePage() {
             loading={submitting}
             loadingLabel={t("tenantPortal.verify.submitting")}
             disabled={resending}
-            style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.verify.submit")}
           </LoadingButton>
@@ -173,8 +172,7 @@ export function TenantPortalVerifyPhonePage() {
       <p className="text-center text-sm text-muted-foreground">
         <Link
           to={tenantPortalPath(subdomain)}
-          className="underline"
-          style={{ color: primary }}
+          className="text-primary underline"
         >
           {t("tenantPortal.verify.backToLogin")}
         </Link>
