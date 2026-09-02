@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, useLocation } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
@@ -16,6 +16,27 @@ function image(
 
 const first = image("img-1", "https://cdn.example/one.jpg", "one.jpg")
 const second = image("img-2", "https://cdn.example/two.jpg", "two.jpg")
+
+const LIST_PATH = "/t/clube/catalogo"
+const DETAIL_PATH = "/t/clube/catalogo/1"
+
+function LocationPath() {
+  const { pathname } = useLocation()
+  return <div data-testid="location-path">{pathname}</div>
+}
+
+function renderLinkedCarousel() {
+  render(
+    <MemoryRouter initialEntries={[LIST_PATH]}>
+      <LocationPath />
+      <CatalogProductImageGallery
+        images={[first, second]}
+        alt="Cadeira"
+        imageLinkTo={DETAIL_PATH}
+      />
+    </MemoryRouter>,
+  )
+}
 
 describe("CatalogProductImageGallery", () => {
   it("renders nothing when there are no images", () => {
@@ -135,5 +156,28 @@ describe("CatalogProductImageGallery", () => {
     expect(imageLink).not.toContainElement(
       screen.getByRole("button", { name: "Imagem anterior" }),
     )
+  })
+
+  it("does not leave the current route after a qualifying swipe on a linked image", () => {
+    renderLinkedCarousel()
+
+    const img = screen.getByRole("img")
+    fireEvent.pointerDown(img, { button: 0, clientX: 200 })
+    fireEvent.pointerUp(img, { button: 0, clientX: 120 })
+
+    expect(screen.getByRole("img")).toHaveAttribute("src", second.url)
+
+    fireEvent.click(screen.getByRole("img").closest("a")!)
+
+    expect(screen.getByTestId("location-path").textContent).toBe(LIST_PATH)
+  })
+
+  it("navigates to imageLinkTo on a plain click without a swipe", async () => {
+    const user = userEvent.setup()
+    renderLinkedCarousel()
+
+    await user.click(screen.getByRole("img"))
+
+    expect(screen.getByTestId("location-path").textContent).toBe(DETAIL_PATH)
   })
 })
