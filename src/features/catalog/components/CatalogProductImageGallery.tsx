@@ -1,5 +1,6 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -14,10 +15,30 @@ type CatalogProductImageGalleryProps = {
   alt: string
   className?: string
   frameClassName?: string
+  /** Arrow controls: always visible, or hidden until hover/focus on md+. Default always. */
+  controlsVisibility?: "always" | "hover"
+  /** When set, wraps only the img / broken fallback in a Link. Controls stay siblings. */
+  imageLinkTo?: string
 }
 
 function stopParentNavigation(event: { stopPropagation: () => void }) {
   event.stopPropagation()
+}
+
+function wrapGalleryMedia(
+  imageLinkTo: string | undefined,
+  media: ReactNode,
+  onLinkClick?: (event: MouseEvent<HTMLAnchorElement>) => void,
+) {
+  if (imageLinkTo == null || imageLinkTo.length === 0) {
+    return media
+  }
+
+  return (
+    <Link to={imageLinkTo} className="block h-full w-full" onClick={onLinkClick}>
+      {media}
+    </Link>
+  )
 }
 
 export function CatalogProductImageGallery({
@@ -25,12 +46,15 @@ export function CatalogProductImageGallery({
   alt,
   className,
   frameClassName,
+  controlsVisibility = "always",
+  imageLinkTo,
 }: CatalogProductImageGalleryProps) {
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
   const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [loadedIds, setLoadedIds] = useState<ReadonlySet<string>>(() => new Set())
   const pointerStartX = useRef<number | null>(null)
+  const suppressNextClickRef = useRef(false)
 
   const count = images.length
   const safeIndex = count === 0 ? 0 : Math.min(index, count - 1)
@@ -77,6 +101,7 @@ export function CatalogProductImageGallery({
     if (!isCarousel || event.button !== 0) {
       return
     }
+    suppressNextClickRef.current = false
     pointerStartX.current = event.clientX
   }
 
@@ -88,13 +113,24 @@ export function CatalogProductImageGallery({
     pointerStartX.current = null
     if (delta >= SWIPE_THRESHOLD_PX) {
       goPrevious()
+      suppressNextClickRef.current = true
     } else if (delta <= -SWIPE_THRESHOLD_PX) {
       goNext()
+      suppressNextClickRef.current = true
     }
   }
 
   function onPointerCancel() {
     pointerStartX.current = null
+  }
+
+  function onMediaLinkClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (!suppressNextClickRef.current) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    suppressNextClickRef.current = false
   }
 
   function markLoaded(id: string) {
@@ -119,8 +155,13 @@ export function CatalogProductImageGallery({
     })
   }
 
+  const hideArrowsUntilHover = controlsVisibility === "hover"
+
   return (
-    <div className={cn("relative", className)} onClick={stopParentNavigation}>
+    <div
+      className={cn("relative", hideArrowsUntilHover && "group", className)}
+      onClick={stopParentNavigation}
+    >
       <div
         className={cn(
           "relative overflow-hidden bg-muted",
@@ -135,26 +176,30 @@ export function CatalogProductImageGallery({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {isBroken ? (
-          <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-muted-foreground">
-            {t("catalog.products.gallery.broken")}
-          </div>
-        ) : (
-          <img
-            src={current.url}
-            alt={alt}
-            draggable={false}
-            className={cn(
-              "h-full w-full object-contain object-center",
-              isLoaded ? "opacity-100" : "opacity-0",
-            )}
-            onLoad={() => {
-              markLoaded(current.id)
-            }}
-            onError={() => {
-              markFailed(current.id)
-            }}
-          />
+        {wrapGalleryMedia(
+          imageLinkTo,
+          isBroken ? (
+            <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-muted-foreground">
+              {t("catalog.products.gallery.broken")}
+            </div>
+          ) : (
+            <img
+              src={current.url}
+              alt={alt}
+              draggable={false}
+              className={cn(
+                "h-full w-full object-contain object-center",
+                isLoaded ? "opacity-100" : "opacity-0",
+              )}
+              onLoad={() => {
+                markLoaded(current.id)
+              }}
+              onError={() => {
+                markFailed(current.id)
+              }}
+            />
+          ),
+          onMediaLinkClick,
         )}
 
         {isCarousel ? (
@@ -163,7 +208,11 @@ export function CatalogProductImageGallery({
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
+              className={cn(
+                "pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-sm ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                hideArrowsUntilHover &&
+                  "md:pointer-events-none md:opacity-0 md:transition-opacity md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:focus-visible:pointer-events-auto md:focus-visible:opacity-100",
+              )}
               aria-label={t("catalog.products.gallery.previous")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {
@@ -177,7 +226,11 @@ export function CatalogProductImageGallery({
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
+              className={cn(
+                "pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-sm ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                hideArrowsUntilHover &&
+                  "md:pointer-events-none md:opacity-0 md:transition-opacity md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100 md:focus-visible:pointer-events-auto md:focus-visible:opacity-100",
+              )}
               aria-label={t("catalog.products.gallery.next")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {
