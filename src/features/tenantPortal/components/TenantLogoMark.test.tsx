@@ -28,11 +28,28 @@ describe("TenantLogoMark", () => {
     )
   })
 
-  it("puts a dark-background logo on a light surface in dark theme", () => {
+  it("renders a dark-background logo without an adaptive white surface in dark theme", () => {
     useThemeMock.mockReturnValue({ resolvedTheme: "dark" })
 
     render(
       <TenantLogoMark logoSvg={darkBackgroundLogo} displayName="Clube" />,
+    )
+
+    const mark = screen.getByRole("img", { name: "Clube" })
+    expect(mark).toHaveAttribute("data-logo-surface", "none")
+    expect(mark.className).not.toMatch(/bg-neutral-100/)
+    expect(mark.className).not.toMatch(/bg-neutral-300/)
+  })
+
+  it("still applies an adaptive surface when renderMode is adaptive-surface", () => {
+    useThemeMock.mockReturnValue({ resolvedTheme: "dark" })
+
+    render(
+      <TenantLogoMark
+        logoSvg={darkBackgroundLogo}
+        displayName="Clube"
+        renderMode="adaptive-surface"
+      />,
     )
 
     expect(screen.getByRole("img", { name: "Clube" })).toHaveAttribute(

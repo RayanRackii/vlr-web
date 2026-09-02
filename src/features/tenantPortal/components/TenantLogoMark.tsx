@@ -17,7 +17,7 @@ type TenantLogoMarkProps = {
   className?: string
   /** Larger mark on portal hero vs compact sidebar. */
   size?: "sm" | "lg"
-  /** Presentation override. Default auto inspects the SVG and adapts the surface only. */
+  /** Presentation override. Default auto renders the original SVG with no extra pad. */
   renderMode?: TenantLogoRenderMode
 }
 

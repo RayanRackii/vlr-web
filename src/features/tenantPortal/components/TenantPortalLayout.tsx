@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { useTenantThemeStyle } from "@/lib/useTenantTheme"
+import { inspectTenantLogoSvg } from "@/features/tenantPortal/lib/inspectTenantLogoSvg"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
+import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenantLogoSvg"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   fetchTenantBranding,
@@ -70,9 +72,18 @@ export function TenantPortalLayout() {
     }
   }, [subdomain, t])
 
+  const logoInspection = useMemo(
+    () => inspectTenantLogoSvg(sanitizeTenantLogoSvg(branding?.logoSvg)),
+    [branding?.logoSvg],
+  )
   const { tokens, style: themeStyle } = useTenantThemeStyle(
     branding?.primaryColor,
     branding?.accentColor,
+    {
+      logoBackgroundColor: logoInspection.backgroundColor,
+      logoBackgroundIsDark:
+        logoInspection.hasEmbeddedBackground && logoInspection.backgroundIsDark,
+    },
   )
 
   if (loading) {
