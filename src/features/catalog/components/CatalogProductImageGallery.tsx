@@ -14,6 +14,8 @@ type CatalogProductImageGalleryProps = {
   alt: string
   className?: string
   frameClassName?: string
+  /** Arrow controls: always visible, or hidden until hover/focus on md+. Default always. */
+  controlsVisibility?: "always" | "hover"
 }
 
 function stopParentNavigation(event: { stopPropagation: () => void }) {
@@ -25,6 +27,7 @@ export function CatalogProductImageGallery({
   alt,
   className,
   frameClassName,
+  controlsVisibility = "always",
 }: CatalogProductImageGalleryProps) {
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
@@ -119,8 +122,13 @@ export function CatalogProductImageGallery({
     })
   }
 
+  const hideArrowsUntilHover = controlsVisibility === "hover"
+
   return (
-    <div className={cn("relative", className)} onClick={stopParentNavigation}>
+    <div
+      className={cn("relative", hideArrowsUntilHover && "group", className)}
+      onClick={stopParentNavigation}
+    >
       <div
         className={cn(
           "relative overflow-hidden bg-muted",
@@ -163,7 +171,11 @@ export function CatalogProductImageGallery({
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
+              className={cn(
+                "pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                hideArrowsUntilHover &&
+                  "md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:focus-visible:opacity-100",
+              )}
               aria-label={t("catalog.products.gallery.previous")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {
@@ -177,7 +189,11 @@ export function CatalogProductImageGallery({
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
+              className={cn(
+                "pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60",
+                hideArrowsUntilHover &&
+                  "md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:focus-visible:opacity-100",
+              )}
               aria-label={t("catalog.products.gallery.next")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {

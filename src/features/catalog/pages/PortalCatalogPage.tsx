@@ -5,17 +5,11 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
-import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
-import {
-  formatCatalogMoney,
-  type PortalProduct,
-} from "@/features/catalog/schemas/catalogSchemas"
+import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
+import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { listPortalCatalogProducts } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
 import {
@@ -25,7 +19,7 @@ import {
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback"
 
 export function PortalCatalogPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
   const customerId = getCustomerId()
   const cart = useCatalogCart(subdomain, customerId)
@@ -65,46 +59,45 @@ export function PortalCatalogPage() {
   }, 300)
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
+    <div className="mx-auto w-full max-w-[1440px] space-y-6">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">
             {t("tenantPortal.catalog.title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("tenantPortal.catalog.subtitle")}
-          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              render={
+                <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
+              }
+            >
+              {t("tenantPortal.catalog.requestCta")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
+            >
+              <ShoppingBag data-icon="inline-start" />
+              {t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            render={
-              <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
-            }
-          >
-            {t("tenantPortal.catalog.requestCta")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
-          >
-            <ShoppingBag data-icon="inline-start" />
-            {t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}
-          </Button>
-        </div>
-      </div>
-
-      <Input
-        value={search}
-        placeholder={t("tenantPortal.catalog.searchPlaceholder")}
-        onChange={(event) => {
-          const value = event.target.value
-          setSearch(value)
-          debouncedSearch(value)
-        }}
-      />
+        <p className="text-sm text-muted-foreground">
+          {t("tenantPortal.catalog.subtitle")}
+        </p>
+        <Input
+          value={search}
+          placeholder={t("tenantPortal.catalog.searchPlaceholder")}
+          onChange={(event) => {
+            const value = event.target.value
+            setSearch(value)
+            debouncedSearch(value)
+          }}
+        />
+      </header>
 
       {loadError ? (
         <p className="text-sm text-destructive">{loadError}</p>
@@ -117,75 +110,27 @@ export function PortalCatalogPage() {
           {t("tenantPortal.catalog.empty")}
         </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => {
-            const images = selectCatalogProductImages(product.files)
             const qty = quantities[product.id] ?? 1
-            const priceLabel =
-              formatCatalogMoney(
-                product.price,
-                product.currency,
-                i18n.language,
-              ) ?? t("tenantPortal.catalog.priceOnRequest")
             return (
-              <li
-                key={product.id}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
-              >
-                <CatalogProductImageGallery
-                  images={images}
-                  alt={product.name}
-                  frameClassName="h-36 w-full rounded-lg"
+              <li key={product.id} className="min-h-0">
+                <PortalCatalogProductCard
+                  product={product}
+                  subdomain={subdomain}
+                  quantity={qty}
+                  onQuantityChange={(next) => {
+                    setQuantities((current) => ({
+                      ...current,
+                      [product.id]: next,
+                    }))
+                  }}
+                  onAdd={() => {
+                    cart.add(product.id, qty)
+                    toast.success(t("tenantPortal.catalog.addedToCart"))
+                  }}
+                  primary={primary}
                 />
-                <div className="space-y-1">
-                  <Link
-                    to={tenantPortalPath(subdomain, `catalogo/${product.id}`)}
-                    className="font-medium hover:underline"
-                  >
-                    {product.name}
-                  </Link>
-                  {product.code ? (
-                    <p className="text-xs text-muted-foreground">
-                      {product.code}
-                    </p>
-                  ) : null}
-                  <div className="flex items-center gap-2">
-                    {product.price == null ? (
-                      <Badge variant="warning">
-                        {t("tenantPortal.catalog.priceOnRequest")}
-                      </Badge>
-                    ) : (
-                      <p className="text-sm">{priceLabel}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-auto flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    className="w-20"
-                    value={qty}
-                    aria-label={t("tenantPortal.catalog.quantity")}
-                    onChange={(event) => {
-                      const next = Number(event.target.value)
-                      setQuantities((current) => ({
-                        ...current,
-                        [product.id]: Number.isFinite(next) && next > 0 ? next : 1,
-                      }))
-                    }}
-                  />
-                  <LoadingButton
-                    type="button"
-                    className="flex-1"
-                    style={{ backgroundColor: primary }}
-                    onClick={() => {
-                      cart.add(product.id, qty)
-                      toast.success(t("tenantPortal.catalog.addedToCart"))
-                    }}
-                  >
-                    {t("tenantPortal.catalog.addToCart")}
-                  </LoadingButton>
-                </div>
               </li>
             )
           })}
@@ -212,7 +157,7 @@ function PortalCartPanel({
   const names = new Map(products.map((product) => [product.id, product.name]))
 
   return (
-    <section className="space-y-3 rounded-xl border border-border p-4">
+    <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
       <h2 className="text-sm font-medium">{t("tenantPortal.catalog.cartTitle")}</h2>
       <ul className="space-y-2 text-sm">
         {cart.items.map((item) => (

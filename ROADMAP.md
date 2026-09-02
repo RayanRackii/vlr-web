@@ -106,6 +106,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] CustomerAppLayout.modulePath para `catalog`
 - [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
+- [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
 
 ## 5. Fluxo de convite B2B
 
@@ -193,6 +194,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-01 | **UX:** fundo sólido detectado no SVG vira canvas do portal no tema dark (exato); logo original, sem card branco; light permanece light. |
 | 2026-09-02 | **Executado:** Catalog P2 create UX — código gerado do nome (até override manual), arquivos na fila antes do productId, um save sem virar edição; 409 de código duplicado permanece no formulário. |
 | 2026-09-02 | **Executado:** carrossel de imagens do produto (lista/detalhe B2C + edição B2B); filtra jpeg/png/webp; `object-contain`; sem Embla/Swiper. |
+| 2026-09-02 | **Executado:** grade B2C do catálogo — cards compactos (`1/2/3/4` colunas), placeholder estável sem foto, stepper `[−][qtd][+]`, CTA Adicionar; sem mudança de contrato/API/carrinho. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
