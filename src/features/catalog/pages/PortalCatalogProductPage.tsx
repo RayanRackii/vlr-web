@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
+import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogMoney,
   type PortalProduct,
@@ -90,7 +92,7 @@ export function PortalCatalogProductPage() {
     )
   }
 
-  const image = product.files[0]
+  const images = selectCatalogProductImages(product.files)
   const priceLabel =
     formatCatalogMoney(product.price, product.currency, i18n.language) ??
     t("tenantPortal.catalog.priceOnRequest")
@@ -106,13 +108,11 @@ export function PortalCatalogProductPage() {
         {t("common.back")}
       </Button>
 
-      {image ? (
-        <img
-          src={image.url}
-          alt=""
-          className="h-56 w-full rounded-xl object-cover"
-        />
-      ) : null}
+      <CatalogProductImageGallery
+        images={images}
+        alt={product.name}
+        frameClassName="h-56 w-full rounded-xl"
+      />
 
       <div className="space-y-2">
         <h1 className="text-xl font-semibold tracking-tight">{product.name}</h1>

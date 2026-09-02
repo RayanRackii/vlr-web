@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
+import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogMoney,
   type PortalProduct,
@@ -117,7 +119,7 @@ export function PortalCatalogPage() {
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
           {products.map((product) => {
-            const image = product.files[0]
+            const images = selectCatalogProductImages(product.files)
             const qty = quantities[product.id] ?? 1
             const priceLabel =
               formatCatalogMoney(
@@ -130,13 +132,11 @@ export function PortalCatalogPage() {
                 key={product.id}
                 className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
               >
-                {image ? (
-                  <img
-                    src={image.url}
-                    alt=""
-                    className="h-36 w-full rounded-lg object-cover"
-                  />
-                ) : null}
+                <CatalogProductImageGallery
+                  images={images}
+                  alt={product.name}
+                  frameClassName="h-36 w-full rounded-lg"
+                />
                 <div className="space-y-1">
                   <Link
                     to={tenantPortalPath(subdomain, `catalogo/${product.id}`)}
