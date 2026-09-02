@@ -162,8 +162,8 @@ export function CatalogProductImageGallery({
             <Button
               type="button"
               variant="secondary"
-              size="icon-sm"
-              className="pointer-events-auto absolute top-1/2 left-1.5 z-10 -translate-y-1/2 rounded-full bg-background/80 shadow-sm"
+              size="icon"
+              className="pointer-events-auto absolute top-1/2 left-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
               aria-label={t("catalog.products.gallery.previous")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {
@@ -176,8 +176,8 @@ export function CatalogProductImageGallery({
             <Button
               type="button"
               variant="secondary"
-              size="icon-sm"
-              className="pointer-events-auto absolute top-1/2 right-1.5 z-10 -translate-y-1/2 rounded-full bg-background/80 shadow-sm"
+              size="icon"
+              className="pointer-events-auto absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-full bg-black/45 text-white shadow-md ring-1 ring-white/25 backdrop-blur-[2px] transition-colors hover:bg-black/60"
               aria-label={t("catalog.products.gallery.next")}
               onPointerDown={stopParentNavigation}
               onClick={(event) => {
@@ -188,36 +188,40 @@ export function CatalogProductImageGallery({
               <ChevronRight aria-hidden />
             </Button>
             {count <= DOT_INDICATOR_MAX ? (
-              <div className="pointer-events-auto absolute inset-x-0 bottom-2 z-10 flex justify-center gap-1.5">
-                {images.map((image, imageIndex) => (
-                  <button
-                    key={image.id}
-                    type="button"
-                    className={cn(
-                      "size-2 rounded-full",
-                      imageIndex === safeIndex
-                        ? "bg-foreground"
-                        : "bg-foreground/40",
-                    )}
-                    aria-label={t("catalog.products.gallery.imageOf", {
-                      current: imageIndex + 1,
-                      total: count,
-                    })}
-                    aria-current={imageIndex === safeIndex ? true : undefined}
-                    onPointerDown={stopParentNavigation}
-                    onClick={(event) => {
-                      stopParentNavigation(event)
-                      goTo(imageIndex)
-                    }}
-                  />
-                ))}
+              <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
+                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1.5 ring-1 ring-white/25 backdrop-blur-[2px]">
+                  {images.map((image, imageIndex) => (
+                    <button
+                      key={image.id}
+                      type="button"
+                      className={cn(
+                        "rounded-full transition-colors",
+                        imageIndex === safeIndex
+                          ? "size-2 bg-white"
+                          : "size-1.5 bg-white/45 hover:bg-white/75",
+                      )}
+                      aria-label={t("catalog.products.gallery.imageOf", {
+                        current: imageIndex + 1,
+                        total: count,
+                      })}
+                      aria-current={imageIndex === safeIndex ? true : undefined}
+                      onPointerDown={stopParentNavigation}
+                      onClick={(event) => {
+                        stopParentNavigation(event)
+                        goTo(imageIndex)
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 text-center text-xs font-medium text-foreground drop-shadow-sm">
-                {t("catalog.products.gallery.imageOf", {
-                  current: safeIndex + 1,
-                  total: count,
-                })}
+              <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center">
+                <span className="rounded-full bg-black/45 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/25 backdrop-blur-[2px]">
+                  {t("catalog.products.gallery.imageOf", {
+                    current: safeIndex + 1,
+                    total: count,
+                  })}
+                </span>
               </div>
             )}
           </>
