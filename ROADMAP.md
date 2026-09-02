@@ -49,6 +49,7 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 
 - [x] Host `{subdomain}.rolvix.com.br` + path `/t/:subdomain`.
 - [x] Marca via **`LogoSvg`** (admin textarea + `TenantLogoMark` + DOMPurify); sem `logoUrl` no produto.
+- [x] Logo com fundo sólido embutido: superfície adaptativa ao tema (não recolorir o SVG).
 - [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
 - [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
 
@@ -184,6 +185,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-01 | **Executado:** SuperAdmin company wizard redesign (shell 1200px, stepper vertical/compact, ações à direita); `/admin` redireciona para `/admin/dashboard`; detecção SuperAdmin via `GET /api/users/me` (`SUPER_ADMIN`) com fallback de e-mail `VITE_PLATFORM_ADMIN_EMAILS`. |
 | 2026-09-01 | **Fix:** SuperAdmin wizard Recursos agora carrega o catálogo de famílias da plataforma em `GET /api/admin/asset-families` (não mais o endpoint B2B tenant-scoped). |
 | 2026-09-01 | **Fix:** validity gate — Continuar/Finalizar do wizard de empresa (e Salvar no edit) desabilitados enquanto o passo/schema cliente for inválido; Back/Cancel livres; erros só-servidor no submit. Wrapper `FormPrimaryButton`. Outras telas: FOLLOWUP. |
+| 2026-09-01 | **UX:** logo SVG com fundo sólido embutido ganha superfície neutra no tema oposto; markup original preservado (sem invert/recolor). |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
