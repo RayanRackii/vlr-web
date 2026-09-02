@@ -237,7 +237,9 @@ export function CatalogProductsPage() {
         error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
       )
     } finally {
-      setOperationInFlight(false)
+      if (!saveLockRef.current.inFlight) {
+        setOperationInFlight(false)
+      }
     }
   }
 
@@ -299,7 +301,9 @@ export function CatalogProductsPage() {
         error instanceof Error ? error.message : t("apiErrors.uploadCatalogFile"),
       )
     } finally {
-      setOperationInFlight(false)
+      if (!saveLockRef.current.inFlight) {
+        setOperationInFlight(false)
+      }
     }
   }
 
@@ -929,6 +933,9 @@ export function CatalogProductsPage() {
                   variant="outline"
                   disabled={operationInFlight || form.formState.isSubmitting}
                   onClick={() => {
+                    if (operationInFlight || saveLockRef.current.inFlight) {
+                      return
+                    }
                     setDialogOpen(false)
                   }}
                 >

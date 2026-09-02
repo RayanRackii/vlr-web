@@ -135,6 +135,22 @@ describe("saveCatalogProductCreate", () => {
     expect(retried.files.map((file) => file.status)).toEqual(["sent", "sent"])
   })
 
+  it("leaves file.error unset when upload throws a non-Error", async () => {
+    const result = await saveCatalogProductCreate({
+      createdProductId: null,
+      values,
+      pendingFiles: [waitingFile("a.pdf", "a")],
+      createProduct: vi.fn(async () => ({ id: "product-1" })),
+      uploadFile: vi.fn(async () => {
+        throw "boom"
+      }),
+      lock: { inFlight: false },
+    })
+
+    expect(result.files[0]?.status).toBe("error")
+    expect(result.files[0]?.error).toBeUndefined()
+  })
+
   it("does not repeat uploads for files already marked sent", async () => {
     const createProduct = vi.fn(async () => ({ id: "product-1" }))
     const uploadFile = vi.fn(async () => undefined)

@@ -45,8 +45,8 @@ function clonePendingFiles(files: PendingFile[]): PendingFile[] {
   return files.map((item) => ({ ...item }))
 }
 
-function uploadErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Upload failed"
+function uploadErrorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined
 }
 
 export function toCatalogProductWriteBody(
@@ -112,7 +112,12 @@ async function uploadPendingFiles(options: {
       delete pending.error
     } catch (error) {
       pending.status = "error"
-      pending.error = uploadErrorMessage(error)
+      const message = uploadErrorMessage(error)
+      if (message === undefined) {
+        delete pending.error
+      } else {
+        pending.error = message
+      }
     }
 
     emit()
