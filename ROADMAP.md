@@ -49,7 +49,7 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 
 - [x] Host `{subdomain}.rolvix.com.br` + path `/t/:subdomain`.
 - [x] Marca via **`LogoSvg`** (admin textarea + `TenantLogoMark` + DOMPurify); sem `logoUrl` no produto.
-- [x] Logo com fundo sólido embutido: superfície adaptativa ao tema (não recolorir o SVG).
+- [x] Logo com fundo sólido embutido: markup original no portal; o canvas dark usa a cor detectada (sem pad branco automático).
 - [x] Fundo B2C do portal (login/register/verify) adapta light/dark a partir das cores do tenant, sem forçar a página escura a ficar clara.
 - [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
 - [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
@@ -188,6 +188,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-01 | **Fix:** validity gate — Continuar/Finalizar do wizard de empresa (e Salvar no edit) desabilitados enquanto o passo/schema cliente for inválido; Back/Cancel livres; erros só-servidor no submit. Wrapper `FormPrimaryButton`. Outras telas: FOLLOWUP. |
 | 2026-09-01 | **UX:** logo SVG com fundo sólido embutido ganha superfície neutra no tema oposto; markup original preservado (sem invert/recolor). |
 | 2026-09-01 | **UX:** portal B2C resolve superfícies light/dark a partir das cores do tenant (`resolveTenantTheme`); fundo da página deixa de misturar sempre com branco. |
+| 2026-09-01 | **UX:** fundo sólido detectado no SVG vira canvas do portal no tema dark (exato); logo original, sem card branco; light permanece light. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

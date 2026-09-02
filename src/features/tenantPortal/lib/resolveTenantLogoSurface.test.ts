@@ -31,13 +31,13 @@ describe("resolveTenantLogoSurface", () => {
     ).toBe("none")
   })
 
-  it("uses a light surface for a dark-background logo in dark theme", () => {
+  it("keeps a dark-background logo on the original surface in dark theme", () => {
     expect(
       resolveTenantLogoSurface({
         theme: "dark",
         inspection: darkBackground,
       }),
-    ).toBe("light")
+    ).toBe("none")
   })
 
   it("does not adapt a dark-background logo in light theme", () => {
@@ -49,13 +49,13 @@ describe("resolveTenantLogoSurface", () => {
     ).toBe("none")
   })
 
-  it("uses a neutral surface for a light-background logo in light theme", () => {
+  it("does not auto-adapt a light-background logo in light theme", () => {
     expect(
       resolveTenantLogoSurface({
         theme: "light",
         inspection: lightBackground,
       }),
-    ).toBe("neutral")
+    ).toBe("none")
   })
 
   it("never adapts when the override is original", () => {

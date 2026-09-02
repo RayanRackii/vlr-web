@@ -11,7 +11,7 @@ export function resolveTenantLogoSurface(options: {
 }): TenantLogoSurface {
   const renderMode = options.renderMode ?? "auto"
 
-  if (renderMode === "original") {
+  if (renderMode === "original" || renderMode === "auto") {
     return "none"
   }
 
@@ -19,21 +19,12 @@ export function resolveTenantLogoSurface(options: {
     return "none"
   }
 
-  const forceAdaptive = renderMode === "adaptive-surface"
-  const theme = options.theme
-
   if (options.inspection.backgroundIsDark) {
-    if (forceAdaptive || theme === "dark") {
-      return "light"
-    }
-    return "none"
+    return "light"
   }
 
   if (options.inspection.backgroundIsLight) {
-    if (forceAdaptive || theme === "light") {
-      return "neutral"
-    }
-    return "none"
+    return "neutral"
   }
 
   return "none"
