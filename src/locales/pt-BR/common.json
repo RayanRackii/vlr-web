@@ -443,6 +443,12 @@
         "error": "Falha no envio",
         "retry": "Tentar novamente",
         "partialFailure": "Produto salvo, mas alguns arquivos não foram enviados."
+      },
+      "gallery": {
+        "previous": "Imagem anterior",
+        "next": "Próxima imagem",
+        "imageOf": "{{current}} / {{total}}",
+        "broken": "Não foi possível carregar a imagem"
       }
     },
     "requests": {

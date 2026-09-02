@@ -443,6 +443,12 @@
         "error": "Error al enviar",
         "retry": "Reintentar",
         "partialFailure": "Producto guardado, pero algunos archivos no se enviaron."
+      },
+      "gallery": {
+        "previous": "Imagen anterior",
+        "next": "Imagen siguiente",
+        "imageOf": "{{current}} / {{total}}",
+        "broken": "No se pudo cargar la imagen"
       }
     },
     "requests": {
