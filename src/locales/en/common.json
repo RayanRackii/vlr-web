@@ -435,7 +435,14 @@
         "title": "Files",
         "customerVisible": "Customer visible",
         "internal": "Internal (B2B)",
-        "open": "Open"
+        "open": "Open",
+        "select": "Select files",
+        "waiting": "Ready to upload",
+        "sending": "Uploading...",
+        "sent": "Uploaded",
+        "error": "Upload failed",
+        "retry": "Retry",
+        "partialFailure": "Product saved, but some files were not uploaded."
       }
     },
     "requests": {

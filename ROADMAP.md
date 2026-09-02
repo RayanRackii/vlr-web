@@ -104,6 +104,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
 - [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
 - [x] CustomerAppLayout.modulePath para `catalog`
+- [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 
 ## 5. Fluxo de convite B2B
 
@@ -189,6 +190,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-01 | **UX:** logo SVG com fundo sólido embutido ganha superfície neutra no tema oposto; markup original preservado (sem invert/recolor). |
 | 2026-09-01 | **UX:** portal B2C resolve superfícies light/dark a partir das cores do tenant (`resolveTenantTheme`); fundo da página deixa de misturar sempre com branco. |
 | 2026-09-01 | **UX:** fundo sólido detectado no SVG vira canvas do portal no tema dark (exato); logo original, sem card branco; light permanece light. |
+| 2026-09-02 | **Executado:** Catalog P2 create UX — código gerado do nome (até override manual), arquivos na fila antes do productId, um save sem virar edição; 409 de código duplicado permanece no formulário. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
@@ -202,7 +204,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | CreateWorkOrder / CreatePlan | VALIDITY_GATE_APPLICABLE |
 | AssetCategories | VALIDITY_GATE_APPLICABLE |
 | People users / roles | VALIDITY_GATE_APPLICABLE (e-mail único = SERVER_VALIDATION_ONLY) |
-| Catalog product form / cart / product request | VALIDITY_GATE_APPLICABLE |
+| Catalog product form / cart / product request | Product create/edit: VALIDITY_GATE_APPLICABLE (**P2 2026-09-02**). Cart / product request: FOLLOWUP |
 | Reservations confirm / cancel | SPECIAL_CASE |
 | Delete dialogs | SPECIAL_CASE |
 | Credenciais erradas / unicidade / provider externo | SERVER_VALIDATION_ONLY |

@@ -435,7 +435,14 @@
         "title": "Arquivos",
         "customerVisible": "Visível ao cliente",
         "internal": "Interno (B2B)",
-        "open": "Abrir"
+        "open": "Abrir",
+        "select": "Selecionar arquivos",
+        "waiting": "Pronto para enviar",
+        "sending": "Enviando...",
+        "sent": "Enviado",
+        "error": "Falha no envio",
+        "retry": "Tentar novamente",
+        "partialFailure": "Produto salvo, mas alguns arquivos não foram enviados."
       }
     },
     "requests": {
