@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { Separator } from "@/components/ui/separator"
-import { ROLVIX_PRIMARY_COLOR } from "@/lib/brandColors"
 import { cn } from "@/lib/utils"
 
 export type CustomerNavItem = {
@@ -32,7 +31,6 @@ export function CustomerSidebar({
   className,
 }: CustomerSidebarProps) {
   const { t } = useTranslation()
-  const primary = primaryColor ?? ROLVIX_PRIMARY_COLOR
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -68,12 +66,9 @@ export function CustomerSidebar({
                   cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )
-                }
-                style={({ isActive }) =>
-                  isActive ? { backgroundColor: primary } : undefined
                 }
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />

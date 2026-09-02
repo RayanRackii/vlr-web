@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
-import { ROLVIX_PRIMARY_COLOR } from "@/lib/brandColors"
+import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
 import type {
   ModuleMenuItem,
@@ -85,6 +85,11 @@ export function CustomerAppLayout() {
     }
   }, [subdomain, signedIn, t])
 
+  const { tokens, style: themeStyle } = useTenantThemeCssVars(
+    branding?.primaryColor,
+    branding?.accentColor,
+  )
+
   if (!signedIn) {
     return (
       <Navigate
@@ -133,38 +138,39 @@ export function CustomerAppLayout() {
     ? t("tenantPortal.profile.title")
     : (activeItem?.label ?? branding.displayName)
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
-  const primary = branding.primaryColor ?? ROLVIX_PRIMARY_COLOR
 
   return (
-    <AppShell
-      sidebar={({ onNavigate }) => (
-        <CustomerSidebar
-          brandLabel={branding.displayName}
-          logoSvg={branding.logoSvg}
-          primaryColor={branding.primaryColor}
-          items={navItems}
-          onNavigate={onNavigate}
+    <div className="min-h-screen bg-background text-foreground" style={themeStyle}>
+      <AppShell
+        sidebar={({ onNavigate }) => (
+          <CustomerSidebar
+            brandLabel={branding.displayName}
+            logoSvg={branding.logoSvg}
+            primaryColor={branding.primaryColor}
+            items={navItems}
+            onNavigate={onNavigate}
+          />
+        )}
+        pageTitle={pageTitle}
+        userLabel={userLabel}
+        initials={getEmailInitials(userLabel)}
+        profileTo={profileTo}
+        onSignOut={() => {
+          clearCustomerSession()
+          window.location.assign(tenantPortalPath(subdomain))
+        }}
+      >
+        <Outlet
+          context={
+            {
+              subdomain,
+              branding,
+              primary: tokens.primary,
+              menu,
+            } satisfies CustomerAppOutletContext
+          }
         />
-      )}
-      pageTitle={pageTitle}
-      userLabel={userLabel}
-      initials={getEmailInitials(userLabel)}
-      profileTo={profileTo}
-      onSignOut={() => {
-        clearCustomerSession()
-        window.location.assign(tenantPortalPath(subdomain))
-      }}
-    >
-      <Outlet
-        context={
-          {
-            subdomain,
-            branding,
-            primary,
-            menu,
-          } satisfies CustomerAppOutletContext
-        }
-      />
-    </AppShell>
+      </AppShell>
+    </div>
   )
 }

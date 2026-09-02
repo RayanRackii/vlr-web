@@ -28,7 +28,7 @@ import {
 export function TenantPortalLoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { subdomain, primary } = useOutletContext<TenantPortalOutletContext>()
+  const { subdomain } = useOutletContext<TenantPortalOutletContext>()
   const [submitting, setSubmitting] = useState(false)
 
   const form = useForm<CustomerLoginFormValues>({
@@ -99,7 +99,6 @@ export function TenantPortalLoginPage() {
             className="w-full"
             loading={submitting}
             loadingLabel={t("tenantPortal.login.submitting")}
-            style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.login.submit")}
           </LoadingButton>
@@ -110,8 +109,7 @@ export function TenantPortalLoginPage() {
         {t("tenantPortal.login.noAccount")}{" "}
         <Link
           to={tenantPortalPath(subdomain, "register")}
-          className="font-medium underline"
-          style={{ color: primary }}
+          className="font-medium text-primary underline"
         >
           {t("tenantPortal.login.registerLink")}
         </Link>
