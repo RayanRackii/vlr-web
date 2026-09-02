@@ -77,7 +77,7 @@ export function TenantPortalLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/40">
+      <div className="min-h-screen" style={themeStyle}>
         {subdomain ? (
           <TenantPortalChromeHeader
             subdomain={subdomain}
@@ -93,7 +93,7 @@ export function TenantPortalLayout() {
 
   if (error || !branding || !subdomain) {
     return (
-      <div className="min-h-screen bg-muted/40">
+      <div className="min-h-screen" style={themeStyle}>
         <TenantPortalChromeHeader
           subdomain={subdomain ?? "unknown"}
           portalBasePath={portalBasePath}
