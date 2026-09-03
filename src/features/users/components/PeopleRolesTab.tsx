@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ShieldCheck } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionKeyGroups } from "@/features/users/components/PermissionKeyGroups"
+import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import { Can } from "@/features/users/permissions/Can"
 import { toggleUniqueId } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -187,31 +189,38 @@ export function PeopleRolesTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {t("peopleAccess.roles.description")}
-        </p>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold tracking-tight">
+            {t("peopleAccess.tabs.roles")}
+          </h2>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            {t("peopleAccess.roles.description")}
+          </p>
+        </div>
         <Can permission="core.roles.manage">
-          <Button type="button" onClick={openCreate}>
+          <Button type="button" size="sm" onClick={openCreate}>
             {t("peopleAccess.roles.create")}
           </Button>
         </Can>
       </div>
 
       {visibleRoles.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {t("peopleAccess.roles.empty")}
-        </p>
+        <PeopleEmptyState
+          icon={ShieldCheck}
+          title={t("peopleAccess.roles.empty")}
+          description={t("peopleAccess.roles.emptyDescription")}
+        />
       ) : (
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="space-y-2">
           {visibleRoles.map((role) => {
             const itemPolicy = getRoleEditorPolicy(role)
 
             return (
               <li
                 key={role.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">

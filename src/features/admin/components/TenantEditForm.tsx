@@ -26,6 +26,7 @@ import {
 } from "@/lib/brandColors"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
+import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
 import {
   MODULE_KEYS,
@@ -441,7 +442,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="tenant-modules">
             <CardHeader>
               <CardTitle className="text-base text-foreground">
                 {t("admin.edit.sections.modules")}
@@ -584,6 +585,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
               <ModuleMenuItemsManager
                 tenantId={tenantId}
                 subdomain={values.subdomain}
+                activeModules={values.activeModules.map(toCanonicalModuleName)}
               />
             </CardContent>
           </Card>

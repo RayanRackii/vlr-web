@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Users } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -27,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import { Can } from "@/features/users/permissions/Can"
 import {
   formatAssignedRoles,
@@ -170,14 +172,20 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {t("peopleAccess.users.description")}
-        </p>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold tracking-tight">
+            {t("peopleAccess.tabs.users")}
+          </h2>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            {t("peopleAccess.users.description")}
+          </p>
+        </div>
         <Can permission="core.users.invite">
           <Button
             type="button"
+            size="sm"
             onClick={() => {
               inviteForm.reset({ fullName: "", email: "", roleIds: [] })
               inviteForm.clearErrors()
@@ -199,15 +207,17 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
       ) : null}
 
       {members.length === 0 && loadError === null ? (
-        <p className="text-sm text-muted-foreground">
-          {t("peopleAccess.users.empty")}
-        </p>
+        <PeopleEmptyState
+          icon={Users}
+          title={t("peopleAccess.users.empty")}
+          description={t("peopleAccess.users.emptyDescription")}
+        />
       ) : (
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="space-y-2">
           {members.map((member) => (
             <li
               key={member.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 space-y-1">
                 <p className="truncate text-sm font-medium">
