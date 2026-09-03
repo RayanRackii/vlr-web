@@ -196,6 +196,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-02 | **Executado:** carrossel de imagens do produto (lista/detalhe B2C + edição B2B); filtra jpeg/png/webp; `object-contain`; sem Embla/Swiper. |
 | 2026-09-02 | **Executado:** grade B2C do catálogo — cards compactos (`1/2/3/4` colunas), placeholder estável sem foto, stepper `[−][qtd][+]`, CTA Adicionar; sem mudança de contrato/API/carrinho. |
 | 2026-09-03 | **UX (WEB):** Pessoas e acesso alinhado ao visual da agenda (cabeçalho, abas underline, empty state); RBAC/convite inalterados. |
+| 2026-09-03 | **UX (WEB):** Formulário de cadastro B2C — 7 campos padrão obrigatórios (somente leitura) + personalizados em diálogo; chave gerada só no create; tipos traduzidos. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
