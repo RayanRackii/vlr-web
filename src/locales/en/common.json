@@ -1946,7 +1946,14 @@
       "deleteError": "Could not remove the item.",
       "loadError": "Could not load the menu.",
       "tenantPageTitle": "Portal menu",
-      "tenantPageDescription": "Organize the shortcuts and pages customers will see after they sign in to the portal."
+      "tenantPageDescription": "Organize the shortcuts and pages customers will see after they sign in to the portal.",
+      "discoveryTitle": "Grow your portal",
+      "discoveryDescription": "Discover other features you can make available to your customers.",
+      "noEligibleFunctionality": "No other active features are available.",
+      "discoverModule": "Learn about module",
+      "catalogAutoNav": "The module automatically adds:",
+      "discoveryCatalogBenefit": "Show products and receive requests from your customers.",
+      "discoveryRentalsBenefit": "Announce time slots and allow bookings in the portal."
     },
     "dashboard": {
       "title": "Super-Admin Panel",

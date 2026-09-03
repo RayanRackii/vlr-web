@@ -5,7 +5,10 @@ import i18n from "@/lib/i18n"
 
 import {
   buildCustomerNavItems,
+  getDiscoverablePortalModules,
+  getEligiblePortalMenuModules,
   getVisiblePortalMenuItems,
+  PORTAL_CUSTOMER_MODULES,
   suggestPortalMenuLabel,
 } from "./customerNav"
 
@@ -62,6 +65,28 @@ const INVENTORY: ModuleMenuItem = {
   isActive: true,
   rentalAssetId: null,
 }
+
+describe("getEligiblePortalMenuModules / getDiscoverablePortalModules", () => {
+  it("intersects B2C-supported modules with the tenant active set", () => {
+    expect(getEligiblePortalMenuModules(["rentals", "inventory"])).toEqual([
+      "rentals",
+    ])
+    expect(getEligiblePortalMenuModules(["Catalog", "Rentals"])).toEqual([
+      "rentals",
+      "catalog",
+    ])
+    expect(getEligiblePortalMenuModules(["inventory", "pmoc"])).toEqual([])
+  })
+
+  it("lists B2C modules that are not active for discovery", () => {
+    expect(getDiscoverablePortalModules(["rentals"])).toEqual(["catalog"])
+    expect(getDiscoverablePortalModules(["catalog"])).toEqual(["rentals"])
+    expect(getDiscoverablePortalModules(["rentals", "catalog"])).toEqual([])
+    expect(getDiscoverablePortalModules([])).toEqual([
+      ...PORTAL_CUSTOMER_MODULES,
+    ])
+  })
+})
 
 describe("getVisiblePortalMenuItems", () => {
   it("drops inactive items and modules not in the tenant set", () => {

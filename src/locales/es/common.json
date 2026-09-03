@@ -1946,7 +1946,14 @@
       "deleteError": "No se pudo eliminar el ítem.",
       "loadError": "No se pudo cargar el menú.",
       "tenantPageTitle": "Menú del portal",
-      "tenantPageDescription": "Organice los accesos y páginas que verán sus clientes al entrar en el portal."
+      "tenantPageDescription": "Organice los accesos y páginas que verán sus clientes al entrar en el portal.",
+      "discoveryTitle": "Amplíe su portal",
+      "discoveryDescription": "Conozca otras funcionalidades que puede ofrecer a sus clientes.",
+      "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
+      "discoverModule": "Conocer módulo",
+      "catalogAutoNav": "El módulo añade automáticamente:",
+      "discoveryCatalogBenefit": "Muestre productos y reciba solicitudes de sus clientes.",
+      "discoveryRentalsBenefit": "Informe sobre horarios y permita reservas en el portal."
     },
     "dashboard": {
       "title": "Panel Super-Admin",
