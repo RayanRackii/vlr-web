@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, ChevronUp, ListPlus } from "lucide-react"
+import { ChevronDown, ChevronUp, ListPlus, Monitor, Smartphone } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -477,8 +477,8 @@ export function ModuleMenuItemsManager({
   ) : null
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-4">
+    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+      <div className="min-w-0 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-base font-semibold tracking-tight">
@@ -500,7 +500,7 @@ export function ModuleMenuItemsManager({
               title={t("admin.moduleMenu.empty")}
               description={t("admin.moduleMenu.emptyDescription")}
             />
-            {writeControls}
+            <div className="flex justify-center">{writeControls}</div>
           </div>
         ) : (
           <ul className="space-y-2">
@@ -514,16 +514,16 @@ export function ModuleMenuItemsManager({
               return (
                 <li
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border px-3 py-2"
                 >
-                  <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex min-w-0 flex-1 basis-48 items-center gap-2.5">
                     <Icon
-                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                      className="size-4 shrink-0 text-muted-foreground"
                       aria-hidden
                     />
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-medium">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="truncate text-sm font-medium leading-5">
                           {item.label}
                         </p>
                         <Badge variant={item.isActive ? "success" : "outline"}>
@@ -542,7 +542,7 @@ export function ModuleMenuItemsManager({
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         <span>{friendlyModuleLabel(item.moduleName, t)}</span>
                         {destination ? (
                           <span>{` · ${destination}`}</span>
@@ -551,11 +551,11 @@ export function ModuleMenuItemsManager({
                     </div>
                   </div>
                   {canWrite ? (
-                    <div className="flex items-center gap-1">
+                    <div className="ml-auto flex shrink-0 items-center gap-0.5">
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon"
+                        size="icon-sm"
                         disabled={saving || index === 0}
                         aria-label={t("admin.moduleMenu.moveUp")}
                         onClick={() => {
@@ -567,7 +567,7 @@ export function ModuleMenuItemsManager({
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon"
+                        size="icon-sm"
                         disabled={saving || index === sortedItems.length - 1}
                         aria-label={t("admin.moduleMenu.moveDown")}
                         onClick={() => {
@@ -580,6 +580,7 @@ export function ModuleMenuItemsManager({
                         type="button"
                         variant="outline"
                         size="sm"
+                        className="ml-1"
                         onClick={() => {
                           openEdit(item)
                         }}
@@ -590,6 +591,7 @@ export function ModuleMenuItemsManager({
                         type="button"
                         variant="ghost"
                         size="sm"
+                        className="text-muted-foreground hover:text-destructive"
                         onClick={() => {
                           setPendingDelete(item)
                         }}
@@ -605,26 +607,30 @@ export function ModuleMenuItemsManager({
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-3 lg:sticky lg:top-20 lg:self-start">
         <div className="flex justify-end gap-1">
           <Button
             type="button"
             variant={viewport === "desktop" ? "secondary" : "ghost"}
             size="sm"
+            aria-pressed={viewport === "desktop"}
             onClick={() => {
               setViewport("desktop")
             }}
           >
+            <Monitor aria-hidden />
             {t("admin.moduleMenu.previewViewportDesktop")}
           </Button>
           <Button
             type="button"
             variant={viewport === "mobile" ? "secondary" : "ghost"}
             size="sm"
+            aria-pressed={viewport === "mobile"}
             onClick={() => {
               setViewport("mobile")
             }}
           >
+            <Smartphone aria-hidden />
             {t("admin.moduleMenu.previewViewportMobile")}
           </Button>
         </div>
