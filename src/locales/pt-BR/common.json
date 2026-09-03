@@ -48,6 +48,7 @@
     "noBookableKind": "Nenhum tipo reservável encontrado. Crie um tipo Aberto primeiro.",
     "register": "Não foi possível concluir o cadastro.",
     "createField": "Não foi possível criar o campo.",
+    "updateField": "Não foi possível atualizar o campo.",
     "deleteField": "Não foi possível excluir o campo.",
     "verifyPhone": "Não foi possível verificar o celular.",
     "resendPhoneVerification": "Não foi possível reenviar o código.",
@@ -1886,20 +1887,54 @@
   "admin": {
     "registrationFields": {
       "title": "Campos do cadastro (portal)",
-      "description": "Além de nome, e-mail, senha e celular, defina campos extras deste cliente (ex.: CPF, foto, tem bagagem).",
-      "empty": "Nenhum campo extra. O cadastro usará só os campos mínimos.",
+      "description": "Defina campos extras do cadastro do portal B2C.",
+      "empty": "Nenhum campo personalizado ainda.",
+      "emptyDescription": "Adicione informações extras que o cliente preenche no cadastro.",
       "fieldKey": "Chave (ex.: cpf, temBagagem)",
-      "label": "Rótulo exibido",
+      "label": "Nome do campo",
+      "fieldType": "Tipo",
       "required": "Obrigatório",
-      "optionsPlaceholder": "Opções do select, separadas por vírgula",
-      "add": "Adicionar campo",
+      "optional": "Opcional",
+      "requiredCheckbox": "Campo obrigatório",
+      "optionsPlaceholder": "Opções da lista, separadas por vírgula",
+      "add": "+ Adicionar campo",
+      "save": "Salvar",
+      "createTitle": "Adicionar campo",
+      "editTitle": "Editar campo",
+      "generatedKey": "Chave interna: {{key}}",
       "createSuccess": "Campo adicionado.",
       "createError": "Não foi possível adicionar o campo.",
+      "updateSuccess": "Campo atualizado.",
+      "updateError": "Não foi possível atualizar o campo.",
+      "deleteTitle": "Excluir campo",
+      "deleteDescription": "Excluir \"{{label}}\" do cadastro do portal?",
       "deleteSuccess": "Campo removido.",
       "deleteError": "Não foi possível remover o campo.",
       "loadError": "Não foi possível carregar os campos.",
       "tenantPageTitle": "Formulário de cadastro",
-      "tenantPageDescription": "Configure os campos extras do portal B2C desta empresa."
+      "tenantPageDescription": "Configure as informações solicitadas no cadastro do portal B2C.",
+      "builtIn": {
+        "title": "Campos padrão",
+        "description": "Estes campos fazem parte do cadastro padrão do portal.",
+        "document": "CPF ou CNPJ"
+      },
+      "custom": {
+        "title": "Campos personalizados",
+        "description": "Informações extras solicitadas no cadastro, além dos campos padrão."
+      },
+      "types": {
+        "text": "Texto",
+        "email": "E-mail",
+        "phone": "Telefone",
+        "cpf": "CPF",
+        "cnpj": "CNPJ",
+        "cep": "CEP",
+        "boolean": "Sim / Não",
+        "number": "Número",
+        "select": "Lista de opções",
+        "photo": "Foto / imagem",
+        "date": "Data"
+      }
     },
     "moduleMenu": {
       "title": "Itens do menu (portal B2C)",

@@ -235,7 +235,7 @@ export function formatCustomerDocument(
   return digits
 }
 
-const CORE_REGISTER_FIELD_KEYS = new Set([
+export const CORE_REGISTER_FIELD_KEYS = new Set([
   "name",
   "email",
   "password",

@@ -48,6 +48,7 @@
     "noBookableKind": "No bookable occupancy kind found. Create an Open kind first.",
     "register": "Could not complete registration.",
     "createField": "Could not create field.",
+    "updateField": "Could not update the field.",
     "deleteField": "Could not delete field.",
     "verifyPhone": "Could not verify phone.",
     "resendPhoneVerification": "Could not resend the verification code.",
@@ -1850,20 +1851,54 @@
   "admin": {
     "registrationFields": {
       "title": "Registration fields (portal)",
-      "description": "Besides name, email, password and phone, define extra fields for this client (e.g. CPF, photo, hasLuggage).",
-      "empty": "No extra fields. Registration will use only the core fields.",
+      "description": "Define extra fields for the B2C portal registration.",
+      "empty": "No custom fields yet.",
+      "emptyDescription": "Add extra information customers fill in during registration.",
       "fieldKey": "Key (e.g. cpf, hasLuggage)",
-      "label": "Displayed label",
+      "label": "Field name",
+      "fieldType": "Type",
       "required": "Required",
-      "optionsPlaceholder": "Select options, comma-separated",
-      "add": "Add field",
+      "optional": "Optional",
+      "requiredCheckbox": "Required field",
+      "optionsPlaceholder": "List options, comma-separated",
+      "add": "+ Add field",
+      "save": "Save",
+      "createTitle": "Add field",
+      "editTitle": "Edit field",
+      "generatedKey": "Internal key: {{key}}",
       "createSuccess": "Field added.",
       "createError": "Could not add the field.",
+      "updateSuccess": "Field updated.",
+      "updateError": "Could not update the field.",
+      "deleteTitle": "Delete field",
+      "deleteDescription": "Delete \"{{label}}\" from the portal registration?",
       "deleteSuccess": "Field removed.",
       "deleteError": "Could not remove the field.",
       "loadError": "Could not load fields.",
       "tenantPageTitle": "Registration form",
-      "tenantPageDescription": "Configure extra B2C portal fields for this company."
+      "tenantPageDescription": "Configure the information requested in B2C portal registration.",
+      "builtIn": {
+        "title": "Standard fields",
+        "description": "These fields are part of the portal’s standard registration.",
+        "document": "CPF or CNPJ"
+      },
+      "custom": {
+        "title": "Custom fields",
+        "description": "Extra information requested at registration, beyond the standard fields."
+      },
+      "types": {
+        "text": "Text",
+        "email": "Email",
+        "phone": "Phone",
+        "cpf": "CPF",
+        "cnpj": "CNPJ",
+        "cep": "Postal code",
+        "boolean": "Yes / No",
+        "number": "Number",
+        "select": "Option list",
+        "photo": "Photo / image",
+        "date": "Date"
+      }
     },
     "moduleMenu": {
       "title": "Menu items (B2C portal)",

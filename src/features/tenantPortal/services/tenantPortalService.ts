@@ -303,6 +303,37 @@ export async function createRegistrationField(
   }
 }
 
+export async function updateRegistrationField(
+  fieldId: string,
+  body: {
+    label: string
+    fieldType: string
+    isRequired: boolean
+    sortOrder: number
+    options?: string[] | null
+  },
+  tenantId?: string,
+): Promise<RegistrationField> {
+  const url = tenantId
+    ? `/api/admin/tenants/${tenantId}/registration-fields/${fieldId}`
+    : `/api/registration-fields/${fieldId}`
+  try {
+    const response = await api.put(url, body)
+    const parsed = registrationFieldSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.updateField")),
+    )
+  }
+}
+
 export async function deleteRegistrationField(
   fieldId: string,
   tenantId?: string,
