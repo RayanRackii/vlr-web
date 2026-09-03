@@ -442,7 +442,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="tenant-modules">
             <CardHeader>
               <CardTitle className="text-base text-foreground">
                 {t("admin.edit.sections.modules")}

@@ -198,6 +198,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-03 | **UX (WEB):** Pessoas e acesso alinhado ao visual da agenda (cabeçalho, abas underline, empty state); RBAC/convite inalterados. |
 | 2026-09-03 | **UX (WEB):** Formulário de cadastro B2C — 7 campos padrão obrigatórios (somente leitura) + personalizados em diálogo; chave gerada só no create; tipos traduzidos. |
 | 2026-09-03 | **UX (WEB):** builder visual do menu do portal (lista + prévia B2C via `buildCustomerNavItems`); sem API nova, ícone persistido ou presets. |
+| 2026-09-03 | **UX (WEB):** menu do portal — add só com módulos B2C ativos; discovery “Amplie seu portal”; catálogo sem Nome exibido editável. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

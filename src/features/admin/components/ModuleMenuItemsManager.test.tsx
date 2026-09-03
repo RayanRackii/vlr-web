@@ -404,6 +404,188 @@ describe("ModuleMenuItemsManager", () => {
     )
     expect(within(preview).queryByRole("link")).not.toBeInTheDocument()
   })
+
+  it("offers only eligible modules in the create select", async () => {
+    const user = userEvent.setup()
+    renderManager({ activeModules: ["rentals"] })
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    const functionality = within(dialog).getByLabelText(
+      i18n.t("admin.moduleMenu.functionality"),
+    )
+    expect(functionality).toHaveValue("rentals")
+    expect(
+      within(functionality).getByRole("option", {
+        name: i18n.t("admin.modules.Rentals"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(functionality).queryByRole("option", {
+        name: i18n.t("admin.modules.Catalog"),
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("includes catalog in the create select when the module is active", async () => {
+    const user = userEvent.setup()
+    renderManager({ activeModules: ["catalog"] })
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    const functionality = within(dialog).getByLabelText(
+      i18n.t("admin.moduleMenu.functionality"),
+    )
+    expect(functionality).toHaveValue("catalog")
+    expect(
+      within(functionality).getByRole("option", {
+        name: i18n.t("admin.modules.Catalog"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps an inactive catalog item in the list but out of the preview", async () => {
+    renderManager({
+      items: [CATALOG_ITEM],
+      activeModules: ["rentals"],
+    })
+    await waitForLoaded()
+
+    const row = listRow(CATALOG_ITEM.label)
+    expect(
+      within(row).getByText(i18n.t("admin.moduleMenu.inactiveModule")),
+    ).toBeInTheDocument()
+
+    const preview = screen
+      .getByText(i18n.t("admin.moduleMenu.previewCaption"))
+      .closest("section")
+    if (!preview) {
+      throw new Error("Preview was not rendered.")
+    }
+    expect(
+      within(preview).queryByRole("button", {
+        name: i18n.t("tenantPortal.catalog.navCatalog"),
+        hidden: true,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(preview).queryByRole("button", {
+        name: i18n.t("tenantPortal.catalog.navOrders"),
+        hidden: true,
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows Catalog in discovery when inactive and hides it when active", async () => {
+    const { rerender } = renderManager({
+      items: [RENTALS_ITEM],
+      activeModules: ["rentals"],
+    })
+    await waitForLoaded()
+
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.discoveryTitle")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.modules.Catalog")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.discoveryCatalogBenefit")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("link", {
+        name: i18n.t("admin.moduleMenu.discoverModule"),
+      }),
+    ).not.toBeInTheDocument()
+
+    listMock.mockResolvedValue([RENTALS_ITEM])
+    rerender(
+      <MemoryRouter initialEntries={["/configuracoes/menu"]}>
+        <TestPermissionProvider
+          permissions={WRITE_PERMS}
+          activeModules={["rentals", "catalog"]}
+        >
+          <ModuleMenuItemsManager />
+          <LocationProbe />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    await waitForLoaded()
+
+    expect(
+      screen.queryByText(i18n.t("admin.moduleMenu.discoveryCatalogBenefit")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("hides display-name input for catalog and keeps it for rentals", async () => {
+    const user = userEvent.setup()
+    renderManager({ activeModules: ["rentals", "catalog"] })
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    expect(
+      within(dialog).getByLabelText(i18n.t("admin.moduleMenu.label")),
+    ).toBeInTheDocument()
+
+    await user.selectOptions(
+      within(dialog).getByLabelText(i18n.t("admin.moduleMenu.functionality")),
+      "catalog",
+    )
+
+    expect(
+      within(dialog).queryByLabelText(i18n.t("admin.moduleMenu.label")),
+    ).not.toBeInTheDocument()
+    expect(
+      within(dialog).getByText(i18n.t("admin.moduleMenu.catalogAutoNav")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.catalog.navCatalog")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.catalog.navOrders")),
+    ).toBeInTheDocument()
+  })
+
+  it("shows noEligible copy and hides add CTA when nothing is eligible", async () => {
+    renderManager({ activeModules: ["inventory"] })
+    await waitForLoaded()
+
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.noEligibleFunctionality")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("admin.moduleMenu.add"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(i18n.t("admin.moduleMenu.functionality")),
+    ).not.toBeInTheDocument()
+  })
 })
 
 describe("TenantModuleMenuPage", () => {

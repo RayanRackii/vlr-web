@@ -30,9 +30,36 @@ export function toCanonicalModuleName(moduleName: string): string {
   return normalized
 }
 
+/** B2C portal functionalities supported by customer nav (canonical keys). */
+export const PORTAL_CUSTOMER_MODULES = ["rentals", "catalog"] as const
+
+export type PortalCustomerModule = (typeof PORTAL_CUSTOMER_MODULES)[number]
+
 export function isCustomerNavModule(moduleName: string): boolean {
   const canonical = toCanonicalModuleName(moduleName)
-  return canonical === "rentals" || canonical === "catalog"
+  return (PORTAL_CUSTOMER_MODULES as readonly string[]).includes(canonical)
+}
+
+function activeModuleSet(activeModules: readonly string[]): Set<string> {
+  return new Set(
+    activeModules.map((moduleName) => toCanonicalModuleName(moduleName)),
+  )
+}
+
+/** B2C-supported modules that are active for the tenant. */
+export function getEligiblePortalMenuModules(
+  activeModules: readonly string[],
+): PortalCustomerModule[] {
+  const active = activeModuleSet(activeModules)
+  return PORTAL_CUSTOMER_MODULES.filter((moduleName) => active.has(moduleName))
+}
+
+/** B2C-supported modules that are not active for the tenant (discovery). */
+export function getDiscoverablePortalModules(
+  activeModules: readonly string[],
+): PortalCustomerModule[] {
+  const active = activeModuleSet(activeModules)
+  return PORTAL_CUSTOMER_MODULES.filter((moduleName) => !active.has(moduleName))
 }
 
 export function getVisiblePortalMenuItems(
