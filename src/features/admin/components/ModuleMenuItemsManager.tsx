@@ -30,7 +30,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PortalMenuPreview } from "@/features/admin/components/PortalMenuPreview"
 import {
-  getDiscoverablePortalModules,
   getEligiblePortalMenuModules,
   isCatalogModuleName,
   isCustomerNavModule,
@@ -129,12 +128,6 @@ function friendlyModuleLabel(
   }
 }
 
-function discoveryBenefitKey(moduleName: PortalCustomerModule): string {
-  return moduleName === "catalog"
-    ? "admin.moduleMenu.discoveryCatalogBenefit"
-    : "admin.moduleMenu.discoveryRentalsBenefit"
-}
-
 function destinationLabel(
   item: ModuleMenuItem,
   assets: readonly AssetOption[],
@@ -173,10 +166,6 @@ export function ModuleMenuItemsManager({
   const activeModules = activeModulesProp ?? permissionModules
   const eligibleModules = useMemo(
     () => getEligiblePortalMenuModules(activeModules),
-    [activeModules],
-  )
-  const discoverableModules = useMemo(
-    () => getDiscoverablePortalModules(activeModules),
     [activeModules],
   )
   const canAddItem = eligibleModules.length > 0
@@ -511,52 +500,6 @@ export function ModuleMenuItemsManager({
     ) : null
   ) : null
 
-  const discoverySection =
-    discoverableModules.length > 0 ? (
-      <section className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3">
-        <div className="space-y-0.5">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("admin.moduleMenu.discoveryTitle")}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {t("admin.moduleMenu.discoveryDescription")}
-          </p>
-        </div>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {discoverableModules.map((moduleName) => {
-            const Icon = iconForModule(moduleName)
-            return (
-              <li
-                key={moduleName}
-                className="flex items-start gap-2.5 rounded-md bg-background px-3 py-2"
-              >
-                <Icon
-                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="text-sm font-medium leading-5">
-                    {friendlyModuleLabel(moduleName, t)}
-                  </p>
-                  <p className="text-xs leading-snug text-muted-foreground">
-                    {t(discoveryBenefitKey(moduleName))}
-                  </p>
-                  {tenantId ? (
-                    <a
-                      href="#tenant-modules"
-                      className="inline-flex min-h-8 items-center text-xs font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      {t("admin.moduleMenu.discoverModule")}
-                    </a>
-                  ) : null}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-    ) : null
-
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
       <div className="min-w-0 space-y-4">
@@ -698,8 +641,6 @@ export function ModuleMenuItemsManager({
             {t("admin.moduleMenu.noEligibleFunctionality")}
           </p>
         ) : null}
-
-        {!loading ? discoverySection : null}
       </div>
 
       <div className="min-w-0 space-y-3 lg:sticky lg:top-20 lg:self-start">

@@ -1983,6 +1983,26 @@
       "loadError": "Não foi possível carregar o menu.",
       "tenantPageTitle": "Menu do portal",
       "tenantPageDescription": "Organize os atalhos e páginas que seus clientes verão após entrar no portal.",
+      "tabs": {
+        "configuration": "Configuração do menu",
+        "explore": "Explore módulos"
+      },
+      "exploreTitle": "Explore outros módulos",
+      "exploreDescription": "Veja o que a plataforma oferece para o portal do cliente e para a operação interna.",
+      "exploreAllActive": "Todos os módulos da plataforma já estão ativos neste ambiente.",
+      "categoryCustomer": "Para seus clientes",
+      "categoryOperations": "Para sua operação",
+      "stateActive": "Ativo",
+      "stateAvailable": "Disponível",
+      "contextPortal": "Portal do cliente",
+      "contextOperations": "Operação interna",
+      "exploreDescriptions": {
+        "Catalog": "Exiba produtos e receba solicitações dos seus clientes no portal.",
+        "Rentals": "Avise sobre horários e permita reservas no portal.",
+        "PMOC": "Organize planos de manutenção preventiva e templates.",
+        "Inventory": "Cadastre e controle ativos e recursos da operação.",
+        "OS": "Abra e acompanhe ordens de serviço no dia a dia."
+      },
       "discoveryTitle": "Amplie seu portal",
       "discoveryDescription": "Conheça outras funcionalidades que você pode disponibilizar aos seus clientes.",
       "noEligibleFunctionality": "Nenhuma outra funcionalidade ativa disponível.",

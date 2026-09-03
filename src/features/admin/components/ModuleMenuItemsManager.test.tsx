@@ -488,44 +488,26 @@ describe("ModuleMenuItemsManager", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("shows Catalog in discovery when inactive and hides it when active", async () => {
-    const { rerender } = renderManager({
+  it("does not render discovery marketing cards under the builder", async () => {
+    renderManager({
       items: [RENTALS_ITEM],
       activeModules: ["rentals"],
     })
     await waitForLoaded()
 
     expect(
-      screen.getByText(i18n.t("admin.moduleMenu.discoveryTitle")),
-    ).toBeInTheDocument()
+      screen.queryByText(i18n.t("admin.moduleMenu.discoveryTitle")),
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("admin.modules.Catalog")),
-    ).toBeInTheDocument()
+      screen.queryByText(i18n.t("admin.moduleMenu.exploreTitle")),
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("admin.moduleMenu.discoveryCatalogBenefit")),
-    ).toBeInTheDocument()
+      screen.queryByText(i18n.t("admin.moduleMenu.discoveryCatalogBenefit")),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByRole("link", {
         name: i18n.t("admin.moduleMenu.discoverModule"),
       }),
-    ).not.toBeInTheDocument()
-
-    listMock.mockResolvedValue([RENTALS_ITEM])
-    rerender(
-      <MemoryRouter initialEntries={["/configuracoes/menu"]}>
-        <TestPermissionProvider
-          permissions={WRITE_PERMS}
-          activeModules={["rentals", "catalog"]}
-        >
-          <ModuleMenuItemsManager />
-          <LocationProbe />
-        </TestPermissionProvider>
-      </MemoryRouter>,
-    )
-    await waitForLoaded()
-
-    expect(
-      screen.queryByText(i18n.t("admin.moduleMenu.discoveryCatalogBenefit")),
     ).not.toBeInTheDocument()
   })
 
@@ -591,22 +573,52 @@ describe("ModuleMenuItemsManager", () => {
 describe("TenantModuleMenuPage", () => {
   beforeEach(() => {
     listMock.mockReset()
+    assetsMock.mockReset()
+    brandingMock.mockReset()
     apiGetMock.mockReset()
     listMock.mockResolvedValue([])
+    assetsMock.mockResolvedValue([])
+    brandingMock.mockResolvedValue({
+      subdomain: "clube",
+      displayName: "Clube",
+      logoSvg: null,
+      primaryColor: "#111111",
+      accentColor: "#222222",
+      welcomeTagline: null,
+    })
     apiGetMock.mockResolvedValue({ data: [] })
   })
 
-  it("uses the cadastro shell without extra padding", async () => {
-    const { container } = render(
+  function renderPage(
+    options: {
+      activeModules?: readonly string[]
+      items?: ModuleMenuItem[]
+    } = {},
+  ) {
+    listMock.mockResolvedValue(options.items ?? [])
+    return render(
       <MemoryRouter>
         <TestPermissionProvider
           permissions={WRITE_PERMS}
-          activeModules={ACTIVE_MODULES}
+          activeModules={options.activeModules ?? ACTIVE_MODULES}
         >
           <TenantModuleMenuPage />
         </TestPermissionProvider>
       </MemoryRouter>,
     )
+  }
+
+  async function waitForPageLoaded() {
+    await waitFor(() => {
+      expect(listMock).toHaveBeenCalled()
+    })
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    })
+  }
+
+  it("uses the cadastro shell without extra padding", async () => {
+    const { container } = renderPage()
 
     expect(
       await screen.findByRole("heading", {
@@ -624,5 +636,170 @@ describe("TenantModuleMenuPage", () => {
       "space-y-6",
     )
     expect(container.firstChild).not.toHaveClass("p-6")
+  })
+
+  it("shows the builder and preview on configuration, without explore heading", async () => {
+    renderPage({ items: [] })
+    await waitForPageLoaded()
+
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.configuration"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.explore"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.previewCaption")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.exploreTitle"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("admin.moduleMenu.discoveryTitle")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("opens explore with inactive Catalog and operations modules, without preview or CTAs", async () => {
+    const user = userEvent.setup()
+    renderPage({
+      items: [RENTALS_ITEM],
+      activeModules: ["rentals"],
+    })
+    await waitForPageLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.explore"),
+      }),
+    )
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.exploreTitle"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.title"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.modules.PMOC")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.modules.Inventory")),
+    ).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.OS"))).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.modules.Catalog")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByText(i18n.t("admin.moduleMenu.stateAvailable")).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole("link", {
+        name: i18n.t("admin.moduleMenu.discoverModule"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /ativar/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps Catalog listed as Active when the module is already on", async () => {
+    const user = userEvent.setup()
+    renderPage({
+      items: [RENTALS_ITEM, CATALOG_ITEM],
+      activeModules: ["rentals", "catalog"],
+    })
+    await waitForPageLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.explore"),
+      }),
+    )
+
+    const exploreRoot = screen
+      .getByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.exploreTitle"),
+      })
+      .closest("div.space-y-6")
+    if (!(exploreRoot instanceof HTMLElement)) {
+      throw new Error("Explore surface was not rendered.")
+    }
+    const catalogName = within(exploreRoot).getByText(
+      i18n.t("admin.modules.Catalog"),
+    )
+    const card = catalogName.closest("li")
+    if (!(card instanceof HTMLElement)) {
+      throw new Error("Catalog card was not rendered.")
+    }
+    expect(
+      within(card).getByText(i18n.t("admin.moduleMenu.stateActive")),
+    ).toBeInTheDocument()
+  })
+
+  it("preserves the builder list when switching back from explore", async () => {
+    const user = userEvent.setup()
+    renderPage({
+      items: [RENTALS_ITEM],
+      activeModules: ["rentals"],
+    })
+    await waitForPageLoaded()
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.title"),
+      }),
+    ).toBeInTheDocument()
+    expect(listRow(RENTALS_ITEM.label)).toBeInTheDocument()
+    const callsBeforeExplore = listMock.mock.calls.length
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.explore"),
+      }),
+    )
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.exploreTitle"),
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.tabs.configuration"),
+      }),
+    )
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: i18n.t("admin.moduleMenu.title"),
+      }),
+    ).toBeInTheDocument()
+    expect(listRow(RENTALS_ITEM.label)).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.previewCaption")),
+    ).toBeInTheDocument()
+    expect(listMock.mock.calls.length).toBe(callsBeforeExplore)
   })
 })
