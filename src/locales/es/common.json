@@ -1947,13 +1947,26 @@
       "loadError": "No se pudo cargar el menú.",
       "tenantPageTitle": "Menú del portal",
       "tenantPageDescription": "Organice los accesos y páginas que verán sus clientes al entrar en el portal.",
-      "discoveryTitle": "Amplíe su portal",
-      "discoveryDescription": "Conozca otras funcionalidades que puede ofrecer a sus clientes.",
+      "tabs": {
+        "configuration": "Configuración del menú",
+        "explore": "Explorar módulos"
+      },
+      "exploreTitle": "Explorar otros módulos",
+      "exploreDescription": "Vea lo que la plataforma ofrece para el portal del cliente y para la operación interna.",
+      "exploreAllActive": "Todos los módulos de la plataforma ya están activos en este entorno.",
+      "categoryCustomer": "Para sus clientes",
+      "categoryOperations": "Para su operación",
+      "stateActive": "Activo",
+      "stateAvailable": "Disponible",
+      "exploreDescriptions": {
+        "Catalog": "Muestre productos y reciba solicitudes de sus clientes en el portal.",
+        "Rentals": "Informe sobre horarios y permita reservas en el portal.",
+        "PMOC": "Organice planes de mantenimiento preventivo y plantillas.",
+        "Inventory": "Registre y controle activos y recursos de la operación.",
+        "OS": "Abra y acompañe órdenes de servicio en el día a día."
+      },
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
-      "discoverModule": "Conocer módulo",
-      "catalogAutoNav": "El módulo añade automáticamente:",
-      "discoveryCatalogBenefit": "Muestre productos y reciba solicitudes de sus clientes.",
-      "discoveryRentalsBenefit": "Informe sobre horarios y permita reservas en el portal."
+      "catalogAutoNav": "El módulo añade automáticamente:"
     },
     "dashboard": {
       "title": "Panel Super-Admin",
