@@ -8,7 +8,6 @@ import {
   type ModuleCatalogEntry,
 } from "@/features/admin/moduleCatalog"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
-import { cn } from "@/lib/utils"
 
 function ModuleCard({
   entry,
@@ -21,36 +20,21 @@ function ModuleCard({
   const Icon = entry.icon
 
   return (
-    <li
-      className={cn(
-        "flex flex-col gap-2 rounded-lg border border-border bg-background px-3 py-3",
-        active ? "border-border" : "border-dashed bg-muted/30",
-      )}
-    >
-      <div className="flex items-start gap-2.5">
-        <Icon
-          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="text-sm font-medium leading-5">{t(entry.nameKey)}</p>
-            <Badge variant="secondary">
-              {entry.category === "customer"
-                ? t("admin.moduleMenu.contextPortal")
-                : t("admin.moduleMenu.contextOperations")}
-            </Badge>
-            <Badge variant={active ? "success" : "outline"}>
-              {active
-                ? t("admin.moduleMenu.stateActive")
-                : t("admin.moduleMenu.stateAvailable")}
-            </Badge>
-          </div>
-          <p className="text-xs leading-snug text-muted-foreground">
-            {t(entry.descriptionKey)}
-          </p>
-        </div>
+    <li className="rounded-lg border border-border bg-card px-3.5 py-3">
+      <div className="flex items-center gap-2.5">
+        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <p className="min-w-0 flex-1 truncate text-sm font-medium leading-5">
+          {t(entry.nameKey)}
+        </p>
+        <Badge variant={active ? "success" : "outline"}>
+          {active
+            ? t("admin.moduleMenu.stateActive")
+            : t("admin.moduleMenu.stateAvailable")}
+        </Badge>
       </div>
+      <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+        {t(entry.descriptionKey)}
+      </p>
     </li>
   )
 }

@@ -1958,8 +1958,6 @@
       "categoryOperations": "Para su operación",
       "stateActive": "Activo",
       "stateAvailable": "Disponible",
-      "contextPortal": "Portal del cliente",
-      "contextOperations": "Operación interna",
       "exploreDescriptions": {
         "Catalog": "Muestre productos y reciba solicitudes de sus clientes en el portal.",
         "Rentals": "Informe sobre horarios y permita reservas en el portal.",
@@ -1967,13 +1965,8 @@
         "Inventory": "Registre y controle activos y recursos de la operación.",
         "OS": "Abra y acompañe órdenes de servicio en el día a día."
       },
-      "discoveryTitle": "Amplíe su portal",
-      "discoveryDescription": "Conozca otras funcionalidades que puede ofrecer a sus clientes.",
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
-      "discoverModule": "Conocer módulo",
-      "catalogAutoNav": "El módulo añade automáticamente:",
-      "discoveryCatalogBenefit": "Muestre productos y reciba solicitudes de sus clientes.",
-      "discoveryRentalsBenefit": "Informe sobre horarios y permita reservas en el portal."
+      "catalogAutoNav": "El módulo añade automáticamente:"
     },
     "dashboard": {
       "title": "Panel Super-Admin",

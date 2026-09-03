@@ -1958,8 +1958,6 @@
       "categoryOperations": "For your operations",
       "stateActive": "Active",
       "stateAvailable": "Available",
-      "contextPortal": "Customer portal",
-      "contextOperations": "Internal operations",
       "exploreDescriptions": {
         "Catalog": "Show products and receive customer requests in the portal.",
         "Rentals": "Share court availability and let customers book time slots.",
@@ -1967,13 +1965,8 @@
         "Inventory": "Register and track assets and operational resources.",
         "OS": "Open and track work orders day to day."
       },
-      "discoveryTitle": "Grow your portal",
-      "discoveryDescription": "Discover other features you can make available to your customers.",
       "noEligibleFunctionality": "No other active features are available.",
-      "discoverModule": "Learn about module",
-      "catalogAutoNav": "The module automatically adds:",
-      "discoveryCatalogBenefit": "Show products and receive requests from your customers.",
-      "discoveryRentalsBenefit": "Announce time slots and allow bookings in the portal."
+      "catalogAutoNav": "The module automatically adds:"
     },
     "dashboard": {
       "title": "Super-Admin Panel",
