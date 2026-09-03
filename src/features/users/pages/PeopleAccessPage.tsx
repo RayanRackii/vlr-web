@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PeopleRolesTab } from "@/features/users/components/PeopleRolesTab"
 import { PeopleUsersTab } from "@/features/users/components/PeopleUsersTab"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -14,6 +13,9 @@ import {
   listPermissions,
   listRoles,
 } from "@/features/users/services/rolesService"
+import { cn } from "@/lib/utils"
+
+type PeopleAccessTab = "users" | "roles"
 
 export function PeopleAccessPage() {
   const { t } = useTranslation()
@@ -24,7 +26,7 @@ export function PeopleAccessPage() {
   const [catalog, setCatalog] = useState<PermissionCatalogItemDto[]>([])
   const [isLoading, setIsLoading] = useState(canReadRoles)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [tab, setTab] = useState("users")
+  const [tab, setTab] = useState<PeopleAccessTab>("users")
 
   const loadRolesBundle = useCallback(async () => {
     if (!canReadRoles) {
@@ -59,15 +61,52 @@ export function PeopleAccessPage() {
     void loadRolesBundle()
   }, [loadRolesBundle])
 
+  const tabItems: { id: PeopleAccessTab; labelKey: string }[] = canReadRoles
+    ? [
+        { id: "users", labelKey: "peopleAccess.tabs.users" },
+        { id: "roles", labelKey: "peopleAccess.tabs.roles" },
+      ]
+    : [{ id: "users", labelKey: "peopleAccess.tabs.users" }]
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("peopleAccess.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("peopleAccess.description")}
-        </p>
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("peopleAccess.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("peopleAccess.description")}
+          </p>
+        </div>
+
+        <div className="border-b border-border">
+          <nav
+            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
+            aria-label={t("peopleAccess.title")}
+          >
+            {tabItems.map((item) => {
+              const isActive = tab === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setTab(item.id)
+                  }}
+                  className={cn(
+                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                  )}
+                >
+                  {t(item.labelKey)}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
       </div>
 
       {loadError !== null ? (
@@ -82,39 +121,17 @@ export function PeopleAccessPage() {
       {canReadRoles && isLoading ? (
         <PageContentSkeleton rows={4} />
       ) : (
-        <Tabs
-          value={tab}
-          onValueChange={(value) => {
-            if (value === "users" || value === "roles") {
-              setTab(value)
-            }
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="users">
-              {t("peopleAccess.tabs.users")}
-            </TabsTrigger>
-            {canReadRoles ? (
-              <TabsTrigger value="roles">
-                {t("peopleAccess.tabs.roles")}
-              </TabsTrigger>
-            ) : null}
-          </TabsList>
+        <div>
+          {tab === "users" ? <PeopleUsersTab roles={roles} /> : null}
 
-          <TabsContent value="users" className="mt-4">
-            <PeopleUsersTab roles={roles} />
-          </TabsContent>
-
-          {canReadRoles ? (
-            <TabsContent value="roles" className="mt-4">
-              <PeopleRolesTab
-                roles={roles}
-                catalog={catalog}
-                onRolesChanged={loadRolesBundle}
-              />
-            </TabsContent>
+          {tab === "roles" && canReadRoles ? (
+            <PeopleRolesTab
+              roles={roles}
+              catalog={catalog}
+              onRolesChanged={loadRolesBundle}
+            />
           ) : null}
-        </Tabs>
+        </div>
       )}
     </div>
   )

@@ -1690,7 +1690,7 @@
   },
   "peopleAccess": {
     "title": "Personas y acceso",
-    "description": "Gestione usuarios del entorno y los perfiles de acceso (funciones y permisos).",
+    "description": "Gestione usuarios del entorno y los perfiles de acceso.",
     "tabs": {
       "users": "Usuarios",
       "roles": "Funciones y permisos"
@@ -1803,6 +1803,7 @@
       "assignDescription": "Defina las funciones de {{name}}.",
       "saveRoles": "Guardar funciones",
       "empty": "Ningún usuario en este entorno.",
+      "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de este entorno.",
       "noRoles": "Ninguna función asignada"
     },
     "roles": {
@@ -1816,6 +1817,7 @@
       "view": "Ver permisos",
       "save": "Guardar",
       "empty": "Ninguna función visible.",
+      "emptyDescription": "Cree una función personalizada para organizar los accesos de este entorno.",
       "deleteTitle": "Eliminar función",
       "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
     },

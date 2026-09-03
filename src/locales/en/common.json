@@ -1690,7 +1690,7 @@
   },
   "peopleAccess": {
     "title": "People and access",
-    "description": "Manage people in this environment and their access profiles (functions and permissions).",
+    "description": "Manage users in this environment and their access profiles.",
     "tabs": {
       "users": "Users",
       "roles": "Functions and permissions"
@@ -1803,6 +1803,7 @@
       "assignDescription": "Set the functions for {{name}}.",
       "saveRoles": "Save functions",
       "empty": "No users in this environment.",
+      "emptyDescription": "Invite someone to start configuring access for this environment.",
       "noRoles": "No function assigned"
     },
     "roles": {
@@ -1816,6 +1817,7 @@
       "view": "View permissions",
       "save": "Save",
       "empty": "No visible functions.",
+      "emptyDescription": "Create a custom function to organize access in this environment.",
       "deleteTitle": "Delete function",
       "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
     },
