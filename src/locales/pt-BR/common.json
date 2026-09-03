@@ -1726,7 +1726,7 @@
   },
   "peopleAccess": {
     "title": "Pessoas e acesso",
-    "description": "Gerencie usuários do ambiente e os perfis de acesso (funções e permissões).",
+    "description": "Gerencie usuários do ambiente e os perfis de acesso.",
     "tabs": {
       "users": "Usuários",
       "roles": "Funções e permissões"
@@ -1839,6 +1839,7 @@
       "assignDescription": "Defina as funções de {{name}}.",
       "saveRoles": "Salvar funções",
       "empty": "Nenhum usuário neste ambiente.",
+      "emptyDescription": "Convide uma pessoa para começar a configurar os acessos deste ambiente.",
       "noRoles": "Nenhuma função atribuída"
     },
     "roles": {
@@ -1852,6 +1853,7 @@
       "view": "Ver permissões",
       "save": "Salvar",
       "empty": "Nenhuma função visível.",
+      "emptyDescription": "Crie uma função personalizada para organizar os acessos deste ambiente.",
       "deleteTitle": "Excluir função",
       "deleteDescription": "Excluir a função {{name}}? Só é possível se ela não estiver atribuída a ninguém."
     },
