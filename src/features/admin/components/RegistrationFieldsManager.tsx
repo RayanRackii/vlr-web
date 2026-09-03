@@ -9,6 +9,7 @@ import { z } from "zod"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -281,7 +282,7 @@ export function RegistrationFieldsManager({
           {BUILT_IN_FIELDS.map((field) => (
             <li
               key={field.id}
-              className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <p className="text-sm font-medium">{t(field.labelKey)}</p>
               <Badge variant="secondary">
@@ -377,7 +378,7 @@ export function RegistrationFieldsManager({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {dialog?.mode === "edit"
@@ -392,7 +393,7 @@ export function RegistrationFieldsManager({
           </DialogHeader>
 
           <form
-            className="grid gap-3"
+            className="grid gap-4"
             onSubmit={(event) => {
               void form.handleSubmit(handleSave)(event)
             }}
@@ -420,7 +421,7 @@ export function RegistrationFieldsManager({
               </Label>
               <select
                 id="registration-field-type"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                 {...form.register("fieldType")}
               >
                 {FIELD_TYPE_OPTIONS.map((type) => (
@@ -431,10 +432,18 @@ export function RegistrationFieldsManager({
               </select>
             </div>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" {...form.register("isRequired")} />
-              {t("admin.registrationFields.requiredCheckbox")}
-            </label>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="registration-field-required"
+                {...form.register("isRequired")}
+              />
+              <Label
+                htmlFor="registration-field-required"
+                className="font-normal"
+              >
+                {t("admin.registrationFields.requiredCheckbox")}
+              </Label>
+            </div>
 
             {watchedValues.fieldType === "select" ? (
               <div className="grid gap-1.5">
@@ -449,7 +458,7 @@ export function RegistrationFieldsManager({
               </div>
             ) : null}
 
-            <DialogFooter className="-mx-0 -mb-0 border-t-0 bg-transparent p-0">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
