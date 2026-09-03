@@ -513,28 +513,28 @@ export function ModuleMenuItemsManager({
 
   const discoverySection =
     discoverableModules.length > 0 ? (
-      <section className="space-y-3 border-t border-border pt-4">
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium tracking-tight">
+      <section className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3">
+        <div className="space-y-0.5">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("admin.moduleMenu.discoveryTitle")}
           </h3>
           <p className="text-xs text-muted-foreground">
             {t("admin.moduleMenu.discoveryDescription")}
           </p>
         </div>
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {discoverableModules.map((moduleName) => {
             const Icon = iconForModule(moduleName)
             return (
               <li
                 key={moduleName}
-                className="flex items-start gap-2.5 rounded-md border border-border/80 bg-muted/20 px-3 py-2.5"
+                className="flex items-start gap-2.5 rounded-md bg-background px-3 py-2"
               >
                 <Icon
                   className="mt-0.5 size-4 shrink-0 text-muted-foreground"
                   aria-hidden
                 />
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <p className="text-sm font-medium leading-5">
                     {friendlyModuleLabel(moduleName, t)}
                   </p>
@@ -544,7 +544,7 @@ export function ModuleMenuItemsManager({
                   {tenantId ? (
                     <a
                       href="#tenant-modules"
-                      className="inline-flex text-xs font-medium text-primary underline-offset-4 hover:underline"
+                      className="inline-flex min-h-8 items-center text-xs font-medium text-primary underline-offset-4 hover:underline"
                     >
                       {t("admin.moduleMenu.discoverModule")}
                     </a>
@@ -839,11 +839,9 @@ export function ModuleMenuItemsManager({
             ) : null}
 
             {isCatalog ? (
-              <div className="grid gap-1.5 rounded-md border border-border/80 bg-muted/20 px-3 py-2.5">
-                <p className="text-sm text-muted-foreground">
-                  {t("admin.moduleMenu.catalogAutoNav")}
-                </p>
-                <ul className="list-inside list-disc text-sm">
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <p>{t("admin.moduleMenu.catalogAutoNav")}</p>
+                <ul className="list-inside list-disc space-y-0.5 pl-1">
                   <li>{t("tenantPortal.catalog.navCatalog")}</li>
                   <li>{t("tenantPortal.catalog.navOrders")}</li>
                 </ul>
