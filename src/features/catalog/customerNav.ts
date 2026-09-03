@@ -21,6 +21,68 @@ export function isCatalogModuleName(moduleName: string): boolean {
   return CATALOG_MODULE_ALIASES.has(moduleName.trim().toLowerCase())
 }
 
+/** Canonical platform module key (`rentals`, `catalog`, …). */
+export function toCanonicalModuleName(moduleName: string): string {
+  const normalized = moduleName.trim().toLowerCase()
+  if (isCatalogModuleName(normalized)) {
+    return "catalog"
+  }
+  return normalized
+}
+
+export function isCustomerNavModule(moduleName: string): boolean {
+  const canonical = toCanonicalModuleName(moduleName)
+  return canonical === "rentals" || canonical === "catalog"
+}
+
+export function getVisiblePortalMenuItems(
+  items: readonly ModuleMenuItem[],
+  activeModules: readonly string[],
+): ModuleMenuItem[] {
+  const active = new Set(
+    activeModules.map((moduleName) => toCanonicalModuleName(moduleName)),
+  )
+
+  return items
+    .filter(
+      (item) =>
+        item.isActive && active.has(toCanonicalModuleName(item.moduleName)),
+    )
+    .slice()
+    .sort((left, right) => {
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder
+      }
+      return left.label.localeCompare(right.label, undefined, {
+        sensitivity: "base",
+      })
+    })
+}
+
+export function suggestPortalMenuLabel({
+  moduleName,
+  rentalAssetName,
+  t,
+}: {
+  moduleName: string
+  rentalAssetName?: string | null
+  t: TFunction
+}): string {
+  if (isCatalogModuleName(moduleName)) {
+    return t("tenantPortal.catalog.navCatalog")
+  }
+
+  if (toCanonicalModuleName(moduleName) === "rentals") {
+    const name = rentalAssetName?.trim()
+    if (name) {
+      return t("admin.moduleMenu.suggestedLabelRentalsAsset", { name })
+    }
+    return t("admin.moduleMenu.suggestedLabelRentals")
+  }
+
+  return ""
+}
+
 export function buildCustomerNavItems(
   subdomain: string,
   menu: readonly ModuleMenuItem[],
