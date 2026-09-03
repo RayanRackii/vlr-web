@@ -1,0 +1,446 @@
+import { render, screen, waitFor, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { useLocation } from "react-router-dom"
+import { MemoryRouter } from "react-router-dom"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
+import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
+import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import {
+  createModuleMenuItem,
+  deleteModuleMenuItem,
+  fetchPortalRentalAssets,
+  fetchTenantBranding,
+  listTenantModuleMenuItems,
+  updateModuleMenuItem,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
+import { api } from "@/lib/api"
+import i18n from "@/lib/i18n"
+
+vi.mock("@/features/tenantPortal/services/tenantPortalService", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/features/tenantPortal/services/tenantPortalService")
+  >("@/features/tenantPortal/services/tenantPortalService")
+  return {
+    ...actual,
+    listTenantModuleMenuItems: vi.fn(),
+    listAdminModuleMenuItems: vi.fn(),
+    createModuleMenuItem: vi.fn(),
+    updateModuleMenuItem: vi.fn(),
+    deleteModuleMenuItem: vi.fn(),
+    fetchPortalRentalAssets: vi.fn(),
+    fetchTenantBranding: vi.fn(),
+  }
+})
+
+vi.mock("@/lib/api", () => ({
+  api: {
+    get: vi.fn(),
+  },
+}))
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
+}))
+
+const WRITE_PERMS = ["core.module_menu.write"] as const
+const ACTIVE_MODULES = ["rentals", "catalog"] as const
+
+const RENTALS_ITEM: ModuleMenuItem = {
+  id: "11111111-1111-4111-8111-111111111111",
+  moduleName: "rentals",
+  label: "Quadra 1",
+  sortOrder: 0,
+  isActive: true,
+  rentalAssetId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+}
+
+const CATALOG_ITEM: ModuleMenuItem = {
+  id: "22222222-2222-4222-8222-222222222222",
+  moduleName: "catalog",
+  label: "Loja custom",
+  sortOrder: 10,
+  isActive: true,
+  rentalAssetId: null,
+}
+
+const INVENTORY_ITEM: ModuleMenuItem = {
+  id: "33333333-3333-4333-8333-333333333333",
+  moduleName: "inventory",
+  label: "Ativos",
+  sortOrder: 20,
+  isActive: true,
+  rentalAssetId: null,
+}
+
+const INACTIVE_ITEM: ModuleMenuItem = {
+  id: "44444444-4444-4444-8444-444444444444",
+  moduleName: "rentals",
+  label: "Horário extra",
+  sortOrder: 30,
+  isActive: false,
+  rentalAssetId: null,
+}
+
+const listMock = vi.mocked(listTenantModuleMenuItems)
+const createMock = vi.mocked(createModuleMenuItem)
+const updateMock = vi.mocked(updateModuleMenuItem)
+const deleteMock = vi.mocked(deleteModuleMenuItem)
+const assetsMock = vi.mocked(fetchPortalRentalAssets)
+const brandingMock = vi.mocked(fetchTenantBranding)
+const apiGetMock = vi.mocked(api.get)
+
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location-path">{location.pathname}</div>
+}
+
+function renderManager(
+  options: {
+    permissions?: readonly string[]
+    activeModules?: readonly string[]
+    items?: ModuleMenuItem[]
+  } = {},
+) {
+  listMock.mockResolvedValue(options.items ?? [])
+  return render(
+    <MemoryRouter initialEntries={["/configuracoes/menu"]}>
+      <TestPermissionProvider
+        permissions={options.permissions ?? WRITE_PERMS}
+        activeModules={options.activeModules ?? ACTIVE_MODULES}
+      >
+        <ModuleMenuItemsManager />
+        <LocationProbe />
+      </TestPermissionProvider>
+    </MemoryRouter>,
+  )
+}
+
+function listRow(label: string) {
+  const row = screen
+    .getAllByText(label)
+    .map((node) => node.closest("li"))
+    .find((node) => node !== null)
+  if (!row) {
+    throw new Error("Row was not rendered.")
+  }
+  return row
+}
+
+async function waitForLoaded() {
+  await waitFor(() => {
+    expect(listMock).toHaveBeenCalled()
+  })
+  await waitFor(() => {
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+}
+
+describe("ModuleMenuItemsManager", () => {
+  beforeEach(() => {
+    listMock.mockReset()
+    createMock.mockReset()
+    updateMock.mockReset()
+    deleteMock.mockReset()
+    assetsMock.mockReset()
+    brandingMock.mockReset()
+    apiGetMock.mockReset()
+    listMock.mockResolvedValue([])
+    createMock.mockResolvedValue(RENTALS_ITEM)
+    updateMock.mockResolvedValue(RENTALS_ITEM)
+    deleteMock.mockResolvedValue(undefined)
+    assetsMock.mockResolvedValue([])
+    brandingMock.mockRejectedValue(new Error("no branding"))
+    apiGetMock.mockResolvedValue({ data: [] })
+  })
+
+  it("shows an empty state and a first-item CTA", async () => {
+    renderManager()
+    await waitForLoaded()
+
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.empty")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("lists items with friendly module and destination labels", async () => {
+    apiGetMock.mockResolvedValue({
+      data: [
+        {
+          id: RENTALS_ITEM.rentalAssetId,
+          name: "Quadra de tênis",
+        },
+      ],
+    })
+    renderManager({
+      items: [RENTALS_ITEM, CATALOG_ITEM, INVENTORY_ITEM, INACTIVE_ITEM],
+    })
+    await waitForLoaded()
+
+    expect(screen.getAllByText("Quadra 1").length).toBeGreaterThan(0)
+    expect(screen.getAllByText(i18n.t("admin.modules.Rentals")).length).toBeGreaterThan(0)
+    expect(screen.getByText("Quadra de tênis", { exact: false })).toBeInTheDocument()
+    expect(screen.queryByText(RENTALS_ITEM.rentalAssetId ?? "")).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.Catalog"))).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.notInPortal")),
+    ).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.moduleMenu.hidden"))).toBeInTheDocument()
+  })
+
+  it("shows the inactive-module badge when the tenant module is off", async () => {
+    renderManager({
+      items: [RENTALS_ITEM],
+      activeModules: ["catalog"],
+    })
+    await waitForLoaded()
+
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.inactiveModule")),
+    ).toBeInTheDocument()
+  })
+
+  it("creates a rentals item with canonical moduleName", async () => {
+    const user = userEvent.setup()
+    renderManager()
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    const functionality = within(dialog).getByLabelText(
+      i18n.t("admin.moduleMenu.functionality"),
+    )
+    expect(functionality).toHaveValue("rentals")
+    expect(
+      within(functionality).queryByRole("option", { name: "Rentals" }),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("admin.moduleMenu.create"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          moduleName: "rentals",
+          label: i18n.t("admin.moduleMenu.suggestedLabelRentals"),
+          isActive: true,
+          rentalAssetId: null,
+        }),
+        undefined,
+      )
+    })
+    expect(createMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      "moduleName",
+      "Rentals",
+    )
+  })
+
+  it("creates a catalog item with moduleName catalog", async () => {
+    const user = userEvent.setup()
+    renderManager()
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    await user.selectOptions(
+      within(dialog).getByLabelText(i18n.t("admin.moduleMenu.functionality")),
+      "catalog",
+    )
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("admin.moduleMenu.create"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          moduleName: "catalog",
+        }),
+        undefined,
+      )
+    })
+  })
+
+  it("updates an item without sending moduleName", async () => {
+    const user = userEvent.setup()
+    renderManager({ items: [RENTALS_ITEM] })
+    await waitForLoaded()
+
+    const row = listRow(RENTALS_ITEM.label)
+    await user.click(
+      within(row).getByRole("button", { name: i18n.t("common.edit") }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    const labelInput = within(dialog).getByLabelText(
+      i18n.t("admin.moduleMenu.label"),
+    )
+    await user.clear(labelInput)
+    await user.type(labelInput, "Quadra coberta")
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("admin.moduleMenu.save"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    const body = updateMock.mock.calls[0]?.[1]
+    expect(body).toEqual(
+      expect.objectContaining({
+        label: "Quadra coberta",
+        isActive: true,
+      }),
+    )
+    expect(body).not.toHaveProperty("moduleName")
+  })
+
+  it("confirms delete before calling the API", async () => {
+    const user = userEvent.setup()
+    renderManager({ items: [RENTALS_ITEM] })
+    await waitForLoaded()
+
+    const row = listRow(RENTALS_ITEM.label)
+    await user.click(
+      within(row).getByRole("button", { name: i18n.t("common.delete") }),
+    )
+
+    const confirm = await screen.findByRole("alertdialog")
+    expect(
+      within(confirm).getByText(
+        i18n.t("admin.moduleMenu.deleteDescription", {
+          label: RENTALS_ITEM.label,
+        }),
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(confirm).getByRole("button", { name: i18n.t("common.delete") }),
+    )
+
+    await waitFor(() => {
+      expect(deleteMock).toHaveBeenCalledWith(RENTALS_ITEM.id, undefined)
+    })
+  })
+
+  it("updates the preview while typing a rentals label", async () => {
+    const user = userEvent.setup()
+    renderManager()
+    await waitForLoaded()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("admin.moduleMenu.addFirst"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    const labelInput = within(dialog).getByLabelText(
+      i18n.t("admin.moduleMenu.label"),
+    )
+    await user.clear(labelInput)
+    await user.type(labelInput, "Minha agenda")
+
+    const preview = screen
+      .getByText(i18n.t("admin.moduleMenu.previewCaption"))
+      .closest("section")
+    if (!preview) {
+      throw new Error("Preview was not rendered.")
+    }
+    expect(
+      within(preview).getByRole("button", {
+        name: "Minha agenda",
+        hidden: true,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("does not navigate when a preview nav button is clicked", async () => {
+    const user = userEvent.setup()
+    renderManager({ items: [RENTALS_ITEM] })
+    await waitForLoaded()
+
+    const preview = screen
+      .getByText(i18n.t("admin.moduleMenu.previewCaption"))
+      .closest("section")
+    if (!preview) {
+      throw new Error("Preview was not rendered.")
+    }
+
+    await user.click(within(preview).getByRole("button", { name: RENTALS_ITEM.label }))
+
+    expect(screen.getByTestId("location-path")).toHaveTextContent(
+      "/configuracoes/menu",
+    )
+    expect(within(preview).queryByRole("link")).not.toBeInTheDocument()
+  })
+})
+
+describe("TenantModuleMenuPage", () => {
+  beforeEach(() => {
+    listMock.mockReset()
+    apiGetMock.mockReset()
+    listMock.mockResolvedValue([])
+    apiGetMock.mockResolvedValue({ data: [] })
+  })
+
+  it("uses the cadastro shell without extra padding", async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <TestPermissionProvider
+          permissions={WRITE_PERMS}
+          activeModules={ACTIVE_MODULES}
+        >
+          <TenantModuleMenuPage />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: i18n.t("admin.moduleMenu.tenantPageTitle"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("admin.moduleMenu.tenantPageDescription")),
+    ).toBeInTheDocument()
+    expect(container.firstChild).toHaveClass(
+      "mx-auto",
+      "w-full",
+      "max-w-7xl",
+      "space-y-6",
+    )
+    expect(container.firstChild).not.toHaveClass("p-6")
+  })
+})
