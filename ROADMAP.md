@@ -81,6 +81,9 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
 - [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
 - [x] `PermissionRoute` nas rotas de produto (módulo **e** permissão) + página **Pessoas e acesso** (`/pessoas-e-acesso`) com usuários e funções.
+- [x] Docs: Inventory opcional; Rentals/PMOC/OS não forçam Ativos (ADR 0004 no `vlr-api`; spec `docs/plans/active/2026-09-04-module-dependencies-asset-registry.md`).
+- [ ] Wizard/Explore consomem metadata da API (Wave 3 da spec); copy comercial, nunca “Asset Registry”.
+- [ ] UX Rentals/PMOC/OS sem nav `/ativos` quando `inventory` está off (Wave 4).
 - [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
 ## 4.5. UX de Ativos (fundação)
@@ -93,7 +96,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wizard: passo Operação; preços por preset (todos os dias / fim de semana / por dia); estado preservado entre passos
 - [x] Wizard Location: “Fila de reservas” + horário de abertura (`queueEnabled` / `queueOpeningTime`); oculto para Good
 - [x] F-16: lote — tipo Location gera N recursos numerados; tipo Good gera um recurso com quantidade em estoque (sem toggle extra)
-- [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
+- [ ] Wave 4: cadastro de recursos via Rentals quando `inventory` está off (não exigir Ativos).
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
@@ -200,6 +203,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-03 | **UX (WEB):** builder visual do menu do portal (lista + prévia B2C via `buildCustomerNavItems`); sem API nova, ícone persistido ou presets. |
 | 2026-09-03 | **UX (WEB):** menu do portal — add só com módulos B2C ativos; discovery “Amplie seu portal”; catálogo sem Nome exibido editável. |
 | 2026-09-03 | **UX (WEB):** discovery de módulos sai do builder e vira aba **Explore módulos** (catálogo Inventory/PMOC/OS/Rentals/Catalog). |
+| 2026-09-04 | **Docs:** Inventory opcional; Rentals/PMOC/OS sem forçar Ativos (espelho ADR 0004 / spec no `vlr-api`). Explore não deve usar o termo Asset Registry. Sem código nesta entrega. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
