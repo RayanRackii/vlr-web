@@ -76,7 +76,7 @@ export function isPersistedSlotId(id: string | null | undefined): boolean {
   return Boolean(id && id !== EMPTY_SLOT_ID)
 }
 
-const rentalAssetSchema = z.object({
+export const rentalAssetSchema = z.object({
   id: z.string().uuid(),
   assetId: z.string().uuid(),
   name: z.string(),
@@ -87,6 +87,12 @@ const rentalAssetSchema = z.object({
   closeTime: z.string().nullable().optional(),
   allowedDurationMinutes: z.string().nullable().optional(),
   unitId: z.string().uuid(),
+  type: z.enum(["Location", "Good"]).optional().default("Location"),
+  totalQuantity: z.number().int().optional().default(1),
+  queueEnabled: z.boolean().optional().default(false),
+  queueOpeningTime: z.string().nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
+  categoryName: z.string().nullable().optional(),
 })
 
 export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>

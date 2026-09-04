@@ -24,8 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useAuth } from "@/contexts/AuthContext"
-import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
-import { getCategories } from "@/features/assets/services/assetCategoriesService"
+import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
+import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import {
   type MaintenanceFrequency,
   type MaintenancePlan,
@@ -44,7 +44,7 @@ export function MaintenancePlansPage() {
   const navigate = useNavigate()
 
   const [plans, setPlans] = useState<MaintenancePlan[]>([])
-  const [categories, setCategories] = useState<AssetCategory[]>([])
+  const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -62,7 +62,7 @@ export function MaintenancePlansPage() {
     try {
       const [plansData, categoriesData] = await Promise.all([
         getPlans(),
-        getCategories(),
+        listPlanAssetCategories(),
       ])
       setPlans(plansData)
       setCategories(categoriesData)

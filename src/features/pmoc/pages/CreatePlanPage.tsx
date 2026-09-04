@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, BookMarked, CircleCheck, LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, BookMarked, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -34,10 +34,10 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
-import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
-import { getCategories } from "@/features/assets/services/assetCategoriesService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
+import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
+import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import {
   buildCreatePlanRequest,
   createPlanFormSchema,
@@ -66,7 +66,7 @@ export function CreatePlanPage() {
   const navigate = useNavigate()
 
   const [units, setUnits] = useState<Unit[]>([])
-  const [categories, setCategories] = useState<AssetCategory[]>([])
+  const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export function CreatePlanPage() {
     try {
       const [unitsData, categoriesData] = await Promise.all([
         getUnits(),
-        getCategories(),
+        listPlanAssetCategories(),
       ])
       setUnits(unitsData)
       setCategories(categoriesData)
@@ -352,6 +352,23 @@ export function CreatePlanPage() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin" />
           {t("pmoc.create.loading")}
+        </div>
+      ) : loadError !== null ? null : categories.length === 0 ? (
+        <div
+          role="status"
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
+        >
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <ClipboardList className="size-6" aria-hidden />
+          </div>
+          <div className="max-w-sm space-y-1">
+            <p className="text-sm font-medium text-foreground">
+              {t("pmoc.create.emptyCategoriesTitle")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("pmoc.create.emptyCategoriesDescription")}
+            </p>
+          </div>
         </div>
       ) : (
         <Form {...form}>

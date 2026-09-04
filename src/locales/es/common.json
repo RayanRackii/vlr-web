@@ -818,6 +818,7 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "rentalsResources": "Recursos",
     "catalog": "Catálogo y pedidos",
     "catalogProducts": "Productos",
     "catalogOrders": "Pedidos",
@@ -1556,7 +1557,9 @@
         "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
         "loadLookupsFailed": "No se pudieron cargar unidades o categorías.",
         "createFailed": "No se pudo crear el plan."
-      }
+      },
+      "emptyCategoriesTitle": "Ningún tipo disponible",
+      "emptyCategoriesDescription": "Los tipos de equipo vienen del aprovisionamiento del Super-Admin. No es posible crear tipos en esta pantalla."
     },
     "templates": {
       "importButton": "Importar Modelo Estándar (Normas/CREA)",
@@ -1631,6 +1634,8 @@
         "loadLookupsFailed": "No se pudieron cargar los activos y técnicos.",
         "createFailed": "No se pudo crear la orden de trabajo."
       },
+      "emptyAssetsTitle": "Ningún recurso disponible",
+      "emptyAssetsDescription": "No hay recursos para abrir una orden de trabajo. Los recursos de este entorno vienen del aprovisionamiento (Super-Admin).",
       "success": "Orden de trabajo creada correctamente.",
       "submit": "Crear OT",
       "redirecting": "OT creada"
@@ -2261,7 +2266,9 @@
       "dayEmptyNoTemplates": "Aún no hay una grilla semanal. En Configuración semanal, cree la grilla estándar.",
       "dayEmptyOpenHoursTitle": "Ningún horario generado",
       "dayEmptyOpenHoursDescription": "En Configuración semanal, guarde el horario estándar. Los intervalos de este día aparecen automáticamente.",
-      "noAssets": "Ningún espacio o bien alquilable. Marque un activo como alquilable en Activos.",
+      "noAssets": "Ningún espacio o bien alquilable.",
+      "noAssetsDescription": "Registre un recurso en Recursos para mostrarlo en la agenda.",
+      "noAssetsAction": "Añadir recurso",
       "loadError": "No se pudo cargar la escala.",
       "seedSuccess": "{{count}} horarios semanales creados. Ya quedan disponibles para reservar.",
       "seedError": "No se pudo crear la grilla estándar.",
@@ -2392,6 +2399,54 @@
         "deleteSuccess": "Template eliminado.",
         "saveError": "No se pudo guardar el template.",
         "deleteError": "No se pudo eliminar el template."
+      }
+    },
+    "resources": {
+      "title": "Recursos",
+      "description": "Registre espacios e ítems alquilables de la operación.",
+      "add": "Añadir recurso",
+      "edit": "Editar recurso",
+      "formDescription": "Un espacio (cancha, sala) o ítem alquilable. No use esta pantalla para inventario general.",
+      "saveCreate": "Crear recurso",
+      "saveEdit": "Guardar recurso",
+      "emptyTitle": "Ningún recurso disponible para alquiler",
+      "emptyDescription": "Registre su primer espacio o recurso para empezar.",
+      "emptyCategoriesTitle": "Ningún tipo disponible",
+      "emptyCategoriesDescription": "Los tipos de espacio y recurso vienen del aprovisionamiento del Super-Admin. No es posible crear tipos en esta pantalla.",
+      "loadError": "No se pudieron cargar los recursos.",
+      "createSuccess": "Recurso creado.",
+      "updateSuccess": "Recurso actualizado.",
+      "createError": "No se pudo crear el recurso.",
+      "updateError": "No se pudo actualizar el recurso.",
+      "typeLocation": "Espacio",
+      "typeGood": "Ítem alquilable",
+      "form": {
+        "name": "Nombre",
+        "namePlaceholder": "Ej.: Cancha 1",
+        "tag": "Identificador",
+        "tagPlaceholder": "Ej.: C-01",
+        "unit": "Unidad",
+        "unitPlaceholder": "Seleccione la unidad",
+        "category": "Tipo",
+        "categoryPlaceholder": "Seleccione el tipo",
+        "family": "Familia",
+        "familyPlaceholder": "Seleccione la familia",
+        "rentalType": "Tipo de alquiler",
+        "totalQuantity": "Cantidad",
+        "requiresDeposit": "¿Es necesario un pago previo?",
+        "queueEnabled": "Fila de reservas",
+        "queueOpeningTime": "Hora de apertura de la fila",
+        "location": "Ubicación",
+        "locationPlaceholder": "Ej.: Bloque A"
+      },
+      "validation": {
+        "nameRequired": "Informe el nombre.",
+        "tagRequired": "Informe el identificador.",
+        "unitRequired": "Seleccione la unidad.",
+        "categoryRequired": "Seleccione el tipo.",
+        "familyRequired": "Seleccione la familia.",
+        "quantityMin": "La cantidad debe ser al menos 1.",
+        "queueOpeningTimeRequired": "Informe la hora de apertura de la fila."
       }
     },
     "layout": {

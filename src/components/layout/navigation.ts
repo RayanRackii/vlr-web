@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
+  Boxes,
   CalendarCheck,
   CalendarClock,
   ClipboardList,
@@ -47,6 +48,7 @@ export type AppNavigationItem = {
     | "nav.schedule"
     | "nav.layout"
     | "nav.reservations"
+    | "nav.rentalsResources"
     | "nav.admin"
     | "nav.catalog"
   to: string
@@ -146,6 +148,13 @@ const operationsItems: readonly AppNavigationItem[] = [
     icon: ClipboardPen,
     modules: ["os"],
     permission: "os.work_orders.read",
+  },
+  {
+    labelKey: "nav.rentalsResources",
+    to: "/configuracoes/recursos",
+    icon: Boxes,
+    modules: ["rentals"],
+    permission: "rentals.assets.read",
   },
   {
     labelKey: "nav.schedule",

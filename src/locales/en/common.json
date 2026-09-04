@@ -818,6 +818,7 @@
     "schedule": "Schedule",
     "layout": "Layout",
     "reservations": "Reservations",
+    "rentalsResources": "Resources",
     "catalog": "Catalog & Orders",
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
@@ -1556,7 +1557,9 @@
         "unauthorized": "Invalid session. Please sign in again.",
         "loadLookupsFailed": "Could not load units or categories.",
         "createFailed": "Could not create the plan."
-      }
+      },
+      "emptyCategoriesTitle": "No types available",
+      "emptyCategoriesDescription": "Equipment types come from Super-Admin provisioning. Types cannot be created on this screen."
     },
     "templates": {
       "importButton": "Import Standard Template (Standards/CREA)",
@@ -1631,6 +1634,8 @@
         "loadLookupsFailed": "Could not load assets and technicians.",
         "createFailed": "Could not create the work order."
       },
+      "emptyAssetsTitle": "No resources available",
+      "emptyAssetsDescription": "There are no resources to open a work order. Resources in this environment come from Super-Admin provisioning.",
       "success": "Work order created successfully.",
       "submit": "Create work order",
       "redirecting": "Work order created"
@@ -2261,7 +2266,9 @@
       "dayEmptyNoTemplates": "There is no weekly grid yet. In Weekly setup, create the default grid.",
       "dayEmptyOpenHoursTitle": "No time slots generated",
       "dayEmptyOpenHoursDescription": "In Weekly setup, save standard hours. This day’s intervals appear automatically.",
-      "noAssets": "No rentable spaces or goods. Mark an asset as rentable under Assets.",
+      "noAssets": "No rentable spaces or goods yet.",
+      "noAssetsDescription": "Add a resource under Resources to show it on the schedule.",
+      "noAssetsAction": "Add resource",
       "loadError": "Could not load the schedule.",
       "seedSuccess": "{{count}} weekly time slots created. They are now available to book.",
       "seedError": "Could not create the default grid.",
@@ -2392,6 +2399,54 @@
         "deleteSuccess": "Template deleted.",
         "saveError": "Could not save the template.",
         "deleteError": "Could not delete the template."
+      }
+    },
+    "resources": {
+      "title": "Resources",
+      "description": "Register spaces and rentable items for operations.",
+      "add": "Add resource",
+      "edit": "Edit resource",
+      "formDescription": "A space (court, room) or rentable item. Do not use this screen for general inventory.",
+      "saveCreate": "Create resource",
+      "saveEdit": "Save resource",
+      "emptyTitle": "No resources available for rental",
+      "emptyDescription": "Register your first space or resource to get started.",
+      "emptyCategoriesTitle": "No types available",
+      "emptyCategoriesDescription": "Space and resource types come from Super-Admin provisioning. Types cannot be created on this screen.",
+      "loadError": "Could not load resources.",
+      "createSuccess": "Resource created.",
+      "updateSuccess": "Resource updated.",
+      "createError": "Could not create the resource.",
+      "updateError": "Could not update the resource.",
+      "typeLocation": "Space",
+      "typeGood": "Rentable item",
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "E.g. Court 1",
+        "tag": "Tag",
+        "tagPlaceholder": "E.g. C-01",
+        "unit": "Unit",
+        "unitPlaceholder": "Select a unit",
+        "category": "Type",
+        "categoryPlaceholder": "Select a type",
+        "family": "Family",
+        "familyPlaceholder": "Select a family",
+        "rentalType": "Rental type",
+        "totalQuantity": "Quantity",
+        "requiresDeposit": "Is prior payment required?",
+        "queueEnabled": "Reservation queue",
+        "queueOpeningTime": "Queue opening time",
+        "location": "Location",
+        "locationPlaceholder": "E.g. Building A"
+      },
+      "validation": {
+        "nameRequired": "Enter a name.",
+        "tagRequired": "Enter a tag.",
+        "unitRequired": "Select a unit.",
+        "categoryRequired": "Select a type.",
+        "familyRequired": "Select a family.",
+        "quantityMin": "Quantity must be at least 1.",
+        "queueOpeningTimeRequired": "Enter the queue opening time."
       }
     },
     "layout": {
