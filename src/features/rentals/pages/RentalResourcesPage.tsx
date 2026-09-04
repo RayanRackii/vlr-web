@@ -39,6 +39,7 @@ export function RentalResourcesPage() {
   const [families, setFamilies] = useState<AssetFamily[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<AdminRentalAsset | null>(null)
@@ -47,6 +48,7 @@ export function RentalResourcesPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const [assetList, categoryList, familyList, unitList] = await Promise.all([
         listAdminRentalAssets(),
@@ -59,11 +61,12 @@ export function RentalResourcesPage() {
       setFamilies(familyList)
       setUnits(unitList)
     } catch (error) {
-      toast.error(
+      const message =
         error instanceof Error
           ? error.message
-          : t("rentals.resources.loadError"),
-      )
+          : t("rentals.resources.loadError")
+      setLoadError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -131,7 +134,7 @@ export function RentalResourcesPage() {
           <Button
             type="button"
             className="w-full sm:w-auto"
-            disabled={!canWrite || loading || categories.length === 0}
+            disabled={!canWrite || loading || loadError !== null || categories.length === 0}
             onClick={openCreate}
           >
             <Plus data-icon="inline-start" />
@@ -142,6 +145,10 @@ export function RentalResourcesPage() {
 
       {loading ? (
         <PageContentSkeleton rows={4} />
+      ) : loadError !== null ? (
+        <p className="text-sm text-destructive" role="alert">
+          {loadError}
+        </p>
       ) : categories.length === 0 ? (
         <ScheduleEmptyState
           icon={Boxes}

@@ -33,7 +33,11 @@ export async function listRentalAssetCategories(): Promise<
 > {
   try {
     const response = await api.get<unknown>("/api/rental-assets/categories")
-    return registryCategoryListSchema.parse(response.data)
+    const parsed = registryCategoryListSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
   } catch (error: unknown) {
     throwResourcesError(error, i18n.t("rentals.resources.loadError"))
   }
@@ -42,7 +46,11 @@ export async function listRentalAssetCategories(): Promise<
 export async function listRentalAssetFamilies(): Promise<AssetFamily[]> {
   try {
     const response = await api.get<unknown>("/api/rental-assets/families")
-    return assetFamilyListSchema.parse(response.data)
+    const parsed = assetFamilyListSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
   } catch (error: unknown) {
     throwResourcesError(error, i18n.t("apiErrors.loadAssetFamilies"))
   }
@@ -55,7 +63,11 @@ export async function createRentalAsset(
 
   try {
     const response = await api.post<unknown>("/api/rental-assets", payload)
-    return rentalAssetSchema.parse(response.data)
+    const parsed = rentalAssetSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
   } catch (error: unknown) {
     throwResourcesError(error, i18n.t("rentals.resources.createError"))
   }
@@ -72,7 +84,11 @@ export async function updateRentalAsset(
       `/api/rental-assets/${rentalAssetId}`,
       payload,
     )
-    return rentalAssetSchema.parse(response.data)
+    const parsed = rentalAssetSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
   } catch (error: unknown) {
     throwResourcesError(error, i18n.t("rentals.resources.updateError"))
   }

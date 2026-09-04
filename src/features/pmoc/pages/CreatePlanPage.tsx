@@ -353,7 +353,7 @@ export function CreatePlanPage() {
           <LoaderCircle className="size-4 animate-spin" />
           {t("pmoc.create.loading")}
         </div>
-      ) : categories.length === 0 ? (
+      ) : loadError !== null ? null : categories.length === 0 ? (
         <div
           role="status"
           className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
