@@ -2,7 +2,11 @@ import { isNeverSelectableModuleKey } from "@/features/admin/schemas/adminModule
 import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import { z } from "zod"
 
-/** Canonical commercial keys used only as a presentation helper. Not the selectable universe. */
+/**
+ * Canonical commercial keys used only as a WEB presentation helper (Explore módulos).
+ * Not the Super-Admin selectable universe — that still comes from GET /api/admin/modules.
+ * Does not include `maintenance` (legacy) or `asset-registry` (internal capability).
+ */
 export const KNOWN_COMMERCIAL_MODULE_KEYS = [
   "inventory",
   "pmoc",

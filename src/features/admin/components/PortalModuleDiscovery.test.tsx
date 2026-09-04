@@ -1,9 +1,12 @@
-import { render, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import { render, screen, within } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { PortalModuleDiscovery } from "@/features/admin/components/PortalModuleDiscovery"
 import { listAdminModules } from "@/features/admin/services/adminModulesService"
+import {
+  getEligiblePortalMenuModules,
+  PORTAL_CUSTOMER_MODULES,
+} from "@/features/catalog/customerNav"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
@@ -17,49 +20,6 @@ vi.mock("@/features/admin/services/adminModulesService", async () => {
   }
 })
 
-const FIVE_COMMERCIAL_MODULES = [
-  {
-    key: "inventory",
-    isCommercial: true,
-    isLegacy: false,
-    provides: ["asset-registry"],
-    requiredCapabilities: [],
-    aliases: [],
-  },
-  {
-    key: "pmoc",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "os",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "rentals",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "catalog",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: [],
-    aliases: ["orders"],
-  },
-]
-
 const listModulesMock = vi.mocked(listAdminModules)
 
 function renderExplore(activeModules: readonly string[] = ["rentals"]) {
@@ -70,80 +30,103 @@ function renderExplore(activeModules: readonly string[] = ["rentals"]) {
   )
 }
 
+function moduleCard(name: string) {
+  const card = screen.getByText(name).closest("li")
+  if (!(card instanceof HTMLElement)) {
+    throw new Error(`Card for ${name} was not rendered.`)
+  }
+  return card
+}
+
 describe("PortalModuleDiscovery", () => {
   beforeEach(() => {
     listModulesMock.mockReset()
-    listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
+    listModulesMock.mockRejectedValue(new Error("PlatformAdmin-only catalog"))
   })
 
-  it("lists commercial modules from GET /api/admin/modules", async () => {
+  it("does not call GET /api/admin/modules", () => {
+    renderExplore(["rentals"])
+
+    expect(listModulesMock).not.toHaveBeenCalled()
+  })
+
+  it("lists the commercial presentation modules", () => {
+    renderExplore(["rentals"])
+
+    expect(screen.getByText(i18n.t("admin.modules.Inventory"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.PMOC"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.OS"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.Rentals"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.modules.Catalog"))).toBeInTheDocument()
+  })
+
+  it("does not show maintenance as a normal available module", () => {
+    renderExplore(["rentals", "maintenance"])
+
+    expect(screen.queryByText(/^Manutenção$/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^Maintenance$/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("admin.modules.legacyMaintenanceNote")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("does not show asset-registry", () => {
+    renderExplore(["rentals", "asset-registry"])
+
+    expect(screen.queryByText(/asset-registry/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Asset Registry/i)).not.toBeInTheDocument()
+  })
+
+  it("marks badges from activeModules, not from a catalog GET", () => {
     renderExplore(["rentals"])
 
     expect(
-      await screen.findByText(i18n.t("admin.modules.Rentals")),
+      within(moduleCard(i18n.t("admin.modules.Rentals"))).getByText(
+        i18n.t("admin.moduleMenu.stateActive"),
+      ),
     ).toBeInTheDocument()
-    expect(screen.getByText(i18n.t("admin.modules.Catalog"))).toBeInTheDocument()
-    expect(screen.getByText(i18n.t("admin.modules.PMOC"))).toBeInTheDocument()
-    expect(screen.getByText(i18n.t("admin.modules.Inventory"))).toBeInTheDocument()
-    expect(screen.getByText(i18n.t("admin.modules.OS"))).toBeInTheDocument()
-    expect(listModulesMock).toHaveBeenCalled()
+    expect(
+      within(moduleCard(i18n.t("admin.modules.Catalog"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(moduleCard(i18n.t("admin.modules.Inventory"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
+    ).toBeInTheDocument()
   })
 
-  it("does not render a maintenance card even when the payload includes it", async () => {
-    listModulesMock.mockResolvedValue([
-      ...FIVE_COMMERCIAL_MODULES,
-      {
-        key: "maintenance",
-        isCommercial: false,
-        isLegacy: true,
-        provides: [],
-        requiredCapabilities: [],
-        aliases: [],
-      },
-    ])
-    renderExplore()
+  it("does not derive B2C eligibility; portal menu stays rentals/catalog", () => {
+    renderExplore(["inventory"])
+
+    expect(PORTAL_CUSTOMER_MODULES).toEqual(["rentals", "catalog"])
+    expect(getEligiblePortalMenuModules(["inventory"])).toEqual([])
 
     expect(
-      await screen.findByText(i18n.t("admin.modules.Rentals")),
+      within(moduleCard(i18n.t("admin.modules.Inventory"))).getByText(
+        i18n.t("admin.moduleMenu.stateActive"),
+      ),
     ).toBeInTheDocument()
-    expect(screen.queryByText(/^Manutenção$/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/^Maintenance$/i)).not.toBeInTheDocument()
-  })
-
-  it("still shows an unknown commercial key from the API", async () => {
-    listModulesMock.mockResolvedValue([
-      ...FIVE_COMMERCIAL_MODULES,
-      {
-        key: "billing",
-        isCommercial: true,
-        isLegacy: false,
-        provides: [],
-        requiredCapabilities: [],
-        aliases: [],
-      },
-    ])
-    renderExplore()
-
-    expect(await screen.findByText("billing")).toBeInTheDocument()
-  })
-
-  it("shows error and retry when the catalog fails", async () => {
-    listModulesMock
-      .mockRejectedValueOnce(new Error("falha do catálogo"))
-      .mockResolvedValue(FIVE_COMMERCIAL_MODULES)
-    const user = userEvent.setup()
-    renderExplore()
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "falha do catálogo",
-    )
-
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("admin.modules.retry") }),
-    )
-
     expect(
-      await screen.findByText(i18n.t("admin.modules.Rentals")),
+      within(moduleCard(i18n.t("admin.modules.PMOC"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(moduleCard(i18n.t("admin.modules.OS"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(moduleCard(i18n.t("admin.modules.Rentals"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(moduleCard(i18n.t("admin.modules.Catalog"))).getByText(
+        i18n.t("admin.moduleMenu.stateAvailable"),
+      ),
     ).toBeInTheDocument()
   })
 })

@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
-import { listAdminModules } from "@/features/admin/services/adminModulesService"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
   createModuleMenuItem,
@@ -41,16 +40,6 @@ vi.mock("@/lib/api", () => ({
     get: vi.fn(),
   },
 }))
-
-vi.mock("@/features/admin/services/adminModulesService", async () => {
-  const actual = await vi.importActual<
-    typeof import("@/features/admin/services/adminModulesService")
-  >("@/features/admin/services/adminModulesService")
-  return {
-    ...actual,
-    listAdminModules: vi.fn(),
-  }
-})
 
 vi.mock("sonner", () => ({
   toast: {
@@ -109,50 +98,6 @@ const deleteMock = vi.mocked(deleteModuleMenuItem)
 const assetsMock = vi.mocked(fetchPortalRentalAssets)
 const brandingMock = vi.mocked(fetchTenantBranding)
 const apiGetMock = vi.mocked(api.get)
-const listModulesMock = vi.mocked(listAdminModules)
-
-const FIVE_COMMERCIAL_MODULES = [
-  {
-    key: "inventory",
-    isCommercial: true,
-    isLegacy: false,
-    provides: ["asset-registry"],
-    requiredCapabilities: [],
-    aliases: [],
-  },
-  {
-    key: "pmoc",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "os",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "rentals",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: ["asset-registry"],
-    aliases: [],
-  },
-  {
-    key: "catalog",
-    isCommercial: true,
-    isLegacy: false,
-    provides: [],
-    requiredCapabilities: [],
-    aliases: ["orders"],
-  },
-]
 
 function LocationProbe() {
   const location = useLocation()
@@ -209,7 +154,6 @@ describe("ModuleMenuItemsManager", () => {
     assetsMock.mockReset()
     brandingMock.mockReset()
     apiGetMock.mockReset()
-    listModulesMock.mockReset()
     listMock.mockResolvedValue([])
     createMock.mockResolvedValue(RENTALS_ITEM)
     updateMock.mockResolvedValue(RENTALS_ITEM)
@@ -217,7 +161,6 @@ describe("ModuleMenuItemsManager", () => {
     assetsMock.mockResolvedValue([])
     brandingMock.mockRejectedValue(new Error("no branding"))
     apiGetMock.mockResolvedValue({ data: [] })
-    listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
   })
 
   it("shows an empty state and a first-item CTA", async () => {
@@ -633,7 +576,6 @@ describe("TenantModuleMenuPage", () => {
     assetsMock.mockReset()
     brandingMock.mockReset()
     apiGetMock.mockReset()
-    listModulesMock.mockReset()
     listMock.mockResolvedValue([])
     assetsMock.mockResolvedValue([])
     brandingMock.mockResolvedValue({
@@ -645,7 +587,6 @@ describe("TenantModuleMenuPage", () => {
       welcomeTagline: null,
     })
     apiGetMock.mockResolvedValue({ data: [] })
-    listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
   })
 
   function renderPage(

@@ -7,6 +7,7 @@ import {
   Wrench,
 } from "lucide-react"
 
+import { KNOWN_COMMERCIAL_MODULE_KEYS } from "@/features/admin/schemas/adminTenantSchemas"
 import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 
 export type ModuleCatalogCategory = "customer" | "operations"
@@ -78,6 +79,14 @@ export function presentCommercialModule(moduleKey: string): PresentedModule {
       ? `admin.moduleMenu.exploreDescriptions.${pascal}`
       : key,
   }
+}
+
+/**
+ * Tenant B2B Explore list. Presentation-only; badges use runtime `activeModules`.
+ * Super-Admin wizard/edit still load selectable keys from GET /api/admin/modules.
+ */
+export function presentedCommercialModules(): readonly PresentedModule[] {
+  return KNOWN_COMMERCIAL_MODULE_KEYS.map((key) => presentCommercialModule(key))
 }
 
 export function isModuleCatalogEntryActive(

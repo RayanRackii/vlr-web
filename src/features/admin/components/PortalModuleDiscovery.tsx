@@ -1,14 +1,11 @@
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAdminModuleCatalog } from "@/features/admin/hooks/useAdminModuleCatalog"
 import {
   areAllCatalogModulesActive,
   isModuleCatalogEntryActive,
   modulesByCategory,
-  presentCommercialModule,
+  presentedCommercialModules,
   type PresentedModule,
 } from "@/features/admin/moduleCatalog"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -83,14 +80,7 @@ function CategorySection({
 export function PortalModuleDiscovery() {
   const { t } = useTranslation()
   const { activeModules } = usePermissions()
-  const {
-    selectable,
-    error,
-    isLoading,
-    retry,
-  } = useAdminModuleCatalog()
-
-  const presented = selectable.map((item) => presentCommercialModule(item.key))
+  const presented = presentedCommercialModules()
   const commercialKeys = presented.map((entry) => entry.key)
   const allActive = areAllCatalogModulesActive(activeModules, commercialKeys)
   const customerModules = modulesByCategory(presented, "customer")
@@ -112,39 +102,16 @@ export function PortalModuleDiscovery() {
         ) : null}
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="space-y-2">
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-          <Button type="button" variant="outline" size="sm" onClick={retry}>
-            {t("admin.modules.retry")}
-          </Button>
-        </div>
-      ) : null}
-
-      {!isLoading && !error ? (
-        <>
-          <CategorySection
-            title={t("admin.moduleMenu.categoryCustomer")}
-            entries={customerModules}
-            activeModules={activeModules}
-          />
-          <CategorySection
-            title={t("admin.moduleMenu.categoryOperations")}
-            entries={operationsModules}
-            activeModules={activeModules}
-          />
-        </>
-      ) : null}
+      <CategorySection
+        title={t("admin.moduleMenu.categoryCustomer")}
+        entries={customerModules}
+        activeModules={activeModules}
+      />
+      <CategorySection
+        title={t("admin.moduleMenu.categoryOperations")}
+        entries={operationsModules}
+        activeModules={activeModules}
+      />
     </div>
   )
 }

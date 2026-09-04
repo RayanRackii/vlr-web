@@ -82,7 +82,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
 - [x] `PermissionRoute` nas rotas de produto (módulo **e** permissão) + página **Pessoas e acesso** (`/pessoas-e-acesso`) com usuários e funções.
 - [x] Docs: Inventory opcional; Rentals/PMOC/OS não forçam Ativos (ADR 0004 no `vlr-api`; spec `docs/plans/active/2026-09-04-module-dependencies-asset-registry.md`).
-- [x] Wizard/Explore consomem `GET /api/admin/modules` (Wave 3); copy comercial, nunca “Asset Registry”; sem auto-select de Inventory.
+- [x] Wave 3: wizard/edit (Super-Admin) consomem `GET /api/admin/modules`; Explore (tenant B2B) usa metadados de apresentação WEB + `activeModules` porque o GET do catálogo é PlatformAdmin-only. Copy comercial, nunca “Asset Registry”; sem auto-select de Inventory.
 - [ ] UX Rentals/PMOC/OS sem nav `/ativos` quando `inventory` está off (Wave 4).
 - [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
 
@@ -205,6 +205,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-03 | **UX (WEB):** discovery de módulos sai do builder e vira aba **Explore módulos** (catálogo Inventory/PMOC/OS/Rentals/Catalog). |
 | 2026-09-04 | **Docs:** Inventory opcional; Rentals/PMOC/OS sem forçar Ativos (espelho ADR 0004 / spec no `vlr-api`). Explore não deve usar o termo Asset Registry. Sem código nesta entrega. |
 | 2026-09-04 | **Executado (WEB Wave 3):** wizard/edit/Explore consomem `GET /api/admin/modules`; checkboxes só comerciais não-legado; Rentals/PMOC/OS não auto-selecionam Inventory; `maintenance` não é selecionável (nota legado só no edit); Asset Registry nunca aparece como módulo. |
+| 2026-09-04 | **Fix (WEB Wave 3):** Explore em `/configuracoes/menu` não chama `GET /api/admin/modules` (403 para JWT de tenant). Wizard/edit Super-Admin seguem no catálogo da API; Explore usa apresentação WEB + `activeModules`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
