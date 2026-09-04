@@ -29,6 +29,7 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PortalMenuPreview } from "@/features/admin/components/PortalMenuPreview"
+import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
   getEligiblePortalMenuModules,
   isCatalogModuleName,
@@ -112,20 +113,7 @@ function friendlyModuleLabel(
   moduleName: string,
   t: (key: string) => string,
 ): string {
-  switch (toCanonicalModuleName(moduleName)) {
-    case "rentals":
-      return t("admin.modules.Rentals")
-    case "catalog":
-      return t("admin.modules.Catalog")
-    case "inventory":
-      return t("admin.modules.Inventory")
-    case "pmoc":
-      return t("admin.modules.PMOC")
-    case "os":
-      return t("admin.modules.OS")
-    default:
-      return t("admin.modules.unknown")
-  }
+  return t(moduleNameI18nKey(moduleName))
 }
 
 function destinationLabel(

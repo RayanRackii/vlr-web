@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
+import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
   PRICE_PER_MODULE_BRL,
   type TenantAdmin,
@@ -68,25 +69,7 @@ function mapTenantDeleteError(message: string, t: TFunction): string {
 }
 
 function moduleLabelKey(moduleName: string): string {
-  const normalized = moduleName.toLowerCase()
-
-  if (normalized === "inventory") {
-    return "admin.modules.Inventory"
-  }
-
-  if (normalized === "pmoc") {
-    return "admin.modules.PMOC"
-  }
-
-  if (normalized === "os") {
-    return "admin.modules.OS"
-  }
-
-  if (normalized === "rentals") {
-    return "admin.modules.Rentals"
-  }
-
-  return "admin.modules.unknown"
+  return moduleNameI18nKey(moduleName)
 }
 
 export function AdminDashboardPage() {

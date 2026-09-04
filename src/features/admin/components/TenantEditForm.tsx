@@ -2,12 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Check,
-  ClipboardList,
   Layers,
   Package,
-  ShoppingBag,
   Tent,
-  Wrench,
   Zap,
   type LucideIcon,
 } from "lucide-react"
@@ -28,11 +25,12 @@ import { RegistrationFieldsManager } from "@/features/admin/components/Registrat
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
+import { CommercialModulePicker } from "@/features/admin/components/CommercialModulePicker"
+import { useAdminModuleCatalog } from "@/features/admin/hooks/useAdminModuleCatalog"
 import {
-  MODULE_KEYS,
+  commercialModuleSelections,
   createTenantOnboardingSchemas,
   tenantOnboardingMessagesFromT,
-  type ModuleKey,
   type TenantOnboardingFormValues,
   toTenantBrandingPayload,
 } from "@/features/admin/schemas/adminTenantSchemas"
@@ -62,14 +60,6 @@ import { cn } from "@/lib/utils"
 
 const SUCCESS_REDIRECT_MS = 5000
 
-const MODULE_ICONS = {
-  Inventory: Package,
-  PMOC: ClipboardList,
-  OS: Wrench,
-  Rentals: Tent,
-  Catalog: ShoppingBag,
-} as const
-
 const FAMILY_ICONS: Record<string, LucideIcon> = {
   spaces: Tent,
   electrical: Zap,
@@ -84,13 +74,25 @@ function familyIcon(key: string): LucideIcon {
 type TenantEditFormProps = {
   tenantId: string
   initialValues: TenantOnboardingFormValues
+  hasLegacyMaintenance?: boolean
 }
 
-export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps) {
+export function TenantEditForm({
+  tenantId,
+  initialValues,
+  hasLegacyMaintenance = false,
+}: TenantEditFormProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [families, setFamilies] = useState<AssetFamily[]>([])
+  const {
+    selectable: commercialModules,
+    error: modulesError,
+    isLoading: modulesLoading,
+    retry: retryModules,
+    modulesAvailable,
+  } = useAdminModuleCatalog()
   const redirectTimeoutRef = useRef<number | null>(null)
   const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
@@ -143,7 +145,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
     }
   }, [])
 
-  function toggleModule(moduleKey: ModuleKey) {
+  function toggleModule(moduleKey: string) {
     if (isActionLocked) {
       return
     }
@@ -188,7 +190,7 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
         taxId: values.taxId.trim(),
         subdomain: values.subdomain.trim().toLowerCase(),
         ...toTenantBrandingPayload(values),
-        activeModules: values.activeModules,
+        activeModules: commercialModuleSelections(values.activeModules),
         assetFamilyKeys: values.assetFamilyKeys,
       })
 
@@ -451,49 +453,26 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
                 {t("admin.edit.sections.modulesDescription")}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {hasLegacyMaintenance ? (
+                <p className="text-sm text-muted-foreground" role="note">
+                  {t("admin.modules.legacyMaintenanceNote")}
+                </p>
+              ) : null}
               <FormField
                 control={form.control}
                 name="activeModules"
                 render={() => (
                   <FormItem>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {MODULE_KEYS.map((moduleKey) => {
-                        const Icon = MODULE_ICONS[moduleKey]
-                        const selected = values.activeModules.includes(moduleKey)
-
-                        return (
-                          <button
-                            key={moduleKey}
-                            type="button"
-                            disabled={isActionLocked}
-                            onClick={() => {
-                              toggleModule(moduleKey)
-                            }}
-                            className={cn(
-                              "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
-                              selected
-                                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                                : "border-border hover:border-primary/40 hover:bg-muted/40",
-                              isActionLocked && "pointer-events-none opacity-60",
-                            )}
-                          >
-                            {selected ? (
-                              <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
-                                <Check className="size-3" />
-                              </span>
-                            ) : null}
-                            <Icon className="size-5 text-foreground" />
-                            <span className="text-sm font-medium">
-                              {t(`admin.modules.${moduleKey}`)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {t(`admin.modules.${moduleKey}Description`)}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <CommercialModulePicker
+                      modules={commercialModules}
+                      selectedKeys={values.activeModules}
+                      isLoading={modulesLoading}
+                      error={modulesError}
+                      onRetry={retryModules}
+                      onToggle={toggleModule}
+                      disabled={isActionLocked}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -603,7 +582,10 @@ export function TenantEditForm({ tenantId, initialValues }: TenantEditFormProps)
             </Button>
             <FormPrimaryButton
               type="submit"
-              isValid={schemas.tenantOnboardingSchema.safeParse(values).success}
+              isValid={
+                modulesAvailable &&
+                schemas.tenantOnboardingSchema.safeParse(values).success
+              }
               loading={isSubmitting}
               loadingLabel={t("admin.edit.actions.saving")}
               disabled={isSubmitSuccess}

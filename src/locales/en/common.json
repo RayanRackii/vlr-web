@@ -65,6 +65,7 @@
     "leaveQueue": "Could not leave the waiting queue.",
     "processImage": "Could not process image.",
     "loadAssetFamilies": "Could not load asset families.",
+    "loadAdminModules": "Could not load modules.",
     "loadOccupancyKinds": "Could not load occupancy kinds.",
     "loadTemplates": "Could not load templates.",
     "loadAssets": "Could not load assets.",
@@ -1960,10 +1961,10 @@
       "stateAvailable": "Available",
       "exploreDescriptions": {
         "Catalog": "Show products and receive customer requests in the portal.",
-        "Rentals": "Share court availability and let customers book time slots.",
-        "PMOC": "Organize preventive maintenance plans and templates.",
+        "Rentals": "Manage bookable resources and hours.",
+        "PMOC": "Uses resources registered in the environment.",
         "Inventory": "Register and track assets and operational resources.",
-        "OS": "Open and track work orders day to day."
+        "OS": "Lets you link services to the environment's resources."
       },
       "noEligibleFunctionality": "No other active features are available.",
       "catalogAutoNav": "The module automatically adds:"
@@ -2095,16 +2096,19 @@
     },
     "modules": {
       "Inventory": "Inventory",
-      "InventoryDescription": "Asset registry and control.",
+      "InventoryDescription": "Register and control assets.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Maintenance plans and templates.",
+      "PMOCDescription": "Uses resources registered in the environment.",
       "OS": "Work Orders",
-      "OSDescription": "Work order execution and tracking.",
+      "OSDescription": "Lets you link services to the environment's resources.",
       "Rentals": "Rentals",
-      "RentalsDescription": "Locations, goods, and B2C reservations.",
+      "RentalsDescription": "Manage bookable resources and hours.",
       "Catalog": "Catalog & Orders",
       "CatalogDescription": "Products, orders, and B2C notifications.",
-      "unknown": "Module"
+      "unknown": "Module",
+      "loadFailed": "Could not load modules.",
+      "retry": "Try again",
+      "legacyMaintenanceNote": "This client still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
     },
     "wizard": {
       "title": "Register a new company",

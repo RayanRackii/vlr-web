@@ -698,7 +698,7 @@ describe("TenantModuleMenuPage", () => {
       }),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("admin.modules.PMOC")),
+      await screen.findByText(i18n.t("admin.modules.PMOC")),
     ).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("admin.modules.Inventory")),
@@ -743,7 +743,7 @@ describe("TenantModuleMenuPage", () => {
     if (!(exploreRoot instanceof HTMLElement)) {
       throw new Error("Explore surface was not rendered.")
     }
-    const catalogName = within(exploreRoot).getByText(
+    const catalogName = await within(exploreRoot).findByText(
       i18n.t("admin.modules.Catalog"),
     )
     const card = catalogName.closest("li")
