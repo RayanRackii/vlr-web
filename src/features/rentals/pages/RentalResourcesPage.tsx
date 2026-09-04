@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { Boxes, Plus } from "lucide-react"
+import { Boxes, ChevronRight, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -114,7 +114,7 @@ export function RentalResourcesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -126,11 +126,11 @@ export function RentalResourcesPage() {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex sm:justify-end">
         <Can permission="rentals.assets.write">
           <Button
             type="button"
-            size="sm"
+            className="w-full sm:w-auto"
             disabled={!canWrite || loading || categories.length === 0}
             onClick={openCreate}
           >
@@ -162,15 +162,15 @@ export function RentalResourcesPage() {
             <li key={asset.id}>
               <button
                 type="button"
-                className="flex w-full flex-col gap-1 rounded-lg border border-border px-4 py-3 text-left transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                className="group flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
                   openEdit(asset)
                 }}
                 disabled={!canWrite}
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{asset.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{asset.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
                     {asset.type === "Good"
                       ? t("rentals.resources.typeGood")
                       : t("rentals.resources.typeLocation")}
@@ -180,6 +180,12 @@ export function RentalResourcesPage() {
                       : null}
                   </p>
                 </div>
+                {canWrite ? (
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                ) : null}
               </button>
             </li>
           ))}

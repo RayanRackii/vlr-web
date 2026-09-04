@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ClipboardPen } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -213,14 +213,19 @@ export function CreateWorkOrderPage() {
           {!isLoadingLookups && assets.length === 0 && !loadError ? (
             <div
               role="status"
-              className="rounded-lg border border-dashed border-border px-6 py-14 text-center"
+              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
             >
-              <p className="text-sm font-medium">
-                {t("workOrders.create.emptyAssetsTitle")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("workOrders.create.emptyAssetsDescription")}
-              </p>
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ClipboardPen className="size-6" aria-hidden />
+              </div>
+              <div className="max-w-sm space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {t("workOrders.create.emptyAssetsTitle")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("workOrders.create.emptyAssetsDescription")}
+                </p>
+              </div>
             </div>
           ) : (
           <Form {...form}>

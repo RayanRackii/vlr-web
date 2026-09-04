@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, BookMarked, CircleCheck, LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, BookMarked, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -356,14 +356,19 @@ export function CreatePlanPage() {
       ) : categories.length === 0 ? (
         <div
           role="status"
-          className="rounded-lg border border-dashed border-border px-6 py-14 text-center"
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
         >
-          <p className="text-sm font-medium">
-            {t("pmoc.create.emptyCategoriesTitle")}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("pmoc.create.emptyCategoriesDescription")}
-          </p>
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <ClipboardList className="size-6" aria-hidden />
+          </div>
+          <div className="max-w-sm space-y-1">
+            <p className="text-sm font-medium text-foreground">
+              {t("pmoc.create.emptyCategoriesTitle")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("pmoc.create.emptyCategoriesDescription")}
+            </p>
+          </div>
         </div>
       ) : (
         <Form {...form}>

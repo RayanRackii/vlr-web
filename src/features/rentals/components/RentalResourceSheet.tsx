@@ -151,9 +151,9 @@ export function RentalResourceSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full overflow-y-auto sm:max-w-lg"
+        className="w-full sm:max-w-lg"
       >
-        <SheetHeader>
+        <SheetHeader className="border-b border-border">
           <SheetTitle>
             {editing
               ? t("rentals.resources.edit")
@@ -166,7 +166,7 @@ export function RentalResourceSheet({
 
         <Form {...form}>
           <form
-            className="flex flex-1 flex-col gap-4 px-4 pb-4"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
             onSubmit={(event) => {
               event.preventDefault()
               void form.handleSubmit(async (values) => {
@@ -466,7 +466,7 @@ export function RentalResourceSheet({
               )}
             />
 
-            <SheetFooter className="px-0">
+            <SheetFooter className="sticky bottom-0 -mx-4 -mb-4 border-t border-border bg-popover px-4">
               <Button
                 type="button"
                 variant="outline"
