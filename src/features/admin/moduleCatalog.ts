@@ -50,20 +50,6 @@ export function moduleNameI18nKey(moduleKey: string): string {
   return pascal ? `admin.modules.${pascal}` : "admin.modules.unknown"
 }
 
-export function moduleDescriptionI18nKey(moduleKey: string): string {
-  const pascal = I18N_PASCAL_BY_KEY[toCanonicalModuleName(moduleKey)]
-  return pascal
-    ? `admin.modules.${pascal}Description`
-    : `${toCanonicalModuleName(moduleKey)}Description`
-}
-
-export function moduleExploreDescriptionI18nKey(moduleKey: string): string {
-  const pascal = I18N_PASCAL_BY_KEY[toCanonicalModuleName(moduleKey)]
-  return pascal
-    ? `admin.moduleMenu.exploreDescriptions.${pascal}`
-    : toCanonicalModuleName(moduleKey)
-}
-
 export function presentCommercialModule(moduleKey: string): PresentedModule {
   const key = toCanonicalModuleName(moduleKey)
   const pascal = I18N_PASCAL_BY_KEY[key]
