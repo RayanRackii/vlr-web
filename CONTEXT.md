@@ -99,24 +99,32 @@ Digits-only CPF (11) or CNPJ (14) on Customer. Distinct from Tenant.TaxId. Legac
 _Avoid_: TaxId as the Customer document
 
 **CatalogProduct**:
-A tenant-owned product offered to that tenant's Customers. Not Asset and not Rentable.
-_Avoid_: Product (bare); linking to Asset in v1
+A tenant-owned product offered to that tenant's Customers. Not Asset and not Rentable. Does not require Inventory or Asset Registry.
+_Avoid_: Product (bare); linking to Asset in v1; treating Catalog as an Assets module
 
 **CatalogOrder**:
-A Customer request for CatalogProducts with quantities. Not a payment and not a Reservation.
-_Avoid_: Order (bare); persisted Cart
+A Customer request for CatalogProducts with quantities. Not a payment and not a Reservation. Belongs to Catalog (`orders` / `pedidos` are aliases, not a separate module).
+_Avoid_: Order (bare); persisted Cart; a standalone Orders module
 
 **ProductRequest**:
 A Customer request for something not in the catalog. Does not auto-create a CatalogProduct.
 _Avoid_: Suggestion; Lead
 
 **Asset**:
-A Tenant-scoped inventory resource (space, electrical equipment, good, …). Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows. Bulk create follows rental type: Location = N entities with numbered tags; Good = one entity with stock quantity.
-_Avoid_: One physical table per use case; dynamic per-tenant tables; asking the admin to type seven identical price rows as the default path
+A Tenant-scoped registry resource (space, electrical equipment, good, …). Persistence stays in `assets.*` on the API. Core fields are shared; family-specific values live in `Attributes` (JSONB). Linked 1:1 to a Rentable when `IsRentable`. Distinct from the commercial Inventory (Ativos) module: Rentals, PMOC and OS may use Asset rows without that entitlement. Create/edit wizard: Geral → Operação → Preços (if rentable) → Revisão. Pricing UI offers same-every-day, weekday+weekend, or per-day presets and expands them into per-weekday pricing rows. Bulk create follows rental type: Location = N entities with numbered tags; Good = one entity with stock quantity.
+_Avoid_: One physical table per use case; dynamic per-tenant tables; asking the admin to type seven identical price rows as the default path; treating Asset as the Inventory module
 
 **AssetFamily**:
-A platform catalog entry (`spaces`, `electrical`, `goods`, `generic`, …) with a FieldSchema describing extra attribute fields. Tenants enable families at onboarding (`TenantAssetFamily`). Drives asset forms and copy tone.
-_Avoid_: STI / child tables per family; inventing new CREATE TABLE migrations for each vertical
+A platform catalog entry (`spaces`, `electrical`, `goods`, `generic`, …) with a FieldSchema describing extra attribute fields. Tenants enable families at onboarding (`TenantAssetFamily`). Drives asset forms and copy tone. Family opt-in is Asset Registry provisioning, not Inventory entitlement.
+_Avoid_: STI / child tables per family; inventing new CREATE TABLE migrations for each vertical; requiring Inventory to be entitled before families can exist
+
+**AssetRegistry**:
+Internal platform capability to persist and reference Asset, AssetCategory, and AssetFamily. Not a `tenant_modules` row. Not the Ativos product. Auto-provisioned when Rentals, PMOC, or OS is activated. Canonical ADR: `vlr-api/docs/adr/0004-module-dependencies-asset-registry.md`.
+_Avoid_: Showing “Asset Registry” in tenant UI; auto-enabling the Inventory checkbox when Rentals is selected
+
+**TenantModule**:
+Commercial entitlement (`activeModules` / `core.tenant_modules`). Keys: `inventory`, `pmoc`, `os`, `rentals`, `catalog`. `maintenance` is legacy — do not activate. Distinct from Asset Registry.
+_Avoid_: A module key `asset-registry`; forcing Inventory on for Rentals/PMOC/OS
 
 **ResourceCategory**:
 A Tenant-defined label for grouping Rentables (for example padel, society, tennis, meeting room, van). Used for filters, legends, and layout meaning — not a hard-coded enum in the platform. In inventory UI this is **AssetCategory** (Tipo) within an AssetFamily.
@@ -171,7 +179,7 @@ The tenant-owned URL slug used to resolve which Tenant a public B2C request belo
 _Avoid_: custom domain (until real custom hostnames are supported), slug alone without tenant resolution
 
 ## 2. Dinâmica de Módulos e Customização
-- **Cardápio:** Super Admin ativa módulos por Tenant (`inventory`, `maintenance`, `pmoc`, `os`, `rentals`). UI B2B filtra a sidebar por `activeModules` em seções **Visão geral** / **Pessoas & portal** / **Operação** (parcial; `ModuleGuard` + Users do tenant ainda no ROADMAP).
+- **Cardápio:** Super Admin ativa **módulos comerciais** por Tenant (`inventory`, `pmoc`, `os`, `rentals`, `catalog`). Inventory (Ativos) é opcional. Rentals / PMOC / OS exigem Asset Registry (capability), não o checkbox de Ativos — a API não autoativa `inventory`. `maintenance` é legado. UI B2B filtra a sidebar por `activeModules` em seções **Visão geral** / **Pessoas & portal** / **Operação** (parcial; `ModuleGuard` + Users do tenant ainda no ROADMAP). Canônico: `vlr-api` ADR 0004.
 - **Chrome B2B / landing Rolvix:** paleta padrão `#4D6A92` (primary), `#5A8FA0` (accent) e `#A2C6E9` (complementary), com gradiente azul suave em superfícies de destaque. O portal B2C continua personalizado por tenant (`PrimaryColor` / `AccentColor`); a paleta Rolvix é apenas fallback e default de novos cadastros.
 - **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
 - **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`. E-mails `PlatformAdmin` não aparecem/contam como usuários do tenant e não podem ser excluídos pela UI de users.
