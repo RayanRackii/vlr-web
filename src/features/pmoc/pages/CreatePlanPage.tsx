@@ -34,10 +34,10 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
-import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
-import { getCategories } from "@/features/assets/services/assetCategoriesService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
+import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
+import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import {
   buildCreatePlanRequest,
   createPlanFormSchema,
@@ -66,7 +66,7 @@ export function CreatePlanPage() {
   const navigate = useNavigate()
 
   const [units, setUnits] = useState<Unit[]>([])
-  const [categories, setCategories] = useState<AssetCategory[]>([])
+  const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export function CreatePlanPage() {
     try {
       const [unitsData, categoriesData] = await Promise.all([
         getUnits(),
-        getCategories(),
+        listPlanAssetCategories(),
       ])
       setUnits(unitsData)
       setCategories(categoriesData)
@@ -352,6 +352,18 @@ export function CreatePlanPage() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin" />
           {t("pmoc.create.loading")}
+        </div>
+      ) : categories.length === 0 ? (
+        <div
+          role="status"
+          className="rounded-lg border border-dashed border-border px-6 py-14 text-center"
+        >
+          <p className="text-sm font-medium">
+            {t("pmoc.create.emptyCategoriesTitle")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("pmoc.create.emptyCategoriesDescription")}
+          </p>
         </div>
       ) : (
         <Form {...form}>

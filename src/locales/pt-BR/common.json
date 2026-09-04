@@ -818,6 +818,7 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "rentalsResources": "Recursos",
     "catalog": "Catálogo & Pedidos",
     "catalogProducts": "Produtos",
     "catalogOrders": "Pedidos",
@@ -1592,7 +1593,9 @@
         "unauthorized": "Sessão inválida. Faça login novamente.",
         "loadLookupsFailed": "Não foi possível carregar unidades ou categorias.",
         "createFailed": "Não foi possível criar o plano."
-      }
+      },
+      "emptyCategoriesTitle": "Nenhum tipo disponível",
+      "emptyCategoriesDescription": "Os tipos de equipamento vêm do provisionamento feito pelo Super-Admin. Não é possível criar tipos nesta tela."
     },
     "templates": {
       "importButton": "Importar Modelo Padrão (Normas/CREA)",
@@ -1667,6 +1670,8 @@
         "loadLookupsFailed": "Não foi possível carregar ativos e técnicos.",
         "createFailed": "Não foi possível criar a ordem de serviço."
       },
+      "emptyAssetsTitle": "Nenhum recurso disponível",
+      "emptyAssetsDescription": "Não há recursos cadastrados para abrir uma ordem de serviço. Os recursos deste ambiente vêm do provisionamento (Super-Admin).",
       "success": "Ordem de serviço criada com sucesso.",
       "submit": "Criar OS",
       "redirecting": "OS criada"
@@ -2297,7 +2302,9 @@
       "dayEmptyNoTemplates": "Ainda não há uma grade semanal. Em Configuração semanal, crie a grade padrão.",
       "dayEmptyOpenHoursTitle": "Nenhum horário gerado",
       "dayEmptyOpenHoursDescription": "Em Configuração semanal, salve o horário padrão. Os intervalos deste dia aparecem automaticamente.",
-      "noAssets": "Nenhum espaço ou bem alugável. Marque um ativo como alugável em Ativos.",
+      "noAssets": "Nenhum espaço ou item alugável cadastrado.",
+      "noAssetsDescription": "Cadastre um recurso em Recursos para ele aparecer na agenda.",
+      "noAssetsAction": "Adicionar recurso",
       "loadError": "Não foi possível carregar a escala.",
       "seedSuccess": "{{count}} horários semanais criados. Já ficam disponíveis para reserva.",
       "seedError": "Não foi possível criar a grade padrão.",
@@ -2428,6 +2435,54 @@
         "deleteSuccess": "Template excluído.",
         "saveError": "Não foi possível salvar o template.",
         "deleteError": "Não foi possível excluir o template."
+      }
+    },
+    "resources": {
+      "title": "Recursos",
+      "description": "Cadastre espaços e itens alugáveis da operação.",
+      "add": "Adicionar recurso",
+      "edit": "Editar recurso",
+      "formDescription": "Espaço (quadra, sala) ou item alugável. Não use esta tela para cadastro geral de inventário.",
+      "saveCreate": "Criar recurso",
+      "saveEdit": "Salvar recurso",
+      "emptyTitle": "Nenhum recurso disponível para aluguel",
+      "emptyDescription": "Cadastre seu primeiro espaço ou recurso para começar.",
+      "emptyCategoriesTitle": "Nenhum tipo disponível",
+      "emptyCategoriesDescription": "Os tipos de espaço e recurso vêm do provisionamento feito pelo Super-Admin. Não é possível criar tipos nesta tela.",
+      "loadError": "Não foi possível carregar os recursos.",
+      "createSuccess": "Recurso criado.",
+      "updateSuccess": "Recurso atualizado.",
+      "createError": "Não foi possível criar o recurso.",
+      "updateError": "Não foi possível atualizar o recurso.",
+      "typeLocation": "Espaço",
+      "typeGood": "Item alugável",
+      "form": {
+        "name": "Nome",
+        "namePlaceholder": "Ex.: Quadra 1",
+        "tag": "Identificador",
+        "tagPlaceholder": "Ex.: Q-01",
+        "unit": "Unidade",
+        "unitPlaceholder": "Selecione a unidade",
+        "category": "Tipo",
+        "categoryPlaceholder": "Selecione o tipo",
+        "family": "Família",
+        "familyPlaceholder": "Selecione a família",
+        "rentalType": "Tipo de aluguel",
+        "totalQuantity": "Quantidade",
+        "requiresDeposit": "É necessário pagamento prévio?",
+        "queueEnabled": "Fila de reservas",
+        "queueOpeningTime": "Horário de abertura da fila",
+        "location": "Localização",
+        "locationPlaceholder": "Ex.: Bloco A"
+      },
+      "validation": {
+        "nameRequired": "Informe o nome.",
+        "tagRequired": "Informe o identificador.",
+        "unitRequired": "Selecione a unidade.",
+        "categoryRequired": "Selecione o tipo.",
+        "familyRequired": "Selecione a família.",
+        "quantityMin": "A quantidade deve ser pelo menos 1.",
+        "queueOpeningTimeRequired": "Informe o horário de abertura da fila."
       }
     },
     "layout": {
