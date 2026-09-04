@@ -65,6 +65,7 @@
     "leaveQueue": "No se pudo salir de la fila.",
     "processImage": "No se pudo procesar la imagen.",
     "loadAssetFamilies": "No se pudieron cargar las familias de activos.",
+    "loadAdminModules": "No se pudieron cargar los módulos.",
     "loadOccupancyKinds": "No se pudieron cargar los tipos de ocupación.",
     "loadTemplates": "No se pudieron cargar las plantillas.",
     "loadAssets": "No se pudieron cargar los activos.",
@@ -1960,10 +1961,10 @@
       "stateAvailable": "Disponible",
       "exploreDescriptions": {
         "Catalog": "Muestre productos y reciba solicitudes de sus clientes en el portal.",
-        "Rentals": "Informe sobre horarios y permita reservas en el portal.",
-        "PMOC": "Organice planes de mantenimiento preventivo y plantillas.",
+        "Rentals": "Gestione recursos reservables y horarios.",
+        "PMOC": "Utiliza los recursos registrados en el entorno.",
         "Inventory": "Registre y controle activos y recursos de la operación.",
-        "OS": "Abra y acompañe órdenes de servicio en el día a día."
+        "OS": "Permite vincular servicios a los recursos del entorno."
       },
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
       "catalogAutoNav": "El módulo añade automáticamente:"
@@ -2097,14 +2098,17 @@
       "Inventory": "Inventario",
       "InventoryDescription": "Registro y control de activos.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Planes de mantenimiento y plantillas.",
+      "PMOCDescription": "Utiliza los recursos registrados en el entorno.",
       "OS": "Órdenes de Trabajo",
-      "OSDescription": "Ejecución y seguimiento de OT.",
+      "OSDescription": "Permite vincular servicios a los recursos del entorno.",
       "Rentals": "Alquileres",
-      "RentalsDescription": "Locales, bienes y reservas B2C.",
+      "RentalsDescription": "Gestione recursos reservables y horarios.",
       "Catalog": "Catálogo y pedidos",
       "CatalogDescription": "Productos, pedidos y notificaciones B2C.",
-      "unknown": "Módulo"
+      "unknown": "Módulo",
+      "loadFailed": "No se pudieron cargar los módulos.",
+      "retry": "Intentar de nuevo",
+      "legacyMaintenanceNote": "Este cliente aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
     },
     "wizard": {
       "title": "Registrar nueva empresa",

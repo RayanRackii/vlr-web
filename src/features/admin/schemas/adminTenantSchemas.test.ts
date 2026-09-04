@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  commercialModuleSelections,
   createTenantOnboardingSchemas,
   isTenantOnboardingStepValid,
+  mapTenantModuleToKey,
+  tenantAdminToFormValues,
+  tenantHasLegacyMaintenance,
   tenantOnboardingMessagesFromT,
   toCreateTenantAdminRequest,
+  type TenantAdmin,
   type TenantOnboardingFormValues,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import i18n from "@/lib/i18n"
@@ -43,6 +48,14 @@ describe("tenant onboarding validation messages", () => {
     expect(result.success).toBe(false)
     expect(messagesFound).toContain(i18n.t("admin.wizard.validation.subdomainFormat"))
     expect(messagesFound.join(" ")).not.toContain("Invalid input")
+  })
+
+  it("accepts canonical API keys and does not require PascalCase MODULE_KEYS", () => {
+    const result = schemas.step3Schema.safeParse({
+      activeModules: ["rentals", "catalog"],
+    })
+
+    expect(result.success).toBe(true)
   })
 
   it("uses a specific pt-BR message when no modules are selected", () => {
@@ -89,7 +102,7 @@ const completeWizardValues: TenantOnboardingFormValues = {
   primaryColor: "#4D6A92",
   accentColor: "",
   welcomeTagline: "",
-  activeModules: ["Rentals"],
+  activeModules: ["rentals"],
   assetFamilyKeys: ["spaces"],
   adminFullName: "",
   adminEmail: "",
@@ -106,6 +119,14 @@ describe("isTenantOnboardingStepValid", () => {
     expect(isTenantOnboardingStepValid(4, emptyWizardValues, schemas)).toBe(
       false,
     )
+  })
+
+  it("treats step 3 as invalid when the module catalog is unavailable", () => {
+    expect(
+      isTenantOnboardingStepValid(3, completeWizardValues, schemas, {
+        modulesAvailable: false,
+      }),
+    ).toBe(false)
   })
 
   it("treats step 4 as invalid when the catalog is unavailable", () => {
@@ -149,7 +170,7 @@ describe("toCreateTenantAdminRequest", () => {
       primaryColor: "4D6A92",
       accentColor: "",
       welcomeTagline: "  Bem-vindo  ",
-      activeModules: ["Rentals", "Inventory"],
+      activeModules: ["rentals", "inventory"],
       assetFamilyKeys: ["spaces"],
       adminFullName: "  Maria Silva  ",
       adminEmail: "  maria@acme.com  ",
@@ -163,7 +184,7 @@ describe("toCreateTenantAdminRequest", () => {
       primaryColor: "#4D6A92",
       accentColor: null,
       welcomeTagline: "Bem-vindo",
-      activeModules: ["Rentals", "Inventory"],
+      activeModules: ["rentals", "inventory"],
       assetFamilyKeys: ["spaces"],
       adminFullName: "Maria Silva",
       adminEmail: "maria@acme.com",
@@ -179,7 +200,7 @@ describe("toCreateTenantAdminRequest", () => {
       primaryColor: "",
       accentColor: "",
       welcomeTagline: "",
-      activeModules: ["OS"],
+      activeModules: ["os"],
       assetFamilyKeys: ["generic"],
       adminFullName: "   ",
       adminEmail: "",
@@ -194,4 +215,61 @@ describe("toCreateTenantAdminRequest", () => {
     expect(payload.accentColor).toBeNull()
     expect(payload.welcomeTagline).toBeNull()
   })
+
+  it("canonicalizes aliases and omits maintenance from the create payload", () => {
+    const values: TenantOnboardingFormValues = {
+      ...completeWizardValues,
+      activeModules: ["orders", "maintenance", "asset-registry", "Rentals"],
+    }
+
+    expect(toCreateTenantAdminRequest(values).activeModules).toEqual([
+      "catalog",
+      "rentals",
+    ])
+  })
 })
+
+describe("mapTenantModuleToKey", () => {
+  it("maps API names through aliases to canonical keys", () => {
+    expect(mapTenantModuleToKey("orders")).toBe("catalog")
+    expect(mapTenantModuleToKey("Rentals")).toBe("rentals")
+    expect(mapTenantModuleToKey("Inventory")).toBe("inventory")
+  })
+
+  it("does not map maintenance or asset-registry as selectable keys", () => {
+    expect(mapTenantModuleToKey("maintenance")).toBeNull()
+    expect(mapTenantModuleToKey("asset-registry")).toBeNull()
+  })
+})
+
+describe("tenantAdminToFormValues", () => {
+  const tenant: TenantAdmin = {
+    id: "11111111-1111-4111-8111-111111111111",
+    legalName: "Clube",
+    taxId: "12345",
+    subdomain: "clube",
+    isActive: true,
+    createdAt: "2026-09-04T00:00:00.000Z",
+    activeModules: [
+      { moduleName: "orders", isActive: true },
+      { moduleName: "maintenance", isActive: true },
+      { moduleName: "rentals", isActive: true },
+    ],
+    assetFamilyKeys: ["spaces"],
+  }
+
+  it("maps aliases and keeps maintenance off the selectable form list", () => {
+    expect(tenantAdminToFormValues(tenant).activeModules).toEqual([
+      "catalog",
+      "rentals",
+    ])
+    expect(tenantHasLegacyMaintenance(tenant)).toBe(true)
+  })
+
+  it("does not add inventory when only rentals is present", () => {
+    expect(
+      commercialModuleSelections(["rentals"]).includes("inventory"),
+    ).toBe(false)
+  })
+})
+
