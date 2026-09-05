@@ -555,7 +555,7 @@ export function TenantEditForm({
 
           <Card>
             <CardContent className="pt-6">
-              <RegistrationFieldsManager tenantId={tenantId} />
+              <RegistrationFieldsManager tenantId={tenantId} canWrite />
             </CardContent>
           </Card>
 
@@ -565,6 +565,7 @@ export function TenantEditForm({
                 tenantId={tenantId}
                 subdomain={values.subdomain}
                 activeModules={values.activeModules.map(toCanonicalModuleName)}
+                canWrite
               />
             </CardContent>
           </Card>

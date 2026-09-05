@@ -207,6 +207,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-04 | **Executado (WEB Wave 3):** wizard/edit Super-Admin consomem `GET /api/admin/modules`; checkboxes só comerciais não-legado; Rentals/PMOC/OS não auto-selecionam Inventory; `maintenance` não é selecionável (nota legado só no edit); Asset Registry nunca aparece como módulo. Explore tenant usa apresentação WEB + `activeModules`. |
 | 2026-09-04 | **Fix (WEB Wave 3):** Explore em `/configuracoes/menu` não chama `GET /api/admin/modules` (403 para JWT de tenant). Wizard/edit Super-Admin seguem no catálogo da API; Explore usa apresentação WEB + `activeModules`. |
 | 2026-09-04 | **Executado (WEB Wave 4):** `/configuracoes/recursos` cria/edita rentables com `rentals.assets.*` (sem AssetWizard / `POST /api/assets`). Agenda empty state aponta para Recursos. PMOC/OS pickers usam GET Wave 2; empty states sem CTA para `/ativos`. PMOC/OS **não** criam tipos/recursos nesta wave. |
+| 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
