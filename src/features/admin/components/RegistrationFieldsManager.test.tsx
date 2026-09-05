@@ -56,14 +56,8 @@ const createMock = vi.mocked(createRegistrationField)
 const updateMock = vi.mocked(updateRegistrationField)
 const deleteMock = vi.mocked(deleteRegistrationField)
 
-function renderManager(
-  permissions: readonly string[] = WRITE_PERMS,
-) {
-  return render(
-    <TestPermissionProvider permissions={permissions}>
-      <RegistrationFieldsManager />
-    </TestPermissionProvider>,
-  )
+function renderManager(canWrite = true) {
+  return render(<RegistrationFieldsManager canWrite={canWrite} />)
 }
 
 async function waitForListLoaded() {

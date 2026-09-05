@@ -29,6 +29,7 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PortalMenuPreview } from "@/features/admin/components/PortalMenuPreview"
+import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
   getEligiblePortalMenuModules,
   isCatalogModuleName,
@@ -52,8 +53,6 @@ import {
   updateModuleMenuItem,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
-import { Can } from "@/features/users/permissions/Can"
-import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { api } from "@/lib/api"
 
 const CREATE_DRAFT_ID = "00000000-0000-4000-8000-000000000001"
@@ -77,8 +76,10 @@ type AssetOption = {
 type ModuleMenuItemsManagerProps = {
   tenantId?: string
   subdomain?: string | null
-  /** Canonical module keys. Super-Admin embed can pass the tenant's subscribed set. */
-  activeModules?: readonly string[]
+  /** Canonical module keys of the target tenant (form DTO or current-tenant permissions). */
+  activeModules: readonly string[]
+  /** Caller-owned write gate. Super-Admin embed passes true; tenant pages pass the real permission. */
+  canWrite: boolean
 }
 
 function asAssetOptions(list: unknown): AssetOption[] {
@@ -112,20 +113,7 @@ function friendlyModuleLabel(
   moduleName: string,
   t: (key: string) => string,
 ): string {
-  switch (toCanonicalModuleName(moduleName)) {
-    case "rentals":
-      return t("admin.modules.Rentals")
-    case "catalog":
-      return t("admin.modules.Catalog")
-    case "inventory":
-      return t("admin.modules.Inventory")
-    case "pmoc":
-      return t("admin.modules.PMOC")
-    case "os":
-      return t("admin.modules.OS")
-    default:
-      return t("admin.modules.unknown")
-  }
+  return t(moduleNameI18nKey(moduleName))
 }
 
 function destinationLabel(
@@ -158,12 +146,10 @@ function isModuleInTenant(
 export function ModuleMenuItemsManager({
   tenantId,
   subdomain,
-  activeModules: activeModulesProp,
+  activeModules,
+  canWrite,
 }: ModuleMenuItemsManagerProps) {
   const { t } = useTranslation()
-  const { can, activeModules: permissionModules } = usePermissions()
-  const canWrite = Boolean(tenantId) || can("core.module_menu.write")
-  const activeModules = activeModulesProp ?? permissionModules
   const eligibleModules = useMemo(
     () => getEligiblePortalMenuModules(activeModules),
     [activeModules],
@@ -492,13 +478,7 @@ export function ModuleMenuItemsManager({
     </Button>
   ) : null
 
-  const writeControls = canWrite ? (
-    tenantId ? (
-      addButton
-    ) : addButton ? (
-      <Can permission="core.module_menu.write">{addButton}</Can>
-    ) : null
-  ) : null
+  const writeControls = canWrite ? addButton : null
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">

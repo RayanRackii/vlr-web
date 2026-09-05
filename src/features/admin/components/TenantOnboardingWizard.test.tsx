@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { TenantOnboardingWizard } from "@/features/admin/components/TenantOnboardingWizard"
+import { listAdminModules } from "@/features/admin/services/adminModulesService"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import i18n from "@/lib/i18n"
@@ -12,6 +13,16 @@ import i18n from "@/lib/i18n"
 vi.mock("@/features/assets/services/assetFamiliesService", () => ({
   listAdminAssetFamilyCatalog: vi.fn(),
 }))
+
+vi.mock("@/features/admin/services/adminModulesService", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/features/admin/services/adminModulesService")
+  >("@/features/admin/services/adminModulesService")
+  return {
+    ...actual,
+    listAdminModules: vi.fn(),
+  }
+})
 
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
   createAdminTenant: vi.fn(),
@@ -33,7 +44,37 @@ const CATALOG_FAMILY = {
   isActive: true,
 }
 
+function commercialModule(
+  key: string,
+  overrides: Partial<{
+    isCommercial: boolean
+    isLegacy: boolean
+    provides: string[]
+    requiredCapabilities: string[]
+    aliases: string[]
+  }> = {},
+) {
+  return {
+    key,
+    isCommercial: true,
+    isLegacy: false,
+    provides: [],
+    requiredCapabilities: [],
+    aliases: [],
+    ...overrides,
+  }
+}
+
+const FIVE_COMMERCIAL_MODULES = [
+  commercialModule("inventory", { provides: ["asset-registry"] }),
+  commercialModule("pmoc", { requiredCapabilities: ["asset-registry"] }),
+  commercialModule("os", { requiredCapabilities: ["asset-registry"] }),
+  commercialModule("rentals", { requiredCapabilities: ["asset-registry"] }),
+  commercialModule("catalog", { aliases: ["orders"] }),
+]
+
 const listFamiliesMock = vi.mocked(listAdminAssetFamilyCatalog)
+const listModulesMock = vi.mocked(listAdminModules)
 const createAdminTenantMock = vi.mocked(createAdminTenant)
 
 function renderWizard() {
@@ -101,7 +142,7 @@ async function fillThroughAdminInvite(
   await continueWhenEnabled(user)
 
   await user.click(
-    screen.getByRole("button", {
+    await screen.findByRole("button", {
       name: new RegExp(i18n.t("admin.modules.Rentals")),
     }),
   )
@@ -117,6 +158,8 @@ describe("TenantOnboardingWizard", () => {
   beforeEach(() => {
     listFamiliesMock.mockReset()
     listFamiliesMock.mockResolvedValue([CATALOG_FAMILY])
+    listModulesMock.mockReset()
+    listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
     createAdminTenantMock.mockReset()
     vi.mocked(toast.success).mockReset()
     vi.mocked(toast.error).mockReset()
@@ -242,7 +285,7 @@ describe("TenantOnboardingWizard", () => {
     await continueWhenEnabled(user)
 
     await user.click(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: new RegExp(i18n.t("admin.modules.Rentals")),
       }),
     )
@@ -284,7 +327,7 @@ describe("TenantOnboardingWizard", () => {
     await continueWhenEnabled(user)
 
     await user.click(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: new RegExp(i18n.t("admin.modules.Rentals")),
       }),
     )
@@ -339,4 +382,154 @@ describe("TenantOnboardingWizard", () => {
     expect(finishButton()).toBeEnabled()
     expect(createAdminTenantMock).toHaveBeenCalledTimes(1)
   })
+
+  async function fillToModulesStep(
+    user: ReturnType<typeof userEvent.setup>,
+  ) {
+    await fillCompanyStep(user)
+    await continueWhenEnabled(user)
+    await user.type(
+      await screen.findByLabelText(i18n.t("admin.wizard.fields.subdomain")),
+      "acme",
+    )
+    await continueWhenEnabled(user)
+  }
+
+  it.each([
+    ["admin.modules.Rentals", "rentals"],
+    ["admin.modules.PMOC", "pmoc"],
+    ["admin.modules.OS", "os"],
+    ["admin.modules.Catalog", "catalog"],
+  ] as const)(
+    "submits only %s without inventing inventory",
+    async (nameKey, canonicalKey) => {
+      createAdminTenantMock.mockResolvedValue({
+        id: "11111111-1111-4111-8111-111111111111",
+        legalName: "Clube Acme",
+        taxId: "123456789",
+        subdomain: "acme",
+        isActive: true,
+        createdAt: "2026-09-04T00:00:00.000Z",
+        activeModules: [{ moduleName: canonicalKey, isActive: true }],
+        assetFamilyKeys: ["spaces"],
+      })
+      const user = userEvent.setup()
+      renderWizard()
+
+      await fillToModulesStep(user)
+      await user.click(
+        await screen.findByRole("button", {
+          name: new RegExp(i18n.t(nameKey)),
+        }),
+      )
+      await continueWhenEnabled(user)
+      await user.click(await screen.findByRole("button", { name: /Espaços/ }))
+      await continueWhenEnabled(user)
+      await continueWhenEnabled(user)
+      await user.click(finishButton())
+
+      await waitFor(() => {
+        expect(createAdminTenantMock).toHaveBeenCalled()
+      })
+
+      const payload = createAdminTenantMock.mock.calls[0]?.[0]
+      expect(payload?.activeModules).toEqual([canonicalKey])
+      expect(payload?.activeModules).not.toContain("inventory")
+    },
+  )
+
+  it("does not select Inventory when Rentals is clicked", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+
+    await fillToModulesStep(user)
+
+    const rentals = await screen.findByRole("button", {
+      name: new RegExp(i18n.t("admin.modules.Rentals")),
+    })
+    const inventory = screen.getByRole("button", {
+      name: new RegExp(i18n.t("admin.modules.Inventory")),
+    })
+
+    await user.click(rentals)
+
+    expect(rentals).toHaveAttribute("aria-pressed", "true")
+    expect(inventory).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("disables Continuar and offers retry when the module catalog fails", async () => {
+    listModulesMock
+      .mockRejectedValueOnce(new Error("falha do catálogo"))
+      .mockResolvedValue(FIVE_COMMERCIAL_MODULES)
+    const user = userEvent.setup()
+    renderWizard()
+
+    await fillToModulesStep(user)
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "falha do catálogo",
+    )
+    expect(nextButton()).toBeDisabled()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("admin.modules.retry") }),
+    )
+
+    expect(
+      await screen.findByRole("button", {
+        name: new RegExp(i18n.t("admin.modules.Rentals")),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("never renders asset-registry as a module button even if the payload includes it", async () => {
+    listModulesMock.mockResolvedValue([
+      ...FIVE_COMMERCIAL_MODULES,
+      commercialModule("asset-registry", {
+        isCommercial: true,
+        isLegacy: false,
+      }),
+    ])
+    const user = userEvent.setup()
+    renderWizard()
+
+    await fillToModulesStep(user)
+
+    expect(
+      await screen.findByRole("button", {
+        name: new RegExp(i18n.t("admin.modules.Rentals")),
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/asset-registry/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /asset-registry/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("does not offer maintenance as a selectable module", async () => {
+    listModulesMock.mockResolvedValue([
+      ...FIVE_COMMERCIAL_MODULES,
+      commercialModule("maintenance", {
+        isCommercial: false,
+        isLegacy: true,
+      }),
+    ])
+    const user = userEvent.setup()
+    renderWizard()
+
+    await fillToModulesStep(user)
+
+    expect(
+      await screen.findByRole("button", {
+        name: new RegExp(i18n.t("admin.modules.Rentals")),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /^Manutenção$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /^Maintenance$/i }),
+    ).not.toBeInTheDocument()
+  })
 })
+

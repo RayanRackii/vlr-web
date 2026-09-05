@@ -106,7 +106,7 @@ function LocationProbe() {
 
 function renderManager(
   options: {
-    permissions?: readonly string[]
+    canWrite?: boolean
     activeModules?: readonly string[]
     items?: ModuleMenuItem[]
   } = {},
@@ -114,13 +114,11 @@ function renderManager(
   listMock.mockResolvedValue(options.items ?? [])
   return render(
     <MemoryRouter initialEntries={["/configuracoes/menu"]}>
-      <TestPermissionProvider
-        permissions={options.permissions ?? WRITE_PERMS}
+      <ModuleMenuItemsManager
         activeModules={options.activeModules ?? ACTIVE_MODULES}
-      >
-        <ModuleMenuItemsManager />
-        <LocationProbe />
-      </TestPermissionProvider>
+        canWrite={options.canWrite ?? true}
+      />
+      <LocationProbe />
     </MemoryRouter>,
   )
 }
@@ -698,7 +696,7 @@ describe("TenantModuleMenuPage", () => {
       }),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("admin.modules.PMOC")),
+      await screen.findByText(i18n.t("admin.modules.PMOC")),
     ).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("admin.modules.Inventory")),
@@ -743,7 +741,7 @@ describe("TenantModuleMenuPage", () => {
     if (!(exploreRoot instanceof HTMLElement)) {
       throw new Error("Explore surface was not rendered.")
     }
-    const catalogName = within(exploreRoot).getByText(
+    const catalogName = await within(exploreRoot).findByText(
       i18n.t("admin.modules.Catalog"),
     )
     const card = catalogName.closest("li")

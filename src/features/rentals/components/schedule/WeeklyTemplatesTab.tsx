@@ -1,6 +1,7 @@
 import { CalendarRange, ChevronLeft, ChevronRight, Settings2, SlidersHorizontal } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -94,6 +95,7 @@ export function WeeklyTemplatesTab({
   onApplyWeeklyRule,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [policyOpen, setPolicyOpen] = useState(false)
   const [ruleOpen, setRuleOpen] = useState(false)
 
@@ -130,6 +132,11 @@ export function WeeklyTemplatesTab({
       <ScheduleEmptyState
         icon={CalendarRange}
         title={t("rentals.schedule.noAssets")}
+        description={t("rentals.schedule.noAssetsDescription")}
+        actionLabel={t("rentals.schedule.noAssetsAction")}
+        onAction={() => {
+          void navigate("/configuracoes/recursos")
+        }}
       />
     )
   }

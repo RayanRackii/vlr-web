@@ -1,6 +1,7 @@
 import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -84,6 +85,7 @@ export function DailyAgendaTab({
   onGoWeeklySetup,
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   const selectedAssets = useMemo(
     () =>
@@ -121,6 +123,11 @@ export function DailyAgendaTab({
       <ScheduleEmptyState
         icon={CalendarDays}
         title={t("rentals.schedule.noAssets")}
+        description={t("rentals.schedule.noAssetsDescription")}
+        actionLabel={t("rentals.schedule.noAssetsAction")}
+        onAction={() => {
+          void navigate("/configuracoes/recursos")
+        }}
       />
     )
   }

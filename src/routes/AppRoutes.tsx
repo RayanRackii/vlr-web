@@ -23,6 +23,7 @@ import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
+import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
@@ -164,6 +165,14 @@ export function AppRoutes() {
             <Route
               path="/configuracoes/menu"
               element={<TenantModuleMenuPage />}
+            />
+          </Route>
+          <Route
+            element={<PermissionRoute permission="rentals.assets.read" />}
+          >
+            <Route
+              path="/configuracoes/recursos"
+              element={<RentalResourcesPage />}
             />
           </Route>
           <Route

@@ -1,8 +1,22 @@
+import { isNeverSelectableModuleKey } from "@/features/admin/schemas/adminModuleCatalogSchemas"
+import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import { z } from "zod"
 
-export const MODULE_KEYS = ["Inventory", "PMOC", "OS", "Rentals", "Catalog"] as const
+/**
+ * Canonical commercial keys used only as a WEB presentation helper (Explore módulos).
+ * Not the Super-Admin selectable universe — that still comes from GET /api/admin/modules.
+ * Does not include `maintenance` (legacy) or `asset-registry` (internal capability).
+ */
+export const KNOWN_COMMERCIAL_MODULE_KEYS = [
+  "inventory",
+  "pmoc",
+  "os",
+  "rentals",
+  "catalog",
+] as const
 
-export type ModuleKey = (typeof MODULE_KEYS)[number]
+export type KnownCommercialModuleKey =
+  (typeof KNOWN_COMMERCIAL_MODULE_KEYS)[number]
 
 export const PRICE_PER_MODULE_BRL = 199
 
@@ -98,7 +112,7 @@ export function createTenantOnboardingSchemas(
   })
 
   const step3Schema = z.object({
-    activeModules: z.array(z.enum(MODULE_KEYS)).min(1, messages.modulesMin),
+    activeModules: z.array(z.string().min(1)).min(1, messages.modulesMin),
   })
 
   const stepFamiliesSchema = z.object({
@@ -163,7 +177,7 @@ export function isTenantOnboardingStepValid(
   step: number,
   values: TenantOnboardingFormValues,
   schemas: TenantOnboardingSchemas,
-  options?: { familiesAvailable?: boolean },
+  options?: { familiesAvailable?: boolean; modulesAvailable?: boolean },
 ): boolean {
   if (step === 1) {
     return schemas.step1Schema.safeParse({
@@ -183,6 +197,10 @@ export function isTenantOnboardingStepValid(
   }
 
   if (step === 3) {
+    if (options?.modulesAvailable === false) {
+      return false
+    }
+
     return schemas.step3Schema.safeParse({
       activeModules: values.activeModules,
     }).success
@@ -274,16 +292,37 @@ export type UpdateTenantAdminRequest = z.infer<
   typeof updateTenantAdminRequestSchema
 >
 
-const MODULE_NAME_TO_KEY: Record<string, ModuleKey> = {
-  inventory: "Inventory",
-  pmoc: "PMOC",
-  os: "OS",
-  rentals: "Rentals",
-  catalog: "Catalog",
+export function mapTenantModuleToKey(moduleName: string): string | null {
+  const canonical = toCanonicalModuleName(moduleName)
+  if (canonical.length === 0 || isNeverSelectableModuleKey(canonical)) {
+    return null
+  }
+  return canonical
 }
 
-export function mapTenantModuleToKey(moduleName: string): ModuleKey | null {
-  return MODULE_NAME_TO_KEY[moduleName.toLowerCase()] ?? null
+export function tenantHasLegacyMaintenance(tenant: TenantAdmin): boolean {
+  return tenant.activeModules.some(
+    (module) =>
+      module.isActive && toCanonicalModuleName(module.moduleName) === "maintenance",
+  )
+}
+
+export function commercialModuleSelections(
+  keys: readonly string[],
+): string[] {
+  const seen = new Set<string>()
+  const selected: string[] = []
+
+  for (const key of keys) {
+    const canonical = mapTenantModuleToKey(key)
+    if (canonical === null || seen.has(canonical)) {
+      continue
+    }
+    seen.add(canonical)
+    selected.push(canonical)
+  }
+
+  return selected
 }
 
 export function tenantAdminToFormValues(
@@ -297,10 +336,11 @@ export function tenantAdminToFormValues(
     primaryColor: tenant.primaryColor ?? "",
     accentColor: tenant.accentColor ?? "",
     welcomeTagline: tenant.welcomeTagline ?? "",
-    activeModules: tenant.activeModules
-      .filter((module) => module.isActive)
-      .map((module) => mapTenantModuleToKey(module.moduleName))
-      .filter((moduleKey): moduleKey is ModuleKey => moduleKey !== null),
+    activeModules: commercialModuleSelections(
+      tenant.activeModules
+        .filter((module) => module.isActive)
+        .map((module) => module.moduleName),
+    ),
     assetFamilyKeys: tenant.assetFamilyKeys ?? [],
     adminFullName: "",
     adminEmail: "",
@@ -334,7 +374,7 @@ export function toCreateTenantAdminRequest(
     taxId: values.taxId.trim(),
     subdomain: values.subdomain.trim().toLowerCase(),
     ...toTenantBrandingPayload(values),
-    activeModules: values.activeModules,
+    activeModules: commercialModuleSelections(values.activeModules),
     assetFamilyKeys: values.assetFamilyKeys,
     adminFullName: values.adminFullName.trim() || null,
     adminEmail: values.adminEmail.trim() || null,

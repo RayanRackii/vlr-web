@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ClipboardPen } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -32,15 +32,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { Asset } from "@/features/assets/schemas/assetSchemas"
-import { getAssets } from "@/features/assets/services/assetsService"
 import type { TechnicianUser } from "@/features/users/schemas/userSchemas"
 import { getTechnicians } from "@/features/users/services/usersService"
 import {
   createWorkOrderFormSchema,
   type CreateWorkOrderFormValues,
+  type WorkOrderRegistryAsset,
 } from "@/features/workOrders/schemas/workOrderSchemas"
-import { createWorkOrder } from "@/features/workOrders/services/workOrdersService"
+import {
+  createWorkOrder,
+  listWorkOrderAssets,
+} from "@/features/workOrders/services/workOrdersService"
 
 const UNASSIGNED_VALUE = "unassigned"
 
@@ -48,7 +50,7 @@ export function CreateWorkOrderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const redirectTimeoutRef = useRef<number | null>(null)
-  const [assets, setAssets] = useState<Asset[]>([])
+  const [assets, setAssets] = useState<WorkOrderRegistryAsset[]>([])
   const [technicians, setTechnicians] = useState<TechnicianUser[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -82,10 +84,10 @@ export function CreateWorkOrderPage() {
 
     try {
       const [assetData, technicianData] = await Promise.all([
-        getAssets(),
+        listWorkOrderAssets(),
         getTechnicians(),
       ])
-      setAssets(assetData.filter((asset) => asset.requiresMaintenance))
+      setAssets(assetData)
       setTechnicians(technicianData)
     } catch (error: unknown) {
       setLoadError(
@@ -208,6 +210,24 @@ export function CreateWorkOrderPage() {
             </div>
           ) : null}
 
+          {!isLoadingLookups && assets.length === 0 && !loadError ? (
+            <div
+              role="status"
+              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
+            >
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ClipboardPen className="size-6" aria-hidden />
+              </div>
+              <div className="max-w-sm space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {t("workOrders.create.emptyAssetsTitle")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("workOrders.create.emptyAssetsDescription")}
+                </p>
+              </div>
+            </div>
+          ) : (
           <Form {...form}>
             <form
               className="space-y-5"
@@ -366,6 +386,7 @@ export function CreateWorkOrderPage() {
               </div>
             </form>
           </Form>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -81,7 +81,16 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Sidebar B2B em seções (Visão geral / Pessoas & portal / Operação) filtrada por `activeModules`.
 - [x] Skeleton shimmer na sidebar enquanto `activeModules` carrega (mantém Visão geral visível).
 - [x] `PermissionRoute` nas rotas de produto (módulo **e** permissão) + página **Pessoas e acesso** (`/pessoas-e-acesso`) com usuários e funções.
-- [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
+- [x] Docs: Inventory opcional; Rentals/PMOC/OS não forçam Ativos (ADR 0004 no `vlr-api`; spec `docs/plans/active/2026-09-04-module-dependencies-asset-registry.md`).
+- [x] Wave 3: wizard/edit (Super-Admin) consomem `GET /api/admin/modules`; Explore (tenant B2B) usa metadados de apresentação WEB + `activeModules` porque o GET do catálogo é PlatformAdmin-only. Copy comercial, nunca “Asset Registry”; sem auto-select de Inventory.
+- [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
+- [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
+
+## 4.9. DEV E2E / Release Certification
+
+- [x] Playwright contra Preview `vlr-web-git-develop` + Railway DEV API.
+- [x] Guard `E2E_PROD_GUARD` (`E2E_ENV=development`, URLs DEV obrigatórias).
+- [x] Matriz 32 combinações comerciais + gate 403 + restore do tenant compartilhado.
 
 ## 4.5. UX de Ativos (fundação)
 
@@ -93,7 +102,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wizard: passo Operação; preços por preset (todos os dias / fim de semana / por dia); estado preservado entre passos
 - [x] Wizard Location: “Fila de reservas” + horário de abertura (`queueEnabled` / `queueOpeningTime`); oculto para Good
 - [x] F-16: lote — tipo Location gera N recursos numerados; tipo Good gera um recurso com quantidade em estoque (sem toggle extra)
-- [ ] Considerar `inventory` sempre ativo no create de tenant (follow-up).
+- [x] Wave 4: cadastro de recursos alugáveis via Rentals (`POST/PUT /api/rental-assets`) quando `inventory` está off. Ativos permanece o CRUD geral quando Inventory está on. Sem serial number / data de instalação / RequiresMaintenance / exclusão em lote nesta tela.
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
@@ -200,6 +209,13 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-03 | **UX (WEB):** builder visual do menu do portal (lista + prévia B2C via `buildCustomerNavItems`); sem API nova, ícone persistido ou presets. |
 | 2026-09-03 | **UX (WEB):** menu do portal — add só com módulos B2C ativos; discovery “Amplie seu portal”; catálogo sem Nome exibido editável. |
 | 2026-09-03 | **UX (WEB):** discovery de módulos sai do builder e vira aba **Explore módulos** (catálogo Inventory/PMOC/OS/Rentals/Catalog). |
+| 2026-09-04 | **Docs:** Inventory opcional; Rentals/PMOC/OS sem forçar Ativos (espelho ADR 0004 / spec no `vlr-api`). Explore não deve usar o termo Asset Registry. Sem código nesta entrega. |
+| 2026-09-04 | **Executado (WEB Wave 3):** wizard/edit Super-Admin consomem `GET /api/admin/modules`; checkboxes só comerciais não-legado; Rentals/PMOC/OS não auto-selecionam Inventory; `maintenance` não é selecionável (nota legado só no edit); Asset Registry nunca aparece como módulo. Explore tenant usa apresentação WEB + `activeModules`. |
+| 2026-09-04 | **Fix (WEB Wave 3):** Explore em `/configuracoes/menu` não chama `GET /api/admin/modules` (403 para JWT de tenant). Wizard/edit Super-Admin seguem no catálogo da API; Explore usa apresentação WEB + `activeModules`. |
+| 2026-09-04 | **Executado (WEB Wave 4):** `/configuracoes/recursos` cria/edita rentables com `rentals.assets.*` (sem AssetWizard / `POST /api/assets`). Agenda empty state aponta para Recursos. PMOC/OS pickers usam GET Wave 2; empty states sem CTA para `/ativos`. PMOC/OS **não** criam tipos/recursos nesta wave. |
+| 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
+| 2026-09-05 | **E2E (WEB):** Playwright release suite against deployed DEV (`npm run test:e2e:release`). Prod guard, 32-state commercial matrix, runtime 403, module flows, restore. Secrets stay in gitignored `.env.e2e.local`. |
+| 2026-09-05 | **E2E (WEB):** Cleanup now cancels E2E work orders, double-deletes assets (30-day schedule + permanent when FK allows), and `RESTORE_MATCH` fails if active E2E leftovers remain. Tenant-edit asserts commercial modules only. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

@@ -7,51 +7,76 @@ import {
   Wrench,
 } from "lucide-react"
 
-import {
-  MODULE_KEYS,
-  type ModuleKey,
-} from "@/features/admin/schemas/adminTenantSchemas"
+import { KNOWN_COMMERCIAL_MODULE_KEYS } from "@/features/admin/schemas/adminTenantSchemas"
 import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 
 export type ModuleCatalogCategory = "customer" | "operations"
 
-export type ModuleCatalogEntry = {
-  key: ModuleKey
+export type PresentedModule = {
+  key: string
   category: ModuleCatalogCategory
   icon: LucideIcon
-  nameKey: `admin.modules.${ModuleKey}`
-  descriptionKey: `admin.moduleMenu.exploreDescriptions.${ModuleKey}`
+  nameKey: string
+  descriptionKey: string
+  exploreDescriptionKey: string
 }
 
-const CATEGORY_BY_KEY: Record<ModuleKey, ModuleCatalogCategory> = {
-  Catalog: "customer",
-  Rentals: "customer",
-  PMOC: "operations",
-  Inventory: "operations",
-  OS: "operations",
+const CATEGORY_BY_KEY: Record<string, ModuleCatalogCategory> = {
+  catalog: "customer",
+  rentals: "customer",
+  pmoc: "operations",
+  inventory: "operations",
+  os: "operations",
 }
 
-const ICON_BY_KEY: Record<ModuleKey, LucideIcon> = {
-  Inventory: Package,
-  PMOC: ClipboardList,
-  OS: Wrench,
-  Rentals: Tent,
-  Catalog: ShoppingBag,
+const ICON_BY_KEY: Record<string, LucideIcon> = {
+  inventory: Package,
+  pmoc: ClipboardList,
+  os: Wrench,
+  rentals: Tent,
+  catalog: ShoppingBag,
 }
 
-/** Presentation metadata for every platform module in `MODULE_KEYS`. */
-export const MODULE_CATALOG: readonly ModuleCatalogEntry[] = MODULE_KEYS.map(
-  (key) => ({
+const I18N_PASCAL_BY_KEY: Record<string, string> = {
+  inventory: "Inventory",
+  pmoc: "PMOC",
+  os: "OS",
+  rentals: "Rentals",
+  catalog: "Catalog",
+}
+
+export function moduleNameI18nKey(moduleKey: string): string {
+  const pascal = I18N_PASCAL_BY_KEY[toCanonicalModuleName(moduleKey)]
+  return pascal ? `admin.modules.${pascal}` : "admin.modules.unknown"
+}
+
+export function presentCommercialModule(moduleKey: string): PresentedModule {
+  const key = toCanonicalModuleName(moduleKey)
+  const pascal = I18N_PASCAL_BY_KEY[key]
+  return {
     key,
-    category: CATEGORY_BY_KEY[key],
-    icon: ICON_BY_KEY[key],
-    nameKey: `admin.modules.${key}`,
-    descriptionKey: `admin.moduleMenu.exploreDescriptions.${key}`,
-  }),
-)
+    category: CATEGORY_BY_KEY[key] ?? "operations",
+    icon: ICON_BY_KEY[key] ?? Package,
+    nameKey: pascal ? `admin.modules.${pascal}` : key,
+    descriptionKey: pascal
+      ? `admin.modules.${pascal}Description`
+      : `${key}Description`,
+    exploreDescriptionKey: pascal
+      ? `admin.moduleMenu.exploreDescriptions.${pascal}`
+      : key,
+  }
+}
+
+/**
+ * Tenant B2B Explore list. Presentation-only; badges use runtime `activeModules`.
+ * Super-Admin wizard/edit still load selectable keys from GET /api/admin/modules.
+ */
+export function presentedCommercialModules(): readonly PresentedModule[] {
+  return KNOWN_COMMERCIAL_MODULE_KEYS.map((key) => presentCommercialModule(key))
+}
 
 export function isModuleCatalogEntryActive(
-  key: ModuleKey,
+  key: string,
   activeModules: readonly string[],
 ): boolean {
   const active = new Set(
@@ -62,14 +87,20 @@ export function isModuleCatalogEntryActive(
 
 export function areAllCatalogModulesActive(
   activeModules: readonly string[],
+  commercialKeys: readonly string[],
 ): boolean {
-  return MODULE_KEYS.every((key) =>
+  if (commercialKeys.length === 0) {
+    return false
+  }
+
+  return commercialKeys.every((key) =>
     isModuleCatalogEntryActive(key, activeModules),
   )
 }
 
 export function modulesByCategory(
+  entries: readonly PresentedModule[],
   category: ModuleCatalogCategory,
-): readonly ModuleCatalogEntry[] {
-  return MODULE_CATALOG.filter((entry) => entry.category === category)
+): readonly PresentedModule[] {
+  return entries.filter((entry) => entry.category === category)
 }

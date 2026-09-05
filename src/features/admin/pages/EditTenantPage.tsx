@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { TenantEditForm } from "@/features/admin/components/TenantEditForm"
 import {
   tenantAdminToFormValues,
+  tenantHasLegacyMaintenance,
   type TenantOnboardingFormValues,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { getAdminTenant } from "@/features/admin/services/adminTenantsService"
@@ -74,6 +75,7 @@ export function EditTenantPage() {
   const { id } = useParams<{ id: string }>()
   const [initialValues, setInitialValues] =
     useState<TenantOnboardingFormValues | null>(null)
+  const [hasLegacyMaintenance, setHasLegacyMaintenance] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -100,6 +102,7 @@ export function EditTenantPage() {
         }
 
         setInitialValues(tenantAdminToFormValues(tenant))
+        setHasLegacyMaintenance(tenantHasLegacyMaintenance(tenant))
       } catch (error: unknown) {
         if (cancelled) {
           return
@@ -189,6 +192,7 @@ export function EditTenantPage() {
             key={formKey}
             tenantId={tenantId}
             initialValues={initialValues}
+            hasLegacyMaintenance={hasLegacyMaintenance}
           />
         ) : null}
       </main>

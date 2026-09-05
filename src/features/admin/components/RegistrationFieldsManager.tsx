@@ -47,8 +47,6 @@ import {
   updateRegistrationField,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
-import { Can } from "@/features/users/permissions/Can"
-import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const BUILT_IN_FIELDS = [
   { id: "name", labelKey: "tenantPortal.fields.name" },
@@ -76,6 +74,8 @@ type DialogState =
 type RegistrationFieldsManagerProps = {
   /** When set, uses platform-admin endpoints for that tenant. */
   tenantId?: string
+  /** Caller-owned write gate. Super-Admin embed passes true; tenant pages pass the real permission. */
+  canWrite: boolean
 }
 
 function parseOptions(
@@ -96,11 +96,9 @@ function parseOptions(
 
 export function RegistrationFieldsManager({
   tenantId,
+  canWrite,
 }: RegistrationFieldsManagerProps) {
   const { t } = useTranslation()
-  const { can } = usePermissions()
-  const canWrite =
-    Boolean(tenantId) || can("core.registration_fields.write")
 
   const [fields, setFields] = useState<RegistrationField[]>([])
   const [loading, setLoading] = useState(true)
@@ -303,13 +301,7 @@ export function RegistrationFieldsManager({
               {t("admin.registrationFields.custom.description")}
             </p>
           </div>
-          {canWrite ? (
-            tenantId ? (
-              addButton
-            ) : (
-              <Can permission="core.registration_fields.write">{addButton}</Can>
-            )
-          ) : null}
+          {canWrite ? addButton : null}
         </div>
 
         {loading ? (

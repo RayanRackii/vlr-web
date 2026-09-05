@@ -5,7 +5,8 @@ import {
   areAllCatalogModulesActive,
   isModuleCatalogEntryActive,
   modulesByCategory,
-  type ModuleCatalogEntry,
+  presentedCommercialModules,
+  type PresentedModule,
 } from "@/features/admin/moduleCatalog"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
@@ -13,18 +14,22 @@ function ModuleCard({
   entry,
   active,
 }: {
-  entry: ModuleCatalogEntry
+  entry: PresentedModule
   active: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const Icon = entry.icon
+  const name = i18n.exists(entry.nameKey) ? t(entry.nameKey) : entry.key
+  const description = i18n.exists(entry.exploreDescriptionKey)
+    ? t(entry.exploreDescriptionKey)
+    : null
 
   return (
     <li className="rounded-lg border border-border bg-card px-3.5 py-3">
       <div className="flex items-center gap-2.5">
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <p className="min-w-0 flex-1 truncate text-sm font-medium leading-5">
-          {t(entry.nameKey)}
+          {name}
         </p>
         <Badge variant={active ? "success" : "outline"}>
           {active
@@ -32,9 +37,11 @@ function ModuleCard({
             : t("admin.moduleMenu.stateAvailable")}
         </Badge>
       </div>
-      <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
-        {t(entry.descriptionKey)}
-      </p>
+      {description ? (
+        <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+          {description}
+        </p>
+      ) : null}
     </li>
   )
 }
@@ -45,7 +52,7 @@ function CategorySection({
   activeModules,
 }: {
   title: string
-  entries: readonly ModuleCatalogEntry[]
+  entries: readonly PresentedModule[]
   activeModules: readonly string[]
 }) {
   if (entries.length === 0) {
@@ -73,9 +80,11 @@ function CategorySection({
 export function PortalModuleDiscovery() {
   const { t } = useTranslation()
   const { activeModules } = usePermissions()
-  const allActive = areAllCatalogModulesActive(activeModules)
-  const customerModules = modulesByCategory("customer")
-  const operationsModules = modulesByCategory("operations")
+  const presented = presentedCommercialModules()
+  const commercialKeys = presented.map((entry) => entry.key)
+  const allActive = areAllCatalogModulesActive(activeModules, commercialKeys)
+  const customerModules = modulesByCategory(presented, "customer")
+  const operationsModules = modulesByCategory(presented, "operations")
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">

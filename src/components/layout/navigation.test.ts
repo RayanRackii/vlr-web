@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import {
   filterNavigationItemsByAccess,
   appNavigationItems,
+  getPageTitleKey,
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 
@@ -103,5 +104,43 @@ describe("filterNavigationItemsByAccess", () => {
       "/catalogo/produtos",
       "/catalogo/pedidos",
     ])
+  })
+
+  it("shows Recursos and hides Ativos when rentals is on and inventory is off", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      [
+        "rentals.assets.read",
+        "rentals.schedule.read",
+        "rentals.layouts.read",
+        "rentals.reservations.read",
+        "inventory.assets.read",
+        "inventory.categories.read",
+      ],
+    )
+
+    expect(visible.map((item) => item.to)).toContain("/configuracoes/recursos")
+    expect(visible.some((item) => item.to === "/ativos")).toBe(false)
+    expect(visible.some((item) => item.labelKey === "nav.rentalsResources")).toBe(
+      true,
+    )
+  })
+
+  it("shows Ativos and hides Recursos when inventory is on and rentals is off", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["inventory"],
+      ["inventory.assets.read", "inventory.categories.read", "rentals.assets.read"],
+    )
+
+    expect(visible.some((item) => item.to === "/ativos")).toBe(true)
+    expect(visible.map((item) => item.to)).not.toContain("/configuracoes/recursos")
+  })
+})
+
+describe("getPageTitleKey", () => {
+  it("resolves the rentals resources page", () => {
+    expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
   })
 })

@@ -11,7 +11,9 @@ Leia primeiro [`CONTEXT.md`](../../CONTEXT.md) e [`AGENTS.md`](../../AGENTS.md).
 
 ## Módulos da plataforma
 
-Chaves usadas no admin (`src/features/admin/schemas/adminTenantSchemas.ts`): `Inventory`, `PMOC`, `OS`, `Rentals` (backend normaliza para `inventory`, `pmoc`, `os`, `rentals`, `maintenance`).
+Chaves usadas no admin (`src/features/admin/schemas/adminTenantSchemas.ts`): `Inventory`, `PMOC`, `OS`, `Rentals`, `Catalog` (backend normaliza para `inventory`, `pmoc`, `os`, `rentals`, `catalog`). `maintenance` é legado — não oferecer no wizard.
+
+**Inventory (Ativos) é comercialmente opcional.** Rentals / PMOC / OS exigem Asset Registry (capability na API, tabelas `assets.*`), não o módulo Ativos — não marcar Inventory automaticamente. Catalog não depende de Assets. Pedidos pertencem ao Catalog. Nunca mostrar “Asset Registry” na UI. Canônico: `vlr-api/docs/adr/0004-module-dependencies-asset-registry.md`.
 
 **Meta de arquitetura:** a sidebar e as rotas do app autenticado devem respeitar os módulos ativos do tenant (`activeModules` / `tenant_modules`). Nav de produto no tenant usa seções **Visão geral** / **Pessoas & portal** / **Operação** (não misturar com console Super-Admin). Nav Super-Admin em modo plataforma ≠ nav de produto dentro do tenant. Toda feature nova de módulo deve nascer preparada para esse gating.
 

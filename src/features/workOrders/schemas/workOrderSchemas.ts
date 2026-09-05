@@ -49,6 +49,22 @@ export const workOrderAssetSchema = z.object({
 
 export type WorkOrderAsset = z.infer<typeof workOrderAssetSchema>
 
+/** Wave 2 picker: GET /api/work-orders/assets (`RegistryAssetListItem`). */
+export const workOrderRegistryAssetSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  tag: z.string().min(1),
+  unitId: z.string().uuid(),
+  categoryId: z.string().uuid(),
+  status: assetStatusResponseSchema,
+})
+
+export type WorkOrderRegistryAsset = z.infer<typeof workOrderRegistryAssetSchema>
+
+export const workOrderRegistryAssetListSchema = z.array(
+  workOrderRegistryAssetSchema,
+)
+
 export const workOrderTaskSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),

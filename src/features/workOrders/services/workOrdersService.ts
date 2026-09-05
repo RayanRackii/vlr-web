@@ -9,13 +9,39 @@ import {
   updateWorkOrderStatusRequestSchema,
   updateWorkOrderTaskValueRequestSchema,
   workOrderListSchema,
+  workOrderRegistryAssetListSchema,
   workOrderSchema,
   type CreateWorkOrderRequest,
   type UpdateWorkOrderStatusRequest,
   type WorkOrder,
+  type WorkOrderRegistryAsset,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 
 const WORK_ORDERS_PATH = "/api/work-orders"
+
+export async function listWorkOrderAssets(): Promise<WorkOrderRegistryAsset[]> {
+  try {
+    const response = await api.get<unknown>(`${WORK_ORDERS_PATH}/assets`)
+    const parsed = workOrderRegistryAssetListSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("workOrders.create.errors.loadLookupsFailed"),
+      ),
+    )
+  }
+}
 
 export async function createWorkOrder(
   data: CreateWorkOrderRequest,
