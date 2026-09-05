@@ -84,7 +84,13 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Docs: Inventory opcional; Rentals/PMOC/OS não forçam Ativos (ADR 0004 no `vlr-api`; spec `docs/plans/active/2026-09-04-module-dependencies-asset-registry.md`).
 - [x] Wave 3: wizard/edit (Super-Admin) consomem `GET /api/admin/modules`; Explore (tenant B2B) usa metadados de apresentação WEB + `activeModules` porque o GET do catálogo é PlatformAdmin-only. Copy comercial, nunca “Asset Registry”; sem auto-select de Inventory.
 - [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
-- [ ] Enforcement API 403 para módulos inativos (ver `vlr-api`).
+- [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
+
+## 4.9. DEV E2E / Release Certification
+
+- [x] Playwright contra Preview `vlr-web-git-develop` + Railway DEV API.
+- [x] Guard `E2E_PROD_GUARD` (`E2E_ENV=development`, URLs DEV obrigatórias).
+- [x] Matriz 32 combinações comerciais + gate 403 + restore do tenant compartilhado.
 
 ## 4.5. UX de Ativos (fundação)
 
@@ -208,6 +214,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-04 | **Fix (WEB Wave 3):** Explore em `/configuracoes/menu` não chama `GET /api/admin/modules` (403 para JWT de tenant). Wizard/edit Super-Admin seguem no catálogo da API; Explore usa apresentação WEB + `activeModules`. |
 | 2026-09-04 | **Executado (WEB Wave 4):** `/configuracoes/recursos` cria/edita rentables com `rentals.assets.*` (sem AssetWizard / `POST /api/assets`). Agenda empty state aponta para Recursos. PMOC/OS pickers usam GET Wave 2; empty states sem CTA para `/ativos`. PMOC/OS **não** criam tipos/recursos nesta wave. |
 | 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
+| 2026-09-05 | **E2E (WEB):** Playwright release suite against deployed DEV (`npm run test:e2e:release`). Prod guard, 32-state commercial matrix, runtime 403, module flows, restore. Secrets stay in gitignored `.env.e2e.local`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
