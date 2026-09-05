@@ -158,32 +158,42 @@ test.describe("OS without Inventory", () => {
     const context = readContext()
     expect(context.isolationTenantId).toBeTruthy()
 
-    await admin.put(`/api/admin/tenants/${context.isolationTenantId}`, {
-      legalName: "E2E Isolation Tenant",
-      taxId: "E2EISOLATION01",
-      subdomain: context.isolationTenantSlug,
-      activeModules: ["os"],
-      assetFamilyKeys: ["generic"],
-    })
+    try {
+      await admin.put(`/api/admin/tenants/${context.isolationTenantId}`, {
+        legalName: "E2E Isolation Tenant",
+        taxId: "E2EISOLATION01",
+        subdomain: context.isolationTenantSlug,
+        activeModules: ["os"],
+        assetFamilyKeys: ["generic"],
+      })
 
-    const snapshot = readSnapshot()
-    await applyCommercialModules(admin, snapshot, ["os"], ["generic"])
+      const snapshot = readSnapshot()
+      await applyCommercialModules(admin, snapshot, ["os"], ["generic"])
 
-    const b2b = b2bClient()
-    const assets = await b2b.get("/api/work-orders/assets")
-    expect(assets.status).toBe(200)
+      const b2b = b2bClient()
+      const assets = await b2b.get("/api/work-orders/assets")
+      expect(assets.status).toBe(200)
 
-    const guards = attachPageGuards(page)
-    await page.goto("/os/nova")
-    await expect(page).not.toHaveURL(/\/ativos/)
-    await expect(page.getByRole("link", { name: /ativos/i })).toHaveCount(0)
-    if ((assets.body as unknown[] | null)?.length === 0) {
-      await expect(
-        page.getByText("Nenhum recurso disponível"),
-      ).toBeVisible({ timeout: 30_000 })
-      await expect(page.getByText(/\/ativos/)).toHaveCount(0)
+      const guards = attachPageGuards(page)
+      await page.goto("/os/nova")
+      await expect(page).not.toHaveURL(/\/ativos/)
+      await expect(page.getByRole("link", { name: /ativos/i })).toHaveCount(0)
+      if ((assets.body as unknown[] | null)?.length === 0) {
+        await expect(
+          page.getByText("Nenhum recurso disponível"),
+        ).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByText(/\/ativos/)).toHaveCount(0)
+      }
+      guards.assertNoCrash()
+    } finally {
+      await admin.put(`/api/admin/tenants/${context.isolationTenantId}`, {
+        legalName: "E2E Isolation Tenant",
+        taxId: "E2EISOLATION01",
+        subdomain: context.isolationTenantSlug,
+        activeModules: ["catalog"],
+        assetFamilyKeys: ["generic"],
+      })
     }
-    guards.assertNoCrash()
   })
 
   test("a Rentals-created resource appears in OS assets and can be referenced", async () => {

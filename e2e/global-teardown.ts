@@ -12,7 +12,7 @@ export default async function globalTeardown(): Promise<void> {
 
   try {
     await deleteE2eOwnedResources(admin, b2b, snapshot)
-    const restored = await restoreSnapshotExact(admin, snapshot)
+    const restored = await restoreSnapshotExact(admin, b2b, snapshot)
     writeJson(path.join(CACHE_DIR, "restore-result.json"), restored)
     if (!restored.match) {
       throw new Error(`E2E_CLEANUP_FAILED ${restored.detail}`)

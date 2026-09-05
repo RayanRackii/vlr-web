@@ -10,7 +10,7 @@ test.describe("restoration", () => {
     const admin = adminClient()
     const b2b = b2bClient()
     await deleteE2eOwnedResources(admin, b2b, snapshot)
-    const restored = await restoreSnapshotExact(admin, snapshot)
+    const restored = await restoreSnapshotExact(admin, b2b, snapshot)
     expect(restored.match, restored.detail).toBe(true)
     expect(restored.detail).toBe("RESTORE_MATCH: YES")
   })

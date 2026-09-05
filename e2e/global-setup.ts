@@ -28,6 +28,16 @@ const ISOLATION_TAX_ID = "E2EISOLATION01"
 
 export default async function globalSetup(): Promise<void> {
   const env = loadE2eEnv()
+  if (!env.allowMutations) {
+    throw new Error(
+      "E2E_CONFIG_REQUIRED: certification requires E2E_ALLOW_MUTATIONS=true",
+    )
+  }
+  if (!env.restoreOriginalTenantState) {
+    throw new Error(
+      "E2E_CONFIG_REQUIRED: certification requires E2E_RESTORE_ORIGINAL_TENANT_STATE=true",
+    )
+  }
   ensureAuthDirs()
 
   const runId = new Date().toISOString().replace(/[:.]/g, "-")

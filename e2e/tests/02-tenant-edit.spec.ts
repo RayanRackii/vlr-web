@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test"
 
+import type { AdminTenant } from "../api-client"
 import { adminClient } from "../clients"
 import { readContext, readSnapshot } from "../context"
 import { PLATFORM_ADMIN_STATE } from "../env"
 import { attachPageGuards } from "../page-errors"
+import { tenantCommercialModules } from "../tenant"
 
 test.describe("Tenant Edit regression", () => {
   test.use({ storageState: PLATFORM_ADMIN_STATE })
@@ -16,14 +18,10 @@ test.describe("Tenant Edit regression", () => {
     const snapshot = readSnapshot()
     const guards = attachPageGuards(page)
 
-    const meHits: string[] = []
     const tenantHits: string[] = []
 
     page.on("request", (request) => {
       const url = request.url()
-      if (url.includes("/api/users/me")) {
-        meHits.push(url)
-      }
       if (url.includes(`/api/admin/tenants/${context.tenantId}`)) {
         tenantHits.push(url)
       }
@@ -58,6 +56,9 @@ test.describe("Tenant Edit regression", () => {
     await expect(legalName).toHaveValue(snapshot.legalName)
 
     expect(tenantHits.length).toBeGreaterThan(0)
+    expect(
+      tenantHits.some((url) => url.includes(`/api/admin/tenants/${context.tenantId}`)),
+    ).toBe(true)
     guards.assertNoCrash()
   })
 
@@ -68,18 +69,14 @@ test.describe("Tenant Edit regression", () => {
       tenantId: string | null
       activeModules: string[]
     }>("/api/users/me")
-    const tenant = await adminClient().get<{
-      id: string
-      activeModules: Array<{ moduleName: string; isActive: boolean }>
-    }>(`/api/admin/tenants/${context.tenantId}`)
-
+    const tenant = await adminClient().get<AdminTenant>(
+      `/api/admin/tenants/${context.tenantId}`,
+    )
     expect(tenant.status).toBe(200)
     expect(tenant.body?.id).toBe(snapshot.id)
-    const tenantModules = (tenant.body?.activeModules ?? [])
-      .filter((module) => module.isActive)
-      .map((module) => module.moduleName.toLowerCase())
-      .sort()
-    expect(tenantModules).toEqual([...snapshot.commercialModules].sort())
+    expect(tenantCommercialModules(tenant.body!).sort()).toEqual(
+      [...snapshot.commercialModules].sort(),
+    )
     expect(me.status).toBe(200)
   })
 })

@@ -215,6 +215,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-04 | **Executado (WEB Wave 4):** `/configuracoes/recursos` cria/edita rentables com `rentals.assets.*` (sem AssetWizard / `POST /api/assets`). Agenda empty state aponta para Recursos. PMOC/OS pickers usam GET Wave 2; empty states sem CTA para `/ativos`. PMOC/OS **não** criam tipos/recursos nesta wave. |
 | 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
 | 2026-09-05 | **E2E (WEB):** Playwright release suite against deployed DEV (`npm run test:e2e:release`). Prod guard, 32-state commercial matrix, runtime 403, module flows, restore. Secrets stay in gitignored `.env.e2e.local`. |
+| 2026-09-05 | **E2E (WEB):** Cleanup now cancels E2E work orders, double-deletes assets (30-day schedule + permanent when FK allows), and `RESTORE_MATCH` fails if active E2E leftovers remain. Tenant-edit asserts commercial modules only. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
