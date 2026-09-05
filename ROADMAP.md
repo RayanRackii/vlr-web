@@ -216,6 +216,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
 | 2026-09-05 | **E2E (WEB):** Playwright release suite against deployed DEV (`npm run test:e2e:release`). Prod guard, 32-state commercial matrix, runtime 403, module flows, restore. Secrets stay in gitignored `.env.e2e.local`. |
 | 2026-09-05 | **E2E (WEB):** Cleanup now cancels E2E work orders, double-deletes assets (30-day schedule + permanent when FK allows), and `RESTORE_MATCH` fails if active E2E leftovers remain. Tenant-edit asserts commercial modules only. |
+| 2026-09-05 | **PROD:** Human Gate approved. Squash `develop` → `main` WEB PR #48 SHA `37a5266381ad5061cfda0299acb2c84a2726b050`. Vercel Production SUCCESS. `rolvix.com.br` 308→www 200; `www.rolvix.com.br` 200. API PR #51 SHA `48ad32a1e2ac3c71ec7df59a895ef1eecae55140`. DEV E2E_CERTIFIED (51 tests, 32/32). Migrations/config **NONE**. Rollback WEB `4b048c4f0e4f4a54efc5dca74404627699b9259d`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
