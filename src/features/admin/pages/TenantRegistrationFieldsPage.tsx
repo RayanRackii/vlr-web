@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next"
 
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 export function TenantRegistrationFieldsPage() {
   const { t } = useTranslation()
+  const { can } = usePermissions()
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -17,7 +19,9 @@ export function TenantRegistrationFieldsPage() {
           </p>
         </div>
       </div>
-      <RegistrationFieldsManager />
+      <RegistrationFieldsManager
+        canWrite={can("core.registration_fields.write")}
+      />
     </div>
   )
 }

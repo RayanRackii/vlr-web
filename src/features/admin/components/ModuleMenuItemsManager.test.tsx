@@ -106,7 +106,7 @@ function LocationProbe() {
 
 function renderManager(
   options: {
-    permissions?: readonly string[]
+    canWrite?: boolean
     activeModules?: readonly string[]
     items?: ModuleMenuItem[]
   } = {},
@@ -114,13 +114,11 @@ function renderManager(
   listMock.mockResolvedValue(options.items ?? [])
   return render(
     <MemoryRouter initialEntries={["/configuracoes/menu"]}>
-      <TestPermissionProvider
-        permissions={options.permissions ?? WRITE_PERMS}
+      <ModuleMenuItemsManager
         activeModules={options.activeModules ?? ACTIVE_MODULES}
-      >
-        <ModuleMenuItemsManager />
-        <LocationProbe />
-      </TestPermissionProvider>
+        canWrite={options.canWrite ?? true}
+      />
+      <LocationProbe />
     </MemoryRouter>,
   )
 }

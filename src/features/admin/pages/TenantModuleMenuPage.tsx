@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next"
 
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import { PortalModuleDiscovery } from "@/features/admin/components/PortalModuleDiscovery"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
 
 type ModuleMenuTab = "configuration" | "explore"
 
 export function TenantModuleMenuPage() {
   const { t } = useTranslation()
+  const { can, activeModules } = usePermissions()
   const [tab, setTab] = useState<ModuleMenuTab>("configuration")
 
   const tabItems: { id: ModuleMenuTab; labelKey: string }[] = [
@@ -67,7 +69,10 @@ export function TenantModuleMenuPage() {
         className={cn(tab !== "configuration" && "hidden")}
         aria-hidden={tab !== "configuration"}
       >
-        <ModuleMenuItemsManager />
+        <ModuleMenuItemsManager
+          activeModules={activeModules}
+          canWrite={can("core.module_menu.write")}
+        />
       </div>
 
       <div
