@@ -1,4 +1,4 @@
-import { chromium, type FullConfig } from "@playwright/test"
+import { chromium } from "@playwright/test"
 
 import { ApiClient, expectStatus, type AdminTenant, type CurrentUser } from "./api-client"
 import { loginB2b, loginCustomerUi } from "./auth-ui"
@@ -26,7 +26,7 @@ import { hasLegacyMaintenance } from "./tenant"
 const ISOLATION_SLUG = "e2e-cert-isolation"
 const ISOLATION_TAX_ID = "E2EISOLATION01"
 
-export default async function globalSetup(_config: FullConfig): Promise<void> {
+export default async function globalSetup(): Promise<void> {
   const env = loadE2eEnv()
   ensureAuthDirs()
 

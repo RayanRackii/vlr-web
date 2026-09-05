@@ -175,6 +175,10 @@ test.describe("Rentals without Inventory — UI", () => {
 test.describe("Rentals + Inventory together", () => {
   test.use({ storageState: B2B_STATE })
 
+  test.afterAll(async () => {
+    await restoreTenant(adminClient(), readSnapshot())
+  })
+
   test("Ativos and Recursos both work and stay distinct", async ({ page }) => {
     const admin = adminClient()
     const snapshot = readSnapshot()

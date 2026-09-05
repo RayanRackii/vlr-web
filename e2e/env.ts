@@ -79,6 +79,23 @@ export function loadE2eEnv(): E2eEnv {
     throw new Error("E2E_PROD_GUARD_BLOCKED: production infrastructure detected")
   }
 
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!value) {
+      continue
+    }
+    const upper = key.toUpperCase()
+    if (
+      !upper.includes("SUPABASE") &&
+      !upper.startsWith("E2E_") &&
+      !upper.startsWith("VITE_")
+    ) {
+      continue
+    }
+    if (isProductionTarget(value)) {
+      throw new Error("E2E_PROD_GUARD_BLOCKED: production infrastructure detected")
+    }
+  }
+
   cached = {
     envName,
     webUrl,

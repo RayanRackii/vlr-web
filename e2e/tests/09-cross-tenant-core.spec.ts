@@ -71,6 +71,9 @@ test.describe("Cross-tenant isolation", () => {
 })
 
 test.describe("Core / PlatformAdmin ungated", () => {
+  test.afterAll(async () => {
+    await restoreTenant(adminClient(), readSnapshot())
+  })
   test("core and admin endpoints are not module-gated", async () => {
     const admin = adminClient()
     const b2b = b2bClient()
@@ -119,49 +122,55 @@ test.describe("PlatformAdmin create/edit secondary tenant", () => {
     }>(`/api/admin/tenants/${context.isolationTenantId}`)
     expect(before.status).toBe(200)
 
-    const updated = await admin.put(
-      `/api/admin/tenants/${context.isolationTenantId}`,
-      {
+    try {
+      const updated = await admin.put(
+        `/api/admin/tenants/${context.isolationTenantId}`,
+        {
+          legalName: "E2E Isolation Tenant",
+          taxId: "E2EISOLATION01",
+          subdomain: context.isolationTenantSlug,
+          activeModules: ["catalog", "rentals"],
+          assetFamilyKeys: ["generic", "spaces"],
+        },
+      )
+      expect(updated.status, updated.text.slice(0, 240)).toBe(200)
+
+      const again = await admin.put(
+        `/api/admin/tenants/${context.isolationTenantId}`,
+        {
+          legalName: "E2E Isolation Tenant",
+          taxId: "E2EISOLATION01",
+          subdomain: context.isolationTenantSlug,
+          activeModules: ["catalog", "rentals"],
+          assetFamilyKeys: ["generic", "spaces"],
+        },
+      )
+      expect(again.status).toBe(200)
+
+      const guards = attachPageGuards(page)
+      await page.goto(`/admin/tenants/${context.isolationTenantId}/edit`)
+      await expect(page.getByRole("heading", { name: "Editar cliente" })).toBeVisible({
+        timeout: 30_000,
+      })
+      guards.assertNoCrash()
+    } finally {
+      await admin.put(`/api/admin/tenants/${context.isolationTenantId}`, {
         legalName: "E2E Isolation Tenant",
         taxId: "E2EISOLATION01",
         subdomain: context.isolationTenantSlug,
-        activeModules: ["catalog", "rentals"],
-        assetFamilyKeys: ["generic", "spaces"],
-      },
-    )
-    expect(updated.status, updated.text.slice(0, 240)).toBe(200)
-
-    const again = await admin.put(
-      `/api/admin/tenants/${context.isolationTenantId}`,
-      {
-        legalName: "E2E Isolation Tenant",
-        taxId: "E2EISOLATION01",
-        subdomain: context.isolationTenantSlug,
-        activeModules: ["catalog", "rentals"],
-        assetFamilyKeys: ["generic", "spaces"],
-      },
-    )
-    expect(again.status).toBe(200)
-
-    const guards = attachPageGuards(page)
-    await page.goto(`/admin/tenants/${context.isolationTenantId}/edit`)
-    await expect(page.getByRole("heading", { name: "Editar cliente" })).toBeVisible({
-      timeout: 30_000,
-    })
-    guards.assertNoCrash()
-
-    await admin.put(`/api/admin/tenants/${context.isolationTenantId}`, {
-      legalName: "E2E Isolation Tenant",
-      taxId: "E2EISOLATION01",
-      subdomain: context.isolationTenantSlug,
-      activeModules: ["catalog"],
-      assetFamilyKeys: ["generic"],
-    })
+        activeModules: ["catalog"],
+        assetFamilyKeys: ["generic"],
+      })
+    }
   })
 })
 
 test.describe("PermissionProvider pages for tenant admin", () => {
   test.use({ storageState: B2B_STATE })
+
+  test.afterAll(async () => {
+    await restoreTenant(adminClient(), readSnapshot())
+  })
 
   test("cadastro and menu do not crash", async ({ page }) => {
     const admin = adminClient()

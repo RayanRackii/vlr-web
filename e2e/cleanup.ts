@@ -38,6 +38,36 @@ export async function deleteE2eOwnedResources(
     }
   }
 
+  const rentables = await b2b.get<Array<Named & { assetId?: string }>>(
+    "/api/rental-assets",
+  )
+  if (rentables.status === 200 && Array.isArray(rentables.body)) {
+    for (const rentable of rentables.body.filter(isE2eOwned)) {
+      const assetId = rentable.assetId ?? rentable.id
+      await b2b.delete(`/api/assets/${assetId}`)
+    }
+  }
+
+  const orders = await b2b.get<
+    Array<{
+      id: string
+      customerNote?: string
+      items?: Array<{ productName?: string }>
+    }>
+  >("/api/catalog/orders")
+  if (orders.status === 200 && Array.isArray(orders.body)) {
+    for (const order of orders.body) {
+      const haystack = `${order.customerNote ?? ""} ${
+        order.items?.map((item) => item.productName ?? "").join(" ") ?? ""
+      }`.toUpperCase()
+      if (haystack.includes(E2E_PREFIX)) {
+        await b2b.post(`/api/catalog/orders/${order.id}/cancel`, {
+          reason: "E2E cleanup",
+        })
+      }
+    }
+  }
+
   const plans = await b2b.get<Named[]>("/api/maintenance-plans")
   if (plans.status === 200 && Array.isArray(plans.body)) {
     for (const plan of plans.body.filter(isE2eOwned)) {
@@ -124,11 +154,17 @@ export async function restoreSnapshotExact(
     reloaded.assetFamilyKeys,
     snapshot.familyKeys,
   )
+  const maintenanceMatch =
+    reloaded.activeModules.some(
+      (module) =>
+        module.isActive &&
+        module.moduleName.trim().toLowerCase() === "maintenance",
+    ) === snapshot.hasLegacyMaintenance
 
-  if (!modulesMatch || !familiesMatch) {
+  if (!modulesMatch || !familiesMatch || !maintenanceMatch) {
     return {
       match: false,
-      detail: `modules actual=${tenantCommercialModules(reloaded).join(",")} expected=${snapshot.commercialModules.join(",")} families actual=${reloaded.assetFamilyKeys.join(",")} expected=${snapshot.familyKeys.join(",")}`,
+      detail: `modules actual=${tenantCommercialModules(reloaded).join(",")} expected=${snapshot.commercialModules.join(",")} families actual=${reloaded.assetFamilyKeys.join(",")} expected=${snapshot.familyKeys.join(",")} maintenanceMatch=${maintenanceMatch}`,
     }
   }
 

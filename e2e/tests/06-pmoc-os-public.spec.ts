@@ -61,6 +61,10 @@ test.describe("Public and B2C Rentals", () => {
 test.describe("B2C Rentals UI", () => {
   test.use({ storageState: B2C_STATE })
 
+  test.afterAll(async () => {
+    await restoreTenant(adminClient(), readSnapshot())
+  })
+
   test("Customer portal app renders when Rentals is ON", async ({ page }) => {
     const admin = adminClient()
     const snapshot = readSnapshot()

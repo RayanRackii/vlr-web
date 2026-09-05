@@ -86,6 +86,10 @@ test.describe("Catalog independent of Inventory", () => {
 test.describe("Catalog B2B UI", () => {
   test.use({ storageState: B2B_STATE })
 
+  test.afterAll(async () => {
+    await restoreTenant(adminClient(), readSnapshot())
+  })
+
   test("product list and create dialog render", async ({ page }) => {
     const admin = adminClient()
     const snapshot = readSnapshot()

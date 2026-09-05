@@ -92,12 +92,10 @@ export async function restoreTenant(
   admin: ApiClient,
   snapshot: TenantSnapshot,
 ): Promise<AdminTenant> {
-  return applyCommercialModules(
-    admin,
-    snapshot,
-    snapshot.commercialModules,
-    snapshot.familyKeys,
-  )
+  const modules = snapshot.hasLegacyMaintenance
+    ? [...snapshot.commercialModules, "maintenance"]
+    : snapshot.commercialModules
+  return applyCommercialModules(admin, snapshot, modules, snapshot.familyKeys)
 }
 
 export function assertExactCommercial(
