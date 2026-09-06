@@ -6,8 +6,10 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   cancelAdminReservation,
+  completeAdminReservation,
   confirmAdminReservation,
   formatMoney,
   formatReservationAssets,
@@ -27,6 +29,7 @@ function todayIsoDate(): string {
 
 export function ReservationsPage() {
   const { t } = useTranslation()
+  const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
   const [date, setDate] = useState(todayIsoDate())
   const [status, setStatus] = useState<ReservationStatus | "">("")
@@ -92,6 +95,23 @@ export function ReservationsPage() {
     }
   }
 
+  async function onComplete(id: string) {
+    setBusyId(id)
+    try {
+      await completeAdminReservation(id)
+      toast.success(t("rentals.reservations.completeSuccess"))
+      await load()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("rentals.reservations.completeError"),
+      )
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
       <div className="space-y-1">
@@ -149,6 +169,9 @@ export function ReservationsPage() {
         <ul className="divide-y divide-border rounded-md border border-border">
           {rows.map((row) => {
             const canConfirm = row.status === "PendingDeposit"
+            const canComplete =
+              row.status === "Confirmed" &&
+              can("rentals.reservations.complete")
             const canCancel =
               row.status === "PendingDeposit" || row.status === "Confirmed"
 
@@ -183,6 +206,19 @@ export function ReservationsPage() {
                       }}
                     >
                       {t("rentals.reservations.confirm")}
+                    </LoadingButton>
+                  ) : null}
+                  {canComplete ? (
+                    <LoadingButton
+                      type="button"
+                      size="sm"
+                      loading={busyId === row.id}
+                      disabled={isTrialReadOnly}
+                      onClick={() => {
+                        void onComplete(row.id)
+                      }}
+                    >
+                      {t("rentals.reservations.complete")}
                     </LoadingButton>
                   ) : null}
                   {canCancel ? (

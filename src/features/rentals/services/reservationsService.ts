@@ -111,6 +111,26 @@ export async function cancelAdminReservation(
   }
 }
 
+export async function completeAdminReservation(
+  id: string,
+): Promise<AdminReservation> {
+  try {
+    const response = await api.post(`/api/reservations/${id}/complete`)
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.completeReservation"),
+      ),
+    )
+  }
+}
+
 export function formatReservationAssets(reservation: AdminReservation): string {
   if (reservation.items.length === 0) {
     return "—"
