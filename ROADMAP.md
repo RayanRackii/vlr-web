@@ -52,7 +52,7 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 - [x] Logo com fundo sólido embutido: markup original no portal; o canvas dark usa a cor detectada (sem pad branco automático).
 - [x] Fundo B2C do portal (login/register/verify) adapta light/dark a partir das cores do tenant, sem forçar a página escura a ficar clara.
 - [x] Confirmar DNS/Vercel wildcard `*.rolvix.com.br` — live in PROD (wildcard TLS valid; arbitrary first-level tenant hosts; `/t/:slug` fallback preserved). Reserved infrastructure names (`www`, `api`, `app`, `admin`, `dev`, `staging`, `preview`, `mail`, `support`) enforced by API (`vlr-api` develop `c873833ac6f70bf8f82b81e315cc63a32a8d4166`).
-- [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
+- [x] Migration `AddTenantLogoSvg` (`core.tenants.logo_svg` text nullable) confirmed on DEV and PROD: history `20260804152356_AddTenantLogoSvg` + column present. No apply in this audit.
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
@@ -218,6 +218,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-05 | **E2E (WEB):** Cleanup now cancels E2E work orders, double-deletes assets (30-day schedule + permanent when FK allows), and `RESTORE_MATCH` fails if active E2E leftovers remain. Tenant-edit asserts commercial modules only. |
 | 2026-09-05 | **PROD:** Human Gate approved. Squash `develop` → `main` WEB PR #48 SHA `37a5266381ad5061cfda0299acb2c84a2726b050`. Vercel Production SUCCESS. `rolvix.com.br` 308→www 200; `www.rolvix.com.br` 200. API PR #51 SHA `48ad32a1e2ac3c71ec7df59a895ef1eecae55140`. DEV E2E_CERTIFIED (51 tests, 32/32). Migrations/config **NONE**. Rollback WEB `4b048c4f0e4f4a54efc5dca74404627699b9259d`. |
 | 2026-09-05 | **Docs:** close wildcard infra — `*.rolvix.com.br` live in PROD, wildcard TLS valid, arbitrary first-level tenant hosts supported, `/t/:slug` fallback preserved. Reserved infrastructure names enforced by API (`c873833ac6f70bf8f82b81e315cc63a32a8d4166`). No WEB/DNS/Vercel/PROD mutation. |
+| 2026-09-05 | **Docs:** confirm `AddTenantLogoSvg` applied. DEV: `core.__ef_migrations_history` + `core.tenants.logo_svg` text NULL. PROD: workflow `list/production` run `33261868461` (2026-08-29) lists `20260804152356_AddTenantLogoSvg`, `PENDING_COUNT=0`, identity `kbptdzfbngelzdhriyhf`. Runtime branding still returns `logoSvg`. No migration apply. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
