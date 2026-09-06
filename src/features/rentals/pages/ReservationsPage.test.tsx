@@ -119,6 +119,8 @@ describe("ReservationsPage Complete", () => {
 
     expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).toBeInTheDocument()
+    expect(screen.getByText(/10:00/)).toBeInTheDocument()
+    expect(screen.getByText(/11:00/)).toBeInTheDocument()
   })
 
   it("hides Concluir when the reservation is Confirmed but the permission is missing", async () => {

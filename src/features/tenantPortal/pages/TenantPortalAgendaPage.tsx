@@ -19,6 +19,7 @@ import {
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
+import { formatReservationRange } from "@/features/rentals/services/reservationsService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
@@ -36,13 +37,7 @@ import {
   type PortalReservation,
   type PortalScheduleSlot,
 } from "@/features/tenantPortal/services/tenantPortalService"
-
-function todayIsoDate(): string {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${now.getFullYear()}-${month}-${day}`
-}
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 
 export function TenantPortalAgendaPage() {
   const { t } = useTranslation()
@@ -62,7 +57,7 @@ export function TenantPortalAgendaPage() {
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>([])
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
-  const [date, setDate] = useState(todayIsoDate())
+  const [date, setDate] = useState(brazilTodayIsoDate())
   const [startTime, setStartTime] = useState("")
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
@@ -574,8 +569,11 @@ export function TenantPortalAgendaPage() {
                         .join(", ")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(reservation.startDateTime).toLocaleString()} →{" "}
-                      {new Date(reservation.endDateTime).toLocaleTimeString()} ·{" "}
+                      {formatReservationRange(
+                        reservation.startDateTime,
+                        reservation.endDateTime,
+                      )}{" "}
+                      ·{" "}
                       {t(`rentals.reservations.statuses.${reservation.status}`, {
                         defaultValue: reservation.status,
                       })}

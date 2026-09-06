@@ -19,19 +19,13 @@ import {
   type AdminReservation,
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
-
-function todayIsoDate(): string {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${now.getFullYear()}-${month}-${day}`
-}
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 
 export function ReservationsPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
-  const [date, setDate] = useState(todayIsoDate())
+  const [date, setDate] = useState(brazilTodayIsoDate())
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
   const [loading, setLoading] = useState(true)
