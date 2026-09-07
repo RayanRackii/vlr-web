@@ -121,7 +121,8 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch `feat/catalog-orders`.
 
 - [x] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
-- [x] B2B: Produtos, Pedidos, Notificações (`/catalogo/*`)
+- [x] B2B: Produtos, Pedidos; `/catalogo/notificacoes` é histórico/reenvio (sem matriz de canais)
+- [x] Settings unificadas `/configuracoes/notificacoes` (Catalog + Rentals; `core.notifications.read` / `core.notifications.write`)
 - [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
 - [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
 - [x] CustomerAppLayout.modulePath para `catalog`
@@ -238,6 +239,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-06 | **PROD:** Rentals Wave 1 **PROD_COMPLETE**. WEB `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Clocks in `America/Sao_Paulo`. Public/read-only smoke passed. No customer write smoke. This closeout does not authorize Wave 2 / Layout / timezone follow-up implementation. |
 | 2026-09-07 | **DEV:** B2C self-cancel **CLOSED_DEV** (not PROD). WEB `3478355` / PR #59; API `89b3e6d` / PR #64. Minhas reservas Cancelar; Playwright Confirmed path passed. Wave 1 permanece PROD_COMPLETE. |
 | 2026-09-07 | **Código (WEB):** B2C self-cancel em Minhas reservas (`POST /api/reservations/mine/{id}/cancel`). API first já em `develop` `89b3e6d` / PR #64. Sem Complete B2C. Wave 1 permanece PROD_COMPLETE. |
+| 2026-09-07 | **Código (WEB):** settings unificadas de notificações em `/configuracoes/notificacoes` (Catalog + Rentals). `/catalogo/notificacoes` fica só histórico/reenvio. WhatsApp Rentals liga/desliga na UI (SQL não é o caminho normal). API already on `develop` (`51b7306` / PR #70). Branch `feat/unified-notification-settings`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

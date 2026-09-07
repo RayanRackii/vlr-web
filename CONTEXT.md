@@ -106,6 +106,10 @@ _Avoid_: Product (bare); linking to Asset in v1; treating Catalog as an Assets m
 A Customer request for CatalogProducts with quantities. Not a payment and not a Reservation. Belongs to Catalog (`orders` / `pedidos` are aliases, not a separate module).
 _Avoid_: Order (bare); persisted Cart; a standalone Orders module
 
+**Notification channel settings**:
+Tenant B2B page at `/configuracoes/notificacoes` for Catalog + Rentals event channels (`GET/PUT /api/notifications/channel-configs`). `/catalogo/notificacoes` is Catalog delivery history and resend only. Customer cannot configure. Rentals WhatsApp is toggled in this UI — SQL is not the normal path (API runbook).
+_Avoid_: A second Catalog channel matrix; a Rentals-only settings screen; treating SQL as the operator path
+
 **ProductRequest**:
 A Customer request for something not in the catalog. Does not auto-create a CatalogProduct.
 _Avoid_: Suggestion; Lead
@@ -206,7 +210,7 @@ vlr-web (este repo)                 vlr-api (repo irmão)
 ```
 
 ## 4. Fases (resumo para o FE)
-- Fase 1.5 notificações reais — **adiada**.
+- Fase 1.5 notificações reais (entrega Meta/Resend) — **adiada**. Canais do tenant ligam/desligam em `/configuracoes/notificacoes`.
 - Fase 2a PMOC/OS/Inventário — base entregue.
 - Fase 2b Rentals beachhead — **foco**: portal estável + agenda por Slot + admin de reservas.
 - Não antecipar módulos futuros (RH, Financeiro, …).
