@@ -13,6 +13,7 @@ import {
   getQueue,
   isSafeClosedPhaseWindow,
   isSafeOpenPhaseWindow,
+  isWaitingRoomStillOpen,
   joinQueue,
   openAgendaOnDate,
   queueError,
@@ -177,6 +178,10 @@ test.describe("Rentals queue E2E", () => {
   })
 
   test("Customer joins WaitingRoom, duplicate join is idempotent, reload keeps ticket", async () => {
+    test.skip(
+      !isWaitingRoomStillOpen(waitingLocation.queueOpeningTime),
+      "WaitingRoom opening is too close; this Location would drift into Open.",
+    )
     const customer = customerClient(readSnapshot().subdomain)
     const first = await joinQueue(customer, waitingLocation.id)
     expect(first.status, queueError(first)).toBe(200)
@@ -199,6 +204,10 @@ test.describe("Rentals queue E2E", () => {
   })
 
   test("waiting Customer cannot book (QUEUE_WAITING)", async () => {
+    test.skip(
+      !isWaitingRoomStillOpen(waitingLocation.queueOpeningTime),
+      "WaitingRoom opening is too close; this Location would drift into Open.",
+    )
     const snapshot = readSnapshot()
     const customer = customerClient(snapshot.subdomain)
     const booked = await customer.post("/api/reservations", {
@@ -392,9 +401,10 @@ test.describe("Rentals queue B2C UI", () => {
     const guards = attachPageGuards(page)
     await openAgendaOnDate(page, snapshot.subdomain, bookDate, closedLocation!.name)
     await selectLocationOnAgenda(page, closedLocation!.name, bookWindow.startTime)
-    await expect(page.getByText(/A fila abre às/)).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText(waitingRoomClock)).toBeVisible()
-    await expect(page.getByText(opensClock)).toBeVisible()
+    const closedCopy = page.getByText(/A fila abre às/)
+    await expect(closedCopy).toBeVisible({ timeout: 15_000 })
+    await expect(closedCopy).toContainText(waitingRoomClock)
+    await expect(closedCopy).toContainText(opensClock)
     await expect(page.getByRole("button", { name: "Entrar na fila" })).toHaveCount(0)
     await expect(page.getByRole("button", { name: "Reservar horário" })).toBeDisabled()
     guards.assertNoCrash()
@@ -403,6 +413,10 @@ test.describe("Rentals queue B2C UI", () => {
   test("join waiting UI survives reload without duplicating the ticket", async ({
     page,
   }) => {
+    test.skip(
+      !isWaitingRoomStillOpen(waitingLocation.queueOpeningTime),
+      "WaitingRoom opening is too close; this Location would drift into Open.",
+    )
     const snapshot = readSnapshot()
     const customer = customerClient(snapshot.subdomain)
     const guards = attachPageGuards(page)

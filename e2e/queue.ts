@@ -103,6 +103,29 @@ export function isSafeClosedPhaseWindow(now = new Date()): boolean {
   return saoPauloWallClock(now).minutesFromMidnight + 50 < 24 * 60
 }
 
+/**
+ * Minutes until TimeOnly T on the São Paulo wall. A wrap to 00:xx while still
+ * before midnight is next-day T (ResolveOpeningDate). After T has passed the
+ * same civil morning, remaining is negative (Open) — do not add 24h.
+ */
+export function minutesUntilOpening(openingTime: string, now = new Date()): number {
+  const wall = saoPauloWallClock(now)
+  const [hour, minute] = openingTime.split(":").map(Number)
+  let remaining = hour * 60 + minute - wall.minutesFromMidnight
+  if (remaining < -12 * 60) {
+    remaining += 24 * 60
+  }
+  return remaining
+}
+
+/** Skip WaitingRoom assertions when a slow serial describe could drift into Open. */
+export function isWaitingRoomStillOpen(
+  openingTime: string,
+  now = new Date(),
+): boolean {
+  return minutesUntilOpening(openingTime, now) >= 8
+}
+
 export function openingTimeForPhase(phase: QueuePhase, now = new Date()): string {
   if (phase === "Open") {
     const wall = saoPauloWallClock(now)
@@ -112,7 +135,7 @@ export function openingTimeForPhase(phase: QueuePhase, now = new Date()): string
     return "00:00:00"
   }
   if (phase === "WaitingRoom") {
-    return addMinutesSaoPaulo(10, now).hhmmss
+    return addMinutesSaoPaulo(25, now).hhmmss
   }
   return addMinutesSaoPaulo(45, now).hhmmss
 }
