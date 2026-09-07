@@ -67,7 +67,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 - [x] Admin: **Concluir** em reserva `Confirmed` (`POST /api/reservations/{id}/complete`) só com `rentals.reservations.complete`. Sem UI B2C Complete/cancel nesta wave.
-- [x] Wave 1 Phase B T1: reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. **Not** deployed to PROD/`main`.
+- [x] Wave 1 **PROD_COMPLETE** (Phase A + Phase B T1): staff Complete (`rentals.reservations.complete`); reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. WEB PROD `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API PROD `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Public/read-only smoke only (no customer write smoke). Follow-ups (WEB today-boundary and other timezone tests) remain non-blocking and are **not** authorized by this closeout.
 
 ### 3.6. Fila de reservas (WaitingQueue)
 
@@ -224,6 +224,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-05 | **Docs:** close registration-fields migration + FE/BE deploy. History IDs `20260804012343_AddTenantRegistrationFields`, `20260804020748_CleanupFiccDuplicateCpfsAndSeedRegistrationFields`, `20260828175423_AddCatalogOrdersAndCustomerDocument` applied DEV (live schema) and PROD (`list/production` `33261868461`, `PENDING_COUNT=0`). Feature in API `48ad32a1e2ac3c71ec7df59a895ef1eecae55140` / WEB `37a5266381ad5061cfda0299acb2c84a2726b050`. Live `GET .../ficc/registration-schema` 200; host and path `/register` 200. No apply/deploy. Authenticated PROD config smoke not executed. |
 | 2026-09-06 | **Fix (WEB):** Phase B T1 — `brazilTimeZone` helper; reservation range and B2C mine list render `America/Sao_Paulo`; Rentals “today” is Brazil civil today. API JSON remains UTC instant. Not deployed to PROD. |
 | 2026-09-06 | **Executado (WEB Phase A):** Concluir reserva Confirmada no admin (`completeAdminReservation` + permissão `rentals.reservations.complete` + i18n). Sem timezone UI, sem Complete/cancel B2C. |
+| 2026-09-06 | **PROD:** Rentals Wave 1 **PROD_COMPLETE**. WEB `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Clocks in `America/Sao_Paulo`. Public/read-only smoke passed. No customer write smoke. This closeout does not authorize Wave 2 / Layout / timezone follow-up implementation. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
