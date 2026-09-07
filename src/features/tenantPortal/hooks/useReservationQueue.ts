@@ -9,10 +9,10 @@ import {
   leaveReservationQueue,
   type ReservationQueueStatus,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { SAO_PAULO_TZ } from "@/lib/brazilTimeZone"
 
 const POLL_INTERVAL_MS = 4000
 const COUNTDOWN_TICK_MS = 1000
-const SAO_PAULO_TZ = "America/Sao_Paulo"
 
 export type ReservationQueueView =
   | { kind: "hidden" }

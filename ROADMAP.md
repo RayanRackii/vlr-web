@@ -16,7 +16,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 ## 1. Registro dinâmico por tenant — FEITO (código)
 
 - [x] `/register` dinâmico + UI admin de campos.
-- [ ] Confirmar migration + deploy FE/BE.
+- [x] Confirmar migration + deploy FE/BE — `AddTenantRegistrationFields` + seed + `AddCatalogOrdersAndCustomerDocument` applied DEV and PROD; feature in API/WEB PROD SHAs; live public schema + `/register` 200. Authenticated admin/B2B PROD smoke not executed.
 
 ## 2. Shell B2C + menu multi-item — FEITO (código)
 
@@ -51,8 +51,8 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 - [x] Marca via **`LogoSvg`** (admin textarea + `TenantLogoMark` + DOMPurify); sem `logoUrl` no produto.
 - [x] Logo com fundo sólido embutido: markup original no portal; o canvas dark usa a cor detectada (sem pad branco automático).
 - [x] Fundo B2C do portal (login/register/verify) adapta light/dark a partir das cores do tenant, sem forçar a página escura a ficar clara.
-- [ ] Confirmar DNS/Vercel wildcard `*.rolvix.com.br`.
-- [ ] Aplicar migration `AddTenantLogoSvg` no Supabase (`logo_svg` text).
+- [x] Confirmar DNS/Vercel wildcard `*.rolvix.com.br` — live in PROD (wildcard TLS valid; arbitrary first-level tenant hosts; `/t/:slug` fallback preserved). Reserved infrastructure names (`www`, `api`, `app`, `admin`, `dev`, `staging`, `preview`, `mail`, `support`) enforced by API (`vlr-api` develop `c873833ac6f70bf8f82b81e315cc63a32a8d4166`).
+- [x] Migration `AddTenantLogoSvg` (`core.tenants.logo_svg` text nullable) confirmed on DEV and PROD: history `20260804152356_AddTenantLogoSvg` + column present. No apply in this audit.
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
@@ -66,6 +66,8 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Agenda multi-espaço: seletor múltiplo, política em lote, agenda agrupada; UI **Horário padrão** / **Grade personalizada** (domínio OpenHours/SlotGrid permanece no código)
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
+- [x] Admin: **Concluir** em reserva `Confirmed` (`POST /api/reservations/{id}/complete`) só com `rentals.reservations.complete`. Sem UI B2C Complete/cancel nesta wave.
+- [x] Wave 1 Phase B T1: reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. **Not** deployed to PROD/`main`.
 
 ### 3.6. Fila de reservas (WaitingQueue)
 
@@ -216,6 +218,12 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-05 | **Fix (WEB):** Super-Admin tenant edit (`/admin/tenants/:id/edit`) no longer calls `usePermissions`. Shared registration-fields and portal-menu managers take explicit `canWrite` plus target-tenant `activeModules` from the admin DTO/form. `/admin` stays outside `PermissionProvider`. |
 | 2026-09-05 | **E2E (WEB):** Playwright release suite against deployed DEV (`npm run test:e2e:release`). Prod guard, 32-state commercial matrix, runtime 403, module flows, restore. Secrets stay in gitignored `.env.e2e.local`. |
 | 2026-09-05 | **E2E (WEB):** Cleanup now cancels E2E work orders, double-deletes assets (30-day schedule + permanent when FK allows), and `RESTORE_MATCH` fails if active E2E leftovers remain. Tenant-edit asserts commercial modules only. |
+| 2026-09-05 | **PROD:** Human Gate approved. Squash `develop` → `main` WEB PR #48 SHA `37a5266381ad5061cfda0299acb2c84a2726b050`. Vercel Production SUCCESS. `rolvix.com.br` 308→www 200; `www.rolvix.com.br` 200. API PR #51 SHA `48ad32a1e2ac3c71ec7df59a895ef1eecae55140`. DEV E2E_CERTIFIED (51 tests, 32/32). Migrations/config **NONE**. Rollback WEB `4b048c4f0e4f4a54efc5dca74404627699b9259d`. |
+| 2026-09-05 | **Docs:** close wildcard infra — `*.rolvix.com.br` live in PROD, wildcard TLS valid, arbitrary first-level tenant hosts supported, `/t/:slug` fallback preserved. Reserved infrastructure names enforced by API (`c873833ac6f70bf8f82b81e315cc63a32a8d4166`). No WEB/DNS/Vercel/PROD mutation. |
+| 2026-09-05 | **Docs:** confirm `AddTenantLogoSvg` applied. DEV: `core.__ef_migrations_history` + `core.tenants.logo_svg` text NULL. PROD: workflow `list/production` run `33261868461` (2026-08-29) lists `20260804152356_AddTenantLogoSvg`, `PENDING_COUNT=0`, identity `kbptdzfbngelzdhriyhf`. Runtime branding still returns `logoSvg`. No migration apply. |
+| 2026-09-05 | **Docs:** close registration-fields migration + FE/BE deploy. History IDs `20260804012343_AddTenantRegistrationFields`, `20260804020748_CleanupFiccDuplicateCpfsAndSeedRegistrationFields`, `20260828175423_AddCatalogOrdersAndCustomerDocument` applied DEV (live schema) and PROD (`list/production` `33261868461`, `PENDING_COUNT=0`). Feature in API `48ad32a1e2ac3c71ec7df59a895ef1eecae55140` / WEB `37a5266381ad5061cfda0299acb2c84a2726b050`. Live `GET .../ficc/registration-schema` 200; host and path `/register` 200. No apply/deploy. Authenticated PROD config smoke not executed. |
+| 2026-09-06 | **Fix (WEB):** Phase B T1 — `brazilTimeZone` helper; reservation range and B2C mine list render `America/Sao_Paulo`; Rentals “today” is Brazil civil today. API JSON remains UTC instant. Not deployed to PROD. |
+| 2026-09-06 | **Executado (WEB Phase A):** Concluir reserva Confirmada no admin (`completeAdminReservation` + permissão `rentals.reservations.complete` + i18n). Sem timezone UI, sem Complete/cancel B2C. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

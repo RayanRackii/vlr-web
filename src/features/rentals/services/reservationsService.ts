@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { formatBrazilDateTimeRange } from "@/lib/brazilTimeZone"
 import i18n from "@/lib/i18n"
 
 export const reservationStatuses = [
@@ -111,6 +112,26 @@ export async function cancelAdminReservation(
   }
 }
 
+export async function completeAdminReservation(
+  id: string,
+): Promise<AdminReservation> {
+  try {
+    const response = await api.post(`/api/reservations/${id}/complete`)
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.completeReservation"),
+      ),
+    )
+  }
+}
+
 export function formatReservationAssets(reservation: AdminReservation): string {
   if (reservation.items.length === 0) {
     return "—"
@@ -128,26 +149,7 @@ export function formatReservationRange(
   startDateTime: string,
   endDateTime: string,
 ): string {
-  const start = new Date(startDateTime)
-  const end = new Date(endDateTime)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return `${startDateTime} – ${endDateTime}`
-  }
-
-  const datePart = start.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
-  const startTime = start.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-  const endTime = end.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-  return `${datePart} ${startTime} – ${endTime}`
+  return formatBrazilDateTimeRange(startDateTime, endDateTime)
 }
 
 export function formatMoney(amount: number): string {
