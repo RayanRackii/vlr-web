@@ -808,6 +808,31 @@ export async function listMyPortalReservations(): Promise<PortalReservation[]> {
   }
 }
 
+export async function cancelMyPortalReservation(
+  id: string,
+): Promise<PortalReservation> {
+  try {
+    const response = await customerApi.post(
+      `/api/reservations/mine/${id}/cancel`,
+    )
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.cancelReservation"),
+      ),
+    )
+  }
+}
+
 const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
 
 const scheduleSlotSchema = z.object({

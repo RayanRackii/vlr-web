@@ -67,7 +67,17 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Padrões de loading **em toda a app**: `Skeleton` default shimmer; `LoadingButton` em mutações; `TopProgressBar` (React Router, delay ~250ms); skeletons estruturados (agenda, dashboard KPIs, tabelas, páginas de lista)
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 - [x] Admin: **Concluir** em reserva `Confirmed` (`POST /api/reservations/{id}/complete`) só com `rentals.reservations.complete`. Sem UI B2C Complete/cancel nesta wave.
-- [x] Wave 1 Phase B T1: reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. **Not** deployed to PROD/`main`.
+- [x] Wave 1 **PROD_COMPLETE** (Phase A + Phase B T1): staff Complete (`rentals.reservations.complete`); reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. WEB PROD `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API PROD `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Public/read-only smoke only (no customer write smoke). Follow-ups (WEB today-boundary and other timezone tests) remain non-blocking and are **not** authorized by this closeout.
+
+### 3.7. Cancelamento B2C pelo cliente
+
+Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch `feat/rentals-b2c-self-cancel`. API already on `develop` (`89b3e6d` / PR #64). Wave 1 remains **PROD_COMPLETE**.
+
+- [x] `cancelMyPortalReservation` via `POST /api/reservations/mine/{id}/cancel` (`customerApi` + Zod)
+- [x] Minhas reservas: Cancelar em `PendingDeposit`|`Confirmed` com start futuro; sem diálogo; sem Complete B2C
+- [x] Vitest: helper + service + agenda page
+- [x] Playwright `e2e/tests/10-b2c-self-cancel.spec.ts` (DEV; Confirmed path passed against Railway + develop Preview)
+- [x] **CLOSED_DEV** — not PROD. API `89b3e6d` / PR #64; WEB `3478355` / PR #59. Wave 1 remains **PROD_COMPLETE**.
 
 ### 3.6. Fila de reservas (WaitingQueue)
 
@@ -76,7 +86,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Admin wizard Operação (Location): toggle fila (default off) + horário de abertura; persistir em create/update/bulk
 - [x] B2C agenda: poll GET queue 4s (pausa se a aba estiver oculta); Closed / WaitingRoom / Waiting / Active 90s / Expired
 - [x] Reserva continua em `bookPortalSlot` / `createPortalReservation`; 409 `QUEUE_*` muda o estado da fila
-- [ ] Validar E2E com a API na mesma branch (merge API first)
+- [x] Validar E2E com a API na mesma branch (Playwright `e2e/tests/10-queue-rentals.spec.ts` against Railway DEV + develop Preview). Join/Waiting/Active→book/reload/auth/module-off covered. Closed UI skipped near São Paulo midnight wrap (API `ReservationQueueTests` still cover Closed). Single E2E Customer — multi-customer atomicity stays in API `ReservationQueueConcurrencyTests`.
 
 ## 4. Gating B2B por módulos
 
@@ -224,6 +234,10 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-05 | **Docs:** close registration-fields migration + FE/BE deploy. History IDs `20260804012343_AddTenantRegistrationFields`, `20260804020748_CleanupFiccDuplicateCpfsAndSeedRegistrationFields`, `20260828175423_AddCatalogOrdersAndCustomerDocument` applied DEV (live schema) and PROD (`list/production` `33261868461`, `PENDING_COUNT=0`). Feature in API `48ad32a1e2ac3c71ec7df59a895ef1eecae55140` / WEB `37a5266381ad5061cfda0299acb2c84a2726b050`. Live `GET .../ficc/registration-schema` 200; host and path `/register` 200. No apply/deploy. Authenticated PROD config smoke not executed. |
 | 2026-09-06 | **Fix (WEB):** Phase B T1 — `brazilTimeZone` helper; reservation range and B2C mine list render `America/Sao_Paulo`; Rentals “today” is Brazil civil today. API JSON remains UTC instant. Not deployed to PROD. |
 | 2026-09-06 | **Executado (WEB Phase A):** Concluir reserva Confirmada no admin (`completeAdminReservation` + permissão `rentals.reservations.complete` + i18n). Sem timezone UI, sem Complete/cancel B2C. |
+| 2026-09-07 | **E2E (WEB):** Rentals Queue validated against DEV API + portal. Playwright `10-queue-rentals.spec.ts`: join, duplicate ticket, waiting cannot book, Open turn → Reservation, occupancy reuse 409, reload keeps ticket, module-off 403, unauthenticated agenda → login. Closed phase skipped when São Paulo clock is too close to midnight. No runtime product change. |
+| 2026-09-06 | **PROD:** Rentals Wave 1 **PROD_COMPLETE**. WEB `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Clocks in `America/Sao_Paulo`. Public/read-only smoke passed. No customer write smoke. This closeout does not authorize Wave 2 / Layout / timezone follow-up implementation. |
+| 2026-09-07 | **DEV:** B2C self-cancel **CLOSED_DEV** (not PROD). WEB `3478355` / PR #59; API `89b3e6d` / PR #64. Minhas reservas Cancelar; Playwright Confirmed path passed. Wave 1 permanece PROD_COMPLETE. |
+| 2026-09-07 | **Código (WEB):** B2C self-cancel em Minhas reservas (`POST /api/reservations/mine/{id}/cancel`). API first já em `develop` `89b3e6d` / PR #64. Sem Complete B2C. Wave 1 permanece PROD_COMPLETE. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
