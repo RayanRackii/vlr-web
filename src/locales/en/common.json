@@ -92,6 +92,8 @@
     "resendCatalogNotification": "Could not resend the notification.",
     "loadCatalogChannels": "Could not load notification channels.",
     "saveCatalogChannel": "Could not save the channel.",
+    "loadNotificationChannelConfigs": "Could not load notification channels.",
+    "saveNotificationChannelConfig": "Could not save the notification channel.",
     "loadPortalCatalog": "Could not load the catalog.",
     "loadPortalCatalogProduct": "Could not load the product.",
     "submitPortalOrder": "Could not submit the order.",
@@ -510,7 +512,7 @@
     },
     "notifications": {
       "title": "Notifications",
-      "subtitle": "Catalog deliveries and channels per event.",
+      "subtitle": "Catalog delivery history. Resend failed deliveries when needed.",
       "channelsTitle": "Channels per event",
       "channelsSubtitle": "Email, WhatsApp, and SMS start off. SMS is not available in this version.",
       "smsUnavailable": "The SMS channel is not available.",
@@ -526,6 +528,20 @@
         "status": "Status",
         "createdAt": "Created",
         "actions": "Actions"
+      }
+    }
+  },
+  "notifications": {
+    "settings": {
+      "title": "Notifications",
+      "subtitle": "Choose notification channels per event. Only active modules for this workspace are listed.",
+      "empty": "No notification modules are active in this workspace.",
+      "inAppAlwaysOn": "In-app always on",
+      "toggleChannel": "Enable {{channel}} for {{event}}",
+      "toastSaved": "Channel updated.",
+      "modules": {
+        "catalog": "Catalog & Orders",
+        "rentals": "Rentals"
       }
     }
   },
@@ -827,6 +843,7 @@
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
     "catalogNotifications": "Notifications",
+    "notifications": "Notifications",
     "peopleAccess": "People and access",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
@@ -1760,6 +1777,8 @@
       "core.registration_fields.write": "Edit registration fields",
       "core.module_menu.read": "View portal menu",
       "core.module_menu.write": "Edit portal menu",
+      "core.notifications.read": "View notifications",
+      "core.notifications.write": "Edit notification channels",
       "inventory.assets.read": "View resources",
       "inventory.assets.write": "Edit resources",
       "inventory.categories.read": "View types",
@@ -2221,6 +2240,13 @@
     }
   },
   "rentals": {
+    "events": {
+      "reservationPendingDeposit": "Awaiting deposit",
+      "reservationConfirmed": "Reservation confirmed",
+      "reservationCanceled": "Reservation canceled",
+      "reservationCompleted": "Reservation completed",
+      "reservationReminder": "Reservation reminder"
+    },
     "schedule": {
       "title": "Schedule",
       "description": "Operations for a specific day and recurring weekly setup for spaces.",

@@ -13,7 +13,6 @@ import { toast } from "sonner"
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Table,
@@ -26,33 +25,14 @@ import {
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
-  CATALOG_EVENT_TYPES,
-  NOTIFICATION_CHANNELS,
   catalogEventI18nKey,
   formatCatalogDate,
-  type CatalogChannelConfig,
   type CatalogNotificationDelivery,
-  type NotificationChannel,
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
-  listCatalogNotificationChannels,
   listCatalogNotifications,
   resendCatalogNotification,
-  upsertCatalogNotificationChannel,
 } from "@/features/catalog/services/catalogService"
-
-function isChannelActive(
-  configs: readonly CatalogChannelConfig[],
-  eventType: string,
-  channel: NotificationChannel,
-): boolean {
-  return configs.some(
-    (item) =>
-      item.eventType === eventType &&
-      item.channel === channel &&
-      item.isActive,
-  )
-}
 
 export function CatalogNotificationsPage() {
   const { t, i18n } = useTranslation()
@@ -62,22 +42,16 @@ export function CatalogNotificationsPage() {
   const [deliveries, setDeliveries] = useState<CatalogNotificationDelivery[]>(
     [],
   )
-  const [channels, setChannels] = useState<CatalogChannelConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [resendBusyId, setResendBusyId] = useState<string | null>(null)
-  const [channelBusyKey, setChannelBusyKey] = useState<string | null>(null)
 
   async function reload() {
     setLoading(true)
     try {
-      const [nextDeliveries, nextChannels] = await Promise.all([
-        listCatalogNotifications(),
-        listCatalogNotificationChannels(),
-      ])
+      const nextDeliveries = await listCatalogNotifications()
       setDeliveries(nextDeliveries)
-      setChannels(nextChannels)
       setLoadError(null)
     } catch (error) {
       setLoadError(
@@ -111,41 +85,6 @@ export function CatalogNotificationsPage() {
       )
     } finally {
       setResendBusyId(null)
-    }
-  }
-
-  async function onToggleChannel(
-    eventType: string,
-    channel: NotificationChannel,
-    isActive: boolean,
-  ) {
-    if (channel === "Sms") {
-      return
-    }
-    const key = `${eventType}:${channel}`
-    setChannelBusyKey(key)
-    try {
-      const updated = await upsertCatalogNotificationChannel({
-        eventType,
-        channel,
-        isActive,
-      })
-      setChannels((current) => {
-        const without = current.filter(
-          (item) =>
-            !(item.eventType === eventType && item.channel === channel),
-        )
-        return [...without, updated]
-      })
-      toast.success(t("catalog.notifications.toastChannelSaved"))
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.saveCatalogChannel"),
-      )
-    } finally {
-      setChannelBusyKey(null)
     }
   }
 
@@ -257,81 +196,6 @@ export function CatalogNotificationsPage() {
       {loadError ? (
         <p className="text-sm text-destructive">{loadError}</p>
       ) : null}
-
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">
-            {t("catalog.notifications.channelsTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("catalog.notifications.channelsSubtitle")}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("catalog.notifications.smsUnavailable")}
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("catalog.notifications.columns.event")}</TableHead>
-                {NOTIFICATION_CHANNELS.map((channel) => (
-                  <TableHead key={channel}>
-                    {t(`catalog.channels.${channel}`)}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {CATALOG_EVENT_TYPES.map((eventType) => (
-                <TableRow key={eventType}>
-                  <TableCell>
-                    {t(catalogEventI18nKey(eventType), {
-                      defaultValue: eventType,
-                    })}
-                  </TableCell>
-                  {NOTIFICATION_CHANNELS.map((channel) => {
-                    const checked = isChannelActive(
-                      channels,
-                      eventType,
-                      channel,
-                    )
-                    const key = `${eventType}:${channel}`
-                    const sms = channel === "Sms"
-                    return (
-                      <TableCell key={channel}>
-                        <Checkbox
-                          checked={checked}
-                          disabled={
-                            sms ||
-                            !canResend ||
-                            channelBusyKey === key ||
-                            loading
-                          }
-                          aria-label={t("catalog.notifications.toggleChannel", {
-                            event: t(catalogEventI18nKey(eventType), {
-                              defaultValue: eventType,
-                            }),
-                            channel: t(`catalog.channels.${channel}`),
-                          })}
-                          onChange={(event) => {
-                            void onToggleChannel(
-                              eventType,
-                              channel,
-                              event.target.checked,
-                            )
-                          }}
-                        />
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
 
       <Can permission="catalog.notifications.read">
         <div className="rounded-xl border border-border">

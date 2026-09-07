@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
+  Bell,
   Boxes,
   CalendarCheck,
   CalendarClock,
@@ -51,6 +52,7 @@ export type AppNavigationItem = {
     | "nav.rentalsResources"
     | "nav.admin"
     | "nav.catalog"
+    | "nav.notifications"
   to: string
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
@@ -102,6 +104,13 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
     icon: MenuSquare,
     modules: ["rentals"],
     permission: "core.module_menu.read",
+  },
+  {
+    labelKey: "nav.notifications",
+    to: "/configuracoes/notificacoes",
+    icon: Bell,
+    modules: ["catalog", "rentals"],
+    permission: "core.notifications.read",
   },
 ]
 

@@ -92,6 +92,8 @@
     "resendCatalogNotification": "Não foi possível reenviar a notificação.",
     "loadCatalogChannels": "Não foi possível carregar os canais.",
     "saveCatalogChannel": "Não foi possível salvar o canal.",
+    "loadNotificationChannelConfigs": "Não foi possível carregar os canais de notificação.",
+    "saveNotificationChannelConfig": "Não foi possível salvar o canal de notificação.",
     "loadPortalCatalog": "Não foi possível carregar o catálogo.",
     "loadPortalCatalogProduct": "Não foi possível carregar o produto.",
     "submitPortalOrder": "Não foi possível enviar o pedido.",
@@ -510,7 +512,7 @@
     },
     "notifications": {
       "title": "Notificações",
-      "subtitle": "Entregas e canais por evento do catálogo.",
+      "subtitle": "Histórico de entregas do catálogo. Reenvie falhas quando precisar.",
       "channelsTitle": "Canais por evento",
       "channelsSubtitle": "E-mail, WhatsApp e SMS começam desligados. SMS não está disponível nesta versão.",
       "smsUnavailable": "O canal SMS não está disponível.",
@@ -526,6 +528,20 @@
         "status": "Status",
         "createdAt": "Criado em",
         "actions": "Ações"
+      }
+    }
+  },
+  "notifications": {
+    "settings": {
+      "title": "Notificações",
+      "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos neste ambiente.",
+      "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
+      "inAppAlwaysOn": "No app sempre ativo",
+      "toggleChannel": "Ativar {{channel}} para {{event}}",
+      "toastSaved": "Canal atualizado.",
+      "modules": {
+        "catalog": "Catálogo & Pedidos",
+        "rentals": "Aluguéis"
       }
     }
   },
@@ -827,6 +843,7 @@
     "catalogProducts": "Produtos",
     "catalogOrders": "Pedidos",
     "catalogNotifications": "Notificações",
+    "notifications": "Notificações",
     "peopleAccess": "Pessoas e acesso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
@@ -1796,6 +1813,8 @@
       "core.registration_fields.write": "Editar campos de cadastro",
       "core.module_menu.read": "Ver menu do portal",
       "core.module_menu.write": "Editar menu do portal",
+      "core.notifications.read": "Ver notificações",
+      "core.notifications.write": "Editar canais de notificação",
       "inventory.assets.read": "Ver recursos",
       "inventory.assets.write": "Editar recursos",
       "inventory.categories.read": "Ver tipos",
@@ -2257,6 +2276,13 @@
     }
   },
   "rentals": {
+    "events": {
+      "reservationPendingDeposit": "Aguardando depósito",
+      "reservationConfirmed": "Reserva confirmada",
+      "reservationCanceled": "Reserva cancelada",
+      "reservationCompleted": "Reserva concluída",
+      "reservationReminder": "Lembrete de reserva"
+    },
     "schedule": {
       "title": "Escala / agenda",
       "description": "Operação de um dia específico e configuração semanal recorrente dos espaços.",
