@@ -22,8 +22,10 @@ import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayo
 import { formatReservationRange } from "@/features/rentals/services/reservationsService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
+import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
 import {
   bookPortalSlot,
+  cancelMyPortalReservation,
   createPortalReservation,
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
@@ -65,6 +67,7 @@ export function TenantPortalAgendaPage() {
   const [loading, setLoading] = useState(true)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [layoutItems, setLayoutItems] = useState<
     {
       rentalAssetId: string
@@ -288,6 +291,36 @@ export function TenantPortalAgendaPage() {
       )
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function onCancelMine(id: string) {
+    if (cancelingId !== null) {
+      return
+    }
+    setCancelingId(id)
+    try {
+      await cancelMyPortalReservation(id)
+      toast.success(t("tenantPortal.agenda.cancelSuccess"))
+      const [reservations, day] = await Promise.all([
+        listMyPortalReservations(),
+        fetchPublicScheduleDay(subdomain, date),
+      ])
+      setMine(reservations)
+      setSlots(day.slots.filter(isCustomerBookableSlot))
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("apiErrors.cancelReservation"),
+      )
+      try {
+        setMine(await listMyPortalReservations())
+      } catch {
+        // Stay on the current list if refetch fails.
+      }
+    } finally {
+      setCancelingId(null)
     }
   }
 
@@ -578,6 +611,24 @@ export function TenantPortalAgendaPage() {
                         defaultValue: reservation.status,
                       })}
                     </p>
+                    {canCustomerSelfCancel(
+                      reservation.status,
+                      reservation.startDateTime,
+                    ) ? (
+                      <LoadingButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        loading={cancelingId === reservation.id}
+                        loadingLabel={t("tenantPortal.agenda.cancelling")}
+                        onClick={() => {
+                          void onCancelMine(reservation.id)
+                        }}
+                      >
+                        {t("tenantPortal.agenda.cancel")}
+                      </LoadingButton>
+                    ) : null}
                   </li>
                 ))}
               </ul>
