@@ -9,7 +9,7 @@ Você atua como Arquiteto de Software e Desenvolvedor Full-Stack Sênior. O sist
 O primeiro cliente pagante é um **clube** que precisa (1) avisar clientes sobre o estado das quadras e (2) permitir **reserva de horários**. O módulo **Rentals** (`rentals`) é o foco. Não expandir RH, Financeiro, Estoque etc. enquanto o beachhead não estiver operacional.
 
 **Ordem de etapas (ciclo atual):**
-1. **Resend + WhatsApp (Meta)** — **adiada** (config externa); não bloquear o beachhead.
+1. **Resend + WhatsApp (Meta)** — e-mail OK. WhatsApp Catalog/Rentals mapeado na API; **PROD externo desligado**. UI Catalog de canais já existe (`/catalogo/notificacoes`). Sem tela Rentals de canais neste slice. Timing do lembrete = Human Gate na API.
 2. **Portal B2C branded** — shell, login e-mail+senha, register dinâmico e menu multi-item já em código; fechar DNS/deploy.
 3. **Agenda por Slot** — admin (kinds/templates/dia) + B2C book por `slotId` (APIs no `vlr-api`; UX neste repo). Ver `ROADMAP.md` §3.5.
 4. Demais: gating B2B por módulos, admin de reservas, onboarding legado.
@@ -206,7 +206,7 @@ vlr-web (este repo)                 vlr-api (repo irmão)
 ```
 
 ## 4. Fases (resumo para o FE)
-- Fase 1.5 notificações reais — **adiada**.
+- Fase 1.5 notificações reais — e-mail OK; WhatsApp mapping na API (PROD off). Sem mudança de runtime WEB neste slice.
 - Fase 2a PMOC/OS/Inventário — base entregue.
 - Fase 2b Rentals beachhead — **foco**: portal estável + agenda por Slot + admin de reservas.
 - Não antecipar módulos futuros (RH, Financeiro, …).

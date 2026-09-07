@@ -3,7 +3,7 @@
 Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `ROADMAP.md` do repo irmão **`vlr-api`**.
 
 **Foco de produto agora:** portal B2C estável + **agenda por Slot** (APIs no `vlr-api`; UX aqui).  
-**Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
+**Notificações:** e-mail OK. WhatsApp Catalog/Rentals é API-only neste slice (canal Catalog já tem UI). PROD WhatsApp continua desligado.
 
 ## 0. Disciplina
 
@@ -236,6 +236,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-06 | **Executado (WEB Phase A):** Concluir reserva Confirmada no admin (`completeAdminReservation` + permissão `rentals.reservations.complete` + i18n). Sem timezone UI, sem Complete/cancel B2C. |
 | 2026-09-07 | **E2E (WEB):** Rentals Queue validated against DEV API + portal. Playwright `10-queue-rentals.spec.ts`: join, duplicate ticket, waiting cannot book, Open turn → Reservation, occupancy reuse 409, reload keeps ticket, module-off 403, unauthenticated agenda → login. Closed phase skipped when São Paulo clock is too close to midnight. No runtime product change. |
 | 2026-09-06 | **PROD:** Rentals Wave 1 **PROD_COMPLETE**. WEB `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Clocks in `America/Sao_Paulo`. Public/read-only smoke passed. No customer write smoke. This closeout does not authorize Wave 2 / Layout / timezone follow-up implementation. |
+| 2026-09-07 | **Docs (WEB):** espelho WhatsApp Catalog+Rentals — mapping na API; sem runtime WEB. Canal Catalog permanece `/catalogo/notificacoes`. Reminder timing e enablement PROD são Human Gates na API. |
 | 2026-09-07 | **DEV:** B2C self-cancel **CLOSED_DEV** (not PROD). WEB `3478355` / PR #59; API `89b3e6d` / PR #64. Minhas reservas Cancelar; Playwright Confirmed path passed. Wave 1 permanece PROD_COMPLETE. |
 | 2026-09-07 | **Código (WEB):** B2C self-cancel em Minhas reservas (`POST /api/reservations/mine/{id}/cancel`). API first já em `develop` `89b3e6d` / PR #64. Sem Complete B2C. Wave 1 permanece PROD_COMPLETE. |
 
