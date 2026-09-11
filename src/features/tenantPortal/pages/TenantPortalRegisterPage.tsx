@@ -7,7 +7,7 @@ import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -30,6 +30,7 @@ import {
 import {
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
+  persistPendingEmailVerification,
   registerCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -107,6 +108,9 @@ export function TenantPortalRegisterPage() {
     values: defaultValues,
   })
 
+  const watchedValues = form.watch()
+  const isRegisterValid = schema.safeParse(watchedValues).success
+
   async function onPhotoChange(fieldKey: string, file: File | undefined) {
     if (!file) {
       form.setValue(fieldKey, "", { shouldValidate: true })
@@ -152,7 +156,11 @@ export function TenantPortalRegisterPage() {
       } else {
         toast.success(t("tenantPortal.register.toastSuccess"))
       }
-      void navigate(tenantPortalPath(subdomain, "verify-phone"), {
+      persistPendingEmailVerification(subdomain, {
+        email,
+        verificationSendFailed,
+      })
+      void navigate(tenantPortalPath(subdomain, "verify-email"), {
         replace: true,
         state: { email, verificationSendFailed },
       })
@@ -369,14 +377,15 @@ export function TenantPortalRegisterPage() {
             />
           ))}
 
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isRegisterValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.register.submitting")}
           >
             {t("tenantPortal.register.submit")}
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
 

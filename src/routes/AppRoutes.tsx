@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
@@ -32,7 +32,7 @@ import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortal
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
-import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
+import { TenantPortalVerifyEmailPage } from "@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
@@ -50,6 +50,18 @@ import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrder
 import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
 
+function RedirectVerifyPhoneToEmail() {
+  const location = useLocation()
+  return (
+    <Navigate
+      to="../verify-email"
+      relative="path"
+      replace
+      state={location.state}
+    />
+  )
+}
+
 export function AppRoutes() {
   const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
 
@@ -60,7 +72,8 @@ export function AppRoutes() {
         <Route element={<TenantPortalLayout />}>
           <Route index element={<TenantPortalLoginPage />} />
           <Route path="register" element={<TenantPortalRegisterPage />} />
-          <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+          <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
+          <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
@@ -92,7 +105,8 @@ export function AppRoutes() {
         <Route element={<TenantPortalLayout />}>
           <Route index element={<TenantPortalLoginPage />} />
           <Route path="register" element={<TenantPortalRegisterPage />} />
-          <Route path="verify-phone" element={<TenantPortalVerifyPhonePage />} />
+          <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
+          <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
