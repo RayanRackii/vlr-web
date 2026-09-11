@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test, type Page, type Response } from "@playwright/test"
 
 import { adminClient, b2bClient } from "../clients"
 import { readSnapshot } from "../context"
@@ -7,9 +7,64 @@ import { attachPageGuards } from "../page-errors"
 import { applyCommercialModules, restoreTenant } from "../tenant"
 
 const SETTINGS_PATH = "/configuracoes/notificacoes"
-const CONFIRMED_WHATSAPP =
-  "Ativar WhatsApp para Reserva confirmada"
+const CONFIRMED_WHATSAPP = "Ativar WhatsApp para Reserva confirmada"
 const CATALOG_EMAIL = "Ativar E-mail para Pedido criado"
+const CHANNEL_CONFIGS_PATH = "/api/notifications/channel-configs"
+
+function isChannelConfigPut(response: Response): boolean {
+  return (
+    response.request().method() === "PUT" &&
+    response.url().includes(CHANNEL_CONFIGS_PATH)
+  )
+}
+
+async function persistSwitch(
+  page: Page,
+  switchName: string,
+  wantChecked: boolean,
+): Promise<void> {
+  const control = page.getByRole("switch", { name: switchName })
+  await expect(control).toBeVisible({ timeout: 30_000 })
+
+  const currentlyChecked =
+    (await control.getAttribute("aria-checked")) === "true"
+  if (currentlyChecked === wantChecked) {
+    return
+  }
+
+  const persisted = page.waitForResponse(isChannelConfigPut, {
+    timeout: 30_000,
+  })
+  await control.click()
+  const response = await persisted
+  expect(
+    response.ok(),
+    `PUT ${CHANNEL_CONFIGS_PATH} expected 2xx, got ${response.status()}`,
+  ).toBe(true)
+
+  const payload = (await response.json()) as { isActive?: unknown }
+  expect(payload.isActive).toBe(wantChecked)
+  await expect(control).toHaveAttribute(
+    "aria-checked",
+    String(wantChecked),
+  )
+}
+
+async function reloadAndAssertSwitch(
+  page: Page,
+  switchName: string,
+  wantChecked: boolean,
+): Promise<void> {
+  await page.reload()
+  await expect(
+    page.getByRole("heading", { name: "Notificações" }),
+  ).toBeVisible({ timeout: 30_000 })
+  await expect(
+    page.getByRole("switch", { name: switchName }),
+  ).toHaveAttribute("aria-checked", String(wantChecked), {
+    timeout: 30_000,
+  })
+}
 
 test.describe("Unified notification settings", () => {
   test.describe.configure({ mode: "serial" })
@@ -44,46 +99,17 @@ test.describe("Unified notification settings", () => {
       page.getByRole("heading", { name: "Notificações" }),
     ).toBeVisible({ timeout: 30_000 })
 
-    const rentalsSwitch = page.getByRole("switch", {
-      name: CONFIRMED_WHATSAPP,
-    })
-    await expect(rentalsSwitch).toBeVisible({ timeout: 30_000 })
-
-    if ((await rentalsSwitch.getAttribute("aria-checked")) !== "true") {
-      await rentalsSwitch.click()
-    }
-    await expect(rentalsSwitch).toHaveAttribute("aria-checked", "true")
-
-    await page.reload()
-    await expect(
-      page.getByRole("switch", { name: CONFIRMED_WHATSAPP }),
-    ).toHaveAttribute("aria-checked", "true", { timeout: 30_000 })
-
-    await page.getByRole("switch", { name: CONFIRMED_WHATSAPP }).click()
-    await expect(
-      page.getByRole("switch", { name: CONFIRMED_WHATSAPP }),
-    ).toHaveAttribute("aria-checked", "false")
-
-    await page.reload()
-    await expect(
-      page.getByRole("switch", { name: CONFIRMED_WHATSAPP }),
-    ).toHaveAttribute("aria-checked", "false", { timeout: 30_000 })
+    await persistSwitch(page, CONFIRMED_WHATSAPP, true)
+    await reloadAndAssertSwitch(page, CONFIRMED_WHATSAPP, true)
+    await persistSwitch(page, CONFIRMED_WHATSAPP, false)
+    await reloadAndAssertSwitch(page, CONFIRMED_WHATSAPP, false)
 
     const catalogSwitch = page.getByRole("switch", { name: CATALOG_EMAIL })
     if ((await catalogSwitch.count()) > 0) {
-      await expect(catalogSwitch).toBeVisible()
-      if ((await catalogSwitch.getAttribute("aria-checked")) !== "true") {
-        await catalogSwitch.click()
-      }
-      await expect(catalogSwitch).toHaveAttribute("aria-checked", "true")
-      await page.reload()
-      await expect(
-        page.getByRole("switch", { name: CATALOG_EMAIL }),
-      ).toHaveAttribute("aria-checked", "true", { timeout: 30_000 })
-      await page.getByRole("switch", { name: CATALOG_EMAIL }).click()
-      await expect(
-        page.getByRole("switch", { name: CATALOG_EMAIL }),
-      ).toHaveAttribute("aria-checked", "false")
+      await persistSwitch(page, CATALOG_EMAIL, true)
+      await reloadAndAssertSwitch(page, CATALOG_EMAIL, true)
+      await persistSwitch(page, CATALOG_EMAIL, false)
+      await reloadAndAssertSwitch(page, CATALOG_EMAIL, false)
     }
 
     guards.assertNoCrash()
@@ -101,7 +127,9 @@ test.describe("Customer cannot open tenant notification settings", () => {
     const guards = attachPageGuards(page)
     await page.goto(SETTINGS_PATH)
     await expect(
-      page.getByText("Escolha os canais de aviso por evento", { exact: false }),
+      page.getByText("Escolha os canais de aviso por evento", {
+        exact: false,
+      }),
     ).toHaveCount(0)
     await expect(
       page.getByRole("switch", { name: CONFIRMED_WHATSAPP }),
