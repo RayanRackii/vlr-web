@@ -243,6 +243,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-09 | **Ops DEV:** reminder template ACTIVE in Meta; live smoke no longer skipped. Unified settings PUT used for Catalog created, Rentals confirmed, then reminder. Meta returned **132001** on all three. Toggles restored off. No WEB code change. PROD WhatsApp still off. |
 | 2026-09-11 | **Ops DEV:** WhatsApp live smoke **CLOSED_DEV**. Catalog created, Rentals confirmed, reminder Sent. Playwright `12-notification-settings` now launches after `npx playwright install`; persistence-after-reload assertion still fails (reload does not wait for PUT). PROD WhatsApp still off. |
 | 2026-09-11 | **Test (WEB):** spec 12 waits for `PUT /api/notifications/channel-configs` 2xx before reload. Test race only; no runtime change. Branch `test/notification-settings-e2e-race`. |
+| 2026-09-11 | **Git:** release `develop` → `main` passa a **Create a merge commit** (não squash). Reconciliação única `chore/final-main-develop-ancestry-reconciliation`. Sem delta de produto. PROD não deployado neste passo. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
