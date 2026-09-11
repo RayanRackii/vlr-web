@@ -30,6 +30,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 import { toast } from "sonner"
 import { TenantPortalVerifyEmailPage } from "@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"
 import {
+  persistPendingEmailVerification,
   resendCustomerEmailVerification,
   verifyCustomerEmail,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -67,17 +68,16 @@ const authResponse: CustomerAuthResponse = {
   },
 }
 
-function renderVerify(state: {
+function renderVerify(state?: {
   email?: string
   verificationSendFailed?: boolean
 }) {
   return render(
     <MemoryRouter
       initialEntries={[
-        {
-          pathname: "/t/ficc/verify-email",
-          state,
-        },
+        state
+          ? { pathname: "/t/ficc/verify-email", state }
+          : "/t/ficc/verify-email",
       ]}
     >
       <Routes>
@@ -105,6 +105,7 @@ function assertNoSmsSignupCopy(container: HTMLElement) {
 
 describe("TenantPortalVerifyEmailPage", () => {
   beforeEach(() => {
+    window.sessionStorage.clear()
     verifyEmail.mockReset()
     resendEmail.mockReset()
     toastSuccess.mockReset()
@@ -115,6 +116,7 @@ describe("TenantPortalVerifyEmailPage", () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    window.sessionStorage.clear()
   })
 
   it("shows the masked email from location state and a 6-digit code field", () => {
@@ -215,5 +217,58 @@ describe("TenantPortalVerifyEmailPage", () => {
       name: i18n.t("tenantPortal.verify.resend"),
     })
     expect(resendReady).toBeEnabled()
+  })
+
+  it("submits using the email restored from sessionStorage when location.state is missing", async () => {
+    const user = userEvent.setup()
+    persistPendingEmailVerification("ficc", {
+      email: "rachel@example.com",
+      verificationSendFailed: true,
+    })
+    renderVerify()
+
+    expect(screen.getByText(/r\*\*\*@example\.com/)).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.code")),
+      "123456",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.verify.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(verifyEmail).toHaveBeenCalledWith("ficc", {
+        email: "rachel@example.com",
+        code: "123456",
+      })
+    })
+  })
+
+  it("shows an email input and gates Confirm when nothing is stored", async () => {
+    const user = userEvent.setup()
+    renderVerify()
+
+    const emailInput = screen.getByLabelText(i18n.t("tenantPortal.fields.email"))
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.verify.submit"),
+    })
+    expect(emailInput).toBeInTheDocument()
+    expect(submit).toBeDisabled()
+    expect(screen.queryByText(/r\*\*\*@example\.com/)).not.toBeInTheDocument()
+
+    await user.type(emailInput, "rachel@example.com")
+    expect(submit).toBeDisabled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.code")),
+      "123456",
+    )
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
   })
 })

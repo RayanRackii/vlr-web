@@ -30,6 +30,7 @@ import {
 import {
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
+  persistPendingEmailVerification,
   registerCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -155,6 +156,10 @@ export function TenantPortalRegisterPage() {
       } else {
         toast.success(t("tenantPortal.register.toastSuccess"))
       }
+      persistPendingEmailVerification(subdomain, {
+        email,
+        verificationSendFailed,
+      })
       void navigate(tenantPortalPath(subdomain, "verify-email"), {
         replace: true,
         state: { email, verificationSendFailed },

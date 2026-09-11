@@ -31,6 +31,70 @@ const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
 const CUSTOMER_ID_KEY = "rolvix.customer.id"
+const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
+  "rolvix.customer.pendingEmailVerification"
+
+export type PendingEmailVerification = {
+  email: string
+  verificationSendFailed: boolean
+}
+
+export function pendingEmailVerificationStorageKey(subdomain: string): string {
+  return `${PENDING_EMAIL_VERIFICATION_KEY_PREFIX}.${subdomain.trim().toLowerCase()}`
+}
+
+export function persistPendingEmailVerification(
+  subdomain: string,
+  payload: PendingEmailVerification,
+): void {
+  const email = payload.email.trim()
+  if (email.length === 0) {
+    return
+  }
+
+  const stored: PendingEmailVerification = {
+    email,
+    verificationSendFailed: payload.verificationSendFailed === true,
+  }
+  window.sessionStorage.setItem(
+    pendingEmailVerificationStorageKey(subdomain),
+    JSON.stringify(stored),
+  )
+}
+
+export function readPendingEmailVerification(
+  subdomain: string,
+): PendingEmailVerification | null {
+  const raw = window.sessionStorage.getItem(
+    pendingEmailVerificationStorageKey(subdomain),
+  )
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== "object" || parsed === null) {
+      return null
+    }
+    const record = parsed as Record<string, unknown>
+    const email = typeof record.email === "string" ? record.email.trim() : ""
+    const emailParsed = z.string().trim().email().safeParse(email)
+    if (!emailParsed.success) {
+      return null
+    }
+    return {
+      email: emailParsed.data,
+      verificationSendFailed: record.verificationSendFailed === true,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function clearPendingEmailVerification(subdomain: string): void {
+  window.sessionStorage.removeItem(pendingEmailVerificationStorageKey(subdomain))
+}
 
 /** Tenant slug from hostname only (`ficc.rolvix.com.br` → `ficc`). */
 export function getHostTenantSubdomain(): string | null {

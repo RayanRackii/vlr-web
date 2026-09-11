@@ -29,6 +29,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import {
   fetchRegistrationSchema,
+  readPendingEmailVerification,
   registerCustomer,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
@@ -80,6 +81,7 @@ async function waitForRegisterForm() {
 
 describe("TenantPortalRegisterPage email verification", () => {
   beforeEach(() => {
+    window.sessionStorage.clear()
     fetchSchema.mockReset()
     register.mockReset()
     fetchSchema.mockResolvedValue({
@@ -158,5 +160,9 @@ describe("TenantPortalRegisterPage email verification", () => {
       )
     })
     expect(await screen.findByText("verify-email-page")).toBeInTheDocument()
+    expect(readPendingEmailVerification("ficc")).toEqual({
+      email: "ana@club.test",
+      verificationSendFailed: false,
+    })
   })
 })
