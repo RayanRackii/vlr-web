@@ -174,6 +174,11 @@ describe("TenantPortalVerifyEmailPage", () => {
     expect(toastSuccess).toHaveBeenCalledWith(
       i18n.t("tenantPortal.verify.resendToastSuccess"),
     )
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.verify.sendFailedTitle"), {
+        exact: false,
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it("navigates to the app after a successful verify", async () => {

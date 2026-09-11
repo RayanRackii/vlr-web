@@ -63,7 +63,7 @@ export function TenantPortalVerifyEmailPage() {
   const resolvedEmail =
     emailFromState.length > 0 ? emailFromState : (stored?.email ?? "")
   const emailIsKnown = isValidVerificationEmail(resolvedEmail)
-  const verificationSendFailed =
+  const initialSendFailed =
     locationState !== null &&
     Object.prototype.hasOwnProperty.call(locationState, "verificationSendFailed")
       ? locationState.verificationSendFailed === true
@@ -72,8 +72,9 @@ export function TenantPortalVerifyEmailPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
+  const [sendFailed, setSendFailed] = useState(initialSendFailed)
   const [cooldownSeconds, setCooldownSeconds] = useState(() =>
-    emailIsKnown && !verificationSendFailed
+    emailIsKnown && !initialSendFailed
       ? EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS
       : 0,
   )
@@ -94,9 +95,9 @@ export function TenantPortalVerifyEmailPage() {
     }
     persistPendingEmailVerification(subdomain, {
       email: resolvedEmail,
-      verificationSendFailed,
+      verificationSendFailed: sendFailed,
     })
-  }, [emailIsKnown, resolvedEmail, subdomain, verificationSendFailed])
+  }, [emailIsKnown, resolvedEmail, subdomain, sendFailed])
 
   useEffect(() => {
     if (!cooldownActive) {
@@ -113,7 +114,7 @@ export function TenantPortalVerifyEmailPage() {
   async function onSubmit(values: VerifyEmailFormValues) {
     persistPendingEmailVerification(subdomain, {
       email: values.email,
-      verificationSendFailed,
+      verificationSendFailed: sendFailed,
     })
     setSubmitting(true)
     try {
@@ -146,6 +147,7 @@ export function TenantPortalVerifyEmailPage() {
         email,
         verificationSendFailed: false,
       })
+      setSendFailed(false)
       toast.success(t("tenantPortal.verify.resendToastSuccess"))
       setCooldownSeconds(EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS)
     } catch (error) {
@@ -173,7 +175,7 @@ export function TenantPortalVerifyEmailPage() {
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.verify.expiresHint")}
         </p>
-        {verificationSendFailed ? (
+        {sendFailed ? (
           <p
             className="text-sm text-amber-800 dark:text-amber-200"
             role="status"
