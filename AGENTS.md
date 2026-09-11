@@ -36,7 +36,9 @@ Uma implementação = uma branch própria + N commits + uma review.
 
 **Branches:** `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `test/<slug>`, `chore/<slug>`. Mudança cross-repo usa o **mesmo nome** em `vlr-api` e `vlr-web`.
 
-`main` permanece PROD-ready. `develop` permanece integration/DEV. Implementação só em `feat` / `fix` / `refactor` / `test` / `chore`.
+`main` permanece PROD-ready. `develop` permanece integration/DEV. Implementação só em `feat` / `fix` / `refactor` / `test` / `chore`. Commits diretos em `main` são proibidos.
+
+Merge methods (canônico em `vlr-api/AGENTS.md`): feature → `develop` = **Squash and merge**; production `develop` → `main` = **Create a merge commit**. Nunca squash nem rebase-and-merge de release. Não abrir reconciliação rotineira `main` → `develop` após release; hotfix em `main` que não está em `develop` exige back-merge.
 
 O usuário trabalha nos mesmos repos a partir de mais de um computador. Nenhum agente pode assumir que a branch local, os refs `origin/*` locais, os commits locais ou a working tree representam o estado remoto atual.
 
@@ -156,7 +158,7 @@ Se não estiver seguro continuar noutro PC, dizer o motivo explicitamente.
 
 ## Autonomous Delivery Workflow
 
-Canônico (contrato Fable, blockers, squash-aware, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
+Canônico (contrato Fable, blockers, merge methods, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
 
 O parent é dono do ciclo técnico completo. O usuário não precisa pedir branch/commit/push/PR/review/approve/merge. “MR” = Pull Request.
 
@@ -164,7 +166,7 @@ Neste repo: `web-implementer` ou `ui-implementer` (um writer por working tree) �
 
 Merge Risk Gate: GLM prepara dossier compacto. Fable (`rolvix-deep-architect` no `vlr-api`) é **obrigatório** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `FABLE_MERGE_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
 
-Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates. Nunca `main`/PROD. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
+Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates (**Squash and merge**). Nunca `main`/PROD automático. Release `develop` → `main` (Human Gate): **Create a merge commit**. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
 
 Testes: se houver infra, adicionar regressão automática; senão `TEST_INFRASTRUCTURE_MISSING`. Auth/tenant/contrato de API compartilhado não devem depender só de build.
 
