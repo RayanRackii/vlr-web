@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import {
@@ -10,6 +10,7 @@ import {
 } from "react-router-dom"
 import { toast } from "sonner"
 
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
@@ -21,17 +22,20 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import {
-  verifyPhoneSchema,
-  type VerifyPhoneFormValues,
+  verifyEmailSchema,
+  type VerifyEmailFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
-  resendCustomerPhoneVerification,
+  resendCustomerEmailVerification,
   tenantPortalPath,
-  verifyCustomerPhone,
+  verifyCustomerEmail,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
-export function TenantPortalVerifyPhonePage() {
+const EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = 45
+
+export function TenantPortalVerifyEmailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
@@ -43,19 +47,42 @@ export function TenantPortalVerifyPhonePage() {
   const emailFromState =
     typeof locationState?.email === "string" ? locationState.email : ""
   const verificationSendFailed = locationState?.verificationSendFailed === true
+  const maskedEmail = maskEmail(emailFromState)
 
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
+  const [cooldownSeconds, setCooldownSeconds] = useState(() =>
+    emailFromState.length > 0 && !verificationSendFailed
+      ? EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS
+      : 0,
+  )
 
-  const form = useForm<VerifyPhoneFormValues>({
-    resolver: zodResolver(verifyPhoneSchema),
+  const form = useForm<VerifyEmailFormValues>({
+    resolver: zodResolver(verifyEmailSchema),
     defaultValues: { email: emailFromState, code: "" },
   })
 
-  async function onSubmit(values: VerifyPhoneFormValues) {
+  const watchedValues = form.watch()
+  const isVerifyValid = verifyEmailSchema.safeParse(watchedValues).success
+
+  const cooldownActive = cooldownSeconds > 0
+
+  useEffect(() => {
+    if (!cooldownActive) {
+      return
+    }
+    const timerId = window.setInterval(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1))
+    }, 1000)
+    return () => {
+      window.clearInterval(timerId)
+    }
+  }, [cooldownActive])
+
+  async function onSubmit(values: VerifyEmailFormValues) {
     setSubmitting(true)
     try {
-      await verifyCustomerPhone(subdomain, values)
+      await verifyCustomerEmail(subdomain, values)
       toast.success(t("tenantPortal.verify.toastSuccess"))
       void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
@@ -78,25 +105,31 @@ export function TenantPortalVerifyPhonePage() {
     const email = form.getValues("email")
     setResending(true)
     try {
-      await resendCustomerPhoneVerification(subdomain, { email })
+      await resendCustomerEmailVerification(subdomain, { email })
       toast.success(t("tenantPortal.verify.resendToastSuccess"))
+      setCooldownSeconds(EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS)
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : t("apiErrors.resendPhoneVerification"),
+          : t("apiErrors.resendEmailVerification"),
       )
     } finally {
       setResending(false)
     }
   }
 
+  const resendDisabled = submitting || cooldownSeconds > 0
+
   return (
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">{t("tenantPortal.verify.title")}</h2>
         <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.verify.subtitle")}
+          {t("tenantPortal.verify.subtitle", { maskedEmail })}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {t("tenantPortal.verify.expiresHint")}
         </p>
         {verificationSendFailed ? (
           <p
@@ -115,19 +148,6 @@ export function TenantPortalVerifyPhonePage() {
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FormField
             control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
-                <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="code"
             render={({ field }) => (
               <FormItem>
@@ -138,33 +158,41 @@ export function TenantPortalVerifyPhonePage() {
                     autoComplete="one-time-code"
                     maxLength={6}
                     {...field}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.value.replace(/\D/g, "").slice(0, 6),
+                      )
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isVerifyValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.verify.submitting")}
             disabled={resending}
           >
             {t("tenantPortal.verify.submit")}
-          </LoadingButton>
+          </FormPrimaryButton>
           <LoadingButton
             type="button"
             variant="outline"
             className="w-full"
             loading={resending}
             loadingLabel={t("tenantPortal.verify.resendSubmitting")}
-            disabled={submitting}
+            disabled={resendDisabled}
             onClick={() => {
               void onResend()
             }}
           >
-            {t("tenantPortal.verify.resend")}
+            {cooldownSeconds > 0
+              ? t("tenantPortal.verify.resendIn", { seconds: cooldownSeconds })
+              : t("tenantPortal.verify.resend")}
           </LoadingButton>
         </form>
       </Form>

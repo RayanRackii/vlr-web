@@ -23,6 +23,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] `AppShell` compartilhado com B2B `MainLayout`.
 - [x] Pós-login: `CustomerAppLayout` com sidebar dos itens de `GET .../menu`.
 - [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
+- [x] Cadastro B2C verifica **e-mail** (código); `/verify-email` + redirect de `/verify-phone`. Celular coletado, não bloqueia. **Não PROD.**
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
 - [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
@@ -44,6 +45,15 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 - [x] `GET`/`PATCH /api/customers/me` (nome + foto via file picker; `safeParse` em schema separado do login)
 - [x] Erro de carga: botão Tentar novamente (re-GET), sem sair do layout; sucesso recarrega via GET
 - FOLLOW_UP (fora deste MVP): e-mail com verificação; telefone com SMS; CPF; senha B2C (troca/recuperação); CEP/endereço; ExtraAttributes. Upload de foto **não** aberto — cadastro já comprime e persiste `PhotoUrl`.
+
+## 2.10. Verificação de e-mail no cadastro B2C — FEITO (código, DEV)
+
+Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `feat/b2c-email-verification`.
+
+- [x] Register navega para `/verify-email` (redirect de `/verify-phone` preservando `location.state`)
+- [x] Página: e-mail mascarado, código 6 dígitos (paste-friendly), cooldown 45s, i18n pt-BR/en/es sem copy de SMS no signup
+- [x] Zod: `requiresEmailVerification` obrigatório; `requiresPhoneVerification` opcional (compat); `emailVerified` nos perfis
+- **Não PROD.**
 
 ## 3. Portal branding / host
 
@@ -244,6 +254,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-11 | **Ops DEV:** WhatsApp live smoke **CLOSED_DEV**. Catalog created, Rentals confirmed, reminder Sent. Playwright `12-notification-settings` now launches after `npx playwright install`; persistence-after-reload assertion still fails (reload does not wait for PUT). PROD WhatsApp still off. |
 | 2026-09-11 | **Test (WEB):** spec 12 waits for `PUT /api/notifications/channel-configs` 2xx before reload. Test race only; no runtime change. Branch `test/notification-settings-e2e-race`. |
 | 2026-09-11 | **Git:** release `develop` → `main` passa a **Create a merge commit** (não squash). Reconciliação única `chore/final-main-develop-ancestry-reconciliation`. Sem delta de produto. PROD não deployado neste passo. |
+| 2026-09-11 | **Código (WEB):** cadastro B2C verifica e-mail (código 6 dígitos) em `/verify-email`; redirect de `/verify-phone`; celular continua no formulário mas não bloqueia. Twilio não entra no UX de signup. **Não PROD.** |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

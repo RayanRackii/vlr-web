@@ -72,7 +72,7 @@ export function isTenantHostMode(): boolean {
 export type TenantPortalSegment =
   | ""
   | "register"
-  | "verify-phone"
+  | "verify-email"
   | "app"
   | "app/perfil"
   | "agenda"
@@ -213,6 +213,7 @@ const NIL_CUSTOMER_ID = "00000000-0000-0000-0000-000000000000"
 
 const LEGACY_REGISTER_SEND_FAILED: RegisterCustomerResponse = {
   customerId: NIL_CUSTOMER_ID,
+  requiresEmailVerification: true,
   requiresPhoneVerification: true,
   verificationStarted: false,
 }
@@ -350,7 +351,7 @@ export async function deleteRegistrationField(
   }
 }
 
-export async function resendCustomerPhoneVerification(
+export async function resendCustomerEmailVerification(
   subdomain: string,
   body: { email: string },
 ): Promise<void> {
@@ -364,19 +365,19 @@ export async function resendCustomerPhoneVerification(
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        i18n.t("apiErrors.resendPhoneVerification"),
+        i18n.t("apiErrors.resendEmailVerification"),
       ),
     )
   }
 }
 
-export async function verifyCustomerPhone(
+export async function verifyCustomerEmail(
   subdomain: string,
   body: { email: string; code: string },
 ): Promise<CustomerAuthResponse> {
   try {
     const response = await publicApi.post(
-      "/api/auth/customer/verify-phone",
+      "/api/auth/customer/verify-email",
       body,
       { headers: subdomainHeaders(subdomain) },
     )
@@ -393,7 +394,7 @@ export async function verifyCustomerPhone(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyPhone")),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyEmail")),
     )
   }
 }

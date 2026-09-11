@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import {
   buildCustomerRegisterSchema,
   registerResponseSchema,
@@ -69,23 +70,62 @@ describe("buildCustomerRegisterSchema PF/PJ", () => {
 describe("registerResponseSchema", () => {
   const customerId = "11111111-1111-4111-8111-111111111111"
 
-  it("accepts a register response with verificationStarted", () => {
+  it("requires requiresEmailVerification", () => {
     const parsed = registerResponseSchema.safeParse({
       customerId,
-      requiresPhoneVerification: true,
+      verificationStarted: true,
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it("accepts a register response without requiresPhoneVerification", () => {
+    const parsed = registerResponseSchema.safeParse({
+      customerId,
+      requiresEmailVerification: true,
       verificationStarted: false,
     })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
+      expect(parsed.data.requiresEmailVerification).toBe(true)
       expect(parsed.data.verificationStarted).toBe(false)
+      expect(parsed.data.requiresPhoneVerification).toBeUndefined()
     }
+  })
+
+  it("accepts a register response with the phone compat alias", () => {
+    const parsed = registerResponseSchema.safeParse({
+      customerId,
+      requiresEmailVerification: true,
+      requiresPhoneVerification: true,
+      verificationStarted: true,
+    })
+    expect(parsed.success).toBe(true)
   })
 
   it("rejects a register response without verificationStarted", () => {
     const parsed = registerResponseSchema.safeParse({
       customerId,
-      requiresPhoneVerification: true,
+      requiresEmailVerification: true,
     })
     expect(parsed.success).toBe(false)
+  })
+})
+
+describe("maskEmail", () => {
+  it("masks the local part after the first character", () => {
+    expect(maskEmail("rachel@example.com")).toBe("r***@example.com")
+  })
+
+  it("still masks a short local part", () => {
+    expect(maskEmail("a@example.com")).toBe("a***@example.com")
+    expect(maskEmail("ab@club.test")).toBe("a***@club.test")
+  })
+
+  it("returns a safe fallback for empty or invalid values", () => {
+    expect(maskEmail("")).toBe("***")
+    expect(maskEmail("   ")).toBe("***")
+    expect(maskEmail("not-an-email")).toBe("***")
+    expect(maskEmail("@example.com")).toBe("***")
+    expect(maskEmail("rachel@")).toBe("***")
   })
 })
