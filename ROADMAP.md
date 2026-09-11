@@ -3,7 +3,7 @@
 Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `ROADMAP.md` do repo irmão **`vlr-api`**.
 
 **Foco de produto agora:** portal B2C estável + **agenda por Slot** (APIs no `vlr-api`; UX aqui).  
-**Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
+**Adiado:** OTP real E2E / WhatsApp **PROD** até enablement humano. DEV WhatsApp live smoke CLOSED_DEV.
 
 ## 0. Disciplina
 
@@ -241,6 +241,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-07 | **Código (WEB):** B2C self-cancel em Minhas reservas (`POST /api/reservations/mine/{id}/cancel`). API first já em `develop` `89b3e6d` / PR #64. Sem Complete B2C. Wave 1 permanece PROD_COMPLETE. |
 | 2026-09-07 | **Código (WEB):** settings unificadas de notificações em `/configuracoes/notificacoes` (Catalog + Rentals). `/catalogo/notificacoes` fica só histórico/reenvio. WhatsApp Rentals liga/desliga na UI (SQL não é o caminho normal). API already on `develop` (`51b7306` / PR #70). Branch `feat/unified-notification-settings`. |
 | 2026-09-09 | **Ops DEV:** reminder template ACTIVE in Meta; live smoke no longer skipped. Unified settings PUT used for Catalog created, Rentals confirmed, then reminder. Meta returned **132001** on all three. Toggles restored off. No WEB code change. PROD WhatsApp still off. |
+| 2026-09-11 | **Ops DEV:** WhatsApp live smoke **CLOSED_DEV**. Catalog created, Rentals confirmed, reminder Sent. Playwright `12-notification-settings` now launches after `npx playwright install`; persistence-after-reload assertion still fails (reload does not wait for PUT). PROD WhatsApp still off. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

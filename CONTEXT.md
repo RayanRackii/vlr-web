@@ -9,7 +9,7 @@ Você atua como Arquiteto de Software e Desenvolvedor Full-Stack Sênior. O sist
 O primeiro cliente pagante é um **clube** que precisa (1) avisar clientes sobre o estado das quadras e (2) permitir **reserva de horários**. O módulo **Rentals** (`rentals`) é o foco. Não expandir RH, Financeiro, Estoque etc. enquanto o beachhead não estiver operacional.
 
 **Ordem de etapas (ciclo atual):**
-1. **Resend + WhatsApp (Meta)** — **adiada** (config externa); não bloquear o beachhead.
+1. **Notificações (Resend + WhatsApp Meta)** — e-mail Resend saudável. WhatsApp Catalog/Rentals + lembrete 24h **CLOSED_DEV**; entrega externa **desligada em PROD**. SMS de branding = Twilio Console (`Rolvix`). Não bloquear o beachhead de slots por ops Meta.
 2. **Portal B2C branded** — shell, login e-mail+senha, register dinâmico e menu multi-item já em código; fechar DNS/deploy.
 3. **Agenda por Slot** — admin (kinds/templates/dia) + B2C book por `slotId` (APIs no `vlr-api`; UX neste repo). Ver `ROADMAP.md` §3.5.
 4. Demais: gating B2B por módulos, admin de reservas, onboarding legado.
