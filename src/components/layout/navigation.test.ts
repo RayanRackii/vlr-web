@@ -137,10 +137,60 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.some((item) => item.to === "/ativos")).toBe(true)
     expect(visible.map((item) => item.to)).not.toContain("/configuracoes/recursos")
   })
+
+  it("shows notifications when catalog is on and the permission matches", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["catalog"],
+      ["core.notifications.read"],
+    )
+
+    expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
+  })
+
+  it("shows notifications when rentals is on and the permission matches", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      ["core.notifications.read"],
+    )
+
+    expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
+  })
+
+  it("hides notifications when the permission is missing", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["catalog", "rentals"],
+      ["core.users.read"],
+    )
+
+    expect(visible.map((item) => item.to)).not.toContain(
+      "/configuracoes/notificacoes",
+    )
+  })
+
+  it("hides notifications when neither catalog nor rentals is on", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["inventory"],
+      ["core.notifications.read"],
+    )
+
+    expect(visible.map((item) => item.to)).not.toContain(
+      "/configuracoes/notificacoes",
+    )
+  })
 })
 
 describe("getPageTitleKey", () => {
   it("resolves the rentals resources page", () => {
     expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
+  })
+
+  it("resolves the unified notifications settings page", () => {
+    expect(getPageTitleKey("/configuracoes/notificacoes")).toBe(
+      "nav.notifications",
+    )
   })
 })

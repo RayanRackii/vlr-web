@@ -34,6 +34,7 @@ import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPor
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalVerifyPhonePage } from "@/features/tenantPortal/pages/TenantPortalVerifyPhonePage"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
@@ -165,6 +166,16 @@ export function AppRoutes() {
             <Route
               path="/configuracoes/menu"
               element={<TenantModuleMenuPage />}
+            />
+          </Route>
+          <Route
+            element={
+              <PermissionRoute permission="core.notifications.read" />
+            }
+          >
+            <Route
+              path="/configuracoes/notificacoes"
+              element={<NotificationsSettingsPage />}
             />
           </Route>
           <Route

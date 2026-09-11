@@ -9,7 +9,7 @@ Você atua como Arquiteto de Software e Desenvolvedor Full-Stack Sênior. O sist
 O primeiro cliente pagante é um **clube** que precisa (1) avisar clientes sobre o estado das quadras e (2) permitir **reserva de horários**. O módulo **Rentals** (`rentals`) é o foco. Não expandir RH, Financeiro, Estoque etc. enquanto o beachhead não estiver operacional.
 
 **Ordem de etapas (ciclo atual):**
-1. **Resend + WhatsApp (Meta)** — **adiada** (config externa); não bloquear o beachhead.
+1. **Notificações (Resend + WhatsApp Meta)** — e-mail Resend saudável. WhatsApp Catalog/Rentals + lembrete 24h **CLOSED_DEV**; entrega externa **desligada em PROD**. SMS de branding = Twilio Console (`Rolvix`). Não bloquear o beachhead de slots por ops Meta.
 2. **Portal B2C branded** — shell, login e-mail+senha, register dinâmico e menu multi-item já em código; fechar DNS/deploy.
 3. **Agenda por Slot** — admin (kinds/templates/dia) + B2C book por `slotId` (APIs no `vlr-api`; UX neste repo). Ver `ROADMAP.md` §3.5.
 4. Demais: gating B2B por módulos, admin de reservas, onboarding legado.
@@ -105,6 +105,10 @@ _Avoid_: Product (bare); linking to Asset in v1; treating Catalog as an Assets m
 **CatalogOrder**:
 A Customer request for CatalogProducts with quantities. Not a payment and not a Reservation. Belongs to Catalog (`orders` / `pedidos` are aliases, not a separate module).
 _Avoid_: Order (bare); persisted Cart; a standalone Orders module
+
+**Notification channel settings**:
+Tenant B2B page at `/configuracoes/notificacoes` for Catalog + Rentals event channels (`GET/PUT /api/notifications/channel-configs`). `/catalogo/notificacoes` is Catalog delivery history and resend only. Customer cannot configure. Rentals WhatsApp is toggled in this UI — SQL is not the normal path (API runbook).
+_Avoid_: A second Catalog channel matrix; a Rentals-only settings screen; treating SQL as the operator path
 
 **ProductRequest**:
 A Customer request for something not in the catalog. Does not auto-create a CatalogProduct.
@@ -206,7 +210,7 @@ vlr-web (este repo)                 vlr-api (repo irmão)
 ```
 
 ## 4. Fases (resumo para o FE)
-- Fase 1.5 notificações reais — **adiada**.
+- Fase 1.5 notificações reais (entrega Meta/Resend) — **adiada**. Canais do tenant ligam/desligam em `/configuracoes/notificacoes`.
 - Fase 2a PMOC/OS/Inventário — base entregue.
 - Fase 2b Rentals beachhead — **foco**: portal estável + agenda por Slot + admin de reservas.
 - Não antecipar módulos futuros (RH, Financeiro, …).

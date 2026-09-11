@@ -3,7 +3,7 @@
 Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `ROADMAP.md` do repo irmão **`vlr-api`**.
 
 **Foco de produto agora:** portal B2C estável + **agenda por Slot** (APIs no `vlr-api`; UX aqui).  
-**Adiado:** OTP/WhatsApp real E2E até config Meta/Resend.
+**Adiado:** OTP real E2E / WhatsApp **PROD** até enablement humano. DEV WhatsApp live smoke CLOSED_DEV.
 
 ## 0. Disciplina
 
@@ -121,7 +121,8 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch `feat/catalog-orders`.
 
 - [x] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
-- [x] B2B: Produtos, Pedidos, Notificações (`/catalogo/*`)
+- [x] B2B: Produtos, Pedidos; `/catalogo/notificacoes` é histórico/reenvio (sem matriz de canais)
+- [x] Settings unificadas `/configuracoes/notificacoes` (Catalog + Rentals; `core.notifications.read` / `core.notifications.write`)
 - [x] B2C: Catálogo + Meus pedidos (não label combinada); cart client-side; solicitar produto
 - [x] Register PF/PJ (CPF/CNPJ); perfil não edita tipo/documento
 - [x] CustomerAppLayout.modulePath para `catalog`
@@ -238,6 +239,11 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-06 | **PROD:** Rentals Wave 1 **PROD_COMPLETE**. WEB `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Clocks in `America/Sao_Paulo`. Public/read-only smoke passed. No customer write smoke. This closeout does not authorize Wave 2 / Layout / timezone follow-up implementation. |
 | 2026-09-07 | **DEV:** B2C self-cancel **CLOSED_DEV** (not PROD). WEB `3478355` / PR #59; API `89b3e6d` / PR #64. Minhas reservas Cancelar; Playwright Confirmed path passed. Wave 1 permanece PROD_COMPLETE. |
 | 2026-09-07 | **Código (WEB):** B2C self-cancel em Minhas reservas (`POST /api/reservations/mine/{id}/cancel`). API first já em `develop` `89b3e6d` / PR #64. Sem Complete B2C. Wave 1 permanece PROD_COMPLETE. |
+| 2026-09-07 | **Código (WEB):** settings unificadas de notificações em `/configuracoes/notificacoes` (Catalog + Rentals). `/catalogo/notificacoes` fica só histórico/reenvio. WhatsApp Rentals liga/desliga na UI (SQL não é o caminho normal). API already on `develop` (`51b7306` / PR #70). Branch `feat/unified-notification-settings`. |
+| 2026-09-09 | **Ops DEV:** reminder template ACTIVE in Meta; live smoke no longer skipped. Unified settings PUT used for Catalog created, Rentals confirmed, then reminder. Meta returned **132001** on all three. Toggles restored off. No WEB code change. PROD WhatsApp still off. |
+| 2026-09-11 | **Ops DEV:** WhatsApp live smoke **CLOSED_DEV**. Catalog created, Rentals confirmed, reminder Sent. Playwright `12-notification-settings` now launches after `npx playwright install`; persistence-after-reload assertion still fails (reload does not wait for PUT). PROD WhatsApp still off. |
+| 2026-09-11 | **Test (WEB):** spec 12 waits for `PUT /api/notifications/channel-configs` 2xx before reload. Test race only; no runtime change. Branch `test/notification-settings-e2e-race`. |
+| 2026-09-11 | **Git:** release `develop` → `main` passa a **Create a merge commit** (não squash). Reconciliação única `chore/final-main-develop-ancestry-reconciliation`. Sem delta de produto. PROD não deployado neste passo. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
