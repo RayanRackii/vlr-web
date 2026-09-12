@@ -7,6 +7,13 @@ import { toast } from "sonner"
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import {
   autoPlaceItems,
@@ -214,6 +221,14 @@ export function TenantPortalAgendaPage() {
   }, [signedIn, subdomain, date, t])
 
   const timeWindows = useMemo(() => listDistinctStartTimes(slots), [slots])
+  const timeItems = useMemo(
+    () =>
+      timeWindows.map((window) => ({
+        value: window.startTime,
+        label: `${formatScheduleTime(window.startTime)} – ${formatScheduleTime(window.endTime)}`,
+      })),
+    [timeWindows],
+  )
   const placedIds = useMemo(
     () => new Set(layoutItems.map((item) => item.rentalAssetId)),
     [layoutItems],
@@ -361,28 +376,36 @@ export function TenantPortalAgendaPage() {
             </label>
             <label className="space-y-1 text-sm">
               <span>{t("tenantPortal.agenda.time")}</span>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                value={startTime}
-                disabled={slotsLoading || timeWindows.length === 0}
-                onChange={(event) => {
-                  setStartTime(event.target.value)
+              <Select
+                modal={false}
+                value={startTime || null}
+                onValueChange={(value) => {
+                  if (!value) {
+                    return
+                  }
+                  setStartTime(value)
                   setSelectedRentalAssetId(null)
                 }}
+                items={timeItems}
+                disabled={slotsLoading || timeWindows.length === 0}
               >
-                {timeWindows.length === 0 ? (
-                  <option value="">
-                    {t("tenantPortal.agenda.noTimes")}
-                  </option>
-                ) : (
-                  timeWindows.map((window) => (
-                    <option key={window.startTime} value={window.startTime}>
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={t("tenantPortal.agenda.noTimes")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeWindows.map((window) => (
+                    <SelectItem
+                      key={window.startTime}
+                      value={window.startTime}
+                    >
                       {formatScheduleTime(window.startTime)} –{" "}
                       {formatScheduleTime(window.endTime)}
-                    </option>
-                  ))
-                )}
-              </select>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
           </div>
 

@@ -5,7 +5,11 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
+import type {
+  PortalRentalAsset,
+  PortalReservation,
+  PortalScheduleSlot,
+} from "@/features/tenantPortal/services/tenantPortalService"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -272,5 +276,138 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
       expect(cancelButton()).not.toBeInTheDocument()
     })
     expect(completeButton()).not.toBeInTheDocument()
+  })
+})
+
+const ASSET_A_ID = "11111111-1111-4111-8111-111111111111"
+const ASSET_B_ID = "22222222-2222-4222-8222-222222222222"
+const ASSET_A_ASSET_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01"
+const ASSET_B_ASSET_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa02"
+
+function makeAsset(id: string, assetId: string, name: string): PortalRentalAsset {
+  return {
+    id,
+    assetId,
+    tenantId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    name,
+    type: "Location",
+    totalQuantity: 1,
+    isActive: true,
+    requiresDeposit: true,
+    queueEnabled: false,
+    queueOpeningTime: null,
+    schedulePolicy: "SlotGrid",
+    createdAt: "2026-09-06T12:00:00.000Z",
+  }
+}
+
+function makeSlot(
+  overrides: Pick<PortalScheduleSlot, "id" | "rentalAssetId" | "assetName" | "startTime" | "endTime">,
+): PortalScheduleSlot {
+  return {
+    occupancyKindId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    occupancyKindKey: "open",
+    occupancyKindLabel: "Aberto",
+    occupancyKindColorHex: null,
+    isBookableByCustomer: true,
+    label: null,
+    status: "available",
+    reservationId: null,
+    isDerived: false,
+    date: "2026-09-12",
+    ...overrides,
+  }
+}
+
+describe("TenantPortalAgendaPage time selector", () => {
+  beforeEach(() => {
+    listMine.mockReset()
+    fetchAssets.mockReset()
+    fetchLayouts.mockReset()
+    fetchDay.mockReset()
+    cancelMine.mockReset()
+    toastSuccess.mockReset()
+    toastError.mockReset()
+
+    listMine.mockResolvedValue([])
+    fetchLayouts.mockResolvedValue([])
+    fetchAssets.mockResolvedValue([
+      makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "09:00:00",
+          endTime: "10:00:00",
+        }),
+      ],
+    })
+  })
+
+  it("renders the accessible select with themed popup classes", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const trigger = await screen.findByRole("combobox", {
+      name: i18n.t("tenantPortal.agenda.time"),
+    })
+    expect(trigger).toBeEnabled()
+    expect(trigger).toHaveAttribute("data-slot", "select-trigger")
+
+    await user.click(trigger)
+    const option = await screen.findByRole("option", { name: "09:00 – 10:00" })
+    const popup = option.closest("[data-slot='select-content']")
+    expect(popup).toHaveClass("bg-popover")
+    expect(popup).toHaveClass("text-popover-foreground")
+  })
+
+  it("selects a later time and keeps unavailable courts distinguishable", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const courtOne = await screen.findByRole("button", { name: "Quadra 1" })
+    const courtTwo = await screen.findByRole("button", { name: "Quadra 2" })
+    expect(courtOne).not.toHaveAttribute("aria-disabled")
+    expect(courtTwo).toHaveAttribute("aria-disabled", "true")
+
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: "09:00 – 10:00" }),
+    )
+
+    await waitFor(() => {
+      expect(courtTwo).not.toHaveAttribute("aria-disabled")
+    })
+    expect(courtOne).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("disables the time selector when the day has no bookable slots", async () => {
+    fetchDay.mockResolvedValue({ date: "2026-09-12", slots: [] })
+    renderAgenda()
+
+    const trigger = await screen.findByRole("combobox", {
+      name: i18n.t("tenantPortal.agenda.time"),
+    })
+    await waitFor(() => {
+      expect(trigger).toBeDisabled()
+    })
+    expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
   })
 })

@@ -97,6 +97,18 @@
   html {
     @apply scroll-smooth font-sans;
   }
+  input:-webkit-autofill {
+    animation-name: on-webkit-autofill;
+  }
+}
+
+@keyframes on-webkit-autofill {
+  from {
+    opacity: 0.999;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes skeleton-shimmer {

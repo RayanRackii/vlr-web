@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import {
   buildCustomerRegisterSchema,
+  isValidBrazilianPhoneDigits,
+  normalizeBrazilianPhoneDigits,
   registerResponseSchema,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
@@ -127,5 +129,75 @@ describe("maskEmail", () => {
     expect(maskEmail("not-an-email")).toBe("***")
     expect(maskEmail("@example.com")).toBe("***")
     expect(maskEmail("rachel@")).toBe("***")
+  })
+})
+
+describe("normalizeBrazilianPhoneDigits", () => {
+  it("strips +55 from a mobile autofill value", () => {
+    expect(normalizeBrazilianPhoneDigits("+55 45 99999-9999")).toBe("45999999999")
+    expect(isValidBrazilianPhoneDigits("+55 45 99999-9999")).toBe(true)
+  })
+
+  it("strips +55 from a landline", () => {
+    expect(normalizeBrazilianPhoneDigits("+55 45 3333-4444")).toBe("4533334444")
+    expect(isValidBrazilianPhoneDigits("+55 45 3333-4444")).toBe(true)
+  })
+
+  it("keeps national 10-digit and 11-digit numbers", () => {
+    expect(normalizeBrazilianPhoneDigits("4533334444")).toBe("4533334444")
+    expect(normalizeBrazilianPhoneDigits("45999999999")).toBe("45999999999")
+    expect(isValidBrazilianPhoneDigits("4533334444")).toBe(true)
+    expect(isValidBrazilianPhoneDigits("45999999999")).toBe(true)
+  })
+
+  it("accepts formatted national input", () => {
+    expect(normalizeBrazilianPhoneDigits("(45) 99999-9999")).toBe("45999999999")
+    expect(normalizeBrazilianPhoneDigits("45 99999-9999")).toBe("45999999999")
+    expect(normalizeBrazilianPhoneDigits("5545999999999")).toBe("45999999999")
+  })
+
+  it("does not strip DDD 55 from an 11-digit national mobile", () => {
+    expect(normalizeBrazilianPhoneDigits("55999999999")).toBe("55999999999")
+    expect(isValidBrazilianPhoneDigits("55999999999")).toBe(true)
+  })
+
+  it("rejects short and overlong values without truncating", () => {
+    expect(normalizeBrazilianPhoneDigits("459999999")).toBe("459999999")
+    expect(isValidBrazilianPhoneDigits("459999999")).toBe(false)
+    expect(normalizeBrazilianPhoneDigits("55459999999999")).toBe("459999999999")
+    expect(isValidBrazilianPhoneDigits("55459999999999")).toBe(false)
+    expect(normalizeBrazilianPhoneDigits("123456789012")).toBe("123456789012")
+    expect(isValidBrazilianPhoneDigits("123456789012")).toBe(false)
+  })
+})
+
+describe("buildCustomerRegisterSchema phone", () => {
+  const schema = buildCustomerRegisterSchema([], "mismatch", {
+    invalidCpf: "Invalid CPF",
+    invalidCnpj: "Invalid CNPJ",
+  })
+
+  function parsePhone(phone: string) {
+    return schema.safeParse({
+      ...CORE,
+      customerType: "Individual",
+      document: "529.982.247-25",
+      phone,
+    })
+  }
+
+  it("accepts +55 mobile, landline, and formatted national phones", () => {
+    expect(parsePhone("+55 45 99999-9999").success).toBe(true)
+    expect(parsePhone("+55 45 3333-4444").success).toBe(true)
+    expect(parsePhone("(45) 99999-9999").success).toBe(true)
+    expect(parsePhone("45 99999-9999").success).toBe(true)
+    expect(parsePhone("4533334444").success).toBe(true)
+    expect(parsePhone("45999999999").success).toBe(true)
+  })
+
+  it("rejects invalid short and long phones", () => {
+    expect(parsePhone("459999999").success).toBe(false)
+    expect(parsePhone("55459999999999").success).toBe(false)
+    expect(parsePhone("123456789012").success).toBe(false)
   })
 })
