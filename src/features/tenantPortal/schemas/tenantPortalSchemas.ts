@@ -124,6 +124,28 @@ export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "")
 }
 
+/**
+ * National BR phone digits for validation/submit.
+ * Strips a leading country code 55 only when the value is long enough
+ * to be country code + DDD + number (12+ digits), matching
+ * `BrazilianDocumentValidator.NormalizePhoneBr` without the +55 prefix.
+ */
+export function normalizeBrazilianPhoneDigits(raw: string): string {
+  let digits = onlyDigits(raw)
+  if (digits.startsWith("0")) {
+    digits = digits.replace(/^0+/, "")
+  }
+  if (digits.startsWith("55") && digits.length >= 12) {
+    digits = digits.slice(2)
+  }
+  return digits
+}
+
+export function isValidBrazilianPhoneDigits(raw: string): boolean {
+  const digits = normalizeBrazilianPhoneDigits(raw)
+  return digits.length === 10 || digits.length === 11
+}
+
 /** CPF check digits (Brazilian algorithm). */
 export function isValidCpf(raw: string): boolean {
   const digits = onlyDigits(raw)
@@ -261,10 +283,7 @@ const coreRegisterShape = {
   phone: z
     .string()
     .trim()
-    .refine((value) => {
-      const digits = onlyDigits(value)
-      return digits.length === 10 || digits.length === 11
-    }, "Invalid phone"),
+    .refine(isValidBrazilianPhoneDigits, "Invalid phone"),
   customerType: customerTypeSchema,
   document: z.string().trim().min(1),
 }
