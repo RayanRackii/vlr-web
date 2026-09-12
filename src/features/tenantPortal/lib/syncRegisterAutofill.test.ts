@@ -76,4 +76,19 @@ describe("syncRegisterAutofill", () => {
     email.dispatchEvent(new Event("input", { bubbles: true }))
     expect(onField).not.toHaveBeenCalled()
   })
+
+  it("syncs values already present when listeners attach", () => {
+    const form = document.createElement("form")
+    const email = document.createElement("input")
+    email.name = "email"
+    email.value = "prefilled@club.test"
+    form.append(email)
+    document.body.append(form)
+
+    const onField = vi.fn()
+    const detach = attachAutofillSync(form, onField)
+
+    expect(onField).toHaveBeenCalledWith("email", "prefilled@club.test")
+    detach()
+  })
 })

@@ -57,6 +57,13 @@ export function attachAutofillSync(
   formElement.addEventListener("change", handle, true)
   formElement.addEventListener("animationstart", handle, true)
 
+  for (const input of formElement.querySelectorAll("input")) {
+    const read = readAutofilledTextInput(input)
+    if (read && read.value !== "") {
+      onField(read.name, read.value)
+    }
+  }
+
   return () => {
     formElement.removeEventListener("input", handle, true)
     formElement.removeEventListener("change", handle, true)
