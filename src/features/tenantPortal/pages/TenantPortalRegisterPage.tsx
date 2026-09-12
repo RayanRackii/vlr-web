@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
@@ -27,6 +27,7 @@ import {
   type CustomerType,
   type RegistrationField,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
@@ -34,6 +35,19 @@ import {
   registerCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+
+function extraFieldAutoComplete(fieldType: string): string | undefined {
+  if (fieldType === "email") {
+    return "email"
+  }
+  if (fieldType === "phone") {
+    return "tel"
+  }
+  if (fieldType === "cep") {
+    return "postal-code"
+  }
+  return undefined
+}
 
 export function TenantPortalRegisterPage() {
   const { t } = useTranslation()
@@ -107,9 +121,30 @@ export function TenantPortalRegisterPage() {
     resolver: zodResolver(schema) as any,
     values: defaultValues,
   })
+  const formRef = useRef<HTMLFormElement>(null)
 
   const watchedValues = form.watch()
   const isRegisterValid = schema.safeParse(watchedValues).success
+
+  useEffect(() => {
+    const formElement = formRef.current
+    if (!formElement) {
+      return
+    }
+
+    return attachAutofillSync(formElement, (name, raw) => {
+      const next =
+        name === "document"
+          ? form.getValues("customerType") === "Company"
+            ? formatCnpjMask(raw)
+            : formatCpfMask(raw)
+          : raw
+      if (form.getValues(name) === next) {
+        return
+      }
+      form.setValue(name, next, { shouldDirty: true, shouldTouch: true })
+    })
+  }, [form, schemaLoading, schemaError])
 
   async function onPhotoChange(fieldKey: string, file: File | undefined) {
     if (!file) {
@@ -196,6 +231,7 @@ export function TenantPortalRegisterPage() {
 
       <Form {...form}>
         <form
+          ref={formRef}
           className="space-y-4"
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
@@ -286,14 +322,24 @@ export function TenantPortalRegisterPage() {
                   </FormLabel>
                   <FormControl>
                     <Input
+                      name={field.name}
+                      ref={field.ref}
                       inputMode="numeric"
                       autoComplete="off"
                       value={String(field.value ?? "")}
+                      onBlur={field.onBlur}
                       onChange={(event) => {
                         const next =
                           customerType === "Company"
                             ? formatCnpjMask(event.target.value)
                             : formatCpfMask(event.target.value)
+                        field.onChange(next)
+                      }}
+                      onInput={(event) => {
+                        const next =
+                          customerType === "Company"
+                            ? formatCnpjMask(event.currentTarget.value)
+                            : formatCpfMask(event.currentTarget.value)
                         field.onChange(next)
                       }}
                     />
@@ -364,8 +410,11 @@ export function TenantPortalRegisterPage() {
                               ? "date"
                               : extra.fieldType === "email"
                                 ? "email"
-                                : "text"
+                                : extra.fieldType === "phone"
+                                  ? "tel"
+                                  : "text"
                         }
+                        autoComplete={extraFieldAutoComplete(extra.fieldType)}
                         {...field}
                         value={String(field.value ?? "")}
                       />
