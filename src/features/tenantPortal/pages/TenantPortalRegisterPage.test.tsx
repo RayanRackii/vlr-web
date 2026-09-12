@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { WEBKIT_AUTOFILL_ANIMATION } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -163,6 +164,209 @@ describe("TenantPortalRegisterPage email verification", () => {
     expect(readPendingEmailVerification("ficc")).toEqual({
       email: "ana@club.test",
       verificationSendFailed: false,
+    })
+  })
+})
+
+function autofillInput(element: HTMLElement, value: string) {
+  fireEvent.input(element, { target: { value } })
+}
+
+async function autofillValidRegisterCore() {
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+    "Ana Silva",
+  )
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    "ana@club.test",
+  )
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    "password1",
+  )
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    "password1",
+  )
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+    "11988880001",
+  )
+  autofillInput(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+    "52998224725",
+  )
+}
+
+describe("TenantPortalRegisterPage browser autofill", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+    fetchSchema.mockReset()
+    register.mockReset()
+    fetchSchema.mockResolvedValue({
+      coreFields: [
+        "name",
+        "email",
+        "password",
+        "confirmPassword",
+        "phone",
+        "customerType",
+        "document",
+      ],
+      fields: [],
+    })
+    register.mockResolvedValue({
+      customerId: "11111111-1111-4111-8111-111111111111",
+      requiresEmailVerification: true,
+      verificationStarted: true,
+    })
+  })
+
+  it("uses semantic autocomplete attributes on core fields", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.name"))).toHaveAttribute(
+      "autocomplete",
+      "name",
+    )
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.email"))).toHaveAttribute(
+      "autocomplete",
+      "email",
+    )
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    ).toHaveAttribute("autocomplete", "new-password")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    ).toHaveAttribute("autocomplete", "new-password")
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.phone"))).toHaveAttribute(
+      "autocomplete",
+      "tel",
+    )
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.cpf"))).toHaveAttribute(
+      "autocomplete",
+      "off",
+    )
+  })
+
+  it("enables submit after autofill-equivalent input events populate valid fields", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    expect(submit).toBeDisabled()
+
+    autofillValidRegisterCore()
+
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+  })
+
+  it("keeps submit disabled when autofill leaves a required field invalid", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    autofillValidRegisterCore()
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "not-an-email",
+    )
+
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.register.submit"),
+      }),
+    ).toBeDisabled()
+  })
+
+  it("syncs webkit autofill animation into form state", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    const nameInput = screen.getByLabelText(
+      i18n.t("tenantPortal.fields.name"),
+    ) as HTMLInputElement
+    nameInput.value = "Ana Silva"
+    const autofillStart = new Event("animationstart", { bubbles: true })
+    Object.defineProperty(autofillStart, "animationName", {
+      value: WEBKIT_AUTOFILL_ANIMATION,
+    })
+    nameInput.dispatchEvent(autofillStart)
+
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+      "password1",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+      "11988880001",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+      "52998224725",
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: i18n.t("tenantPortal.register.submit"),
+        }),
+      ).toBeEnabled()
+    })
+    expect(nameInput).toHaveValue("Ana Silva")
+  })
+
+  it("enables submit when a required tenant extra field is autofilled", async () => {
+    fetchSchema.mockResolvedValue({
+      coreFields: [
+        "name",
+        "email",
+        "password",
+        "confirmPassword",
+        "phone",
+        "customerType",
+        "document",
+      ],
+      fields: [
+        {
+          id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          fieldKey: "membershipId",
+          label: "Matrícula",
+          fieldType: "text",
+          isRequired: true,
+          sortOrder: 1,
+          options: null,
+        },
+      ],
+    })
+
+    renderRegister()
+    await waitForRegisterForm()
+    expect(await screen.findByLabelText("Matrícula")).toBeInTheDocument()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    autofillValidRegisterCore()
+    expect(submit).toBeDisabled()
+
+    autofillInput(screen.getByLabelText("Matrícula"), "SOC-42")
+
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
     })
   })
 })

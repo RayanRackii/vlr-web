@@ -255,6 +255,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-11 | **Test (WEB):** spec 12 waits for `PUT /api/notifications/channel-configs` 2xx before reload. Test race only; no runtime change. Branch `test/notification-settings-e2e-race`. |
 | 2026-09-11 | **Git:** release `develop` → `main` passa a **Create a merge commit** (não squash). Reconciliação única `chore/final-main-develop-ancestry-reconciliation`. Sem delta de produto. PROD não deployado neste passo. |
 | 2026-09-11 | **Código (WEB):** cadastro B2C verifica e-mail (código 6 dígitos) em `/verify-email`; redirect de `/verify-phone`; celular continua no formulário mas não bloqueia. Twilio não entra no UX de signup. **Não PROD.** |
+| 2026-09-12 | **Fix (WEB):** cadastro B2C reconhece autofill do Chrome (input/change/animationstart → RHF) e habilita o submit; seletor de horário da agenda troca o `<select>` nativo pelo Select do design system (popup legível no tema dark). Sem backend, sem PROD. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
