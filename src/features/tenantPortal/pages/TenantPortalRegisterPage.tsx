@@ -23,6 +23,7 @@ import {
   formatCnpjMask,
   formatCpfMask,
   isReservedRegisterFieldKey,
+  normalizeBrazilianPhoneDigits,
   onlyDigits,
   type CustomerType,
   type RegistrationField,
@@ -133,12 +134,15 @@ export function TenantPortalRegisterPage() {
     }
 
     return attachAutofillSync(formElement, (name, raw) => {
-      const next =
-        name === "document"
-          ? form.getValues("customerType") === "Company"
+      let next = raw
+      if (name === "document") {
+        next =
+          form.getValues("customerType") === "Company"
             ? formatCnpjMask(raw)
             : formatCpfMask(raw)
-          : raw
+      } else if (name === "phone") {
+        next = normalizeBrazilianPhoneDigits(raw)
+      }
       if (form.getValues(name) === next) {
         return
       }
@@ -179,7 +183,7 @@ export function TenantPortalRegisterPage() {
         name: String(values.name ?? ""),
         email,
         password: String(values.password ?? ""),
-        phone: String(values.phone ?? ""),
+        phone: normalizeBrazilianPhoneDigits(String(values.phone ?? "")),
         customerType:
           values.customerType === "Company" ? "Company" : "Individual",
         document: onlyDigits(String(values.document ?? "")),
@@ -258,6 +262,13 @@ export function TenantPortalRegisterPage() {
                       autoComplete={autoComplete}
                       {...field}
                       value={String(field.value ?? "")}
+                      onChange={(event) => {
+                        field.onChange(
+                          name === "phone"
+                            ? normalizeBrazilianPhoneDigits(event.target.value)
+                            : event.target.value,
+                        )
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

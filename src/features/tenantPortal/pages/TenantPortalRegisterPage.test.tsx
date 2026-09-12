@@ -267,6 +267,56 @@ describe("TenantPortalRegisterPage browser autofill", () => {
     })
   })
 
+  it("enables submit after a valid +55 mobile autofill and submits national digits", async () => {
+    const user = userEvent.setup()
+    renderRegister()
+    await waitForRegisterForm()
+
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+      "Ana Silva",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+      "password1",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+      "+55 45 99999-9999",
+    )
+    autofillInput(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+      "52998224725",
+    )
+
+    const phone = screen.getByLabelText(i18n.t("tenantPortal.fields.phone"))
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(phone).toHaveValue("45999999999")
+      expect(submit).toBeEnabled()
+    })
+
+    await user.click(submit)
+    await waitFor(() => {
+      expect(register).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({
+          phone: "45999999999",
+        }),
+      )
+    })
+  })
+
   it("keeps submit disabled when autofill leaves a required field invalid", async () => {
     renderRegister()
     await waitForRegisterForm()
