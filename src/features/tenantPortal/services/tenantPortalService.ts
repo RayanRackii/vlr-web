@@ -31,6 +31,70 @@ const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
 const CUSTOMER_ID_KEY = "rolvix.customer.id"
+const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
+  "rolvix.customer.pendingEmailVerification"
+
+export type PendingEmailVerification = {
+  email: string
+  verificationSendFailed: boolean
+}
+
+export function pendingEmailVerificationStorageKey(subdomain: string): string {
+  return `${PENDING_EMAIL_VERIFICATION_KEY_PREFIX}.${subdomain.trim().toLowerCase()}`
+}
+
+export function persistPendingEmailVerification(
+  subdomain: string,
+  payload: PendingEmailVerification,
+): void {
+  const email = payload.email.trim()
+  if (email.length === 0) {
+    return
+  }
+
+  const stored: PendingEmailVerification = {
+    email,
+    verificationSendFailed: payload.verificationSendFailed === true,
+  }
+  window.sessionStorage.setItem(
+    pendingEmailVerificationStorageKey(subdomain),
+    JSON.stringify(stored),
+  )
+}
+
+export function readPendingEmailVerification(
+  subdomain: string,
+): PendingEmailVerification | null {
+  const raw = window.sessionStorage.getItem(
+    pendingEmailVerificationStorageKey(subdomain),
+  )
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== "object" || parsed === null) {
+      return null
+    }
+    const record = parsed as Record<string, unknown>
+    const email = typeof record.email === "string" ? record.email.trim() : ""
+    const emailParsed = z.string().trim().email().safeParse(email)
+    if (!emailParsed.success) {
+      return null
+    }
+    return {
+      email: emailParsed.data,
+      verificationSendFailed: record.verificationSendFailed === true,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function clearPendingEmailVerification(subdomain: string): void {
+  window.sessionStorage.removeItem(pendingEmailVerificationStorageKey(subdomain))
+}
 
 /** Tenant slug from hostname only (`ficc.rolvix.com.br` → `ficc`). */
 export function getHostTenantSubdomain(): string | null {
@@ -72,7 +136,7 @@ export function isTenantHostMode(): boolean {
 export type TenantPortalSegment =
   | ""
   | "register"
-  | "verify-phone"
+  | "verify-email"
   | "app"
   | "app/perfil"
   | "agenda"
@@ -213,6 +277,7 @@ const NIL_CUSTOMER_ID = "00000000-0000-0000-0000-000000000000"
 
 const LEGACY_REGISTER_SEND_FAILED: RegisterCustomerResponse = {
   customerId: NIL_CUSTOMER_ID,
+  requiresEmailVerification: true,
   requiresPhoneVerification: true,
   verificationStarted: false,
 }
@@ -350,7 +415,7 @@ export async function deleteRegistrationField(
   }
 }
 
-export async function resendCustomerPhoneVerification(
+export async function resendCustomerEmailVerification(
   subdomain: string,
   body: { email: string },
 ): Promise<void> {
@@ -364,19 +429,19 @@ export async function resendCustomerPhoneVerification(
     throw new Error(
       parseApiError(
         getAxiosErrorPayload(error),
-        i18n.t("apiErrors.resendPhoneVerification"),
+        i18n.t("apiErrors.resendEmailVerification"),
       ),
     )
   }
 }
 
-export async function verifyCustomerPhone(
+export async function verifyCustomerEmail(
   subdomain: string,
   body: { email: string; code: string },
 ): Promise<CustomerAuthResponse> {
   try {
     const response = await publicApi.post(
-      "/api/auth/customer/verify-phone",
+      "/api/auth/customer/verify-email",
       body,
       { headers: subdomainHeaders(subdomain) },
     )
@@ -393,7 +458,7 @@ export async function verifyCustomerPhone(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyPhone")),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyEmail")),
     )
   }
 }

@@ -24,13 +24,13 @@ Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
 - Login branded (`LogoSvg`, cores, trade name).
 - Cadastro no mesmo shell; Customer só daquele Tenant.
 
-**Campos de cadastro (beachhead):** foto, nome, e-mail (login), senha, CPF, CEP, celular (SMS via Twilio Verify = prova de posse, **não** autentica).
+**Campos de cadastro (beachhead):** foto, nome, e-mail (login), senha, CPF, CEP, celular (coletado e armazenado para WhatsApp futuro; **não** autentica e **não** bloqueia o cadastro). Ativação = verificação de **e-mail** (código de 6 dígitos). Twilio **não** é usado no UX de signup.
 
-**Auth B2C:** login = e-mail + senha → JWT `Customer`. OTP-only por telefone é legado a aposentar.
+**Auth B2C:** login = e-mail + senha → JWT `Customer` após o e-mail verificado. OTP-only por telefone é legado a aposentar.
 
 **Branding (baixa manutenção):** `TradeName`, `LogoSvg` (SVG sanitizado — não URL), `PrimaryColor`, `AccentColor` opcional, `SupportWhatsApp` opcional, `WelcomeTagline` ≤120. `LogoUrl` legado — não usar no produto. Novos tenants partem da paleta Rolvix (`#4D6A92` / `#5A8FA0`); valores salvos por tenant continuam soberanos no login e app B2C.
 
-**Validações BR:** CPF/CEP no front para UX; API é autoridade. Verificação de celular no cadastro é Twilio Verify (API). Cadastro B2C pendente (celular ainda não verificado) retoma em `/verify-phone` se o envio do SMS falhar. SMS de catálogo/notificação continua enfileirado (nunca síncrono na request).
+**Validações BR:** CPF/CEP no front para UX; API é autoridade. Cadastro B2C verifica o **e-mail** (código de 6 dígitos em `/verify-email`). Celular é coletado, mas não bloqueia a ativação. Twilio Verify **não** entra no UX de signup. Cadastro pendente (e-mail ainda não verificado) retoma em `/verify-email` se o envio falhar. SMS de catálogo/notificação continua enfileirado (nunca síncrono na request).
 
 ## Language
 
@@ -43,7 +43,7 @@ A person who accesses the platform on behalf of a Tenant (B2B). Authentication i
 _Avoid_: Employee, account holder
 
 **Customer**:
-An end consumer registered exclusively under one Tenant (B2C). Logs in with email + password. `CustomerType` is Individual (CPF) or Company (CNPJ). One account holds one document (`Document`, digits only). Profile also includes name, postal address (via CEP), SMS-verified mobile (for WhatsApp notifications, not login), and optional photo. Not a platform User (B2B). Not an Organization.
+An end consumer registered exclusively under one Tenant (B2C). Logs in with email + password after email-verified activation. `CustomerType` is Individual (CPF) or Company (CNPJ). One account holds one document (`Document`, digits only). Profile also includes name, postal address (via CEP), mobile phone (stored for future WhatsApp notifications, not login and not a signup gate), and optional photo. Not a platform User (B2B). Not an Organization.
 _Avoid_: Client, member, sócio (in code); OrganizationMember; using Tenant.TaxId as the Customer document
 
 **Unit**:

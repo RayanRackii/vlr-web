@@ -59,6 +59,7 @@ export const customerAuthProfileSchema = z.object({
   cpf: z.string().nullable().optional(),
   createdAt: z.string(),
   phoneVerified: z.boolean(),
+  emailVerified: z.boolean().optional().default(false),
   photoUrl: z.string().nullable(),
   extraAttributes: z.record(z.string(), z.string().nullable()).optional(),
 })
@@ -81,6 +82,7 @@ export const customerProfileSchema = z.object({
   photoUrl: z.string().nullable(),
   createdAt: z.string(),
   phoneVerified: z.boolean(),
+  emailVerified: z.boolean().optional().default(false),
   extraAttributes: z
     .record(z.string(), z.string().nullable())
     .nullable()
@@ -111,7 +113,8 @@ export type CustomerAuthResponse = z.infer<typeof authResponseSchema>
 
 export const registerResponseSchema = z.object({
   customerId: z.string().uuid(),
-  requiresPhoneVerification: z.boolean(),
+  requiresEmailVerification: z.boolean(),
+  requiresPhoneVerification: z.boolean().optional(),
   verificationStarted: z.boolean(),
 })
 
@@ -383,12 +386,12 @@ export const customerLoginSchema = z.object({
 
 export type CustomerLoginFormValues = z.infer<typeof customerLoginSchema>
 
-export const verifyPhoneSchema = z.object({
+export const verifyEmailSchema = z.object({
   email: z.string().trim().email(),
   code: z.string().trim().regex(/^\d{6}$/),
 })
 
-export type VerifyPhoneFormValues = z.infer<typeof verifyPhoneSchema>
+export type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
 export const FIELD_TYPE_OPTIONS = [
   "text",
