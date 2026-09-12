@@ -1,7 +1,11 @@
-import { Navigate, Outlet } from "react-router-dom"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
+import {
+  isSafeStaffNextPath,
+  staffLoginPath,
+} from "@/lib/safeStaffNextPath"
 
 type ProtectedRouteProps = {
   children?: ReactNode
@@ -9,6 +13,7 @@ type ProtectedRouteProps = {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -19,7 +24,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (user === null) {
-    return <Navigate to="/" replace />
+    const next = `${location.pathname}${location.search}`
+    const to = isSafeStaffNextPath(next) ? staffLoginPath(next) : "/login"
+    return <Navigate to={to} replace />
   }
 
   return children ?? <Outlet />

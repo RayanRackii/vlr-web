@@ -17,7 +17,15 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { TENANT_PORTAL_OUTLINE_BUTTON_CLASS } from "@/features/tenantPortal/lib/tenantPortalControlStyles"
 import {
   buildCustomerRegisterSchema,
   formatCnpjMask,
@@ -58,6 +66,7 @@ export function TenantPortalRegisterPage() {
   const [fields, setFields] = useState<RegistrationField[]>([])
   const [schemaLoading, setSchemaLoading] = useState(true)
   const [schemaError, setSchemaError] = useState<string | null>(null)
+  const [blockedAttempted, setBlockedAttempted] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -93,6 +102,17 @@ export function TenantPortalRegisterPage() {
           invalidCpf: t("tenantPortal.validation.invalidCpf"),
           invalidCnpj: t("tenantPortal.validation.invalidCnpj"),
         },
+        {
+          nameMin: t("tenantPortal.validation.nameMin"),
+          nameMax: t("tenantPortal.validation.nameMax"),
+          emailInvalid: t("tenantPortal.validation.emailInvalid"),
+          passwordMin: t("tenantPortal.validation.passwordMin"),
+          phoneInvalid: t("tenantPortal.validation.phoneInvalid"),
+          documentRequired: t("tenantPortal.validation.documentRequired"),
+          invalidCep: t("tenantPortal.validation.invalidCep"),
+          photoRequired: t("tenantPortal.validation.photoRequired"),
+          fieldRequired: t("tenantPortal.validation.fieldRequired"),
+        },
       ),
     [fields, t],
   )
@@ -126,6 +146,15 @@ export function TenantPortalRegisterPage() {
 
   const watchedValues = form.watch()
   const isRegisterValid = schema.safeParse(watchedValues).success
+  const extraFields = fields.filter(
+    (extra) => !isReservedRegisterFieldKey(extra.fieldKey),
+  )
+  const missingRequiredPhoto = extraFields.some(
+    (extra) =>
+      extra.fieldType === "photo" &&
+      extra.isRequired &&
+      !String(watchedValues[extra.fieldKey] ?? "").trim(),
+  )
 
   useEffect(() => {
     const formElement = formRef.current
@@ -291,6 +320,11 @@ export function TenantPortalRegisterPage() {
                       <Button
                         type="button"
                         variant={current === "Individual" ? "default" : "outline"}
+                        className={
+                          current === "Individual"
+                            ? undefined
+                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS
+                        }
                         onClick={() => {
                           field.onChange("Individual")
                           form.setValue("document", "")
@@ -301,6 +335,11 @@ export function TenantPortalRegisterPage() {
                       <Button
                         type="button"
                         variant={current === "Company" ? "default" : "outline"}
+                        className={
+                          current === "Company"
+                            ? undefined
+                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS
+                        }
                         onClick={() => {
                           field.onChange("Company")
                           form.setValue("document", "")
@@ -361,9 +400,7 @@ export function TenantPortalRegisterPage() {
             }}
           />
 
-          {fields
-            .filter((extra) => !isReservedRegisterFieldKey(extra.fieldKey))
-            .map((extra) => (
+          {extraFields.map((extra) => (
             <FormField
               key={extra.id}
               control={form.control}
@@ -372,7 +409,9 @@ export function TenantPortalRegisterPage() {
                 <FormItem>
                   <FormLabel>
                     {extra.label}
-                    {extra.isRequired ? "" : ` (${t("common.optional")})`}
+                    {extra.isRequired
+                      ? ` (${t("tenantPortal.register.requiredMark")})`
+                      : ` (${t("common.optional")})`}
                   </FormLabel>
                   <FormControl>
                     {extra.fieldType === "boolean" ? (
@@ -398,20 +437,34 @@ export function TenantPortalRegisterPage() {
                         }}
                       />
                     ) : extra.fieldType === "select" ? (
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-                        value={String(field.value ?? "")}
-                        onChange={field.onChange}
+                      <Select
+                        modal={false}
+                        value={String(field.value ?? "") || null}
+                        onValueChange={(value) => {
+                          if (typeof value === "string") {
+                            field.onChange(value)
+                          }
+                        }}
+                        items={(extra.options ?? []).map((option) => ({
+                          value: option,
+                          label: option,
+                        }))}
                       >
-                        <option value="">
-                          {t("tenantPortal.register.selectPlaceholder")}
-                        </option>
-                        {(extra.options ?? []).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t(
+                              "tenantPortal.register.selectPlaceholder",
+                            )}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(extra.options ?? []).map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <Input
                         type={
@@ -431,21 +484,52 @@ export function TenantPortalRegisterPage() {
                       />
                     )}
                   </FormControl>
+                  {extra.fieldType === "photo" && extra.isRequired ? (
+                    <p className="text-xs text-muted-foreground">
+                      {t("tenantPortal.register.photoRequired")}
+                    </p>
+                  ) : null}
                   <FormMessage />
                 </FormItem>
               )}
             />
           ))}
 
-          <FormPrimaryButton
-            type="submit"
-            className="w-full"
-            isValid={isRegisterValid}
-            loading={submitting}
-            loadingLabel={t("tenantPortal.register.submitting")}
+          <div
+            onClick={() => {
+              if (isRegisterValid || submitting) {
+                return
+              }
+              setBlockedAttempted(true)
+              void form.trigger()
+            }}
           >
-            {t("tenantPortal.register.submit")}
-          </FormPrimaryButton>
+            <FormPrimaryButton
+              type="submit"
+              className="w-full"
+              isValid={isRegisterValid}
+              loading={submitting}
+              loadingLabel={t("tenantPortal.register.submitting")}
+              aria-describedby={
+                blockedAttempted && !isRegisterValid
+                  ? "register-blocked-hint"
+                  : undefined
+              }
+            >
+              {t("tenantPortal.register.submit")}
+            </FormPrimaryButton>
+          </div>
+          {blockedAttempted && !isRegisterValid ? (
+            <p
+              id="register-blocked-hint"
+              role="status"
+              className="text-sm text-destructive"
+            >
+              {missingRequiredPhoto
+                ? t("tenantPortal.register.photoRequired")
+                : t("tenantPortal.register.blockedHint")}
+            </p>
+          ) : null}
         </form>
       </Form>
 

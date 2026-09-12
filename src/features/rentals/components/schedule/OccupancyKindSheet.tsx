@@ -17,6 +17,13 @@ import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -151,23 +158,34 @@ export function OccupancyKindSheet({
               label={t("rentals.schedule.kinds.iconKey")}
               help={t("rentals.schedule.kinds.help.iconKey")}
             />
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+            <Select
+              modal={false}
               value={form.iconKey ?? "circle-check"}
               disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  iconKey: event.target.value,
-                }))
+              onValueChange={(value) => {
+                if (typeof value === "string") {
+                  setForm((current) => ({
+                    ...current,
+                    iconKey: value,
+                  }))
+                }
               }}
+              items={ICON_KEYS.map((iconKey) => ({
+                value: iconKey,
+                label: iconKey,
+              }))}
             >
-              {ICON_KEYS.map((iconKey) => (
-                <option key={iconKey} value={iconKey}>
-                  {iconKey}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ICON_KEYS.map((iconKey) => (
+                  <SelectItem key={iconKey} value={iconKey}>
+                    {iconKey}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <FieldLabel

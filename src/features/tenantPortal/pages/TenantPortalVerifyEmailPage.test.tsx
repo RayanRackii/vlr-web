@@ -224,6 +224,20 @@ describe("TenantPortalVerifyEmailPage", () => {
     expect(resendReady).toBeEnabled()
   })
 
+  it("uses high-contrast outline classes on Reenviar código", () => {
+    renderVerify({
+      email: "rachel@example.com",
+      verificationSendFailed: true,
+    })
+
+    const resend = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.verify.resend"),
+    })
+    expect(resend.className).toContain("dark:bg-transparent")
+    expect(resend.className).toContain("text-foreground")
+    expect(resend.className).toContain("border-foreground/40")
+  })
+
   it("submits using the email restored from sessionStorage when location.state is missing", async () => {
     const user = userEvent.setup()
     persistPendingEmailVerification("ficc", {

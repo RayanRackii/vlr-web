@@ -405,7 +405,7 @@ describe("TenantPortalRegisterPage browser autofill", () => {
 
     renderRegister()
     await waitForRegisterForm()
-    expect(await screen.findByLabelText("Matrícula")).toBeInTheDocument()
+    expect(await screen.findByLabelText(/Matrícula/)).toBeInTheDocument()
 
     const submit = screen.getByRole("button", {
       name: i18n.t("tenantPortal.register.submit"),
@@ -413,10 +413,65 @@ describe("TenantPortalRegisterPage browser autofill", () => {
     autofillValidRegisterCore()
     expect(submit).toBeDisabled()
 
-    autofillInput(screen.getByLabelText("Matrícula"), "SOC-42")
+    autofillInput(screen.getByLabelText(/Matrícula/), "SOC-42")
 
     await waitFor(() => {
       expect(submit).toBeEnabled()
     })
+  })
+
+  it("keeps the unselected Empresa chip readable on a dark tenant surface", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    const company = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.fields.company"),
+    })
+    expect(company.className).toContain("dark:bg-transparent")
+    expect(company.className).toContain("text-foreground")
+    expect(company.className).toContain("border-foreground/40")
+  })
+
+  it("explains a required photo when Continuar stays blocked", async () => {
+    const user = userEvent.setup()
+    fetchSchema.mockResolvedValue({
+      coreFields: [
+        "name",
+        "email",
+        "password",
+        "confirmPassword",
+        "phone",
+        "customerType",
+        "document",
+      ],
+      fields: [
+        {
+          id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          fieldKey: "fotoDePerfil",
+          label: "FOTO DO PERFIL",
+          fieldType: "photo",
+          isRequired: true,
+          sortOrder: 1,
+          options: null,
+        },
+      ],
+    })
+
+    renderRegister()
+    await waitForRegisterForm()
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.register.photoRequired")),
+    ).toBeInTheDocument()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    autofillValidRegisterCore()
+    expect(submit).toBeDisabled()
+
+    await user.click(submit.parentElement as HTMLElement)
+    expect(
+      await screen.findByRole("status"),
+    ).toHaveTextContent(i18n.t("tenantPortal.register.photoRequired"))
   })
 })

@@ -275,17 +275,50 @@ export function isReservedRegisterFieldKey(fieldKey: string): boolean {
   return CORE_REGISTER_FIELD_KEYS.has(fieldKey)
 }
 
-const coreRegisterShape = {
-  name: z.string().trim().min(2).max(200),
-  email: z.string().trim().email(),
-  password: z.string().min(8).max(128),
-  confirmPassword: z.string().min(8).max(128),
-  phone: z
-    .string()
-    .trim()
-    .refine(isValidBrazilianPhoneDigits, "Invalid phone"),
-  customerType: customerTypeSchema,
-  document: z.string().trim().min(1),
+export type CustomerRegisterFieldMessages = {
+  nameMin: string
+  nameMax: string
+  emailInvalid: string
+  passwordMin: string
+  phoneInvalid: string
+  documentRequired: string
+  invalidCep: string
+  photoRequired: string
+  fieldRequired: string
+}
+
+const DEFAULT_REGISTER_FIELD_MESSAGES: CustomerRegisterFieldMessages = {
+  nameMin: "O nome deve ter pelo menos 2 caracteres.",
+  nameMax: "O nome pode ter no máximo 200 caracteres.",
+  emailInvalid: "E-mail inválido.",
+  passwordMin: "A senha deve ter no mínimo 8 caracteres.",
+  phoneInvalid: "Informe um celular válido.",
+  documentRequired: "Informe o documento.",
+  invalidCep: "CEP inválido.",
+  photoRequired: "Envie uma foto de perfil.",
+  fieldRequired: "Preencha este campo.",
+}
+
+function buildCoreRegisterShape(messages: CustomerRegisterFieldMessages) {
+  return {
+    name: z
+      .string()
+      .trim()
+      .min(2, messages.nameMin)
+      .max(200, messages.nameMax),
+    email: z.string().trim().email(messages.emailInvalid),
+    password: z.string().min(8, messages.passwordMin).max(128, messages.passwordMin),
+    confirmPassword: z
+      .string()
+      .min(8, messages.passwordMin)
+      .max(128, messages.passwordMin),
+    phone: z
+      .string()
+      .trim()
+      .refine(isValidBrazilianPhoneDigits, messages.phoneInvalid),
+    customerType: customerTypeSchema,
+    document: z.string().trim().min(1, messages.documentRequired),
+  }
 }
 
 export function buildCustomerRegisterSchema(
@@ -295,7 +328,9 @@ export function buildCustomerRegisterSchema(
     invalidCpf: string
     invalidCnpj: string
   },
+  fieldMessages?: Partial<CustomerRegisterFieldMessages>,
 ) {
+  const messages = { ...DEFAULT_REGISTER_FIELD_MESSAGES, ...fieldMessages }
   const extraShape: Record<string, z.ZodTypeAny> = {}
 
   for (const field of fields) {
@@ -310,7 +345,9 @@ export function buildCustomerRegisterSchema(
         schema = z.boolean()
         break
       case "number":
-        schema = z.coerce.number()
+        schema = z.coerce.number({
+          error: messages.fieldRequired,
+        })
         break
       case "cpf":
         schema = z
@@ -318,7 +355,7 @@ export function buildCustomerRegisterSchema(
           .trim()
           .refine(
             (value) => isValidCpf(value),
-            documentMessages?.invalidCpf ?? "Invalid CPF",
+            documentMessages?.invalidCpf ?? "CPF inválido.",
           )
         break
       case "cnpj":
@@ -327,29 +364,37 @@ export function buildCustomerRegisterSchema(
           .trim()
           .refine(
             (value) => isValidCnpj(value),
-            documentMessages?.invalidCnpj ?? "Invalid CNPJ",
+            documentMessages?.invalidCnpj ?? "CNPJ inválido.",
           )
         break
       case "cep":
         schema = z
           .string()
           .trim()
-          .refine((value) => onlyDigits(value).length === 8, "Invalid CEP")
+          .refine(
+            (value) => onlyDigits(value).length === 8,
+            messages.invalidCep,
+          )
         break
       case "photo":
-        schema = z.string().min(32).max(400_000)
+        schema = z
+          .string()
+          .min(32, messages.photoRequired)
+          .max(400_000, messages.photoRequired)
         break
       case "email":
-        schema = z.string().trim().email()
+        schema = z.string().trim().email(messages.emailInvalid)
         break
       case "select":
-        schema = z.string().trim().min(1)
+        schema = z.string().trim().min(1, messages.fieldRequired)
         if (field.options && field.options.length > 0) {
-          schema = z.enum(field.options as [string, ...string[]])
+          schema = z.enum(field.options as [string, ...string[]], {
+            error: messages.fieldRequired,
+          })
         }
         break
       default:
-        schema = z.string().trim().min(1)
+        schema = z.string().trim().min(1, messages.fieldRequired)
     }
 
     if (!field.isRequired) {
@@ -364,7 +409,7 @@ export function buildCustomerRegisterSchema(
 
   return z
     .object({
-      ...coreRegisterShape,
+      ...buildCoreRegisterShape(messages),
       ...extraShape,
     })
     .superRefine((values, ctx) => {
@@ -380,7 +425,7 @@ export function buildCustomerRegisterSchema(
         ctx.addIssue({
           code: "custom",
           path: ["document"],
-          message: documentMessages?.invalidCpf ?? "Invalid CPF",
+          message: documentMessages?.invalidCpf ?? "CPF inválido.",
         })
       }
 
@@ -388,7 +433,7 @@ export function buildCustomerRegisterSchema(
         ctx.addIssue({
           code: "custom",
           path: ["document"],
-          message: documentMessages?.invalidCnpj ?? "Invalid CNPJ",
+          message: documentMessages?.invalidCnpj ?? "CNPJ inválido.",
         })
       }
     })
@@ -398,19 +443,44 @@ export type CustomerRegisterFormValues = z.infer<
   ReturnType<typeof buildCustomerRegisterSchema>
 >
 
-export const customerLoginSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(1),
-})
+export function buildCustomerLoginSchema(messages: {
+  emailInvalid: string
+  passwordRequired: string
+}) {
+  return z.object({
+    email: z.string().trim().email(messages.emailInvalid),
+    password: z.string().min(1, messages.passwordRequired),
+  })
+}
 
-export type CustomerLoginFormValues = z.infer<typeof customerLoginSchema>
+export type CustomerLoginFormValues = {
+  email: string
+  password: string
+}
 
-export const verifyEmailSchema = z.object({
-  email: z.string().trim().email(),
-  code: z.string().trim().regex(/^\d{6}$/),
-})
+const customerEmailFormatSchema = z.string().trim().email()
 
-export type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
+export function isValidCustomerEmail(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    customerEmailFormatSchema.safeParse(value).success
+  )
+}
+
+export function buildVerifyEmailSchema(messages: {
+  emailInvalid: string
+  codeInvalid: string
+}) {
+  return z.object({
+    email: z.string().trim().email(messages.emailInvalid),
+    code: z.string().trim().regex(/^\d{6}$/, messages.codeInvalid),
+  })
+}
+
+export type VerifyEmailFormValues = {
+  email: string
+  code: string
+}
 
 export const FIELD_TYPE_OPTIONS = [
   "text",

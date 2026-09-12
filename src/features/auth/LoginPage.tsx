@@ -1,7 +1,7 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -21,6 +21,7 @@ import {
 } from "@/features/auth/loginSchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
 import { supabase } from "@/lib/supabase"
+import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
 
 function getLoginErrorMessage(
   error: AuthError,
@@ -36,6 +37,7 @@ function getLoginErrorMessage(
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
 
@@ -61,7 +63,7 @@ export function LoginPage() {
       return
     }
 
-    void navigate("/dashboard")
+    void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
   }
 
   async function onForgotPassword() {

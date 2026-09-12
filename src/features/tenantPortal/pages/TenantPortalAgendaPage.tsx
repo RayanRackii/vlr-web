@@ -73,6 +73,7 @@ export function TenantPortalAgendaPage() {
   >(null)
   const [loading, setLoading] = useState(true)
   const [slotsLoading, setSlotsLoading] = useState(false)
+  const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [layoutItems, setLayoutItems] = useState<
@@ -178,11 +179,17 @@ export function TenantPortalAgendaPage() {
   useEffect(() => {
     if (!signedIn || !date) {
       setSlots([])
+      setStartTime("")
+      setSlotsLoading(false)
+      setSlotsError(false)
       return
     }
 
     let cancelled = false
     setSlotsLoading(true)
+    setSlotsError(false)
+    setSlots([])
+    setStartTime("")
     setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
       .then((day) => {
@@ -192,16 +199,13 @@ export function TenantPortalAgendaPage() {
         const bookable = day.slots.filter(isCustomerBookableSlot)
         setSlots(bookable)
         const times = listDistinctStartTimes(bookable)
-        setStartTime((current) => {
-          if (current && times.some((time) => time.startTime === current)) {
-            return current
-          }
-          return times[0]?.startTime ?? ""
-        })
+        setStartTime(times[0]?.startTime ?? "")
       })
       .catch((error) => {
         if (!cancelled) {
           setSlots([])
+          setStartTime("")
+          setSlotsError(true)
           toast.error(
             error instanceof Error
               ? error.message
@@ -387,11 +391,19 @@ export function TenantPortalAgendaPage() {
                   setSelectedRentalAssetId(null)
                 }}
                 items={timeItems}
-                disabled={slotsLoading || timeWindows.length === 0}
+                disabled={
+                  slotsLoading || slotsError || timeWindows.length === 0
+                }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" aria-busy={slotsLoading}>
                   <SelectValue
-                    placeholder={t("tenantPortal.agenda.noTimes")}
+                    placeholder={
+                      slotsLoading
+                        ? t("tenantPortal.agenda.loadingTimes")
+                        : slotsError
+                          ? t("tenantPortal.agenda.slotsError")
+                          : t("tenantPortal.agenda.noTimes")
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>

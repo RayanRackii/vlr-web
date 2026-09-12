@@ -123,6 +123,25 @@ function renderManager(
   )
 }
 
+async function chooseModule(
+  user: ReturnType<typeof userEvent.setup>,
+  dialog: HTMLElement,
+  moduleKey: "rentals" | "catalog",
+) {
+  const trigger = within(dialog).getByLabelText(
+    i18n.t("admin.moduleMenu.functionality"),
+  )
+  await user.click(trigger)
+  await user.click(
+    await screen.findByRole("option", {
+      name:
+        moduleKey === "rentals"
+          ? i18n.t("admin.modules.Rentals")
+          : i18n.t("admin.modules.Catalog"),
+    }),
+  )
+}
+
 function listRow(label: string) {
   const row = screen
     .getAllByText(label)
@@ -227,10 +246,17 @@ describe("ModuleMenuItemsManager", () => {
     const functionality = within(dialog).getByLabelText(
       i18n.t("admin.moduleMenu.functionality"),
     )
-    expect(functionality).toHaveValue("rentals")
+    expect(functionality).toHaveTextContent(i18n.t("admin.modules.Rentals"))
+    await user.click(functionality)
     expect(
-      within(functionality).queryByRole("option", { name: "Rentals" }),
+      await screen.findByRole("option", {
+        name: i18n.t("admin.modules.Rentals"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: "Rentals" }),
     ).not.toBeInTheDocument()
+    await user.keyboard("{Escape}")
 
     await user.click(
       within(dialog).getByRole("button", {
@@ -267,10 +293,7 @@ describe("ModuleMenuItemsManager", () => {
     )
 
     const dialog = await screen.findByRole("dialog")
-    await user.selectOptions(
-      within(dialog).getByLabelText(i18n.t("admin.moduleMenu.functionality")),
-      "catalog",
-    )
+    await chooseModule(user, dialog, "catalog")
     await user.click(
       within(dialog).getByRole("button", {
         name: i18n.t("admin.moduleMenu.create"),
@@ -418,17 +441,19 @@ describe("ModuleMenuItemsManager", () => {
     const functionality = within(dialog).getByLabelText(
       i18n.t("admin.moduleMenu.functionality"),
     )
-    expect(functionality).toHaveValue("rentals")
+    expect(functionality).toHaveTextContent(i18n.t("admin.modules.Rentals"))
+    await user.click(functionality)
     expect(
-      within(functionality).getByRole("option", {
+      await screen.findByRole("option", {
         name: i18n.t("admin.modules.Rentals"),
       }),
     ).toBeInTheDocument()
     expect(
-      within(functionality).queryByRole("option", {
+      screen.queryByRole("option", {
         name: i18n.t("admin.modules.Catalog"),
       }),
     ).not.toBeInTheDocument()
+    await user.keyboard("{Escape}")
   })
 
   it("includes catalog in the create select when the module is active", async () => {
@@ -446,12 +471,14 @@ describe("ModuleMenuItemsManager", () => {
     const functionality = within(dialog).getByLabelText(
       i18n.t("admin.moduleMenu.functionality"),
     )
-    expect(functionality).toHaveValue("catalog")
+    expect(functionality).toHaveTextContent(i18n.t("admin.modules.Catalog"))
+    await user.click(functionality)
     expect(
-      within(functionality).getByRole("option", {
+      await screen.findByRole("option", {
         name: i18n.t("admin.modules.Catalog"),
       }),
     ).toBeInTheDocument()
+    await user.keyboard("{Escape}")
   })
 
   it("keeps an inactive catalog item in the list but out of the preview", async () => {
@@ -525,10 +552,7 @@ describe("ModuleMenuItemsManager", () => {
       within(dialog).getByLabelText(i18n.t("admin.moduleMenu.label")),
     ).toBeInTheDocument()
 
-    await user.selectOptions(
-      within(dialog).getByLabelText(i18n.t("admin.moduleMenu.functionality")),
-      "catalog",
-    )
+    await chooseModule(user, dialog, "catalog")
 
     expect(
       within(dialog).queryByLabelText(i18n.t("admin.moduleMenu.label")),

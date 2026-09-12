@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -142,20 +149,35 @@ export function WeeklyRuleSheet({
           </label>
           <label className="block space-y-1 text-xs">
             <span>{t("rentals.schedule.templates.kind")}</span>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              value={ruleKindId}
+            <Select
+              modal={false}
+              value={ruleKindId || null}
               disabled={busy || readOnly}
-              onChange={(event) => setOccupancyKindId(event.target.value)}
-            >
-              {kinds
+              onValueChange={(value) => {
+                if (typeof value === "string") {
+                  setOccupancyKindId(value)
+                }
+              }}
+              items={kinds
                 .filter((kind) => kind.isActive)
-                .map((kind) => (
-                  <option key={kind.id} value={kind.id}>
-                    {kind.label}
-                  </option>
-                ))}
-            </select>
+                .map((kind) => ({
+                  value: kind.id,
+                  label: kind.label,
+                }))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {kinds
+                  .filter((kind) => kind.isActive)
+                  .map((kind) => (
+                    <SelectItem key={kind.id} value={kind.id}>
+                      {kind.label}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </label>
         </div>
 
