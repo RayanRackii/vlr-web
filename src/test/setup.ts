@@ -22,6 +22,10 @@ vi.mock("@/lib/supabase", () => ({
       })),
       signOut: vi.fn(async () => ({ error: null })),
       refreshSession: vi.fn(async () => ({ error: null })),
+      signInWithPassword: vi.fn(async () => ({
+        data: { user: null, session: null },
+        error: null,
+      })),
     },
   },
 }))

@@ -6,6 +6,13 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import {
@@ -261,30 +268,56 @@ export function RentalLayoutsPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="min-w-0 flex-1 space-y-1 text-sm">
               <span>{t("rentals.layout.select")}</span>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                value={selectedId === "new" ? "new" : selectedId}
-                onChange={(event) => {
-                  if (event.target.value === "new") {
+              <Select
+                modal={false}
+                value={selectedId === "new" ? "new" : selectedId || null}
+                onValueChange={(value) => {
+                  if (value === "new") {
                     startCreate()
                     return
                   }
-                  selectLayout(event.target.value)
+                  if (typeof value === "string") {
+                    selectLayout(value)
+                  }
                 }}
+                items={[
+                  ...(selectedId === "new"
+                    ? [
+                        {
+                          value: "new",
+                          label: t("rentals.layout.newDraft"),
+                        },
+                      ]
+                    : []),
+                  ...layouts.map((layout) => ({
+                    value: layout.id,
+                    label: `${layout.name}${
+                      layout.isActive
+                        ? ""
+                        : ` (${t("rentals.layout.inactive")})`
+                    }`,
+                  })),
+                ]}
               >
-                {layouts.length === 0 && selectedId !== "new" ? (
-                  <option value="">{t("rentals.layout.empty")}</option>
-                ) : null}
-                {selectedId === "new" ? (
-                  <option value="new">{t("rentals.layout.newDraft")}</option>
-                ) : null}
-                {layouts.map((layout) => (
-                  <option key={layout.id} value={layout.id}>
-                    {layout.name}
-                    {layout.isActive ? "" : ` (${t("rentals.layout.inactive")})`}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("rentals.layout.empty")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedId === "new" ? (
+                    <SelectItem value="new">
+                      {t("rentals.layout.newDraft")}
+                    </SelectItem>
+                  ) : null}
+                  {layouts.map((layout) => (
+                    <SelectItem key={layout.id} value={layout.id}>
+                      {layout.name}
+                      {layout.isActive
+                        ? ""
+                        : ` (${t("rentals.layout.inactive")})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
             <Button
               type="button"

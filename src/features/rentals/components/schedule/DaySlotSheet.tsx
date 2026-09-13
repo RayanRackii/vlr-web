@@ -6,6 +6,13 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -151,23 +158,34 @@ function DaySlotSheetForm({
             <>
               <label className="space-y-1.5 text-sm">
                 <span className="font-medium">{t("rentals.schedule.templates.kind")}</span>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                  value={draft.occupancyKindId}
+                <Select
+                  modal={false}
+                  value={draft.occupancyKindId || null}
                   disabled={busy || readOnly}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      occupancyKindId: event.target.value,
-                    }))
-                  }
+                  onValueChange={(value) => {
+                    if (typeof value === "string") {
+                      setDraft((current) => ({
+                        ...current,
+                        occupancyKindId: value,
+                      }))
+                    }
+                  }}
+                  items={activeKinds.map((kind) => ({
+                    value: kind.id,
+                    label: kind.label,
+                  }))}
                 >
-                  {activeKinds.map((kind) => (
-                    <option key={kind.id} value={kind.id}>
-                      {kind.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeKinds.map((kind) => (
+                      <SelectItem key={kind.id} value={kind.id}>
+                        {kind.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
 
               <label className="space-y-1.5 text-sm">

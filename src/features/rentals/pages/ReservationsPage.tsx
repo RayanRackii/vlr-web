@@ -5,6 +5,13 @@ import { toast } from "sonner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
@@ -20,6 +27,8 @@ import {
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
 import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+
+const ALL_STATUSES = "__all__"
 
 export function ReservationsPage() {
   const { t } = useTranslation()
@@ -136,20 +145,44 @@ export function ReservationsPage() {
         </label>
         <label className="space-y-1 text-sm">
           <span>{t("rentals.reservations.status")}</span>
-          <select
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value as ReservationStatus | "")
+          <Select
+            modal={false}
+            value={status || ALL_STATUSES}
+            onValueChange={(value) => {
+              if (typeof value !== "string") {
+                return
+              }
+              setStatus(
+                value === ALL_STATUSES ? "" : (value as ReservationStatus),
+              )
             }}
+            items={[
+              {
+                value: ALL_STATUSES,
+                label: t("rentals.reservations.statusAll"),
+              },
+              ...reservationStatuses.map((value) => ({
+                value,
+                label: t(`rentals.reservations.statuses.${value}`),
+              })),
+            ]}
           >
-            <option value="">{t("rentals.reservations.statusAll")}</option>
-            {reservationStatuses.map((value) => (
-              <option key={value} value={value}>
-                {t(`rentals.reservations.statuses.${value}`)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue
+                placeholder={t("rentals.reservations.statusAll")}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_STATUSES}>
+                {t("rentals.reservations.statusAll")}
+              </SelectItem>
+              {reservationStatuses.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {t(`rentals.reservations.statuses.${value}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
       </div>
 

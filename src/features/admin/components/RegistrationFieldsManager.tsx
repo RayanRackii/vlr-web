@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ListPlus } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -31,6 +31,13 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { generateRegistrationFieldKey } from "@/features/admin/lib/generateRegistrationFieldKey"
 import { registrationFieldTypeLabelKey } from "@/features/admin/lib/registrationFieldTypeLabel"
 import {
@@ -411,17 +418,39 @@ export function RegistrationFieldsManager({
               <Label htmlFor="registration-field-type">
                 {t("admin.registrationFields.fieldType")}
               </Label>
-              <select
-                id="registration-field-type"
-                className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                {...form.register("fieldType")}
-              >
-                {FIELD_TYPE_OPTIONS.map((type) => (
-                  <option key={type} value={type}>
-                    {t(registrationFieldTypeLabelKey(type))}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={form.control}
+                name="fieldType"
+                render={({ field }) => (
+                  <Select
+                    modal={false}
+                    value={field.value}
+                    onValueChange={(value) => {
+                      if (typeof value === "string") {
+                        field.onChange(value)
+                      }
+                    }}
+                    items={FIELD_TYPE_OPTIONS.map((type) => ({
+                      value: type,
+                      label: t(registrationFieldTypeLabelKey(type)),
+                    }))}
+                  >
+                    <SelectTrigger
+                      id="registration-field-type"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FIELD_TYPE_OPTIONS.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(registrationFieldTypeLabelKey(type))}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="flex items-center gap-2">

@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -111,51 +118,78 @@ export function TemplateSheet({
             <span className="font-medium">
               {t("rentals.schedule.templates.dayOfWeek")}
             </span>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+            <Select
+              modal={false}
               value={draft.dayOfWeek}
               disabled={readOnly || busy || lockDayOfWeek}
-              onChange={(event) => {
-                setDraft((current) => ({
-                  ...current,
-                  dayOfWeek: event.target.value,
-                }))
+              onValueChange={(value) => {
+                if (typeof value === "string") {
+                  setDraft((current) => ({
+                    ...current,
+                    dayOfWeek: value,
+                  }))
+                }
               }}
+              items={DAY_NAMES.map((dayName) => ({
+                value: dayName,
+                label: t(`rentals.schedule.days.${dayName}`),
+              }))}
             >
-              {DAY_NAMES.map((dayName) => (
-                <option key={dayName} value={dayName}>
-                  {t(`rentals.schedule.days.${dayName}`)}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DAY_NAMES.map((dayName) => (
+                  <SelectItem key={dayName} value={dayName}>
+                    {t(`rentals.schedule.days.${dayName}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
 
           <label className="space-y-1.5 text-sm">
             <span className="font-medium">
               {t("rentals.schedule.templates.kind")}
             </span>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-              value={draft.occupancyKindId}
+            <Select
+              modal={false}
+              value={draft.occupancyKindId || null}
               disabled={readOnly || busy}
-              onChange={(event) => {
-                setDraft((current) => ({
-                  ...current,
-                  occupancyKindId: event.target.value,
-                }))
+              onValueChange={(value) => {
+                if (typeof value === "string") {
+                  setDraft((current) => ({
+                    ...current,
+                    occupancyKindId: value,
+                  }))
+                }
               }}
-            >
-              {kinds
+              items={kinds
                 .filter(
                   (kind) =>
                     kind.isActive || kind.id === draft.occupancyKindId,
                 )
-                .map((kind) => (
-                  <option key={kind.id} value={kind.id}>
-                    {kind.label}
-                  </option>
-                ))}
-            </select>
+                .map((kind) => ({
+                  value: kind.id,
+                  label: kind.label,
+                }))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {kinds
+                  .filter(
+                    (kind) =>
+                      kind.isActive || kind.id === draft.occupancyKindId,
+                  )
+                  .map((kind) => (
+                    <SelectItem key={kind.id} value={kind.id}>
+                      {kind.label}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </label>
 
           <div className="grid grid-cols-2 gap-3">

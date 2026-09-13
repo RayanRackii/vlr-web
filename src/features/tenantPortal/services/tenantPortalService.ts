@@ -9,6 +9,7 @@ import {
   parseApiError,
 } from "@/lib/api"
 import i18n from "@/lib/i18n"
+import { parseCustomerAuthError } from "@/features/tenantPortal/lib/mapCustomerAuthError"
 import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
 import {
   authResponseSchema,
@@ -311,7 +312,10 @@ export async function registerCustomer(
       throw error
     }
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.register")),
+      parseCustomerAuthError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.register"),
+      ),
     )
   }
 }
@@ -427,7 +431,7 @@ export async function resendCustomerEmailVerification(
     )
   } catch (error) {
     throw new Error(
-      parseApiError(
+      parseCustomerAuthError(
         getAxiosErrorPayload(error),
         i18n.t("apiErrors.resendEmailVerification"),
       ),
@@ -458,7 +462,10 @@ export async function verifyCustomerEmail(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.verifyEmail")),
+      parseCustomerAuthError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.verifyEmail"),
+      ),
     )
   }
 }
@@ -486,7 +493,10 @@ export async function loginCustomer(
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.signIn")),
+      parseCustomerAuthError(
+        getAxiosErrorPayload(error),
+        i18n.t("apiErrors.signIn"),
+      ),
     )
   }
 }

@@ -196,7 +196,18 @@
     "validation": {
       "passwordMismatch": "Passwords must match.",
       "invalidCpf": "Invalid CPF.",
-      "invalidCnpj": "Invalid CNPJ."
+      "invalidCnpj": "Invalid CNPJ.",
+      "emailInvalid": "Invalid email.",
+      "passwordRequired": "Enter your password.",
+      "passwordMin": "Password must be at least 8 characters.",
+      "nameMin": "Name must be at least 2 characters.",
+      "nameMax": "Name can have at most 200 characters.",
+      "phoneInvalid": "Enter a valid mobile number.",
+      "codeInvalid": "Invalid code.",
+      "documentRequired": "Enter the document.",
+      "invalidCep": "Invalid postal code.",
+      "photoRequired": "Upload a profile photo.",
+      "fieldRequired": "Fill in this field."
     },
     "login": {
       "title": "Sign in",
@@ -205,6 +216,8 @@
       "submitting": "Signing in...",
       "toastSuccess": "Signed in!",
       "toastError": "Could not sign in.",
+      "invalidCredentials": "Invalid email or password.",
+      "emailNotVerified": "Confirm your email before signing in.",
       "noAccount": "No account yet?",
       "registerLink": "Register"
     },
@@ -220,7 +233,11 @@
       "schemaError": "Could not load this company's registration form.",
       "selectPlaceholder": "Select...",
       "hasAccount": "Already have an account?",
-      "loginLink": "Sign in"
+      "loginLink": "Sign in",
+      "requiredMark": "required",
+      "blockedHint": "Fill in the required fields to continue.",
+      "photoRequired": "Upload the profile photo to continue.",
+      "duplicateCustomer": "An account with this information already exists."
     },
     "verify": {
       "title": "Confirm email",
@@ -234,6 +251,7 @@
       "resendToastSuccess": "A new code was sent by email.",
       "toastSuccess": "Email verified!",
       "toastError": "Invalid code.",
+      "invalidOrExpired": "Invalid or expired code.",
       "sendFailedTitle": "Account created, but the verification email was not sent.",
       "sendFailedBody": "Your account exists (or is pending), but the verification code could not be sent. Use Resend code to try again.",
       "backToLogin": "Back to sign in"
@@ -269,6 +287,7 @@
       "slotsError": "Could not load slots for this day.",
       "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
       "noTimes": "No times on this date",
+      "loadingTimes": "Loading times...",
       "reserveSuccess": "Reservation created!",
       "reserveError": "Could not create the reservation.",
       "loadError": "Could not load the schedule.",

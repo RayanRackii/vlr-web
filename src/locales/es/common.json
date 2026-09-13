@@ -196,7 +196,18 @@
     "validation": {
       "passwordMismatch": "Las contraseñas deben coincidir.",
       "invalidCpf": "CPF inválido.",
-      "invalidCnpj": "CNPJ inválido."
+      "invalidCnpj": "CNPJ inválido.",
+      "emailInvalid": "Correo inválido.",
+      "passwordRequired": "Ingrese su contraseña.",
+      "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+      "nameMin": "El nombre debe tener al menos 2 caracteres.",
+      "nameMax": "El nombre puede tener como máximo 200 caracteres.",
+      "phoneInvalid": "Ingrese un celular válido.",
+      "codeInvalid": "Código inválido.",
+      "documentRequired": "Ingrese el documento.",
+      "invalidCep": "CEP inválido.",
+      "photoRequired": "Envíe una foto de perfil.",
+      "fieldRequired": "Complete este campo."
     },
     "login": {
       "title": "Entrar",
@@ -205,6 +216,8 @@
       "submitting": "Entrando...",
       "toastSuccess": "¡Sesión iniciada!",
       "toastError": "No fue posible entrar.",
+      "invalidCredentials": "Correo o contraseña inválidos.",
+      "emailNotVerified": "Confirme su correo antes de entrar.",
       "noAccount": "¿Aún no tiene cuenta?",
       "registerLink": "Regístrese"
     },
@@ -220,7 +233,11 @@
       "schemaError": "No se pudo cargar el formulario de esta empresa.",
       "selectPlaceholder": "Seleccione...",
       "hasAccount": "¿Ya tiene cuenta?",
-      "loginLink": "Entrar"
+      "loginLink": "Entrar",
+      "requiredMark": "obligatorio",
+      "blockedHint": "Complete los campos obligatorios para continuar.",
+      "photoRequired": "Envíe la foto de perfil para continuar.",
+      "duplicateCustomer": "Ya existe una cuenta con estos datos."
     },
     "verify": {
       "title": "Confirmar correo",
@@ -234,6 +251,7 @@
       "resendToastSuccess": "Se envió un nuevo código por correo.",
       "toastSuccess": "¡Correo verificado!",
       "toastError": "Código inválido.",
+      "invalidOrExpired": "Código inválido o expirado.",
       "sendFailedTitle": "Cuenta creada, pero el correo de verificación no se envió.",
       "sendFailedBody": "Su cuenta ya existe (o quedó pendiente), pero no se pudo enviar el código. Use Reenviar código para intentarlo de nuevo.",
       "backToLogin": "Volver al inicio de sesión"
@@ -269,6 +287,7 @@
       "slotsError": "No se pudieron cargar los horarios del día.",
       "noSlots": "No hay horarios disponibles en esta fecha. Es posible que el club aún no haya publicado la escala.",
       "noTimes": "No hay horarios en esta fecha",
+      "loadingTimes": "Cargando horarios...",
       "reserveSuccess": "¡Reserva creada!",
       "reserveError": "No se pudo crear la reserva.",
       "loadError": "No se pudo cargar la agenda.",

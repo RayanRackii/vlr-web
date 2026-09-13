@@ -11,6 +11,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -175,20 +182,33 @@ export function WeeklyTemplatesTab({
             <ChevronRight aria-hidden />
           </Button>
         </div>
-        <select
-          className="flex h-9 w-auto rounded-md border border-input bg-transparent px-3 text-sm"
+        <Select
+          modal={false}
           value={weekday}
-          aria-label={t("rentals.schedule.templates.dayOfWeek")}
-          onChange={(event) =>
-            onWeekdayChange(event.target.value as DayOfWeekName)
-          }
+          onValueChange={(value) => {
+            if (typeof value === "string") {
+              onWeekdayChange(value as DayOfWeekName)
+            }
+          }}
+          items={DAY_NAMES.map((dayName) => ({
+            value: dayName,
+            label: t(`rentals.schedule.days.${dayName}`),
+          }))}
         >
-          {DAY_NAMES.map((dayName) => (
-            <option key={dayName} value={dayName}>
-              {t(`rentals.schedule.days.${dayName}`)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger
+            className="w-auto"
+            aria-label={t("rentals.schedule.templates.dayOfWeek")}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DAY_NAMES.map((dayName) => (
+              <SelectItem key={dayName} value={dayName}>
+                {t(`rentals.schedule.days.${dayName}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Popover>
           <PopoverTrigger
             render={<Button type="button" variant="outline" size="sm" />}
