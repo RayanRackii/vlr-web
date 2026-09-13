@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import {
@@ -12,6 +12,7 @@ import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { cn } from "@/lib/utils"
 import {
   Form,
   FormControl,
@@ -23,8 +24,10 @@ import {
 import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
+import { TENANT_PORTAL_OUTLINE_BUTTON_CLASS } from "@/features/tenantPortal/lib/tenantPortalControlStyles"
 import {
-  verifyEmailSchema,
+  buildVerifyEmailSchema,
+  isValidCustomerEmail,
   type VerifyEmailFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
@@ -39,10 +42,7 @@ import {
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = 45
 
 function isValidVerificationEmail(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    verifyEmailSchema.shape.email.safeParse(value).success
-  )
+  return isValidCustomerEmail(value)
 }
 
 export function TenantPortalVerifyEmailPage() {
@@ -79,13 +79,22 @@ export function TenantPortalVerifyEmailPage() {
       : 0,
   )
 
+  const schema = useMemo(
+    () =>
+      buildVerifyEmailSchema({
+        emailInvalid: t("tenantPortal.validation.emailInvalid"),
+        codeInvalid: t("tenantPortal.validation.codeInvalid"),
+      }),
+    [t],
+  )
+
   const form = useForm<VerifyEmailFormValues>({
-    resolver: zodResolver(verifyEmailSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: resolvedEmail, code: "" },
   })
 
   const watchedValues = form.watch()
-  const isVerifyValid = verifyEmailSchema.safeParse(watchedValues).success
+  const isVerifyValid = schema.safeParse(watchedValues).success
 
   const cooldownActive = cooldownSeconds > 0
 
@@ -243,7 +252,7 @@ export function TenantPortalVerifyEmailPage() {
           <LoadingButton
             type="button"
             variant="outline"
-            className="w-full"
+            className={cn("w-full", TENANT_PORTAL_OUTLINE_BUTTON_CLASS)}
             loading={resending}
             loadingLabel={t("tenantPortal.verify.resendSubmitting")}
             disabled={resendDisabled}

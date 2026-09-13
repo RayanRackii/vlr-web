@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import {
-  customerLoginSchema,
+  buildCustomerLoginSchema,
   type CustomerLoginFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
@@ -30,9 +30,17 @@ export function TenantPortalLoginPage() {
   const navigate = useNavigate()
   const { subdomain } = useOutletContext<TenantPortalOutletContext>()
   const [submitting, setSubmitting] = useState(false)
+  const schema = useMemo(
+    () =>
+      buildCustomerLoginSchema({
+        emailInvalid: t("tenantPortal.validation.emailInvalid"),
+        passwordRequired: t("tenantPortal.validation.passwordRequired"),
+      }),
+    [t],
+  )
 
   const form = useForm<CustomerLoginFormValues>({
-    resolver: zodResolver(customerLoginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   })
 

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import {
+  buildCustomerLoginSchema,
   buildCustomerRegisterSchema,
+  buildVerifyEmailSchema,
   isValidBrazilianPhoneDigits,
   normalizeBrazilianPhoneDigits,
   registerResponseSchema,
@@ -199,5 +201,89 @@ describe("buildCustomerRegisterSchema phone", () => {
     expect(parsePhone("459999999").success).toBe(false)
     expect(parsePhone("55459999999999").success).toBe(false)
     expect(parsePhone("123456789012").success).toBe(false)
+  })
+})
+
+const ENGLISH_ZOD_DEFAULTS = /Invalid input|Invalid email|Invalid phone|Invalid CEP/i
+
+describe("B2C Portuguese validation messages", () => {
+  const loginSchema = buildCustomerLoginSchema({
+    emailInvalid: "E-mail inválido.",
+    passwordRequired: "Informe sua senha.",
+  })
+  const verifySchema = buildVerifyEmailSchema({
+    emailInvalid: "E-mail inválido.",
+    codeInvalid: "Código inválido.",
+  })
+  const registerSchema = buildCustomerRegisterSchema(
+    [
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        fieldKey: "fotoDePerfil",
+        label: "Foto de perfil",
+        fieldType: "photo",
+        isRequired: true,
+        sortOrder: 1,
+        options: null,
+      },
+    ],
+    "As senhas precisam ser iguais.",
+    { invalidCpf: "CPF inválido.", invalidCnpj: "CNPJ inválido." },
+    {
+      emailInvalid: "E-mail inválido.",
+      passwordMin: "A senha deve ter no mínimo 8 caracteres.",
+      phoneInvalid: "Informe um celular válido.",
+      photoRequired: "Envie uma foto de perfil.",
+    },
+  )
+
+  it("uses Portuguese copy for invalid login email and empty password", () => {
+    const parsed = loginSchema.safeParse({ email: "not-an-email", password: "" })
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+    const messages = parsed.error.issues.map((issue) => issue.message)
+    expect(messages).toContain("E-mail inválido.")
+    expect(messages).toContain("Informe sua senha.")
+    expect(messages.some((message) => ENGLISH_ZOD_DEFAULTS.test(message))).toBe(
+      false,
+    )
+  })
+
+  it("uses Portuguese copy for an invalid verification code", () => {
+    const parsed = verifySchema.safeParse({
+      email: "ana@club.test",
+      code: "12ab",
+    })
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+    expect(parsed.error.issues.map((issue) => issue.message)).toContain(
+      "Código inválido.",
+    )
+  })
+
+  it("does not leak Zod defaults from empty register or required photo", () => {
+    const parsed = registerSchema.safeParse({
+      name: "A",
+      email: "bad",
+      password: "short",
+      confirmPassword: "short",
+      phone: "123",
+      customerType: "Individual",
+      document: "",
+      fotoDePerfil: "",
+    })
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+    const messages = parsed.error.issues.map((issue) => issue.message)
+    expect(messages.some((message) => ENGLISH_ZOD_DEFAULTS.test(message))).toBe(
+      false,
+    )
+    expect(messages).toContain("Envie uma foto de perfil.")
   })
 })

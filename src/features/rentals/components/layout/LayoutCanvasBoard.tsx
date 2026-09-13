@@ -212,10 +212,12 @@ export function LayoutCanvasBoard({
                 key={item.key}
                 role={mode === "pick" ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
+                aria-label={item.label}
+                title={item.label}
                 aria-pressed={mode === "pick" ? item.selected : undefined}
                 aria-disabled={unavailable || undefined}
                 className={cn(
-                  "absolute flex items-center justify-center rounded-lg border px-1.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:text-sm",
+                  "absolute flex min-w-0 items-center justify-center overflow-hidden rounded-lg border px-0.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:px-1.5 sm:text-sm",
                   mode === "edit" &&
                     "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   clickable &&
@@ -248,7 +250,9 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                <span className="line-clamp-3 break-words px-3">{item.label}</span>
+                <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
+                  {item.label}
+                </span>
                 {mode === "edit" && onRemove ? (
                   <button
                     type="button"

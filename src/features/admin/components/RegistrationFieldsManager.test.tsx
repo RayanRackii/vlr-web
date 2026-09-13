@@ -71,6 +71,22 @@ async function waitForListLoaded() {
   })
 }
 
+async function chooseFieldType(
+  user: ReturnType<typeof userEvent.setup>,
+  dialog: HTMLElement,
+  typeKey: "phone" | "boolean" | "date" | "text",
+) {
+  const trigger = within(dialog).getByLabelText(
+    i18n.t("admin.registrationFields.fieldType"),
+  )
+  await user.click(trigger)
+  await user.click(
+    await screen.findByRole("option", {
+      name: i18n.t(`admin.registrationFields.types.${typeKey}`),
+    }),
+  )
+}
+
 function builtInList() {
   const heading = screen.getByRole("heading", {
     name: i18n.t("admin.registrationFields.builtIn.title"),
@@ -181,23 +197,28 @@ describe("RegistrationFieldsManager", () => {
       i18n.t("admin.registrationFields.fieldType"),
     )
 
-    expect(typeSelect).toHaveDisplayValue(
+    expect(typeSelect).toHaveTextContent(
       i18n.t("admin.registrationFields.types.text"),
     )
+    await user.click(typeSelect)
     expect(
-      within(typeSelect).getByRole("option", {
+      await screen.findByRole("option", {
         name: i18n.t("admin.registrationFields.types.phone"),
       }),
-    ).toHaveValue("phone")
+    ).toBeInTheDocument()
     expect(
-      within(typeSelect).queryByRole("option", { name: "phone" }),
+      screen.queryByRole("option", { name: "phone" }),
     ).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole("option", {
+        name: i18n.t("admin.registrationFields.types.phone"),
+      }),
+    )
 
     await user.type(
       within(dialog).getByLabelText(i18n.t("admin.registrationFields.label")),
       "Celular comercial",
     )
-    await user.selectOptions(typeSelect, "phone")
     await user.click(
       within(dialog).getByRole("button", {
         name: i18n.t("admin.registrationFields.save"),
@@ -233,10 +254,7 @@ describe("RegistrationFieldsManager", () => {
       within(dialog).getByLabelText(i18n.t("admin.registrationFields.label")),
       "Tem bagagem",
     )
-    await user.selectOptions(
-      within(dialog).getByLabelText(i18n.t("admin.registrationFields.fieldType")),
-      "boolean",
-    )
+    await chooseFieldType(user, dialog, "boolean")
     await user.click(
       within(dialog).getByRole("button", {
         name: i18n.t("admin.registrationFields.save"),
@@ -284,10 +302,7 @@ describe("RegistrationFieldsManager", () => {
       within(dialog).getByLabelText(i18n.t("admin.registrationFields.label")),
       "Data de nascimento",
     )
-    await user.selectOptions(
-      within(dialog).getByLabelText(i18n.t("admin.registrationFields.fieldType")),
-      "date",
-    )
+    await chooseFieldType(user, dialog, "date")
     await user.click(
       within(dialog).getByRole("checkbox", {
         name: i18n.t("admin.registrationFields.requiredCheckbox"),

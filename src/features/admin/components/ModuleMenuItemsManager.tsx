@@ -28,6 +28,13 @@ import {
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { PortalMenuPreview } from "@/features/admin/components/PortalMenuPreview"
 import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
@@ -81,6 +88,8 @@ type ModuleMenuItemsManagerProps = {
   /** Caller-owned write gate. Super-Admin embed passes true; tenant pages pass the real permission. */
   canWrite: boolean
 }
+
+const ANY_ASSET = "__any__"
 
 function asAssetOptions(list: unknown): AssetOption[] {
   if (!Array.isArray(list)) {
@@ -701,12 +710,14 @@ export function ModuleMenuItemsManager({
                   {friendlyModuleLabel(editor.moduleName, t)}
                 </p>
               ) : (
-                <select
-                  id="module-menu-functionality"
-                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                <Select
+                  modal={false}
                   value={editor.moduleName}
-                  onChange={(event) => {
-                    const moduleName = event.target.value
+                  onValueChange={(value) => {
+                    if (typeof value !== "string") {
+                      return
+                    }
+                    const moduleName = value
                     setLabelTouched(false)
                     setEditor((current) => ({
                       ...current,
@@ -715,15 +726,30 @@ export function ModuleMenuItemsManager({
                     }))
                     applySuggestedLabel(moduleName, "", false)
                   }}
-                >
-                  {eligibleModules.map((key) => (
-                    <option key={key} value={key}>
-                      {key === "rentals"
+                  items={eligibleModules.map((key) => ({
+                    value: key,
+                    label:
+                      key === "rentals"
                         ? t("admin.modules.Rentals")
-                        : t("admin.modules.Catalog")}
-                    </option>
-                  ))}
-                </select>
+                        : t("admin.modules.Catalog"),
+                  }))}
+                >
+                  <SelectTrigger
+                    id="module-menu-functionality"
+                    className="w-full"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligibleModules.map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {key === "rentals"
+                          ? t("admin.modules.Rentals")
+                          : t("admin.modules.Catalog")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
 
@@ -732,12 +758,14 @@ export function ModuleMenuItemsManager({
                 <Label htmlFor="module-menu-destination">
                   {t("admin.moduleMenu.destination")}
                 </Label>
-                <select
-                  id="module-menu-destination"
-                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-                  value={editor.rentalAssetId}
-                  onChange={(event) => {
-                    const rentalAssetId = event.target.value
+                <Select
+                  modal={false}
+                  value={editor.rentalAssetId || ANY_ASSET}
+                  onValueChange={(value) => {
+                    if (typeof value !== "string") {
+                      return
+                    }
+                    const rentalAssetId = value === ANY_ASSET ? "" : value
                     setEditor((current) => ({
                       ...current,
                       rentalAssetId,
@@ -748,14 +776,34 @@ export function ModuleMenuItemsManager({
                       labelTouched,
                     )
                   }}
+                  items={[
+                    {
+                      value: ANY_ASSET,
+                      label: t("admin.moduleMenu.anyAsset"),
+                    },
+                    ...assets.map((asset) => ({
+                      value: asset.id,
+                      label: asset.name,
+                    })),
+                  ]}
                 >
-                  <option value="">{t("admin.moduleMenu.anyAsset")}</option>
-                  {assets.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="module-menu-destination"
+                    className="w-full"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ANY_ASSET}>
+                      {t("admin.moduleMenu.anyAsset")}
+                    </SelectItem>
+                    {assets.map((asset) => (
+                      <SelectItem key={asset.id} value={asset.id}>
+                        {asset.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ) : null}
 

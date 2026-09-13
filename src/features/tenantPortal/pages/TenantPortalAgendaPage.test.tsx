@@ -410,4 +410,44 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
   })
+
+  it("shows a loading state instead of the empty copy while slots are in flight", async () => {
+    let resolveDay: (value: { date: string; slots: PortalScheduleSlot[] }) => void =
+      () => {}
+    fetchDay.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDay = resolve
+        }),
+    )
+    renderAgenda()
+
+    const trigger = await screen.findByRole("combobox", {
+      name: i18n.t("tenantPortal.agenda.time"),
+    })
+    expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.loadingTimes"))
+    expect(trigger).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+
+    resolveDay({ date: "2026-09-12", slots: [] })
+
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    })
+    expect(trigger).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.loadingTimes"),
+    )
+  })
+
+  it("shows an error state instead of the empty copy when the request fails", async () => {
+    fetchDay.mockRejectedValue(new Error("network"))
+    renderAgenda()
+
+    const trigger = await screen.findByRole("combobox", {
+      name: i18n.t("tenantPortal.agenda.time"),
+    })
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.slotsError"))
+    })
+    expect(trigger).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+  })
 })
