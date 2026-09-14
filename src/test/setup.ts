@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { afterEach, vi } from "vitest"
 
+import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
 import i18n from "@/lib/i18n"
 
 await i18n.changeLanguage("pt-BR")
@@ -31,5 +32,6 @@ vi.mock("@/lib/supabase", () => ({
 }))
 
 afterEach(() => {
+  resetCurrentUserCacheForTests()
   cleanup()
 })

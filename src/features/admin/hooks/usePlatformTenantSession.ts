@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
+import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { supabase } from "@/lib/supabase"
 
 const TENANT_LABEL_KEY = "rolvix.activeTenantLabel"
@@ -36,6 +37,7 @@ function readTenantIdFromUser(user: {
 }
 
 export async function refreshAuthSession() {
+  invalidateCurrentUserCache()
   const { error } = await supabase.auth.refreshSession()
   if (error) {
     throw error

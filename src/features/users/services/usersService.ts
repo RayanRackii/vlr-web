@@ -2,6 +2,10 @@ import i18n from "@/lib/i18n"
 import { api } from "@/lib/api"
 import { throwRbacServiceError } from "@/features/users/permissions/rbacErrors"
 import {
+  invalidateCurrentUserCache,
+  readCurrentUser,
+} from "@/features/users/services/currentUserCache"
+import {
   assignUserRolesRequestSchema,
   currentUserSchema,
   inviteTenantMemberRequestSchema,
@@ -30,7 +34,12 @@ function parseOrThrow<T>(
   return data
 }
 
-export async function getCurrentUser(): Promise<CurrentUser> {
+export type GetCurrentUserOptions = {
+  /** Bypass the session cache and in-flight request (profile refresh). */
+  force?: boolean
+}
+
+async function loadCurrentUserFromApi(): Promise<CurrentUser> {
   try {
     const response = await api.get<unknown>(`${USERS_PATH}/me`)
     const parsed = currentUserSchema.safeParse(response.data)
@@ -42,6 +51,16 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   } catch (error: unknown) {
     throwRbacServiceError(error, "users.errors.loadCurrent")
   }
+}
+
+export async function getCurrentUser(
+  options?: GetCurrentUserOptions,
+): Promise<CurrentUser> {
+  if (options?.force) {
+    invalidateCurrentUserCache()
+  }
+
+  return readCurrentUser(loadCurrentUserFromApi)
 }
 
 export async function getTechnicians(): Promise<TechnicianUser[]> {

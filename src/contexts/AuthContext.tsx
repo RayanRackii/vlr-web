@@ -8,6 +8,7 @@ import {
 } from "react"
 import type { Session, User } from "@supabase/supabase-js"
 
+import { syncCurrentUserCacheToAuthUser } from "@/features/users/services/currentUserCache"
 import { supabase } from "@/lib/supabase"
 
 type AuthContextValue = {
@@ -38,12 +39,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (error !== null) {
+        syncCurrentUserCacheToAuthUser(null)
         setSession(null)
         setUser(null)
         setIsLoading(false)
         return
       }
 
+      syncCurrentUserCacheToAuthUser(data.session?.user ?? null)
       setSession(data.session)
       setUser(data.session?.user ?? null)
       setIsLoading(false)
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
+      syncCurrentUserCacheToAuthUser(nextSession?.user ?? null)
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
       setIsLoading(false)
