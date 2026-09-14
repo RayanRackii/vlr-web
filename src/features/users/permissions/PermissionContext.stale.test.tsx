@@ -46,10 +46,21 @@ const profile: CurrentUser = {
   permissions: ["core.notifications.read"],
 }
 
+const profileB: CurrentUser = {
+  ...profile,
+  id: "33333333-3333-4333-8333-333333333333",
+  fullName: "Admin B",
+  email: "admin-b@example.com",
+  tenantId: "55555555-5555-4555-8555-555555555555",
+  activeModules: ["rentals"],
+  permissions: ["rentals.reservations.read"],
+}
+
 const profileTenantB: CurrentUser = {
   ...profile,
   tenantId: "44444444-4444-4444-8444-444444444444",
-  email: "admin-a@example.com",
+  activeModules: ["rentals"],
+  permissions: ["core.notifications.read", "rentals.schedule.read"],
 }
 
 function Probe() {
@@ -57,28 +68,130 @@ function Probe() {
   if (isLoading) {
     return <PageContentSkeleton />
   }
-  if (!can("core.notifications.read")) {
+  if (!currentUser) {
     return <p>denied:{error ?? "none"}</p>
   }
-  return <p>ready:{currentUser?.tenantId ?? currentUser?.email}</p>
-}
-
-function Harness() {
-  const [, setTick] = useState(0)
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => {
-          authState.user = {
-            ...authState.user,
-            app_metadata: { tenant_id: "44444444-4444-4444-8444-444444444444" },
+      <p>ready:{currentUser.email}</p>
+      <p>tenant:{currentUser.tenantId}</p>
+      <p>modules:{currentUser.activeModules.join(",")}</p>
+      <p>canNotify:{String(can("core.notifications.read"))}</p>
+    </div>
+  )
+}
+
+function Harness({
+  onSwitchTenant,
+  onLogout,
+  onLoginB,
+  onEnterA,
+  onExit,
+  onExitThenEnterB,
+}: {
+  onSwitchTenant?: () => void
+  onLogout?: () => void
+  onLoginB?: () => void
+  onEnterA?: () => void
+  onExit?: () => void
+  onExitThenEnterB?: () => void
+}) {
+  const [, setTick] = useState(0)
+  function bump(mutate: () => void) {
+    mutate()
+    setTick((n) => n + 1)
+  }
+  return (
+    <div>
+      {onSwitchTenant ? (
+        <button
+          type="button"
+          onClick={() =>
+            bump(() => {
+              authState.user = {
+                ...authState.user,
+                app_metadata: {
+                  tenant_id: "44444444-4444-4444-8444-444444444444",
+                },
+              }
+            })
           }
-          setTick((n) => n + 1)
-        }}
-      >
-        switch-tenant
-      </button>
+        >
+          switch-tenant
+        </button>
+      ) : null}
+      {onLogout ? (
+        <button type="button" onClick={() => bump(() => {
+          authState.user = { id: "", email: "", app_metadata: {} }
+        })}>
+          logout
+        </button>
+      ) : null}
+      {onLoginB ? (
+        <button
+          type="button"
+          onClick={() =>
+            bump(() => {
+              authState.user = {
+                id: "user-b",
+                email: "admin-b@example.com",
+                app_metadata: {},
+              }
+            })
+          }
+        >
+          login-b
+        </button>
+      ) : null}
+      {onEnterA ? (
+        <button
+          type="button"
+          onClick={() =>
+            bump(() => {
+              authState.user = {
+                ...authState.user,
+                app_metadata: {
+                  tenant_id: "22222222-2222-4222-8222-222222222222",
+                },
+              }
+            })
+          }
+        >
+          enter-a
+        </button>
+      ) : null}
+      {onExit ? (
+        <button
+          type="button"
+          onClick={() =>
+            bump(() => {
+              authState.user = {
+                ...authState.user,
+                app_metadata: {},
+              }
+            })
+          }
+        >
+          exit-tenant
+        </button>
+      ) : null}
+      {onExitThenEnterB ? (
+        <button
+          type="button"
+          onClick={() =>
+            bump(() => {
+              authState.user = {
+                ...authState.user,
+                app_metadata: {
+                  tenant_id: "44444444-4444-4444-8444-444444444444",
+                },
+              }
+            })
+          }
+        >
+          enter-b
+        </button>
+      ) : null}
       <PermissionProvider>
         <Probe />
       </PermissionProvider>
@@ -115,7 +228,7 @@ describe("PermissionProvider stale /me", () => {
           }),
       )
 
-    render(<Harness />)
+    render(<Harness onSwitchTenant />)
     expect(screen.getByRole("status")).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "switch-tenant" }))
@@ -124,7 +237,7 @@ describe("PermissionProvider stale /me", () => {
     resolveSecond(profileTenantB)
     await waitFor(() => {
       expect(
-        screen.getByText("ready:44444444-4444-4444-8444-444444444444"),
+        screen.getByText("tenant:44444444-4444-4444-8444-444444444444"),
       ).toBeInTheDocument()
     })
 
@@ -133,8 +246,127 @@ describe("PermissionProvider stale /me", () => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument()
     })
     expect(
-      screen.getByText("ready:44444444-4444-4444-8444-444444444444"),
+      screen.getByText("tenant:44444444-4444-4444-8444-444444444444"),
     ).toBeInTheDocument()
     expect(screen.queryByText(/denied:/)).not.toBeInTheDocument()
+  })
+
+  it("A: logout then login as B issues a new /me and does not keep A", async () => {
+    const user = userEvent.setup()
+    getCurrentUserMock.mockImplementation(async () => {
+      if (authState.user.id === "user-b") {
+        return profileB
+      }
+      if (!authState.user.id) {
+        throw new Error("unauthenticated")
+      }
+      return profile
+    })
+
+    render(<Harness onLogout onLoginB />)
+
+    await waitFor(() => {
+      expect(screen.getByText("ready:admin-a@example.com")).toBeInTheDocument()
+    })
+    expect(screen.getByText("modules:catalog")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "logout" }))
+    await user.click(screen.getByRole("button", { name: "login-b" }))
+
+    await waitFor(() => {
+      expect(screen.getByText("ready:admin-b@example.com")).toBeInTheDocument()
+    })
+    expect(screen.getByText("modules:rentals")).toBeInTheDocument()
+    expect(screen.getByText("canNotify:false")).toBeInTheDocument()
+    expect(screen.queryByText("ready:admin-a@example.com")).not.toBeInTheDocument()
+    expect(getCurrentUserMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("B/C: tenant enter then A→B reloads a fresh tenant B profile", async () => {
+    const user = userEvent.setup()
+    const platformHome: CurrentUser = {
+      ...profile,
+      tenantId: null,
+      activeModules: [],
+      permissions: [],
+      role: "SUPER_ADMIN",
+    }
+    getCurrentUserMock
+      .mockResolvedValueOnce(platformHome)
+      .mockResolvedValueOnce(profile)
+      .mockResolvedValueOnce(profileTenantB)
+
+    authState.user = {
+      id: "user-a",
+      email: "admin-a@example.com",
+      app_metadata: {},
+    }
+
+    render(<Harness onEnterA onExitThenEnterB />)
+
+    await waitFor(() => {
+      expect(screen.getByText("ready:admin-a@example.com")).toBeInTheDocument()
+    })
+    expect(screen.getByText("modules:")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "enter-a" }))
+    await waitFor(() => {
+      expect(screen.getByText("modules:catalog")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: "enter-b" }))
+    await waitFor(() => {
+      expect(screen.getByText("modules:rentals")).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText("tenant:44444444-4444-4444-8444-444444444444"),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
+    expect(getCurrentUserMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("C: tenant A → exit → tenant B does not retain A modules", async () => {
+    const user = userEvent.setup()
+    const platformHome: CurrentUser = {
+      ...profile,
+      tenantId: null,
+      activeModules: [],
+      permissions: [],
+      role: "SUPER_ADMIN",
+    }
+    getCurrentUserMock
+      .mockResolvedValueOnce(profile)
+      .mockResolvedValueOnce(platformHome)
+      .mockResolvedValueOnce(profileTenantB)
+
+    authState.user = {
+      id: "user-a",
+      email: "admin-a@example.com",
+      app_metadata: {
+        tenant_id: "22222222-2222-4222-8222-222222222222",
+      },
+    }
+
+    render(<Harness onExit onExitThenEnterB />)
+
+    await waitFor(() => {
+      expect(screen.getByText("modules:catalog")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: "exit-tenant" }))
+    await waitFor(() => {
+      expect(screen.getByText("modules:")).toBeInTheDocument()
+    })
+    expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "enter-b" }))
+    await waitFor(() => {
+      expect(screen.getByText("modules:rentals")).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText("tenant:44444444-4444-4444-8444-444444444444"),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
+    expect(getCurrentUserMock).toHaveBeenCalledTimes(3)
   })
 })

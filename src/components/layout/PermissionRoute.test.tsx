@@ -97,4 +97,30 @@ describe("PermissionRoute loading gate", () => {
     })
     expect(screen.queryByRole("status")).not.toBeInTheDocument()
   })
+
+  it("denies the notifications route when the permission is missing", async () => {
+    getCurrentUserMock.mockResolvedValue({
+      ...profile,
+      permissions: ["core.dashboard.read"],
+    })
+
+    renderRoute()
+
+    expect(await screen.findByRole("heading", { name: "Acesso negado" })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Notificações" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("denies after /me failure instead of leaving an infinite skeleton", async () => {
+    getCurrentUserMock.mockRejectedValue(new Error("network"))
+
+    renderRoute()
+
+    expect(await screen.findByRole("heading", { name: "Acesso negado" })).toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Notificações" }),
+    ).not.toBeInTheDocument()
+  })
 })

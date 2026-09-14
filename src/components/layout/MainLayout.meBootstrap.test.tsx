@@ -5,8 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
+import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
+import {
+  listNotificationChannelConfigs,
+} from "@/features/notifications/services/notificationChannelConfigService"
 import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
 import { api } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 const authState = {
   user: {
@@ -41,7 +46,13 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
+vi.mock("@/features/notifications/services/notificationChannelConfigService", () => ({
+  listNotificationChannelConfigs: vi.fn(),
+  updateNotificationChannelConfig: vi.fn(),
+}))
+
 const apiGet = vi.mocked(api.get)
+const listConfigs = vi.mocked(listNotificationChannelConfigs)
 
 const mePayload = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -63,6 +74,21 @@ describe("MainLayout current-user bootstrap", () => {
     resetCurrentUserCacheForTests()
     vi.stubEnv("VITE_PLATFORM_ADMIN_EMAILS", "")
     apiGet.mockReset()
+    listConfigs.mockReset()
+    listConfigs.mockResolvedValue([
+      {
+        module: "catalog",
+        events: [
+          {
+            eventType: "catalog.order.created",
+            displayKey: "catalog.events.orderCreated",
+            channels: [
+              { channel: "Email", isActive: false, configurable: true },
+            ],
+          },
+        ],
+      },
+    ])
     apiGet.mockImplementation(async (url: string) => {
       if (String(url).includes("/api/users/me")) {
         return { data: mePayload }
@@ -97,5 +123,42 @@ describe("MainLayout current-user bootstrap", () => {
       )
       expect(meCalls).toHaveLength(1)
     })
+  })
+
+  it("waits for one /me then loads channel-configs and the notifications table", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/notificacoes"]}>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route
+              element={<PermissionRoute permission="core.notifications.read" />}
+            >
+              <Route
+                path="/configuracoes/notificacoes"
+                element={<NotificationsSettingsPage />}
+              />
+            </Route>
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByRole("heading", {
+        name: i18n.t("notifications.settings.title"),
+      }),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(listConfigs).toHaveBeenCalledTimes(1)
+    })
+    expect(
+      await screen.findByText(i18n.t("catalog.events.orderCreated")),
+    ).toBeInTheDocument()
+
+    const meCalls = apiGet.mock.calls.filter((call) =>
+      String(call[0]).includes("/api/users/me"),
+    )
+    expect(meCalls).toHaveLength(1)
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
   })
 })
