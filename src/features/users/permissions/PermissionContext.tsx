@@ -4,13 +4,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
 
-import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { useAuth } from "@/contexts/AuthContext"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { currentUserSessionFingerprint } from "@/features/users/services/currentUserCache"
 import { getCurrentUser } from "@/features/users/services/usersService"
 
 export type PermissionContextValue = {
@@ -50,33 +52,63 @@ type PermissionProviderProps = {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const { isInTenantEnvironment } = usePlatformTenantSession()
+  const { user } = useAuth()
+  const sessionFingerprint = currentUserSessionFingerprint(user)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loadGenerationRef = useRef(0)
+  const sessionFingerprintRef = useRef<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
+    const requestId = ++loadGenerationRef.current
     setIsLoading(true)
     setError(null)
 
     try {
-      const profile = await getCurrentUser()
+      const profile = await getCurrentUser(force ? { force: true } : undefined)
+      if (requestId !== loadGenerationRef.current) {
+        return
+      }
       setCurrentUser(profile)
     } catch (caught: unknown) {
+      if (requestId !== loadGenerationRef.current) {
+        return
+      }
       setCurrentUser(null)
       setError(caught instanceof Error ? caught.message : null)
     } finally {
-      setIsLoading(false)
+      if (requestId === loadGenerationRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
+  const refresh = useCallback(async () => {
+    await load(true)
+  }, [load])
+
   useEffect(() => {
-    void load()
-  }, [isInTenantEnvironment, load])
+    const identityChanged =
+      sessionFingerprintRef.current !== null &&
+      sessionFingerprintRef.current !== sessionFingerprint
+    sessionFingerprintRef.current = sessionFingerprint
+    void load(identityChanged)
+  }, [load, sessionFingerprint])
 
   const value = useMemo(
-    () => buildValue(currentUser, isLoading, error, load),
-    [currentUser, error, isLoading, load],
+    () => {
+      const identityPending =
+        sessionFingerprintRef.current !== null &&
+        sessionFingerprintRef.current !== sessionFingerprint
+      return buildValue(
+        identityPending ? null : currentUser,
+        isLoading || identityPending,
+        identityPending ? null : error,
+        refresh,
+      )
+    },
+    [currentUser, error, isLoading, refresh, sessionFingerprint],
   )
 
   return (

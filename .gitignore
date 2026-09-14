@@ -15,6 +15,7 @@ dist-ssr/
 .env.test.local
 .env.production.local
 .env.e2e.local
+.env.e2e.prod.local
 
 ## Playwright E2E
 e2e/.auth/

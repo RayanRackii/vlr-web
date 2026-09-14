@@ -19,6 +19,7 @@ import {
   writeActiveTenantLabel,
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
+import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { supabase } from "@/lib/supabase"
 
 function MainLayoutShell() {
@@ -91,6 +92,7 @@ function MainLayoutShell() {
       }
       onSignOut={async () => {
         writeActiveTenantLabel(null)
+        invalidateCurrentUserCache()
         const { error } = await supabase.auth.signOut()
         if (error !== null) {
           return

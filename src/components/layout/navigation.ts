@@ -17,7 +17,6 @@ import {
   Wrench,
 } from "lucide-react"
 
-import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -313,8 +312,7 @@ function buildProductSections(
 }
 
 export function useAppNavigationSections(): AppNavigationState {
-  const isPlatformAdmin = useIsPlatformAdmin()
-  const { isInTenantEnvironment } = usePlatformTenantSession()
+  const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
   const { activeModules, permissions, isLoading } = usePermissions()
 
   const needsProductNav = !isPlatformAdmin || isInTenantEnvironment
