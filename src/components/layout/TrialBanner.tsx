@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { getCurrentUser } from "@/features/users/services/usersService"
-import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 function daysUntil(iso: string | null | undefined): number | null {
   if (!iso) {
@@ -18,25 +16,7 @@ function daysUntil(iso: string | null | undefined): number | null {
 
 export function TrialBanner() {
   const { t } = useTranslation()
-  const [profile, setProfile] = useState<CurrentUser | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    void getCurrentUser()
-      .then((user) => {
-        if (!cancelled) {
-          setProfile(user)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setProfile(null)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { currentUser: profile } = usePermissions()
 
   if (!profile?.isTrial) {
     return null

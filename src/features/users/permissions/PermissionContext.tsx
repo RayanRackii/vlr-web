@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -54,29 +55,48 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loadGenerationRef = useRef(0)
+  const tenantEnvRef = useRef<boolean | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
+    const requestId = ++loadGenerationRef.current
     setIsLoading(true)
     setError(null)
 
     try {
-      const profile = await getCurrentUser()
+      const profile = await getCurrentUser(force ? { force: true } : undefined)
+      if (requestId !== loadGenerationRef.current) {
+        return
+      }
       setCurrentUser(profile)
     } catch (caught: unknown) {
+      if (requestId !== loadGenerationRef.current) {
+        return
+      }
       setCurrentUser(null)
       setError(caught instanceof Error ? caught.message : null)
     } finally {
-      setIsLoading(false)
+      if (requestId === loadGenerationRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
+  const refresh = useCallback(async () => {
+    await load(true)
+  }, [load])
+
   useEffect(() => {
-    void load()
+    const tenantChanged =
+      tenantEnvRef.current !== null &&
+      tenantEnvRef.current !== isInTenantEnvironment
+    tenantEnvRef.current = isInTenantEnvironment
+    void load(tenantChanged)
   }, [isInTenantEnvironment, load])
 
   const value = useMemo(
-    () => buildValue(currentUser, isLoading, error, load),
-    [currentUser, error, isLoading, load],
+    () => buildValue(currentUser, isLoading, error, refresh),
+    [currentUser, error, isLoading, refresh],
   )
 
   return (
