@@ -97,8 +97,18 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   }, [load, sessionFingerprint])
 
   const value = useMemo(
-    () => buildValue(currentUser, isLoading, error, refresh),
-    [currentUser, error, isLoading, refresh],
+    () => {
+      const identityPending =
+        sessionFingerprintRef.current !== null &&
+        sessionFingerprintRef.current !== sessionFingerprint
+      return buildValue(
+        identityPending ? null : currentUser,
+        isLoading || identityPending,
+        identityPending ? null : error,
+        refresh,
+      )
+    },
+    [currentUser, error, isLoading, refresh, sessionFingerprint],
   )
 
   return (

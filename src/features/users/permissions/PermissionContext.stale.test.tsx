@@ -89,12 +89,12 @@ function Harness({
   onExit,
   onExitThenEnterB,
 }: {
-  onSwitchTenant?: () => void
-  onLogout?: () => void
-  onLoginB?: () => void
-  onEnterA?: () => void
-  onExit?: () => void
-  onExitThenEnterB?: () => void
+  onSwitchTenant?: boolean
+  onLogout?: boolean
+  onLoginB?: boolean
+  onEnterA?: boolean
+  onExit?: boolean
+  onExitThenEnterB?: boolean
 }) {
   const [, setTick] = useState(0)
   function bump(mutate: () => void) {
@@ -368,5 +368,43 @@ describe("PermissionProvider stale /me", () => {
     ).toBeInTheDocument()
     expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
     expect(getCurrentUserMock).toHaveBeenCalledTimes(3)
+  })
+
+  it("does not keep tenant A permissions visible while tenant B /me is in flight", async () => {
+    const user = userEvent.setup()
+    let resolveB!: (value: CurrentUser) => void
+    getCurrentUserMock
+      .mockResolvedValueOnce(profile)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveB = resolve
+          }),
+      )
+
+    authState.user = {
+      id: "user-a",
+      email: "admin-a@example.com",
+      app_metadata: {
+        tenant_id: "22222222-2222-4222-8222-222222222222",
+      },
+    }
+
+    render(<Harness onExitThenEnterB />)
+
+    await waitFor(() => {
+      expect(screen.getByText("modules:catalog")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: "enter-b" }))
+    expect(screen.getByRole("status")).toBeInTheDocument()
+    expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
+    expect(screen.queryByText("canNotify:true")).not.toBeInTheDocument()
+
+    resolveB(profileTenantB)
+    await waitFor(() => {
+      expect(screen.getByText("modules:rentals")).toBeInTheDocument()
+    })
+    expect(screen.queryByText("modules:catalog")).not.toBeInTheDocument()
   })
 })
