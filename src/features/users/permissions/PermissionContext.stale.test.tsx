@@ -15,16 +15,18 @@ vi.mock("@/features/users/services/usersService", () => ({
   getCurrentUser: vi.fn(),
 }))
 
-const session = { isInTenantEnvironment: false }
+const authState = {
+  user: {
+    id: "user-a",
+    email: "admin-a@example.com",
+    app_metadata: {} as Record<string, unknown>,
+  },
+  session: {},
+  isLoading: false,
+}
 
-vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({
-  usePlatformTenantSession: () => ({
-    isPlatformAdmin: false,
-    isInTenantEnvironment: session.isInTenantEnvironment,
-    activeTenantId: null,
-    activeTenantLabel: null,
-    clearTenantLabel: () => undefined,
-  }),
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => authState,
 }))
 
 const getCurrentUserMock = vi.mocked(getCurrentUser)
@@ -44,6 +46,12 @@ const profile: CurrentUser = {
   permissions: ["core.notifications.read"],
 }
 
+const profileTenantB: CurrentUser = {
+  ...profile,
+  tenantId: "44444444-4444-4444-8444-444444444444",
+  email: "admin-a@example.com",
+}
+
 function Probe() {
   const { isLoading, currentUser, error, can } = usePermissions()
   if (isLoading) {
@@ -52,7 +60,7 @@ function Probe() {
   if (!can("core.notifications.read")) {
     return <p>denied:{error ?? "none"}</p>
   }
-  return <p>ready:{currentUser?.email}</p>
+  return <p>ready:{currentUser?.tenantId ?? currentUser?.email}</p>
 }
 
 function Harness() {
@@ -62,11 +70,14 @@ function Harness() {
       <button
         type="button"
         onClick={() => {
-          session.isInTenantEnvironment = true
+          authState.user = {
+            ...authState.user,
+            app_metadata: { tenant_id: "44444444-4444-4444-8444-444444444444" },
+          }
           setTick((n) => n + 1)
         }}
       >
-        enter-tenant
+        switch-tenant
       </button>
       <PermissionProvider>
         <Probe />
@@ -78,7 +89,11 @@ function Harness() {
 describe("PermissionProvider stale /me", () => {
   beforeEach(() => {
     getCurrentUserMock.mockReset()
-    session.isInTenantEnvironment = false
+    authState.user = {
+      id: "user-a",
+      email: "admin-a@example.com",
+      app_metadata: {},
+    }
   })
 
   it("F: a stale failure cannot overwrite a newer successful profile", async () => {
@@ -103,19 +118,23 @@ describe("PermissionProvider stale /me", () => {
     render(<Harness />)
     expect(screen.getByRole("status")).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "enter-tenant" }))
+    await user.click(screen.getByRole("button", { name: "switch-tenant" }))
     expect(getCurrentUserMock).toHaveBeenCalledTimes(2)
 
-    resolveSecond(profile)
+    resolveSecond(profileTenantB)
     await waitFor(() => {
-      expect(screen.getByText("ready:admin-a@example.com")).toBeInTheDocument()
+      expect(
+        screen.getByText("ready:44444444-4444-4444-8444-444444444444"),
+      ).toBeInTheDocument()
     })
 
     rejectFirst(new Error("network"))
     await waitFor(() => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument()
     })
-    expect(screen.getByText("ready:admin-a@example.com")).toBeInTheDocument()
+    expect(
+      screen.getByText("ready:44444444-4444-4444-8444-444444444444"),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/denied:/)).not.toBeInTheDocument()
   })
 })

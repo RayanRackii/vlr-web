@@ -11,6 +11,18 @@ vi.mock("@/features/users/services/usersService", () => ({
   getCurrentUser: vi.fn(),
 }))
 
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    user: {
+      id: "user-a",
+      email: "admin-a@example.com",
+      app_metadata: {},
+    },
+    session: {},
+    isLoading: false,
+  }),
+}))
+
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({
   usePlatformTenantSession: () => ({
     isPlatformAdmin: false,

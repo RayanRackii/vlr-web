@@ -9,9 +9,10 @@ import {
   type ReactNode,
 } from "react"
 
-import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { useAuth } from "@/contexts/AuthContext"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { currentUserSessionFingerprint } from "@/features/users/services/currentUserCache"
 import { getCurrentUser } from "@/features/users/services/usersService"
 
 export type PermissionContextValue = {
@@ -51,12 +52,13 @@ type PermissionProviderProps = {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const { isInTenantEnvironment } = usePlatformTenantSession()
+  const { user } = useAuth()
+  const sessionFingerprint = currentUserSessionFingerprint(user)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const loadGenerationRef = useRef(0)
-  const tenantEnvRef = useRef<boolean | null>(null)
+  const sessionFingerprintRef = useRef<string | null>(null)
 
   const load = useCallback(async (force = false) => {
     const requestId = ++loadGenerationRef.current
@@ -87,12 +89,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   }, [load])
 
   useEffect(() => {
-    const tenantChanged =
-      tenantEnvRef.current !== null &&
-      tenantEnvRef.current !== isInTenantEnvironment
-    tenantEnvRef.current = isInTenantEnvironment
-    void load(tenantChanged)
-  }, [isInTenantEnvironment, load])
+    const identityChanged =
+      sessionFingerprintRef.current !== null &&
+      sessionFingerprintRef.current !== sessionFingerprint
+    sessionFingerprintRef.current = sessionFingerprint
+    void load(identityChanged)
+  }, [load, sessionFingerprint])
 
   const value = useMemo(
     () => buildValue(currentUser, isLoading, error, refresh),
