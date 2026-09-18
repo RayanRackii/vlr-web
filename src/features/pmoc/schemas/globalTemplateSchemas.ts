@@ -5,6 +5,26 @@ import {
   taskInputTypeResponseSchema,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 
+export const globalTemplateStatusValues = ["Published", "Deprecated"] as const
+
+export const globalTemplateStatusSchema = z.enum(globalTemplateStatusValues)
+
+export type GlobalTemplateStatus = z.infer<typeof globalTemplateStatusSchema>
+
+const globalTemplateStatusByIndex = [
+  "Published",
+  "Deprecated",
+] as const satisfies readonly GlobalTemplateStatus[]
+
+export const globalTemplateStatusResponseSchema = z.union([
+  globalTemplateStatusSchema,
+  z
+    .number()
+    .int()
+    .refine((value): value is 0 | 1 => value === 0 || value === 1)
+    .transform((value) => globalTemplateStatusByIndex[value]),
+])
+
 export const globalTemplateTaskSchema = z.object({
   id: z.string().uuid(),
   globalMaintenanceTemplateId: z.string().uuid(),
@@ -26,6 +46,10 @@ export const globalMaintenanceTemplateSchema = z.object({
   frequency: maintenanceFrequencyResponseSchema,
   jurisdiction: z.string().min(1),
   targetEquipmentType: z.string().min(1),
+  libraryKey: z.string().min(1).max(80),
+  version: z.number().int(),
+  status: globalTemplateStatusResponseSchema,
+  sourceReferences: z.string().nullable(),
   tasks: z.array(globalTemplateTaskSchema),
   createdAt: z.string(),
   updatedAt: z.string().nullish(),

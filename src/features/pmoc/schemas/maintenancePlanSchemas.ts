@@ -67,6 +67,33 @@ export const taskInputTypeResponseSchema = z.union([
     .transform((value) => taskInputTypeByIndex[value]),
 ])
 
+export const maintenancePlanOriginKindValues = [
+  "Custom",
+  "RolvixTemplate",
+] as const
+
+export const maintenancePlanOriginKindSchema = z.enum(
+  maintenancePlanOriginKindValues,
+)
+
+export type MaintenancePlanOriginKind = z.infer<
+  typeof maintenancePlanOriginKindSchema
+>
+
+const maintenancePlanOriginKindByIndex = [
+  "Custom",
+  "RolvixTemplate",
+] as const satisfies readonly MaintenancePlanOriginKind[]
+
+export const maintenancePlanOriginKindResponseSchema = z.union([
+  maintenancePlanOriginKindSchema,
+  z
+    .number()
+    .int()
+    .refine((value): value is 0 | 1 => value === 0 || value === 1)
+    .transform((value) => maintenancePlanOriginKindByIndex[value]),
+])
+
 export const planTaskSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -91,6 +118,10 @@ export const maintenancePlanSchema = z.object({
   frequency: maintenanceFrequencyResponseSchema,
   assetCategoryId: z.string().uuid(),
   isActive: z.boolean(),
+  originKind: maintenancePlanOriginKindResponseSchema,
+  sourceTemplateId: z.string().uuid().nullable(),
+  sourceTemplateVersion: z.number().int().nullable(),
+  autoGenerateEnabled: z.boolean(),
   tasks: z.array(planTaskSchema),
   createdAt: z.string(),
   updatedAt: z.string().nullish(),
@@ -124,6 +155,61 @@ export type CreateMaintenancePlanRequest = z.infer<
   typeof createMaintenancePlanRequestSchema
 >
 
+export const updateMaintenancePlanRequestSchema = z.object({
+  unitId: z.string().uuid(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().nullish(),
+  frequency: maintenanceFrequencySchema,
+  assetCategoryId: z.string().uuid(),
+  isActive: z.boolean(),
+  autoGenerateEnabled: z.boolean(),
+})
+
+export type UpdateMaintenancePlanRequest = z.infer<
+  typeof updateMaintenancePlanRequestSchema
+>
+
+export const replacePlanTaskRequestSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(1),
+  inputType: taskInputTypeSchema,
+  isMandatory: z.boolean(),
+  order: z.number().int(),
+  configuration: z.string().nullish(),
+})
+
+export const replacePlanTasksRequestSchema = z.object({
+  tasks: z.array(replacePlanTaskRequestSchema).min(1),
+})
+
+export type ReplacePlanTasksRequest = z.infer<
+  typeof replacePlanTasksRequestSchema
+>
+
+export const createFromTemplateRequestSchema = z.object({
+  templateId: z.string().uuid(),
+  unitId: z.string().uuid(),
+  assetCategoryId: z.string().uuid(),
+  name: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().nullish(),
+  isActive: z.boolean().optional(),
+})
+
+export type CreateFromTemplateRequest = z.infer<
+  typeof createFromTemplateRequestSchema
+>
+
+export type ReplacePlanTaskFormItem = {
+  taskId?: string
+  title: string
+  inputType: TaskInputType
+  isMandatory: boolean
+  min?: number | null
+  max?: number | null
+  unit?: string | null
+  options?: string[]
+}
+
 export function createPlanFormSchema(messages: {
   unitRequired: string
   nameRequired: string
@@ -137,6 +223,7 @@ export function createPlanFormSchema(messages: {
 }) {
   const taskSchema = z
     .object({
+      taskId: z.string().uuid().optional(),
       title: z.string().trim().min(1, messages.taskTitleRequired),
       inputType: taskInputTypeSchema,
       isMandatory: z.boolean(),
@@ -207,8 +294,80 @@ export function buildCreatePlanRequest(
   }
 }
 
+export function buildHeaderUpdateFromPlan(
+  plan: MaintenancePlan,
+  patch: Partial<
+    Pick<MaintenancePlan, "isActive" | "autoGenerateEnabled">
+  > = {},
+): UpdateMaintenancePlanRequest {
+  return updateMaintenancePlanRequestSchema.parse({
+    unitId: plan.unitId,
+    name: plan.name,
+    description: plan.description ?? null,
+    frequency: plan.frequency,
+    assetCategoryId: plan.assetCategoryId,
+    isActive: patch.isActive ?? plan.isActive,
+    autoGenerateEnabled: patch.autoGenerateEnabled ?? plan.autoGenerateEnabled,
+  })
+}
+
+export function buildReplaceTasksRequest(
+  tasks: ReplacePlanTaskFormItem[],
+): ReplacePlanTasksRequest {
+  return replacePlanTasksRequestSchema.parse({
+    tasks: tasks.map((task, index) => ({
+      ...(task.taskId ? { id: task.taskId } : {}),
+      title: task.title,
+      inputType: task.inputType,
+      isMandatory: task.isMandatory,
+      order: index + 1,
+      configuration: buildTaskConfiguration(task),
+    })),
+  })
+}
+
+export function createFromTemplateFormSchema(messages: {
+  unitRequired: string
+  categoryRequired: string
+}) {
+  return z.object({
+    unitId: z
+      .string()
+      .min(1, messages.unitRequired)
+      .uuid(messages.unitRequired),
+    assetCategoryId: z
+      .string()
+      .min(1, messages.categoryRequired)
+      .uuid(messages.categoryRequired),
+    name: z.string().trim().max(200).optional(),
+  })
+}
+
+export type CreateFromTemplateFormValues = z.infer<
+  ReturnType<typeof createFromTemplateFormSchema>
+>
+
+export function buildCreateFromTemplateRequest(
+  templateId: string,
+  values: CreateFromTemplateFormValues,
+): CreateFromTemplateRequest {
+  const name = values.name?.trim()
+  return createFromTemplateRequestSchema.parse({
+    templateId,
+    unitId: values.unitId,
+    assetCategoryId: values.assetCategoryId,
+    ...(name && name.length > 0 ? { name } : {}),
+  })
+}
+
 function buildTaskConfiguration(
-  task: CreatePlanFormValues["tasks"][number],
+  task: {
+    inputType: TaskInputType
+    min?: number | null
+    max?: number | null
+    unit?: string | null
+    options?: string[]
+  },
 ): string | null {
   if (task.inputType === "Number") {
     const payload: Record<string, number | string> = {}

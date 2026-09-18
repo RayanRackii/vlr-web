@@ -108,6 +108,17 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
 - [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
 
+## 4.11. PMOC OS Phase 1 — Slice 5 (WEB library + detail)
+
+Spec canônica: `vlr-api/docs/plans/active/2026-09-18-pmoc-os-phase1.md` §12 / Slice 5. Branch `feat/pmoc-os-phase1-web-library-detail`.
+
+- [x] Rotas estáticas `/pmoc/biblioteca`, `/pmoc/biblioteca/:templateId`, `/pmoc/:id` (depois de `/pmoc/novo`)
+- [x] Nav: Meus PMOCs, Biblioteca Rolvix (`pmoc.templates.read`), Novo personalizado
+- [x] Biblioteca + preview + Usar modelo (`POST /api/maintenance-plans/from-template`)
+- [x] Detalhe empilhado: origem, ativo, auto-gerar, checklist replace-set; delete 409 `PLAN_IN_USE` → desativar
+- [x] `/pmoc/novo` só personalizado (sem import client-side / CREA)
+- [ ] Slice 6 (fora desta entrega): Gerar OS, OS relacionadas, origem da OS
+
 ## 4.9. DEV E2E / Release Certification
 
 - [x] Playwright contra Preview `vlr-web-git-develop` + Railway DEV API.
@@ -256,7 +267,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-11 | **Git:** release `develop` → `main` passa a **Create a merge commit** (não squash). Reconciliação única `chore/final-main-develop-ancestry-reconciliation`. Sem delta de produto. PROD não deployado neste passo. |
 | 2026-09-11 | **Código (WEB):** cadastro B2C verifica e-mail (código 6 dígitos) em `/verify-email`; redirect de `/verify-phone`; celular continua no formulário mas não bloqueia. Twilio não entra no UX de signup. **Não PROD.** |
 | 2026-09-12 | **Fix (WEB):** cadastro B2C reconhece autofill do Chrome (input/change/animationstart → RHF) e habilita o submit; seletor de horário da agenda troca o `<select>` nativo pelo Select do design system (popup legível no tema dark). Sem backend, sem PROD. |
-| 2026-09-12 | **Fix (WEB):** telefone B2C normaliza +55/formatação para DDD+número (10–11 dígitos) no autofill, cola e digitação, alinhado a `NormalizePhoneBr`. Sem contrato novo, sem PROD. |
+| 2026-09-18 | **Código (WEB Slice 5):** Biblioteca Rolvix, preview/clone, detalhe de plano, checklist edit e auto toggle. Sem Gerar OS / OS relacionadas (Slice 6). Branch `feat/pmoc-os-phase1-web-library-detail`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

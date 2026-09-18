@@ -26,6 +26,7 @@ export type AppNavigationChildItem = {
     | "nav.assetsInventory"
     | "nav.assetsCategories"
     | "nav.pmocPlans"
+    | "nav.pmocLibrary"
     | "nav.pmocNew"
     | "nav.adminTenants"
     | "nav.adminUsers"
@@ -142,6 +143,11 @@ const operationsItems: readonly AppNavigationItem[] = [
         labelKey: "nav.pmocPlans",
         to: "/pmoc",
         permission: "pmoc.plans.read",
+      },
+      {
+        labelKey: "nav.pmocLibrary",
+        to: "/pmoc/biblioteca",
+        permission: "pmoc.templates.read",
       },
       {
         labelKey: "nav.pmocNew",
@@ -376,6 +382,8 @@ export function getPageTitleKey(
 ):
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
+  | "nav.pmocTemplatePreview"
+  | "nav.pmocPlanDetail"
   | "app.name" {
   if (pathname.startsWith("/admin/users")) {
     return "nav.adminUsers"
@@ -403,6 +411,18 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/pessoas-e-acesso")) {
     return "nav.peopleAccess"
+  }
+
+  if (pathname.startsWith("/pmoc/biblioteca/")) {
+    return "nav.pmocTemplatePreview"
+  }
+
+  if (
+    /^\/pmoc\/[^/]+$/.test(pathname) &&
+    pathname !== "/pmoc/novo" &&
+    pathname !== "/pmoc/biblioteca"
+  ) {
+    return "nav.pmocPlanDetail"
   }
 
   for (const item of appNavigationItems) {
