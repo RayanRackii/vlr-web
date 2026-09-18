@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { ClipboardList } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
@@ -98,8 +99,11 @@ export function PlanRelatedWorkOrders({
       ) : null}
 
       {!isLoading && workOrders.length === 0 && loadError === null ? (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <ClipboardList className="size-6" aria-hidden />
+          </div>
+          <p className="max-w-sm text-sm text-muted-foreground">
             {t("pmoc.plans.related.empty")}
           </p>
           {onGenerate ? (
@@ -129,17 +133,24 @@ export function PlanRelatedWorkOrders({
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
+                  <span>
+                    {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
+                  </span>
+                  {workOrder.assignedUser ? (
+                    <>
+                      <span aria-hidden="true"> · </span>
+                      <span>{workOrder.assignedUser.fullName}</span>
+                    </>
+                  ) : null}
                 </p>
-                {workOrder.assignedUser ? (
-                  <p className="text-sm text-muted-foreground">
-                    {workOrder.assignedUser.fullName}
-                  </p>
-                ) : null}
               </div>
               <Link
                 to={`/os/${workOrder.id}`}
-                className={buttonVariants({ variant: "outline", size: "sm" })}
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "sm",
+                  className: "self-start sm:self-auto",
+                })}
               >
                 {t("workOrders.actions.open")}
               </Link>

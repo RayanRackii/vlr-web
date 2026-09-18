@@ -424,7 +424,7 @@ export function PmocPlanDetailPage() {
         </dl>
       </section>
 
-      <section className="space-y-2 rounded-xl border border-border p-4">
+      <section className="space-y-2 rounded-xl border border-border p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("pmoc.plans.sections.origin")}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm">{t(`pmoc.plans.origin.${plan.originKind}`)}</p>
@@ -432,51 +432,6 @@ export function PmocPlanDetailPage() {
           plan.sourceTemplateVersion != null ? (
             <Badge variant="secondary">v{plan.sourceTemplateVersion}</Badge>
           ) : null}
-        </div>
-      </section>
-
-      <section className="divide-y rounded-xl border border-border">
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="space-y-0.5">
-            <h2 className="text-sm font-medium">{t("pmoc.plans.columns.status")}</h2>
-            <p className="text-sm text-muted-foreground">
-              {plan.isActive
-                ? t("pmoc.plans.status.active")
-                : t("pmoc.plans.status.inactive")}
-            </p>
-          </div>
-          <Can permission="pmoc.plans.write">
-            <Switch
-              checked={plan.isActive}
-              disabled={isHeaderBusy}
-              aria-label={t("pmoc.plans.columns.status")}
-              onCheckedChange={(checked) => {
-                void patchHeader({ isActive: checked })
-              }}
-            />
-          </Can>
-        </div>
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="space-y-0.5">
-            <h2 className="text-sm font-medium">
-              {t("pmoc.plans.autoGenerateEnabled")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {plan.autoGenerateEnabled
-                ? t("pmoc.plans.autoGenerateOn")
-                : t("pmoc.plans.autoGenerateOff")}
-            </p>
-          </div>
-          <Can permission="pmoc.plans.write">
-            <Switch
-              checked={plan.autoGenerateEnabled}
-              disabled={isHeaderBusy}
-              aria-label={t("pmoc.plans.autoGenerateEnabled")}
-              onCheckedChange={(checked) => {
-                void patchHeader({ autoGenerateEnabled: checked })
-              }}
-            />
-          </Can>
         </div>
       </section>
 
@@ -721,6 +676,51 @@ export function PmocPlanDetailPage() {
               ))}
           </ol>
         )}
+      </section>
+
+      <section className="divide-y rounded-xl border border-border">
+        <div className="flex items-center justify-between gap-3 p-4">
+          <div className="space-y-0.5">
+            <h2 className="text-sm font-medium">{t("pmoc.plans.columns.status")}</h2>
+            <p className="text-sm text-muted-foreground">
+              {plan.isActive
+                ? t("pmoc.plans.status.active")
+                : t("pmoc.plans.status.inactive")}
+            </p>
+          </div>
+          <Can permission="pmoc.plans.write">
+            <Switch
+              checked={plan.isActive}
+              disabled={isHeaderBusy}
+              aria-label={t("pmoc.plans.columns.status")}
+              onCheckedChange={(checked) => {
+                void patchHeader({ isActive: checked })
+              }}
+            />
+          </Can>
+        </div>
+        <div className="flex items-center justify-between gap-3 p-4">
+          <div className="space-y-0.5">
+            <h2 className="text-sm font-medium">
+              {t("pmoc.plans.autoGenerateEnabled")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {plan.autoGenerateEnabled
+                ? t("pmoc.plans.autoGenerateOn")
+                : t("pmoc.plans.autoGenerateOff")}
+            </p>
+          </div>
+          <Can permission="pmoc.plans.write">
+            <Switch
+              checked={plan.autoGenerateEnabled}
+              disabled={isHeaderBusy}
+              aria-label={t("pmoc.plans.autoGenerateEnabled")}
+              onCheckedChange={(checked) => {
+                void patchHeader({ autoGenerateEnabled: checked })
+              }}
+            />
+          </Can>
+        </div>
       </section>
 
       {osModuleActive ? (
