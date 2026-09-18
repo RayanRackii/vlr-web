@@ -12,6 +12,7 @@ Domain/shared packs: `vlr-api/docs/context-packs/INDEX.md`
 
 - `rentals` — Reservation, Slot, schedule, booking UI contracts
 - `catalog` — CatalogProduct, CatalogOrder, ProductRequest, catalog UI (canonical pack on API)
+- `pmoc-os` — MaintenancePlan, templates, WorkOrder snapshot, Biblioteca Rolvix (canonical pack on API; Phase 1 spec not yet implemented)
 - Planned on API: `platform-core`, `authentication`, `assets`
 
 ## Planned / on-demand (this repo)
