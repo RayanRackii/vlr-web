@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { ChevronRight, LibraryBig } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -81,7 +82,17 @@ export function PmocLibraryPage() {
       {isLoading ? <PageContentSkeleton rows={4} /> : null}
 
       {!isLoading && loadError === null && published.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("pmoc.library.empty")}</p>
+        <div
+          role="status"
+          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
+        >
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <LibraryBig className="size-6" aria-hidden />
+          </div>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            {t("pmoc.library.empty")}
+          </p>
+        </div>
       ) : null}
 
       {!isLoading && published.length > 0 ? (
@@ -91,21 +102,33 @@ export function PmocLibraryPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-auto w-full flex-col items-start gap-1 whitespace-normal px-4 py-3 text-left"
+                className="group h-auto w-full flex-col items-start gap-2 whitespace-normal px-4 py-3 text-left"
                 onClick={() => {
                   void navigate(`/pmoc/biblioteca/${template.id}`)
                 }}
               >
-                <span className="font-medium">{template.name}</span>
-                <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex w-full items-center justify-between gap-2">
+                  <span className="min-w-0 font-medium">{template.name}</span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <Badge variant="secondary">
                     {t("pmoc.library.version", { version: template.version })}
                   </Badge>
-                  <span>{t(`pmoc.frequency.${template.frequency}`)}</span>
-                  <span>{template.jurisdiction}</span>
+                  <span className="min-w-0">
+                    {t("pmoc.templates.meta", {
+                      jurisdiction: template.jurisdiction,
+                      equipment: template.targetEquipmentType,
+                      frequency: t(`pmoc.frequency.${template.frequency}`),
+                      tasks: template.tasks.length,
+                    })}
+                  </span>
                 </span>
                 {template.description ? (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="line-clamp-2 text-sm text-muted-foreground">
                     {template.description}
                   </span>
                 ) : null}

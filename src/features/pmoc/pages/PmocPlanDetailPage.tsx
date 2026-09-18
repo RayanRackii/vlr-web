@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -297,12 +298,21 @@ export function PmocPlanDetailPage() {
   if (loadError !== null || plan === null) {
     return (
       <div className="space-y-4">
-        <p role="alert" className="text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+        >
           {loadError ?? t("pmoc.plans.errors.loadFailed")}
-        </p>
-        <Button type="button" variant="outline" onClick={() => void loadPage()}>
-          {t("pmoc.create.actions.back")}
-        </Button>
+        </div>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void loadPage()}
+          >
+            {t("pmoc.create.actions.back")}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -310,7 +320,7 @@ export function PmocPlanDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Button
             type="button"
             variant="ghost"
@@ -328,8 +338,13 @@ export function PmocPlanDetailPage() {
           ) : null}
         </div>
 
-        <Can permission="pmoc.plans.write">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={plan.isActive ? "success" : "secondary"}>
+            {plan.isActive
+              ? t("pmoc.plans.status.active")
+              : t("pmoc.plans.status.inactive")}
+          </Badge>
+          <Can permission="pmoc.plans.write">
             <Button
               type="button"
               variant="outline"
@@ -340,8 +355,8 @@ export function PmocPlanDetailPage() {
             >
               {t("pmoc.plans.actions.delete")}
             </Button>
-          </div>
-        </Can>
+          </Can>
+        </div>
       </div>
 
       {planInUse ? (
@@ -365,25 +380,44 @@ export function PmocPlanDetailPage() {
         </div>
       ) : null}
 
-      <section className="space-y-2 rounded-xl border border-border p-4">
+      <section className="space-y-3 rounded-xl border border-border p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("pmoc.plans.sections.overview")}</h2>
-        <p className="text-sm">{plan.name}</p>
+        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-3">
+          <div className="space-y-0.5">
+            <dt className="text-xs text-muted-foreground">
+              {t("pmoc.create.form.frequency")}
+            </dt>
+            <dd className="text-sm">{t(`pmoc.frequency.${plan.frequency}`)}</dd>
+          </div>
+          <div className="space-y-0.5">
+            <dt className="text-xs text-muted-foreground">
+              {t("pmoc.create.form.unit")}
+            </dt>
+            <dd className="text-sm">{unitName}</dd>
+          </div>
+          <div className="space-y-0.5">
+            <dt className="text-xs text-muted-foreground">
+              {t("pmoc.create.form.category")}
+            </dt>
+            <dd className="text-sm">{categoryName}</dd>
+          </div>
+        </dl>
       </section>
 
       <section className="space-y-2 rounded-xl border border-border p-4">
         <h2 className="text-sm font-medium">{t("pmoc.plans.sections.origin")}</h2>
-        <p className="text-sm">{t(`pmoc.plans.origin.${plan.originKind}`)}</p>
-        {plan.originKind === "RolvixTemplate" &&
-        plan.sourceTemplateVersion != null ? (
-          <p className="text-sm text-muted-foreground">
-            v{plan.sourceTemplateVersion}
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm">{t(`pmoc.plans.origin.${plan.originKind}`)}</p>
+          {plan.originKind === "RolvixTemplate" &&
+          plan.sourceTemplateVersion != null ? (
+            <Badge variant="secondary">v{plan.sourceTemplateVersion}</Badge>
+          ) : null}
+        </div>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+      <section className="divide-y rounded-xl border border-border">
+        <div className="flex items-center justify-between gap-3 p-4">
+          <div className="space-y-0.5">
             <h2 className="text-sm font-medium">{t("pmoc.plans.columns.status")}</h2>
             <p className="text-sm text-muted-foreground">
               {plan.isActive
@@ -402,11 +436,8 @@ export function PmocPlanDetailPage() {
             />
           </Can>
         </div>
-      </section>
-
-      <section className="space-y-3 rounded-xl border border-border p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex items-center justify-between gap-3 p-4">
+          <div className="space-y-0.5">
             <h2 className="text-sm font-medium">
               {t("pmoc.plans.autoGenerateEnabled")}
             </h2>
@@ -427,27 +458,6 @@ export function PmocPlanDetailPage() {
             />
           </Can>
         </div>
-      </section>
-
-      <section className="space-y-2 rounded-xl border border-border p-4">
-        <p className="text-sm">
-          <span className="text-muted-foreground">
-            {t("pmoc.create.form.frequency")}:{" "}
-          </span>
-          {t(`pmoc.frequency.${plan.frequency}`)}
-        </p>
-        <p className="text-sm">
-          <span className="text-muted-foreground">
-            {t("pmoc.create.form.unit")}:{" "}
-          </span>
-          {unitName}
-        </p>
-        <p className="text-sm">
-          <span className="text-muted-foreground">
-            {t("pmoc.create.form.category")}:{" "}
-          </span>
-          {categoryName}
-        </p>
       </section>
 
       <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
@@ -651,23 +661,42 @@ export function PmocPlanDetailPage() {
                 })}
               </div>
 
-              <FormPrimaryButton
-                type="submit"
-                isValid={isChecklistValid}
-                loading={formState.isSubmitting}
-                loadingLabel={t("pmoc.plans.actions.saving")}
-              >
-                {t("pmoc.plans.actions.saveChecklist")}
-              </FormPrimaryButton>
+              <div className="flex justify-end">
+                <FormPrimaryButton
+                  type="submit"
+                  isValid={isChecklistValid}
+                  loading={formState.isSubmitting}
+                  loadingLabel={t("pmoc.plans.actions.saving")}
+                >
+                  {t("pmoc.plans.actions.saveChecklist")}
+                </FormPrimaryButton>
+              </div>
             </form>
           </Form>
         ) : (
           <ol className="divide-y rounded-lg border border-border">
             {[...plan.tasks]
               .sort((left, right) => left.order - right.order)
-              .map((task) => (
-                <li key={task.id} className="px-4 py-3 text-sm">
-                  {task.title}
+              .map((task, index) => (
+                <li
+                  key={task.id}
+                  className="flex items-start gap-3 px-4 py-3 text-sm"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 space-y-0.5">
+                    <p className="font-medium">{task.title}</p>
+                    <p className="text-muted-foreground">
+                      {t(`pmoc.inputType.${task.inputType}`)}
+                      {task.isMandatory
+                        ? ` · ${t("pmoc.create.tasks.isMandatory")}`
+                        : ""}
+                    </p>
+                  </div>
                 </li>
               ))}
           </ol>

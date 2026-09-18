@@ -208,12 +208,21 @@ export function PmocTemplatePreviewPage() {
   if (loadError !== null || template === null) {
     return (
       <div className="space-y-4">
-        <p role="alert" className="text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+        >
           {loadError ?? t("pmoc.preview.errors.loadFailed")}
-        </p>
-        <Button type="button" variant="outline" onClick={() => void loadTemplate()}>
-          {t("common.back")}
-        </Button>
+        </div>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void loadTemplate()}
+          >
+            {t("common.back")}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -223,7 +232,7 @@ export function PmocTemplatePreviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Button
             type="button"
             variant="ghost"
@@ -239,11 +248,22 @@ export function PmocTemplatePreviewPage() {
           {template.description ? (
             <p className="text-sm text-muted-foreground">{template.description}</p>
           ) : null}
+          <p className="text-sm text-muted-foreground">
+            {t("pmoc.templates.meta", {
+              jurisdiction: template.jurisdiction,
+              equipment: template.targetEquipmentType,
+              frequency: t(`pmoc.frequency.${template.frequency}`),
+              tasks: template.tasks.length,
+            })}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">
             {t(`pmoc.templates.status.${template.status}`)}
+          </Badge>
+          <Badge variant="secondary">
+            {t("pmoc.library.version", { version: template.version })}
           </Badge>
           {canClone ? (
             <Can permission="pmoc.plans.write">
@@ -257,34 +277,12 @@ export function PmocTemplatePreviewPage() {
               </Button>
             </Can>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="max-w-xs text-sm text-muted-foreground">
               {t("pmoc.preview.deprecatedHint")}
             </p>
           )}
         </div>
       </div>
-
-      <section className="space-y-2 rounded-xl border border-border p-4">
-        <p className="text-sm">
-          <span className="text-muted-foreground">
-            {t("pmoc.create.form.frequency")}:{" "}
-          </span>
-          {t(`pmoc.frequency.${template.frequency}`)}
-        </p>
-        <p className="text-sm">
-          <span className="text-muted-foreground">
-            {t("pmoc.library.version", { version: template.version })}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {t("pmoc.templates.meta", {
-            jurisdiction: template.jurisdiction,
-            equipment: template.targetEquipmentType,
-            frequency: t(`pmoc.frequency.${template.frequency}`),
-            tasks: template.tasks.length,
-          })}
-        </p>
-      </section>
 
       {template.sourceReferences ? (
         <section className="space-y-2 rounded-xl border border-border p-4">
@@ -302,15 +300,26 @@ export function PmocTemplatePreviewPage() {
           {t("pmoc.plans.sections.checklist")}
         </h2>
         <ol className="divide-y rounded-xl border border-border">
-          {orderedTasks.map((task) => (
-            <li key={task.id} className="px-4 py-3 text-sm">
-              <p className="font-medium">{task.title}</p>
-              <p className="text-muted-foreground">
-                {t(`pmoc.inputType.${task.inputType}`)}
-                {task.isMandatory
-                  ? ` · ${t("pmoc.create.tasks.isMandatory")}`
-                  : ""}
-              </p>
+          {orderedTasks.map((task, index) => (
+            <li
+              key={task.id}
+              className="flex items-start gap-3 px-4 py-3 text-sm"
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+              >
+                {index + 1}
+              </span>
+              <div className="min-w-0 space-y-0.5">
+                <p className="font-medium">{task.title}</p>
+                <p className="text-muted-foreground">
+                  {t(`pmoc.inputType.${task.inputType}`)}
+                  {task.isMandatory
+                    ? ` · ${t("pmoc.create.tasks.isMandatory")}`
+                    : ""}
+                </p>
+              </div>
             </li>
           ))}
         </ol>
