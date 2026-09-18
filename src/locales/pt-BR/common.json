@@ -853,8 +853,11 @@
     "assetsInventory": "Recursos",
     "assetsCategories": "Tipos",
     "pmoc": "PMOC",
-    "pmocPlans": "Planos",
-    "pmocNew": "Novo Plano",
+    "pmocPlans": "Meus PMOCs",
+    "pmocLibrary": "Biblioteca Rolvix",
+    "pmocTemplatePreview": "Modelo",
+    "pmocPlanDetail": "Plano",
+    "pmocNew": "Novo personalizado",
     "workOrders": "OS",
     "registrationFields": "Cadastro portal",
     "moduleMenu": "Menu do portal",
@@ -1561,13 +1564,38 @@
       "empty": "Nenhum plano cadastrado ainda.",
       "emptyValue": "—",
       "actions": {
-        "new": "Novo Plano"
+        "new": "Novo personalizado",
+        "delete": "Excluir plano",
+        "deactivate": "Desativar plano",
+        "saveChecklist": "Salvar checklist",
+        "saving": "Salvando..."
       },
       "columns": {
         "name": "Nome do Plano",
+        "origin": "Origem",
         "frequency": "Frequência",
         "category": "Categoria Vinculada",
-        "status": "Status"
+        "status": "Status",
+        "autoGenerate": "Automático"
+      },
+      "origin": {
+        "Custom": "Personalizado",
+        "RolvixTemplate": "Modelo Rolvix",
+        "rolvixWithVersion": "Modelo Rolvix · v{{version}}"
+      },
+      "autoGenerateEnabled": "Gerar ordens de serviço automaticamente",
+      "autoGenerateOn": "Sim",
+      "autoGenerateOff": "Não",
+      "sections": {
+        "overview": "Visão geral",
+        "origin": "Origem",
+        "checklist": "Checklist"
+      },
+      "toast": {
+        "updated": "Plano atualizado.",
+        "deactivated": "Plano desativado.",
+        "deleted": "Plano excluído.",
+        "checklistSaved": "Checklist salvo."
       },
       "status": {
         "active": "Ativo",
@@ -1577,7 +1605,35 @@
         "unauthorized": "Sessão inválida. Faça login novamente.",
         "loadFailed": "Não foi possível carregar os planos.",
         "invalidResponse": "Resposta inválida da API.",
-        "createFailed": "Não foi possível criar o plano."
+        "createFailed": "Não foi possível criar o plano.",
+        "updateFailed": "Não foi possível atualizar o plano.",
+        "deleteFailed": "Não foi possível excluir o plano.",
+        "replaceTasksFailed": "Não foi possível salvar o checklist.",
+        "planInUse": "Este plano está em uso por ordens de serviço. Desative-o em vez de excluir."
+      }
+    },
+    "library": {
+      "title": "Biblioteca Rolvix",
+      "description": "Modelos padrão da plataforma. Clone para o seu tenant e personalize o checklist.",
+      "loading": "Carregando biblioteca...",
+      "empty": "Nenhum modelo publicado no momento.",
+      "version": "Versão {{version}}",
+      "errors": {
+        "unauthorized": "Sessão inválida. Faça login novamente.",
+        "loadFailed": "Não foi possível carregar a biblioteca."
+      }
+    },
+    "preview": {
+      "useModel": "Usar modelo",
+      "confirmClone": "Criar plano",
+      "dialogTitle": "Usar modelo",
+      "dialogDescription": "Escolha a unidade e a categoria. O nome é opcional; o padrão é o nome do modelo.",
+      "nameOptional": "Nome (opcional)",
+      "namePlaceholder": "Deixe vazio para usar o nome do modelo",
+      "deprecatedHint": "Este modelo está descontinuado e não pode ser clonado.",
+      "errors": {
+        "loadFailed": "Não foi possível carregar o modelo.",
+        "cloneFailed": "Não foi possível criar o plano a partir do modelo."
       }
     },
     "create": {
@@ -1642,13 +1698,14 @@
       "emptyCategoriesDescription": "Os tipos de equipamento vêm do provisionamento feito pelo Super-Admin. Não é possível criar tipos nesta tela."
     },
     "templates": {
-      "importButton": "Importar Modelo Padrão (Normas/CREA)",
-      "dialogTitle": "Cardápio de Normas",
-      "dialogDescription": "Selecione um modelo regulatório para preencher o plano. Você poderá editar as tarefas antes de salvar.",
+      "sourceReferences": "Fontes e referências",
       "loading": "Carregando modelos...",
-      "empty": "Nenhum modelo disponível para esta jurisdição.",
+      "empty": "Nenhum modelo publicado no momento.",
       "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tarefas",
-      "importSuccess": "Modelo \"{{name}}\" importado. Revise e adapte as tarefas antes de salvar.",
+      "status": {
+        "Published": "Publicado",
+        "Deprecated": "Descontinuado"
+      },
       "errors": {
         "loadFailed": "Não foi possível carregar os modelos globais.",
         "invalidResponse": "Resposta inválida da API de templates."

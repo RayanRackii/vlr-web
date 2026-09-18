@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   flexRender,
   getCoreRowModel,
@@ -36,6 +36,8 @@ import { isAxiosError } from "@/lib/api"
 type PlanTableRow = MaintenancePlan & {
   categoryName: string
   statusLabel: string
+  originLabel: string
+  autoLabel: string
 }
 
 export function MaintenancePlansPage() {
@@ -107,6 +109,10 @@ export function MaintenancePlansPage() {
         statusLabel: plan.isActive
           ? t("pmoc.plans.status.active")
           : t("pmoc.plans.status.inactive"),
+        originLabel: t(`pmoc.plans.origin.${plan.originKind}`),
+        autoLabel: plan.autoGenerateEnabled
+          ? t("pmoc.plans.autoGenerateOn")
+          : t("pmoc.plans.autoGenerateOff"),
       })),
     [categoryNameById, plans, t],
   )
@@ -120,6 +126,26 @@ export function MaintenancePlansPage() {
             column={column}
             title={t("pmoc.plans.columns.name")}
           />
+        ),
+        cell: ({ row }) => (
+          <Link
+            to={`/pmoc/${row.original.id}`}
+            className="font-medium hover:underline"
+          >
+            {row.original.name}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: "originLabel",
+        header: ({ column }) => (
+          <DataTableColumnFilterHeader
+            column={column}
+            title={t("pmoc.plans.columns.origin")}
+          />
+        ),
+        cell: ({ getValue }) => (
+          <span data-testid="plan-origin">{String(getValue() ?? "")}</span>
         ),
       },
       {
@@ -165,6 +191,18 @@ export function MaintenancePlansPage() {
           <Badge variant={row.original.isActive ? "success" : "secondary"}>
             {row.original.statusLabel}
           </Badge>
+        ),
+      },
+      {
+        accessorKey: "autoLabel",
+        header: ({ column }) => (
+          <DataTableColumnFilterHeader
+            column={column}
+            title={t("pmoc.plans.columns.autoGenerate")}
+          />
+        ),
+        cell: ({ getValue }) => (
+          <span data-testid="plan-auto">{String(getValue() ?? "")}</span>
         ),
       },
     ],
@@ -249,7 +287,14 @@ export function MaintenancePlansPage() {
 
             {!isLoading
               ? filteredRows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer"
+                    data-testid="plan-row"
+                    onClick={() => {
+                      void navigate(`/pmoc/${row.original.id}`)
+                    }}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="whitespace-normal">
                         {flexRender(

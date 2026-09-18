@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, BookMarked, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -42,13 +34,11 @@ import {
   buildCreatePlanRequest,
   createPlanFormSchema,
   maintenanceFrequencyValues,
-  mapGlobalTemplateTaskToFormTask,
   taskInputTypeValues,
   type CreatePlanFormValues,
   type TaskInputType,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
-import type { GlobalMaintenanceTemplate } from "@/features/pmoc/schemas/globalTemplateSchemas"
-import { createPlan, getGlobalTemplates } from "@/features/pmoc/services/pmocService"
+import { createPlan } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
 
 function parseOptionalNumber(value: string): number | null {
@@ -71,10 +61,6 @@ export function CreatePlanPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
-  const [templates, setTemplates] = useState<GlobalMaintenanceTemplate[]>([])
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
-  const [templateError, setTemplateError] = useState<string | null>(null)
 
   const formSchema = useMemo(
     () =>
@@ -115,7 +101,7 @@ export function CreatePlanPage() {
     },
   })
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "tasks",
   })
@@ -228,69 +214,6 @@ export function CreatePlanPage() {
     [t],
   )
 
-  async function openTemplateDialog() {
-    setIsTemplateDialogOpen(true)
-    setTemplateError(null)
-    setIsLoadingTemplates(true)
-
-    try {
-      const data = await getGlobalTemplates("BR")
-      setTemplates(data)
-    } catch (error: unknown) {
-      console.error("CreatePlanPage openTemplateDialog failed", error)
-      if (isAxiosError(error)) {
-        console.error(
-          "CreatePlanPage openTemplateDialog response",
-          error.response?.data,
-        )
-      }
-
-      setTemplateError(
-        error instanceof Error
-          ? error.message
-          : t("pmoc.templates.errors.loadFailed"),
-      )
-    } finally {
-      setIsLoadingTemplates(false)
-    }
-  }
-
-  function handleImportTemplate(template: GlobalMaintenanceTemplate) {
-    form.setValue("name", template.name)
-    form.setValue("description", template.description ?? "")
-    form.setValue("frequency", template.frequency)
-
-    const importedTasks = [...template.tasks]
-      .sort((a, b) => a.order - b.order)
-      .map((task) =>
-        mapGlobalTemplateTaskToFormTask({
-          title: task.title,
-          inputType: task.inputType,
-          isMandatory: task.isMandatory,
-          configuration: task.configuration,
-        }),
-      )
-
-    replace(
-      importedTasks.length > 0
-        ? importedTasks
-        : [
-            {
-              title: "",
-              inputType: "Checkbox",
-              isMandatory: true,
-              min: null,
-              max: null,
-              unit: null,
-              options: undefined,
-            },
-          ],
-    )
-
-    setIsTemplateDialogOpen(false)
-    setSuccessMessage(t("pmoc.templates.importSuccess", { name: template.name }))
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -304,16 +227,6 @@ export function CreatePlanPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              void openTemplateDialog()
-            }}
-          >
-            <BookMarked data-icon="inline-start" />
-            {t("pmoc.templates.importButton")}
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -808,81 +721,7 @@ export function CreatePlanPage() {
           </form>
         </Form>
       )}
-
-      <Dialog
-        open={isTemplateDialogOpen}
-        onOpenChange={setIsTemplateDialogOpen}
-      >
-        <DialogContent className="gap-4 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("pmoc.templates.dialogTitle")}</DialogTitle>
-            <DialogDescription>
-              {t("pmoc.templates.dialogDescription")}
-            </DialogDescription>
-          </DialogHeader>
-
-          {isLoadingTemplates ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LoaderCircle className="size-4 animate-spin" />
-              {t("pmoc.templates.loading")}
-            </div>
-          ) : null}
-
-          {templateError !== null ? (
-            <p role="alert" className="text-sm text-destructive">
-              {templateError}
-            </p>
-          ) : null}
-
-          {!isLoadingTemplates && templateError === null && templates.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("pmoc.templates.empty")}
-            </p>
-          ) : null}
-
-          {!isLoadingTemplates && templates.length > 0 ? (
-            <div className="max-h-80 space-y-2 overflow-y-auto">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  className="w-full rounded-lg border border-border bg-muted/20 p-3 text-left transition-colors hover:bg-muted/40"
-                  onClick={() => {
-                    handleImportTemplate(template)
-                  }}
-                >
-                  <p className="font-medium">{template.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t("pmoc.templates.meta", {
-                      jurisdiction: template.jurisdiction,
-                      equipment: template.targetEquipmentType,
-                      frequency: t(`pmoc.frequency.${template.frequency}`),
-                      tasks: template.tasks.length,
-                    })}
-                  </p>
-                  {template.description ? (
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                      {template.description}
-                    </p>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsTemplateDialogOpen(false)
-              }}
-            >
-              {t("common.cancel")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
+
