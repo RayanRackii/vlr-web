@@ -30,6 +30,7 @@ import {
   type WorkOrder,
   type WorkOrderStatus,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+import { WorkOrderOrigin, formatWorkOrderOriginText } from "@/features/workOrders/components/WorkOrderOrigin"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { isAxiosError } from "@/lib/api"
 
@@ -112,6 +113,12 @@ function WorkOrdersTable({
           <DataTableColumnFilterHeader
             column={column}
             title={t("workOrders.columns.origin")}
+          />
+        ),
+        cell: ({ row }) => (
+          <WorkOrderOrigin
+            maintenancePlanId={row.original.maintenancePlanId}
+            sourcePlanName={row.original.sourcePlanName}
           />
         ),
       },
@@ -279,9 +286,11 @@ export function WorkOrdersPage() {
       map[workOrder.status].push({
         ...workOrder,
         assetLabel: `${workOrder.asset.tag} — ${workOrder.asset.name}`,
-        originLabel: workOrder.maintenancePlanId
-          ? t("workOrders.origin.pmoc")
-          : t("workOrders.origin.manual"),
+        originLabel: formatWorkOrderOriginText(
+          workOrder.maintenancePlanId,
+          workOrder.sourcePlanName,
+          t,
+        ),
       })
     }
 

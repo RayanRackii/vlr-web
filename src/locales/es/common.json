@@ -1532,7 +1532,9 @@
         "delete": "Eliminar plan",
         "deactivate": "Desactivar plan",
         "saveChecklist": "Guardar checklist",
-        "saving": "Guardando..."
+        "saving": "Guardando...",
+        "generateWorkOrder": "Generar OT",
+        "generating": "Generando..."
       },
       "columns": {
         "name": "Nombre del Plan",
@@ -1553,7 +1555,24 @@
       "sections": {
         "overview": "Resumen",
         "origin": "Origen",
-        "checklist": "Checklist"
+        "checklist": "Checklist",
+        "relatedWorkOrders": "Órdenes de trabajo generadas"
+      },
+      "related": {
+        "empty": "No se ha generado ninguna orden de trabajo para este plan."
+      },
+      "generate": {
+        "dialogTitle": "Generar OT",
+        "dialogDescription": "Elija el activo y la fecha. El técnico es opcional.",
+        "submit": "Generar OT",
+        "success": "Orden de trabajo generada.",
+        "viewWorkOrder": "Abrir OT",
+        "emptyAssets": "No hay activos activos en esta unidad y categoría para generar una orden de trabajo.",
+        "errors": {
+          "duplicate": "Ya existe una orden de trabajo activa para este plan, activo y período. Cambie el activo o la fecha.",
+          "generateFailed": "No se pudo generar la orden de trabajo.",
+          "loadLookupsFailed": "No se pudieron cargar los activos y técnicos."
+        }
       },
       "toast": {
         "updated": "Plan actualizado.",
@@ -1695,11 +1714,14 @@
       "asset": "Activo",
       "origin": "Origen",
       "scheduledDate": "Fecha Programada",
+      "assignee": "Técnico",
       "actions": "Acciones"
     },
     "origin": {
       "pmoc": "PMOC",
-      "manual": "Manual"
+      "pmocWithName": "PMOC · {{name}}",
+      "manual": "Manual",
+      "viewPlan": "Ver plan"
     },
     "status": {
       "Pending": "Pendiente",
@@ -1709,7 +1731,8 @@
     },
     "actions": {
       "execute": "Ejecutar",
-      "view": "Ver"
+      "view": "Ver",
+      "open": "Abrir"
     },
     "create": {
       "action": "Nueva OT",

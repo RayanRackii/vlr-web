@@ -1568,7 +1568,9 @@
         "delete": "Excluir plano",
         "deactivate": "Desativar plano",
         "saveChecklist": "Salvar checklist",
-        "saving": "Salvando..."
+        "saving": "Salvando...",
+        "generateWorkOrder": "Gerar OS",
+        "generating": "Gerando..."
       },
       "columns": {
         "name": "Nome do Plano",
@@ -1589,7 +1591,24 @@
       "sections": {
         "overview": "Visão geral",
         "origin": "Origem",
-        "checklist": "Checklist"
+        "checklist": "Checklist",
+        "relatedWorkOrders": "Ordens de serviço geradas"
+      },
+      "related": {
+        "empty": "Nenhuma ordem de serviço foi gerada para este plano."
+      },
+      "generate": {
+        "dialogTitle": "Gerar OS",
+        "dialogDescription": "Escolha o ativo e a data. O técnico é opcional.",
+        "submit": "Gerar OS",
+        "success": "Ordem de serviço gerada.",
+        "viewWorkOrder": "Abrir OS",
+        "emptyAssets": "Não há ativos ativos nesta unidade e categoria para gerar uma OS.",
+        "errors": {
+          "duplicate": "Já existe uma ordem de serviço ativa para este plano, ativo e período. Altere o ativo ou a data.",
+          "generateFailed": "Não foi possível gerar a ordem de serviço.",
+          "loadLookupsFailed": "Não foi possível carregar ativos e técnicos."
+        }
       },
       "toast": {
         "updated": "Plano atualizado.",
@@ -1731,11 +1750,14 @@
       "asset": "Ativo",
       "origin": "Origem",
       "scheduledDate": "Data Agendada",
+      "assignee": "Técnico",
       "actions": "Ações"
     },
     "origin": {
       "pmoc": "PMOC",
-      "manual": "Manual"
+      "pmocWithName": "PMOC · {{name}}",
+      "manual": "Manual",
+      "viewPlan": "Ver plano"
     },
     "status": {
       "Pending": "Pendente",
@@ -1745,7 +1767,8 @@
     },
     "actions": {
       "execute": "Executar",
-      "view": "Visualizar"
+      "view": "Visualizar",
+      "open": "Abrir"
     },
     "create": {
       "action": "Nova OS",

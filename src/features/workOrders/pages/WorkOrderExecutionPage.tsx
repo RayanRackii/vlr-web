@@ -30,6 +30,7 @@ import {
   type WorkOrder,
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -503,9 +504,10 @@ export function WorkOrderExecutionPage() {
             {t("workOrders.columns.origin")}
           </p>
           <p className="font-medium">
-            {workOrder.maintenancePlanId
-              ? t("workOrders.origin.pmoc")
-              : t("workOrders.origin.manual")}
+            <WorkOrderOrigin
+              maintenancePlanId={workOrder.maintenancePlanId}
+              sourcePlanName={workOrder.sourcePlanName}
+            />
           </p>
         </div>
         <div>

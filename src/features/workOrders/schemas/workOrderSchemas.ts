@@ -87,6 +87,7 @@ export const workOrderSchema = z.object({
   tenantId: z.string().uuid(),
   assetId: z.string().uuid(),
   maintenancePlanId: z.string().uuid().nullish(),
+  sourcePlanName: z.string().nullish(),
   assignedUserId: z.string().uuid().nullish(),
   status: workOrderStatusResponseSchema,
   scheduledDate: z.string().min(1),
@@ -129,6 +130,36 @@ export const createWorkOrderRequestSchema = z.object({
 
 export type CreateWorkOrderRequest = z.infer<
   typeof createWorkOrderRequestSchema
+>
+
+export const generateWorkOrderFromPlanRequestSchema = z.object({
+  planId: z.string().uuid(),
+  assetId: z.string().uuid(),
+  assignedUserId: z.string().uuid().nullish(),
+  scheduledDate: z.string().min(1),
+})
+
+export type GenerateWorkOrderFromPlanRequest = z.infer<
+  typeof generateWorkOrderFromPlanRequestSchema
+>
+
+type GenerateWorkOrderFromPlanFormMessages = {
+  assetRequired: string
+  dateRequired: string
+}
+
+export function generateWorkOrderFromPlanFormSchema(
+  messages: GenerateWorkOrderFromPlanFormMessages,
+) {
+  return z.object({
+    assetId: z.string().uuid(messages.assetRequired),
+    assignedUserId: z.string().uuid().optional(),
+    scheduledDate: z.string().min(1, messages.dateRequired),
+  })
+}
+
+export type GenerateWorkOrderFromPlanFormValues = z.infer<
+  ReturnType<typeof generateWorkOrderFromPlanFormSchema>
 >
 
 type CreateWorkOrderFormMessages = {

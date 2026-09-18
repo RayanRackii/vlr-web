@@ -48,8 +48,10 @@ import {
   replaceTasks,
   updatePlan,
 } from "@/features/pmoc/services/pmocService"
+import { GenerateWorkOrderDialog } from "@/features/pmoc/components/GenerateWorkOrderDialog"
+import { PlanRelatedWorkOrders } from "@/features/pmoc/components/PlanRelatedWorkOrders"
 import { Can } from "@/features/users/permissions/Can"
-import { useCan } from "@/features/users/permissions/PermissionContext"
+import { useCan, usePermissions } from "@/features/users/permissions/PermissionContext"
 import { isAxiosError } from "@/lib/api"
 
 function parseOptionalNumber(value: string): number | null {
@@ -97,6 +99,10 @@ export function PmocPlanDetailPage() {
   const params = useParams()
   const planId = params.id ?? ""
   const canWrite = useCan("pmoc.plans.write")
+  const { activeModules } = usePermissions()
+  const osModuleActive = activeModules.some(
+    (module) => module.trim().toLowerCase() === "os",
+  )
 
   const [plan, setPlan] = useState<MaintenancePlan | null>(null)
   const [units, setUnits] = useState<Unit[]>([])
@@ -106,6 +112,8 @@ export function PmocPlanDetailPage() {
   const [planInUse, setPlanInUse] = useState(false)
   const [isHeaderBusy, setIsHeaderBusy] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false)
+  const [relatedRefreshKey, setRelatedRefreshKey] = useState(0)
 
   const formSchema = useMemo(
     () =>
@@ -344,6 +352,18 @@ export function PmocPlanDetailPage() {
               ? t("pmoc.plans.status.active")
               : t("pmoc.plans.status.inactive")}
           </Badge>
+          {osModuleActive ? (
+            <Can permission="os.work_orders.create">
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsGenerateOpen(true)
+                }}
+              >
+                {t("pmoc.plans.actions.generateWorkOrder")}
+              </Button>
+            </Can>
+          ) : null}
           <Can permission="pmoc.plans.write">
             <Button
               type="button"
@@ -702,6 +722,33 @@ export function PmocPlanDetailPage() {
           </ol>
         )}
       </section>
+
+      {osModuleActive ? (
+        <Can permission="os.work_orders.read">
+          <PlanRelatedWorkOrders
+            planId={plan.id}
+            refreshKey={relatedRefreshKey}
+            onGenerate={() => {
+              setIsGenerateOpen(true)
+            }}
+          />
+        </Can>
+      ) : null}
+
+      {osModuleActive ? (
+        <Can permission="os.work_orders.create">
+          <GenerateWorkOrderDialog
+            open={isGenerateOpen}
+            onOpenChange={setIsGenerateOpen}
+            planId={plan.id}
+            unitId={plan.unitId}
+            assetCategoryId={plan.assetCategoryId}
+            onGenerated={() => {
+              setRelatedRefreshKey((current) => current + 1)
+            }}
+          />
+        </Can>
+      ) : null}
     </div>
   )
 }
