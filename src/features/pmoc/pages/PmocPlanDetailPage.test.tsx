@@ -50,6 +50,25 @@ vi.mock("@/features/pmoc/services/pmocService", () => {
   }
 })
 
+vi.mock("@/features/users/services/usersService", () => ({
+  getTechnicians: vi.fn(),
+}))
+
+vi.mock("@/features/workOrders/services/workOrdersService", () => {
+  class DuplicateWorkOrderError extends Error {
+    readonly code = "DUPLICATE_WORK_ORDER" as const
+  }
+
+  return {
+    getWorkOrders: vi.fn(),
+    listWorkOrderAssets: vi.fn(),
+    generateWorkOrderFromPlan: vi.fn(),
+    DuplicateWorkOrderError,
+    isDuplicateWorkOrderError: (error: unknown) =>
+      error instanceof DuplicateWorkOrderError,
+  }
+})
+
 import { getUnits } from "@/features/assets/services/unitsService"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import {
@@ -59,6 +78,17 @@ import {
   replaceTasks,
   updatePlan,
 } from "@/features/pmoc/services/pmocService"
+import { getTechnicians } from "@/features/users/services/usersService"
+import {
+  generateWorkOrderFromPlan,
+  getWorkOrders,
+  listWorkOrderAssets,
+} from "@/features/workOrders/services/workOrdersService"
+import {
+  matchingRegistryAsset,
+  makeWorkOrder,
+} from "@/features/workOrders/test/workOrderFixtures"
+import { toast } from "sonner"
 
 const getPlanMock = vi.mocked(getPlan)
 const updatePlanMock = vi.mocked(updatePlan)
@@ -66,16 +96,31 @@ const replaceTasksMock = vi.mocked(replaceTasks)
 const deletePlanMock = vi.mocked(deletePlan)
 const getUnitsMock = vi.mocked(getUnits)
 const listCategoriesMock = vi.mocked(listPlanAssetCategories)
+const getWorkOrdersMock = vi.mocked(getWorkOrders)
+const listAssetsMock = vi.mocked(listWorkOrderAssets)
+const getTechniciansMock = vi.mocked(getTechnicians)
+const generateMock = vi.mocked(generateWorkOrderFromPlan)
+const toastSuccess = vi.mocked(toast.success)
 
 const WRITE_PERMS = ["pmoc.plans.read", "pmoc.plans.write"] as const
+const OS_WRITE_PERMS = [
+  ...WRITE_PERMS,
+  "os.work_orders.read",
+  "os.work_orders.create",
+] as const
+const OS_READ_PERMS = [...WRITE_PERMS, "os.work_orders.read"] as const
 
-function renderDetail(permissions: readonly string[] = WRITE_PERMS) {
+function renderDetail(
+  permissions: readonly string[] = WRITE_PERMS,
+  activeModules: readonly string[] = ["pmoc"],
+) {
   return render(
     <MemoryRouter initialEntries={[`/pmoc/${PLAN_ID}`]}>
-      <TestPermissionProvider permissions={permissions} activeModules={["pmoc"]}>
+      <TestPermissionProvider permissions={permissions} activeModules={activeModules}>
         <Routes>
           <Route path="/pmoc/:id" element={<PmocPlanDetailPage />} />
           <Route path="/pmoc" element={<div>plans-list</div>} />
+          <Route path="/os/:id" element={<div>os-detail</div>} />
         </Routes>
       </TestPermissionProvider>
     </MemoryRouter>,
@@ -90,6 +135,11 @@ describe("PmocPlanDetailPage", () => {
     deletePlanMock.mockReset()
     getUnitsMock.mockReset()
     listCategoriesMock.mockReset()
+    getWorkOrdersMock.mockReset()
+    listAssetsMock.mockReset()
+    getTechniciansMock.mockReset()
+    generateMock.mockReset()
+    toastSuccess.mockReset()
 
     getPlanMock.mockResolvedValue({
       ...basePlanJson,
@@ -110,6 +160,10 @@ describe("PmocPlanDetailPage", () => {
       },
     ])
     listCategoriesMock.mockResolvedValue([{ id: CATEGORY_ID, name: "Split" }])
+    getWorkOrdersMock.mockResolvedValue([])
+    listAssetsMock.mockResolvedValue([matchingRegistryAsset])
+    getTechniciansMock.mockResolvedValue([])
+    generateMock.mockResolvedValue(makeWorkOrder())
   })
 
   it("shows origin, auto toggle, and checklist, and hides related OS / Gerar OS", async () => {
@@ -186,5 +240,87 @@ describe("PmocPlanDetailPage", () => {
         expect.objectContaining({ isActive: false }),
       )
     })
+  })
+
+  it("A/L: write-capable OS user sees Gerar OS even when AutoGenerateEnabled is false", async () => {
+    renderDetail(OS_WRITE_PERMS, ["pmoc", "os"])
+
+    expect(
+      (
+        await screen.findAllByRole("button", {
+          name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+        })
+      ).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
+    ).toBeInTheDocument()
+  })
+
+  it("B: read-only OS user does not see Gerar OS but can see related OS", async () => {
+    renderDetail(OS_READ_PERMS, ["pmoc", "os"])
+
+    expect(await screen.findByTestId("related-work-orders")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("hides Gerar OS when the OS module is inactive even with create permission", async () => {
+    renderDetail(OS_WRITE_PERMS, ["pmoc"])
+
+    expect(await screen.findByText(basePlanJson.name)).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByTestId("related-work-orders")).toBeNull()
+  })
+
+  it("D: successful generation stays on the plan and refetches related OS", async () => {
+    const created = makeWorkOrder()
+    getWorkOrdersMock.mockResolvedValueOnce([]).mockResolvedValueOnce([created])
+    generateMock.mockResolvedValue(created)
+
+    renderDetail(OS_WRITE_PERMS, ["pmoc", "os"])
+    const user = userEvent.setup()
+
+    await user.click(
+      (
+        await screen.findAllByRole("button", {
+          name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+        })
+      )[0]!,
+    )
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("workOrders.create.form.asset"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: "AC-01 — Split sala 1" }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.generate.submit"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(generateMock).toHaveBeenCalled()
+    })
+    await waitFor(() => {
+      expect(getWorkOrdersMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+    })
+    expect(getWorkOrdersMock).toHaveBeenCalledWith({
+      maintenancePlanId: PLAN_ID,
+    })
+    expect(screen.getByText(basePlanJson.name)).toBeInTheDocument()
+    expect(screen.queryByText("os-detail")).not.toBeInTheDocument()
+    expect(toastSuccess).toHaveBeenCalled()
+    expect(await screen.findByText("AC-01 — Split sala 1")).toBeInTheDocument()
   })
 })

@@ -49,5 +49,8 @@ describe("pmoc i18n copy", () => {
     expect(ptBR.pmoc.plans.autoGenerateEnabled).toBe(
       "Gerar ordens de serviço automaticamente",
     )
+    expect(ptBR.pmoc.plans.actions.generateWorkOrder).toBe("Gerar OS")
+    expect(ptBR.pmoc.plans.related.empty).toMatch(/Nenhuma ordem de serviço/i)
+    expect(ptBR.workOrders.origin.pmocWithName).toBe("PMOC · {{name}}")
   })
 })

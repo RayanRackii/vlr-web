@@ -1532,7 +1532,9 @@
         "delete": "Delete plan",
         "deactivate": "Deactivate plan",
         "saveChecklist": "Save checklist",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "generateWorkOrder": "Generate WO",
+        "generating": "Generating..."
       },
       "columns": {
         "name": "Plan Name",
@@ -1553,7 +1555,24 @@
       "sections": {
         "overview": "Overview",
         "origin": "Origin",
-        "checklist": "Checklist"
+        "checklist": "Checklist",
+        "relatedWorkOrders": "Generated work orders"
+      },
+      "related": {
+        "empty": "No work orders have been generated for this plan."
+      },
+      "generate": {
+        "dialogTitle": "Generate WO",
+        "dialogDescription": "Choose the asset and date. The technician is optional.",
+        "submit": "Generate WO",
+        "success": "Work order generated.",
+        "viewWorkOrder": "Open WO",
+        "emptyAssets": "There are no active assets in this unit and category to generate a work order.",
+        "errors": {
+          "duplicate": "An active work order already exists for this plan, asset, and period. Change the asset or the date.",
+          "generateFailed": "Could not generate the work order.",
+          "loadLookupsFailed": "Could not load assets and technicians."
+        }
       },
       "toast": {
         "updated": "Plan updated.",
@@ -1695,11 +1714,14 @@
       "asset": "Asset",
       "origin": "Origin",
       "scheduledDate": "Scheduled Date",
+      "assignee": "Technician",
       "actions": "Actions"
     },
     "origin": {
       "pmoc": "PMOC",
-      "manual": "Manual"
+      "pmocWithName": "PMOC · {{name}}",
+      "manual": "Manual",
+      "viewPlan": "View plan"
     },
     "status": {
       "Pending": "Pending",
@@ -1709,7 +1731,8 @@
     },
     "actions": {
       "execute": "Execute",
-      "view": "View"
+      "view": "View",
+      "open": "Open"
     },
     "create": {
       "action": "New work order",
