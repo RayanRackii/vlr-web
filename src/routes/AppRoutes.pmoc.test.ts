@@ -24,4 +24,10 @@ describe("AppRoutes PMOC static paths", () => {
     )
     expect(paths.indexOf("/pmoc/novo")).toBeLessThan(paths.indexOf("/pmoc/:id"))
   })
+
+  it("R: /pmoc/:id remains gated by pmoc.plans.read", () => {
+    expect(appRoutesSource).toMatch(
+      /PermissionRoute permission="pmoc\.plans\.read"[\s\S]*path="\/pmoc\/:id"/,
+    )
+  })
 })

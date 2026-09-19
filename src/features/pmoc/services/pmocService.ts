@@ -1,6 +1,10 @@
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
+  maintenancePlanCoverageSchema,
+  type MaintenancePlanCoverage,
+} from "@/features/pmoc/schemas/coverageSchemas"
+import {
   createFromTemplateRequestSchema,
   createMaintenancePlanRequestSchema,
   maintenancePlanListSchema,
@@ -129,6 +133,35 @@ export async function getPlans(): Promise<MaintenancePlan[]> {
     }
 
     throwPmocServiceError(error, "pmoc.plans.errors.loadFailed")
+  }
+}
+
+export async function getPlanCoverage(
+  id: string,
+): Promise<MaintenancePlanCoverage> {
+  try {
+    const response = await api.get<unknown>(
+      `${MAINTENANCE_PLANS_PATH}/${id}/coverage`,
+    )
+    const parsed = maintenancePlanCoverageSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      console.error("getPlanCoverage Zod validation failed", {
+        data: response.data,
+        error: parsed.error.flatten(),
+        issues: parsed.error.issues,
+      })
+      throw new Error(i18n.t("pmoc.plans.coverage.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    console.error("getPlanCoverage failed", error)
+    if (isAxiosError(error)) {
+      console.error("getPlanCoverage response data", error.response?.data)
+    }
+
+    throwPmocServiceError(error, "pmoc.plans.coverage.errors.loadFailed")
   }
 }
 

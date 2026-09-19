@@ -55,4 +55,16 @@ describe("MaintenancePlansPage Phase 1 list", () => {
     const planLink = row.querySelector("a")
     expect(planLink).toHaveAttribute("href", `/pmoc/${PLAN_ID}`)
   })
+
+  it("H6: plan list does not show coverage aggregates", async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <MaintenancePlansPage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByTestId("plan-row")
+    expect(screen.queryByTestId("plan-coverage")).not.toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/Nunca executados|Ativos elegíveis/i)
+  })
 })

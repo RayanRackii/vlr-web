@@ -1556,10 +1556,53 @@
         "overview": "Overview",
         "origin": "Origin",
         "checklist": "Checklist",
+        "coverage": "Asset coverage",
         "relatedWorkOrders": "Generated work orders"
       },
       "related": {
         "empty": "No work orders have been generated for this plan."
+      },
+      "coverage": {
+        "question": "Which assets need attention?",
+        "summaryEligible": "Eligible assets",
+        "summaryNever": "Never executed",
+        "summaryOverdue": "Overdue",
+        "summaryOnTrack": "On track",
+        "summaryOpen": "With open WO",
+        "status": {
+          "NeverExecuted": "Never executed",
+          "OnTrack": "On track",
+          "Overdue": "Overdue"
+        },
+        "columns": {
+          "tag": "Tag",
+          "name": "Asset",
+          "status": "Status",
+          "lastMaintenance": "Last maintenance",
+          "nextDue": "Next due",
+          "openWorkOrder": "Open WO"
+        },
+        "neverExecuted": "Never executed",
+        "empty": "No currently active assets match this plan's unit and category.",
+        "inactiveNote": "This plan is inactive. Eligible assets remain visible.",
+        "loading": "Loading coverage...",
+        "consideredToday": "Considered by automatic processing today",
+        "automationDisabled": "Automation is off",
+        "planInactive": "Plan is inactive",
+        "notDueToday": "Not a due day",
+        "calendar": {
+          "automation": "Automation",
+          "automationOn": "On",
+          "automationOff": "Off",
+          "asOfDate": "Reference date",
+          "lastDueDate": "Last due date",
+          "nextDueDate": "Next due date",
+          "considered": "Automatic processing"
+        },
+        "errors": {
+          "loadFailed": "Could not load asset coverage.",
+          "invalidResponse": "Invalid API response."
+        }
       },
       "generate": {
         "dialogTitle": "Generate WO",

@@ -1556,10 +1556,53 @@
         "overview": "Resumen",
         "origin": "Origen",
         "checklist": "Checklist",
+        "coverage": "Cobertura de activos",
         "relatedWorkOrders": "Órdenes de trabajo generadas"
       },
       "related": {
         "empty": "No se ha generado ninguna orden de trabajo para este plan."
+      },
+      "coverage": {
+        "question": "¿Qué activos necesitan atención?",
+        "summaryEligible": "Activos elegibles",
+        "summaryNever": "Nunca ejecutados",
+        "summaryOverdue": "Atrasados",
+        "summaryOnTrack": "Al día",
+        "summaryOpen": "Con OT abierta",
+        "status": {
+          "NeverExecuted": "Nunca ejecutado",
+          "OnTrack": "Al día",
+          "Overdue": "Atrasado"
+        },
+        "columns": {
+          "tag": "Tag",
+          "name": "Activo",
+          "status": "Estado",
+          "lastMaintenance": "Último mantenimiento",
+          "nextDue": "Próximo vencimiento",
+          "openWorkOrder": "OT abierta"
+        },
+        "neverExecuted": "Nunca ejecutado",
+        "empty": "Ningún activo activo coincide con la unidad y la categoría de este plan.",
+        "inactiveNote": "Este plan está inactivo. Los activos elegibles siguen visibles.",
+        "loading": "Cargando cobertura...",
+        "consideredToday": "Considerado por el procesamiento automático hoy",
+        "automationDisabled": "Automatización desactivada",
+        "planInactive": "Plan inactivo",
+        "notDueToday": "Fuera del día de vencimiento",
+        "calendar": {
+          "automation": "Automatización",
+          "automationOn": "Activa",
+          "automationOff": "Inactiva",
+          "asOfDate": "Fecha de referencia",
+          "lastDueDate": "Último vencimiento",
+          "nextDueDate": "Próximo vencimiento",
+          "considered": "Procesamiento automático"
+        },
+        "errors": {
+          "loadFailed": "No se pudo cargar la cobertura de activos.",
+          "invalidResponse": "Respuesta inválida de la API."
+        }
       },
       "generate": {
         "dialogTitle": "Generar OT",
