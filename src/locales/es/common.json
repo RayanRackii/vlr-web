@@ -853,8 +853,11 @@
     "assetsInventory": "Recursos",
     "assetsCategories": "Tipos",
     "pmoc": "PMOC",
-    "pmocPlans": "Planes",
-    "pmocNew": "Nuevo Plan",
+    "pmocPlans": "Mis PMOCs",
+    "pmocLibrary": "Biblioteca Rolvix",
+    "pmocTemplatePreview": "Modelo",
+    "pmocPlanDetail": "Plan",
+    "pmocNew": "Nuevo personalizado",
     "workOrders": "OT",
     "registrationFields": "Registro portal",
     "moduleMenu": "Menú del portal",
@@ -1525,13 +1528,57 @@
       "empty": "Aún no hay planes registrados.",
       "emptyValue": "—",
       "actions": {
-        "new": "Nuevo Plan"
+        "new": "Nuevo personalizado",
+        "delete": "Eliminar plan",
+        "deactivate": "Desactivar plan",
+        "saveChecklist": "Guardar checklist",
+        "saving": "Guardando...",
+        "generateWorkOrder": "Generar OT",
+        "generating": "Generando..."
       },
       "columns": {
         "name": "Nombre del Plan",
+        "origin": "Origen",
         "frequency": "Frecuencia",
         "category": "Categoría Vinculada",
-        "status": "Estado"
+        "status": "Estado",
+        "autoGenerate": "Automático"
+      },
+      "origin": {
+        "Custom": "Personalizado",
+        "RolvixTemplate": "Modelo Rolvix",
+        "rolvixWithVersion": "Modelo Rolvix · v{{version}}"
+      },
+      "autoGenerateEnabled": "Generar órdenes de servicio automáticamente",
+      "autoGenerateOn": "Sí",
+      "autoGenerateOff": "No",
+      "sections": {
+        "overview": "Resumen",
+        "origin": "Origen",
+        "checklist": "Checklist",
+        "relatedWorkOrders": "Órdenes de trabajo generadas"
+      },
+      "related": {
+        "empty": "No se ha generado ninguna orden de trabajo para este plan."
+      },
+      "generate": {
+        "dialogTitle": "Generar OT",
+        "dialogDescription": "Elija el activo y la fecha. El técnico es opcional.",
+        "submit": "Generar OT",
+        "success": "Orden de trabajo generada.",
+        "viewWorkOrder": "Abrir OT",
+        "emptyAssets": "No hay activos activos en esta unidad y categoría para generar una orden de trabajo.",
+        "errors": {
+          "duplicate": "Ya existe una orden de trabajo activa para este plan, activo y período. Cambie el activo o la fecha.",
+          "generateFailed": "No se pudo generar la orden de trabajo.",
+          "loadLookupsFailed": "No se pudieron cargar los activos y técnicos."
+        }
+      },
+      "toast": {
+        "updated": "Plan actualizado.",
+        "deactivated": "Plan desactivado.",
+        "deleted": "Plan eliminado.",
+        "checklistSaved": "Checklist guardado."
       },
       "status": {
         "active": "Activo",
@@ -1541,7 +1588,35 @@
         "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
         "loadFailed": "No se pudieron cargar los planes.",
         "invalidResponse": "Respuesta inválida de la API.",
-        "createFailed": "No se pudo crear el plan."
+        "createFailed": "No se pudo crear el plan.",
+        "updateFailed": "No se pudo actualizar el plan.",
+        "deleteFailed": "No se pudo eliminar el plan.",
+        "replaceTasksFailed": "No se pudo guardar el checklist.",
+        "planInUse": "Este plan está en uso por órdenes de trabajo. Desactívelo en lugar de eliminarlo."
+      }
+    },
+    "library": {
+      "title": "Biblioteca Rolvix",
+      "description": "Modelos estándar de la plataforma. Clónelos en su tenant y personalice el checklist.",
+      "loading": "Cargando biblioteca...",
+      "empty": "No hay modelos publicados en este momento.",
+      "version": "Versión {{version}}",
+      "errors": {
+        "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
+        "loadFailed": "No se pudo cargar la biblioteca."
+      }
+    },
+    "preview": {
+      "useModel": "Usar modelo",
+      "confirmClone": "Crear plan",
+      "dialogTitle": "Usar modelo",
+      "dialogDescription": "Elija la unidad y la categoría. El nombre es opcional; el valor predeterminado es el nombre del modelo.",
+      "nameOptional": "Nombre (opcional)",
+      "namePlaceholder": "Deje vacío para usar el nombre del modelo",
+      "deprecatedHint": "Este modelo está descontinuado y no se puede clonar.",
+      "errors": {
+        "loadFailed": "No se pudo cargar el modelo.",
+        "cloneFailed": "No se pudo crear el plan a partir del modelo."
       }
     },
     "create": {
@@ -1606,13 +1681,14 @@
       "emptyCategoriesDescription": "Los tipos de equipo vienen del aprovisionamiento del Super-Admin. No es posible crear tipos en esta pantalla."
     },
     "templates": {
-      "importButton": "Importar Modelo Estándar (Normas/CREA)",
-      "dialogTitle": "Catálogo de Normas",
-      "dialogDescription": "Seleccione un modelo regulatorio para rellenar el plan. Podrá editar las tareas antes de guardar.",
+      "sourceReferences": "Fuentes y referencias",
       "loading": "Cargando modelos...",
-      "empty": "No hay modelos disponibles para esta jurisdicción.",
+      "empty": "No hay modelos publicados en este momento.",
       "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tareas",
-      "importSuccess": "Modelo \"{{name}}\" importado. Revise y adapte las tareas antes de guardar.",
+      "status": {
+        "Published": "Publicado",
+        "Deprecated": "Descontinuado"
+      },
       "errors": {
         "loadFailed": "No se pudieron cargar los modelos globales.",
         "invalidResponse": "Respuesta inválida de la API de templates."
@@ -1638,11 +1714,14 @@
       "asset": "Activo",
       "origin": "Origen",
       "scheduledDate": "Fecha Programada",
+      "assignee": "Técnico",
       "actions": "Acciones"
     },
     "origin": {
       "pmoc": "PMOC",
-      "manual": "Manual"
+      "pmocWithName": "PMOC · {{name}}",
+      "manual": "Manual",
+      "viewPlan": "Ver plan"
     },
     "status": {
       "Pending": "Pendiente",
@@ -1652,7 +1731,8 @@
     },
     "actions": {
       "execute": "Ejecutar",
-      "view": "Ver"
+      "view": "Ver",
+      "open": "Abrir"
     },
     "create": {
       "action": "Nueva OT",

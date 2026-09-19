@@ -853,8 +853,11 @@
     "assetsInventory": "Resources",
     "assetsCategories": "Types",
     "pmoc": "PMOC",
-    "pmocPlans": "Plans",
-    "pmocNew": "New Plan",
+    "pmocPlans": "My PMOCs",
+    "pmocLibrary": "Rolvix Library",
+    "pmocTemplatePreview": "Template",
+    "pmocPlanDetail": "Plan",
+    "pmocNew": "New custom",
     "workOrders": "Work Orders",
     "registrationFields": "Portal registration",
     "moduleMenu": "Portal menu",
@@ -1525,13 +1528,57 @@
       "empty": "No plans registered yet.",
       "emptyValue": "—",
       "actions": {
-        "new": "New Plan"
+        "new": "New custom",
+        "delete": "Delete plan",
+        "deactivate": "Deactivate plan",
+        "saveChecklist": "Save checklist",
+        "saving": "Saving...",
+        "generateWorkOrder": "Generate WO",
+        "generating": "Generating..."
       },
       "columns": {
         "name": "Plan Name",
+        "origin": "Origin",
         "frequency": "Frequency",
         "category": "Linked Category",
-        "status": "Status"
+        "status": "Status",
+        "autoGenerate": "Auto"
+      },
+      "origin": {
+        "Custom": "Custom",
+        "RolvixTemplate": "Rolvix template",
+        "rolvixWithVersion": "Rolvix template · v{{version}}"
+      },
+      "autoGenerateEnabled": "Generate work orders automatically",
+      "autoGenerateOn": "Yes",
+      "autoGenerateOff": "No",
+      "sections": {
+        "overview": "Overview",
+        "origin": "Origin",
+        "checklist": "Checklist",
+        "relatedWorkOrders": "Generated work orders"
+      },
+      "related": {
+        "empty": "No work orders have been generated for this plan."
+      },
+      "generate": {
+        "dialogTitle": "Generate WO",
+        "dialogDescription": "Choose the asset and date. The technician is optional.",
+        "submit": "Generate WO",
+        "success": "Work order generated.",
+        "viewWorkOrder": "Open WO",
+        "emptyAssets": "There are no active assets in this unit and category to generate a work order.",
+        "errors": {
+          "duplicate": "An active work order already exists for this plan, asset, and period. Change the asset or the date.",
+          "generateFailed": "Could not generate the work order.",
+          "loadLookupsFailed": "Could not load assets and technicians."
+        }
+      },
+      "toast": {
+        "updated": "Plan updated.",
+        "deactivated": "Plan deactivated.",
+        "deleted": "Plan deleted.",
+        "checklistSaved": "Checklist saved."
       },
       "status": {
         "active": "Active",
@@ -1541,7 +1588,35 @@
         "unauthorized": "Invalid session. Please sign in again.",
         "loadFailed": "Could not load plans.",
         "invalidResponse": "Invalid API response.",
-        "createFailed": "Could not create the plan."
+        "createFailed": "Could not create the plan.",
+        "updateFailed": "Could not update the plan.",
+        "deleteFailed": "Could not delete the plan.",
+        "replaceTasksFailed": "Could not save the checklist.",
+        "planInUse": "This plan is in use by work orders. Deactivate it instead of deleting."
+      }
+    },
+    "library": {
+      "title": "Rolvix Library",
+      "description": "Standard templates from the platform. Clone into your tenant and customize the checklist.",
+      "loading": "Loading library...",
+      "empty": "No published templates at the moment.",
+      "version": "Version {{version}}",
+      "errors": {
+        "unauthorized": "Invalid session. Please sign in again.",
+        "loadFailed": "Could not load the library."
+      }
+    },
+    "preview": {
+      "useModel": "Use template",
+      "confirmClone": "Create plan",
+      "dialogTitle": "Use template",
+      "dialogDescription": "Choose the unit and category. Name is optional; the default is the template name.",
+      "nameOptional": "Name (optional)",
+      "namePlaceholder": "Leave empty to use the template name",
+      "deprecatedHint": "This template is deprecated and cannot be cloned.",
+      "errors": {
+        "loadFailed": "Could not load the template.",
+        "cloneFailed": "Could not create the plan from the template."
       }
     },
     "create": {
@@ -1606,13 +1681,14 @@
       "emptyCategoriesDescription": "Equipment types come from Super-Admin provisioning. Types cannot be created on this screen."
     },
     "templates": {
-      "importButton": "Import Standard Template (Standards/CREA)",
-      "dialogTitle": "Standards Catalog",
-      "dialogDescription": "Select a regulatory template to prefill the plan. You can edit tasks before saving.",
+      "sourceReferences": "Sources and references",
       "loading": "Loading templates...",
-      "empty": "No templates available for this jurisdiction.",
+      "empty": "No published templates at the moment.",
       "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tasks",
-      "importSuccess": "Template \"{{name}}\" imported. Review and adapt the tasks before saving.",
+      "status": {
+        "Published": "Published",
+        "Deprecated": "Deprecated"
+      },
       "errors": {
         "loadFailed": "Could not load global templates.",
         "invalidResponse": "Invalid templates API response."
@@ -1638,11 +1714,14 @@
       "asset": "Asset",
       "origin": "Origin",
       "scheduledDate": "Scheduled Date",
+      "assignee": "Technician",
       "actions": "Actions"
     },
     "origin": {
       "pmoc": "PMOC",
-      "manual": "Manual"
+      "pmocWithName": "PMOC · {{name}}",
+      "manual": "Manual",
+      "viewPlan": "View plan"
     },
     "status": {
       "Pending": "Pending",
@@ -1652,7 +1731,8 @@
     },
     "actions": {
       "execute": "Execute",
-      "view": "View"
+      "view": "View",
+      "open": "Open"
     },
     "create": {
       "action": "New work order",

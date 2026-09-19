@@ -27,7 +27,9 @@ vi.mock("@/features/pmoc/services/pmocPlanCategoriesService", () => ({
 
 vi.mock("@/features/pmoc/services/pmocService", () => ({
   createPlan: vi.fn(),
-  getGlobalTemplates: vi.fn(),
+  getGlobalTemplates: vi.fn(async () => {
+    throw new Error("CreatePlanPage must not import templates")
+  }),
 }))
 
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -72,5 +74,22 @@ describe("CreatePlanPage category picker", () => {
     expect(screen.queryByRole("link", { name: /ativos/i })).not.toBeInTheDocument()
     expect(container.textContent).not.toMatch(/Ativos/)
     expect(container.textContent).not.toMatch(/Asset Registry/i)
+  })
+
+  it("does not offer CREA / client-side template import", async () => {
+    listCategoriesMock.mockResolvedValue([{ id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Split" }])
+
+    const { container } = render(
+      <MemoryRouter>
+        <CreatePlanPage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByText(i18n.t("pmoc.create.title"))
+    expect(container.textContent).not.toMatch(/\bCREA\b/i)
+    expect(container.textContent).not.toMatch(/Cardápio/i)
+    expect(
+      screen.queryByRole("button", { name: /importar modelo/i }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -193,4 +193,45 @@ describe("getPageTitleKey", () => {
       "nav.notifications",
     )
   })
+
+  it("resolves PMOC library, preview, and plan detail titles", () => {
+    expect(getPageTitleKey("/pmoc/biblioteca")).toBe("nav.pmocLibrary")
+    expect(
+      getPageTitleKey("/pmoc/biblioteca/6f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e"),
+    ).toBe("nav.pmocTemplatePreview")
+    expect(getPageTitleKey("/pmoc/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")).toBe(
+      "nav.pmocPlanDetail",
+    )
+    expect(getPageTitleKey("/pmoc/novo")).toBe("nav.pmocNew")
+    expect(getPageTitleKey("/pmoc")).toBe("nav.pmocPlans")
+  })
+})
+
+describe("PMOC library nav", () => {
+  it("places Biblioteca Rolvix between plans and new, and hides it without templates.read", () => {
+    const withLibrary = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["pmoc"],
+      ["pmoc.plans.read", "pmoc.templates.read", "pmoc.plans.write"],
+    )
+    const pmocWithLibrary = withLibrary.find((item) => item.labelKey === "nav.pmoc")
+    expect(pmocWithLibrary?.children?.map((child) => child.to)).toEqual([
+      "/pmoc",
+      "/pmoc/biblioteca",
+      "/pmoc/novo",
+    ])
+
+    const withoutLibrary = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["pmoc"],
+      ["pmoc.plans.read", "pmoc.plans.write"],
+    )
+    const pmocWithoutLibrary = withoutLibrary.find(
+      (item) => item.labelKey === "nav.pmoc",
+    )
+    expect(pmocWithoutLibrary?.children?.map((child) => child.to)).toEqual([
+      "/pmoc",
+      "/pmoc/novo",
+    ])
+  })
 })

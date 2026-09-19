@@ -21,6 +21,9 @@ import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { PmocLibraryPage } from "@/features/pmoc/pages/PmocLibraryPage"
+import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
+import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
@@ -150,8 +153,18 @@ export function AppRoutes() {
           <Route element={<PermissionRoute permission="pmoc.plans.read" />}>
             <Route path="/pmoc" element={<MaintenancePlansPage />} />
           </Route>
+          <Route element={<PermissionRoute permission="pmoc.templates.read" />}>
+            <Route path="/pmoc/biblioteca" element={<PmocLibraryPage />} />
+            <Route
+              path="/pmoc/biblioteca/:templateId"
+              element={<PmocTemplatePreviewPage />}
+            />
+          </Route>
           <Route element={<PermissionRoute permission="pmoc.plans.write" />}>
             <Route path="/pmoc/novo" element={<CreatePlanPage />} />
+          </Route>
+          <Route element={<PermissionRoute permission="pmoc.plans.read" />}>
+            <Route path="/pmoc/:id" element={<PmocPlanDetailPage />} />
           </Route>
           <Route
             element={<PermissionRoute permission="os.work_orders.read" />}
