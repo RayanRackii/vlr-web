@@ -21,11 +21,16 @@ import {
   createFromTemplate,
   deletePlan,
   getPlan,
+  getPlanCoverage,
   getTemplateById,
   isPlanInUseError,
   replaceTasks,
   updatePlan,
 } from "@/features/pmoc/services/pmocService"
+import {
+  emptyCoverageJson,
+  populatedCoverageJson,
+} from "@/features/pmoc/test/coverageFixtures"
 import {
   basePlanJson,
   baseTemplateJson,
@@ -185,6 +190,29 @@ describe("pmocService Phase 1 methods", () => {
     }
 
     expect(apiDelete).toHaveBeenCalledWith(`/api/maintenance-plans/${PLAN_ID}`)
+  })
+
+  it("A: coverage request uses GET /api/maintenance-plans/{id}/coverage", async () => {
+    apiGet.mockResolvedValue({ data: populatedCoverageJson })
+
+    const coverage = await getPlanCoverage(PLAN_ID)
+
+    expect(apiGet).toHaveBeenCalledWith(
+      `/api/maintenance-plans/${PLAN_ID}/coverage`,
+    )
+    expect(apiGet.mock.calls[0]?.[1]).toBeUndefined()
+    expect(coverage.planId).toBe(PLAN_ID)
+    expect(coverage.wouldBeConsideredByGenerator).toBe(true)
+    expect(coverage.assets).toHaveLength(3)
+  })
+
+  it("rejects a coverage payload that drops eligibleAssetCount", async () => {
+    const { eligibleAssetCount: _omitted, ...invalid } = emptyCoverageJson
+    apiGet.mockResolvedValue({ data: invalid })
+
+    await expect(getPlanCoverage(PLAN_ID)).rejects.toThrow(
+      i18n.t("pmoc.plans.coverage.errors.invalidResponse"),
+    )
   })
 
   it("resolves unused DELETE 204", async () => {

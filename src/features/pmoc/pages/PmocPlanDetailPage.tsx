@@ -49,6 +49,7 @@ import {
   updatePlan,
 } from "@/features/pmoc/services/pmocService"
 import { GenerateWorkOrderDialog } from "@/features/pmoc/components/GenerateWorkOrderDialog"
+import { PlanCoverageSection } from "@/features/pmoc/components/PlanCoverageSection"
 import { PlanRelatedWorkOrders } from "@/features/pmoc/components/PlanRelatedWorkOrders"
 import { Can } from "@/features/users/permissions/Can"
 import { useCan, usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -722,6 +723,8 @@ export function PmocPlanDetailPage() {
           </Can>
         </div>
       </section>
+
+      <PlanCoverageSection planId={plan.id} refreshKey={relatedRefreshKey} />
 
       {osModuleActive ? (
         <Can permission="os.work_orders.read">

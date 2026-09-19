@@ -1592,10 +1592,53 @@
         "overview": "Visão geral",
         "origin": "Origem",
         "checklist": "Checklist",
+        "coverage": "Cobertura dos ativos",
         "relatedWorkOrders": "Ordens de serviço geradas"
       },
       "related": {
         "empty": "Nenhuma ordem de serviço foi gerada para este plano."
+      },
+      "coverage": {
+        "question": "Quais ativos precisam de atenção?",
+        "summaryEligible": "Ativos elegíveis",
+        "summaryNever": "Nunca executados",
+        "summaryOverdue": "Atrasados",
+        "summaryOnTrack": "Em dia",
+        "summaryOpen": "Com OS aberta",
+        "status": {
+          "NeverExecuted": "Nunca executado",
+          "OnTrack": "Em dia",
+          "Overdue": "Atrasado"
+        },
+        "columns": {
+          "tag": "Tag",
+          "name": "Ativo",
+          "status": "Status",
+          "lastMaintenance": "Última manutenção",
+          "nextDue": "Próximo vencimento",
+          "openWorkOrder": "OS aberta"
+        },
+        "neverExecuted": "Nunca executado",
+        "empty": "Nenhum ativo ativo corresponde à unidade e à categoria deste plano.",
+        "inactiveNote": "Este plano está inativo. Os ativos elegíveis continuam visíveis.",
+        "loading": "Carregando cobertura...",
+        "consideredToday": "Elegível para processamento automático hoje",
+        "automationDisabled": "Automação desligada",
+        "planInactive": "Plano inativo",
+        "notDueToday": "Fora do dia de vencimento",
+        "calendar": {
+          "automation": "Automação",
+          "automationOn": "Ativa",
+          "automationOff": "Inativa",
+          "asOfDate": "Data de referência",
+          "lastDueDate": "Último vencimento",
+          "nextDueDate": "Próximo vencimento",
+          "considered": "Processamento automático"
+        },
+        "errors": {
+          "loadFailed": "Não foi possível carregar a cobertura dos ativos.",
+          "invalidResponse": "Resposta inválida da API."
+        }
       },
       "generate": {
         "dialogTitle": "Gerar OS",

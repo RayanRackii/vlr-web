@@ -8,6 +8,10 @@ import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 import {
+  emptyCoverageJson,
+  populatedCoverageJson,
+} from "@/features/pmoc/test/coverageFixtures"
+import {
   basePlanJson,
   CATEGORY_ID,
   PLAN_ID,
@@ -42,6 +46,7 @@ vi.mock("@/features/pmoc/services/pmocService", () => {
 
   return {
     getPlan: vi.fn(),
+    getPlanCoverage: vi.fn(),
     updatePlan: vi.fn(),
     replaceTasks: vi.fn(),
     deletePlan: vi.fn(),
@@ -74,6 +79,7 @@ import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCatego
 import {
   deletePlan,
   getPlan,
+  getPlanCoverage,
   PlanInUseError,
   replaceTasks,
   updatePlan,
@@ -91,6 +97,7 @@ import {
 import { toast } from "sonner"
 
 const getPlanMock = vi.mocked(getPlan)
+const getPlanCoverageMock = vi.mocked(getPlanCoverage)
 const updatePlanMock = vi.mocked(updatePlan)
 const replaceTasksMock = vi.mocked(replaceTasks)
 const deletePlanMock = vi.mocked(deletePlan)
@@ -130,6 +137,7 @@ function renderDetail(
 describe("PmocPlanDetailPage", () => {
   beforeEach(() => {
     getPlanMock.mockReset()
+    getPlanCoverageMock.mockReset()
     updatePlanMock.mockReset()
     replaceTasksMock.mockReset()
     deletePlanMock.mockReset()
@@ -148,6 +156,7 @@ describe("PmocPlanDetailPage", () => {
       sourceTemplateVersion: 1,
       autoGenerateEnabled: false,
     })
+    getPlanCoverageMock.mockResolvedValue(emptyCoverageJson)
     updatePlanMock.mockResolvedValue({ ...basePlanJson, isActive: false })
     replaceTasksMock.mockResolvedValue({ ...basePlanJson })
     getUnitsMock.mockResolvedValue([
@@ -322,5 +331,38 @@ describe("PmocPlanDetailPage", () => {
     expect(screen.queryByText("os-detail")).not.toBeInTheDocument()
     expect(toastSuccess).toHaveBeenCalled()
     expect(await screen.findByText("AC-01 — Split sala 1")).toBeInTheDocument()
+    expect(getPlanCoverageMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("S/T: coverage coexists with Gerar OS and related OS without merging tables", async () => {
+    getPlanCoverageMock.mockResolvedValue(populatedCoverageJson)
+
+    renderDetail(OS_WRITE_PERMS, ["pmoc", "os"])
+
+    expect(await screen.findByTestId("plan-coverage")).toBeInTheDocument()
+    expect(screen.getByTestId("related-work-orders")).toBeInTheDocument()
+    expect(
+      (
+        await screen.findAllByRole("button", {
+          name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+        })
+      ).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText(i18n.t("pmoc.plans.coverage.question"))).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("pmoc.plans.sections.relatedWorkOrders")),
+    ).toBeInTheDocument()
+  })
+
+  it("N: AutoGenerateEnabled=false still shows coverage on the plan page", async () => {
+    getPlanCoverageMock.mockResolvedValue(populatedCoverageJson)
+
+    renderDetail(WRITE_PERMS, ["pmoc"])
+
+    expect(await screen.findByTestId("plan-coverage")).toBeInTheDocument()
+    expect(screen.getAllByTestId("coverage-asset-row")).toHaveLength(3)
+    expect(
+      screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
+    ).toBeInTheDocument()
   })
 })

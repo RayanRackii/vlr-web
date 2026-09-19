@@ -124,3 +124,35 @@ describe("PermissionRoute loading gate", () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe("PermissionRoute PMOC coverage gate", () => {
+  beforeEach(() => {
+    getCurrentUserMock.mockReset()
+  })
+
+  it("R: Technician without pmoc.plans.read is denied /pmoc/:id", async () => {
+    getCurrentUserMock.mockResolvedValue({
+      ...profile,
+      role: "TECHNICIAN",
+      permissions: ["os.work_orders.read", "os.work_orders.execute"],
+      activeModules: ["os", "pmoc"],
+    })
+
+    render(
+      <MemoryRouter initialEntries={["/pmoc/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]}>
+        <PermissionProvider>
+          <Routes>
+            <Route element={<PermissionRoute permission="pmoc.plans.read" />}>
+              <Route path="/pmoc/:id" element={<h1>Plan detail</h1>} />
+            </Route>
+          </Routes>
+        </PermissionProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Acesso negado" })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Plan detail" }),
+    ).not.toBeInTheDocument()
+  })
+})
