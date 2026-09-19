@@ -9,6 +9,7 @@ import {
   COVERAGE_LAST_DUE_DATE,
   COVERAGE_NEXT_DUE_DATE,
   emptyCoverageJson,
+  LAST_WORK_ORDER_ID,
   OPEN_WORK_ORDER_ID,
   populatedCoverageJson,
 } from "@/features/pmoc/test/coverageFixtures"
@@ -117,14 +118,21 @@ describe("PlanCoverageSection", () => {
       "href",
       `/os/${OPEN_WORK_ORDER_ID}`,
     )
+    const overdueRow = screen.getAllByTestId("coverage-asset-row")[0]!
+    expect(
+      within(overdueRow).getByTestId("coverage-last-maintenance-link"),
+    ).toHaveAttribute("href", `/os/${LAST_WORK_ORDER_ID}`)
   })
 
-  it("K: open WorkOrder is not an actionable link without OS read", async () => {
+  it("K: last OS and open WorkOrder are not actionable links without OS read", async () => {
     renderCoverage(PMOC_READ, ["pmoc", "os"])
 
     expect(await screen.findByTestId("coverage-open-work-order")).toBeInTheDocument()
     expect(
       screen.queryByTestId("coverage-open-work-order-link"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId("coverage-last-maintenance-link"),
     ).not.toBeInTheDocument()
   })
 
@@ -134,6 +142,9 @@ describe("PlanCoverageSection", () => {
     expect(await screen.findByTestId("coverage-open-work-order")).toBeInTheDocument()
     expect(
       screen.queryByTestId("coverage-open-work-order-link"),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId("coverage-last-maintenance-link"),
     ).not.toBeInTheDocument()
   })
 
@@ -193,7 +204,7 @@ describe("PlanCoverageSection", () => {
       i18n.t("pmoc.plans.coverage.consideredToday"),
     )
     expect(considered.textContent).not.toMatch(
-      /será gerada|will generate|OS será|WO will/i,
+      /será gerada|will generate|OS será|WO will|elegív/i,
     )
   })
 

@@ -365,4 +365,34 @@ describe("PmocPlanDetailPage", () => {
       screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
     ).toBeInTheDocument()
   })
+
+  it("refetches coverage after toggling AutoGenerateEnabled", async () => {
+    getPlanCoverageMock.mockResolvedValue(populatedCoverageJson)
+    updatePlanMock.mockResolvedValue({
+      ...basePlanJson,
+      originKind: "RolvixTemplate",
+      sourceTemplateId: TEMPLATE_ID,
+      sourceTemplateVersion: 1,
+      autoGenerateEnabled: true,
+    })
+
+    renderDetail(WRITE_PERMS, ["pmoc"])
+    const user = userEvent.setup()
+
+    await screen.findByTestId("plan-coverage")
+    expect(getPlanCoverageMock).toHaveBeenCalledTimes(1)
+
+    await user.click(
+      screen.getByRole("switch", {
+        name: i18n.t("pmoc.plans.autoGenerateEnabled"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(updatePlanMock).toHaveBeenCalled()
+    })
+    await waitFor(() => {
+      expect(getPlanCoverageMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+    })
+  })
 })

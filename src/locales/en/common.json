@@ -1586,7 +1586,7 @@
         "empty": "No currently active assets match this plan's unit and category.",
         "inactiveNote": "This plan is inactive. Eligible assets remain visible.",
         "loading": "Loading coverage...",
-        "consideredToday": "Eligible for automatic processing today",
+        "consideredToday": "Considered by automatic processing today",
         "automationDisabled": "Automation is off",
         "planInactive": "Plan is inactive",
         "notDueToday": "Not a due day",

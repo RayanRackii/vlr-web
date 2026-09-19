@@ -233,6 +233,7 @@ export function PmocPlanDetailPage() {
     try {
       const next = await updatePlan(plan.id, buildHeaderUpdateFromPlan(plan, patch))
       setPlan(next)
+      setRelatedRefreshKey((current) => current + 1)
       toast.success(
         patch.isActive === false
           ? t("pmoc.plans.toast.deactivated")

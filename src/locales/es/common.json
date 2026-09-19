@@ -1586,7 +1586,7 @@
         "empty": "Ningún activo activo coincide con la unidad y la categoría de este plan.",
         "inactiveNote": "Este plan está inactivo. Los activos elegibles siguen visibles.",
         "loading": "Cargando cobertura...",
-        "consideredToday": "Elegible para procesamiento automático hoy",
+        "consideredToday": "Considerado por el procesamiento automático hoy",
         "automationDisabled": "Automatización desactivada",
         "planInactive": "Plan inactivo",
         "notDueToday": "Fuera del día de vencimiento",

@@ -379,11 +379,27 @@ export function PlanCoverageSection({
                         data-testid="coverage-last-maintenance"
                         className="min-w-32 whitespace-normal"
                       >
-                        {lastMaintenanceLabel(
-                          asset,
-                          locale,
-                          t("pmoc.plans.coverage.neverExecuted"),
-                        )}
+                        <div className="flex flex-col items-start gap-1.5">
+                          <span>
+                            {lastMaintenanceLabel(
+                              asset,
+                              locale,
+                              t("pmoc.plans.coverage.neverExecuted"),
+                            )}
+                          </span>
+                          {asset.lastMaintenance && canOpenOs ? (
+                            <Link
+                              data-testid="coverage-last-maintenance-link"
+                              to={`/os/${asset.lastMaintenance.workOrderId}`}
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "sm",
+                              })}
+                            >
+                              {t("workOrders.actions.open")}
+                            </Link>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell
                         data-testid="coverage-next-due"
