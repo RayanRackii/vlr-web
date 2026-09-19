@@ -269,6 +269,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-12 | **Fix (WEB):** cadastro B2C reconhece autofill do Chrome (input/change/animationstart → RHF) e habilita o submit; seletor de horário da agenda troca o `<select>` nativo pelo Select do design system (popup legível no tema dark). Sem backend, sem PROD. |
 | 2026-09-12 | **Fix (WEB):** telefone B2C normaliza +55/formatação para DDD+número (10–11 dígitos) no autofill, cola e digitação, alinhado a `NormalizePhoneBr`. Sem contrato novo, sem PROD. |
 | 2026-09-18 | **Código (WEB Slice 5):** Biblioteca Rolvix, preview/clone, detalhe de plano, checklist edit e auto toggle. Sem Gerar OS / OS relacionadas (Slice 6). Branch `feat/pmoc-os-phase1-web-library-detail`. |
+| 2026-09-19 | **Código (WEB Phase 2 Slice 2):** cobertura de ativos no detalhe `/pmoc/:id` via `GET /api/maintenance-plans/{id}/coverage`. Sem H6/H7, sem API. Branch `feat/pmoc-os-phase2-coverage-web`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
