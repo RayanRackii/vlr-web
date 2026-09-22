@@ -6,10 +6,8 @@ import { PlanCoverageSection } from "@/features/pmoc/components/PlanCoverageSect
 import { formatCivilDateOnly } from "@/features/pmoc/lib/formatCivilDate"
 import {
   COVERAGE_AS_OF_DATE,
-  COVERAGE_LAST_DUE_DATE,
   COVERAGE_NEXT_DUE_DATE,
   emptyCoverageJson,
-  LAST_WORK_ORDER_ID,
   OPEN_WORK_ORDER_ID,
   populatedCoverageJson,
 } from "@/features/pmoc/test/coverageFixtures"
@@ -58,31 +56,33 @@ describe("PlanCoverageSection", () => {
     getPlanCoverageMock.mockResolvedValue(populatedCoverageJson)
   })
 
-  it("C/D/E/F: renders overdue, never executed, on track, and summary counts", async () => {
+  it("P-W: separates history from due and renders API counters", async () => {
     renderCoverage()
 
     expect(
       await screen.findByText(i18n.t("pmoc.plans.coverage.question")),
     ).toBeInTheDocument()
     expect(screen.getByTestId("coverage-summary-eligible")).toHaveTextContent("3")
-    expect(screen.getByTestId("coverage-summary-never")).toHaveTextContent("1")
+    expect(screen.getByTestId("coverage-summary-attention")).toHaveTextContent("2")
+    expect(screen.getByTestId("coverage-summary-dueToday")).toHaveTextContent("1")
     expect(screen.getByTestId("coverage-summary-overdue")).toHaveTextContent("1")
-    expect(screen.getByTestId("coverage-summary-onTrack")).toHaveTextContent("1")
+    expect(screen.getByTestId("coverage-summary-never")).toHaveTextContent("1")
     expect(screen.getByTestId("coverage-summary-open")).toHaveTextContent("1")
 
     const rows = screen.getAllByTestId("coverage-asset-row")
-    expect(rows.map((row) => row.getAttribute("data-operational-status"))).toEqual(
-      ["Overdue", "NeverExecuted", "OnTrack"],
-    )
-    expect(rows[0]).toHaveTextContent(
-      i18n.t("pmoc.plans.coverage.status.Overdue"),
-    )
+    expect(rows.map((row) => row.getAttribute("data-due-status"))).toEqual([
+      "Overdue",
+      "DueToday",
+      "NotDue",
+    ])
+    expect(rows[0]).toHaveTextContent(i18n.t("pmoc.plans.coverage.due.Overdue"))
     expect(rows[1]).toHaveTextContent(
-      i18n.t("pmoc.plans.coverage.status.NeverExecuted"),
+      i18n.t("pmoc.plans.coverage.history.NeverExecuted"),
     )
-    expect(rows[2]).toHaveTextContent(
-      i18n.t("pmoc.plans.coverage.status.OnTrack"),
-    )
+    expect(rows[1]).toHaveTextContent(i18n.t("pmoc.plans.coverage.due.DueToday"))
+    expect(rows[1]).toHaveAttribute("data-needs-attention", "true")
+    expect(rows[2]).toHaveTextContent(i18n.t("pmoc.plans.coverage.due.NotDue"))
+    expect(rows[2]).toHaveAttribute("data-needs-attention", "false")
   })
 
   it("G: lastMaintenance null is shown as never executed, not a dash", async () => {
@@ -90,61 +90,60 @@ describe("PlanCoverageSection", () => {
 
     const neverRow = (await screen.findAllByTestId("coverage-asset-row"))[1]!
     const last = within(neverRow).getByTestId("coverage-last-maintenance")
-    expect(last).toHaveTextContent(i18n.t("pmoc.plans.coverage.neverExecuted"))
+    expect(last).toHaveTextContent(
+      i18n.t("pmoc.plans.coverage.history.NeverExecuted"),
+    )
     expect(last.textContent).not.toBe("—")
     expect(last.textContent).not.toBe("-")
   })
 
-  it("H: nextDueDate is rendered from the API civil date", async () => {
+  it("X/Y: effectiveNextDueDate is rendered from the API and not recomputed", async () => {
     renderCoverage()
 
-    const expected = formatCivilDateOnly(COVERAGE_NEXT_DUE_DATE, i18n.language)
+    const overdue = formatCivilDateOnly("2026-09-01", i18n.language)
+    const today = formatCivilDateOnly(COVERAGE_AS_OF_DATE, i18n.language)
+    const future = formatCivilDateOnly(COVERAGE_NEXT_DUE_DATE, i18n.language)
     const nextDues = await screen.findAllByTestId("coverage-next-due")
-    for (const cell of nextDues) {
-      expect(cell).toHaveTextContent(expected)
-    }
-    expect(screen.getByTestId("coverage-plan-next-due")).toHaveTextContent(
-      expected,
-    )
+    expect(nextDues.map((cell) => cell.textContent)).toEqual([
+      overdue,
+      today,
+      future,
+    ])
+    expect(planCoverageSource).not.toMatch(/AddDays|intervalDays\s*\+/)
+    expect(planCoverageSource).not.toMatch(/new Date\(\)/)
   })
 
   it("I/J: open WorkOrder is rendered and links when OS read is allowed", async () => {
     renderCoverage(OS_READ, ["pmoc", "os"])
 
-    expect(await screen.findByTestId("coverage-open-work-order")).toHaveTextContent(
-      i18n.t("workOrders.status.InProgress"),
-    )
-    expect(screen.getByTestId("coverage-open-work-order-link")).toHaveAttribute(
+    const rows = await screen.findAllByTestId("coverage-asset-row")
+    const open = within(rows[1]!).getByTestId("coverage-open-work-order")
+    expect(open).toHaveTextContent(i18n.t("workOrders.status.InProgress"))
+    expect(within(open).getByTestId("coverage-open-work-order-link")).toHaveAttribute(
       "href",
       `/os/${OPEN_WORK_ORDER_ID}`,
     )
     const overdueRow = screen.getAllByTestId("coverage-asset-row")[0]!
     expect(
-      within(overdueRow).getByTestId("coverage-last-maintenance-link"),
-    ).toHaveAttribute("href", `/os/${LAST_WORK_ORDER_ID}`)
+      within(overdueRow).getByTestId("coverage-last-maintenance"),
+    ).toHaveTextContent("03/08/2026")
   })
 
   it("K: last OS and open WorkOrder are not actionable links without OS read", async () => {
     renderCoverage(PMOC_READ, ["pmoc", "os"])
 
-    expect(await screen.findByTestId("coverage-open-work-order")).toBeInTheDocument()
+    expect(await screen.findAllByTestId("coverage-open-work-order")).not.toHaveLength(0)
     expect(
       screen.queryByTestId("coverage-open-work-order-link"),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByTestId("coverage-last-maintenance-link"),
     ).not.toBeInTheDocument()
   })
 
   it("K: open WorkOrder link is absent when the OS module is inactive", async () => {
     renderCoverage(OS_READ, ["pmoc"])
 
-    expect(await screen.findByTestId("coverage-open-work-order")).toBeInTheDocument()
+    expect(await screen.findAllByTestId("coverage-open-work-order")).not.toHaveLength(0)
     expect(
       screen.queryByTestId("coverage-open-work-order-link"),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByTestId("coverage-last-maintenance-link"),
     ).not.toBeInTheDocument()
   })
 
@@ -167,7 +166,6 @@ describe("PlanCoverageSection", () => {
       ...populatedCoverageJson,
       isActive: false,
       autoGenerateEnabled: true,
-      isDueToday: true,
       wouldBeConsideredByGenerator: false,
     })
 
@@ -184,7 +182,6 @@ describe("PlanCoverageSection", () => {
     getPlanCoverageMock.mockResolvedValue({
       ...populatedCoverageJson,
       autoGenerateEnabled: false,
-      isDueToday: true,
       wouldBeConsideredByGenerator: false,
     })
 
@@ -201,7 +198,7 @@ describe("PlanCoverageSection", () => {
 
     const considered = await screen.findByTestId("coverage-considered")
     expect(considered).toHaveTextContent(
-      i18n.t("pmoc.plans.coverage.consideredToday"),
+      i18n.t("pmoc.plans.coverage.consideredPossible"),
     )
     expect(considered.textContent).not.toMatch(
       /será gerada|will generate|OS será|WO will|elegív/i,
@@ -211,20 +208,12 @@ describe("PlanCoverageSection", () => {
   it("P: browser clock is not used to recompute API due dates", async () => {
     renderCoverage()
 
-    const calendar = await screen.findByTestId("coverage-calendar")
-    expect(calendar).toHaveAttribute("data-as-of-date", COVERAGE_AS_OF_DATE)
-    expect(calendar).toHaveAttribute("data-last-due-date", COVERAGE_LAST_DUE_DATE)
-    expect(calendar).toHaveAttribute("data-next-due-date", COVERAGE_NEXT_DUE_DATE)
-    expect(calendar).toHaveAttribute("data-is-due-today", "true")
-    expect(calendar).toHaveAttribute("data-would-be-considered", "true")
-    expect(screen.getByTestId("coverage-as-of-date")).toHaveTextContent(
+    expect(await screen.findByTestId("coverage-as-of-date")).toHaveTextContent(
       formatCivilDateOnly(COVERAGE_AS_OF_DATE, i18n.language),
     )
-    expect(screen.getByTestId("coverage-last-due-date")).toHaveTextContent(
-      formatCivilDateOnly(COVERAGE_LAST_DUE_DATE, i18n.language),
-    )
-
     expect(planCoverageSource).not.toMatch(/Date\.now/)
+    expect(planCoverageSource).not.toMatch(/operationalStatus/)
+    expect(planCoverageSource).not.toMatch(/frequency/)
     expect(planCoverageSource).not.toMatch(/getTimezoneOffset/)
     expect(planCoverageSource).not.toMatch(/PmocDueCalendar/)
     expect(planCoverageSource).not.toMatch(/new Date\(\)/)

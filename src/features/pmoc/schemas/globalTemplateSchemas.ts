@@ -1,7 +1,6 @@
 import { z } from "zod"
 
 import {
-  maintenanceFrequencyResponseSchema,
   taskInputTypeResponseSchema,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 
@@ -43,7 +42,6 @@ export const globalMaintenanceTemplateSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
   description: z.string().nullish(),
-  frequency: maintenanceFrequencyResponseSchema,
   jurisdiction: z.string().min(1),
   targetEquipmentType: z.string().min(1),
   libraryKey: z.string().min(1).max(80),

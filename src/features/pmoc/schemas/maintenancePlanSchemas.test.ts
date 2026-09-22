@@ -14,7 +14,8 @@ import { basePlanJson } from "@/features/pmoc/test/pmocFixtures"
 const formMessages = {
   unitRequired: "unit",
   nameRequired: "name",
-  frequencyRequired: "frequency",
+  intervalInvalid: "interval",
+  firstDueRequired: "firstDue",
   categoryRequired: "category",
   taskTitleRequired: "task",
   tasksRequired: "tasks",
@@ -81,6 +82,55 @@ describe("maintenancePlanSchema Phase 1 fields", () => {
   })
 })
 
+describe("Phase 3 scheduling validation", () => {
+  const formSchema = createPlanFormSchema(formMessages)
+
+  it("A/B: interval and first due are required", () => {
+    const parsed = formSchema.safeParse({
+      unitId: basePlanJson.unitId,
+      name: "Custom",
+      intervalDays: Number.NaN,
+      firstDueDate: "",
+      assetCategoryId: basePlanJson.assetCategoryId,
+      isActive: true,
+      tasks: [
+        {
+          title: "Tarefa",
+          inputType: "Checkbox",
+          isMandatory: true,
+        },
+      ],
+    })
+
+    expect(parsed.success).toBe(false)
+  })
+
+  it("C/D/E/F: rejects 0 and 3651, accepts 30 and a past first due date", () => {
+    const base = {
+      unitId: basePlanJson.unitId,
+      name: "Custom",
+      assetCategoryId: basePlanJson.assetCategoryId,
+      isActive: true,
+      tasks: [
+        {
+          title: "Tarefa",
+          inputType: "Checkbox" as const,
+          isMandatory: true,
+        },
+      ],
+    }
+
+    expect(formSchema.safeParse({ ...base, intervalDays: 0, firstDueDate: "2026-10-01" }).success).toBe(false)
+    expect(formSchema.safeParse({ ...base, intervalDays: 3651, firstDueDate: "2026-10-01" }).success).toBe(false)
+    const valid = formSchema.safeParse({
+      ...base,
+      intervalDays: 30,
+      firstDueDate: "2026-01-15",
+    })
+    expect(valid.success).toBe(true)
+  })
+})
+
 describe("createMaintenancePlanRequestSchema", () => {
   it("omits autoGenerateEnabled so new custom plans stay off", () => {
     const formSchema = createPlanFormSchema(formMessages)
@@ -88,7 +138,8 @@ describe("createMaintenancePlanRequestSchema", () => {
       unitId: basePlanJson.unitId,
       name: "Custom",
       description: "",
-      frequency: "Monthly",
+      intervalDays: 30,
+      firstDueDate: "2026-10-01",
       assetCategoryId: basePlanJson.assetCategoryId,
       isActive: true,
       tasks: [
@@ -117,7 +168,8 @@ describe("updateMaintenancePlanRequestSchema", () => {
       unitId: basePlanJson.unitId,
       name: "PMOC",
       description: null,
-      frequency: "Monthly",
+      intervalDays: 30,
+      firstDueDate: "2026-10-01",
       assetCategoryId: basePlanJson.assetCategoryId,
       isActive: true,
       autoGenerateEnabled: false,
@@ -170,6 +222,8 @@ describe("createFromTemplateRequestSchema", () => {
       templateId: "6f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e",
       unitId: basePlanJson.unitId,
       assetCategoryId: basePlanJson.assetCategoryId,
+      intervalDays: 30,
+      firstDueDate: "2026-01-15",
       name: "Clone",
     })
 

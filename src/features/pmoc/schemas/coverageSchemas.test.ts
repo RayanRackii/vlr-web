@@ -17,18 +17,18 @@ describe("maintenancePlanCoverageSchema", () => {
 
     expect(parsed.data.eligibleAssetCount).toBe(3)
     expect(parsed.data.summary.assetsOverdue).toBe(1)
-    expect(parsed.data.assets[0]?.operationalStatus).toBe("Overdue")
+    expect(parsed.data.assets[0]?.dueStatus).toBe("Overdue")
     expect(parsed.data.assets[1]?.lastMaintenance).toBeNull()
     expect(parsed.data.assets[1]?.openWorkOrder?.status).toBe("InProgress")
   })
 
-  it("accepts numeric operationalStatus 2 as Overdue", () => {
+  it("accepts numeric dueStatus 2 as Overdue", () => {
     const parsed = maintenancePlanCoverageSchema.safeParse({
       ...populatedCoverageJson,
       assets: [
         {
           ...populatedCoverageJson.assets[0],
-          operationalStatus: 2,
+          dueStatus: 2,
         },
       ],
     })
@@ -38,21 +38,33 @@ describe("maintenancePlanCoverageSchema", () => {
       return
     }
 
-    expect(parsed.data.assets[0]?.operationalStatus).toBe("Overdue")
+    expect(parsed.data.assets[0]?.dueStatus).toBe("Overdue")
   })
 
-  it("rejects DueSoon as an operational status", () => {
-    const parsed = maintenancePlanCoverageSchema.safeParse({
+  it("rejects DueSoon and operationalStatus", () => {
+    const withDueSoon = maintenancePlanCoverageSchema.safeParse({
       ...populatedCoverageJson,
       assets: [
         {
           ...populatedCoverageJson.assets[0],
-          operationalStatus: "DueSoon",
+          dueStatus: "DueSoon",
+        },
+      ],
+    })
+    const withOperational = maintenancePlanCoverageSchema.safeParse({
+      ...populatedCoverageJson,
+      assets: [
+        {
+          ...populatedCoverageJson.assets[0],
+          operationalStatus: "Overdue",
         },
       ],
     })
 
-    expect(parsed.success).toBe(false)
+    expect(withDueSoon.success).toBe(false)
+    if (withOperational.success) {
+      expect(withOperational.data.assets[0]).not.toHaveProperty("operationalStatus")
+    }
   })
 
   it("rejects eligibleAssetCount that disagrees with summary.eligibleAssets", () => {

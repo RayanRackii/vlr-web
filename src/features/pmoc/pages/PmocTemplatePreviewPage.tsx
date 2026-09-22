@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -74,6 +75,8 @@ export function PmocTemplatePreviewPage() {
       createFromTemplateFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
+        intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
+        firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
       }),
     [t],
   )
@@ -84,6 +87,8 @@ export function PmocTemplatePreviewPage() {
       unitId: "",
       assetCategoryId: "",
       name: "",
+      intervalDays: Number.NaN,
+      firstDueDate: "",
     },
   })
 
@@ -151,7 +156,13 @@ export function PmocTemplatePreviewPage() {
   async function openCloneDialog() {
     setIsCloneOpen(true)
     setCloneError(null)
-    form.reset({ unitId: "", assetCategoryId: "", name: "" })
+    form.reset({
+      unitId: "",
+      assetCategoryId: "",
+      name: "",
+      intervalDays: Number.NaN,
+      firstDueDate: "",
+    })
     await loadLookups()
   }
 
@@ -252,7 +263,6 @@ export function PmocTemplatePreviewPage() {
             {t("pmoc.templates.meta", {
               jurisdiction: template.jurisdiction,
               equipment: template.targetEquipmentType,
-              frequency: t(`pmoc.frequency.${template.frequency}`),
               tasks: template.tasks.length,
             })}
           </p>
@@ -431,6 +441,8 @@ export function PmocTemplatePreviewPage() {
                     </FormItem>
                   )}
                 />
+
+                <PlanSchedulingFields control={form.control} />
 
                 <FormField
                   control={form.control}

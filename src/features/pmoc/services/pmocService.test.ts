@@ -91,7 +91,8 @@ describe("pmocService Phase 1 methods", () => {
       unitId: basePlanJson.unitId,
       name: basePlanJson.name,
       description: basePlanJson.description,
-      frequency: "Monthly",
+      intervalDays: basePlanJson.intervalDays,
+      firstDueDate: basePlanJson.firstDueDate,
       assetCategoryId: basePlanJson.assetCategoryId,
       isActive: true,
       autoGenerateEnabled: true,
@@ -101,7 +102,8 @@ describe("pmocService Phase 1 methods", () => {
       unitId: basePlanJson.unitId,
       name: basePlanJson.name,
       description: basePlanJson.description,
-      frequency: "Monthly",
+      intervalDays: basePlanJson.intervalDays,
+      firstDueDate: basePlanJson.firstDueDate,
       assetCategoryId: basePlanJson.assetCategoryId,
       isActive: true,
       autoGenerateEnabled: true,
@@ -155,6 +157,8 @@ describe("pmocService Phase 1 methods", () => {
       templateId: TEMPLATE_ID,
       unitId: basePlanJson.unitId,
       assetCategoryId: basePlanJson.assetCategoryId,
+      intervalDays: 30,
+      firstDueDate: "2026-01-15",
       name: "Clone",
     })
 

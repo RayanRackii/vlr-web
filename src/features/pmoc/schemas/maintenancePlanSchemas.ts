@@ -1,39 +1,22 @@
 import { z } from "zod"
 
-export const maintenanceFrequencyValues = [
-  "Daily",
-  "Weekly",
-  "Monthly",
-  "Quarterly",
-  "Semiannual",
-  "Annual",
-] as const
+export const PMOC_MIN_INTERVAL_DAYS = 1
+export const PMOC_MAX_INTERVAL_DAYS = 3650
 
-export const maintenanceFrequencySchema = z.enum(maintenanceFrequencyValues)
+export const civilDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a civil yyyy-MM-dd date")
 
-export type MaintenanceFrequency = z.infer<typeof maintenanceFrequencySchema>
-
-const maintenanceFrequencyByIndex = [
-  "Daily",
-  "Weekly",
-  "Monthly",
-  "Quarterly",
-  "Semiannual",
-  "Annual",
-] as const satisfies readonly MaintenanceFrequency[]
-
-/** ASP.NET may serialize enums as numbers unless JsonStringEnumConverter is enabled. */
-export const maintenanceFrequencyResponseSchema = z.union([
-  maintenanceFrequencySchema,
-  z
-    .number()
-    .int()
-    .refine(
-      (value): value is 0 | 1 | 2 | 3 | 4 | 5 =>
-        value >= 0 && value < maintenanceFrequencyByIndex.length,
-    )
-    .transform((value) => maintenanceFrequencyByIndex[value]),
-])
+export function intervalDaysSchema(message: string) {
+  return z.custom<number>(
+    (value) =>
+      typeof value === "number" &&
+      Number.isInteger(value) &&
+      value >= PMOC_MIN_INTERVAL_DAYS &&
+      value <= PMOC_MAX_INTERVAL_DAYS,
+    message,
+  )
+}
 
 export const taskInputTypeValues = [
   "Checkbox",
@@ -115,7 +98,8 @@ export const maintenancePlanSchema = z.object({
   unitId: z.string().uuid(),
   name: z.string().min(1),
   description: z.string().nullish(),
-  frequency: maintenanceFrequencyResponseSchema,
+  intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
+  firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid(),
   isActive: z.boolean(),
   originKind: maintenancePlanOriginKindResponseSchema,
@@ -145,7 +129,8 @@ export const createMaintenancePlanRequestSchema = z.object({
   unitId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().nullish(),
-  frequency: maintenanceFrequencySchema,
+  intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
+  firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid(),
   isActive: z.boolean(),
   tasks: z.array(createPlanTaskRequestSchema).min(1),
@@ -159,7 +144,8 @@ export const updateMaintenancePlanRequestSchema = z.object({
   unitId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().nullish(),
-  frequency: maintenanceFrequencySchema,
+  intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
+  firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid(),
   isActive: z.boolean(),
   autoGenerateEnabled: z.boolean(),
@@ -190,6 +176,8 @@ export const createFromTemplateRequestSchema = z.object({
   templateId: z.string().uuid(),
   unitId: z.string().uuid(),
   assetCategoryId: z.string().uuid(),
+  intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
+  firstDueDate: civilDateSchema,
   name: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().nullish(),
   isActive: z.boolean().optional(),
@@ -213,7 +201,8 @@ export type ReplacePlanTaskFormItem = {
 export function createPlanFormSchema(messages: {
   unitRequired: string
   nameRequired: string
-  frequencyRequired: string
+  intervalInvalid: string
+  firstDueRequired: string
   categoryRequired: string
   taskTitleRequired: string
   tasksRequired: string
@@ -257,7 +246,12 @@ export function createPlanFormSchema(messages: {
       .uuid(messages.unitRequired),
     name: z.string().trim().min(1, messages.nameRequired).max(200),
     description: z.string().trim().optional(),
-    frequency: maintenanceFrequencySchema,
+    intervalDays: intervalDaysSchema(messages.intervalInvalid),
+    firstDueDate: z
+      .string()
+      .trim()
+      .min(1, messages.firstDueRequired)
+      .pipe(civilDateSchema),
     assetCategoryId: z
       .string()
       .min(1, messages.categoryRequired)
@@ -281,7 +275,8 @@ export function buildCreatePlanRequest(
       values.description && values.description.length > 0
         ? values.description
         : null,
-    frequency: values.frequency,
+    intervalDays: values.intervalDays,
+    firstDueDate: values.firstDueDate,
     assetCategoryId: values.assetCategoryId,
     isActive: values.isActive,
     tasks: values.tasks.map((task, index) => ({
@@ -304,7 +299,8 @@ export function buildHeaderUpdateFromPlan(
     unitId: plan.unitId,
     name: plan.name,
     description: plan.description ?? null,
-    frequency: plan.frequency,
+    intervalDays: plan.intervalDays,
+    firstDueDate: plan.firstDueDate,
     assetCategoryId: plan.assetCategoryId,
     isActive: patch.isActive ?? plan.isActive,
     autoGenerateEnabled: patch.autoGenerateEnabled ?? plan.autoGenerateEnabled,
@@ -329,6 +325,8 @@ export function buildReplaceTasksRequest(
 export function createFromTemplateFormSchema(messages: {
   unitRequired: string
   categoryRequired: string
+  intervalInvalid: string
+  firstDueRequired: string
 }) {
   return z.object({
     unitId: z
@@ -340,6 +338,12 @@ export function createFromTemplateFormSchema(messages: {
       .min(1, messages.categoryRequired)
       .uuid(messages.categoryRequired),
     name: z.string().trim().max(200).optional(),
+    intervalDays: intervalDaysSchema(messages.intervalInvalid),
+    firstDueDate: z
+      .string()
+      .trim()
+      .min(1, messages.firstDueRequired)
+      .pipe(civilDateSchema),
   })
 }
 
@@ -356,6 +360,8 @@ export function buildCreateFromTemplateRequest(
     templateId,
     unitId: values.unitId,
     assetCategoryId: values.assetCategoryId,
+    intervalDays: values.intervalDays,
+    firstDueDate: values.firstDueDate,
     ...(name && name.length > 0 ? { name } : {}),
   })
 }
