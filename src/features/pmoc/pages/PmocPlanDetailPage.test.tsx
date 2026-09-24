@@ -360,7 +360,7 @@ describe("PmocPlanDetailPage", () => {
     renderDetail(WRITE_PERMS, ["pmoc"])
 
     expect(await screen.findByTestId("plan-coverage")).toBeInTheDocument()
-    expect(screen.getAllByTestId("coverage-asset-row")).toHaveLength(3)
+    expect(await screen.findAllByTestId("coverage-asset-row")).toHaveLength(3)
     expect(
       screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
     ).toBeInTheDocument()
@@ -393,6 +393,42 @@ describe("PmocPlanDetailPage", () => {
     })
     await waitFor(() => {
       expect(getPlanCoverageMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  it("G/H/I/J/K: loads and submits interval and first due without Frequency", async () => {
+    updatePlanMock.mockResolvedValue({
+      ...basePlanJson,
+      intervalDays: 45,
+      firstDueDate: "2026-01-15",
+    })
+    renderDetail()
+    const user = userEvent.setup()
+
+    const interval = await screen.findByRole("spinbutton", {
+      name: i18n.t("pmoc.scheduling.interval"),
+    })
+    const firstDue = screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue"))
+    expect(interval).toHaveValue(30)
+    expect(firstDue).toHaveValue("2026-10-01")
+    expect(screen.queryByText(/Frequência/)).not.toBeInTheDocument()
+
+    await user.clear(interval)
+    await user.type(interval, "45")
+    await user.clear(firstDue)
+    await user.type(firstDue, "2026-01-15")
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("pmoc.scheduling.save") }),
+    )
+
+    await waitFor(() => {
+      expect(updatePlanMock).toHaveBeenCalledWith(
+        PLAN_ID,
+        expect.objectContaining({
+          intervalDays: 45,
+          firstDueDate: "2026-01-15",
+        }),
+      )
     })
   })
 })

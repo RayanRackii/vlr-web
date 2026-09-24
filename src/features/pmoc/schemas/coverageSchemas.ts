@@ -1,38 +1,55 @@
 import { z } from "zod"
 
-import { maintenanceFrequencyResponseSchema } from "@/features/pmoc/schemas/maintenancePlanSchemas"
+import { civilDateSchema } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { workOrderStatusResponseSchema } from "@/features/workOrders/schemas/workOrderSchemas"
 
-export const civilDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a civil yyyy-MM-dd date")
+export { civilDateSchema }
 
-export const pmocOperationalStatusValues = [
+export const pmocHistoryStatusValues = ["NeverExecuted", "Executed"] as const
+
+export const pmocHistoryStatusSchema = z.enum(pmocHistoryStatusValues)
+
+export type PmocHistoryStatus = z.infer<typeof pmocHistoryStatusSchema>
+
+const pmocHistoryStatusByIndex = [
   "NeverExecuted",
-  "OnTrack",
+  "Executed",
+] as const satisfies readonly PmocHistoryStatus[]
+
+export const pmocHistoryStatusResponseSchema = z.union([
+  pmocHistoryStatusSchema,
+  z
+    .number()
+    .int()
+    .refine(
+      (value): value is 0 | 1 =>
+        value >= 0 && value < pmocHistoryStatusByIndex.length,
+    )
+    .transform((value) => pmocHistoryStatusByIndex[value]),
+])
+
+export const pmocDueStatusValues = ["NotDue", "DueToday", "Overdue"] as const
+
+export const pmocDueStatusSchema = z.enum(pmocDueStatusValues)
+
+export type PmocDueStatus = z.infer<typeof pmocDueStatusSchema>
+
+const pmocDueStatusByIndex = [
+  "NotDue",
+  "DueToday",
   "Overdue",
-] as const
+] as const satisfies readonly PmocDueStatus[]
 
-export const pmocOperationalStatusSchema = z.enum(pmocOperationalStatusValues)
-
-export type PmocOperationalStatus = z.infer<typeof pmocOperationalStatusSchema>
-
-const pmocOperationalStatusByIndex = [
-  "NeverExecuted",
-  "OnTrack",
-  "Overdue",
-] as const satisfies readonly PmocOperationalStatus[]
-
-export const pmocOperationalStatusResponseSchema = z.union([
-  pmocOperationalStatusSchema,
+export const pmocDueStatusResponseSchema = z.union([
+  pmocDueStatusSchema,
   z
     .number()
     .int()
     .refine(
       (value): value is 0 | 1 | 2 =>
-        value >= 0 && value < pmocOperationalStatusByIndex.length,
+        value >= 0 && value < pmocDueStatusByIndex.length,
     )
-    .transform((value) => pmocOperationalStatusByIndex[value]),
+    .transform((value) => pmocDueStatusByIndex[value]),
 ])
 
 export const maintenancePlanLastMaintenanceSchema = z.object({
@@ -59,9 +76,11 @@ export const maintenancePlanCoverageAssetItemSchema = z.object({
   assetId: z.string().uuid(),
   name: z.string().min(1),
   tag: z.string().min(1),
+  historyStatus: pmocHistoryStatusResponseSchema,
   lastMaintenance: maintenancePlanLastMaintenanceSchema.nullable(),
-  nextDueDate: civilDateSchema,
-  operationalStatus: pmocOperationalStatusResponseSchema,
+  effectiveNextDueDate: civilDateSchema,
+  dueStatus: pmocDueStatusResponseSchema,
+  needsAttention: z.boolean(),
   openWorkOrder: maintenancePlanOpenWorkOrderSchema.nullable(),
 })
 
@@ -71,10 +90,12 @@ export type MaintenancePlanCoverageAssetItem = z.infer<
 
 export const maintenancePlanCoverageSummarySchema = z.object({
   eligibleAssets: z.number().int().nonnegative(),
-  assetsWithPmocHistory: z.number().int().nonnegative(),
   assetsNeverExecuted: z.number().int().nonnegative(),
+  assetsExecuted: z.number().int().nonnegative(),
+  assetsNotDue: z.number().int().nonnegative(),
+  assetsDueToday: z.number().int().nonnegative(),
   assetsOverdue: z.number().int().nonnegative(),
-  assetsOnTrack: z.number().int().nonnegative(),
+  assetsNeedingAttention: z.number().int().nonnegative(),
   assetsWithOpenWorkOrder: z.number().int().nonnegative(),
 })
 
@@ -86,12 +107,10 @@ export const maintenancePlanCoverageSchema = z
   .object({
     planId: z.string().uuid(),
     asOfDate: civilDateSchema,
-    frequency: maintenanceFrequencyResponseSchema,
-    lastDueDate: civilDateSchema,
-    nextDueDate: civilDateSchema,
+    intervalDays: z.number().int().min(1).max(3650),
+    firstDueDate: civilDateSchema,
     isActive: z.boolean(),
     autoGenerateEnabled: z.boolean(),
-    isDueToday: z.boolean(),
     wouldBeConsideredByGenerator: z.boolean(),
     eligibleAssetCount: z.number().int().nonnegative(),
     summary: maintenancePlanCoverageSummarySchema,

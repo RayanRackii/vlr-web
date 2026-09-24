@@ -1,18 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Layers } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   formatBrazilInstantDate,
   formatCivilDateOnly,
@@ -20,47 +11,37 @@ import {
 import type {
   MaintenancePlanCoverage,
   MaintenancePlanCoverageAssetItem,
-  PmocOperationalStatus,
+  PmocDueStatus,
 } from "@/features/pmoc/schemas/coverageSchemas"
 import { getPlanCoverage } from "@/features/pmoc/services/pmocService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { isAxiosError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
-function statusBadgeVariant(status: PmocOperationalStatus) {
+function dueBadgeVariant(status: PmocDueStatus) {
   if (status === "Overdue") {
     return "destructive" as const
   }
-  if (status === "NeverExecuted") {
+  if (status === "DueToday") {
     return "warning" as const
   }
   return "success" as const
 }
 
-function summaryValueClassName(
-  key: string,
-  value: number,
-): string | undefined {
-  if (value <= 0) {
-    return undefined
+function consideredMessage(
+  coverage: MaintenancePlanCoverage,
+  t: (key: string) => string,
+): string {
+  if (coverage.wouldBeConsideredByGenerator) {
+    return t("pmoc.plans.coverage.consideredPossible")
   }
-  if (key === "overdue") {
-    return "text-destructive"
+  if (!coverage.isActive) {
+    return t("pmoc.plans.coverage.planInactive")
   }
-  if (key === "never") {
-    return "text-amber-700 dark:text-amber-300"
+  if (!coverage.autoGenerateEnabled) {
+    return t("pmoc.plans.coverage.automationDisabled")
   }
-  if (key === "onTrack") {
-    return "text-emerald-700 dark:text-emerald-300"
-  }
-  return undefined
-}
-
-function stateDotClassName(isOn: boolean): string {
-  return cn(
-    "size-1.5 shrink-0 rounded-full",
-    isOn ? "bg-emerald-500" : "bg-muted-foreground/50",
-  )
+  return t("pmoc.plans.coverage.nothingDue")
 }
 
 function lastMaintenanceLabel(
@@ -68,7 +49,10 @@ function lastMaintenanceLabel(
   locale: string,
   neverExecuted: string,
 ): string {
-  if (asset.lastMaintenance == null) {
+  if (
+    asset.historyStatus === "NeverExecuted" ||
+    asset.lastMaintenance == null
+  ) {
     return neverExecuted
   }
 
@@ -79,24 +63,56 @@ function lastMaintenanceLabel(
   return formatCivilDateOnly(asset.lastMaintenance.scheduledDate, locale)
 }
 
-function consideredMessage(
-  coverage: MaintenancePlanCoverage,
-  t: (key: string) => string,
-): string {
-  if (coverage.wouldBeConsideredByGenerator) {
-    return t("pmoc.plans.coverage.consideredToday")
-  }
-  if (!coverage.isActive) {
-    return t("pmoc.plans.coverage.planInactive")
-  }
-  if (!coverage.autoGenerateEnabled) {
-    return t("pmoc.plans.coverage.automationDisabled")
-  }
-  if (!coverage.isDueToday) {
-    return t("pmoc.plans.coverage.notDueToday")
-  }
-
-  return t("pmoc.plans.coverage.notDueToday")
+function AssetFields({
+  asset,
+  locale,
+  canOpenOs,
+  t,
+}: {
+  asset: MaintenancePlanCoverageAssetItem
+  locale: string
+  canOpenOs: boolean
+  t: (key: string, options?: Record<string, unknown>) => string
+}) {
+  return (
+    <>
+      <div className="min-w-0">
+        <p className="font-medium">{asset.name}</p>
+        <p className="text-xs text-muted-foreground">{asset.tag}</p>
+      </div>
+      <p data-testid="coverage-last-maintenance">
+        {lastMaintenanceLabel(
+          asset,
+          locale,
+          t("pmoc.plans.coverage.history.NeverExecuted"),
+        )}
+      </p>
+      <p data-testid="coverage-next-due">
+        {formatCivilDateOnly(asset.effectiveNextDueDate, locale)}
+      </p>
+      <Badge
+        data-testid="coverage-due-status"
+        variant={dueBadgeVariant(asset.dueStatus)}
+      >
+        {t(`pmoc.plans.coverage.due.${asset.dueStatus}`)}
+      </Badge>
+      <div data-testid="coverage-open-work-order">
+        {asset.openWorkOrder == null ? (
+          t("pmoc.plans.emptyValue")
+        ) : canOpenOs ? (
+          <Link
+            to={`/os/${asset.openWorkOrder.workOrderId}`}
+            data-testid="coverage-open-work-order-link"
+            className={cn(buttonVariants({ variant: "link", size: "sm" }), "h-auto px-0")}
+          >
+            {t(`workOrders.status.${asset.openWorkOrder.status}`)}
+          </Link>
+        ) : (
+          t(`workOrders.status.${asset.openWorkOrder.status}`)
+        )}
+      </div>
+    </>
+  )
 }
 
 export function PlanCoverageSection({
@@ -155,26 +171,25 @@ export function PlanCoverageSection({
             key: "eligible",
             label: t("pmoc.plans.coverage.summaryEligible"),
             value: coverage.summary.eligibleAssets,
+            emphasize: false,
           },
           {
-            key: "never",
-            label: t("pmoc.plans.coverage.summaryNever"),
-            value: coverage.summary.assetsNeverExecuted,
+            key: "attention",
+            label: t("pmoc.plans.coverage.summaryAttention"),
+            value: coverage.summary.assetsNeedingAttention,
+            emphasize: coverage.summary.assetsNeedingAttention > 0,
+          },
+          {
+            key: "dueToday",
+            label: t("pmoc.plans.coverage.summaryDueToday"),
+            value: coverage.summary.assetsDueToday,
+            emphasize: coverage.summary.assetsDueToday > 0,
           },
           {
             key: "overdue",
             label: t("pmoc.plans.coverage.summaryOverdue"),
             value: coverage.summary.assetsOverdue,
-          },
-          {
-            key: "onTrack",
-            label: t("pmoc.plans.coverage.summaryOnTrack"),
-            value: coverage.summary.assetsOnTrack,
-          },
-          {
-            key: "open",
-            label: t("pmoc.plans.coverage.summaryOpen"),
-            value: coverage.summary.assetsWithOpenWorkOrder,
+            emphasize: coverage.summary.assetsOverdue > 0,
           },
         ]
 
@@ -212,107 +227,28 @@ export function PlanCoverageSection({
           {!coverage.isActive ? (
             <p
               data-testid="coverage-inactive-note"
-              className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
+              className="text-sm text-muted-foreground"
             >
               {t("pmoc.plans.coverage.inactiveNote")}
             </p>
           ) : null}
 
-          <div
-            data-testid="coverage-calendar"
-            data-as-of-date={coverage.asOfDate}
-            data-last-due-date={coverage.lastDueDate}
-            data-next-due-date={coverage.nextDueDate}
-            data-is-due-today={String(coverage.isDueToday)}
-            data-would-be-considered={String(
-              coverage.wouldBeConsideredByGenerator,
-            )}
-            className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-border bg-muted/20 p-3 sm:px-4 lg:grid-cols-5"
-          >
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                {t("pmoc.plans.coverage.calendar.automation")}
-              </p>
-              <p className="flex items-center gap-1.5 text-sm font-medium">
-                <span
-                  aria-hidden="true"
-                  className={stateDotClassName(coverage.autoGenerateEnabled)}
-                />
-                {coverage.autoGenerateEnabled
-                  ? t("pmoc.plans.coverage.calendar.automationOn")
-                  : t("pmoc.plans.coverage.calendar.automationOff")}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                {t("pmoc.plans.coverage.calendar.asOfDate")}
-              </p>
-              <p
-                data-testid="coverage-as-of-date"
-                className="text-sm font-medium tabular-nums"
-              >
-                {formatCivilDateOnly(coverage.asOfDate, locale)}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                {t("pmoc.plans.coverage.calendar.lastDueDate")}
-              </p>
-              <p
-                data-testid="coverage-last-due-date"
-                className="text-sm font-medium tabular-nums"
-              >
-                {formatCivilDateOnly(coverage.lastDueDate, locale)}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">
-                {t("pmoc.plans.coverage.calendar.nextDueDate")}
-              </p>
-              <p
-                data-testid="coverage-plan-next-due"
-                className="text-sm font-medium tabular-nums"
-              >
-                {formatCivilDateOnly(coverage.nextDueDate, locale)}
-              </p>
-            </div>
-            <div className="col-span-2 space-y-0.5 lg:col-span-1">
-              <p className="text-xs text-muted-foreground">
-                {t("pmoc.plans.coverage.calendar.considered")}
-              </p>
-              <p
-                data-testid="coverage-considered"
-                className="flex items-center gap-1.5 text-sm font-medium"
-              >
-                <span
-                  aria-hidden="true"
-                  className={stateDotClassName(
-                    coverage.wouldBeConsideredByGenerator,
-                  )}
-                />
-                {consideredMessage(coverage, t)}
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground" data-testid="coverage-as-of-date">
+            {t("pmoc.plans.coverage.asOf", {
+              date: formatCivilDateOnly(coverage.asOfDate, locale),
+            })}
+          </p>
 
-          <dl
-            data-testid="coverage-summary"
-            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-          >
+          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="coverage-summary">
             {summaryItems.map((item) => (
-              <div
-                key={item.key}
-                className={cn(
-                  "space-y-0.5 rounded-lg border border-border px-3 py-2",
-                  item.key === "open" ? "col-span-2 sm:col-span-1" : undefined,
-                )}
-              >
+              <div key={item.key} className="rounded-lg border border-border p-3">
                 <dt className="text-xs text-muted-foreground">{item.label}</dt>
                 <dd
                   data-testid={`coverage-summary-${item.key}`}
                   className={cn(
-                    "text-lg font-semibold tabular-nums",
-                    summaryValueClassName(item.key, item.value),
+                    "text-2xl font-semibold tabular-nums",
+                    item.emphasize && item.key === "overdue" && "text-destructive",
+                    item.emphasize && item.key === "dueToday" && "text-amber-700 dark:text-amber-300",
                   )}
                 >
                   {item.value}
@@ -321,128 +257,47 @@ export function PlanCoverageSection({
             ))}
           </dl>
 
+          <p className="text-sm text-muted-foreground">
+            <span data-testid="coverage-summary-never">
+              {t("pmoc.plans.coverage.summaryNever")}: {coverage.summary.assetsNeverExecuted}
+            </span>
+            {" · "}
+            <span data-testid="coverage-summary-open">
+              {t("pmoc.plans.coverage.summaryOpen")}: {coverage.summary.assetsWithOpenWorkOrder}
+            </span>
+          </p>
+
+          <p data-testid="coverage-considered" className="text-sm">
+            {consideredMessage(coverage, t)}
+          </p>
+
           {coverage.summary.eligibleAssets === 0 ? (
-            <div
-              data-testid="coverage-empty"
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-10 text-center"
-            >
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <Layers className="size-6" aria-hidden />
-              </div>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                {t("pmoc.plans.coverage.empty")}
-              </p>
-            </div>
+            <p data-testid="coverage-empty" className="text-sm text-muted-foreground">
+              {t("pmoc.plans.coverage.empty")}
+            </p>
           ) : (
-            <div className="rounded-lg border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("pmoc.plans.coverage.columns.tag")}</TableHead>
-                    <TableHead>{t("pmoc.plans.coverage.columns.name")}</TableHead>
-                    <TableHead>
-                      {t("pmoc.plans.coverage.columns.status")}
-                    </TableHead>
-                    <TableHead>
-                      {t("pmoc.plans.coverage.columns.lastMaintenance")}
-                    </TableHead>
-                    <TableHead>
-                      {t("pmoc.plans.coverage.columns.nextDue")}
-                    </TableHead>
-                    <TableHead>
-                      {t("pmoc.plans.coverage.columns.openWorkOrder")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {coverage.assets.map((asset) => (
-                    <TableRow
-                      key={asset.assetId}
-                      data-testid="coverage-asset-row"
-                      data-operational-status={asset.operationalStatus}
-                    >
-                      <TableCell className="font-medium">{asset.tag}</TableCell>
-                      <TableCell className="whitespace-normal">
-                        {asset.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          data-testid="coverage-operational-status"
-                          variant={statusBadgeVariant(asset.operationalStatus)}
-                        >
-                          {t(
-                            `pmoc.plans.coverage.status.${asset.operationalStatus}`,
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell
-                        data-testid="coverage-last-maintenance"
-                        className="min-w-32 whitespace-normal"
-                      >
-                        <div className="flex flex-col items-start gap-1.5">
-                          <span>
-                            {lastMaintenanceLabel(
-                              asset,
-                              locale,
-                              t("pmoc.plans.coverage.neverExecuted"),
-                            )}
-                          </span>
-                          {asset.lastMaintenance && canOpenOs ? (
-                            <Link
-                              data-testid="coverage-last-maintenance-link"
-                              to={`/os/${asset.lastMaintenance.workOrderId}`}
-                              className={buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                              })}
-                            >
-                              {t("workOrders.actions.open")}
-                            </Link>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        data-testid="coverage-next-due"
-                        className="tabular-nums"
-                      >
-                        {formatCivilDateOnly(asset.nextDueDate, locale)}
-                      </TableCell>
-                      <TableCell className="min-w-36 whitespace-normal">
-                        {asset.openWorkOrder ? (
-                          <div
-                            data-testid="coverage-open-work-order"
-                            className="flex flex-col items-start gap-1.5"
-                          >
-                            <span className="text-sm">
-                              {t(
-                                `workOrders.status.${asset.openWorkOrder.status}`,
-                              )}{" "}
-                              ·{" "}
-                              {formatCivilDateOnly(
-                                asset.openWorkOrder.scheduledDate,
-                                locale,
-                              )}
-                            </span>
-                            {canOpenOs ? (
-                              <Link
-                                data-testid="coverage-open-work-order-link"
-                                to={`/os/${asset.openWorkOrder.workOrderId}`}
-                                className={buttonVariants({
-                                  variant: "outline",
-                                  size: "sm",
-                                })}
-                              >
-                                {t("workOrders.actions.open")}
-                              </Link>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ul className="space-y-3">
+              {coverage.assets.map((asset) => (
+                <li
+                  key={asset.assetId}
+                  data-testid="coverage-asset-row"
+                  data-history-status={asset.historyStatus}
+                  data-due-status={asset.dueStatus}
+                  data-needs-attention={String(asset.needsAttention)}
+                  className={cn(
+                    "grid gap-2 rounded-lg border border-border p-3 text-sm sm:grid-cols-2 lg:grid-cols-5",
+                    asset.needsAttention && "border-amber-500/40",
+                  )}
+                >
+                  <AssetFields
+                    asset={asset}
+                    locale={locale}
+                    canOpenOs={canOpenOs}
+                    t={t}
+                  />
+                </li>
+              ))}
+            </ul>
           )}
         </>
       ) : null}

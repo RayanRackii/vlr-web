@@ -124,7 +124,8 @@ test.describe("PMOC without Inventory", () => {
         unitId: unit.id,
         name: planName,
         description: "E2E certification plan",
-        frequency: "Monthly",
+        intervalDays: 30,
+        firstDueDate: "2026-10-01",
         assetCategoryId: quadro!.id,
         isActive: true,
         tasks: [

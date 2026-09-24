@@ -51,8 +51,10 @@ import {
 import { GenerateWorkOrderDialog } from "@/features/pmoc/components/GenerateWorkOrderDialog"
 import { PlanCoverageSection } from "@/features/pmoc/components/PlanCoverageSection"
 import { PlanRelatedWorkOrders } from "@/features/pmoc/components/PlanRelatedWorkOrders"
+import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
 import { Can } from "@/features/users/permissions/Can"
 import { useCan, usePermissions } from "@/features/users/permissions/PermissionContext"
+import { formatCivilDateOnly } from "@/features/pmoc/lib/formatCivilDate"
 import { isAxiosError } from "@/lib/api"
 
 function parseOptionalNumber(value: string): number | null {
@@ -81,7 +83,8 @@ function planToFormValues(plan: MaintenancePlan): CreatePlanFormValues {
     unitId: plan.unitId,
     name: plan.name,
     description: plan.description ?? "",
-    frequency: plan.frequency,
+    intervalDays: plan.intervalDays,
+    firstDueDate: plan.firstDueDate,
     assetCategoryId: plan.assetCategoryId,
     isActive: plan.isActive,
     tasks:
@@ -95,7 +98,7 @@ function planToFormValues(plan: MaintenancePlan): CreatePlanFormValues {
 }
 
 export function PmocPlanDetailPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const params = useParams()
   const planId = params.id ?? ""
@@ -121,7 +124,8 @@ export function PmocPlanDetailPage() {
       createPlanFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
         nameRequired: t("pmoc.create.validation.nameRequired"),
-        frequencyRequired: t("pmoc.create.validation.frequencyRequired"),
+        intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
+        firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -138,7 +142,8 @@ export function PmocPlanDetailPage() {
       unitId: "",
       name: "",
       description: "",
-      frequency: "Monthly",
+      intervalDays: 30,
+      firstDueDate: "",
       assetCategoryId: "",
       isActive: true,
       tasks: [emptyTask()],
@@ -242,6 +247,35 @@ export function PmocPlanDetailPage() {
       if (patch.isActive === false) {
         setPlanInUse(false)
       }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("pmoc.plans.errors.updateFailed")
+      toast.error(message)
+    } finally {
+      setIsHeaderBusy(false)
+    }
+  }
+
+  async function onSaveScheduling(values: CreatePlanFormValues) {
+    if (!plan) {
+      return
+    }
+
+    setIsHeaderBusy(true)
+    try {
+      const next = await updatePlan(
+        plan.id,
+        buildHeaderUpdateFromPlan({
+          ...plan,
+          intervalDays: values.intervalDays,
+          firstDueDate: values.firstDueDate,
+        }),
+      )
+      setPlan(next)
+      reset(planToFormValues(next))
+      toast.success(t("pmoc.plans.toast.updated"))
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -402,15 +436,9 @@ export function PmocPlanDetailPage() {
         </div>
       ) : null}
 
-      <section className="space-y-3 rounded-xl border border-border p-4 sm:p-6">
+      <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("pmoc.plans.sections.overview")}</h2>
-        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-3">
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">
-              {t("pmoc.create.form.frequency")}
-            </dt>
-            <dd className="text-sm">{t(`pmoc.frequency.${plan.frequency}`)}</dd>
-          </div>
+        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
           <div className="space-y-0.5">
             <dt className="text-xs text-muted-foreground">
               {t("pmoc.create.form.unit")}
@@ -424,6 +452,43 @@ export function PmocPlanDetailPage() {
             <dd className="text-sm">{categoryName}</dd>
           </div>
         </dl>
+        {canWrite ? (
+          <Form {...form}>
+            <form
+              className="space-y-4"
+              noValidate
+              onSubmit={(event) => {
+                void handleSubmit(onSaveScheduling)(event)
+              }}
+            >
+              <PlanSchedulingFields control={control} showEditHint />
+              <Button type="submit" disabled={isHeaderBusy || !formState.isDirty}>
+                {isHeaderBusy
+                  ? t("pmoc.plans.actions.saving")
+                  : t("pmoc.scheduling.save")}
+              </Button>
+            </form>
+          </Form>
+        ) : (
+          <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+            <div className="space-y-0.5">
+              <dt className="text-xs text-muted-foreground">
+                {t("pmoc.scheduling.interval")}
+              </dt>
+              <dd className="text-sm">
+                {t("pmoc.scheduling.intervalValue", { days: plan.intervalDays })}
+              </dd>
+            </div>
+            <div className="space-y-0.5">
+              <dt className="text-xs text-muted-foreground">
+                {t("pmoc.scheduling.firstDue")}
+              </dt>
+              <dd className="text-sm" data-testid="plan-first-due-readonly">
+                {formatCivilDateOnly(plan.firstDueDate, i18n.language)}
+              </dd>
+            </div>
+          </dl>
+        )}
       </section>
 
       <section className="space-y-2 rounded-xl border border-border p-4 sm:p-6">
