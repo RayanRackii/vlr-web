@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -33,7 +34,6 @@ import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCatego
 import {
   buildCreatePlanRequest,
   createPlanFormSchema,
-  maintenanceFrequencyValues,
   taskInputTypeValues,
   type CreatePlanFormValues,
   type TaskInputType,
@@ -67,7 +67,8 @@ export function CreatePlanPage() {
       createPlanFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
         nameRequired: t("pmoc.create.validation.nameRequired"),
-        frequencyRequired: t("pmoc.create.validation.frequencyRequired"),
+        intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
+        firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -84,7 +85,8 @@ export function CreatePlanPage() {
       unitId: "",
       name: "",
       description: "",
-      frequency: "Monthly",
+      intervalDays: Number.NaN,
+      firstDueDate: "",
       assetCategoryId: "",
       isActive: true,
       tasks: [
@@ -169,15 +171,6 @@ export function CreatePlanPage() {
       setSubmitError(message)
     }
   }
-
-  const frequencyItems = useMemo(
-    () =>
-      maintenanceFrequencyValues.map((frequency) => ({
-        value: frequency,
-        label: t(`pmoc.frequency.${frequency}`),
-      })),
-    [t],
-  )
 
   const inputTypeItems = useMemo(
     () =>
@@ -287,6 +280,7 @@ export function CreatePlanPage() {
         <Form {...form}>
           <form
             className="space-y-8"
+            noValidate
             onSubmit={(event) => {
               void form.handleSubmit(onSubmit)(event)
             }}
@@ -407,39 +401,7 @@ export function CreatePlanPage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="frequency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.frequency")}</FormLabel>
-                      <Select
-                        modal={false}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        items={frequencyItems}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue
-                              placeholder={t(
-                                "pmoc.create.form.frequencyPlaceholder",
-                              )}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {maintenanceFrequencyValues.map((frequency) => (
-                            <SelectItem key={frequency} value={frequency}>
-                              {t(`pmoc.frequency.${frequency}`)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <PlanSchedulingFields control={form.control} />
 
                 <FormField
                   control={form.control}

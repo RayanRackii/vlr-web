@@ -122,7 +122,6 @@ export function PmocLibraryPage() {
                     {t("pmoc.templates.meta", {
                       jurisdiction: template.jurisdiction,
                       equipment: template.targetEquipmentType,
-                      frequency: t(`pmoc.frequency.${template.frequency}`),
                       tasks: template.tasks.length,
                     })}
                   </span>

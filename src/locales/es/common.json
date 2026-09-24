@@ -1506,13 +1506,17 @@
     }
   },
   "pmoc": {
-    "frequency": {
-      "Daily": "Diario",
-      "Weekly": "Semanal",
-      "Monthly": "Mensual",
-      "Quarterly": "Trimestral",
-      "Semiannual": "Semestral",
-      "Annual": "Anual"
+    "scheduling": {
+      "title": "Programación",
+      "interval": "Intervalo entre mantenimientos",
+      "days": "días",
+      "intervalValue": "{{days}} días",
+      "firstDue": "Primer vencimiento",
+      "helper": "Después de concluir un mantenimiento, el próximo vencimiento se calcula a partir de la fecha real de conclusión.",
+      "editHint": "Cambiar el intervalo recalcula el próximo vencimiento de los activos ya ejecutados. Cambiar el primer vencimiento vale solo para activos que nunca se ejecutaron.",
+      "save": "Guardar programación",
+      "intervalInvalid": "Indique un intervalo entero entre 1 y 3650 días.",
+      "firstDueRequired": "Indique el primer vencimiento."
     },
     "inputType": {
       "Checkbox": "Checkbox",
@@ -1539,7 +1543,6 @@
       "columns": {
         "name": "Nombre del Plan",
         "origin": "Origen",
-        "frequency": "Frecuencia",
         "category": "Categoría Vinculada",
         "status": "Estado",
         "autoGenerate": "Automático"
@@ -1563,15 +1566,21 @@
         "empty": "No se ha generado ninguna orden de trabajo para este plan."
       },
       "coverage": {
-        "question": "¿Qué activos necesitan atención?",
+        "question": "¿Qué activos necesitan mantenimiento?",
         "summaryEligible": "Activos elegibles",
+        "summaryAttention": "Necesitan atención",
+        "summaryDueToday": "Vencen hoy",
         "summaryNever": "Nunca ejecutados",
         "summaryOverdue": "Atrasados",
-        "summaryOnTrack": "Al día",
         "summaryOpen": "Con OT abierta",
-        "status": {
+        "asOf": "Situación el {{date}}",
+        "history": {
           "NeverExecuted": "Nunca ejecutado",
-          "OnTrack": "Al día",
+          "Executed": "Ejecutado"
+        },
+        "due": {
+          "NotDue": "Al día",
+          "DueToday": "Vence hoy",
           "Overdue": "Atrasado"
         },
         "columns": {
@@ -1584,21 +1593,12 @@
         },
         "neverExecuted": "Nunca ejecutado",
         "empty": "Ningún activo activo coincide con la unidad y la categoría de este plan.",
-        "inactiveNote": "Este plan está inactivo. Los activos elegibles siguen visibles.",
+        "inactiveNote": "Este plan está inactivo. La cobertura sigue visible, pero el procesamiento automático no lo considera.",
         "loading": "Cargando cobertura...",
-        "consideredToday": "Considerado por el procesamiento automático hoy",
-        "automationDisabled": "Automatización desactivada",
-        "planInactive": "Plan inactivo",
-        "notDueToday": "Fuera del día de vencimiento",
-        "calendar": {
-          "automation": "Automatización",
-          "automationOn": "Activa",
-          "automationOff": "Inactiva",
-          "asOfDate": "Fecha de referencia",
-          "lastDueDate": "Último vencimiento",
-          "nextDueDate": "Próximo vencimiento",
-          "considered": "Procesamiento automático"
-        },
+        "consideredPossible": "Hay activos que pueden ser considerados por el procesamiento automático.",
+        "automationDisabled": "La generación automática está desactivada. Ningún activo será considerado por ella.",
+        "planInactive": "Este plan está inactivo y no es considerado por el procesamiento automático.",
+        "nothingDue": "Ningún activo elegible vence hoy ni está atrasado.",
         "errors": {
           "loadFailed": "No se pudo cargar la cobertura de activos.",
           "invalidResponse": "Respuesta inválida de la API."
@@ -1653,7 +1653,7 @@
       "useModel": "Usar modelo",
       "confirmClone": "Crear plan",
       "dialogTitle": "Usar modelo",
-      "dialogDescription": "Elija la unidad y la categoría. El nombre es opcional; el valor predeterminado es el nombre del modelo.",
+      "dialogDescription": "Elija la unidad, la categoría y la programación de este plan. El nombre es opcional.",
       "nameOptional": "Nombre (opcional)",
       "namePlaceholder": "Deje vacío para usar el nombre del modelo",
       "deprecatedHint": "Este modelo está descontinuado y no se puede clonar.",
@@ -1668,7 +1668,7 @@
       "loading": "Cargando unidades y categorías...",
       "sections": {
         "main": "Datos principales",
-        "mainDescription": "Identifique el plan, la unidad, la frecuencia y la categoría objetivo.",
+        "mainDescription": "Identifique el plan, la unidad, la programación y la categoría objetivo.",
         "tasks": "Checklist de tareas",
         "tasksDescription": "Agregue los pasos que el técnico deberá completar en campo."
       },
@@ -1688,8 +1688,6 @@
         "unitPlaceholder": "Seleccione la unidad",
         "category": "Categoría del activo",
         "categoryPlaceholder": "Seleccione la categoría",
-        "frequency": "Frecuencia",
-        "frequencyPlaceholder": "Seleccione la frecuencia",
         "status": "Estado"
       },
       "tasks": {
@@ -1704,7 +1702,6 @@
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
         "nameRequired": "El nombre es obligatorio.",
-        "frequencyRequired": "La frecuencia es obligatoria.",
         "categoryRequired": "La categoría es obligatoria.",
         "taskTitleRequired": "El título de la tarea es obligatorio.",
         "tasksRequired": "Agregue al menos una tarea.",
@@ -1727,7 +1724,7 @@
       "sourceReferences": "Fuentes y referencias",
       "loading": "Cargando modelos...",
       "empty": "No hay modelos publicados en este momento.",
-      "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tareas",
+      "meta": "{{jurisdiction}} · {{equipment}} · {{tasks}} tareas",
       "status": {
         "Published": "Publicado",
         "Deprecated": "Descontinuado"

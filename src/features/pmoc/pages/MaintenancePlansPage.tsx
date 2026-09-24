@@ -26,10 +26,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
-import {
-  type MaintenanceFrequency,
-  type MaintenancePlan,
-} from "@/features/pmoc/schemas/maintenancePlanSchemas"
+import { type MaintenancePlan } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { getPlans } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
 
@@ -147,28 +144,6 @@ export function MaintenancePlansPage() {
         cell: ({ getValue }) => (
           <span data-testid="plan-origin">{String(getValue() ?? "")}</span>
         ),
-      },
-      {
-        accessorKey: "frequency",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("pmoc.plans.columns.frequency")}
-          />
-        ),
-        cell: ({ getValue }) => {
-          const frequency = getValue<MaintenanceFrequency>()
-          return t(`pmoc.frequency.${frequency}`)
-        },
-        filterFn: (row, columnId, filterValue) => {
-          if (typeof filterValue !== "string" || filterValue.trim() === "") {
-            return true
-          }
-
-          const frequency = row.getValue<MaintenanceFrequency>(columnId)
-          const label = t(`pmoc.frequency.${frequency}`).toLowerCase()
-          return label.includes(filterValue.trim().toLowerCase())
-        },
       },
       {
         accessorKey: "categoryName",

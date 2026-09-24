@@ -137,6 +137,18 @@ describe("PmocTemplatePreviewPage", () => {
     )
     await user.click(await screen.findByRole("option", { name: "Split" }))
 
+    expect(confirm).toBeDisabled()
+    expect(screen.queryByText(/Frequência|Frequency|Frecuencia/)).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }),
+      "30",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
+      "2026-01-15",
+    )
+
     expect(confirm).toBeEnabled()
     await user.click(confirm)
 
@@ -146,6 +158,8 @@ describe("PmocTemplatePreviewPage", () => {
           templateId: TEMPLATE_ID,
           unitId: UNIT_ID,
           assetCategoryId: CATEGORY_ID,
+          intervalDays: 30,
+          firstDueDate: "2026-01-15",
         }),
       )
     })

@@ -1506,13 +1506,17 @@
     }
   },
   "pmoc": {
-    "frequency": {
-      "Daily": "Daily",
-      "Weekly": "Weekly",
-      "Monthly": "Monthly",
-      "Quarterly": "Quarterly",
-      "Semiannual": "Semiannual",
-      "Annual": "Annual"
+    "scheduling": {
+      "title": "Schedule",
+      "interval": "Interval between maintenance",
+      "days": "days",
+      "intervalValue": "{{days}} days",
+      "firstDue": "First due date",
+      "helper": "After a maintenance is completed, the next due date is calculated from the actual completion date.",
+      "editHint": "Changing the interval recalculates the next due date of assets that were already maintained. Changing the first due date applies only to assets that have never been maintained.",
+      "save": "Save schedule",
+      "intervalInvalid": "Enter a whole number of days from 1 to 3650.",
+      "firstDueRequired": "Enter the first due date."
     },
     "inputType": {
       "Checkbox": "Checkbox",
@@ -1539,7 +1543,6 @@
       "columns": {
         "name": "Plan Name",
         "origin": "Origin",
-        "frequency": "Frequency",
         "category": "Linked Category",
         "status": "Status",
         "autoGenerate": "Auto"
@@ -1563,15 +1566,21 @@
         "empty": "No work orders have been generated for this plan."
       },
       "coverage": {
-        "question": "Which assets need attention?",
+        "question": "Which assets need maintenance?",
         "summaryEligible": "Eligible assets",
+        "summaryAttention": "Need attention",
+        "summaryDueToday": "Due today",
         "summaryNever": "Never executed",
         "summaryOverdue": "Overdue",
-        "summaryOnTrack": "On track",
-        "summaryOpen": "With open WO",
-        "status": {
+        "summaryOpen": "With an open work order",
+        "asOf": "Status on {{date}}",
+        "history": {
           "NeverExecuted": "Never executed",
-          "OnTrack": "On track",
+          "Executed": "Executed"
+        },
+        "due": {
+          "NotDue": "On track",
+          "DueToday": "Due today",
           "Overdue": "Overdue"
         },
         "columns": {
@@ -1584,21 +1593,12 @@
         },
         "neverExecuted": "Never executed",
         "empty": "No currently active assets match this plan's unit and category.",
-        "inactiveNote": "This plan is inactive. Eligible assets remain visible.",
+        "inactiveNote": "This plan is inactive. Coverage stays visible, but automatic processing does not consider this plan.",
         "loading": "Loading coverage...",
-        "consideredToday": "Considered by automatic processing today",
-        "automationDisabled": "Automation is off",
-        "planInactive": "Plan is inactive",
-        "notDueToday": "Not a due day",
-        "calendar": {
-          "automation": "Automation",
-          "automationOn": "On",
-          "automationOff": "Off",
-          "asOfDate": "Reference date",
-          "lastDueDate": "Last due date",
-          "nextDueDate": "Next due date",
-          "considered": "Automatic processing"
-        },
+        "consideredPossible": "Some assets may be considered by automatic processing.",
+        "automationDisabled": "Automatic generation is off. No asset will be considered by it.",
+        "planInactive": "This plan is inactive and is not considered by automatic processing.",
+        "nothingDue": "No eligible asset is due today or overdue.",
         "errors": {
           "loadFailed": "Could not load asset coverage.",
           "invalidResponse": "Invalid API response."
@@ -1653,7 +1653,7 @@
       "useModel": "Use template",
       "confirmClone": "Create plan",
       "dialogTitle": "Use template",
-      "dialogDescription": "Choose the unit and category. Name is optional; the default is the template name.",
+      "dialogDescription": "Choose the unit, category, and schedule for this plan. Name is optional.",
       "nameOptional": "Name (optional)",
       "namePlaceholder": "Leave empty to use the template name",
       "deprecatedHint": "This template is deprecated and cannot be cloned.",
@@ -1668,7 +1668,7 @@
       "loading": "Loading units and categories...",
       "sections": {
         "main": "Main details",
-        "mainDescription": "Identify the plan, unit, frequency, and target category.",
+        "mainDescription": "Identify the plan, unit, schedule, and target category.",
         "tasks": "Task checklist",
         "tasksDescription": "Add the steps technicians must complete in the field."
       },
@@ -1688,8 +1688,6 @@
         "unitPlaceholder": "Select a unit",
         "category": "Asset category",
         "categoryPlaceholder": "Select a category",
-        "frequency": "Frequency",
-        "frequencyPlaceholder": "Select a frequency",
         "status": "Status"
       },
       "tasks": {
@@ -1704,7 +1702,6 @@
       "validation": {
         "unitRequired": "Unit is required.",
         "nameRequired": "Name is required.",
-        "frequencyRequired": "Frequency is required.",
         "categoryRequired": "Category is required.",
         "taskTitleRequired": "Task title is required.",
         "tasksRequired": "Add at least one task.",
@@ -1727,7 +1724,7 @@
       "sourceReferences": "Sources and references",
       "loading": "Loading templates...",
       "empty": "No published templates at the moment.",
-      "meta": "{{jurisdiction}} · {{equipment}} · {{frequency}} · {{tasks}} tasks",
+      "meta": "{{jurisdiction}} · {{equipment}} · {{tasks}} tasks",
       "status": {
         "Published": "Published",
         "Deprecated": "Deprecated"
