@@ -108,16 +108,18 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
 - [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
 
-## 4.11. PMOC OS Phase 1 — Slice 5 (WEB library + detail)
+## 4.11. PMOC / OS — FEITO (PROD)
 
-Spec canônica: `vlr-api/docs/plans/active/2026-09-18-pmoc-os-phase1.md` §12 / Slice 5. Branch `feat/pmoc-os-phase1-web-library-detail`.
+Phases 1–3 are **COMPLETE / RELEASED PROD**. Phase 4 is **NOT PLANNED**. Canonical spec: `vlr-api/docs/plans/active/2026-09-19-pmoc-os-phase3.md`. WEB release merge `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85).
+
+Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-os-phase1.md`. Branch `feat/pmoc-os-phase1-web-library-detail`.
 
 - [x] Rotas estáticas `/pmoc/biblioteca`, `/pmoc/biblioteca/:templateId`, `/pmoc/:id` (depois de `/pmoc/novo`)
 - [x] Nav: Meus PMOCs, Biblioteca Rolvix (`pmoc.templates.read`), Novo personalizado
 - [x] Biblioteca + preview + Usar modelo (`POST /api/maintenance-plans/from-template`)
 - [x] Detalhe empilhado: origem, ativo, auto-gerar, checklist replace-set; delete 409 `PLAN_IN_USE` → desativar
 - [x] `/pmoc/novo` só personalizado (sem import client-side / CREA)
-- [ ] Slice 6 (fora desta entrega): Gerar OS, OS relacionadas, origem da OS
+- [x] Gerar OS, OS relacionadas, and Coverage V3 shipped in later slices and are on PROD. This checkbox is closed; it is not open work.
 
 ## 4.9. DEV E2E / Release Certification
 
@@ -270,6 +272,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-12 | **Fix (WEB):** telefone B2C normaliza +55/formatação para DDD+número (10–11 dígitos) no autofill, cola e digitação, alinhado a `NormalizePhoneBr`. Sem contrato novo, sem PROD. |
 | 2026-09-18 | **Código (WEB Slice 5):** Biblioteca Rolvix, preview/clone, detalhe de plano, checklist edit e auto toggle. Sem Gerar OS / OS relacionadas (Slice 6). Branch `feat/pmoc-os-phase1-web-library-detail`. |
 | 2026-09-19 | **Código (WEB Phase 2 Slice 2):** cobertura de ativos no detalhe `/pmoc/:id` via `GET /api/maintenance-plans/{id}/coverage`. Sem H6/H7, sem API. Branch `feat/pmoc-os-phase2-coverage-web`. |
+| 2026-09-24 | **Fechado (PMOC/OS):** Phases 1–3 COMPLETE / RELEASED PROD. Phase 4 NOT PLANNED. WEB `main` `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85). Current scheduling UI is interval + first due, not Frequency. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
