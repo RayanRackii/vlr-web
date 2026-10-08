@@ -2390,6 +2390,25 @@
       "reservationCompleted": "Reserva completada",
       "reservationReminder": "Recordatorio de reserva"
     },
+    "teacherLessons": {
+      "title": "Clases",
+      "description": "Cree o elimine clases solo para la fecha seleccionada. El horario semanal no cambiará.",
+      "court": "Cancha",
+      "date": "Fecha",
+      "availableTime": "Horario disponible",
+      "chooseTime": "Seleccione un horario",
+      "slotRequired": "Seleccione un horario disponible.",
+      "slotUnavailable": "Este horario ya no está disponible. Actualice el horario y elija otro.",
+      "labelOptional": "Nombre de la clase (opcional)",
+      "create": "Crear clase para esta fecha",
+      "remove": "Eliminar clase",
+      "lessonsForDate": "Clases en esta fecha",
+      "none": "No hay clases en esta fecha.",
+      "loadError": "No se pudo cargar el horario de este día.",
+      "createSuccess": "Clase creada para esta fecha.",
+      "removeSuccess": "Clase eliminada para esta fecha.",
+      "changeError": "No se pudo cambiar la clase. Compruebe si hay una reserva o conflicto."
+    },
     "schedule": {
       "title": "Escala / agenda",
       "description": "Operación de un día concreto y configuración semanal recurrente de los espacios.",
