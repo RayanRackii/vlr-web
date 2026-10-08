@@ -78,6 +78,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 - [x] Admin: **Concluir** em reserva `Confirmed` (`POST /api/reservations/{id}/complete`) só com `rentals.reservations.complete`. Sem UI B2C Complete/cancel nesta wave.
 - [x] Wave 1 **PROD_COMPLETE** (Phase A + Phase B T1): staff Complete (`rentals.reservations.complete`); reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. WEB PROD `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API PROD `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Public/read-only smoke only (no customer write smoke). Follow-ups (WEB today-boundary and other timezone tests) remain non-blocking and are **not** authorized by this closeout.
+- [ ] Teacher date-only lessons (FICC pilot, local work in progress): dedicated teacher-only page exposes only create/remove for a selected date and SlotGrid court; admin agenda remains behind existing `rentals.schedule.write`. API migration is prepared but not applied; role grant and deployment remain pending separate approval. PostgreSQL concurrency tests require Docker and are currently skipped.
 
 ### 3.7. Cancelamento B2C pelo cliente
 
@@ -203,6 +204,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-08-14 | **Branding:** paleta Rolvix atualizada para steel blue (`#4D6A92` / `#5A8FA0` / `#A2C6E9`), gradientes suaves e novos defaults de tenant; cores já salvas por tenant permanecem personalizadas. |
 | 2026-08-14 | **UX Agenda:** workspace responsivo em duas colunas; busca local de espaços/bens nos controles à esquerda, agendas agrupadas à direita e cards de política com estado selecionado explícito. |
 | 2026-08-14 | **Refino Agenda:** cabeçalho centralizado, maior respiro entre colunas, remoção da faixa redundante da agenda e copy explícita de recorrência por dia da semana. |
+| 2026-10-08 | **Em andamento:** teacher date-only lessons na API e no web; controles restritos a dia único, revisão e confirmação PostgreSQL ainda pendentes. |
 | 2026-08-14 | **Perf Agenda:** templates do dia pedidos com `dayOfWeek` (payload ~7x menor); correção principal de lentidão foi no `vlr-api` (fim do N+1 na derivação de horários). |
 | 2026-08-14 | **UX Agenda:** cards diários clicáveis (ajuste/indisponibilizar/restaurar só na data); abas Agenda do dia vs Configuração semanal; política/seed movidos para a config semanal. |
 | 2026-08-14 | **Redesign Agenda:** grade virtualizada tempo × recursos, toolbar compacta, drawer com escopo diário/recorrente e construtor de regra semanal em lote. |
