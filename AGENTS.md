@@ -180,8 +180,8 @@ O parent/orchestrator é **Grok 4.6**. Dono do [Autonomous Delivery Workflow](#a
 
 Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
-1. **rolvix-architect** (`glm-5.2`, readonly) — arquitetura do Rolvix (API + web); Merge Review Dossier.
-2. **rolvix-deep-architect** (`claude-fable-5`, readonly) — arquitetura profunda com aprovação explícita **ou** Merge Risk Gate quando o `AGENTS.md` da API o tornar obrigatório.
+1. **rolvix-architect** (`glm-5.2-high`, readonly) — arquitetura do Rolvix (API + web); Merge Review Dossier.
+2. **rolvix-deep-architect** (`claude-fable-5-thinking-high`, readonly) — arquitetura profunda com aprovação explícita **ou** Merge Risk Gate quando o `AGENTS.md` da API o tornar obrigatório.
 
 Ownership de implementação **neste** repo:
 
