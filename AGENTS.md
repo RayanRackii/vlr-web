@@ -176,7 +176,7 @@ Fila: `READY` / `IN_PROGRESS` / `BLOCKED_HUMAN` / `BLOCKED_TECHNICAL` / `PR_OPEN
 
 Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-O parent/orchestrator é **Grok 4.6**. Dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, `web-reviewer`, PR, merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
+O parent/orchestrator é **Grok 4.7 xhigh**. Dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, `web-reviewer`, PR, merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
 
 Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
@@ -185,9 +185,9 @@ Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
 Ownership de implementação **neste** repo:
 
-3. **web-implementer** (`grok-4.6`, write) — engenharia frontend geral (React, TypeScript, API, Zod, auth, estado, forms, routing, i18n técnico). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
+3. **web-implementer** (`grok-4.7-xhigh`, write) — engenharia frontend geral (React, TypeScript, API, Zod, auth, estado, forms, routing, i18n técnico). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
 4. **ui-implementer** (`kimi-k3`, write) — visual/layout/UX/browser, **somente** quando isso for central. Não altera contrato/domínio/auth por conta própria.
-5. **web-reviewer** (`grok-4.6`, readonly) — Standards × Spec no diff `origin/develop...HEAD` de `vlr-web`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
+5. **web-reviewer** (`grok-4.7-xhigh`, readonly) — Standards × Spec no diff `origin/develop...HEAD` de `vlr-web`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
 
 Um writer ativo por working tree: `web-implementer` **ou** `ui-implementer`, nunca os dois ao mesmo tempo neste repo. Sequência ok. Paralelo com `api-implementer` só no outro repo, e só se a spec não exigir ordem API→UI.
 

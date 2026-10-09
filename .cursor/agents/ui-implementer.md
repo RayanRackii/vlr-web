@@ -21,7 +21,7 @@ When browser/screenshot tools add value: implement → render → inspect visual
 
 ## When you do not enter
 
-API integration; Zod; DTOs; auth; permissions; state management; business rules; HTTP; parsing; purely technical i18n; non-visual bugs; logical refactors; structural TypeScript; backend. Those stay with **web-implementer** (Grok 4.6).
+API integration; Zod; DTOs; auth; permissions; state management; business rules; HTTP; parsing; purely technical i18n; non-visual bugs; logical refactors; structural TypeScript; backend. Those stay with **web-implementer** (Grok 4.7 xhigh).
 
 Being in `vlr-web` is not enough reason to use this agent.
 
