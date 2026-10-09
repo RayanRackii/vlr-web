@@ -63,6 +63,48 @@ const dayScheduleSchema = z.object({
 export type AdminDaySchedule = z.infer<typeof dayScheduleSchema>
 export type AdminDaySlot = AdminDaySchedule["slots"][number]
 
+export type TeacherLessonRequest = {
+  rentalAssetId: string
+  date: string
+  startTime: string
+  endTime: string
+  label?: string | null
+}
+
+export async function createTeacherLesson(
+  body: TeacherLessonRequest,
+): Promise<AdminDaySlot> {
+  try {
+    const response = await api.post("/api/schedule/lessons", {
+      ...body,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
+    })
+    const parsed = scheduleSlotSchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidPayload"))
+    return parsed.data
+  } catch (error) {
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.teacherLessons.changeError")), { cause: error })
+  }
+}
+
+export async function removeTeacherLesson(
+  body: Omit<TeacherLessonRequest, "label">,
+): Promise<AdminDaySlot> {
+  try {
+    const response = await api.post("/api/schedule/lessons/remove", {
+      ...body,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
+    })
+    const parsed = scheduleSlotSchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidPayload"))
+    return parsed.data
+  } catch (error) {
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.teacherLessons.changeError")), { cause: error })
+  }
+}
+
 export type DailyOccurrenceAction =
   | "Update"
   | "MakeUnavailable"

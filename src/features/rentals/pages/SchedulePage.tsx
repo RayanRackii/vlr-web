@@ -48,7 +48,9 @@ import {
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
+import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
 
@@ -75,6 +77,14 @@ function mergeAssets(
 }
 
 export function SchedulePage() {
+  const { can } = usePermissions()
+  const hasLessonOnlyAccess =
+    can("rentals.schedule.lessons.write") && !can("rentals.schedule.write")
+
+  return hasLessonOnlyAccess ? <TeacherLessonsPage /> : <AdminSchedulePage />
+}
+
+function AdminSchedulePage() {
   const { t } = useTranslation()
   const { isTrialReadOnly } = useTrialStatus()
 
