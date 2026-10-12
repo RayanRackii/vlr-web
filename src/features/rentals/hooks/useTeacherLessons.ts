@@ -13,6 +13,32 @@ import {
 
 type LessonSlot = AdminDaySchedule["slots"][number]
 
+export function isUnreservedAvailable(slot: { status: string; reservationId?: string | null }) {
+  return slot.status === "Available" && !slot.reservationId
+}
+
+function sameCivilDate(actual: string, expected: string) {
+  return actual.slice(0, 10) === expected.slice(0, 10)
+}
+
+function sameClock(actual: string, expected: string) {
+  return actual.slice(0, 8) === expected.slice(0, 8)
+}
+
+function matchesRequestedInterval(
+  slot: LessonSlot,
+  assetId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+) {
+  return slot.rentalAssetId === assetId
+    && sameCivilDate(slot.date, date)
+    && sameClock(slot.startTime, startTime)
+    && sameClock(slot.endTime, endTime)
+    && isUnreservedAvailable(slot)
+}
+
 export function useTeacherLessons(t: TFunction) {
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
@@ -57,7 +83,10 @@ export function useTeacherLessons(t: TFunction) {
   }) => {
     setBusy(true)
     try {
-      await createTeacherLesson({ rentalAssetId: assetId, date, startTime: slot.startTime, endTime: slot.endTime, label: label.trim() || null })
+      const created = await createTeacherLesson({ rentalAssetId: assetId, date, startTime: slot.startTime, endTime: slot.endTime, label: label.trim() || null })
+      if (created.occupancyKindKey !== "lesson" || !matchesRequestedInterval(created, assetId, date, slot.startTime, slot.endTime)) {
+        throw new Error(t("rentals.teacherLessons.changeError"))
+      }
       toast.success(t("rentals.teacherLessons.createSuccess"))
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : t("rentals.teacherLessons.changeError")
@@ -69,7 +98,10 @@ export function useTeacherLessons(t: TFunction) {
   const remove = useCallback(async (assetId: string, date: string, startTime: string, endTime: string) => {
     setBusy(true)
     try {
-      await removeTeacherLesson({ rentalAssetId: assetId, date, startTime, endTime })
+      const opened = await removeTeacherLesson({ rentalAssetId: assetId, date, startTime, endTime })
+      if (opened.occupancyKindKey !== "open" || !matchesRequestedInterval(opened, assetId, date, startTime, endTime)) {
+        throw new Error(t("rentals.teacherLessons.changeError"))
+      }
       toast.success(t("rentals.teacherLessons.removeSuccess"))
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : t("rentals.teacherLessons.changeError")

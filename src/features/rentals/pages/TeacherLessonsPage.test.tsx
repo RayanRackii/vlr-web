@@ -73,6 +73,22 @@ const lessonSlot = {
 }
 const bookedLessonSlot = { ...lessonSlot, id: "71111111-1111-1111-1111-111111111111", status: "Booked" }
 const cancelledLessonSlot = { ...lessonSlot, id: "81111111-1111-1111-1111-111111111111", status: "Cancelled" }
+const reservedOpenSlot = {
+  ...openSlot,
+  id: "91111111-1111-1111-1111-111111111111",
+  startTime: "14:00:00",
+  endTime: "15:00:00",
+  status: "Available",
+  reservationId: "a1111111-1111-1111-1111-111111111111",
+}
+const reservedLessonSlot = {
+  ...lessonSlot,
+  id: "b1111111-1111-1111-1111-111111111111",
+  startTime: "15:00:00",
+  endTime: "16:00:00",
+  status: "Available",
+  reservationId: "c1111111-1111-1111-1111-111111111111",
+}
 
 describe("TeacherLessonsPage", () => {
   beforeEach(() => {
@@ -154,5 +170,109 @@ describe("TeacherLessonsPage", () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Este horário não está mais disponível. Atualize a grade e escolha outro."))
     expect(screen.getByRole("button", { name: "Criar aula nesta data" })).toBeDisabled()
+  })
+
+  it("does not offer an available slot or lesson that already has a reservation", async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
+      date: todayIsoDate(),
+      slots: [openSlot, reservedOpenSlot, lessonSlot, reservedLessonSlot],
+    })
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "14:00–15:00" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Remover aula 12:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Remover aula 15:00" })).not.toBeInTheDocument()
+  })
+
+  it("does not toast success when create returns a slot that still has a reservation", async () => {
+    const user = userEvent.setup()
+    vi.mocked(toast.success).mockClear()
+    vi.mocked(toast.error).mockClear()
+    vi.mocked(createTeacherLesson).mockImplementation(async (body) => ({
+      ...secondOpenSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Aula",
+      status: "Available",
+      reservationId: "d1111111-1111-1111-1111-111111111111",
+    }))
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
+    await user.type(screen.getByLabelText("Nome da aula (opcional)"), "Treino")
+    await user.click(screen.getByRole("button", { name: "Criar aula nesta data" }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+      "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
+    ))
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("Nome da aula (opcional)")).toHaveValue("Treino")
+  })
+
+  it("does not toast success when remove returns a slot that is still a lesson", async () => {
+    const user = userEvent.setup()
+    vi.mocked(toast.success).mockClear()
+    vi.mocked(toast.error).mockClear()
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => ({
+      ...lessonSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "lesson",
+      status: "Available",
+      reservationId: null,
+    }))
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+      "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
+    ))
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "Remover aula 12:00" })).toBeInTheDocument()
+  })
+
+  it("toasts success only when create and remove return the expected unreserved slot", async () => {
+    const user = userEvent.setup()
+    vi.mocked(toast.success).mockClear()
+    vi.mocked(toast.error).mockClear()
+    vi.mocked(createTeacherLesson).mockImplementation(async (body) => ({
+      ...secondOpenSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Aula",
+      status: "Available",
+      reservationId: null,
+    }))
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => ({
+      ...openSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "open",
+      status: "Available",
+      reservationId: null,
+    }))
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
+    await user.type(screen.getByLabelText("Nome da aula (opcional)"), "Treino")
+    await user.click(screen.getByRole("button", { name: "Criar aula nesta data" }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aula criada nesta data."))
+    expect(screen.getByLabelText("Nome da aula (opcional)")).toHaveValue("")
+
+    await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aula removida nesta data."))
+    expect(toast.error).not.toHaveBeenCalled()
   })
 })
