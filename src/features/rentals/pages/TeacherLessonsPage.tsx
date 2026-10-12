@@ -23,14 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
+import { isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 
 export function TeacherLessonsPage() {
   const { t } = useTranslation()
   const { assets, day, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
-  const available = day?.slots.filter((slot) => slot.occupancyKindKey === "open" && slot.status === "Available") ?? []
-  const lessons = day?.slots.filter((slot) => slot.occupancyKindKey === "lesson" && slot.status === "Available") ?? []
+  const available = day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? []
+  const lessons = day?.slots.filter((slot) => slot.occupancyKindKey === "lesson" && isUnreservedAvailable(slot)) ?? []
   const schema = useMemo(() => z.object({
     assetId: z.string().min(1),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -66,7 +66,7 @@ export function TeacherLessonsPage() {
     void loadDay(assetId, date).then((result) => {
       if (!result) return
       const selected = getValues("slotKey") || selectedBeforeRefresh
-      if (!selected || result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open")) return
+      if (!selected || result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))) return
       const message = t("rentals.teacherLessons.slotUnavailable")
       setValue("slotKey", "", { shouldValidate: false })
       setError("slotKey", { type: "validate", message })
