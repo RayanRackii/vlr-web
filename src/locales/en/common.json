@@ -2390,6 +2390,25 @@
       "reservationCompleted": "Reservation completed",
       "reservationReminder": "Reservation reminder"
     },
+    "teacherLessons": {
+      "title": "Lessons",
+      "description": "Create or remove lessons for the selected date only. The weekly schedule will not change.",
+      "court": "Court",
+      "date": "Date",
+      "availableTime": "Available time",
+      "chooseTime": "Choose a time",
+      "slotRequired": "Select an available time.",
+      "slotUnavailable": "This time is no longer available. Refresh the schedule and choose another.",
+      "labelOptional": "Lesson name (optional)",
+      "create": "Create lesson for this date",
+      "remove": "Remove lesson",
+      "lessonsForDate": "Lessons on this date",
+      "none": "No lessons on this date.",
+      "loadError": "Could not load this day's schedule.",
+      "createSuccess": "Lesson created for this date.",
+      "removeSuccess": "Lesson removed for this date.",
+      "changeError": "Could not change the lesson. Check for a reservation or conflict."
+    },
     "schedule": {
       "title": "Schedule",
       "description": "Operations for a specific day and recurring weekly setup for spaces.",

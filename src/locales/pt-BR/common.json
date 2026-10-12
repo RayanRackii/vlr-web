@@ -2426,6 +2426,25 @@
       "reservationCompleted": "Reserva concluída",
       "reservationReminder": "Lembrete de reserva"
     },
+    "teacherLessons": {
+      "title": "Aulas",
+      "description": "Crie ou remova aulas somente na data selecionada. A grade semanal não será alterada.",
+      "court": "Quadra",
+      "date": "Data",
+      "availableTime": "Horário disponível",
+      "chooseTime": "Selecione um horário",
+      "slotRequired": "Selecione um horário disponível.",
+      "slotUnavailable": "Este horário não está mais disponível. Atualize a grade e escolha outro.",
+      "labelOptional": "Nome da aula (opcional)",
+      "create": "Criar aula nesta data",
+      "remove": "Remover aula",
+      "lessonsForDate": "Aulas nesta data",
+      "none": "Nenhuma aula nesta data.",
+      "loadError": "Não foi possível carregar a grade deste dia.",
+      "createSuccess": "Aula criada nesta data.",
+      "removeSuccess": "Aula removida nesta data.",
+      "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito."
+    },
     "schedule": {
       "title": "Escala / agenda",
       "description": "Operação de um dia específico e configuração semanal recorrente dos espaços.",
