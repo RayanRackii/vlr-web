@@ -11,13 +11,16 @@ import {
   inviteTenantMemberRequestSchema,
   inviteTenantMemberResponseSchema,
   technicianUserListSchema,
-  tenantMemberListSchema,
+  tenantCustomerPageSchema,
+  tenantMemberPageSchema,
   type AssignUserRolesRequest,
   type CurrentUser,
+  type DirectoryQuery,
   type InviteTenantMemberRequest,
   type InviteTenantMemberResponse,
   type TechnicianUser,
-  type TenantMember,
+  type TenantCustomerPage,
+  type TenantMemberPage,
 } from "@/features/users/schemas/userSchemas"
 
 const USERS_PATH = "/api/users"
@@ -77,10 +80,22 @@ export async function getTechnicians(): Promise<TechnicianUser[]> {
   }
 }
 
-export async function listTenantMembers(): Promise<TenantMember[]> {
+function directoryConfig(query?: DirectoryQuery) {
+  return {
+    params: {
+      q: query?.q,
+      page: query?.page,
+      pageSize: query?.pageSize,
+    },
+  }
+}
+
+export async function listTenantMembers(
+  query?: DirectoryQuery,
+): Promise<TenantMemberPage> {
   try {
-    const response = await api.get<unknown>(USERS_PATH)
-    const parsed = tenantMemberListSchema.safeParse(response.data)
+    const response = await api.get<unknown>(USERS_PATH, directoryConfig(query))
+    const parsed = tenantMemberPageSchema.safeParse(response.data)
     return parseOrThrow(
       parsed.success,
       parsed.success ? parsed.data : undefined,
@@ -88,6 +103,25 @@ export async function listTenantMembers(): Promise<TenantMember[]> {
     )
   } catch (error: unknown) {
     throwRbacServiceError(error, "peopleAccess.errors.loadUsers")
+  }
+}
+
+export async function listTenantCustomers(
+  query?: DirectoryQuery,
+): Promise<TenantCustomerPage> {
+  try {
+    const response = await api.get<unknown>(
+      "/api/customers",
+      directoryConfig(query),
+    )
+    const parsed = tenantCustomerPageSchema.safeParse(response.data)
+    return parseOrThrow(
+      parsed.success,
+      parsed.success ? parsed.data : undefined,
+      "users.errors.invalidResponse",
+    )
+  } catch (error: unknown) {
+    throwRbacServiceError(error, "peopleAccess.errors.loadCustomers")
   }
 }
 

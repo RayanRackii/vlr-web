@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { PeopleCustomersTab } from "@/features/users/components/PeopleCustomersTab"
 import { PeopleRolesTab } from "@/features/users/components/PeopleRolesTab"
 import { PeopleUsersTab } from "@/features/users/components/PeopleUsersTab"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -15,12 +16,13 @@ import {
 } from "@/features/users/services/rolesService"
 import { cn } from "@/lib/utils"
 
-type PeopleAccessTab = "users" | "roles"
+type PeopleAccessTab = "users" | "customers" | "roles"
 
 export function PeopleAccessPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const canReadRoles = can("core.roles.read")
+  const canReadCustomers = can("core.customers.read")
 
   const [roles, setRoles] = useState<RoleResponse[]>([])
   const [catalog, setCatalog] = useState<PermissionCatalogItemDto[]>([])
@@ -61,12 +63,15 @@ export function PeopleAccessPage() {
     void loadRolesBundle()
   }, [loadRolesBundle])
 
-  const tabItems: { id: PeopleAccessTab; labelKey: string }[] = canReadRoles
-    ? [
-        { id: "users", labelKey: "peopleAccess.tabs.users" },
-        { id: "roles", labelKey: "peopleAccess.tabs.roles" },
-      ]
-    : [{ id: "users", labelKey: "peopleAccess.tabs.users" }]
+  const tabItems: { id: PeopleAccessTab; labelKey: string }[] = [
+    { id: "users", labelKey: "peopleAccess.tabs.users" },
+    ...(canReadCustomers
+      ? [{ id: "customers" as const, labelKey: "peopleAccess.tabs.customers" }]
+      : []),
+    ...(canReadRoles
+      ? [{ id: "roles" as const, labelKey: "peopleAccess.tabs.roles" }]
+      : []),
+  ]
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -123,6 +128,10 @@ export function PeopleAccessPage() {
       ) : (
         <div>
           {tab === "users" ? <PeopleUsersTab roles={roles} /> : null}
+
+          {tab === "customers" && canReadCustomers ? (
+            <PeopleCustomersTab />
+          ) : null}
 
           {tab === "roles" && canReadRoles ? (
             <PeopleRolesTab

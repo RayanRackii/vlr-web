@@ -28,6 +28,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  DIRECTORY_PAGE_SIZE,
+  PeoplePager,
+  PeopleSearchForm,
+} from "@/features/users/components/PeopleDirectoryControls"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import { Can } from "@/features/users/permissions/Can"
 import {
@@ -58,6 +63,11 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   const { t } = useTranslation()
   const { currentUser, refresh } = usePermissions()
   const [members, setMembers] = useState<TenantMember[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [query, setQuery] = useState("")
+  const [appliedQuery, setAppliedQuery] = useState("")
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -104,9 +114,16 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     setLoadError(null)
 
     try {
-      const data = await listTenantMembers()
-      setMembers(data)
+      const data = await listTenantMembers({
+        q: appliedQuery.length >= 2 ? appliedQuery : undefined,
+        page,
+        pageSize: DIRECTORY_PAGE_SIZE,
+      })
+      setMembers(data.items)
+      setTotal(data.total)
     } catch (error: unknown) {
+      setMembers([])
+      setTotal(0)
       setLoadError(
         error instanceof Error
           ? error.message
@@ -115,7 +132,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [t])
+  }, [appliedQuery, page, t])
 
   useEffect(() => {
     void loadMembers()
@@ -159,6 +176,18 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     }
   }
 
+  function submitSearch() {
+    const next = query.trim()
+    if (next.length === 1) {
+      setSearchError(t("peopleAccess.users.searchTooShort"))
+      return
+    }
+
+    setSearchError(null)
+    setPage(1)
+    setAppliedQuery(next)
+  }
+
   function openAssign(member: TenantMember) {
     setAssigning(member)
     assignForm.reset({
@@ -167,9 +196,8 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     assignForm.clearErrors()
   }
 
-  if (isLoading) {
-    return <PageContentSkeleton rows={4} />
-  }
+  const from = total === 0 ? 0 : (page - 1) * DIRECTORY_PAGE_SIZE + 1
+  const to = Math.min(page * DIRECTORY_PAGE_SIZE, total)
 
   return (
     <div className="space-y-6">
@@ -197,6 +225,19 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
         </Can>
       </div>
 
+      <PeopleSearchForm
+        id="team-member-search"
+        label={t("peopleAccess.users.searchLabel")}
+        placeholder={t("peopleAccess.users.searchPlaceholder")}
+        actionLabel={t("peopleAccess.users.searchAction")}
+        value={query}
+        error={searchError}
+        onValueChange={setQuery}
+        onSubmit={submitSearch}
+      />
+
+      {isLoading ? <PageContentSkeleton rows={4} /> : null}
+
       {loadError !== null ? (
         <div
           role="alert"
@@ -206,7 +247,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
         </div>
       ) : null}
 
-      {members.length === 0 && loadError === null ? (
+      {!isLoading && members.length === 0 && loadError === null ? (
         <PeopleEmptyState
           icon={Users}
           title={t("peopleAccess.users.empty")}
@@ -254,6 +295,18 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
           ))}
         </ul>
       )}
+
+      {!isLoading && loadError === null ? (
+        <PeoplePager
+          page={page}
+          pageSize={DIRECTORY_PAGE_SIZE}
+          total={total}
+          summary={t("peopleAccess.pagination.summary", { from, to, total })}
+          previousLabel={t("peopleAccess.pagination.previous")}
+          nextLabel={t("peopleAccess.pagination.next")}
+          onPageChange={setPage}
+        />
+      ) : null}
 
       <Dialog
         open={inviteOpen}
