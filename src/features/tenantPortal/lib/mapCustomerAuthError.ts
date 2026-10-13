@@ -9,6 +9,10 @@ const CUSTOMER_AUTH_ERROR_KEYS: Record<string, string> = {
     "tenantPortal.login.emailNotVerified",
   "Invalid or expired verification code.":
     "tenantPortal.verify.invalidOrExpired",
+  "Password must be at least 8 characters.":
+    "tenantPortal.validation.passwordMin",
+  "Too many verification attempts. Try again shortly.":
+    "tenantPortal.passwordReset.rateLimited",
   "A customer with this email already exists.":
     "tenantPortal.register.duplicateCustomer",
   "A customer with this document already exists.":

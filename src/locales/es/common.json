@@ -219,7 +219,32 @@
       "invalidCredentials": "Correo o contraseña inválidos.",
       "emailNotVerified": "Confirme su correo antes de entrar.",
       "noAccount": "¿Aún no tiene cuenta?",
-      "registerLink": "Regístrese"
+      "registerLink": "Regístrese",
+      "forgotPassword": "Olvidé mi contraseña"
+    },
+    "passwordReset": {
+      "requestTitle": "Olvidé mi contraseña",
+      "requestSubtitle": "Indique el correo de su cuenta. Si existe, enviaremos un código para restablecer la contraseña.",
+      "requestSubmit": "Enviar código",
+      "requestSubmitting": "Enviando...",
+      "requestToast": "Si existe una cuenta con este correo, enviamos un código para restablecer la contraseña.",
+      "requestError": "No fue posible enviar el código.",
+      "confirmTitle": "Restablecer contraseña",
+      "confirmSubtitle": "Escriba el código de 6 dígitos enviado a {{maskedEmail}} y elija una nueva contraseña.",
+      "confirmSubtitleNoEmail": "Escriba el código de 6 dígitos y elija una nueva contraseña.",
+      "expiresHint": "El código expira en 15 minutos. Si no llega, reenvíelo después de la espera.",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "submit": "Restablecer contraseña",
+      "submitting": "Guardando...",
+      "toastSuccess": "Contraseña restablecida. Entre con la nueva contraseña.",
+      "toastError": "No fue posible restablecer la contraseña.",
+      "resend": "Reenviar código",
+      "resendIn": "Reenviar en {{seconds}}s",
+      "resendSubmitting": "Reenviando...",
+      "resendToast": "Si existe una cuenta con este correo, enviamos un nuevo código.",
+      "backToLogin": "Volver al inicio de sesión",
+      "rateLimited": "Demasiados intentos. Inténtelo de nuevo en un momento."
     },
     "register": {
       "title": "Crear cuenta",

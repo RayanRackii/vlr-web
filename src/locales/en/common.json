@@ -219,7 +219,32 @@
       "invalidCredentials": "Invalid email or password.",
       "emailNotVerified": "Confirm your email before signing in.",
       "noAccount": "No account yet?",
-      "registerLink": "Register"
+      "registerLink": "Register",
+      "forgotPassword": "Forgot password"
+    },
+    "passwordReset": {
+      "requestTitle": "Forgot password",
+      "requestSubtitle": "Enter your account email. If it exists, we will send a code to reset the password.",
+      "requestSubmit": "Send code",
+      "requestSubmitting": "Sending...",
+      "requestToast": "If an account exists for this email, we sent a code to reset the password.",
+      "requestError": "Could not send the code.",
+      "confirmTitle": "Reset password",
+      "confirmSubtitle": "Enter the 6-digit code sent to {{maskedEmail}} and choose a new password.",
+      "confirmSubtitleNoEmail": "Enter the 6-digit code and choose a new password.",
+      "expiresHint": "The code expires in 15 minutes. If it does not arrive, resend after the wait.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Reset password",
+      "submitting": "Saving...",
+      "toastSuccess": "Password reset. Sign in with the new password.",
+      "toastError": "Could not reset the password.",
+      "resend": "Resend code",
+      "resendIn": "Resend in {{seconds}}s",
+      "resendSubmitting": "Resending...",
+      "resendToast": "If an account exists for this email, we sent a new code.",
+      "backToLogin": "Back to sign in",
+      "rateLimited": "Too many attempts. Try again shortly."
     },
     "register": {
       "title": "Create account",

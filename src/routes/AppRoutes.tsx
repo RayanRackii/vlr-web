@@ -32,7 +32,9 @@ import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAp
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
+import { TenantPortalForgotPasswordPage } from "@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
+import { TenantPortalResetPasswordPage } from "@/features/tenantPortal/pages/TenantPortalResetPasswordPage"
 import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalVerifyEmailPage } from "@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"
@@ -77,6 +79,11 @@ export function AppRoutes() {
           <Route path="register" element={<TenantPortalRegisterPage />} />
           <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
           <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
+          <Route path="forgot-password" element={<TenantPortalForgotPasswordPage />} />
+          <Route
+            path="forgot-password/confirm"
+            element={<TenantPortalResetPasswordPage />}
+          />
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
@@ -110,6 +117,11 @@ export function AppRoutes() {
           <Route path="register" element={<TenantPortalRegisterPage />} />
           <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
           <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
+          <Route path="forgot-password" element={<TenantPortalForgotPasswordPage />} />
+          <Route
+            path="forgot-password/confirm"
+            element={<TenantPortalResetPasswordPage />}
+          />
         </Route>
         <Route element={<CustomerAppLayout />}>
           <Route path="app" element={<TenantPortalHomePage />} />
