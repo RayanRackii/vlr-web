@@ -1924,7 +1924,8 @@
     "title": "Pessoas e acesso",
     "description": "Gerencie usuários do ambiente e os perfis de acesso.",
     "tabs": {
-      "users": "Usuários",
+      "users": "Equipe",
+      "customers": "Clientes do portal",
       "roles": "Funções e permissões"
     },
     "role": "Função",
@@ -1950,6 +1951,7 @@
     "resources": {
       "dashboard": "Dashboard",
       "users": "Usuários",
+      "customers": "Clientes",
       "roles": "Funções",
       "units": "Unidades",
       "registration_fields": "Cadastro do portal",
@@ -1972,6 +1974,7 @@
     "catalog": {
       "core.dashboard.read": "Ver dashboard",
       "core.users.read": "Ver usuários",
+      "core.customers.read": "Ver clientes do portal",
       "core.users.invite": "Convidar usuários",
       "core.users.assign_roles": "Atribuir funções",
       "core.roles.read": "Ver funções",
@@ -2039,7 +2042,28 @@
       "saveRoles": "Salvar funções",
       "empty": "Nenhum usuário neste ambiente.",
       "emptyDescription": "Convide uma pessoa para começar a configurar os acessos deste ambiente.",
-      "noRoles": "Nenhuma função atribuída"
+      "noRoles": "Nenhuma função atribuída",
+      "searchLabel": "Buscar na equipe",
+      "searchPlaceholder": "Nome ou e-mail",
+      "searchAction": "Buscar",
+      "searchTooShort": "Digite pelo menos 2 caracteres."
+    },
+    "customers": {
+      "description": "Clientes que entram pelo portal deste ambiente.",
+      "empty": "Nenhum cliente neste ambiente.",
+      "emptyDescription": "Quando alguém criar uma conta no portal, ela aparece aqui.",
+      "verified": "Verificado",
+      "unverified": "Não verificado",
+      "createdAt": "Criado em",
+      "searchLabel": "Buscar clientes",
+      "searchPlaceholder": "Nome ou e-mail",
+      "searchAction": "Buscar",
+      "searchTooShort": "Digite pelo menos 2 caracteres."
+    },
+    "pagination": {
+      "summary": "{{from}}–{{to}} de {{total}}",
+      "previous": "Página anterior",
+      "next": "Próxima página"
     },
     "roles": {
       "description": "Funções de sistema e perfis personalizados deste ambiente.",
@@ -2072,6 +2096,7 @@
     "errors": {
       "invalidResponse": "Resposta inválida da API.",
       "loadUsers": "Não foi possível carregar os usuários.",
+      "loadCustomers": "Não foi possível carregar os clientes.",
       "loadRoles": "Não foi possível carregar as funções.",
       "loadRole": "Não foi possível carregar a função.",
       "loadPermissions": "Não foi possível carregar as permissões.",

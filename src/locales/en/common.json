@@ -1888,7 +1888,8 @@
     "title": "People and access",
     "description": "Manage users in this environment and their access profiles.",
     "tabs": {
-      "users": "Users",
+      "users": "Team",
+      "customers": "Portal customers",
       "roles": "Functions and permissions"
     },
     "role": "Function",
@@ -1914,6 +1915,7 @@
     "resources": {
       "dashboard": "Dashboard",
       "users": "Users",
+      "customers": "Customers",
       "roles": "Functions",
       "units": "Units",
       "registration_fields": "Portal registration",
@@ -1936,6 +1938,7 @@
     "catalog": {
       "core.dashboard.read": "View dashboard",
       "core.users.read": "View users",
+      "core.customers.read": "View portal customers",
       "core.users.invite": "Invite users",
       "core.users.assign_roles": "Assign functions",
       "core.roles.read": "View functions",
@@ -2003,7 +2006,28 @@
       "saveRoles": "Save functions",
       "empty": "No users in this environment.",
       "emptyDescription": "Invite someone to start configuring access for this environment.",
-      "noRoles": "No function assigned"
+      "noRoles": "No function assigned",
+      "searchLabel": "Search the team",
+      "searchPlaceholder": "Name or email",
+      "searchAction": "Search",
+      "searchTooShort": "Type at least 2 characters."
+    },
+    "customers": {
+      "description": "Customers who sign in through this environment's portal.",
+      "empty": "No portal customers in this environment.",
+      "emptyDescription": "When someone creates a portal account, they show up here.",
+      "verified": "Verified",
+      "unverified": "Not verified",
+      "createdAt": "Created",
+      "searchLabel": "Search customers",
+      "searchPlaceholder": "Name or email",
+      "searchAction": "Search",
+      "searchTooShort": "Type at least 2 characters."
+    },
+    "pagination": {
+      "summary": "{{from}}–{{to}} of {{total}}",
+      "previous": "Previous page",
+      "next": "Next page"
     },
     "roles": {
       "description": "System functions and custom access profiles for this environment.",
@@ -2036,6 +2060,7 @@
     "errors": {
       "invalidResponse": "Invalid API response.",
       "loadUsers": "Could not load users.",
+      "loadCustomers": "Could not load portal customers.",
       "loadRoles": "Could not load functions.",
       "loadRole": "Could not load the function.",
       "loadPermissions": "Could not load permissions.",
