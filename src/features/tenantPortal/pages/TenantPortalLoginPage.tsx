@@ -102,6 +102,14 @@ export function TenantPortalLoginPage() {
               </FormItem>
             )}
           />
+          <p className="text-right text-sm">
+            <Link
+              to={tenantPortalPath(subdomain, "forgot-password")}
+              className="font-medium text-primary underline"
+            >
+              {t("tenantPortal.login.forgotPassword")}
+            </Link>
+          </p>
           <LoadingButton
             type="submit"
             className="w-full"

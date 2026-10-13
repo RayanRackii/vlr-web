@@ -4,6 +4,7 @@ import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import {
   buildCustomerLoginSchema,
   buildCustomerRegisterSchema,
+  buildPasswordResetConfirmSchema,
   buildVerifyEmailSchema,
   isValidBrazilianPhoneDigits,
   normalizeBrazilianPhoneDigits,
@@ -285,5 +286,27 @@ describe("B2C Portuguese validation messages", () => {
       false,
     )
     expect(messages).toContain("Envie uma foto de perfil.")
+  })
+
+  it("uses Portuguese copy when the new password is short or does not match", () => {
+    const schema = buildPasswordResetConfirmSchema({
+      emailInvalid: "E-mail inválido.",
+      codeInvalid: "Código inválido.",
+      passwordMin: "A senha deve ter no mínimo 8 caracteres.",
+      passwordMismatch: "As senhas precisam ser iguais.",
+    })
+    const parsed = schema.safeParse({
+      email: "ana@club.test",
+      code: "123456",
+      newPassword: "short",
+      confirmPassword: "other",
+    })
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+    const messages = parsed.error.issues.map((issue) => issue.message)
+    expect(messages).toContain("A senha deve ter no mínimo 8 caracteres.")
+    expect(messages).toContain("As senhas precisam ser iguais.")
   })
 })

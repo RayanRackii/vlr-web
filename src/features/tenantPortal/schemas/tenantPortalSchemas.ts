@@ -482,6 +482,50 @@ export type VerifyEmailFormValues = {
   code: string
 }
 
+export function buildPasswordResetRequestSchema(messages: {
+  emailInvalid: string
+}) {
+  return z.object({
+    email: z.string().trim().email(messages.emailInvalid),
+  })
+}
+
+export type PasswordResetRequestFormValues = {
+  email: string
+}
+
+export function buildPasswordResetConfirmSchema(messages: {
+  emailInvalid: string
+  codeInvalid: string
+  passwordMin: string
+  passwordMismatch: string
+}) {
+  return z
+    .object({
+      email: z.string().trim().email(messages.emailInvalid),
+      code: z.string().trim().regex(/^\d{6}$/, messages.codeInvalid),
+      newPassword: z
+        .string()
+        .min(8, messages.passwordMin)
+        .max(128, messages.passwordMin),
+      confirmPassword: z
+        .string()
+        .min(1, messages.passwordMismatch)
+        .max(128, messages.passwordMin),
+    })
+    .refine((values) => values.newPassword === values.confirmPassword, {
+      message: messages.passwordMismatch,
+      path: ["confirmPassword"],
+    })
+}
+
+export type PasswordResetConfirmFormValues = {
+  email: string
+  code: string
+  newPassword: string
+  confirmPassword: string
+}
+
 export const FIELD_TYPE_OPTIONS = [
   "text",
   "email",

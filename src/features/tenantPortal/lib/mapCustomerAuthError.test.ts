@@ -12,6 +12,17 @@ describe("mapCustomerAuthError", () => {
     )
   })
 
+  it("maps password reset failures to Portuguese copy", () => {
+    expect(
+      localizeCustomerAuthError(
+        "Too many verification attempts. Try again shortly.",
+      ),
+    ).toBe("Muitas tentativas. Tente de novo em instantes.")
+    expect(
+      localizeCustomerAuthError("Password must be at least 8 characters."),
+    ).toBe("A senha deve ter no mínimo 8 caracteres.")
+  })
+
   it("maps email-not-verified without exposing the raw API sentence", () => {
     expect(
       localizeCustomerAuthError(
