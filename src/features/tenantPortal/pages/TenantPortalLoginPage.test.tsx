@@ -81,6 +81,16 @@ describe("TenantPortalLoginPage", () => {
     expect(login).not.toHaveBeenCalled()
   })
 
+  it("links Esqueci a senha to the reset request screen", () => {
+    renderLogin()
+
+    expect(
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.login.forgotPassword"),
+      }),
+    ).toHaveAttribute("href", "/t/ficc/forgot-password")
+  })
+
   it("maps a known English API login error to Portuguese", async () => {
     const user = userEvent.setup()
     login.mockRejectedValue(new Error("E-mail ou senha inválidos."))

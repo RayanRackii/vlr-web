@@ -138,6 +138,8 @@ export type TenantPortalSegment =
   | ""
   | "register"
   | "verify-email"
+  | "forgot-password"
+  | "forgot-password/confirm"
   | "app"
   | "app/perfil"
   | "agenda"
@@ -465,6 +467,46 @@ export async function verifyCustomerEmail(
       parseCustomerAuthError(
         getAxiosErrorPayload(error),
         i18n.t("apiErrors.verifyEmail"),
+      ),
+    )
+  }
+}
+
+export async function requestCustomerPasswordReset(
+  subdomain: string,
+  body: { email: string },
+): Promise<void> {
+  try {
+    await publicApi.post(
+      "/api/auth/customer/password-reset/request",
+      { email: body.email },
+      { headers: subdomainHeaders(subdomain) },
+    )
+  } catch (error) {
+    throw new Error(
+      parseCustomerAuthError(
+        getAxiosErrorPayload(error),
+        i18n.t("tenantPortal.passwordReset.requestError"),
+      ),
+    )
+  }
+}
+
+export async function confirmCustomerPasswordReset(
+  subdomain: string,
+  body: { email: string; code: string; newPassword: string },
+): Promise<void> {
+  try {
+    await publicApi.post(
+      "/api/auth/customer/password-reset/confirm",
+      body,
+      { headers: subdomainHeaders(subdomain) },
+    )
+  } catch (error) {
+    throw new Error(
+      parseCustomerAuthError(
+        getAxiosErrorPayload(error),
+        i18n.t("tenantPortal.passwordReset.toastError"),
       ),
     )
   }

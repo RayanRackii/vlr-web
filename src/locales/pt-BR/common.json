@@ -219,7 +219,32 @@
       "invalidCredentials": "E-mail ou senha inválidos.",
       "emailNotVerified": "Confirme seu e-mail antes de entrar.",
       "noAccount": "Ainda não tem conta?",
-      "registerLink": "Cadastre-se"
+      "registerLink": "Cadastre-se",
+      "forgotPassword": "Esqueci a senha"
+    },
+    "passwordReset": {
+      "requestTitle": "Esqueci a senha",
+      "requestSubtitle": "Informe o e-mail da sua conta. Se ele existir, enviaremos um código para redefinir a senha.",
+      "requestSubmit": "Enviar código",
+      "requestSubmitting": "Enviando...",
+      "requestToast": "Se existir uma conta com este e-mail, enviamos um código para redefinir a senha.",
+      "requestError": "Não foi possível enviar o código.",
+      "confirmTitle": "Redefinir senha",
+      "confirmSubtitle": "Digite o código de 6 dígitos enviado para {{maskedEmail}} e escolha uma nova senha.",
+      "confirmSubtitleNoEmail": "Digite o código de 6 dígitos e escolha uma nova senha.",
+      "expiresHint": "O código expira em 15 minutos. Se não chegar, reenvie após a espera.",
+      "newPassword": "Nova senha",
+      "confirmPassword": "Confirmar nova senha",
+      "submit": "Redefinir senha",
+      "submitting": "Salvando...",
+      "toastSuccess": "Senha redefinida. Entre com a nova senha.",
+      "toastError": "Não foi possível redefinir a senha.",
+      "resend": "Reenviar código",
+      "resendIn": "Reenviar em {{seconds}}s",
+      "resendSubmitting": "Reenviando...",
+      "resendToast": "Se existir uma conta com este e-mail, enviamos um novo código.",
+      "backToLogin": "Voltar ao login",
+      "rateLimited": "Muitas tentativas. Tente de novo em instantes."
     },
     "register": {
       "title": "Criar conta",
