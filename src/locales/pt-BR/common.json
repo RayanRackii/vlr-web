@@ -68,6 +68,10 @@
     "leaveQueue": "Não foi possível sair da fila.",
     "processImage": "Não foi possível processar a imagem.",
     "loadAssetFamilies": "Não foi possível carregar as famílias de ativos.",
+    "loadAdminAssetFamilies": "Não foi possível carregar as famílias de recursos.",
+    "createAdminAssetFamily": "Não foi possível criar a família de recursos.",
+    "updateAdminAssetFamily": "Não foi possível atualizar a família de recursos.",
+    "deleteAdminAssetFamily": "Não foi possível excluir a família de recursos.",
     "loadAdminModules": "Não foi possível carregar os módulos.",
     "loadOccupancyKinds": "Não foi possível carregar os tipos de ocupação.",
     "loadTemplates": "Não foi possível carregar os templates.",
@@ -915,6 +919,7 @@
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuários",
+    "adminAssetFamilies": "Famílias",
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação",
     "loading": "Carregando menu de navegação",
@@ -2368,6 +2373,86 @@
       },
       "errors": {
         "loadFailed": "Não foi possível carregar os usuários."
+      }
+    },
+    "assetFamilies": {
+      "title": "Famílias de recursos",
+      "description": "Catálogo global dos formulários de cadastro. A chave é única e não muda depois de criada. Famílias do sistema não podem ser desativadas nem excluídas.",
+      "includeInactive": "Incluir inativas",
+      "seedBadge": "Sistema",
+      "statusActive": "Ativa",
+      "statusInactive": "Inativa",
+      "emptyTitle": "Nenhuma família encontrada",
+      "emptyDescription": "Crie uma família ou inclua as inativas.",
+      "columns": {
+        "key": "Chave",
+        "label": "Rótulo",
+        "sortOrder": "Ordem",
+        "fields": "Campos",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "actions": {
+        "create": "Nova família",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "deleteNamed": "Excluir {{label}}",
+        "save": "Salvar",
+        "saving": "Salvando...",
+        "retry": "Tentar novamente"
+      },
+      "dialog": {
+        "createTitle": "Nova família",
+        "editTitle": "Editar família",
+        "createDescription": "A chave fica definida agora e não pode mudar depois.",
+        "editDescription": "A chave não muda. Rótulo, campos, ordem e situação podem."
+      },
+      "form": {
+        "key": "Chave",
+        "keyHint": "Começa com letra e usa só letras minúsculas, números e _ (até 64 caracteres).",
+        "label": "Rótulo",
+        "sortOrder": "Ordem",
+        "isActive": "Ativa",
+        "seedLocked": "Famílias do sistema (espaços, elétricos, bens e genérica) permanecem ativas.",
+        "fields": "Campos",
+        "fieldsEmpty": "Nenhum campo. O formulário de cadastro não pede atributos extras.",
+        "addField": "Adicionar campo",
+        "fieldItem": "Campo {{number}}",
+        "fieldKey": "Chave do campo",
+        "fieldLabel": "Rótulo do campo",
+        "fieldType": "Tipo",
+        "fieldRequired": "Obrigatório",
+        "removeField": "Remover campo"
+      },
+      "types": {
+        "text": "Texto",
+        "number": "Número",
+        "boolean": "Sim/não"
+      },
+      "validation": {
+        "key": "A chave deve começar com letra e usar só letras minúsculas, números e _ (até 64 caracteres).",
+        "labelRequired": "Informe o rótulo.",
+        "labelMax": "O rótulo deve ter no máximo 200 caracteres.",
+        "sortOrder": "Informe um número inteiro.",
+        "fieldKey": "Informe a chave do campo.",
+        "fieldKeyDuplicate": "Esta chave de campo está repetida.",
+        "seedActive": "Famílias do sistema não podem ser desativadas."
+      },
+      "success": {
+        "created": "Família criada.",
+        "updated": "Família atualizada.",
+        "deleted": "Família excluída."
+      },
+      "delete": {
+        "title": "Excluir família",
+        "description": "Excluir {{label}} ({{key}})? A exclusão é definitiva e só vale se a família não estiver em uso.",
+        "confirm": "Excluir",
+        "deleting": "Excluindo..."
+      },
+      "errors": {
+        "loadFailed": "Não foi possível carregar as famílias.",
+        "saveFailed": "Não foi possível salvar a família.",
+        "deleteFailed": "Não foi possível excluir a família."
       }
     },
     "modules": {
