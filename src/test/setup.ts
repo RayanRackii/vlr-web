@@ -27,6 +27,14 @@ vi.mock("@/lib/supabase", () => ({
         data: { user: null, session: null },
         error: null,
       })),
+      verifyOtp: vi.fn(async () => ({
+        data: { session: null, user: null },
+        error: null,
+      })),
+      updateUser: vi.fn(async () => ({
+        data: { user: null },
+        error: null,
+      })),
     },
   },
 }))

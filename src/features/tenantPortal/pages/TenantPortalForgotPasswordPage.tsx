@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -40,7 +40,10 @@ export function TenantPortalForgotPasswordPage() {
   const form = useForm<PasswordResetRequestFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "" },
+    mode: "onTouched",
   })
+  const watchedValues = form.watch()
+  const isRequestValid = schema.safeParse(watchedValues).success
 
   async function onSubmit(values: PasswordResetRequestFormValues) {
     setSubmitting(true)
@@ -87,14 +90,15 @@ export function TenantPortalForgotPasswordPage() {
               </FormItem>
             )}
           />
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isRequestValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.passwordReset.requestSubmitting")}
           >
             {t("tenantPortal.passwordReset.requestSubmit")}
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
 
