@@ -81,18 +81,16 @@ describe("requestPasswordReset", () => {
     })
   })
 
-  it("throws the API error and does not return the generic success sentence", async () => {
+  it("returns the generic sentence for a client error without reading its prose", async () => {
     post.mockRejectedValue(apiError(400, "Email is required."))
 
-    await expect(requestPasswordReset("  ", "ficc")).rejects.toThrow(
-      "Email is required.",
+    await expect(requestPasswordReset("ana@club.test", "ficc")).resolves.toBe(
+      genericMessage,
     )
   })
 
-  it("returns the generic sentence when the company slug is unknown", async () => {
-    post.mockRejectedValue(
-      apiError(401, "No active tenant found for subdomain 'missing'."),
-    )
+  it("returns the generic sentence for any non-5xx failure", async () => {
+    post.mockRejectedValue(apiError(404, "tenant missing"))
 
     await expect(requestPasswordReset("ana@club.test", "missing")).resolves.toBe(
       genericMessage,
@@ -101,6 +99,14 @@ describe("requestPasswordReset", () => {
       "/api/auth/forgot-password",
       { email: "ana@club.test" },
       { headers: { "X-Tenant-Subdomain": "missing" } },
+    )
+  })
+
+  it("throws a 5xx error instead of the generic success sentence", async () => {
+    post.mockRejectedValue(apiError(503, "mail down"))
+
+    await expect(requestPasswordReset("ana@club.test", "ficc")).rejects.toThrow(
+      "mail down",
     )
   })
 })

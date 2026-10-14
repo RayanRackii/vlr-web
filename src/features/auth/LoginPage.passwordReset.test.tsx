@@ -145,14 +145,11 @@ describe("LoginPage forgot password", () => {
       { headers: { "X-Tenant-Subdomain": "ficc" } },
     )
     expect(await screen.findByRole("status")).toHaveTextContent(genericMessage)
-    expect(screen.queryByText(/missing|No active tenant/i)).not.toBeInTheDocument()
   })
 
-  it("keeps the generic sentence when the typed company does not exist", async () => {
+  it("keeps the generic sentence when the reset responds with a non-5xx error", async () => {
     const user = userEvent.setup()
-    post.mockRejectedValue(
-      apiError(401, "No active tenant found for subdomain 'missing'."),
-    )
+    post.mockRejectedValue(apiError(404, "tenant missing"))
     renderLogin("/login")
 
     await user.type(screen.getByLabelText("E-mail"), "ana@club.test")
@@ -174,7 +171,7 @@ describe("LoginPage forgot password", () => {
     )
     expect(await screen.findByRole("status")).toHaveTextContent(genericMessage)
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(screen.queryByText(/No active tenant/i)).not.toBeInTheDocument()
+    expect(screen.queryByText("tenant missing")).not.toBeInTheDocument()
   })
 
   it("stays on the company step when the reset request fails", async () => {

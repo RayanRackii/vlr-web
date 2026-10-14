@@ -1,14 +1,24 @@
 import { z } from "zod"
 
-import { publicApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import {
+  publicApi,
+  getAxiosErrorPayload,
+  isAxiosError,
+  parseApiError,
+} from "@/lib/api"
 import i18n from "@/lib/i18n"
 
 const forgotPasswordResponseSchema = z.object({
   message: z.string().optional(),
 })
 
-function isUnknownTenantError(message: string): boolean {
-  return message.startsWith("No active tenant found for subdomain")
+function isServerFailure(error: unknown): boolean {
+  if (!isAxiosError(error)) {
+    return false
+  }
+
+  const status = error.response?.status
+  return typeof status === "number" && status >= 500
 }
 
 function tenantSubdomainHeader(
@@ -40,14 +50,16 @@ export async function requestPasswordReset(
     const message = parsed.success ? (parsed.data.message?.trim() ?? "") : ""
     return message.length > 0 ? message : i18n.t("auth.login.resetSent")
   } catch (error) {
-    const message = parseApiError(
-      getAxiosErrorPayload(error),
-      i18n.t("auth.login.resetFailed"),
-    )
-    if (isUnknownTenantError(message)) {
+    if (!isServerFailure(error)) {
       return i18n.t("auth.login.resetSent")
     }
 
-    throw new Error(message, { cause: error })
+    throw new Error(
+      parseApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("auth.login.resetFailed"),
+      ),
+      { cause: error },
+    )
   }
 }
