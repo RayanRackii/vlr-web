@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Platform",
+    "name": "Rolvix",
     "authenticatedArea": "Authenticated area"
   },
   "common": {
@@ -2305,7 +2305,7 @@
         "basicDescription": "Legal name and tax document for the company.",
         "identity": "Subdomain & Branding",
         "identityDescription": "Environment address, logo, colors, and portal tagline.",
-        "modules": "Platform Modules",
+        "modules": "Rolvix Modules",
         "modulesDescription": "Select the active modules for this client.",
         "families": "Asset families",
         "familiesDescription": "Which resource types this client registers (spaces, electrical, goods…)."
