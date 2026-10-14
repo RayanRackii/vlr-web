@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 
+import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
@@ -145,7 +146,7 @@ export function AppRoutes() {
         </Route>
 
         <Route element={<MainLayout />}>
-          <Route element={<PermissionRoute permission="core.dashboard.read" />}>
+          <Route element={<DashboardHomeRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
           <Route
