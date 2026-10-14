@@ -1,14 +1,16 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +21,10 @@ import {
   loginSchema,
   type LoginFormValues,
 } from "@/features/auth/loginSchema"
+import {
+  buildPasswordResetCompanySchema,
+  type PasswordResetCompanyFormValues,
+} from "@/features/auth/passwordResetCompanySchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
 import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { supabase } from "@/lib/supabase"
@@ -42,6 +48,17 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
+  const [resetEmail, setResetEmail] = useState<string | null>(null)
+  const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
+  const companySchema = useMemo(
+    () =>
+      buildPasswordResetCompanySchema({
+        subdomainMin: t("auth.login.resetCompanyMin"),
+        subdomainMax: t("auth.login.resetCompanyMax"),
+        subdomainFormat: t("auth.login.resetCompanyFormat"),
+      }),
+    [t],
+  )
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -51,7 +68,40 @@ export function LoginPage() {
     },
   })
 
+  const companyForm = useForm<PasswordResetCompanyFormValues>({
+    resolver: zodResolver(companySchema),
+    defaultValues: { subdomain: "" },
+    mode: "onTouched",
+  })
+  const companySubdomain = useWatch({
+    control: companyForm.control,
+    name: "subdomain",
+  })
+  const companyValid = companySchema.safeParse({
+    subdomain: companySubdomain ?? "",
+  }).success
+
   const isSubmitting = form.formState.isSubmitting
+
+  async function sendReset(email: string, subdomain: string) {
+    setIsSendingReset(true)
+    try {
+      const message = await requestPasswordReset(email, subdomain)
+      setResetEmail(null)
+      companyForm.reset({ subdomain: "" })
+      setResetInfo(message)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("auth.login.resetFailed")
+      if (resetEmail) {
+        companyForm.setError("root", { message })
+      } else {
+        form.setError("root", { message })
+      }
+    } finally {
+      setIsSendingReset(false)
+    }
+  }
 
   async function onSubmit(values: LoginFormValues) {
     setResetInfo(null)
@@ -78,23 +128,24 @@ export function LoginPage() {
       return
     }
 
-    setIsSendingReset(true)
-    try {
-      const message = await requestPasswordReset(
-        email,
-        resolveTenantSubdomain(location.pathname),
-      )
-      setResetInfo(message)
-    } catch (error) {
-      form.setError("root", {
-        message:
-          error instanceof Error
-            ? error.message
-            : t("auth.login.resetFailed"),
-      })
-    } finally {
-      setIsSendingReset(false)
+    if (resolvedSubdomain) {
+      await sendReset(email, resolvedSubdomain)
+      return
     }
+
+    companyForm.reset({ subdomain: "" })
+    companyForm.clearErrors()
+    setResetEmail(email)
+  }
+
+  async function onCompanySubmit(values: PasswordResetCompanyFormValues) {
+    if (!resetEmail) {
+      return
+    }
+
+    form.clearErrors("root")
+    companyForm.clearErrors("root")
+    await sendReset(resetEmail, values.subdomain)
   }
 
   return (
@@ -106,6 +157,79 @@ export function LoginPage() {
         </p>
       </header>
 
+      {resetEmail ? (
+        <Form {...companyForm}>
+          <form
+            className="space-y-6"
+            onSubmit={companyForm.handleSubmit(onCompanySubmit)}
+            noValidate
+          >
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">
+                {t("auth.login.resetCompanyTitle")}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {t("auth.login.resetCompanySubtitle")}
+              </p>
+            </div>
+
+            <FormField
+              control={companyForm.control}
+              name="subdomain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("auth.login.resetCompanyLabel")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      autoComplete="organization"
+                      placeholder={t("auth.login.resetCompanyPlaceholder")}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t("auth.login.resetCompanyHint")}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {companyForm.formState.errors.root?.message ? (
+              <p
+                role="alert"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                {companyForm.formState.errors.root.message}
+              </p>
+            ) : null}
+
+            <FormPrimaryButton
+              type="submit"
+              className="w-full"
+              isValid={companyValid}
+              loading={isSendingReset}
+              loadingLabel={t("auth.login.resetCompanySubmitting")}
+            >
+              {t("auth.login.resetCompanySubmit")}
+            </FormPrimaryButton>
+
+            <LoadingButton
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={isSendingReset}
+              onClick={() => {
+                setResetEmail(null)
+                companyForm.clearErrors()
+              }}
+            >
+              {t("auth.login.resetCompanyBack")}
+            </LoadingButton>
+          </form>
+        </Form>
+      ) : null}
+
+      {resetEmail ? null : (
       <Form {...form}>
         <form
           className="space-y-6"
@@ -192,6 +316,7 @@ export function LoginPage() {
           </LoadingButton>
         </form>
       </Form>
+      )}
     </main>
   )
 }

@@ -88,4 +88,19 @@ describe("requestPasswordReset", () => {
       "Email is required.",
     )
   })
+
+  it("returns the generic sentence when the company slug is unknown", async () => {
+    post.mockRejectedValue(
+      apiError(401, "No active tenant found for subdomain 'missing'."),
+    )
+
+    await expect(requestPasswordReset("ana@club.test", "missing")).resolves.toBe(
+      genericMessage,
+    )
+    expect(post).toHaveBeenCalledWith(
+      "/api/auth/forgot-password",
+      { email: "ana@club.test" },
+      { headers: { "X-Tenant-Subdomain": "missing" } },
+    )
+  })
 })

@@ -7,6 +7,10 @@ const forgotPasswordResponseSchema = z.object({
   message: z.string().optional(),
 })
 
+function isUnknownTenantError(message: string): boolean {
+  return message.startsWith("No active tenant found for subdomain")
+}
+
 function tenantSubdomainHeader(
   subdomain: string | null,
 ): Record<string, string> | undefined {
@@ -36,12 +40,14 @@ export async function requestPasswordReset(
     const message = parsed.success ? (parsed.data.message?.trim() ?? "") : ""
     return message.length > 0 ? message : i18n.t("auth.login.resetSent")
   } catch (error) {
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("auth.login.resetFailed"),
-      ),
-      { cause: error },
+    const message = parseApiError(
+      getAxiosErrorPayload(error),
+      i18n.t("auth.login.resetFailed"),
     )
+    if (isUnknownTenantError(message)) {
+      return i18n.t("auth.login.resetSent")
+    }
+
+    throw new Error(message, { cause: error })
   }
 }
