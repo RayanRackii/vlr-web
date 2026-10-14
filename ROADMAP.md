@@ -160,7 +160,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] `submitInvitePassword` → `POST /api/invites/accept`
 - [x] Super-Admin `/admin/users` — lista global com filtro nome/tenant + exclusão
 - [x] Modo suporte: Abrir ambiente = login real (membership + `tenant_id` JWT); Voltar limpa metadata
-- [x] Esqueci a senha → `POST /api/auth/forgot-password` (e-mail Rolvix/Resend); `/reset-password` inalterado
+- [x] Esqueci a senha → `POST /api/auth/forgot-password` com `X-Tenant-Subdomain` do tenant atual (`resolveTenantSubdomain`: path `/t/:slug` ou host). Mensagem genérica inalterada. Portal B2C já envia o mesmo header em `POST /api/auth/customer/password-reset/request`. Ship junto com `vlr-api` #100. `/reset-password` inalterado. Sem secrets.
 - [ ] Onboarding público ainda coleta senha (legado)
 
 ## Dívidas técnicas conhecidas
@@ -276,6 +276,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-18 | **Código (WEB Slice 5):** Biblioteca Rolvix, preview/clone, detalhe de plano, checklist edit e auto toggle. Sem Gerar OS / OS relacionadas (Slice 6). Branch `feat/pmoc-os-phase1-web-library-detail`. |
 | 2026-09-19 | **Código (WEB Phase 2 Slice 2):** cobertura de ativos no detalhe `/pmoc/:id` via `GET /api/maintenance-plans/{id}/coverage`. Sem H6/H7, sem API. Branch `feat/pmoc-os-phase2-coverage-web`. |
 | 2026-09-24 | **Fechado (PMOC/OS):** Phases 1–3 COMPLETE / RELEASED PROD. Phase 4 NOT PLANNED. WEB `main` `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85). Current scheduling UI is interval + first due, not Frequency. |
+| 2026-10-14 | **Código (WEB, sem merge):** `POST /api/auth/forgot-password` envia `X-Tenant-Subdomain` resolvido como os demais calls de tenant (path `/t/:slug` ou host). O login B2B passa esse slug em “Esqueci a senha”. No apex `/login` não há slug, então o header não vai e a frase genérica continua. O portal B2C já enviava o header no reset de Customer. Ship junto com `vlr-api` #100. Sem secrets, sem env. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

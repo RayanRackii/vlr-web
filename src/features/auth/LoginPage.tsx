@@ -1,7 +1,7 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -20,6 +20,7 @@ import {
   type LoginFormValues,
 } from "@/features/auth/loginSchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
+import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { supabase } from "@/lib/supabase"
 import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
 
@@ -37,6 +38,7 @@ function getLoginErrorMessage(
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
@@ -78,7 +80,10 @@ export function LoginPage() {
 
     setIsSendingReset(true)
     try {
-      const message = await requestPasswordReset(email)
+      const message = await requestPasswordReset(
+        email,
+        resolveTenantSubdomain(location.pathname),
+      )
       setResetInfo(message)
     } catch (error) {
       form.setError("root", {
