@@ -288,6 +288,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** validity gate no AssetWizard (criar, editar e lote). `FormPrimaryButton` + `safeParse` do passo atual: geral, operação, preços e revisão. A revisão exige os passos anteriores; preços só entram quando o recurso é alugável. Voltar fica livre; erro de servidor permanece no diálogo, mantém os valores e reabilita “Concluir”. |
 | 2026-10-14 | **Fix (WEB):** validity gate em Criar OS e Novo Plano de Manutenção. `FormPrimaryButton` + `safeParse` do schema do formulário (ativo, data e tarefa; plano com unidade, categoria, agendamento e checklist). Voltar e Cancelar ficam livres; erro de servidor permanece no formulário, mantém os valores e reabilita o botão. |
 | 2026-10-14 | **Fix (WEB):** validity gate em tipos de ativo (criar e editar). `FormPrimaryButton` + `safeParse` do schema do diálogo (nome obrigatório; fabricante e descrição opcionais). Cancelar fica livre; erro de servidor permanece no diálogo, mantém os valores e reabilita “Salvar”. Exclusão continua caso especial. |
+| 2026-10-14 | **Fix (WEB):** validity gate em Pessoas (convidar usuário, atribuir funções, criar e editar função). `FormPrimaryButton` + `safeParse` do schema do formulário (nome, e-mail e ao menos uma função no convite; ao menos uma função na atribuição; nome da função no criar/editar; permissões seguem o schema e não são obrigatórias). Fechar fica livre; erro de servidor permanece no formulário, mantém os valores e reabilita o botão. E-mail único continua só no servidor. Exclusão de função, busca e clientes do portal ficaram de fora. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
@@ -309,7 +310,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | AssetWizard | gated 2026-10-14 (`fix/form-validity-asset-wizard`) — geral, operação, preços e revisão |
 | CreateWorkOrder / CreatePlan | gated 2026-10-14 (`fix/form-validity-workorder-plan`) — schema do formulário |
 | AssetCategories | gated 2026-10-14 (`fix/form-validity-asset-categories`) — nome obrigatório no criar/editar |
-| People users / roles | VALIDITY_GATE_APPLICABLE (e-mail único = SERVER_VALIDATION_ONLY) |
+| People users / roles | gated 2026-10-14 (`fix/form-validity-people-users-roles`) — convite, atribuição e criar/editar função; e-mail único = SERVER_VALIDATION_ONLY; exclusão = SPECIAL_CASE |
 | Catalog product form / cart / product request | Product create/edit: VALIDITY_GATE_APPLICABLE (**P2 2026-09-02**). Cart / product request: FOLLOWUP |
 | Reservations confirm / cancel | SPECIAL_CASE |
 | Delete dialogs | SPECIAL_CASE |

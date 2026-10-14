@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Users } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -25,9 +25,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LoadingButton } from "@/components/ui/loading-button"
 import {
   DIRECTORY_PAGE_SIZE,
   PeoplePager,
@@ -108,6 +108,11 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
       roleIds: [],
     },
   })
+
+  const inviteValues = useWatch({ control: inviteForm.control })
+  const isInviteValid = inviteSchema.safeParse(inviteValues).success
+  const assignValues = useWatch({ control: assignForm.control })
+  const isAssignValid = assignSchema.safeParse(assignValues).success
 
   const loadMembers = useCallback(async () => {
     setIsLoading(true)
@@ -399,12 +404,13 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                 )}
               />
               <DialogFooter>
-                <LoadingButton
+                <FormPrimaryButton
                   type="submit"
+                  isValid={isInviteValid}
                   loading={inviteForm.formState.isSubmitting}
                 >
                   {t("peopleAccess.users.sendInvite")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </DialogFooter>
             </form>
           </Form>
@@ -473,12 +479,13 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                 )}
               />
               <DialogFooter>
-                <LoadingButton
+                <FormPrimaryButton
                   type="submit"
+                  isValid={isAssignValid}
                   loading={assignForm.formState.isSubmitting}
                 >
                   {t("peopleAccess.users.saveRoles")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </DialogFooter>
             </form>
           </Form>
