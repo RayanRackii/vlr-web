@@ -124,19 +124,24 @@
         "headquarters": "Nombre de la unidad matriz",
         "adminName": "Nombre del administrador",
         "adminEmail": "Correo del administrador",
-        "adminPhone": "Celular",
-        "adminPassword": "Contraseña"
+        "adminPhone": "Celular"
       },
       "subdomainHint": "El subdominio del portal se genera automáticamente a partir del nombre (4 caracteres).",
       "subdomainPreview": "Subdominio previsto",
       "reviewLimits": "Límites de la prueba: 10 activos, 20 usuarios, notificaciones solo por correo.",
+      "inviteHint": "La contraseña no se pide aquí. Después de crear la cuenta, enviamos una invitación a este correo.",
       "finish": "Crear cuenta de prueba",
       "submitting": "Creando...",
-      "successTitle": "¡Cuenta creada!",
-      "successBody": "Será redirigido al inicio de sesión en breve.",
+      "successTitle": "Cuenta de prueba creada",
+      "successBody": "Enviamos una invitación a {{email}}. Abra ese correo y defina la contraseña en el enlace de la invitación.",
       "successSubdomain": "Su subdominio: {{subdomain}}",
       "errors": {
-        "failed": "No se pudo completar el registro. Inténtelo de nuevo."
+        "failed": "No se pudo completar el registro. Inténtelo de nuevo.",
+        "rateLimited": "Demasiados intentos de registro. Espere unos minutos e inténtelo de nuevo.",
+        "signupRejected": "No se pudo crear la cuenta con estos datos. Revise el correo e inténtelo de nuevo.",
+        "signupUnavailable": "El registro no está disponible en este momento. Inténtelo de nuevo en unos instantes.",
+        "trialRequired": "El registro público solo acepta una cuenta de prueba.",
+        "trialAlreadyUsed": "Ya existe una prueba para este correo o celular."
       }
     }
   },

@@ -161,7 +161,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] Super-Admin `/admin/users` — lista global com filtro nome/tenant + exclusão
 - [x] Modo suporte: Abrir ambiente = login real (membership + `tenant_id` JWT); Voltar limpa metadata
 - [x] Esqueci a senha → `POST /api/auth/forgot-password` com `X-Tenant-Subdomain`. No host ou `/t/:slug` o slug vem de `resolveTenantSubdomain`. No apex `/login` um passo pede o identificador da empresa antes do POST. Sem consulta de e-mail entre tenants. Resposta não-5xx fica na frase genérica; 5xx mostra o erro. Portal B2C já envia o header em `POST /api/auth/customer/password-reset/request`. Ship junto com `vlr-api` #100. `/reset-password` inalterado. Sem secrets.
-- [ ] Onboarding público ainda coleta senha (legado)
+- [x] Onboarding público não coleta senha. `POST /api/onboarding/tenants` segue só com `isTrial: true`; o admin define a senha no e-mail de convite (`/invite?token=`). Pareia com `vlr-api` #111.
 
 ## Dívidas técnicas conhecidas
 
@@ -280,6 +280,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Código (WEB, sem merge):** `POST /api/auth/forgot-password` envia `X-Tenant-Subdomain` resolvido como os demais calls de tenant (path `/t/:slug` ou host). O login B2B passa esse slug em “Esqueci a senha”. No apex `/login` não há slug, então o header não vai e a frase genérica continua. O portal B2C já enviava o header no reset de Customer. Ship junto com `vlr-api` #100. Sem secrets, sem env. |
 | 2026-10-14 | **Código (WEB, sem merge):** no apex `/login`, “Esqueci a senha” pede o identificador da empresa e só então envia `X-Tenant-Subdomain`. Sem consulta de e-mail entre tenants. Empresa desconhecida permanece na mesma frase genérica. |
 | 2026-10-14 | **Review (WEB, sem merge):** o reset B2B deixa de comparar o texto inglês da API. Qualquer falha que não seja 5xx vira a frase genérica; 5xx continua erro. Alinhado ao `vlr-api` #100, que passa a responder 200 genérico para tenant desconhecido. |
+| 2026-10-14 | **Código (WEB, sem merge):** onboarding público deixa de pedir senha. Sucesso pede para abrir o e-mail de convite; erros `ANONYMOUS_TRIAL_RATE_LIMITED`, `SIGNUP_REJECTED`, `SIGNUP_UNAVAILABLE`, `ANONYMOUS_TRIAL_REQUIRED` e trial já usado viram frases i18n. Pareia com `vlr-api` #111. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

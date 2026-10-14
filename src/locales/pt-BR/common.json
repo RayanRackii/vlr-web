@@ -124,19 +124,24 @@
         "headquarters": "Nome da unidade matriz",
         "adminName": "Nome do administrador",
         "adminEmail": "E-mail do administrador",
-        "adminPhone": "Celular (com DDD)",
-        "adminPassword": "Senha"
+        "adminPhone": "Celular (com DDD)"
       },
       "subdomainHint": "O subdomínio do portal será gerado automaticamente a partir do nome da empresa (4 caracteres).",
       "subdomainPreview": "Subdomínio previsto",
       "reviewLimits": "Limites do trial: 10 ativos, 20 usuários, notificações só por e-mail.",
+      "inviteHint": "A senha não é pedida aqui. Depois de criar a conta, enviamos um convite para este e-mail.",
       "finish": "Criar conta de teste",
       "submitting": "Criando...",
-      "successTitle": "Conta criada!",
-      "successBody": "Você será redirecionado para o login em instantes.",
+      "successTitle": "Conta de teste criada",
+      "successBody": "Enviamos um convite para {{email}}. Abra esse e-mail e defina a senha no link do convite.",
       "successSubdomain": "Seu subdomínio: {{subdomain}}",
       "errors": {
-        "failed": "Não foi possível concluir o cadastro. Tente novamente."
+        "failed": "Não foi possível concluir o cadastro. Tente novamente.",
+        "rateLimited": "Muitas tentativas de cadastro. Aguarde alguns minutos e tente novamente.",
+        "signupRejected": "Não foi possível criar a conta com estes dados. Verifique o e-mail e tente novamente.",
+        "signupUnavailable": "O serviço de cadastro está indisponível no momento. Tente novamente em instantes.",
+        "trialRequired": "O cadastro público aceita apenas uma conta de teste.",
+        "trialAlreadyUsed": "Já existe um teste para este e-mail ou celular."
       }
     }
   },

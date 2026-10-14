@@ -124,19 +124,24 @@
         "headquarters": "Headquarters unit name",
         "adminName": "Admin full name",
         "adminEmail": "Admin email",
-        "adminPhone": "Mobile phone",
-        "adminPassword": "Password"
+        "adminPhone": "Mobile phone"
       },
       "subdomainHint": "Your portal subdomain is generated automatically from the company name (4 characters).",
       "subdomainPreview": "Expected subdomain",
       "reviewLimits": "Trial limits: 10 assets, 20 users, email-only notifications.",
+      "inviteHint": "A password is not collected here. After you create the account, we email an invite to this address.",
       "finish": "Create trial account",
       "submitting": "Creating...",
-      "successTitle": "Account created!",
-      "successBody": "You will be redirected to login shortly.",
+      "successTitle": "Trial account created",
+      "successBody": "We sent an invite to {{email}}. Open that email and set your password from the invite link.",
       "successSubdomain": "Your subdomain: {{subdomain}}",
       "errors": {
-        "failed": "Could not complete signup. Please try again."
+        "failed": "Could not complete signup. Please try again.",
+        "rateLimited": "Too many signup attempts. Wait a few minutes and try again.",
+        "signupRejected": "We could not create the account with these details. Check the email and try again.",
+        "signupUnavailable": "Signup is unavailable right now. Try again in a moment.",
+        "trialRequired": "Public signup only accepts a trial account.",
+        "trialAlreadyUsed": "A trial already exists for this email or phone."
       }
     }
   },

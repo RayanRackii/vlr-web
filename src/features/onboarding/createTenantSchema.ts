@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import i18n from "@/lib/i18n"
+
 export const createTenantRequestSchema = z.object({
   legalName: z.string().trim().min(1, "Razão social é obrigatória."),
   taxId: z.string().trim().min(1, "CNPJ/CPF é obrigatório."),
@@ -19,10 +21,7 @@ export const createTenantRequestSchema = z.object({
     .string()
     .trim()
     .min(10, "Informe um celular válido com DDD."),
-  adminPassword: z
-    .string()
-    .min(8, "A senha deve ter no mínimo 8 caracteres."),
-  isTrial: z.boolean(),
+  isTrial: z.literal(true),
 })
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>
@@ -30,9 +29,10 @@ export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>
 export const createTenantResponseSchema = z.object({
   tenantId: z.string().uuid(),
   headquartersUnitId: z.string().uuid(),
-  adminUserId: z.string().uuid(),
+  adminUserId: z.string().uuid().nullable(),
   superAdminRoleId: z.string().uuid(),
-  supabaseAuthId: z.string().min(1),
+  supabaseAuthId: z.string().min(1).nullable(),
+  inviteId: z.string().uuid(),
   subdomain: z.string().nullable().optional(),
 })
 
@@ -42,12 +42,28 @@ const apiErrorSchema = z.object({
   error: z.string(),
 })
 
+const onboardingErrorMessageKeys = {
+  ANONYMOUS_TRIAL_RATE_LIMITED: "trial.onboarding.errors.rateLimited",
+  SIGNUP_REJECTED: "trial.onboarding.errors.signupRejected",
+  SIGNUP_UNAVAILABLE: "trial.onboarding.errors.signupUnavailable",
+  ANONYMOUS_TRIAL_REQUIRED: "trial.onboarding.errors.trialRequired",
+  "Trial already used for this email or phone.":
+    "trial.onboarding.errors.trialAlreadyUsed",
+} as const
+
+type OnboardingApiError = keyof typeof onboardingErrorMessageKeys
+
+function isOnboardingApiError(value: string): value is OnboardingApiError {
+  return Object.prototype.hasOwnProperty.call(onboardingErrorMessageKeys, value)
+}
+
 export function parseApiError(payload: unknown): string {
   const parsed = apiErrorSchema.safeParse(payload)
+  const fallback = i18n.t("trial.onboarding.errors.failed")
 
-  if (parsed.success) {
-    return parsed.data.error
+  if (!parsed.success || !isOnboardingApiError(parsed.data.error)) {
+    return fallback
   }
 
-  return "Não foi possível concluir o cadastro. Tente novamente."
+  return i18n.t(onboardingErrorMessageKeys[parsed.data.error])
 }
