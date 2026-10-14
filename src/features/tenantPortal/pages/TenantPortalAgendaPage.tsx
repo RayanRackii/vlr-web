@@ -26,13 +26,17 @@ import {
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
-import { formatReservationRange } from "@/features/rentals/services/reservationsService"
+import {
+  formatMoney,
+  formatReservationRange,
+} from "@/features/rentals/services/reservationsService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
 import {
   bookPortalSlot,
   cancelMyPortalReservation,
+  checkPortalAvailability,
   createPortalReservation,
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
@@ -76,6 +80,12 @@ export function TenantPortalAgendaPage() {
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
+  const [quote, setQuote] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "ready"; amount: number | null }
+    | { status: "error" }
+  >({ status: "idle" })
   const [layoutItems, setLayoutItems] = useState<
     {
       rentalAssetId: string
@@ -247,6 +257,45 @@ export function TenantPortalAgendaPage() {
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
   )
+  const quoteAssetId = selectedAsset?.assetId ?? null
+  const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
+  const quoteEnd = selectedSlot?.endTime.slice(0, 5) ?? null
+
+  useEffect(() => {
+    if (!quoteAssetId || !quoteStart || !quoteEnd) {
+      setQuote({ status: "idle" })
+      return
+    }
+
+    let cancelled = false
+    setQuote({ status: "loading" })
+    void checkPortalAvailability(subdomain, {
+      assetId: quoteAssetId,
+      date,
+      startTime: quoteStart,
+      endTime: quoteEnd,
+      quantity: 1,
+    })
+      .then((result) => {
+        if (cancelled) {
+          return
+        }
+        setQuote({
+          status: "ready",
+          amount: result.isAvailable ? result.estimatedTotalAmount : null,
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQuote({ status: "error" })
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [date, quoteAssetId, quoteEnd, quoteStart, subdomain])
+
   const queueEnabled = isLocationQueueEnabled(selectedAsset)
   const queue = useReservationQueue({
     rentalAssetId: selectedRentalAssetId,
@@ -269,22 +318,27 @@ export function TenantPortalAgendaPage() {
     }
     setSubmitting(true)
     try {
-      if (canBookViaSlotId(selectedSlot)) {
-        await bookPortalSlot({
-          slotId: selectedSlot.id,
-          unitId: selectedAsset.unitId,
-          quantity: 1,
-        })
-      } else {
-        await createPortalReservation({
-          unitId: selectedAsset.unitId,
-          date,
-          startTime: selectedSlot.startTime.slice(0, 5),
-          endTime: selectedSlot.endTime.slice(0, 5),
-          items: [{ assetId: selectedAsset.assetId, quantity: 1 }],
-        })
-      }
-      toast.success(t("tenantPortal.agenda.reserveSuccess"))
+      const created = canBookViaSlotId(selectedSlot)
+        ? await bookPortalSlot({
+            slotId: selectedSlot.id,
+            unitId: selectedAsset.unitId,
+            quantity: 1,
+          })
+        : await createPortalReservation({
+            unitId: selectedAsset.unitId,
+            date,
+            startTime: selectedSlot.startTime.slice(0, 5),
+            endTime: selectedSlot.endTime.slice(0, 5),
+            items: [{ assetId: selectedAsset.assetId, quantity: 1 }],
+          })
+      toast.success(
+        t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(created.totalAmount),
+          status: t(`rentals.reservations.statuses.${created.status}`, {
+            defaultValue: created.status,
+          }),
+        }),
+      )
       const [reservations, day] = await Promise.all([
         listMyPortalReservations(),
         fetchPublicScheduleDay(subdomain, date),
@@ -600,6 +654,38 @@ export function TenantPortalAgendaPage() {
             </div>
           ) : null}
 
+          {selectedAsset?.requiresDeposit ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.depositRequired")}
+            </p>
+          ) : null}
+
+          {quote.status === "loading" ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.quoteLoading")}
+            </p>
+          ) : null}
+
+          {quote.status === "ready" && quote.amount !== null ? (
+            <p className="text-sm font-medium">
+              {t("tenantPortal.agenda.available", {
+                amount: formatMoney(quote.amount),
+              })}
+            </p>
+          ) : null}
+
+          {quote.status === "ready" && quote.amount === null ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.unavailable")}
+            </p>
+          ) : null}
+
+          {quote.status === "error" ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.availabilityError")}
+            </p>
+          ) : null}
+
           {queue.hideReserveUi ? null : (
           <LoadingButton
             type="button"
@@ -644,6 +730,10 @@ export function TenantPortalAgendaPage() {
                       ·{" "}
                       {t(`rentals.reservations.statuses.${reservation.status}`, {
                         defaultValue: reservation.status,
+                      })}
+                      {" · "}
+                      {t("tenantPortal.agenda.total", {
+                        amount: formatMoney(reservation.totalAmount),
                       })}
                     </p>
                     {canCustomerSelfCancel(
