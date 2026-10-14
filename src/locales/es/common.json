@@ -212,6 +212,23 @@
       "resetCompanyMin": "El identificador debe tener al menos 2 caracteres.",
       "resetCompanyMax": "El identificador debe tener como máximo 63 caracteres.",
       "resetCompanyFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o acme-club)."
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Defina una nueva contraseña para acceder a la plataforma.",
+      "loading": "Validando enlace…",
+      "invalidLink": "Enlace inválido o expirado. Solicite un nuevo restablecimiento en la pantalla de inicio de sesión.",
+      "backToLogin": "Volver al inicio de sesión",
+      "passwordLabel": "Nueva contraseña",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "submit": "Guardar contraseña",
+      "submitting": "Guardando...",
+      "updateFailed": "No se pudo actualizar la contraseña. Inténtelo de nuevo.",
+      "validation": {
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+        "confirmRequired": "Confirme la contraseña.",
+        "mismatch": "Las contraseñas no coinciden."
+      }
     }
   },
   "tenantPortal": {
