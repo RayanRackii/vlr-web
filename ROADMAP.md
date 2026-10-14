@@ -276,6 +276,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-09-18 | **Código (WEB Slice 5):** Biblioteca Rolvix, preview/clone, detalhe de plano, checklist edit e auto toggle. Sem Gerar OS / OS relacionadas (Slice 6). Branch `feat/pmoc-os-phase1-web-library-detail`. |
 | 2026-09-19 | **Código (WEB Phase 2 Slice 2):** cobertura de ativos no detalhe `/pmoc/:id` via `GET /api/maintenance-plans/{id}/coverage`. Sem H6/H7, sem API. Branch `feat/pmoc-os-phase2-coverage-web`. |
 | 2026-09-24 | **Fechado (PMOC/OS):** Phases 1–3 COMPLETE / RELEASED PROD. Phase 4 NOT PLANNED. WEB `main` `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85). Current scheduling UI is interval + first due, not Frequency. |
+| 2026-10-14 | **Fix (WEB):** Clientes do portal distingue busca sem resultado do ambiente sem clientes e descarta resposta obsoleta da listagem (`AbortSignal` + geração da request). |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
