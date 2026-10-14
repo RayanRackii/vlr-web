@@ -9,14 +9,14 @@ import {
   type ColumnFiltersState,
 } from "@tanstack/react-table"
 import { CircleCheck, MoreHorizontal, Plus } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Dialog,
   DialogContent,
@@ -98,6 +98,9 @@ export function AssetCategoriesPage() {
       description: "",
     },
   })
+
+  const watchedValues = useWatch({ control: form.control })
+  const isCategoryFormValid = formSchema.safeParse(watchedValues).success
 
   const loadCategories = useCallback(async () => {
     if (!session) {
@@ -604,13 +607,14 @@ export function AssetCategoriesPage() {
                 >
                   {t("common.cancel")}
                 </Button>
-                <LoadingButton
+                <FormPrimaryButton
                   type="submit"
+                  isValid={isCategoryFormValid}
                   loading={form.formState.isSubmitting}
                   loadingLabel={t("assets.categories.actions.saving")}
                 >
                   {t("assets.categories.actions.save")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </DialogFooter>
             </form>
           </Form>
