@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   flexRender,
@@ -126,7 +126,7 @@ export function CatalogProductsPage() {
     resolver: zodResolver(catalogProductFormSchema),
     defaultValues: emptyProductForm(),
   })
-  const watchedValues = form.watch()
+  const watchedValues = useWatch({ control: form.control })
   const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
 
   async function reload() {
