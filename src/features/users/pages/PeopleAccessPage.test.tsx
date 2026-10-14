@@ -7,6 +7,7 @@ import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
 import type { RoleResponse } from "@/features/users/schemas/roleSchemas"
 import type {
   InviteTenantMemberResponse,
+  TenantCustomer,
   TenantMember,
 } from "@/features/users/schemas/userSchemas"
 import {
@@ -16,6 +17,7 @@ import {
 import {
   assignUserRoles,
   inviteTenantMember,
+  listTenantCustomers,
   listTenantMembers,
 } from "@/features/users/services/usersService"
 import i18n from "@/lib/i18n"
@@ -27,6 +29,7 @@ vi.mock("@/features/users/services/rolesService", () => ({
 
 vi.mock("@/features/users/services/usersService", () => ({
   listTenantMembers: vi.fn(),
+  listTenantCustomers: vi.fn(),
   inviteTenantMember: vi.fn(),
   assignUserRoles: vi.fn(),
   getCurrentUser: vi.fn(),
@@ -85,10 +88,28 @@ const ASSIGN_PERMS = [
   "core.users.assign_roles",
   "core.roles.read",
 ] as const
+const CUSTOMER_PERMS = ["core.users.read", "core.customers.read"] as const
+
+const CUSTOMER: TenantCustomer = {
+  id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+  name: "Cliente Portal",
+  email: "cliente@example.com",
+  emailVerified: true,
+  createdAt: "2026-10-13T15:00:00.000Z",
+}
+
+function memberPage(items: TenantMember[]) {
+  return { items, page: 1, pageSize: 20, total: items.length }
+}
+
+function customerPage(items: TenantCustomer[]) {
+  return { items, page: 1, pageSize: 20, total: items.length }
+}
 
 const listRolesMock = vi.mocked(listRoles)
 const listPermissionsMock = vi.mocked(listPermissions)
 const listTenantMembersMock = vi.mocked(listTenantMembers)
+const listTenantCustomersMock = vi.mocked(listTenantCustomers)
 const inviteTenantMemberMock = vi.mocked(inviteTenantMember)
 const assignUserRolesMock = vi.mocked(assignUserRoles)
 
@@ -116,12 +137,14 @@ describe("PeopleAccessPage", () => {
     listRolesMock.mockReset()
     listPermissionsMock.mockReset()
     listTenantMembersMock.mockReset()
+    listTenantCustomersMock.mockReset()
     inviteTenantMemberMock.mockReset()
     assignUserRolesMock.mockReset()
 
     listRolesMock.mockResolvedValue([ADMIN_ROLE])
     listPermissionsMock.mockResolvedValue([])
-    listTenantMembersMock.mockResolvedValue([])
+    listTenantMembersMock.mockResolvedValue(memberPage([]))
+    listTenantCustomersMock.mockResolvedValue(customerPage([]))
     inviteTenantMemberMock.mockResolvedValue(INVITE_RESPONSE)
     assignUserRolesMock.mockResolvedValue(undefined)
   })
@@ -192,7 +215,7 @@ describe("PeopleAccessPage", () => {
   })
 
   it("renders member name, email, role, status, and assign when permitted", async () => {
-    listTenantMembersMock.mockResolvedValue([MEMBER])
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
     renderPage(ASSIGN_PERMS)
 
     expect(await screen.findByText(MEMBER.fullName)).toBeInTheDocument()
@@ -280,6 +303,87 @@ describe("PeopleAccessPage", () => {
         fullName: "Bruno Lima",
         email: "bruno@example.com",
         roleIds: [ROLE_ID],
+      })
+    })
+  })
+
+  it("hides the portal customers tab without core.customers.read", async () => {
+    renderPage(READ_USERS)
+
+    await waitForUsersLoaded()
+
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("peopleAccess.tabs.customers"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(listTenantCustomersMock).not.toHaveBeenCalled()
+  })
+
+  it("shows portal customers on their tab and keeps the team empty copy separate", async () => {
+    const user = userEvent.setup()
+    listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
+    renderPage(CUSTOMER_PERMS)
+
+    expect(
+      await screen.findByText(i18n.t("peopleAccess.users.empty")),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("peopleAccess.tabs.customers"),
+      }),
+    )
+
+    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(screen.getByText(CUSTOMER.email ?? "")).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("peopleAccess.customers.verified")),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/13\/10\/2026/)).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("peopleAccess.users.empty")),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("peopleAccess.customers.empty")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("searches the team with at least two characters", async () => {
+    const user = userEvent.setup()
+    renderPage(READ_USERS)
+    await waitForUsersLoaded()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("peopleAccess.users.searchLabel")),
+      "a",
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("peopleAccess.users.searchAction"),
+      }),
+    )
+
+    expect(
+      screen.getByText(i18n.t("peopleAccess.users.searchTooShort")),
+    ).toBeInTheDocument()
+    expect(listTenantMembersMock).toHaveBeenCalledTimes(1)
+
+    await user.type(
+      screen.getByLabelText(i18n.t("peopleAccess.users.searchLabel")),
+      "n",
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("peopleAccess.users.searchAction"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(listTenantMembersMock).toHaveBeenCalledWith({
+        q: "an",
+        page: 1,
+        pageSize: 20,
       })
     })
   })

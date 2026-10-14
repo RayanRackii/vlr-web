@@ -59,6 +59,38 @@ export const tenantMemberListSchema = z.array(tenantMemberSchema)
 
 export type TenantMember = z.infer<typeof tenantMemberSchema>
 
+export function pagedSchema<T extends z.ZodType>(item: T) {
+  return z.object({
+    items: z.array(item),
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive(),
+    total: z.number().int().nonnegative(),
+  })
+}
+
+export const tenantMemberPageSchema = pagedSchema(tenantMemberSchema)
+
+export type TenantMemberPage = z.infer<typeof tenantMemberPageSchema>
+
+export const tenantCustomerSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().nullable(),
+  emailVerified: z.boolean(),
+  createdAt: z.string(),
+})
+
+export const tenantCustomerPageSchema = pagedSchema(tenantCustomerSchema)
+
+export type TenantCustomer = z.infer<typeof tenantCustomerSchema>
+export type TenantCustomerPage = z.infer<typeof tenantCustomerPageSchema>
+
+export type DirectoryQuery = {
+  q?: string
+  page?: number
+  pageSize?: number
+}
+
 export const inviteTenantMemberRequestSchema = z.object({
   fullName: z.string().trim().min(2),
   email: z.string().trim().email(),

@@ -1888,7 +1888,8 @@
     "title": "Personas y acceso",
     "description": "Gestione usuarios del entorno y los perfiles de acceso.",
     "tabs": {
-      "users": "Usuarios",
+      "users": "Equipo",
+      "customers": "Clientes del portal",
       "roles": "Funciones y permisos"
     },
     "role": "Función",
@@ -1914,6 +1915,7 @@
     "resources": {
       "dashboard": "Panel",
       "users": "Usuarios",
+      "customers": "Clientes",
       "roles": "Funciones",
       "units": "Unidades",
       "registration_fields": "Registro del portal",
@@ -1936,6 +1938,7 @@
     "catalog": {
       "core.dashboard.read": "Ver panel",
       "core.users.read": "Ver usuarios",
+      "core.customers.read": "Ver clientes del portal",
       "core.users.invite": "Invitar usuarios",
       "core.users.assign_roles": "Asignar funciones",
       "core.roles.read": "Ver funciones",
@@ -2003,7 +2006,30 @@
       "saveRoles": "Guardar funciones",
       "empty": "Ningún usuario en este entorno.",
       "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de este entorno.",
-      "noRoles": "Ninguna función asignada"
+      "noRoles": "Ninguna función asignada",
+      "searchLabel": "Buscar en el equipo",
+      "searchPlaceholder": "Nombre o e-mail",
+      "searchAction": "Buscar",
+      "searchTooShort": "Escriba al menos 2 caracteres."
+    },
+    "customers": {
+      "description": "Clientes que entran por el portal de este entorno.",
+      "empty": "Ningún cliente en este entorno.",
+      "emptyDescription": "Cuando alguien cree una cuenta en el portal, aparece aquí.",
+      "verified": "Verificado",
+      "unverified": "No verificado",
+      "createdAt": "Creado el",
+      "searchLabel": "Buscar clientes",
+      "searchPlaceholder": "Nombre o e-mail",
+      "searchAction": "Buscar",
+      "searchTooShort": "Escriba al menos 2 caracteres.",
+      "emptySearch": "Ningún resultado para esta búsqueda.",
+      "emptySearchDescription": "Ningún cliente coincide con ese nombre o e-mail."
+    },
+    "pagination": {
+      "summary": "{{from}}–{{to}} de {{total}}",
+      "previous": "Página anterior",
+      "next": "Página siguiente"
     },
     "roles": {
       "description": "Funciones de sistema y perfiles personalizados de este entorno.",
@@ -2036,6 +2062,7 @@
     "errors": {
       "invalidResponse": "Respuesta inválida de la API.",
       "loadUsers": "No se pudieron cargar los usuarios.",
+      "loadCustomers": "No se pudieron cargar los clientes.",
       "loadRoles": "No se pudieron cargar las funciones.",
       "loadRole": "No se pudo cargar la función.",
       "loadPermissions": "No se pudieron cargar los permisos.",
