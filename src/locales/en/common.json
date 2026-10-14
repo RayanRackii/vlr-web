@@ -165,7 +165,18 @@
       "invalidCredentials": "Invalid email or password.",
       "failed": "Could not sign in. Please try again.",
       "resetSent": "If an account exists for this email, we sent a password reset link.",
-      "resetFailed": "Could not send the reset email. Please try again."
+      "resetFailed": "Could not send the reset email. Please try again.",
+      "resetCompanyTitle": "Which company?",
+      "resetCompanySubtitle": "Enter the company identifier so we can send the reset link.",
+      "resetCompanyLabel": "Company",
+      "resetCompanyPlaceholder": "acme",
+      "resetCompanyHint": "Lowercase letters, numbers, and hyphens. It is the same identifier as the portal address.",
+      "resetCompanySubmit": "Send link",
+      "resetCompanySubmitting": "Sending...",
+      "resetCompanyBack": "Back",
+      "resetCompanyMin": "The identifier must be at least 2 characters.",
+      "resetCompanyMax": "The identifier must be at most 63 characters.",
+      "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club)."
     }
   },
   "tenantPortal": {

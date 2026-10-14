@@ -165,7 +165,18 @@
       "invalidCredentials": "E-mail ou senha inválidos.",
       "failed": "Não foi possível entrar. Tente novamente.",
       "resetSent": "Se existir uma conta com este e-mail, enviamos um link para redefinir a senha.",
-      "resetFailed": "Não foi possível enviar o e-mail de reset. Tente novamente."
+      "resetFailed": "Não foi possível enviar o e-mail de reset. Tente novamente.",
+      "resetCompanyTitle": "Qual é a empresa?",
+      "resetCompanySubtitle": "Informe o identificador da empresa para enviarmos o link de redefinição.",
+      "resetCompanyLabel": "Empresa",
+      "resetCompanyPlaceholder": "acme",
+      "resetCompanyHint": "Letras minúsculas, números e hífens. É o mesmo identificador do endereço do portal.",
+      "resetCompanySubmit": "Enviar link",
+      "resetCompanySubmitting": "Enviando...",
+      "resetCompanyBack": "Voltar",
+      "resetCompanyMin": "O identificador deve ter pelo menos 2 caracteres.",
+      "resetCompanyMax": "O identificador deve ter no máximo 63 caracteres.",
+      "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou acme-clube)."
     }
   },
   "tenantPortal": {
