@@ -1,10 +1,11 @@
+import axios from "axios"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   listTenantCustomers,
   listTenantMembers,
 } from "@/features/users/services/usersService"
-import { api } from "@/lib/api"
+import { api, isAxiosError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/lib/api", () => ({
@@ -66,5 +67,23 @@ describe("people directory responses", () => {
     expect(page.items[0]).not.toHaveProperty("passwordHash")
     expect(page.items[0]).not.toHaveProperty("document")
     expect(page.items[0]).not.toHaveProperty("phone")
+  })
+
+  it("forwards an abort signal and rethrows cancellation instead of a load error", async () => {
+    vi.mocked(isAxiosError).mockImplementation((error: unknown) =>
+      axios.isAxiosError(error),
+    )
+    const controller = new AbortController()
+    const canceled = new axios.CanceledError("canceled")
+    apiGet.mockRejectedValue(canceled)
+
+    await expect(
+      listTenantCustomers({ q: "zz", page: 1, pageSize: 20 }, controller.signal),
+    ).rejects.toBe(canceled)
+
+    expect(apiGet).toHaveBeenCalledWith("/api/customers", {
+      params: { q: "zz", page: 1, pageSize: 20 },
+      signal: controller.signal,
+    })
   })
 })

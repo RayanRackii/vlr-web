@@ -2033,7 +2033,9 @@
       "searchLabel": "Search customers",
       "searchPlaceholder": "Name or email",
       "searchAction": "Search",
-      "searchTooShort": "Type at least 2 characters."
+      "searchTooShort": "Type at least 2 characters.",
+      "emptySearch": "No results for this search.",
+      "emptySearchDescription": "No customer matches that name or email."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} of {{total}}",

@@ -2033,7 +2033,9 @@
       "searchLabel": "Buscar clientes",
       "searchPlaceholder": "Nombre o e-mail",
       "searchAction": "Buscar",
-      "searchTooShort": "Escriba al menos 2 caracteres."
+      "searchTooShort": "Escriba al menos 2 caracteres.",
+      "emptySearch": "Ningún resultado para esta búsqueda.",
+      "emptySearchDescription": "Ningún cliente coincide con ese nombre o e-mail."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",
