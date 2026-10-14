@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ShieldCheck } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -24,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -95,6 +96,9 @@ export function PeopleRolesTab({
       permissionKeys: [],
     },
   })
+
+  const roleValues = useWatch({ control: form.control })
+  const isRoleFormValid = schema.safeParse(roleValues).success
 
   const editingRole = editorRole === "create" ? null : editorRole
   const policy = editingRole
@@ -360,12 +364,13 @@ export function PeopleRolesTab({
               />
 
               {!policy.isFullyReadonly && canManage ? (
-                <LoadingButton
+                <FormPrimaryButton
                   type="submit"
+                  isValid={isRoleFormValid}
                   loading={form.formState.isSubmitting}
                 >
                   {t("peopleAccess.roles.save")}
-                </LoadingButton>
+                </FormPrimaryButton>
               ) : null}
             </form>
           </Form>
