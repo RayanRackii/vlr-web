@@ -292,4 +292,33 @@ describe("AdminAssetFamiliesPage", () => {
     )
     expect(screen.getByRole("alertdialog")).toBeInTheDocument()
   })
+
+  it("filters the order column by the digits typed, not a numeric range", async () => {
+    const user = userEvent.setup()
+    const dozen: AdminAssetFamily = {
+      ...courts,
+      id: "44444444-4444-4444-8444-444444444444",
+      key: "doze",
+      label: "Doze",
+      sortOrder: 12,
+    }
+    listMock.mockResolvedValue([courts, dozen])
+
+    render(<AdminAssetFamiliesPage />)
+    await screen.findByText("Doze")
+
+    const orderHeader = screen.getByRole("columnheader", { name: /Ordem/ })
+    await user.click(
+      within(orderHeader).getByRole("button", {
+        name: i18n.t("common.filter"),
+      }),
+    )
+    await user.type(
+      screen.getByPlaceholderText(i18n.t("common.searchPlaceholder")),
+      "12",
+    )
+
+    expect(screen.getByText("Doze")).toBeInTheDocument()
+    expect(screen.queryByText("Quadras")).not.toBeInTheDocument()
+  })
 })

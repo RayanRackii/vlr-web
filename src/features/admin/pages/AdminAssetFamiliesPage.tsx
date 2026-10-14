@@ -253,7 +253,8 @@ export function AdminAssetFamiliesPage() {
         ),
       },
       {
-        accessorKey: "sortOrder",
+        id: "sortOrder",
+        accessorFn: (row) => String(row.sortOrder),
         header: ({ column }) => (
           <DataTableColumnFilterHeader
             column={column}
