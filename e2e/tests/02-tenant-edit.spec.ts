@@ -34,7 +34,7 @@ test.describe("Tenant Edit regression", () => {
     ).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("Informações Básicas")).toBeVisible()
     await expect(page.getByText("Subdomínio e Identidade")).toBeVisible()
-    await expect(page.getByText("Módulos da Plataforma")).toBeVisible()
+    await expect(page.getByText("Módulos Rolvix")).toBeVisible()
     await expect(page.getByText("Famílias de recursos")).toBeVisible()
 
     await expect(page.getByRole("button", { name: /Inventário/ })).toBeVisible()
