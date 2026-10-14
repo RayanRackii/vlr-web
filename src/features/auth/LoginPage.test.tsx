@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
+import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
 function renderLogin(initialPath: string) {
@@ -43,6 +44,72 @@ describe("LoginPage next redirect", () => {
   it("ignores an open-redirect next URL", async () => {
     renderLogin("/login?next=https://evil.example")
     await submitValidCredentials()
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+})
+
+describe("LoginPage validity gate", () => {
+  beforeEach(() => {
+    vi.mocked(supabase.auth.signInWithPassword).mockReset()
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+      data: { user: { id: "1" }, session: {} },
+      error: null,
+    } as never)
+  })
+
+  it("keeps Entrar disabled until email and password pass the schema", async () => {
+    const user = userEvent.setup()
+    renderLogin("/login")
+
+    const entrar = screen.getByRole("button", { name: "Entrar" })
+    const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
+    expect(entrar).toBeDisabled()
+    expect(forgot).toBeDisabled()
+
+    await user.type(screen.getByLabelText("E-mail"), "not-an-email")
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    expect(entrar).toBeDisabled()
+    expect(forgot).toBeDisabled()
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText("E-mail"))
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.clear(screen.getByLabelText("Senha"))
+    expect(entrar).toBeDisabled()
+    expect(forgot).toBeEnabled()
+
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    expect(entrar).toBeEnabled()
+    expect(forgot).toBeEnabled()
+  })
+
+  it("stays on the form after a server error and re-enables Entrar", async () => {
+    const user = userEvent.setup()
+    vi.mocked(supabase.auth.signInWithPassword)
+      .mockResolvedValueOnce({
+        data: { user: null, session: null },
+        error: { message: "Invalid login credentials" },
+      } as never)
+      .mockResolvedValueOnce({
+        data: { user: { id: "1" }, session: {} },
+        error: null,
+      } as never)
+    renderLogin("/login")
+
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("auth.login.invalidCredentials"),
+    )
+    expect(screen.getByLabelText("E-mail")).toHaveValue("admin@clube.com")
+    expect(screen.getByLabelText("Senha")).toHaveValue("password1")
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Esqueci a senha" })).toBeEnabled()
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
   })
 })
