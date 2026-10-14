@@ -12,7 +12,7 @@ O primeiro cliente pagante é um **clube** que precisa (1) avisar clientes sobre
 1. **Notificações (Resend + WhatsApp Meta)** — e-mail Resend saudável. WhatsApp Catalog/Rentals + lembrete 24h **CLOSED_DEV**; entrega externa **desligada em PROD**. SMS de branding = Twilio Console (`Rolvix`). Não bloquear o beachhead de slots por ops Meta.
 2. **Portal B2C branded** — shell, login e-mail+senha, register dinâmico e menu multi-item já em código; fechar DNS/deploy.
 3. **Agenda por Slot** — admin (kinds/templates/dia) + B2C book por `slotId` (APIs no `vlr-api`; UX neste repo). Ver `ROADMAP.md` §3.5.
-4. Demais: gating B2B por módulos, admin de reservas, onboarding legado.
+4. Demais: gating B2B por módulos, admin de reservas, depósito.
 
 Detalhe: este `ROADMAP.md` e o do repo `vlr-api`. Regras: `.cursor/rules/`.
 
@@ -185,7 +185,7 @@ _Avoid_: custom domain (until real custom hostnames are supported), slug alone w
 ## 2. Dinâmica de Módulos e Customização
 - **Cardápio:** Super Admin ativa **módulos comerciais** por Tenant (`inventory`, `pmoc`, `os`, `rentals`, `catalog`). Inventory (Ativos) é opcional. Rentals / PMOC / OS exigem Asset Registry (capability), não o checkbox de Ativos — a API não autoativa `inventory`. `maintenance` é legado. UI B2B filtra a sidebar por `activeModules` em seções **Visão geral** / **Pessoas & portal** / **Operação** (parcial; `ModuleGuard` + Users do tenant ainda no ROADMAP). Canônico: `vlr-api` ADR 0004.
 - **Chrome B2B / landing Rolvix:** paleta padrão `#4D6A92` (primary), `#5A8FA0` (accent) e `#A2C6E9` (complementary), com gradiente azul suave em superfícies de destaque. O portal B2C continua personalizado por tenant (`PrimaryColor` / `AccentColor`); a paleta Rolvix é apenas fallback e default de novos cadastros.
-- **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → convidado define senha. Onboarding público com senha do admin é legado.
+- **Regra de ouro:** admin **nunca** define senha de outro User. Convite → `/invite?token=` → a própria pessoa define a senha. O onboarding público **nunca** coleta a senha do administrador: `POST /api/onboarding/tenants` aceita somente `isTrial: true`, cria o tenant e um convite pendente para o e-mail informado, e a senha é definida só nesse convite. Tenant permanente continua no wizard Platform Admin.
 - **Modo suporte:** “Abrir ambiente” no apex B2B (`rolvix.com.br`) — membership Admin + `app_metadata.tenant_id`. **Não** redirecionar para o portal B2C. “Voltar à plataforma” limpa `tenant_id`. E-mails `PlatformAdmin` não aparecem/contam como usuários do tenant e não podem ser excluídos pela UI de users.
 - **Subdomain** = roteamento + branding; o portal é a UI B2C.
 

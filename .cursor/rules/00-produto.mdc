@@ -25,7 +25,7 @@ O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes 
 1. Resend + WhatsApp — **adiada** (config Meta em andamento).
 2. Portal B2C branded — shell, login e-mail+senha, menu dinâmico em código; fechar DNS/deploy.
 3. Agenda por Slot (admin + B2C) **em código**; próximo salto visual: canvas de Layout.
-4. Demais: gating B2B restante (`ModuleGuard`), onboarding legado, depósito.
+4. Demais: gating B2B restante (`ModuleGuard`), depósito.
 
 ## ROADMAP (obrigatório)
 
@@ -36,7 +36,7 @@ O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes 
 
 ## Regra de ouro de segurança
 
-**Administradores nunca definem a senha de outros usuários.** Fluxo: convite por token → `/invite?token=` → `POST /api/invites/accept` (API real). Onboarding público que ainda coleta senha do admin é legado.
+**Administradores nunca definem a senha de outros usuários.** Fluxo: convite por token → `/invite?token=` → `POST /api/invites/accept` (API real). O onboarding público nunca coleta a senha do administrador; ela é definida só pelo convite.
 
 ## Ecossistema
 

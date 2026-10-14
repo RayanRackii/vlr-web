@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CircleCheck } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -23,13 +22,10 @@ import {
   type CreateTenantRequest,
 } from "@/features/onboarding/createTenantSchema"
 
-const SUCCESS_REDIRECT_DELAY_MS = 3000
-
 export function OnboardingPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null)
 
   const form = useForm<CreateTenantRequest>({
     resolver: zodResolver(createTenantRequestSchema),
@@ -42,7 +38,6 @@ export function OnboardingPage() {
       adminFullName: "",
       adminEmail: "",
       adminPhone: "",
-      adminPassword: "",
       isTrial: true,
     },
   })
@@ -58,22 +53,6 @@ export function OnboardingPage() {
     ],
     [t],
   )
-
-  useEffect(() => {
-    if (!showSuccessAlert) {
-      return
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" })
-
-    const timeoutId = window.setTimeout(() => {
-      void navigate("/login")
-    }, SUCCESS_REDIRECT_DELAY_MS)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [navigate, showSuccessAlert])
 
   async function goNext() {
     if (step === 0) {
@@ -94,7 +73,6 @@ export function OnboardingPage() {
         "adminFullName",
         "adminEmail",
         "adminPhone",
-        "adminPassword",
       ])
       if (!ok) {
         return
@@ -104,9 +82,10 @@ export function OnboardingPage() {
   }
 
   async function onFinish() {
+    const payload: CreateTenantRequest = { ...form.getValues(), isTrial: true }
     try {
-      await createTenant({ ...form.getValues(), isTrial: true })
-      setShowSuccessAlert(true)
+      await createTenant(payload)
+      setInviteEmail(payload.adminEmail)
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -114,6 +93,29 @@ export function OnboardingPage() {
           : t("trial.onboarding.errors.failed")
       form.setError("root", { message })
     }
+  }
+
+  if (inviteEmail !== null) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 p-6">
+        <div
+          role="status"
+          className="space-y-3 rounded-lg border border-green-600/30 bg-green-600/10 p-6 text-green-900 dark:text-green-300"
+        >
+          <div className="flex items-start gap-3">
+            <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("trial.onboarding.successTitle")}
+              </h1>
+              <p className="text-sm">
+                {t("trial.onboarding.successBody", { email: inviteEmail })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -137,21 +139,6 @@ export function OnboardingPage() {
         }}
       />
 
-      {showSuccessAlert ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
-        >
-          <div className="flex items-start gap-3">
-            <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <div className="space-y-1">
-              <p className="font-medium">{t("trial.onboarding.successTitle")}</p>
-              <p className="text-sm">{t("trial.onboarding.successBody")}</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       <Form {...form}>
         <form
           className="space-y-6"
@@ -160,7 +147,7 @@ export function OnboardingPage() {
           }}
           noValidate
         >
-          <fieldset className="space-y-6" disabled={showSuccessAlert}>
+          <fieldset className="space-y-6">
             {step === 0 ? (
               <div className="space-y-4">
                 <FormField
@@ -256,21 +243,9 @@ export function OnboardingPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="adminPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("trial.onboarding.fields.adminPassword")}
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <p className="text-sm text-muted-foreground">
+                  {t("trial.onboarding.inviteHint")}
+                </p>
               </div>
             ) : null}
 
@@ -317,7 +292,7 @@ export function OnboardingPage() {
             <Button
               type="button"
               variant="outline"
-              disabled={step === 0 || showSuccessAlert || isSubmitting}
+              disabled={step === 0 || isSubmitting}
               onClick={() => {
                 setStep((current) => Math.max(0, current - 1))
               }}
@@ -327,7 +302,7 @@ export function OnboardingPage() {
             {step < 2 ? (
               <Button
                 type="button"
-                disabled={showSuccessAlert || isSubmitting}
+                disabled={isSubmitting}
                 onClick={() => {
                   void goNext()
                 }}
@@ -339,7 +314,6 @@ export function OnboardingPage() {
                 type="button"
                 loading={isSubmitting}
                 loadingLabel={t("trial.onboarding.submitting")}
-                disabled={showSuccessAlert}
                 onClick={() => {
                   void onFinish()
                 }}
