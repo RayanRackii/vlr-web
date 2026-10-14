@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
 import i18n from "@/lib/i18n"
@@ -111,5 +111,63 @@ describe("LoginPage validity gate", () => {
 
     await user.click(screen.getByRole("button", { name: "Entrar" }))
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+})
+
+describe("LoginPage locale", () => {
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it("renders the sign-in and company steps in English", async () => {
+    const user = userEvent.setup()
+    await i18n.changeLanguage("en")
+    renderLogin("/login")
+
+    expect(
+      screen.getByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Sign in with your credentials to access the platform.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("Email")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("admin@hotel.com")).toBeInTheDocument()
+    expect(screen.getByLabelText("Password")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Your password")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: "Forgot password" }),
+    ).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Entrar" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Esqueci a senha" }),
+    ).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("Email"), "not-an-email")
+    await user.tab()
+    expect(await screen.findByText("Enter a valid email.")).toBeInTheDocument()
+    expect(screen.queryByText("Informe um e-mail válido.")).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText("Email"))
+    await user.type(screen.getByLabelText("Email"), "admin@clube.com")
+    await user.click(screen.getByRole("button", { name: "Forgot password" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Which company?" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Enter the company identifier so we can send the reset link.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("Company")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("acme")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Send link" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Back" })).toBeEnabled()
+    expect(
+      screen.queryByRole("heading", { name: "Qual é a empresa?" }),
+    ).not.toBeInTheDocument()
   })
 })

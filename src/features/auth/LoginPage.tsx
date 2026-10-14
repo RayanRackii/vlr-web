@@ -167,9 +167,11 @@ export function LoginPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 p-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Login</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("auth.login.title")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Entre com suas credenciais para acessar a plataforma.
+          {t("auth.login.subtitle")}
         </p>
       </header>
 
@@ -257,11 +259,11 @@ export function LoginPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>E-mail</FormLabel>
+                <FormLabel>{t("auth.login.emailLabel")}</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="admin@hotel.com"
+                    placeholder={t("auth.login.emailPlaceholder")}
                     autoComplete="email"
                     {...field}
                   />
@@ -276,11 +278,11 @@ export function LoginPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Senha</FormLabel>
+                <FormLabel>{t("auth.login.passwordLabel")}</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="Sua senha"
+                    placeholder={t("auth.login.passwordPlaceholder")}
                     autoComplete="current-password"
                     {...field}
                   />
@@ -313,9 +315,9 @@ export function LoginPage() {
             className="w-full"
             isValid={loginValid}
             loading={isSubmitting}
-            loadingLabel="Entrando..."
+            loadingLabel={t("auth.login.submitting")}
           >
-            Entrar
+            {t("auth.login.submit")}
           </FormPrimaryButton>
 
           <FormPrimaryButton
@@ -324,13 +326,13 @@ export function LoginPage() {
             className="w-full"
             isValid={forgotPasswordEmailValid}
             loading={isSendingReset}
-            loadingLabel="Enviando..."
+            loadingLabel={t("auth.login.forgotSubmitting")}
             disabled={isSubmitting}
             onClick={() => {
               void onForgotPassword()
             }}
           >
-            Esqueci a senha
+            {t("auth.login.forgotPassword")}
           </FormPrimaryButton>
         </form>
       </Form>

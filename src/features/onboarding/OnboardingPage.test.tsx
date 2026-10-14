@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { createTenant } from "@/features/onboarding/createTenant"
+import i18n from "@/lib/i18n"
 
 vi.mock("@/features/onboarding/createTenant", () => ({
   createTenant: vi.fn(),
@@ -184,5 +185,70 @@ describe("OnboardingPage validity gate", () => {
     expect(screen.getByRole("button", { name: "Criar conta de teste" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "Voltar" })).toBeEnabled()
     expect(createTenantMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("OnboardingPage locale", () => {
+  beforeEach(() => {
+    createTenantMock.mockReset()
+  })
+
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it("renders the public trial form in English", async () => {
+    const user = userEvent.setup()
+    await i18n.changeLanguage("en")
+    renderOnboarding()
+
+    expect(
+      screen.getByRole("heading", { name: "Start your free trial" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "14 days full access, then read-only until day 30. No WhatsApp; up to 10 assets and 20 users.",
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("navigation", { name: "Progress" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled()
+    expect(
+      screen.queryByRole("heading", { name: "Comece seu teste grátis" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Próximo" }),
+    ).not.toBeInTheDocument()
+
+    const legalName = screen.getByLabelText("Legal name")
+    await user.click(legalName)
+    await user.tab()
+    expect(
+      await screen.findByText("Legal name is required."),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText("Razão social é obrigatória."),
+    ).not.toBeInTheDocument()
+
+    await user.type(legalName, "Club Courts")
+    await user.type(screen.getByLabelText("Tax ID"), "12345678000199")
+    expect(screen.getByLabelText("Headquarters unit name")).toHaveValue(
+      "Matriz",
+    )
+    await user.click(screen.getByRole("button", { name: "Next" }))
+
+    expect(screen.getByLabelText("Admin full name")).toBeInTheDocument()
+    expect(screen.getByLabelText("Admin email")).toBeInTheDocument()
+    expect(screen.getByLabelText("Mobile phone")).toHaveAttribute(
+      "placeholder",
+      "11999999999",
+    )
+    expect(
+      screen.getByText(
+        "A password is not collected here. After you create the account, we email an invite to this address.",
+      ),
+    ).toBeInTheDocument()
   })
 })

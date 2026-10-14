@@ -167,6 +167,7 @@ export function OnboardingPage() {
 
       <WizardPanelsStepper
         steps={panelSteps}
+        ariaLabel={t("trial.onboarding.stepsAria")}
         currentIndex={step}
         onStepClick={(index) => {
           if (index < step) {
@@ -270,7 +271,7 @@ export function OnboardingPage() {
                       <FormControl>
                         <Input
                           type="tel"
-                          placeholder="11999999999"
+                          placeholder={t("trial.onboarding.fields.phonePlaceholder")}
                           autoComplete="tel"
                           {...field}
                         />
