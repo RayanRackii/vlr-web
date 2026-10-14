@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -43,6 +43,12 @@ export function TenantPortalLoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   })
+  const email = useWatch({ control: form.control, name: "email" })
+  const password = useWatch({ control: form.control, name: "password" })
+  const isLoginValid = schema.safeParse({
+    email: email ?? "",
+    password: password ?? "",
+  }).success
 
   async function onSubmit(values: CustomerLoginFormValues) {
     setSubmitting(true)
@@ -110,14 +116,15 @@ export function TenantPortalLoginPage() {
               {t("tenantPortal.login.forgotPassword")}
             </Link>
           </p>
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isLoginValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.login.submitting")}
           >
             {t("tenantPortal.login.submit")}
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
 

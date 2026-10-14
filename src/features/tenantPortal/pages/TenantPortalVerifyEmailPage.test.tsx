@@ -153,6 +153,42 @@ describe("TenantPortalVerifyEmailPage", () => {
     expect(
       screen.getByRole("heading", { name: i18n.t("tenantPortal.verify.title") }),
     ).toBeInTheDocument()
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.code"))).toHaveValue(
+      "123456",
+    )
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.verify.submit") }),
+    ).toBeEnabled()
+    expect(
+      screen.getByRole("link", { name: i18n.t("tenantPortal.verify.backToLogin") }),
+    ).toHaveAttribute("href", "/t/ficc")
+  })
+
+  it("keeps Confirmar disabled until the code passes the schema", async () => {
+    const user = userEvent.setup()
+    renderVerify({ email: "rachel@example.com" })
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.verify.submit"),
+    })
+    const back = screen.getByRole("link", {
+      name: i18n.t("tenantPortal.verify.backToLogin"),
+    })
+    expect(submit).toBeDisabled()
+    expect(back).toHaveAttribute("href", "/t/ficc")
+    expect(verifyEmail).not.toHaveBeenCalled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.code")),
+      "12345",
+    )
+    expect(submit).toBeDisabled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.code")),
+      "6",
+    )
+    expect(submit).toBeEnabled()
   })
 
   it("calls the resend API when send failed and resend is available", async () => {
