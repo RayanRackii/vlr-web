@@ -281,13 +281,20 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Código (WEB, sem merge):** no apex `/login`, “Esqueci a senha” pede o identificador da empresa e só então envia `X-Tenant-Subdomain`. Sem consulta de e-mail entre tenants. Empresa desconhecida permanece na mesma frase genérica. |
 | 2026-10-14 | **Review (WEB, sem merge):** o reset B2B deixa de comparar o texto inglês da API. Qualquer falha que não seja 5xx vira a frase genérica; 5xx continua erro. Alinhado ao `vlr-api` #100, que passa a responder 200 genérico para tenant desconhecido. |
 | 2026-10-14 | **Código (WEB, sem merge):** onboarding público deixa de pedir senha. Sucesso pede para abrir o e-mail de convite; erros `ANONYMOUS_TRIAL_RATE_LIMITED`, `SIGNUP_REJECTED`, `SIGNUP_UNAVAILABLE`, `ANONYMOUS_TRIAL_REQUIRED` e trial já usado viram frases i18n. Pareia com `vlr-api` #111. |
+| 2026-10-14 | **Fix (WEB):** validity gate em `/invite` (Definir senha), `/reset-password` (Salvar senha), “Esqueci a senha” no login B2B (só o e-mail; senha vazia não bloqueia) e no pedido de reset B2C. `FormPrimaryButton` + `safeParse` do schema do passo; Voltar/link de saída livres; erro de servidor permanece no formulário. Já estavam gated e ficaram de fora: identificador da empresa no apex e confirmação de senha B2C. “Entrar” no login B2B continua FOLLOWUP. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
 | Superfície | Classificação |
 |---|---|
 | Wizard empresa / TenantEditForm | VALIDITY_GATE_APPLICABLE (**este PR**) |
-| Login / reset / set-password | VALIDITY_GATE_APPLICABLE |
+| Login B2B (Entrar) | VALIDITY_GATE_APPLICABLE (FOLLOWUP) |
+| B2B “Esqueci a senha” | gated 2026-10-14 (`fix/form-validity-invite-reset`) — e-mail válido; senha não entra no gate |
+| Apex identificador da empresa | já usava `FormPrimaryButton` (skipped) |
+| `/reset-password` | gated 2026-10-14 |
+| `/invite` set-password | gated 2026-10-14 |
+| B2C password-reset request | gated 2026-10-14 |
+| B2C password-reset confirm | já usava `FormPrimaryButton` (skipped) |
 | Portal login / register / verify / profile | VALIDITY_GATE_APPLICABLE |
 | OnboardingPage (legado) | VALIDITY_GATE_APPLICABLE |
 | AssetWizard | VALIDITY_GATE_APPLICABLE |

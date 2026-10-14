@@ -89,6 +89,34 @@ describe("TenantPortal password reset", () => {
     window.localStorage.clear()
   })
 
+  it("keeps the reset request disabled until the email is valid", async () => {
+    const user = userEvent.setup()
+    renderResetFlow()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.passwordReset.requestSubmit"),
+    })
+    expect(submit).toBeDisabled()
+    expect(
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.passwordReset.backToLogin"),
+      }),
+    ).toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana",
+    )
+    expect(submit).toBeDisabled()
+    expect(requestReset).not.toHaveBeenCalled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "@club.test",
+    )
+    expect(submit).toBeEnabled()
+  })
+
   it("asks for a code and continues even when the API stays generic", async () => {
     const user = userEvent.setup()
     requestReset.mockResolvedValue()
@@ -121,6 +149,11 @@ describe("TenantPortal password reset", () => {
     window.localStorage.setItem("rolvix.customer.token", "old-session")
     renderResetFlow("/t/ficc/forgot-password/confirm")
 
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.passwordReset.submit"),
+    })
+    expect(submit).toBeDisabled()
+
     await user.type(screen.getByLabelText(i18n.t("tenantPortal.fields.code")), "123456")
     await user.type(
       screen.getByLabelText(i18n.t("tenantPortal.passwordReset.newPassword")),
@@ -130,11 +163,8 @@ describe("TenantPortal password reset", () => {
       screen.getByLabelText(i18n.t("tenantPortal.passwordReset.confirmPassword")),
       "new-secret",
     )
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("tenantPortal.passwordReset.submit"),
-      }),
-    )
+    expect(submit).toBeEnabled()
+    await user.click(submit)
 
     await waitFor(() => {
       expect(confirmReset).toHaveBeenCalledWith("ficc", {
@@ -177,5 +207,10 @@ describe("TenantPortal password reset", () => {
         name: i18n.t("tenantPortal.passwordReset.requestTitle"),
       }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.passwordReset.requestSubmit"),
+      }),
+    ).toBeEnabled()
   })
 })

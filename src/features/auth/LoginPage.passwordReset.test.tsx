@@ -65,6 +65,24 @@ describe("LoginPage forgot password", () => {
     })
   })
 
+  it("keeps Esqueci a senha disabled until the email is valid", async () => {
+    const user = userEvent.setup()
+    renderLogin("/login")
+
+    const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
+    expect(forgot).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled()
+
+    await user.type(screen.getByLabelText("E-mail"), "not-an-email")
+    expect(forgot).toBeDisabled()
+    expect(post).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText("E-mail"))
+    await user.type(screen.getByLabelText("E-mail"), "ana@club.test")
+    expect(forgot).toBeEnabled()
+    expect(screen.getByLabelText("Senha")).toHaveValue("")
+  })
+
   it("sends X-Tenant-Subdomain from a tenant host on the B2B login", async () => {
     Object.defineProperty(window, "location", {
       configurable: true,

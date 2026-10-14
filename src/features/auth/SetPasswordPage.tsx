@@ -6,7 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -48,8 +48,11 @@ export function SetPasswordPage() {
       password: "",
       confirmPassword: "",
     },
+    mode: "onTouched",
   })
 
+  const watchedValues = form.watch()
+  const isPasswordValid = schema.safeParse(watchedValues).success
   const isSubmitting = form.formState.isSubmitting
 
   useEffect(() => {
@@ -176,14 +179,15 @@ export function SetPasswordPage() {
                     )}
                   />
 
-                  <LoadingButton
+                  <FormPrimaryButton
                     type="submit"
                     className="w-full"
+                    isValid={isPasswordValid}
                     loading={isSubmitting}
                     loadingLabel={t("auth.invite.submitting")}
                   >
                     {t("auth.invite.submit")}
-                  </LoadingButton>
+                  </FormPrimaryButton>
                 </form>
               </Form>
             )}

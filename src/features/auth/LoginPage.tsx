@@ -66,7 +66,15 @@ export function LoginPage() {
       email: "",
       password: "",
     },
+    mode: "onTouched",
   })
+  const loginEmail = useWatch({
+    control: form.control,
+    name: "email",
+  })
+  const forgotPasswordEmailValid = loginSchema
+    .pick({ email: true })
+    .safeParse({ email: loginEmail ?? "" }).success
 
   const companyForm = useForm<PasswordResetCompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -301,10 +309,11 @@ export function LoginPage() {
             Entrar
           </LoadingButton>
 
-          <LoadingButton
+          <FormPrimaryButton
             type="button"
             variant="ghost"
             className="w-full"
+            isValid={forgotPasswordEmailValid}
             loading={isSendingReset}
             loadingLabel="Enviando..."
             disabled={isSubmitting}
@@ -313,7 +322,7 @@ export function LoginPage() {
             }}
           >
             Esqueci a senha
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
       )}
