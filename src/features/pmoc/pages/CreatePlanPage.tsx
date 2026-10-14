@@ -6,7 +6,7 @@ import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -108,10 +108,9 @@ export function CreatePlanPage() {
     name: "tasks",
   })
 
-  const watchedTasks = useWatch({
-    control: form.control,
-    name: "tasks",
-  })
+  const watchedValues = useWatch({ control: form.control })
+  const isPlanValid = formSchema.safeParse(watchedValues).success
+  const watchedTasks = watchedValues.tasks
 
   const loadLookups = useCallback(async () => {
     if (!session) {
@@ -672,13 +671,14 @@ export function CreatePlanPage() {
               >
                 {t("common.cancel")}
               </Button>
-              <LoadingButton
+              <FormPrimaryButton
                 type="submit"
+                isValid={isPlanValid}
                 loading={form.formState.isSubmitting}
                 loadingLabel={t("pmoc.create.actions.saving")}
               >
                 {t("pmoc.create.actions.save")}
-              </LoadingButton>
+              </FormPrimaryButton>
             </div>
           </form>
         </Form>

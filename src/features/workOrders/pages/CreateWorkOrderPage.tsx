@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, ClipboardPen } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -77,6 +77,9 @@ export function CreateWorkOrderPage() {
       taskTitle: "",
     },
   })
+
+  const watchedValues = useWatch({ control: form.control })
+  const isCreateValid = formSchema.safeParse(watchedValues).success
 
   const loadLookups = useCallback(async () => {
     setIsLoadingLookups(true)
@@ -374,15 +377,16 @@ export function CreateWorkOrderPage() {
               />
 
               <div className="flex justify-end">
-                <LoadingButton
+                <FormPrimaryButton
                   type="submit"
+                  isValid={isCreateValid}
                   loading={form.formState.isSubmitting}
                   disabled={isLoadingLookups || isSubmitted}
                 >
                   {isSubmitted
                     ? t("workOrders.create.redirecting")
                     : t("workOrders.create.submit")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </div>
             </form>
           </Form>
