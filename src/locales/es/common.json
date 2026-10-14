@@ -68,6 +68,10 @@
     "leaveQueue": "No se pudo salir de la fila.",
     "processImage": "No se pudo procesar la imagen.",
     "loadAssetFamilies": "No se pudieron cargar las familias de activos.",
+    "loadAdminAssetFamilies": "No se pudieron cargar las familias de recursos.",
+    "createAdminAssetFamily": "No se pudo crear la familia de recursos.",
+    "updateAdminAssetFamily": "No se pudo actualizar la familia de recursos.",
+    "deleteAdminAssetFamily": "No se pudo eliminar la familia de recursos.",
     "loadAdminModules": "No se pudieron cargar los módulos.",
     "loadOccupancyKinds": "No se pudieron cargar los tipos de ocupación.",
     "loadTemplates": "No se pudieron cargar las plantillas.",
@@ -915,6 +919,7 @@
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
     "adminUsers": "Usuarios",
+    "adminAssetFamilies": "Familias",
     "menu": "Menú de navegación",
     "openMenu": "Abrir menú de navegación",
     "loading": "Cargando menú de navegación",
@@ -2332,6 +2337,86 @@
       },
       "errors": {
         "loadFailed": "No se pudieron cargar los usuarios."
+      }
+    },
+    "assetFamilies": {
+      "title": "Familias de recursos",
+      "description": "Catálogo global de los formularios de registro. La clave es única y no cambia después de crearla. Las familias del sistema no se pueden desactivar ni eliminar.",
+      "includeInactive": "Incluir inactivas",
+      "seedBadge": "Sistema",
+      "statusActive": "Activa",
+      "statusInactive": "Inactiva",
+      "emptyTitle": "Ninguna familia encontrada",
+      "emptyDescription": "Cree una familia o incluya las inactivas.",
+      "columns": {
+        "key": "Clave",
+        "label": "Etiqueta",
+        "sortOrder": "Orden",
+        "fields": "Campos",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "create": "Nueva familia",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "deleteNamed": "Eliminar {{label}}",
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "retry": "Intentar de nuevo"
+      },
+      "dialog": {
+        "createTitle": "Nueva familia",
+        "editTitle": "Editar familia",
+        "createDescription": "La clave se define ahora y no puede cambiar después.",
+        "editDescription": "La clave no cambia. La etiqueta, los campos, el orden y el estado sí."
+      },
+      "form": {
+        "key": "Clave",
+        "keyHint": "Empieza con letra y usa solo letras minúsculas, números y _ (hasta 64 caracteres).",
+        "label": "Etiqueta",
+        "sortOrder": "Orden",
+        "isActive": "Activa",
+        "seedLocked": "Las familias del sistema (espacios, eléctricos, bienes y genérica) permanecen activas.",
+        "fields": "Campos",
+        "fieldsEmpty": "Sin campos. El formulario de registro no pide atributos extra.",
+        "addField": "Agregar campo",
+        "fieldItem": "Campo {{number}}",
+        "fieldKey": "Clave del campo",
+        "fieldLabel": "Etiqueta del campo",
+        "fieldType": "Tipo",
+        "fieldRequired": "Obligatorio",
+        "removeField": "Quitar campo"
+      },
+      "types": {
+        "text": "Texto",
+        "number": "Número",
+        "boolean": "Sí/no"
+      },
+      "validation": {
+        "key": "La clave debe empezar con letra y usar solo letras minúsculas, números y _ (hasta 64 caracteres).",
+        "labelRequired": "Indique la etiqueta.",
+        "labelMax": "La etiqueta debe tener como máximo 200 caracteres.",
+        "sortOrder": "Indique un número entero.",
+        "fieldKey": "Indique la clave del campo.",
+        "fieldKeyDuplicate": "Esta clave de campo está repetida.",
+        "seedActive": "Las familias del sistema no se pueden desactivar."
+      },
+      "success": {
+        "created": "Familia creada.",
+        "updated": "Familia actualizada.",
+        "deleted": "Familia eliminada."
+      },
+      "delete": {
+        "title": "Eliminar familia",
+        "description": "¿Eliminar {{label}} ({{key}})? La eliminación es definitiva y solo vale si la familia no está en uso.",
+        "confirm": "Eliminar",
+        "deleting": "Eliminando..."
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar las familias.",
+        "saveFailed": "No se pudo guardar la familia.",
+        "deleteFailed": "No se pudo eliminar la familia."
       }
     },
     "modules": {

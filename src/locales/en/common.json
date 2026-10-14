@@ -68,6 +68,10 @@
     "leaveQueue": "Could not leave the waiting queue.",
     "processImage": "Could not process image.",
     "loadAssetFamilies": "Could not load asset families.",
+    "loadAdminAssetFamilies": "Could not load asset families.",
+    "createAdminAssetFamily": "Could not create the asset family.",
+    "updateAdminAssetFamily": "Could not update the asset family.",
+    "deleteAdminAssetFamily": "Could not delete the asset family.",
     "loadAdminModules": "Could not load modules.",
     "loadOccupancyKinds": "Could not load occupancy kinds.",
     "loadTemplates": "Could not load templates.",
@@ -915,6 +919,7 @@
     "admin": "Super-Admin",
     "adminTenants": "Clients",
     "adminUsers": "Users",
+    "adminAssetFamilies": "Families",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu",
     "loading": "Loading navigation menu",
@@ -2332,6 +2337,86 @@
       },
       "errors": {
         "loadFailed": "Could not load users."
+      }
+    },
+    "assetFamilies": {
+      "title": "Asset families",
+      "description": "Global catalog for registration forms. The key is unique and cannot change after creation. System families cannot be deactivated or deleted.",
+      "includeInactive": "Include inactive",
+      "seedBadge": "System",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "emptyTitle": "No families found",
+      "emptyDescription": "Create a family or include inactive ones.",
+      "columns": {
+        "key": "Key",
+        "label": "Label",
+        "sortOrder": "Order",
+        "fields": "Fields",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "create": "New family",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleteNamed": "Delete {{label}}",
+        "save": "Save",
+        "saving": "Saving...",
+        "retry": "Try again"
+      },
+      "dialog": {
+        "createTitle": "New family",
+        "editTitle": "Edit family",
+        "createDescription": "The key is set now and cannot change later.",
+        "editDescription": "The key stays the same. Label, fields, order, and status can change."
+      },
+      "form": {
+        "key": "Key",
+        "keyHint": "Starts with a letter and uses only lowercase letters, digits, and _ (up to 64 characters).",
+        "label": "Label",
+        "sortOrder": "Order",
+        "isActive": "Active",
+        "seedLocked": "System families (spaces, electrical, goods, and generic) stay active.",
+        "fields": "Fields",
+        "fieldsEmpty": "No fields. Registration forms will not ask for extra attributes.",
+        "addField": "Add field",
+        "fieldItem": "Field {{number}}",
+        "fieldKey": "Field key",
+        "fieldLabel": "Field label",
+        "fieldType": "Type",
+        "fieldRequired": "Required",
+        "removeField": "Remove field"
+      },
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "boolean": "Yes/no"
+      },
+      "validation": {
+        "key": "The key must start with a letter and use only lowercase letters, digits, and _ (up to 64 characters).",
+        "labelRequired": "Enter a label.",
+        "labelMax": "The label must be at most 200 characters.",
+        "sortOrder": "Enter a whole number.",
+        "fieldKey": "Enter the field key.",
+        "fieldKeyDuplicate": "This field key is duplicated.",
+        "seedActive": "System families cannot be deactivated."
+      },
+      "success": {
+        "created": "Family created.",
+        "updated": "Family updated.",
+        "deleted": "Family deleted."
+      },
+      "delete": {
+        "title": "Delete family",
+        "description": "Delete {{label}} ({{key}})? This is permanent and only works when the family is unused.",
+        "confirm": "Delete",
+        "deleting": "Deleting..."
+      },
+      "errors": {
+        "loadFailed": "Could not load families.",
+        "saveFailed": "Could not save the family.",
+        "deleteFailed": "Could not delete the family."
       }
     },
     "modules": {

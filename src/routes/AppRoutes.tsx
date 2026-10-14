@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import { AdminAssetFamiliesPage } from "@/features/admin/pages/AdminAssetFamiliesPage"
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
 import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage"
 import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
@@ -280,6 +281,10 @@ export function AppRoutes() {
             />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route
+              path="/admin/asset-families"
+              element={<AdminAssetFamiliesPage />}
+            />
           </Route>
         </Route>
       </Route>
