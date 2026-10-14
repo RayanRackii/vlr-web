@@ -2,25 +2,40 @@ import { z } from "zod"
 
 import i18n from "@/lib/i18n"
 
+function translated(key: string) {
+  return {
+    error: () => i18n.t(key),
+  }
+}
+
 export const createTenantRequestSchema = z.object({
-  legalName: z.string().trim().min(1, "Razão social é obrigatória."),
-  taxId: z.string().trim().min(1, "CNPJ/CPF é obrigatório."),
+  legalName: z
+    .string()
+    .trim()
+    .min(1, translated("trial.onboarding.validation.legalNameRequired")),
+  taxId: z
+    .string()
+    .trim()
+    .min(1, translated("trial.onboarding.validation.taxIdRequired")),
   tradeName: z.string().trim().optional(),
   headquartersUnitName: z
     .string()
     .trim()
-    .min(1, "Nome da unidade matriz é obrigatório."),
+    .min(1, translated("trial.onboarding.validation.headquartersRequired")),
   headquartersUnitCode: z.string().trim().optional(),
-  adminFullName: z.string().trim().min(1, "Nome do administrador é obrigatório."),
+  adminFullName: z
+    .string()
+    .trim()
+    .min(1, translated("trial.onboarding.validation.adminNameRequired")),
   adminEmail: z
     .string()
     .trim()
-    .min(1, "E-mail é obrigatório.")
-    .email("Informe um e-mail válido."),
+    .min(1, translated("trial.onboarding.validation.emailRequired"))
+    .email(translated("trial.onboarding.validation.emailInvalid")),
   adminPhone: z
     .string()
     .trim()
-    .min(10, "Informe um celular válido com DDD."),
+    .min(10, translated("trial.onboarding.validation.phoneInvalid")),
   isTrial: z.literal(true),
 })
 

@@ -122,13 +122,15 @@
         "admin": "Admin",
         "review": "Review"
       },
+      "stepsAria": "Progress",
       "fields": {
         "legalName": "Legal name",
         "taxId": "Tax ID",
         "headquarters": "Headquarters unit name",
         "adminName": "Admin full name",
         "adminEmail": "Admin email",
-        "adminPhone": "Mobile phone"
+        "adminPhone": "Mobile phone",
+        "phonePlaceholder": "11999999999"
       },
       "subdomainHint": "Your portal subdomain is generated automatically from the company name (4 characters).",
       "subdomainPreview": "Expected subdomain",
@@ -146,6 +148,15 @@
         "signupUnavailable": "Signup is unavailable right now. Try again in a moment.",
         "trialRequired": "Public signup only accepts a trial account.",
         "trialAlreadyUsed": "A trial already exists for this email or phone."
+      },
+      "validation": {
+        "legalNameRequired": "Legal name is required.",
+        "taxIdRequired": "Tax ID is required.",
+        "headquartersRequired": "Headquarters name is required.",
+        "adminNameRequired": "Administrator name is required.",
+        "emailRequired": "Email is required.",
+        "emailInvalid": "Enter a valid email.",
+        "phoneInvalid": "Enter a valid mobile number with area code."
       }
     }
   },
@@ -173,6 +184,21 @@
     "login": {
       "invalidCredentials": "Invalid email or password.",
       "failed": "Could not sign in. Please try again.",
+      "title": "Sign in",
+      "subtitle": "Sign in with your credentials to access the platform.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "admin@hotel.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "forgotPassword": "Forgot password",
+      "forgotSubmitting": "Sending...",
+      "validation": {
+        "emailRequired": "Email is required.",
+        "emailInvalid": "Enter a valid email.",
+        "passwordRequired": "Password is required."
+      },
       "resetSent": "If an account exists for this email, we sent a password reset link.",
       "resetFailed": "Could not send the reset email. Please try again.",
       "resetCompanyTitle": "Which company?",
