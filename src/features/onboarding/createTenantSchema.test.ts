@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   createTenantRequestSchema,
   createTenantResponseSchema,
+  isPublicOnboardingStepValid,
   parseApiError,
+  type CreateTenantRequest,
 } from "@/features/onboarding/createTenantSchema"
 import i18n from "@/lib/i18n"
 
@@ -15,6 +17,18 @@ const response = {
   supabaseAuthId: null,
   inviteId: "44444444-4444-4444-8444-444444444444",
   subdomain: "club",
+}
+
+const validRequest: CreateTenantRequest = {
+  legalName: "Clube Quadras",
+  taxId: "12345678000199",
+  tradeName: "",
+  headquartersUnitName: "Matriz",
+  headquartersUnitCode: "",
+  adminFullName: "Ana Costa",
+  adminEmail: "ana@clube.com",
+  adminPhone: "11999999999",
+  isTrial: true,
 }
 
 const rawApiErrors = [
@@ -98,6 +112,57 @@ describe("createTenant schemas", () => {
       expect(message).not.toContain(apiError)
     },
   )
+
+  it("gates each public onboarding step without later empty fields", () => {
+    expect(
+      isPublicOnboardingStepValid(0, {
+        ...validRequest,
+        legalName: "",
+        taxId: "",
+      }),
+    ).toBe(false)
+    expect(
+      isPublicOnboardingStepValid(0, {
+        ...validRequest,
+        legalName: "   ",
+        taxId: "123",
+        adminEmail: "",
+        adminPhone: "",
+      }),
+    ).toBe(false)
+    expect(
+      isPublicOnboardingStepValid(0, {
+        ...validRequest,
+        adminFullName: "",
+        adminEmail: "not-an-email",
+        adminPhone: "123",
+      }),
+    ).toBe(true)
+
+    expect(
+      isPublicOnboardingStepValid(1, {
+        ...validRequest,
+        adminEmail: "not-an-email",
+      }),
+    ).toBe(false)
+    expect(
+      isPublicOnboardingStepValid(1, {
+        ...validRequest,
+        adminPhone: "119999999",
+        legalName: "",
+      }),
+    ).toBe(false)
+    expect(isPublicOnboardingStepValid(1, validRequest)).toBe(true)
+
+    expect(
+      isPublicOnboardingStepValid(2, {
+        ...validRequest,
+        legalName: "",
+      }),
+    ).toBe(false)
+    expect(isPublicOnboardingStepValid(2, validRequest)).toBe(true)
+    expect(isPublicOnboardingStepValid(3, validRequest)).toBe(false)
+  })
 
   it("replaces an unknown API error with the generic signup message", () => {
     expect(parseApiError({ error: "provider said no" })).toBe(

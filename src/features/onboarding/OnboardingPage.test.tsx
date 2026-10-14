@@ -112,6 +112,77 @@ describe("OnboardingPage", () => {
       "Muitas tentativas de cadastro. Aguarde alguns minutos e tente novamente.",
     )
     expect(screen.queryByText("ANONYMOUS_TRIAL_RATE_LIMITED")).not.toBeInTheDocument()
+    expect(screen.getByText("Clube Quadras")).toBeInTheDocument()
+    expect(screen.getByText("ana@clube.com")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Criar conta de teste" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeEnabled()
+
+    createTenantMock.mockResolvedValueOnce({
+      tenantId: "11111111-1111-4111-8111-111111111111",
+      headquartersUnitId: "22222222-2222-4222-8222-222222222222",
+      adminUserId: null,
+      superAdminRoleId: "33333333-3333-4333-8333-333333333333",
+      supabaseAuthId: null,
+      inviteId: "44444444-4444-4444-8444-444444444444",
+      subdomain: "club",
+    })
+    await user.click(screen.getByRole("button", { name: "Criar conta de teste" }))
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Enviamos um convite para ana@clube.com. Abra esse e-mail e defina a senha no link do convite.",
+    )
+    expect(createTenantMock).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("OnboardingPage validity gate", () => {
+  beforeEach(() => {
+    createTenantMock.mockReset()
+  })
+
+  it("keeps Próximo disabled until the current step schema is valid", async () => {
+    const user = userEvent.setup()
+    renderOnboarding()
+
+    const next = screen.getByRole("button", { name: "Próximo" })
+    expect(next).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeDisabled()
+
+    await user.type(screen.getByLabelText("Razão social"), "   ")
+    await user.type(screen.getByLabelText("CNPJ/CPF"), "12345678000199")
+    expect(next).toBeDisabled()
+    expect(createTenantMock).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText("Razão social"))
+    await user.type(screen.getByLabelText("Razão social"), "Clube Quadras")
+    expect(next).toBeEnabled()
+
+    await user.clear(screen.getByLabelText("Razão social"))
+    expect(next).toBeDisabled()
+
+    await user.type(screen.getByLabelText("Razão social"), "Clube Quadras")
+    await user.click(next)
+
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Próximo" })).toBeDisabled()
+
+    await user.type(screen.getByLabelText("Nome do administrador"), "Ana Costa")
+    await user.type(screen.getByLabelText("E-mail do administrador"), "not-an-email")
+    await user.type(screen.getByLabelText("Celular (com DDD)"), "119999999")
+    expect(screen.getByRole("button", { name: "Próximo" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeEnabled()
+
+    await user.clear(screen.getByLabelText("E-mail do administrador"))
+    await user.type(screen.getByLabelText("E-mail do administrador"), "ana@clube.com")
+    expect(screen.getByRole("button", { name: "Próximo" })).toBeDisabled()
+
+    await user.clear(screen.getByLabelText("Celular (com DDD)"))
+    await user.type(screen.getByLabelText("Celular (com DDD)"), "11999999999")
+    expect(screen.getByRole("button", { name: "Próximo" })).toBeEnabled()
+
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
+    expect(screen.getByRole("button", { name: "Criar conta de teste" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Voltar" })).toBeEnabled()
+    expect(createTenantMock).not.toHaveBeenCalled()
   })
 })
