@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import {
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
+import { isAssetWizardStepValid } from "@/features/assets/components/assetWizardStepSchema"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
   attributesToPayload,
@@ -220,6 +221,30 @@ export function AssetWizard({
 
   const currentStepId = steps[stepIndex]?.id ?? "general"
   const isLastStep = stepIndex >= steps.length - 1
+  const isCurrentStepValid = useMemo(
+    () =>
+      isAssetWizardStepValid(currentStepId, {
+        mode,
+        rentalType: form.rentalType,
+        unitId: form.unitId,
+        categoryId: form.categoryId,
+        familyId: form.familyId,
+        name: form.name,
+        tag: form.tag,
+        baseLocationName: form.baseLocationName,
+        baseTag: form.baseTag,
+        startNumber: form.startNumber,
+        endNumber: form.endNumber,
+        totalQuantity: form.totalQuantity,
+        attributes: form.attributes,
+        familyFields: selectedFamily?.fields ?? [],
+        isRentable: form.isRentable,
+        queueEnabled: form.queueEnabled,
+        queueOpeningTime: form.queueOpeningTime,
+        pricing,
+      }),
+    [currentStepId, form, mode, pricing, selectedFamily],
+  )
   const isBulkLocation = mode === "bulk" && form.rentalType === "Location"
   const isBulkGood = mode === "bulk" && form.rentalType === "Good"
 
@@ -1618,8 +1643,9 @@ export function AssetWizard({
           </Button>
           <div className="flex gap-2">
             {isLastStep ? (
-              <LoadingButton
+              <FormPrimaryButton
                 type="button"
+                isValid={isCurrentStepValid}
                 loading={isSubmitting}
                 disabled={isLoading || readOnly}
                 onClick={() => {
@@ -1627,15 +1653,17 @@ export function AssetWizard({
                 }}
               >
                 {t("assets.wizard.finish")}
-              </LoadingButton>
+              </FormPrimaryButton>
             ) : (
-              <Button
+              <FormPrimaryButton
                 type="button"
-                disabled={isLoading || isSubmitting}
+                isValid={isCurrentStepValid}
+                loading={isSubmitting}
+                disabled={isLoading}
                 onClick={handleNext}
               >
                 {t("assets.wizard.next")}
-              </Button>
+              </FormPrimaryButton>
             )}
           </div>
         </DialogFooter>
