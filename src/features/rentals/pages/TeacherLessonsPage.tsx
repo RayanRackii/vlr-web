@@ -26,28 +26,47 @@ import {
 import { isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+function initialLessonDate() {
+  const today = todayIsoDate()
+  if (typeof window === "undefined") return today
+  const value = new URLSearchParams(window.location.search).get("date")
+  if (!value || !ISO_DATE.test(value) || value < today) return today
+  return value
+}
+
 export function TeacherLessonsPage() {
   const { t } = useTranslation()
   const { assets, day, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
-  const available = day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? []
-  const lessons = day?.slots.filter((slot) => slot.occupancyKindKey === "lesson" && isUnreservedAvailable(slot)) ?? []
-  const schema = useMemo(() => z.object({
-    assetId: z.string().min(1),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    slotKey: z.string()
-      .min(1, { message: t("rentals.teacherLessons.slotRequired") })
-      .refine((value) => !value || available.some((slot) => slotKeyFor(slot) === value), {
-        message: t("rentals.teacherLessons.slotUnavailable"),
-      }),
-    label: z.string().max(120),
-  }), [available, t])
+  const available = useMemo(
+    () => day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? [],
+    [day],
+  )
+  const lessons = useMemo(
+    () => day?.slots.filter((slot) => slot.occupancyKindKey === "lesson" && isUnreservedAvailable(slot)) ?? [],
+    [day],
+  )
+  const schema = useMemo(() => {
+    const slotRequired = t("rentals.teacherLessons.slotRequired")
+    return z.object({
+      assetId: z.string().min(1),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      slotKey: z.string({ error: slotRequired })
+        .min(1, { error: slotRequired })
+        .refine((value) => !value || available.some((slot) => slotKeyFor(slot) === value), {
+          message: t("rentals.teacherLessons.slotUnavailable"),
+        }),
+      label: z.string().max(120),
+    })
+  }, [available, t])
   type FormValues = z.infer<typeof schema>
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: { assetId: "", date: todayIsoDate(), slotKey: "", label: "" },
+    defaultValues: { assetId: "", date: initialLessonDate(), slotKey: "", label: "" },
   })
-  const { getValues, setError, setValue } = form
+  const { clearErrors, getValues, setError, setValue } = form
   const assetId = useWatch({ control: form.control, name: "assetId" })
   const date = useWatch({ control: form.control, name: "date" })
   const slotKey = useWatch({ control: form.control, name: "slotKey" })
@@ -59,6 +78,16 @@ export function TeacherLessonsPage() {
     if (!assets.length || assetId) return
     setValue("assetId", assets[0].id, { shouldValidate: true })
   }, [assetId, assets, setValue])
+
+  useEffect(() => {
+    if (!date || !ISO_DATE.test(date)) return
+    const url = new URL(window.location.href)
+    if (date === todayIsoDate()) url.searchParams.delete("date")
+    else url.searchParams.set("date", date)
+    const next = `${url.pathname}${url.search}${url.hash}`
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    if (current !== next) window.history.replaceState(window.history.state, "", next)
+  }, [date])
 
   useEffect(() => {
     if (!assetId || !date) return
@@ -84,8 +113,9 @@ export function TeacherLessonsPage() {
     }
     try {
       await create({ assetId: valuesToSubmit.assetId, date: valuesToSubmit.date, slot, label: valuesToSubmit.label })
-      form.setValue("label", "")
-      form.setValue("slotKey", "", { shouldValidate: true })
+      setValue("label", "")
+      setValue("slotKey", "", { shouldValidate: false })
+      clearErrors("slotKey")
       await loadDay(valuesToSubmit.assetId, valuesToSubmit.date)
     } catch {
       // The hook reports API errors and keeps the form values for correction.
@@ -118,7 +148,18 @@ export function TeacherLessonsPage() {
           <FormField control={form.control} name="slotKey" render={({ field }) => (
             <FormItem className="sm:col-span-2">
               <FormLabel>{t("rentals.teacherLessons.availableTime")}</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange} items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}` }))} disabled={busy || available.length === 0}>
+              <Select
+                value={field.value ? field.value : null}
+                onValueChange={(value) => {
+                  if (typeof value !== "string" || value.length === 0) {
+                    setValue("slotKey", "", { shouldValidate: false })
+                    return
+                  }
+                  field.onChange(value)
+                }}
+                items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}` }))}
+                disabled={busy || available.length === 0}
+              >
                 <FormControl><SelectTrigger aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={t("rentals.teacherLessons.chooseTime")} /></SelectTrigger></FormControl>
                 <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</SelectItem>)}</SelectContent>
               </Select>
