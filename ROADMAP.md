@@ -287,6 +287,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** validity gate no onboarding público legado (`/onboarding`). `FormPrimaryButton` + `safeParse` do passo: empresa (razão social, documento, matriz), administrador (nome, e-mail, celular) e revisão (schema completo). Voltar fica livre; erro de servidor permanece na revisão, mantém os valores e reabilita “Criar conta de teste”. |
 | 2026-10-14 | **Fix (WEB):** validity gate no AssetWizard (criar, editar e lote). `FormPrimaryButton` + `safeParse` do passo atual: geral, operação, preços e revisão. A revisão exige os passos anteriores; preços só entram quando o recurso é alugável. Voltar fica livre; erro de servidor permanece no diálogo, mantém os valores e reabilita “Concluir”. |
 | 2026-10-14 | **Fix (WEB):** validity gate em Criar OS e Novo Plano de Manutenção. `FormPrimaryButton` + `safeParse` do schema do formulário (ativo, data e tarefa; plano com unidade, categoria, agendamento e checklist). Voltar e Cancelar ficam livres; erro de servidor permanece no formulário, mantém os valores e reabilita o botão. |
+| 2026-10-14 | **Fix (WEB):** validity gate em tipos de ativo (criar e editar). `FormPrimaryButton` + `safeParse` do schema do diálogo (nome obrigatório; fabricante e descrição opcionais). Cancelar fica livre; erro de servidor permanece no diálogo, mantém os valores e reabilita “Salvar”. Exclusão continua caso especial. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
@@ -307,7 +308,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | OnboardingPage (legado) | gated 2026-10-14 (`fix/form-validity-onboarding-page`) — empresa, administrador e revisão |
 | AssetWizard | gated 2026-10-14 (`fix/form-validity-asset-wizard`) — geral, operação, preços e revisão |
 | CreateWorkOrder / CreatePlan | gated 2026-10-14 (`fix/form-validity-workorder-plan`) — schema do formulário |
-| AssetCategories | VALIDITY_GATE_APPLICABLE |
+| AssetCategories | gated 2026-10-14 (`fix/form-validity-asset-categories`) — nome obrigatório no criar/editar |
 | People users / roles | VALIDITY_GATE_APPLICABLE (e-mail único = SERVER_VALIDATION_ONLY) |
 | Catalog product form / cart / product request | Product create/edit: VALIDITY_GATE_APPLICABLE (**P2 2026-09-02**). Cart / product request: FOLLOWUP |
 | Reservations confirm / cancel | SPECIAL_CASE |
