@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CircleCheck } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -19,6 +19,7 @@ import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { createTenant } from "@/features/onboarding/createTenant"
 import {
   createTenantRequestSchema,
+  isPublicOnboardingStepValid,
   type CreateTenantRequest,
 } from "@/features/onboarding/createTenantSchema"
 
@@ -26,6 +27,8 @@ export function OnboardingPage() {
   const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const [inviteEmail, setInviteEmail] = useState<string | null>(null)
+
+  const [submitting, setSubmitting] = useState(false)
 
   const form = useForm<CreateTenantRequest>({
     resolver: zodResolver(createTenantRequestSchema),
@@ -40,10 +43,32 @@ export function OnboardingPage() {
       adminPhone: "",
       isTrial: true,
     },
+    mode: "onTouched",
   })
 
-  const isSubmitting = form.formState.isSubmitting
-  const values = form.watch()
+  const legalName = useWatch({ control: form.control, name: "legalName" }) ?? ""
+  const taxId = useWatch({ control: form.control, name: "taxId" }) ?? ""
+  const tradeName = useWatch({ control: form.control, name: "tradeName" }) ?? ""
+  const headquartersUnitName =
+    useWatch({ control: form.control, name: "headquartersUnitName" }) ?? ""
+  const headquartersUnitCode =
+    useWatch({ control: form.control, name: "headquartersUnitCode" }) ?? ""
+  const adminFullName =
+    useWatch({ control: form.control, name: "adminFullName" }) ?? ""
+  const adminEmail = useWatch({ control: form.control, name: "adminEmail" }) ?? ""
+  const adminPhone = useWatch({ control: form.control, name: "adminPhone" }) ?? ""
+  const stepValues: CreateTenantRequest = {
+    legalName,
+    taxId,
+    tradeName,
+    headquartersUnitName,
+    headquartersUnitCode,
+    adminFullName,
+    adminEmail,
+    adminPhone,
+    isTrial: true,
+  }
+  const isCurrentStepValid = isPublicOnboardingStepValid(step, stepValues)
 
   const panelSteps = useMemo(
     () => [
@@ -82,16 +107,27 @@ export function OnboardingPage() {
   }
 
   async function onFinish() {
-    const payload: CreateTenantRequest = { ...form.getValues(), isTrial: true }
+    const parsed = createTenantRequestSchema.safeParse({
+      ...form.getValues(),
+      isTrial: true,
+    })
+    if (!parsed.success) {
+      await form.trigger()
+      return
+    }
+
+    setSubmitting(true)
     try {
-      await createTenant(payload)
-      setInviteEmail(payload.adminEmail)
+      await createTenant(parsed.data)
+      setInviteEmail(parsed.data.adminEmail)
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : t("trial.onboarding.errors.failed")
       form.setError("root", { message })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -255,25 +291,25 @@ export function OnboardingPage() {
                   <span className="text-muted-foreground">
                     {t("trial.onboarding.fields.legalName")}:{" "}
                   </span>
-                  {values.legalName}
+                  {stepValues.legalName}
                 </p>
                 <p>
                   <span className="text-muted-foreground">
                     {t("trial.onboarding.fields.taxId")}:{" "}
                   </span>
-                  {values.taxId}
+                  {stepValues.taxId}
                 </p>
                 <p>
                   <span className="text-muted-foreground">
                     {t("trial.onboarding.fields.adminEmail")}:{" "}
                   </span>
-                  {values.adminEmail}
+                  {stepValues.adminEmail}
                 </p>
                 <p>
                   <span className="text-muted-foreground">
                     {t("trial.onboarding.fields.adminPhone")}:{" "}
                   </span>
-                  {values.adminPhone}
+                  {stepValues.adminPhone}
                 </p>
                 <p className="text-muted-foreground">
                   {t("trial.onboarding.reviewLimits")}
@@ -292,7 +328,7 @@ export function OnboardingPage() {
             <Button
               type="button"
               variant="outline"
-              disabled={step === 0 || isSubmitting}
+              disabled={step === 0 || submitting}
               onClick={() => {
                 setStep((current) => Math.max(0, current - 1))
               }}
@@ -300,26 +336,28 @@ export function OnboardingPage() {
               {t("common.back")}
             </Button>
             {step < 2 ? (
-              <Button
+              <FormPrimaryButton
                 type="button"
-                disabled={isSubmitting}
+                isValid={isCurrentStepValid}
+                loading={submitting}
                 onClick={() => {
                   void goNext()
                 }}
               >
                 {t("common.next")}
-              </Button>
+              </FormPrimaryButton>
             ) : (
-              <LoadingButton
+              <FormPrimaryButton
                 type="button"
-                loading={isSubmitting}
+                isValid={isCurrentStepValid}
+                loading={submitting}
                 loadingLabel={t("trial.onboarding.submitting")}
                 onClick={() => {
                   void onFinish()
                 }}
               >
                 {t("trial.onboarding.finish")}
-              </LoadingButton>
+              </FormPrimaryButton>
             )}
           </div>
         </form>

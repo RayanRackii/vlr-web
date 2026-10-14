@@ -26,6 +26,45 @@ export const createTenantRequestSchema = z.object({
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>
 
+export const publicOnboardingCompanyStepSchema = createTenantRequestSchema.pick({
+  legalName: true,
+  taxId: true,
+  headquartersUnitName: true,
+})
+
+export const publicOnboardingAdminStepSchema = createTenantRequestSchema.pick({
+  adminFullName: true,
+  adminEmail: true,
+  adminPhone: true,
+})
+
+export function isPublicOnboardingStepValid(
+  step: number,
+  values: CreateTenantRequest,
+): boolean {
+  if (step === 0) {
+    return publicOnboardingCompanyStepSchema.safeParse({
+      legalName: values.legalName,
+      taxId: values.taxId,
+      headquartersUnitName: values.headquartersUnitName,
+    }).success
+  }
+
+  if (step === 1) {
+    return publicOnboardingAdminStepSchema.safeParse({
+      adminFullName: values.adminFullName,
+      adminEmail: values.adminEmail,
+      adminPhone: values.adminPhone,
+    }).success
+  }
+
+  if (step === 2) {
+    return createTenantRequestSchema.safeParse(values).success
+  }
+
+  return false
+}
+
 export const createTenantResponseSchema = z.object({
   tenantId: z.string().uuid(),
   headquartersUnitId: z.string().uuid(),
