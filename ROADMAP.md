@@ -285,6 +285,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** validity gate em “Entrar” no login B2B (`/login`). `FormPrimaryButton` + `loginSchema.safeParse` em e-mail e senha; “Esqueci a senha” continua só com o e-mail; Voltar livre; erro de servidor permanece no formulário e reabilita o botão. |
 | 2026-10-14 | **Fix (WEB):** validity gate em “Entrar” no portal B2C e em “Salvar” no perfil B2C. `FormPrimaryButton` + `safeParse` do schema do passo; “Esqueci a senha”, “Cadastre-se” e “Alterar foto” ficam livres; erro de servidor continua no toast, o formulário mantém os valores e o botão reabilita. Cadastro B2C (formulário único) e verificação de e-mail já usavam `FormPrimaryButton` e ficaram de fora; `/verify-phone` só redireciona para `/verify-email`. |
 | 2026-10-14 | **Fix (WEB):** validity gate no onboarding público legado (`/onboarding`). `FormPrimaryButton` + `safeParse` do passo: empresa (razão social, documento, matriz), administrador (nome, e-mail, celular) e revisão (schema completo). Voltar fica livre; erro de servidor permanece na revisão, mantém os valores e reabilita “Criar conta de teste”. |
+| 2026-10-14 | **Fix (WEB):** validity gate no AssetWizard (criar, editar e lote). `FormPrimaryButton` + `safeParse` do passo atual: geral, operação, preços e revisão. A revisão exige os passos anteriores; preços só entram quando o recurso é alugável. Voltar fica livre; erro de servidor permanece no diálogo, mantém os valores e reabilita “Concluir”. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
@@ -303,7 +304,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | Portal verify | já usava `FormPrimaryButton` (skipped) — código de 6 dígitos; `/verify-phone` redireciona; reenvio livre |
 | Portal profile | gated 2026-10-14 (`fix/form-validity-b2c-portal`) — nome válido |
 | OnboardingPage (legado) | gated 2026-10-14 (`fix/form-validity-onboarding-page`) — empresa, administrador e revisão |
-| AssetWizard | VALIDITY_GATE_APPLICABLE |
+| AssetWizard | gated 2026-10-14 (`fix/form-validity-asset-wizard`) — geral, operação, preços e revisão |
 | CreateWorkOrder / CreatePlan | VALIDITY_GATE_APPLICABLE |
 | AssetCategories | VALIDITY_GATE_APPLICABLE |
 | People users / roles | VALIDITY_GATE_APPLICABLE (e-mail único = SERVER_VALIDATION_ONLY) |
