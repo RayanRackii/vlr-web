@@ -78,6 +78,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] Layout canvas (mapa de rentables) em Operação + picker B2C data+horário (fallback em grade se não houver layout)
 - [x] Admin: **Concluir** em reserva `Confirmed` (`POST /api/reservations/{id}/complete`) só com `rentals.reservations.complete`. Sem UI B2C Complete/cancel nesta wave.
 - [x] Wave 1 **PROD_COMPLETE** (Phase A + Phase B T1): staff Complete (`rentals.reservations.complete`); reservation start/end and Rentals “today” format in `America/Sao_Paulo`. API instants stay UTC. No parallel civil fields. WEB PROD `0d995955dd56338cc8cbfda6bf8ff6950afb68f6`; API PROD `54b385d5d14d0438fceb0c358872cf7ef1e1f589`. Public/read-only smoke only (no customer write smoke). Follow-ups (WEB today-boundary and other timezone tests) remain non-blocking and are **not** authorized by this closeout.
+- [x] Agenda B2C (#135): data mínima = hoje em `America/Sao_Paulo`; horários de hoje que já começaram ficam ocultos, com explicação; em Minhas reservas, reserva com fim já alcançado mostra “Reserva passada” e não oferece Cancelar. Pós-login B2B: sem `core.dashboard.read`, `/dashboard` abre a primeira rota da sidebar que o usuário pode ver; sem nenhuma, permanece Acesso negado.
 - [x] Teacher date-only lessons (FICC pilot) em `develop`: `src/features/rentals/pages/TeacherLessonsPage.tsx` e `src/features/rentals/hooks/useTeacherLessons.ts` (página no PR #87; correção de release no PR #90, https://github.com/RayanRackii/vlr-web/pull/90, merge `64657ea`). A tela só cria/remove aula na data e na quadra SlotGrid selecionadas. Slot `Available` com `reservationId` não entra na oferta nem na remoção, e o toast de sucesso exige o corpo esperado (aula sem reserva no create, open sem reserva no remove). Agenda admin permanece em `rentals.schedule.write`. Modelo de permissão da tela de professor: `rentals.schedule.lessons.write` + `rentals.assets.read` + `rentals.schedule.read`, sem `rentals.schedule.write`. Rota `/configuracoes/agenda` e o nav continuam em `rentals.schedule.read`. API já mergeada (`vlr-api` #92 / #95 / #126). Pendente humano, fora deste PR: aplicar no DEV a migration `AddRentalsScheduleLessonsWritePermission` e conceder explicitamente `rentals.schedule.lessons.write` (Rayan).
 
 ### 3.7. Cancelamento B2C pelo cliente
@@ -108,6 +109,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wave 3: wizard/edit (Super-Admin) consomem `GET /api/admin/modules`; Explore (tenant B2B) usa metadados de apresentação WEB + `activeModules` porque o GET do catálogo é PlatformAdmin-only. Copy comercial, nunca “Asset Registry”; sem auto-select de Inventory.
 - [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
 - [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
+- [x] Pós-login: usuário sem `core.dashboard.read` não permanece em Acesso negado em `/dashboard`; cai na primeira rota permitida (ordem da sidebar, módulo + permissão). Platform admin fora do tenant continua no dashboard.
 
 ## 4.11. PMOC / OS — FEITO (PROD)
 
@@ -298,6 +300,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** nome do produto nas superfícies Rolvix deixa de ser `Platform`/`frontend` e passa a Rolvix (`app.name` nos três locales, `<title>`, seção de módulos do Super-Admin). |
 | 2026-10-14 | **Fix (WEB):** "Voltar à plataforma" sai do ambiente do tenant e abre `/admin/dashboard` mesmo quando o JWT em memória ainda traz `app_metadata.tenant_id` ou o `refreshSession` falha. O `POST /api/admin/tenants/exit` continua obrigatório antes de limpar o estado local. Abrir ambiente e sign-out bem-sucedido desfazem essa saída. |
 | 2026-10-14 | **Fix (WEB, sem merge):** a agenda B2C mostra a estimativa (`GET /api/reservations/availability`) antes de reservar, o total em Minhas reservas e o total + status no toast. Espaço com `requiresDeposit` avisa que a reserva nasce aguardando confirmação do clube; não há passo de pagamento. Contrato da API inalterado. |
+| 2026-10-14 | **Fix (WEB, #135):** agenda B2C não oferece data anterior a hoje nem horário de hoje já iniciado (`America/Sao_Paulo`); Minhas reservas marca reserva passada (fim ≤ agora) sem Cancelar. Login B2B sem `core.dashboard.read` sai de `/dashboard` para a primeira rota permitida da sidebar. Sem deploy. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

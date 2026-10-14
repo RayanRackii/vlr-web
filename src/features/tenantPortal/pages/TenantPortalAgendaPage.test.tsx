@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { formatMoney } from "@/features/rentals/services/reservationsService"
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import i18n from "@/lib/i18n"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import type {
@@ -208,6 +209,24 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
 
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.pastReservation")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("labels an ended reservation as past and hides cancel", async () => {
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", PAST_ISO, {
+        endDateTime: "2020-01-15T14:00:00.000Z",
+      }),
+    ])
+    renderAgenda()
+    await waitForMineList()
+
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.pastReservation")),
+    ).toBeInTheDocument()
+    expect(cancelButton()).not.toBeInTheDocument()
   })
 
   it("hides Cancelar for Canceled", async () => {
@@ -341,6 +360,10 @@ function makeSlot(
 
 describe("TenantPortalAgendaPage time selector", () => {
   beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ["Date"],
+      now: new Date("2026-10-14T08:00:00.000Z"),
+    })
     listMine.mockReset()
     fetchAssets.mockReset()
     fetchLayouts.mockReset()
@@ -383,6 +406,10 @@ describe("TenantPortalAgendaPage time selector", () => {
         }),
       ],
     })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("renders the accessible select with themed popup classes", async () => {
@@ -568,5 +595,96 @@ describe("TenantPortalAgendaPage time selector", () => {
         status: i18n.t("rentals.reservations.statuses.Confirmed"),
       }),
     )
+  })
+
+  it("does not offer a date before today in America/Sao_Paulo", async () => {
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    expect(dateInput).toHaveAttribute("min", brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+  })
+
+  it("hides slots that already started today and explains that they are hidden", async () => {
+    vi.setSystemTime(new Date("2026-10-14T15:00:00.000Z"))
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "13:00:00",
+          endTime: "14:00:00",
+        }),
+      ],
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.pastSlotsHidden")),
+    ).toBeInTheDocument()
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+    expect(
+      await screen.findByRole("option", { name: "13:00 – 14:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps morning slots on a later date", async () => {
+    vi.setSystemTime(new Date("2026-10-14T15:00:00.000Z"))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    fireEvent.change(dateInput, { target: { value: "2026-10-15" } })
+
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-15")
+    })
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+    expect(
+      await screen.findByRole("option", { name: "08:00 – 09:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.pastSlotsHidden")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("clamps a past date back to today", async () => {
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
+
+    await waitFor(() => {
+      expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    })
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
   })
 })

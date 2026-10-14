@@ -33,6 +33,7 @@ import {
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
+import { isPastReservation } from "@/features/tenantPortal/lib/isPastReservation"
 import {
   bookPortalSlot,
   cancelMyPortalReservation,
@@ -50,7 +51,25 @@ import {
   type PortalReservation,
   type PortalScheduleSlot,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import {
+  brazilTodayIsoDate,
+  clampBrazilDateToToday,
+  isBrazilSlotStartInPast,
+} from "@/lib/brazilTimeZone"
+
+function upcomingBookableSlots(
+  daySlots: readonly PortalScheduleSlot[],
+  dayDate: string,
+) {
+  const bookable = daySlots.filter(isCustomerBookableSlot)
+  const upcoming = bookable.filter(
+    (slot) => !isBrazilSlotStartInPast(dayDate, slot.startTime),
+  )
+  return {
+    upcoming,
+    pastHidden: upcoming.length < bookable.length,
+  }
+}
 
 export function TenantPortalAgendaPage() {
   const { t } = useTranslation()
@@ -71,6 +90,7 @@ export function TenantPortalAgendaPage() {
   const [mine, setMine] = useState<PortalReservation[]>([])
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
   const [date, setDate] = useState(brazilTodayIsoDate())
+  const [pastSlotsHidden, setPastSlotsHidden] = useState(false)
   const [startTime, setStartTime] = useState("")
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
@@ -190,6 +210,7 @@ export function TenantPortalAgendaPage() {
     if (!signedIn || !date) {
       setSlots([])
       setStartTime("")
+      setPastSlotsHidden(false)
       setSlotsLoading(false)
       setSlotsError(false)
       return
@@ -198,6 +219,7 @@ export function TenantPortalAgendaPage() {
     let cancelled = false
     setSlotsLoading(true)
     setSlotsError(false)
+    setPastSlotsHidden(false)
     setSlots([])
     setStartTime("")
     setSelectedRentalAssetId(null)
@@ -206,9 +228,10 @@ export function TenantPortalAgendaPage() {
         if (cancelled) {
           return
         }
-        const bookable = day.slots.filter(isCustomerBookableSlot)
-        setSlots(bookable)
-        const times = listDistinctStartTimes(bookable)
+        const selected = upcomingBookableSlots(day.slots, date)
+        setSlots(selected.upcoming)
+        setPastSlotsHidden(selected.pastHidden)
+        const times = listDistinctStartTimes(selected.upcoming)
         setStartTime(times[0]?.startTime ?? "")
       })
       .catch((error) => {
@@ -344,8 +367,9 @@ export function TenantPortalAgendaPage() {
         fetchPublicScheduleDay(subdomain, date),
       ])
       setMine(reservations)
-      const bookable = day.slots.filter(isCustomerBookableSlot)
-      setSlots(bookable)
+      const selected = upcomingBookableSlots(day.slots, date)
+      setSlots(selected.upcoming)
+      setPastSlotsHidden(selected.pastHidden)
       setSelectedRentalAssetId(null)
     } catch (error) {
       if (queue.applyBookingError(error)) {
@@ -380,7 +404,9 @@ export function TenantPortalAgendaPage() {
         fetchPublicScheduleDay(subdomain, date),
       ])
       setMine(reservations)
-      setSlots(day.slots.filter(isCustomerBookableSlot))
+      const selected = upcomingBookableSlots(day.slots, date)
+      setSlots(selected.upcoming)
+      setPastSlotsHidden(selected.pastHidden)
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -395,6 +421,11 @@ export function TenantPortalAgendaPage() {
     } finally {
       setCancelingId(null)
     }
+  }
+
+  function onDateChange(value: string) {
+    const next = clampBrazilDateToToday(value)
+    setDate(next)
   }
 
   function spaceState(rentalAssetId: string) {
@@ -426,9 +457,14 @@ export function TenantPortalAgendaPage() {
               <span>{t("tenantPortal.agenda.date")}</span>
               <Input
                 type="date"
+                min={brazilTodayIsoDate()}
                 value={date}
                 onChange={(event) => {
-                  setDate(event.target.value)
+                  const next = clampBrazilDateToToday(event.target.value)
+                  if (event.target.value !== next) {
+                    event.currentTarget.value = next
+                  }
+                  onDateChange(next)
                 }}
               />
             </label>
@@ -474,6 +510,12 @@ export function TenantPortalAgendaPage() {
               </Select>
             </label>
           </div>
+
+          {pastSlotsHidden ? (
+            <p className="text-sm text-muted-foreground">
+              {t("tenantPortal.agenda.pastSlotsHidden")}
+            </p>
+          ) : null}
 
           {slotsLoading ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -736,7 +778,13 @@ export function TenantPortalAgendaPage() {
                         amount: formatMoney(reservation.totalAmount),
                       })}
                     </p>
-                    {canCustomerSelfCancel(
+                    {isPastReservation(reservation.endDateTime) ? (
+                      <p className="text-xs font-medium">
+                        {t("tenantPortal.agenda.pastReservation")}
+                      </p>
+                    ) : null}
+                    {!isPastReservation(reservation.endDateTime) &&
+                    canCustomerSelfCancel(
                       reservation.status,
                       reservation.startDateTime,
                     ) ? (

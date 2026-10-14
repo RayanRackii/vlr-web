@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   filterNavigationItemsByAccess,
+  firstPermittedProductPath,
   appNavigationItems,
   getPageTitleKey,
   type AppNavigationItem,
@@ -180,6 +181,34 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).not.toContain(
       "/configuracoes/notificacoes",
     )
+  })
+})
+
+describe("firstPermittedProductPath", () => {
+  it("returns the dashboard when that is the first permitted route", () => {
+    expect(firstPermittedProductPath([], ["core.dashboard.read"])).toBe(
+      "/dashboard",
+    )
+  })
+
+  it("skips the dashboard and uses the first people route", () => {
+    expect(
+      firstPermittedProductPath(
+        ["rentals"],
+        ["rentals.schedule.read", "core.users.read"],
+      ),
+    ).toBe("/pessoas-e-acesso")
+  })
+
+  it("uses the first allowed child when the parent path is not permitted", () => {
+    expect(
+      firstPermittedProductPath(["inventory"], ["inventory.categories.read"]),
+    ).toBe("/ativos/categorias")
+  })
+
+  it("returns null when no module and permission pair is visible", () => {
+    expect(firstPermittedProductPath([], ["rentals.schedule.read"])).toBeNull()
+    expect(firstPermittedProductPath(["rentals"], [])).toBeNull()
   })
 })
 
