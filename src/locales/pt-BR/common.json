@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Platform",
+    "name": "Rolvix",
     "authenticatedArea": "Área autenticada"
   },
   "common": {
@@ -2341,7 +2341,7 @@
         "basicDescription": "Razão social e documento fiscal da empresa.",
         "identity": "Subdomínio e Identidade",
         "identityDescription": "Endereço do ambiente, logo, cores e frase do portal.",
-        "modules": "Módulos da Plataforma",
+        "modules": "Módulos Rolvix",
         "modulesDescription": "Selecione os módulos ativos para este cliente.",
         "families": "Famílias de recursos",
         "familiesDescription": "Quais tipos de recursos este cliente cadastra (espaços, elétricos, bens…)."
