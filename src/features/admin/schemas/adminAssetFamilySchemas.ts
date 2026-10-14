@@ -98,7 +98,7 @@ export function createAdminAssetFamilyFormSchema(messages: {
         .min(1, messages.labelRequired)
         .max(200, messages.labelMax),
       sortOrder: z
-        .number()
+        .number({ error: messages.sortOrderInvalid })
         .int(messages.sortOrderInvalid)
         .min(INT32_MIN, messages.sortOrderInvalid)
         .max(INT32_MAX, messages.sortOrderInvalid),

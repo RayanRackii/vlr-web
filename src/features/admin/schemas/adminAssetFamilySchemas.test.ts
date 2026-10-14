@@ -87,6 +87,20 @@ describe("admin asset family form schema", () => {
       fields: [],
     })
     expect(longLabel.success).toBe(false)
+
+    const missingOrder = schema.safeParse({
+      key: "quadras",
+      label: "Quadras",
+      sortOrder: Number.NaN,
+      isActive: true,
+      fields: [],
+    })
+    expect(missingOrder.success).toBe(false)
+    if (!missingOrder.success) {
+      expect(missingOrder.error.issues.every((issue) => issue.message === "sort")).toBe(
+        true,
+      )
+    }
   })
 
   it("rejects duplicate field keys after trim and seed deactivation", () => {
