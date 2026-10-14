@@ -63,22 +63,49 @@ describe("TenantPortalLoginPage", () => {
     toastError.mockReset()
   })
 
-  it("shows Portuguese schema messages instead of Invalid input", async () => {
+  it("keeps Entrar disabled until email and password pass the schema", async () => {
     const user = userEvent.setup()
     renderLogin()
 
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
-    )
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.login.submit"),
+    })
+    const forgot = screen.getByRole("link", {
+      name: i18n.t("tenantPortal.login.forgotPassword"),
+    })
+    const registerLink = screen.getByRole("link", {
+      name: i18n.t("tenantPortal.login.registerLink"),
+    })
+    expect(submit).toBeDisabled()
+    expect(forgot).toHaveAttribute("href", "/t/ficc/forgot-password")
+    expect(registerLink).toHaveAttribute("href", "/t/ficc/register")
 
-    expect(
-      await screen.findByText(i18n.t("tenantPortal.validation.emailInvalid")),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(i18n.t("tenantPortal.validation.passwordRequired")),
-    ).toBeInTheDocument()
-    expect(screen.queryByText(/Invalid input/i)).not.toBeInTheDocument()
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "not-an-email",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    expect(submit).toBeDisabled()
     expect(login).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText(i18n.t("tenantPortal.fields.email")))
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.clear(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    )
+    expect(submit).toBeDisabled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    expect(submit).toBeEnabled()
   })
 
   it("links Esqueci a senha to the reset request screen", () => {
@@ -111,5 +138,15 @@ describe("TenantPortalLoginPage", () => {
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith("E-mail ou senha inválidos.")
     })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).toHaveValue("ana@club.test")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    ).toHaveValue("wrong-password")
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    ).toBeEnabled()
+    expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
   })
 })
