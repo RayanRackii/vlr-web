@@ -296,6 +296,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** login B2B (`/login`, “Esqueci a senha” e o passo de identificador no apex) e onboarding público legado (`/onboarding`) passam labels, placeholders, botões, validação e o aria-label do stepper para i18n pt-BR/en/es. O texto pt-BR permanece o de hoje. O valor inicial da unidade matriz continua `Matriz` (entra no `POST /api/onboarding/tenants`). `/reset-password` fica de fora. |
 | 2026-10-14 | **Fix (WEB):** `/reset-password` passa título, labels, botões, validação e o estado de link inválido para i18n pt-BR/en/es (`auth.resetPassword.*`). O texto pt-BR permanece o de hoje. `/invite` já estava em i18n. ROADMAP do `vlr-api` fora de escopo. |
 | 2026-10-14 | **Fix (WEB):** nome do produto nas superfícies Rolvix deixa de ser `Platform`/`frontend` e passa a Rolvix (`app.name` nos três locales, `<title>`, seção de módulos do Super-Admin). |
+| 2026-10-14 | **Fix (WEB):** "Voltar à plataforma" sai do ambiente do tenant e abre `/admin/dashboard` mesmo quando o JWT em memória ainda traz `app_metadata.tenant_id` ou o `refreshSession` falha. O `POST /api/admin/tenants/exit` continua obrigatório antes de limpar o estado local. Abrir ambiente e sign-out bem-sucedido desfazem essa saída. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
