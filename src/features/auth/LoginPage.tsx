@@ -72,6 +72,14 @@ export function LoginPage() {
     control: form.control,
     name: "email",
   })
+  const loginPassword = useWatch({
+    control: form.control,
+    name: "password",
+  })
+  const loginValid = loginSchema.safeParse({
+    email: loginEmail ?? "",
+    password: loginPassword ?? "",
+  }).success
   const forgotPasswordEmailValid = loginSchema
     .pick({ email: true })
     .safeParse({ email: loginEmail ?? "" }).success
@@ -300,14 +308,15 @@ export function LoginPage() {
             </p>
           ) : null}
 
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={loginValid}
             loading={isSubmitting}
             loadingLabel="Entrando..."
           >
             Entrar
-          </LoadingButton>
+          </FormPrimaryButton>
 
           <FormPrimaryButton
             type="button"

@@ -71,7 +71,7 @@ describe("LoginPage forgot password", () => {
 
     const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
     expect(forgot).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeDisabled()
 
     await user.type(screen.getByLabelText("E-mail"), "not-an-email")
     expect(forgot).toBeDisabled()
@@ -80,6 +80,7 @@ describe("LoginPage forgot password", () => {
     await user.clear(screen.getByLabelText("E-mail"))
     await user.type(screen.getByLabelText("E-mail"), "ana@club.test")
     expect(forgot).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeDisabled()
     expect(screen.getByLabelText("Senha")).toHaveValue("")
   })
 
