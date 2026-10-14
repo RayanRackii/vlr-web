@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -14,8 +14,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
@@ -35,6 +35,8 @@ export function PortalProductRequestPage() {
     resolver: zodResolver(productRequestFormSchema),
     defaultValues: { description: "", quantity: 1, note: "" },
   })
+  const watchedRequest = useWatch({ control: form.control })
+  const isRequestValid = productRequestFormSchema.safeParse(watchedRequest).success
 
   async function onSubmit(values: ProductRequestFormValues) {
     setSubmitting(true)
@@ -151,15 +153,16 @@ export function PortalProductRequestPage() {
               </p>
             ) : null}
           </div>
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isRequestValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.catalog.submitting")}
             style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.catalog.requestSubmit")}
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
     </div>
