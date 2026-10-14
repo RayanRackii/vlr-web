@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -11,6 +11,7 @@ import {
   PeopleSearchForm,
 } from "@/features/users/components/PeopleDirectoryControls"
 import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
+import { isCanceledRequest } from "@/features/users/services/requestCancellation"
 import { listTenantCustomers } from "@/features/users/services/usersService"
 
 function formatCreatedAt(value: string, language: string) {
@@ -37,20 +38,37 @@ export function PeopleCustomersTab() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const latestRequestRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
 
   const loadCustomers = useCallback(async () => {
+    const requestId = ++latestRequestRef.current
+    const controller = new AbortController()
+    const previous = abortRef.current
+    abortRef.current = controller
+    previous?.abort()
+
     setIsLoading(true)
     setLoadError(null)
 
     try {
-      const data = await listTenantCustomers({
-        q: appliedQuery.length >= 2 ? appliedQuery : undefined,
-        page,
-        pageSize: DIRECTORY_PAGE_SIZE,
-      })
+      const data = await listTenantCustomers(
+        {
+          q: appliedQuery.length >= 2 ? appliedQuery : undefined,
+          page,
+          pageSize: DIRECTORY_PAGE_SIZE,
+        },
+        controller.signal,
+      )
+      if (requestId !== latestRequestRef.current) {
+        return
+      }
       setCustomers(data.items)
       setTotal(data.total)
     } catch (error: unknown) {
+      if (requestId !== latestRequestRef.current || isCanceledRequest(error)) {
+        return
+      }
       setCustomers([])
       setTotal(0)
       setLoadError(
@@ -59,12 +77,18 @@ export function PeopleCustomersTab() {
           : t("peopleAccess.errors.loadCustomers"),
       )
     } finally {
-      setIsLoading(false)
+      if (requestId === latestRequestRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [appliedQuery, page, t])
 
   useEffect(() => {
     void loadCustomers()
+    return () => {
+      latestRequestRef.current += 1
+      abortRef.current?.abort()
+    }
   }, [loadCustomers])
 
   function submitSearch() {
@@ -118,8 +142,16 @@ export function PeopleCustomersTab() {
       {!isLoading && loadError === null && customers.length === 0 ? (
         <PeopleEmptyState
           icon={Users}
-          title={t("peopleAccess.customers.empty")}
-          description={t("peopleAccess.customers.emptyDescription")}
+          title={t(
+            appliedQuery.length >= 2
+              ? "peopleAccess.customers.emptySearch"
+              : "peopleAccess.customers.empty",
+          )}
+          description={t(
+            appliedQuery.length >= 2
+              ? "peopleAccess.customers.emptySearchDescription"
+              : "peopleAccess.customers.emptyDescription",
+          )}
         />
       ) : null}
 

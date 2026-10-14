@@ -5,6 +5,7 @@ import {
   invalidateCurrentUserCache,
   readCurrentUser,
 } from "@/features/users/services/currentUserCache"
+import { isCanceledRequest } from "@/features/users/services/requestCancellation"
 import {
   assignUserRolesRequestSchema,
   currentUserSchema,
@@ -108,12 +109,13 @@ export async function listTenantMembers(
 
 export async function listTenantCustomers(
   query?: DirectoryQuery,
+  signal?: AbortSignal,
 ): Promise<TenantCustomerPage> {
   try {
-    const response = await api.get<unknown>(
-      "/api/customers",
-      directoryConfig(query),
-    )
+    const response = await api.get<unknown>("/api/customers", {
+      ...directoryConfig(query),
+      ...(signal !== undefined ? { signal } : {}),
+    })
     const parsed = tenantCustomerPageSchema.safeParse(response.data)
     return parseOrThrow(
       parsed.success,
@@ -121,6 +123,10 @@ export async function listTenantCustomers(
       "users.errors.invalidResponse",
     )
   } catch (error: unknown) {
+    if (isCanceledRequest(error)) {
+      throw error
+    }
+
     throwRbacServiceError(error, "peopleAccess.errors.loadCustomers")
   }
 }
