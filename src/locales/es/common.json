@@ -122,13 +122,15 @@
         "admin": "Administrador",
         "review": "Revisión"
       },
+      "stepsAria": "Progreso",
       "fields": {
         "legalName": "Razón social",
         "taxId": "CNPJ/CPF",
         "headquarters": "Nombre de la unidad matriz",
         "adminName": "Nombre del administrador",
         "adminEmail": "Correo del administrador",
-        "adminPhone": "Celular"
+        "adminPhone": "Celular",
+        "phonePlaceholder": "11999999999"
       },
       "subdomainHint": "El subdominio del portal se genera automáticamente a partir del nombre (4 caracteres).",
       "subdomainPreview": "Subdominio previsto",
@@ -146,6 +148,15 @@
         "signupUnavailable": "El registro no está disponible en este momento. Inténtelo de nuevo en unos instantes.",
         "trialRequired": "El registro público solo acepta una cuenta de prueba.",
         "trialAlreadyUsed": "Ya existe una prueba para este correo o celular."
+      },
+      "validation": {
+        "legalNameRequired": "La razón social es obligatoria.",
+        "taxIdRequired": "El CNPJ/CPF es obligatorio.",
+        "headquartersRequired": "El nombre de la unidad matriz es obligatorio.",
+        "adminNameRequired": "El nombre del administrador es obligatorio.",
+        "emailRequired": "El correo electrónico es obligatorio.",
+        "emailInvalid": "Ingrese un correo electrónico válido.",
+        "phoneInvalid": "Ingrese un celular válido con código de área."
       }
     }
   },
@@ -173,6 +184,21 @@
     "login": {
       "invalidCredentials": "Correo o contraseña inválidos.",
       "failed": "No se pudo iniciar sesión. Inténtelo de nuevo.",
+      "title": "Iniciar sesión",
+      "subtitle": "Inicie sesión con sus credenciales para acceder a la plataforma.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "admin@hotel.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Su contraseña",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión...",
+      "forgotPassword": "Olvidé la contraseña",
+      "forgotSubmitting": "Enviando...",
+      "validation": {
+        "emailRequired": "El correo electrónico es obligatorio.",
+        "emailInvalid": "Ingrese un correo electrónico válido.",
+        "passwordRequired": "La contraseña es obligatoria."
+      },
       "resetSent": "Si existe una cuenta con este correo, enviamos un enlace para restablecer la contraseña.",
       "resetFailed": "No se pudo enviar el correo de restablecimiento. Inténtelo de nuevo.",
       "resetCompanyTitle": "¿Cuál es la empresa?",

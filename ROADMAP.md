@@ -166,7 +166,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 ## Dívidas técnicas conhecidas
 
 - Branding inconsistente (`Platform` vs Rolvix).
-- Login/Onboarding B2B com strings hardcoded.
+- [x] Login/Onboarding B2B com strings hardcoded.
 - Landing anuncia módulos futuros.
 - Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
@@ -293,6 +293,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** validity gate no carrinho B2C (`/catalogo/carrinho`) e em solicitar produto. `FormPrimaryButton` + `safeParse` do schema do passo: observação do pedido até 2000; descrição (obrigatória até 2000), quantidade (inteiro de 1 a 9999, já no schema) e observação até 2000 na solicitação. Voltar, a quantidade do item e os arquivos ficam livres; carrinho vazio continua desabilitando “Enviar pedido” como já fazia. Erro de servidor permanece no toast, mantém os valores e reabilita o botão. Adicionar ao carrinho e cancelar pedido seguem caso especial (sem schema de formulário). |
 | 2026-10-14 | **Docs:** ROADMAP marca teacher date-only lessons como código em `develop` (página PR #87; release-blocker PR #90). Permissão da tela: `rentals.schedule.lessons.write` + `rentals.assets.read` + `rentals.schedule.read`, sem `rentals.schedule.write`. Pendente humano: aplicar no DEV `AddRentalsScheduleLessonsWritePermission` e conceder `rentals.schedule.lessons.write` (Rayan). Sem UI, migration, role ou infra neste PR. |
 | 2026-10-14 | **Código (WEB):** Super-Admin lista, cria, edita, desativa e exclui famílias globais em `/admin/asset-families` (`GET/POST/PUT/DELETE /api/admin/asset-families`, `?includeInactive=true`). Chave imutável; seeds `spaces`/`electrical`/`goods`/`generic` sem excluir ou desativar. Pareia com `vlr-api` #128. Não havia checkbox desmarcado correspondente neste ROADMAP. |
+| 2026-10-14 | **Fix (WEB):** login B2B (`/login`, “Esqueci a senha” e o passo de identificador no apex) e onboarding público legado (`/onboarding`) passam labels, placeholders, botões, validação e o aria-label do stepper para i18n pt-BR/en/es. O texto pt-BR permanece o de hoje. O valor inicial da unidade matriz continua `Matriz` (entra no `POST /api/onboarding/tenants`). `/reset-password` fica de fora. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
