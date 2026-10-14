@@ -188,6 +188,12 @@ describe("getPageTitleKey", () => {
     expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
   })
 
+  it("resolves the platform asset families page before the tenants title", () => {
+    expect(getPageTitleKey("/admin/asset-families")).toBe(
+      "nav.adminAssetFamilies",
+    )
+  })
+
   it("resolves the unified notifications settings page", () => {
     expect(getPageTitleKey("/configuracoes/notificacoes")).toBe(
       "nav.notifications",

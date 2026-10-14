@@ -30,6 +30,7 @@ export type AppNavigationChildItem = {
     | "nav.pmocNew"
     | "nav.adminTenants"
     | "nav.adminUsers"
+    | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
     | "nav.catalogOrders"
     | "nav.catalogNotifications"
@@ -346,6 +347,10 @@ export function useAppNavigationSections(): AppNavigationState {
                   labelKey: "nav.adminUsers",
                   to: "/admin/users",
                 },
+                {
+                  labelKey: "nav.adminAssetFamilies",
+                  to: "/admin/asset-families",
+                },
               ],
             },
           ],
@@ -385,6 +390,10 @@ export function getPageTitleKey(
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
   | "app.name" {
+  if (pathname.startsWith("/admin/asset-families")) {
+    return "nav.adminAssetFamilies"
+  }
+
   if (pathname.startsWith("/admin/users")) {
     return "nav.adminUsers"
   }
