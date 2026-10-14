@@ -1,9 +1,10 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import type { TFunction } from "i18next"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { useTranslation } from "react-i18next"
+import { Link, useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -16,37 +17,30 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  createResetPasswordSchema,
+  type ResetPasswordFormValues,
+} from "@/features/auth/resetPasswordSchema"
 import { supabase } from "@/lib/supabase"
 
-const resetPasswordSchema = z
-  .object({
-    password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres."),
-    confirmPassword: z.string().min(1, "Confirme a senha."),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    message: "As senhas não coincidem.",
-    path: ["confirmPassword"],
-  })
-
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
-
-function getResetErrorMessage(error: AuthError): string {
+function getResetErrorMessage(error: AuthError, t: TFunction): string {
   if (error.message.toLowerCase().includes("session")) {
-    return "Link inválido ou expirado. Solicite um novo reset na tela de login."
+    return t("auth.resetPassword.invalidLink")
   }
 
-  return "Não foi possível atualizar a senha. Tente novamente."
+  return t("auth.resetPassword.updateFailed")
 }
 
 type GateState = "loading" | "ready" | "invalid"
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [gate, setGate] = useState<GateState>("loading")
-  const [gateError, setGateError] = useState<string | null>(null)
+  const schema = useMemo(() => createResetPasswordSchema(t), [t])
 
   const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -55,7 +49,7 @@ export function ResetPasswordPage() {
   })
 
   const watchedValues = form.watch()
-  const isResetValid = resetPasswordSchema.safeParse(watchedValues).success
+  const isResetValid = schema.safeParse(watchedValues).success
   const isSubmitting = form.formState.isSubmitting
 
   useEffect(() => {
@@ -78,9 +72,6 @@ export function ResetPasswordPage() {
 
         if (error !== null) {
           setGate("invalid")
-          setGateError(
-            "Link inválido ou expirado. Solicite um novo reset na tela de login.",
-          )
           return
         }
 
@@ -102,9 +93,6 @@ export function ResetPasswordPage() {
       }
 
       setGate("invalid")
-      setGateError(
-        "Link inválido ou expirado. Solicite um novo reset na tela de login.",
-      )
     }
 
     void establishRecoverySession()
@@ -120,7 +108,7 @@ export function ResetPasswordPage() {
     })
 
     if (error !== null) {
-      form.setError("root", { message: getResetErrorMessage(error) })
+      form.setError("root", { message: getResetErrorMessage(error, t) })
       return
     }
 
@@ -130,7 +118,9 @@ export function ResetPasswordPage() {
   if (gate === "loading") {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-4 p-6">
-        <p className="text-sm text-muted-foreground">Validando link…</p>
+        <p className="text-sm text-muted-foreground">
+          {t("auth.resetPassword.loading")}
+        </p>
       </main>
     )
   }
@@ -139,13 +129,15 @@ export function ResetPasswordPage() {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-6 p-6">
         <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Nova senha</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {t("auth.resetPassword.title")}
+          </h1>
           <p className="text-sm text-destructive" role="alert">
-            {gateError}
+            {t("auth.resetPassword.invalidLink")}
           </p>
         </header>
         <Button type="button" render={<Link to="/login" />}>
-          Voltar ao login
+          {t("auth.resetPassword.backToLogin")}
         </Button>
       </main>
     )
@@ -154,9 +146,11 @@ export function ResetPasswordPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 p-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Nova senha</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("auth.resetPassword.title")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Defina uma nova senha para acessar a plataforma.
+          {t("auth.resetPassword.subtitle")}
         </p>
       </header>
 
@@ -171,7 +165,7 @@ export function ResetPasswordPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nova senha</FormLabel>
+                <FormLabel>{t("auth.resetPassword.passwordLabel")}</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
@@ -189,7 +183,9 @@ export function ResetPasswordPage() {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirmar senha</FormLabel>
+                <FormLabel>
+                  {t("auth.resetPassword.confirmPasswordLabel")}
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="password"
@@ -216,9 +212,9 @@ export function ResetPasswordPage() {
             className="w-full"
             isValid={isResetValid}
             loading={isSubmitting}
-            loadingLabel="Salvando..."
+            loadingLabel={t("auth.resetPassword.submitting")}
           >
-            Salvar senha
+            {t("auth.resetPassword.submit")}
           </FormPrimaryButton>
         </form>
       </Form>

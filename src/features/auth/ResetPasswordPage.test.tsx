@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
+import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
 function renderReset() {
@@ -101,6 +102,80 @@ describe("ResetPasswordPage validity gate", () => {
     ).toBeEnabled()
     expect(
       screen.queryByRole("button", { name: "Salvar senha" }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe("ResetPasswordPage locale", () => {
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it("renders the reset form in English, including validation", async () => {
+    const user = userEvent.setup()
+    await i18n.changeLanguage("en")
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: { id: "1" } } },
+      error: null,
+    } as never)
+    renderReset()
+
+    expect(
+      await screen.findByRole("heading", { name: "New password" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Set a new password to access the platform."),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("New password")).toBeInTheDocument()
+    expect(screen.getByLabelText("Confirm password")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Save password" })).toBeDisabled()
+    expect(screen.queryByRole("heading", { name: "Nova senha" })).not.toBeInTheDocument()
+    expect(screen.queryByText("Salvar senha")).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText("New password"), "short")
+    await user.tab()
+    expect(
+      await screen.findByText("Password must be at least 8 characters."),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText("A senha deve ter pelo menos 8 caracteres."),
+    ).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText("New password"))
+    await user.type(screen.getByLabelText("New password"), "password1")
+    await user.type(screen.getByLabelText("Confirm password"), "password2")
+    await user.tab()
+    expect(await screen.findByText("Passwords do not match.")).toBeInTheDocument()
+    expect(screen.queryByText("As senhas não coincidem.")).not.toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText("Confirm password"))
+    await user.tab()
+    expect(await screen.findByText("Confirm the password.")).toBeInTheDocument()
+    expect(screen.queryByText("Confirme a senha.")).not.toBeInTheDocument()
+  })
+
+  it("renders the invalid-link state in English", async () => {
+    await i18n.changeLanguage("en")
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    } as never)
+    renderReset()
+
+    expect(
+      await screen.findByRole("heading", { name: "New password" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Invalid or expired link. Request a new reset on the sign-in screen.",
+    )
+    expect(screen.getByRole("link", { name: "Back to sign in" })).toBeEnabled()
+    expect(
+      screen.queryByText(
+        "Link inválido ou expirado. Solicite um novo reset na tela de login.",
+      ),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Save password" }),
     ).not.toBeInTheDocument()
   })
 })
