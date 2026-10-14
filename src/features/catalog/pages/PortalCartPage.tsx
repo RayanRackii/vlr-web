@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
@@ -16,8 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
@@ -53,6 +53,8 @@ export function PortalCartPage() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: { customerNote: "" },
   })
+  const watchedCheckout = useWatch({ control: form.control })
+  const isCheckoutValid = checkoutSchema.safeParse(watchedCheckout).success
 
   useEffect(() => {
     let cancelled = false
@@ -203,16 +205,17 @@ export function PortalCartPage() {
               </FormItem>
             )}
           />
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isCheckoutValid}
             loading={submitting}
             disabled={cart.items.length === 0}
             loadingLabel={t("tenantPortal.catalog.submitting")}
             style={{ backgroundColor: primary }}
           >
             {t("tenantPortal.catalog.submitOrder")}
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
     </div>
