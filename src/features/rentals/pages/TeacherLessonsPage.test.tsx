@@ -90,8 +90,16 @@ const reservedLessonSlot = {
   reservationId: "c1111111-1111-1111-1111-111111111111",
 }
 
+function addIsoDays(iso: string, days: number) {
+  const [year, month, day] = iso.split("-").map(Number)
+  const date = new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1))
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
 describe("TeacherLessonsPage", () => {
   beforeEach(() => {
+    window.history.replaceState(null, "", "/")
     vi.mocked(listAdminRentalAssets).mockResolvedValue([court])
     vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
       date: "2026-10-08",
@@ -274,5 +282,181 @@ describe("TeacherLessonsPage", () => {
     await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aula removida nesta data."))
     expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it("shows the created unbookable lesson and does not render Invalid input", async () => {
+    const user = userEvent.setup()
+    const closedSlot = {
+      ...openSlot,
+      id: "d1014191-0160-4af8-ad4a-f4e69d6091e9",
+      startTime: "20:00:00",
+      endTime: "21:00:00",
+      occupancyKindKey: "closed",
+      occupancyKindLabel: "Closed",
+      isBookableByCustomer: false,
+      label: "Reserva manual (M6)",
+      isDerived: false,
+      source: "DailyOverride" as const,
+      sourceTemplateId: null,
+    }
+    vi.mocked(createTeacherLesson).mockImplementation(async (body) => ({
+      ...secondOpenSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Lesson",
+      isBookableByCustomer: false,
+      label: "Aula teste Bot4",
+      status: "Available",
+      reservationId: null,
+      isDerived: false,
+      source: "DailyOverride" as const,
+    }))
+    let fetches = 0
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => {
+      fetches += 1
+      if (fetches === 1) {
+        return { date, slots: [openSlot, secondOpenSlot, closedSlot] }
+      }
+      return {
+        date,
+        slots: [
+          openSlot,
+          {
+            ...secondOpenSlot,
+            id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+            occupancyKindKey: "lesson",
+            occupancyKindLabel: "Lesson",
+            isBookableByCustomer: false,
+            label: "Aula teste Bot4",
+            status: "Available",
+            reservationId: null,
+            isDerived: false,
+            source: "DailyOverride" as const,
+          },
+          closedSlot,
+        ],
+      }
+    })
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "11:00–12:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "20:00–21:00" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "11:00–12:00" }))
+    await user.click(screen.getByRole("button", { name: "Criar aula nesta data" }))
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aula criada nesta data."))
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.queryByText(/Invalid input/i)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Remover aula 11:00" })).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "11:00–12:00" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "20:00–21:00" })).not.toBeInTheDocument()
+  })
+
+  it("keeps the created lesson when the day refresh fails", async () => {
+    const user = userEvent.setup()
+    vi.mocked(createTeacherLesson).mockImplementation(async (body) => ({
+      ...secondOpenSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Lesson",
+      isBookableByCustomer: false,
+      label: "Aula teste Bot4",
+      status: "Available",
+      reservationId: null,
+    }))
+    let fetches = 0
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => {
+      fetches += 1
+      if (fetches > 1) throw new Error("network")
+      return { date, slots: [openSlot, secondOpenSlot] }
+    })
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
+    await user.click(screen.getByRole("button", { name: "Criar aula nesta data" }))
+
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Invalid input/i)).not.toBeInTheDocument()
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("network"))
+    expect(screen.getByRole("button", { name: "Remover aula 11:00" })).toBeInTheDocument()
+  })
+
+  it("keeps the created lesson when a later read still returns the open interval", async () => {
+    const user = userEvent.setup()
+    vi.mocked(createTeacherLesson).mockImplementation(async (body) => ({
+      ...secondOpenSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Lesson",
+      isBookableByCustomer: false,
+      label: "Aula teste Bot4",
+      status: "Available",
+      reservationId: null,
+    }))
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: [openSlot, secondOpenSlot],
+    }))
+    render(<TeacherLessonsPage />)
+
+    await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
+    await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
+    await user.click(screen.getByRole("button", { name: "Criar aula nesta data" }))
+
+    await waitFor(() => expect(vi.mocked(fetchAdminScheduleDay).mock.calls.length).toBeGreaterThanOrEqual(2))
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Invalid input/i)).not.toBeInTheDocument()
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "11:00–12:00" })).not.toBeInTheDocument()
+  })
+
+  it("reloads the lesson for the date stored in the query string", async () => {
+    const lessonDate = addIsoDays(todayIsoDate(), 1)
+    const lesson = {
+      ...lessonSlot,
+      date: lessonDate,
+      startTime: "15:00:00",
+      endTime: "16:00:00",
+      id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+      occupancyKindKey: "lesson",
+      isBookableByCustomer: false,
+      label: "Aula teste Bot4",
+      status: "Available",
+      reservationId: null,
+    }
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: date === lessonDate ? [lesson] : [],
+    }))
+    window.history.replaceState(null, "", `/configuracoes/agenda?date=${lessonDate}`)
+
+    const first = render(<TeacherLessonsPage />)
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+    expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+
+    first.unmount()
+    window.history.replaceState(null, "", `/configuracoes/agenda?date=${lessonDate}`)
+    render(<TeacherLessonsPage />)
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
   })
 })
