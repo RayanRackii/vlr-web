@@ -283,6 +283,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Código (WEB, sem merge):** onboarding público deixa de pedir senha. Sucesso pede para abrir o e-mail de convite; erros `ANONYMOUS_TRIAL_RATE_LIMITED`, `SIGNUP_REJECTED`, `SIGNUP_UNAVAILABLE`, `ANONYMOUS_TRIAL_REQUIRED` e trial já usado viram frases i18n. Pareia com `vlr-api` #111. |
 | 2026-10-14 | **Fix (WEB):** validity gate em `/invite` (Definir senha), `/reset-password` (Salvar senha), “Esqueci a senha” no login B2B (só o e-mail; senha vazia não bloqueia) e no pedido de reset B2C. `FormPrimaryButton` + `safeParse` do schema do passo; Voltar/link de saída livres; erro de servidor permanece no formulário. Já estavam gated e ficaram de fora: identificador da empresa no apex e confirmação de senha B2C. “Entrar” no login B2B continua FOLLOWUP. |
 | 2026-10-14 | **Fix (WEB):** validity gate em “Entrar” no login B2B (`/login`). `FormPrimaryButton` + `loginSchema.safeParse` em e-mail e senha; “Esqueci a senha” continua só com o e-mail; Voltar livre; erro de servidor permanece no formulário e reabilita o botão. |
+| 2026-10-14 | **Fix (WEB):** validity gate em “Entrar” no portal B2C e em “Salvar” no perfil B2C. `FormPrimaryButton` + `safeParse` do schema do passo; “Esqueci a senha”, “Cadastre-se” e “Alterar foto” ficam livres; erro de servidor continua no toast, o formulário mantém os valores e o botão reabilita. Cadastro B2C (formulário único) e verificação de e-mail já usavam `FormPrimaryButton` e ficaram de fora; `/verify-phone` só redireciona para `/verify-email`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
@@ -296,7 +297,10 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | `/invite` set-password | gated 2026-10-14 |
 | B2C password-reset request | gated 2026-10-14 |
 | B2C password-reset confirm | já usava `FormPrimaryButton` (skipped) |
-| Portal login / register / verify / profile | VALIDITY_GATE_APPLICABLE |
+| Portal login | gated 2026-10-14 (`fix/form-validity-b2c-portal`) — e-mail e senha válidos |
+| Portal register | já usava `FormPrimaryButton` (skipped) — formulário único |
+| Portal verify | já usava `FormPrimaryButton` (skipped) — código de 6 dígitos; `/verify-phone` redireciona; reenvio livre |
+| Portal profile | gated 2026-10-14 (`fix/form-validity-b2c-portal`) — nome válido |
 | OnboardingPage (legado) | VALIDITY_GATE_APPLICABLE |
 | AssetWizard | VALIDITY_GATE_APPLICABLE |
 | CreateWorkOrder / CreatePlan | VALIDITY_GATE_APPLICABLE |

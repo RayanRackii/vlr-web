@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Camera, CircleAlert, Lock, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
@@ -18,8 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   buildCustomerProfileFormSchema,
@@ -129,6 +129,10 @@ export function TenantPortalProfilePage() {
     resolver: zodResolver(schema),
     defaultValues: { name: "" },
   })
+  const watchedName = useWatch({ control: form.control, name: "name" })
+  const isProfileValid = schema.safeParse({
+    name: watchedName ?? "",
+  }).success
 
   const loadGenerationRef = useRef(0)
   const photoCompressGenerationRef = useRef(0)
@@ -286,7 +290,6 @@ export function TenantPortalProfilePage() {
     )
   }
 
-  const watchedName = form.watch("name")
   const address = formatProfileAddress(profile)
   const email = profile.email?.trim() ?? ""
   const phone = profile.phone?.trim() ?? ""
@@ -299,8 +302,8 @@ export function TenantPortalProfilePage() {
     profile.customerType === "Company"
       ? t("tenantPortal.fields.company")
       : t("tenantPortal.fields.individual")
-  const displayName =
-    watchedName.trim().length > 0 ? watchedName.trim() : profile.name
+  const trimmedName = (watchedName ?? "").trim()
+  const displayName = trimmedName.length > 0 ? trimmedName : profile.name
   const hasReadOnlyFields =
     email.length > 0 ||
     phone.length > 0 ||
@@ -464,10 +467,10 @@ export function TenantPortalProfilePage() {
           ) : null}
 
           <div className="flex justify-end">
-            <LoadingButton
+            <FormPrimaryButton
               type="submit"
+              isValid={isProfileValid}
               loading={saving || photoProcessing}
-              disabled={saving || photoProcessing}
               loadingLabel={
                 photoProcessing && !saving
                   ? t("tenantPortal.profile.photoProcessing")
@@ -477,7 +480,7 @@ export function TenantPortalProfilePage() {
               style={{ backgroundColor: primary }}
             >
               {t("tenantPortal.profile.save")}
-            </LoadingButton>
+            </FormPrimaryButton>
           </div>
         </form>
       </Form>

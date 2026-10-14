@@ -27,6 +27,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
   }
 })
 
+import { toast } from "sonner"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import {
   fetchRegistrationSchema,
@@ -36,6 +37,7 @@ import {
 
 const fetchSchema = vi.mocked(fetchRegistrationSchema)
 const register = vi.mocked(registerCustomer)
+const toastError = vi.mocked(toast.error)
 
 const outletContext: TenantPortalOutletContext = {
   subdomain: "ficc",
@@ -102,6 +104,7 @@ describe("TenantPortalRegisterPage email verification", () => {
       requiresEmailVerification: true,
       verificationStarted: true,
     })
+    toastError.mockReset()
   })
 
   it("does not mention SMS in the register copy", async () => {
@@ -165,6 +168,76 @@ describe("TenantPortalRegisterPage email verification", () => {
       email: "ana@club.test",
       verificationSendFailed: false,
     })
+  })
+
+  it("keeps the form filled and re-enables Continuar after a server error", async () => {
+    const user = userEvent.setup()
+    register.mockRejectedValue(new Error("Já existe uma conta com estes dados."))
+    renderRegister()
+    await waitForRegisterForm()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    const loginLink = screen.getByRole("link", {
+      name: i18n.t("tenantPortal.register.loginLink"),
+    })
+    expect(submit).toBeDisabled()
+    expect(loginLink).toHaveAttribute("href", "/t/ficc")
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+      "A",
+    )
+    expect(submit).toBeDisabled()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+      "na Silva",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+      "password1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+      "11988880001",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+      "52998224725",
+    )
+
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+    ).toHaveValue("Ana Silva")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).toHaveValue("ana@club.test")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    ).toHaveValue("password1")
+    expect(submit).toBeEnabled()
+    expect(screen.queryByText("verify-email-page")).not.toBeInTheDocument()
+    expect(loginLink).toHaveAttribute("href", "/t/ficc")
   })
 })
 
