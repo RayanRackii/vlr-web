@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -51,8 +51,11 @@ export function ResetPasswordPage() {
       password: "",
       confirmPassword: "",
     },
+    mode: "onTouched",
   })
 
+  const watchedValues = form.watch()
+  const isResetValid = resetPasswordSchema.safeParse(watchedValues).success
   const isSubmitting = form.formState.isSubmitting
 
   useEffect(() => {
@@ -208,14 +211,15 @@ export function ResetPasswordPage() {
             </p>
           ) : null}
 
-          <LoadingButton
+          <FormPrimaryButton
             type="submit"
             className="w-full"
+            isValid={isResetValid}
             loading={isSubmitting}
             loadingLabel="Salvando..."
           >
             Salvar senha
-          </LoadingButton>
+          </FormPrimaryButton>
         </form>
       </Form>
     </main>
