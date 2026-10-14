@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { PermissionProvider } from "@/features/users/permissions/PermissionContext"
 import {
+  clearPlatformTenantExited,
+  markPlatformTenantExited,
   refreshAuthSession,
   usePlatformTenantSession,
   writeActiveTenantLabel,
@@ -42,8 +44,19 @@ function MainLayoutShell() {
     setIsExiting(true)
     try {
       await exitTenantEnvironment()
-      writeActiveTenantLabel(null)
-      await refreshAuthSession()
+      if (user?.id) {
+        markPlatformTenantExited(user.id)
+      } else {
+        writeActiveTenantLabel(null)
+      }
+
+      try {
+        await refreshAuthSession()
+      } catch {
+        // POST /exit already cleared the server tenant. A failed token refresh
+        // must not leave the platform admin inside the tenant shell.
+      }
+
       void navigate("/admin/dashboard", { replace: true })
     } catch (error: unknown) {
       const message =
@@ -97,6 +110,7 @@ function MainLayoutShell() {
         if (error !== null) {
           return
         }
+        clearPlatformTenantExited()
         void navigate("/login", { replace: true })
       }}
     >
