@@ -16,6 +16,11 @@ function padClockPart(value: string): string {
   return value.padStart(2, "0")
 }
 
+/** Civil date and `HH:mm:ss` clock of an instant in America/Sao_Paulo. */
+export function brazilCivilDateTime(instant: Date): { date: string; time: string } {
+  return brazilCivilParts(instant)
+}
+
 function brazilCivilParts(now: Date): { date: string; time: string } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: SAO_PAULO_TZ,
