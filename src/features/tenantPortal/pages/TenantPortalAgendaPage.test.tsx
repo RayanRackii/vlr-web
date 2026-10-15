@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -65,6 +65,10 @@ import {
 const RESERVATION_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const FUTURE_ISO = "2099-01-15T13:00:00.000Z"
 const PAST_ISO = "2020-01-15T13:00:00.000Z"
+/** 08:00 in America/Sao_Paulo on the fake clock used by the time-selector tests. */
+const SLOT_08_ISO = "2026-10-14T11:00:00.000Z"
+const VIEWED_DATE = "2026-10-14"
+const OTHER_DATE = "2026-10-15"
 
 const listMine = vi.mocked(listMyPortalReservations)
 const fetchAssets = vi.mocked(fetchPortalRentalAssets)
@@ -830,7 +834,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
   it("clears Reservando and shows the reservation before the refresh settles", async () => {
     const user = userEvent.setup()
-    const created = makeReservation("Confirmed", FUTURE_ISO, {
+    const created = makeReservation("Confirmed", SLOT_08_ISO, {
       items: [
         {
           id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
@@ -939,7 +943,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       }
       return Promise.reject(new Error("schedule down"))
     })
-    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
     renderAgenda()
 
     await bookQuadra1(user)
@@ -948,9 +952,10 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(toastSuccess).toHaveBeenCalled()
     })
     await waitFor(() => {
-      expect(dayCalls).toBeGreaterThanOrEqual(2)
+      expect(toastError).toHaveBeenCalledWith("schedule down")
     })
-    expect(toastError).not.toHaveBeenCalled()
+    expect(toastError).toHaveBeenCalledTimes(1)
+    expect(dayCalls).toBe(3)
     expect(
       screen.queryByRole("button", {
         name: i18n.t("tenantPortal.agenda.reserving"),
@@ -1515,7 +1520,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
   it("clears the reserved mark when this browser's booking is canceled", async () => {
     const user = userEvent.setup()
-    const created = makeReservation("Confirmed", FUTURE_ISO)
+    const created = makeReservation("Confirmed", SLOT_08_ISO)
     let dayCalls = 0
     fetchDay.mockImplementation(() => {
       dayCalls += 1
@@ -1536,7 +1541,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       return new Promise(() => {})
     })
     bookSlot.mockResolvedValue(created)
-    cancelMine.mockResolvedValue(makeReservation("Canceled", FUTURE_ISO))
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
     renderAgenda()
 
     await bookQuadra1(user)
@@ -1565,6 +1570,415 @@ describe("TenantPortalAgendaPage time selector", () => {
       }),
     ).toBeInTheDocument()
     expect(dayCalls).toBeGreaterThanOrEqual(2)
+  })
+
+  function agendaSlot(
+    rentalAssetId: string,
+    assetName: string,
+    overrides: Partial<PortalScheduleSlot> = {},
+  ): PortalScheduleSlot {
+    return makeSlot({
+      id:
+        rentalAssetId === ASSET_A_ID
+          ? "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1"
+          : "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+      rentalAssetId,
+      assetName,
+      startTime: "08:00:00",
+      endTime: "09:00:00",
+      ...overrides,
+    })
+  }
+
+  function heldQuadra1(): PortalScheduleSlot {
+    return agendaSlot(ASSET_A_ID, "Quadra 1", {
+      status: "booked",
+      isBookableByCustomer: false,
+      reservationId: RESERVATION_ID,
+    })
+  }
+
+  function freeQuadra1(): PortalScheduleSlot {
+    return agendaSlot(ASSET_A_ID, "Quadra 1")
+  }
+
+  function freeQuadra2(): PortalScheduleSlot {
+    return agendaSlot(ASSET_B_ID, "Quadra 2")
+  }
+
+  async function expectQuadra1Selectable() {
+    const court = await screen.findByRole("button", { name: "Quadra 1" })
+    expect(court).toBeEnabled()
+    expect(court).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    expect(court).not.toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+  }
+
+  it("frees the slot after reserve and cancel in the same session", async () => {
+    const user = userEvent.setup()
+    let dayCalls = 0
+    fetchDay.mockImplementation(() => {
+      dayCalls += 1
+      if (dayCalls === 1) {
+        return Promise.resolve({
+          date: VIEWED_DATE,
+          slots: [freeQuadra1(), freeQuadra2()],
+        })
+      }
+      if (dayCalls === 2) {
+        return Promise.resolve({
+          date: VIEWED_DATE,
+          slots: [heldQuadra1(), freeQuadra2()],
+        })
+      }
+      return Promise.resolve({
+        date: VIEWED_DATE,
+        slots: [freeQuadra1(), freeQuadra2()],
+      })
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
+    renderAgenda()
+
+    await bookQuadra1(user)
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(dayCalls).toBeGreaterThanOrEqual(2)
+    })
+
+    await confirmCancel(user)
+    await expectQuadra1Selectable()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("frees a slot loaded from the server after a remount", async () => {
+    let released = false
+    fetchDay.mockImplementation(() =>
+      Promise.resolve({
+        date: VIEWED_DATE,
+        slots: released
+          ? [freeQuadra1(), freeQuadra2()]
+          : [heldQuadra1(), freeQuadra2()],
+      }),
+    )
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", SLOT_08_ISO),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
+    const user = userEvent.setup()
+
+    const first = renderAgenda()
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+    first.unmount()
+
+    renderAgenda()
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+
+    released = true
+    await confirmCancel(user)
+    await expectQuadra1Selectable()
+  })
+
+  it("frees the slot after a language switch without refetching the day", async () => {
+    let released = false
+    fetchDay.mockImplementation(() =>
+      Promise.resolve({
+        date: VIEWED_DATE,
+        slots: released
+          ? [freeQuadra1(), freeQuadra2()]
+          : [heldQuadra1(), freeQuadra2()],
+      }),
+    )
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", SLOT_08_ISO),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+    const dayCalls = fetchDay.mock.calls.length
+
+    try {
+      await i18n.changeLanguage("en")
+      expect(
+        await screen.findByRole("button", {
+          name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        }),
+      ).toBeInTheDocument()
+      expect(fetchDay.mock.calls.length).toBe(dayCalls)
+
+      released = true
+      await confirmCancel(user)
+      await expectQuadra1Selectable()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("refetches the cancelled reservation date and the viewed date", async () => {
+    const user = userEvent.setup()
+    const otherIso = "2026-10-15T11:00:00.000Z"
+    fetchDay.mockImplementation((_subdomain: string, dayDate: string) =>
+      Promise.resolve({
+        date: dayDate,
+        slots: [freeQuadra1(), freeQuadra2()],
+      }),
+    )
+    let released = false
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", otherIso),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", otherIso))
+    renderAgenda()
+
+    await expectQuadra1Selectable()
+    released = true
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      const dates = fetchDay.mock.calls.map((call) => call[1])
+      expect(dates).toContain(VIEWED_DATE)
+      expect(dates).toContain(OTHER_DATE)
+    })
+
+    fireEvent.change(screen.getByLabelText(i18n.t("tenantPortal.agenda.date")), {
+      target: { value: OTHER_DATE },
+    })
+    await expectQuadra1Selectable()
+  })
+
+  it("does not paint another date when that day's refresh returns a taken slot", async () => {
+    const user = userEvent.setup()
+    const otherIso = "2026-10-15T11:00:00.000Z"
+    fetchDay.mockImplementation((_subdomain: string, dayDate: string) =>
+      Promise.resolve({
+        date: dayDate,
+        slots:
+          dayDate === OTHER_DATE
+            ? [
+                agendaSlot(ASSET_A_ID, "Quadra 1", {
+                  status: "booked",
+                  isBookableByCustomer: false,
+                  reservationId: null,
+                }),
+              ]
+            : [freeQuadra1(), freeQuadra2()],
+      }),
+    )
+    let released = false
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", otherIso),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", otherIso))
+    renderAgenda()
+
+    await expectQuadra1Selectable()
+    released = true
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(fetchDay.mock.calls.map((call) => call[1])).toContain(OTHER_DATE)
+    })
+    await expectQuadra1Selectable()
+  })
+
+  it("keeps a taken mark on its own date when the customer changes day", async () => {
+    const user = userEvent.setup()
+    let calls = 0
+    fetchDay.mockImplementation((_subdomain: string, dayDate: string) => {
+      calls += 1
+      if (calls === 2) {
+        return new Promise(() => {})
+      }
+      return Promise.resolve({
+        date: dayDate,
+        slots: [freeQuadra1(), freeQuadra2()],
+      })
+    })
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText(i18n.t("tenantPortal.agenda.date")), {
+      target: { value: OTHER_DATE },
+    })
+
+    await expectQuadra1Selectable()
+  })
+
+  it("discards a schedule response for a date the customer already left", async () => {
+    let resolveOther: (value: {
+      date: string
+      slots: PortalScheduleSlot[]
+    }) => void = () => {}
+    const requested: string[] = []
+    fetchDay.mockImplementation((_subdomain: string, dayDate: string) => {
+      requested.push(dayDate)
+      if (requested.length === 1) {
+        return Promise.resolve({
+          date: dayDate,
+          slots: [freeQuadra1(), freeQuadra2()],
+        })
+      }
+      if (dayDate === OTHER_DATE) {
+        return new Promise((resolve) => {
+          resolveOther = resolve
+        })
+      }
+      return Promise.resolve({
+        date: dayDate,
+        slots: [freeQuadra1(), freeQuadra2()],
+      })
+    })
+    renderAgenda()
+    await expectQuadra1Selectable()
+
+    fireEvent.change(screen.getByLabelText(i18n.t("tenantPortal.agenda.date")), {
+      target: { value: OTHER_DATE },
+    })
+    await waitFor(() => {
+      expect(requested).toContain(OTHER_DATE)
+    })
+    fireEvent.change(screen.getByLabelText(i18n.t("tenantPortal.agenda.date")), {
+      target: { value: VIEWED_DATE },
+    })
+    await expectQuadra1Selectable()
+
+    await act(async () => {
+      resolveOther({
+        date: OTHER_DATE,
+        slots: [
+          agendaSlot(ASSET_A_ID, "Quadra 1", {
+            status: "booked",
+            isBookableByCustomer: false,
+            reservationId: null,
+          }),
+        ],
+      })
+      await Promise.resolve()
+    })
+
+    await expectQuadra1Selectable()
+  })
+
+  it("retries a failed slot refresh once and then toasts", async () => {
+    const user = userEvent.setup()
+    let calls = 0
+    fetchDay.mockImplementation(() => {
+      calls += 1
+      if (calls === 1) {
+        return Promise.resolve({
+          date: VIEWED_DATE,
+          slots: [heldQuadra1(), freeQuadra2()],
+        })
+      }
+      return Promise.reject(new Error("schedule down"))
+    })
+    let released = false
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", SLOT_08_ISO),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+
+    released = true
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("schedule down")
+    })
+    expect(toastError).toHaveBeenCalledTimes(1)
+    expect(calls).toBe(3)
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("recovers the slot when the first refresh fails and the retry succeeds", async () => {
+    const user = userEvent.setup()
+    let calls = 0
+    fetchDay.mockImplementation(() => {
+      calls += 1
+      if (calls === 1) {
+        return Promise.resolve({
+          date: VIEWED_DATE,
+          slots: [heldQuadra1(), freeQuadra2()],
+        })
+      }
+      if (calls === 2) {
+        return Promise.reject(new Error("schedule down"))
+      }
+      return Promise.resolve({
+        date: VIEWED_DATE,
+        slots: [freeQuadra1(), freeQuadra2()],
+      })
+    })
+    let released = false
+    listMine.mockImplementation(() =>
+      Promise.resolve([
+        makeReservation(released ? "Canceled" : "Confirmed", SLOT_08_ISO),
+      ]),
+    )
+    cancelMine.mockResolvedValue(makeReservation("Canceled", SLOT_08_ISO))
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+
+    released = true
+    await confirmCancel(user)
+    await expectQuadra1Selectable()
+    expect(toastError).not.toHaveBeenCalled()
+    expect(calls).toBe(3)
   })
 })
 

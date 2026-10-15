@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { brazilCivilDateTime } from "@/lib/brazilTimeZone"
+
 const reservationIdSchema = z.string().uuid()
 
 const CANCELED_STATUSES = new Set(["canceled", "cancelled"])
@@ -55,4 +57,173 @@ export function findVisibleAgendaReservation<T extends AgendaReservationCandidat
   }
 
   return match
+}
+
+const BLOCKING_RESERVATION_STATUSES = new Set(["pendingdeposit", "confirmed"])
+
+export type AgendaReservationHold = {
+  id: string
+  status: string
+  startDateTime: string
+  items: readonly { rentalAssetId: string }[]
+}
+
+export type AgendaSlotHold = {
+  rentalAssetId: string
+  startTime: string
+  reservationId?: string | null
+  isBookableByCustomer: boolean
+  status: string
+}
+
+/** PendingDeposit and Confirmed still occupy the slot. Canceled does not. */
+export function isBlockingReservationStatus(status: string): boolean {
+  return BLOCKING_RESERVATION_STATUSES.has(status.trim().toLowerCase())
+}
+
+function clockKey(value: string): string {
+  return value.length >= 5 ? value.slice(0, 5) : value
+}
+
+/**
+ * One civil date plus one rental asset plus one start clock.
+ * A key from Monday cannot paint Tuesday.
+ */
+export function agendaReservedSlotKey(
+  date: string,
+  rentalAssetId: string,
+  startTime: string,
+): string {
+  return `${date}:${rentalAssetId}|${clockKey(startTime)}`
+}
+
+/** Start of a reservation on the Rolvix clock, or null when the instant is unreadable. */
+export function reservationCivilStart(
+  startDateTime: string,
+): { date: string; time: string } | null {
+  const instant = new Date(startDateTime)
+  if (Number.isNaN(instant.getTime())) {
+    return null
+  }
+
+  const civil = brazilCivilDateTime(instant)
+  return { date: civil.date, time: clockKey(civil.time) }
+}
+
+export function reservationCivilDate(startDateTime: string): string | null {
+  return reservationCivilStart(startDateTime)?.date ?? null
+}
+
+function isBookableObservation(slot: AgendaSlotHold): boolean {
+  return (
+    slot.isBookableByCustomer && slot.status.toLowerCase() === "available"
+  )
+}
+
+/**
+ * Slots this customer still holds on `date`.
+ * A blocking reservation contributes its asset and start clock.
+ * A non-bookable schedule row contributes when its reservationId is one of
+ * those blocking reservations. Canceled rows and other customers do not.
+ */
+export function reservedSlotKeysForDate(
+  date: string,
+  reservations: readonly AgendaReservationHold[],
+  slots: readonly AgendaSlotHold[],
+): ReadonlySet<string> {
+  const blocking = reservations.filter((reservation) =>
+    isBlockingReservationStatus(reservation.status),
+  )
+  const blockingIds = new Set(
+    blocking.map((reservation) => reservation.id.toLowerCase()),
+  )
+  const keys = new Set<string>()
+
+  for (const reservation of blocking) {
+    const civil = reservationCivilStart(reservation.startDateTime)
+    if (civil === null || civil.date !== date) {
+      continue
+    }
+
+    for (const item of reservation.items) {
+      if (item.rentalAssetId.length === 0) {
+        continue
+      }
+      keys.add(agendaReservedSlotKey(date, item.rentalAssetId, civil.time))
+    }
+  }
+
+  for (const slot of slots) {
+    const reservationId = slot.reservationId?.trim().toLowerCase() ?? ""
+    if (reservationId.length === 0 || !blockingIds.has(reservationId)) {
+      continue
+    }
+    if (isBookableObservation(slot)) {
+      continue
+    }
+    keys.add(agendaReservedSlotKey(date, slot.rentalAssetId, slot.startTime))
+  }
+
+  return keys
+}
+
+/** Drop optimistic marks once the server lists that slot as bookable on `date`. */
+export function withoutBookableReservedKeys(
+  keys: ReadonlySet<string>,
+  date: string,
+  bookableSlots: readonly { rentalAssetId: string; startTime: string }[],
+): ReadonlySet<string> {
+  if (keys.size === 0 || bookableSlots.length === 0) {
+    return keys
+  }
+
+  const bookable = new Set(
+    bookableSlots.map((slot) =>
+      agendaReservedSlotKey(date, slot.rentalAssetId, slot.startTime),
+    ),
+  )
+  let changed = false
+  const next = new Set<string>()
+  for (const key of keys) {
+    if (bookable.has(key)) {
+      changed = true
+      continue
+    }
+    next.add(key)
+  }
+
+  return changed ? next : keys
+}
+
+/** Viewed date plus each reservation's civil date, without duplicates. */
+export function agendaRefreshDates(
+  viewedDate: string,
+  reservations: readonly { startDateTime: string }[],
+): string[] {
+  const dates: string[] = []
+  const seen = new Set<string>()
+
+  const add = (value: string | null) => {
+    if (value === null || value.length === 0 || seen.has(value)) {
+      return
+    }
+    seen.add(value)
+    dates.push(value)
+  }
+
+  add(viewedDate)
+  for (const reservation of reservations) {
+    add(reservationCivilDate(reservation.startDateTime))
+  }
+
+  return dates
+}
+
+/** Run once, and exactly once more after a failure. The second failure propagates. */
+export async function retryOnce<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch {
+    return await operation()
+  }
 }

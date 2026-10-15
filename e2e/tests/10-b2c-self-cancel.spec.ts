@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test"
 
 import type { ApiClient } from "../api-client"
 import { adminClient, b2bClient, customerClient, publicClient } from "../clients"
@@ -147,7 +147,147 @@ test.describe("B2C self-cancel", () => {
     await expect(reserve).toBeEnabled()
     guards.assertNoCrash()
   })
+
+  test("after reload, cancelling frees the slot without a second reload", async ({
+    page,
+  }) => {
+    expect(location).toBeTruthy()
+    const booked = location!
+    const snapshot = readSnapshot()
+    const guards = attachPageGuards(page)
+
+    await bookOnAgenda(page, snapshot.subdomain, booked.name, bookDate, bookWindow.startTime)
+    await page.reload()
+    await showAgendaDate(page, bookDate, booked.name)
+    await cancelListedReservation(page, booked.name, bookWindow.startTime)
+    await selectLocationOnAgenda(page, booked.name, bookWindow.startTime)
+    await expect(page.getByRole("button", { name: "Reservar horário" })).toBeEnabled()
+    guards.assertNoCrash()
+  })
+
+  test("after a language switch, cancelling frees the slot", async ({ page }) => {
+    expect(location).toBeTruthy()
+    const booked = location!
+    const snapshot = readSnapshot()
+    const guards = attachPageGuards(page)
+
+    try {
+      await bookOnAgenda(page, snapshot.subdomain, booked.name, bookDate, bookWindow.startTime)
+      await page.getByRole("button", { name: "Idioma" }).click()
+      await page.getByRole("menuitem", { name: /English/ }).click()
+      await expect(page.getByRole("button", { name: "Cancel" }).first()).toBeVisible()
+      await cancelListedReservation(page, booked.name, bookWindow.startTime, {
+        cancel: "Cancel",
+        confirm: "Confirm cancellation",
+        success: "Reservation canceled.",
+      })
+      await selectLocationOnAgenda(page, booked.name, bookWindow.startTime)
+      await expect(page.getByRole("button", { name: "Book slot" })).toBeEnabled()
+      guards.assertNoCrash()
+    } finally {
+      const language = page.getByRole("button", { name: "Language" })
+      if (await language.isVisible().catch(() => false)) {
+        await language.click()
+        await page.getByRole("menuitem", { name: /Português/ }).click()
+      }
+    }
+  })
+
+  test("cancelling a reservation of another date frees that slot", async ({
+    page,
+  }) => {
+    expect(location).toBeTruthy()
+    const booked = location!
+    const snapshot = readSnapshot()
+    const otherDate = addDaysIso(bookDate, 1)
+    const otherWindow = await ensureBookableDay(
+      b2bClient(),
+      publicClient(snapshot.subdomain),
+      snapshot.subdomain,
+      booked,
+      otherDate,
+    )
+    const guards = attachPageGuards(page)
+
+    await bookOnAgenda(
+      page,
+      snapshot.subdomain,
+      booked.name,
+      otherDate,
+      otherWindow.startTime,
+    )
+    await page.locator('input[type="date"]').fill(bookDate)
+    await expect(
+      page.getByRole("button", { name: new RegExp(booked.name) }),
+    ).toBeVisible()
+
+    const viewedSchedule = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes(`/schedule/days/${bookDate}`),
+    )
+    const reservedSchedule = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        response.url().includes(`/schedule/days/${otherDate}`),
+    )
+    await cancelListedReservation(page, booked.name, otherWindow.startTime)
+    await Promise.all([viewedSchedule, reservedSchedule])
+
+    await page.locator('input[type="date"]').fill(otherDate)
+    await selectLocationOnAgenda(page, booked.name, otherWindow.startTime)
+    await expect(page.getByRole("button", { name: "Reservar horário" })).toBeEnabled()
+    guards.assertNoCrash()
+  })
 })
+
+async function showAgendaDate(page: Page, date: string, locationName: string) {
+  const dateField = page.locator('input[type="date"]')
+  await expect(dateField).toBeVisible({ timeout: 30_000 })
+  await dateField.fill(date)
+  await expect(
+    page.getByRole("button", { name: new RegExp(locationName) }),
+  ).toBeVisible({ timeout: 30_000 })
+}
+
+async function bookOnAgenda(
+  page: Page,
+  subdomain: string,
+  locationName: string,
+  date: string,
+  startTime: string,
+) {
+  await openAgendaOnDate(page, subdomain, date, locationName)
+  await selectLocationOnAgenda(page, locationName, startTime)
+  const reserve = page.getByRole("button", { name: "Reservar horário" })
+  await expect(reserve).toBeEnabled({ timeout: 15_000 })
+  await reserve.click()
+  await expect(page.getByText("Reserva criada!")).toBeVisible({ timeout: 20_000 })
+}
+
+async function cancelListedReservation(
+  page: Page,
+  locationName: string,
+  startTime: string,
+  labels: { cancel: string; confirm: string; success: string } = {
+    cancel: "Cancelar",
+    confirm: "Confirmar cancelamento",
+    success: "Reserva cancelada.",
+  },
+) {
+  const hhmm = startTime.slice(0, 5)
+  const mineRow = page
+    .locator("li")
+    .filter({ hasText: locationName })
+    .filter({ hasText: hhmm })
+    .first()
+  await expect(mineRow).toBeVisible()
+  await mineRow.getByRole("button", { name: labels.cancel }).click()
+  const dialog = page.getByRole("alertdialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: labels.confirm }).click()
+  await expect(page.getByText(labels.success)).toBeVisible({ timeout: 20_000 })
+}
 
 async function createBookableLocation(
   b2b: ApiClient,
