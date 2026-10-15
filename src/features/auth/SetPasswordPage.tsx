@@ -28,6 +28,7 @@ import {
   type SetPasswordFormValues,
 } from "@/features/auth/setPasswordSchema"
 import { submitInvitePassword } from "@/features/auth/setPasswordService"
+import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 
 export function SetPasswordPage() {
@@ -74,6 +75,7 @@ export function SetPasswordPage() {
         password: values.password,
       })
 
+      noteStaffSignIn()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: accepted.email,
         password: values.password,

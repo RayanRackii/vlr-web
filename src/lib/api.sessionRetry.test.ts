@@ -10,6 +10,7 @@ import { assignBrowserLocation } from "@/lib/browserLocation"
 import {
   api,
   customerApi,
+  noteStaffSignIn,
   resetStaffSessionRefreshForTests,
 } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
@@ -455,6 +456,457 @@ describe("staff api 401 retry", () => {
     expect(logged).not.toContain(STAFF_EMAIL)
     expect(logged).not.toContain(OTHER_STAFF_EMAIL)
     expect(logged).not.toContain("other-staff-access-token")
+  })
+})
+
+const ROTATED_ACCESS = "rotated-staff-access-token"
+const ROTATED_REFRESH = "rotated-refresh-token"
+const QUEUED_ACCESS = "queued-staff-access-token"
+const QUEUED_REFRESH = "queued-refresh-token"
+const INFLIGHT_ACCESS = "inflight-staff-access-token"
+const INFLIGHT_REFRESH = "inflight-refresh-token"
+const SIGNED_IN_ACCESS = "signed-in-staff-access-token"
+const SIGNED_IN_REFRESH = "signed-in-refresh-token"
+
+type StaffStoredSession = {
+  accessToken: string
+  refreshToken: string
+  userId: string
+  email: string
+  expiresAt: number
+}
+
+type RefreshScript =
+  | { kind: "success"; accessToken: string; refreshToken: string }
+  | { kind: "terminal"; error: AuthApiError }
+
+function futureExpiry(): number {
+  return Math.floor(Date.now() / 1000) + 3600
+}
+
+function staffSession(input: {
+  accessToken: string
+  refreshToken: string
+  userId?: string
+  email?: string
+  expiresAt?: number
+}): StaffStoredSession {
+  return {
+    accessToken: input.accessToken,
+    refreshToken: input.refreshToken,
+    userId: input.userId ?? "user-1",
+    email: input.email ?? STAFF_EMAIL,
+    expiresAt: input.expiresAt ?? futureExpiry(),
+  }
+}
+
+function createAuthJsSession() {
+  let stored: StaffStoredSession | null = null
+  const refreshCalls: string[] = []
+  const waiters = new Map<string, Array<(script: RefreshScript) => void>>()
+  const planned = new Map<string, RefreshScript>()
+
+  function install(): void {
+    vi.mocked(supabase.auth.getSession).mockImplementation(async () => {
+      if (stored === null) {
+        return { data: { session: null }, error: null } as never
+      }
+
+      return {
+        data: {
+          session: {
+            access_token: stored.accessToken,
+            refresh_token: stored.refreshToken,
+            expires_at: stored.expiresAt,
+            user: { id: stored.userId, email: stored.email },
+          },
+        },
+        error: null,
+      } as never
+    })
+
+    vi.mocked(supabase.auth.refreshSession).mockImplementation(async (args) => {
+      const refreshToken =
+        typeof args?.refresh_token === "string" ? args.refresh_token : ""
+      refreshCalls.push(refreshToken)
+      const started = stored
+      const script = await scriptFor(refreshToken)
+      const after = stored
+      const storageChanged =
+        started !== null &&
+        (after === null || after.refreshToken !== started.refreshToken)
+
+      if (script.kind === "success") {
+        if (!storageChanged && started !== null) {
+          stored = {
+            accessToken: script.accessToken,
+            refreshToken: script.refreshToken,
+            userId: started.userId,
+            email: started.email,
+            expiresAt: futureExpiry(),
+          }
+        }
+
+        if (storageChanged || stored === null) {
+          return {
+            data: { session: null, user: null },
+            error: { name: "AuthRefreshDiscardedError", status: 409, message: "discarded" },
+          } as never
+        }
+
+        return {
+          data: {
+            session: {
+              access_token: stored.accessToken,
+              refresh_token: stored.refreshToken,
+              expires_at: stored.expiresAt,
+              user: { id: stored.userId, email: stored.email },
+            },
+            user: { id: stored.userId, email: stored.email },
+          },
+          error: null,
+        } as never
+      }
+
+      const accessStillValid =
+        after !== null && after.expiresAt * 1000 > Date.now()
+      if (!accessStillValid) {
+        stored = null
+      }
+
+      return {
+        data: { session: null, user: null },
+        error: script.error,
+      } as never
+    })
+  }
+
+  function scriptFor(refreshToken: string): Promise<RefreshScript> {
+    const bucket = waiters.get(refreshToken)
+    if (bucket) {
+      return new Promise((resolve) => {
+        bucket.push(resolve)
+      })
+    }
+
+    return Promise.resolve(
+      planned.get(refreshToken) ?? {
+        kind: "success",
+        accessToken: "unexpected-refresh-access-token",
+        refreshToken: "unexpected-refresh-token",
+      },
+    )
+  }
+
+  return {
+    refreshCalls,
+    install,
+    read: () => stored,
+    write: (session: StaffStoredSession | null) => {
+      stored = session
+    },
+    plan(refreshToken: string, script: RefreshScript) {
+      planned.set(refreshToken, script)
+    },
+    hold(refreshToken: string) {
+      waiters.set(refreshToken, [])
+    },
+    release(refreshToken: string, script: RefreshScript) {
+      const bucket = waiters.get(refreshToken) ?? []
+      waiters.delete(refreshToken)
+      for (const resolve of bucket) {
+        resolve(script)
+      }
+    },
+  }
+}
+
+async function flushTurns(): Promise<void> {
+  for (let i = 0; i < 10; i += 1) {
+    await Promise.resolve()
+  }
+}
+
+describe("staff api 401 refresh binding", () => {
+  beforeEach(() => {
+    resetStaffSessionRefreshForTests()
+    vi.mocked(supabase.auth.signOut).mockClear()
+    vi.mocked(supabase.auth.refreshSession).mockReset()
+    vi.mocked(assignBrowserLocation).mockClear()
+  })
+
+  afterEach(() => {
+    resetStaffSessionRefreshForTests()
+  })
+
+  it("retries once after refresh saves the rotated session", async () => {
+    const session = createAuthJsSession()
+    const original = staffSession({
+      accessToken: OLD_STAFF_TOKEN,
+      refreshToken: REFRESH_SECRET,
+    })
+    session.write(original)
+    session.install()
+    session.plan(REFRESH_SECRET, {
+      kind: "success",
+      accessToken: ROTATED_ACCESS,
+      refreshToken: ROTATED_REFRESH,
+    })
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+
+    const response = await api.get("/api/users/me")
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([
+      `Bearer ${OLD_STAFF_TOKEN}`,
+      `Bearer ${ROTATED_ACCESS}`,
+    ])
+    expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    expect(session.read()).toMatchObject({
+      accessToken: ROTATED_ACCESS,
+      refreshToken: ROTATED_REFRESH,
+      userId: "user-1",
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(ROTATED_ACCESS)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(ROTATED_REFRESH)
+    expect(logged).not.toContain(STAFF_EMAIL)
+  })
+
+  it("shares one refresh across concurrent 401s for the same stored token", async () => {
+    const session = createAuthJsSession()
+    session.write(
+      staffSession({
+        accessToken: OLD_STAFF_TOKEN,
+        refreshToken: REFRESH_SECRET,
+      }),
+    )
+    session.install()
+    session.hold(REFRESH_SECRET)
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+      { kind: "status", status: 200 },
+    ])
+
+    const first = api.get("/api/users/me")
+    await vi.waitFor(() => {
+      expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    })
+    const second = api.get("/api/users/me")
+    await vi.waitFor(() => {
+      expect(calls).toHaveLength(2)
+    })
+    await flushTurns()
+
+    expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    session.release(REFRESH_SECRET, {
+      kind: "success",
+      accessToken: ROTATED_ACCESS,
+      refreshToken: ROTATED_REFRESH,
+    })
+
+    const responses = await Promise.all([first, second])
+    expect(responses.map((response) => response.status)).toEqual([200, 200])
+    expect(calls).toEqual([
+      `Bearer ${OLD_STAFF_TOKEN}`,
+      `Bearer ${OLD_STAFF_TOKEN}`,
+      `Bearer ${ROTATED_ACCESS}`,
+      `Bearer ${ROTATED_ACCESS}`,
+    ])
+    expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    expect(session.read()?.refreshToken).toBe(ROTATED_REFRESH)
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+  })
+
+  it("does not exchange a queued refresh token after re-login replaces the session", async () => {
+    const session = createAuthJsSession()
+    session.write(
+      staffSession({
+        accessToken: INFLIGHT_ACCESS,
+        refreshToken: INFLIGHT_REFRESH,
+      }),
+    )
+    session.install()
+    session.hold(INFLIGHT_REFRESH)
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+
+    const inflight = api.get("/api/users/me")
+    await vi.waitFor(() => {
+      expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+    })
+
+    session.write(
+      staffSession({
+        accessToken: QUEUED_ACCESS,
+        refreshToken: QUEUED_REFRESH,
+      }),
+    )
+    const queued = api.get("/api/rentals")
+    await vi.waitFor(() => {
+      expect(vi.mocked(supabase.auth.getSession).mock.calls.length).toBeGreaterThanOrEqual(4)
+    })
+    await flushTurns()
+    expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+    expect(calls.map((authorization) => authorization.length > 0)).toEqual([
+      true,
+      true,
+    ])
+
+    noteStaffSignIn()
+    session.write(
+      staffSession({
+        accessToken: SIGNED_IN_ACCESS,
+        refreshToken: SIGNED_IN_REFRESH,
+      }),
+    )
+    session.release(INFLIGHT_REFRESH, {
+      kind: "success",
+      accessToken: ROTATED_ACCESS,
+      refreshToken: ROTATED_REFRESH,
+    })
+
+    await expect(inflight).rejects.toMatchObject({ response: { status: 401 } })
+    await expect(queued).rejects.toMatchObject({ response: { status: 401 } })
+    expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+    expect(session.read()).toMatchObject({
+      accessToken: SIGNED_IN_ACCESS,
+      refreshToken: SIGNED_IN_REFRESH,
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(calls).toEqual([
+      `Bearer ${INFLIGHT_ACCESS}`,
+      `Bearer ${QUEUED_ACCESS}`,
+    ])
+    const logged = loggedText(info)
+    expect(logged).not.toContain(INFLIGHT_REFRESH)
+    expect(logged).not.toContain(QUEUED_REFRESH)
+    expect(logged).not.toContain(SIGNED_IN_REFRESH)
+    expect(logged).not.toContain(SIGNED_IN_ACCESS)
+    expect(logged).not.toContain(STAFF_EMAIL)
+  })
+
+  it("retries with the current session when a queued token is replaced without sign-in", async () => {
+    const session = createAuthJsSession()
+    session.write(
+      staffSession({
+        accessToken: INFLIGHT_ACCESS,
+        refreshToken: INFLIGHT_REFRESH,
+      }),
+    )
+    session.install()
+    session.hold(INFLIGHT_REFRESH)
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+      { kind: "status", status: 200 },
+    ])
+
+    const inflight = api.get("/api/users/me")
+    await vi.waitFor(() => {
+      expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+    })
+    session.write(
+      staffSession({
+        accessToken: QUEUED_ACCESS,
+        refreshToken: QUEUED_REFRESH,
+      }),
+    )
+    const queued = api.get("/api/rentals")
+    await vi.waitFor(() => {
+      expect(vi.mocked(supabase.auth.getSession).mock.calls.length).toBeGreaterThanOrEqual(4)
+    })
+    await flushTurns()
+    expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+
+    session.write(
+      staffSession({
+        accessToken: SIGNED_IN_ACCESS,
+        refreshToken: SIGNED_IN_REFRESH,
+      }),
+    )
+    session.release(INFLIGHT_REFRESH, {
+      kind: "success",
+      accessToken: ROTATED_ACCESS,
+      refreshToken: ROTATED_REFRESH,
+    })
+
+    const responses = await Promise.all([inflight, queued])
+    expect(responses.map((response) => response.status)).toEqual([200, 200])
+    expect(session.refreshCalls).toEqual([INFLIGHT_REFRESH])
+    expect(session.read()).toMatchObject({
+      accessToken: SIGNED_IN_ACCESS,
+      refreshToken: SIGNED_IN_REFRESH,
+    })
+    expect(calls).toEqual([
+      `Bearer ${INFLIGHT_ACCESS}`,
+      `Bearer ${QUEUED_ACCESS}`,
+      `Bearer ${SIGNED_IN_ACCESS}`,
+      `Bearer ${SIGNED_IN_ACCESS}`,
+    ])
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+  })
+
+  it("does not sign out when a terminal refresh error belongs to a replaced token", async () => {
+    const session = createAuthJsSession()
+    session.write(
+      staffSession({
+        accessToken: OLD_STAFF_TOKEN,
+        refreshToken: REFRESH_SECRET,
+        expiresAt: Math.floor(Date.now() / 1000) - 60,
+      }),
+    )
+    session.install()
+    session.hold(REFRESH_SECRET)
+    installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+
+    const pending = api.get("/api/users/me")
+    await vi.waitFor(() => {
+      expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    })
+    session.write(
+      staffSession({
+        accessToken: SIGNED_IN_ACCESS,
+        refreshToken: SIGNED_IN_REFRESH,
+      }),
+    )
+    session.release(REFRESH_SECRET, {
+      kind: "terminal",
+      error: new AuthApiError(
+        "Invalid Refresh Token",
+        400,
+        "refresh_token_not_found",
+      ),
+    })
+
+    await expect(pending).resolves.toMatchObject({ status: 200 })
+    expect(session.refreshCalls).toEqual([REFRESH_SECRET])
+    expect(session.read()).toMatchObject({
+      accessToken: SIGNED_IN_ACCESS,
+      refreshToken: SIGNED_IN_REFRESH,
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(SIGNED_IN_REFRESH)
+    expect(logged).not.toContain(SIGNED_IN_ACCESS)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(STAFF_EMAIL)
   })
 })
 
