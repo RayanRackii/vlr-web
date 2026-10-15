@@ -110,6 +110,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Admin wizard Operação (Location): toggle fila (default off) + horário de abertura; persistir em create/update/bulk
 - [x] B2C agenda: poll GET queue 4s (pausa se a aba estiver oculta); Closed / WaitingRoom / Waiting / Active 90s / Expired
 - [x] Reserva continua em `bookPortalSlot` / `createPortalReservation`; 409 `QUEUE_*` muda o estado da fila
+- [x] Recurso com fila explica o ticket (`requiresTicket`, pt-BR/en/es). Com a fase Open e ninguém à frente, a agenda oferece só “Entrar na fila e reservar” (entra e, se o ticket ficar Active, reserva). Sem fila, o texto não aparece. (#165)
 - [x] Validar E2E com a API na mesma branch (Playwright `e2e/tests/10-queue-rentals.spec.ts` against Railway DEV + develop Preview). Join/Waiting/Active→book/reload/auth/module-off covered. Closed UI skipped near São Paulo midnight wrap (API `ReservationQueueTests` still cover Closed). Single E2E Customer — multi-customer atomicity stays in API `ReservationQueueConcurrencyTests`.
 
 ## 4. Gating B2B por módulos
@@ -326,6 +327,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-15 | **Fix (WEB, #142):** menu mobile do cliente logado lista Reservar horário, Minhas reservas e Perfil nas rotas que já existiam. Ícones do header do portal têm alvo de 44px; o seletor mostra PT/EN/ES. O celular no perfil aparece com máscara brasileira e o valor enviado à API não muda. “Enviar código” habilita quando o e-mail é colado ou preenchido pelo navegador. Sem mudança no `vlr-api`. |
 | 2026-10-15 | **Fix (WEB, #149):** o 401 do staff só chama `refreshSession` se, depois da espera, a época, o usuário e o refresh token guardado ainda são os do request. Se mudaram, repete com o access token atual ou desiste, sem refresh. Erro terminal faz `signOut({ scope: 'local' })` só se esse refresh token ainda está guardado. `signInWithPassword` avança a época antes da chamada. Portal B2C sem mudança. Sem mudança no `vlr-api`. |
 | 2026-10-15 | **Fix (WEB, #164 #160):** a agenda B2C deixa de guardar o horário reservado num ref local. O card “Horário já reservado.” deriva das reservas bloqueantes do cliente e do `reservationId` do dia, com chave `data + recurso + início`. Cancelar rebusca os slots do dia cancelado e do dia visto; se o refetch falha, tenta de novo uma vez e só então mostra o erro. Trocar o idioma não dispara outro GET do dia. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #165):** recurso com fila mostra por que a reserva pede ticket. Com a fase Open e ninguém à frente, um único “Entrar na fila e reservar” entra e reserva se o ticket ficar Active. Sala de espera, espera, vez, expirado e fechado continuam nas suas ações. Sem fila, nada disso aparece. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

@@ -5,12 +5,16 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { formatMoney } from "@/features/rentals/services/reservationsService"
 import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import enCommon from "@/locales/en/common.json"
+import esCommon from "@/locales/es/common.json"
+import ptBRCommon from "@/locales/pt-BR/common.json"
 import i18n from "@/lib/i18n"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import type {
   PortalRentalAsset,
   PortalReservation,
   PortalScheduleSlot,
+  ReservationQueueStatus,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
 vi.mock("sonner", () => ({
@@ -44,6 +48,8 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
     bookPortalSlot: vi.fn(),
     checkPortalAvailability: vi.fn(),
     createPortalReservation: vi.fn(),
+    fetchReservationQueue: vi.fn(),
+    joinReservationQueue: vi.fn(),
   }
 })
 
@@ -59,6 +65,8 @@ import {
   createPortalReservation,
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
+  fetchReservationQueue,
+  joinReservationQueue,
   listMyPortalReservations,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
@@ -78,6 +86,8 @@ const cancelMine = vi.mocked(cancelMyPortalReservation)
 const checkAvailability = vi.mocked(checkPortalAvailability)
 const bookSlot = vi.mocked(bookPortalSlot)
 const createReservation = vi.mocked(createPortalReservation)
+const fetchQueue = vi.mocked(fetchReservationQueue)
+const joinQueue = vi.mocked(joinReservationQueue)
 const fetchPolicy = vi.mocked(fetchPublicBookingPolicy)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
@@ -192,6 +202,8 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     cancelMine.mockReset()
     checkAvailability.mockReset()
     bookSlot.mockReset()
+    fetchQueue.mockReset()
+    joinQueue.mockReset()
     createReservation.mockReset()
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
@@ -583,6 +595,8 @@ describe("TenantPortalAgendaPage time selector", () => {
     cancelMine.mockReset()
     checkAvailability.mockReset()
     bookSlot.mockReset()
+    fetchQueue.mockReset()
+    joinQueue.mockReset()
     createReservation.mockReset()
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
@@ -1994,6 +2008,8 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     cancelMine.mockReset()
     checkAvailability.mockReset()
     bookSlot.mockReset()
+    fetchQueue.mockReset()
+    joinQueue.mockReset()
     createReservation.mockReset()
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
@@ -2115,6 +2131,405 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     expect(toastError).not.toHaveBeenCalled()
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
       brazilTodayIsoDate(),
+    )
+  })
+})
+
+const QUEUE_TICKET_ID = "99999999-9999-4999-8999-999999999991"
+
+function queueTicket(
+  status: "Waiting" | "Active" | "Expired",
+  overrides: Partial<NonNullable<ReservationQueueStatus["myTicket"]>> = {},
+): NonNullable<ReservationQueueStatus["myTicket"]> {
+  return {
+    id: QUEUE_TICKET_ID,
+    status,
+    sequence: 1,
+    position: status === "Waiting" ? 2 : 1,
+    joinedAt: "2026-10-15T08:00:00.000Z",
+    turnStartedAt: status === "Active" ? "2026-10-15T08:00:00.000Z" : null,
+    turnExpiresAt: status === "Active" ? "2026-10-15T08:01:30.000Z" : null,
+    completedReservationId: null,
+    ...overrides,
+  }
+}
+
+function queueStatus(
+  overrides: Partial<ReservationQueueStatus> = {},
+): ReservationQueueStatus {
+  return {
+    rentalAssetId: ASSET_A_ID,
+    queueEnabled: true,
+    openingDate: "2026-10-15",
+    opensAt: "2026-10-15T13:00:00.000Z",
+    waitingRoomOpensAt: "2026-10-15T12:30:00.000Z",
+    serverNow: "2026-10-15T08:00:00.000Z",
+    phase: "Open",
+    waitingCount: 0,
+    aheadCount: 0,
+    myTicket: null,
+    ...overrides,
+  }
+}
+
+function buttonNamed(name: string) {
+  return screen.getByRole("button", {
+    name: (accessibleName) => accessibleName === name,
+  })
+}
+
+function queryButtonNamed(name: string) {
+  return screen.queryByRole("button", {
+    name: (accessibleName) => accessibleName === name,
+  })
+}
+
+describe("TenantPortalAgendaPage queue explainer", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ["Date"],
+      now: new Date("2026-10-15T08:00:00.000Z"),
+    })
+    listMine.mockReset()
+    fetchAssets.mockReset()
+    fetchLayouts.mockReset()
+    fetchDay.mockReset()
+    cancelMine.mockReset()
+    checkAvailability.mockReset()
+    bookSlot.mockReset()
+    createReservation.mockReset()
+    fetchPolicy.mockReset()
+    fetchQueue.mockReset()
+    joinQueue.mockReset()
+    toastSuccess.mockReset()
+    toastError.mockReset()
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      reason: null,
+    })
+    listMine.mockResolvedValue([])
+    fetchLayouts.mockResolvedValue([])
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+        queueEnabled: true,
+        queueOpeningTime: "07:30:00",
+        requiresDeposit: false,
+      },
+      {
+        ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+        requiresDeposit: false,
+      },
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-15",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          date: "2026-10-15",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          date: "2026-10-15",
+        }),
+      ],
+    })
+    fetchQueue.mockResolvedValue(queueStatus())
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  async function chooseCourt(
+    user: ReturnType<typeof userEvent.setup>,
+    name: string,
+  ) {
+    await user.click(await screen.findByRole("button", { name }))
+  }
+
+  it("explains the ticket only for a resource that requires a queue", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await chooseCourt(user, "Quadra 2")
+
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).not.toBeInTheDocument()
+    expect(fetchQueue).not.toHaveBeenCalled()
+
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(fetchQueue).toHaveBeenCalledWith(ASSET_A_ID)
+  })
+
+  it("shows the join view while the waiting room is open", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({ phase: "WaitingRoom", aheadCount: 0, waitingCount: 0 }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.join"))).toBeEnabled()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
+    ).not.toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+
+    joinQueue.mockResolvedValue(
+      queueStatus({
+        phase: "WaitingRoom",
+        aheadCount: 0,
+        waitingCount: 1,
+        myTicket: queueTicket("Waiting", { position: 1 }),
+      }),
+    )
+    await user.click(buttonNamed(i18n.t("tenantPortal.agenda.queue.join")))
+
+    await waitFor(() => {
+      expect(joinQueue).toHaveBeenCalledWith(ASSET_A_ID)
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it("keeps join separate when someone is already ahead", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({ phase: "Open", aheadCount: 2, waitingCount: 2 }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.join"))).toBeEnabled()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
+    ).not.toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+  })
+
+  it("offers one join-and-reserve action when the queue is open and nobody is ahead", async () => {
+    joinQueue.mockResolvedValue(
+      queueStatus({ myTicket: queueTicket("Active") }),
+    )
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    const action = await screen.findByRole("button", {
+      name: (accessibleName) =>
+        accessibleName === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+    })
+    expect(action).toBeEnabled()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.join")),
+    ).not.toBeInTheDocument()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.reserveSlot")),
+    ).not.toBeInTheDocument()
+
+    await user.click(action)
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalledWith({
+        slotId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        quantity: 1,
+      })
+    })
+    expect(joinQueue).toHaveBeenCalledWith(ASSET_A_ID)
+    expect(joinQueue.mock.invocationCallOrder[0]).toBeLessThan(
+      bookSlot.mock.invocationCallOrder[0] ?? 0,
+    )
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it("does not reserve when joining leaves the ticket waiting", async () => {
+    joinQueue.mockResolvedValue(
+      queueStatus({
+        phase: "Open",
+        aheadCount: 1,
+        waitingCount: 2,
+        myTicket: queueTicket("Waiting"),
+      }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await user.click(
+      await screen.findByRole("button", {
+        name: (accessibleName) =>
+          accessibleName === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+      }),
+    )
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.inQueue")),
+    ).toBeInTheDocument()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it("shows the waiting view with position and people ahead", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({
+        phase: "Open",
+        aheadCount: 1,
+        waitingCount: 2,
+        myTicket: queueTicket("Waiting"),
+      }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.queue.inQueue")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.queue.position", { position: 2 }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.queue.ahead", { count: 1 })),
+    ).toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.leave"))).toBeEnabled()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the active view and enables reserve during the turn", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({ myTicket: queueTicket("Active") }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.queue.yourTurn")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.queue.countdown", { time: "01:30" }),
+      ),
+    ).toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+  })
+
+  it("shows the expired view without the reserve action", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({ myTicket: queueTicket("Expired") }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.queue.expired")),
+    ).toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.rejoin"))).toBeEnabled()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.reserveSlot")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the closed view before the waiting room opens", async () => {
+    fetchQueue.mockResolvedValue(
+      queueStatus({ phase: "Closed", myTicket: null }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.queue.closed", {
+          waitingRoom: "09:30",
+          opensAt: "10:00",
+        }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.join")),
+    ).not.toBeInTheDocument()
+    expect(
+      queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
+    ).not.toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+  })
+
+  it("keeps the explanation and the one-step action in pt-BR, en, and es", () => {
+    const copies = [
+      ptBRCommon.tenantPortal.agenda.queue,
+      enCommon.tenantPortal.agenda.queue,
+      esCommon.tenantPortal.agenda.queue,
+    ]
+    for (const copy of copies) {
+      expect(copy.requiresTicket.length).toBeGreaterThan(0)
+      expect(copy.joinAndReserve.length).toBeGreaterThan(0)
+      expect(copy.joiningAndReserving.length).toBeGreaterThan(0)
+    }
+    expect(ptBRCommon.tenantPortal.agenda.queue.joinAndReserve).toBe(
+      "Entrar na fila e reservar",
+    )
+    expect(enCommon.tenantPortal.agenda.queue.requiresTicket).not.toBe(
+      ptBRCommon.tenantPortal.agenda.queue.requiresTicket,
+    )
+    expect(esCommon.tenantPortal.agenda.queue.requiresTicket).not.toBe(
+      ptBRCommon.tenantPortal.agenda.queue.requiresTicket,
+    )
+    expect(enCommon.tenantPortal.agenda.queue.joinAndReserve).not.toBe(
+      ptBRCommon.tenantPortal.agenda.queue.joinAndReserve,
+    )
+    expect(esCommon.tenantPortal.agenda.queue.joinAndReserve).not.toBe(
+      ptBRCommon.tenantPortal.agenda.queue.joinAndReserve,
     )
   })
 })
