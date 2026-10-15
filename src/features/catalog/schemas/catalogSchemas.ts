@@ -1,5 +1,10 @@
 import { z } from "zod"
 
+import {
+  formatLocaleCurrency,
+  formatLocaleDateTime,
+} from "@/lib/localeFormat"
+
 export const catalogFileVisibilitySchema = z.enum([
   "CustomerVisible",
   "InternalB2B",
@@ -298,24 +303,9 @@ export function formatCatalogMoney(
     return null
   }
 
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-    }).format(amount)
-  } catch {
-    return `${amount.toFixed(2)} ${currency}`
-  }
+  return formatLocaleCurrency(amount, currency, locale)
 }
 
 export function formatCatalogDate(value: string, locale: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(date)
+  return formatLocaleDateTime(value, locale)
 }

@@ -1,7 +1,10 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
-import { formatBrazilDateTimeRange } from "@/lib/brazilTimeZone"
+import {
+  formatLocaleCurrency,
+  formatLocaleDateTimeRange,
+} from "@/lib/localeFormat"
 import i18n from "@/lib/i18n"
 
 export const reservationStatuses = [
@@ -149,12 +152,14 @@ export function formatReservationRange(
   startDateTime: string,
   endDateTime: string,
 ): string {
-  return formatBrazilDateTimeRange(startDateTime, endDateTime)
+  return formatLocaleDateTimeRange(
+    startDateTime,
+    endDateTime,
+    i18n.language,
+  )
 }
 
-export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount)
+/** Rentals amounts have no currency on the API; callers pass the tenant currency. */
+export function formatMoney(amount: number, currency = "BRL"): string {
+  return formatLocaleCurrency(amount, currency, i18n.language)
 }

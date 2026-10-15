@@ -1,13 +1,16 @@
 import { ClipboardList, ShoppingBag } from "lucide-react"
 import type { TFunction } from "i18next"
 
-import type { CustomerNavItem } from "@/features/tenantPortal/components/CustomerSidebar"
+import {
+  iconForModule,
+  type CustomerNavItem,
+} from "@/features/tenantPortal/components/CustomerSidebar"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
   menuItemAgendaPath,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { iconForModule } from "@/features/tenantPortal/components/CustomerSidebar"
+import i18n, { supportedLanguages } from "@/lib/i18n"
 
 const CATALOG_MODULE_ALIASES = new Set([
   "catalog",
@@ -86,6 +89,39 @@ export function getVisiblePortalMenuItems(
     })
 }
 
+function normalizeMenuLabel(value: string): string {
+  return value.trim().toLocaleLowerCase("pt-BR")
+}
+
+/**
+ * Stock rentals chrome ("Reservar horário" / "Book a time" / "Reservar horario")
+ * follows the active language. Any other label is tenant-entered data and stays
+ * as stored — including resource names.
+ */
+export function localizedCustomerMenuLabel(
+  moduleName: string,
+  label: string,
+  t: TFunction,
+): string {
+  if (toCanonicalModuleName(moduleName) !== "rentals") {
+    return label
+  }
+
+  const normalized = normalizeMenuLabel(label)
+  const isStockLabel = supportedLanguages.some((language) => {
+    const stock = i18n.t("admin.moduleMenu.suggestedLabelRentals", {
+      lng: language,
+    })
+    return normalizeMenuLabel(stock) === normalized
+  })
+
+  if (!isStockLabel) {
+    return label
+  }
+
+  return t("admin.moduleMenu.suggestedLabelRentals")
+}
+
 export function suggestPortalMenuLabel({
   moduleName,
   rentalAssetName,
@@ -143,7 +179,7 @@ export function buildCustomerNavItems(
     if (item.moduleName.toLowerCase() === "rentals") {
       items.push({
         id: item.id,
-        label: item.label,
+        label: localizedCustomerMenuLabel(item.moduleName, item.label, t),
         to: menuItemAgendaPath(subdomain, item.id),
         icon: iconForModule(item.moduleName),
       })
