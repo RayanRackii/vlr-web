@@ -87,6 +87,13 @@ test.describe("B2C self-cancel", () => {
     ).toHaveCount(0)
 
     await cancel.click()
+    const dialog = page.getByRole("alertdialog")
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText("não emite reembolso")
+    await expect(dialog).toContainText("já estiver confirmada")
+    await dialog
+      .getByRole("button", { name: "Confirmar cancelamento" })
+      .click()
     await expect(page.getByText("Reserva cancelada.")).toBeVisible({
       timeout: 20_000,
     })
