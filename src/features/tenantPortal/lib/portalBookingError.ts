@@ -19,9 +19,17 @@ export function isReservationQueueErrorCode(
   return (RESERVATION_QUEUE_ERROR_CODES as readonly string[]).includes(value)
 }
 
-const SLOT_TAKEN_PATTERNS = [
+/** 409 that names this interval as already reserved. */
+const INTERVAL_RESERVED_PATTERNS = [
   /não está disponível para o intervalo solicitado/i,
   /already reserved for (this|the requested) interval/i,
+]
+
+/**
+ * 409 that blocks the slot without saying this interval is already reserved.
+ * These still surface as errors, but the card stays "unavailable".
+ */
+const SLOT_UNAVAILABLE_PATTERNS = [
   /not available for booking/i,
   /insufficient quantity/i,
 ]
@@ -96,7 +104,10 @@ export function readDailyBookingLimit(error: unknown): number | null {
   return value
 }
 
-export function isSlotTakenConflict(error: unknown): boolean {
+function matchesBookingConflict(
+  error: unknown,
+  patterns: readonly RegExp[],
+): boolean {
   if (!(error instanceof PortalBookingError) || error.status !== 409) {
     return false
   }
@@ -109,5 +120,18 @@ export function isSlotTakenConflict(error: unknown): boolean {
     return false
   }
 
-  return SLOT_TAKEN_PATTERNS.some((pattern) => pattern.test(error.message))
+  return patterns.some((pattern) => pattern.test(error.message))
+}
+
+/** True only when the 409 says this interval is already reserved. */
+export function isSlotTakenConflict(error: unknown): boolean {
+  return matchesBookingConflict(error, INTERVAL_RESERVED_PATTERNS)
+}
+
+/**
+ * True for "Slot is not available for booking." and "Insufficient quantity".
+ * Callers toast these and must not mark the card as reserved.
+ */
+export function isSlotUnavailableConflict(error: unknown): boolean {
+  return matchesBookingConflict(error, SLOT_UNAVAILABLE_PATTERNS)
 }

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   buildCustomerProfileFormSchema,
+  formatBrazilianPhone,
   formatCustomerDocument,
   type CustomerProfile,
   type CustomerProfileFormValues,
@@ -438,7 +439,7 @@ export function TenantPortalProfilePage() {
                 {phone.length > 0 ? (
                   <ReadOnlyValue
                     label={t("tenantPortal.fields.phone")}
-                    value={phone}
+                    value={formatBrazilianPhone(phone)}
                   />
                 ) : null}
                 <ReadOnlyValue

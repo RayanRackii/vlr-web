@@ -38,4 +38,76 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(label?.className).not.toContain("break-words")
     expect(label?.className).not.toContain("px-3")
   })
+
+  it("uses the same available color when a space is selected", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q1",
+            rentalAssetId: "11111111-1111-4111-8111-111111111111",
+            label: "Quadra 1",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: true,
+            disabled: false,
+            selected: true,
+          },
+          {
+            key: "q2",
+            rentalAssetId: "22222222-2222-4222-8222-222222222222",
+            label: "Quadra 2",
+            xPercent: 50,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 2,
+            available: true,
+            disabled: false,
+            selected: false,
+          },
+        ]}
+      />,
+    )
+
+    const selected = screen.getByRole("button", { name: "Quadra 1" })
+    const other = screen.getByRole("button", { name: "Quadra 2" })
+    expect(selected.className).toContain("bg-emerald-100")
+    expect(other.className).toContain("bg-emerald-100")
+    expect(selected.className).not.toContain("bg-primary/20")
+  })
+
+  it("shows a taken explanation in the tile, not only in the title", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q2",
+            rentalAssetId: "22222222-2222-4222-8222-222222222222",
+            label: "Quadra 2",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: false,
+            disabled: true,
+            detail: "Horário já reservado.",
+          },
+        ]}
+      />,
+    )
+
+    const tile = screen.getByRole("button", {
+      name: "Quadra 2. Horário já reservado.",
+    })
+    expect(tile).toHaveAttribute("aria-disabled", "true")
+    expect(tile).toHaveTextContent("Horário já reservado.")
+    expect(tile.className).toContain("text-foreground")
+  })
 })

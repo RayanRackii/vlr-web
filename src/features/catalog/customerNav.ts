@@ -1,13 +1,16 @@
-import { ClipboardList, ShoppingBag } from "lucide-react"
+import { CircleUser, ClipboardList, ListChecks, ShoppingBag } from "lucide-react"
 import type { TFunction } from "i18next"
 
-import type { CustomerNavItem } from "@/features/tenantPortal/components/CustomerSidebar"
+import {
+  iconForModule,
+  type CustomerNavItem,
+} from "@/features/tenantPortal/components/CustomerSidebar"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
   menuItemAgendaPath,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { iconForModule } from "@/features/tenantPortal/components/CustomerSidebar"
+import i18n, { supportedLanguages } from "@/lib/i18n"
 
 const CATALOG_MODULE_ALIASES = new Set([
   "catalog",
@@ -34,6 +37,9 @@ export function toCanonicalModuleName(moduleName: string): string {
 export const PORTAL_CUSTOMER_MODULES = ["rentals", "catalog"] as const
 
 export type PortalCustomerModule = (typeof PORTAL_CUSTOMER_MODULES)[number]
+
+/** Fragment on the rentals agenda that scrolls to the customer's reservations. */
+export const CUSTOMER_MY_RESERVATIONS_HASH = "#minhas-reservas"
 
 export function isCustomerNavModule(moduleName: string): boolean {
   const canonical = toCanonicalModuleName(moduleName)
@@ -84,6 +90,39 @@ export function getVisiblePortalMenuItems(
         sensitivity: "base",
       })
     })
+}
+
+function normalizeMenuLabel(value: string): string {
+  return value.trim().toLocaleLowerCase("pt-BR")
+}
+
+/**
+ * Stock rentals chrome ("Reservar horário" / "Book a time" / "Reservar horario")
+ * follows the active language. Any other label is tenant-entered data and stays
+ * as stored — including resource names.
+ */
+export function localizedCustomerMenuLabel(
+  moduleName: string,
+  label: string,
+  t: TFunction,
+): string {
+  if (toCanonicalModuleName(moduleName) !== "rentals") {
+    return label
+  }
+
+  const normalized = normalizeMenuLabel(label)
+  const isStockLabel = supportedLanguages.some((language) => {
+    const stock = i18n.t("admin.moduleMenu.suggestedLabelRentals", {
+      lng: language,
+    })
+    return normalizeMenuLabel(stock) === normalized
+  })
+
+  if (!isStockLabel) {
+    return label
+  }
+
+  return t("admin.moduleMenu.suggestedLabelRentals")
 }
 
 export function suggestPortalMenuLabel({
@@ -143,12 +182,49 @@ export function buildCustomerNavItems(
     if (item.moduleName.toLowerCase() === "rentals") {
       items.push({
         id: item.id,
-        label: item.label,
+        label: localizedCustomerMenuLabel(item.moduleName, item.label, t),
         to: menuItemAgendaPath(subdomain, item.id),
         icon: iconForModule(item.moduleName),
       })
     }
   }
+
+  return items
+}
+
+/**
+ * Module links plus the signed-in account links.
+ * Minhas reservas is present when the menu includes rentals and points at that
+ * agenda with {@link CUSTOMER_MY_RESERVATIONS_HASH}. Perfil always points at
+ * `app/perfil`.
+ */
+export function buildCustomerShellNavItems(
+  subdomain: string,
+  menu: readonly ModuleMenuItem[],
+  t: TFunction,
+): CustomerNavItem[] {
+  const items = buildCustomerNavItems(subdomain, menu, t)
+  const firstRentals = menu.find(
+    (item) => item.moduleName.toLowerCase() === "rentals",
+  )
+
+  if (firstRentals) {
+    items.push({
+      id: "customer-my-reservations",
+      label: t("tenantPortal.agenda.myReservations"),
+      to: `${menuItemAgendaPath(subdomain, firstRentals.id)}${CUSTOMER_MY_RESERVATIONS_HASH}`,
+      icon: ListChecks,
+      end: true,
+    })
+  }
+
+  items.push({
+    id: "customer-profile",
+    label: t("account.profile"),
+    to: tenantPortalPath(subdomain, "app/perfil"),
+    icon: CircleUser,
+    end: true,
+  })
 
   return items
 }

@@ -11,21 +11,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  languageNativeNames,
   supportedLanguages,
   type SupportedLanguage,
 } from "@/lib/i18n"
 
 const languageOptions: readonly {
   code: SupportedLanguage
-  labelKey: "language.ptBR" | "language.en" | "language.es"
   shortLabel: string
 }[] = [
-  { code: "pt-BR", labelKey: "language.ptBR", shortLabel: "PT" },
-  { code: "en", labelKey: "language.en", shortLabel: "EN" },
-  { code: "es", labelKey: "language.es", shortLabel: "ES" },
+  { code: "pt-BR", shortLabel: "PT" },
+  { code: "en", shortLabel: "EN" },
+  { code: "es", shortLabel: "ES" },
 ]
 
-export function LanguageSwitcher() {
+type LanguageSwitcherProps = {
+  className?: string
+  /** Keep PT/EN/ES visible below the sm breakpoint. */
+  showShortLabel?: boolean
+}
+
+export function LanguageSwitcher({
+  className,
+  showShortLabel = false,
+}: LanguageSwitcherProps) {
   const { t, i18n } = useTranslation()
 
   const currentLanguage =
@@ -48,12 +57,15 @@ export function LanguageSwitcher() {
             type="button"
             variant="ghost"
             size="sm"
+            className={className}
             aria-label={t("language.label")}
           />
         }
       >
         <Languages />
-        <span className="hidden sm:inline">{currentShortLabel}</span>
+        <span className={showShortLabel ? undefined : "hidden sm:inline"}>
+          {currentShortLabel}
+        </span>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-40">
@@ -69,7 +81,7 @@ export function LanguageSwitcher() {
             }}
           >
             <span className="w-8 font-medium">{option.shortLabel}</span>
-            <span>{t(option.labelKey)}</span>
+            <span>{languageNativeNames[option.code]}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

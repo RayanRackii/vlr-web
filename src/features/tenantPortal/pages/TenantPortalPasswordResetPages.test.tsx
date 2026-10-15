@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { WEBKIT_AUTOFILL_ANIMATION } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -115,6 +116,77 @@ describe("TenantPortal password reset", () => {
       "@club.test",
     )
     expect(submit).toBeEnabled()
+  })
+
+  it("enables Enviar código when the email is pasted", async () => {
+    const user = userEvent.setup()
+    renderResetFlow()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.passwordReset.requestSubmit"),
+    })
+    expect(submit).toBeDisabled()
+
+    const email = screen.getByLabelText(i18n.t("tenantPortal.fields.email"))
+    await user.click(email)
+    await user.paste("ana@club.test")
+
+    expect(submit).toBeEnabled()
+    expect(email).toHaveValue("ana@club.test")
+  })
+
+  it("enables Enviar código on an input event and a webkit autofill animation", async () => {
+    renderResetFlow()
+
+    const email = screen.getByLabelText(
+      i18n.t("tenantPortal.fields.email"),
+    ) as HTMLInputElement
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.passwordReset.requestSubmit"),
+    })
+
+    fireEvent.input(email, { target: { value: "not-an-email" } })
+    expect(submit).toBeDisabled()
+
+    fireEvent.input(email, { target: { value: "ana@club.test" } })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+
+    fireEvent.input(email, { target: { value: "" } })
+    await waitFor(() => {
+      expect(submit).toBeDisabled()
+    })
+
+    email.value = "other@club.test"
+    const autofillStart = new Event("animationstart", { bubbles: true })
+    Object.defineProperty(autofillStart, "animationName", {
+      value: WEBKIT_AUTOFILL_ANIMATION,
+    })
+    email.dispatchEvent(autofillStart)
+
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    expect(email).toHaveValue("other@club.test")
+  })
+
+  it("enables Enviar código when autofill lands in the field after mount", async () => {
+    renderResetFlow()
+
+    const email = screen.getByLabelText(
+      i18n.t("tenantPortal.fields.email"),
+    ) as HTMLInputElement
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.passwordReset.requestSubmit"),
+    })
+    expect(submit).toBeDisabled()
+
+    email.value = "ana@club.test"
+
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
   })
 
   it("asks for a code and continues even when the API stays generic", async () => {

@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { submitInvitePassword } from "@/features/auth/setPasswordService"
+import {
+  resetStaffSessionRefreshForTests,
+  staffAuthEpochForTests,
+} from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
@@ -100,6 +104,7 @@ describe("SetPasswordPage validity gate", () => {
   })
 
   it("submits a valid invite password and leaves the button usable after a server error", async () => {
+    resetStaffSessionRefreshForTests()
     const user = userEvent.setup()
     acceptInvite.mockRejectedValueOnce(new Error("INVALID_INVITE"))
     acceptInvite.mockResolvedValueOnce(accepted)
@@ -124,9 +129,11 @@ describe("SetPasswordPage validity gate", () => {
     ).toHaveValue("password1")
     expect(submitButton()).toBeEnabled()
     expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
+    expect(staffAuthEpochForTests()).toBe(0)
 
     await user.click(submitButton())
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(staffAuthEpochForTests()).toBe(1)
   })
 
   it("keeps the invalid-link login action enabled", () => {

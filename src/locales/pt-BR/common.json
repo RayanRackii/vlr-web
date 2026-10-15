@@ -373,6 +373,7 @@
       "depositRequired": "Este espaço exige depósito. A reserva fica aguardando a confirmação do clube; esta tela não cobra.",
       "total": "Total {{amount}}",
       "unavailable": "Horário indisponível.",
+      "slotReserved": "Horário já reservado.",
       "legendAvailable": "Disponível",
       "legendUnavailable": "Indisponível",
       "unplaced": "Outros espaços",

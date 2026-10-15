@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
@@ -26,7 +26,11 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 
 import { toast } from "sonner"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
-import { loginCustomer } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  clearCustomerSession,
+  loginCustomer,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 
 const login = vi.mocked(loginCustomer)
 const toastError = vi.mocked(toast.error)
@@ -61,6 +65,11 @@ describe("TenantPortalLoginPage", () => {
   beforeEach(() => {
     login.mockReset()
     toastError.mockReset()
+    clearCustomerSession()
+  })
+
+  afterEach(() => {
+    clearCustomerSession()
   })
 
   it("keeps Entrar disabled until email and password pass the schema", async () => {
@@ -147,6 +156,27 @@ describe("TenantPortalLoginPage", () => {
     expect(
       screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
     ).toBeEnabled()
+    expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
+  })
+
+  it("opens the signed-in portal when this tenant already has a session", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana Souza")
+    renderLogin()
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    ).not.toBeInTheDocument()
+    expect(login).not.toHaveBeenCalled()
+  })
+
+  it("keeps the login form when the saved session belongs to another tenant", () => {
+    persistCustomerSession("customer-token", "other-club", "Ana Souza")
+    renderLogin()
+
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    ).toBeInTheDocument()
     expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
   })
 })

@@ -373,6 +373,7 @@
       "depositRequired": "Este espacio exige depósito. La reserva queda pendiente de confirmación del club; esta pantalla no cobra.",
       "total": "Total {{amount}}",
       "unavailable": "Horario no disponible.",
+      "slotReserved": "Este horario ya está reservado.",
       "legendAvailable": "Disponible",
       "legendUnavailable": "No disponible",
       "unplaced": "Otros espacios",
@@ -1005,8 +1006,8 @@
   },
   "language": {
     "label": "Idioma",
-    "ptBR": "Portugués",
-    "en": "Inglés",
+    "ptBR": "Português",
+    "en": "English",
     "es": "Español"
   },
   "pages": {

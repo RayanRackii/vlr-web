@@ -27,16 +27,26 @@ const CUSTOMER_TOKEN_STORAGE_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_STORAGE_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_STORAGE_KEY = "rolvix.customer.label"
 const CUSTOMER_ID_STORAGE_KEY = "rolvix.customer.id"
+/** Must match `CUSTOMER_TENANT_ID_KEY` in tenantPortalService. */
+const CUSTOMER_TENANT_ID_STORAGE_KEY = "rolvix.customer.tenantId"
 
 const apiErrorSchema = z.object({
   error: z.string(),
 })
 
 type StaffRefreshResult =
-  | { ok: true; accessToken: string }
-  | { ok: false; error: unknown }
+  | { kind: "refreshed"; accessToken: string }
+  | { kind: "skipped" }
+  | { kind: "failed"; error: unknown }
 
-type StaffSessionPrincipal = {
+type StaffSessionSnapshot = {
+  userId: string
+  refreshToken: string
+  accessToken: string
+}
+
+type StaffRefreshBinding = {
+  epoch: number
   userId: string
   refreshToken: string
 }
@@ -44,8 +54,9 @@ type StaffSessionPrincipal = {
 type StaffSignOut = typeof supabase.auth.signOut
 
 /**
- * Bumped synchronously at the start of every staff `signOut`.
- * A 401 retry still awaiting refresh must not run after this changes.
+ * Bumped synchronously at the start of staff `signOut` and password sign-in.
+ * A 401 retry still awaiting refresh must not call `refreshSession` or sign
+ * out locally after this changes.
  */
 let staffAuthEpoch = 0
 let staffSignOutEpochInstalled = false
@@ -108,6 +119,19 @@ export function resetStaffSessionRefreshForTests(): void {
   staffRefreshInflight = null
   staffRefreshInflightToken = null
   staffAuthEpoch = 0
+}
+
+/**
+ * Call synchronously before `signInWithPassword`.
+ * A failed attempt bumps the epoch too and does not sign the current user out.
+ */
+export function noteStaffSignIn(): void {
+  staffAuthEpoch += 1
+}
+
+/** Tests only. */
+export function staffAuthEpochForTests(): number {
+  return staffAuthEpoch
 }
 
 function authorizationHeader(
@@ -279,32 +303,38 @@ function isTerminalStaffRefreshError(error: unknown): boolean {
   return isAuthApiError(error) && (status === 400 || status === 401)
 }
 
-async function readStaffSessionPrincipal(): Promise<StaffSessionPrincipal | null> {
+async function readStaffSession(): Promise<StaffSessionSnapshot | null> {
   try {
     const { data } = await supabase.auth.getSession()
     const session = data?.session
     const userId = session?.user?.id
     const refreshToken = session?.refresh_token
+    const accessToken = session?.access_token
     if (typeof userId !== "string" || userId.length === 0) {
       return null
     }
     if (typeof refreshToken !== "string" || refreshToken.length === 0) {
       return null
     }
-    return { userId, refreshToken }
+    if (typeof accessToken !== "string" || accessToken.length === 0) {
+      return null
+    }
+    return { userId, refreshToken, accessToken }
   } catch {
     return null
   }
 }
 
-async function readStaffUserId(): Promise<string | null> {
-  try {
-    const { data } = await supabase.auth.getSession()
-    const userId = data?.session?.user?.id
-    return typeof userId === "string" && userId.length > 0 ? userId : null
-  } catch {
-    return null
-  }
+function staffBindingMatches(
+  binding: StaffRefreshBinding,
+  current: StaffSessionSnapshot | null,
+): boolean {
+  return (
+    staffAuthEpoch === binding.epoch &&
+    current !== null &&
+    current.userId === binding.userId &&
+    current.refreshToken === binding.refreshToken
+  )
 }
 
 async function performStaffRefresh(
@@ -315,34 +345,50 @@ async function performStaffRefresh(
       refresh_token: refreshToken,
     })
     if (result.error) {
-      return { ok: false, error: result.error }
+      return { kind: "failed", error: result.error }
     }
 
     const accessToken = result.data?.session?.access_token
     if (typeof accessToken !== "string" || accessToken.trim().length === 0) {
-      return { ok: false, error: null }
+      return { kind: "failed", error: null }
     }
 
-    return { ok: true, accessToken }
+    return { kind: "refreshed", accessToken }
   } catch (error: unknown) {
-    return { ok: false, error }
+    return { kind: "failed", error }
   }
 }
 
-function refreshStaffSession(refreshToken: string): Promise<StaffRefreshResult> {
-  if (staffRefreshInflight && staffRefreshInflightToken === refreshToken) {
+async function refreshStaffSessionAfterWait(
+  binding: StaffRefreshBinding,
+): Promise<StaffRefreshResult> {
+  const current = await readStaffSession()
+  if (!staffBindingMatches(binding, current)) {
+    return { kind: "skipped" }
+  }
+
+  return refreshStaffSession(binding)
+}
+
+function refreshStaffSession(
+  binding: StaffRefreshBinding,
+): Promise<StaffRefreshResult> {
+  if (
+    staffRefreshInflight &&
+    staffRefreshInflightToken === binding.refreshToken
+  ) {
     return staffRefreshInflight
   }
 
   if (staffRefreshInflight) {
     return staffRefreshInflight.then(
-      () => refreshStaffSession(refreshToken),
-      () => refreshStaffSession(refreshToken),
+      () => refreshStaffSessionAfterWait(binding),
+      () => refreshStaffSessionAfterWait(binding),
     )
   }
 
-  staffRefreshInflightToken = refreshToken
-  const promise = performStaffRefresh(refreshToken).finally(() => {
+  staffRefreshInflightToken = binding.refreshToken
+  const promise = performStaffRefresh(binding.refreshToken).finally(() => {
     if (staffRefreshInflight === promise) {
       staffRefreshInflight = null
       staffRefreshInflightToken = null
@@ -350,14 +396,6 @@ function refreshStaffSession(refreshToken: string): Promise<StaffRefreshResult> 
   })
   staffRefreshInflight = promise
   return promise
-}
-
-function staffPrincipalStill(
-  epoch: number,
-  senderUserId: string,
-  currentUserId: string | null,
-): boolean {
-  return staffAuthEpoch === epoch && currentUserId === senderUserId
 }
 
 function customerLoginPath(): string {
@@ -380,6 +418,7 @@ function clearCustomerSessionStorage(): void {
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
 }
 
 function readStoredCustomerToken(): string | null {
@@ -449,42 +488,74 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Refresh the principal that sent this request. Drop the retry if that
-    // user signs out or the stored user changes. A terminal GoTrue failure
-    // signs out locally so the shell leaves; network and 5xx keep the session.
+    // Capture the session that sent this request. After every wait, refresh
+    // only if the epoch, user id, and stored refresh token still match.
+    // Otherwise retry with the current access token or reject, without
+    // calling refreshSession. A terminal GoTrue failure signs out locally
+    // only when that same refresh token is still stored.
     const epoch = staffAuthEpoch
-    const before = await readStaffSessionPrincipal()
-    if (
-      !staffPrincipalStill(epoch, senderUserId, before?.userId ?? null) ||
-      before === null
-    ) {
+    const before = await readStaffSession()
+    const binding: StaffRefreshBinding = {
+      epoch,
+      userId: senderUserId,
+      refreshToken: before?.refreshToken ?? "",
+    }
+    if (!staffBindingMatches(binding, before)) {
       logApi401("b2b", config)
       return Promise.reject(error)
     }
 
-    const refresh = await refreshStaffSession(before.refreshToken)
-    logApi401("b2b", config, refresh.ok ? undefined : refresh.error)
-    const afterUserId = await readStaffUserId()
-    if (!staffPrincipalStill(epoch, senderUserId, afterUserId)) {
-      return Promise.reject(error)
-    }
-
-    if (!refresh.ok) {
-      if (isTerminalStaffRefreshError(refresh.error)) {
-        try {
-          await supabase.auth.signOut({ scope: "local" })
-        } catch {
-          // Keep rejecting the original 401 if local sign-out fails.
-        }
-      }
-      return Promise.reject(error)
-    }
-
-    config.rolvixStaffAuthRetry = true
-    setAuthorization(config, refresh.accessToken)
-    return api.request(config)
+    const refresh = await refreshStaffSession(binding)
+    return settleStaff401(config, error, binding, refresh)
   },
 )
+
+async function settleStaff401(
+  config: InternalAxiosRequestConfig,
+  error: AxiosError,
+  binding: StaffRefreshBinding,
+  refresh: StaffRefreshResult,
+): Promise<AxiosResponse> {
+  logApi401(
+    "b2b",
+    config,
+    refresh.kind === "failed" ? refresh.error : undefined,
+  )
+
+  const current = await readStaffSession()
+  if (
+    current === null ||
+    current.userId !== binding.userId ||
+    staffAuthEpoch !== binding.epoch
+  ) {
+    return Promise.reject(error)
+  }
+
+  if (current.refreshToken !== binding.refreshToken) {
+    config.rolvixStaffAuthRetry = true
+    setAuthorization(config, current.accessToken)
+    return api.request(config)
+  }
+
+  if (refresh.kind === "failed") {
+    if (isTerminalStaffRefreshError(refresh.error)) {
+      try {
+        await supabase.auth.signOut({ scope: "local" })
+      } catch {
+        // Keep rejecting the original 401 if local sign-out fails.
+      }
+    }
+    return Promise.reject(error)
+  }
+
+  if (refresh.kind !== "refreshed") {
+    return Promise.reject(error)
+  }
+
+  config.rolvixStaffAuthRetry = true
+  setAuthorization(config, refresh.accessToken)
+  return api.request(config)
+}
 
 customerApi.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {

@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import type {
   ModuleMenuItem,
   TenantBranding,
@@ -15,12 +16,12 @@ import {
   clearCustomerSession,
   fetchTenantBranding,
   fetchTenantMenu,
-  getCustomerAccessToken,
   getCustomerLabel,
+  isCustomerSignedInForTenant,
   resolveTenantSubdomain,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { buildCustomerNavItems } from "@/features/catalog/customerNav"
+import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 
 export type CustomerAppOutletContext = {
   subdomain: string
@@ -41,7 +42,8 @@ export function CustomerAppLayout() {
     return resolveTenantSubdomain(window.location.pathname)
   }, [params.subdomain])
 
-  const signedIn = getCustomerAccessToken() !== null
+  const signedIn =
+    subdomain !== null && isCustomerSignedInForTenant(subdomain)
   const [branding, setBranding] = useState<TenantBranding | null>(null)
   const [menu, setMenu] = useState<ModuleMenuItem[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -125,12 +127,10 @@ export function CustomerAppLayout() {
     )
   }
 
-  const navItems = buildCustomerNavItems(subdomain, menu, t)
+  const navItems = buildCustomerShellNavItems(subdomain, menu, t)
 
-  const activeItem = navItems.find(
-    (item) =>
-      location.pathname === item.to ||
-      location.pathname.startsWith(`${item.to}/`),
+  const activeItem = navItems.find((item) =>
+    isCustomerNavItemActive(item, navItems, location.pathname, location.hash),
   )
   const profileTo = tenantPortalPath(subdomain, "app/perfil")
   const isProfilePage = location.pathname === profileTo
@@ -155,6 +155,8 @@ export function CustomerAppLayout() {
         userLabel={userLabel}
         initials={getEmailInitials(userLabel)}
         profileTo={profileTo}
+        enlargeHeaderTargets
+        showLanguageCode
         onSignOut={() => {
           clearCustomerSession()
           window.location.assign(tenantPortalPath(subdomain))
