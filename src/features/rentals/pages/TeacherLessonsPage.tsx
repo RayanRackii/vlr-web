@@ -37,12 +37,24 @@ import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFor
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
-function initialLessonDate() {
-  const today = todayIsoDate()
-  if (typeof window === "undefined") return today
+function readLessonDateFromLocation(today: string): {
+  date: string
+  adjustedFromPast: boolean
+} {
+  if (typeof window === "undefined") {
+    return { date: today, adjustedFromPast: false }
+  }
+
   const value = new URLSearchParams(window.location.search).get("date")
-  if (!value || !ISO_DATE.test(value) || value < today) return today
-  return value
+  if (!value || !ISO_DATE.test(value)) {
+    return { date: today, adjustedFromPast: false }
+  }
+
+  if (value < today) {
+    return { date: today, adjustedFromPast: true }
+  }
+
+  return { date: value, adjustedFromPast: false }
 }
 
 type PendingRemoval = {
@@ -79,10 +91,11 @@ export function TeacherLessonsPage() {
     })
   }, [available, t])
   type FormValues = z.infer<typeof schema>
+  const [dateRequest] = useState(() => readLessonDateFromLocation(todayIsoDate()))
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: { assetId: "", date: initialLessonDate(), slotKey: "", label: "" },
+    defaultValues: { assetId: "", date: dateRequest.date, slotKey: "", label: "" },
   })
   const { clearErrors, getValues, setError, setValue } = form
   const assetId = useWatch({ control: form.control, name: "assetId" })
@@ -162,6 +175,11 @@ export function TeacherLessonsPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("rentals.teacherLessons.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.description")}</p>
+        {dateRequest.adjustedFromPast && date === todayIsoDate() ? (
+          <p role="status" className="text-sm text-foreground">
+            {t("rentals.teacherLessons.pastDateAdjusted")}
+          </p>
+        ) : null}
       </header>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2">

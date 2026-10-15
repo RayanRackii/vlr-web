@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { firstPermittedProductPath } from "@/components/layout/navigation"
+import { staffHomeRedirectState } from "@/components/layout/staffHomeRedirect"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
@@ -30,7 +31,7 @@ export function DashboardHomeRoute() {
 
   const next = firstPermittedProductPath(activeModules, permissions)
   if (next && next !== "/dashboard") {
-    return <Navigate to={next} replace />
+    return <Navigate to={next} replace state={staffHomeRedirectState()} />
   }
 
   return <AccessDeniedPage />

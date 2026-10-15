@@ -5,6 +5,8 @@ import { toast } from "sonner"
 
 import { AppShell } from "@/components/layout/AppShell"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { staffHeaderContextLabel } from "@/components/layout/staffHeaderContextLabel"
+import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
 import { TrialBanner } from "@/components/layout/TrialBanner"
 import {
   getEmailInitials,
@@ -12,7 +14,7 @@ import {
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
-import { PermissionProvider } from "@/features/users/permissions/PermissionContext"
+import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   clearPlatformTenantExited,
   markPlatformTenantExited,
@@ -30,6 +32,7 @@ function MainLayoutShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const { isInTenantEnvironment, activeTenantLabel } = usePlatformTenantSession()
+  const { currentUser } = usePermissions()
   const [isExiting, setIsExiting] = useState(false)
 
   const userEmail = user?.email ?? t("account.userFallback")
@@ -75,8 +78,13 @@ function MainLayoutShell() {
       pageTitle={pageTitle}
       userLabel={userEmail}
       initials={initials}
+      contextLabel={staffHeaderContextLabel(
+        currentUser,
+        t("app.authenticatedArea"),
+      )}
       banner={
         <>
+          <StaffHomeRedirectNotice />
           <TrialBanner />
           {isInTenantEnvironment ? (
           <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 dark:text-amber-100">

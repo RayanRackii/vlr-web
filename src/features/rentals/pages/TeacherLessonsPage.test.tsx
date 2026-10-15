@@ -436,6 +436,26 @@ describe("TeacherLessonsPage", () => {
     expect(screen.queryByRole("option", { name: "11:00–12:00" })).not.toBeInTheDocument()
   })
 
+  it("explains when a past date query is shown as today", async () => {
+    window.history.replaceState(null, "", "/configuracoes/agenda?date=2000-01-01")
+    render(<TeacherLessonsPage />)
+
+    expect(
+      await screen.findByText(
+        "A data do link já passou. Os horários abaixo são de hoje.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toHaveValue(todayIsoDate())
+    await waitFor(() => {
+      expect(fetchAdminScheduleDay).toHaveBeenCalledWith(todayIsoDate(), [court.id])
+    })
+    expect(fetchAdminScheduleDay).not.toHaveBeenCalledWith(
+      "2000-01-01",
+      expect.anything(),
+    )
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+  })
+
   it("reloads the lesson for the date stored in the query string", async () => {
     const lessonDate = addIsoDays(todayIsoDate(), 1)
     const lesson = {

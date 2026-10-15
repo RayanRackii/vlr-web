@@ -992,7 +992,8 @@
       "peoplePortal": "People & portal",
       "operations": "Operations",
       "platform": "Platform"
-    }
+    },
+    "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows."
   },
   "account": {
     "title": "Account",
@@ -2628,7 +2629,8 @@
       "loadError": "Could not load this day's schedule.",
       "createSuccess": "Lesson created for this date.",
       "removeSuccess": "Lesson removed for this date.",
-      "changeError": "Could not change the lesson. Check for a reservation or conflict."
+      "changeError": "Could not change the lesson. Check for a reservation or conflict.",
+      "pastDateAdjusted": "The date in the link is in the past. The times below are for today."
     },
     "schedule": {
       "title": "Schedule",
