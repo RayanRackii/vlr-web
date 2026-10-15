@@ -1,4 +1,5 @@
 import {
+  AuthError,
   isAuthApiError,
   isAuthRetryableFetchError,
 } from "@supabase/supabase-js"
@@ -33,8 +34,14 @@ const apiErrorSchema = z.object({
 })
 
 type StaffRefreshResult =
-  | { ok: true; accessToken: string }
+  | { ok: true; accessToken: string; refreshToken: string | null }
   | { ok: false; error: unknown }
+
+type StaffRefreshSender = {
+  epoch: number
+  userId: string
+  refreshToken: string
+}
 
 type StaffSessionPrincipal = {
   userId: string
@@ -42,15 +49,22 @@ type StaffSessionPrincipal = {
 }
 
 type StaffSignOut = typeof supabase.auth.signOut
+type StaffSignIn = typeof supabase.auth.signInWithPassword
+type StaffVerifyOtp = typeof supabase.auth.verifyOtp
 
 /**
- * Bumped synchronously at the start of every staff `signOut`.
- * A 401 retry still awaiting refresh must not run after this changes.
+ * Bumped at the start of every staff `signOut`, and after `signInWithPassword`
+ * or `verifyOtp` returns a session. A 401 retry still awaiting refresh must
+ * not run after this changes.
  */
 let staffAuthEpoch = 0
 let staffSignOutEpochInstalled = false
+let staffSignInEpochInstalled = false
+let staffVerifyOtpEpochInstalled = false
 let staffRefreshInflight: Promise<StaffRefreshResult> | null = null
 let staffRefreshInflightToken: string | null = null
+let staffSignInImplForTests: StaffSignIn | null = null
+let staffVerifyOtpImplForTests: StaffVerifyOtp | null = null
 const staffSenderUserId = new WeakMap<InternalAxiosRequestConfig, string>()
 
 export function getApiBaseUrl(): string {
@@ -108,6 +122,22 @@ export function resetStaffSessionRefreshForTests(): void {
   staffRefreshInflight = null
   staffRefreshInflightToken = null
   staffAuthEpoch = 0
+  staffSignInImplForTests = null
+  staffVerifyOtpImplForTests = null
+}
+
+/**
+ * Replaces the mocked `signInWithPassword` body so a test can persist a
+ * session the way auth-js does. The epoch bump still runs in this module.
+ * Tests only.
+ */
+export function setStaffSignInImplForTests(impl: StaffSignIn | null): void {
+  staffSignInImplForTests = impl
+}
+
+/** Same as {@link setStaffSignInImplForTests} for `verifyOtp`. Tests only. */
+export function setStaffVerifyOtpImplForTests(impl: StaffVerifyOtp | null): void {
+  staffVerifyOtpImplForTests = impl
 }
 
 function authorizationHeader(
@@ -242,6 +272,135 @@ function installStaffSignOutEpochBump(): void {
 
 installStaffSignOutEpochBump()
 
+function staffAuthResultHasSession(result: unknown): boolean {
+  if (typeof result !== "object" || result === null) {
+    return false
+  }
+
+  const record = result as {
+    error?: unknown
+    data?: { session?: unknown } | null
+  }
+  if (record.error != null) {
+    return false
+  }
+
+  const session = record.data?.session
+  return typeof session === "object" && session !== null
+}
+
+function isVitestMock(fn: unknown): fn is {
+  mock: object
+  mockImplementation: (impl: (...args: never[]) => unknown) => unknown
+  getMockImplementation: () => ((...args: never[]) => unknown) | undefined
+} {
+  if (typeof fn !== "function") {
+    return false
+  }
+
+  const candidate = fn as {
+    mock?: unknown
+    mockImplementation?: unknown
+    getMockImplementation?: unknown
+  }
+  return (
+    typeof candidate.mock === "object" &&
+    candidate.mock !== null &&
+    typeof candidate.mockImplementation === "function" &&
+    typeof candidate.getMockImplementation === "function"
+  )
+}
+
+function emptySignInResult(): Awaited<ReturnType<StaffSignIn>> {
+  return {
+    data: {
+      user: null,
+      session: null,
+      weakPassword: null,
+    },
+    error: new AuthError("Auth session missing!"),
+  }
+}
+
+function emptyVerifyOtpResult(): Awaited<ReturnType<StaffVerifyOtp>> {
+  return {
+    data: {
+      user: null,
+      session: null,
+    },
+    error: null,
+  }
+}
+
+function installStaffSignInEpochBump(): void {
+  if (staffSignInEpochInstalled) {
+    return
+  }
+
+  staffSignInEpochInstalled = true
+  const current = supabase.auth.signInWithPassword
+
+  if (isVitestMock(current)) {
+    const initial = current.getMockImplementation()
+    current.mockImplementation(async (credentials) => {
+      const run = staffSignInImplForTests ?? initial
+      const result = run ? await run(credentials) : emptySignInResult()
+      if (staffAuthResultHasSession(result)) {
+        staffAuthEpoch += 1
+      }
+      return result
+    })
+    return
+  }
+
+  const bound = current.bind(supabase.auth)
+  const auth = supabase.auth as { signInWithPassword: StaffSignIn }
+  auth.signInWithPassword = (credentials) => {
+    return bound(credentials).then((result) => {
+      if (staffAuthResultHasSession(result)) {
+        staffAuthEpoch += 1
+      }
+      return result
+    })
+  }
+}
+
+function installStaffVerifyOtpEpochBump(): void {
+  if (staffVerifyOtpEpochInstalled) {
+    return
+  }
+
+  staffVerifyOtpEpochInstalled = true
+  const current = supabase.auth.verifyOtp
+
+  if (isVitestMock(current)) {
+    const initial = current.getMockImplementation()
+    current.mockImplementation(async (credentials) => {
+      const run = staffVerifyOtpImplForTests ?? initial
+      const result = run ? await run(credentials) : emptyVerifyOtpResult()
+      if (staffAuthResultHasSession(result)) {
+        staffAuthEpoch += 1
+      }
+      return result
+    })
+    return
+  }
+
+  const bound = current.bind(supabase.auth)
+  const auth = supabase.auth as { verifyOtp: StaffVerifyOtp }
+  auth.verifyOtp = (credentials) => {
+    return bound(credentials).then((result) => {
+      if (staffAuthResultHasSession(result)) {
+        staffAuthEpoch += 1
+      }
+      return result
+    })
+  }
+}
+
+installStaffSignInEpochBump()
+installStaffVerifyOtpEpochBump()
+
 function isTerminalStaffRefreshError(error: unknown): boolean {
   if (isAuthRetryableFetchError(error)) {
     return false
@@ -297,16 +456,6 @@ async function readStaffSessionPrincipal(): Promise<StaffSessionPrincipal | null
   }
 }
 
-async function readStaffUserId(): Promise<string | null> {
-  try {
-    const { data } = await supabase.auth.getSession()
-    const userId = data?.session?.user?.id
-    return typeof userId === "string" && userId.length > 0 ? userId : null
-  } catch {
-    return null
-  }
-}
-
 async function performStaffRefresh(
   refreshToken: string,
 ): Promise<StaffRefreshResult> {
@@ -323,26 +472,23 @@ async function performStaffRefresh(
       return { ok: false, error: null }
     }
 
-    return { ok: true, accessToken }
+    const nextRefresh = result.data?.session?.refresh_token
+    return {
+      ok: true,
+      accessToken,
+      refreshToken:
+        typeof nextRefresh === "string" && nextRefresh.length > 0
+          ? nextRefresh
+          : null,
+    }
   } catch (error: unknown) {
     return { ok: false, error }
   }
 }
 
-function refreshStaffSession(refreshToken: string): Promise<StaffRefreshResult> {
-  if (staffRefreshInflight && staffRefreshInflightToken === refreshToken) {
-    return staffRefreshInflight
-  }
-
-  if (staffRefreshInflight) {
-    return staffRefreshInflight.then(
-      () => refreshStaffSession(refreshToken),
-      () => refreshStaffSession(refreshToken),
-    )
-  }
-
-  staffRefreshInflightToken = refreshToken
-  const promise = performStaffRefresh(refreshToken).finally(() => {
+function startStaffRefresh(sender: StaffRefreshSender): Promise<StaffRefreshResult> {
+  staffRefreshInflightToken = sender.refreshToken
+  const promise = performStaffRefresh(sender.refreshToken).finally(() => {
     if (staffRefreshInflight === promise) {
       staffRefreshInflight = null
       staffRefreshInflightToken = null
@@ -352,12 +498,55 @@ function refreshStaffSession(refreshToken: string): Promise<StaffRefreshResult> 
   return promise
 }
 
+async function refreshStaffSessionAfterWait(
+  sender: StaffRefreshSender,
+): Promise<StaffRefreshResult> {
+  const current = await readStaffSessionPrincipal()
+  if (!staffSenderStill(sender, current)) {
+    return { ok: false, error: null }
+  }
+
+  return refreshStaffSession(sender)
+}
+
+function refreshStaffSession(
+  sender: StaffRefreshSender,
+): Promise<StaffRefreshResult> {
+  if (
+    staffRefreshInflight &&
+    staffRefreshInflightToken === sender.refreshToken
+  ) {
+    return staffRefreshInflight
+  }
+
+  if (staffRefreshInflight) {
+    return staffRefreshInflight.then(
+      () => refreshStaffSessionAfterWait(sender),
+      () => refreshStaffSessionAfterWait(sender),
+    )
+  }
+
+  return startStaffRefresh(sender)
+}
+
 function staffPrincipalStill(
   epoch: number,
   senderUserId: string,
   currentUserId: string | null,
 ): boolean {
   return staffAuthEpoch === epoch && currentUserId === senderUserId
+}
+
+function staffSenderStill(
+  sender: StaffRefreshSender,
+  current: StaffSessionPrincipal | null,
+): boolean {
+  return (
+    staffAuthEpoch === sender.epoch &&
+    current !== null &&
+    current.userId === sender.userId &&
+    current.refreshToken === sender.refreshToken
+  )
 }
 
 function customerLoginPath(): string {
@@ -449,34 +638,53 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Refresh the principal that sent this request. Drop the retry if that
-    // user signs out or the stored user changes. A terminal GoTrue failure
-    // signs out locally so the shell leaves; network and 5xx keep the session.
+    // Refresh the principal that sent this request. After every wait, call
+    // refreshSession only when the epoch, user id, and stored refresh token
+    // still belong to that sender. A terminal GoTrue failure signs out
+    // locally only if the stored refresh token is still the one that failed.
+    // Network and 5xx keep the session.
     const epoch = staffAuthEpoch
     const before = await readStaffSessionPrincipal()
-    if (
-      !staffPrincipalStill(epoch, senderUserId, before?.userId ?? null) ||
-      before === null
-    ) {
+    const sender: StaffRefreshSender = {
+      epoch,
+      userId: senderUserId,
+      refreshToken: before?.refreshToken ?? "",
+    }
+    if (!staffSenderStill(sender, before)) {
       logApi401("b2b", config)
       return Promise.reject(error)
     }
 
-    const refresh = await refreshStaffSession(before.refreshToken)
+    const refresh = await refreshStaffSession(sender)
     logApi401("b2b", config, refresh.ok ? undefined : refresh.error)
-    const afterUserId = await readStaffUserId()
-    if (!staffPrincipalStill(epoch, senderUserId, afterUserId)) {
-      return Promise.reject(error)
-    }
-
+    const after = await readStaffSessionPrincipal()
     if (!refresh.ok) {
-      if (isTerminalStaffRefreshError(refresh.error)) {
+      if (
+        isTerminalStaffRefreshError(refresh.error) &&
+        after !== null &&
+        after.refreshToken === sender.refreshToken
+      ) {
         try {
           await supabase.auth.signOut({ scope: "local" })
         } catch {
           // Keep rejecting the original 401 if local sign-out fails.
         }
       }
+      return Promise.reject(error)
+    }
+
+    if (!staffPrincipalStill(epoch, senderUserId, after?.userId ?? null)) {
+      return Promise.reject(error)
+    }
+
+    // A newer sign-in stores a different refresh token than the one this
+    // refresh rotated. Do not replay the stale access token.
+    if (
+      after !== null &&
+      after.refreshToken !== sender.refreshToken &&
+      (refresh.refreshToken === null ||
+        after.refreshToken !== refresh.refreshToken)
+    ) {
       return Promise.reject(error)
     }
 
