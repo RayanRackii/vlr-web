@@ -28,6 +28,7 @@ import {
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 
 export function RentalResourcesPage() {
   const { t } = useTranslation()
@@ -61,10 +62,12 @@ export function RentalResourcesPage() {
       setFamilies(familyList)
       setUnits(unitList)
     } catch (error) {
-      const message =
-        error instanceof Error
+      const fallback = t("rentals.resources.loadError")
+      const raw =
+        error instanceof Error && error.message.trim().length > 0
           ? error.message
-          : t("rentals.resources.loadError")
+          : fallback
+      const message = mapRbacErrorMessage(raw, fallback)
       setLoadError(message)
       toast.error(message)
     } finally {

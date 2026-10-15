@@ -1,7 +1,16 @@
 import { z } from "zod"
 
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import i18n from "@/lib/i18n"
+
+function lessonChangeError(error: unknown): Error {
+  const fallback = i18n.t("rentals.teacherLessons.changeError")
+  return new Error(
+    mapRbacErrorMessage(parseApiError(getAxiosErrorPayload(error), fallback), fallback),
+    { cause: error },
+  )
+}
 
 const occupancyKindSchema = z.object({
   id: z.string().uuid(),
@@ -84,7 +93,7 @@ export async function createTeacherLesson(
     if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidPayload"))
     return parsed.data
   } catch (error) {
-    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.teacherLessons.changeError")), { cause: error })
+    throw lessonChangeError(error)
   }
 }
 
@@ -101,7 +110,7 @@ export async function removeTeacherLesson(
     if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidPayload"))
     return parsed.data
   } catch (error) {
-    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.teacherLessons.changeError")), { cause: error })
+    throw lessonChangeError(error)
   }
 }
 

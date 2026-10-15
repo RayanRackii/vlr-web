@@ -407,8 +407,11 @@
       "queue": {
         "closed": "A fila abre às {{waitingRoom}} e as reservas às {{opensAt}}.",
         "closedFallback": "A fila de reservas ainda não está aberta.",
+        "requiresTicket": "Este recurso exige um ticket da fila para reservar.",
         "join": "Entrar na fila",
+        "joinAndReserve": "Entrar na fila e reservar",
         "joining": "Entrando...",
+        "joiningAndReserving": "Entrando e reservando...",
         "inQueue": "Você está na fila",
         "position": "Sua posição: {{position}}",
         "ahead": "{{count}} à sua frente",
@@ -992,7 +995,8 @@
       "peoplePortal": "Pessoas & portal",
       "operations": "Operação",
       "platform": "Plataforma"
-    }
+    },
+    "dashboardRedirectNotice": "Você não tem acesso ao painel. Abrimos a primeira página permitida para o seu acesso."
   },
   "account": {
     "title": "Conta",
@@ -2664,7 +2668,8 @@
       "loadError": "Não foi possível carregar a grade deste dia.",
       "createSuccess": "Aula criada nesta data.",
       "removeSuccess": "Aula removida nesta data.",
-      "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito."
+      "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
+      "pastDateAdjusted": "A data do link já passou. Os horários abaixo são de hoje."
     },
     "schedule": {
       "title": "Escala / agenda",
