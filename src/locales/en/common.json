@@ -63,6 +63,8 @@
     "createReservation": "Could not create reservation.",
     "loadScheduleDay": "Could not load schedule day.",
     "bookSlot": "Could not book slot.",
+    "loadBookingPolicy": "Could not load the booking policy.",
+    "saveBookingPolicy": "Could not save the booking policy.",
     "loadQueue": "Could not load the waiting queue.",
     "joinQueue": "Could not join the waiting queue.",
     "leaveQueue": "Could not leave the waiting queue.",
@@ -389,7 +391,15 @@
       "empty": "No reservations yet.",
       "cancel": "Cancel",
       "cancelling": "Cancelling...",
+      "cancelConfirmTitle": "Cancel this reservation?",
+      "cancelConfirmBody": "The time slot becomes available again. This screen does not collect payment or issue a refund, including when the reservation is already confirmed. When a deposit is required, only the club confirms it; canceling does not move any payment here.",
+      "cancelConfirmAction": "Confirm cancellation",
+      "cancelConfirmDismiss": "Keep reservation",
       "cancelSuccess": "Reservation canceled.",
+      "cancellationPolicyLabel": "Cancellation policy",
+      "dailyLimitReached": "You reached the limit of {{count}} active reservations for this day.",
+      "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
+      "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
       "noAssets": "No spaces configured",
       "backHome": "Back",
       "queue": {
@@ -958,6 +968,7 @@
     "schedule": "Schedule",
     "layout": "Layout",
     "reservations": "Reservations",
+    "bookingPolicy": "Booking policy",
     "rentalsResources": "Resources",
     "catalog": "Catalog & Orders",
     "catalogProducts": "Products",
@@ -2897,6 +2908,27 @@
         "Confirmed": "Confirmed",
         "Canceled": "Canceled",
         "Completed": "Completed"
+      }
+    },
+    "bookingPolicy": {
+      "title": "Booking policy",
+      "description": "Set the cancellation text and the daily cap on active reservations per customer. It applies to every resource type in this workspace.",
+      "cancellationLabel": "Cancellation text",
+      "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows only the standard note when canceling.",
+      "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
+      "characterCount": "{{count}}/{{max}}",
+      "dailyLimitToggle": "Limit active reservations per customer per day",
+      "dailyLimitHint": "Counts pending-deposit and confirmed reservations that start on the same day. Off means no limit.",
+      "dailyLimitValue": "Maximum per day",
+      "save": "Save",
+      "saved": "Booking policy saved.",
+      "loadError": "Could not load the booking policy.",
+      "saveError": "Could not save the booking policy.",
+      "readOnly": "You can view this policy, but you cannot change it.",
+      "retry": "Try again",
+      "validation": {
+        "textMax": "The text can be at most 2000 characters.",
+        "limitRange": "Enter an integer from 1 to 100."
       }
     }
   }

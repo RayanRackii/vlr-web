@@ -1,10 +1,19 @@
 import { Loader2 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Navigate, useOutletContext, useParams } from "react-router-dom"
+import { Navigate, useOutletContext, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -25,6 +34,7 @@ import {
   listDistinctStartTimes,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
+import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import {
   formatMoney,
@@ -32,7 +42,16 @@ import {
 } from "@/features/rentals/services/reservationsService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
+import {
+  findVisibleAgendaReservation,
+  parseAgendaReservationQuery,
+} from "@/features/tenantPortal/lib/agendaReservationQuery"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
+import {
+  isDailyBookingLimitError,
+  isSlotTakenConflict,
+  readDailyBookingLimit,
+} from "@/features/tenantPortal/lib/portalBookingError"
 import { isPastReservation } from "@/features/tenantPortal/lib/isPastReservation"
 import {
   bookPortalSlot,
@@ -56,6 +75,7 @@ import {
   clampBrazilDateToToday,
   isBrazilSlotStartInPast,
 } from "@/lib/brazilTimeZone"
+import { cn } from "@/lib/utils"
 
 function upcomingBookableSlots(
   daySlots: readonly PortalScheduleSlot[],
@@ -73,6 +93,7 @@ function upcomingBookableSlots(
 
 export function TenantPortalAgendaPage() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
     useOutletContext<CustomerAppOutletContext>()
@@ -100,6 +121,16 @@ export function TenantPortalAgendaPage() {
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
+  const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
+  const [cancellationPolicyText, setCancellationPolicyText] = useState<
+    string | null
+  >(null)
+  const submittingRef = useRef(false)
+  const cancelingRef = useRef(false)
+  const viewedDateRef = useRef(date)
+  const refreshGeneration = useRef(0)
+  const focusedRowRef = useRef<HTMLLIElement | null>(null)
+  const scrolledReservationIdRef = useRef<string | null>(null)
   const [quote, setQuote] = useState<
     | { status: "idle" }
     | { status: "loading" }
@@ -207,6 +238,30 @@ export function TenantPortalAgendaPage() {
   }, [signedIn, subdomain, t, lockedAssetId, lockedRentalAssetId])
 
   useEffect(() => {
+    if (!signedIn) {
+      return
+    }
+
+    let cancelled = false
+    void fetchPublicBookingPolicy(subdomain)
+      .then((policy) => {
+        if (!cancelled) {
+          setCancellationPolicyText(policy.cancellationPolicyText)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCancellationPolicyText(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [signedIn, subdomain])
+
+  useEffect(() => {
+    viewedDateRef.current = date
     if (!signedIn || !date) {
       setSlots([])
       setStartTime("")
@@ -325,6 +380,30 @@ export function TenantPortalAgendaPage() {
     enabled: queueEnabled,
   })
 
+  const focusedReservationId =
+    findVisibleAgendaReservation(
+      mine,
+      parseAgendaReservationQuery(searchParams.get("reservation")),
+    )?.id ?? null
+
+  useEffect(() => {
+    if (loading || focusedReservationId === null) {
+      return
+    }
+
+    if (scrolledReservationIdRef.current === focusedReservationId) {
+      return
+    }
+
+    const row = focusedRowRef.current
+    if (row === null || typeof row.scrollIntoView !== "function") {
+      return
+    }
+
+    row.scrollIntoView({ block: "center" })
+    scrolledReservationIdRef.current = focusedReservationId
+  }, [focusedReservationId, loading])
+
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
   }
@@ -334,25 +413,61 @@ export function TenantPortalAgendaPage() {
   }
 
   const title = menuItem?.label ?? t("tenantPortal.agenda.title")
+  const cancellationPolicyNote = visibleCancellationPolicyText(
+    cancellationPolicyText,
+  )
+
+  function refreshAgenda(dayDate: string) {
+    const generation = refreshGeneration.current + 1
+    refreshGeneration.current = generation
+    void Promise.all([
+      listMyPortalReservations(),
+      fetchPublicScheduleDay(subdomain, dayDate),
+    ])
+      .then(([reservations, day]) => {
+        if (refreshGeneration.current !== generation) {
+          return
+        }
+        setMine((current) => {
+          const serverIds = new Set(reservations.map((row) => row.id))
+          const onlyLocal = current.filter((row) => !serverIds.has(row.id))
+          return [...onlyLocal, ...reservations]
+        })
+        if (viewedDateRef.current !== dayDate) {
+          return
+        }
+        const selected = upcomingBookableSlots(day.slots, dayDate)
+        setSlots(selected.upcoming)
+        setPastSlotsHidden(selected.pastHidden)
+      })
+      .catch(() => {
+        // The mutation result is already on screen. A slow or failed
+        // refresh must not replace the result toast or keep the button busy.
+      })
+  }
 
   async function onReserve() {
-    if (!selectedAsset || !selectedSlot) {
+    if (!selectedAsset || !selectedSlot || submittingRef.current) {
       return
     }
+    const asset = selectedAsset
+    const slot = selectedSlot
+    const dayDate = date
+    submittingRef.current = true
     setSubmitting(true)
     try {
-      const created = canBookViaSlotId(selectedSlot)
+      const created = canBookViaSlotId(slot)
         ? await bookPortalSlot({
-            slotId: selectedSlot.id,
-            unitId: selectedAsset.unitId,
+            slotId: slot.id,
+            unitId: asset.unitId,
             quantity: 1,
           })
         : await createPortalReservation({
-            unitId: selectedAsset.unitId,
-            date,
-            startTime: selectedSlot.startTime.slice(0, 5),
-            endTime: selectedSlot.endTime.slice(0, 5),
-            items: [{ assetId: selectedAsset.assetId, quantity: 1 }],
+            unitId: asset.unitId,
+            date: dayDate,
+            startTime: slot.startTime.slice(0, 5),
+            endTime: slot.endTime.slice(0, 5),
+            items: [{ assetId: asset.assetId, quantity: 1 }],
           })
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
@@ -362,15 +477,22 @@ export function TenantPortalAgendaPage() {
           }),
         }),
       )
-      const [reservations, day] = await Promise.all([
-        listMyPortalReservations(),
-        fetchPublicScheduleDay(subdomain, date),
+      setMine((current) => [
+        created,
+        ...current.filter((reservation) => reservation.id !== created.id),
       ])
-      setMine(reservations)
-      const selected = upcomingBookableSlots(day.slots, date)
-      setSlots(selected.upcoming)
-      setPastSlotsHidden(selected.pastHidden)
+      setSlots((current) =>
+        current.filter(
+          (candidate) =>
+            !(
+              candidate.rentalAssetId === slot.rentalAssetId &&
+              candidate.startTime === slot.startTime &&
+              candidate.endTime === slot.endTime
+            ),
+        ),
+      )
       setSelectedRentalAssetId(null)
+      refreshAgenda(dayDate)
     } catch (error) {
       if (queue.applyBookingError(error)) {
         const code = getReservationQueueErrorCode(error)
@@ -381,50 +503,85 @@ export function TenantPortalAgendaPage() {
         )
         return
       }
+      if (isDailyBookingLimitError(error)) {
+        const count = readDailyBookingLimit(error)
+        toast.error(
+          count === null
+            ? t("tenantPortal.agenda.dailyLimitReachedUnknown")
+            : t("tenantPortal.agenda.dailyLimitReached", { count }),
+        )
+        return
+      }
+      if (isSlotTakenConflict(error)) {
+        toast.error(t("tenantPortal.agenda.slotJustTaken"))
+        setSelectedRentalAssetId(null)
+        refreshAgenda(dayDate)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
           : t("tenantPortal.agenda.reserveError"),
       )
     } finally {
+      submittingRef.current = false
       setSubmitting(false)
     }
   }
 
-  async function onCancelMine(id: string) {
-    if (cancelingId !== null) {
+  function requestCancel(id: string) {
+    if (cancelingRef.current) {
       return
     }
+    setPendingCancelId(id)
+  }
+
+  async function confirmCancel() {
+    if (pendingCancelId === null || cancelingRef.current) {
+      return
+    }
+    const id = pendingCancelId
+    const dayDate = date
+    cancelingRef.current = true
     setCancelingId(id)
     try {
-      await cancelMyPortalReservation(id)
+      const canceled = await cancelMyPortalReservation(id)
       toast.success(t("tenantPortal.agenda.cancelSuccess"))
-      const [reservations, day] = await Promise.all([
-        listMyPortalReservations(),
-        fetchPublicScheduleDay(subdomain, date),
-      ])
-      setMine(reservations)
-      const selected = upcomingBookableSlots(day.slots, date)
-      setSlots(selected.upcoming)
-      setPastSlotsHidden(selected.pastHidden)
+      setMine((current) => {
+        const exists = current.some(
+          (reservation) => reservation.id === canceled.id,
+        )
+        if (!exists) {
+          return [canceled, ...current]
+        }
+        return current.map((reservation) =>
+          reservation.id === canceled.id ? canceled : reservation,
+        )
+      })
+      setPendingCancelId(null)
+      refreshAgenda(dayDate)
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : t("apiErrors.cancelReservation"),
       )
-      try {
-        setMine(await listMyPortalReservations())
-      } catch {
-        // Stay on the current list if refetch fails.
-      }
+      void listMyPortalReservations()
+        .then((reservations) => {
+          setMine(reservations)
+        })
+        .catch(() => {
+          // Stay on the current list if refetch fails.
+        })
     } finally {
+      cancelingRef.current = false
       setCancelingId(null)
     }
   }
 
   function onDateChange(value: string) {
     const next = clampBrazilDateToToday(value)
+    viewedDateRef.current = next
     setDate(next)
   }
 
@@ -754,61 +911,131 @@ export function TenantPortalAgendaPage() {
               </p>
             ) : (
               <ul className="space-y-2">
-                {mine.map((reservation) => (
-                  <li
-                    key={reservation.id}
-                    className="rounded-md border border-border px-3 py-2 text-sm"
-                  >
-                    <p className="font-medium">
-                      {reservation.items
-                        .map((item) => item.assetName)
-                        .join(", ")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatReservationRange(
-                        reservation.startDateTime,
-                        reservation.endDateTime,
-                      )}{" "}
-                      ·{" "}
-                      {t(`rentals.reservations.statuses.${reservation.status}`, {
-                        defaultValue: reservation.status,
-                      })}
-                      {" · "}
-                      {t("tenantPortal.agenda.total", {
-                        amount: formatMoney(reservation.totalAmount),
-                      })}
-                    </p>
-                    {isPastReservation(reservation.endDateTime) ? (
-                      <p className="text-xs font-medium">
-                        {t("tenantPortal.agenda.pastReservation")}
+                {mine.map((reservation) => {
+                  const focused = reservation.id === focusedReservationId
+                  return (
+                    <li
+                      key={reservation.id}
+                      ref={focused ? focusedRowRef : undefined}
+                      aria-current={focused ? "true" : undefined}
+                      data-reservation-focused={focused ? "true" : undefined}
+                      className={cn(
+                        "scroll-mt-16 rounded-md border px-3 py-2 text-sm",
+                        focused
+                          ? "border-primary bg-primary/10 ring-2 ring-primary"
+                          : "border-border",
+                      )}
+                    >
+                      <p className="font-medium">
+                        {reservation.items
+                          .map((item) => item.assetName)
+                          .join(", ")}
                       </p>
-                    ) : null}
-                    {!isPastReservation(reservation.endDateTime) &&
-                    canCustomerSelfCancel(
-                      reservation.status,
-                      reservation.startDateTime,
-                    ) ? (
-                      <LoadingButton
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="mt-2"
-                        loading={cancelingId === reservation.id}
-                        loadingLabel={t("tenantPortal.agenda.cancelling")}
-                        onClick={() => {
-                          void onCancelMine(reservation.id)
-                        }}
-                      >
-                        {t("tenantPortal.agenda.cancel")}
-                      </LoadingButton>
-                    ) : null}
-                  </li>
-                ))}
+                      <p className="text-xs text-muted-foreground">
+                        {formatReservationRange(
+                          reservation.startDateTime,
+                          reservation.endDateTime,
+                        )}{" "}
+                        ·{" "}
+                        {t(`rentals.reservations.statuses.${reservation.status}`, {
+                          defaultValue: reservation.status,
+                        })}
+                        {" · "}
+                        {t("tenantPortal.agenda.total", {
+                          amount: formatMoney(reservation.totalAmount),
+                        })}
+                      </p>
+                      {isPastReservation(reservation.endDateTime) ? (
+                        <p className="text-xs font-medium">
+                          {t("tenantPortal.agenda.pastReservation")}
+                        </p>
+                      ) : null}
+                      {!isPastReservation(reservation.endDateTime) &&
+                      canCustomerSelfCancel(
+                        reservation.status,
+                        reservation.startDateTime,
+                      ) ? (
+                        <LoadingButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-2"
+                          loading={cancelingId === reservation.id}
+                          loadingLabel={t("tenantPortal.agenda.cancelling")}
+                          onClick={() => {
+                            requestCancel(reservation.id)
+                          }}
+                        >
+                          {t("tenantPortal.agenda.cancel")}
+                        </LoadingButton>
+                      ) : null}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
+
+          <AlertDialog
+            open={pendingCancelId !== null}
+            onOpenChange={(open) => {
+              if (!open && !cancelingRef.current) {
+                setPendingCancelId(null)
+              }
+            }}
+          >
+            <AlertDialogContent className="max-h-[min(80vh,40rem)] overflow-y-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {t("tenantPortal.agenda.cancelConfirmTitle")}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("tenantPortal.agenda.cancelConfirmBody")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {cancellationPolicyNote ? (
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    {t("tenantPortal.agenda.cancellationPolicyLabel")}
+                  </p>
+                  {/* Plain text only. Never parse the tenant policy as HTML. */}
+                  <p
+                    className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-muted-foreground"
+                    data-testid="cancellation-policy-text"
+                  >
+                    {cancellationPolicyNote}
+                  </p>
+                </div>
+              ) : null}
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={cancelingId !== null}>
+                  {t("tenantPortal.agenda.cancelConfirmDismiss")}
+                </AlertDialogCancel>
+                <LoadingButton
+                  type="button"
+                  variant="destructive"
+                  loading={cancelingId !== null}
+                  loadingLabel={t("tenantPortal.agenda.cancelling")}
+                  onClick={() => {
+                    void confirmCancel()
+                  }}
+                >
+                  {t("tenantPortal.agenda.cancelConfirmAction")}
+                </LoadingButton>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </div>
   )
+}
+
+function visibleCancellationPolicyText(value: string | null): string | null {
+  if (value === null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
 }

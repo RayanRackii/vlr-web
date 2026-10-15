@@ -10,7 +10,15 @@ import {
 } from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { parseCustomerAuthError } from "@/features/tenantPortal/lib/mapCustomerAuthError"
+import {
+  isReservationQueueErrorCode,
+  portalBookingErrorFromUnknown,
+  RESERVATION_QUEUE_ERROR_CODES,
+  type ReservationQueueErrorCode,
+} from "@/features/tenantPortal/lib/portalBookingError"
 import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
+
+export { RESERVATION_QUEUE_ERROR_CODES, type ReservationQueueErrorCode }
 import {
   authResponseSchema,
   customerProfileSchema,
@@ -904,9 +912,7 @@ export async function createPortalReservation(body: {
     }
     return parsed.data
   } catch (error) {
-    throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.createReservation")),
-    )
+    throwPortalBookingFailure(error, "apiErrors.createReservation")
   }
 }
 
@@ -1032,22 +1038,16 @@ export async function bookPortalSlot(body: {
     }
     return parsed.data
   } catch (error) {
-    throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.bookSlot")),
-    )
+    throwPortalBookingFailure(error, "apiErrors.bookSlot")
   }
 }
 
-export const RESERVATION_QUEUE_ERROR_CODES = [
-  "QUEUE_REQUIRED",
-  "QUEUE_WAITING",
-  "QUEUE_TURN_EXPIRED",
-  "QUEUE_TURN_ALREADY_USED",
-  "QUEUE_WAITING_ROOM_CLOSED",
-] as const
-
-export type ReservationQueueErrorCode =
-  (typeof RESERVATION_QUEUE_ERROR_CODES)[number]
+function throwPortalBookingFailure(error: unknown, fallbackKey: string): never {
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+  throw portalBookingErrorFromUnknown(error, i18n.t(fallbackKey))
+}
 
 export const reservationQueueTicketStatusSchema = z.enum([
   "Waiting",
@@ -1089,12 +1089,6 @@ export const reservationQueueStatusSchema = z.object({
 
 export type ReservationQueueTicket = z.infer<typeof reservationQueueTicketSchema>
 export type ReservationQueueStatus = z.infer<typeof reservationQueueStatusSchema>
-
-function isReservationQueueErrorCode(
-  value: string,
-): value is ReservationQueueErrorCode {
-  return (RESERVATION_QUEUE_ERROR_CODES as readonly string[]).includes(value)
-}
 
 export function getReservationQueueErrorCode(
   error: unknown,

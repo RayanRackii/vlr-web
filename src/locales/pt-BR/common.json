@@ -63,6 +63,8 @@
     "createReservation": "Não foi possível criar a reserva.",
     "loadScheduleDay": "Não foi possível carregar a agenda do dia.",
     "bookSlot": "Não foi possível reservar o horário.",
+    "loadBookingPolicy": "Não foi possível carregar a política de reservas.",
+    "saveBookingPolicy": "Não foi possível salvar a política de reservas.",
     "loadQueue": "Não foi possível carregar a fila.",
     "joinQueue": "Não foi possível entrar na fila.",
     "leaveQueue": "Não foi possível sair da fila.",
@@ -389,7 +391,15 @@
       "empty": "Nenhuma reserva ainda.",
       "cancel": "Cancelar",
       "cancelling": "Cancelando...",
+      "cancelConfirmTitle": "Cancelar esta reserva?",
+      "cancelConfirmBody": "O horário volta a ficar disponível. Esta tela não cobra e não emite reembolso, inclusive se a reserva já estiver confirmada. O depósito, quando exigido, só é confirmado pelo clube; o cancelamento não movimenta pagamento aqui.",
+      "cancelConfirmAction": "Confirmar cancelamento",
+      "cancelConfirmDismiss": "Manter reserva",
       "cancelSuccess": "Reserva cancelada.",
+      "cancellationPolicyLabel": "Política de cancelamento",
+      "dailyLimitReached": "Você atingiu o limite de {{count}} reservas ativas neste dia.",
+      "dailyLimitReachedUnknown": "Você atingiu o limite de reservas ativas neste dia.",
+      "slotJustTaken": "Este horário acabou de ser reservado. A agenda foi atualizada — escolha outro.",
       "noAssets": "Nenhum espaço cadastrado",
       "backHome": "Voltar",
       "queue": {
@@ -958,6 +968,7 @@
     "schedule": "Escala / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
+    "bookingPolicy": "Política de reservas",
     "rentalsResources": "Recursos",
     "catalog": "Catálogo & Pedidos",
     "catalogProducts": "Produtos",
@@ -2933,6 +2944,27 @@
         "Confirmed": "Confirmada",
         "Canceled": "Cancelada",
         "Completed": "Concluída"
+      }
+    },
+    "bookingPolicy": {
+      "title": "Política de reservas",
+      "description": "Defina o texto de cancelamento e o limite diário de reservas ativas por cliente. Vale para todos os tipos de recurso deste ambiente.",
+      "cancellationLabel": "Texto de cancelamento",
+      "cancellationHint": "Texto simples, sem formatação. Até 2000 caracteres. Em branco, o portal mostra só a nota padrão ao cancelar.",
+      "cancellationPlaceholder": "Texto simples exibido ao cancelar uma reserva.",
+      "characterCount": "{{count}}/{{max}}",
+      "dailyLimitToggle": "Limitar reservas ativas por cliente por dia",
+      "dailyLimitHint": "Conta reservas pendentes de depósito e confirmadas que começam no mesmo dia. Desligado significa sem limite.",
+      "dailyLimitValue": "Máximo por dia",
+      "save": "Salvar",
+      "saved": "Política de reservas salva.",
+      "loadError": "Não foi possível carregar a política de reservas.",
+      "saveError": "Não foi possível salvar a política de reservas.",
+      "readOnly": "Você pode consultar a política, mas não alterá-la.",
+      "retry": "Tentar novamente",
+      "validation": {
+        "textMax": "O texto pode ter no máximo 2000 caracteres.",
+        "limitRange": "Informe um inteiro de 1 a 100."
       }
     }
   }
