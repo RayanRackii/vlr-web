@@ -406,8 +406,11 @@
       "queue": {
         "closed": "A fila abre às {{waitingRoom}} e as reservas às {{opensAt}}.",
         "closedFallback": "A fila de reservas ainda não está aberta.",
+        "requiresTicket": "Este recurso exige um ticket da fila para reservar.",
         "join": "Entrar na fila",
+        "joinAndReserve": "Entrar na fila e reservar",
         "joining": "Entrando...",
+        "joiningAndReserving": "Entrando e reservando...",
         "inQueue": "Você está na fila",
         "position": "Sua posição: {{position}}",
         "ahead": "{{count}} à sua frente",

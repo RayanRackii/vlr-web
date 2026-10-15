@@ -17,10 +17,18 @@ const COUNTDOWN_TICK_MS = 1000
 export type ReservationQueueView =
   | { kind: "hidden" }
   | { kind: "closed"; waitingRoomTime: string; opensTime: string }
-  | { kind: "join" }
+  | { kind: "join"; joinAndReserve: boolean }
   | { kind: "waiting"; position: number; aheadCount: number }
   | { kind: "active"; countdown: string }
   | { kind: "expired" }
+
+function isOpenWithNobodyAhead(status: ReservationQueueStatus): boolean {
+  return (
+    status.phase === "Open" &&
+    status.aheadCount === 0 &&
+    status.waitingCount === 0
+  )
+}
 
 function toastQueueFailure(
   error: unknown,
@@ -79,11 +87,12 @@ export function useReservationQueue(options: {
   enabled: boolean
 }): {
   view: ReservationQueueView
+  explanation: string | null
   canReserve: boolean
   hideReserveUi: boolean
   joining: boolean
   leaving: boolean
-  join: () => Promise<void>
+  join: () => Promise<ReservationQueueStatus | null>
   leave: () => Promise<void>
   refresh: () => Promise<void>
   applyBookingError: (error: unknown) => boolean
@@ -288,17 +297,25 @@ export function useReservationQueue(options: {
         opensTime: formatQueueClockTime(status.opensAt, i18n.language),
       }
     }
-    return { kind: "join" }
+    return {
+      kind: "join",
+      joinAndReserve: isOpenWithNobodyAhead(status),
+    }
   }, [enabled, i18n.language, remainingMs, status])
+
+  const explanation =
+    enabled && (status == null || status.queueEnabled === true)
+      ? t("tenantPortal.agenda.queue.requiresTicket")
+      : null
 
   const queueGating =
     enabled && (status == null || status.queueEnabled === true)
   const canReserve = !queueGating || view.kind === "active"
   const hideReserveUi = view.kind === "expired"
 
-  const join = useCallback(async () => {
+  const join = useCallback(async (): Promise<ReservationQueueStatus | null> => {
     if (!rentalAssetId) {
-      return
+      return null
     }
     mutating.current = true
     fetchGeneration.current += 1
@@ -306,9 +323,11 @@ export function useReservationQueue(options: {
     try {
       const next = await joinReservationQueue(rentalAssetId)
       applyStatus(next)
+      return next
     } catch (error) {
       toastQueueFailure(error, t("apiErrors.joinQueue"), t)
       void refresh()
+      return null
     } finally {
       mutating.current = false
       setJoining(false)
@@ -348,6 +367,7 @@ export function useReservationQueue(options: {
 
   return {
     view,
+    explanation,
     canReserve,
     hideReserveUi,
     joining,
