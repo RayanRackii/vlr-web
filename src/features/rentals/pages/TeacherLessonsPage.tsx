@@ -1,10 +1,19 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
@@ -23,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
+import { compareSlotsByStartTime, isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
@@ -36,11 +45,20 @@ function initialLessonDate() {
   return value
 }
 
+type PendingRemoval = {
+  startTime: string
+  endTime: string
+}
+
 export function TeacherLessonsPage() {
   const { t } = useTranslation()
-  const { assets, day, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
+  const { assets, day, dayStatus, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
+  const removalInFlight = useRef(false)
   const available = useMemo(
-    () => day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? [],
+    () => (day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? [])
+      .slice()
+      .sort(compareSlotsByStartTime),
     [day],
   )
   const lessons = useMemo(
@@ -122,6 +140,23 @@ export function TeacherLessonsPage() {
     }
   }
 
+  async function confirmRemoval() {
+    if (!pendingRemoval || !assetId || !date || removalInFlight.current) return
+    removalInFlight.current = true
+    try {
+      await remove(assetId, date, pendingRemoval.startTime, pendingRemoval.endTime)
+      setPendingRemoval(null)
+      await loadDay(assetId, date)
+    } catch {
+      // The hook reports API errors and keeps the dialog open so the user can retry.
+    } finally {
+      removalInFlight.current = false
+    }
+  }
+
+  const lessonsPending = dayStatus === "loading"
+    || (dayStatus === "idle" && (loading || assets.length > 0 || Boolean(assetId)))
+
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6" data-testid="teacher-lessons-page">
       <header className="space-y-1">
@@ -179,13 +214,29 @@ export function TeacherLessonsPage() {
       </Form>
       <section className="space-y-3" aria-labelledby="lessons-heading">
         <h2 id="lessons-heading" className="text-lg font-semibold">{t("rentals.teacherLessons.lessonsForDate")}</h2>
-        {lessons.length === 0 ? <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.none")}</p> : lessons.map((lesson) => (
+        {lessonsPending ? <p className="text-sm text-muted-foreground" role="status">{t("rentals.teacherLessons.loading")}</p> : lessons.length === 0 ? (
+          dayStatus === "error" ? null : <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.none")}</p>
+        ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
             <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{lesson.endTime.slice(0, 5)}</p></div>
-            <Button type="button" onClick={() => void remove(assetId, date, lesson.startTime, lesson.endTime).then(() => loadDay(assetId, date)).catch(() => undefined)} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
+            <Button type="button" onClick={() => setPendingRemoval({ startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
           </article>
         ))}
       </section>
+      <AlertDialog open={pendingRemoval !== null} onOpenChange={(open) => { if (!open && !busy) setPendingRemoval(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("rentals.teacherLessons.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("rentals.teacherLessons.confirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy} />
+            <Button type="button" variant="destructive" disabled={busy || pendingRemoval === null} onClick={() => { void confirmRemoval() }}>
+              {t("rentals.teacherLessons.confirmAction")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
