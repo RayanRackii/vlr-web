@@ -11,6 +11,7 @@ import {
 } from "@supabase/supabase-js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { assignBrowserLocation } from "@/lib/browserLocation"
 import {
   api,
@@ -48,6 +49,8 @@ const LATER_REFRESH = "later-refresh-token"
 const QUEUED_ACCESS = "queued-staff-access-token"
 const LATER_ACCESS = "later-staff-access-token"
 const SIGNED_IN_ACCESS = "signed-in-staff-access-token"
+const PLATFORM_REFRESH = "platform-refresh-token"
+const PLATFORM_ACCESS = "platform-staff-access-token"
 const STAFF_EMAIL = "staff@club.test"
 const OTHER_STAFF_EMAIL = "other-staff@club.test"
 const CUSTOMER_ID = "rolvix.customer.id"
@@ -187,6 +190,50 @@ function authJsRefreshResult(
   } as never
 }
 
+/**
+ * Models the unsafe auth-js window: the newer session is written before
+ * `_callRefreshToken` snapshots storage, so the commit guard does not discard
+ * the explicit refresh token. The rotated session overwrites storage unless
+ * the caller puts the newer one back.
+ */
+function installPreSnapshotOverwrite(options: {
+  stored: { current: StoredStaffSession | null }
+  newer: StoredStaffSession
+  rotated: StoredStaffSession
+  beforeSnapshot: () => Promise<void>
+}) {
+  vi.mocked(supabase.auth.getSession).mockImplementation(async () =>
+    sessionPayload(options.stored.current),
+  )
+  vi.mocked(supabase.auth.setSession).mockImplementation(async () => {
+    expect(options.stored.current?.refresh_token).toBe(
+      options.rotated.refresh_token,
+    )
+    expect(options.stored.current?.access_token).toBe(options.rotated.access_token)
+    options.stored.current = options.newer
+    return {
+      data: { session: options.newer, user: options.newer.user },
+      error: null,
+    } as never
+  })
+  vi.mocked(supabase.auth.refreshSession).mockImplementation(async (current) => {
+    if (typeof current?.refresh_token !== "string") {
+      options.stored.current = options.newer
+      return {
+        data: { session: options.newer, user: options.newer.user },
+        error: null,
+      } as never
+    }
+
+    await options.beforeSnapshot()
+    const storedAtStart = options.stored.current?.refresh_token ?? null
+    return authJsRefreshResult(storedAtStart, options.stored, {
+      kind: "success",
+      session: options.rotated,
+    })
+  })
+}
+
 function requireFunctionAdapter(adapter: typeof api.defaults.adapter) {
   if (typeof adapter !== "function") {
     throw new Error("missing adapter")
@@ -249,6 +296,7 @@ describe("staff api 401 retry", () => {
     window.localStorage.setItem(STAFF_MARKER, "keep-staff-session")
     vi.mocked(supabase.auth.signOut).mockClear()
     vi.mocked(supabase.auth.refreshSession).mockReset()
+    vi.mocked(supabase.auth.setSession).mockReset()
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
         session: {
@@ -295,6 +343,7 @@ describe("staff api 401 retry", () => {
       refresh_token: REFRESH_SECRET,
     })
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(supabase.auth.setSession).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     expect(assignBrowserLocation).not.toHaveBeenCalled()
     const logged = loggedText(info)
@@ -498,6 +547,7 @@ describe("staff api 401 retry", () => {
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: "local" })
+    expect(supabase.auth.setSession).not.toHaveBeenCalled()
     const logged = loggedText(info)
     expect(logged).not.toContain(OLD_STAFF_TOKEN)
     expect(logged).not.toContain(NEW_STAFF_TOKEN)
@@ -769,6 +819,7 @@ describe("staff api 401 retry", () => {
     expect(refreshCalls).toEqual([REFRESH_SECRET])
     expect(stored.current?.refresh_token).toBe(LATER_REFRESH)
     expect(stored.current?.access_token).toBe(LATER_ACCESS)
+    expect(supabase.auth.setSession).not.toHaveBeenCalled()
     expect(calls).toEqual([
       `Bearer ${OLD_STAFF_TOKEN}`,
       `Bearer ${QUEUED_ACCESS}`,
@@ -930,6 +981,206 @@ describe("staff api 401 retry", () => {
     const logged = loggedText(info)
     expect(logged).not.toContain("password1")
     expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(STAFF_EMAIL)
+  })
+
+  it.each([
+    {
+      label: "sign-in",
+      establish: async (
+        stored: { current: StoredStaffSession | null },
+        session: StoredStaffSession,
+      ) => {
+        setStaffSignInImplForTests(async () => {
+          stored.current = session
+          return {
+            data: { user: session.user, session },
+            error: null,
+          } as never
+        })
+        await supabase.auth.signInWithPassword({
+          email: STAFF_EMAIL,
+          password: "password1",
+        })
+      },
+      secret: "password1",
+    },
+    {
+      label: "verifyOtp",
+      establish: async (
+        stored: { current: StoredStaffSession | null },
+        session: StoredStaffSession,
+      ) => {
+        setStaffVerifyOtpImplForTests(async () => {
+          stored.current = session
+          return {
+            data: { user: session.user, session },
+            error: null,
+          } as never
+        })
+        await supabase.auth.verifyOtp({
+          token_hash: "recovery-hash",
+          type: "recovery",
+        })
+      },
+      secret: "recovery-hash",
+    },
+  ])(
+    "keeps the $label session written before the auth-js refresh snapshot",
+    async ({ establish, secret }) => {
+      const stored = {
+        current: staffStoredSession(REFRESH_SECRET, OLD_STAFF_TOKEN),
+      }
+      const signedIn = staffStoredSession(SIGNED_IN_REFRESH, SIGNED_IN_ACCESS)
+      const rotated = staffStoredSession(ROTATED_REFRESH, NEW_STAFF_TOKEN)
+      installPreSnapshotOverwrite({
+        stored,
+        newer: signedIn,
+        rotated,
+        beforeSnapshot: () => establish(stored, signedIn),
+      })
+      const calls = installAdapter(api, [
+        { kind: "status", status: 401 },
+        { kind: "status", status: 200 },
+      ])
+
+      await expect(api.get("/api/users/me")).rejects.toMatchObject({
+        response: { status: 401 },
+      })
+
+      expect(stored.current?.refresh_token).toBe(SIGNED_IN_REFRESH)
+      expect(stored.current?.access_token).toBe(SIGNED_IN_ACCESS)
+      expect(stored.current?.user.id).toBe("user-1")
+      expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+        refresh_token: REFRESH_SECRET,
+      })
+      expect(supabase.auth.setSession).toHaveBeenCalledTimes(1)
+      expect(supabase.auth.setSession).toHaveBeenCalledWith({
+        access_token: SIGNED_IN_ACCESS,
+        refresh_token: SIGNED_IN_REFRESH,
+      })
+      expect(calls).toEqual([`Bearer ${OLD_STAFF_TOKEN}`])
+      expect(supabase.auth.signOut).not.toHaveBeenCalled()
+      const logged = loggedText(info)
+      expect(logged).not.toContain(secret)
+      expect(logged).not.toContain(REFRESH_SECRET)
+      expect(logged).not.toContain(ROTATED_REFRESH)
+      expect(logged).not.toContain(SIGNED_IN_REFRESH)
+      expect(logged).not.toContain(OLD_STAFF_TOKEN)
+      expect(logged).not.toContain(NEW_STAFF_TOKEN)
+      expect(logged).not.toContain(SIGNED_IN_ACCESS)
+      expect(logged).not.toContain(STAFF_EMAIL)
+    },
+  )
+
+  it("keeps the platform refresh session written before the auth-js refresh snapshot", async () => {
+    const stored = {
+      current: staffStoredSession(REFRESH_SECRET, OLD_STAFF_TOKEN),
+    }
+    const platform = staffStoredSession(PLATFORM_REFRESH, PLATFORM_ACCESS)
+    const rotated = staffStoredSession(ROTATED_REFRESH, NEW_STAFF_TOKEN)
+    installPreSnapshotOverwrite({
+      stored,
+      newer: platform,
+      rotated,
+      beforeSnapshot: () => refreshAuthSession(),
+    })
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+
+    await expect(api.get("/api/users/me")).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+
+    expect(stored.current?.refresh_token).toBe(PLATFORM_REFRESH)
+    expect(stored.current?.access_token).toBe(PLATFORM_ACCESS)
+    expect(stored.current?.user.id).toBe("user-1")
+    expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(2)
+    expect(supabase.auth.refreshSession).toHaveBeenNthCalledWith(1, {
+      refresh_token: REFRESH_SECRET,
+    })
+    expect(supabase.auth.setSession).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.setSession).toHaveBeenCalledWith({
+      access_token: PLATFORM_ACCESS,
+      refresh_token: PLATFORM_REFRESH,
+    })
+    expect(calls).toEqual([`Bearer ${OLD_STAFF_TOKEN}`])
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(ROTATED_REFRESH)
+    expect(logged).not.toContain(PLATFORM_REFRESH)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(NEW_STAFF_TOKEN)
+    expect(logged).not.toContain(PLATFORM_ACCESS)
+    expect(logged).not.toContain(STAFF_EMAIL)
+  })
+
+  it("retries both 401s from one refresh while storage still holds that refresh token", async () => {
+    const stored = {
+      current: staffStoredSession(REFRESH_SECRET, OLD_STAFF_TOKEN),
+    }
+    let reads = 0
+    vi.mocked(supabase.auth.getSession).mockImplementation(async () => {
+      reads += 1
+      return sessionPayload(stored.current)
+    })
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+      { kind: "status", status: 200 },
+    ])
+    const pendingRefresh = holdStaffRefresh()
+    const first = api.get("/api/users/me")
+    const second = api.get("/api/orders")
+
+    await vi.waitFor(() => {
+      expect(reads).toBeGreaterThanOrEqual(4)
+    })
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+      refresh_token: REFRESH_SECRET,
+    })
+    expect(stored.current?.refresh_token).toBe(REFRESH_SECRET)
+
+    pendingRefresh.release({
+      data: {
+        session: {
+          access_token: NEW_STAFF_TOKEN,
+          refresh_token: ROTATED_REFRESH,
+          user: { id: "user-1", email: STAFF_EMAIL },
+        },
+        user: { id: "user-1", email: STAFF_EMAIL },
+      },
+      error: null,
+    })
+
+    const [firstResponse, secondResponse] = await Promise.all([first, second])
+
+    expect(firstResponse.status).toBe(200)
+    expect(secondResponse.status).toBe(200)
+    expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
+    expect(stored.current?.refresh_token).toBe(REFRESH_SECRET)
+    expect(calls).toEqual([
+      `Bearer ${OLD_STAFF_TOKEN}`,
+      `Bearer ${OLD_STAFF_TOKEN}`,
+      `Bearer ${NEW_STAFF_TOKEN}`,
+      `Bearer ${NEW_STAFF_TOKEN}`,
+    ])
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(supabase.auth.setSession).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(ROTATED_REFRESH)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(NEW_STAFF_TOKEN)
     expect(logged).not.toContain(STAFF_EMAIL)
   })
 })

@@ -3,6 +3,7 @@ import { useCallback, useMemo, useSyncExternalStore } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
+import { noteEstablishedStaffSession } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 
 const TENANT_LABEL_KEY = "rolvix.activeTenantLabel"
@@ -91,10 +92,14 @@ function subscribePlatformTenantExit(onStoreChange: () => void) {
 
 export async function refreshAuthSession() {
   invalidateCurrentUserCache()
-  const { error } = await supabase.auth.refreshSession()
+  const { data, error } = await supabase.auth.refreshSession()
   if (error) {
     throw error
   }
+
+  // Enter/exit tenant saves new claims here. A staff 401 may already be inside
+  // refreshSession({ refresh_token }) and can write the previous JWT back.
+  noteEstablishedStaffSession(data.session)
 }
 
 /**

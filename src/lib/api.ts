@@ -48,16 +48,26 @@ type StaffSessionPrincipal = {
   refreshToken: string
 }
 
+type StaffEpochSession = {
+  accessToken: string
+  refreshToken: string
+}
+
 type StaffSignOut = typeof supabase.auth.signOut
 type StaffSignIn = typeof supabase.auth.signInWithPassword
 type StaffVerifyOtp = typeof supabase.auth.verifyOtp
 
 /**
- * Bumped at the start of every staff `signOut`, and after `signInWithPassword`
- * or `verifyOtp` returns a session. A 401 retry still awaiting refresh must
- * not run after this changes.
+ * Bumped at the start of every staff `signOut`, and after `signInWithPassword`,
+ * `verifyOtp`, or a platform `refreshSession()` returns a session.
+ * `staffEpochSession` is the last of those sessions. A 401 refresh that then
+ * saves a different refresh token is not retried; `setSession` puts this one
+ * back. auth-js only discards a refresh when storage changes after its own
+ * snapshot, so an explicit `refresh_token` can still overwrite a session that
+ * was saved before that snapshot.
  */
 let staffAuthEpoch = 0
+let staffEpochSession: StaffEpochSession | null = null
 let staffSignOutEpochInstalled = false
 let staffSignInEpochInstalled = false
 let staffVerifyOtpEpochInstalled = false
@@ -122,6 +132,7 @@ export function resetStaffSessionRefreshForTests(): void {
   staffRefreshInflight = null
   staffRefreshInflightToken = null
   staffAuthEpoch = 0
+  staffEpochSession = null
   staffSignInImplForTests = null
   staffVerifyOtpImplForTests = null
 }
@@ -253,7 +264,7 @@ function installStaffSignOutEpochBump(): void {
   if (isMockedSignOut(current)) {
     const initial = current.getMockImplementation()
     current.mockImplementation((options) => {
-      staffAuthEpoch += 1
+      forgetStaffEpochSession()
       if (initial) {
         return initial(options)
       }
@@ -265,12 +276,83 @@ function installStaffSignOutEpochBump(): void {
   const bound = current.bind(supabase.auth)
   const auth = supabase.auth as { signOut: StaffSignOut }
   auth.signOut = (options) => {
-    staffAuthEpoch += 1
+    forgetStaffEpochSession()
     return bound(options)
   }
 }
 
 installStaffSignOutEpochBump()
+
+function forgetStaffEpochSession(): void {
+  staffEpochSession = null
+  staffAuthEpoch += 1
+}
+
+/**
+ * Records a session that replaced the staff principal and bumps
+ * `staffAuthEpoch`. An in-flight 401 refresh puts this session back when
+ * auth-js saved a different refresh token.
+ */
+export function noteEstablishedStaffSession(
+  session:
+    | {
+        access_token?: unknown
+        refresh_token?: unknown
+      }
+    | null
+    | undefined,
+): void {
+  const accessToken = session?.access_token
+  const refreshToken = session?.refresh_token
+  if (typeof accessToken !== "string" || accessToken.length === 0) {
+    return
+  }
+  if (typeof refreshToken !== "string" || refreshToken.length === 0) {
+    return
+  }
+
+  staffEpochSession = { accessToken, refreshToken }
+  staffAuthEpoch += 1
+}
+
+function sessionFromAuthResult(result: unknown): {
+  access_token?: unknown
+  refresh_token?: unknown
+} | null {
+  if (typeof result !== "object" || result === null) {
+    return null
+  }
+
+  const session = (
+    result as { data?: { session?: unknown } | null }
+  ).data?.session
+  if (typeof session !== "object" || session === null) {
+    return null
+  }
+
+  return session as { access_token?: unknown; refresh_token?: unknown }
+}
+
+function adoptStaffAuthResult(result: unknown): void {
+  if (!staffAuthResultHasSession(result)) {
+    return
+  }
+
+  const session = sessionFromAuthResult(result)
+  const accessToken = session?.access_token
+  const refreshToken = session?.refresh_token
+  if (
+    typeof accessToken !== "string" ||
+    accessToken.length === 0 ||
+    typeof refreshToken !== "string" ||
+    refreshToken.length === 0
+  ) {
+    forgetStaffEpochSession()
+    return
+  }
+
+  noteEstablishedStaffSession(session)
+}
 
 function staffAuthResultHasSession(result: unknown): boolean {
   if (typeof result !== "object" || result === null) {
@@ -345,9 +427,7 @@ function installStaffSignInEpochBump(): void {
     current.mockImplementation(async (credentials) => {
       const run = staffSignInImplForTests ?? initial
       const result = run ? await run(credentials) : emptySignInResult()
-      if (staffAuthResultHasSession(result)) {
-        staffAuthEpoch += 1
-      }
+      adoptStaffAuthResult(result)
       return result
     })
     return
@@ -357,9 +437,7 @@ function installStaffSignInEpochBump(): void {
   const auth = supabase.auth as { signInWithPassword: StaffSignIn }
   auth.signInWithPassword = (credentials) => {
     return bound(credentials).then((result) => {
-      if (staffAuthResultHasSession(result)) {
-        staffAuthEpoch += 1
-      }
+      adoptStaffAuthResult(result)
       return result
     })
   }
@@ -378,9 +456,7 @@ function installStaffVerifyOtpEpochBump(): void {
     current.mockImplementation(async (credentials) => {
       const run = staffVerifyOtpImplForTests ?? initial
       const result = run ? await run(credentials) : emptyVerifyOtpResult()
-      if (staffAuthResultHasSession(result)) {
-        staffAuthEpoch += 1
-      }
+      adoptStaffAuthResult(result)
       return result
     })
     return
@@ -390,9 +466,7 @@ function installStaffVerifyOtpEpochBump(): void {
   const auth = supabase.auth as { verifyOtp: StaffVerifyOtp }
   auth.verifyOtp = (credentials) => {
     return bound(credentials).then((result) => {
-      if (staffAuthResultHasSession(result)) {
-        staffAuthEpoch += 1
-      }
+      adoptStaffAuthResult(result)
       return result
     })
   }
@@ -456,13 +530,88 @@ async function readStaffSessionPrincipal(): Promise<StaffSessionPrincipal | null
   }
 }
 
+function refreshTokenSavedByRefresh(result: {
+  error: unknown
+  data: { session: { refresh_token?: unknown } | null } | null
+}): string | null {
+  if (result.error != null) {
+    return null
+  }
+
+  const refreshToken = result.data?.session?.refresh_token
+  return typeof refreshToken === "string" && refreshToken.length > 0
+    ? refreshToken
+    : null
+}
+
+function supersededStaffSession(
+  epochAtStart: number,
+  savedRefreshToken: string | null,
+): StaffEpochSession | null {
+  if (staffAuthEpoch === epochAtStart) {
+    return null
+  }
+
+  const captured = staffEpochSession
+  if (captured === null || captured.refreshToken === savedRefreshToken) {
+    return null
+  }
+
+  return captured
+}
+
+async function writeSupersededStaffSession(
+  session: StaffEpochSession,
+): Promise<void> {
+  try {
+    await supabase.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+    })
+  } catch {
+    // The explicit refresh already replaced storage. Still do not retry it.
+  }
+}
+
+async function restoreSupersededStaffSession(
+  epochAtStart: number,
+  savedRefreshToken: string | null,
+): Promise<boolean> {
+  const captured = supersededStaffSession(epochAtStart, savedRefreshToken)
+  if (captured === null) {
+    return false
+  }
+
+  await writeSupersededStaffSession(captured)
+
+  // A newer sign-in can land while setSession is awaiting the user endpoint.
+  const latest = supersededStaffSession(epochAtStart, savedRefreshToken)
+  if (latest !== null && latest.refreshToken !== captured.refreshToken) {
+    await writeSupersededStaffSession(latest)
+  }
+
+  return true
+}
+
 async function performStaffRefresh(
   refreshToken: string,
 ): Promise<StaffRefreshResult> {
+  // auth-js awaits initializePromise and __loadSession before _callRefreshToken
+  // snapshots storage. A sign-in, verifyOtp, or platform refresh that finishes
+  // in that gap is not discarded: the explicit refresh token is still saved.
+  const epochAtStart = staffAuthEpoch
   try {
     const result = await supabase.auth.refreshSession({
       refresh_token: refreshToken,
     })
+    if (
+      await restoreSupersededStaffSession(
+        epochAtStart,
+        refreshTokenSavedByRefresh(result),
+      )
+    ) {
+      return { ok: false, error: result.error ?? null }
+    }
     if (result.error) {
       return { ok: false, error: result.error }
     }
@@ -482,6 +631,7 @@ async function performStaffRefresh(
           : null,
     }
   } catch (error: unknown) {
+    await restoreSupersededStaffSession(epochAtStart, null)
     return { ok: false, error }
   }
 }
@@ -640,9 +790,10 @@ api.interceptors.response.use(
 
     // Refresh the principal that sent this request. After every wait, call
     // refreshSession only when the epoch, user id, and stored refresh token
-    // still belong to that sender. A terminal GoTrue failure signs out
-    // locally only if the stored refresh token is still the one that failed.
-    // Network and 5xx keep the session.
+    // still belong to that sender. If a newer session was saved before the
+    // auth-js snapshot, put that session back and do not retry. A terminal
+    // GoTrue failure signs out locally only if the stored refresh token is
+    // still the one that failed. Network and 5xx keep the session.
     const epoch = staffAuthEpoch
     const before = await readStaffSessionPrincipal()
     const sender: StaffRefreshSender = {
