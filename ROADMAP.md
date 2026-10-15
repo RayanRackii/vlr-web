@@ -22,6 +22,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 
 - [x] `AppShell` compartilhado com B2B `MainLayout`.
 - [x] Pós-login: `CustomerAppLayout` com sidebar dos itens de `GET .../menu`.
+- [x] Menu do cliente logado (#142): Reservar horário (item de rentals), Minhas reservas (`agenda/:id#minhas-reservas`) e Perfil (`app/perfil`). Header do portal com alvo de toque 44px e código PT/EN/ES. Telefone do perfil só na tela, máscara BR. “Enviar código” habilita com cola e autofill.
 - [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
 - [x] Cadastro B2C verifica **e-mail** (código); `/verify-email` + redirect de `/verify-phone`. Celular coletado, não bloqueia. **Não PROD.**
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
@@ -321,6 +322,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-15 | **Fix (WEB, #137):** no portal B2C deslogado (login, cadastro, esqueci a senha) o seletor de idioma troca o texto na hora e grava a escolha, como no app logado. O rótulo padrão "Reservar horário" segue o idioma no menu, no cabeçalho e no h2; nome de recurso digitado pelo tenant permanece como foi salvo. Datas e valores do portal passam por helpers de locale (`Intl`) com a moeda informada. O seletor mostra Português, English e Español. |
 | 2026-10-15 | **Fix (WEB, #146 #132):** conflito de reserva solta o botão quando o POST responde, explica que o horário acabou de ser reservado e refaz o dia sem esperar o refetch. Espaço cinza mostra “Horário indisponível.” ou “Horário já reservado.” no próprio card. Disponível usa o mesmo verde no mapa, na seleção e fora do mapa. Legenda “Indisponível” em `text-foreground`. `/t/{tenant}` com sessão desse tenant vai ao portal; outro tenant não. Sem mudança no `vlr-api`. O ~8s até o 409 é o tempo do POST no servidor (o perdedor espera o `FOR UPDATE` do recurso até o commit do vencedor, que ainda publica a notificação; `EnsureReadyAsync` serializa antes, com advisory lock). Não há retry de 409 no cliente. Não medido nesta máquina. |
 | 2026-10-15 | **Fix (WEB, #146 #132):** “Horário já reservado.” fica só para o 409 de intervalo já reservado, para a reserva deste navegador, ou para um `reservationId` que está em Minhas reservas. `booked` ou id de outra reserva mostra “Horário indisponível.”. 409 “Slot is not available for booking.” e “Insufficient quantity” continuam no toast e não marcam o card como reservado. Cancelar remove a marca local. `tenantPortalPath` / `tenantPortalHref` só interpolam slug `[a-z0-9-]+`. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #142):** menu mobile do cliente logado lista Reservar horário, Minhas reservas e Perfil nas rotas que já existiam. Ícones do header do portal têm alvo de 44px; o seletor mostra PT/EN/ES. O celular no perfil aparece com máscara brasileira e o valor enviado à API não muda. “Enviar código” habilita quando o e-mail é colado ou preenchido pelo navegador. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

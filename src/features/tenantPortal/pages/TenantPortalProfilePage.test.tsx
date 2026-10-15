@@ -104,6 +104,8 @@ describe("TenantPortalProfilePage validity gate", () => {
       name: i18n.t("tenantPortal.profile.photoChange"),
     })
     expect(name).toHaveValue("Ana Silva")
+    expect(await screen.findByText("(11) 98888-0001")).toBeInTheDocument()
+    expect(screen.queryByText("11988880001")).not.toBeInTheDocument()
     expect(save).toBeEnabled()
     expect(changePhoto).toBeEnabled()
 

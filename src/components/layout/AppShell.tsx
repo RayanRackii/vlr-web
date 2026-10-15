@@ -3,6 +3,7 @@ import { CircleUser, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -22,6 +23,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
 export type AppShellProps = {
   sidebar: (opts: { onNavigate?: () => void }) => ReactNode
@@ -31,6 +33,10 @@ export type AppShellProps = {
   onSignOut: () => void | Promise<void>
   /** When set, account menu shows Meu Perfil above Sign out. Omit for B2B. */
   profileTo?: string
+  /** At least 44×44px hit area on header icon buttons. Icon glyph size stays put. */
+  enlargeHeaderTargets?: boolean
+  /** Show PT/EN/ES beside the language icon on every viewport. */
+  showLanguageCode?: boolean
   banner?: ReactNode
   children: ReactNode
 }
@@ -42,6 +48,8 @@ export function AppShell({
   initials,
   onSignOut,
   profileTo,
+  enlargeHeaderTargets = false,
+  showLanguageCode = false,
   banner = null,
   children,
 }: AppShellProps) {
@@ -61,6 +69,10 @@ export function AppShell({
       setIsSigningOut(false)
     }
   }
+
+  const headerIconClassName = enlargeHeaderTargets
+    ? headerTouchTargetClassName
+    : undefined
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -88,7 +100,7 @@ export function AppShell({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="lg:hidden"
+              className={cn("lg:hidden", headerIconClassName)}
               onClick={() => {
                 setIsMobileMenuOpen(true)
               }}
@@ -106,8 +118,11 @@ export function AppShell({
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            <LanguageSwitcher />
-            <ThemeToggle />
+            <LanguageSwitcher
+              className={headerIconClassName}
+              showShortLabel={showLanguageCode}
+            />
+            <ThemeToggle className={headerIconClassName} />
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -116,7 +131,7 @@ export function AppShell({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="rounded-full"
+                    className={cn("rounded-full", headerIconClassName)}
                     aria-label={t("account.openMenu")}
                   />
                 }

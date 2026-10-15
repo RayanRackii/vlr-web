@@ -3,8 +3,12 @@ import { afterEach, describe, expect, it } from "vitest"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import i18n from "@/lib/i18n"
 
+import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
+
 import {
   buildCustomerNavItems,
+  buildCustomerShellNavItems,
+  CUSTOMER_MY_RESERVATIONS_HASH,
   getDiscoverablePortalModules,
   getEligiblePortalMenuModules,
   getVisiblePortalMenuItems,
@@ -152,6 +156,64 @@ describe("buildCustomerNavItems", () => {
     expect(nav).toHaveLength(1)
     expect(nav[0]?.id).toBe(RENTALS_A.id)
     expect(nav[0]?.label).toBe(RENTALS_A.label)
+  })
+})
+
+describe("buildCustomerShellNavItems", () => {
+  it("lists book, my reservations, and profile for a signed-in rentals menu", () => {
+    const stock = { ...RENTALS_B, label: "Reservar horário" }
+    const nav = buildCustomerShellNavItems("clube", [stock], i18n.t)
+
+    expect(nav.map((item) => item.label)).toEqual([
+      i18n.t("admin.moduleMenu.suggestedLabelRentals"),
+      i18n.t("tenantPortal.agenda.myReservations"),
+      i18n.t("account.profile"),
+    ])
+    expect(nav[0]?.to).toBe(`/t/clube/agenda/${stock.id}`)
+    expect(nav[1]?.to).toBe(
+      `/t/clube/agenda/${stock.id}${CUSTOMER_MY_RESERVATIONS_HASH}`,
+    )
+    expect(nav[2]?.to).toBe("/t/clube/app/perfil")
+  })
+
+  it("keeps catalog links and skips my reservations when rentals is absent", () => {
+    const nav = buildCustomerShellNavItems("clube", [CATALOG], i18n.t)
+
+    expect(nav.map((item) => item.label)).toEqual([
+      i18n.t("tenantPortal.catalog.navCatalog"),
+      i18n.t("tenantPortal.catalog.navOrders"),
+      i18n.t("account.profile"),
+    ])
+    expect(nav.some((item) => item.to.includes("agenda"))).toBe(false)
+  })
+
+  it("highlights my reservations only when the agenda hash is present", () => {
+    const stock = { ...RENTALS_B, label: "Reservar horário" }
+    const nav = buildCustomerShellNavItems("clube", [stock], i18n.t)
+    const agendaPath = `/t/clube/agenda/${stock.id}`
+
+    expect(
+      isCustomerNavItemActive(nav[0]!, nav, agendaPath, ""),
+    ).toBe(true)
+    expect(
+      isCustomerNavItemActive(nav[1]!, nav, agendaPath, ""),
+    ).toBe(false)
+    expect(
+      isCustomerNavItemActive(
+        nav[1]!,
+        nav,
+        agendaPath,
+        CUSTOMER_MY_RESERVATIONS_HASH,
+      ),
+    ).toBe(true)
+    expect(
+      isCustomerNavItemActive(
+        nav[0]!,
+        nav,
+        agendaPath,
+        CUSTOMER_MY_RESERVATIONS_HASH,
+      ),
+    ).toBe(false)
   })
 })
 

@@ -1,4 +1,4 @@
-import { ClipboardList, ShoppingBag } from "lucide-react"
+import { CircleUser, ClipboardList, ListChecks, ShoppingBag } from "lucide-react"
 import type { TFunction } from "i18next"
 
 import {
@@ -37,6 +37,9 @@ export function toCanonicalModuleName(moduleName: string): string {
 export const PORTAL_CUSTOMER_MODULES = ["rentals", "catalog"] as const
 
 export type PortalCustomerModule = (typeof PORTAL_CUSTOMER_MODULES)[number]
+
+/** Fragment on the rentals agenda that scrolls to the customer's reservations. */
+export const CUSTOMER_MY_RESERVATIONS_HASH = "#minhas-reservas"
 
 export function isCustomerNavModule(moduleName: string): boolean {
   const canonical = toCanonicalModuleName(moduleName)
@@ -185,6 +188,43 @@ export function buildCustomerNavItems(
       })
     }
   }
+
+  return items
+}
+
+/**
+ * Module links plus the signed-in account links.
+ * Minhas reservas is present when the menu includes rentals and points at that
+ * agenda with {@link CUSTOMER_MY_RESERVATIONS_HASH}. Perfil always points at
+ * `app/perfil`.
+ */
+export function buildCustomerShellNavItems(
+  subdomain: string,
+  menu: readonly ModuleMenuItem[],
+  t: TFunction,
+): CustomerNavItem[] {
+  const items = buildCustomerNavItems(subdomain, menu, t)
+  const firstRentals = menu.find(
+    (item) => item.moduleName.toLowerCase() === "rentals",
+  )
+
+  if (firstRentals) {
+    items.push({
+      id: "customer-my-reservations",
+      label: t("tenantPortal.agenda.myReservations"),
+      to: `${menuItemAgendaPath(subdomain, firstRentals.id)}${CUSTOMER_MY_RESERVATIONS_HASH}`,
+      icon: ListChecks,
+      end: true,
+    })
+  }
+
+  items.push({
+    id: "customer-profile",
+    label: t("account.profile"),
+    to: tenantPortalPath(subdomain, "app/perfil"),
+    icon: CircleUser,
+    end: true,
+  })
 
   return items
 }
