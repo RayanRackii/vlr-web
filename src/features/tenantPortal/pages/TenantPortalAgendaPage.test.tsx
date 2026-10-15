@@ -57,6 +57,7 @@ import { toast } from "sonner"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
+import { resetAgendaQueryClientForTests } from "@/features/tenantPortal/lib/agendaQueryClient"
 import { PortalBookingError } from "@/features/tenantPortal/lib/portalBookingError"
 import {
   bookPortalSlot,
@@ -91,6 +92,10 @@ const joinQueue = vi.mocked(joinReservationQueue)
 const fetchPolicy = vi.mocked(fetchPublicBookingPolicy)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
+
+beforeEach(() => {
+  resetAgendaQueryClientForTests()
+})
 
 const outletContext: CustomerAppOutletContext = {
   subdomain: "ficc",
@@ -976,6 +981,143 @@ describe("TenantPortalAgendaPage time selector", () => {
       }),
     ).not.toBeInTheDocument()
     expect(screen.getAllByText("Quadra 1").length).toBeGreaterThan(0)
+  })
+
+  it("refetches the list and the slot after Back during Reservando", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", SLOT_08_ISO, {
+      items: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          assetId: ASSET_A_ASSET_ID,
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          quantity: 1,
+          unitPrice: 80,
+          subTotal: 80,
+        },
+      ],
+    })
+    let phase: "stale" | "fresh" = "stale"
+    let resolveBook: (value: PortalReservation) => void = () => {}
+    bookSlot.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveBook = resolve
+        }),
+    )
+    listMine.mockImplementation(async () => (phase === "fresh" ? [created] : []))
+    fetchDay.mockImplementation(async () => ({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          ...(phase === "fresh"
+            ? {
+                status: "booked",
+                isBookableByCustomer: false,
+                reservationId: created.id,
+              }
+            : {}),
+        }),
+      ],
+    }))
+
+    const first = renderAgenda()
+    await bookQuadra1(user)
+    expect(
+      await screen.findByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserving"),
+      }),
+    ).toBeInTheDocument()
+    first.unmount()
+
+    renderAgenda()
+    await waitFor(() => {
+      expect(
+        screen.getByRole("combobox", {
+          name: i18n.t("tenantPortal.agenda.time"),
+        }),
+      ).toHaveTextContent("08:00")
+    })
+    expect(screen.getByText(i18n.t("tenantPortal.agenda.empty"))).toBeInTheDocument()
+    const callsBeforeSettle = fetchDay.mock.calls.length
+    phase = "fresh"
+    await act(async () => {
+      resolveBook(created)
+    })
+
+    await waitFor(() => {
+      expect(fetchDay.mock.calls.length).toBeGreaterThan(callsBeforeSettle)
+    })
+    expect(await screen.findByRole("listitem")).toHaveTextContent(
+      i18n.t("rentals.reservations.statuses.Confirmed"),
+    )
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("does not say someone else took a slot this customer just booked", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", SLOT_08_ISO, {
+      items: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          assetId: ASSET_A_ASSET_ID,
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          quantity: 1,
+          unitPrice: 80,
+          subTotal: 80,
+        },
+      ],
+    })
+    let resolveBook: (value: PortalReservation) => void = () => {}
+    bookSlot.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveBook = resolve
+        }),
+    )
+    bookSlot.mockRejectedValueOnce(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+
+    const first = renderAgenda()
+    await bookQuadra1(user)
+    first.unmount()
+    renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    await act(async () => {
+      resolveBook(created)
+    })
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalled()
+    })
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.slotHeldByYou", {
+          reservations: i18n.t("tenantPortal.agenda.myReservations"),
+        }),
+      )
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotJustTaken"),
+    )
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {

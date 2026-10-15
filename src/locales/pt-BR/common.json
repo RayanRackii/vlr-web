@@ -402,6 +402,7 @@
       "dailyLimitReached": "Você atingiu o limite de {{count}} reservas ativas neste dia.",
       "dailyLimitReachedUnknown": "Você atingiu o limite de reservas ativas neste dia.",
       "slotJustTaken": "Este horário acabou de ser reservado. A agenda foi atualizada — escolha outro.",
+      "slotHeldByYou": "Você já reservou este horário. Veja em {{reservations}}.",
       "noAssets": "Nenhum espaço cadastrado",
       "backHome": "Voltar",
       "queue": {
@@ -2669,7 +2670,8 @@
       "createSuccess": "Aula criada nesta data.",
       "removeSuccess": "Aula removida nesta data.",
       "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
-      "pastDateAdjusted": "A data do link já passou. Os horários abaixo são de hoje."
+      "pastDateAdjusted": "A data do link já passou. Os horários abaixo são de hoje.",
+      "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos."
     },
     "schedule": {
       "title": "Escala / agenda",

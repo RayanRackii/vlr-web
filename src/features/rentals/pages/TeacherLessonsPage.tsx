@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select"
 import { compareSlotsByStartTime, isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
+import { isPastTenantSlotStart, withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -67,7 +68,7 @@ export function TeacherLessonsPage() {
   const { assets, day, dayStatus, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
   const removalInFlight = useRef(false)
-  const available = useMemo(
+  const openSlots = useMemo(
     () => (day?.slots.filter((slot) => slot.occupancyKindKey === "open" && isUnreservedAvailable(slot)) ?? [])
       .slice()
       .sort(compareSlotsByStartTime),
@@ -84,12 +85,12 @@ export function TeacherLessonsPage() {
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       slotKey: z.string({ error: slotRequired })
         .min(1, { error: slotRequired })
-        .refine((value) => !value || available.some((slot) => slotKeyFor(slot) === value), {
+        .refine((value) => !value || openSlots.some((slot) => slotKeyFor(slot) === value), {
           message: t("rentals.teacherLessons.slotUnavailable"),
         }),
       label: z.string().max(120),
     })
-  }, [available, t])
+  }, [openSlots, t])
   type FormValues = z.infer<typeof schema>
   const [dateRequest] = useState(() => readLessonDateFromLocation(todayIsoDate()))
   const form = useForm<FormValues>({
@@ -102,8 +103,16 @@ export function TeacherLessonsPage() {
   const date = useWatch({ control: form.control, name: "date" })
   const slotKey = useWatch({ control: form.control, name: "slotKey" })
   const label = useWatch({ control: form.control, name: "label" })
+  const available = useMemo(() => {
+    if (!date || !ISO_DATE.test(date)) {
+      return openSlots
+    }
+    return withoutPastTenantSlots(date, openSlots)
+  }, [date, openSlots])
+  const pastSlotsHidden = available.length < openSlots.length
   const values = { assetId, date, slotKey, label }
   const isValid = schema.safeParse(values).success
+    && (!slotKey || available.some((slot) => slotKeyFor(slot) === slotKey))
 
   useEffect(() => {
     if (!assets.length || assetId) return
@@ -126,7 +135,11 @@ export function TeacherLessonsPage() {
     void loadDay(assetId, date).then((result) => {
       if (!result) return
       const selected = getValues("slotKey") || selectedBeforeRefresh
-      if (!selected || result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))) return
+      const selectedStart = selected?.split("|")[0] ?? ""
+      const stillOffered = Boolean(selected)
+        && !isPastTenantSlotStart(date, selectedStart)
+        && result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))
+      if (!selected || stillOffered) return
       const message = t("rentals.teacherLessons.slotUnavailable")
       setValue("slotKey", "", { shouldValidate: false })
       setError("slotKey", { type: "validate", message })
@@ -217,6 +230,11 @@ export function TeacherLessonsPage() {
                 <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</SelectItem>)}</SelectContent>
               </Select>
               <FormMessage />
+              {pastSlotsHidden ? (
+                <p role="status" className="text-sm text-muted-foreground">
+                  {t("rentals.teacherLessons.pastSlotsHidden")}
+                </p>
+              ) : null}
             </FormItem>
           )} />
           <FormField control={form.control} name="label" render={({ field }) => (

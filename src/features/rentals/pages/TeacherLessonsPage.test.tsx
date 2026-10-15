@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
@@ -104,6 +104,10 @@ async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
 
 describe("TeacherLessonsPage", () => {
   beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ["Date"],
+      now: new Date("2026-10-08T12:00:00.000Z"),
+    })
     window.history.replaceState(null, "", "/")
     vi.mocked(listAdminRentalAssets).mockResolvedValue([court])
     vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
@@ -112,6 +116,10 @@ describe("TeacherLessonsPage", () => {
     })
     vi.mocked(createTeacherLesson).mockResolvedValue(lessonSlot)
     vi.mocked(removeTeacherLesson).mockResolvedValue(openSlot)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("offers date-only lesson actions and no generic schedule administration", async () => {
@@ -434,6 +442,55 @@ describe("TeacherLessonsPage", () => {
     await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
     expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
     expect(screen.queryByRole("option", { name: "11:00–12:00" })).not.toBeInTheDocument()
+  })
+
+  it("hides times that already started today on the tenant clock", async () => {
+    vi.setSystemTime(new Date("2026-10-15T15:00:00.000Z"))
+    const today = "2026-10-15"
+    vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
+      date: today,
+      slots: [
+        { ...openSlot, date: today, startTime: "08:00:00", endTime: "09:00:00" },
+        { ...openSlot, date: today, startTime: "13:00:00", endTime: "14:00:00" },
+        {
+          ...lessonSlot,
+          date: today,
+          startTime: "09:00:00",
+          endTime: "10:00:00",
+        },
+      ],
+    })
+    const user = userEvent.setup()
+    render(<TeacherLessonsPage />)
+
+    expect(
+      await screen.findByText("Horários que já começaram hoje ficam ocultos."),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole("button", { name: "Remover aula 09:00" }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(
+      await screen.findByRole("option", { name: "13:00–14:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: "08:00–09:00" }),
+    ).not.toBeInTheDocument()
+
+    await user.keyboard("{Escape}")
+    fireEvent.change(screen.getByLabelText("Data"), {
+      target: { value: "2026-10-16" },
+    })
+    await waitFor(() => {
+      expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-16", [court.id])
+    })
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(
+      await screen.findByRole("option", { name: "08:00–09:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText("Horários que já começaram hoje ficam ocultos."),
+    ).not.toBeInTheDocument()
   })
 
   it("explains when a past date query is shown as today", async () => {

@@ -57,9 +57,16 @@ import {
   findVisibleAgendaReservation,
   parseAgendaReservationQuery,
   reservedSlotKeysForDate,
-  retryOnce,
   withoutBookableReservedKeys,
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
+import {
+  commitPortalBooking,
+  customerAlreadyHoldsSlot,
+  forgetOwnBooking,
+  getAgendaQueryRevision,
+  invalidateAgendaQueries,
+  subscribeAgendaQueries,
+} from "@/features/tenantPortal/lib/agendaQueryClient"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
 import {
   isDailyBookingLimitError,
@@ -85,10 +92,10 @@ import {
   type PortalReservation,
   type PortalScheduleSlot,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
 import {
   brazilTodayIsoDate,
   clampBrazilDateToToday,
-  isBrazilSlotStartInPast,
 } from "@/lib/brazilTimeZone"
 import appI18n from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -111,11 +118,9 @@ function partitionAgendaSlots(
   daySlots: readonly PortalScheduleSlot[],
   dayDate: string,
 ) {
-  const observed = daySlots.filter(
-    (slot) => !isBrazilSlotStartInPast(dayDate, slot.startTime),
-  )
-  const bookable = observed.filter(isCustomerBookableSlot)
+  const observed = withoutPastTenantSlots(dayDate, daySlots)
   const bookableIncludingPast = daySlots.filter(isCustomerBookableSlot)
+  const bookable = withoutPastTenantSlots(dayDate, bookableIncludingPast)
   return {
     observed,
     bookable,
@@ -167,7 +172,6 @@ export function TenantPortalAgendaPage() {
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
-  const refreshGeneration = useRef(0)
   const scheduleRequest = useRef(0)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
@@ -211,6 +215,7 @@ export function TenantPortalAgendaPage() {
     }
 
     let cancelled = false
+    const seenRevision = getAgendaQueryRevision()
     setLoading(true)
     void Promise.all([
       fetchPortalRentalAssets(subdomain),
@@ -222,7 +227,9 @@ export function TenantPortalAgendaPage() {
           return
         }
         setAssets(assetList)
-        setMine(reservations)
+        if (getAgendaQueryRevision() === seenRevision) {
+          setMine(reservations)
+        }
 
         const visibleIds = new Set(
           assetList
@@ -311,6 +318,7 @@ export function TenantPortalAgendaPage() {
       return
     }
 
+    const seenRevision = getAgendaQueryRevision()
     const requestId = scheduleRequest.current + 1
     scheduleRequest.current = requestId
     let cancelled = false
@@ -323,7 +331,11 @@ export function TenantPortalAgendaPage() {
     setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
       .then((day) => {
-        if (cancelled || scheduleRequest.current !== requestId) {
+        if (
+          cancelled ||
+          scheduleRequest.current !== requestId ||
+          getAgendaQueryRevision() !== seenRevision
+        ) {
           return
         }
         const selected = partitionAgendaSlots(day.slots, date)
@@ -337,7 +349,11 @@ export function TenantPortalAgendaPage() {
         setStartTime(times[0]?.startTime ?? "")
       })
       .catch((error) => {
-        if (!cancelled && scheduleRequest.current === requestId) {
+        if (
+          !cancelled &&
+          scheduleRequest.current === requestId &&
+          getAgendaQueryRevision() === seenRevision
+        ) {
           setSlots([])
           setObservedSlots([])
           setStartTime("")
@@ -359,6 +375,43 @@ export function TenantPortalAgendaPage() {
       cancelled = true
     }
   }, [signedIn, subdomain, date])
+
+  useEffect(() => {
+    return subscribeAgendaQueries((snapshot) => {
+      if (
+        snapshot.subdomain.trim().toLowerCase() !==
+        subdomain.trim().toLowerCase()
+      ) {
+        return
+      }
+
+      setMine((current) => {
+        const serverIds = new Set(snapshot.reservations.map((row) => row.id))
+        const onlyLocal = current.filter((row) => !serverIds.has(row.id))
+        return [...onlyLocal, ...snapshot.reservations]
+      })
+      if (!snapshot.applySlots) {
+        return
+      }
+
+      const viewed = viewedDateRef.current
+      const match = snapshot.days.find((entry) => entry.dayDate === viewed)
+      if (!match) {
+        return
+      }
+
+      scheduleRequest.current += 1
+      const selected = partitionAgendaSlots(match.day.slots, viewed)
+      setSlotsLoading(false)
+      setSlots(selected.bookable)
+      setObservedSlots(selected.observed)
+      setPastSlotsHidden(selected.pastHidden)
+      setSlotsError(false)
+      setOptimisticReservedKeys((current) =>
+        withoutBookableReservedKeys(current, viewed, selected.bookable),
+      )
+    })
+  }, [subdomain])
 
   const derivedReservedKeys = useMemo(
     () => reservedSlotKeysForDate(date, mine, observedSlots),
@@ -485,68 +538,9 @@ export function TenantPortalAgendaPage() {
   )
 
   function refreshAgenda(dayDates: readonly string[]) {
-    const requestedDates = [
-      ...new Set(dayDates.filter((value) => value.length > 0)),
-    ]
-    if (requestedDates.length === 0) {
-      return
-    }
-
-    const refreshId = refreshGeneration.current + 1
-    refreshGeneration.current = refreshId
-    const requestId = scheduleRequest.current + 1
-    scheduleRequest.current = requestId
-
-    void (async () => {
-      try {
-        const snapshot = await retryOnce(() => loadAgendaDays(requestedDates))
-        if (refreshGeneration.current !== refreshId) {
-          return
-        }
-        setMine((current) => {
-          const serverIds = new Set(snapshot.reservations.map((row) => row.id))
-          const onlyLocal = current.filter((row) => !serverIds.has(row.id))
-          return [...onlyLocal, ...snapshot.reservations]
-        })
-        if (scheduleRequest.current !== requestId) {
-          return
-        }
-        const viewed = viewedDateRef.current
-        const match = snapshot.days.find((entry) => entry.dayDate === viewed)
-        if (!match) {
-          return
-        }
-        const selected = partitionAgendaSlots(match.day.slots, viewed)
-        setSlots(selected.bookable)
-        setObservedSlots(selected.observed)
-        setPastSlotsHidden(selected.pastHidden)
-        setSlotsError(false)
-        setOptimisticReservedKeys((current) =>
-          withoutBookableReservedKeys(current, viewed, selected.bookable),
-        )
-      } catch (error) {
-        if (refreshGeneration.current !== refreshId) {
-          return
-        }
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : appI18n.t("tenantPortal.agenda.slotsError"),
-        )
-      }
-    })()
-  }
-
-  function loadAgendaDays(dayDates: readonly string[]) {
-    const reservationsPromise = listMyPortalReservations()
-    const daysPromise = Promise.all(
-      dayDates.map(async (dayDate) => {
-        const day = await fetchPublicScheduleDay(subdomain, dayDate)
-        return { dayDate, day }
-      }),
-    )
-    return Promise.all([reservationsPromise, daysPromise]).then(
-      ([reservations, days]) => ({ reservations, days }),
+    void invalidateAgendaQueries(
+      { subdomain, dates: dayDates },
+      { applySlots: true },
     )
   }
 
@@ -560,19 +554,23 @@ export function TenantPortalAgendaPage() {
     submittingRef.current = true
     setSubmitting(true)
     try {
-      const created = canBookViaSlotId(slot)
-        ? await bookPortalSlot({
-            slotId: slot.id,
-            unitId: asset.unitId,
-            quantity: 1,
-          })
-        : await createPortalReservation({
-            unitId: asset.unitId,
-            date: dayDate,
-            startTime: slot.startTime.slice(0, 5),
-            endTime: slot.endTime.slice(0, 5),
-            items: [{ assetId: asset.assetId, quantity: 1 }],
-          })
+      const created = await commitPortalBooking(
+        () =>
+          canBookViaSlotId(slot)
+            ? bookPortalSlot({
+                slotId: slot.id,
+                unitId: asset.unitId,
+                quantity: 1,
+              })
+            : createPortalReservation({
+                unitId: asset.unitId,
+                date: dayDate,
+                startTime: slot.startTime.slice(0, 5),
+                endTime: slot.endTime.slice(0, 5),
+                items: [{ assetId: asset.assetId, quantity: 1 }],
+              }),
+        { subdomain, dates: [dayDate] },
+      )
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
           amount: formatMoney(created.totalAmount),
@@ -589,7 +587,6 @@ export function TenantPortalAgendaPage() {
         setSlots((current) => dropScheduleSlot(current, slot))
         setSelectedRentalAssetId(null)
       }
-      refreshAgenda([dayDate])
     } catch (error) {
       if (queue.applyBookingError(error)) {
         const code = getReservationQueueErrorCode(error)
@@ -610,7 +607,19 @@ export function TenantPortalAgendaPage() {
         return
       }
       if (isSlotTakenConflict(error)) {
-        toast.error(t("tenantPortal.agenda.slotJustTaken"))
+        const heldByCustomer = customerAlreadyHoldsSlot(
+          dayDate,
+          slot.rentalAssetId,
+          slot.startTime,
+          mine,
+        )
+        toast.error(
+          heldByCustomer
+            ? t("tenantPortal.agenda.slotHeldByYou", {
+                reservations: t("tenantPortal.agenda.myReservations"),
+              })
+            : t("tenantPortal.agenda.slotJustTaken"),
+        )
         if (viewedDateRef.current === dayDate) {
           const reservedKey = agendaReservedSlotKey(
             dayDate,
@@ -627,7 +636,6 @@ export function TenantPortalAgendaPage() {
           })
           setSelectedRentalAssetId(null)
         }
-        refreshAgenda([dayDate])
         return
       }
       if (isSlotUnavailableConflict(error)) {
@@ -699,6 +707,7 @@ export function TenantPortalAgendaPage() {
         )
       })
       setPendingCancelId(null)
+      forgetOwnBooking(existing ?? canceled)
       refreshAgenda(
         agendaRefreshDates(
           viewedDate,
