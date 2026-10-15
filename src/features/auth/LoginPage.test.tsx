@@ -4,6 +4,10 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
+import {
+  resetStaffSessionRefreshForTests,
+  staffAuthEpochForTests,
+} from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
@@ -36,9 +40,11 @@ describe("LoginPage next redirect", () => {
   }
 
   it("returns to a safe staff next path after login", async () => {
+    resetStaffSessionRefreshForTests()
     renderLogin("/login?next=/os")
     await submitValidCredentials()
     expect(await screen.findByText("orders")).toBeInTheDocument()
+    expect(staffAuthEpochForTests()).toBe(1)
   })
 
   it("ignores an open-redirect next URL", async () => {
@@ -84,6 +90,7 @@ describe("LoginPage validity gate", () => {
   })
 
   it("stays on the form after a server error and re-enables Entrar", async () => {
+    resetStaffSessionRefreshForTests()
     const user = userEvent.setup()
     vi.mocked(supabase.auth.signInWithPassword)
       .mockResolvedValueOnce({
@@ -103,6 +110,7 @@ describe("LoginPage validity gate", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       i18n.t("auth.login.invalidCredentials"),
     )
+    expect(staffAuthEpochForTests()).toBe(1)
     expect(screen.getByLabelText("E-mail")).toHaveValue("admin@clube.com")
     expect(screen.getByLabelText("Senha")).toHaveValue("password1")
     expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled()

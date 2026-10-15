@@ -27,6 +27,7 @@ import {
 } from "@/features/auth/passwordResetCompanySchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
 import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
+import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
 
@@ -121,6 +122,7 @@ export function LoginPage() {
 
   async function onSubmit(values: LoginFormValues) {
     setResetInfo(null)
+    noteStaffSignIn()
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
