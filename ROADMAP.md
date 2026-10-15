@@ -91,6 +91,15 @@ Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch 
 - [x] Playwright `e2e/tests/10-b2c-self-cancel.spec.ts` (DEV; Confirmed path passed against Railway + develop Preview)
 - [x] **CLOSED_DEV** — not PROD. API `89b3e6d` / PR #64; WEB `3478355` / PR #59. Wave 1 remains **PROD_COMPLETE**.
 
+### 3.8. Política de reservas (texto de cancelamento + limite diário)
+
+API `vlr-api` #174 em `develop` (migration DEV aplicada). O contrato é genérico: vale para qualquer tipo de recurso e qualquer tenant. O PUT substitui os dois campos.
+
+- [x] Admin `/configuracoes/politica-reservas` (`rentals.booking_policy.read` para ver, `rentals.booking_policy.write` para salvar): texto simples até 2000 caracteres (em branco = null) e limite 1–100 ou sem limite (`null`). i18n pt-BR/en/es. Validity gate no salvar.
+- [x] Cancelar no portal B2C mostra `cancellationPolicyText` como texto puro, além da nota que já existia. Sem texto, só a nota.
+- [x] 409 `DAILY_BOOKING_LIMIT_REACHED` em `POST /api/reservations` e `POST /api/schedule/slots/book` vira frase traduzida com o limite.
+- [x] Conflito de horário (409 em que o recurso/horário já foi reservado) avisa que o horário acabou de ser reservado e atualiza a agenda. #146 parcial: fora deste passo ficam o atraso do botão, a cor do card e o login em `/t/{tenant}`.
+
 ### 3.6. Fila de reservas (WaitingQueue)
 
 Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branch `feat/reservation-waiting-queue`. Feature-detect `queueEnabled === true`.
@@ -304,6 +313,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB):** tela de aulas do professor. Depois do create, “Aulas nesta data” mantém a aula na data selecionada (`?date=` no reload; refresh do mesmo dia não zera a lista; se o GET omitir o intervalo, a aula recém-criada continua). O horário deixa de mostrar `Invalid input` ao esvaziar. `20:00–21:00` fora da oferta é slot `closed` persistido, não bug de API/fuso. Sem mudança no `vlr-api`. |
 | 2026-10-14 | **Fix (WEB):** tela de aulas do professor. A leitura inicial da quadra pré-selecionada e da data (`?date=`) não mostra “Nenhuma aula nesta data.” enquanto o GET do dia está em voo. O horário liberado ao remover volta ordenado pelo início. Remover aula pede confirmação. Sem mudança no `vlr-api`. |
 | 2026-10-15 | **Fix (WEB, #136):** agenda B2C pede confirmação antes de cancelar e explica que esta tela não cobra nem reembolsa, inclusive em reserva já confirmada. “Reservando…” / “Cancelando...” soltam quando o POST termina, com toast de sucesso ou erro; a reserva entra ou sai da lista pela resposta, e o refetch de horários não segura o botão. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Código (WEB):** política de reservas em `/configuracoes/politica-reservas` (`GET`/`PUT /api/rentals/booking-policy`, PUT substitui texto e limite). O cancelamento B2C mostra o texto do tenant como texto puro. 409 `DAILY_BOOKING_LIMIT_REACHED` vira frase traduzida. Conflito de horário avisa que o horário acabou de ser reservado e atualiza a agenda (#146 parcial). Pareia com `vlr-api` #174. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

@@ -182,6 +182,30 @@ describe("filterNavigationItemsByAccess", () => {
       "/configuracoes/notificacoes",
     )
   })
+
+  it("shows booking policy when rentals is on and the read permission matches", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      ["rentals.booking_policy.read"],
+    )
+
+    expect(visible.map((item) => item.to)).toContain(
+      "/configuracoes/politica-reservas",
+    )
+  })
+
+  it("hides booking policy without the read permission", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      ["rentals.reservations.read"],
+    )
+
+    expect(visible.map((item) => item.to)).not.toContain(
+      "/configuracoes/politica-reservas",
+    )
+  })
 })
 
 describe("firstPermittedProductPath", () => {
@@ -226,6 +250,12 @@ describe("getPageTitleKey", () => {
   it("resolves the unified notifications settings page", () => {
     expect(getPageTitleKey("/configuracoes/notificacoes")).toBe(
       "nav.notifications",
+    )
+  })
+
+  it("resolves the booking policy page", () => {
+    expect(getPageTitleKey("/configuracoes/politica-reservas")).toBe(
+      "nav.bookingPolicy",
     )
   })
 

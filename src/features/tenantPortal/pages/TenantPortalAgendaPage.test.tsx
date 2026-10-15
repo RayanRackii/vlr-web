@@ -24,6 +24,10 @@ vi.mock("@/features/rentals/services/rentalLayoutService", () => ({
   fetchPublicRentalLayouts: vi.fn(),
 }))
 
+vi.mock("@/features/rentals/services/bookingPolicyService", () => ({
+  fetchPublicBookingPolicy: vi.fn(),
+}))
+
 vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -44,11 +48,14 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 
 import { toast } from "sonner"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
+import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
+import { PortalBookingError } from "@/features/tenantPortal/lib/portalBookingError"
 import {
   bookPortalSlot,
   cancelMyPortalReservation,
   checkPortalAvailability,
+  createPortalReservation,
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
   listMyPortalReservations,
@@ -65,6 +72,8 @@ const fetchDay = vi.mocked(fetchPublicScheduleDay)
 const cancelMine = vi.mocked(cancelMyPortalReservation)
 const checkAvailability = vi.mocked(checkPortalAvailability)
 const bookSlot = vi.mocked(bookPortalSlot)
+const createReservation = vi.mocked(createPortalReservation)
+const fetchPolicy = vi.mocked(fetchPublicBookingPolicy)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
 
@@ -178,8 +187,14 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     cancelMine.mockReset()
     checkAvailability.mockReset()
     bookSlot.mockReset()
+    createReservation.mockReset()
+    fetchPolicy.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
     checkAvailability.mockResolvedValue({
       isAvailable: true,
       requestedQuantity: 1,
@@ -366,6 +381,68 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
   })
 
+  it("shows the tenant cancellation text as plain text beside the existing note", async () => {
+    const user = userEvent.setup()
+    const policyText = '<img src=x onerror="alert(1)"><script>alert(1)</script>'
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: `  ${policyText}\nLine 2  `,
+      maxActiveReservationsPerCustomerPerDay: 2,
+    })
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+    ).toBeInTheDocument()
+    const policy = within(dialog).getByTestId("cancellation-policy-text")
+    expect(policy).toHaveTextContent(`${policyText} Line 2`)
+    expect(policy.innerHTML).not.toContain("<img")
+    expect(policy.innerHTML).not.toContain("<script")
+    expect(policy.querySelector("img")).toBeNull()
+    expect(policy.querySelector("script")).toBeNull()
+  })
+
+  it("keeps only the existing note when the tenant has no cancellation text", async () => {
+    const user = userEvent.setup()
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: "   ",
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).queryByTestId("cancellation-policy-text"),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps only the existing note when the public policy request fails", async () => {
+    const user = userEvent.setup()
+    fetchPolicy.mockRejectedValue(new Error("policy down"))
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).queryByTestId("cancellation-policy-text"),
+    ).not.toBeInTheDocument()
+    expect(toastError).not.toHaveBeenCalledWith("policy down")
+  })
+
   it("clears Cancelando and shows the canceled reservation before refresh settles", async () => {
     const user = userEvent.setup()
     const canceled = makeReservation("Canceled", FUTURE_ISO)
@@ -497,8 +574,14 @@ describe("TenantPortalAgendaPage time selector", () => {
     cancelMine.mockReset()
     checkAvailability.mockReset()
     bookSlot.mockReset()
+    createReservation.mockReset()
+    fetchPolicy.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
     checkAvailability.mockResolvedValue({
       isAvailable: true,
       requestedQuantity: 1,
@@ -956,5 +1039,159 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(dateInput).toHaveValue(brazilTodayIsoDate())
     })
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+  })
+
+  it("says the time was just taken and refreshes the agenda after a booking conflict", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+    renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dayCalls = fetchDay.mock.calls.length
+    const mineCalls = listMine.mock.calls.length
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.slotJustTaken"),
+      )
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      expect.stringContaining("não está disponível"),
+    )
+    await waitFor(() => {
+      expect(fetchDay.mock.calls.length).toBeGreaterThan(dayCalls)
+      expect(listMine.mock.calls.length).toBeGreaterThan(mineCalls)
+    })
+  })
+
+  it("translates the daily booking limit without refreshing the agenda", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "Limite de 2 reservas ativas por dia atingido.",
+        409,
+        "DAILY_BOOKING_LIMIT_REACHED",
+      ),
+    )
+    renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dayCalls = fetchDay.mock.calls.length
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.dailyLimitReached", { count: 2 }),
+      )
+    })
+    expect(fetchDay.mock.calls.length).toBe(dayCalls)
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotJustTaken"),
+    )
+  })
+
+  it("uses the limit message without a number when the payload omits one", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError("limit reached", 409, "DAILY_BOOKING_LIMIT_REACHED"),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.dailyLimitReachedUnknown"),
+      )
+    })
+  })
+
+  it("translates the daily limit when the reservation is created without a slot id", async () => {
+    const user = userEvent.setup()
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        {
+          ...makeSlot({
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            startTime: "08:00:00",
+            endTime: "09:00:00",
+          }),
+          isDerived: true,
+        },
+      ],
+    })
+    createReservation.mockRejectedValue(
+      new PortalBookingError(
+        "Limite de 4 reservas ativas por dia atingido.",
+        409,
+        "DAILY_BOOKING_LIMIT_REACHED",
+      ),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalled()
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(toastError).toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.dailyLimitReached", { count: 4 }),
+    )
+  })
+
+  it("keeps a queue failure on the queue message", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError("QUEUE_REQUIRED", 409, null),
+    )
+    renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dayCalls = fetchDay.mock.calls.length
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.queue.errors.QUEUE_REQUIRED"),
+      )
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotJustTaken"),
+    )
+    expect(fetchDay.mock.calls.length).toBe(dayCalls)
+  })
+
+  it("shows a non-conflict booking error without refreshing the agenda", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "Slot does not belong to the given unit.",
+        409,
+        null,
+      ),
+    )
+    renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dayCalls = fetchDay.mock.calls.length
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Slot does not belong to the given unit.",
+      )
+    })
+    expect(fetchDay.mock.calls.length).toBe(dayCalls)
   })
 })

@@ -27,6 +27,7 @@ import { PmocLibraryPage } from "@/features/pmoc/pages/PmocLibraryPage"
 import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
 import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
+import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
@@ -245,6 +246,16 @@ export function AppRoutes() {
             <Route
               path="/configuracoes/reservas"
               element={<ReservationsPage />}
+            />
+          </Route>
+          <Route
+            element={
+              <PermissionRoute permission="rentals.booking_policy.read" />
+            }
+          >
+            <Route
+              path="/configuracoes/politica-reservas"
+              element={<BookingPolicyPage />}
             />
           </Route>
           <Route
