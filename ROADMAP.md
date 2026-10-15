@@ -86,7 +86,7 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch `feat/rentals-b2c-self-cancel`. API already on `develop` (`89b3e6d` / PR #64). Wave 1 remains **PROD_COMPLETE**.
 
 - [x] `cancelMyPortalReservation` via `POST /api/reservations/mine/{id}/cancel` (`customerApi` + Zod)
-- [x] Minhas reservas: Cancelar em `PendingDeposit`|`Confirmed` com start futuro; sem diálogo; sem Complete B2C
+- [x] Minhas reservas: Cancelar em `PendingDeposit`|`Confirmed` com start futuro pede confirmação e explica que o portal não cobra nem reembolsa (inclusive reserva já confirmada; depósito continua confirmação do clube, sem estorno nesta tela). Sem Complete B2C. O botão de reservar/cancelar solta ao fim do POST; a lista usa a resposta na hora e o refetch do dia não segura o loading.
 - [x] Vitest: helper + service + agenda page
 - [x] Playwright `e2e/tests/10-b2c-self-cancel.spec.ts` (DEV; Confirmed path passed against Railway + develop Preview)
 - [x] **CLOSED_DEV** — not PROD. API `89b3e6d` / PR #64; WEB `3478355` / PR #59. Wave 1 remains **PROD_COMPLETE**.
@@ -303,6 +303,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-14 | **Fix (WEB, #135):** agenda B2C não oferece data anterior a hoje nem horário de hoje já iniciado (`America/Sao_Paulo`); Minhas reservas marca reserva passada (fim ≤ agora) sem Cancelar. Login B2B sem `core.dashboard.read` sai de `/dashboard` para a primeira rota permitida da sidebar. Sem deploy. |
 | 2026-10-14 | **Fix (WEB):** tela de aulas do professor. Depois do create, “Aulas nesta data” mantém a aula na data selecionada (`?date=` no reload; refresh do mesmo dia não zera a lista; se o GET omitir o intervalo, a aula recém-criada continua). O horário deixa de mostrar `Invalid input` ao esvaziar. `20:00–21:00` fora da oferta é slot `closed` persistido, não bug de API/fuso. Sem mudança no `vlr-api`. |
 | 2026-10-14 | **Fix (WEB):** tela de aulas do professor. A leitura inicial da quadra pré-selecionada e da data (`?date=`) não mostra “Nenhuma aula nesta data.” enquanto o GET do dia está em voo. O horário liberado ao remover volta ordenado pelo início. Remover aula pede confirmação. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #136):** agenda B2C pede confirmação antes de cancelar e explica que esta tela não cobra nem reembolsa, inclusive em reserva já confirmada. “Reservando…” / “Cancelando...” soltam quando o POST termina, com toast de sucesso ou erro; a reserva entra ou sai da lista pela resposta, e o refetch de horários não segura o botão. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -133,6 +133,25 @@ function cancelButton() {
   })
 }
 
+async function openCancelDialog(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.cancel"),
+    }),
+  )
+  return screen.findByRole("alertdialog")
+}
+
+async function confirmCancel(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await openCancelDialog(user)
+  await user.click(
+    within(dialog).getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+    }),
+  )
+  return dialog
+}
+
 function completeButton() {
   return screen.queryByRole("button", {
     name: i18n.t("rentals.reservations.complete"),
@@ -254,11 +273,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     await waitForMineList()
     expect(cancelButton()).toBeInTheDocument()
 
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("tenantPortal.agenda.cancel"),
-      }),
-    )
+    await confirmCancel(user)
 
     await waitFor(() => {
       expect(cancelMine).toHaveBeenCalledWith(RESERVATION_ID)
@@ -292,11 +307,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     renderAgenda()
     await waitForMineList()
 
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("tenantPortal.agenda.cancel"),
-      }),
-    )
+    await confirmCancel(user)
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
@@ -314,6 +325,121 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
       expect(cancelButton()).not.toBeInTheDocument()
     })
     expect(completeButton()).not.toBeInTheDocument()
+  })
+
+  it("explains the deposit and refund consequence before calling cancel", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(cancelMine).not.toHaveBeenCalled()
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmDismiss"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+    expect(cancelMine).not.toHaveBeenCalled()
+  })
+
+  it("shows the same payment note before canceling a pending deposit", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([makeReservation("PendingDeposit", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+    ).toBeInTheDocument()
+    expect(cancelMine).not.toHaveBeenCalled()
+  })
+
+  it("clears Cancelando and shows the canceled reservation before refresh settles", async () => {
+    const user = userEvent.setup()
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    let listCalls = 0
+    listMine.mockImplementation(() => {
+      listCalls += 1
+      if (listCalls === 1) {
+        return Promise.resolve([makeReservation("Confirmed", FUTURE_ISO)])
+      }
+      return new Promise(() => {})
+    })
+    let dayCalls = 0
+    fetchDay.mockImplementation(() => {
+      dayCalls += 1
+      if (dayCalls === 1) {
+        return Promise.resolve({ date: "2026-09-08", slots: [] })
+      }
+      return new Promise(() => {})
+    })
+    cancelMine.mockResolvedValue(canceled)
+
+    renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.cancelSuccess"),
+      )
+    })
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelling"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(cancelButton()).not.toBeInTheDocument()
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it("clears Cancelando and toasts when cancel fails even if refetch hangs", async () => {
+    const user = userEvent.setup()
+    let listCalls = 0
+    listMine.mockImplementation(() => {
+      listCalls += 1
+      if (listCalls === 1) {
+        return Promise.resolve([makeReservation("Confirmed", FUTURE_ISO)])
+      }
+      return new Promise(() => {})
+    })
+    cancelMine.mockRejectedValue(
+      new Error("Cannot cancel a reservation that has already started."),
+    )
+
+    renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Cannot cancel a reservation that has already started.",
+      )
+    })
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelling"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+      }),
+    ).toBeEnabled()
   })
 })
 
@@ -595,6 +721,150 @@ describe("TenantPortalAgendaPage time selector", () => {
         status: i18n.t("rentals.reservations.statuses.Confirmed"),
       }),
     )
+  })
+
+  async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", {
+        amount: formatMoney(80),
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    )
+  }
+
+  it("clears Reservando and shows the reservation before the refresh settles", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", FUTURE_ISO, {
+      items: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          assetId: ASSET_A_ASSET_ID,
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          quantity: 1,
+          unitPrice: 80,
+          subTotal: 80,
+        },
+      ],
+    })
+    let dayCalls = 0
+    fetchDay.mockImplementation(() => {
+      dayCalls += 1
+      if (dayCalls === 1) {
+        return Promise.resolve({
+          date: "2026-09-12",
+          slots: [
+            makeSlot({
+              id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+              rentalAssetId: ASSET_A_ID,
+              assetName: "Quadra 1",
+              startTime: "08:00:00",
+              endTime: "09:00:00",
+            }),
+          ],
+        })
+      }
+      return new Promise(() => {})
+    })
+    let listCalls = 0
+    listMine.mockImplementation(() => {
+      listCalls += 1
+      if (listCalls === 1) {
+        return Promise.resolve([])
+      }
+      return new Promise(() => {})
+    })
+    bookSlot.mockResolvedValue(created)
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(80),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      )
+    })
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserving"),
+      }),
+    ).not.toBeInTheDocument()
+    const row = screen.getByRole("listitem")
+    expect(row).toHaveTextContent("Quadra 1")
+    expect(row).toHaveTextContent(
+      i18n.t("rentals.reservations.statuses.Confirmed"),
+    )
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    )
+  })
+
+  it("clears Reservando and toasts when booking fails", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(new Error("slot taken"))
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("slot taken")
+    })
+    expect(toastSuccess).not.toHaveBeenCalled()
+    const reserve = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    })
+    expect(reserve).not.toHaveAttribute("aria-busy", "true")
+    expect(reserve).toBeEnabled()
+  })
+
+  it("keeps the success toast when the follow-up refresh fails", async () => {
+    const user = userEvent.setup()
+    let dayCalls = 0
+    fetchDay.mockImplementation(() => {
+      dayCalls += 1
+      if (dayCalls === 1) {
+        return Promise.resolve({
+          date: "2026-09-12",
+          slots: [
+            makeSlot({
+              id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+              rentalAssetId: ASSET_A_ID,
+              assetName: "Quadra 1",
+              startTime: "08:00:00",
+              endTime: "09:00:00",
+            }),
+          ],
+        })
+      }
+      return Promise.reject(new Error("schedule down"))
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalled()
+    })
+    await waitFor(() => {
+      expect(dayCalls).toBeGreaterThanOrEqual(2)
+    })
+    expect(toastError).not.toHaveBeenCalled()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserving"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByText("Quadra 1").length).toBeGreaterThan(0)
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {
