@@ -144,6 +144,14 @@ export function isTenantHostMode(): boolean {
   return getHostTenantSubdomain() !== null
 }
 
+/** Same charset `customerLoginPath` accepts from `/t/:subdomain`. */
+const PORTAL_SLUG_PATTERN = /^[a-z0-9-]+$/
+
+function portalSlug(subdomain: string): string | null {
+  const slug = subdomain.trim().toLowerCase()
+  return PORTAL_SLUG_PATTERN.test(slug) ? slug : null
+}
+
 export type TenantPortalSegment =
   | ""
   | "register"
@@ -179,7 +187,10 @@ export function tenantPortalPathMode(
   subdomain: string,
   segment: TenantPortalSegment = "",
 ): string {
-  const slug = subdomain.trim().toLowerCase()
+  const slug = portalSlug(subdomain)
+  if (slug === null) {
+    return "/"
+  }
   return segment.length > 0 ? `/t/${slug}/${segment}` : `/t/${slug}`
 }
 
@@ -198,7 +209,7 @@ export function tenantPortalHref(
   segment: TenantPortalSegment = "",
   options?: TenantPortalHrefOptions,
 ): string {
-  const slug = subdomain.trim().toLowerCase()
+  const slug = portalSlug(subdomain)
   const segmentPath = segment.length > 0 ? `/${segment}` : ""
 
   const hostname =
@@ -209,6 +220,11 @@ export function tenantPortalHref(
     (typeof window !== "undefined"
       ? window.location.origin
       : "http://localhost:5173")
+  const safeOrigin = origin.replace(/\/+$/, "")
+
+  if (slug === null) {
+    return `${safeOrigin}/`
+  }
 
   if (isProductHostname(hostname)) {
     const base = getTenantBaseDomain()
@@ -216,7 +232,7 @@ export function tenantPortalHref(
   }
 
   const path = tenantPortalPathMode(slug, segment)
-  return `${origin.replace(/\/+$/, "")}${path}`
+  return `${safeOrigin}${path}`
 }
 
 /** Placeholder for empty subdomain fields in admin forms. */
