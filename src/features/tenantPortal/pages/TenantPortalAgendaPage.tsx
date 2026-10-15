@@ -34,6 +34,7 @@ import {
   listDistinctStartTimes,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
+import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import {
   formatMoney,
@@ -42,6 +43,11 @@ import {
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
+import {
+  isDailyBookingLimitError,
+  isSlotTakenConflict,
+  readDailyBookingLimit,
+} from "@/features/tenantPortal/lib/portalBookingError"
 import { isPastReservation } from "@/features/tenantPortal/lib/isPastReservation"
 import {
   bookPortalSlot,
@@ -110,6 +116,9 @@ export function TenantPortalAgendaPage() {
   const [submitting, setSubmitting] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
+  const [cancellationPolicyText, setCancellationPolicyText] = useState<
+    string | null
+  >(null)
   const submittingRef = useRef(false)
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
@@ -219,6 +228,29 @@ export function TenantPortalAgendaPage() {
       cancelled = true
     }
   }, [signedIn, subdomain, t, lockedAssetId, lockedRentalAssetId])
+
+  useEffect(() => {
+    if (!signedIn) {
+      return
+    }
+
+    let cancelled = false
+    void fetchPublicBookingPolicy(subdomain)
+      .then((policy) => {
+        if (!cancelled) {
+          setCancellationPolicyText(policy.cancellationPolicyText)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCancellationPolicyText(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [signedIn, subdomain])
 
   useEffect(() => {
     viewedDateRef.current = date
@@ -349,6 +381,9 @@ export function TenantPortalAgendaPage() {
   }
 
   const title = menuItem?.label ?? t("tenantPortal.agenda.title")
+  const cancellationPolicyNote = visibleCancellationPolicyText(
+    cancellationPolicyText,
+  )
 
   function refreshAgenda(dayDate: string) {
     const generation = refreshGeneration.current + 1
@@ -434,6 +469,21 @@ export function TenantPortalAgendaPage() {
             ? t(`tenantPortal.agenda.queue.errors.${code}`)
             : t("tenantPortal.agenda.reserveError"),
         )
+        return
+      }
+      if (isDailyBookingLimitError(error)) {
+        const count = readDailyBookingLimit(error)
+        toast.error(
+          count === null
+            ? t("tenantPortal.agenda.dailyLimitReachedUnknown")
+            : t("tenantPortal.agenda.dailyLimitReached", { count }),
+        )
+        return
+      }
+      if (isSlotTakenConflict(error)) {
+        toast.error(t("tenantPortal.agenda.slotJustTaken"))
+        setSelectedRentalAssetId(null)
+        refreshAgenda(dayDate)
         return
       }
       toast.error(
@@ -891,7 +941,7 @@ export function TenantPortalAgendaPage() {
               }
             }}
           >
-            <AlertDialogContent>
+            <AlertDialogContent className="max-h-[min(80vh,40rem)] overflow-y-auto">
               <AlertDialogHeader>
                 <AlertDialogTitle>
                   {t("tenantPortal.agenda.cancelConfirmTitle")}
@@ -900,6 +950,20 @@ export function TenantPortalAgendaPage() {
                   {t("tenantPortal.agenda.cancelConfirmBody")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              {cancellationPolicyNote ? (
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    {t("tenantPortal.agenda.cancellationPolicyLabel")}
+                  </p>
+                  {/* Plain text only. Never parse the tenant policy as HTML. */}
+                  <p
+                    className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-muted-foreground"
+                    data-testid="cancellation-policy-text"
+                  >
+                    {cancellationPolicyNote}
+                  </p>
+                </div>
+              ) : null}
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={cancelingId !== null}>
                   {t("tenantPortal.agenda.cancelConfirmDismiss")}
@@ -922,4 +986,13 @@ export function TenantPortalAgendaPage() {
       )}
     </div>
   )
+}
+
+function visibleCancellationPolicyText(value: string | null): string | null {
+  if (value === null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
 }

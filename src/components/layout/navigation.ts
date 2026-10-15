@@ -12,6 +12,7 @@ import {
   Map,
   MenuSquare,
   Package,
+  ScrollText,
   Shield,
   Users,
   Wrench,
@@ -50,6 +51,7 @@ export type AppNavigationItem = {
     | "nav.schedule"
     | "nav.layout"
     | "nav.reservations"
+    | "nav.bookingPolicy"
     | "nav.rentalsResources"
     | "nav.admin"
     | "nav.catalog"
@@ -191,6 +193,13 @@ const operationsItems: readonly AppNavigationItem[] = [
     icon: CalendarCheck,
     modules: ["rentals"],
     permission: "rentals.reservations.read",
+  },
+  {
+    labelKey: "nav.bookingPolicy",
+    to: "/configuracoes/politica-reservas",
+    icon: ScrollText,
+    modules: ["rentals"],
+    permission: "rentals.booking_policy.read",
   },
   {
     labelKey: "nav.catalog",
