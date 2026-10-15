@@ -406,8 +406,11 @@
       "queue": {
         "closed": "The queue opens at {{waitingRoom}} and reservations open at {{opensAt}}.",
         "closedFallback": "The reservation queue is not open yet.",
+        "requiresTicket": "This resource requires a queue ticket to book.",
         "join": "Join the queue",
+        "joinAndReserve": "Join the queue and book",
         "joining": "Joining...",
+        "joiningAndReserving": "Joining and booking...",
         "inQueue": "You are in the queue",
         "position": "Your position: {{position}}",
         "ahead": "{{count}} ahead of you",

@@ -184,6 +184,7 @@ export function TenantPortalAgendaPage() {
     string | null
   >(null)
   const submittingRef = useRef(false)
+  const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
   const reservedSlotKeys = useRef(
@@ -640,6 +641,21 @@ export function TenantPortalAgendaPage() {
     }
   }
 
+  async function onJoinAndReserve() {
+    if (!selectedSlot || submittingRef.current || joinAndReserveLock.current) {
+      return
+    }
+    joinAndReserveLock.current = true
+    try {
+      const next = await queue.join()
+      if (next?.phase === "Open" && next.myTicket?.status === "Active") {
+        await onReserve()
+      }
+    } finally {
+      joinAndReserveLock.current = false
+    }
+  }
+
   function requestCancel(id: string) {
     if (cancelingRef.current) {
       return
@@ -914,6 +930,10 @@ export function TenantPortalAgendaPage() {
             </div>
           ) : null}
 
+          {queue.explanation ? (
+            <p className="text-sm text-muted-foreground">{queue.explanation}</p>
+          ) : null}
+
           {queue.view.kind === "closed" ? (
             <p className="rounded-lg border border-border px-3 py-3 text-sm text-muted-foreground">
               {queue.view.waitingRoomTime && queue.view.opensTime
@@ -929,14 +949,31 @@ export function TenantPortalAgendaPage() {
             <div className="rounded-lg border border-border px-3 py-3">
               <LoadingButton
                 type="button"
-                variant="outline"
+                variant={queue.view.joinAndReserve ? "default" : "outline"}
+                className={queue.view.joinAndReserve ? "w-full sm:w-auto" : undefined}
+                style={
+                  queue.view.joinAndReserve
+                    ? { backgroundColor: primary }
+                    : undefined
+                }
+                disabled={queue.view.joinAndReserve && !selectedSlot}
                 loading={queue.joining}
-                loadingLabel={t("tenantPortal.agenda.queue.joining")}
+                loadingLabel={
+                  queue.view.joinAndReserve
+                    ? t("tenantPortal.agenda.queue.joiningAndReserving")
+                    : t("tenantPortal.agenda.queue.joining")
+                }
                 onClick={() => {
+                  if (queue.view.kind === "join" && queue.view.joinAndReserve) {
+                    void onJoinAndReserve()
+                    return
+                  }
                   void queue.join()
                 }}
               >
-                {t("tenantPortal.agenda.queue.join")}
+                {queue.view.joinAndReserve
+                  ? t("tenantPortal.agenda.queue.joinAndReserve")
+                  : t("tenantPortal.agenda.queue.join")}
               </LoadingButton>
             </div>
           ) : null}
@@ -1034,7 +1071,8 @@ export function TenantPortalAgendaPage() {
             </p>
           ) : null}
 
-          {queue.hideReserveUi ? null : (
+          {queue.hideReserveUi ||
+          (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
           <LoadingButton
             type="button"
             className="w-full sm:w-auto"
