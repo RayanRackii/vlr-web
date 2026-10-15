@@ -6,9 +6,10 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import type { Session, User } from "@supabase/supabase-js"
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 
 import { syncCurrentUserCacheToAuthUser } from "@/features/users/services/currentUserCache"
+import { logAuthSessionEvent } from "@/lib/authSessionLog"
 import { supabase } from "@/lib/supabase"
 
 type AuthContextValue = {
@@ -30,15 +31,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let isMounted = true
+    let signedOut = false
+
+    function logStaffEvent(
+      event: "SIGNED_IN" | "TOKEN_REFRESHED" | "SIGNED_OUT" | "GET_SESSION",
+      nextSession: Session | null,
+      error?: unknown,
+    ) {
+      logAuthSessionEvent({
+        event,
+        surface: "b2b",
+        hadSession: nextSession !== null,
+        expiresAt: nextSession?.expires_at ?? null,
+        error,
+      })
+    }
 
     async function initializeAuth() {
       const { data, error } = await supabase.auth.getSession()
 
-      if (!isMounted) {
+      if (!isMounted || signedOut) {
         return
       }
 
-      if (error !== null) {
+      const session = error === null ? (data?.session ?? null) : null
+      logStaffEvent("GET_SESSION", session, error ?? undefined)
+
+      if (session === null) {
         syncCurrentUserCacheToAuthUser(null)
         setSession(null)
         setUser(null)
@@ -46,9 +65,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      syncCurrentUserCacheToAuthUser(data.session?.user ?? null)
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
+      syncCurrentUserCacheToAuthUser(session.user ?? null)
+      setSession(session)
+      setUser(session.user ?? null)
       setIsLoading(false)
     }
 
@@ -56,14 +75,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, nextSession) => {
       if (!isMounted) {
         return
       }
 
-      syncCurrentUserCacheToAuthUser(nextSession?.user ?? null)
+      if (
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "SIGNED_OUT"
+      ) {
+        logStaffEvent(event, nextSession)
+      }
+
+      if (event === "SIGNED_OUT") {
+        signedOut = true
+        syncCurrentUserCacheToAuthUser(null)
+        setSession(null)
+        setUser(null)
+        setIsLoading(false)
+        return
+      }
+
+      // A null session on any other event (refresh race, HMR, BroadcastChannel)
+      // must not wipe the user. SIGNED_OUT is the only listener that clears it.
+      if (nextSession === null) {
+        return
+      }
+
+      syncCurrentUserCacheToAuthUser(nextSession.user ?? null)
       setSession(nextSession)
-      setUser(nextSession?.user ?? null)
+      setUser(nextSession.user ?? null)
       setIsLoading(false)
     })
 
