@@ -124,9 +124,9 @@ function makeReservation(
   }
 }
 
-function renderAgenda() {
+function renderAgenda(initialEntry = "/agenda") {
   return render(
-    <MemoryRouter initialEntries={["/agenda"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route element={<Outlet context={outletContext} />}>
           <Route path="/agenda" element={<TenantPortalAgendaPage />} />
@@ -1193,5 +1193,142 @@ describe("TenantPortalAgendaPage time selector", () => {
       )
     })
     expect(fetchDay.mock.calls.length).toBe(dayCalls)
+  })
+})
+
+describe("TenantPortalAgendaPage ?reservation=", () => {
+  const FOREIGN_ID = "99999999-9999-4999-8999-999999999999"
+  let scrollIntoView: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    listMine.mockReset()
+    fetchAssets.mockReset()
+    fetchLayouts.mockReset()
+    fetchDay.mockReset()
+    cancelMine.mockReset()
+    checkAvailability.mockReset()
+    bookSlot.mockReset()
+    createReservation.mockReset()
+    fetchPolicy.mockReset()
+    toastSuccess.mockReset()
+    toastError.mockReset()
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
+    fetchAssets.mockResolvedValue([])
+    fetchLayouts.mockResolvedValue([])
+    fetchDay.mockResolvedValue({ date: brazilTodayIsoDate(), slots: [] })
+    listMine.mockResolvedValue([])
+    scrollIntoView = vi.fn()
+    HTMLElement.prototype.scrollIntoView =
+      scrollIntoView as typeof HTMLElement.prototype.scrollIntoView
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView")
+  })
+
+  it("selects and scrolls to the customer's visible reservation without changing the day", async () => {
+    const otherId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, {
+        id: otherId,
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef",
+            assetId: "ffffffff-ffff-4fff-8fff-fffffffffffe",
+            rentalAssetId: "11111111-1111-4111-8111-111111111112",
+            assetName: "Quadra 2",
+            quantity: 1,
+            unitPrice: 40,
+            subTotal: 40,
+          },
+        ],
+      }),
+      makeReservation("Confirmed", FUTURE_ISO),
+    ])
+
+    renderAgenda(`/agenda?reservation=${RESERVATION_ID.toUpperCase()}`)
+
+    const focused = (await screen.findByText("Quadra 1")).closest("li")
+    const other = screen.getByText("Quadra 2").closest("li")
+    expect(focused).toHaveAttribute("data-reservation-focused", "true")
+    expect(focused).toHaveAttribute("aria-current", "true")
+    expect(other).not.toHaveAttribute("data-reservation-focused")
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" })
+    })
+    expect(scrollIntoView.mock.instances).toContain(focused)
+    expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
+      brazilTodayIsoDate(),
+    )
+    expect(fetchDay).toHaveBeenCalledWith("ficc", brazilTodayIsoDate())
+    expect(
+      fetchDay.mock.calls.some((call) => String(call[1]).startsWith("2099")),
+    ).toBe(false)
+    expect(document.body).not.toHaveTextContent(RESERVATION_ID)
+  })
+
+  it("stays on the normal agenda for a malformed or foreign id", async () => {
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO),
+      makeReservation("Canceled", FUTURE_ISO, {
+        id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeed",
+            assetId: "ffffffff-ffff-4fff-8fff-fffffffffffd",
+            rentalAssetId: "11111111-1111-4111-8111-111111111113",
+            assetName: "Quadra cancelada",
+            quantity: 1,
+            unitPrice: 10,
+            subTotal: 10,
+          },
+        ],
+      }),
+    ])
+
+    const { unmount } = renderAgenda("/agenda?reservation=not-a-guid")
+    expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
+    expect(screen.getByText("Quadra 1").closest("li")).not.toHaveAttribute(
+      "data-reservation-focused",
+    )
+    expect(document.body).not.toHaveTextContent("not-a-guid")
+    expect(toastError).not.toHaveBeenCalled()
+    unmount()
+
+    const { unmount: unmountForeign } = renderAgenda(
+      `/agenda?reservation=${FOREIGN_ID}`,
+    )
+    expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
+    expect(screen.getByText("Quadra 1").closest("li")).not.toHaveAttribute(
+      "data-reservation-focused",
+    )
+    expect(document.body).not.toHaveTextContent(FOREIGN_ID)
+    expect(toastError).not.toHaveBeenCalled()
+    expect(screen.getByText("Quadra cancelada")).toBeInTheDocument()
+    unmountForeign()
+
+    renderAgenda(
+      `/agenda?reservation=${encodeURIComponent("<script>alert(1)</script>")}`,
+    )
+    expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
+    expect(document.body.innerHTML).not.toContain("<script>alert(1)</script>")
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("does not open a canceled reservation from the query", async () => {
+    listMine.mockResolvedValue([makeReservation("Canceled", FUTURE_ISO)])
+    renderAgenda(`/agenda?reservation=${RESERVATION_ID}`)
+
+    const row = (await screen.findByText("Quadra 1")).closest("li")
+    expect(row).not.toHaveAttribute("data-reservation-focused")
+    expect(scrollIntoView).not.toHaveBeenCalled()
+    expect(document.body).not.toHaveTextContent(RESERVATION_ID)
+    expect(toastError).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
+      brazilTodayIsoDate(),
+    )
   })
 })
