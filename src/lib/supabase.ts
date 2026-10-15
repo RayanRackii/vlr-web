@@ -19,4 +19,12 @@ if (!supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    storage: localStorage,
+    // Leave debug off. The library logger can print access and refresh tokens.
+    debug: false,
+  },
+})
