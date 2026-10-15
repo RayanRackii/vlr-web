@@ -1,8 +1,11 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 
+import i18n from "@/lib/i18n"
+import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   clearCustomerSession,
@@ -101,5 +104,66 @@ describe("CustomerAppLayout session tenant", () => {
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
     expect(screen.queryByText("login-form")).not.toBeInTheDocument()
     expect(fetchBranding).toHaveBeenCalledWith("ficc")
+  })
+
+  it("lists book, my reservations, and profile in the mobile menu", async () => {
+    const user = userEvent.setup()
+    const menuItemId = "11111111-1111-4111-8111-111111111111"
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([
+      {
+        id: menuItemId,
+        moduleName: "rentals",
+        label: "Reservar horário",
+        sortOrder: 1,
+        isActive: true,
+        rentalAssetId: null,
+      },
+    ])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    const openMenu = screen.getByRole("button", { name: i18n.t("nav.openMenu") })
+    expect(openMenu).toHaveClass(...headerTouchTargetClassName.split(" "))
+    expect(
+      screen.getByRole("button", { name: i18n.t("theme.toggle") }),
+    ).toHaveClass(...headerTouchTargetClassName.split(" "))
+    expect(
+      screen.getByRole("button", { name: i18n.t("account.openMenu") }),
+    ).toHaveClass(...headerTouchTargetClassName.split(" "))
+
+    const language = screen.getByRole("button", { name: i18n.t("language.label") })
+    expect(language).toHaveClass(...headerTouchTargetClassName.split(" "))
+    expect(language).toHaveTextContent("PT")
+    expect(language.querySelector("span")).not.toHaveClass("hidden")
+
+    await user.click(openMenu)
+
+    const dialog = await screen.findByRole("dialog")
+    const book = within(dialog).getByRole("link", {
+      name: i18n.t("admin.moduleMenu.suggestedLabelRentals"),
+    })
+    const mine = within(dialog).getByRole("link", {
+      name: i18n.t("tenantPortal.agenda.myReservations"),
+    })
+    const profile = within(dialog).getByRole("link", {
+      name: i18n.t("account.profile"),
+    })
+
+    expect(book).toHaveAttribute("href", `/t/ficc/agenda/${menuItemId}`)
+    expect(mine).toHaveAttribute(
+      "href",
+      `/t/ficc/agenda/${menuItemId}#minhas-reservas`,
+    )
+    expect(profile).toHaveAttribute("href", "/t/ficc/app/perfil")
   })
 })

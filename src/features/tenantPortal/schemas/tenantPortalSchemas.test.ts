@@ -6,6 +6,7 @@ import {
   buildCustomerRegisterSchema,
   buildPasswordResetConfirmSchema,
   buildVerifyEmailSchema,
+  formatBrazilianPhone,
   isValidBrazilianPhoneDigits,
   normalizeBrazilianPhoneDigits,
   registerResponseSchema,
@@ -171,6 +172,27 @@ describe("normalizeBrazilianPhoneDigits", () => {
     expect(isValidBrazilianPhoneDigits("55459999999999")).toBe(false)
     expect(normalizeBrazilianPhoneDigits("123456789012")).toBe("123456789012")
     expect(isValidBrazilianPhoneDigits("123456789012")).toBe(false)
+  })
+})
+
+describe("formatBrazilianPhone", () => {
+  it("masks an 11-digit mobile and a 10-digit landline", () => {
+    expect(formatBrazilianPhone("11912345678")).toBe("(11) 91234-5678")
+    expect(formatBrazilianPhone("1112345678")).toBe("(11) 1234-5678")
+  })
+
+  it("masks values that already include punctuation or a country code", () => {
+    expect(formatBrazilianPhone("+55 (11) 91234-5678")).toBe("(11) 91234-5678")
+    expect(formatBrazilianPhone("551112345678")).toBe("(11) 1234-5678")
+    expect(formatBrazilianPhone("(11) 91234-5678")).toBe("(11) 91234-5678")
+  })
+
+  it("leaves empty and non-national values unchanged", () => {
+    expect(formatBrazilianPhone("")).toBe("")
+    expect(formatBrazilianPhone(null)).toBe("")
+    expect(formatBrazilianPhone("   ")).toBe("")
+    expect(formatBrazilianPhone("12345")).toBe("12345")
+    expect(formatBrazilianPhone("+1 555 0100")).toBe("+1 555 0100")
   })
 })
 

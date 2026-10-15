@@ -146,6 +146,27 @@ export function isValidBrazilianPhoneDigits(raw: string): boolean {
   return digits.length === 10 || digits.length === 11
 }
 
+/**
+ * Display mask for a Brazilian phone. Does not define the value sent to the API.
+ * 11 digits → `(11) 91234-5678`. 10 digits → `(11) 1234-5678`.
+ * Any other length is returned trimmed, unchanged.
+ */
+export function formatBrazilianPhone(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() ?? ""
+  if (trimmed.length === 0) {
+    return ""
+  }
+
+  const digits = normalizeBrazilianPhoneDigits(trimmed)
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  }
+  return trimmed
+}
+
 /** CPF check digits (Brazilian algorithm). */
 export function isValidCpf(raw: string): boolean {
   const digits = onlyDigits(raw)

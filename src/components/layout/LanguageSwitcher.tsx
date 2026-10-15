@@ -25,7 +25,16 @@ const languageOptions: readonly {
   { code: "es", shortLabel: "ES" },
 ]
 
-export function LanguageSwitcher() {
+type LanguageSwitcherProps = {
+  className?: string
+  /** Keep PT/EN/ES visible below the sm breakpoint. */
+  showShortLabel?: boolean
+}
+
+export function LanguageSwitcher({
+  className,
+  showShortLabel = false,
+}: LanguageSwitcherProps) {
   const { t, i18n } = useTranslation()
 
   const currentLanguage =
@@ -48,12 +57,15 @@ export function LanguageSwitcher() {
             type="button"
             variant="ghost"
             size="sm"
+            className={className}
             aria-label={t("language.label")}
           />
         }
       >
         <Languages />
-        <span className="hidden sm:inline">{currentShortLabel}</span>
+        <span className={showShortLabel ? undefined : "hidden sm:inline"}>
+          {currentShortLabel}
+        </span>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-40">

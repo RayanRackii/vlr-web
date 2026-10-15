@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
@@ -44,8 +45,11 @@ export function TenantPortalChromeHeader({
 
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1">
-            <LanguageSwitcher />
-            <ThemeToggle />
+            <LanguageSwitcher
+              className={headerTouchTargetClassName}
+              showShortLabel
+            />
+            <ThemeToggle className={headerTouchTargetClassName} />
           </div>
 
           <div

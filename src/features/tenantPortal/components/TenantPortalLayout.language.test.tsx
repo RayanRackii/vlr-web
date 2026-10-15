@@ -138,6 +138,20 @@ describe("logged-out portal language switch", () => {
     expect(screen.queryByRole("menuitem", { name: /Inglés/ })).not.toBeInTheDocument()
   })
 
+  it("shows the current language code and a 44px header target", async () => {
+    renderPortal("/t/ficc/forgot-password")
+    const language = await screen.findByRole("button", {
+      name: i18n.t("language.label"),
+    })
+    expect(language).toHaveTextContent("PT")
+    expect(language.querySelector("span")).not.toHaveClass("hidden")
+    expect(language.className).toContain("min-h-[44px]")
+    expect(language.className).toContain("min-w-[44px]")
+    const theme = screen.getByRole("button", { name: i18n.t("theme.toggle") })
+    expect(theme.className).toContain("min-h-[44px]")
+    expect(theme.className).toContain("min-w-[44px]")
+  })
+
   it("switches forgot-password copy to Spanish", async () => {
     renderPortal("/t/ficc/forgot-password")
     expect(

@@ -5,7 +5,11 @@ import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 
-export function ThemeToggle() {
+type ThemeToggleProps = {
+  className?: string
+}
+
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const { t } = useTranslation()
   const { resolvedTheme, setTheme } = useTheme()
   const [isMounted, setIsMounted] = useState(false)
@@ -20,6 +24,7 @@ export function ThemeToggle() {
         type="button"
         variant="ghost"
         size="icon-sm"
+        className={className}
         aria-label={t("theme.toggle")}
         disabled
       >
@@ -35,6 +40,7 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon-sm"
+      className={className}
       aria-label={t("theme.toggle")}
       onClick={() => {
         setTheme(isDark ? "light" : "dark")

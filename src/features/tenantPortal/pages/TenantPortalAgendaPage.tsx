@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Navigate, useOutletContext, useParams, useSearchParams } from "react-router-dom"
+import { Navigate, useLocation, useOutletContext, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -46,7 +46,10 @@ import {
   formatMoney,
   formatReservationRange,
 } from "@/features/rentals/services/reservationsService"
-import { localizedCustomerMenuLabel } from "@/features/catalog/customerNav"
+import {
+  CUSTOMER_MY_RESERVATIONS_HASH,
+  localizedCustomerMenuLabel,
+} from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
@@ -144,6 +147,7 @@ export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
   const dateInputId = useId()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
     useOutletContext<CustomerAppOutletContext>()
@@ -469,6 +473,19 @@ export function TenantPortalAgendaPage() {
     row.scrollIntoView({ block: "center" })
     scrolledReservationIdRef.current = focusedReservationId
   }, [focusedReservationId, loading])
+
+  useEffect(() => {
+    if (loading || location.hash !== CUSTOMER_MY_RESERVATIONS_HASH) {
+      return
+    }
+
+    const section = document.getElementById("minhas-reservas")
+    if (section === null || typeof section.scrollIntoView !== "function") {
+      return
+    }
+
+    section.scrollIntoView({ block: "start" })
+  }, [loading, location.hash])
 
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
@@ -1033,7 +1050,10 @@ export function TenantPortalAgendaPage() {
           </LoadingButton>
           )}
 
-          <div className="space-y-2 border-t border-border pt-4">
+          <div
+            id="minhas-reservas"
+            className="scroll-mt-16 space-y-2 border-t border-border pt-4"
+          >
             <h3 className="text-sm font-medium">
               {t("tenantPortal.agenda.myReservations")}
             </h3>

@@ -1,7 +1,8 @@
 import { CalendarDays, Package, ShoppingBag, type LucideIcon } from "lucide-react"
-import { NavLink } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
@@ -11,6 +12,8 @@ export type CustomerNavItem = {
   label: string
   to: string
   icon: LucideIcon
+  /** Match only the exact path (no descendant routes). */
+  end?: boolean
 }
 
 type CustomerSidebarProps = {
@@ -31,6 +34,7 @@ export function CustomerSidebar({
   className,
 }: CustomerSidebarProps) {
   const { t } = useTranslation()
+  const location = useLocation()
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -57,23 +61,28 @@ export function CustomerSidebar({
         ) : (
           items.map((item) => {
             const Icon = item.icon
+            const active = isCustomerNavItemActive(
+              item,
+              items,
+              location.pathname,
+              location.hash,
+            )
             return (
-              <NavLink
+              <Link
                 key={item.id}
                 to={item.to}
                 onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )
-                }
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
                 <span className="truncate">{item.label}</span>
-              </NavLink>
+              </Link>
             )
           })
         )}

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
   buildPasswordResetRequestSchema,
   type PasswordResetRequestFormValues,
@@ -40,10 +41,53 @@ export function TenantPortalForgotPasswordPage() {
   const form = useForm<PasswordResetRequestFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "" },
-    mode: "onTouched",
+    mode: "onChange",
   })
-  const watchedValues = form.watch()
-  const isRequestValid = schema.safeParse(watchedValues).success
+  const emailValue = useWatch({ control: form.control, name: "email" }) ?? ""
+  const isRequestValid = schema.safeParse({ email: emailValue }).success
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    const formElement = formRef.current
+    if (!formElement) {
+      return
+    }
+
+    const applyEmail = (raw: string) => {
+      if (raw.length === 0 || form.getValues("email") === raw) {
+        return
+      }
+      form.setValue("email", raw, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      })
+    }
+
+    const detach = attachAutofillSync(formElement, (name, raw) => {
+      if (name !== "email") {
+        return
+      }
+      applyEmail(raw)
+    })
+
+    const rescan = () => {
+      const input = formElement.querySelector<HTMLInputElement>(
+        'input[name="email"]',
+      )
+      if (!input) {
+        return
+      }
+      applyEmail(input.value)
+    }
+
+    const timer = window.setTimeout(rescan, 0)
+
+    return () => {
+      detach()
+      window.clearTimeout(timer)
+    }
+  }, [form])
 
   async function onSubmit(values: PasswordResetRequestFormValues) {
     setSubmitting(true)
@@ -76,7 +120,12 @@ export function TenantPortalForgotPasswordPage() {
       </div>
 
       <Form {...form}>
-        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <form
+          ref={formRef}
+          className="space-y-4"
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+        >
           <FormField
             control={form.control}
             name="email"
