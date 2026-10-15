@@ -8,6 +8,11 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
+import {
+  portalPickAvailableClass,
+  portalPickAvailableSelectedClass,
+  portalPickUnavailableClass,
+} from "@/features/rentals/components/layout/portalPickStyles"
 
 export type CanvasBoardItem = {
   key: string
@@ -21,6 +26,8 @@ export type CanvasBoardItem = {
   available?: boolean
   selected?: boolean
   disabled?: boolean
+  /** Visible status for a space that cannot be booked. Not a hover-only tooltip. */
+  detail?: string | null
 }
 
 type TileDrag = {
@@ -205,28 +212,30 @@ export function LayoutCanvasBoard({
           style={{ aspectRatio: String(aspectRatio) }}
         >
           {items.map((item) => {
-            const unavailable = mode === "pick" && item.disabled
-            const clickable = mode === "pick" && !unavailable
+            const picked = mode === "pick"
+            const unavailable = picked && item.disabled === true
+            const selected = picked && item.selected === true && !unavailable
+            const clickable = picked && !unavailable
+            const accessibleName = item.detail
+              ? `${item.label}. ${item.detail}`
+              : item.label
             return (
               <div
                 key={item.key}
-                role={mode === "pick" ? "button" : undefined}
+                role={picked ? "button" : undefined}
                 tabIndex={clickable ? 0 : undefined}
-                aria-label={item.label}
-                title={item.label}
-                aria-pressed={mode === "pick" ? item.selected : undefined}
+                aria-label={accessibleName}
+                title={accessibleName}
+                aria-pressed={picked ? item.selected : undefined}
                 aria-disabled={unavailable || undefined}
                 className={cn(
                   "absolute flex min-w-0 items-center justify-center overflow-hidden rounded-lg border px-0.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:px-1.5 sm:text-sm",
+                  picked && "flex-col gap-0.5",
                   mode === "edit" &&
                     "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
-                  clickable &&
-                    !item.selected &&
-                    "cursor-pointer border-emerald-500/70 bg-emerald-100 text-emerald-950 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-50",
-                  item.selected &&
-                    "border-primary bg-primary/20 text-foreground ring-2 ring-primary",
-                  unavailable &&
-                    "cursor-not-allowed border-border bg-muted text-muted-foreground",
+                  clickable && !selected && portalPickAvailableClass,
+                  selected && portalPickAvailableSelectedClass,
+                  unavailable && portalPickUnavailableClass,
                 )}
                 style={{
                   left: `${item.xPercent}%`,
@@ -253,6 +262,11 @@ export function LayoutCanvasBoard({
                 <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                   {item.label}
                 </span>
+                {item.detail ? (
+                  <span className="line-clamp-2 max-w-full px-0.5 text-xs font-semibold leading-tight">
+                    {item.detail}
+                  </span>
+                ) : null}
                 {mode === "edit" && onRemove ? (
                   <button
                     type="button"

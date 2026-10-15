@@ -15,8 +15,8 @@ import {
   clearCustomerSession,
   fetchTenantBranding,
   fetchTenantMenu,
-  getCustomerAccessToken,
   getCustomerLabel,
+  isCustomerSignedInForTenant,
   resolveTenantSubdomain,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -41,7 +41,8 @@ export function CustomerAppLayout() {
     return resolveTenantSubdomain(window.location.pathname)
   }, [params.subdomain])
 
-  const signedIn = getCustomerAccessToken() !== null
+  const signedIn =
+    subdomain !== null && isCustomerSignedInForTenant(subdomain)
   const [branding, setBranding] = useState<TenantBranding | null>(null)
   const [menu, setMenu] = useState<ModuleMenuItem[]>([])
   const [error, setError] = useState<string | null>(null)

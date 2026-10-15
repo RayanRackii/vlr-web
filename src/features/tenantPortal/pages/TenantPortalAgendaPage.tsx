@@ -32,8 +32,14 @@ import {
   findSlotAtStart,
   isCustomerBookableSlot,
   listDistinctStartTimes,
+  normalizeClock,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
+import {
+  portalPickAvailableClass,
+  portalPickAvailableSelectedClass,
+  portalPickUnavailableClass,
+} from "@/features/rentals/components/layout/portalPickStyles"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import {
@@ -62,8 +68,8 @@ import {
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
   formatScheduleTime,
-  getCustomerAccessToken,
   getReservationQueueErrorCode,
+  isCustomerSignedInForTenant,
   isLocationQueueEnabled,
   listMyPortalReservations,
   tenantPortalPath,
@@ -78,17 +84,33 @@ import {
 } from "@/lib/brazilTimeZone"
 import { cn } from "@/lib/utils"
 
-function upcomingBookableSlots(
+function reservationSlotKey(rentalAssetId: string, startTime: string): string {
+  return `${rentalAssetId}|${normalizeClock(startTime)}`
+}
+
+function isReservedObservation(slot: PortalScheduleSlot | undefined): boolean {
+  if (!slot || isCustomerBookableSlot(slot)) {
+    return false
+  }
+  return (
+    slot.status.toLowerCase() === "booked" ||
+    Boolean(slot.reservationId)
+  )
+}
+
+function partitionAgendaSlots(
   daySlots: readonly PortalScheduleSlot[],
   dayDate: string,
 ) {
-  const bookable = daySlots.filter(isCustomerBookableSlot)
-  const upcoming = bookable.filter(
+  const observed = daySlots.filter(
     (slot) => !isBrazilSlotStartInPast(dayDate, slot.startTime),
   )
+  const bookable = observed.filter(isCustomerBookableSlot)
+  const bookableIncludingPast = daySlots.filter(isCustomerBookableSlot)
   return {
-    upcoming,
-    pastHidden: upcoming.length < bookable.length,
+    observed,
+    bookable,
+    pastHidden: bookable.length < bookableIncludingPast.length,
   }
 }
 
@@ -99,7 +121,7 @@ export function TenantPortalAgendaPage() {
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
     useOutletContext<CustomerAppOutletContext>()
-  const signedIn = getCustomerAccessToken() !== null
+  const signedIn = isCustomerSignedInForTenant(subdomain)
 
   const menuItem = useMemo(
     () => menu.find((item) => item.id === menuItemId) ?? null,
@@ -112,6 +134,10 @@ export function TenantPortalAgendaPage() {
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>([])
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
+  const [observedSlots, setObservedSlots] = useState<PortalScheduleSlot[]>([])
+  const [reservedKeys, setReservedKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
   const [date, setDate] = useState(brazilTodayIsoDate())
   const [pastSlotsHidden, setPastSlotsHidden] = useState(false)
   const [startTime, setStartTime] = useState("")
@@ -278,6 +304,8 @@ export function TenantPortalAgendaPage() {
     setSlotsError(false)
     setPastSlotsHidden(false)
     setSlots([])
+    setObservedSlots([])
+    setReservedKeys(new Set())
     setStartTime("")
     setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
@@ -285,15 +313,17 @@ export function TenantPortalAgendaPage() {
         if (cancelled) {
           return
         }
-        const selected = upcomingBookableSlots(day.slots, date)
-        setSlots(selected.upcoming)
+        const selected = partitionAgendaSlots(day.slots, date)
+        setSlots(selected.bookable)
+        setObservedSlots(selected.observed)
         setPastSlotsHidden(selected.pastHidden)
-        const times = listDistinctStartTimes(selected.upcoming)
+        const times = listDistinctStartTimes(selected.bookable)
         setStartTime(times[0]?.startTime ?? "")
       })
       .catch((error) => {
         if (!cancelled) {
           setSlots([])
+          setObservedSlots([])
           setStartTime("")
           setSlotsError(true)
           toast.error(
@@ -440,9 +470,22 @@ export function TenantPortalAgendaPage() {
         if (viewedDateRef.current !== dayDate) {
           return
         }
-        const selected = upcomingBookableSlots(day.slots, dayDate)
-        setSlots(selected.upcoming)
+        const selected = partitionAgendaSlots(day.slots, dayDate)
+        setSlots(selected.bookable)
+        setObservedSlots(selected.observed)
         setPastSlotsHidden(selected.pastHidden)
+        setReservedKeys((current) => {
+          if (current.size === 0) {
+            return current
+          }
+          const next = new Set(current)
+          for (const slot of selected.bookable) {
+            next.delete(
+              reservationSlotKey(slot.rentalAssetId, slot.startTime),
+            )
+          }
+          return next.size === current.size ? current : next
+        })
       })
       .catch(() => {
         // The mutation result is already on screen. A slow or failed
@@ -485,6 +528,11 @@ export function TenantPortalAgendaPage() {
         created,
         ...current.filter((reservation) => reservation.id !== created.id),
       ])
+      setReservedKeys((current) => {
+        const next = new Set(current)
+        next.add(reservationSlotKey(slot.rentalAssetId, slot.startTime))
+        return next
+      })
       setSlots((current) =>
         current.filter(
           (candidate) =>
@@ -518,6 +566,11 @@ export function TenantPortalAgendaPage() {
       }
       if (isSlotTakenConflict(error)) {
         toast.error(t("tenantPortal.agenda.slotJustTaken"))
+        setReservedKeys((current) => {
+          const next = new Set(current)
+          next.add(reservationSlotKey(slot.rentalAssetId, slot.startTime))
+          return next
+        })
         setSelectedRentalAssetId(null)
         refreshAgenda(dayDate)
         return
@@ -593,10 +646,27 @@ export function TenantPortalAgendaPage() {
     const slot = startTime
       ? findSlotAtStart(slots, rentalAssetId, startTime)
       : undefined
+    const observed = startTime
+      ? findSlotAtStart(observedSlots, rentalAssetId, startTime)
+      : undefined
+    const keyReserved =
+      startTime.length > 0 &&
+      reservedKeys.has(reservationSlotKey(rentalAssetId, startTime))
+    const reserved =
+      keyReserved ||
+      (startTime.length > 0 && !slot && isReservedObservation(observed))
+    const available = Boolean(slot) && !keyReserved
+    const detail =
+      startTime.length === 0 || available
+        ? null
+        : reserved
+          ? t("tenantPortal.agenda.slotReserved")
+          : t("tenantPortal.agenda.unavailable")
     return {
-      available: Boolean(slot),
-      disabled: !slot,
-      selected: selectedRentalAssetId === rentalAssetId,
+      available,
+      disabled: !available,
+      selected: available && selectedRentalAssetId === rentalAssetId,
+      detail,
     }
   }
 
@@ -682,13 +752,13 @@ export function TenantPortalAgendaPage() {
             </span>
           ) : null}
 
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-3 rounded-sm border border-emerald-500/70 bg-emerald-100 dark:bg-emerald-950" />
+          <div className="flex flex-wrap gap-3 text-sm">
+            <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <span className="size-3 rounded-sm border-2 border-emerald-700 bg-emerald-500 dark:border-emerald-300" />
               {t("tenantPortal.agenda.legendAvailable")}
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-3 rounded-sm border border-border bg-muted" />
+            <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <span className="size-3 rounded-sm border-2 border-foreground/80 bg-foreground/40" />
               {t("tenantPortal.agenda.legendUnavailable")}
             </span>
           </div>
@@ -723,6 +793,7 @@ export function TenantPortalAgendaPage() {
                   available: inVisibleSet && state.available,
                   disabled,
                   selected: inVisibleSet && state.selected,
+                  detail: inVisibleSet ? state.detail : null,
                 }
               })}
               onSelect={setSelectedRentalAssetId}
@@ -743,22 +814,31 @@ export function TenantPortalAgendaPage() {
                       type="button"
                       disabled={state.disabled || submitting}
                       aria-pressed={state.selected}
-                      className="rounded-lg border px-3 py-4 text-sm font-medium disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
-                      style={
-                        state.disabled
-                          ? undefined
-                          : {
-                              borderColor: state.selected ? primary : undefined,
-                              backgroundColor: state.selected
-                                ? `${primary}22`
-                                : undefined,
-                            }
+                      aria-label={
+                        state.detail
+                          ? `${asset.name}. ${state.detail}`
+                          : asset.name
                       }
+                      className={cn(
+                        "rounded-lg border px-3 py-4 text-sm font-medium",
+                        state.available &&
+                          state.selected &&
+                          portalPickAvailableSelectedClass,
+                        state.available &&
+                          !state.selected &&
+                          portalPickAvailableClass,
+                        !state.available && portalPickUnavailableClass,
+                      )}
                       onClick={() => {
                         setSelectedRentalAssetId(asset.id)
                       }}
                     >
-                      {asset.name}
+                      <span className="block">{asset.name}</span>
+                      {state.detail ? (
+                        <span className="mt-1 block text-xs font-semibold">
+                          {state.detail}
+                        </span>
+                      ) : null}
                     </button>
                   )
                 })}

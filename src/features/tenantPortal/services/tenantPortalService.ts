@@ -40,6 +40,8 @@ const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
 const CUSTOMER_ID_KEY = "rolvix.customer.id"
+/** Must match `CUSTOMER_TENANT_ID_STORAGE_KEY` in `src/lib/api.ts`. */
+const CUSTOMER_TENANT_ID_KEY = "rolvix.customer.tenantId"
 const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
   "rolvix.customer.pendingEmailVerification"
 
@@ -468,6 +470,7 @@ export async function verifyCustomerEmail(
       subdomain,
       parsed.data.customer.email ?? parsed.data.customer.name,
       parsed.data.customer.id,
+      parsed.data.customer.tenantId,
     )
     return parsed.data
   } catch (error) {
@@ -539,6 +542,7 @@ export async function loginCustomer(
       subdomain,
       parsed.data.customer.email ?? parsed.data.customer.name,
       parsed.data.customer.id,
+      parsed.data.customer.tenantId,
     )
     return parsed.data
   } catch (error) {
@@ -556,14 +560,21 @@ export function persistCustomerSession(
   subdomain: string,
   label?: string,
   customerId?: string,
+  tenantId?: string,
 ): void {
   window.localStorage.setItem(CUSTOMER_TOKEN_KEY, token)
-  window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain)
+  window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain.trim().toLowerCase())
   if (label && label.trim().length > 0) {
     window.localStorage.setItem(CUSTOMER_LABEL_KEY, label.trim())
   }
   if (customerId && customerId.trim().length > 0) {
     window.localStorage.setItem(CUSTOMER_ID_KEY, customerId.trim())
+  }
+  const normalizedTenantId = normalizeGuid(tenantId)
+  if (normalizedTenantId) {
+    window.localStorage.setItem(CUSTOMER_TENANT_ID_KEY, normalizedTenantId)
+  } else {
+    window.localStorage.removeItem(CUSTOMER_TENANT_ID_KEY)
   }
 }
 
@@ -572,10 +583,50 @@ export function clearCustomerSession(): void {
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_KEY)
   window.localStorage.removeItem(CUSTOMER_LABEL_KEY)
   window.localStorage.removeItem(CUSTOMER_ID_KEY)
+  window.localStorage.removeItem(CUSTOMER_TENANT_ID_KEY)
 }
 
 export function getCustomerAccessToken(): string | null {
-  return window.localStorage.getItem(CUSTOMER_TOKEN_KEY)
+  const stored = window.localStorage.getItem(CUSTOMER_TOKEN_KEY)
+  if (stored === null || stored.length === 0) {
+    return null
+  }
+  return stored
+}
+
+export function getCustomerSubdomain(): string | null {
+  return normalizeTenantSlug(window.localStorage.getItem(CUSTOMER_SUBDOMAIN_KEY))
+}
+
+/**
+ * Customer session for this portal tenant only.
+ * A token saved for another subdomain is not signed in here.
+ * When both the saved tenant id and the token `tenant_id` claim are present,
+ * they must match. The API still authorizes every request.
+ */
+export function isCustomerSignedInForTenant(subdomain: string): boolean {
+  const slug = normalizeTenantSlug(subdomain)
+  const token = getCustomerAccessToken()
+  if (slug === null || token === null) {
+    return false
+  }
+  if (getCustomerSubdomain() !== slug) {
+    return false
+  }
+
+  const storedTenantId = normalizeGuid(
+    window.localStorage.getItem(CUSTOMER_TENANT_ID_KEY),
+  )
+  const tokenTenantId = normalizeGuid(decodeJwtClaim(token, "tenant_id"))
+  if (
+    storedTenantId !== null &&
+    tokenTenantId !== null &&
+    storedTenantId !== tokenTenantId
+  ) {
+    return false
+  }
+
+  return true
 }
 
 export function getCustomerLabel(): string | null {
@@ -591,30 +642,48 @@ export function getCustomerId(): string | null {
   return decodeCustomerIdFromToken(getCustomerAccessToken())
 }
 
-function decodeCustomerIdFromToken(token: string | null): string | null {
+function normalizeTenantSlug(value: string | null | undefined): string | null {
+  const slug = value?.trim().toLowerCase() ?? ""
+  return slug.length > 0 ? slug : null
+}
+
+function normalizeGuid(value: string | null | undefined): string | null {
+  const guid = value?.trim().toLowerCase() ?? ""
+  return guid.length > 0 ? guid : null
+}
+
+function decodeJwtClaim(token: string | null, claim: string): string | null {
   if (!token) {
     return null
   }
 
-  const parts = token.split(".")
-  const payloadPart = parts[1]
+  const payloadPart = token.split(".")[1]
   if (!payloadPart) {
     return null
   }
 
   try {
-    const padded = payloadPart.replace(/-/g, "+").replace(/_/g, "/")
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    )
     const json = window.atob(padded)
     const parsed: unknown = JSON.parse(json)
     if (typeof parsed !== "object" || parsed === null) {
       return null
     }
-    const record = parsed as Record<string, unknown>
-    const customerId = record.customer_id
-    return typeof customerId === "string" ? customerId : null
+    const value = (parsed as Record<string, unknown>)[claim]
+    return typeof value === "string" && value.trim().length > 0
+      ? value.trim()
+      : null
   } catch {
     return null
   }
+}
+
+function decodeCustomerIdFromToken(token: string | null): string | null {
+  return decodeJwtClaim(token, "customer_id")
 }
 
 export async function fetchTenantMenu(

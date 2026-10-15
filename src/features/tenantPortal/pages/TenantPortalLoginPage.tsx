@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate, useOutletContext } from "react-router-dom"
+import { Link, Navigate, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -21,6 +21,7 @@ import {
   type CustomerLoginFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  isCustomerSignedInForTenant,
   loginCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -65,6 +66,10 @@ export function TenantPortalLoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (isCustomerSignedInForTenant(subdomain)) {
+    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
   }
 
   return (
