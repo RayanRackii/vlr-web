@@ -140,6 +140,13 @@ describe("TenantPortalRegisterPage email verification", () => {
       screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
       "11988880001",
     )
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.phone"))).toHaveValue(
+      "(11) 98888-0001",
+    )
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.phone"))).toHaveAttribute(
+      "placeholder",
+      i18n.t("tenantPortal.fields.phonePlaceholder"),
+    )
     await user.type(
       screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
       "52998224725",
@@ -375,7 +382,7 @@ describe("TenantPortalRegisterPage browser autofill", () => {
       name: i18n.t("tenantPortal.register.submit"),
     })
     await waitFor(() => {
-      expect(phone).toHaveValue("45999999999")
+      expect(phone).toHaveValue("+55 (45) 99999-9999")
       expect(submit).toBeEnabled()
     })
 
