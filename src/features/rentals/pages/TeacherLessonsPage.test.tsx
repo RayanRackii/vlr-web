@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
@@ -95,6 +95,11 @@ function addIsoDays(iso: string, days: number) {
   const date = new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1))
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
+}
+
+async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await screen.findByRole("alertdialog")
+  await user.click(within(dialog).getByRole("button", { name: "Confirmar remoção" }))
 }
 
 describe("TeacherLessonsPage", () => {
@@ -239,12 +244,15 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
 
     await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    expect(removeTeacherLesson).not.toHaveBeenCalled()
+    await confirmLessonRemoval(user)
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
       "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
     ))
     expect(toast.success).not.toHaveBeenCalled()
-    expect(screen.getByRole("button", { name: "Remover aula 12:00" })).toBeInTheDocument()
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Remover aula 12:00", hidden: true })).toBeInTheDocument()
   })
 
   it("toasts success only when create and remove return the expected unreserved slot", async () => {
@@ -280,6 +288,7 @@ describe("TeacherLessonsPage", () => {
     expect(screen.getByLabelText("Nome da aula (opcional)")).toHaveValue("")
 
     await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    await confirmLessonRemoval(user)
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aula removida nesta data."))
     expect(toast.error).not.toHaveBeenCalled()
   })
@@ -458,5 +467,86 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
     expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+  })
+
+  it("does not show an empty lesson list while the initial day read is still in flight", async () => {
+    const lessonDate = addIsoDays(todayIsoDate(), 1)
+    const lesson = {
+      ...lessonSlot,
+      date: lessonDate,
+      startTime: "15:00:00",
+      endTime: "16:00:00",
+      id: "e295e5f4-c8bf-48ae-96b3-7210d4b3138f",
+      occupancyKindKey: "lesson",
+      isBookableByCustomer: false,
+      label: "Aula teste Bot4",
+      status: "Available",
+      reservationId: null,
+    }
+    let resolveDay: (value: { date: string; slots: typeof lesson[] }) => void = () => undefined
+    const pendingDay = new Promise<{ date: string; slots: typeof lesson[] }>((resolve) => {
+      resolveDay = resolve
+    })
+    vi.mocked(fetchAdminScheduleDay).mockReturnValue(pendingDay)
+    window.history.replaceState(null, "", `/configuracoes/agenda?date=${lessonDate}`)
+
+    render(<TeacherLessonsPage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: "Quadra" })).toHaveTextContent("Quadra 1")
+      expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
+    })
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando as aulas desta data.")
+
+    await act(async () => {
+      resolveDay({ date: lessonDate, slots: [lesson] })
+    })
+
+    expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("lists the freed time in start order after a lesson is removed", async () => {
+    const user = userEvent.setup()
+    const slot10 = { ...openSlot, startTime: "10:00:00", endTime: "11:00:00" }
+    const slot14 = {
+      ...openSlot,
+      id: "91111111-1111-1111-1111-111111111112",
+      startTime: "14:00:00",
+      endTime: "15:00:00",
+      reservationId: null,
+    }
+    const lesson12 = { ...lessonSlot, startTime: "12:00:00", endTime: "13:00:00" }
+    let reads = 0
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => {
+      reads += 1
+      if (reads === 1) return { date, slots: [slot10, slot14, lesson12] }
+      return { date, slots: [slot10, slot14] }
+    })
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => ({
+      ...openSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "open",
+      status: "Available",
+      reservationId: null,
+    }))
+    render(<TeacherLessonsPage />)
+
+    await screen.findByRole("button", { name: "Remover aula 12:00" })
+    const callsBeforeRemoval = vi.mocked(fetchAdminScheduleDay).mock.calls.length
+    await user.click(screen.getByRole("button", { name: "Remover aula 12:00" }))
+    await confirmLessonRemoval(user)
+    await waitFor(() => expect(vi.mocked(fetchAdminScheduleDay).mock.calls.length).toBe(callsBeforeRemoval + 1))
+
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
+      "10:00–11:00",
+      "12:00–13:00",
+      "14:00–15:00",
+    ])
   })
 })

@@ -55,11 +55,19 @@ function sameClockInterval(slot: LessonSlot, assetId: string, startTime: string,
     && sameClock(slot.endTime, endTime)
 }
 
+export function compareSlotsByStartTime(
+  left: { startTime: string; endTime: string },
+  right: { startTime: string; endTime: string },
+) {
+  const start = left.startTime.localeCompare(right.startTime)
+  return start !== 0 ? start : left.endTime.localeCompare(right.endTime)
+}
+
 function replaceInterval(slots: LessonSlot[], assetId: string, startTime: string, endTime: string, next: LessonSlot) {
   return [
     ...slots.filter((slot) => !sameClockInterval(slot, assetId, startTime, endTime)),
     next,
-  ]
+  ].sort(compareSlotsByStartTime)
 }
 
 function applyWrites(day: AdminDaySchedule, writes: LocalWrite[], assetId: string, date: string) {
@@ -79,9 +87,12 @@ function applyWrites(day: AdminDaySchedule, writes: LocalWrite[], assetId: strin
   return { day: { ...day, slots }, writes: kept }
 }
 
+export type TeacherDayStatus = "idle" | "loading" | "ready" | "error"
+
 export function useTeacherLessons(t: TFunction) {
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
+  const [dayStatus, setDayStatus] = useState<TeacherDayStatus>("idle")
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const latestDayRequest = useRef(0)
@@ -105,6 +116,7 @@ export function useTeacherLessons(t: TFunction) {
     shownKey.current = dayKey(assetId, date)
     dayRef.current = next
     setDay(next)
+    setDayStatus("ready")
   }, [])
 
   const rememberWrite = useCallback((slot: LessonSlot, assetId: string, date: string) => {
@@ -126,6 +138,7 @@ export function useTeacherLessons(t: TFunction) {
     if (!refreshingSameDay) {
       dayRef.current = null
       setDay(null)
+      setDayStatus("loading")
     }
     try {
       const result = await fetchAdminScheduleDay(date, [assetId])
@@ -139,6 +152,7 @@ export function useTeacherLessons(t: TFunction) {
         if (!refreshingSameDay) {
           dayRef.current = null
           setDay(null)
+          setDayStatus("error")
         }
         toast.error(error instanceof Error ? error.message : t("rentals.teacherLessons.loadError"))
       }
@@ -183,5 +197,5 @@ export function useTeacherLessons(t: TFunction) {
     } finally { setBusy(false) }
   }, [rememberWrite, t])
 
-  return { assets, day, loading, busy, loadDay, create, remove }
+  return { assets, day, dayStatus, loading, busy, loadDay, create, remove }
 }
