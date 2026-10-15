@@ -32,8 +32,14 @@ function loggedText(spy: { mock: { calls: ReadonlyArray<readonly unknown[]> } })
 const OLD_STAFF_TOKEN = "old-staff-access-token"
 const NEW_STAFF_TOKEN = "new-staff-access-token"
 const CUSTOMER_ACCESS_TOKEN = "customer-access-token"
+const NEXT_CUSTOMER_TOKEN = "customer-access-token-next"
 const REFRESH_SECRET = "refresh-token-secret"
+const OTHER_REFRESH_SECRET = "other-refresh-token-secret"
 const STAFF_EMAIL = "staff@club.test"
+const OTHER_STAFF_EMAIL = "other-staff@club.test"
+const CUSTOMER_ID = "rolvix.customer.id"
+const CUSTOMER_ID_VALUE = "customer-id-secret"
+const NEXT_CUSTOMER_ID = "customer-id-next"
 
 type Outcome =
   | { kind: "status"; status: number }
@@ -65,6 +71,38 @@ function authorizationOf(config: InternalAxiosRequestConfig): string | null {
 
   const direct = headers.Authorization ?? headers.authorization
   return typeof direct === "string" && direct.length > 0 ? direct : null
+}
+
+function holdStaffRefresh(): { release: (value: unknown) => void } {
+  let release: (value: unknown) => void = () => undefined
+  const promise = new Promise((resolve) => {
+    release = resolve
+  })
+  vi.mocked(supabase.auth.refreshSession).mockReturnValue(
+    promise as ReturnType<typeof supabase.auth.refreshSession>,
+  )
+  return { release }
+}
+
+function refreshedStaffSession(userId: string): unknown {
+  return {
+    data: {
+      session: {
+        access_token: NEW_STAFF_TOKEN,
+        refresh_token: REFRESH_SECRET,
+        user: { id: userId, email: STAFF_EMAIL },
+      },
+      user: { id: userId, email: STAFF_EMAIL },
+    },
+    error: null,
+  }
+}
+
+function requireFunctionAdapter(adapter: typeof api.defaults.adapter) {
+  if (typeof adapter !== "function") {
+    throw new Error("missing adapter")
+  }
+  return adapter
 }
 
 function installAdapter(
@@ -164,6 +202,9 @@ describe("staff api 401 retry", () => {
     expect(calls[0]).toBe(`Bearer ${OLD_STAFF_TOKEN}`)
     expect(calls[1]).toBe(`Bearer ${NEW_STAFF_TOKEN}`)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+      refresh_token: REFRESH_SECRET,
+    })
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     expect(assignBrowserLocation).not.toHaveBeenCalled()
@@ -178,7 +219,7 @@ describe("staff api 401 retry", () => {
     expect(logged).toContain("\"requestPath\":\"/api/users/me\"")
   })
 
-  it("does not sign out when refresh returns a terminal auth error", async () => {
+  it("signs out locally when refresh returns refresh_token_not_found", async () => {
     const calls = installAdapter(api, [{ kind: "status", status: 401 }])
     vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
       data: { session: null, user: null },
@@ -195,7 +236,11 @@ describe("staff api 401 retry", () => {
 
     expect(calls).toHaveLength(1)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
-    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+      refresh_token: REFRESH_SECRET,
+    })
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" })
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     const logged = loggedText(info)
     expect(logged).toContain("\"errorName\":\"AuthApiError\"")
@@ -204,6 +249,38 @@ describe("staff api 401 retry", () => {
     expect(logged).not.toContain(REFRESH_SECRET)
     expect(logged).not.toContain(OLD_STAFF_TOKEN)
   })
+
+  it.each([
+    {
+      label: "invalid grant",
+      error: new AuthApiError("invalid grant", 400, "invalid_grant"),
+    },
+    {
+      label: "401",
+      error: new AuthApiError("unauthorized", 401, "bad_jwt"),
+    },
+  ])(
+    "signs out locally when refresh fails with $label and does not retry",
+    async ({ error }) => {
+      const calls = installAdapter(api, [{ kind: "status", status: 401 }])
+      vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+        data: { session: null, user: null },
+        error,
+      } as never)
+
+      await expect(api.get("/api/users/me")).rejects.toMatchObject({
+        response: { status: 401 },
+      })
+
+      expect(calls).toHaveLength(1)
+      expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" })
+      expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
+      const logged = loggedText(info)
+      expect(logged).not.toContain(REFRESH_SECRET)
+      expect(logged).not.toContain(OLD_STAFF_TOKEN)
+      expect(logged).not.toContain(STAFF_EMAIL)
+    },
+  )
 
   it.each([
     {
@@ -308,6 +385,76 @@ describe("staff api 401 retry", () => {
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
+
+  it("drops the retry when signOut runs while refresh is in flight", async () => {
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+    const pendingRefresh = holdStaffRefresh()
+    const pending = api.get("/api/users/me")
+
+    await vi.waitFor(() => {
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+        refresh_token: REFRESH_SECRET,
+      })
+    })
+    await supabase.auth.signOut()
+    pendingRefresh.release(refreshedStaffSession("user-1"))
+
+    await expect(pending).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+    expect(calls).toEqual([`Bearer ${OLD_STAFF_TOKEN}`])
+    expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: "local" })
+    const logged = loggedText(info)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(NEW_STAFF_TOKEN)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(STAFF_EMAIL)
+  })
+
+  it("drops the retry when the stored user changes while refresh is in flight", async () => {
+    const calls = installAdapter(api, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+    const pendingRefresh = holdStaffRefresh()
+    const pending = api.get("/api/users/me")
+
+    await vi.waitFor(() => {
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
+        refresh_token: REFRESH_SECRET,
+      })
+    })
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: {
+          access_token: "other-staff-access-token",
+          refresh_token: OTHER_REFRESH_SECRET,
+          user: { id: "user-2", email: OTHER_STAFF_EMAIL },
+        },
+      },
+      error: null,
+    } as never)
+    pendingRefresh.release(refreshedStaffSession("user-1"))
+
+    await expect(pending).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+    expect(calls).toEqual([`Bearer ${OLD_STAFF_TOKEN}`])
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(OLD_STAFF_TOKEN)
+    expect(logged).not.toContain(NEW_STAFF_TOKEN)
+    expect(logged).not.toContain(REFRESH_SECRET)
+    expect(logged).not.toContain(OTHER_REFRESH_SECRET)
+    expect(logged).not.toContain(STAFF_EMAIL)
+    expect(logged).not.toContain(OTHER_STAFF_EMAIL)
+    expect(logged).not.toContain("other-staff-access-token")
+  })
 })
 
 describe("customer api 401 retry", () => {
@@ -316,6 +463,7 @@ describe("customer api 401 retry", () => {
     window.localStorage.setItem(CUSTOMER_TOKEN, CUSTOMER_ACCESS_TOKEN)
     window.localStorage.setItem(CUSTOMER_SUBDOMAIN, "ficc")
     window.localStorage.setItem(CUSTOMER_LABEL, "FICC")
+    window.localStorage.setItem(CUSTOMER_ID, CUSTOMER_ID_VALUE)
     vi.mocked(assignBrowserLocation).mockClear()
     vi.mocked(supabase.auth.signOut).mockClear()
     vi.mocked(supabase.auth.refreshSession).mockClear()
@@ -325,6 +473,7 @@ describe("customer api 401 retry", () => {
     window.localStorage.removeItem(CUSTOMER_TOKEN)
     window.localStorage.removeItem(CUSTOMER_SUBDOMAIN)
     window.localStorage.removeItem(CUSTOMER_LABEL)
+    window.localStorage.removeItem(CUSTOMER_ID)
     window.history.pushState({}, "", "/")
   })
 
@@ -355,6 +504,7 @@ describe("customer api 401 retry", () => {
     expect(calls[0]).toBe(`Bearer ${CUSTOMER_ACCESS_TOKEN}`)
     expect(calls[1]).toBe(`Bearer ${CUSTOMER_ACCESS_TOKEN}`)
     expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBe(CUSTOMER_ACCESS_TOKEN)
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBe(CUSTOMER_ID_VALUE)
     expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBe("ficc")
     expect(assignBrowserLocation).not.toHaveBeenCalled()
     expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
@@ -375,8 +525,12 @@ describe("customer api 401 retry", () => {
     expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBeNull()
     expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBeNull()
     expect(window.localStorage.getItem(CUSTOMER_LABEL)).toBeNull()
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBeNull()
     expect(assignBrowserLocation).toHaveBeenCalledTimes(1)
     expect(assignBrowserLocation).toHaveBeenCalledWith("/t/ficc")
+    const logged = loggedText(info)
+    expect(logged).not.toContain(CUSTOMER_ACCESS_TOKEN)
+    expect(logged).not.toContain(CUSTOMER_ID_VALUE)
   })
 
   it.each([
@@ -417,6 +571,115 @@ describe("customer api 401 retry", () => {
       expect(assignBrowserLocation).not.toHaveBeenCalled()
     },
   )
+
+  it("does not replay or clear a login that replaced the 401 bearer", async () => {
+    const calls = installAdapter(customerApi, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+    const inner = requireFunctionAdapter(customerApi.defaults.adapter)
+    customerApi.defaults.adapter = (config) => {
+      window.localStorage.setItem(CUSTOMER_TOKEN, NEXT_CUSTOMER_TOKEN)
+      window.localStorage.setItem(CUSTOMER_ID, NEXT_CUSTOMER_ID)
+      return inner(config)
+    }
+
+    const error = await customerApi.get("/api/customers/me").then(
+      () => null,
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toBeInstanceOf(AxiosError)
+    if (!(error instanceof AxiosError) || error.config === undefined) {
+      throw new Error("expected the original 401")
+    }
+    expect(error.response?.status).toBe(401)
+    expect(authorizationOf(error.config)).toBeNull()
+    expect(calls).toEqual([`Bearer ${CUSTOMER_ACCESS_TOKEN}`])
+    expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBe(NEXT_CUSTOMER_TOKEN)
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBe(NEXT_CUSTOMER_ID)
+    expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBe("ficc")
+    expect(window.localStorage.getItem(CUSTOMER_LABEL)).toBe("FICC")
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
+    const logged = loggedText(info)
+    expect(logged).not.toContain(CUSTOMER_ACCESS_TOKEN)
+    expect(logged).not.toContain(NEXT_CUSTOMER_TOKEN)
+    expect(logged).not.toContain(CUSTOMER_ID_VALUE)
+    expect(logged).not.toContain(NEXT_CUSTOMER_ID)
+  })
+
+  it("does not retry when the customer token is already gone", async () => {
+    const calls = installAdapter(customerApi, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 200 },
+    ])
+    const inner = requireFunctionAdapter(customerApi.defaults.adapter)
+    customerApi.defaults.adapter = (config) => {
+      window.localStorage.removeItem(CUSTOMER_TOKEN)
+      return inner(config)
+    }
+
+    const error = await customerApi.get("/api/customers/me").then(
+      () => null,
+      (caught: unknown) => caught,
+    )
+
+    expect(error).toBeInstanceOf(AxiosError)
+    if (!(error instanceof AxiosError) || error.config === undefined) {
+      throw new Error("expected the original 401")
+    }
+    expect(authorizationOf(error.config)).toBeNull()
+    expect(calls).toEqual([`Bearer ${CUSTOMER_ACCESS_TOKEN}`])
+    expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBeNull()
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBe(CUSTOMER_ID_VALUE)
+    expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBe("ficc")
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
+  })
+
+  it("does not clear a replacement login when the retried request is 401", async () => {
+    const calls = installAdapter(customerApi, [
+      { kind: "status", status: 401 },
+      { kind: "status", status: 401 },
+    ])
+    const inner = requireFunctionAdapter(customerApi.defaults.adapter)
+    customerApi.defaults.adapter = (config) => {
+      const pending = inner(config)
+      if (calls.length === 2) {
+        window.localStorage.setItem(CUSTOMER_TOKEN, NEXT_CUSTOMER_TOKEN)
+        window.localStorage.setItem(CUSTOMER_ID, NEXT_CUSTOMER_ID)
+      }
+      return pending
+    }
+
+    await expect(customerApi.get("/api/customers/me")).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+
+    expect(calls).toEqual([
+      `Bearer ${CUSTOMER_ACCESS_TOKEN}`,
+      `Bearer ${CUSTOMER_ACCESS_TOKEN}`,
+    ])
+    expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBe(NEXT_CUSTOMER_TOKEN)
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBe(NEXT_CUSTOMER_ID)
+    expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBe("ficc")
+    expect(window.localStorage.getItem(CUSTOMER_LABEL)).toBe("FICC")
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
+  })
+
+  it("does not send a stale bearer on a retry after the token changed", async () => {
+    window.localStorage.setItem(CUSTOMER_TOKEN, NEXT_CUSTOMER_TOKEN)
+    const calls = installAdapter(customerApi, [{ kind: "status", status: 200 }])
+
+    const response = await customerApi.get("/api/customers/me", {
+      rolvixCustomerAuthRetry: true,
+      headers: { Authorization: `Bearer ${CUSTOMER_ACCESS_TOKEN}` },
+    })
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([""])
+    expect(window.localStorage.getItem(CUSTOMER_TOKEN)).toBe(NEXT_CUSTOMER_TOKEN)
+    expect(window.localStorage.getItem(CUSTOMER_ID)).toBe(CUSTOMER_ID_VALUE)
+  })
 })
 
 describe("staff api session log expiry", () => {
