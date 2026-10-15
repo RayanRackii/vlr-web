@@ -3,10 +3,12 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
+import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { getCurrentUser } from "@/features/users/services/usersService"
 import { PermissionProvider } from "@/features/users/permissions/PermissionContext"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import i18n from "@/lib/i18n"
 
 vi.mock("@/features/users/services/usersService", () => ({
   getCurrentUser: vi.fn(),
@@ -57,6 +59,7 @@ function renderHome() {
   return render(
     <MemoryRouter initialEntries={["/dashboard"]}>
       <PermissionProvider>
+        <StaffHomeRedirectNotice />
         <Routes>
           <Route element={<DashboardHomeRoute />}>
             <Route path="/dashboard" element={<h1>Painel</h1>} />
@@ -92,6 +95,7 @@ describe("DashboardHomeRoute", () => {
 
     expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Acesso negado" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
   })
 
   it("lands on the first permitted route when dashboard read is missing", async () => {
@@ -102,6 +106,10 @@ describe("DashboardHomeRoute", () => {
     expect(await screen.findByRole("heading", { name: "Pessoas" })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Acesso negado" })).not.toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Painel" })).not.toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      i18n.t("nav.dashboardRedirectNotice"),
+    )
+    expect(screen.getByRole("status")).not.toHaveTextContent("FORBIDDEN")
   })
 
   it("lands on the first allowed child route", async () => {
@@ -144,5 +152,49 @@ describe("DashboardHomeRoute", () => {
     renderHome()
 
     expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("sends a professor to the agenda with an explanation, not Recursos", async () => {
+    getCurrentUserMock.mockResolvedValue({
+      ...profile,
+      activeModules: ["rentals"],
+      permissions: [
+        "rentals.assets.read",
+        "rentals.occupancy_kinds.read",
+        "rentals.schedule.read",
+        "rentals.schedule.lessons.write",
+      ],
+    })
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <PermissionProvider>
+          <StaffHomeRedirectNotice />
+          <Routes>
+            <Route element={<DashboardHomeRoute />}>
+              <Route path="/dashboard" element={<h1>Painel</h1>} />
+            </Route>
+            <Route
+              element={
+                <PermissionRoute permissions={["rentals.assets.read", "core.units.read"]} />
+              }
+            >
+              <Route path="/configuracoes/recursos" element={<h1>Recursos</h1>} />
+            </Route>
+            <Route element={<PermissionRoute permission="rentals.schedule.read" />}>
+              <Route path="/configuracoes/agenda" element={<h1>Agenda</h1>} />
+            </Route>
+          </Routes>
+        </PermissionProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Agenda" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Recursos" })).not.toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      i18n.t("nav.dashboardRedirectNotice"),
+    )
   })
 })

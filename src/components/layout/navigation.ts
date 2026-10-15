@@ -36,7 +36,9 @@ export type AppNavigationChildItem = {
     | "nav.catalogOrders"
     | "nav.catalogNotifications"
   to: string
+  /** Every key is required. An entry with none is hidden. */
   permission?: string
+  permissions?: readonly string[]
 }
 
 export type AppNavigationItem = {
@@ -61,7 +63,9 @@ export type AppNavigationItem = {
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
   modules?: readonly string[]
+  /** Every key is required. An entry with none is hidden. */
   permission?: string
+  permissions?: readonly string[]
 }
 
 export type AppNavigationSectionTitleKey =
@@ -117,6 +121,15 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
   },
 ]
 
+/**
+ * Recursos lists rentable assets and loads `GET /api/units` (`core.units.read`).
+ * Court listing for lessons stays on `rentals.assets.read` alone.
+ */
+export const RENTAL_RESOURCES_PERMISSIONS = [
+  "rentals.assets.read",
+  "core.units.read",
+] as const
+
 const operationsItems: readonly AppNavigationItem[] = [
   {
     labelKey: "nav.assets",
@@ -171,7 +184,7 @@ const operationsItems: readonly AppNavigationItem[] = [
     to: "/configuracoes/recursos",
     icon: Boxes,
     modules: ["rentals"],
-    permission: "rentals.assets.read",
+    permissions: RENTAL_RESOURCES_PERMISSIONS,
   },
   {
     labelKey: "nav.schedule",
@@ -233,6 +246,36 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...operationsItems,
 ]
 
+export function declaredPermissionKeys(entry: {
+  permission?: string
+  permissions?: readonly string[]
+}): readonly string[] {
+  const keys: string[] = []
+  if (entry.permission) {
+    keys.push(entry.permission)
+  }
+
+  for (const key of entry.permissions ?? []) {
+    if (!keys.includes(key)) {
+      keys.push(key)
+    }
+  }
+
+  return keys
+}
+
+function hasDeclaredAccess(
+  entry: { permission?: string; permissions?: readonly string[] },
+  granted: readonly string[],
+): boolean {
+  const required = declaredPermissionKeys(entry)
+  if (required.length === 0) {
+    return false
+  }
+
+  return required.every((key) => hasPermission(granted, key))
+}
+
 function moduleIsEnabled(
   modules: readonly string[] | undefined,
   activeModules: readonly string[],
@@ -259,13 +302,16 @@ export function filterNavigationItemsByAccess(
     }
 
     if (item.children && item.children.length > 0) {
-      const children = item.children.filter((child) => {
-        if (!child.permission) {
-          return true
-        }
+      if (
+        declaredPermissionKeys(item).length > 0 &&
+        !hasDeclaredAccess(item, permissions)
+      ) {
+        return []
+      }
 
-        return hasPermission(permissions, child.permission)
-      })
+      const children = item.children.filter((child) =>
+        hasDeclaredAccess(child, permissions),
+      )
 
       if (children.length === 0) {
         return []
@@ -274,7 +320,7 @@ export function filterNavigationItemsByAccess(
       return [{ ...item, children }]
     }
 
-    if (item.permission && !hasPermission(permissions, item.permission)) {
+    if (!hasDeclaredAccess(item, permissions)) {
       return []
     }
 

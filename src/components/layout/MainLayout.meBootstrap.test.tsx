@@ -116,6 +116,7 @@ describe("MainLayout current-user bootstrap", () => {
     )
 
     expect(await screen.findByRole("heading", { name: "Notificações" })).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("app.authenticatedArea"))).toBeInTheDocument()
 
     await waitFor(() => {
       const meCalls = apiGet.mock.calls.filter((call) =>
@@ -160,5 +161,41 @@ describe("MainLayout current-user bootstrap", () => {
     )
     expect(meCalls).toHaveLength(1)
     expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("shows the tenant trade name in the header when /me includes it", async () => {
+    apiGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("/api/users/me")) {
+        return {
+          data: {
+            ...mePayload,
+            tenantTradeName: "FICC",
+            tenantLegalName: "FICC LTDA",
+          },
+        }
+      }
+      return { data: [] }
+    })
+
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/notificacoes"]}>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route
+              element={<PermissionRoute permission="core.notifications.read" />}
+            >
+              <Route
+                path="/configuracoes/notificacoes"
+                element={<h1>Notificações</h1>}
+              />
+            </Route>
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText("FICC")).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("app.authenticatedArea"))).not.toBeInTheDocument()
+    expect(screen.queryByText("FICC LTDA")).not.toBeInTheDocument()
   })
 })

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
+import { toast } from "sonner"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
@@ -204,6 +205,17 @@ describe("RentalResourcesPage", () => {
         .length,
     ).toBeGreaterThan(0)
     expectNoForbiddenCopy(container)
+  })
+
+  it("replaces a raw FORBIDDEN load error with the translated denial", async () => {
+    getUnitsMock.mockRejectedValue(new Error("FORBIDDEN"))
+    renderPage(["rentals.assets.read"])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("rbac.errors.FORBIDDEN"),
+    )
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+    expect(toast.error).toHaveBeenCalledWith(i18n.t("rbac.errors.FORBIDDEN"))
   })
 
   it("guides configuration when there are no categories and never links to Ativos", async () => {

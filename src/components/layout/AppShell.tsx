@@ -37,6 +37,8 @@ export type AppShellProps = {
   enlargeHeaderTargets?: boolean
   /** Show PT/EN/ES beside the language icon on every viewport. */
   showLanguageCode?: boolean
+  /** Subtitle under the page title. Staff shell passes the tenant name. */
+  contextLabel?: string
   banner?: ReactNode
   children: ReactNode
 }
@@ -50,6 +52,7 @@ export function AppShell({
   profileTo,
   enlargeHeaderTargets = false,
   showLanguageCode = false,
+  contextLabel,
   banner = null,
   children,
 }: AppShellProps) {
@@ -112,7 +115,7 @@ export function AppShell({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{pageTitle}</p>
               <p className="hidden text-xs text-muted-foreground sm:block">
-                {t("app.authenticatedArea")}
+                {contextLabel ?? t("app.authenticatedArea")}
               </p>
             </div>
           </div>

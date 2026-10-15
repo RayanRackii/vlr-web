@@ -92,6 +92,7 @@ Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch 
 - [x] Vitest: helper + service + agenda page
 - [x] Playwright `e2e/tests/10-b2c-self-cancel.spec.ts` (DEV; Confirmed path passed against Railway + develop Preview)
 - [x] **CLOSED_DEV** — not PROD. API `89b3e6d` / PR #64; WEB `3478355` / PR #59. Wave 1 remains **PROD_COMPLETE**.
+- [x] Agenda B2C (#164 #160): “reservado” sai das reservas do cliente e dos slots do dia, com a data civil no chaveamento. Cancelar rebusca o dia da reserva e o dia visto; falha de refetch tenta uma vez e então mostra toast. Trocar o idioma não refaz o GET do dia. Sem mudança no `vlr-api`.
 
 ### 3.8. Política de reservas (texto de cancelamento + limite diário)
 
@@ -109,6 +110,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Admin wizard Operação (Location): toggle fila (default off) + horário de abertura; persistir em create/update/bulk
 - [x] B2C agenda: poll GET queue 4s (pausa se a aba estiver oculta); Closed / WaitingRoom / Waiting / Active 90s / Expired
 - [x] Reserva continua em `bookPortalSlot` / `createPortalReservation`; 409 `QUEUE_*` muda o estado da fila
+- [x] Recurso com fila explica o ticket (`requiresTicket`, pt-BR/en/es). Com a fase Open e ninguém à frente, a agenda oferece só “Entrar na fila e reservar” (entra e, se o ticket ficar Active, reserva). Sem fila, o texto não aparece. (#165)
 - [x] Validar E2E com a API na mesma branch (Playwright `e2e/tests/10-queue-rentals.spec.ts` against Railway DEV + develop Preview). Join/Waiting/Active→book/reload/auth/module-off covered. Closed UI skipped near São Paulo midnight wrap (API `ReservationQueueTests` still cover Closed). Single E2E Customer — multi-customer atomicity stays in API `ReservationQueueConcurrencyTests`.
 
 ## 4. Gating B2B por módulos
@@ -121,6 +123,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Wave 4: nav Recursos (`/configuracoes/recursos`, `rentals.assets.*`) quando Rentals está on; `/ativos` permanece só com Inventory. PMOC/OS pickers leem Wave 2 (`maintenance-plans/asset-categories`, `work-orders/assets`) sem mandar o usuário a Ativos. **Não** há criação self-sufficient de tipos/recursos em PMOC/OS nesta wave.
 - [x] Enforcement API 403 para módulos inativos certificado no Playwright DEV (`npm run test:e2e:release`).
 - [x] Pós-login: usuário sem `core.dashboard.read` não permanece em Acesso negado em `/dashboard`; cai na primeira rota permitida (ordem da sidebar, módulo + permissão). Platform admin fora do tenant continua no dashboard.
+- [x] #168: cada item do menu declara as permissões que a página exige e some se faltar alguma (sem regra por função). Recursos exige `rentals.assets.read` e `core.units.read` porque a página chama `GET /api/units`. Quem só lê quadras (professor) não vê Recursos; `/dashboard` explica a troca para a primeira rota permitida. Cabeçalho usa `tenantTradeName` de `GET /api/users/me`, ou `tenantLegalName`, e só então “Área autenticada”. `?date=` passada na tela de aulas avisa que os horários são de hoje. Código `FORBIDDEN` na carga de Recursos vira a frase de `rbac.errors.FORBIDDEN`.
 
 ## 4.11. PMOC / OS — FEITO (PROD)
 
@@ -324,6 +327,10 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-15 | **Fix (WEB, #146 #132):** “Horário já reservado.” fica só para o 409 de intervalo já reservado, para a reserva deste navegador, ou para um `reservationId` que está em Minhas reservas. `booked` ou id de outra reserva mostra “Horário indisponível.”. 409 “Slot is not available for booking.” e “Insufficient quantity” continuam no toast e não marcam o card como reservado. Cancelar remove a marca local. `tenantPortalPath` / `tenantPortalHref` só interpolam slug `[a-z0-9-]+`. Sem mudança no `vlr-api`. |
 | 2026-10-15 | **Fix (WEB, #142):** menu mobile do cliente logado lista Reservar horário, Minhas reservas e Perfil nas rotas que já existiam. Ícones do header do portal têm alvo de 44px; o seletor mostra PT/EN/ES. O celular no perfil aparece com máscara brasileira e o valor enviado à API não muda. “Enviar código” habilita quando o e-mail é colado ou preenchido pelo navegador. Sem mudança no `vlr-api`. |
 | 2026-10-15 | **Fix (WEB, #149):** o 401 do staff só chama `refreshSession` se, depois da espera, a época, o usuário e o refresh token guardado ainda são os do request. Se mudaram, repete com o access token atual ou desiste, sem refresh. Erro terminal faz `signOut({ scope: 'local' })` só se esse refresh token ainda está guardado. `signInWithPassword` avança a época antes da chamada. Portal B2C sem mudança. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #166):** cadastro mascara o celular (BR / E.164) com placeholder i18n; o envio continua em dígitos. Perfil mostra CPF e celular mascarados, com botão para revelar. A foto obrigatória do FICC fica em `extraAttributes.fotoDePerfil` (a API só copia para `photoUrl` as chaves `photo` e `photoUrl`); o perfil lê esse atributo. Sem log de documento, telefone ou foto. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #164 #160):** a agenda B2C deixa de guardar o horário reservado num ref local. O card “Horário já reservado.” deriva das reservas bloqueantes do cliente e do `reservationId` do dia, com chave `data + recurso + início`. Cancelar rebusca os slots do dia cancelado e do dia visto; se o refetch falha, tenta de novo uma vez e só então mostra o erro. Trocar o idioma não dispara outro GET do dia. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #165):** recurso com fila mostra por que a reserva pede ticket. Com a fase Open e ninguém à frente, um único “Entrar na fila e reservar” entra e reserva se o ticket ficar Active. Sala de espera, espera, vez, expirado e fechado continuam nas suas ações. Sem fila, nada disso aparece. Sem mudança no `vlr-api`. |
+| 2026-10-15 | **Fix (WEB, #168):** menu do staff filtra cada item pelas permissões que ele declara. Recursos exige `rentals.assets.read` e `core.units.read`. Professor sem unidades não vê o item e não cai nele ao sair de `/dashboard`; a troca de página mostra um aviso. Cabeçalho mostra `tenantTradeName` (ou `tenantLegalName`) quando `GET /api/users/me` enviar. `?date=` passada na tela de aulas avisa que os horários são de hoje. `FORBIDDEN` na carga de Recursos vira frase traduzida. O DTO atual de `/me` no `vlr-api` ainda não traz o nome do tenant. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

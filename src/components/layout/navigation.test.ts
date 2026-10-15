@@ -2,10 +2,12 @@ import { LayoutDashboard } from "lucide-react"
 import { describe, expect, it } from "vitest"
 
 import {
+  declaredPermissionKeys,
   filterNavigationItemsByAccess,
   firstPermittedProductPath,
   appNavigationItems,
   getPageTitleKey,
+  RENTAL_RESOURCES_PERMISSIONS,
   type AppNavigationItem,
 } from "@/components/layout/navigation"
 
@@ -113,6 +115,7 @@ describe("filterNavigationItemsByAccess", () => {
       ["rentals"],
       [
         "rentals.assets.read",
+        "core.units.read",
         "rentals.schedule.read",
         "rentals.layouts.read",
         "rentals.reservations.read",
@@ -205,6 +208,144 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).not.toContain(
       "/configuracoes/politica-reservas",
     )
+  })
+})
+
+const professorPermissions = [
+  "rentals.assets.read",
+  "rentals.occupancy_kinds.read",
+  "rentals.schedule.read",
+  "rentals.schedule.lessons.write",
+]
+
+const receptionistPermissions = ["rentals.reservations.read"]
+
+const resourceManagerPermissions = [...RENTAL_RESOURCES_PERMISSIONS]
+
+const clubAdminPermissions = [
+  "core.dashboard.read",
+  "core.users.read",
+  "core.units.read",
+  "rentals.assets.read",
+  "rentals.schedule.read",
+  "rentals.layouts.read",
+  "rentals.reservations.read",
+  "rentals.booking_policy.read",
+]
+
+describe("staff menu permissions by role", () => {
+  it("requires every product leaf to declare the permission it needs", () => {
+    for (const item of appNavigationItems) {
+      if (item.children && item.children.length > 0) {
+        for (const child of item.children) {
+          expect(declaredPermissionKeys(child).length).toBeGreaterThan(0)
+        }
+        continue
+      }
+
+      expect(declaredPermissionKeys(item).length).toBeGreaterThan(0)
+    }
+
+    expect(declaredPermissionKeys({
+      permissions: RENTAL_RESOURCES_PERMISSIONS,
+    })).toEqual(["rentals.assets.read", "core.units.read"])
+  })
+
+  it("hides a leaf or child that does not declare a permission", () => {
+    const ungatedLeaf: AppNavigationItem = {
+      labelKey: "nav.schedule",
+      to: "/configuracoes/agenda",
+      icon,
+      modules: ["rentals"],
+    }
+    expect(
+      filterNavigationItemsByAccess(
+        [ungatedLeaf],
+        ["rentals"],
+        ["rentals.schedule.read"],
+      ),
+    ).toEqual([])
+
+    const parent: AppNavigationItem = {
+      labelKey: "nav.assets",
+      to: "/ativos",
+      icon,
+      modules: ["inventory"],
+      children: [
+        {
+          labelKey: "nav.assetsInventory",
+          to: "/ativos",
+          permission: "inventory.assets.read",
+        },
+        {
+          labelKey: "nav.assetsCategories",
+          to: "/ativos/categorias",
+        },
+      ],
+    }
+    const visible = filterNavigationItemsByAccess(
+      [parent],
+      ["inventory"],
+      ["inventory.assets.read", "inventory.categories.read"],
+    )
+    expect(visible[0]?.children?.map((child) => child.to)).toEqual(["/ativos"])
+  })
+
+  it("hides Recursos from a professor and opens the agenda first", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      professorPermissions,
+    )
+
+    expect(visible.map((item) => item.to)).not.toContain("/configuracoes/recursos")
+    expect(visible.some((item) => item.labelKey === "nav.rentalsResources")).toBe(
+      false,
+    )
+    expect(visible.map((item) => item.to)).toContain("/configuracoes/agenda")
+    expect(
+      firstPermittedProductPath(["rentals"], professorPermissions),
+    ).toBe("/configuracoes/agenda")
+  })
+
+  it("shows Recursos to a resource manager who can read assets and units", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      resourceManagerPermissions,
+    )
+
+    expect(visible.map((item) => item.to)).toContain("/configuracoes/recursos")
+    expect(visible.map((item) => item.to)).not.toContain("/configuracoes/agenda")
+    expect(
+      firstPermittedProductPath(["rentals"], resourceManagerPermissions),
+    ).toBe("/configuracoes/recursos")
+  })
+
+  it("keeps the dashboard as the first route for a club admin", () => {
+    expect(
+      firstPermittedProductPath(["rentals"], clubAdminPermissions),
+    ).toBe("/dashboard")
+    expect(
+      filterNavigationItemsByAccess(
+        appNavigationItems,
+        ["rentals"],
+        clubAdminPermissions,
+      ).map((item) => item.to),
+    ).toContain("/configuracoes/recursos")
+  })
+
+  it("opens reservations for a receptionist and hides Recursos", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["rentals"],
+      receptionistPermissions,
+    )
+
+    expect(visible.map((item) => item.to)).toEqual(["/configuracoes/reservas"])
+    expect(
+      firstPermittedProductPath(["rentals"], receptionistPermissions),
+    ).toBe("/configuracoes/reservas")
   })
 })
 

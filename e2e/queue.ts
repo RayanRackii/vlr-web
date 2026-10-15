@@ -380,14 +380,28 @@ export async function selectLocationOnAgenda(
   startTime: string,
 ): Promise<void> {
   const hhmm = startTime.slice(0, 5)
-  const timeSelect = page.locator("select")
-  await expect(timeSelect).toBeEnabled({ timeout: 30_000 })
-  const option = timeSelect.locator("option").filter({ hasText: hhmm }).first()
-  const value = await option.getAttribute("value")
-  if (value) {
-    await timeSelect.selectOption(value)
+  const native = page.locator("select")
+  if ((await native.count()) > 0) {
+    const timeSelect = native.first()
+    await expect(timeSelect).toBeEnabled({ timeout: 30_000 })
+    const option = timeSelect.locator("option").filter({ hasText: hhmm }).first()
+    const value = await option.getAttribute("value")
+    if (value) {
+      await timeSelect.selectOption(value)
+    } else {
+      await timeSelect.selectOption({ label: new RegExp(hhmm) })
+    }
   } else {
-    await timeSelect.selectOption({ label: new RegExp(hhmm) })
+    const timeSelect = page.getByRole("combobox").first()
+    await expect(timeSelect).toBeEnabled({ timeout: 30_000 })
+    const current = (await timeSelect.textContent()) ?? ""
+    if (!current.includes(hhmm)) {
+      await timeSelect.click()
+      await page
+        .getByRole("option", { name: new RegExp(escapeRegExp(hhmm)) })
+        .first()
+        .click()
+    }
   }
   await page.getByRole("button", { name: new RegExp(escapeRegExp(locationName)) }).click()
 }
