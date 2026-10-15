@@ -57,6 +57,7 @@ import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSe
 import {
   isDailyBookingLimitError,
   isSlotTakenConflict,
+  isSlotUnavailableConflict,
   readDailyBookingLimit,
 } from "@/features/tenantPortal/lib/portalBookingError"
 import { isPastReservation } from "@/features/tenantPortal/lib/isPastReservation"
@@ -88,14 +89,39 @@ function reservationSlotKey(rentalAssetId: string, startTime: string): string {
   return `${rentalAssetId}|${normalizeClock(startTime)}`
 }
 
-function isReservedObservation(slot: PortalScheduleSlot | undefined): boolean {
+function dropScheduleSlot(
+  current: readonly PortalScheduleSlot[],
+  slot: PortalScheduleSlot,
+): PortalScheduleSlot[] {
+  return current.filter(
+    (candidate) =>
+      !(
+        candidate.rentalAssetId === slot.rentalAssetId &&
+        candidate.startTime === slot.startTime &&
+        candidate.endTime === slot.endTime
+      ),
+  )
+}
+
+/**
+ * A public row is "already reserved" only when its reservation belongs to
+ * this customer. Booked status or another customer's reservationId is not
+ * enough. This browser's own reservedKeys are applied by the caller.
+ */
+function isReservedObservation(
+  slot: PortalScheduleSlot | undefined,
+  ownedReservationIds: ReadonlySet<string>,
+): boolean {
   if (!slot || isCustomerBookableSlot(slot)) {
     return false
   }
-  return (
-    slot.status.toLowerCase() === "booked" ||
-    Boolean(slot.reservationId)
-  )
+
+  const reservationId = slot.reservationId ?? null
+  if (reservationId === null || reservationId.length === 0) {
+    return false
+  }
+
+  return ownedReservationIds.has(reservationId)
 }
 
 function partitionAgendaSlots(
@@ -156,6 +182,9 @@ export function TenantPortalAgendaPage() {
   const submittingRef = useRef(false)
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
+  const reservedSlotKeys = useRef(
+    new Map<string, { day: string; key: string }>(),
+  )
   const refreshGeneration = useRef(0)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
@@ -306,6 +335,7 @@ export function TenantPortalAgendaPage() {
     setSlots([])
     setObservedSlots([])
     setReservedKeys(new Set())
+    reservedSlotKeys.current.clear()
     setStartTime("")
     setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
@@ -344,6 +374,10 @@ export function TenantPortalAgendaPage() {
     }
   }, [signedIn, subdomain, date, t])
 
+  const ownedReservationIds = useMemo(
+    () => new Set(mine.map((reservation) => reservation.id)),
+    [mine],
+  )
   const timeWindows = useMemo(() => listDistinctStartTimes(slots), [slots])
   const timeItems = useMemo(
     () =>
@@ -528,21 +562,14 @@ export function TenantPortalAgendaPage() {
         created,
         ...current.filter((reservation) => reservation.id !== created.id),
       ])
+      const reservedKey = reservationSlotKey(slot.rentalAssetId, slot.startTime)
+      reservedSlotKeys.current.set(created.id, { day: dayDate, key: reservedKey })
       setReservedKeys((current) => {
         const next = new Set(current)
-        next.add(reservationSlotKey(slot.rentalAssetId, slot.startTime))
+        next.add(reservedKey)
         return next
       })
-      setSlots((current) =>
-        current.filter(
-          (candidate) =>
-            !(
-              candidate.rentalAssetId === slot.rentalAssetId &&
-              candidate.startTime === slot.startTime &&
-              candidate.endTime === slot.endTime
-            ),
-        ),
-      )
+      setSlots((current) => dropScheduleSlot(current, slot))
       setSelectedRentalAssetId(null)
       refreshAgenda(dayDate)
     } catch (error) {
@@ -575,6 +602,16 @@ export function TenantPortalAgendaPage() {
         refreshAgenda(dayDate)
         return
       }
+      if (isSlotUnavailableConflict(error)) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t("tenantPortal.agenda.unavailable"),
+        )
+        setSlots((current) => dropScheduleSlot(current, slot))
+        setSelectedRentalAssetId(null)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
@@ -604,6 +641,18 @@ export function TenantPortalAgendaPage() {
     try {
       const canceled = await cancelMyPortalReservation(id)
       toast.success(t("tenantPortal.agenda.cancelSuccess"))
+      const marked = reservedSlotKeys.current.get(id)
+      reservedSlotKeys.current.delete(id)
+      if (marked && marked.day === dayDate) {
+        setReservedKeys((current) => {
+          if (!current.has(marked.key)) {
+            return current
+          }
+          const next = new Set(current)
+          next.delete(marked.key)
+          return next
+        })
+      }
       setMine((current) => {
         const exists = current.some(
           (reservation) => reservation.id === canceled.id,
@@ -654,7 +703,9 @@ export function TenantPortalAgendaPage() {
       reservedKeys.has(reservationSlotKey(rentalAssetId, startTime))
     const reserved =
       keyReserved ||
-      (startTime.length > 0 && !slot && isReservedObservation(observed))
+      (startTime.length > 0 &&
+        !slot &&
+        isReservedObservation(observed, ownedReservationIds))
     const available = Boolean(slot) && !keyReserved
     const detail =
       startTime.length === 0 || available

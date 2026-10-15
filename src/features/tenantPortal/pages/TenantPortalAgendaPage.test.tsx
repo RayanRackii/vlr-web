@@ -1247,7 +1247,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).not.toContain("text-muted-foreground")
   })
 
-  it("explains a space with no bookable slot and a booked slot in the day", async () => {
+  it("explains a foreign booked row as unavailable", async () => {
     fetchDay.mockResolvedValue({
       date: "2026-10-14",
       slots: [
@@ -1276,14 +1276,94 @@ describe("TenantPortalAgendaPage time selector", () => {
       await screen.findByRole("button", { name: "Quadra 1" }),
     ).toBeEnabled()
     const taken = screen.getByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
     })
     expect(taken).toHaveAttribute("aria-disabled", "true")
-    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(taken).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
     expect(taken).not.toHaveAttribute(
       "title",
       i18n.t("tenantPortal.agenda.slotReserved"),
     )
+  })
+
+  it("announces reserved when the public reservation belongs to this customer", async () => {
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, {
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            assetId: ASSET_B_ASSET_ID,
+            rentalAssetId: ASSET_B_ID,
+            assetName: "Quadra 2",
+            quantity: 1,
+            unitPrice: 80,
+            subTotal: 80,
+          },
+        ],
+      }),
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          status: "booked",
+          isBookableByCustomer: false,
+          reservationId: RESERVATION_ID,
+        }),
+      ],
+    })
+    renderAgenda()
+
+    const taken = await screen.findByRole("button", {
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+    })
+    expect(taken).toHaveAttribute("aria-disabled", "true")
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+  })
+
+  it("does not announce reserved for a booked row with no reservation id", async () => {
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          status: "booked",
+          isBookableByCustomer: false,
+          reservationId: null,
+        }),
+      ],
+    })
+    renderAgenda()
+
+    const taken = await screen.findByRole("button", {
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+    })
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(taken).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
   })
 
   it("explains an unplaced space that is not offered at the selected time", async () => {
@@ -1405,6 +1485,86 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
       }),
     ).toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+  })
+
+  it.each([
+    "Slot is not available for booking.",
+    "Insufficient quantity for this slot.",
+  ])("toasts %s without marking the card reserved", async (message) => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(new PortalBookingError(message, 409, null))
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(message)
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotJustTaken"),
+    )
+    const card = screen.getByRole("button", {
+      name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+    })
+    expect(card).toHaveAttribute("aria-disabled", "true")
+    expect(card).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(card).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.slotReserved"),
+    )
+  })
+
+  it("clears the reserved mark when this browser's booking is canceled", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", FUTURE_ISO)
+    let dayCalls = 0
+    fetchDay.mockImplementation(() => {
+      dayCalls += 1
+      if (dayCalls === 1) {
+        return Promise.resolve({
+          date: "2026-10-14",
+          slots: [
+            makeSlot({
+              id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+              rentalAssetId: ASSET_A_ID,
+              assetName: "Quadra 1",
+              startTime: "08:00:00",
+              endTime: "09:00:00",
+            }),
+          ],
+        })
+      }
+      return new Promise(() => {})
+    })
+    bookSlot.mockResolvedValue(created)
+    cancelMine.mockResolvedValue(makeReservation("Canceled", FUTURE_ISO))
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).toBeInTheDocument()
+
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.cancelSuccess"),
+      )
+    })
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      }),
+    ).toBeInTheDocument()
+    expect(dayCalls).toBeGreaterThanOrEqual(2)
   })
 })
 
