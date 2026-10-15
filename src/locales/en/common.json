@@ -373,6 +373,7 @@
       "depositRequired": "This space requires a deposit. The reservation stays pending until the club confirms it. This screen does not collect payment.",
       "total": "Total {{amount}}",
       "unavailable": "Slot unavailable.",
+      "slotReserved": "This time is already booked.",
       "legendAvailable": "Available",
       "legendUnavailable": "Unavailable",
       "unplaced": "Other spaces",

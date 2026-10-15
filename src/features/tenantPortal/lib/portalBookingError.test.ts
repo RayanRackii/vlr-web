@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import {
   isDailyBookingLimitError,
   isSlotTakenConflict,
+  isSlotUnavailableConflict,
   portalBookingErrorFromUnknown,
   readDailyBookingLimit,
 } from "@/features/tenantPortal/lib/portalBookingError"
@@ -75,9 +76,14 @@ describe("portal booking failures", () => {
 
     expect(isSlotTakenConflict(taken)).toBe(true)
     expect(isSlotTakenConflict(english)).toBe(true)
-    expect(isSlotTakenConflict(unavailable)).toBe(true)
-    expect(isSlotTakenConflict(quantity)).toBe(true)
+    expect(isSlotTakenConflict(unavailable)).toBe(false)
+    expect(isSlotTakenConflict(quantity)).toBe(false)
     expect(isSlotTakenConflict(wrongUnit)).toBe(false)
+    expect(isSlotUnavailableConflict(unavailable)).toBe(true)
+    expect(isSlotUnavailableConflict(quantity)).toBe(true)
+    expect(isSlotUnavailableConflict(taken)).toBe(false)
+    expect(isSlotUnavailableConflict(english)).toBe(false)
+    expect(isSlotUnavailableConflict(wrongUnit)).toBe(false)
   })
 
   it("keeps queue codes recognizable and out of the slot-taken path", () => {

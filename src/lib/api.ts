@@ -27,6 +27,8 @@ const CUSTOMER_TOKEN_STORAGE_KEY = "rolvix.customer.token"
 const CUSTOMER_SUBDOMAIN_STORAGE_KEY = "rolvix.customer.subdomain"
 const CUSTOMER_LABEL_STORAGE_KEY = "rolvix.customer.label"
 const CUSTOMER_ID_STORAGE_KEY = "rolvix.customer.id"
+/** Must match `CUSTOMER_TENANT_ID_KEY` in tenantPortalService. */
+const CUSTOMER_TENANT_ID_STORAGE_KEY = "rolvix.customer.tenantId"
 
 const apiErrorSchema = z.object({
   error: z.string(),
@@ -380,6 +382,7 @@ function clearCustomerSessionStorage(): void {
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
 }
 
 function readStoredCustomerToken(): string | null {

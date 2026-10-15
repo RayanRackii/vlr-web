@@ -38,6 +38,7 @@ const OTHER_REFRESH_SECRET = "other-refresh-token-secret"
 const STAFF_EMAIL = "staff@club.test"
 const OTHER_STAFF_EMAIL = "other-staff@club.test"
 const CUSTOMER_ID = "rolvix.customer.id"
+const CUSTOMER_TENANT_ID = "rolvix.customer.tenantId"
 const CUSTOMER_ID_VALUE = "customer-id-secret"
 const NEXT_CUSTOMER_ID = "customer-id-next"
 
@@ -464,6 +465,10 @@ describe("customer api 401 retry", () => {
     window.localStorage.setItem(CUSTOMER_SUBDOMAIN, "ficc")
     window.localStorage.setItem(CUSTOMER_LABEL, "FICC")
     window.localStorage.setItem(CUSTOMER_ID, CUSTOMER_ID_VALUE)
+    window.localStorage.setItem(
+      CUSTOMER_TENANT_ID,
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    )
     vi.mocked(assignBrowserLocation).mockClear()
     vi.mocked(supabase.auth.signOut).mockClear()
     vi.mocked(supabase.auth.refreshSession).mockClear()
@@ -474,6 +479,7 @@ describe("customer api 401 retry", () => {
     window.localStorage.removeItem(CUSTOMER_SUBDOMAIN)
     window.localStorage.removeItem(CUSTOMER_LABEL)
     window.localStorage.removeItem(CUSTOMER_ID)
+    window.localStorage.removeItem(CUSTOMER_TENANT_ID)
     window.history.pushState({}, "", "/")
   })
 
@@ -526,6 +532,7 @@ describe("customer api 401 retry", () => {
     expect(window.localStorage.getItem(CUSTOMER_SUBDOMAIN)).toBeNull()
     expect(window.localStorage.getItem(CUSTOMER_LABEL)).toBeNull()
     expect(window.localStorage.getItem(CUSTOMER_ID)).toBeNull()
+    expect(window.localStorage.getItem(CUSTOMER_TENANT_ID)).toBeNull()
     expect(assignBrowserLocation).toHaveBeenCalledTimes(1)
     expect(assignBrowserLocation).toHaveBeenCalledWith("/t/ficc")
     const logged = loggedText(info)
@@ -535,6 +542,7 @@ describe("customer api 401 retry", () => {
 
   it.each([
     { label: "403", outcome: { kind: "status", status: 403 } satisfies Outcome },
+    { label: "409", outcome: { kind: "status", status: 409 } satisfies Outcome },
     { label: "500", outcome: { kind: "status", status: 500 } satisfies Outcome },
     { label: "network", outcome: { kind: "network" } satisfies Outcome },
   ])("leaves the customer token in place on $label", async ({ outcome }) => {
