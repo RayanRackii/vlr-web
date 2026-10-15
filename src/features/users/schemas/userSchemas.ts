@@ -33,6 +33,8 @@ export const currentUserSchema = z.object({
   notificationsEmailOnly: z.boolean().default(false),
   roles: z.array(tenantRoleRefSchema).default([]),
   permissions: z.array(z.string()).default([]),
+  tenantTradeName: z.string().nullish(),
+  tenantLegalName: z.string().nullish(),
 })
 
 export type CurrentUser = z.infer<typeof currentUserSchema>

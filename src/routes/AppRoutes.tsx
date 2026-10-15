@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
+import { RENTAL_RESOURCES_PERMISSIONS } from "@/components/layout/navigation"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
@@ -221,7 +222,9 @@ export function AppRoutes() {
             />
           </Route>
           <Route
-            element={<PermissionRoute permission="rentals.assets.read" />}
+            element={
+              <PermissionRoute permissions={RENTAL_RESOURCES_PERMISSIONS} />
+            }
           >
             <Route
               path="/configuracoes/recursos"

@@ -7,18 +7,42 @@ import { resolvePermissionRouteAccess } from "@/features/users/permissions/permi
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 type PermissionRouteProps = {
-  permission: string
+  permission?: string
+  permissions?: readonly string[]
 }
 
-export function PermissionRoute({ permission }: PermissionRouteProps) {
+function requiredPermissionKeys({
+  permission,
+  permissions,
+}: PermissionRouteProps): string[] {
+  const keys: string[] = []
+  if (permission) {
+    keys.push(permission)
+  }
+
+  for (const key of permissions ?? []) {
+    if (!keys.includes(key)) {
+      keys.push(key)
+    }
+  }
+
+  return keys
+}
+
+export function PermissionRoute({
+  permission,
+  permissions,
+}: PermissionRouteProps) {
   const { can, isLoading } = usePermissions()
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
+  const required = requiredPermissionKeys({ permission, permissions })
 
   const access = resolvePermissionRouteAccess({
     isLoading,
-    hasPermission: can(permission),
+    hasPermission:
+      required.length > 0 && required.every((key) => can(key)),
     isPlatformAdminOutsideTenant: isPlatformAdmin && !isInTenantEnvironment,
-    permission,
+    permission: required[0] ?? "",
   })
 
   if (access === "loading") {

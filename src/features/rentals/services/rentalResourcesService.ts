@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import { ZodError } from "zod"
 import {
   assetFamilyListSchema,
@@ -25,7 +26,10 @@ function throwResourcesError(error: unknown, fallback: string): never {
     throw error
   }
 
-  throw new Error(parseApiError(getAxiosErrorPayload(error), fallback))
+  throw new Error(
+    mapRbacErrorMessage(parseApiError(getAxiosErrorPayload(error), fallback), fallback),
+    { cause: error },
+  )
 }
 
 export async function listRentalAssetCategories(): Promise<

@@ -989,7 +989,8 @@
       "peoplePortal": "Personas y portal",
       "operations": "Operación",
       "platform": "Plataforma"
-    }
+    },
+    "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso."
   },
   "account": {
     "title": "Cuenta",
@@ -2625,7 +2626,8 @@
       "loadError": "No se pudo cargar el horario de este día.",
       "createSuccess": "Clase creada para esta fecha.",
       "removeSuccess": "Clase eliminada para esta fecha.",
-      "changeError": "No se pudo cambiar la clase. Compruebe si hay una reserva o conflicto."
+      "changeError": "No se pudo cambiar la clase. Compruebe si hay una reserva o conflicto.",
+      "pastDateAdjusted": "La fecha del enlace ya pasó. Los horarios de abajo son de hoy."
     },
     "schedule": {
       "title": "Escala / agenda",
