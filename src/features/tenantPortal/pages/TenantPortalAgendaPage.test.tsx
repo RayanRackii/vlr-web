@@ -1,8 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
+import { formatMoney } from "@/features/rentals/services/reservationsService"
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import i18n from "@/lib/i18n"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import type {
@@ -35,6 +37,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
     fetchPublicScheduleDay: vi.fn(),
     cancelMyPortalReservation: vi.fn(),
     bookPortalSlot: vi.fn(),
+    checkPortalAvailability: vi.fn(),
     createPortalReservation: vi.fn(),
   }
 })
@@ -43,7 +46,9 @@ import { toast } from "sonner"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import {
+  bookPortalSlot,
   cancelMyPortalReservation,
+  checkPortalAvailability,
   fetchPortalRentalAssets,
   fetchPublicScheduleDay,
   listMyPortalReservations,
@@ -58,6 +63,8 @@ const fetchAssets = vi.mocked(fetchPortalRentalAssets)
 const fetchLayouts = vi.mocked(fetchPublicRentalLayouts)
 const fetchDay = vi.mocked(fetchPublicScheduleDay)
 const cancelMine = vi.mocked(cancelMyPortalReservation)
+const checkAvailability = vi.mocked(checkPortalAvailability)
+const bookSlot = vi.mocked(bookPortalSlot)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
 
@@ -136,7 +143,11 @@ async function waitForMineList() {
   expect(
     await screen.findByText(i18n.t("tenantPortal.agenda.myReservations")),
   ).toBeInTheDocument()
-  expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
+  const row = (await screen.findByText("Quadra 1")).closest("li")
+  expect(row).toHaveTextContent(formatMoney(80))
+  expect(row).toHaveTextContent(
+    i18n.t("tenantPortal.agenda.total", { amount: formatMoney(80) }),
+  )
 }
 
 describe("TenantPortalAgendaPage B2C self-cancel", () => {
@@ -146,8 +157,17 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     fetchLayouts.mockReset()
     fetchDay.mockReset()
     cancelMine.mockReset()
+    checkAvailability.mockReset()
+    bookSlot.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      reason: null,
+    })
 
     fetchAssets.mockResolvedValue([])
     fetchLayouts.mockResolvedValue([])
@@ -189,6 +209,24 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
 
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.pastReservation")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("labels an ended reservation as past and hides cancel", async () => {
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", PAST_ISO, {
+        endDateTime: "2020-01-15T14:00:00.000Z",
+      }),
+    ])
+    renderAgenda()
+    await waitForMineList()
+
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.pastReservation")),
+    ).toBeInTheDocument()
+    expect(cancelButton()).not.toBeInTheDocument()
   })
 
   it("hides Cancelar for Canceled", async () => {
@@ -322,13 +360,26 @@ function makeSlot(
 
 describe("TenantPortalAgendaPage time selector", () => {
   beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ["Date"],
+      now: new Date("2026-10-14T08:00:00.000Z"),
+    })
     listMine.mockReset()
     fetchAssets.mockReset()
     fetchLayouts.mockReset()
     fetchDay.mockReset()
     cancelMine.mockReset()
+    checkAvailability.mockReset()
+    bookSlot.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      reason: null,
+    })
 
     listMine.mockResolvedValue([])
     fetchLayouts.mockResolvedValue([])
@@ -355,6 +406,10 @@ describe("TenantPortalAgendaPage time selector", () => {
         }),
       ],
     })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("renders the accessible select with themed popup classes", async () => {
@@ -449,5 +504,187 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(trigger).toHaveTextContent(i18n.t("tenantPortal.agenda.slotsError"))
     })
     expect(trigger).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+  })
+
+  it("shows the estimate and the deposit note before booking a deposit court", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    expect(
+      await screen.findByText(
+        i18n.t("tenantPortal.agenda.available", {
+          amount: formatMoney(80),
+        }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.depositRequired")),
+    ).toBeInTheDocument()
+    expect(checkAvailability).toHaveBeenCalledWith(
+      "ficc",
+      expect.objectContaining({
+        assetId: ASSET_A_ASSET_ID,
+        startTime: "08:00",
+        endTime: "09:00",
+        quantity: 1,
+      }),
+    )
+  })
+
+  it("shows the estimate without a deposit note when the court does not require one", async () => {
+    const user = userEvent.setup()
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+        requiresDeposit: false,
+      },
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "19:00:00",
+          endTime: "20:00:00",
+        }),
+      ],
+    })
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 2" }))
+
+    expect(
+      await screen.findByText(
+        i18n.t("tenantPortal.agenda.available", {
+          amount: formatMoney(80),
+        }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.depositRequired")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("toasts the booked total and status", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", {
+        amount: formatMoney(80),
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalled()
+    })
+    expect(toastSuccess).toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+        amount: formatMoney(80),
+        status: i18n.t("rentals.reservations.statuses.Confirmed"),
+      }),
+    )
+  })
+
+  it("does not offer a date before today in America/Sao_Paulo", async () => {
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    expect(dateInput).toHaveAttribute("min", brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+  })
+
+  it("hides slots that already started today and explains that they are hidden", async () => {
+    vi.setSystemTime(new Date("2026-10-14T15:00:00.000Z"))
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "13:00:00",
+          endTime: "14:00:00",
+        }),
+      ],
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.pastSlotsHidden")),
+    ).toBeInTheDocument()
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+    expect(
+      await screen.findByRole("option", { name: "13:00 – 14:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps morning slots on a later date", async () => {
+    vi.setSystemTime(new Date("2026-10-14T15:00:00.000Z"))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    fireEvent.change(dateInput, { target: { value: "2026-10-15" } })
+
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-15")
+    })
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+    expect(
+      await screen.findByRole("option", { name: "08:00 – 09:00" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.pastSlotsHidden")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("clamps a past date back to today", async () => {
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
+
+    await waitFor(() => {
+      expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    })
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
   })
 })

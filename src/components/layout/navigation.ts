@@ -318,6 +318,25 @@ function buildProductSections(
   return sections
 }
 
+/** First sidebar route the user may open, in product-nav order. */
+export function firstPermittedProductPath(
+  activeModules: readonly string[],
+  permissions: readonly string[],
+): string | null {
+  for (const section of buildProductSections(activeModules, permissions)) {
+    for (const item of section.items) {
+      const childPath = item.children?.[0]?.to
+      if (childPath) {
+        return childPath
+      }
+
+      return item.to
+    }
+  }
+
+  return null
+}
+
 export function useAppNavigationSections(): AppNavigationState {
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
   const { activeModules, permissions, isLoading } = usePermissions()

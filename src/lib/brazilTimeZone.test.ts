@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   brazilTodayIsoDate,
+  clampBrazilDateToToday,
   formatBrazilDateTimeRange,
   formatBrazilTime,
+  isBrazilSlotStartInPast,
   SAO_PAULO_TZ,
 } from "@/lib/brazilTimeZone"
 
@@ -39,5 +41,22 @@ describe("brazilTimeZone", () => {
 
     const brazilMorning = new Date("2026-09-10T04:00:00.000Z")
     expect(brazilTodayIsoDate(brazilMorning)).toBe("2026-09-10")
+  })
+
+  it("hides a slot that already started on the Sao Paulo civil clock", () => {
+    const now = new Date("2026-10-14T02:30:00.000Z")
+    expect(brazilTodayIsoDate(now)).toBe("2026-10-13")
+    expect(isBrazilSlotStartInPast("2026-10-13", "23:00:00", now)).toBe(true)
+    expect(isBrazilSlotStartInPast("2026-10-13", "23:45:00", now)).toBe(false)
+    expect(isBrazilSlotStartInPast("2026-10-14", "08:00:00", now)).toBe(false)
+    expect(clampBrazilDateToToday("2026-10-12", now)).toBe("2026-10-13")
+    expect(clampBrazilDateToToday("2026-10-14", now)).toBe("2026-10-14")
+    expect(clampBrazilDateToToday("", now)).toBe("")
+  })
+
+  it("treats a slot that starts at the current Sao Paulo minute as past", () => {
+    const noon = new Date("2026-10-14T15:00:00.000Z")
+    expect(isBrazilSlotStartInPast("2026-10-14", "12:00:00", noon)).toBe(true)
+    expect(isBrazilSlotStartInPast("2026-10-14", "12:01:00", noon)).toBe(false)
   })
 })

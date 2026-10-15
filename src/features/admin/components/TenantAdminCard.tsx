@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
 import {
+  clearPlatformTenantExited,
   refreshAuthSession,
   writeActiveTenantLabel,
 } from "@/features/admin/hooks/usePlatformTenantSession"
@@ -63,6 +64,7 @@ export function TenantAdminCard({
     setIsEntering(true)
     try {
       const result = await enterTenantEnvironment(tenant.id)
+      clearPlatformTenantExited()
       writeActiveTenantLabel(result.legalName)
       await refreshAuthSession()
       void navigate("/dashboard", { replace: true })
