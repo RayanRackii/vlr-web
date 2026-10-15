@@ -104,8 +104,12 @@ describe("TenantPortalProfilePage validity gate", () => {
       name: i18n.t("tenantPortal.profile.photoChange"),
     })
     expect(name).toHaveValue("Ana Silva")
-    expect(await screen.findByText("(11) 98888-0001")).toBeInTheDocument()
+    expect(await screen.findByText("(11) *****-0001")).toBeInTheDocument()
+    expect(screen.getByText("***.982.247-**")).toBeInTheDocument()
+    expect(screen.queryByText("(11) 98888-0001")).not.toBeInTheDocument()
+    expect(screen.queryByText("529.982.247-25")).not.toBeInTheDocument()
     expect(screen.queryByText("11988880001")).not.toBeInTheDocument()
+    expect(screen.queryByText("52998224725")).not.toBeInTheDocument()
     expect(save).toBeEnabled()
     expect(changePhoto).toBeEnabled()
 
@@ -143,5 +147,83 @@ describe("TenantPortalProfilePage validity gate", () => {
     expect(
       screen.getByRole("heading", { name: i18n.t("tenantPortal.profile.title") }),
     ).toBeInTheDocument()
+  })
+
+  it("reveals CPF and phone only after the visitor asks", async () => {
+    const user = userEvent.setup()
+    const log = vi.spyOn(console, "log").mockImplementation(() => {})
+    const info = vi.spyOn(console, "info").mockImplementation(() => {})
+    renderProfile()
+
+    expect(await screen.findByText("***.982.247-**")).toBeInTheDocument()
+    expect(screen.getByText("(11) *****-0001")).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.profile.showSensitive", {
+          label: i18n.t("tenantPortal.fields.cpf"),
+        }),
+      }),
+    )
+    expect(screen.getByText("529.982.247-25")).toBeInTheDocument()
+    expect(screen.queryByText("***.982.247-**")).not.toBeInTheDocument()
+    expect(screen.queryByText("(11) 98888-0001")).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.profile.showSensitive", {
+          label: i18n.t("tenantPortal.fields.phone"),
+        }),
+      }),
+    )
+    expect(screen.getByText("(11) 98888-0001")).toBeInTheDocument()
+    expect(log).not.toHaveBeenCalled()
+    expect(info).not.toHaveBeenCalled()
+    log.mockRestore()
+    info.mockRestore()
+  })
+
+  it("shows the signup photo stored on extraAttributes.fotoDePerfil", async () => {
+    const signupPhoto = `data:image/jpeg;base64,${"a".repeat(48)}`
+    const OriginalImage = window.Image
+    class LoadedImage {
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      complete = false
+      naturalWidth = 0
+      set src(_value: string) {
+        this.complete = true
+        this.naturalWidth = 1
+        this.onload?.()
+      }
+    }
+    vi.stubGlobal("Image", LoadedImage)
+
+    fetchProfile.mockResolvedValue({
+      ...profile,
+      photoUrl: null,
+      extraAttributes: {
+        cep: "85851000",
+        fotoDePerfil: signupPhoto,
+      },
+    })
+    try {
+      renderProfile()
+
+      await waitFor(() => {
+        const image = document.querySelector("img")
+        expect(image).toHaveAttribute("src", signupPhoto)
+      })
+      expect(
+        screen.queryByText(i18n.t("tenantPortal.profile.photoNone")),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.getByRole("button", {
+          name: i18n.t("tenantPortal.profile.photoRemove"),
+        }),
+      ).toBeInTheDocument()
+    } finally {
+      vi.stubGlobal("Image", OriginalImage)
+    }
   })
 })

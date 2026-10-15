@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Camera, CircleAlert, Lock, Trash2 } from "lucide-react"
+import { Camera, CircleAlert, Eye, EyeOff, Lock, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -22,6 +22,11 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
+  maskBrazilianPhone,
+  maskCustomerDocument,
+} from "@/features/tenantPortal/lib/masks"
+import { resolveCustomerPhotoUrl } from "@/features/tenantPortal/lib/profilePhoto"
+import {
   buildCustomerProfileFormSchema,
   formatBrazilianPhone,
   formatCustomerDocument,
@@ -35,13 +40,6 @@ import {
   type UpdateCustomerProfileRequest,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { cn } from "@/lib/utils"
-
-function normalizePhotoUrl(value: string | null): string | null {
-  if (value == null || value.trim().length === 0) {
-    return null
-  }
-  return value
-}
 
 function nameInitials(name: string): string {
   const parts = name
@@ -104,6 +102,47 @@ function ReadOnlyValue({
   )
 }
 
+function SensitiveReadOnlyValue({
+  label,
+  masked,
+  revealed,
+  showLabel,
+  hideLabel,
+  className,
+}: {
+  label: string
+  masked: string
+  revealed: string
+  showLabel: string
+  hideLabel: string
+  className?: string
+}) {
+  const [visible, setVisible] = useState(false)
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-pressed={visible}
+          aria-label={visible ? hideLabel : showLabel}
+          onClick={() => {
+            setVisible((current) => !current)
+          }}
+        >
+          {visible ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+        </Button>
+      </div>
+      <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm break-words">
+        {visible ? revealed : masked}
+      </p>
+    </div>
+  )
+}
+
 export function TenantPortalProfilePage() {
   const { t } = useTranslation()
   const { primary } = useOutletContext<CustomerAppOutletContext>()
@@ -138,11 +177,27 @@ export function TenantPortalProfilePage() {
   const loadGenerationRef = useRef(0)
   const photoCompressGenerationRef = useRef(0)
   const photoProcessingRef = useRef(false)
+  // Signup photos live on extraAttributes until the column is set.
+  // PATCH cannot clear that attribute, so a removal in this visit stays hidden
+  // after save. A later visit still shows the signup photo.
+  const extraPhotoSuppressedRef = useRef(false)
+
+  function photoFromProfile(next: CustomerProfile): string | null {
+    const column = next.photoUrl?.trim() ?? ""
+    if (column.length > 0) {
+      extraPhotoSuppressedRef.current = false
+      return column
+    }
+    if (extraPhotoSuppressedRef.current) {
+      return null
+    }
+    return resolveCustomerPhotoUrl(null, next.extraAttributes)
+  }
 
   function applyProfile(next: CustomerProfile) {
     setProfile(next)
     form.reset({ name: next.name })
-    setPhotoPreview(normalizePhotoUrl(next.photoUrl))
+    setPhotoPreview(photoFromProfile(next))
     setPhotoDirty(false)
     photoProcessingRef.current = false
     setPhotoProcessing(false)
@@ -201,6 +256,7 @@ export function TenantPortalProfilePage() {
       if (generation !== photoCompressGenerationRef.current) {
         return
       }
+      extraPhotoSuppressedRef.current = false
       setPhotoPreview(dataUrl)
       setPhotoDirty(true)
     } catch {
@@ -219,6 +275,7 @@ export function TenantPortalProfilePage() {
   function onRemovePhoto() {
     photoCompressGenerationRef.current += 1
     photoProcessingRef.current = false
+    extraPhotoSuppressedRef.current = true
     setPhotoProcessing(false)
     setPhotoPreview(null)
     setPhotoDirty(true)
@@ -294,7 +351,14 @@ export function TenantPortalProfilePage() {
   const address = formatProfileAddress(profile)
   const email = profile.email?.trim() ?? ""
   const phone = profile.phone?.trim() ?? ""
-  const documentLabel = formatCustomerDocument(
+  const revealedPhone = formatBrazilianPhone(phone)
+  const maskedPhone = maskBrazilianPhone(phone)
+  const revealedDocument = formatCustomerDocument(
+    profile.customerType,
+    profile.document,
+    profile.cpf,
+  )
+  const maskedDocument = maskCustomerDocument(
     profile.customerType,
     profile.document,
     profile.cpf,
@@ -308,7 +372,7 @@ export function TenantPortalProfilePage() {
   const hasReadOnlyFields =
     email.length > 0 ||
     phone.length > 0 ||
-    documentLabel !== null ||
+    revealedDocument !== null ||
     address !== null
 
   return (
@@ -437,23 +501,43 @@ export function TenantPortalProfilePage() {
                   />
                 ) : null}
                 {phone.length > 0 ? (
-                  <ReadOnlyValue
+                  <SensitiveReadOnlyValue
                     label={t("tenantPortal.fields.phone")}
-                    value={formatBrazilianPhone(phone)}
+                    masked={maskedPhone}
+                    revealed={revealedPhone}
+                    showLabel={t("tenantPortal.profile.showSensitive", {
+                      label: t("tenantPortal.fields.phone"),
+                    })}
+                    hideLabel={t("tenantPortal.profile.hideSensitive", {
+                      label: t("tenantPortal.fields.phone"),
+                    })}
                   />
                 ) : null}
                 <ReadOnlyValue
                   label={t("tenantPortal.fields.customerType")}
                   value={customerTypeLabel}
                 />
-                {documentLabel ? (
-                  <ReadOnlyValue
+                {revealedDocument && maskedDocument ? (
+                  <SensitiveReadOnlyValue
                     label={
                       profile.customerType === "Company"
                         ? t("tenantPortal.fields.cnpj")
                         : t("tenantPortal.fields.cpf")
                     }
-                    value={documentLabel}
+                    masked={maskedDocument}
+                    revealed={revealedDocument}
+                    showLabel={t("tenantPortal.profile.showSensitive", {
+                      label:
+                        profile.customerType === "Company"
+                          ? t("tenantPortal.fields.cnpj")
+                          : t("tenantPortal.fields.cpf"),
+                    })}
+                    hideLabel={t("tenantPortal.profile.hideSensitive", {
+                      label:
+                        profile.customerType === "Company"
+                          ? t("tenantPortal.fields.cnpj")
+                          : t("tenantPortal.fields.cpf"),
+                    })}
                   />
                 ) : null}
                 {address ? (

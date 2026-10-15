@@ -251,6 +251,7 @@
       "cpf": "CPF",
       "postalCode": "CEP",
       "phone": "Celular",
+      "phonePlaceholder": "(11) 91234-5678",
       "photo": "Foto de perfil",
       "code": "Código",
       "customerType": "Tipo de conta",
@@ -445,6 +446,8 @@
       "photoProcessing": "Processando foto...",
       "photoRemove": "Remover foto",
       "photoNone": "Nenhuma foto",
+      "showSensitive": "Mostrar {{label}}",
+      "hideSensitive": "Ocultar {{label}}",
       "address": "Endereço",
       "sections": {
         "account": "Dados da conta"

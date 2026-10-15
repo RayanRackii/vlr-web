@@ -251,6 +251,7 @@
       "cpf": "CPF",
       "postalCode": "Postal code (CEP)",
       "phone": "Mobile phone",
+      "phonePlaceholder": "+55 11 91234-5678",
       "photo": "Profile photo",
       "code": "Verification code",
       "customerType": "Account type",
@@ -445,6 +446,8 @@
       "photoProcessing": "Processing photo...",
       "photoRemove": "Remove photo",
       "photoNone": "No photo",
+      "showSensitive": "Show {{label}}",
+      "hideSensitive": "Hide {{label}}",
       "address": "Address",
       "sections": {
         "account": "Account details"

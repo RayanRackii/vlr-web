@@ -36,6 +36,7 @@ import {
   type CustomerType,
   type RegistrationField,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { maskPhoneInput } from "@/features/tenantPortal/lib/masks"
 import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
   fetchRegistrationSchema,
@@ -170,7 +171,7 @@ export function TenantPortalRegisterPage() {
             ? formatCnpjMask(raw)
             : formatCpfMask(raw)
       } else if (name === "phone") {
-        next = normalizeBrazilianPhoneDigits(raw)
+        next = maskPhoneInput(raw)
       }
       if (form.getValues(name) === next) {
         return
@@ -293,12 +294,18 @@ export function TenantPortalRegisterPage() {
                     <Input
                       type={type}
                       autoComplete={autoComplete}
+                      placeholder={
+                        name === "phone"
+                          ? t("tenantPortal.fields.phonePlaceholder")
+                          : undefined
+                      }
+                      inputMode={name === "phone" ? "tel" : undefined}
                       {...field}
                       value={String(field.value ?? "")}
                       onChange={(event) => {
                         field.onChange(
                           name === "phone"
-                            ? normalizeBrazilianPhoneDigits(event.target.value)
+                            ? maskPhoneInput(event.target.value)
                             : event.target.value,
                         )
                       }}
@@ -483,8 +490,20 @@ export function TenantPortalRegisterPage() {
                                   : "text"
                         }
                         autoComplete={extraFieldAutoComplete(extra.fieldType)}
+                        placeholder={
+                          extra.fieldType === "phone"
+                            ? t("tenantPortal.fields.phonePlaceholder")
+                            : undefined
+                        }
                         {...field}
                         value={String(field.value ?? "")}
+                        onChange={(event) => {
+                          field.onChange(
+                            extra.fieldType === "phone"
+                              ? maskPhoneInput(event.target.value)
+                              : event.target.value,
+                          )
+                        }}
                       />
                     )}
                   </FormControl>
