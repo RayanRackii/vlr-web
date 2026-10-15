@@ -10,10 +10,26 @@ export const supportedLanguages = ["pt-BR", "en", "es"] as const
 
 export type SupportedLanguage = (typeof supportedLanguages)[number]
 
+/** Endonyms. The picker must not translate these into the active UI language. */
+export const languageNativeNames: Record<SupportedLanguage, string> = {
+  "pt-BR": "Português",
+  en: "English",
+  es: "Español",
+}
+
+function syncDocumentLanguage(language: string): void {
+  if (typeof document === "undefined") {
+    return
+  }
+  document.documentElement.lang = language
+}
+
 const cachedLng =
   typeof window !== "undefined"
     ? window.localStorage.getItem("i18nextLng")
     : null
+
+i18n.on("languageChanged", syncDocumentLanguage)
 
 void i18n
   .use(LanguageDetector)
@@ -40,6 +56,9 @@ void i18n
       caches: ["localStorage"],
       lookupLocalStorage: "i18nextLng",
     },
+  })
+  .then(() => {
+    syncDocumentLanguage(i18n.resolvedLanguage ?? i18n.language)
   })
 
 export default i18n

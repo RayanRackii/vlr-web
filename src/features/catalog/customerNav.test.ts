@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import i18n from "@/lib/i18n"
@@ -8,6 +8,7 @@ import {
   getDiscoverablePortalModules,
   getEligiblePortalMenuModules,
   getVisiblePortalMenuItems,
+  localizedCustomerMenuLabel,
   PORTAL_CUSTOMER_MODULES,
   suggestPortalMenuLabel,
 } from "./customerNav"
@@ -151,6 +152,35 @@ describe("buildCustomerNavItems", () => {
     expect(nav).toHaveLength(1)
     expect(nav[0]?.id).toBe(RENTALS_A.id)
     expect(nav[0]?.label).toBe(RENTALS_A.label)
+  })
+})
+
+describe("localizedCustomerMenuLabel", () => {
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it("translates the stock rentals label and keeps tenant resource names", async () => {
+    const stock: ModuleMenuItem = {
+      ...RENTALS_B,
+      label: "Reservar horário",
+    }
+
+    await i18n.changeLanguage("en")
+    expect(buildCustomerNavItems("clube", [stock, RENTALS_A], i18n.t).map(
+      (item) => item.label,
+    )).toEqual(["Book a time", "Quadra 1"])
+
+    await i18n.changeLanguage("es")
+    expect(localizedCustomerMenuLabel("rentals", "Book a time", i18n.t)).toBe(
+      "Reservar horario",
+    )
+    expect(localizedCustomerMenuLabel("rentals", "Quadra 1", i18n.t)).toBe(
+      "Quadra 1",
+    )
+    expect(
+      localizedCustomerMenuLabel("rentals", "Reservar Quadra 1", i18n.t),
+    ).toBe("Reservar Quadra 1")
   })
 })
 

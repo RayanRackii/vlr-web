@@ -1,10 +1,11 @@
 import { Loader2 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useOutletContext, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { LocaleDateInput } from "@/components/LocaleDateInput"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,7 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Select,
@@ -40,6 +40,7 @@ import {
   formatMoney,
   formatReservationRange,
 } from "@/features/rentals/services/reservationsService"
+import { localizedCustomerMenuLabel } from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
@@ -92,7 +93,8 @@ function upcomingBookableSlots(
 }
 
 export function TenantPortalAgendaPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const dateInputId = useId()
   const [searchParams] = useSearchParams()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
@@ -412,7 +414,9 @@ export function TenantPortalAgendaPage() {
     return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
   }
 
-  const title = menuItem?.label ?? t("tenantPortal.agenda.title")
+  const title = menuItem
+    ? localizedCustomerMenuLabel(menuItem.moduleName, menuItem.label, t)
+    : t("tenantPortal.agenda.title")
   const cancellationPolicyNote = visibleCancellationPolicyText(
     cancellationPolicyText,
   )
@@ -610,21 +614,18 @@ export function TenantPortalAgendaPage() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1 text-sm">
-              <span>{t("tenantPortal.agenda.date")}</span>
-              <Input
-                type="date"
+            <div className="space-y-1 text-sm">
+              <label htmlFor={dateInputId}>{t("tenantPortal.agenda.date")}</label>
+              <LocaleDateInput
+                id={dateInputId}
+                locale={i18n.language}
                 min={brazilTodayIsoDate()}
                 value={date}
-                onChange={(event) => {
-                  const next = clampBrazilDateToToday(event.target.value)
-                  if (event.target.value !== next) {
-                    event.currentTarget.value = next
-                  }
-                  onDateChange(next)
+                onChange={(nextValue) => {
+                  onDateChange(clampBrazilDateToToday(nextValue))
                 }}
               />
-            </label>
+            </div>
             <label className="space-y-1 text-sm">
               <span>{t("tenantPortal.agenda.time")}</span>
               <Select

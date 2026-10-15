@@ -65,7 +65,7 @@ export function TenantPortalRegisterPage() {
   const [submitting, setSubmitting] = useState(false)
   const [fields, setFields] = useState<RegistrationField[]>([])
   const [schemaLoading, setSchemaLoading] = useState(true)
-  const [schemaError, setSchemaError] = useState<string | null>(null)
+  const [schemaError, setSchemaError] = useState(false)
   const [blockedAttempted, setBlockedAttempted] = useState(false)
 
   useEffect(() => {
@@ -75,12 +75,12 @@ export function TenantPortalRegisterPage() {
       .then((schema) => {
         if (!cancelled) {
           setFields(schema.fields)
-          setSchemaError(null)
+          setSchemaError(false)
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setSchemaError(t("tenantPortal.register.schemaError"))
+          setSchemaError(true)
         }
       })
       .finally(() => {
@@ -91,7 +91,7 @@ export function TenantPortalRegisterPage() {
     return () => {
       cancelled = true
     }
-  }, [subdomain, t])
+  }, [subdomain])
 
   const schema = useMemo(
     () =>
@@ -248,7 +248,11 @@ export function TenantPortalRegisterPage() {
   }
 
   if (schemaError) {
-    return <p className="text-sm text-destructive">{schemaError}</p>
+    return (
+      <p className="text-sm text-destructive">
+        {t("tenantPortal.register.schemaError")}
+      </p>
+    )
   }
 
   return (

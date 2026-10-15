@@ -15,8 +15,10 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
+type PortalLoadError = "missingSubdomain" | "notFound"
+
 export function TenantPortalLayout() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const params = useParams()
   const subdomain = useMemo(() => {
     const fromPath = params.subdomain?.toLowerCase()
@@ -28,20 +30,13 @@ export function TenantPortalLayout() {
 
   const portalBasePath = params.subdomain ? `/t/${params.subdomain}` : ""
 
-  useEffect(() => {
-    // Tenant portals always open in pt-BR by default (user can still switch).
-    if (!i18n.language.startsWith("pt")) {
-      void i18n.changeLanguage("pt-BR")
-    }
-  }, [i18n])
-
   const [branding, setBranding] = useState<TenantBranding | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<PortalLoadError | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!subdomain) {
-      setError(t("tenantPortal.errors.missingSubdomain"))
+      setError("missingSubdomain")
       setLoading(false)
       return
     }
@@ -57,7 +52,7 @@ export function TenantPortalLayout() {
       })
       .catch(() => {
         if (!cancelled) {
-          setError(t("tenantPortal.errors.tenantNotFound"))
+          setError("notFound")
           setBranding(null)
         }
       })
@@ -70,7 +65,14 @@ export function TenantPortalLayout() {
     return () => {
       cancelled = true
     }
-  }, [subdomain, t])
+  }, [subdomain])
+
+  const errorMessage =
+    error === "missingSubdomain"
+      ? t("tenantPortal.errors.missingSubdomain")
+      : error === "notFound"
+        ? t("tenantPortal.errors.tenantNotFound")
+        : null
 
   const logoInspection = useMemo(
     () => inspectTenantLogoSvg(sanitizeTenantLogoSvg(branding?.logoSvg)),
@@ -114,7 +116,7 @@ export function TenantPortalLayout() {
             <h1 className="text-xl font-semibold">
               {t("tenantPortal.errors.title")}
             </h1>
-            <p className="text-sm text-muted-foreground">{error}</p>
+            <p className="text-sm text-muted-foreground">{errorMessage}</p>
             <a
               href={`https://${getTenantBaseDomain()}/`}
               className="text-sm text-primary underline"
