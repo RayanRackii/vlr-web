@@ -187,6 +187,7 @@ export function TenantPortalAgendaPage() {
   const [date, setDate] = useState(() =>
     readAgendaDateParam(searchParams.get("date"), brazilTodayIsoDate()),
   )
+  const [slotsBelongToDate, setSlotsBelongToDate] = useState(date)
   const [pastSlotsHidden, setPastSlotsHidden] = useState(false)
   const [startTime, setStartTime] = useState(
     () => readAgendaTimeParam(searchParams.get("time")) ?? "",
@@ -216,6 +217,7 @@ export function TenantPortalAgendaPage() {
   const scheduleRequest = useRef(0)
   const lastWrittenSearch = useRef<string | null>(null)
   const pendingSearchWrite = useRef(false)
+  const searchWriteBaseline = useRef<string | null>(null)
   const replaceSelectionSearch = useRef(true)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
@@ -268,6 +270,7 @@ export function TenantPortalAgendaPage() {
     }
     setHorizonAdjusted(true)
     viewedDateRef.current = horizonMaxDate
+    replaceSelectionSearch.current = true
     setDate(horizonMaxDate)
   }, [date, horizonMaxDate])
 
@@ -393,17 +396,25 @@ export function TenantPortalAgendaPage() {
     viewedDateRef.current = date
     if (!signedIn || !date) {
       setSlots([])
+      setObservedSlots([])
+      setSlotsBelongToDate(date)
       preferredTimeRef.current = ""
       setStartTime("")
       setPastSlotsHidden(false)
       setSlotsLoading(false)
       setSlotsError(false)
+      setSelectedRentalAssetId(null)
       return
     }
 
     if (dayFetchGate !== "go") {
       setSlotsLoading(true)
       setSlotsError(false)
+      setPastSlotsHidden(false)
+      setSlots([])
+      setObservedSlots([])
+      setSlotsBelongToDate(date)
+      setSelectedRentalAssetId(null)
       return
     }
 
@@ -416,6 +427,7 @@ export function TenantPortalAgendaPage() {
     setPastSlotsHidden(false)
     setSlots([])
     setObservedSlots([])
+    setSlotsBelongToDate(date)
     if (preferredTimeRef.current.length === 0) {
       setStartTime("")
     }
@@ -475,20 +487,30 @@ export function TenantPortalAgendaPage() {
   useEffect(() => {
     const today = brazilTodayIsoDate()
     const current = searchParams.toString()
-    if (pendingSearchWrite.current) {
-      if (current !== lastWrittenSearch.current) {
-        return
-      }
+    const urlDate = readAgendaDateParam(searchParams.get("date"), today)
+    const urlBeyondHorizon =
+      horizonMaxDate !== null && urlDate > horizonMaxDate
+    if (
+      pendingSearchWrite.current &&
+      current === lastWrittenSearch.current
+    ) {
       pendingSearchWrite.current = false
+      searchWriteBaseline.current = null
+    } else if (
+      pendingSearchWrite.current &&
+      current === searchWriteBaseline.current
+    ) {
+      return
     } else if (
       lastWrittenSearch.current !== null &&
       current !== lastWrittenSearch.current
     ) {
-      const urlDate = readAgendaDateParam(searchParams.get("date"), today)
+      pendingSearchWrite.current = false
+      searchWriteBaseline.current = null
       const urlTime = readAgendaTimeParam(searchParams.get("time")) ?? ""
       lastWrittenSearch.current = current
-      replaceSelectionSearch.current = false
-      setHorizonAdjusted(horizonMaxDate !== null && urlDate > horizonMaxDate)
+      replaceSelectionSearch.current = urlBeyondHorizon
+      setHorizonAdjusted(urlBeyondHorizon)
       if (urlDate !== date) {
         viewedDateRef.current = urlDate
         setDate(urlDate)
@@ -511,16 +533,17 @@ export function TenantPortalAgendaPage() {
     const nextQuery = next.toString()
     if (nextQuery === current) {
       lastWrittenSearch.current = current
-      if (startTime.length > 0) {
+      if (startTime.length > 0 && !urlBeyondHorizon) {
         replaceSelectionSearch.current = false
       }
       return
     }
 
-    const replace = replaceSelectionSearch.current
-    if (startTime.length > 0) {
+    const replace = replaceSelectionSearch.current || urlBeyondHorizon
+    if (startTime.length > 0 && !urlBeyondHorizon) {
       replaceSelectionSearch.current = false
     }
+    searchWriteBaseline.current = current
     lastWrittenSearch.current = nextQuery
     pendingSearchWrite.current = true
     setSearchParams(next, { replace })
@@ -551,6 +574,7 @@ export function TenantPortalAgendaPage() {
       scheduleRequest.current += 1
       const selected = partitionAgendaSlots(match.day.slots, viewed)
       setSlotsLoading(false)
+      setSlotsBelongToDate(viewed)
       setSlots(selected.bookable)
       setObservedSlots(selected.observed)
       setPastSlotsHidden(selected.pastHidden)
@@ -561,11 +585,22 @@ export function TenantPortalAgendaPage() {
     })
   }, [subdomain])
 
-  const derivedReservedKeys = useMemo(
-    () => reservedSlotKeysForDate(date, mine, observedSlots),
-    [date, mine, observedSlots],
+  const slotsForView = useMemo(
+    () => (slotsBelongToDate === date ? slots : []),
+    [date, slots, slotsBelongToDate],
   )
-  const timeWindows = useMemo(() => listDistinctStartTimes(slots), [slots])
+  const observedForView = useMemo(
+    () => (slotsBelongToDate === date ? observedSlots : []),
+    [date, observedSlots, slotsBelongToDate],
+  )
+  const derivedReservedKeys = useMemo(
+    () => reservedSlotKeysForDate(date, mine, observedForView),
+    [date, mine, observedForView],
+  )
+  const timeWindows = useMemo(
+    () => listDistinctStartTimes(slotsForView),
+    [slotsForView],
+  )
   const timeItems = useMemo(
     () =>
       timeWindows.map((window) => ({
@@ -584,7 +619,7 @@ export function TenantPortalAgendaPage() {
   )
 
   const selectedSlot = selectedRentalAssetId
-    ? findSlotAtStart(slots, selectedRentalAssetId, startTime)
+    ? findSlotAtStart(slotsForView, selectedRentalAssetId, startTime)
     : undefined
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
@@ -986,7 +1021,7 @@ export function TenantPortalAgendaPage() {
 
   function spaceState(rentalAssetId: string) {
     const slot = startTime
-      ? findSlotAtStart(slots, rentalAssetId, startTime)
+      ? findSlotAtStart(slotsForView, rentalAssetId, startTime)
       : undefined
     const reservedKey =
       startTime.length > 0
@@ -1344,6 +1379,7 @@ export function TenantPortalAgendaPage() {
             loading={submitting}
             loadingLabel={t("tenantPortal.agenda.reserving")}
             disabled={
+              slotsLoading ||
               !selectedSlot ||
               (selectedRentalAssetId !== null &&
                 !spaceState(selectedRentalAssetId).available) ||

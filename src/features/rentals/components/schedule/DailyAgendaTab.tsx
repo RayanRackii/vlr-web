@@ -65,11 +65,11 @@ type DailyAgendaTabProps = {
 
 /** Re-render when a minute passes, or when the tab is focused again. */
 function useTenantClock(): number {
-  const [tick, setTick] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     function bump() {
-      setTick((value) => value + 1)
+      setNow(Date.now())
     }
 
     let intervalId = 0
@@ -99,7 +99,7 @@ function useTenantClock(): number {
     }
   }, [])
 
-  return tick
+  return now
 }
 
 function addDays(isoDate: string, amount: number): string {
@@ -128,6 +128,7 @@ export function DailyAgendaTab({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const clock = useTenantClock()
+  const now = useMemo(() => new Date(clock), [clock])
 
   const selectedAssets = useMemo(
     () =>
@@ -136,19 +137,19 @@ export function DailyAgendaTab({
   )
 
   const occupancies = useMemo(() => {
-    const today = brazilTodayIsoDate()
+    const today = brazilTodayIsoDate(now)
     return (day?.slots ?? []).map((slot) => {
       const occupancy = occupancyFromDaySlot(slot)
       if (
         date === today &&
         occupancy.status === "available" &&
-        isPastTenantSlotStart(date, slot.startTime)
+        isPastTenantSlotStart(date, slot.startTime, now)
       ) {
         return { ...occupancy, status: "unavailable" as const }
       }
       return occupancy
     })
-  }, [clock, date, day])
+  }, [date, day, now])
 
   const hasSlotGrid = selectedAssets.some(
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
@@ -287,8 +288,8 @@ export function DailyAgendaTab({
             busyTargetKey={busyTargetKey}
             readOnly={readOnly}
             isStartClosed={(startTime) =>
-              date === brazilTodayIsoDate() &&
-              isPastTenantSlotStart(date, startTime)
+              date === brazilTodayIsoDate(now) &&
+              isPastTenantSlotStart(date, startTime, now)
             }
             onCellClick={(cell) => {
               const slot = cell.occupancy

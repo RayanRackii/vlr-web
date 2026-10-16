@@ -173,7 +173,12 @@ function renderAgenda(initialEntry = "/agenda") {
   )
 }
 
-function renderAgendaHistory(initialEntry = "/agenda") {
+function renderAgendaHistory(
+  initialEntries: string[] | string = "/agenda",
+) {
+  const entries = Array.isArray(initialEntries)
+    ? initialEntries
+    : [initialEntries]
   const router = createMemoryRouter(
     [
       {
@@ -181,7 +186,10 @@ function renderAgendaHistory(initialEntry = "/agenda") {
         children: [{ path: "/agenda", element: <TenantPortalAgendaPage /> }],
       },
     ],
-    { initialEntries: [initialEntry] },
+    {
+      initialEntries: entries,
+      initialIndex: entries.length - 1,
+    },
   )
   return { router, ...render(<RouterProvider router={router} />) }
 }
@@ -432,6 +440,69 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     })
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelMine).not.toHaveBeenCalled()
+  })
+
+  it("keeps a second reservation when the revision moves and confirm sees the booking already cancelled", async () => {
+    const user = userEvent.setup()
+    const target = makeReservation("Confirmed", FUTURE_ISO)
+    const newer = makeReservation("Confirmed", FUTURE_ISO, {
+      id: "99999999-9999-4999-8999-999999999999",
+      items: [
+        {
+          ...target.items[0],
+          id: "12121212-1212-4121-8121-121212121212",
+          assetName: "Sala nova",
+        },
+      ],
+    })
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    let releaseConfirmList: (rows: PortalReservation[]) => void = () => {}
+    let reads = 0
+    listMine.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          reads += 1
+          if (reads === 1) {
+            resolve([target])
+            return
+          }
+          if (reads === 2) {
+            releaseConfirmList = resolve
+            return
+          }
+          resolve([canceled, newer])
+        }),
+    )
+
+    renderAgenda()
+    await waitForMineList()
+    const dialog = await openCancelDialog(user)
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+      }),
+    )
+    await waitFor(() => {
+      expect(listMine).toHaveBeenCalledTimes(2)
+    })
+
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2099-01-15"] },
+      { applySlots: false },
+    )
+    expect(await screen.findByText("Sala nova")).toBeInTheDocument()
+
+    releaseConfirmList([canceled])
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      )
+    })
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(cancelMine).not.toHaveBeenCalled()
+    expect(screen.getByText("Sala nova")).toBeInTheDocument()
+    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
   })
 
   it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
@@ -1793,6 +1864,87 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(
       screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") }),
     ).toHaveTextContent("08:00")
+  })
+
+  it("replaces a beyond-horizon deep link so Back reaches the earlier entry", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    const { router } = renderAgendaHistory([
+      "/agenda?date=2026-10-15",
+      "/agenda?date=2099-12-31&time=08:00",
+    ])
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-16")
+      expect(router.state.location.search).not.toContain("2099-12-31")
+    })
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
+      "2099-12-31",
+    )
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    expect(router.state.location.search).toContain("date=2026-10-15")
+    expect(router.state.location.search).not.toContain("2099-12-31")
+  })
+
+  it("drops the previous grid while a later day waits on policy", async () => {
+    fetchPolicy.mockImplementation(() => new Promise(() => {}))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ date: "2026-10-14", startTime: "08:00" }),
+      )
+    })
+    const quotesBefore = checkAvailability.mock.calls.length
+
+    fireEvent.change(
+      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      { target: { value: "2026-10-20" } },
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "Quadra 1" }),
+      ).not.toBeInTheDocument()
+    })
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    ).toBeDisabled()
+    expect(checkAvailability).toHaveBeenCalledTimes(quotesBefore)
+    expect(
+      checkAvailability.mock.calls.some(
+        (call) =>
+          typeof call[1] === "object" &&
+          call[1] !== null &&
+          "date" in call[1] &&
+          call[1].date === "2026-10-20",
+      ),
+    ).toBe(false)
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2026-10-20")
   })
 
   it("formats the booking total and the estimate for each locale", async () => {
