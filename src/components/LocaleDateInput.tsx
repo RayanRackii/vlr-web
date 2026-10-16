@@ -7,6 +7,7 @@ type LocaleDateInputProps = {
   value: string
   locale: string
   min?: string
+  max?: string
   onChange: (value: string) => void
   className?: string
 }
@@ -20,6 +21,7 @@ export function LocaleDateInput({
   value,
   locale,
   min,
+  max,
   onChange,
   className,
 }: LocaleDateInputProps) {
@@ -43,6 +45,7 @@ export function LocaleDateInput({
         type="date"
         lang={locale}
         min={min}
+        max={max}
         value={value}
         onChange={(event) => {
           onChange(event.target.value)

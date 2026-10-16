@@ -36,6 +36,7 @@ type DayResourceGridProps = {
   occupancies: readonly ScheduleGridOccupancy[]
   busyTargetKey: string | null
   readOnly: boolean
+  isStartClosed?: (startTime: string) => boolean
   onCellClick: (payload: ScheduleGridCellPayload) => void
 }
 
@@ -44,6 +45,7 @@ export function DayResourceGrid({
   occupancies,
   busyTargetKey,
   readOnly,
+  isStartClosed,
   onCellClick,
 }: DayResourceGridProps) {
   const { t } = useTranslation()
@@ -147,6 +149,7 @@ export function DayResourceGrid({
               axisStep={axis.step}
               busyTargetKey={busyTargetKey}
               readOnly={readOnly}
+              isStartClosed={isStartClosed}
               onCellClick={onCellClick}
             />
           )
@@ -166,6 +169,7 @@ function RowCells({
   axisStep,
   busyTargetKey,
   readOnly,
+  isStartClosed,
   onCellClick,
 }: {
   assets: readonly AdminRentalAsset[]
@@ -177,8 +181,10 @@ function RowCells({
   axisStep: number
   busyTargetKey: string | null
   readOnly: boolean
+  isStartClosed?: (startTime: string) => boolean
   onCellClick: (payload: ScheduleGridCellPayload) => void
 }) {
+  const rowClosed = isStartClosed?.(formatMinutesAsTime(rowStart)) === true
   const { t } = useTranslation()
 
   return (
@@ -213,7 +219,7 @@ function RowCells({
             {!isCovered ? (
               <button
                 type="button"
-                disabled={readOnly}
+                disabled={readOnly || rowClosed}
                 aria-label={`${asset.name}, ${formatMinutesAsTime(rowStart)}–${formatMinutesAsTime(rowEnd)}`}
                 className="h-full w-full rounded-md border border-dashed border-transparent text-left transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
                 onClick={() =>
@@ -251,7 +257,12 @@ function RowCells({
                 <button
                   key={item.id}
                   type="button"
-                  disabled={readOnly || busyTargetKey === item.id}
+                  disabled={
+                    readOnly ||
+                    busyTargetKey === item.id ||
+                    (isStartClosed?.(item.startTime) === true &&
+                      item.status !== "booked")
+                  }
                   aria-label={`${asset.name}, ${item.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${item.status}`)}`}
                   className={cn(
                     "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",

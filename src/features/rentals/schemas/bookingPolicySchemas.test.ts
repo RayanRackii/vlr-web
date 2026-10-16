@@ -32,6 +32,42 @@ describe("bookingPolicySchema", () => {
     expect(parsed.success).toBe(true)
   })
 
+  it("reads the tenant booking horizon and leaves it off the replace body", () => {
+    const parsed = bookingPolicySchema.safeParse({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 365,
+    })
+
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      return
+    }
+    expect(parsed.data.maxAdvanceBookingDays).toBe(365)
+    expect(
+      bookingPolicySchema.safeParse({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: null,
+      }).success,
+    ).toBe(true)
+    const missing = bookingPolicySchema.safeParse({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+    })
+    expect(missing.success).toBe(true)
+    if (missing.success) {
+      expect(missing.data.maxAdvanceBookingDays).toBeUndefined()
+    }
+    expect(
+      bookingPolicySchema.safeParse({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: 3651,
+      }).success,
+    ).toBe(false)
+  })
+
   it("rejects a limit outside 1..100", () => {
     expect(
       bookingPolicySchema.safeParse({

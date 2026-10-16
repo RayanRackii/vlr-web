@@ -385,6 +385,8 @@
       "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
       "noTimes": "No times on this date",
       "pastSlotsHidden": "Times that have already started today are hidden.",
+      "horizonExceeded": "That date is beyond the booking horizon.",
+      "horizonAdjusted": "That date is beyond the booking horizon. Showing the latest date you can book.",
       "loadingTimes": "Loading times...",
       "reserveSuccess": "Reservation created!",
       "reserveSuccessWithTotal": "Reservation created! Total {{amount}} · {{status}}",

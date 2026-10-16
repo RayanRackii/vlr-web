@@ -19,6 +19,8 @@ import { RentableMultiSelect } from "@/features/rentals/components/schedule/Rent
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
+import { isPastTenantSlotStart } from "@/features/rentals/lib/offerableSlot"
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import {
   occupancyFromDaySlot,
   occupancyIdFromSlot,
@@ -93,10 +95,20 @@ export function DailyAgendaTab({
     [assets, selectedRentalAssetIds],
   )
 
-  const occupancies = useMemo(
-    () => (day?.slots ?? []).map(occupancyFromDaySlot),
-    [day],
-  )
+  const occupancies = useMemo(() => {
+    const today = brazilTodayIsoDate()
+    return (day?.slots ?? []).map((slot) => {
+      const occupancy = occupancyFromDaySlot(slot)
+      if (
+        date === today &&
+        occupancy.status === "available" &&
+        isPastTenantSlotStart(date, slot.startTime)
+      ) {
+        return { ...occupancy, status: "unavailable" as const }
+      }
+      return occupancy
+    })
+  }, [date, day])
 
   const hasSlotGrid = selectedAssets.some(
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
@@ -234,6 +246,10 @@ export function DailyAgendaTab({
             occupancies={occupancies}
             busyTargetKey={busyTargetKey}
             readOnly={readOnly}
+            isStartClosed={(startTime) =>
+              date === brazilTodayIsoDate() &&
+              isPastTenantSlotStart(date, startTime)
+            }
             onCellClick={(cell) => {
               const slot = cell.occupancy
                 ? (day?.slots.find(

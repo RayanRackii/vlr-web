@@ -385,6 +385,8 @@
       "noSlots": "Nenhum horário disponível nesta data. O clube ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",
       "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos.",
+      "horizonExceeded": "A data solicitada está além do horizonte de reserva.",
+      "horizonAdjusted": "Essa data passa do horizonte de reserva. Mostrando a última data que ainda pode ser reservada.",
       "loadingTimes": "Carregando horários...",
       "reserveSuccess": "Reserva criada!",
       "reserveSuccessWithTotal": "Reserva criada! Total {{amount}} · {{status}}",

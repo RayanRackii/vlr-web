@@ -1,6 +1,8 @@
 import { getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import i18n from "@/lib/i18n"
 
 export const DAILY_BOOKING_LIMIT_REACHED = "DAILY_BOOKING_LIMIT_REACHED"
+export const BOOKING_HORIZON_EXCEEDED = "booking_horizon_exceeded"
 
 export const RESERVATION_QUEUE_ERROR_CODES = [
   "QUEUE_REQUIRED",
@@ -84,6 +86,28 @@ export function isDailyBookingLimitError(
     error instanceof PortalBookingError &&
     error.code === DAILY_BOOKING_LIMIT_REACHED
   )
+}
+
+export function isBookingHorizonError(
+  error: unknown,
+): error is PortalBookingError {
+  return (
+    error instanceof PortalBookingError &&
+    error.code === BOOKING_HORIZON_EXCEEDED
+  )
+}
+
+/** Message for a booking failure. A horizon rejection uses the translated sentence. */
+export function describeBookingError(error: unknown, fallback: string): string {
+  if (isBookingHorizonError(error)) {
+    return i18n.t("tenantPortal.agenda.horizonExceeded")
+  }
+
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message
+  }
+
+  return fallback
 }
 
 export function readDailyBookingLimit(error: unknown): number | null {
