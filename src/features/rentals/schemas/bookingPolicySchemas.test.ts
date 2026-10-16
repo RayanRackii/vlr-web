@@ -5,13 +5,21 @@ import {
   bookingPolicyToFormValues,
   createBookingPolicyFormSchema,
   parseDailyLimitInput,
+  parseHorizonDaysInput,
+  resolveTenantHorizonWrite,
   toBookingPolicyReplaceBody,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
 
 const schema = createBookingPolicyFormSchema({
   textMax: "text-max",
   limitRange: "limit-range",
+  horizonRange: "horizon-range",
 })
+
+const untouchedHorizon = {
+  horizonMode: "unlimited" as const,
+  horizonDays: "",
+}
 
 describe("bookingPolicySchema", () => {
   it("accepts null text and a null daily limit", () => {
@@ -90,6 +98,7 @@ describe("booking policy form", () => {
       cancellationPolicyText: "   \n  ",
       dailyLimitEnabled: false,
       dailyLimit: "4",
+      ...untouchedHorizon,
     }
 
     expect(schema.safeParse(values).success).toBe(true)
@@ -104,6 +113,7 @@ describe("booking policy form", () => {
       cancellationPolicyText: "  <b>Bring a document.</b>\nLine 2  ",
       dailyLimitEnabled: true,
       dailyLimit: " 2 ",
+      ...untouchedHorizon,
     }
 
     expect(schema.safeParse(values).success).toBe(true)
@@ -120,6 +130,7 @@ describe("booking policy form", () => {
           cancellationPolicyText: "",
           dailyLimitEnabled: true,
           dailyLimit,
+          ...untouchedHorizon,
         }).success,
       ).toBe(false)
     }
@@ -131,6 +142,7 @@ describe("booking policy form", () => {
         cancellationPolicyText: "a".repeat(2001),
         dailyLimitEnabled: false,
         dailyLimit: "",
+        ...untouchedHorizon,
       }).success,
     ).toBe(false)
   })
@@ -145,17 +157,127 @@ describe("booking policy form", () => {
       cancellationPolicyText: "Hello",
       dailyLimitEnabled: true,
       dailyLimit: "3",
+      horizonMode: "unlimited",
+      horizonDays: "",
     })
     expect(
       bookingPolicyToFormValues({
         cancellationPolicyText: null,
         maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: 14,
       }),
     ).toEqual({
       cancellationPolicyText: "",
       dailyLimitEnabled: false,
       dailyLimit: "",
+      horizonMode: "days",
+      horizonDays: "14",
     })
+    expect(
+      bookingPolicyToFormValues({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: null,
+      }),
+    ).toEqual({
+      cancellationPolicyText: "",
+      dailyLimitEnabled: false,
+      dailyLimit: "",
+      ...untouchedHorizon,
+    })
+  })
+
+  it("omits an unchanged horizon, sends null to clear, and sends a number to replace", () => {
+    const base = {
+      cancellationPolicyText: "Note",
+      dailyLimitEnabled: false,
+      dailyLimit: "",
+    }
+
+    expect(
+      toBookingPolicyReplaceBody(
+        { ...base, horizonMode: "unlimited", horizonDays: "" },
+        30,
+      ),
+    ).toEqual({
+      cancellationPolicyText: "Note",
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: null,
+    })
+
+    expect(
+      toBookingPolicyReplaceBody(
+        { ...base, horizonMode: "days", horizonDays: "14" },
+        null,
+      ),
+    ).toEqual({
+      cancellationPolicyText: "Note",
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 14,
+    })
+
+    const unchanged = toBookingPolicyReplaceBody(
+      { ...base, horizonMode: "days", horizonDays: "30" },
+      30,
+    )
+    expect(unchanged).not.toHaveProperty("maxAdvanceBookingDays")
+
+    const absentUnlimited = toBookingPolicyReplaceBody(
+      { ...base, horizonMode: "unlimited", horizonDays: "8" },
+      undefined,
+    )
+    expect(absentUnlimited).not.toHaveProperty("maxAdvanceBookingDays")
+
+    const sameNull = toBookingPolicyReplaceBody(
+      { ...base, ...untouchedHorizon },
+      null,
+    )
+    expect(sameNull).not.toHaveProperty("maxAdvanceBookingDays")
+  })
+
+  it("rejects a horizon outside 0..3650 and accepts the ends", () => {
+    expect(parseHorizonDaysInput("0")).toBe(0)
+    expect(parseHorizonDaysInput("3650")).toBe(3650)
+    expect(parseHorizonDaysInput("08")).toBe(8)
+    expect(parseHorizonDaysInput("")).toBeNull()
+    expect(parseHorizonDaysInput("-1")).toBeNull()
+    expect(parseHorizonDaysInput("3651")).toBeNull()
+    expect(parseHorizonDaysInput("1.5")).toBeNull()
+
+    expect(() => resolveTenantHorizonWrite("days", "3651", null)).toThrow(
+      "Booking horizon is invalid.",
+    )
+
+    for (const horizonDays of ["", "3651", "-1", "1.5"]) {
+      expect(
+        schema.safeParse({
+          cancellationPolicyText: "",
+          dailyLimitEnabled: false,
+          dailyLimit: "",
+          horizonMode: "days",
+          horizonDays,
+        }).success,
+      ).toBe(false)
+    }
+
+    expect(
+      schema.safeParse({
+        cancellationPolicyText: "",
+        dailyLimitEnabled: false,
+        dailyLimit: "",
+        horizonMode: "days",
+        horizonDays: "0",
+      }).success,
+    ).toBe(true)
+    expect(
+      schema.safeParse({
+        cancellationPolicyText: "",
+        dailyLimitEnabled: false,
+        dailyLimit: "",
+        horizonMode: "unlimited",
+        horizonDays: "3651",
+      }).success,
+    ).toBe(true)
   })
 
   it("parses only integers from 1 to 100", () => {

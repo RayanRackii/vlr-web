@@ -2879,7 +2879,15 @@
         "queueEnabled": "Reservation queue",
         "queueOpeningTime": "Queue opening time",
         "location": "Location",
-        "locationPlaceholder": "E.g. Building A"
+        "locationPlaceholder": "E.g. Building A",
+        "horizonLabel": "Booking horizon for this resource",
+        "horizonInherit": "Use tenant default",
+        "horizonUnlimited": "Unlimited",
+        "horizonDaysMode": "A number of days",
+        "horizonDays": "Days ahead",
+        "horizonHint": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
+        "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
+        "horizonEffectiveDays": "In effect: {{count}} days ahead."
       },
       "validation": {
         "nameRequired": "Enter a name.",
@@ -2888,7 +2896,8 @@
         "categoryRequired": "Select a type.",
         "familyRequired": "Select a family.",
         "quantityMin": "Quantity must be at least 1.",
-        "queueOpeningTimeRequired": "Enter the queue opening time."
+        "queueOpeningTimeRequired": "Enter the queue opening time.",
+        "horizonRange": "Enter an integer from 0 to 3650."
       }
     },
     "layout": {
@@ -2944,7 +2953,7 @@
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text and the daily cap on active reservations per customer. It applies to every resource type in this workspace.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace.",
       "cancellationLabel": "Cancellation text",
       "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows a neutral note: the time becomes available again and the customer should check the organization's rules.",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
@@ -2952,6 +2961,12 @@
       "dailyLimitToggle": "Limit active reservations per customer per day",
       "dailyLimitHint": "Counts pending-deposit and confirmed reservations that start on the same day. Off means no limit.",
       "dailyLimitValue": "Maximum per day",
+      "horizonLabel": "How far ahead customers can book",
+      "horizonUnlimited": "Unlimited",
+      "horizonDaysMode": "A number of days",
+      "horizonDays": "Days ahead",
+      "horizonHintUnlimited": "Unlimited means no limit on how far ahead a customer can book a resource.",
+      "horizonHintDays": "A start this many days ahead is allowed. The next day is rejected (booking_horizon_exceeded).",
       "save": "Save",
       "saved": "Booking policy saved.",
       "loadError": "Could not load the booking policy.",
@@ -2960,7 +2975,8 @@
       "retry": "Try again",
       "validation": {
         "textMax": "The text can be at most 2000 characters.",
-        "limitRange": "Enter an integer from 1 to 100."
+        "limitRange": "Enter an integer from 1 to 100.",
+        "horizonRange": "Enter an integer from 0 to 3650."
       }
     }
   }
