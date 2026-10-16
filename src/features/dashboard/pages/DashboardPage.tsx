@@ -32,6 +32,8 @@ import { getDashboardMetrics } from "@/features/dashboard/services/dashboardServ
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
 import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
+import i18n from "@/lib/i18n"
+import { formatLocaleCurrency } from "@/lib/localeFormat"
 
 const ASSET_PIE_COLORS = [
   "hsl(var(--chart-1, 142 76% 36%))",
@@ -47,10 +49,7 @@ function completionRate(total: number, completed: number): number {
 }
 
 function formatMoney(amount: number): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount)
+  return formatLocaleCurrency(amount, "BRL", i18n.language)
 }
 
 function KpiSkeleton() {

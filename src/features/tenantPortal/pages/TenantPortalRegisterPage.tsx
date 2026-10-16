@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate, useOutletContext } from "react-router-dom"
+import { Link, Navigate, useNavigate, useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -41,6 +41,7 @@ import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAuto
 import {
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
+  isCustomerSignedInForTenant,
   persistPendingEmailVerification,
   registerCustomer,
   tenantPortalPath,
@@ -242,6 +243,10 @@ export function TenantPortalRegisterPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (isCustomerSignedInForTenant(subdomain)) {
+    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
   }
 
   if (schemaLoading) {

@@ -3,17 +3,21 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { AppShell } from "@/components/layout/AppShell"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { staffHeaderContextLabel } from "@/components/layout/staffHeaderContextLabel"
 import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
 import { TrialBanner } from "@/components/layout/TrialBanner"
+import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
   getEmailInitials,
   getPageTitleKey,
+  RENTAL_RESOURCES_PERMISSIONS,
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
+import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   clearPlatformTenantExited,
@@ -31,9 +35,32 @@ function MainLayoutShell() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const { isInTenantEnvironment, activeTenantLabel } = usePlatformTenantSession()
-  const { currentUser } = usePermissions()
+  const { isPlatformAdmin, isInTenantEnvironment, activeTenantLabel } =
+    usePlatformTenantSession()
+  const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
   const [isExiting, setIsExiting] = useState(false)
+  const resourcesAccess =
+    location.pathname === "/configuracoes/recursos"
+      ? resolvePermissionRouteAccess({
+          isLoading: permissionsLoading,
+          hasPermission: RENTAL_RESOURCES_PERMISSIONS.every((key) => can(key)),
+          isPlatformAdminOutsideTenant:
+            isPlatformAdmin && !isInTenantEnvironment,
+          permission: RENTAL_RESOURCES_PERMISSIONS[0] ?? "",
+        })
+      : null
+
+  if (resourcesAccess === "loading" || resourcesAccess === "deny") {
+    return (
+      <main className="mx-auto w-full max-w-3xl p-6">
+        {resourcesAccess === "loading" ? (
+          <PageContentSkeleton rows={3} />
+        ) : (
+          <AccessDeniedPage />
+        )}
+      </main>
+    )
+  }
 
   const userEmail = user?.email ?? t("account.userFallback")
   const pageTitle = t(getPageTitleKey(location.pathname))
