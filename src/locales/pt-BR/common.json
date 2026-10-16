@@ -2692,7 +2692,14 @@
       "removeSuccess": "Aula removida nesta data.",
       "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
       "pastDateAdjusted": "A data do link já passou. Os horários abaixo são de hoje.",
-      "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos."
+      "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos.",
+      "loadingTimes": "Carregando os horários deste recurso.",
+      "timesError": "Não foi possível carregar os horários deste recurso.",
+      "retryTimes": "Tentar novamente",
+      "closedDay": "Este recurso está fechado nesta data.",
+      "noHours": "Nenhum horário configurado para este dia da semana.",
+      "noHoursHint": "Os horários recorrentes deste recurso ficam em {{screen}}.",
+      "noneOpen": "Não há horário aberto nesta data. Os intervalos existentes já estão reservados ou são aulas."
     },
     "schedule": {
       "title": "Escala / agenda",
