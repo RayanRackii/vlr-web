@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { TFunction } from "i18next"
 import { toast } from "sonner"
 
+import i18n from "@/lib/i18n"
+
 import {
   createTeacherLesson,
   fetchAdminScheduleDay,
@@ -107,10 +109,13 @@ export function useTeacherLessons(t: TFunction) {
         if (cancelled) return
         setAssets(result.filter((asset) => asset.isActive && asset.type === "Location" && asset.schedulePolicy === "SlotGrid"))
       })
-      .catch((error: unknown) => toast.error(error instanceof Error ? error.message : t("rentals.teacherLessons.loadError")))
+      .catch((error: unknown) => {
+        if (cancelled) return
+        toast.error(error instanceof Error ? error.message : i18n.t("rentals.teacherLessons.loadError"))
+      })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [t])
+  }, [])
 
   const publishDay = useCallback((next: AdminDaySchedule, assetId: string, date: string) => {
     shownKey.current = dayKey(assetId, date)
@@ -154,11 +159,11 @@ export function useTeacherLessons(t: TFunction) {
           setDay(null)
           setDayStatus("error")
         }
-        toast.error(error instanceof Error ? error.message : t("rentals.teacherLessons.loadError"))
+        toast.error(error instanceof Error ? error.message : i18n.t("rentals.teacherLessons.loadError"))
       }
       return refreshingSameDay ? dayRef.current : null
     }
-  }, [publishDay, t])
+  }, [publishDay])
 
   const create = useCallback(async ({ assetId, date, slot, label }: {
     assetId: string

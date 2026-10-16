@@ -585,6 +585,48 @@ describe("TeacherLessonsPage", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument()
   })
 
+  it("selects the first resource before lessons finish loading", async () => {
+    let resolveAssets: (value: typeof court[]) => void = () => undefined
+    const pendingAssets = new Promise<(typeof court)[]>((resolve) => {
+      resolveAssets = resolve
+    })
+    let resolveDay: (value: { date: string; slots: typeof lessonSlot[] }) => void = () => undefined
+    const pendingDay = new Promise<{ date: string; slots: typeof lessonSlot[] }>((resolve) => {
+      resolveDay = resolve
+    })
+    vi.mocked(listAdminRentalAssets).mockReturnValue(pendingAssets)
+    vi.mocked(fetchAdminScheduleDay).mockReturnValue(pendingDay)
+
+    render(<TeacherLessonsPage />)
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Carregando os espaços...",
+    )
+    expect(screen.queryByText("Carregando as aulas desta data.")).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Quadra" })).toBeDisabled()
+
+    await act(async () => {
+      resolveAssets([court])
+    })
+
+    await waitFor(() => {
+      const resource = screen.getByRole("combobox", { name: "Quadra" })
+      expect(resource).toHaveTextContent("Quadra 1")
+      expect(resource).toBeEnabled()
+    })
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Carregando as aulas desta data.",
+    )
+
+    await act(async () => {
+      resolveDay({ date: todayIsoDate(), slots: [lessonSlot] })
+    })
+
+    expect(await screen.findByText("Treino")).toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Quadra" })).toHaveTextContent("Quadra 1")
+  })
+
   it("lists the freed time in start order after a lesson is removed", async () => {
     const user = userEvent.setup()
     const slot10 = { ...openSlot, startTime: "10:00:00", endTime: "11:00:00" }
