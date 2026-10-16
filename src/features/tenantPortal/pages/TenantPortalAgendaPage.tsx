@@ -42,6 +42,11 @@ import {
   portalPickAvailableSelectedClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
+import {
+  clampDateToHorizon,
+  horizonEndDate,
+  resolveAgendaHorizonDays,
+} from "@/features/rentals/lib/bookingHorizon"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import {
@@ -73,14 +78,20 @@ import {
   commitPortalBooking,
   customerAlreadyHoldsSlot,
   forgetOwnBooking,
+  forgetRecentReservation,
   getAgendaQueryRevision,
   invalidateAgendaQueries,
+  isOwnBookedSlot,
+  isPortalBookingInFlight,
   mergeServerReservations,
+  recentPortalReservations,
   releaseCancelledOwnSlots,
   subscribeAgendaQueries,
 } from "@/features/tenantPortal/lib/agendaQueryClient"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
 import {
+  describeBookingError,
+  isBookingHorizonError,
   isDailyBookingLimitError,
   isSlotTakenConflict,
   isSlotUnavailableConflict,
@@ -164,7 +175,9 @@ export function TenantPortalAgendaPage() {
   const lockedRentalAssetId = menuItem?.rentalAssetId ?? null
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
-  const [mine, setMine] = useState<PortalReservation[]>([])
+  const [mine, setMine] = useState<PortalReservation[]>(() =>
+    recentPortalReservations(subdomain),
+  )
   const mineRef = useRef(mine)
   mineRef.current = mine
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
@@ -192,6 +205,10 @@ export function TenantPortalAgendaPage() {
   const [cancellationPolicyText, setCancellationPolicyText] = useState<
     string | null
   >(null)
+  const [policyHorizonDays, setPolicyHorizonDays] = useState<
+    number | null | undefined
+  >(undefined)
+  const [horizonAdjusted, setHorizonAdjusted] = useState(false)
   const submittingRef = useRef(false)
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
@@ -233,6 +250,18 @@ export function TenantPortalAgendaPage() {
     })
   }, [assets, lockedAssetId, lockedRentalAssetId])
 
+  const horizonDays = resolveAgendaHorizonDays(visibleAssets, policyHorizonDays)
+  const horizonMaxDate = horizonEndDate(brazilTodayIsoDate(), horizonDays)
+
+  useEffect(() => {
+    if (horizonMaxDate === null || date <= horizonMaxDate) {
+      return
+    }
+    setHorizonAdjusted(true)
+    viewedDateRef.current = horizonMaxDate
+    setDate(horizonMaxDate)
+  }, [date, horizonMaxDate])
+
   useEffect(() => {
     if (!signedIn) {
       return
@@ -252,7 +281,12 @@ export function TenantPortalAgendaPage() {
         }
         setAssets(assetList)
         if (getAgendaQueryRevision() === seenRevision) {
-          setMine(reservations)
+          setMine(
+            mergeServerReservations(
+              recentPortalReservations(subdomain),
+              reservations,
+            ),
+          )
         }
 
         const visibleAssetsForLayout = [...assetList]
@@ -321,6 +355,11 @@ export function TenantPortalAgendaPage() {
       .then((policy) => {
         if (!cancelled) {
           setCancellationPolicyText(policy.cancellationPolicyText)
+          setPolicyHorizonDays(
+            policy.maxAdvanceBookingDays === undefined
+              ? undefined
+              : policy.maxAdvanceBookingDays,
+          )
         }
       })
       .catch(() => {
@@ -393,9 +432,10 @@ export function TenantPortalAgendaPage() {
           setStartTime("")
           setSlotsError(true)
           toast.error(
-            error instanceof Error
-              ? error.message
-              : appI18n.t("tenantPortal.agenda.slotsError"),
+            describeBookingError(
+              error,
+              appI18n.t("tenantPortal.agenda.slotsError"),
+            ),
           )
         }
       })
@@ -517,9 +557,17 @@ export function TenantPortalAgendaPage() {
           amount: result.isAvailable ? result.estimatedTotalAmount : null,
         })
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled) {
           setQuote({ status: "error" })
+          if (isBookingHorizonError(error)) {
+            toast.error(
+              describeBookingError(
+                error,
+                t("tenantPortal.agenda.availabilityError"),
+              ),
+            )
+          }
         }
       })
 
@@ -637,6 +685,11 @@ export function TenantPortalAgendaPage() {
                 items: [{ assetId: asset.assetId, quantity: 1 }],
               }),
         { subdomain, dates: [dayDate] },
+        {
+          date: dayDate,
+          rentalAssetId: slot.rentalAssetId,
+          startTime: slot.startTime,
+        },
       )
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
@@ -736,9 +789,7 @@ export function TenantPortalAgendaPage() {
         return
       }
       toast.error(
-        error instanceof Error
-          ? error.message
-          : t("tenantPortal.agenda.reserveError"),
+        describeBookingError(error, t("tenantPortal.agenda.reserveError")),
       )
     } finally {
       submittingRef.current = false
@@ -794,6 +845,7 @@ export function TenantPortalAgendaPage() {
       }
       if (current !== null && isCancelledReservationStatus(current.status)) {
         forgetOwnBooking(current)
+        forgetRecentReservation(current.id)
         toast.message(t("tenantPortal.agenda.alreadyCancelled"))
         setPendingCancelId(null)
         refreshAgenda(agendaRefreshDates(viewedDate, [current]))
@@ -814,6 +866,7 @@ export function TenantPortalAgendaPage() {
       })
       setPendingCancelId(null)
       forgetOwnBooking(existing ?? canceled)
+      forgetRecentReservation(canceled.id)
       refreshAgenda(
         agendaRefreshDates(
           viewedDate,
@@ -839,6 +892,7 @@ export function TenantPortalAgendaPage() {
             merged.find((reservation) => reservation.id === id) ?? null
           if (row !== null && isCancelledReservationStatus(row.status)) {
             forgetOwnBooking(row)
+            forgetRecentReservation(row.id)
             setPendingCancelId(null)
             refreshAgenda(agendaRefreshDates(viewedDate, [row]))
           }
@@ -853,7 +907,9 @@ export function TenantPortalAgendaPage() {
   }
 
   function onDateChange(value: string) {
-    const next = clampBrazilDateToToday(value)
+    const todayClamped = clampBrazilDateToToday(value)
+    const next = clampDateToHorizon(todayClamped, horizonMaxDate)
+    setHorizonAdjusted(next !== todayClamped)
     viewedDateRef.current = next
     setDate(next)
   }
@@ -869,7 +925,9 @@ export function TenantPortalAgendaPage() {
     const reserved =
       reservedKey.length > 0 &&
       (optimisticReservedKeys.has(reservedKey) ||
-        derivedReservedKeys.has(reservedKey))
+        derivedReservedKeys.has(reservedKey) ||
+        isOwnBookedSlot(date, rentalAssetId, startTime) ||
+        isPortalBookingInFlight(date, rentalAssetId, startTime))
     const available = Boolean(slot) && !reserved
     const detail =
       startTime.length === 0 || available
@@ -903,6 +961,7 @@ export function TenantPortalAgendaPage() {
                 id={dateInputId}
                 locale={i18n.language}
                 min={brazilTodayIsoDate()}
+                max={horizonMaxDate ?? undefined}
                 value={date}
                 onChange={(nextValue) => {
                   onDateChange(clampBrazilDateToToday(nextValue))
@@ -956,6 +1015,11 @@ export function TenantPortalAgendaPage() {
           {pastSlotsHidden ? (
             <p className="text-sm text-muted-foreground">
               {t("tenantPortal.agenda.pastSlotsHidden")}
+            </p>
+          ) : null}
+          {horizonAdjusted ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              {t("tenantPortal.agenda.horizonAdjusted")}
             </p>
           ) : null}
 

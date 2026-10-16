@@ -62,8 +62,12 @@ _Avoid_: Right, privilege (in code)
 A booking of one Rentable by a Customer for a concrete time window, owned by a Tenant. Prefer linking to a Slot when the tenant uses slot schedules. The owning Customer may self-cancel `PendingDeposit` or `Confirmed` only while `now < StartDateTime` (true instant). Staff cancel has no start cutoff. Cancel does not restore a queue ticket.
 _Avoid_: Booking, appointment, agendamento (in code)
 
+**BookingPolicy**:
+Tenant rules for customer self-booking. One default applies to every bookable resource. Optional cancellation note, optional daily cap on that customer's active reservations, and optional advance horizon (`maxAdvanceBookingDays`). Null horizon means unlimited. A Rentable may override it; null on the resource means inherit. The picker reads `effectiveMaxAdvanceBookingDays` (`override ?? tenant ?? null`). A policy save omits `maxAdvanceBookingDays`, so the stored horizon stays. The horizon applies to customer booking and the public day read, not to the admin day editor or lessons.
+_Avoid_: court policy; a hard-coded max date; clearing the horizon by saving the cancellation note
+
 **Rentable**:
-Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label). Bulk create: Location yields N assets (one per number in the range, quantity 1 each); Good yields one asset whose stock is `TotalQuantity`.
+Anything a Tenant offers for time-based rental through the Rentals module — a space, court, room, vehicle, or physical good. In code this is the existing `RentalAsset` (typed as location/good; categories refine the label). Bulk create: Location yields N assets (one per number in the range, quantity 1 each); Good yields one asset whose stock is `TotalQuantity`. Optional `maxAdvanceBookingDays` overrides the tenant booking horizon; null inherits it. `effectiveMaxAdvanceBookingDays` is that override, otherwise the tenant policy, otherwise unlimited.
 _Avoid_: Court-only language in the module core; Quadra as the only product shape; treating bulk Good as N serialized individual goods
 
 **RequiresDeposit**:

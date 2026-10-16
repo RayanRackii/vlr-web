@@ -20,6 +20,7 @@ import {
   createPortalReservation,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import {
+  BOOKING_HORIZON_EXCEEDED,
   DAILY_BOOKING_LIMIT_REACHED,
   PortalBookingError,
 } from "@/features/tenantPortal/lib/portalBookingError"
@@ -144,6 +145,26 @@ describe("customer booking requests", () => {
     await expect(created).rejects.toMatchObject({
       code: DAILY_BOOKING_LIMIT_REACHED,
       status: 409,
+    })
+  })
+
+  it("keeps the booking horizon code on a rejected book", async () => {
+    customerPost.mockRejectedValue(
+      axiosError(400, {
+        error: "A data solicitada está além do horizonte de reserva.",
+        code: "booking_horizon_exceeded",
+      }),
+    )
+
+    await expect(
+      bookPortalSlot({
+        slotId: "11111111-1111-4111-8111-111111111111",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      }),
+    ).rejects.toMatchObject({
+      code: BOOKING_HORIZON_EXCEEDED,
+      status: 400,
+      message: "A data solicitada está além do horizonte de reserva.",
     })
   })
 

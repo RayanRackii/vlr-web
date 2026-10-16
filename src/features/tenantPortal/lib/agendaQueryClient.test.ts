@@ -24,10 +24,13 @@ import {
   commitPortalBooking,
   customerAlreadyHoldsSlot,
   forgetOwnBooking,
+  forgetRecentReservation,
   getAgendaQueryRevision,
   invalidateAgendaQueries,
   isOwnBookedSlot,
+  isPortalBookingInFlight,
   mergeServerReservations,
+  recentPortalReservations,
   rememberOwnBooking,
   releaseCancelledOwnSlots,
   resetAgendaQueryClientForTests,
@@ -284,5 +287,92 @@ describe("agendaQueryClient", () => {
       expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-15")
     })
     expect(isOwnBookedSlot("2026-10-15", RENTAL_ASSET_ID, "08:00:00")).toBe(false)
+  })
+
+  it("does not send a second booking while the same slot is in flight", async () => {
+    const created = reservation()
+    let calls = 0
+    let resolveBook: (value: PortalReservation) => void = () => undefined
+    const slot = {
+      date: "2026-10-14",
+      rentalAssetId: RENTAL_ASSET_ID,
+      startTime: "08:00:00",
+    }
+    const first = commitPortalBooking(
+      () => {
+        calls += 1
+        return new Promise<PortalReservation>((resolve) => {
+          resolveBook = resolve
+        })
+      },
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      slot,
+    )
+    const second = commitPortalBooking(
+      async () => {
+        calls += 1
+        return created
+      },
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      slot,
+    )
+
+    expect(calls).toBe(1)
+    expect(isPortalBookingInFlight("2026-10-14", RENTAL_ASSET_ID, "08:00")).toBe(
+      true,
+    )
+    resolveBook(created)
+    await expect(first).resolves.toBe(created)
+    await expect(second).resolves.toBe(created)
+    expect(calls).toBe(1)
+    expect(isPortalBookingInFlight("2026-10-14", RENTAL_ASSET_ID, "08:00")).toBe(
+      false,
+    )
+  })
+
+  it("keeps the created reservation when the follow-up list is still empty", async () => {
+    const created = reservation()
+    listMine.mockResolvedValue([])
+    const seen: PortalReservation[][] = []
+    const unsubscribe = subscribeAgendaQueries((snapshot) => {
+      seen.push(snapshot.reservations)
+    })
+
+    await commitPortalBooking(async () => created, {
+      subdomain: "ficc",
+      dates: ["2026-10-14"],
+    })
+
+    await vi.waitFor(() => {
+      expect(seen.length).toBeGreaterThan(0)
+    })
+    expect(seen.at(-1)?.map((row) => row.id)).toContain(created.id)
+    expect(recentPortalReservations("Ficc").map((row) => row.id)).toEqual([
+      created.id,
+    ])
+    unsubscribe()
+  })
+
+  it("drops a cancelled reservation so an empty list cannot restore it", async () => {
+    const created = reservation()
+    listMine.mockResolvedValue([])
+    await commitPortalBooking(async () => created, {
+      subdomain: "ficc",
+      dates: ["2026-10-14"],
+    })
+    forgetRecentReservation(created.id)
+
+    const seen: PortalReservation[][] = []
+    const unsubscribe = subscribeAgendaQueries((snapshot) => {
+      seen.push(snapshot.reservations)
+    })
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      { applySlots: true },
+    )
+
+    expect(seen.at(-1) ?? []).toEqual([])
+    expect(recentPortalReservations("ficc")).toEqual([])
+    unsubscribe()
   })
 })
