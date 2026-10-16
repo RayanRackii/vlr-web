@@ -144,4 +144,52 @@ describe("rentalResourcesService catalog URLs", () => {
     expect(apiPut.mock.calls[0]?.[0]).not.toContain(ASSET_ID)
     expectNoInventoryAssetUrls()
   })
+
+  it("sends an omitted, null, or numeric booking horizon", async () => {
+    apiPost.mockResolvedValue({
+      data: {
+        ...rentalResponse,
+        maxAdvanceBookingDays: 21,
+        effectiveMaxAdvanceBookingDays: 21,
+      },
+    })
+    apiPut.mockResolvedValue({
+      data: {
+        ...rentalResponse,
+        maxAdvanceBookingDays: null,
+        effectiveMaxAdvanceBookingDays: null,
+      },
+    })
+    const { createRentalAsset, updateRentalAsset } = await import(
+      "@/features/rentals/services/rentalResourcesService"
+    )
+
+    const created = await createRentalAsset({
+      ...createBody,
+      maxAdvanceBookingDays: 21,
+    })
+    expect(apiPost).toHaveBeenCalledWith("/api/rental-assets", {
+      ...createBody,
+      maxAdvanceBookingDays: 21,
+    })
+    expect(created.maxAdvanceBookingDays).toBe(21)
+    expect(created.effectiveMaxAdvanceBookingDays).toBe(21)
+
+    const cleared = await updateRentalAsset(RENTAL_ID, {
+      ...createBody,
+      maxAdvanceBookingDays: null,
+    })
+    expect(apiPut).toHaveBeenCalledWith(`/api/rental-assets/${RENTAL_ID}`, {
+      ...createBody,
+      maxAdvanceBookingDays: null,
+    })
+    expect(cleared.maxAdvanceBookingDays).toBeNull()
+    expect(cleared.effectiveMaxAdvanceBookingDays).toBeNull()
+
+    apiPost.mockResolvedValue({ data: rentalResponse })
+    await createRentalAsset(createBody)
+    expect(apiPost.mock.calls[1]?.[1]).not.toHaveProperty(
+      "maxAdvanceBookingDays",
+    )
+  })
 })

@@ -144,6 +144,22 @@ export const rentalAssetSchema = z.object({
   queueOpeningTime: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   categoryName: z.string().nullable().optional(),
+  /** Stored override. Null inherits the tenant policy. Absent means not sent. */
+  maxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(0)
+    .max(3650)
+    .nullable()
+    .optional(),
+  /** Override, otherwise the tenant policy. Null means unlimited. */
+  effectiveMaxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(0)
+    .max(3650)
+    .nullable()
+    .optional(),
 })
 
 export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>

@@ -2879,7 +2879,15 @@
         "queueEnabled": "Fila de reservas",
         "queueOpeningTime": "Hora de apertura de la fila",
         "location": "Ubicación",
-        "locationPlaceholder": "Ej.: Bloque A"
+        "locationPlaceholder": "Ej.: Bloque A",
+        "horizonLabel": "Horizonte de reserva de este recurso",
+        "horizonInherit": "Usar el valor del ambiente",
+        "horizonUnlimited": "Ilimitado",
+        "horizonDaysMode": "Número de días",
+        "horizonDays": "Días adelante",
+        "horizonHint": "Usar el valor del ambiente sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
+        "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
+        "horizonEffectiveDays": "En vigor: {{count}} días adelante."
       },
       "validation": {
         "nameRequired": "Informe el nombre.",
@@ -2888,7 +2896,8 @@
         "categoryRequired": "Seleccione el tipo.",
         "familyRequired": "Seleccione la familia.",
         "quantityMin": "La cantidad debe ser al menos 1.",
-        "queueOpeningTimeRequired": "Informe la hora de apertura de la fila."
+        "queueOpeningTimeRequired": "Informe la hora de apertura de la fila.",
+        "horizonRange": "Indique un entero de 0 a 3650."
       }
     },
     "layout": {
@@ -2944,7 +2953,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina el texto de cancelación y el límite diario de reservas activas por cliente. Vale para todos los tipos de recurso de este ambiente.",
+      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente.",
       "cancellationLabel": "Texto de cancelación",
       "cancellationHint": "Texto simple, sin formato. Hasta 2000 caracteres. En blanco, el portal muestra una nota neutra: el horario vuelve a quedar disponible y la persona debe consultar las reglas.",
       "cancellationPlaceholder": "Texto simple que se muestra al cancelar una reserva.",
@@ -2952,6 +2961,12 @@
       "dailyLimitToggle": "Limitar reservas activas por cliente por día",
       "dailyLimitHint": "Cuenta reservas pendientes de depósito y confirmadas que empiezan el mismo día. Desactivado significa sin límite.",
       "dailyLimitValue": "Máximo por día",
+      "horizonLabel": "Hasta cuántos días adelante el cliente puede reservar",
+      "horizonUnlimited": "Ilimitado",
+      "horizonDaysMode": "Número de días",
+      "horizonDays": "Días adelante",
+      "horizonHintUnlimited": "Ilimitado significa que no hay límite para reservar un recurso.",
+      "horizonHintDays": "Se acepta una fecha hasta ese número de días adelante. El día siguiente se rechaza (booking_horizon_exceeded).",
       "save": "Guardar",
       "saved": "Política de reservas guardada.",
       "loadError": "No se pudo cargar la política de reservas.",
@@ -2960,7 +2975,8 @@
       "retry": "Intentar de nuevo",
       "validation": {
         "textMax": "El texto puede tener como máximo 2000 caracteres.",
-        "limitRange": "Indique un entero de 1 a 100."
+        "limitRange": "Indique un entero de 1 a 100.",
+        "horizonRange": "Indique un entero de 0 a 3650."
       }
     }
   }
