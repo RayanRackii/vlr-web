@@ -2643,6 +2643,7 @@
       "lessonsForDate": "Clases en esta fecha",
       "none": "No hay clases en esta fecha.",
       "loading": "Cargando las clases de esta fecha.",
+      "loadingResources": "Cargando los espacios...",
       "confirmTitle": "¿Eliminar esta clase?",
       "confirmDescription": "El horario vuelve a quedar disponible solo en esta fecha.",
       "confirmAction": "Confirmar eliminación",

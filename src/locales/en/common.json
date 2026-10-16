@@ -2643,6 +2643,7 @@
       "lessonsForDate": "Lessons on this date",
       "none": "No lessons on this date.",
       "loading": "Loading lessons for this date.",
+      "loadingResources": "Loading resources...",
       "confirmTitle": "Remove this lesson?",
       "confirmDescription": "The time becomes available again for this date only.",
       "confirmAction": "Confirm removal",

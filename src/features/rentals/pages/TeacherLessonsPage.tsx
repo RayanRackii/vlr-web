@@ -35,6 +35,7 @@ import {
 import { compareSlotsByStartTime, isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import { isPastTenantSlotStart, withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
+import i18n from "@/lib/i18n"
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -100,6 +101,10 @@ export function TeacherLessonsPage() {
   })
   const { clearErrors, getValues, setError, setValue } = form
   const assetId = useWatch({ control: form.control, name: "assetId" })
+  const selectedAssetId = assets.some((asset) => asset.id === assetId)
+    ? assetId
+    : (assets[0]?.id ?? "")
+  const resourcesPending = loading && assets.length === 0
   const date = useWatch({ control: form.control, name: "date" })
   const slotKey = useWatch({ control: form.control, name: "slotKey" })
   const label = useWatch({ control: form.control, name: "label" })
@@ -110,14 +115,14 @@ export function TeacherLessonsPage() {
     return withoutPastTenantSlots(date, openSlots)
   }, [date, openSlots])
   const pastSlotsHidden = available.length < openSlots.length
-  const values = { assetId, date, slotKey, label }
+  const values = { assetId: selectedAssetId, date, slotKey, label }
   const isValid = schema.safeParse(values).success
     && (!slotKey || available.some((slot) => slotKeyFor(slot) === slotKey))
 
   useEffect(() => {
-    if (!assets.length || assetId) return
-    setValue("assetId", assets[0].id, { shouldValidate: true })
-  }, [assetId, assets, setValue])
+    if (!selectedAssetId || selectedAssetId === assetId) return
+    setValue("assetId", selectedAssetId, { shouldValidate: false })
+  }, [assetId, selectedAssetId, setValue])
 
   useEffect(() => {
     if (!date || !ISO_DATE.test(date)) return
@@ -130,9 +135,9 @@ export function TeacherLessonsPage() {
   }, [date])
 
   useEffect(() => {
-    if (!assetId || !date) return
+    if (!selectedAssetId || !date) return
     const selectedBeforeRefresh = getValues("slotKey")
-    void loadDay(assetId, date).then((result) => {
+    void loadDay(selectedAssetId, date).then((result) => {
       if (!result) return
       const selected = getValues("slotKey") || selectedBeforeRefresh
       const selectedStart = selected?.split("|")[0] ?? ""
@@ -140,12 +145,12 @@ export function TeacherLessonsPage() {
         && !isPastTenantSlotStart(date, selectedStart)
         && result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))
       if (!selected || stillOffered) return
-      const message = t("rentals.teacherLessons.slotUnavailable")
+      const message = i18n.t("rentals.teacherLessons.slotUnavailable")
       setValue("slotKey", "", { shouldValidate: false })
       setError("slotKey", { type: "validate", message })
       toast.error(message)
     })
-  }, [assetId, date, getValues, loadDay, setError, setValue, t])
+  }, [date, getValues, loadDay, selectedAssetId, setError, setValue])
 
   async function onSubmit(valuesToSubmit: FormValues) {
     const slot = available.find((item) => slotKeyFor(item) === valuesToSubmit.slotKey)
@@ -156,23 +161,24 @@ export function TeacherLessonsPage() {
       return
     }
     try {
-      await create({ assetId: valuesToSubmit.assetId, date: valuesToSubmit.date, slot, label: valuesToSubmit.label })
+      const assetForSubmit = selectedAssetId || valuesToSubmit.assetId
+      await create({ assetId: assetForSubmit, date: valuesToSubmit.date, slot, label: valuesToSubmit.label })
       setValue("label", "")
       setValue("slotKey", "", { shouldValidate: false })
       clearErrors("slotKey")
-      await loadDay(valuesToSubmit.assetId, valuesToSubmit.date)
+      await loadDay(assetForSubmit, valuesToSubmit.date)
     } catch {
       // The hook reports API errors and keeps the form values for correction.
     }
   }
 
   async function confirmRemoval() {
-    if (!pendingRemoval || !assetId || !date || removalInFlight.current) return
+    if (!pendingRemoval || !selectedAssetId || !date || removalInFlight.current) return
     removalInFlight.current = true
     try {
-      await remove(assetId, date, pendingRemoval.startTime, pendingRemoval.endTime)
+      await remove(selectedAssetId, date, pendingRemoval.startTime, pendingRemoval.endTime)
       setPendingRemoval(null)
-      await loadDay(assetId, date)
+      await loadDay(selectedAssetId, date)
     } catch {
       // The hook reports API errors and keeps the dialog open so the user can retry.
     } finally {
@@ -180,8 +186,10 @@ export function TeacherLessonsPage() {
     }
   }
 
-  const lessonsPending = dayStatus === "loading"
-    || (dayStatus === "idle" && (loading || assets.length > 0 || Boolean(assetId)))
+  const lessonsPending = !resourcesPending && (
+    dayStatus === "loading"
+    || (dayStatus === "idle" && selectedAssetId.length > 0)
+  )
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6" data-testid="teacher-lessons-page">
@@ -199,8 +207,8 @@ export function TeacherLessonsPage() {
           <FormField control={form.control} name="assetId" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("rentals.teacherLessons.court")}</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange} items={assets.map((asset) => ({ value: asset.id, label: asset.name }))} disabled={loading || busy || assets.length === 0}>
-                <FormControl><SelectTrigger aria-label={t("rentals.teacherLessons.court")}><SelectValue placeholder={t("rentals.teacherLessons.court")} /></SelectTrigger></FormControl>
+              <Select value={selectedAssetId.length > 0 ? selectedAssetId : null} onValueChange={field.onChange} items={assets.map((asset) => ({ value: asset.id, label: asset.name }))} disabled={resourcesPending || busy || assets.length === 0}>
+                <FormControl><SelectTrigger aria-label={t("rentals.teacherLessons.court")}><SelectValue placeholder={resourcesPending ? t("rentals.teacherLessons.loadingResources") : t("rentals.teacherLessons.court")} /></SelectTrigger></FormControl>
                 <SelectContent>{assets.map((asset) => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
               </Select>
             </FormItem>
@@ -250,7 +258,7 @@ export function TeacherLessonsPage() {
       </Form>
       <section className="space-y-3" aria-labelledby="lessons-heading">
         <h2 id="lessons-heading" className="text-lg font-semibold">{t("rentals.teacherLessons.lessonsForDate")}</h2>
-        {lessonsPending ? <p className="text-sm text-muted-foreground" role="status">{t("rentals.teacherLessons.loading")}</p> : lessons.length === 0 ? (
+        {resourcesPending ? <p className="text-sm text-muted-foreground" role="status">{t("rentals.teacherLessons.loadingResources")}</p> : lessonsPending ? <p className="text-sm text-muted-foreground" role="status">{t("rentals.teacherLessons.loading")}</p> : lessons.length === 0 ? (
           dayStatus === "error" ? null : <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.none")}</p>
         ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">

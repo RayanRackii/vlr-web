@@ -2679,6 +2679,7 @@
       "lessonsForDate": "Aulas nesta data",
       "none": "Nenhuma aula nesta data.",
       "loading": "Carregando as aulas desta data.",
+      "loadingResources": "Carregando os espaços...",
       "confirmTitle": "Remover esta aula?",
       "confirmDescription": "O horário volta a ficar disponível somente nesta data.",
       "confirmAction": "Confirmar remoção",
