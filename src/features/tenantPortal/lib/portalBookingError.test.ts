@@ -2,6 +2,8 @@ import { AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { describe, expect, it } from "vitest"
 
 import {
+  describeBookingError,
+  isBookingHorizonError,
   isDailyBookingLimitError,
   isSlotTakenConflict,
   isSlotUnavailableConflict,
@@ -95,5 +97,22 @@ describe("portal booking failures", () => {
     expect(getReservationQueueErrorCode(error)).toBe("QUEUE_REQUIRED")
     expect(isSlotTakenConflict(error)).toBe(false)
     expect(isDailyBookingLimitError(error)).toBe(false)
+  })
+
+  it("translates a booking horizon rejection", async () => {
+    const error = portalBookingErrorFromUnknown(
+      axiosError(400, {
+        error: "A data solicitada está além do horizonte de reserva.",
+        code: "booking_horizon_exceeded",
+      }),
+      i18n.t("apiErrors.bookSlot"),
+    )
+
+    expect(isBookingHorizonError(error)).toBe(true)
+    await i18n.changeLanguage("en")
+    expect(describeBookingError(error, "fallback")).toBe(
+      "That date is beyond the booking horizon.",
+    )
+    await i18n.changeLanguage("pt-BR")
   })
 })

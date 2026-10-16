@@ -902,6 +902,22 @@ const rentalAssetSchema = z.object({
   categoryName: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().nullable().optional(),
+  /** Stored override. Null inherits the tenant policy. Absent means not sent. */
+  maxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(0)
+    .max(3650)
+    .nullable()
+    .optional(),
+  /** Override, otherwise the tenant policy. Null means unlimited. */
+  effectiveMaxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(0)
+    .max(3650)
+    .nullable()
+    .optional(),
 })
 
 export type PortalRentalAsset = z.infer<typeof rentalAssetSchema>
@@ -976,8 +992,12 @@ export async function checkPortalAvailability(
     }
     return parsed.data
   } catch (error) {
-    throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.checkAvailability")),
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    throw portalBookingErrorFromUnknown(
+      error,
+      i18n.t("apiErrors.checkAvailability"),
     )
   }
 }
@@ -1003,7 +1023,12 @@ export async function createPortalReservation(body: {
 
 export async function listMyPortalReservations(): Promise<PortalReservation[]> {
   try {
-    const response = await customerApi.get("/api/reservations/mine")
+    const response = await customerApi.get("/api/reservations/mine", {
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    })
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
@@ -1092,6 +1117,10 @@ export async function fetchPublicScheduleDay(
       `/api/public/tenants/${subdomain}/schedule/days/${date}`,
       {
         params: rentalAssetId ? { rentalAssetId } : undefined,
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
       },
     )
     const parsed = dayScheduleSchema.safeParse(response.data)
@@ -1100,8 +1129,12 @@ export async function fetchPublicScheduleDay(
     }
     return parsed.data
   } catch (error) {
-    throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadScheduleDay")),
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+    throw portalBookingErrorFromUnknown(
+      error,
+      i18n.t("apiErrors.loadScheduleDay"),
     )
   }
 }

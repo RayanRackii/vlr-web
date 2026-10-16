@@ -1,9 +1,13 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
-import { createMemoryRouter, RouterProvider } from "react-router-dom"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
 
 import { DailyAgendaTab } from "@/features/rentals/components/schedule/DailyAgendaTab"
+import type {
+  AdminDaySchedule,
+  AdminRentalAsset,
+} from "@/features/rentals/services/scheduleService"
 import i18n from "@/lib/i18n"
 
 function renderEmptyAgenda() {
@@ -70,5 +74,116 @@ describe("DailyAgendaTab no-assets empty state", () => {
       }),
     )
     expect(await screen.findByText("recursos-page")).toBeInTheDocument()
+  })
+})
+
+const ASSET_ID = "11111111-1111-4111-8111-111111111111"
+
+function agendaAsset(): AdminRentalAsset {
+  return {
+    id: ASSET_ID,
+    assetId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01",
+    name: "Sala 1",
+    isActive: true,
+    requiresDeposit: false,
+    schedulePolicy: "SlotGrid",
+    openTime: "08:00:00",
+    closeTime: "14:00:00",
+    allowedDurationMinutes: "60",
+    unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    type: "Location",
+    totalQuantity: 1,
+    queueEnabled: false,
+    queueOpeningTime: null,
+    categoryId: null,
+    categoryName: null,
+  }
+}
+
+function agendaDay(date: string): AdminDaySchedule {
+  const slot = (id: string, startTime: string, endTime: string) => ({
+    id,
+    rentalAssetId: ASSET_ID,
+    assetName: "Sala 1",
+    date,
+    startTime,
+    endTime,
+    occupancyKindId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    occupancyKindKey: "open",
+    occupancyKindLabel: "Aberto",
+    isBookableByCustomer: true,
+    label: null,
+    status: "Available",
+    reservationId: null,
+    isDerived: false,
+    source: "WeeklyDefault" as const,
+    schedulePolicy: "SlotGrid" as const,
+    supportsEntireRecurrence: false,
+  })
+
+  return {
+    date,
+    slots: [
+      slot("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", "08:00:00", "09:00:00"),
+      slot("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2", "13:00:00", "14:00:00"),
+    ],
+  }
+}
+
+function renderDay(date: string) {
+  return render(
+    <MemoryRouter>
+      <DailyAgendaTab
+        assets={[agendaAsset()]}
+        selectedRentalAssetIds={[ASSET_ID]}
+        date={date}
+        day={agendaDay(date)}
+        loading={false}
+        showSkeleton={false}
+        busy={false}
+        busyAction={null}
+        busyTargetKey={null}
+        readOnly={false}
+        onSelectedRentalAssetIdsChange={() => undefined}
+        onDateChange={() => undefined}
+        onPublish={() => undefined}
+        onSlotOrCellClick={() => undefined}
+      />
+    </MemoryRouter>,
+  )
+}
+
+describe("DailyAgendaTab past starts", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("does not offer a start that already passed today", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-16T15:00:00.000Z"))
+    renderDay("2026-10-16")
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, Aberto, Indisponível",
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
+  })
+
+  it("still offers a morning start on a later date", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-16T15:00:00.000Z"))
+    renderDay("2026-10-17")
+
+    expect(
+      screen.getAllByRole("button", {
+        name: "Sala 1, Aberto, Disponível",
+      }),
+    ).toHaveLength(2)
   })
 })

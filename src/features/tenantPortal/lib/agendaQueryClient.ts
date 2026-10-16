@@ -9,7 +9,10 @@ import {
   retryOnce,
   type AgendaReservationHold,
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
-import { isSlotTakenConflict } from "@/features/tenantPortal/lib/portalBookingError"
+import {
+  describeBookingError,
+  isSlotTakenConflict,
+} from "@/features/tenantPortal/lib/portalBookingError"
 import {
   fetchPublicScheduleDay,
   listMyPortalReservations,
@@ -45,12 +48,86 @@ type Listener = (snapshot: AgendaQuerySnapshot) => void
 let revision = 0
 const listeners = new Set<Listener>()
 const ownSlotKeys = new Set<string>()
+const recentBySubdomain = new Map<string, PortalReservation[]>()
+const inflightBySlot = new Map<string, Promise<PortalReservation>>()
+
+export type PortalBookingSlot = {
+  date: string
+  rentalAssetId: string
+  startTime: string
+}
+
+function subdomainKey(subdomain: string): string {
+  return subdomain.trim().toLowerCase()
+}
+
+function isCancelledStatus(status: string): boolean {
+  const normalized = status.trim().toLowerCase()
+  return normalized === "cancelled" || normalized === "canceled"
+}
+
+export function recentPortalReservations(subdomain: string): PortalReservation[] {
+  return recentBySubdomain.get(subdomainKey(subdomain)) ?? []
+}
+
+function rememberRecentReservation(
+  subdomain: string,
+  created: PortalReservation,
+): void {
+  const key = subdomainKey(subdomain)
+  const current = recentBySubdomain.get(key) ?? []
+  recentBySubdomain.set(key, [
+    created,
+    ...current.filter((row) => row.id !== created.id),
+  ])
+}
+
+/** A cancel in this browser must not be restored by a later empty list read. */
+export function forgetRecentReservation(reservationId: string): void {
+  for (const [key, rows] of recentBySubdomain) {
+    const next = rows.filter((row) => row.id !== reservationId)
+    if (next.length !== rows.length) {
+      recentBySubdomain.set(key, next)
+    }
+  }
+}
+
+function syncRecentReservations(
+  subdomain: string,
+  incoming: readonly PortalReservation[],
+): void {
+  const key = subdomainKey(subdomain)
+  const current = recentBySubdomain.get(key)
+  if (!current || current.length === 0) {
+    return
+  }
+
+  const incomingById = new Map(incoming.map((row) => [row.id, row]))
+  const next: PortalReservation[] = []
+  for (const row of current) {
+    const fresh = incomingById.get(row.id)
+    if (!fresh) {
+      next.push(row)
+      continue
+    }
+    if (!isCancelledStatus(fresh.status)) {
+      next.push(fresh)
+    }
+  }
+  recentBySubdomain.set(key, next)
+}
+
+export function isPortalBookingInFlight(
+  date: string,
+  rentalAssetId: string,
+  startTime: string,
+): boolean {
+  return inflightBySlot.has(agendaReservedSlotKey(date, rentalAssetId, startTime))
+}
 
 function reportRefreshError(error: unknown): void {
   toast.error(
-    error instanceof Error
-      ? error.message
-      : appI18n.t("tenantPortal.agenda.slotsError"),
+    describeBookingError(error, appI18n.t("tenantPortal.agenda.slotsError")),
   )
 }
 
@@ -95,11 +172,16 @@ export function invalidateAgendaQueries(
       if (token !== revision) {
         return
       }
+      releaseCancelledOwnSlots(loaded.reservations)
+      syncRecentReservations(subdomain, loaded.reservations)
       const snapshot: AgendaQuerySnapshot = {
         revision: token,
         subdomain,
         applySlots: options.applySlots,
-        reservations: loaded.reservations,
+        reservations: mergeServerReservations(
+          recentPortalReservations(subdomain),
+          loaded.reservations,
+        ),
         days: loaded.days,
       }
       for (const listener of [...listeners]) {
@@ -123,6 +205,36 @@ export function subscribeAgendaQueries(listener: Listener): () => void {
 
 export function getAgendaQueryRevision(): number {
   return revision
+}
+
+/**
+ * Keep rows this page already has that the snapshot does not list, then take
+ * the snapshot. A stale response must not wipe a booking the subscriber just
+ * added.
+ */
+export function mergeServerReservations<T extends { id: string }>(
+  current: readonly T[],
+  incoming: readonly T[],
+): T[] {
+  const serverIds = new Set(incoming.map((row) => row.id))
+  const onlyLocal = current.filter((row) => !serverIds.has(row.id))
+  return [...onlyLocal, ...incoming]
+}
+
+/** A refresh that shows the booking cancelled must stop blocking that slot. */
+export function releaseCancelledOwnSlots(
+  reservations: readonly {
+    status: string
+    startDateTime: string
+    items: readonly { rentalAssetId: string }[]
+  }[],
+): void {
+  for (const reservation of reservations) {
+    const normalized = reservation.status.trim().toLowerCase()
+    if (normalized === "cancelled" || normalized === "canceled") {
+      forgetOwnBooking(reservation)
+    }
+  }
 }
 
 function ownKeysFor(reservation: {
@@ -198,29 +310,61 @@ export function customerAlreadyHoldsSlot(
 export async function commitPortalBooking<T extends PortalReservation>(
   request: () => Promise<T>,
   scope: AgendaInvalidateScope,
+  slot?: PortalBookingSlot,
 ): Promise<T> {
-  try {
-    const created = await request()
-    rememberOwnBooking(created)
-    const viewed = scope.dates[0] ?? ""
-    void invalidateAgendaQueries(
-      {
-        subdomain: scope.subdomain,
-        dates: agendaRefreshDates(viewed, [created]),
-      },
-      { applySlots: true },
-    )
-    return created
-  } catch (error) {
-    if (isSlotTakenConflict(error)) {
-      void invalidateAgendaQueries(scope, { applySlots: true })
+  const flightKey = slot
+    ? agendaReservedSlotKey(slot.date, slot.rentalAssetId, slot.startTime)
+    : null
+  if (flightKey) {
+    const existing = inflightBySlot.get(flightKey)
+    if (existing) {
+      return existing as Promise<T>
     }
-    throw error
   }
+
+  let resolveRun: (value: T) => void = () => undefined
+  let rejectRun: (reason: unknown) => void = () => undefined
+  const run = new Promise<T>((resolve, reject) => {
+    resolveRun = resolve
+    rejectRun = reject
+  })
+  if (flightKey) {
+    inflightBySlot.set(flightKey, run)
+  }
+
+  void (async () => {
+    try {
+      const created = await request()
+      rememberOwnBooking(created)
+      rememberRecentReservation(scope.subdomain, created)
+      const viewed = scope.dates[0] ?? ""
+      void invalidateAgendaQueries(
+        {
+          subdomain: scope.subdomain,
+          dates: agendaRefreshDates(viewed, [created]),
+        },
+        { applySlots: true },
+      )
+      resolveRun(created)
+    } catch (error) {
+      if (isSlotTakenConflict(error)) {
+        void invalidateAgendaQueries(scope, { applySlots: true })
+      }
+      rejectRun(error)
+    } finally {
+      if (flightKey && inflightBySlot.get(flightKey) === run) {
+        inflightBySlot.delete(flightKey)
+      }
+    }
+  })()
+
+  return run
 }
 
 export function resetAgendaQueryClientForTests(): void {
   revision += 1
   listeners.clear()
   ownSlotKeys.clear()
+  recentBySubdomain.clear()
+  inflightBySlot.clear()
 }

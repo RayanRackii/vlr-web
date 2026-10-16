@@ -23,6 +23,7 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import appI18n from "@/lib/i18n"
+import { persistLanguage } from "@/lib/uiLanguage"
 
 export type CustomerAppOutletContext = {
   subdomain: string
@@ -160,6 +161,7 @@ export function CustomerAppLayout() {
         showLanguageCode
         onSignOut={() => {
           clearCustomerSession()
+          persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
           window.location.assign(tenantPortalPath(subdomain))
         }}
       >

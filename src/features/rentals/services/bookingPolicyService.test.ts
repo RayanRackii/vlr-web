@@ -84,6 +84,26 @@ describe("bookingPolicyService", () => {
     ])
   })
 
+  it("keeps a stored horizon off the policy replace body", async () => {
+    apiPut.mockResolvedValue({
+      data: {
+        cancellationPolicyText: "Keep it.",
+        maxActiveReservationsPerCustomerPerDay: 2,
+        maxAdvanceBookingDays: 30,
+      },
+    })
+
+    await expect(
+      replaceBookingPolicy({
+        cancellationPolicyText: "Keep it.",
+        maxActiveReservationsPerCustomerPerDay: 2,
+        maxAdvanceBookingDays: 30,
+      }),
+    ).resolves.toMatchObject({ maxAdvanceBookingDays: 30 })
+    const body = apiPut.mock.calls[0]?.[1]
+    expect(body).not.toHaveProperty("maxAdvanceBookingDays")
+  })
+
   it("surfaces the API message when save is rejected", async () => {
     apiPut.mockRejectedValue(
       axiosError(400, {

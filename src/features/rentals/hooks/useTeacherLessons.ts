@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { TFunction } from "i18next"
 import { toast } from "sonner"
 
+import i18n from "@/lib/i18n"
+
 import {
   createTeacherLesson,
   fetchAdminScheduleDay,
@@ -70,6 +72,185 @@ function replaceInterval(slots: LessonSlot[], assetId: string, startTime: string
   ].sort(compareSlotsByStartTime)
 }
 
+const REMOVED_LESSONS_STORAGE_KEY = "rolvix.teacherLessons.removed"
+
+type RemovalRecord = {
+  assetId: string
+  date: string
+  startTime: string
+  endTime: string
+  slot: LessonSlot
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function isLessonSlot(value: unknown): value is LessonSlot {
+  if (!isRecord(value)) {
+    return false
+  }
+  return (
+    typeof value.rentalAssetId === "string" &&
+    typeof value.date === "string" &&
+    typeof value.startTime === "string" &&
+    typeof value.endTime === "string" &&
+    typeof value.occupancyKindKey === "string" &&
+    typeof value.status === "string"
+  )
+}
+
+function isRemovalRecord(value: unknown): value is RemovalRecord {
+  if (!isRecord(value)) {
+    return false
+  }
+  return (
+    typeof value.assetId === "string" &&
+    typeof value.date === "string" &&
+    typeof value.startTime === "string" &&
+    typeof value.endTime === "string" &&
+    isLessonSlot(value.slot)
+  )
+}
+
+function readRemovals(): RemovalRecord[] {
+  if (typeof sessionStorage === "undefined") {
+    return []
+  }
+  try {
+    const raw = sessionStorage.getItem(REMOVED_LESSONS_STORAGE_KEY)
+    if (raw === null || raw.length === 0) {
+      return []
+    }
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed.filter(isRemovalRecord)
+  } catch {
+    return []
+  }
+}
+
+function writeRemovals(records: readonly RemovalRecord[]): void {
+  if (typeof sessionStorage === "undefined") {
+    return
+  }
+  try {
+    if (records.length === 0) {
+      sessionStorage.removeItem(REMOVED_LESSONS_STORAGE_KEY)
+      return
+    }
+    sessionStorage.setItem(REMOVED_LESSONS_STORAGE_KEY, JSON.stringify(records))
+  } catch {
+    // The in-memory write still hides the lesson until this tab reloads.
+  }
+}
+
+export function resetRemovedTeacherLessonsForTests(): void {
+  writeRemovals([])
+}
+
+function removalIntervalKey(
+  assetId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+): string {
+  return `${assetId}|${date.slice(0, 10)}|${startTime.slice(0, 8)}|${endTime.slice(0, 8)}`
+}
+
+function rememberRemoval(record: RemovalRecord): void {
+  const key = removalIntervalKey(
+    record.assetId,
+    record.date,
+    record.startTime,
+    record.endTime,
+  )
+  const next = readRemovals().filter(
+    (row) =>
+      removalIntervalKey(row.assetId, row.date, row.startTime, row.endTime) !==
+      key,
+  )
+  next.push(record)
+  writeRemovals(next)
+}
+
+function forgetRemoval(
+  assetId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+): void {
+  const key = removalIntervalKey(assetId, date, startTime, endTime)
+  writeRemovals(
+    readRemovals().filter(
+      (row) =>
+        removalIntervalKey(row.assetId, row.date, row.startTime, row.endTime) !==
+        key,
+    ),
+  )
+}
+
+function localLessonCreateOverrides(
+  writes: readonly LocalWrite[],
+  record: RemovalRecord,
+): boolean {
+  return writes.some(
+    (write) =>
+      dayKey(write.assetId, write.date) === dayKey(record.assetId, record.date) &&
+      sameClock(write.slot.startTime, record.startTime) &&
+      sameClock(write.slot.endTime, record.endTime) &&
+      write.slot.occupancyKindKey === "lesson",
+  )
+}
+
+function serverStillListsRemovedLesson(
+  day: AdminDaySchedule,
+  record: RemovalRecord,
+): boolean {
+  return day.slots.some(
+    (slot) =>
+      sameCivilDate(slot.date, record.date) &&
+      sameClockInterval(slot, record.assetId, record.startTime, record.endTime) &&
+      slot.occupancyKindKey === "lesson" &&
+      isUnreservedAvailable(slot),
+  )
+}
+
+function removalWritesFor(
+  assetId: string,
+  date: string,
+  writes: readonly LocalWrite[],
+): LocalWrite[] {
+  return readRemovals()
+    .filter((record) => dayKey(record.assetId, record.date) === dayKey(assetId, date))
+    .filter((record) => !localLessonCreateOverrides(writes, record))
+    .map((record) => ({
+      assetId: record.assetId,
+      date: record.date,
+      slot: record.slot,
+    }))
+}
+
+function syncRemovalRecords(
+  serverDay: AdminDaySchedule,
+  assetId: string,
+  date: string,
+  writes: readonly LocalWrite[],
+): void {
+  const next = readRemovals().filter((record) => {
+    if (dayKey(record.assetId, record.date) !== dayKey(assetId, date)) {
+      return true
+    }
+    if (localLessonCreateOverrides(writes, record)) {
+      return false
+    }
+    return serverStillListsRemovedLesson(serverDay, record)
+  })
+  writeRemovals(next)
+}
+
 function applyWrites(day: AdminDaySchedule, writes: LocalWrite[], assetId: string, date: string) {
   let slots = day.slots
   const kept: LocalWrite[] = []
@@ -107,10 +288,13 @@ export function useTeacherLessons(t: TFunction) {
         if (cancelled) return
         setAssets(result.filter((asset) => asset.isActive && asset.type === "Location" && asset.schedulePolicy === "SlotGrid"))
       })
-      .catch((error: unknown) => toast.error(error instanceof Error ? error.message : t("rentals.teacherLessons.loadError")))
+      .catch((error: unknown) => {
+        if (cancelled) return
+        toast.error(error instanceof Error ? error.message : i18n.t("rentals.teacherLessons.loadError"))
+      })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [t])
+  }, [])
 
   const publishDay = useCallback((next: AdminDaySchedule, assetId: string, date: string) => {
     shownKey.current = dayKey(assetId, date)
@@ -143,8 +327,15 @@ export function useTeacherLessons(t: TFunction) {
     try {
       const result = await fetchAdminScheduleDay(date, [assetId])
       if (requestId !== latestDayRequest.current) return null
-      const merged = applyWrites(result, writesRef.current, assetId, date)
+      const localWrites = writesRef.current
+      const merged = applyWrites(
+        result,
+        [...removalWritesFor(assetId, date, localWrites), ...localWrites],
+        assetId,
+        date,
+      )
       writesRef.current = merged.writes
+      syncRemovalRecords(result, assetId, date, localWrites)
       publishDay(merged.day, assetId, date)
       return merged.day
     } catch (error) {
@@ -154,11 +345,11 @@ export function useTeacherLessons(t: TFunction) {
           setDay(null)
           setDayStatus("error")
         }
-        toast.error(error instanceof Error ? error.message : t("rentals.teacherLessons.loadError"))
+        toast.error(error instanceof Error ? error.message : i18n.t("rentals.teacherLessons.loadError"))
       }
       return refreshingSameDay ? dayRef.current : null
     }
-  }, [publishDay, t])
+  }, [publishDay])
 
   const create = useCallback(async ({ assetId, date, slot, label }: {
     assetId: string
@@ -172,6 +363,7 @@ export function useTeacherLessons(t: TFunction) {
       if (created.occupancyKindKey !== "lesson" || !matchesRequestedInterval(created, assetId, date, slot.startTime, slot.endTime)) {
         throw new Error(t("rentals.teacherLessons.changeError"))
       }
+      forgetRemoval(assetId, date, slot.startTime, slot.endTime)
       rememberWrite(created, assetId, date)
       toast.success(t("rentals.teacherLessons.createSuccess"))
     } catch (error: unknown) {
@@ -188,6 +380,7 @@ export function useTeacherLessons(t: TFunction) {
       if (opened.occupancyKindKey !== "open" || !matchesRequestedInterval(opened, assetId, date, startTime, endTime)) {
         throw new Error(t("rentals.teacherLessons.changeError"))
       }
+      rememberRemoval({ assetId, date, startTime, endTime, slot: opened })
       rememberWrite(opened, assetId, date)
       toast.success(t("rentals.teacherLessons.removeSuccess"))
     } catch (error: unknown) {

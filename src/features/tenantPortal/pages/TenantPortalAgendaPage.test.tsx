@@ -21,6 +21,7 @@ vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    message: vi.fn(),
   },
 }))
 
@@ -57,8 +58,16 @@ import { toast } from "sonner"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
-import { resetAgendaQueryClientForTests } from "@/features/tenantPortal/lib/agendaQueryClient"
-import { PortalBookingError } from "@/features/tenantPortal/lib/portalBookingError"
+import {
+  customerAlreadyHoldsSlot,
+  invalidateAgendaQueries,
+  rememberOwnBooking,
+  resetAgendaQueryClientForTests,
+} from "@/features/tenantPortal/lib/agendaQueryClient"
+import {
+  BOOKING_HORIZON_EXCEEDED,
+  PortalBookingError,
+} from "@/features/tenantPortal/lib/portalBookingError"
 import {
   bookPortalSlot,
   cancelMyPortalReservation,
@@ -92,6 +101,7 @@ const joinQueue = vi.mocked(joinReservationQueue)
 const fetchPolicy = vi.mocked(fetchPublicBookingPolicy)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
+const toastMessage = vi.mocked(toast.message)
 
 beforeEach(() => {
   resetAgendaQueryClientForTests()
@@ -213,6 +223,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    toastMessage.mockReset()
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,
       maxActiveReservationsPerCustomerPerDay: null,
@@ -327,6 +338,125 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
     expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+  })
+
+  it("reports an already cancelled reservation without a success toast", async () => {
+    const user = userEvent.setup()
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    let reads = 0
+    listMine.mockImplementation(async () => {
+      reads += 1
+      return reads === 1 ? [confirmed] : [canceled]
+    })
+
+    renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      )
+    })
+    expect(cancelMine).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
+    const user = userEvent.setup()
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    rememberOwnBooking(confirmed)
+    expect(
+      customerAlreadyHoldsSlot(
+        "2099-01-15",
+        "11111111-1111-4111-8111-111111111111",
+        "10:00",
+        [],
+      ),
+    ).toBe(true)
+    let reads = 0
+    listMine.mockImplementation(async () => {
+      reads += 1
+      return reads === 1 ? [confirmed] : [canceled]
+    })
+
+    renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      )
+    })
+    expect(
+      customerAlreadyHoldsSlot(
+        "2099-01-15",
+        "11111111-1111-4111-8111-111111111111",
+        "10:00",
+        [],
+      ),
+    ).toBe(false)
+  })
+
+  it("keeps a reservation from a newer refresh when the cancel list is stale", async () => {
+    const user = userEvent.setup()
+    const target = makeReservation("Confirmed", FUTURE_ISO)
+    const newer = makeReservation("Confirmed", FUTURE_ISO, {
+      id: "99999999-9999-4999-8999-999999999999",
+      items: [
+        {
+          ...target.items[0],
+          id: "12121212-1212-4121-8121-121212121212",
+          assetName: "Sala nova",
+        },
+      ],
+    })
+    let releaseStale: (rows: PortalReservation[]) => void = () => {}
+    let reads = 0
+    listMine.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          reads += 1
+          if (reads === 1) {
+            resolve([target])
+            return
+          }
+          if (reads === 2) {
+            releaseStale = resolve
+            return
+          }
+          resolve([target, newer])
+        }),
+    )
+    cancelMine.mockResolvedValue({ ...target, status: "Canceled" })
+
+    renderAgenda()
+    await waitForMineList()
+    const dialog = await openCancelDialog(user)
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+      }),
+    )
+    await waitFor(() => {
+      expect(listMine).toHaveBeenCalledTimes(2)
+    })
+
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2099-01-15"] },
+      { applySlots: false },
+    )
+    expect(await screen.findByText("Sala nova")).toBeInTheDocument()
+
+    releaseStale([target])
+    await waitFor(() => {
+      expect(cancelMine).toHaveBeenCalledWith(target.id)
+    })
+    expect(screen.getByText("Sala nova")).toBeInTheDocument()
   })
 
   it("surfaces an API conflict, stays on the page, and refetches mine", async () => {
@@ -483,7 +613,9 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     let listCalls = 0
     listMine.mockImplementation(() => {
       listCalls += 1
-      if (listCalls === 1) {
+      // The confirm path reads the list once before cancelling. Later reads are
+      // the refresh and must not be required for the success toast.
+      if (listCalls <= 2) {
         return Promise.resolve([makeReservation("Confirmed", FUTURE_ISO)])
       }
       return new Promise(() => {})
@@ -522,7 +654,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     let listCalls = 0
     listMine.mockImplementation(() => {
       listCalls += 1
-      if (listCalls === 1) {
+      if (listCalls <= 2) {
         return Promise.resolve([makeReservation("Confirmed", FUTURE_ISO)])
       }
       return new Promise(() => {})
@@ -618,6 +750,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    toastMessage.mockReset()
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,
       maxActiveReservationsPerCustomerPerDay: null,
@@ -678,17 +811,86 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(popup).toHaveClass("text-popover-foreground")
   })
 
+  it("refetches reservations and the viewed day on focus, then disables a taken slot", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const court = await screen.findByRole("button", { name: "Quadra 1" })
+    await user.click(court)
+    const reserve = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    })
+    await waitFor(() => {
+      expect(reserve).toBeEnabled()
+    })
+
+    const mineBefore = listMine.mock.calls.length
+    const dayBefore = fetchDay.mock.calls.length
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+          status: "booked",
+          isBookableByCustomer: false,
+          reservationId: "99999999-9999-4999-8999-999999999999",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+      ],
+    })
+
+    vi.setSystemTime(new Date("2026-10-14T08:00:03.000Z"))
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+    })
+
+    await waitFor(() => {
+      expect(listMine.mock.calls.length).toBeGreaterThan(mineBefore)
+      expect(fetchDay.mock.calls.length).toBeGreaterThan(dayBefore)
+    })
+    await waitFor(() => {
+      expect(reserve).toBeDisabled()
+    })
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+
+    const mineAfter = listMine.mock.calls.length
+    const dayAfter = fetchDay.mock.calls.length
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(listMine.mock.calls.length).toBe(mineAfter)
+    expect(fetchDay.mock.calls.length).toBe(dayAfter)
+  })
+
   it("selects a later time and keeps unavailable courts distinguishable", async () => {
     const user = userEvent.setup()
     renderAgenda()
 
     const courtOne = await screen.findByRole("button", { name: "Quadra 1" })
     const courtTwo = await screen.findByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(courtOne).not.toHaveAttribute("aria-disabled")
     expect(courtTwo).toHaveAttribute("aria-disabled", "true")
-    expect(courtTwo).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(courtTwo).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
 
     await user.click(
       screen.getByRole("combobox", {
@@ -983,7 +1185,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
     expect(
       screen.getByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
   })
@@ -1124,12 +1326,98 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
     expect(
       screen.getByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
   })
 
-  it("does not say someone else took a slot this customer just booked", async () => {
+  it("shows the in-flight reservation after Back when the list read is still empty", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", SLOT_08_ISO, {
+      items: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          assetId: ASSET_A_ASSET_ID,
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          quantity: 1,
+          unitPrice: 80,
+          subTotal: 80,
+        },
+      ],
+    })
+    let resolveBook: (value: PortalReservation) => void = () => undefined
+    bookSlot.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveBook = resolve
+        }),
+    )
+    listMine.mockResolvedValue([])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+      ],
+    })
+
+    const first = renderAgenda()
+    await bookQuadra1(user)
+    expect(
+      await screen.findByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserving"),
+      }),
+    ).toBeInTheDocument()
+    first.unmount()
+
+    renderAgenda()
+    const taken = await screen.findByRole("button", {
+      name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+    })
+    expect(taken).toHaveAttribute("aria-disabled", "true")
+    expect(bookSlot).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      resolveBook(created)
+    })
+
+    expect(await screen.findByRole("listitem")).toHaveTextContent(
+      i18n.t("rentals.reservations.statuses.Confirmed"),
+    )
+    expect(bookSlot).toHaveBeenCalledTimes(1)
+  })
+
+  it("explains a horizon rejection from the booking request", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "A data solicitada está além do horizonte de reserva.",
+        400,
+        BOOKING_HORIZON_EXCEEDED,
+      ),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.horizonExceeded"),
+      )
+    })
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    ).toBeEnabled()
+  })
+
+  it("keeps the slot taken after Back even when the day still lists it as free", async () => {
     const user = userEvent.setup()
     const created = makeReservation("Confirmed", SLOT_08_ISO, {
       items: [
@@ -1145,25 +1433,23 @@ describe("TenantPortalAgendaPage time selector", () => {
       ],
     })
     let resolveBook: (value: PortalReservation) => void = () => {}
-    bookSlot.mockImplementationOnce(
+    bookSlot.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveBook = resolve
         }),
-    )
-    bookSlot.mockRejectedValueOnce(
-      new PortalBookingError(
-        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
-        409,
-        null,
-      ),
     )
 
     const first = renderAgenda()
     await bookQuadra1(user)
     first.unmount()
     renderAgenda()
-    await screen.findByRole("button", { name: "Quadra 1" })
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+    expect(screen.queryByRole("button", { name: "Quadra 1" })).not.toBeInTheDocument()
     await act(async () => {
       resolveBook(created)
     })
@@ -1171,24 +1457,13 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(toastSuccess).toHaveBeenCalled()
     })
 
-    await bookQuadra1(user)
-
-    await waitFor(() => {
-      expect(toastError).toHaveBeenCalled()
-    })
-    const notice = toastError.mock.calls.at(-1)?.[0]
-    const view = render(<>{notice}</>)
+    expect(bookSlot).toHaveBeenCalledTimes(1)
     expect(
-      view.getByRole("link", {
-        name: i18n.t("tenantPortal.agenda.myReservations"),
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
-    ).toHaveAttribute("href", expect.stringContaining("#minhas-reservas"))
-    expect(view.container).toHaveTextContent(
-      i18n.t("tenantPortal.agenda.slotHeldByYou"),
-    )
-    expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
-      i18n.t("tenantPortal.agenda.slotJustTaken"),
-    )
+    ).toHaveAttribute("aria-disabled", "true")
+    expect(toastError).not.toHaveBeenCalled()
   })
 
   it("recognises a reservation made in another tab instead of saying someone else took it", async () => {
@@ -1236,8 +1511,66 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.slotHeldByYou"),
     )
     expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
-      i18n.t("tenantPortal.agenda.slotJustTaken"),
+      i18n.t("tenantPortal.agenda.slotTaken"),
     )
+  })
+
+  it("keeps the date and time from the address across a reload", async () => {
+    fetchDay.mockImplementation(async (_subdomain: string, dayDate: string) =>
+      Promise.resolve({
+        date: dayDate,
+        slots: [
+          makeSlot({
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            startTime: "08:00:00",
+            endTime: "09:00:00",
+          }),
+          makeSlot({
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            startTime: "13:00:00",
+            endTime: "14:00:00",
+          }),
+        ],
+      }),
+    )
+
+    renderAgenda("/agenda?date=2026-10-20&time=13:00")
+
+    expect(
+      await screen.findByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).toHaveValue("2026-10-20")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-20")
+    })
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    ).toHaveTextContent("13:00")
+    expect(
+      screen.queryByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("falls back to today and the first time when the address has no choice", async () => {
+    renderAgenda("/agenda?date=2020-01-01&time=99:00")
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    await waitFor(() => {
+      expect(
+        screen.getByRole("combobox", {
+          name: i18n.t("tenantPortal.agenda.time"),
+        }),
+      ).toHaveTextContent("08:00")
+    })
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {
@@ -1247,7 +1580,71 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.date"),
     )
     expect(dateInput).toHaveAttribute("min", brazilTodayIsoDate())
+    expect(dateInput).not.toHaveAttribute("max")
     expect(dateInput).toHaveValue(brazilTodayIsoDate())
+  })
+
+  it("caps the date at the horizon the API exposes", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
+
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-16")
+    })
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2099-12-31")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonAdjusted")),
+    ).toBeInTheDocument()
+  })
+
+  it("does not cap the date when the horizon is unlimited", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: null,
+    })
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(fetchPolicy).toHaveBeenCalled()
+    })
+    expect(dateInput).not.toHaveAttribute("max")
+  })
+
+  it("shows the horizon message when the day request is rejected", async () => {
+    fetchDay.mockRejectedValue(
+      new PortalBookingError(
+        "A data solicitada está além do horizonte de reserva.",
+        400,
+        BOOKING_HORIZON_EXCEEDED,
+      ),
+    )
+    renderAgenda()
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.horizonExceeded"),
+      )
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotsError"),
+    )
   })
 
   it("hides slots that already started today and explains that they are hidden", async () => {
@@ -1349,7 +1746,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.slotJustTaken"),
+        i18n.t("tenantPortal.agenda.slotTaken"),
       )
     })
     expect(toastError).not.toHaveBeenCalledWith(
@@ -1383,7 +1780,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(fetchDay.mock.calls.length).toBe(dayCalls)
     expect(toastError).not.toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.slotJustTaken"),
+      i18n.t("tenantPortal.agenda.slotTaken"),
     )
   })
 
@@ -1457,7 +1854,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       )
     })
     expect(toastError).not.toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.slotJustTaken"),
+      i18n.t("tenantPortal.agenda.slotTaken"),
     )
     expect(fetchDay.mock.calls.length).toBe(dayCalls)
   })
@@ -1557,14 +1954,13 @@ describe("TenantPortalAgendaPage time selector", () => {
       await screen.findByRole("button", { name: "Quadra 1" }),
     ).toBeEnabled()
     const taken = screen.getByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(taken).toHaveAttribute("aria-disabled", "true")
-    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
-    expect(taken).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
     expect(taken).not.toHaveAttribute(
       "title",
-      i18n.t("tenantPortal.agenda.slotReserved"),
+      i18n.t("tenantPortal.agenda.slotTaken"),
     )
   })
 
@@ -1609,10 +2005,10 @@ describe("TenantPortalAgendaPage time selector", () => {
     renderAgenda()
 
     const taken = await screen.findByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(taken).toHaveAttribute("aria-disabled", "true")
-    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
   it("does not announce reserved for a booked row with no reservation id", async () => {
@@ -1641,10 +2037,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     renderAgenda()
 
     const taken = await screen.findByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
-    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
-    expect(taken).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    expect(taken).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
   it("explains an unplaced space that is not offered at the selected time", async () => {
@@ -1694,11 +2089,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     const placed = await screen.findByRole("button", { name: "Quadra 1" })
     expect(placed.className).toContain("bg-emerald-100")
     const unplaced = screen.getByRole("button", {
-      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(unplaced.className).toContain("bg-muted")
     expect(unplaced.className).toContain("text-foreground")
-    expect(unplaced).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(unplaced).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
   it("leaves Reservando as soon as the conflict response arrives and marks the space reserved", async () => {
@@ -1748,7 +2143,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.slotJustTaken"),
+        i18n.t("tenantPortal.agenda.slotTaken"),
       )
     })
     expect(
@@ -1763,9 +2158,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(dayCalls).toBeGreaterThanOrEqual(2)
     expect(
       screen.getByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
-    ).toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
+    ).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
   it.each([
@@ -1782,16 +2177,13 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(toastError).toHaveBeenCalledWith(message)
     })
     expect(toastError).not.toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.slotJustTaken"),
+      i18n.t("tenantPortal.agenda.slotTaken"),
     )
     const card = screen.getByRole("button", {
-      name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+      name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(card).toHaveAttribute("aria-disabled", "true")
-    expect(card).toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
-    expect(card).not.toHaveTextContent(
-      i18n.t("tenantPortal.agenda.slotReserved"),
-    )
+    expect(card).toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
   it("clears the reserved mark when this browser's booking is canceled", async () => {
@@ -1824,7 +2216,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
 
@@ -1836,15 +2228,13 @@ describe("TenantPortalAgendaPage time selector", () => {
       )
     })
     expect(
-      screen.queryByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
-      }),
+      screen.queryByRole("button", { name: "Quadra 1" }),
     ).not.toBeInTheDocument()
     expect(
       screen.getByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
-    ).toBeInTheDocument()
+    ).toHaveAttribute("aria-disabled", "true")
     expect(dayCalls).toBeGreaterThanOrEqual(2)
   })
 
@@ -1885,8 +2275,7 @@ describe("TenantPortalAgendaPage time selector", () => {
   async function expectQuadra1Selectable() {
     const court = await screen.findByRole("button", { name: "Quadra 1" })
     expect(court).toBeEnabled()
-    expect(court).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotReserved"))
-    expect(court).not.toHaveTextContent(i18n.t("tenantPortal.agenda.unavailable"))
+    expect(court).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   }
 
   it("frees the slot after reserve and cancel in the same session", async () => {
@@ -1918,7 +2307,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
     await waitFor(() => {
@@ -1951,7 +2340,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const first = renderAgenda()
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
     first.unmount()
@@ -1959,7 +2348,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     renderAgenda()
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
 
@@ -1989,7 +2378,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
     const dayCalls = fetchDay.mock.calls.length
@@ -1998,7 +2387,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       await i18n.changeLanguage("en")
       expect(
         await screen.findByRole("button", {
-          name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+          name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
         }),
       ).toBeInTheDocument()
       expect(fetchDay.mock.calls.length).toBe(dayCalls)
@@ -2174,7 +2563,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
 
@@ -2264,7 +2653,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
 
@@ -2278,7 +2667,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(calls).toBe(3)
     expect(
       screen.getByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.unavailable")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
   })
@@ -2313,7 +2702,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotReserved")}`,
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
     ).toBeInTheDocument()
 
@@ -2343,6 +2732,7 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     fetchPolicy.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    toastMessage.mockReset()
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,
       maxActiveReservationsPerCustomerPerDay: null,
@@ -2532,6 +2922,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     joinQueue.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    toastMessage.mockReset()
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,
       maxActiveReservationsPerCustomerPerDay: null,

@@ -46,7 +46,10 @@ export async function getBookingPolicy(): Promise<BookingPolicy> {
   }
 }
 
-/** PUT replaces both fields. Omitted properties would clear the stored value. */
+/**
+ * PUT replaces the cancellation note and the daily cap.
+ * `maxAdvanceBookingDays` stays off the body: omitted keeps the stored horizon.
+ */
 export async function replaceBookingPolicy(
   policy: BookingPolicy,
 ): Promise<BookingPolicy> {

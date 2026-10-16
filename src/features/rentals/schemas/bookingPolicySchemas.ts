@@ -4,6 +4,9 @@ export const BOOKING_POLICY_TEXT_MAX_LENGTH = 2000
 export const BOOKING_POLICY_DAILY_LIMIT_MIN = 1
 export const BOOKING_POLICY_DAILY_LIMIT_MAX = 100
 
+export const BOOKING_HORIZON_DAY_MIN = 0
+export const BOOKING_HORIZON_DAY_MAX = 3650
+
 export const bookingPolicySchema = z.object({
   cancellationPolicyText: z.string().nullable(),
   maxActiveReservationsPerCustomerPerDay: z
@@ -12,6 +15,18 @@ export const bookingPolicySchema = z.object({
     .min(BOOKING_POLICY_DAILY_LIMIT_MIN)
     .max(BOOKING_POLICY_DAILY_LIMIT_MAX)
     .nullable(),
+  /**
+   * Tenant horizon in civil days. Absent means this payload did not say.
+   * Null means unlimited. The replace body omits it so a policy save keeps
+   * the stored horizon.
+   */
+  maxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(BOOKING_HORIZON_DAY_MIN)
+    .max(BOOKING_HORIZON_DAY_MAX)
+    .nullable()
+    .optional(),
 })
 
 export type BookingPolicy = z.infer<typeof bookingPolicySchema>
