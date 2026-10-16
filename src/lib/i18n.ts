@@ -5,10 +5,15 @@ import { initReactI18next } from "react-i18next"
 import enCommon from "@/locales/en/common.json"
 import esCommon from "@/locales/es/common.json"
 import ptBRCommon from "@/locales/pt-BR/common.json"
+import {
+  persistLanguage,
+  readPersistedLanguage,
+  supportedLanguages,
+  type SupportedLanguage,
+} from "@/lib/uiLanguage"
 
-export const supportedLanguages = ["pt-BR", "en", "es"] as const
-
-export type SupportedLanguage = (typeof supportedLanguages)[number]
+export { supportedLanguages }
+export type { SupportedLanguage }
 
 /** Endonyms. The picker must not translate these into the active UI language. */
 export const languageNativeNames: Record<SupportedLanguage, string> = {
@@ -24,12 +29,12 @@ function syncDocumentLanguage(language: string): void {
   document.documentElement.lang = language
 }
 
-const cachedLng =
-  typeof window !== "undefined"
-    ? window.localStorage.getItem("i18nextLng")
-    : null
+const initialLanguage = readPersistedLanguage()
 
-i18n.on("languageChanged", syncDocumentLanguage)
+i18n.on("languageChanged", (language) => {
+  syncDocumentLanguage(language)
+  persistLanguage(language)
+})
 
 void i18n
   .use(LanguageDetector)
@@ -41,8 +46,9 @@ void i18n
       es: { common: esCommon },
     },
     fallbackLng: "pt-BR",
-    // Honor a saved choice; otherwise lock first paint to pt-BR (no browser EN/ES).
-    ...(cachedLng ? {} : { lng: "pt-BR" }),
+    // Honor an explicit choice. Otherwise lock first paint to pt-BR.
+    // Do not let a regional browser tag (es-ES, en-US) replace that.
+    lng: initialLanguage ?? "pt-BR",
     supportedLngs: [...supportedLanguages],
     // Do NOT set nonExplicitSupportedLngs: true — i18next 26 breaks pt-BR lookup when
     // only regional codes (pt-BR) are listed (returns raw keys).
@@ -54,7 +60,7 @@ void i18n
     detection: {
       order: ["localStorage"],
       caches: ["localStorage"],
-      lookupLocalStorage: "i18nextLng",
+      lookupLocalStorage: "rolvix.uiLanguage",
     },
   })
   .then(() => {

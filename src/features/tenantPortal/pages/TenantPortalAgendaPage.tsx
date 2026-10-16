@@ -33,6 +33,7 @@ import {
   findSlotAtStart,
   isCustomerBookableSlot,
   listDistinctStartTimes,
+  normalizeClock,
   orderByResourceName,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
@@ -64,11 +65,18 @@ import {
   withoutBookableReservedKeys,
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
 import {
+  agendaSelectionSearchParams,
+  readAgendaDateParam,
+  readAgendaTimeParam,
+} from "@/features/tenantPortal/lib/agendaSelectionQuery"
+import {
   commitPortalBooking,
   customerAlreadyHoldsSlot,
   forgetOwnBooking,
   getAgendaQueryRevision,
   invalidateAgendaQueries,
+  mergeServerReservations,
+  releaseCancelledOwnSlots,
   subscribeAgendaQueries,
 } from "@/features/tenantPortal/lib/agendaQueryClient"
 import { canCustomerSelfCancel } from "@/features/tenantPortal/lib/canCustomerSelfCancel"
@@ -140,7 +148,7 @@ function partitionAgendaSlots(
 export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
   const dateInputId = useId()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
@@ -157,14 +165,21 @@ export function TenantPortalAgendaPage() {
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>([])
+  const mineRef = useRef(mine)
+  mineRef.current = mine
   const [slots, setSlots] = useState<PortalScheduleSlot[]>([])
   const [observedSlots, setObservedSlots] = useState<PortalScheduleSlot[]>([])
   const [optimisticReservedKeys, setOptimisticReservedKeys] = useState<
     ReadonlySet<string>
   >(() => new Set())
-  const [date, setDate] = useState(brazilTodayIsoDate())
+  const [date, setDate] = useState(() =>
+    readAgendaDateParam(searchParams.get("date"), brazilTodayIsoDate()),
+  )
   const [pastSlotsHidden, setPastSlotsHidden] = useState(false)
-  const [startTime, setStartTime] = useState("")
+  const [startTime, setStartTime] = useState(
+    () => readAgendaTimeParam(searchParams.get("time")) ?? "",
+  )
+  const preferredTimeRef = useRef(startTime)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
   >(null)
@@ -323,6 +338,7 @@ export function TenantPortalAgendaPage() {
     viewedDateRef.current = date
     if (!signedIn || !date) {
       setSlots([])
+      preferredTimeRef.current = ""
       setStartTime("")
       setPastSlotsHidden(false)
       setSlotsLoading(false)
@@ -339,7 +355,9 @@ export function TenantPortalAgendaPage() {
     setPastSlotsHidden(false)
     setSlots([])
     setObservedSlots([])
-    setStartTime("")
+    if (preferredTimeRef.current.length === 0) {
+      setStartTime("")
+    }
     setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
       .then((day) => {
@@ -358,7 +376,11 @@ export function TenantPortalAgendaPage() {
           withoutBookableReservedKeys(current, date, selected.bookable),
         )
         const times = listDistinctStartTimes(selected.bookable)
-        setStartTime(times[0]?.startTime ?? "")
+        const preferred = normalizeClock(preferredTimeRef.current)
+        const kept = times.find((window) => window.startTime === preferred)
+        const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
+        preferredTimeRef.current = nextTime
+        setStartTime(nextTime)
       })
       .catch((error) => {
         if (
@@ -389,6 +411,22 @@ export function TenantPortalAgendaPage() {
   }, [signedIn, subdomain, date])
 
   useEffect(() => {
+    const today = brazilTodayIsoDate()
+    const timeForUrl =
+      startTime.length > 0 ? startTime : preferredTimeRef.current
+    const next = agendaSelectionSearchParams(
+      searchParams,
+      date,
+      timeForUrl,
+      today,
+    )
+    if (next.toString() === searchParams.toString()) {
+      return
+    }
+    setSearchParams(next, { replace: true })
+  }, [date, searchParams, setSearchParams, startTime])
+
+  useEffect(() => {
     return subscribeAgendaQueries((snapshot) => {
       if (
         snapshot.subdomain.trim().toLowerCase() !==
@@ -397,11 +435,9 @@ export function TenantPortalAgendaPage() {
         return
       }
 
-      setMine((current) => {
-        const serverIds = new Set(snapshot.reservations.map((row) => row.id))
-        const onlyLocal = current.filter((row) => !serverIds.has(row.id))
-        return [...onlyLocal, ...snapshot.reservations]
-      })
+      setMine((current) =>
+        mergeServerReservations(current, snapshot.reservations),
+      )
       if (!snapshot.applySlots) {
         return
       }
@@ -739,18 +775,25 @@ export function TenantPortalAgendaPage() {
     const id = pendingCancelId
     const viewedDate = date
     const existing = mine.find((reservation) => reservation.id === id) ?? null
+    const seenRevision = getAgendaQueryRevision()
     cancelingRef.current = true
     setCancelingId(id)
     try {
       let current = existing
       try {
         const fresh = await listMyPortalReservations()
-        setMine(fresh)
-        current = fresh.find((reservation) => reservation.id === id) ?? null
+        if (getAgendaQueryRevision() === seenRevision) {
+          releaseCancelledOwnSlots(fresh)
+          const merged = mergeServerReservations(mineRef.current, fresh)
+          mineRef.current = merged
+          setMine(merged)
+          current = merged.find((reservation) => reservation.id === id) ?? null
+        }
       } catch {
         // The cancel request still runs. The API remains the authority.
       }
       if (current !== null && isCancelledReservationStatus(current.status)) {
+        forgetOwnBooking(current)
         toast.message(t("tenantPortal.agenda.alreadyCancelled"))
         setPendingCancelId(null)
         refreshAgenda(agendaRefreshDates(viewedDate, [current]))
@@ -785,9 +828,17 @@ export function TenantPortalAgendaPage() {
       )
       void listMyPortalReservations()
         .then((fresh) => {
-          setMine(fresh)
-          const row = fresh.find((reservation) => reservation.id === id) ?? null
+          if (getAgendaQueryRevision() !== seenRevision) {
+            return
+          }
+          releaseCancelledOwnSlots(fresh)
+          const merged = mergeServerReservations(mineRef.current, fresh)
+          mineRef.current = merged
+          setMine(merged)
+          const row =
+            merged.find((reservation) => reservation.id === id) ?? null
           if (row !== null && isCancelledReservationStatus(row.status)) {
+            forgetOwnBooking(row)
             setPendingCancelId(null)
             refreshAgenda(agendaRefreshDates(viewedDate, [row]))
           }
@@ -867,6 +918,7 @@ export function TenantPortalAgendaPage() {
                   if (!value) {
                     return
                   }
+                  preferredTimeRef.current = value
                   setStartTime(value)
                   setSelectedRentalAssetId(null)
                 }}

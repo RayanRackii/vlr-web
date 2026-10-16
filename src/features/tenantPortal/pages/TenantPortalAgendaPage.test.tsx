@@ -58,7 +58,12 @@ import { toast } from "sonner"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
-import { resetAgendaQueryClientForTests } from "@/features/tenantPortal/lib/agendaQueryClient"
+import {
+  customerAlreadyHoldsSlot,
+  invalidateAgendaQueries,
+  rememberOwnBooking,
+  resetAgendaQueryClientForTests,
+} from "@/features/tenantPortal/lib/agendaQueryClient"
 import { PortalBookingError } from "@/features/tenantPortal/lib/portalBookingError"
 import {
   bookPortalSlot,
@@ -354,6 +359,101 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
+    const user = userEvent.setup()
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    rememberOwnBooking(confirmed)
+    expect(
+      customerAlreadyHoldsSlot(
+        "2099-01-15",
+        "11111111-1111-4111-8111-111111111111",
+        "10:00",
+        [],
+      ),
+    ).toBe(true)
+    let reads = 0
+    listMine.mockImplementation(async () => {
+      reads += 1
+      return reads === 1 ? [confirmed] : [canceled]
+    })
+
+    renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      )
+    })
+    expect(
+      customerAlreadyHoldsSlot(
+        "2099-01-15",
+        "11111111-1111-4111-8111-111111111111",
+        "10:00",
+        [],
+      ),
+    ).toBe(false)
+  })
+
+  it("keeps a reservation from a newer refresh when the cancel list is stale", async () => {
+    const user = userEvent.setup()
+    const target = makeReservation("Confirmed", FUTURE_ISO)
+    const newer = makeReservation("Confirmed", FUTURE_ISO, {
+      id: "99999999-9999-4999-8999-999999999999",
+      items: [
+        {
+          ...target.items[0],
+          id: "12121212-1212-4121-8121-121212121212",
+          assetName: "Sala nova",
+        },
+      ],
+    })
+    let releaseStale: (rows: PortalReservation[]) => void = () => {}
+    let reads = 0
+    listMine.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          reads += 1
+          if (reads === 1) {
+            resolve([target])
+            return
+          }
+          if (reads === 2) {
+            releaseStale = resolve
+            return
+          }
+          resolve([target, newer])
+        }),
+    )
+    cancelMine.mockResolvedValue({ ...target, status: "Canceled" })
+
+    renderAgenda()
+    await waitForMineList()
+    const dialog = await openCancelDialog(user)
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+      }),
+    )
+    await waitFor(() => {
+      expect(listMine).toHaveBeenCalledTimes(2)
+    })
+
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2099-01-15"] },
+      { applySlots: false },
+    )
+    expect(await screen.findByText("Sala nova")).toBeInTheDocument()
+
+    releaseStale([target])
+    await waitFor(() => {
+      expect(cancelMine).toHaveBeenCalledWith(target.id)
+    })
+    expect(screen.getByText("Sala nova")).toBeInTheDocument()
   })
 
   it("surfaces an API conflict, stays on the page, and refetches mine", async () => {
@@ -1337,6 +1437,64 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
+  })
+
+  it("keeps the date and time from the address across a reload", async () => {
+    fetchDay.mockImplementation(async (_subdomain: string, dayDate: string) =>
+      Promise.resolve({
+        date: dayDate,
+        slots: [
+          makeSlot({
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            startTime: "08:00:00",
+            endTime: "09:00:00",
+          }),
+          makeSlot({
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            startTime: "13:00:00",
+            endTime: "14:00:00",
+          }),
+        ],
+      }),
+    )
+
+    renderAgenda("/agenda?date=2026-10-20&time=13:00")
+
+    expect(
+      await screen.findByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).toHaveValue("2026-10-20")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-20")
+    })
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    ).toHaveTextContent("13:00")
+    expect(
+      screen.queryByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("falls back to today and the first time when the address has no choice", async () => {
+    renderAgenda("/agenda?date=2020-01-01&time=99:00")
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    await waitFor(() => {
+      expect(
+        screen.getByRole("combobox", {
+          name: i18n.t("tenantPortal.agenda.time"),
+        }),
+      ).toHaveTextContent("08:00")
+    })
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {

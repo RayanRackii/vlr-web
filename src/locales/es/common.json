@@ -189,7 +189,7 @@
       "title": "Iniciar sesión",
       "subtitle": "Inicie sesión con sus credenciales para acceder a la plataforma.",
       "emailLabel": "Correo electrónico",
-      "emailPlaceholder": "admin@hotel.com",
+      "emailPlaceholder": "name@example.com",
       "passwordLabel": "Contraseña",
       "passwordPlaceholder": "Su contraseña",
       "submit": "Iniciar sesión",

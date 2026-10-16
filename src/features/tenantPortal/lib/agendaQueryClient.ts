@@ -95,6 +95,7 @@ export function invalidateAgendaQueries(
       if (token !== revision) {
         return
       }
+      releaseCancelledOwnSlots(loaded.reservations)
       const snapshot: AgendaQuerySnapshot = {
         revision: token,
         subdomain,
@@ -123,6 +124,36 @@ export function subscribeAgendaQueries(listener: Listener): () => void {
 
 export function getAgendaQueryRevision(): number {
   return revision
+}
+
+/**
+ * Keep rows this page already has that the snapshot does not list, then take
+ * the snapshot. A stale response must not wipe a booking the subscriber just
+ * added.
+ */
+export function mergeServerReservations<T extends { id: string }>(
+  current: readonly T[],
+  incoming: readonly T[],
+): T[] {
+  const serverIds = new Set(incoming.map((row) => row.id))
+  const onlyLocal = current.filter((row) => !serverIds.has(row.id))
+  return [...onlyLocal, ...incoming]
+}
+
+/** A refresh that shows the booking cancelled must stop blocking that slot. */
+export function releaseCancelledOwnSlots(
+  reservations: readonly {
+    status: string
+    startDateTime: string
+    items: readonly { rentalAssetId: string }[]
+  }[],
+): void {
+  for (const reservation of reservations) {
+    const normalized = reservation.status.trim().toLowerCase()
+    if (normalized === "cancelled" || normalized === "canceled") {
+      forgetOwnBooking(reservation)
+    }
+  }
 }
 
 function ownKeysFor(reservation: {
