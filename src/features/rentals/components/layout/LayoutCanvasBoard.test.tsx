@@ -110,4 +110,62 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(tile).toHaveTextContent("Horário já reservado.")
     expect(tile.className).toContain("text-foreground")
   })
+
+  it("puts focus and screen-reader order in visual reading order", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q6",
+            rentalAssetId: "66666666-6666-4666-8666-666666666666",
+            label: "Q-6",
+            xPercent: 70,
+            yPercent: 55,
+            widthPercent: 20,
+            heightPercent: 20,
+            zIndex: 6,
+            available: true,
+          },
+          {
+            key: "q5",
+            rentalAssetId: "55555555-5555-4555-8555-555555555555",
+            label: "Q-5",
+            xPercent: 8,
+            yPercent: 55,
+            widthPercent: 20,
+            heightPercent: 20,
+            zIndex: 1,
+            available: true,
+          },
+          {
+            key: "q1",
+            rentalAssetId: "11111111-1111-4111-8111-111111111111",
+            label: "Q-1",
+            xPercent: 8,
+            yPercent: 8,
+            widthPercent: 20,
+            heightPercent: 20,
+            zIndex: 4,
+            available: true,
+          },
+          {
+            key: "q10",
+            rentalAssetId: "10101010-1010-4101-8101-101010101010",
+            label: "Q-10",
+            xPercent: 40,
+            yPercent: 8,
+            widthPercent: 20,
+            heightPercent: 20,
+            zIndex: 2,
+            available: true,
+          },
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Q-1", "Q-10", "Q-5", "Q-6"])
+  })
 })

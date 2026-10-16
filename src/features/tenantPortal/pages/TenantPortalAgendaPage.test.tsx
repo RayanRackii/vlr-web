@@ -421,13 +421,16 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     ).toBeInTheDocument()
     const policy = within(dialog).getByTestId("cancellation-policy-text")
     expect(policy).toHaveTextContent(`${policyText} Line 2`)
+    expect(policy).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancellationPolicyDefault"),
+    )
     expect(policy.innerHTML).not.toContain("<img")
     expect(policy.innerHTML).not.toContain("<script")
     expect(policy.querySelector("img")).toBeNull()
     expect(policy.querySelector("script")).toBeNull()
   })
 
-  it("keeps only the existing note when the tenant has no cancellation text", async () => {
+  it("shows a neutral default when the tenant has no cancellation text", async () => {
     const user = userEvent.setup()
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: "   ",
@@ -443,11 +446,20 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
       within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
     ).toBeInTheDocument()
     expect(
-      within(dialog).queryByTestId("cancellation-policy-text"),
-    ).not.toBeInTheDocument()
+      within(dialog).getByTestId("cancellation-policy-text"),
+    ).toHaveTextContent(i18n.t("tenantPortal.agenda.cancellationPolicyDefault"))
+    expect(
+      enCommon.tenantPortal.agenda.cancellationPolicyDefault.trim().length,
+    ).toBeGreaterThan(20)
+    expect(
+      esCommon.tenantPortal.agenda.cancellationPolicyDefault.trim().length,
+    ).toBeGreaterThan(20)
+    expect(
+      ptBRCommon.tenantPortal.agenda.cancellationPolicyDefault.trim().length,
+    ).toBeGreaterThan(20)
   })
 
-  it("keeps only the existing note when the public policy request fails", async () => {
+  it("shows the neutral default when the public policy request fails", async () => {
     const user = userEvent.setup()
     fetchPolicy.mockRejectedValue(new Error("policy down"))
     listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
@@ -460,8 +472,8 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
       within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
     ).toBeInTheDocument()
     expect(
-      within(dialog).queryByTestId("cancellation-policy-text"),
-    ).not.toBeInTheDocument()
+      within(dialog).getByTestId("cancellation-policy-text"),
+    ).toHaveTextContent(i18n.t("tenantPortal.agenda.cancellationPolicyDefault"))
     expect(toastError).not.toHaveBeenCalledWith("policy down")
   })
 
@@ -1162,13 +1174,68 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.slotHeldByYou", {
-          reservations: i18n.t("tenantPortal.agenda.myReservations"),
-        }),
-      )
+      expect(toastError).toHaveBeenCalled()
     })
-    expect(toastError).not.toHaveBeenCalledWith(
+    const notice = toastError.mock.calls.at(-1)?.[0]
+    const view = render(<>{notice}</>)
+    expect(
+      view.getByRole("link", {
+        name: i18n.t("tenantPortal.agenda.myReservations"),
+      }),
+    ).toHaveAttribute("href", expect.stringContaining("#minhas-reservas"))
+    expect(view.container).toHaveTextContent(
+      i18n.t("tenantPortal.agenda.slotHeldByYou"),
+    )
+    expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
+      i18n.t("tenantPortal.agenda.slotJustTaken"),
+    )
+  })
+
+  it("recognises a reservation made in another tab instead of saying someone else took it", async () => {
+    const user = userEvent.setup()
+    const held = makeReservation("Confirmed", SLOT_08_ISO, {
+      items: [
+        {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          assetId: ASSET_A_ASSET_ID,
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          quantity: 1,
+          unitPrice: 80,
+          subTotal: 80,
+        },
+      ],
+    })
+    let mineCalls = 0
+    listMine.mockImplementation(async () => {
+      mineCalls += 1
+      return mineCalls === 1 ? [] : [held]
+    })
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+
+    renderAgenda()
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalled()
+    })
+    const notice = toastError.mock.calls.at(-1)?.[0]
+    const view = render(<>{notice}</>)
+    expect(
+      view.getByRole("link", {
+        name: i18n.t("tenantPortal.agenda.myReservations"),
+      }),
+    ).toBeInTheDocument()
+    expect(view.container).toHaveTextContent(
+      i18n.t("tenantPortal.agenda.slotHeldByYou"),
+    )
+    expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
       i18n.t("tenantPortal.agenda.slotJustTaken"),
     )
   })

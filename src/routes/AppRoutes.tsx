@@ -58,6 +58,8 @@ import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExe
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
+import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
+import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
 
 function RedirectVerifyPhoneToEmail() {
   const location = useLocation()
@@ -288,6 +290,7 @@ export function AppRoutes() {
           <Route element={<PermissionRoute permission="core.users.read" />}>
             <Route path="/pessoas-e-acesso" element={<PeopleAccessPage />} />
           </Route>
+          <Route path="/perfil" element={<StaffProfilePage />} />
 
           <Route element={<PlatformAdminRoute />}>
             <Route
@@ -304,7 +307,7 @@ export function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<UnknownPathRoute />} />
     </Routes>
   )
 }

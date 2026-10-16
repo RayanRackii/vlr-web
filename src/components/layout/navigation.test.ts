@@ -400,6 +400,10 @@ describe("getPageTitleKey", () => {
     )
   })
 
+  it("resolves the staff profile page", () => {
+    expect(getPageTitleKey("/perfil")).toBe("account.profile")
+  })
+
   it("resolves PMOC library, preview, and plan detail titles", () => {
     expect(getPageTitleKey("/pmoc/biblioteca")).toBe("nav.pmocLibrary")
     expect(
