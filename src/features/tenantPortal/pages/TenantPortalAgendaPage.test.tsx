@@ -1,7 +1,14 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Outlet,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router-dom"
 
 import { formatMoney } from "@/features/rentals/services/reservationsService"
 import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
@@ -164,6 +171,19 @@ function renderAgenda(initialEntry = "/agenda") {
       </Routes>
     </MemoryRouter>,
   )
+}
+
+function renderAgendaHistory(initialEntry = "/agenda") {
+  const router = createMemoryRouter(
+    [
+      {
+        element: <Outlet context={outletContext} />,
+        children: [{ path: "/agenda", element: <TenantPortalAgendaPage /> }],
+      },
+    ],
+    { initialEntries: [initialEntry] },
+  )
+  return { router, ...render(<RouterProvider router={router} />) }
 }
 
 function cancelButton() {
@@ -362,6 +382,56 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it("shows the already-cancelled message when the agenda revision moves during confirm", async () => {
+    const user = userEvent.setup()
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    const canceled = makeReservation("Canceled", FUTURE_ISO)
+    let releaseConfirmList: (rows: PortalReservation[]) => void = () => {}
+    let reads = 0
+    listMine.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          reads += 1
+          if (reads === 1) {
+            resolve([confirmed])
+            return
+          }
+          if (reads === 2) {
+            releaseConfirmList = resolve
+            return
+          }
+          resolve([confirmed])
+        }),
+    )
+    cancelMine.mockResolvedValue(canceled)
+
+    renderAgenda()
+    await waitForMineList()
+    const dialog = await openCancelDialog(user)
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.cancelConfirmAction"),
+      }),
+    )
+    await waitFor(() => {
+      expect(listMine).toHaveBeenCalledTimes(2)
+    })
+
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2099-01-15"] },
+      { applySlots: false },
+    )
+    releaseConfirmList([canceled])
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      )
+    })
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(cancelMine).not.toHaveBeenCalled()
   })
 
   it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
@@ -1645,6 +1715,159 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastError).not.toHaveBeenCalledWith(
       i18n.t("tenantPortal.agenda.slotsError"),
     )
+  })
+
+  it("does not request a date past the horizon before the public policy resolves", async () => {
+    let releasePolicy: (policy: {
+      cancellationPolicyText: null
+      maxActiveReservationsPerCustomerPerDay: null
+      maxAdvanceBookingDays: number
+    }) => void = () => {}
+    fetchPolicy.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releasePolicy = resolve
+        }),
+    )
+    renderAgenda("/agenda?date=2099-12-31")
+
+    expect(
+      await screen.findByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).toBeInTheDocument()
+    expect(fetchDay).not.toHaveBeenCalled()
+
+    await act(async () => {
+      releasePolicy({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: 2,
+      })
+    })
+
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-16")
+    })
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain("2099-12-31")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).toHaveValue("2026-10-16")
+  })
+
+  it("does not request an impossible civil date", async () => {
+    renderAgenda("/agenda?date=2026-11-31")
+
+    expect(
+      await screen.findByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).toHaveValue("2026-10-14")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-14")
+    })
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain("2026-11-31")
+  })
+
+  it("restores the previous date when the browser goes back", async () => {
+    const { router } = renderAgendaHistory()
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    expect(dateInput).toHaveValue("2026-10-14")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-14")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-20")
+    })
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-14")
+    })
+    expect(
+      screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") }),
+    ).toHaveTextContent("08:00")
+  })
+
+  it("formats the booking total and the estimate for each locale", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    expect(await screen.findByRole("listitem")).toHaveTextContent("Total R$ 80,00")
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(
+      await screen.findByText("Disponível. Estimativa: R$ 80,00"),
+    ).toBeInTheDocument()
+
+    try {
+      await i18n.changeLanguage("en")
+      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80.00")
+      expect(screen.getByRole("listitem")).not.toHaveTextContent("80,00")
+      expect(
+        screen.getByText("Available. Estimate: R$ 80.00"),
+      ).toBeInTheDocument()
+
+      await i18n.changeLanguage("es")
+      expect(screen.getByRole("listitem")).toHaveTextContent("Total 80,00 R$")
+      expect(screen.getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
+      expect(
+        screen.getByText("Disponible. Estimación: 80,00 R$"),
+      ).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("explains a horizon rejection from the price estimate in Spanish", async () => {
+    checkAvailability.mockRejectedValue(
+      new PortalBookingError(
+        "A data solicitada está além do horizonte de reserva.",
+        400,
+        BOOKING_HORIZON_EXCEEDED,
+      ),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+
+    try {
+      await i18n.changeLanguage("es")
+      await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+      await waitFor(() => {
+        expect(toastError).toHaveBeenCalledWith(
+          "La fecha pedida está fuera del horizonte de reserva.",
+        )
+      })
+      expect(toastError).not.toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.availabilityError"),
+      )
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("says times, not slots, when the day cannot be loaded in English", async () => {
+    fetchDay.mockRejectedValue(new Error("network"))
+    renderAgenda()
+
+    try {
+      await i18n.changeLanguage("en")
+      const trigger = await screen.findByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      })
+      await waitFor(() => {
+        expect(trigger).toHaveTextContent("Could not load times for this day.")
+      })
+      expect(trigger.textContent ?? "").not.toMatch(/slots/i)
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
   })
 
   it("hides slots that already started today and explains that they are hidden", async () => {

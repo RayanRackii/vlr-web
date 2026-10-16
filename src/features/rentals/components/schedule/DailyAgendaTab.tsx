@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -63,6 +63,45 @@ type DailyAgendaTabProps = {
   onGoWeeklySetup?: () => void
 }
 
+/** Re-render when a minute passes, or when the tab is focused again. */
+function useTenantClock(): number {
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    function bump() {
+      setTick((value) => value + 1)
+    }
+
+    let intervalId = 0
+    const delay = 60_000 - (Date.now() % 60_000)
+    const timeoutId = window.setTimeout(() => {
+      bump()
+      intervalId = window.setInterval(bump, 60_000)
+    }, delay)
+
+    function onFocus() {
+      bump()
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        bump()
+      }
+    }
+
+    window.addEventListener("focus", onFocus)
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => {
+      window.clearTimeout(timeoutId)
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", onFocus)
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
+  }, [])
+
+  return tick
+}
+
 function addDays(isoDate: string, amount: number): string {
   const date = new Date(`${isoDate}T12:00:00`)
   date.setDate(date.getDate() + amount)
@@ -88,6 +127,7 @@ export function DailyAgendaTab({
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const clock = useTenantClock()
 
   const selectedAssets = useMemo(
     () =>
@@ -108,7 +148,7 @@ export function DailyAgendaTab({
       }
       return occupancy
     })
-  }, [date, day])
+  }, [clock, date, day])
 
   const hasSlotGrid = selectedAssets.some(
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",

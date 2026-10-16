@@ -49,10 +49,7 @@ import {
 } from "@/features/rentals/lib/bookingHorizon"
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
-import {
-  formatMoney,
-  formatReservationRange,
-} from "@/features/rentals/services/reservationsService"
+import { formatReservationRange } from "@/features/rentals/services/reservationsService"
 import {
   CUSTOMER_MY_RESERVATIONS_HASH,
   localizedCustomerMenuLabel,
@@ -116,11 +113,9 @@ import {
   type PortalScheduleSlot,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
-import {
-  brazilTodayIsoDate,
-  clampBrazilDateToToday,
-} from "@/lib/brazilTimeZone"
+import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import appI18n from "@/lib/i18n"
+import { formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 
 function isCancelledReservationStatus(status: string): boolean {
@@ -158,6 +153,10 @@ function partitionAgendaSlots(
 
 export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
+  const moneyLocale = i18n.resolvedLanguage ?? i18n.language
+  function formatBookingMoney(amount: number): string {
+    return formatLocaleCurrency(amount, "BRL", moneyLocale)
+  }
   const dateInputId = useId()
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
@@ -208,12 +207,16 @@ export function TenantPortalAgendaPage() {
   const [policyHorizonDays, setPolicyHorizonDays] = useState<
     number | null | undefined
   >(undefined)
+  const [bookingPolicyReady, setBookingPolicyReady] = useState(false)
   const [horizonAdjusted, setHorizonAdjusted] = useState(false)
   const submittingRef = useRef(false)
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
   const scheduleRequest = useRef(0)
+  const lastWrittenSearch = useRef<string | null>(null)
+  const pendingSearchWrite = useRef(false)
+  const replaceSelectionSearch = useRef(true)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
   const [quote, setQuote] = useState<
@@ -252,6 +255,12 @@ export function TenantPortalAgendaPage() {
 
   const horizonDays = resolveAgendaHorizonDays(visibleAssets, policyHorizonDays)
   const horizonMaxDate = horizonEndDate(brazilTodayIsoDate(), horizonDays)
+  const dayFetchGate =
+    horizonMaxDate !== null && date > horizonMaxDate
+      ? "hold"
+      : !bookingPolicyReady && date > brazilTodayIsoDate()
+        ? "wait"
+        : "go"
 
   useEffect(() => {
     if (horizonMaxDate === null || date <= horizonMaxDate) {
@@ -351,6 +360,7 @@ export function TenantPortalAgendaPage() {
     }
 
     let cancelled = false
+    setBookingPolicyReady(false)
     void fetchPublicBookingPolicy(subdomain)
       .then((policy) => {
         if (!cancelled) {
@@ -365,6 +375,12 @@ export function TenantPortalAgendaPage() {
       .catch(() => {
         if (!cancelled) {
           setCancellationPolicyText(null)
+          setPolicyHorizonDays(undefined)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setBookingPolicyReady(true)
         }
       })
 
@@ -381,6 +397,12 @@ export function TenantPortalAgendaPage() {
       setStartTime("")
       setPastSlotsHidden(false)
       setSlotsLoading(false)
+      setSlotsError(false)
+      return
+    }
+
+    if (dayFetchGate !== "go") {
+      setSlotsLoading(true)
       setSlotsError(false)
       return
     }
@@ -448,10 +470,36 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [signedIn, subdomain, date])
+  }, [date, dayFetchGate, signedIn, subdomain])
 
   useEffect(() => {
     const today = brazilTodayIsoDate()
+    const current = searchParams.toString()
+    if (pendingSearchWrite.current) {
+      if (current !== lastWrittenSearch.current) {
+        return
+      }
+      pendingSearchWrite.current = false
+    } else if (
+      lastWrittenSearch.current !== null &&
+      current !== lastWrittenSearch.current
+    ) {
+      const urlDate = readAgendaDateParam(searchParams.get("date"), today)
+      const urlTime = readAgendaTimeParam(searchParams.get("time")) ?? ""
+      lastWrittenSearch.current = current
+      replaceSelectionSearch.current = false
+      setHorizonAdjusted(horizonMaxDate !== null && urlDate > horizonMaxDate)
+      if (urlDate !== date) {
+        viewedDateRef.current = urlDate
+        setDate(urlDate)
+      }
+      if (urlTime !== startTime) {
+        preferredTimeRef.current = urlTime
+        setStartTime(urlTime)
+      }
+      return
+    }
+
     const timeForUrl =
       startTime.length > 0 ? startTime : preferredTimeRef.current
     const next = agendaSelectionSearchParams(
@@ -460,11 +508,23 @@ export function TenantPortalAgendaPage() {
       timeForUrl,
       today,
     )
-    if (next.toString() === searchParams.toString()) {
+    const nextQuery = next.toString()
+    if (nextQuery === current) {
+      lastWrittenSearch.current = current
+      if (startTime.length > 0) {
+        replaceSelectionSearch.current = false
+      }
       return
     }
-    setSearchParams(next, { replace: true })
-  }, [date, searchParams, setSearchParams, startTime])
+
+    const replace = replaceSelectionSearch.current
+    if (startTime.length > 0) {
+      replaceSelectionSearch.current = false
+    }
+    lastWrittenSearch.current = nextQuery
+    pendingSearchWrite.current = true
+    setSearchParams(next, { replace })
+  }, [date, horizonMaxDate, searchParams, setSearchParams, startTime])
 
   useEffect(() => {
     return subscribeAgendaQueries((snapshot) => {
@@ -693,7 +753,7 @@ export function TenantPortalAgendaPage() {
       )
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(created.totalAmount),
+          amount: formatBookingMoney(created.totalAmount),
           status: t(`rentals.reservations.statuses.${created.status}`, {
             defaultValue: created.status,
           }),
@@ -833,12 +893,22 @@ export function TenantPortalAgendaPage() {
       let current = existing
       try {
         const fresh = await listMyPortalReservations()
+        const freshRow =
+          fresh.find((reservation) => reservation.id === id) ?? null
         if (getAgendaQueryRevision() === seenRevision) {
           releaseCancelledOwnSlots(fresh)
           const merged = mergeServerReservations(mineRef.current, fresh)
           mineRef.current = merged
           setMine(merged)
           current = merged.find((reservation) => reservation.id === id) ?? null
+        } else if (
+          freshRow !== null &&
+          isCancelledReservationStatus(freshRow.status)
+        ) {
+          current = freshRow
+          setMine((rows) =>
+            rows.map((row) => (row.id === freshRow.id ? freshRow : row)),
+          )
         }
       } catch {
         // The cancel request still runs. The API remains the authority.
@@ -907,9 +977,9 @@ export function TenantPortalAgendaPage() {
   }
 
   function onDateChange(value: string) {
-    const todayClamped = clampBrazilDateToToday(value)
-    const next = clampDateToHorizon(todayClamped, horizonMaxDate)
-    setHorizonAdjusted(next !== todayClamped)
+    const parsed = readAgendaDateParam(value, brazilTodayIsoDate())
+    const next = clampDateToHorizon(parsed, horizonMaxDate)
+    setHorizonAdjusted(next !== parsed)
     viewedDateRef.current = next
     setDate(next)
   }
@@ -964,7 +1034,7 @@ export function TenantPortalAgendaPage() {
                 max={horizonMaxDate ?? undefined}
                 value={date}
                 onChange={(nextValue) => {
-                  onDateChange(clampBrazilDateToToday(nextValue))
+                  onDateChange(nextValue)
                 }}
               />
             </div>
@@ -1248,7 +1318,7 @@ export function TenantPortalAgendaPage() {
           {quote.status === "ready" && quote.amount !== null ? (
             <p className="text-sm font-medium">
               {t("tenantPortal.agenda.available", {
-                amount: formatMoney(quote.amount),
+                amount: formatBookingMoney(quote.amount),
               })}
             </p>
           ) : null}
@@ -1332,7 +1402,7 @@ export function TenantPortalAgendaPage() {
                         })}
                         {" · "}
                         {t("tenantPortal.agenda.total", {
-                          amount: formatMoney(reservation.totalAmount),
+                          amount: formatBookingMoney(reservation.totalAmount),
                         })}
                       </p>
                       {isPastReservation(reservation.endDateTime) ? (
