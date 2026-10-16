@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
+import enCommon from "@/locales/en/common.json"
+import esCommon from "@/locales/es/common.json"
+import ptBRCommon from "@/locales/pt-BR/common.json"
 import type { TenantNotificationChannelGroup } from "@/features/notifications/schemas/notificationChannelConfigSchemas"
 import {
   listNotificationChannelConfigs,
@@ -247,5 +250,66 @@ describe("NotificationsSettingsPage", () => {
     expect(
       screen.queryByText(i18n.t("rentals.events.reservationConfirmed")),
     ).not.toBeInTheDocument()
+  })
+
+  it("explains that customer email starts on and mirrors the API value", async () => {
+    for (const copy of [ptBRCommon, enCommon, esCommon]) {
+      expect(copy.notifications.settings.emailDefault.trim().length).toBeGreaterThan(20)
+    }
+
+    listMock.mockResolvedValue([
+      {
+        module: "rentals",
+        events: [
+          {
+            eventType: "rentals.reservation.confirmed",
+            displayKey: "rentals.events.reservationConfirmed",
+            channels: [{ channel: "Email", isActive: true, configurable: true }],
+          },
+        ],
+      },
+    ])
+    const { unmount } = renderPage()
+    await waitForLoaded()
+
+    expect(
+      screen.getByText(i18n.t("notifications.settings.emailDefault")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("switch", {
+        name: toggleName("rentals.events.reservationConfirmed", "Email"),
+      }),
+    ).toHaveAttribute("aria-checked", "true")
+    unmount()
+
+    listMock.mockResolvedValue([
+      {
+        module: "rentals",
+        events: [
+          {
+            eventType: "rentals.reservation.confirmed",
+            displayKey: "rentals.events.reservationConfirmed",
+            channels: [{ channel: "Email", isActive: false, configurable: true }],
+          },
+        ],
+      },
+    ])
+    renderPage()
+    await waitForLoaded()
+    expect(
+      screen.getByRole("switch", {
+        name: toggleName("rentals.events.reservationConfirmed", "Email"),
+      }),
+    ).toHaveAttribute("aria-checked", "false")
+  })
+
+  it("does not render a channel switch before the API responds", () => {
+    listMock.mockReturnValue(new Promise(() => {}))
+    renderPage()
+
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("notifications.settings.emailDefault")),
+    ).toBeInTheDocument()
   })
 })

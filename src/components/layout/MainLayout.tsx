@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -30,7 +30,7 @@ import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsSer
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { supabase } from "@/lib/supabase"
 
-function MainLayoutShell() {
+function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -105,6 +105,7 @@ function MainLayoutShell() {
       pageTitle={pageTitle}
       userLabel={userEmail}
       initials={initials}
+      profileTo="/perfil"
       contextLabel={staffHeaderContextLabel(
         currentUser,
         t("app.authenticatedArea"),
@@ -149,15 +150,15 @@ function MainLayoutShell() {
         void navigate("/login", { replace: true })
       }}
     >
-      <Outlet />
+      {children ?? <Outlet />}
     </AppShell>
   )
 }
 
-export function MainLayout() {
+export function MainLayout({ children }: { children?: ReactNode }) {
   return (
     <PermissionProvider>
-      <MainLayoutShell />
+      <MainLayoutShell>{children}</MainLayoutShell>
     </PermissionProvider>
   )
 }

@@ -118,6 +118,51 @@ export function autoPlaceItems(
   return arrangeEvenly(rentalAssetIds)
 }
 
+/** Q-2 before Q-10. Generic for any resource name. */
+export function compareResourceNames(left: string, right: string): number {
+  return left.localeCompare(right, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  })
+}
+
+export function orderByResourceName<T>(
+  items: readonly T[],
+  nameOf: (item: T) => string,
+): T[] {
+  return [...items].sort((left, right) =>
+    compareResourceNames(nameOf(left), nameOf(right)),
+  )
+}
+
+type ReadableCanvasItem = {
+  label: string
+  xPercent: number
+  yPercent: number
+}
+
+/**
+ * Screen-reader and tab order follow the picture: top to bottom, then left
+ * to right. Names break a tie with a natural sort.
+ */
+export function orderCanvasItemsForReading<T extends ReadableCanvasItem>(
+  items: readonly T[],
+): T[] {
+  return [...items].sort((left, right) => {
+    const row = left.yPercent - right.yPercent
+    if (Math.abs(row) > 0.05) {
+      return row
+    }
+
+    const column = left.xPercent - right.xPercent
+    if (Math.abs(column) > 0.05) {
+      return column
+    }
+
+    return compareResourceNames(left.label, right.label)
+  })
+}
+
 export function pickCustomerLayout<T extends LayoutLike>(
   layouts: readonly T[],
   visibleRentalAssetIds: ReadonlySet<string>,

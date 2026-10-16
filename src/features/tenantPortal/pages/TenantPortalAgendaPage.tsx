@@ -27,11 +27,13 @@ import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCa
 import {
   autoPlaceItems,
   canBookViaSlotId,
+  compareResourceNames,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
   findSlotAtStart,
   isCustomerBookableSlot,
   listDistinctStartTimes,
+  orderByResourceName,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
@@ -50,6 +52,7 @@ import {
   localizedCustomerMenuLabel,
 } from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeldByYouNotice"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
   agendaRefreshDates,
@@ -231,18 +234,19 @@ export function TenantPortalAgendaPage() {
           setMine(reservations)
         }
 
+        const visibleAssetsForLayout = [...assetList]
+          .filter((asset) => {
+            if (lockedRentalAssetId) {
+              return asset.id === lockedRentalAssetId
+            }
+            if (lockedAssetId) {
+              return asset.assetId === lockedAssetId
+            }
+            return true
+          })
+          .sort((left, right) => compareResourceNames(left.name, right.name))
         const visibleIds = new Set(
-          assetList
-            .filter((asset) => {
-              if (lockedRentalAssetId) {
-                return asset.id === lockedRentalAssetId
-              }
-              if (lockedAssetId) {
-                return asset.assetId === lockedAssetId
-              }
-              return true
-            })
-            .map((asset) => asset.id),
+          visibleAssetsForLayout.map((asset) => asset.id),
         )
         const layout = pickCustomerLayout(layouts, visibleIds)
         if (layout) {
@@ -263,7 +267,9 @@ export function TenantPortalAgendaPage() {
           setHasAuthoredLayout(false)
           setAspectRatio(DEFAULT_ASPECT_RATIO)
           setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
-          setLayoutItems(autoPlaceItems([...visibleIds]))
+          setLayoutItems(
+            autoPlaceItems(visibleAssetsForLayout.map((asset) => asset.id)),
+          )
         }
       })
       .catch((error) => {
@@ -430,8 +436,9 @@ export function TenantPortalAgendaPage() {
     () => new Set(layoutItems.map((item) => item.rentalAssetId)),
     [layoutItems],
   )
-  const unplacedAssets = visibleAssets.filter(
-    (asset) => !placedIds.has(asset.id),
+  const unplacedAssets = orderByResourceName(
+    visibleAssets.filter((asset) => !placedIds.has(asset.id)),
+    (asset) => asset.name,
   )
 
   const selectedSlot = selectedRentalAssetId
@@ -533,9 +540,11 @@ export function TenantPortalAgendaPage() {
   const title = menuItem
     ? localizedCustomerMenuLabel(menuItem.moduleName, menuItem.label, t)
     : t("tenantPortal.agenda.title")
-  const cancellationPolicyNote = visibleCancellationPolicyText(
+  const tenantCancellationNote = visibleCancellationPolicyText(
     cancellationPolicyText,
   )
+  const cancellationPolicyNote =
+    tenantCancellationNote ?? t("tenantPortal.agenda.cancellationPolicyDefault")
 
   function refreshAgenda(dayDates: readonly string[]) {
     void invalidateAgendaQueries(
@@ -612,18 +621,36 @@ export function TenantPortalAgendaPage() {
         return
       }
       if (isSlotTakenConflict(error)) {
+        let reservations = mine
+        if (
+          !customerAlreadyHoldsSlot(
+            dayDate,
+            slot.rentalAssetId,
+            slot.startTime,
+            reservations,
+          )
+        ) {
+          try {
+            reservations = await listMyPortalReservations()
+            setMine(reservations)
+          } catch {
+            // Keep the list already on screen when Minhas reservas cannot refresh.
+          }
+        }
         const heldByCustomer = customerAlreadyHoldsSlot(
           dayDate,
           slot.rentalAssetId,
           slot.startTime,
-          mine,
+          reservations,
         )
         toast.error(
-          heldByCustomer
-            ? t("tenantPortal.agenda.slotHeldByYou", {
-                reservations: t("tenantPortal.agenda.myReservations"),
-              })
-            : t("tenantPortal.agenda.slotJustTaken"),
+          heldByCustomer ? (
+            <SlotHeldByYouNotice
+              href={`${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`}
+            />
+          ) : (
+            t("tenantPortal.agenda.slotJustTaken")
+          ),
         )
         if (viewedDateRef.current === dayDate) {
           const reservedKey = agendaReservedSlotKey(

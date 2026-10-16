@@ -175,6 +175,9 @@ export function NotificationsSettingsPage() {
         <p className="text-sm text-muted-foreground">
           {t("notifications.settings.subtitle")}
         </p>
+        <p className="text-sm text-muted-foreground">
+          {t("notifications.settings.emailDefault")}
+        </p>
       </div>
 
       {loadError ? (

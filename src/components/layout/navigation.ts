@@ -463,7 +463,12 @@ export function getPageTitleKey(
   | AppNavigationChildItem["labelKey"]
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
+  | "account.profile"
   | "app.name" {
+  if (pathname === "/perfil") {
+    return "account.profile"
+  }
+
   if (pathname.startsWith("/admin/asset-families")) {
     return "nav.adminAssetFamilies"
   }
