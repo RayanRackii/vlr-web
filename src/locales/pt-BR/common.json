@@ -402,7 +402,8 @@
       "dailyLimitReached": "Você atingiu o limite de {{count}} reservas ativas neste dia.",
       "dailyLimitReachedUnknown": "Você atingiu o limite de reservas ativas neste dia.",
       "slotJustTaken": "Este horário acabou de ser reservado. A agenda foi atualizada — escolha outro.",
-      "slotHeldByYou": "Você já reservou este horário. Veja em {{reservations}}.",
+      "slotHeldByYou": "Você já reservou este horário. Veja em",
+      "cancellationPolicyDefault": "Ao cancelar, o horário volta a ficar disponível para outras pessoas. Consulte as regras do estabelecimento.",
       "noAssets": "Nenhum espaço cadastrado",
       "backHome": "Voltar",
       "queue": {
@@ -670,6 +671,7 @@
     "settings": {
       "title": "Notificações",
       "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos neste ambiente.",
+      "emailDefault": "As notificações por e-mail para clientes começam ligadas em organizações novas. Você pode desligá-las aqui.",
       "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
       "inAppAlwaysOn": "No app sempre ativo",
       "toggleChannel": "Ativar {{channel}} para {{event}}",
@@ -1999,6 +2001,18 @@
     "title": "Acesso negado",
     "description": "Você não tem permissão para ver esta página."
   },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "Este endereço não existe neste ambiente.",
+    "home": "Ir para o início"
+  },
+  "staffProfile": {
+    "title": "Meu perfil",
+    "description": "Seus dados de acesso neste ambiente.",
+    "name": "Nome",
+    "email": "E-mail",
+    "roles": "Funções"
+  },
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "Você não pode atribuir um perfil de acesso com mais permissões do que as suas.",
@@ -2961,7 +2975,7 @@
       "title": "Política de reservas",
       "description": "Defina o texto de cancelamento e o limite diário de reservas ativas por cliente. Vale para todos os tipos de recurso deste ambiente.",
       "cancellationLabel": "Texto de cancelamento",
-      "cancellationHint": "Texto simples, sem formatação. Até 2000 caracteres. Em branco, o portal mostra só a nota padrão ao cancelar.",
+      "cancellationHint": "Texto simples, sem formatação. Até 2000 caracteres. Em branco, o portal mostra uma nota neutra: o horário volta a ficar disponível e a pessoa deve consultar as regras.",
       "cancellationPlaceholder": "Texto simples exibido ao cancelar uma reserva.",
       "characterCount": "{{count}}/{{max}}",
       "dailyLimitToggle": "Limitar reservas ativas por cliente por dia",

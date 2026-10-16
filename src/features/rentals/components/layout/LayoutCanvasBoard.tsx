@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react"
+import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from "react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -7,6 +7,7 @@ import {
   clampPercent,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
+  orderCanvasItemsForReading,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
   portalPickAvailableClass,
@@ -91,6 +92,11 @@ export function LayoutCanvasBoard({
   onMoveRef.current = onMove
   onResizeRef.current = onResize
   onFrameResizeRef.current = onFrameResize
+
+  const renderedItems = useMemo(
+    () => (mode === "pick" ? orderCanvasItemsForReading(items) : items),
+    [items, mode],
+  )
 
   function clientToPercent(clientX: number, clientY: number) {
     const rect = boardRef.current?.getBoundingClientRect()
@@ -211,7 +217,7 @@ export function LayoutCanvasBoard({
           )}
           style={{ aspectRatio: String(aspectRatio) }}
         >
-          {items.map((item) => {
+          {renderedItems.map((item) => {
             const picked = mode === "pick"
             const unavailable = picked && item.disabled === true
             const selected = picked && item.selected === true && !unavailable
