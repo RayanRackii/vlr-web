@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
+import { resetRemovedTeacherLessonsForTests } from "@/features/rentals/hooks/useTeacherLessons"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import {
@@ -104,6 +105,7 @@ async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
 
 describe("TeacherLessonsPage", () => {
   beforeEach(() => {
+    resetRemovedTeacherLessonsForTests()
     vi.useFakeTimers({
       toFake: ["Date"],
       now: new Date("2026-10-08T12:00:00.000Z"),
@@ -667,5 +669,33 @@ describe("TeacherLessonsPage", () => {
       "12:00–13:00",
       "14:00–15:00",
     ])
+  })
+
+  it("does not show a removed lesson again when a later read still lists it", async () => {
+    const user = userEvent.setup()
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => ({
+      ...openSlot,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      occupancyKindKey: "open",
+      status: "Available",
+      reservationId: null,
+    }))
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: [openSlot, secondOpenSlot, { ...lessonSlot, date }],
+    }))
+
+    const first = render(<TeacherLessonsPage />)
+    await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    await confirmLessonRemoval(user)
+    expect(await screen.findByText("Nenhuma aula nesta data.")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Remover aula 12:00" })).not.toBeInTheDocument()
+
+    first.unmount()
+    render(<TeacherLessonsPage />)
+    expect(await screen.findByText("Nenhuma aula nesta data.")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Remover aula 12:00" })).not.toBeInTheDocument()
   })
 })

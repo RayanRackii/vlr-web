@@ -141,7 +141,7 @@ describe("LoginPage locale", () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByLabelText("Email")).toBeInTheDocument()
-    expect(screen.getByPlaceholderText("admin@hotel.com")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("name@example.com")).toBeInTheDocument()
     expect(screen.getByLabelText("Password")).toBeInTheDocument()
     expect(screen.getByPlaceholderText("Your password")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled()

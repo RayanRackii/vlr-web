@@ -28,6 +28,8 @@ import {
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
+import appI18n from "@/lib/i18n"
+import { persistLanguage } from "@/lib/uiLanguage"
 import { supabase } from "@/lib/supabase"
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
@@ -143,6 +145,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         writeActiveTenantLabel(null)
         invalidateCurrentUserCache()
         const { error } = await supabase.auth.signOut()
+        persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
         if (error !== null) {
           return
         }

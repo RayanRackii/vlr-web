@@ -383,6 +383,12 @@ export async function fetchAdminScheduleDay(
 ): Promise<AdminDaySchedule> {
   const response = await api.get(
     rentableQueryPath(`/api/schedule/days/${date}`, undefined, rentalAssetIds),
+    {
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    },
   )
   const parsed = dayScheduleSchema.safeParse(response.data)
   if (!parsed.success) {

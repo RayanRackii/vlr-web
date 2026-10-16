@@ -189,7 +189,7 @@
       "title": "Login",
       "subtitle": "Entre com suas credenciais para acessar a plataforma.",
       "emailLabel": "E-mail",
-      "emailPlaceholder": "admin@hotel.com",
+      "emailPlaceholder": "name@example.com",
       "passwordLabel": "Senha",
       "passwordPlaceholder": "Sua senha",
       "submit": "Entrar",

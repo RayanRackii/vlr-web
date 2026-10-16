@@ -182,7 +182,7 @@ test.describe("B2C self-cancel", () => {
         success: "Reservation canceled.",
       })
       await selectLocationOnAgenda(page, booked.name, bookWindow.startTime)
-      await expect(page.getByRole("button", { name: "Book slot" })).toBeEnabled()
+      await expect(page.getByRole("button", { name: "Book a time" })).toBeEnabled()
       guards.assertNoCrash()
     } finally {
       const language = page.getByRole("button", { name: "Language" })

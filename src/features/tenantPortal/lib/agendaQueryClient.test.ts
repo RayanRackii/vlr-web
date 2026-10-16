@@ -27,7 +27,9 @@ import {
   getAgendaQueryRevision,
   invalidateAgendaQueries,
   isOwnBookedSlot,
+  mergeServerReservations,
   rememberOwnBooking,
+  releaseCancelledOwnSlots,
   resetAgendaQueryClientForTests,
   subscribeAgendaQueries,
   type AgendaQuerySnapshot,
@@ -214,6 +216,55 @@ describe("agendaQueryClient", () => {
       ]),
     ).toBe(true)
     expect(getAgendaQueryRevision()).toBeGreaterThan(0)
+  })
+
+  it("keeps rows the snapshot does not list, then appends the snapshot", () => {
+    const local = { id: "local" }
+    const shared = { id: "shared", status: "old" }
+    const incoming = { id: "shared", status: "new" }
+    const added = { id: "added" }
+
+    expect(mergeServerReservations([local, shared], [incoming, added])).toEqual([
+      local,
+      incoming,
+      added,
+    ])
+  })
+
+  it("drops the own-slot key when a refresh lists that booking as cancelled", async () => {
+    const created = reservation()
+    rememberOwnBooking(created)
+    expect(
+      customerAlreadyHoldsSlot("2026-10-14", RENTAL_ASSET_ID, "08:00", []),
+    ).toBe(true)
+
+    listMine.mockResolvedValue([{ ...created, status: "Cancelled" }])
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      { applySlots: false },
+    )
+
+    expect(isOwnBookedSlot("2026-10-14", RENTAL_ASSET_ID, "08:00")).toBe(false)
+    expect(
+      customerAlreadyHoldsSlot("2026-10-14", RENTAL_ASSET_ID, "08:00", []),
+    ).toBe(false)
+
+    rememberOwnBooking(created)
+    releaseCancelledOwnSlots([{ ...created, status: "Canceled" }])
+    expect(isOwnBookedSlot("2026-10-14", RENTAL_ASSET_ID, "08:00")).toBe(false)
+  })
+
+  it("keeps the own-slot key when the refresh still lists the booking", async () => {
+    const created = reservation()
+    rememberOwnBooking(created)
+    listMine.mockResolvedValue([created])
+
+    await invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      { applySlots: false },
+    )
+
+    expect(isOwnBookedSlot("2026-10-14", RENTAL_ASSET_ID, "08:00")).toBe(true)
   })
 
   it("still refetches after a slot conflict", async () => {
