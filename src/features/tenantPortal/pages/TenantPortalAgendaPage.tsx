@@ -53,6 +53,7 @@ import {
 } from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeldByYouNotice"
+import { useRefreshOnForeground } from "@/features/tenantPortal/hooks/useRefreshOnForeground"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
   agendaRefreshDates,
@@ -102,6 +103,11 @@ import {
 } from "@/lib/brazilTimeZone"
 import appI18n from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+
+function isCancelledReservationStatus(status: string): boolean {
+  const normalized = status.trim().toLowerCase()
+  return normalized === "cancelled" || normalized === "canceled"
+}
 
 function dropScheduleSlot(
   current: readonly PortalScheduleSlot[],
@@ -492,6 +498,17 @@ export function TenantPortalAgendaPage() {
     enabled: queueEnabled,
   })
 
+  useRefreshOnForeground(() => {
+    const day = viewedDateRef.current
+    if (day.length === 0) {
+      return
+    }
+    void invalidateAgendaQueries(
+      { subdomain, dates: [day] },
+      { applySlots: true },
+    )
+  }, signedIn)
+
   const focusedReservationId =
     findVisibleAgendaReservation(
       mine,
@@ -649,7 +666,7 @@ export function TenantPortalAgendaPage() {
               href={`${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`}
             />
           ) : (
-            t("tenantPortal.agenda.slotJustTaken")
+            t("tenantPortal.agenda.slotTaken")
           ),
         )
         if (viewedDateRef.current === dayDate) {
@@ -674,7 +691,7 @@ export function TenantPortalAgendaPage() {
         toast.error(
           error instanceof Error
             ? error.message
-            : t("tenantPortal.agenda.unavailable"),
+            : t("tenantPortal.agenda.slotTaken"),
         )
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
@@ -725,6 +742,20 @@ export function TenantPortalAgendaPage() {
     cancelingRef.current = true
     setCancelingId(id)
     try {
+      let current = existing
+      try {
+        const fresh = await listMyPortalReservations()
+        setMine(fresh)
+        current = fresh.find((reservation) => reservation.id === id) ?? null
+      } catch {
+        // The cancel request still runs. The API remains the authority.
+      }
+      if (current !== null && isCancelledReservationStatus(current.status)) {
+        toast.message(t("tenantPortal.agenda.alreadyCancelled"))
+        setPendingCancelId(null)
+        refreshAgenda(agendaRefreshDates(viewedDate, [current]))
+        return
+      }
       const canceled = await cancelMyPortalReservation(id)
       toast.success(t("tenantPortal.agenda.cancelSuccess"))
       setMine((current) => {
@@ -753,11 +784,16 @@ export function TenantPortalAgendaPage() {
           : t("apiErrors.cancelReservation"),
       )
       void listMyPortalReservations()
-        .then((reservations) => {
-          setMine(reservations)
+        .then((fresh) => {
+          setMine(fresh)
+          const row = fresh.find((reservation) => reservation.id === id) ?? null
+          if (row !== null && isCancelledReservationStatus(row.status)) {
+            setPendingCancelId(null)
+            refreshAgenda(agendaRefreshDates(viewedDate, [row]))
+          }
         })
         .catch(() => {
-          // Stay on the current list if refetch fails.
+          // The error toast already reported the failure.
         })
     } finally {
       cancelingRef.current = false
@@ -787,9 +823,7 @@ export function TenantPortalAgendaPage() {
     const detail =
       startTime.length === 0 || available
         ? null
-        : reserved
-          ? t("tenantPortal.agenda.slotReserved")
-          : t("tenantPortal.agenda.unavailable")
+        : t("tenantPortal.agenda.slotTaken")
     return {
       available,
       disabled: !available,
@@ -1105,7 +1139,7 @@ export function TenantPortalAgendaPage() {
 
           {quote.status === "ready" && quote.amount === null ? (
             <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.unavailable")}
+              {t("tenantPortal.agenda.slotTaken")}
             </p>
           ) : null}
 
@@ -1124,7 +1158,11 @@ export function TenantPortalAgendaPage() {
             loading={submitting}
             loadingLabel={t("tenantPortal.agenda.reserving")}
             disabled={
-              !selectedSlot || !queue.canReserve || quote.status === "loading"
+              !selectedSlot ||
+              (selectedRentalAssetId !== null &&
+                !spaceState(selectedRentalAssetId).available) ||
+              !queue.canReserve ||
+              quote.status === "loading"
             }
             onClick={() => {
               void onReserve()
