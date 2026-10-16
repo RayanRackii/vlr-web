@@ -114,9 +114,10 @@ describe("TenantPortalVerifyEmailPage", () => {
     verifyEmail.mockResolvedValue(authResponse)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.useRealTimers()
     window.sessionStorage.clear()
+    await i18n.changeLanguage("pt-BR")
   })
 
   it("shows the masked email from location state and a 6-digit code field", () => {
@@ -210,12 +211,54 @@ describe("TenantPortalVerifyEmailPage", () => {
     expect(toastSuccess).toHaveBeenCalledWith(
       i18n.t("tenantPortal.verify.resendToastSuccess"),
     )
+    expect(screen.getByRole("status")).toHaveTextContent(
+      i18n.t("tenantPortal.verify.resendSent"),
+    )
     expect(
       screen.queryByText(i18n.t("tenantPortal.verify.sendFailedTitle"), {
         exact: false,
       }),
     ).not.toBeInTheDocument()
   })
+
+  it("shows a failed resend, including a rate limit, without clearing the form", async () => {
+    const user = userEvent.setup()
+    const message = i18n.t("tenantPortal.passwordReset.rateLimited")
+    resendEmail.mockRejectedValue(new Error(message))
+    renderVerify({
+      email: "rachel@example.com",
+      verificationSendFailed: true,
+    })
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.verify.resend") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(message)
+    })
+    expect(screen.getByRole("alert")).toHaveTextContent(message)
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.verify.resend") }),
+    ).toBeEnabled()
+    expect(screen.getByLabelText(i18n.t("tenantPortal.fields.code"))).toHaveValue("")
+  })
+
+  it.each(["pt-BR", "en", "es"] as const)(
+    "says a new code replaces the previous one in %s",
+    async (language) => {
+      await i18n.changeLanguage(language)
+      renderVerify({
+        email: "rachel@example.com",
+        verificationSendFailed: true,
+      })
+
+      expect(
+        screen.getByText(i18n.t("tenantPortal.verify.resendReplaces")),
+      ).toBeInTheDocument()
+    },
+  )
 
   it("navigates to the app after a successful verify", async () => {
     const user = userEvent.setup()

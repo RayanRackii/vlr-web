@@ -340,6 +340,8 @@
       "resendIn": "Reenviar en {{seconds}}s",
       "resendSubmitting": "Reenviando...",
       "resendToastSuccess": "Se envió un nuevo código por correo.",
+      "resendReplaces": "Un código nuevo sustituye al anterior. Use el código del correo más reciente.",
+      "resendSent": "Se envió un nuevo código. El código anterior ya no sirve.",
       "toastSuccess": "¡Correo verificado!",
       "toastError": "Código inválido.",
       "invalidOrExpired": "Código inválido o expirado.",

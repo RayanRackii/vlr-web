@@ -53,6 +53,7 @@ Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `
 
 - [x] Register navega para `/verify-email` (redirect de `/verify-phone` preservando `location.state`)
 - [x] Página: e-mail mascarado, código 6 dígitos (paste-friendly), cooldown 45s, i18n pt-BR/en/es sem copy de SMS no signup
+- [x] #196: Reenviar código mostra toast e um estado na tela (enviado ou falha, inclusive limite). O texto fixo diz que um novo código substitui o anterior. A espera de 45s só começa depois do sucesso.
 - [x] Zod: `requiresEmailVerification` obrigatório; `requiresPhoneVerification` opcional (compat); `emailVerified` nos perfis
 - **Não PROD.**
 
@@ -347,6 +348,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-16 | **Fix (WEB, #194 #181 #169 #186 #176):** notificações explicam que o e-mail ao cliente começa ligado e o interruptor segue a API. 409 de horário ocupado rebusca Minhas reservas e, se for desta pessoa, o toast leva até essa lista. Cancelar sem política mostra nota neutra. Cards do mapa seguem a ordem visual. Staff tem `/perfil`; URL autenticada desconhecida não vai para a home pública. Telefone do staff continua fora: a API não devolve nem grava `phone` em `/api/users/me`. |
 | 2026-10-16 | **Fix (WEB, #170):** a agenda B2C rebusca Minhas reservas e o dia visto quando a janela ganha foco ou a aba volta a ficar visível, no máximo uma vez a cada 2s, sem intervalo. Se a grade atualizada mostra o horário ocupado, Reservar fica desabilitado. “Horário indisponível.”, “Horário já reservado.” e o toast de conflito passam a “Este horário já está reservado.” (en/es equivalentes). Se a reserva já é desta pessoa, o toast continua com o link para Minhas reservas. Cancelar uma reserva que a lista já mostra como cancelada avisa “Esta reserva já estava cancelada.” e não mostra sucesso. Sem mudança no `vlr-api`. |
 | 2026-10-16 | **Fix (WEB, #177):** aulas do professor. Enquanto os espaços carregam, o campo e o estado mostram “Carregando os espaços...” e não “Carregando as aulas desta data.”. Assim que a lista chega, o primeiro espaço aparece selecionado e habilitado, e só então carregam as aulas do dia. O redirect de `/dashboard` e abrir `/configuracoes/agenda` direto terminam iguais. Sem mudança no `vlr-api`. |
+| 2026-10-16 | **Fix (WEB, #196):** em `/verify-email`, Reenviar código mostra toast e um estado na tela (enviado ou falha, inclusive limite). O texto fixo diz que um novo código substitui o anterior. A espera de 45s só começa depois do sucesso. pt-BR/en/es. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

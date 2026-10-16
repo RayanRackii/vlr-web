@@ -72,6 +72,8 @@ export function TenantPortalVerifyEmailPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [resending, setResending] = useState(false)
+  const [resendState, setResendState] = useState<"idle" | "sent" | "failed">("idle")
+  const [resendError, setResendError] = useState<string | null>(null)
   const [sendFailed, setSendFailed] = useState(initialSendFailed)
   const [cooldownSeconds, setCooldownSeconds] = useState(() =>
     emailIsKnown && !initialSendFailed
@@ -157,14 +159,18 @@ export function TenantPortalVerifyEmailPage() {
         verificationSendFailed: false,
       })
       setSendFailed(false)
+      setResendState("sent")
+      setResendError(null)
       toast.success(t("tenantPortal.verify.resendToastSuccess"))
       setCooldownSeconds(EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS)
     } catch (error) {
-      toast.error(
+      const message =
         error instanceof Error
           ? error.message
-          : t("apiErrors.resendEmailVerification"),
-      )
+          : t("apiErrors.resendEmailVerification")
+      setResendState("failed")
+      setResendError(message)
+      toast.error(message)
     } finally {
       setResending(false)
     }
@@ -264,6 +270,19 @@ export function TenantPortalVerifyEmailPage() {
               ? t("tenantPortal.verify.resendIn", { seconds: cooldownSeconds })
               : t("tenantPortal.verify.resend")}
           </LoadingButton>
+          <p className="text-sm text-muted-foreground">
+            {t("tenantPortal.verify.resendReplaces")}
+          </p>
+          {resendState === "sent" ? (
+            <p role="status" className="text-sm text-foreground">
+              {t("tenantPortal.verify.resendSent")}
+            </p>
+          ) : null}
+          {resendState === "failed" && resendError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {resendError}
+            </p>
+          ) : null}
         </form>
       </Form>
 
