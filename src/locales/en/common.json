@@ -2656,7 +2656,14 @@
       "removeSuccess": "Lesson removed for this date.",
       "changeError": "Could not change the lesson. Check for a reservation or conflict.",
       "pastDateAdjusted": "The date in the link is in the past. The times below are for today.",
-      "pastSlotsHidden": "Times that have already started today are hidden."
+      "pastSlotsHidden": "Times that have already started today are hidden.",
+      "loadingTimes": "Loading times for this resource.",
+      "timesError": "Could not load times for this resource.",
+      "retryTimes": "Try again",
+      "closedDay": "This resource is closed on this date.",
+      "noHours": "No hours configured for this weekday.",
+      "noHoursHint": "Recurring hours for this resource are set in {{screen}}.",
+      "noneOpen": "No open time on this date. Existing intervals are already reserved or are lessons."
     },
     "schedule": {
       "title": "Schedule",
