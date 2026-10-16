@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
@@ -130,14 +130,14 @@ function agendaDay(date: string): AdminDaySchedule {
   }
 }
 
-function renderDay(date: string) {
+function renderDay(date: string, day: AdminDaySchedule = agendaDay(date)) {
   return render(
     <MemoryRouter>
       <DailyAgendaTab
         assets={[agendaAsset()]}
         selectedRentalAssetIds={[ASSET_ID]}
         date={date}
-        day={agendaDay(date)}
+        day={day}
         loading={false}
         showSkeleton={false}
         busy={false}
@@ -165,12 +165,110 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, Aberto, Indisponível",
+        name: "Sala 1, 08:00, Aberto, Indisponível",
       }),
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, Aberto, Disponível",
+        name: "Sala 1, 13:00, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
+  })
+
+  it("closes a start when the window regains focus or the tab becomes visible", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-16T15:59:00.000Z"))
+    const view = renderDay("2026-10-16")
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
+
+    act(() => {
+      vi.setSystemTime(new Date("2026-10-16T16:00:00.000Z"))
+      window.dispatchEvent(new Event("focus"))
+    })
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Indisponível",
+      }),
+    ).toBeDisabled()
+
+    view.unmount()
+    vi.setSystemTime(new Date("2026-10-16T15:59:00.000Z"))
+    renderDay("2026-10-16")
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
+
+    act(() => {
+      vi.setSystemTime(new Date("2026-10-16T16:00:00.000Z"))
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Indisponível",
+      }),
+    ).toBeDisabled()
+  })
+
+  it("closes a start that passes while the day stays open", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-16T15:59:00.000Z"))
+    renderDay("2026-10-16")
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 08:00, Aberto, Indisponível",
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
+
+    act(() => {
+      vi.advanceTimersByTime(60_000)
+    })
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Indisponível",
+      }),
+    ).toBeDisabled()
+  })
+
+  it("keeps a past booked start enabled", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-16T15:00:00.000Z"))
+    const day = agendaDay("2026-10-16")
+    const morning = day.slots[0]
+    if (!morning) {
+      throw new Error("missing morning slot")
+    }
+    day.slots[0] = {
+      ...morning,
+      status: "Booked",
+      reservationId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    }
+    renderDay("2026-10-16", day)
+
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 08:00, Aberto, Reservado",
+      }),
+    ).toBeEnabled()
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Disponível",
       }),
     ).toBeEnabled()
   })
@@ -181,9 +279,14 @@ describe("DailyAgendaTab past starts", () => {
     renderDay("2026-10-17")
 
     expect(
-      screen.getAllByRole("button", {
-        name: "Sala 1, Aberto, Disponível",
+      screen.getByRole("button", {
+        name: "Sala 1, 08:00, Aberto, Disponível",
       }),
-    ).toHaveLength(2)
+    ).toBeEnabled()
+    expect(
+      screen.getByRole("button", {
+        name: "Sala 1, 13:00, Aberto, Disponível",
+      }),
+    ).toBeEnabled()
   })
 })

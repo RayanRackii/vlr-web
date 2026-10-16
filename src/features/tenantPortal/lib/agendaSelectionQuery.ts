@@ -1,13 +1,31 @@
 import { clampBrazilDateToToday } from "@/lib/brazilTimeZone"
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/** `YYYY-MM-DD` that exists on the civil calendar. `2026-11-31` does not. */
+export function isRealCivilDate(value: string): boolean {
+  const match = ISO_DATE.exec(value)
+  if (!match) {
+    return false
+  }
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const utc = new Date(Date.UTC(year, month - 1, day))
+  return (
+    utc.getUTCFullYear() === year &&
+    utc.getUTCMonth() === month - 1 &&
+    utc.getUTCDate() === day
+  )
+}
 
 export function readAgendaDateParam(
   value: string | null | undefined,
   today: string,
 ): string {
-  if (typeof value !== "string" || !ISO_DATE.test(value)) {
+  if (typeof value !== "string" || !isRealCivilDate(value)) {
     return today
   }
 
