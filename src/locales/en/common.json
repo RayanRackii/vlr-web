@@ -381,7 +381,7 @@
       "legendUnavailable": "Unavailable",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
-      "slotsError": "Could not load slots for this day.",
+      "slotsError": "Could not load times for this day.",
       "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
       "noTimes": "No times on this date",
       "pastSlotsHidden": "Times that have already started today are hidden.",

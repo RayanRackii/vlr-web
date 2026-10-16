@@ -79,6 +79,8 @@ type RemovalRecord = {
   date: string
   startTime: string
   endTime: string
+  /** Lesson slot id that was removed. A later lesson at the same time is a new one. */
+  lessonId?: string
   slot: LessonSlot
 }
 
@@ -102,6 +104,13 @@ function isLessonSlot(value: unknown): value is LessonSlot {
 
 function isRemovalRecord(value: unknown): value is RemovalRecord {
   if (!isRecord(value)) {
+    return false
+  }
+  if (
+    "lessonId" in value &&
+    value.lessonId !== undefined &&
+    typeof value.lessonId !== "string"
+  ) {
     return false
   }
   return (
@@ -205,17 +214,111 @@ function localLessonCreateOverrides(
   )
 }
 
+function unreservedLessonAt(
+  day: AdminDaySchedule,
+  assetId: string,
+  startTime: string,
+  endTime: string,
+): LessonSlot | undefined {
+  return day.slots.find(
+    (slot) =>
+      sameClockInterval(slot, assetId, startTime, endTime) &&
+      slot.occupancyKindKey === "lesson" &&
+      isUnreservedAvailable(slot),
+  )
+}
+
 function serverStillListsRemovedLesson(
   day: AdminDaySchedule,
   record: RemovalRecord,
 ): boolean {
-  return day.slots.some(
-    (slot) =>
-      sameCivilDate(slot.date, record.date) &&
-      sameClockInterval(slot, record.assetId, record.startTime, record.endTime) &&
-      slot.occupancyKindKey === "lesson" &&
-      isUnreservedAvailable(slot),
+  const lesson = unreservedLessonAt(
+    day,
+    record.assetId,
+    record.startTime,
+    record.endTime,
   )
+  if (!lesson || !sameCivilDate(lesson.date, record.date)) {
+    return false
+  }
+  if (record.lessonId !== undefined && lesson.id !== record.lessonId) {
+    return false
+  }
+  return true
+}
+
+/** A new lesson id at the removed time means the lesson was recreated. */
+function forgetRecreatedLessons(
+  day: AdminDaySchedule,
+  assetId: string,
+  date: string,
+): void {
+  for (const record of readRemovals()) {
+    if (dayKey(record.assetId, record.date) !== dayKey(assetId, date)) {
+      continue
+    }
+    if (record.lessonId === undefined) {
+      continue
+    }
+    const lesson = unreservedLessonAt(
+      day,
+      record.assetId,
+      record.startTime,
+      record.endTime,
+    )
+    if (lesson && lesson.id !== record.lessonId) {
+      forgetRemoval(record.assetId, record.date, record.startTime, record.endTime)
+    }
+  }
+}
+
+/**
+ * The open-slot write from a removal must not cover a lesson that is no
+ * longer the one this tab removed.
+ */
+function dropStaleOpenWrites(
+  writes: readonly LocalWrite[],
+  day: AdminDaySchedule,
+  assetId: string,
+  date: string,
+): LocalWrite[] {
+  const removedKeys = new Set(
+    readRemovals()
+      .filter((record) => dayKey(record.assetId, record.date) === dayKey(assetId, date))
+      .map((record) =>
+        removalIntervalKey(
+          record.assetId,
+          record.date,
+          record.startTime,
+          record.endTime,
+        ),
+      ),
+  )
+  return writes.filter((write) => {
+    if (dayKey(write.assetId, write.date) !== dayKey(assetId, date)) {
+      return true
+    }
+    if (write.slot.occupancyKindKey !== "open") {
+      return true
+    }
+    const lesson = unreservedLessonAt(
+      day,
+      write.assetId,
+      write.slot.startTime,
+      write.slot.endTime,
+    )
+    if (!lesson) {
+      return true
+    }
+    return removedKeys.has(
+      removalIntervalKey(
+        write.assetId,
+        write.date,
+        write.slot.startTime,
+        write.slot.endTime,
+      ),
+    )
+  })
 }
 
 function removalWritesFor(
@@ -327,7 +430,10 @@ export function useTeacherLessons(t: TFunction) {
     try {
       const result = await fetchAdminScheduleDay(date, [assetId])
       if (requestId !== latestDayRequest.current) return null
+      forgetRecreatedLessons(result, assetId, date)
+      writesRef.current = dropStaleOpenWrites(writesRef.current, result, assetId, date)
       const localWrites = writesRef.current
+      syncRemovalRecords(result, assetId, date, localWrites)
       const merged = applyWrites(
         result,
         [...removalWritesFor(assetId, date, localWrites), ...localWrites],
@@ -335,7 +441,6 @@ export function useTeacherLessons(t: TFunction) {
         date,
       )
       writesRef.current = merged.writes
-      syncRemovalRecords(result, assetId, date, localWrites)
       publishDay(merged.day, assetId, date)
       return merged.day
     } catch (error) {
@@ -373,14 +478,14 @@ export function useTeacherLessons(t: TFunction) {
     } finally { setBusy(false) }
   }, [rememberWrite, t])
 
-  const remove = useCallback(async (assetId: string, date: string, startTime: string, endTime: string) => {
+  const remove = useCallback(async (assetId: string, date: string, startTime: string, endTime: string, lessonId: string) => {
     setBusy(true)
     try {
       const opened = await removeTeacherLesson({ rentalAssetId: assetId, date, startTime, endTime })
       if (opened.occupancyKindKey !== "open" || !matchesRequestedInterval(opened, assetId, date, startTime, endTime)) {
         throw new Error(t("rentals.teacherLessons.changeError"))
       }
-      rememberRemoval({ assetId, date, startTime, endTime, slot: opened })
+      rememberRemoval({ assetId, date, startTime, endTime, lessonId, slot: opened })
       rememberWrite(opened, assetId, date)
       toast.success(t("rentals.teacherLessons.removeSuccess"))
     } catch (error: unknown) {

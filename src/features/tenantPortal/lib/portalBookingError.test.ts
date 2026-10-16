@@ -113,6 +113,10 @@ describe("portal booking failures", () => {
     expect(describeBookingError(error, "fallback")).toBe(
       "That date is beyond the booking horizon.",
     )
+    await i18n.changeLanguage("es")
+    expect(describeBookingError(error, "fallback")).toBe(
+      "La fecha pedida está fuera del horizonte de reserva.",
+    )
     await i18n.changeLanguage("pt-BR")
   })
 })
