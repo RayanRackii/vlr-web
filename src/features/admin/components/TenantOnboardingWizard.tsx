@@ -53,6 +53,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
+import i18n from "@/lib/i18n"
+import { formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -81,11 +83,10 @@ const STEP_TITLE_KEYS = [
 ] as const
 
 function formatCurrencyBRL(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
+  return formatLocaleCurrency(value, "BRL", i18n.language, {
     maximumFractionDigits: 0,
-  }).format(value)
+    minimumFractionDigits: 0,
+  })
 }
 
 export function TenantOnboardingWizard() {

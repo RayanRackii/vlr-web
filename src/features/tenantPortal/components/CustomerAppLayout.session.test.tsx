@@ -64,10 +64,11 @@ describe("CustomerAppLayout session tenant", () => {
     })
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     clearCustomerSession()
     fetchBranding.mockReset()
     fetchMenu.mockReset()
+    await i18n.changeLanguage("pt-BR")
   })
 
   it("sends a signed-out visit to the login form", async () => {
@@ -165,5 +166,30 @@ describe("CustomerAppLayout session tenant", () => {
       `/t/ficc/agenda/${menuItemId}#minhas-reservas`,
     )
     expect(profile).toHaveAttribute("href", "/t/ficc/app/perfil")
+  })
+
+  it("keeps the signed-in page mounted when the language changes", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+    const brandingCalls = fetchBranding.mock.calls.length
+    const menuCalls = fetchMenu.mock.calls.length
+
+    await i18n.changeLanguage("es")
+
+    expect(screen.getByText("agenda-body")).toBeInTheDocument()
+    expect(fetchBranding).toHaveBeenCalledTimes(brandingCalls)
+    expect(fetchMenu).toHaveBeenCalledTimes(menuCalls)
+    expect(screen.queryByText("login-form")).not.toBeInTheDocument()
   })
 })

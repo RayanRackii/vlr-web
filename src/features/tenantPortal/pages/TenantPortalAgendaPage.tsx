@@ -270,7 +270,7 @@ export function TenantPortalAgendaPage() {
         toast.error(
           error instanceof Error
             ? error.message
-            : t("tenantPortal.agenda.loadError"),
+            : appI18n.t("tenantPortal.agenda.loadError"),
         )
       })
       .finally(() => {
@@ -282,7 +282,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [signedIn, subdomain, t, lockedAssetId, lockedRentalAssetId])
+  }, [signedIn, subdomain, lockedAssetId, lockedRentalAssetId])
 
   useEffect(() => {
     if (!signedIn) {
@@ -545,7 +545,12 @@ export function TenantPortalAgendaPage() {
   }
 
   async function onReserve() {
-    if (!selectedAsset || !selectedSlot || submittingRef.current) {
+    if (
+      !selectedAsset ||
+      !selectedSlot ||
+      submittingRef.current ||
+      quote.status === "loading"
+    ) {
       return
     }
     const asset = selectedAsset
@@ -1091,7 +1096,9 @@ export function TenantPortalAgendaPage() {
             style={{ backgroundColor: primary }}
             loading={submitting}
             loadingLabel={t("tenantPortal.agenda.reserving")}
-            disabled={!selectedSlot || !queue.canReserve}
+            disabled={
+              !selectedSlot || !queue.canReserve || quote.status === "loading"
+            }
             onClick={() => {
               void onReserve()
             }}

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isAxiosError } from "@/lib/api"
+import { formatLocaleCurrency } from "@/lib/localeFormat"
 import type { TFunction } from "i18next"
 
 function TenantCardSkeleton() {
@@ -244,11 +245,12 @@ export function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold">
-                {new Intl.NumberFormat(i18n.language, {
-                  style: "currency",
-                  currency: "BRL",
-                  maximumFractionDigits: 0,
-                }).format(estimatedMonthlyRevenue)}
+                {formatLocaleCurrency(
+                  estimatedMonthlyRevenue,
+                  "BRL",
+                  i18n.language,
+                  { maximumFractionDigits: 0, minimumFractionDigits: 0 },
+                )}
               </p>
             </CardContent>
           </Card>

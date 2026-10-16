@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Outlet, useParams } from "react-router-dom"
+import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -11,15 +11,27 @@ import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenan
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
   fetchTenantBranding,
+  isCustomerSignedInForTenant,
   resolveTenantSubdomain,
+  tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
 type PortalLoadError = "missingSubdomain" | "notFound"
 
+/** Login and register only. Verify-email and password reset stay reachable. */
+function isCustomerAuthEntryPath(pathname: string): boolean {
+  if (pathname === "/" || pathname === "/register") {
+    return true
+  }
+
+  return /^\/t\/[a-z0-9-]+(?:\/register)?\/?$/i.test(pathname)
+}
+
 export function TenantPortalLayout() {
   const { t } = useTranslation()
   const params = useParams()
+  const location = useLocation()
   const subdomain = useMemo(() => {
     const fromPath = params.subdomain?.toLowerCase()
     if (fromPath) {
@@ -34,9 +46,22 @@ export function TenantPortalLayout() {
   const [error, setError] = useState<PortalLoadError | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const redirectSignedIn =
+    Boolean(subdomain) &&
+    isCustomerAuthEntryPath(location.pathname) &&
+    isCustomerSignedInForTenant(subdomain ?? "")
+
   useEffect(() => {
     if (!subdomain) {
       setError("missingSubdomain")
+      setLoading(false)
+      return
+    }
+
+    if (
+      isCustomerAuthEntryPath(location.pathname) &&
+      isCustomerSignedInForTenant(subdomain)
+    ) {
       setLoading(false)
       return
     }
@@ -65,7 +90,7 @@ export function TenantPortalLayout() {
     return () => {
       cancelled = true
     }
-  }, [subdomain])
+  }, [location.pathname, subdomain])
 
   const errorMessage =
     error === "missingSubdomain"
@@ -87,6 +112,10 @@ export function TenantPortalLayout() {
         logoInspection.hasEmbeddedBackground && logoInspection.backgroundIsDark,
     },
   )
+
+  if (redirectSignedIn && subdomain) {
+    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
+  }
 
   if (loading) {
     return (
