@@ -2,6 +2,11 @@ import { z } from "zod"
 
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
+import {
+  BOOKING_HORIZON_DAY_MAX,
+  BOOKING_HORIZON_DAY_MIN,
+  parseHorizonDaysInput,
+} from "@/features/rentals/schemas/bookingPolicySchemas"
 
 export const rentalTypeValues = ["Location", "Good"] as const
 
@@ -30,9 +35,25 @@ export const createRentableRequestSchema = z.object({
   queueEnabled: z.boolean(),
   queueOpeningTime: z.string().nullable(),
   location: z.string().nullable(),
+  /**
+   * Absent keeps the stored override (and, on create, inherits the tenant).
+   * Null clears a stored override so the resource inherits the tenant policy.
+   * A number replaces the override. A resource cannot store unlimited on its own.
+   */
+  maxAdvanceBookingDays: z
+    .number()
+    .int()
+    .min(BOOKING_HORIZON_DAY_MIN)
+    .max(BOOKING_HORIZON_DAY_MAX)
+    .nullable()
+    .optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
+
+export const resourceHorizonModes = ["inherit", "unlimited", "days"] as const
+
+export type ResourceHorizonMode = (typeof resourceHorizonModes)[number]
 
 export function createRentalResourceFormSchema(messages: {
   nameRequired: string
@@ -42,6 +63,7 @@ export function createRentalResourceFormSchema(messages: {
   familyRequired: string
   quantityMin: string
   queueOpeningTimeRequired: string
+  horizonRange: string
 }) {
   return z
     .object({
@@ -65,6 +87,8 @@ export function createRentalResourceFormSchema(messages: {
       queueEnabled: z.boolean(),
       queueOpeningTime: z.string(),
       location: z.string(),
+      horizonMode: z.enum(resourceHorizonModes),
+      horizonDays: z.string(),
     })
     .superRefine((values, ctx) => {
       if (
@@ -78,6 +102,17 @@ export function createRentalResourceFormSchema(messages: {
           message: messages.queueOpeningTimeRequired,
         })
       }
+
+      if (
+        values.horizonMode === "days" &&
+        parseHorizonDaysInput(values.horizonDays) === null
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["horizonDays"],
+          message: messages.horizonRange,
+        })
+      }
     })
 }
 
@@ -85,12 +120,55 @@ export type RentalResourceFormValues = z.infer<
   ReturnType<typeof createRentalResourceFormSchema>
 >
 
+export type ResourceHorizonWriteContext = {
+  creating: boolean
+  stored: number | null | undefined
+}
+
+/**
+ * Create accepts `int?` (omitted and null both inherit).
+ * Update is JsonOptional: omitted keeps the stored override, null clears it
+ * (inherit), and a number replaces it.
+ *
+ * Unlimited sends explicit null. That clears a stored override; the resource
+ * then follows the tenant policy. The horizon in effect is unlimited only
+ * when that policy has no cap.
+ * Use tenant default omits the field when the resource already inherits.
+ * Clearing a stored number also sends null, because omit would keep it.
+ */
+export function resolveResourceHorizonWrite(
+  mode: ResourceHorizonMode,
+  daysInput: string,
+  context: ResourceHorizonWriteContext,
+): number | null | undefined {
+  if (mode === "days") {
+    const days = parseHorizonDaysInput(daysInput)
+    if (days === null) {
+      throw new Error("Booking horizon is invalid.")
+    }
+    if (!context.creating && context.stored === days) {
+      return undefined
+    }
+    return days
+  }
+
+  if (mode === "unlimited") {
+    return null
+  }
+
+  if (context.creating || context.stored == null) {
+    return undefined
+  }
+
+  return null
+}
+
 export function toCreateRentableRequest(
   values: RentalResourceFormValues,
+  horizon: ResourceHorizonWriteContext = { creating: true, stored: undefined },
 ): CreateRentableRequest {
   const isLocation = values.rentalType === "Location"
-
-  return createRentableRequestSchema.parse({
+  const payload: CreateRentableRequest = {
     name: values.name.trim(),
     tag: values.tag.trim(),
     unitId: values.unitId,
@@ -105,5 +183,15 @@ export function toCreateRentableRequest(
         ? toApiTimeOnly(values.queueOpeningTime)
         : null,
     location: values.location.trim() ? values.location.trim() : null,
-  })
+  }
+  const horizonWrite = resolveResourceHorizonWrite(
+    values.horizonMode,
+    values.horizonDays,
+    horizon,
+  )
+  if (horizonWrite !== undefined) {
+    payload.maxAdvanceBookingDays = horizonWrite
+  }
+
+  return createRentableRequestSchema.parse(payload)
 }

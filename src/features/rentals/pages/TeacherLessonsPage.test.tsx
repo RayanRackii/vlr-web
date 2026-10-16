@@ -841,4 +841,46 @@ describe("TeacherLessonsPage", () => {
     expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
     expect(screen.queryByTestId("available-time-state")).not.toBeInTheDocument()
   })
+
+  it("shows a lesson recreated at the same time with a new id", async () => {
+    const user = userEvent.setup()
+    const recreatedId = "d1111111-1111-4111-8111-111111111111"
+    let removed = false
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => {
+      removed = true
+      return {
+        ...openSlot,
+        date: body.date,
+        startTime: body.startTime,
+        endTime: body.endTime,
+        occupancyKindKey: "open",
+        status: "Available",
+        reservationId: null,
+      }
+    })
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: removed
+        ? [
+            { ...openSlot, date },
+            {
+              ...lessonSlot,
+              date,
+              id: recreatedId,
+              label: "Aula nova",
+            },
+          ]
+        : [{ ...openSlot, date }, { ...lessonSlot, date }],
+    }))
+
+    render(<TeacherLessonsPage />)
+    await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    await confirmLessonRemoval(user)
+
+    expect(await screen.findByText("Aula nova")).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Remover aula 12:00" }),
+    ).toBeInTheDocument()
+  })
 })

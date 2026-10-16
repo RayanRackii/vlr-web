@@ -208,6 +208,11 @@ describe("BookingPolicyPage", () => {
     expect(text).toBeDisabled()
     expect(text).toHaveValue("Bring a document.")
     expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      }),
+    ).toBeDisabled()
+    expect(
       screen.queryByRole("button", {
         name: i18n.t("rentals.bookingPolicy.save"),
       }),
@@ -215,6 +220,26 @@ describe("BookingPolicyPage", () => {
     expect(
       screen.getByText(i18n.t("rentals.bookingPolicy.readOnly")),
     ).toBeInTheDocument()
+  })
+
+  it("disables a loaded horizon when the user can only read", async () => {
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: "Bring a document.",
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 12,
+    })
+    renderPage(["rentals.booking_policy.read"])
+
+    const days = await screen.findByLabelText(
+      i18n.t("rentals.bookingPolicy.horizonDays"),
+    )
+    expect(days).toBeDisabled()
+    expect(days).toHaveValue("12")
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      }),
+    ).toBeDisabled()
   })
 
   it("hides save when the trial is read-only", async () => {
@@ -253,5 +278,126 @@ describe("BookingPolicyPage", () => {
         i18n.t("rentals.bookingPolicy.cancellationLabel"),
       ),
     ).toHaveValue("After retry")
+  })
+
+  it("omits the horizon when the loaded value did not change", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: "Bring a document.",
+      maxActiveReservationsPerCustomerPerDay: 3,
+      maxAdvanceBookingDays: 30,
+    })
+    renderPage()
+
+    const text = await screen.findByLabelText(
+      i18n.t("rentals.bookingPolicy.cancellationLabel"),
+    )
+    expect(
+      screen.getByLabelText(i18n.t("rentals.bookingPolicy.horizonDays")),
+    ).toHaveValue("30")
+    await user.type(text, "!")
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.bookingPolicy.save"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalled()
+    })
+    expect(replacePolicy.mock.calls[0]?.[0]).not.toHaveProperty(
+      "maxAdvanceBookingDays",
+    )
+  })
+
+  it("sends null when the horizon changes to unlimited", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 30,
+    })
+    renderPage()
+
+    await screen.findByLabelText(i18n.t("rentals.bookingPolicy.horizonDays"))
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.horizonUnlimited"),
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.bookingPolicy.save"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: null,
+      })
+    })
+  })
+
+  it("sends a number when a horizon is set and blocks values outside 0..3650", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: null,
+    })
+    renderPage()
+
+    await screen.findByLabelText(
+      i18n.t("rentals.bookingPolicy.cancellationLabel"),
+    )
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.horizonDaysMode"),
+      }),
+    )
+
+    const days = screen.getByLabelText(
+      i18n.t("rentals.bookingPolicy.horizonDays"),
+    )
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.bookingPolicy.save"),
+    })
+    expect(save).toBeDisabled()
+
+    await user.type(days, "3651")
+    expect(save).toBeDisabled()
+    expect(replacePolicy).not.toHaveBeenCalled()
+
+    await user.clear(days)
+    await user.type(days, "0")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "3650")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "14")
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        maxAdvanceBookingDays: 14,
+      })
+    })
   })
 })

@@ -29,12 +29,24 @@ function throwBookingPolicyError(error: unknown, fallbackKey: string): never {
   )
 }
 
-function replaceBody(policy: BookingPolicy): BookingPolicy {
-  return {
+function replaceBody(policy: BookingPolicy): {
+  cancellationPolicyText: string | null
+  maxActiveReservationsPerCustomerPerDay: number | null
+  maxAdvanceBookingDays?: number | null
+} {
+  const body: {
+    cancellationPolicyText: string | null
+    maxActiveReservationsPerCustomerPerDay: number | null
+    maxAdvanceBookingDays?: number | null
+  } = {
     cancellationPolicyText: policy.cancellationPolicyText,
     maxActiveReservationsPerCustomerPerDay:
       policy.maxActiveReservationsPerCustomerPerDay,
   }
+  if (policy.maxAdvanceBookingDays !== undefined) {
+    body.maxAdvanceBookingDays = policy.maxAdvanceBookingDays
+  }
+  return body
 }
 
 export async function getBookingPolicy(): Promise<BookingPolicy> {
@@ -48,7 +60,8 @@ export async function getBookingPolicy(): Promise<BookingPolicy> {
 
 /**
  * PUT replaces the cancellation note and the daily cap.
- * `maxAdvanceBookingDays` stays off the body: omitted keeps the stored horizon.
+ * `maxAdvanceBookingDays` is presence-aware: omitted keeps the stored horizon,
+ * explicit null clears it, and a number replaces it.
  */
 export async function replaceBookingPolicy(
   policy: BookingPolicy,

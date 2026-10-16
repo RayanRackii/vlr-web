@@ -64,6 +64,7 @@ function readLessonDateFromLocation(today: string): {
 }
 
 type PendingRemoval = {
+  id: string
   startTime: string
   endTime: string
 }
@@ -190,7 +191,13 @@ export function TeacherLessonsPage() {
     if (!pendingRemoval || !selectedAssetId || !date || removalInFlight.current) return
     removalInFlight.current = true
     try {
-      await remove(selectedAssetId, date, pendingRemoval.startTime, pendingRemoval.endTime)
+      await remove(
+        selectedAssetId,
+        date,
+        pendingRemoval.startTime,
+        pendingRemoval.endTime,
+        pendingRemoval.id,
+      )
       setPendingRemoval(null)
       await loadDay(selectedAssetId, date)
     } catch {
@@ -287,7 +294,7 @@ export function TeacherLessonsPage() {
         ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
             <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{lesson.endTime.slice(0, 5)}</p></div>
-            <Button type="button" onClick={() => setPendingRemoval({ startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
+            <Button type="button" onClick={() => setPendingRemoval({ id: lesson.id, startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
           </article>
         ))}
       </section>

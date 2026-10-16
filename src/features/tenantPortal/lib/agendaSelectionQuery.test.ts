@@ -14,6 +14,8 @@ describe("agenda selection query", () => {
     expect(readAgendaDateParam(null, TODAY)).toBe(TODAY)
     expect(readAgendaDateParam("yesterday", TODAY)).toBe(TODAY)
     expect(readAgendaDateParam("2020-01-01", TODAY)).toBe(TODAY)
+    expect(readAgendaDateParam("2026-11-31", TODAY)).toBe(TODAY)
+    expect(readAgendaDateParam("2026-02-31", TODAY)).toBe(TODAY)
     expect(readAgendaTimeParam(null)).toBeNull()
     expect(readAgendaTimeParam("15")).toBeNull()
     expect(readAgendaTimeParam("99:00")).toBeNull()
