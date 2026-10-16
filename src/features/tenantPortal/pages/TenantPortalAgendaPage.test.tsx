@@ -693,6 +693,59 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(courtOne).toHaveAttribute("aria-disabled", "true")
   })
 
+  it("disables Reservar horário while the price is still calculating", async () => {
+    let resolveQuote: (value: {
+      isAvailable: boolean
+      requestedQuantity: number
+      availableQuantity: number
+      estimatedTotalAmount: number
+      reason: null
+    }) => void = () => {}
+    checkAvailability.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveQuote = resolve
+        }),
+    )
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.quoteLoading")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    ).toBeDisabled()
+
+    resolveQuote({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      reason: null,
+    })
+
+    expect(
+      await screen.findByText(
+        i18n.t("tenantPortal.agenda.available", {
+          amount: formatMoney(80),
+        }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    ).toBeEnabled()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.quoteLoading")),
+    ).not.toBeInTheDocument()
+  })
+
   it("disables the time selector when the day has no bookable slots", async () => {
     fetchDay.mockResolvedValue({ date: "2026-09-12", slots: [] })
     renderAgenda()
@@ -1891,6 +1944,73 @@ describe("TenantPortalAgendaPage time selector", () => {
     }
   })
 
+  it("keeps the selected date, time, and resource when the language changes", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-20")
+    })
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(
+      screen.getByRole("button", { name: "Quadra 1" }),
+    ).toHaveAttribute("aria-pressed", "true")
+    expect(
+      screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") }),
+    ).toHaveTextContent("08:00")
+
+    const dayCalls = fetchDay.mock.calls.length
+    const assetCalls = fetchAssets.mock.calls.length
+
+    try {
+      await i18n.changeLanguage("es")
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-20")
+      expect(
+        screen.getByRole("combobox", {
+          name: i18n.t("tenantPortal.agenda.time"),
+        }),
+      ).toHaveTextContent("08:00")
+      expect(
+        screen.getByRole("button", { name: "Quadra 1" }),
+      ).toHaveAttribute("aria-pressed", "true")
+      expect(formatMoney(80)).toBe("80,00 R$")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.available", {
+            amount: formatMoney(80),
+          }),
+        ),
+      ).toBeInTheDocument()
+
+      await i18n.changeLanguage("en")
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-20")
+      expect(
+        screen.getByRole("button", { name: "Quadra 1" }),
+      ).toHaveAttribute("aria-pressed", "true")
+      expect(formatMoney(80)).toBe("R$ 80.00")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.available", {
+            amount: formatMoney(80),
+          }),
+        ),
+      ).toBeInTheDocument()
+      expect(fetchDay).toHaveBeenCalledTimes(dayCalls)
+      expect(fetchAssets).toHaveBeenCalledTimes(assetCalls)
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
   it("refetches the cancelled reservation date and the viewed date", async () => {
     const user = userEvent.setup()
     const otherIso = "2026-10-15T11:00:00.000Z"
@@ -2411,7 +2531,9 @@ describe("TenantPortalAgendaPage queue explainer", () => {
 
     await chooseCourt(user, "Quadra 2")
 
-    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    })
     expect(
       screen.queryByText(i18n.t("tenantPortal.agenda.queue.requiresTicket")),
     ).not.toBeInTheDocument()
@@ -2596,7 +2718,9 @@ describe("TenantPortalAgendaPage queue explainer", () => {
         i18n.t("tenantPortal.agenda.queue.countdown", { time: "01:30" }),
       ),
     ).toBeInTheDocument()
-    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    })
   })
 
   it("shows the expired view without the reserve action", async () => {

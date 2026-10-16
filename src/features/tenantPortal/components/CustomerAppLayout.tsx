@@ -22,6 +22,7 @@ import {
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
+import appI18n from "@/lib/i18n"
 
 export type CustomerAppOutletContext = {
   subdomain: string
@@ -71,7 +72,7 @@ export function CustomerAppLayout() {
       })
       .catch(() => {
         if (!cancelled) {
-          setError(t("tenantPortal.errors.tenantNotFound"))
+          setError(appI18n.t("tenantPortal.errors.tenantNotFound"))
           setBranding(null)
           setMenu([])
         }
@@ -85,7 +86,7 @@ export function CustomerAppLayout() {
     return () => {
       cancelled = true
     }
-  }, [subdomain, signedIn, t])
+  }, [subdomain, signedIn])
 
   const { tokens, style: themeStyle } = useTenantThemeCssVars(
     branding?.primaryColor,

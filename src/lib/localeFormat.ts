@@ -7,23 +7,84 @@ function normalizeIntlSpaces(value: string): string {
   return value.replace(/[\u00a0\u202f]/g, " ")
 }
 
+export type FormatLocaleCurrencyOptions = {
+  maximumFractionDigits?: number
+  minimumFractionDigits?: number
+}
+
+/**
+ * Symbol for `currency` when the active locale would print the ISO code
+ * (Spanish prints `BRL` for the Brazilian real).
+ */
+function currencySymbol(currency: string): string | null {
+  try {
+    const part = new Intl.NumberFormat("en", {
+      style: "currency",
+      currency,
+      currencyDisplay: "narrowSymbol",
+    })
+      .formatToParts(0)
+      .find((item) => item.type === "currency")
+    const symbol = part?.value ?? ""
+    if (symbol.length === 0 || symbol.toUpperCase() === currency) {
+      return null
+    }
+    return symbol
+  } catch {
+    return null
+  }
+}
+
+function joinCurrencyParts(parts: readonly Intl.NumberFormatPart[]): string {
+  let result = ""
+  let previousType: Intl.NumberFormatPart["type"] | null = null
+  for (const part of parts) {
+    const symbolTouchesAmount =
+      (previousType === "currency" && part.type === "integer") ||
+      (part.type === "currency" &&
+        (previousType === "integer" || previousType === "fraction"))
+    if (symbolTouchesAmount) {
+      result += " "
+    }
+    result += part.value
+    previousType = part.type
+  }
+  return normalizeIntlSpaces(result)
+}
+
 /**
  * Money for any tenant currency. `locale` is the active UI language
- * (`pt-BR`, `en`, `es`), not a resource type.
+ * (`pt-BR`, `en`, `es`), not a resource type. The symbol is the currency
+ * symbol (`R$`, `€`), including when the locale would otherwise print the
+ * ISO code.
  */
 export function formatLocaleCurrency(
   amount: number,
   currency: string,
   locale: string,
+  options?: FormatLocaleCurrencyOptions,
 ): string {
   const normalizedCurrency = currency.trim().toUpperCase()
   try {
-    return normalizeIntlSpaces(
-      new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: normalizedCurrency,
-      }).format(amount),
-    )
+    const symbol = currencySymbol(normalizedCurrency)
+    const parts = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: normalizedCurrency,
+      currencyDisplay: "symbol",
+      maximumFractionDigits: options?.maximumFractionDigits,
+      minimumFractionDigits: options?.minimumFractionDigits,
+    }).formatToParts(amount)
+    const withSymbol = parts.map((part) => {
+      if (
+        part.type === "currency" &&
+        part.value.toUpperCase() === normalizedCurrency &&
+        symbol
+      ) {
+        return { ...part, value: symbol }
+      }
+      return part
+    })
+    return joinCurrencyParts(withSymbol)
   } catch {
     return `${amount.toFixed(2)} ${normalizedCurrency}`
   }

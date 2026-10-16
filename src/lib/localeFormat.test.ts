@@ -17,14 +17,32 @@ describe("localeFormat", () => {
     await i18n.changeLanguage("pt-BR")
   })
 
-  it("formats money with the active locale and the given currency", () => {
+  it("formats money with the active locale and the currency symbol", () => {
+    expect(formatLocaleCurrency(100, "BRL", "pt-BR")).toBe("R$ 100,00")
+    expect(formatLocaleCurrency(100, "BRL", "en")).toBe("R$ 100.00")
+    expect(formatLocaleCurrency(100, "BRL", "es")).toBe("100,00 R$")
     expect(formatLocaleCurrency(80, "BRL", "pt-BR")).toBe("R$ 80,00")
     expect(formatLocaleCurrency(80, "EUR", "pt-BR")).toBe("€ 80,00")
-    expect(formatLocaleCurrency(80, "BRL", "en")).toBe("R$80.00")
-    expect(formatLocaleCurrency(80, "BRL", "es")).toBe("80,00 BRL")
+    expect(formatLocaleCurrency(80, "EUR", "en")).toBe("€ 80.00")
+    expect(formatLocaleCurrency(80, "EUR", "es")).toBe("80,00 €")
+    expect(formatLocaleCurrency(80, "BRL", "en")).toBe("R$ 80.00")
+    expect(formatLocaleCurrency(80, "BRL", "es")).toBe("80,00 R$")
+    expect(
+      formatLocaleCurrency(199, "BRL", "es", {
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      }),
+    ).toBe("199 R$")
     expect(formatLocaleCurrency(80, "not-a-currency", "pt-BR")).toBe(
       "80.00 NOT-A-CURRENCY",
     )
+    expect(formatLocaleCurrency(100, "BRL", "es")).not.toContain("BRL")
+    expect(formatLocaleCurrency(1000, "BRL", "pt-BR")).toBe("R$ 1.000,00")
+    expect(formatLocaleCurrency(1000, "BRL", "en")).toBe("R$ 1,000.00")
+    expect(formatLocaleCurrency(1000, "BRL", "es")).toBe("1000,00 R$")
+    expect(formatLocaleCurrency(-80, "BRL", "pt-BR")).toBe("-R$ 80,00")
+    expect(formatLocaleCurrency(-80, "BRL", "en")).toBe("-R$ 80.00")
+    expect(formatLocaleCurrency(-80, "BRL", "es")).toBe("-80,00 R$")
   })
 
   it("formats a civil date as DD/MM in pt-BR and es, and MM/DD in en", () => {
@@ -52,10 +70,13 @@ describe("localeFormat", () => {
     expect(formatReservationRange(START, END)).toContain("10/09/2026")
 
     await i18n.changeLanguage("en")
-    expect(formatMoney(80)).toBe("R$80.00")
+    expect(formatMoney(80)).toBe("R$ 80.00")
+    expect(formatMoney(100)).not.toContain("BRL")
     expect(formatReservationRange(START, END)).toContain("09/10/2026")
 
     await i18n.changeLanguage("es")
+    expect(formatMoney(100)).toBe("100,00 R$")
+    expect(formatMoney(100)).not.toContain("BRL")
     expect(formatReservationRange(START, END)).toContain("10/09/2026")
     expect(formatReservationRange(START, END)).not.toContain("09/10/2026")
   })
