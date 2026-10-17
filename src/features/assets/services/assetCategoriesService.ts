@@ -173,6 +173,7 @@ export async function deleteCategory(
 
     throw new Error(
       assetDeleteErrorMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
         getAxiosErrorPayload(error),
         i18n.t("assets.categories.errors.deleteFailed"),
         "category",

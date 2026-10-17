@@ -1,4 +1,4 @@
-import { get, set } from "idb-keyval"
+import { get, set, setMany } from "idb-keyval"
 import { z } from "zod"
 
 import { api, isAxiosError } from "@/lib/api"
@@ -13,6 +13,7 @@ const syncQueueItemSchema = z.object({
   taskId: z.string().uuid(),
   value: z.string().nullable(),
   queuedAt: z.string().min(1),
+  clientSequence: z.number().int().nonnegative().optional().default(0),
 })
 
 export type OsSyncQueueItem = z.infer<typeof syncQueueItemSchema>
@@ -36,8 +37,58 @@ export type OsSyncConflict = z.infer<typeof syncConflictSchema>
 
 const syncConflictListSchema = z.array(syncConflictSchema)
 
+const SYNC_QUEUE_LOCK = "rolvix-os-sync-queue"
+
+let queueLockChain: Promise<void> = Promise.resolve()
+let issuedClientSequence = 0
+
 function createQueueItemId(workOrderId: string, taskId: string): string {
   return `${workOrderId}:${taskId}`
+}
+
+function queueVersionKey(item: Pick<OsSyncQueueItem, "id" | "clientSequence">): string {
+  return `${item.id}#${item.clientSequence}`
+}
+
+function hasWebLocks(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    typeof navigator.locks?.request === "function"
+  )
+}
+
+/**
+ * Serializes flush, enqueue, and the direct online PATCH.
+ * Web Locks covers other tabs; the promise chain covers runtimes without it.
+ * Callers already inside the lock must use the unlocked helpers below.
+ */
+function withSyncQueueLock<T>(operation: () => Promise<T>): Promise<T> {
+  const run = (): Promise<T> => {
+    if (!hasWebLocks()) {
+      return operation()
+    }
+
+    return navigator.locks.request(SYNC_QUEUE_LOCK, () => operation())
+  }
+
+  const scheduled = queueLockChain.then(run, run)
+  queueLockChain = scheduled.then(
+    () => undefined,
+    () => undefined,
+  )
+  return scheduled
+}
+
+function takeClientSequence(queue: readonly OsSyncQueueItem[]): number {
+  let maxSeen = issuedClientSequence
+  for (const item of queue) {
+    if (item.clientSequence > maxSeen) {
+      maxSeen = item.clientSequence
+    }
+  }
+
+  issuedClientSequence = maxSeen + 1
+  return issuedClientSequence
 }
 
 async function readSyncQueue(): Promise<OsSyncQueueItem[]> {
@@ -64,15 +115,18 @@ async function writeSyncQueue(queue: OsSyncQueueItem[]): Promise<void> {
   await set(OS_SYNC_QUEUE_KEY, queue)
 }
 
-/**
- * Enqueues (or replaces) a pending task-value PATCH.
- * Latest value for the same workOrderId+taskId wins.
- */
-export async function enqueueTaskValuePatch(item: {
+type TaskValuePatch = {
   workOrderId: string
   taskId: string
   value: string | null
-}): Promise<void> {
+}
+
+/**
+ * Enqueues (or replaces) a pending task-value PATCH.
+ * Latest client sequence for the same workOrderId+taskId wins.
+ * Caller must already hold `withSyncQueueLock`.
+ */
+async function putTaskValuePatch(item: TaskValuePatch): Promise<void> {
   const queue = await readSyncQueue()
   const id = createQueueItemId(item.workOrderId, item.taskId)
   const nextItem: OsSyncQueueItem = {
@@ -81,10 +135,28 @@ export async function enqueueTaskValuePatch(item: {
     taskId: item.taskId,
     value: item.value,
     queuedAt: new Date().toISOString(),
+    clientSequence: takeClientSequence(queue),
   }
 
   const withoutDuplicate = queue.filter((queued) => queued.id !== id)
   await writeSyncQueue([...withoutDuplicate, nextItem])
+}
+
+/** Drops a queued field. Caller must already hold `withSyncQueueLock`. */
+async function discardQueuedTaskValue(
+  workOrderId: string,
+  taskId: string,
+): Promise<void> {
+  const queue = await readSyncQueue()
+  const id = createQueueItemId(workOrderId, taskId)
+  const next = queue.filter((queued) => queued.id !== id)
+  if (next.length !== queue.length) {
+    await writeSyncQueue(next)
+  }
+}
+
+export async function enqueueTaskValuePatch(item: TaskValuePatch): Promise<void> {
+  await withSyncQueueLock(() => putTaskValuePatch(item))
 }
 
 export async function getSyncQueueLength(): Promise<number> {
@@ -115,31 +187,21 @@ async function writeConflicts(conflicts: OsSyncConflict[]): Promise<void> {
   await set(OS_SYNC_CONFLICTS_KEY, conflicts)
 }
 
+async function writeQueueAndConflicts(
+  queue: OsSyncQueueItem[],
+  conflicts: OsSyncConflict[],
+): Promise<void> {
+  await setMany([
+    [OS_SYNC_QUEUE_KEY, queue],
+    [OS_SYNC_CONFLICTS_KEY, conflicts],
+  ])
+}
+
 export async function listSyncConflicts(): Promise<OsSyncConflict[]> {
   return readConflicts()
 }
 
-export async function retrySyncConflict(
-  workOrderId: string,
-  taskId: string,
-): Promise<ProcessSyncQueueResult> {
-  const conflicts = await readConflicts()
-  const conflict = conflicts.find(
-    (item) => item.workOrderId === workOrderId && item.taskId === taskId,
-  )
-
-  if (conflict) {
-    await enqueueTaskValuePatch({
-      workOrderId,
-      taskId,
-      value: conflict.value,
-    })
-  }
-
-  return processSyncQueue()
-}
-
-export async function clearSyncConflict(
+async function clearSyncConflictBody(
   workOrderId: string,
   taskId: string,
 ): Promise<void> {
@@ -150,6 +212,68 @@ export async function clearSyncConflict(
   if (next.length !== conflicts.length) {
     await writeConflicts(next)
   }
+}
+
+export async function retrySyncConflict(
+  workOrderId: string,
+  taskId: string,
+): Promise<ProcessSyncQueueResult> {
+  await withSyncQueueLock(async () => {
+    const conflicts = await readConflicts()
+    const conflict = conflicts.find(
+      (item) => item.workOrderId === workOrderId && item.taskId === taskId,
+    )
+
+    if (conflict) {
+      await putTaskValuePatch({
+        workOrderId,
+        taskId,
+        value: conflict.value,
+      })
+    }
+  })
+
+  return processSyncQueue()
+}
+
+export async function clearSyncConflict(
+  workOrderId: string,
+  taskId: string,
+): Promise<void> {
+  await withSyncQueueLock(() => clearSyncConflictBody(workOrderId, taskId))
+}
+
+type DirectTaskValueResult<T> =
+  | { status: "sent"; value: T }
+  | { status: "queued" }
+
+/**
+ * Online PATCH for one field. Drops any queued value for that field first
+ * (this write is the newer client sequence) and holds the queue lock until
+ * the request settles, so a stale flush cannot land after it.
+ * Network failures are queued. 4xx/5xx propagate with no automatic retry.
+ */
+export async function commitDirectTaskValuePatch<T>(
+  item: TaskValuePatch,
+  send: () => Promise<T>,
+): Promise<DirectTaskValueResult<T>> {
+  return withSyncQueueLock(async () => {
+    await discardQueuedTaskValue(item.workOrderId, item.taskId)
+
+    try {
+      const value = await send()
+      await clearSyncConflictBody(item.workOrderId, item.taskId)
+      return { status: "sent", value }
+    } catch (error: unknown) {
+      if (isNetworkConnectivityError(error)) {
+        console.error("commitDirectTaskValuePatch queued after network error", error)
+        await putTaskValuePatch(item)
+        return { status: "queued" }
+      }
+
+      throw error
+    }
+  })
 }
 
 function isClientHttpError(error: unknown): boolean {
@@ -213,12 +337,10 @@ function notifySyncQueue(): void {
   }
 }
 
-let processSyncQueueTail: Promise<void> = Promise.resolve()
-
 /**
  * Flushes pending PATCH operations to the API.
  * Network and 5xx failures stay queued. 4xx failures are kept as conflicts
- * so the user can see them instead of losing the edit.
+ * so the user can see them instead of losing the edit. 4xx is not retried.
  */
 async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -234,28 +356,21 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
     return { processed: 0, remaining: 0, conflicts }
   }
 
-  const remaining: OsSyncQueueItem[] = []
-  const nextConflicts = [...conflicts]
+  const processedKeys = new Set<string>()
+  const removedConflictIds = new Set<string>()
+  const upsertedConflicts = new Map<string, OsSyncConflict>()
   let processed = 0
 
-  for (let index = 0; index < queue.length; index += 1) {
-    const item = queue[index]
-    if (!item) {
-      continue
-    }
-
+  for (const item of queue) {
     try {
       await api.patch(
         `/api/work-orders/${item.workOrderId}/tasks/${item.taskId}`,
         { value: item.value },
       )
       processed += 1
-      const conflictIndex = nextConflicts.findIndex(
-        (conflict) => conflict.id === item.id,
-      )
-      if (conflictIndex >= 0) {
-        nextConflicts.splice(conflictIndex, 1)
-      }
+      processedKeys.add(queueVersionKey(item))
+      removedConflictIds.add(item.id)
+      upsertedConflicts.delete(item.id)
     } catch (error: unknown) {
       console.error("processSyncQueue item failed", {
         item,
@@ -263,7 +378,6 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
       })
 
       if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
-        remaining.push(item, ...queue.slice(index + 1))
         break
       }
 
@@ -279,21 +393,27 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
           code: body.code,
           reason: body.reason,
         }
-        const existing = nextConflicts.findIndex((entry) => entry.id === item.id)
-        if (existing >= 0) {
-          nextConflicts[existing] = conflict
-        } else {
-          nextConflicts.push(conflict)
-        }
+        processedKeys.add(queueVersionKey(item))
+        upsertedConflicts.set(item.id, conflict)
         continue
       }
-
-      remaining.push(item)
     }
   }
 
-  await writeSyncQueue(remaining)
-  await writeConflicts(nextConflicts)
+  const latestQueue = await readSyncQueue()
+  const latestConflicts = await readConflicts()
+  const remaining = latestQueue.filter(
+    (item) => !processedKeys.has(queueVersionKey(item)),
+  )
+  const nextConflicts = latestConflicts.filter(
+    (conflict) =>
+      !removedConflictIds.has(conflict.id) && !upsertedConflicts.has(conflict.id),
+  )
+  for (const conflict of upsertedConflicts.values()) {
+    nextConflicts.push(conflict)
+  }
+
+  await writeQueueAndConflicts(remaining, nextConflicts)
 
   return {
     processed,
@@ -304,15 +424,10 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
 
 /**
  * Flushes pending PATCH operations one at a time.
- * Overlapping callers (the shell host and the open page) wait their turn so
- * a later empty write cannot drop a 409 conflict.
+ * Shares the queue lock with enqueue and the direct online PATCH.
  */
 export function processSyncQueue(): Promise<ProcessSyncQueueResult> {
-  const run = processSyncQueueTail.then(processSyncQueueBody, processSyncQueueBody)
-  processSyncQueueTail = run.then(
-    () => undefined,
-    () => undefined,
-  )
+  const run = withSyncQueueLock(processSyncQueueBody)
 
   return run.finally(() => {
     notifySyncQueue()

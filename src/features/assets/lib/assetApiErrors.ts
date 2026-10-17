@@ -1,86 +1,89 @@
 import i18n from "@/lib/i18n"
-import {
-  isUnexpectedApiError,
-  readApiErrorBody,
-} from "@/lib/apiErrorText"
+import { readApiErrorBody } from "@/lib/apiErrorText"
 
-const CODE_KEYS: Record<string, string> = {
-  ASSET_TAG_DUPLICATE: "assets.inventory.errors.duplicateTag",
-  ASSET_IN_USE: "assets.inventory.errors.deleteBlockedByWorkOrders",
-  CATEGORY_IN_USE: "assets.categories.errors.inUse",
+function conflictMessage(
+  status: number | null,
+  code: string | null,
+  expectedCode: string,
+  key: string,
+): string | null {
+  if (status !== 409 || code !== expectedCode) {
+    return null
+  }
+
+  return i18n.t(key)
 }
 
 export function localizeAssetApiError(
   payload: unknown,
   fallback: string,
+  status: number | null = null,
 ): string {
-  const { code, error } = readApiErrorBody(payload)
-
-  if (code != null && CODE_KEYS[code] != null) {
-    return i18n.t(CODE_KEYS[code])
-  }
-
-  if (error == null) {
-    return fallback
-  }
-
-  if (/tags already exist/i.test(error) || /tag already exists/i.test(error)) {
-    return i18n.t("assets.inventory.errors.duplicateTag")
-  }
-
-  if (/cannot permanently delete an asset category/i.test(error)) {
-    return i18n.t("assets.categories.errors.inUse")
-  }
-
-  if (
-    /work orders?/i.test(error) &&
-    /(delete|cannot|referenced|in use)/i.test(error)
-  ) {
-    return i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders")
-  }
-
-  if (isUnexpectedApiError(error)) {
-    return fallback
-  }
-
-  return error
+  const { code } = readApiErrorBody(payload)
+  return (
+    conflictMessage(
+      status,
+      code,
+      "ASSET_TAG_DUPLICATE",
+      "assets.inventory.errors.duplicateTag",
+    ) ??
+    conflictMessage(
+      status,
+      code,
+      "ASSET_IN_USE",
+      "assets.inventory.errors.deleteBlockedByWorkOrders",
+    ) ??
+    conflictMessage(
+      status,
+      code,
+      "CATEGORY_IN_USE",
+      "assets.categories.errors.inUse",
+    ) ??
+    fallback
+  )
 }
 
 export function assetDeleteErrorMessage(
+  status: number | null,
   payload: unknown,
   fallback: string,
   kind: "asset" | "category",
 ): string {
-  const { code, error } = readApiErrorBody(payload)
-  const localized = localizeAssetApiError(payload, fallback)
+  const { code } = readApiErrorBody(payload)
 
-  if (
-    kind === "asset" &&
-    (code === "ASSET_IN_USE" || isUnexpectedApiError(error))
-  ) {
-    return i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders")
+  if (kind === "asset") {
+    return (
+      conflictMessage(
+        status,
+        code,
+        "ASSET_IN_USE",
+        "assets.inventory.errors.deleteBlockedByWorkOrders",
+      ) ?? fallback
+    )
   }
 
-  if (
-    kind === "category" &&
-    (code === "CATEGORY_IN_USE" ||
-      isUnexpectedApiError(error) ||
-      /cannot permanently delete an asset category/i.test(error ?? ""))
-  ) {
-    return i18n.t("assets.categories.errors.inUse")
-  }
-
-  return localized
+  return (
+    conflictMessage(
+      status,
+      code,
+      "CATEGORY_IN_USE",
+      "assets.categories.errors.inUse",
+    ) ?? fallback
+  )
 }
 
 export function assetTagConflictMessage(
+  status: number | null,
   payload: unknown,
   fallback: string,
 ): string {
-  const { code, error } = readApiErrorBody(payload)
-  if (code === "ASSET_TAG_DUPLICATE" || isUnexpectedApiError(error)) {
-    return i18n.t("assets.inventory.errors.duplicateTag")
-  }
-
-  return localizeAssetApiError(payload, fallback)
+  const { code } = readApiErrorBody(payload)
+  return (
+    conflictMessage(
+      status,
+      code,
+      "ASSET_TAG_DUPLICATE",
+      "assets.inventory.errors.duplicateTag",
+    ) ?? fallback
+  )
 }

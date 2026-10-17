@@ -21,6 +21,7 @@ import {
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
+import { isWorkOrderTaskFilled } from "@/features/workOrders/lib/workOrderTaskFilled"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -710,11 +711,11 @@ export function WorkOrderExecutionPage() {
     }
 
     const missingMandatory = orderedTasks.filter((task) => {
-      if (task.inputType === "Image") {
+      if (!task.isMandatory) {
         return false
       }
-      const value = currentTaskValue(task)
-      return task.isMandatory && (value == null || value.trim() === "")
+
+      return !isWorkOrderTaskFilled(task, currentTaskValue(task))
     })
 
     if (missingMandatory.length > 0) {

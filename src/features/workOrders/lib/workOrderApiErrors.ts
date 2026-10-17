@@ -5,11 +5,51 @@ import {
 } from "@/lib/apiErrorText"
 
 const CODE_KEYS: Record<string, string> = {
-  MANDATORY_TASKS_INCOMPLETE: "workOrders.errors.mandatoryTasksIncomplete",
   DUPLICATE_WORK_ORDER: "pmoc.plans.generate.errors.duplicate",
   ASSIGNEE_CANNOT_EXECUTE: "workOrders.errors.assigneeCannotExecute",
   WORK_ORDER_CLOSED: "workOrders.errors.workOrderClosed",
   WORK_ORDER_REOPEN_NOT_ALLOWED: "workOrders.errors.reopenNotAllowed",
+}
+
+function readIncompleteTaskTitles(payload: unknown): string[] {
+  if (typeof payload !== "object" || payload === null || !("tasks" in payload)) {
+    return []
+  }
+
+  const tasks = (payload as { tasks?: unknown }).tasks
+  if (!Array.isArray(tasks)) {
+    return []
+  }
+
+  const titles: string[] = []
+  for (const task of tasks) {
+    if (typeof task !== "object" || task === null) {
+      continue
+    }
+
+    const title = (task as { title?: unknown }).title
+    if (typeof title !== "string") {
+      continue
+    }
+
+    const trimmed = title.trim()
+    if (trimmed !== "") {
+      titles.push(trimmed)
+    }
+  }
+
+  return titles
+}
+
+function mandatoryTasksMessage(payload: unknown): string {
+  const titles = readIncompleteTaskTitles(payload)
+  if (titles.length === 0) {
+    return i18n.t("workOrders.errors.mandatoryTasksIncomplete")
+  }
+
+  return i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+    tasks: titles.join(", "),
+  })
 }
 
 const TASK_VALUE_REASON_KEYS: Record<string, string> = {
@@ -35,6 +75,10 @@ export function localizeWorkOrderApiError(
     return i18n.t("workOrders.errors.taskValue.invalid")
   }
 
+  if (code === "MANDATORY_TASKS_INCOMPLETE") {
+    return mandatoryTasksMessage(payload)
+  }
+
   if (code != null && CODE_KEYS[code] != null) {
     return i18n.t(CODE_KEYS[code])
   }
@@ -44,7 +88,7 @@ export function localizeWorkOrderApiError(
   }
 
   if (/^Mandatory tasks are incomplete\b/i.test(error)) {
-    return i18n.t("workOrders.errors.mandatoryTasksIncomplete")
+    return mandatoryTasksMessage(payload)
   }
 
   // The API rejects an ineligible asset with this sentence and no code.

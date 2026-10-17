@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { makeWorkOrder, WORK_ORDER_ID } from "@/features/workOrders/test/workOrderFixtures"
@@ -261,6 +262,94 @@ describe("WorkOrderExecutionPage tasks", () => {
     })
   })
 
+  it("blocks completion when a mandatory checkbox is false", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({
+      tasks: [
+        {
+          ...(makeWorkOrder().tasks[0] as NonNullable<
+            ReturnType<typeof makeWorkOrder>["tasks"][number]
+          >),
+          title: "Verificar filtros",
+          inputType: "Checkbox",
+          isMandatory: true,
+          value: "false",
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
+      }),
+    )
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent(
+      i18n.t("workOrders.execution.mandatoryIncomplete", {
+        tasks: "Verificar filtros",
+      }),
+    )
+    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
+  })
+
+  it("shows the task list from MANDATORY_TASKS_INCOMPLETE", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({
+      tasks: [
+        {
+          ...(makeWorkOrder().tasks[0] as NonNullable<
+            ReturnType<typeof makeWorkOrder>["tasks"][number]
+          >),
+          inputType: "Checkbox",
+          isMandatory: true,
+          value: "true",
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockRejectedValue(
+      new Error(
+        localizeWorkOrderApiError(
+          {
+            error: "Mandatory tasks are incomplete.",
+            code: "MANDATORY_TASKS_INCOMPLETE",
+            tasks: [
+              {
+                id: "16161616-1616-4161-8161-161616161616",
+                title: "Foto do filtro",
+              },
+              {
+                id: "17171717-1717-4171-8171-171717171717",
+                title: "Pressão",
+              },
+            ],
+          },
+          i18n.t("workOrders.errors.updateStatusFailed"),
+        ),
+      ),
+    )
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
+      }),
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+        tasks: "Foto do filtro, Pressão",
+      }),
+    )
+    expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
+  })
+
   it("flushes a pending text edit before completing", async () => {
     const user = userEvent.setup()
     const order = makeWorkOrder({
@@ -368,6 +457,7 @@ describe("WorkOrderExecutionPage tasks", () => {
         taskId: task.id,
         value: "x",
         queuedAt: "2026-10-17T00:00:00.000Z",
+        clientSequence: 0,
         status: 409,
         message: "conflict",
         code: null,
@@ -405,6 +495,7 @@ describe("WorkOrderExecutionPage tasks", () => {
         taskId: task.id,
         value: "true",
         queuedAt: "2026-10-17T00:00:00.000Z",
+        clientSequence: 0,
         status: 409,
         message: "Work order is completed or canceled and cannot be changed.",
         code: "WORK_ORDER_CLOSED",
@@ -447,6 +538,7 @@ describe("WorkOrderExecutionPage tasks", () => {
         taskId: task.id,
         value: "true",
         queuedAt: "2026-10-17T00:00:00.000Z",
+        clientSequence: 0,
         status: 409,
         message: "Work order is completed or canceled and cannot be changed.",
         code: "WORK_ORDER_CLOSED",

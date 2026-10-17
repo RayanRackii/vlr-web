@@ -3,7 +3,7 @@ import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMai
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
-  clearSyncConflict,
+  commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
   isNetworkConnectivityError,
 } from "@/lib/offlineSync"
@@ -220,46 +220,50 @@ export async function updateTaskValue(
   value: string | null,
 ): Promise<WorkOrder | null> {
   const payload = updateWorkOrderTaskValueRequestSchema.parse({ value })
-
-  const queueAndSucceed = async (): Promise<null> => {
-    await enqueueTaskValuePatch({
-      workOrderId,
-      taskId,
-      value: payload.value ?? null,
-    })
-    return null
+  const patch: {
+    workOrderId: string
+    taskId: string
+    value: string | null
+  } = {
+    workOrderId,
+    taskId,
+    value: payload.value ?? null,
   }
 
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return queueAndSucceed()
+    await enqueueTaskValuePatch(patch)
+    return null
   }
 
   try {
-    const response = await api.patch<unknown>(
-      `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
-      payload,
-    )
-    const parsed = workOrderSchema.safeParse(response.data)
+    const outcome = await commitDirectTaskValuePatch(patch, async () => {
+      const response = await api.patch<unknown>(
+        `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
+        payload,
+      )
+      const parsed = workOrderSchema.safeParse(response.data)
 
-    if (!parsed.success) {
-      console.error("updateTaskValue Zod validation failed", {
-        data: response.data,
-        error: parsed.error.flatten(),
-        issues: parsed.error.issues,
-      })
-      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+      if (!parsed.success) {
+        console.error("updateTaskValue Zod validation failed", {
+          data: response.data,
+          error: parsed.error.flatten(),
+          issues: parsed.error.issues,
+        })
+        throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+      }
+
+      return parsed.data
+    })
+
+    if (outcome.status === "queued") {
+      return null
     }
 
-    await clearSyncConflict(workOrderId, taskId)
-    return parsed.data
+    return outcome.value
   } catch (error: unknown) {
     console.error("updateTaskValue failed", error)
     if (isAxiosError(error)) {
       console.error("updateTaskValue response data", error.response?.data)
-    }
-
-    if (isNetworkConnectivityError(error)) {
-      return queueAndSucceed()
     }
 
     if (error instanceof Error && !isAxiosError(error)) {

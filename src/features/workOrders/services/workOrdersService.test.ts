@@ -1,6 +1,20 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+const syncStore = new Map<string, unknown>()
+
+vi.mock("idb-keyval", () => ({
+  get: vi.fn(async (key: string) => syncStore.get(key)),
+  set: vi.fn(async (key: string, value: unknown) => {
+    syncStore.set(key, value)
+  }),
+  setMany: vi.fn(async (entries: ReadonlyArray<readonly [string, unknown]>) => {
+    for (const [key, value] of entries) {
+      syncStore.set(key, value)
+    }
+  }),
+}))
+
 import { api } from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
@@ -181,6 +195,7 @@ describe("updateWorkOrderStatus offline", () => {
 
 describe("updateTaskValue online errors", () => {
   beforeEach(() => {
+    syncStore.clear()
     apiPatch.mockReset()
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
   })
@@ -205,6 +220,44 @@ describe("updateTaskValue online errors", () => {
 
     await expect(updateTaskValue(order.id, task.id, "abc")).rejects.toThrow(
       i18n.t("workOrders.errors.taskValue.notANumber"),
+    )
+  })
+})
+
+describe("updateWorkOrderStatus mandatory tasks", () => {
+  beforeEach(() => {
+    apiPatch.mockReset()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("includes the task titles from MANDATORY_TASKS_INCOMPLETE", async () => {
+    apiPatch.mockRejectedValue(
+      axiosError(400, {
+        error: "Mandatory tasks are incomplete.",
+        code: "MANDATORY_TASKS_INCOMPLETE",
+        tasks: [
+          {
+            id: "16161616-1616-4161-8161-161616161616",
+            title: "Verificar filtros",
+          },
+          {
+            id: "17171717-1717-4171-8171-171717171717",
+            title: "Pressão",
+          },
+        ],
+      }),
+    )
+
+    await expect(
+      updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
+    ).rejects.toThrow(
+      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+        tasks: "Verificar filtros, Pressão",
+      }),
     )
   })
 })
