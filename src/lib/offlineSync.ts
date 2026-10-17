@@ -124,6 +124,8 @@ type TaskValuePatch = {
 /**
  * Enqueues (or replaces) a pending task-value PATCH.
  * Latest client sequence for the same workOrderId+taskId wins.
+ * An older conflict for that field is dropped in the same write, so Retry
+ * cannot put the rejected value back over this version.
  * One IndexedDB write: the previous field value and the new one are never
  * both absent. Caller must already hold `withSyncQueueLock`.
  */
@@ -140,7 +142,16 @@ async function putTaskValuePatch(item: TaskValuePatch): Promise<OsSyncQueueItem>
   }
 
   const withoutDuplicate = queue.filter((queued) => queued.id !== id)
-  await writeSyncQueue([...withoutDuplicate, nextItem])
+  const nextQueue = [...withoutDuplicate, nextItem]
+  const conflicts = await readConflicts()
+  const nextConflicts = conflicts.filter((existing) => existing.id !== id)
+
+  if (nextConflicts.length === conflicts.length) {
+    await writeSyncQueue(nextQueue)
+  } else {
+    await writeQueueAndConflicts(nextQueue, nextConflicts)
+  }
+
   return nextItem
 }
 
@@ -213,13 +224,22 @@ export async function retrySyncConflict(
       (item) => item.workOrderId === workOrderId && item.taskId === taskId,
     )
 
-    if (conflict) {
-      await putTaskValuePatch({
-        workOrderId,
-        taskId,
-        value: conflict.value,
-      })
+    if (!conflict) {
+      return
     }
+
+    const queue = await readSyncQueue()
+    const queued = queue.find((item) => item.id === conflict.id)
+    if (queued && queued.clientSequence > conflict.clientSequence) {
+      await clearSyncConflictBody(workOrderId, taskId)
+      return
+    }
+
+    await putTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: conflict.value,
+    })
   })
 
   return processSyncQueue()
@@ -279,34 +299,43 @@ async function settleQueuedVersion(
  * that field in one write (newer clientSequence) before the request, and
  * the queue lock is held until the request settles, so a stale flush cannot
  * land after it. Network and 5xx failures stay queued, same as flush. A 4xx
- * moves that version into the conflict store and is rethrown. Success
- * removes only this version and clears the field conflict.
+ * moves that version into the conflict store, notifies listeners, and is
+ * rethrown. Success removes only this version and clears the field conflict.
+ * The caller must return after a 2xx; a schema failure belongs outside `send`
+ * so this version is not flushed again.
  */
 export async function commitDirectTaskValuePatch<T>(
   item: TaskValuePatch,
   send: () => Promise<T>,
 ): Promise<DirectTaskValueResult<T>> {
-  return withSyncQueueLock(async () => {
-    const queued = await putTaskValuePatch(item)
+  try {
+    return await withSyncQueueLock(async () => {
+      const queued = await putTaskValuePatch(item)
 
-    try {
-      const value = await send()
-      await settleQueuedVersion(queued, null)
-      return { status: "sent", value }
-    } catch (error: unknown) {
-      if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
-        console.error("commitDirectTaskValuePatch kept queued", error)
-        return { status: "queued" }
-      }
+      try {
+        const value = await send()
+        await settleQueuedVersion(queued, null)
+        return { status: "sent", value }
+      } catch (error: unknown) {
+        if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
+          console.error("commitDirectTaskValuePatch kept queued", error)
+          return { status: "queued" }
+        }
 
-      if (isClientHttpError(error)) {
-        await settleQueuedVersion(queued, httpConflict(queued, error))
+        if (isClientHttpError(error)) {
+          await settleQueuedVersion(queued, httpConflict(queued, error))
+          throw error
+        }
+
         throw error
       }
-
-      throw error
+    })
+  } catch (error: unknown) {
+    if (isClientHttpError(error)) {
+      notifySyncQueue()
     }
-  })
+    throw error
+  }
 }
 
 function isClientHttpError(error: unknown): boolean {

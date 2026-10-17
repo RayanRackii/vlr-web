@@ -241,25 +241,27 @@ export async function updateTaskValue(
         `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
         payload,
       )
-      const parsed = workOrderSchema.safeParse(response.data)
-
-      if (!parsed.success) {
-        console.error("updateTaskValue Zod validation failed", {
-          data: response.data,
-          error: parsed.error.flatten(),
-          issues: parsed.error.issues,
-        })
-        throw new Error(i18n.t("workOrders.errors.invalidResponse"))
-      }
-
-      return parsed.data
+      return response.data
     })
 
     if (outcome.status === "queued") {
       return null
     }
 
-    return outcome.value
+    // A 2xx already applied the value. Parsing inside `send` would leave that
+    // version queued, and a later flush would send it again.
+    const parsed = workOrderSchema.safeParse(outcome.value)
+
+    if (!parsed.success) {
+      console.error("updateTaskValue Zod validation failed", {
+        data: outcome.value,
+        error: parsed.error.flatten(),
+        issues: parsed.error.issues,
+      })
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
   } catch (error: unknown) {
     console.error("updateTaskValue failed", error)
     if (isAxiosError(error)) {

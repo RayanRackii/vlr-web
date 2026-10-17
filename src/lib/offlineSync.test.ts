@@ -35,6 +35,7 @@ import {
   listSyncConflicts,
   processSyncQueue,
   retrySyncConflict,
+  subscribeSyncQueue,
   type OsSyncQueueItem,
 } from "@/lib/offlineSync"
 
@@ -169,6 +170,46 @@ describe("processSyncQueue", () => {
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("does not let retry replace a newer queued version with the rejected value", async () => {
+    const id = `${workOrderId}:${taskId}`
+    store.set("os_sync_queue", [
+      {
+        id,
+        workOrderId,
+        taskId,
+        value: "newer",
+        queuedAt: "2026-10-17T03:00:00.000Z",
+        clientSequence: 5,
+      },
+    ])
+    store.set("os_sync_conflicts", [
+      {
+        id,
+        workOrderId,
+        taskId,
+        value: "rejected",
+        queuedAt: "2026-10-17T02:00:00.000Z",
+        clientSequence: 2,
+        status: 409,
+        message: "Rejected",
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      },
+    ])
+    apiPatch.mockResolvedValue({ data: {} })
+
+    const retried = await retrySyncConflict(workOrderId, taskId)
+
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+    expect(apiPatch).toHaveBeenCalledWith(
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      { value: "newer" },
+    )
+    expect(retried.processed).toBe(1)
+    expect(await listSyncConflicts()).toEqual([])
+    expect(await listQueuedTaskIds()).toEqual([])
   })
 
   it("does not let an in-flight stale flush finish after a newer direct patch", async () => {
@@ -358,6 +399,44 @@ describe("commitDirectTaskValuePatch", () => {
     expect(await listSyncConflicts()).toEqual([])
   })
 
+  it.each([
+    {
+      label: "5xx",
+      fail: () => axiosError(503, { error: "Unavailable" }),
+    },
+    {
+      label: "network error",
+      fail: () => networkError(),
+    },
+  ])(
+    "clears an older field conflict when a $label keeps the newer version queued",
+    async ({ fail }) => {
+      await enqueueTaskValuePatch({
+        workOrderId,
+        taskId,
+        value: "rejected",
+      })
+      apiPatch.mockRejectedValueOnce(
+        axiosError(409, { error: "Rejected", code: "WORK_ORDER_CLOSED" }),
+      )
+      await processSyncQueue()
+      expect(await listSyncConflicts()).toHaveLength(1)
+
+      const outcome = await commitDirectTaskValuePatch(
+        { workOrderId, taskId, value: "newer" },
+        async () => {
+          throw fail()
+        },
+      )
+
+      expect(outcome).toEqual({ status: "queued" })
+      expect(readStoredQueue()).toEqual([
+        expect.objectContaining({ taskId, value: "newer" }),
+      ])
+      expect(await listSyncConflicts()).toEqual([])
+    },
+  )
+
   it("keeps the new value queued when the direct patch hits a network error", async () => {
     await enqueueTaskValuePatch({
       workOrderId,
@@ -440,6 +519,40 @@ describe("commitDirectTaskValuePatch", () => {
         code: "WORK_ORDER_CLOSED",
       }),
     ])
+  })
+
+  it("notifies subscribers after a direct 4xx records a conflict", async () => {
+    let snapshot: Promise<unknown> = Promise.resolve(null)
+    const unsubscribe = subscribeSyncQueue(() => {
+      snapshot = listSyncConflicts()
+    })
+    const error = axiosError(409, {
+      error: "Rejected",
+      code: "WORK_ORDER_CLOSED",
+    })
+
+    try {
+      await expect(
+        commitDirectTaskValuePatch(
+          { workOrderId, taskId, value: "new" },
+          async () => {
+            throw error
+          },
+        ),
+      ).rejects.toBe(error)
+
+      expect(await snapshot).toEqual([
+        expect.objectContaining({
+          workOrderId,
+          taskId,
+          value: "new",
+          status: 409,
+          message: "Rejected",
+        }),
+      ])
+    } finally {
+      unsubscribe()
+    }
   })
 
   it("removes the sent entry and clears the conflict after success", async () => {
