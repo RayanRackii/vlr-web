@@ -9,13 +9,18 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { LiveFieldMessage } from "@/features/pmoc/components/FormValidationSummary"
 
 export function PlanSchedulingFields<T extends FieldValues>({
   control,
   showEditHint = false,
+  intervalMessage,
+  firstDueMessage,
 }: {
   control: Control<T>
   showEditHint?: boolean
+  intervalMessage?: string
+  firstDueMessage?: string
 }) {
   const { t } = useTranslation()
 
@@ -60,7 +65,11 @@ export function PlanSchedulingFields<T extends FieldValues>({
                   {t("pmoc.scheduling.days")}
                 </span>
               </div>
-              <FormMessage />
+              {intervalMessage ? (
+                <LiveFieldMessage message={intervalMessage} />
+              ) : (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
@@ -74,7 +83,11 @@ export function PlanSchedulingFields<T extends FieldValues>({
               <FormControl>
                 <Input type="date" autoComplete="off" {...field} />
               </FormControl>
-              <FormMessage />
+              {firstDueMessage ? (
+                <LiveFieldMessage message={firstDueMessage} />
+              ) : (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />

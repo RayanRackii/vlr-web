@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -228,9 +228,27 @@ describe("PmocPlanDetailPage", () => {
       }),
     )
 
+    const dialog = await screen.findByRole("alertdialog")
+    expect(deletePlanMock).not.toHaveBeenCalled()
+    expect(dialog).toHaveTextContent(i18n.t("pmoc.plans.deleteConfirm.description"))
+    expect(
+      within(dialog).getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.deactivate"),
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.delete"),
+      }),
+    )
+
     expect(
       await screen.findByText(i18n.t("pmoc.plans.errors.planInUse")),
     ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
     expect(
       screen.getByRole("button", {
         name: i18n.t("pmoc.plans.actions.deactivate"),
@@ -418,7 +436,7 @@ describe("PmocPlanDetailPage", () => {
     await user.clear(firstDue)
     await user.type(firstDue, "2026-01-15")
     await user.click(
-      screen.getByRole("button", { name: i18n.t("pmoc.scheduling.save") }),
+      screen.getByRole("button", { name: i18n.t("pmoc.plans.actions.saveDetails") }),
     )
 
     await waitFor(() => {
@@ -430,5 +448,213 @@ describe("PmocPlanDetailPage", () => {
         }),
       )
     })
+  })
+
+  it("saves the plan name and description with the header", async () => {
+    updatePlanMock.mockResolvedValue({
+      ...basePlanJson,
+      name: "Plano revisado",
+      description: "Escopo atualizado",
+    })
+    renderDetail()
+    const user = userEvent.setup()
+
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    await user.clear(name)
+    await user.type(name, "Plano revisado")
+    const description = screen.getByLabelText(i18n.t("pmoc.create.form.description"))
+    await user.clear(description)
+    await user.type(description, "Escopo atualizado")
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.saveDetails"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(updatePlanMock).toHaveBeenCalledWith(
+        PLAN_ID,
+        expect.objectContaining({
+          name: "Plano revisado",
+          description: "Escopo atualizado",
+        }),
+      )
+    })
+  })
+
+  it("shows copied number and single-choice configuration from a template plan", async () => {
+    const choiceId = "99999999-9999-4999-8999-999999999999"
+    getPlanMock.mockResolvedValue({
+      ...basePlanJson,
+      originKind: "RolvixTemplate",
+      sourceTemplateId: TEMPLATE_ID,
+      sourceTemplateVersion: 1,
+      tasks: [
+        {
+          ...basePlanJson.tasks[0]!,
+          title: "Medir",
+          inputType: "Number",
+          configuration: JSON.stringify({ min: 1, max: 10, unit: "bar" }),
+        },
+        {
+          ...basePlanJson.tasks[0]!,
+          id: choiceId,
+          title: "Estado",
+          inputType: "SingleChoice",
+          order: 2,
+          configuration: JSON.stringify({ options: ["Ok", "Revisar"] }),
+        },
+      ],
+    })
+
+    renderDetail()
+
+    expect(await screen.findByLabelText(i18n.t("pmoc.create.tasks.min"))).toHaveValue(1)
+    expect(screen.getByLabelText(i18n.t("pmoc.create.tasks.max"))).toHaveValue(10)
+    expect(screen.getByLabelText(i18n.t("pmoc.create.tasks.unit"))).toHaveValue("bar")
+    expect(
+      screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 1 })),
+    ).toHaveValue("Ok")
+    expect(
+      screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 2 })),
+    ).toHaveValue("Revisar")
+  })
+
+  it("explains why save stays disabled for an empty title, a bad interval, or min greater than max", async () => {
+    renderDetail()
+    const user = userEvent.setup()
+
+    const title = await screen.findByDisplayValue("Verificar filtros")
+    await user.clear(title)
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.saveChecklist"),
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getAllByText(i18n.t("pmoc.create.validation.taskTitleRequired")).length,
+    ).toBeGreaterThan(0)
+
+    const interval = screen.getByRole("spinbutton", {
+      name: i18n.t("pmoc.scheduling.interval"),
+    })
+    await user.clear(interval)
+    await user.type(interval, "0")
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.saveDetails"),
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
+    ).toBeGreaterThan(0)
+
+    await user.type(title, "Medir")
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("pmoc.create.tasks.inputType"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: i18n.t("pmoc.inputType.Number") }),
+    )
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.min")), "8")
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.max")), "2")
+    expect(
+      screen.getAllByText(i18n.t("pmoc.create.validation.numberRangeInvalid")).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.saveChecklist"),
+      }),
+    ).toBeDisabled()
+  })
+
+  it("asks before removing a task and labels the trash button", async () => {
+    renderDetail()
+    const user = userEvent.setup()
+
+    expect(
+      await screen.findByRole("button", {
+        name: i18n.t("pmoc.create.actions.removeTaskNamed", { number: 1 }),
+      }),
+    ).toHaveAttribute(
+      "aria-label",
+      i18n.t("pmoc.create.actions.removeTaskNamed", { number: 1 }),
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("pmoc.create.actions.addTask") }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.create.actions.removeTaskNamed", { number: 2 }),
+      }),
+    )
+
+    const dialog = await screen.findByRole("alertdialog")
+    expect(dialog).toHaveTextContent(
+      i18n.t("pmoc.create.tasks.removeConfirmDescription"),
+    )
+    expect(screen.getAllByText(/Tarefa/)).toHaveLength(2)
+
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("pmoc.create.actions.removeTask"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+    expect(screen.getAllByText(/Tarefa/)).toHaveLength(1)
+  })
+
+  it("hides Gerar OS on an inactive plan and explains why", async () => {
+    getPlanMock.mockResolvedValue({
+      ...basePlanJson,
+      isActive: false,
+      originKind: "RolvixTemplate",
+      sourceTemplateId: TEMPLATE_ID,
+      sourceTemplateVersion: 1,
+      autoGenerateEnabled: false,
+    })
+
+    renderDetail(OS_WRITE_PERMS, ["pmoc", "os"])
+
+    expect(await screen.findByText(basePlanJson.name)).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("pmoc.plans.actions.generateWorkOrder"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("pmoc.plans.generate.inactivePlan")),
+    ).toBeInTheDocument()
+  })
+
+  it("deactivates from the delete confirmation without calling delete", async () => {
+    renderDetail()
+    const user = userEvent.setup()
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("pmoc.plans.actions.delete"),
+      }),
+    )
+    const dialog = await screen.findByRole("alertdialog")
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("pmoc.plans.actions.deactivate"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(updatePlanMock).toHaveBeenCalledWith(
+        PLAN_ID,
+        expect.objectContaining({ isActive: false }),
+      )
+    })
+    expect(deletePlanMock).not.toHaveBeenCalled()
   })
 })

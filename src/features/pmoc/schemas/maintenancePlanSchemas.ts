@@ -209,6 +209,7 @@ export function createPlanFormSchema(messages: {
   numberMinRequired: string
   numberMaxRequired: string
   numberRangeInvalid: string
+  optionsRequired: string
 }) {
   const taskSchema = z
     .object({
@@ -222,19 +223,33 @@ export function createPlanFormSchema(messages: {
       options: z.array(z.string()).optional(),
     })
     .superRefine((task, ctx) => {
-      if (task.inputType !== "Number") {
+      if (task.inputType === "Number") {
+        if (
+          task.min != null &&
+          task.max != null &&
+          task.min > task.max
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["max"],
+            message: messages.numberRangeInvalid,
+          })
+        }
+      }
+
+      if (task.inputType !== "SingleChoice") {
         return
       }
 
-      if (
-        task.min != null &&
-        task.max != null &&
-        task.min > task.max
-      ) {
+      const filledOptions = (task.options ?? [])
+        .map((option) => option.trim())
+        .filter((option) => option.length > 0)
+
+      if (filledOptions.length < 2) {
         ctx.addIssue({
           code: "custom",
-          path: ["max"],
-          message: messages.numberRangeInvalid,
+          path: ["options"],
+          message: messages.optionsRequired,
         })
       }
     })
