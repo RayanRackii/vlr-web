@@ -223,3 +223,41 @@ describe("updateTaskValue online errors", () => {
     )
   })
 })
+
+describe("updateWorkOrderStatus mandatory tasks", () => {
+  beforeEach(() => {
+    apiPatch.mockReset()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("includes the task titles from MANDATORY_TASKS_INCOMPLETE", async () => {
+    apiPatch.mockRejectedValue(
+      axiosError(400, {
+        error: "Mandatory tasks are incomplete.",
+        code: "MANDATORY_TASKS_INCOMPLETE",
+        tasks: [
+          {
+            id: "16161616-1616-4161-8161-161616161616",
+            title: "Verificar filtros",
+          },
+          {
+            id: "17171717-1717-4171-8171-171717171717",
+            title: "Pressão",
+          },
+        ],
+      }),
+    )
+
+    await expect(
+      updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
+    ).rejects.toThrow(
+      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+        tasks: "Verificar filtros, Pressão",
+      }),
+    )
+  })
+})
