@@ -3,32 +3,39 @@ import { describe, expect, it } from "vitest"
 import {
   assetDeleteErrorMessage,
   assetTagConflictMessage,
+  localizeAssetApiError,
 } from "@/features/assets/lib/assetApiErrors"
 import i18n from "@/lib/i18n"
 
+const unexpected = { error: "An unexpected error occurred." }
+
 describe("asset API error copy", () => {
-  it("maps an unexpected create failure to a duplicate tag", () => {
-    expect(
-      assetTagConflictMessage(
-        { error: "An unexpected error occurred." },
-        "fallback",
-      ),
-    ).toBe(i18n.t("assets.inventory.errors.duplicateTag"))
+  it("does not treat the generic 500 message as a duplicate tag", () => {
+    expect(assetTagConflictMessage(500, unexpected, "fallback")).toBe("fallback")
+    expect(assetTagConflictMessage(null, unexpected, "fallback")).toBe("fallback")
   })
 
-  it("maps an unexpected asset delete to work orders", () => {
+  it("does not treat the generic 500 message as a blocked delete", () => {
+    expect(assetDeleteErrorMessage(500, unexpected, "fallback", "asset")).toBe(
+      "fallback",
+    )
+    expect(
+      assetDeleteErrorMessage(500, unexpected, "fallback", "category"),
+    ).toBe("fallback")
     expect(
       assetDeleteErrorMessage(
-        { error: "An unexpected error occurred." },
+        500,
+        { error: "An unexpected error occurred.", code: "ASSET_IN_USE" },
         "fallback",
         "asset",
       ),
-    ).toBe(i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders"))
+    ).toBe("fallback")
   })
 
-  it("maps ASSET_TAG_DUPLICATE and ASSET_IN_USE", () => {
+  it("maps only 409 ASSET_TAG_DUPLICATE, ASSET_IN_USE, and CATEGORY_IN_USE", () => {
     expect(
       assetTagConflictMessage(
+        409,
         {
           error: "An asset with this tag already exists.",
           code: "ASSET_TAG_DUPLICATE",
@@ -37,7 +44,15 @@ describe("asset API error copy", () => {
       ),
     ).toBe(i18n.t("assets.inventory.errors.duplicateTag"))
     expect(
+      assetTagConflictMessage(
+        400,
+        { error: "An asset with this tag already exists.", code: "ASSET_TAG_DUPLICATE" },
+        "fallback",
+      ),
+    ).toBe("fallback")
+    expect(
       assetDeleteErrorMessage(
+        409,
         {
           error:
             "Cannot permanently delete an asset that is referenced by work orders.",
@@ -47,21 +62,9 @@ describe("asset API error copy", () => {
         "asset",
       ),
     ).toBe(i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders"))
-  })
-
-  it("maps a category in use, including the English sentence", () => {
     expect(
       assetDeleteErrorMessage(
-        {
-          error:
-            "Cannot permanently delete an asset category that is referenced by maintenance plans.",
-        },
-        "fallback",
-        "category",
-      ),
-    ).toBe(i18n.t("assets.categories.errors.inUse"))
-    expect(
-      assetDeleteErrorMessage(
+        409,
         {
           error:
             "Cannot permanently delete an asset category that is referenced by maintenance plans.",
@@ -71,5 +74,48 @@ describe("asset API error copy", () => {
         "category",
       ),
     ).toBe(i18n.t("assets.categories.errors.inUse"))
+  })
+
+  it("leaves every other payload on the generic localized error", () => {
+    expect(
+      assetDeleteErrorMessage(
+        409,
+        {
+          error:
+            "Cannot permanently delete an asset category that is referenced by maintenance plans.",
+        },
+        "fallback",
+        "category",
+      ),
+    ).toBe("fallback")
+    expect(
+      assetDeleteErrorMessage(
+        409,
+        { error: "Cannot permanently delete an asset category.", code: "ASSET_IN_USE" },
+        "fallback",
+        "category",
+      ),
+    ).toBe("fallback")
+    expect(
+      assetTagConflictMessage(
+        409,
+        { error: "tags already exist", code: "ASSET_IN_USE" },
+        "fallback",
+      ),
+    ).toBe("fallback")
+    expect(
+      localizeAssetApiError(
+        { error: "An unexpected error occurred." },
+        "fallback",
+        500,
+      ),
+    ).toBe("fallback")
+    expect(
+      localizeAssetApiError(
+        { error: "An asset with this tag already exists.", code: "ASSET_TAG_DUPLICATE" },
+        "fallback",
+        409,
+      ),
+    ).toBe(i18n.t("assets.inventory.errors.duplicateTag"))
   })
 })

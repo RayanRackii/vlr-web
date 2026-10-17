@@ -34,7 +34,11 @@ function throwAssetsError(error: unknown, fallbackKey: string): never {
   }
 
   throw new Error(
-    localizeAssetApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+    localizeAssetApiError(
+      getAxiosErrorPayload(error),
+      i18n.t(fallbackKey),
+      isAxiosError(error) ? (error.response?.status ?? null) : null,
+    ),
   )
 }
 
@@ -92,6 +96,7 @@ export async function createAsset(data: CreateAssetRequest): Promise<Asset> {
 
     throw new Error(
       assetTagConflictMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
         getAxiosErrorPayload(error),
         i18n.t("assets.inventory.errors.createFailed"),
       ),
@@ -121,6 +126,7 @@ export async function updateAsset(
 
     throw new Error(
       assetTagConflictMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
         getAxiosErrorPayload(error),
         i18n.t("assets.inventory.errors.updateFailed"),
       ),
@@ -186,6 +192,7 @@ export async function deleteAsset(id: string): Promise<DeleteAssetResult> {
 
     throw new Error(
       assetDeleteErrorMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
         getAxiosErrorPayload(error),
         i18n.t("assets.inventory.errors.deleteFailed"),
         "asset",
