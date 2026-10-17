@@ -25,7 +25,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
-import { setMany } from "idb-keyval"
+import { set, setMany } from "idb-keyval"
 import { api } from "@/lib/api"
 import {
   clearSyncConflict,
@@ -39,7 +39,19 @@ import {
 } from "@/lib/offlineSync"
 
 const apiPatch = vi.mocked(api.patch)
+const setMock = vi.mocked(set)
 const setManyMock = vi.mocked(setMany)
+
+function readStoredQueue(): OsSyncQueueItem[] {
+  const raw = store.get("os_sync_queue")
+  return Array.isArray(raw) ? (raw as OsSyncQueueItem[]) : []
+}
+
+function networkError(): AxiosError {
+  const error = new AxiosError("Network Error")
+  error.code = "ERR_NETWORK"
+  return error
+}
 
 const otherTaskId = "17171717-1717-4171-8171-171717171717"
 
@@ -305,5 +317,229 @@ describe("processSyncQueue", () => {
     expect(await listQueuedTaskIds()).toEqual([taskId])
     expect(await listSyncConflicts()).toEqual([])
     expect(apiPatch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("commitDirectTaskValuePatch", () => {
+  beforeEach(() => {
+    store.clear()
+    apiPatch.mockReset()
+    setMock.mockClear()
+    setManyMock.mockClear()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+  })
+
+  it("keeps the new value queued and supersedes the old one on 5xx", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+    const previous = readStoredQueue()[0]?.clientSequence ?? 0
+    let duringSend: OsSyncQueueItem[] = []
+
+    const outcome = await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "new" },
+      async () => {
+        duringSend = readStoredQueue()
+        throw axiosError(503, { error: "Unavailable" })
+      },
+    )
+
+    expect(outcome).toEqual({ status: "queued" })
+    expect(duringSend).toEqual([
+      expect.objectContaining({ taskId, value: "new" }),
+    ])
+    const stored = readStoredQueue()
+    expect(stored).toEqual([
+      expect.objectContaining({ taskId, value: "new" }),
+    ])
+    expect(stored[0]?.clientSequence).toBeGreaterThan(previous)
+    expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("keeps the new value queued when the direct patch hits a network error", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+
+    const outcome = await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "new" },
+      async () => {
+        throw networkError()
+      },
+    )
+
+    expect(outcome).toEqual({ status: "queued" })
+    expect(readStoredQueue()).toEqual([
+      expect.objectContaining({ taskId, value: "new" }),
+    ])
+    expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("keeps the old value when the second write fails", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+    const send = vi.fn(async () => "should-not-send")
+    setMock.mockImplementationOnce(async () => {
+      throw new Error("IndexedDB write failed")
+    })
+
+    await expect(
+      commitDirectTaskValuePatch(
+        { workOrderId, taskId, value: "new" },
+        send,
+      ),
+    ).rejects.toThrow("IndexedDB write failed")
+
+    expect(send).not.toHaveBeenCalled()
+    expect(readStoredQueue()).toEqual([
+      expect.objectContaining({ taskId, value: "old" }),
+    ])
+    expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("moves a direct 4xx into the conflict store and surfaces the error", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId: otherTaskId,
+      value: "other",
+    })
+    const error = axiosError(409, {
+      error: "Rejected",
+      code: "WORK_ORDER_CLOSED",
+    })
+
+    await expect(
+      commitDirectTaskValuePatch(
+        { workOrderId, taskId, value: "new" },
+        async () => {
+          throw error
+        },
+      ),
+    ).rejects.toBe(error)
+
+    expect(await listQueuedTaskIds()).toEqual([otherTaskId])
+    expect(await listSyncConflicts()).toEqual([
+      expect.objectContaining({
+        workOrderId,
+        taskId,
+        value: "new",
+        status: 409,
+        message: "Rejected",
+        code: "WORK_ORDER_CLOSED",
+      }),
+    ])
+  })
+
+  it("removes the sent entry and clears the conflict after success", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "stale",
+    })
+    apiPatch.mockRejectedValueOnce(
+      axiosError(409, { error: "Rejected", code: "WORK_ORDER_CLOSED" }),
+    )
+    await processSyncQueue()
+    expect(await listSyncConflicts()).toHaveLength(1)
+
+    let duringSend: OsSyncQueueItem[] = []
+    const outcome = await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "fresh" },
+      async () => {
+        duringSend = readStoredQueue()
+        return { saved: true }
+      },
+    )
+
+    expect(duringSend).toEqual([
+      expect.objectContaining({ taskId, value: "fresh" }),
+    ])
+    expect(outcome).toEqual({ status: "sent", value: { saved: true } })
+    expect(await listQueuedTaskIds()).toEqual([])
+    expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("removes only the sent version when a newer value lands during the request", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+    let newerSequence = 0
+
+    const outcome = await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "sent" },
+      async () => {
+        const sent = readStoredQueue().find((item) => item.taskId === taskId)
+        const sequence = sent?.clientSequence ?? 0
+        newerSequence = sequence + 1
+        store.set("os_sync_queue", [
+          {
+            id: `${workOrderId}:${taskId}`,
+            workOrderId,
+            taskId,
+            value: "newer",
+            queuedAt: "2026-10-17T02:00:00.000Z",
+            clientSequence: newerSequence,
+          },
+        ])
+        return { saved: true }
+      },
+    )
+
+    expect(outcome).toEqual({ status: "sent", value: { saved: true } })
+    expect(readStoredQueue()).toEqual([
+      expect.objectContaining({
+        taskId,
+        value: "newer",
+        clientSequence: newerSequence,
+      }),
+    ])
+  })
+
+  it("still has the new value after a reload simulation following 5xx", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "old",
+    })
+
+    const outcome = await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "kept" },
+      async () => {
+        throw axiosError(503, { error: "Unavailable" })
+      },
+    )
+    expect(outcome).toEqual({ status: "queued" })
+    expect(readStoredQueue()).toEqual([
+      expect.objectContaining({ taskId, value: "kept" }),
+    ])
+
+    vi.resetModules()
+    const reloaded = await import("@/lib/offlineSync")
+    const apiModule = await import("@/lib/api")
+    expect(await reloaded.listQueuedTaskIds()).toEqual([taskId])
+
+    vi.mocked(apiModule.api.patch).mockResolvedValue({ data: {} })
+    const flushed = await reloaded.processSyncQueue()
+
+    expect(flushed.processed).toBe(1)
+    expect(vi.mocked(apiModule.api.patch)).toHaveBeenCalledWith(
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      { value: "kept" },
+    )
+    expect(await reloaded.listQueuedTaskIds()).toEqual([])
   })
 })
