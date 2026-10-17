@@ -124,9 +124,10 @@ type TaskValuePatch = {
 /**
  * Enqueues (or replaces) a pending task-value PATCH.
  * Latest client sequence for the same workOrderId+taskId wins.
- * Caller must already hold `withSyncQueueLock`.
+ * One IndexedDB write: the previous field value and the new one are never
+ * both absent. Caller must already hold `withSyncQueueLock`.
  */
-async function putTaskValuePatch(item: TaskValuePatch): Promise<void> {
+async function putTaskValuePatch(item: TaskValuePatch): Promise<OsSyncQueueItem> {
   const queue = await readSyncQueue()
   const id = createQueueItemId(item.workOrderId, item.taskId)
   const nextItem: OsSyncQueueItem = {
@@ -140,19 +141,7 @@ async function putTaskValuePatch(item: TaskValuePatch): Promise<void> {
 
   const withoutDuplicate = queue.filter((queued) => queued.id !== id)
   await writeSyncQueue([...withoutDuplicate, nextItem])
-}
-
-/** Drops a queued field. Caller must already hold `withSyncQueueLock`. */
-async function discardQueuedTaskValue(
-  workOrderId: string,
-  taskId: string,
-): Promise<void> {
-  const queue = await readSyncQueue()
-  const id = createQueueItemId(workOrderId, taskId)
-  const next = queue.filter((queued) => queued.id !== id)
-  if (next.length !== queue.length) {
-    await writeSyncQueue(next)
-  }
+  return nextItem
 }
 
 export async function enqueueTaskValuePatch(item: TaskValuePatch): Promise<void> {
@@ -247,28 +236,72 @@ type DirectTaskValueResult<T> =
   | { status: "sent"; value: T }
   | { status: "queued" }
 
+function httpConflict(item: OsSyncQueueItem, error: unknown): OsSyncConflict {
+  const body = readApiErrorBody(
+    isAxiosError(error) ? error.response?.data : null,
+  )
+  const status = isAxiosError(error) ? (error.response?.status ?? 400) : 400
+  return {
+    ...item,
+    status,
+    message: body.error ?? body.code ?? "conflict",
+    code: body.code,
+    reason: body.reason,
+  }
+}
+
 /**
- * Online PATCH for one field. Drops any queued value for that field first
- * (this write is the newer client sequence) and holds the queue lock until
- * the request settles, so a stale flush cannot land after it.
- * Network failures are queued. 4xx/5xx propagate with no automatic retry.
+ * Drops one queued version and optionally records a conflict for that field.
+ * Other fields, and a newer version of this field, stay in the queue.
+ * Caller must already hold `withSyncQueueLock`.
+ */
+async function settleQueuedVersion(
+  item: OsSyncQueueItem,
+  conflict: OsSyncConflict | null,
+): Promise<void> {
+  const version = queueVersionKey(item)
+  const latestQueue = await readSyncQueue()
+  const latestConflicts = await readConflicts()
+  const remaining = latestQueue.filter(
+    (queued) => queueVersionKey(queued) !== version,
+  )
+  const nextConflicts = latestConflicts.filter(
+    (existing) => existing.id !== item.id,
+  )
+  if (conflict) {
+    nextConflicts.push(conflict)
+  }
+  await writeQueueAndConflicts(remaining, nextConflicts)
+}
+
+/**
+ * Online PATCH for one field. The new value replaces any queued value for
+ * that field in one write (newer clientSequence) before the request, and
+ * the queue lock is held until the request settles, so a stale flush cannot
+ * land after it. Network and 5xx failures stay queued, same as flush. A 4xx
+ * moves that version into the conflict store and is rethrown. Success
+ * removes only this version and clears the field conflict.
  */
 export async function commitDirectTaskValuePatch<T>(
   item: TaskValuePatch,
   send: () => Promise<T>,
 ): Promise<DirectTaskValueResult<T>> {
   return withSyncQueueLock(async () => {
-    await discardQueuedTaskValue(item.workOrderId, item.taskId)
+    const queued = await putTaskValuePatch(item)
 
     try {
       const value = await send()
-      await clearSyncConflictBody(item.workOrderId, item.taskId)
+      await settleQueuedVersion(queued, null)
       return { status: "sent", value }
     } catch (error: unknown) {
-      if (isNetworkConnectivityError(error)) {
-        console.error("commitDirectTaskValuePatch queued after network error", error)
-        await putTaskValuePatch(item)
+      if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
+        console.error("commitDirectTaskValuePatch kept queued", error)
         return { status: "queued" }
+      }
+
+      if (isClientHttpError(error)) {
+        await settleQueuedVersion(queued, httpConflict(queued, error))
+        throw error
       }
 
       throw error
@@ -382,17 +415,7 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
       }
 
       if (isClientHttpError(error)) {
-        const body = readApiErrorBody(
-          isAxiosError(error) ? error.response?.data : null,
-        )
-        const status = isAxiosError(error) ? (error.response?.status ?? 400) : 400
-        const conflict: OsSyncConflict = {
-          ...item,
-          status,
-          message: body.error ?? body.code ?? "conflict",
-          code: body.code,
-          reason: body.reason,
-        }
+        const conflict = httpConflict(item, error)
         processedKeys.add(queueVersionKey(item))
         upsertedConflicts.set(item.id, conflict)
         continue
