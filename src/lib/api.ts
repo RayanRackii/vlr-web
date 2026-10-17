@@ -11,6 +11,10 @@ import {
   requestPathWithoutQuery,
 } from "@/lib/authSessionLog"
 import { assignBrowserLocation } from "@/lib/browserLocation"
+import {
+  noteTransportFailure,
+  noteTransportSuccess,
+} from "@/lib/connectivity"
 import { supabase } from "@/lib/supabase"
 
 declare module "axios" {
@@ -83,8 +87,28 @@ function createApiClient() {
   })
 }
 
+function noteTransportFromSettled(error: unknown): void {
+  if (isAxiosError(error) && error.response) {
+    noteTransportSuccess()
+    return
+  }
+
+  noteTransportFailure()
+}
+
 /** AllowAnonymous portal/onboarding calls. Never attaches Authorization. */
 export const publicApi = createApiClient()
+
+publicApi.interceptors.response.use(
+  (response) => {
+    noteTransportSuccess()
+    return response
+  },
+  (error: unknown) => {
+    noteTransportFromSettled(error)
+    return Promise.reject(error)
+  },
+)
 
 /** B2B panel: Supabase session JWT only. */
 export const api = createApiClient()
@@ -469,8 +493,13 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    noteTransportSuccess()
+    return response
+  },
   async (error: unknown) => {
+    noteTransportFromSettled(error)
+
     if (!isAxiosError(error) || responseStatus(error) !== 401) {
       return Promise.reject(error)
     }
@@ -582,8 +611,13 @@ customerApi.interceptors.request.use(
 )
 
 customerApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    noteTransportSuccess()
+    return response
+  },
   async (error: unknown): Promise<AxiosResponse> => {
+    noteTransportFromSettled(error)
+
     if (!isAxiosError(error) || responseStatus(error) !== 401) {
       return Promise.reject(error)
     }
