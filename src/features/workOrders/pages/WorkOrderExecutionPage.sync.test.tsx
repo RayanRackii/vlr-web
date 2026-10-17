@@ -24,6 +24,11 @@ vi.mock("idb-keyval", () => ({
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value)
   }),
+  setMany: vi.fn(async (entries: ReadonlyArray<readonly [string, unknown]>) => {
+    for (const [key, value] of entries) {
+      store.set(key, value)
+    }
+  }),
 }))
 
 vi.mock("@/lib/api", async (importOriginal) => {

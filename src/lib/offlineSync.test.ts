@@ -8,6 +8,11 @@ vi.mock("idb-keyval", () => ({
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value)
   }),
+  setMany: vi.fn(async (entries: ReadonlyArray<readonly [string, unknown]>) => {
+    for (const [key, value] of entries) {
+      store.set(key, value)
+    }
+  }),
 }))
 
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -20,17 +25,23 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
+import { setMany } from "idb-keyval"
 import { api } from "@/lib/api"
 import {
   clearSyncConflict,
+  commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
   listQueuedTaskIds,
   listSyncConflicts,
   processSyncQueue,
   retrySyncConflict,
+  type OsSyncQueueItem,
 } from "@/lib/offlineSync"
 
 const apiPatch = vi.mocked(api.patch)
+const setManyMock = vi.mocked(setMany)
+
+const otherTaskId = "17171717-1717-4171-8171-171717171717"
 
 const workOrderId = "99999999-9999-4999-8999-999999999999"
 const taskId = "16161616-1616-4161-8161-161616161616"
@@ -51,6 +62,7 @@ describe("processSyncQueue", () => {
   beforeEach(() => {
     store.clear()
     apiPatch.mockReset()
+    setManyMock.mockClear()
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
   })
 
@@ -76,6 +88,7 @@ describe("processSyncQueue", () => {
     ])
     expect(await listQueuedTaskIds()).toEqual([])
     expect(await listSyncConflicts()).toHaveLength(1)
+    expect(apiPatch).toHaveBeenCalledTimes(1)
   })
 
   it("keeps the queue when the server returns 5xx", async () => {
@@ -144,5 +157,153 @@ describe("processSyncQueue", () => {
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("does not let an in-flight stale flush finish after a newer direct patch", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "stale",
+    })
+
+    let releaseStale: () => void = () => undefined
+    const staleGate = new Promise<void>((resolve) => {
+      releaseStale = resolve
+    })
+    const completed: string[] = []
+
+    apiPatch.mockImplementation(async (_url: string, body: unknown) => {
+      const value =
+        typeof body === "object" && body !== null && "value" in body
+          ? (body as { value?: unknown }).value
+          : null
+      if (value === "stale") {
+        await staleGate
+      }
+      completed.push(typeof value === "string" ? value : "")
+      return { data: {} }
+    })
+
+    const flushPromise = processSyncQueue()
+    await vi.waitUntil(() => apiPatch.mock.calls.length >= 1)
+
+    const directPromise = commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "fresh" },
+      () =>
+        api.patch(`/api/work-orders/${workOrderId}/tasks/${taskId}`, {
+          value: "fresh",
+        }),
+    )
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+    expect(apiPatch.mock.calls).toHaveLength(1)
+    expect(completed).toEqual([])
+
+    releaseStale()
+    await flushPromise
+    await directPromise
+
+    expect(completed).toEqual(["stale", "fresh"])
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("drops a queued value when a newer direct patch is sent first", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "stale",
+    })
+    apiPatch.mockResolvedValue({ data: {} })
+
+    await commitDirectTaskValuePatch(
+      { workOrderId, taskId, value: "fresh" },
+      () =>
+        api.patch(`/api/work-orders/${workOrderId}/tasks/${taskId}`, {
+          value: "fresh",
+        }),
+    )
+    const result = await processSyncQueue()
+
+    expect(result.processed).toBe(0)
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+    expect(apiPatch).toHaveBeenCalledWith(
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      { value: "fresh" },
+    )
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("keeps a queue write that lands while flush is awaiting the network", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "sent",
+    })
+
+    apiPatch.mockImplementation(async () => {
+      const current = store.get("os_sync_queue")
+      const queue = Array.isArray(current) ? (current as OsSyncQueueItem[]) : []
+      const sent = queue.find((item) => item.taskId === taskId)
+      const sequence = sent?.clientSequence ?? 0
+      const newerSameField: OsSyncQueueItem = {
+        id: `${workOrderId}:${taskId}`,
+        workOrderId,
+        taskId,
+        value: "newer-same-field",
+        queuedAt: "2026-10-17T01:00:00.000Z",
+        clientSequence: sequence + 1,
+      }
+      const otherField: OsSyncQueueItem = {
+        id: `${workOrderId}:${otherTaskId}`,
+        workOrderId,
+        taskId: otherTaskId,
+        value: "other",
+        queuedAt: "2026-10-17T01:00:01.000Z",
+        clientSequence: sequence + 2,
+      }
+      store.set("os_sync_queue", [newerSameField, otherField])
+      return { data: {} }
+    })
+
+    const result = await processSyncQueue()
+
+    expect(result.processed).toBe(1)
+    expect(result.remaining).toBe(2)
+    expect(await listQueuedTaskIds()).toEqual([taskId, otherTaskId])
+    const persisted = store.get("os_sync_queue")
+    expect(persisted).toEqual([
+      expect.objectContaining({ taskId, value: "newer-same-field" }),
+      expect.objectContaining({ taskId: otherTaskId, value: "other" }),
+    ])
+  })
+
+  it("keeps the queued 409 when the atomic conflict write fails", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "local",
+    })
+    apiPatch.mockRejectedValue(
+      axiosError(409, { error: "Rejected", code: "WORK_ORDER_CLOSED" }),
+    )
+    setManyMock.mockImplementationOnce(async () => {
+      throw new Error("IndexedDB transaction aborted")
+    })
+
+    await expect(processSyncQueue()).rejects.toThrow(
+      "IndexedDB transaction aborted",
+    )
+
+    expect(setManyMock).toHaveBeenCalledTimes(1)
+    const entries = setManyMock.mock.calls[0]?.[0]
+    expect(entries?.map(([key]) => key)).toEqual([
+      "os_sync_queue",
+      "os_sync_conflicts",
+    ])
+    expect(await listQueuedTaskIds()).toEqual([taskId])
+    expect(await listSyncConflicts()).toEqual([])
+    expect(apiPatch).toHaveBeenCalledTimes(1)
   })
 })
