@@ -2013,6 +2013,7 @@
       "updateTaskFailed": "Could not save the task response.",
       "updateStatusFailed": "Could not update the work order status.",
       "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
+      "mandatoryTasksIncompleteList": "Mandatory tasks are still incomplete: {{tasks}}",
       "assetNotEligible": "This resource is not eligible for this maintenance plan.",
       "assigneeCannotExecute": "The assigned person cannot execute work orders.",
       "workOrderClosed": "This work order is completed or canceled and cannot be changed.",

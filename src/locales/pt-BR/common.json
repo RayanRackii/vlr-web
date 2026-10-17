@@ -2049,6 +2049,7 @@
       "updateTaskFailed": "Não foi possível salvar a resposta da tarefa.",
       "updateStatusFailed": "Não foi possível atualizar o status da OS.",
       "mandatoryTasksIncomplete": "Há tarefas obrigatórias incompletas.",
+      "mandatoryTasksIncompleteList": "Há tarefas obrigatórias incompletas: {{tasks}}",
       "assetNotEligible": "Este recurso não é elegível para este plano de manutenção.",
       "assigneeCannotExecute": "A pessoa designada não pode executar ordens de serviço.",
       "workOrderClosed": "Esta ordem de serviço está concluída ou cancelada e não pode ser alterada.",

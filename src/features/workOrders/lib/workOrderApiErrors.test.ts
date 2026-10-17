@@ -13,6 +13,27 @@ describe("localizeWorkOrderApiError", () => {
     ).toBe(i18n.t("workOrders.errors.mandatoryTasksIncomplete"))
   })
 
+  it("lists the tasks returned with MANDATORY_TASKS_INCOMPLETE", () => {
+    expect(
+      localizeWorkOrderApiError(
+        {
+          error: "Mandatory tasks are incomplete.",
+          code: "MANDATORY_TASKS_INCOMPLETE",
+          tasks: [
+            { id: "16161616-1616-4161-8161-161616161616", title: "Foto do filtro" },
+            { id: "17171717-1717-4171-8171-171717171717", title: " Pressão " },
+            { id: "18181818-1818-4181-8181-181818181818", title: "   " },
+          ],
+        },
+        "fallback",
+      ),
+    ).toBe(
+      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+        tasks: "Foto do filtro, Pressão",
+      }),
+    )
+  })
+
   it("translates an ineligible asset from the sentence, without a code", () => {
     expect(
       localizeWorkOrderApiError(
