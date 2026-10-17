@@ -8,6 +8,7 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,10 +35,15 @@ import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import {
+  BOOKING_HORIZON_DAY_MAX,
+  BOOKING_HORIZON_DAY_MIN,
+} from "@/features/rentals/schemas/bookingPolicySchemas"
+import {
   createRentalResourceFormSchema,
+  type RegistryCategoryListItem,
   type RentalResourceFormValues,
+  type ResourceHorizonMode,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
-import type { RegistryCategoryListItem } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 
 type RentalResourceSheetProps = {
@@ -76,6 +82,12 @@ export function buildRentalResourceFormValues(
     queueEnabled: rentalType === "Location" ? (editing?.queueEnabled ?? false) : false,
     queueOpeningTime: toHtmlTimeInput(editing?.queueOpeningTime),
     location: "",
+    horizonMode:
+      typeof editing?.maxAdvanceBookingDays === "number" ? "days" : "inherit",
+    horizonDays:
+      typeof editing?.maxAdvanceBookingDays === "number"
+        ? String(editing.maxAdvanceBookingDays)
+        : "",
   }
 }
 
@@ -104,6 +116,7 @@ export function RentalResourceSheet({
         queueOpeningTimeRequired: t(
           "rentals.resources.validation.queueOpeningTimeRequired",
         ),
+        horizonRange: t("rentals.resources.validation.horizonRange"),
       }),
     [t],
   )
@@ -131,7 +144,13 @@ export function RentalResourceSheet({
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
   const queueEnabled = watched.queueEnabled ?? false
+  const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
   const isValid = formSchema.safeParse(watched).success
+  const horizonItems = [
+    { value: "inherit", label: t("rentals.resources.form.horizonInherit") },
+    { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
+    { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
+  ]
 
   const unitItems = units.map((unit) => ({ value: unit.id, label: unit.name }))
   const categoryItems = categories.map((category) => ({
@@ -169,6 +188,9 @@ export function RentalResourceSheet({
             className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
             onSubmit={(event) => {
               event.preventDefault()
+              if (readOnly) {
+                return
+              }
               void form.handleSubmit(async (values) => {
                 const ok = await onSubmit(values)
                 if (ok) {
@@ -443,6 +465,88 @@ export function RentalResourceSheet({
                   />
                 ) : null}
               </>
+            ) : null}
+
+            <FormField
+              control={form.control}
+              name="horizonMode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {t("rentals.resources.form.horizonLabel")}
+                  </FormLabel>
+                  <Select
+                    modal={false}
+                    onValueChange={(value) => {
+                      if (
+                        value === "inherit" ||
+                        value === "unlimited" ||
+                        value === "days"
+                      ) {
+                        field.onChange(value)
+                      }
+                    }}
+                    value={field.value}
+                    items={horizonItems}
+                    disabled={readOnly}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {horizonItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {t("rentals.resources.form.horizonHint")}
+                  </FormDescription>
+                  {editing &&
+                  editing.effectiveMaxAdvanceBookingDays !== undefined ? (
+                    <p className="text-sm text-muted-foreground">
+                      {editing.effectiveMaxAdvanceBookingDays === null
+                        ? t(
+                            "rentals.resources.form.horizonEffectiveUnlimited",
+                          )
+                        : t("rentals.resources.form.horizonEffectiveDays", {
+                            count: editing.effectiveMaxAdvanceBookingDays,
+                          })}
+                    </p>
+                  ) : null}
+                </FormItem>
+              )}
+            />
+
+            {horizonMode === "days" ? (
+              <FormField
+                control={form.control}
+                name="horizonDays"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("rentals.resources.form.horizonDays")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        disabled={readOnly}
+                        min={BOOKING_HORIZON_DAY_MIN}
+                        max={BOOKING_HORIZON_DAY_MAX}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("rentals.resources.validation.horizonRange")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             ) : null}
 
             <FormField

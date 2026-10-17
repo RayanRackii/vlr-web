@@ -15,7 +15,9 @@
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Carregando...",
-    "refreshing": "Atualizando..."
+    "refreshing": "Atualizando...",
+    "yes": "Sim",
+    "no": "Não"
   },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
@@ -568,6 +570,17 @@
       "toastUpdated": "Produto atualizado.",
       "toastActivated": "Produto ativado.",
       "toastDeactivated": "Produto desativado.",
+      "deactivateConfirmTitle": "Desativar produto?",
+      "deactivateConfirmBody": "{{name}} deixa de aparecer para novos pedidos. Pedidos já feitos não mudam.",
+      "validation": {
+        "nameRequired": "Informe o nome do produto.",
+        "code": "O código pode ter no máximo 80 caracteres.",
+        "description": "A descrição pode ter no máximo 4000 caracteres.",
+        "currency": "A moeda deve ter 3 letras."
+      },
+      "errors": {
+        "duplicateCode": "Já existe um produto com este código."
+      },
       "toastFileUploaded": "Arquivo enviado.",
       "toastFileDeleted": "Arquivo excluído.",
       "columns": {
@@ -595,7 +608,16 @@
         "sent": "Enviado",
         "error": "Falha no envio",
         "retry": "Tentar novamente",
-        "partialFailure": "Produto salvo, mas alguns arquivos não foram enviados."
+        "partialFailure": "Produto salvo, mas alguns arquivos não foram enviados.",
+        "tooLargeCustomer": "{{name}} passa de 5 MB. Imagens visíveis ao cliente devem ter até 5 MB.",
+        "tooLargeInternal": "{{name}} passa de 25 MB. Arquivos internos devem ter até 25 MB.",
+        "tooLarge": "O arquivo passa do tamanho permitido.",
+        "typeCustomer": "{{name}} não é uma imagem jpeg, png ou webp.",
+        "typeInternal": "{{name}} não é pdf, stl, step, stp ou dxf.",
+        "typeRejected": "Este tipo de arquivo não é aceito.",
+        "contentMismatch": "O conteúdo do arquivo não corresponde ao tipo informado.",
+        "extensionRequired": "{{name}} precisa de uma extensão.",
+        "required": "Selecione um arquivo."
       },
       "gallery": {
         "previous": "Imagem anterior",
@@ -627,6 +649,8 @@
       "rejectedReason": "Motivo da recusa",
       "cancelledReason": "Motivo do cancelamento",
       "toastUpdated": "Pedido atualizado.",
+      "inactiveProductWarningTitle": "Produto inativo no pedido",
+      "inactiveProductWarning": "Estes produtos estão inativos: {{names}}. A aprovação continua disponível.",
       "saving": "Salvando...",
       "columns": {
         "number": "Número",
@@ -1051,7 +1075,7 @@
     "sections": {
       "customers": {
         "title": "Clientes no portal",
-        "description": "Logins no portal B2C ({subdomínio}.rolvix.com.br)."
+        "description": "Logins no portal do cliente deste ambiente."
       },
       "assets": {
         "title": "Recursos",
@@ -1245,6 +1269,9 @@
       "title": "Confirmar exclusão",
       "pendingBadge": "Exclusão Pendente",
       "scheduleWarning": "Esta ação agendará a exclusão do tipo \"{{name}}\" e de todos os {{count}} recursos vinculados para daqui a 30 dias. Digite o nome do tipo para confirmar.",
+      "scheduleWarningNone": "Esta ação agendará a exclusão do tipo \"{{name}}\" para daqui a 30 dias. Não há recursos vinculados. Digite o nome do tipo para confirmar.",
+      "scheduleWarningOne": "Esta ação agendará a exclusão do tipo \"{{name}}\" e do recurso vinculado para daqui a 30 dias. Digite o nome do tipo para confirmar.",
+      "scheduleWarningMany": "Esta ação agendará a exclusão do tipo \"{{name}}\" e de todos os {{count}} recursos vinculados para daqui a 30 dias. Digite o nome do tipo para confirmar.",
       "permanentWarning": "Este item já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
       "assetScheduleWarning": "Esta ação agendará a exclusão do recurso \"{{tag}}\" para daqui a 30 dias. Digite a tag para confirmar.",
       "assetPermanentWarning": "Este recurso já está agendado para exclusão. Deseja excluí-lo permanentemente agora?",
@@ -1360,6 +1387,7 @@
         "createFailed": "Não foi possível criar o tipo.",
         "updateFailed": "Não foi possível atualizar o tipo.",
         "deleteFailed": "Não foi possível excluir o tipo.",
+        "inUse": "Não é possível excluir este tipo porque ele está em uso.",
         "invalidResponse": "Resposta inválida da API."
       }
     },
@@ -1414,6 +1442,7 @@
         "bulkDeleteCount": "Excluir em lote ({{count}})",
         "selectAll": "Selecionar todos",
         "selectRow": "Selecionar {{tag}}",
+        "rowMenu": "Ações de {{tag}}",
         "create": "Criar",
         "creating": "Criando..."
       },
@@ -1498,7 +1527,9 @@
         "deleteFailed": "Não foi possível excluir o recurso.",
         "invalidResponse": "Resposta inválida da API.",
         "invalidUnitsResponse": "Resposta inválida ao carregar unidades.",
-        "updateFailed": "Não foi possível atualizar o recurso."
+        "updateFailed": "Não foi possível atualizar o recurso.",
+        "duplicateTag": "Já existe um recurso com esta tag.",
+        "deleteBlockedByWorkOrders": "Não é possível excluir este recurso porque ele tem ordens de serviço."
       },
       "flags": {
         "rentable": "Aluguel",
@@ -1695,6 +1726,7 @@
         "delete": "Excluir plano",
         "deactivate": "Desativar plano",
         "saveChecklist": "Salvar checklist",
+        "saveDetails": "Salvar dados do plano",
         "saving": "Salvando...",
         "generateWorkOrder": "Gerar OS",
         "generating": "Gerando..."
@@ -1763,6 +1795,10 @@
           "invalidResponse": "Resposta inválida da API."
         }
       },
+      "deleteConfirm": {
+        "title": "Excluir plano?",
+        "description": "As ordens de serviço já geradas mantêm o snapshot do checklist. Um plano que já tem ordens de serviço não pode ser excluído; desative-o."
+      },
       "generate": {
         "dialogTitle": "Gerar OS",
         "dialogDescription": "Escolha o ativo e a data. O técnico é opcional.",
@@ -1770,9 +1806,13 @@
         "success": "Ordem de serviço gerada.",
         "viewWorkOrder": "Abrir OS",
         "emptyAssets": "Não há ativos ativos nesta unidade e categoria para gerar uma OS.",
+        "inactivePlan": "Este plano está inativo. Ative-o para gerar uma ordem de serviço.",
+        "noTechnicians": "Nenhum técnico disponível. A ordem de serviço fica sem atribuição.",
+        "techniciansLoadFailed": "Não foi possível carregar os técnicos. A ordem de serviço pode ser gerada sem atribuição.",
         "errors": {
           "duplicate": "Já existe uma ordem de serviço ativa para este plano, ativo e período. Altere o ativo ou a data.",
           "generateFailed": "Não foi possível gerar a ordem de serviço.",
+          "planInactive": "O plano de manutenção não está ativo.",
           "loadLookupsFailed": "Não foi possível carregar ativos e técnicos."
         }
       },
@@ -1835,6 +1875,7 @@
         "back": "Voltar",
         "addTask": "Adicionar tarefa",
         "removeTask": "Remover tarefa",
+        "removeTaskNamed": "Remover tarefa {{number}}",
         "save": "Salvar plano",
         "saving": "Salvando..."
       },
@@ -1856,7 +1897,14 @@
         "inputType": "Tipo de entrada",
         "isMandatory": "Obrigatório",
         "min": "Mínimo",
-        "max": "Máximo"
+        "max": "Máximo",
+        "unit": "Unidade de medida",
+        "options": "Opções",
+        "optionLabel": "Opção {{number}}",
+        "addOption": "Adicionar opção",
+        "removeOption": "Remover opção {{number}}",
+        "removeConfirmTitle": "Remover tarefa?",
+        "removeConfirmDescription": "A tarefa sai deste plano ao salvar. Ordens de serviço já geradas mantêm o snapshot do checklist."
       },
       "validation": {
         "unitRequired": "A unidade é obrigatória.",
@@ -1866,7 +1914,8 @@
         "tasksRequired": "Adicione pelo menos uma tarefa.",
         "numberMinRequired": "Informe o valor mínimo.",
         "numberMaxRequired": "Informe o valor máximo.",
-        "numberRangeInvalid": "O máximo deve ser maior ou igual ao mínimo."
+        "numberRangeInvalid": "O máximo deve ser maior ou igual ao mínimo.",
+        "optionsRequired": "Informe pelo menos duas opções preenchidas."
       },
       "success": {
         "created": "Plano criado com sucesso."
@@ -1901,12 +1950,14 @@
     "tabs": {
       "Pending": "Pendentes",
       "InProgress": "Em Andamento",
-      "Completed": "Concluídas"
+      "Completed": "Concluídas",
+      "Canceled": "Canceladas"
     },
     "empty": {
       "Pending": "Nenhuma OS pendente.",
       "InProgress": "Nenhuma OS em andamento.",
-      "Completed": "Nenhuma OS concluída."
+      "Completed": "Nenhuma OS concluída.",
+      "Canceled": "Nenhuma OS cancelada."
     },
     "columns": {
       "id": "ID da OS",
@@ -1976,7 +2027,14 @@
       "numberPlaceholder": "Informe o valor",
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Selecione uma opção",
+      "choiceEmpty": "Nenhuma opção foi configurada para esta tarefa.",
       "imageUploadSoon": "Upload de Foto (Em Breve)",
+      "imageUnsupported": "Envio de imagem ainda não suportado",
+      "imageUnsupportedDetail": "Ainda não há envio de arquivo para esta tarefa. Se ela não for obrigatória, a conclusão das demais segue. Se for obrigatória, o servidor ainda pode recusar a finalização até existir envio de arquivo.",
+      "notes": "Observações",
+      "noNotes": "Sem observações.",
+      "completedDate": "Concluída em",
+      "notCompleted": "Ainda não concluída",
       "start": "Iniciar OS",
       "complete": "Finalizar OS",
       "startedSuccess": "OS iniciada com sucesso.",
@@ -1989,11 +2047,38 @@
       "loadOneFailed": "Não foi possível carregar a ordem de serviço.",
       "invalidResponse": "Resposta inválida da API.",
       "updateTaskFailed": "Não foi possível salvar a resposta da tarefa.",
-      "updateStatusFailed": "Não foi possível atualizar o status da OS."
+      "updateStatusFailed": "Não foi possível atualizar o status da OS.",
+      "mandatoryTasksIncomplete": "Há tarefas obrigatórias incompletas.",
+      "mandatoryTasksIncompleteList": "Há tarefas obrigatórias incompletas: {{tasks}}",
+      "assetNotEligible": "Este recurso não é elegível para este plano de manutenção.",
+      "assigneeCannotExecute": "A pessoa designada não pode executar ordens de serviço.",
+      "workOrderClosed": "Esta ordem de serviço está concluída ou cancelada e não pode ser alterada.",
+      "reopenNotAllowed": "Uma ordem de serviço concluída não pode ser reaberta.",
+      "taskValue": {
+        "invalid": "O valor informado não é válido para esta tarefa.",
+        "notANumber": "Informe um número.",
+        "outOfRange": "O número está fora do intervalo permitido.",
+        "notAnOption": "Escolha uma das opções da lista.",
+        "invalidCheckbox": "Marque ou desmarque a tarefa.",
+        "textTooLong": "O texto passa do tamanho permitido.",
+        "invalidConfiguration": "Esta tarefa está configurada de forma inválida."
+      }
     },
     "offline": {
       "title": "Modo Offline",
-      "banner": "Modo Offline: Alterações sendo salvas localmente."
+      "banner": "Modo Offline: Alterações sendo salvas localmente.",
+      "waitingToSync": "Aguardando sincronizar",
+      "startFailed": "Sem conexão. Não foi possível iniciar a ordem de serviço.",
+      "statusFailed": "Sem conexão. Não foi possível atualizar o status da ordem de serviço.",
+      "conflictTitle": "Conflito ao sincronizar",
+      "conflictBody": "Uma alteração salva offline foi recusada pelo servidor e permanece visível para correção.",
+      "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Valor salvo offline: {{value}}",
+      "conflictUnknownField": "Tarefa",
+      "discard": "Descartar",
+      "discardNamed": "Descartar {{field}}",
+      "retry": "Tentar novamente",
+      "retryNamed": "Tentar novamente {{field}}"
     }
   },
   "users": {
@@ -2692,7 +2777,14 @@
       "removeSuccess": "Aula removida nesta data.",
       "changeError": "Não foi possível alterar a aula. Verifique se há uma reserva ou conflito.",
       "pastDateAdjusted": "A data do link já passou. Os horários abaixo são de hoje.",
-      "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos."
+      "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos.",
+      "loadingTimes": "Carregando os horários deste recurso.",
+      "timesError": "Não foi possível carregar os horários deste recurso.",
+      "retryTimes": "Tentar novamente",
+      "closedDay": "Este recurso está fechado nesta data.",
+      "noHours": "Nenhum horário configurado para este dia da semana.",
+      "noHoursHint": "Os horários recorrentes deste recurso ficam em {{screen}}.",
+      "noneOpen": "Não há horário aberto nesta data. Os intervalos existentes já estão reservados ou são aulas."
     },
     "schedule": {
       "title": "Escala / agenda",
@@ -2915,7 +3007,15 @@
         "queueEnabled": "Fila de reservas",
         "queueOpeningTime": "Horário de abertura da fila",
         "location": "Localização",
-        "locationPlaceholder": "Ex.: Bloco A"
+        "locationPlaceholder": "Ex.: Bloco A",
+        "horizonLabel": "Horizonte de reserva deste recurso",
+        "horizonInherit": "Usar o padrão do ambiente",
+        "horizonUnlimited": "Ilimitado",
+        "horizonDaysMode": "Número de dias",
+        "horizonDays": "Dias à frente",
+        "horizonHint": "Usar o padrão do ambiente segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
+        "horizonEffectiveUnlimited": "Em vigor: ilimitado (sem limite).",
+        "horizonEffectiveDays": "Em vigor: {{count}} dias à frente."
       },
       "validation": {
         "nameRequired": "Informe o nome.",
@@ -2924,7 +3024,8 @@
         "categoryRequired": "Selecione o tipo.",
         "familyRequired": "Selecione a família.",
         "quantityMin": "A quantidade deve ser pelo menos 1.",
-        "queueOpeningTimeRequired": "Informe o horário de abertura da fila."
+        "queueOpeningTimeRequired": "Informe o horário de abertura da fila.",
+        "horizonRange": "Informe um inteiro de 0 a 3650."
       }
     },
     "layout": {
@@ -2980,7 +3081,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina o texto de cancelamento e o limite diário de reservas ativas por cliente. Vale para todos os tipos de recurso deste ambiente.",
+      "description": "Defina o texto de cancelamento, até quantos dias à frente o cliente pode reservar um recurso e o limite diário de reservas ativas por cliente. Vale para todos os recursos deste ambiente.",
       "cancellationLabel": "Texto de cancelamento",
       "cancellationHint": "Texto simples, sem formatação. Até 2000 caracteres. Em branco, o portal mostra uma nota neutra: o horário volta a ficar disponível e a pessoa deve consultar as regras.",
       "cancellationPlaceholder": "Texto simples exibido ao cancelar uma reserva.",
@@ -2988,6 +3089,12 @@
       "dailyLimitToggle": "Limitar reservas ativas por cliente por dia",
       "dailyLimitHint": "Conta reservas pendentes de depósito e confirmadas que começam no mesmo dia. Desligado significa sem limite.",
       "dailyLimitValue": "Máximo por dia",
+      "horizonLabel": "Até quantos dias à frente o cliente pode reservar",
+      "horizonUnlimited": "Ilimitado",
+      "horizonDaysMode": "Número de dias",
+      "horizonDays": "Dias à frente",
+      "horizonHintUnlimited": "Ilimitado significa sem limite para reservar um recurso.",
+      "horizonHintDays": "Uma data até esse número de dias à frente é aceita. O dia seguinte é recusado (booking_horizon_exceeded).",
       "save": "Salvar",
       "saved": "Política de reservas salva.",
       "loadError": "Não foi possível carregar a política de reservas.",
@@ -2996,7 +3103,8 @@
       "retry": "Tentar novamente",
       "validation": {
         "textMax": "O texto pode ter no máximo 2000 caracteres.",
-        "limitRange": "Informe um inteiro de 1 a 100."
+        "limitRange": "Informe um inteiro de 1 a 100.",
+        "horizonRange": "Informe um inteiro de 0 a 3650."
       }
     }
   }

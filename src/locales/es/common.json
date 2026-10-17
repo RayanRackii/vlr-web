@@ -15,7 +15,9 @@
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando...",
-    "refreshing": "Actualizando..."
+    "refreshing": "Actualizando...",
+    "yes": "Sí",
+    "no": "No"
   },
   "apiErrors": {
     "invalidResponse": "Respuesta inválida de la API.",
@@ -568,6 +570,17 @@
       "toastUpdated": "Producto actualizado.",
       "toastActivated": "Producto activado.",
       "toastDeactivated": "Producto desactivado.",
+      "deactivateConfirmTitle": "¿Desactivar producto?",
+      "deactivateConfirmBody": "{{name}} deja de aparecer en pedidos nuevos. Los pedidos ya hechos no cambian.",
+      "validation": {
+        "nameRequired": "Indique el nombre del producto.",
+        "code": "El código puede tener como máximo 80 caracteres.",
+        "description": "La descripción puede tener como máximo 4000 caracteres.",
+        "currency": "La moneda debe tener 3 letras."
+      },
+      "errors": {
+        "duplicateCode": "Ya existe un producto con este código."
+      },
       "toastFileUploaded": "Archivo enviado.",
       "toastFileDeleted": "Archivo eliminado.",
       "columns": {
@@ -595,7 +608,16 @@
         "sent": "Enviado",
         "error": "Error al enviar",
         "retry": "Reintentar",
-        "partialFailure": "Producto guardado, pero algunos archivos no se enviaron."
+        "partialFailure": "Producto guardado, pero algunos archivos no se enviaron.",
+        "tooLargeCustomer": "{{name}} supera 5 MB. Las imágenes visibles al cliente deben tener hasta 5 MB.",
+        "tooLargeInternal": "{{name}} supera 25 MB. Los archivos internos deben tener hasta 25 MB.",
+        "tooLarge": "El archivo supera el tamaño permitido.",
+        "typeCustomer": "{{name}} no es una imagen jpeg, png o webp.",
+        "typeInternal": "{{name}} no es pdf, stl, step, stp o dxf.",
+        "typeRejected": "Este tipo de archivo no se acepta.",
+        "contentMismatch": "El contenido del archivo no coincide con el tipo indicado.",
+        "extensionRequired": "{{name}} necesita una extensión.",
+        "required": "Seleccione un archivo."
       },
       "gallery": {
         "previous": "Imagen anterior",
@@ -627,6 +649,8 @@
       "rejectedReason": "Motivo del rechazo",
       "cancelledReason": "Motivo de la cancelación",
       "toastUpdated": "Pedido actualizado.",
+      "inactiveProductWarningTitle": "Producto inactivo en el pedido",
+      "inactiveProductWarning": "Estos productos están inactivos: {{names}}. La aprobación sigue disponible.",
       "saving": "Guardando...",
       "columns": {
         "number": "Número",
@@ -1051,7 +1075,7 @@
     "sections": {
       "customers": {
         "title": "Clientes del portal",
-        "description": "Inicios de sesión en el portal B2C ({subdominio}.rolvix.com.br)."
+        "description": "Inicios de sesión en el portal de clientes de este entorno."
       },
       "assets": {
         "title": "Recursos",
@@ -1245,6 +1269,9 @@
       "title": "Confirmar eliminación",
       "pendingBadge": "Eliminación pendiente",
       "scheduleWarning": "Esta acción programará la eliminación del tipo \"{{name}}\" y de todos los {{count}} recursos vinculados dentro de 30 días. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningNone": "Esta acción programará la eliminación del tipo \"{{name}}\" dentro de 30 días. No hay recursos vinculados. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningOne": "Esta acción programará la eliminación del tipo \"{{name}}\" y del recurso vinculado dentro de 30 días. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningMany": "Esta acción programará la eliminación del tipo \"{{name}}\" y de todos los {{count}} recursos vinculados dentro de 30 días. Escriba el nombre del tipo para confirmar.",
       "permanentWarning": "Este elemento ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
       "assetScheduleWarning": "Esta acción programará la eliminación del recurso \"{{tag}}\" dentro de 30 días. Escriba la tag para confirmar.",
       "assetPermanentWarning": "Este recurso ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
@@ -1342,6 +1369,7 @@
         "createFailed": "No se pudo crear el tipo.",
         "updateFailed": "No se pudo actualizar el tipo.",
         "deleteFailed": "No se pudo eliminar el tipo.",
+        "inUse": "No se puede eliminar este tipo porque está en uso.",
         "invalidResponse": "Respuesta inválida de la API."
       }
     },
@@ -1384,6 +1412,7 @@
         "bulkDeleteCount": "Eliminar en lote ({{count}})",
         "selectAll": "Seleccionar todos",
         "selectRow": "Seleccionar {{tag}}",
+        "rowMenu": "Acciones de {{tag}}",
         "create": "Crear",
         "creating": "Creando..."
       },
@@ -1462,7 +1491,9 @@
         "deleteFailed": "No se pudo eliminar el recurso.",
         "invalidResponse": "Respuesta inválida de la API.",
         "invalidUnitsResponse": "Respuesta inválida al cargar unidades.",
-        "updateFailed": "No se pudo actualizar el recurso."
+        "updateFailed": "No se pudo actualizar el recurso.",
+        "duplicateTag": "Ya existe un recurso con esta etiqueta.",
+        "deleteBlockedByWorkOrders": "No se puede eliminar este recurso porque tiene órdenes de trabajo."
       },
       "flags": {
         "rentable": "Alquiler",
@@ -1659,6 +1690,7 @@
         "delete": "Eliminar plan",
         "deactivate": "Desactivar plan",
         "saveChecklist": "Guardar checklist",
+        "saveDetails": "Guardar datos del plan",
         "saving": "Guardando...",
         "generateWorkOrder": "Generar OT",
         "generating": "Generando..."
@@ -1727,6 +1759,10 @@
           "invalidResponse": "Respuesta inválida de la API."
         }
       },
+      "deleteConfirm": {
+        "title": "¿Eliminar plan?",
+        "description": "Las órdenes de trabajo ya generadas conservan el snapshot del checklist. Un plan que ya tiene órdenes de trabajo no se puede eliminar; desactívelo."
+      },
       "generate": {
         "dialogTitle": "Generar OT",
         "dialogDescription": "Elija el activo y la fecha. El técnico es opcional.",
@@ -1734,9 +1770,13 @@
         "success": "Orden de trabajo generada.",
         "viewWorkOrder": "Abrir OT",
         "emptyAssets": "No hay activos activos en esta unidad y categoría para generar una orden de trabajo.",
+        "inactivePlan": "Este plan está inactivo. Actívelo para generar una orden de trabajo.",
+        "noTechnicians": "No hay técnicos disponibles. La orden de trabajo queda sin asignación.",
+        "techniciansLoadFailed": "No se pudieron cargar los técnicos. La orden de trabajo puede generarse sin asignación.",
         "errors": {
           "duplicate": "Ya existe una orden de trabajo activa para este plan, activo y período. Cambie el activo o la fecha.",
           "generateFailed": "No se pudo generar la orden de trabajo.",
+          "planInactive": "El plan de mantenimiento no está activo.",
           "loadLookupsFailed": "No se pudieron cargar los activos y técnicos."
         }
       },
@@ -1799,6 +1839,7 @@
         "back": "Volver",
         "addTask": "Agregar tarea",
         "removeTask": "Eliminar tarea",
+        "removeTaskNamed": "Eliminar tarea {{number}}",
         "save": "Guardar plan",
         "saving": "Guardando..."
       },
@@ -1820,7 +1861,14 @@
         "inputType": "Tipo de entrada",
         "isMandatory": "Obligatorio",
         "min": "Mínimo",
-        "max": "Máximo"
+        "max": "Máximo",
+        "unit": "Unidad de medida",
+        "options": "Opciones",
+        "optionLabel": "Opción {{number}}",
+        "addOption": "Agregar opción",
+        "removeOption": "Eliminar opción {{number}}",
+        "removeConfirmTitle": "¿Eliminar tarea?",
+        "removeConfirmDescription": "La tarea sale de este plan al guardar. Las órdenes de trabajo ya generadas conservan el snapshot del checklist."
       },
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
@@ -1830,7 +1878,8 @@
         "tasksRequired": "Agregue al menos una tarea.",
         "numberMinRequired": "Ingrese el valor mínimo.",
         "numberMaxRequired": "Ingrese el valor máximo.",
-        "numberRangeInvalid": "El máximo debe ser mayor o igual al mínimo."
+        "numberRangeInvalid": "El máximo debe ser mayor o igual al mínimo.",
+        "optionsRequired": "Indique al menos dos opciones completas."
       },
       "success": {
         "created": "Plan creado con éxito."
@@ -1865,12 +1914,14 @@
     "tabs": {
       "Pending": "Pendientes",
       "InProgress": "En Curso",
-      "Completed": "Completadas"
+      "Completed": "Completadas",
+      "Canceled": "Canceladas"
     },
     "empty": {
       "Pending": "No hay OT pendientes.",
       "InProgress": "No hay OT en curso.",
-      "Completed": "No hay OT completadas."
+      "Completed": "No hay OT completadas.",
+      "Canceled": "No hay OT canceladas."
     },
     "columns": {
       "id": "ID de OT",
@@ -1940,7 +1991,14 @@
       "numberPlaceholder": "Ingrese el valor",
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Seleccione una opción",
+      "choiceEmpty": "No hay opciones configuradas para esta tarea.",
       "imageUploadSoon": "Carga de Foto (Pronto)",
+      "imageUnsupported": "El envío de imagen aún no está soportado",
+      "imageUnsupportedDetail": "Todavía no hay envío de archivo para esta tarea. Si no es obligatoria, las demás pueden completarse. Si es obligatoria, el servidor aún puede rechazar la finalización hasta que exista el envío de archivo.",
+      "notes": "Observaciones",
+      "noNotes": "Sin observaciones.",
+      "completedDate": "Completada el",
+      "notCompleted": "Aún no completada",
       "start": "Iniciar OT",
       "complete": "Finalizar OT",
       "startedSuccess": "OT iniciada con éxito.",
@@ -1953,11 +2011,38 @@
       "loadOneFailed": "No se pudo cargar la orden de trabajo.",
       "invalidResponse": "Respuesta inválida de la API.",
       "updateTaskFailed": "No se pudo guardar la respuesta de la tarea.",
-      "updateStatusFailed": "No se pudo actualizar el estado de la OT."
+      "updateStatusFailed": "No se pudo actualizar el estado de la OT.",
+      "mandatoryTasksIncomplete": "Hay tareas obligatorias incompletas.",
+      "mandatoryTasksIncompleteList": "Hay tareas obligatorias incompletas: {{tasks}}",
+      "assetNotEligible": "Este recurso no es elegible para este plan de mantenimiento.",
+      "assigneeCannotExecute": "La persona asignada no puede ejecutar órdenes de trabajo.",
+      "workOrderClosed": "Esta orden de trabajo está finalizada o cancelada y no se puede cambiar.",
+      "reopenNotAllowed": "Una orden de trabajo finalizada no se puede reabrir.",
+      "taskValue": {
+        "invalid": "El valor no es válido para esta tarea.",
+        "notANumber": "Ingrese un número.",
+        "outOfRange": "El número está fuera del intervalo permitido.",
+        "notAnOption": "Elija una de las opciones de la lista.",
+        "invalidCheckbox": "Marque o desmarque la tarea.",
+        "textTooLong": "El texto supera el tamaño permitido.",
+        "invalidConfiguration": "Esta tarea está configurada de forma inválida."
+      }
     },
     "offline": {
       "title": "Modo Sin Conexión",
-      "banner": "Modo Sin Conexión: Los cambios se están guardando localmente."
+      "banner": "Modo Sin Conexión: Los cambios se están guardando localmente.",
+      "waitingToSync": "Esperando sincronizar",
+      "startFailed": "Sin conexión. No se pudo iniciar la orden de trabajo.",
+      "statusFailed": "Sin conexión. No se pudo actualizar el estado de la orden de trabajo.",
+      "conflictTitle": "Conflicto al sincronizar",
+      "conflictBody": "Un cambio guardado sin conexión fue rechazado por el servidor y sigue visible para corregirlo.",
+      "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Valor guardado sin conexión: {{value}}",
+      "conflictUnknownField": "Tarea",
+      "discard": "Descartar",
+      "discardNamed": "Descartar {{field}}",
+      "retry": "Reintentar",
+      "retryNamed": "Reintentar {{field}}"
     }
   },
   "users": {
@@ -2656,7 +2741,14 @@
       "removeSuccess": "Clase eliminada para esta fecha.",
       "changeError": "No se pudo cambiar la clase. Compruebe si hay una reserva o conflicto.",
       "pastDateAdjusted": "La fecha del enlace ya pasó. Los horarios de abajo son de hoy.",
-      "pastSlotsHidden": "Los horarios que ya empezaron hoy quedan ocultos."
+      "pastSlotsHidden": "Los horarios que ya empezaron hoy quedan ocultos.",
+      "loadingTimes": "Cargando los horarios de este recurso.",
+      "timesError": "No se pudieron cargar los horarios de este recurso.",
+      "retryTimes": "Intentar de nuevo",
+      "closedDay": "Este recurso está cerrado en esta fecha.",
+      "noHours": "No hay horarios configurados para este día de la semana.",
+      "noHoursHint": "Los horarios recurrentes de este recurso se definen en {{screen}}.",
+      "noneOpen": "No hay horario abierto en esta fecha. Los intervalos existentes ya están reservados o son clases."
     },
     "schedule": {
       "title": "Escala / agenda",
@@ -2879,7 +2971,15 @@
         "queueEnabled": "Fila de reservas",
         "queueOpeningTime": "Hora de apertura de la fila",
         "location": "Ubicación",
-        "locationPlaceholder": "Ej.: Bloque A"
+        "locationPlaceholder": "Ej.: Bloque A",
+        "horizonLabel": "Horizonte de reserva de este recurso",
+        "horizonInherit": "Usar el valor del ambiente",
+        "horizonUnlimited": "Ilimitado",
+        "horizonDaysMode": "Número de días",
+        "horizonDays": "Días adelante",
+        "horizonHint": "Usar el valor del ambiente sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
+        "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
+        "horizonEffectiveDays": "En vigor: {{count}} días adelante."
       },
       "validation": {
         "nameRequired": "Informe el nombre.",
@@ -2888,7 +2988,8 @@
         "categoryRequired": "Seleccione el tipo.",
         "familyRequired": "Seleccione la familia.",
         "quantityMin": "La cantidad debe ser al menos 1.",
-        "queueOpeningTimeRequired": "Informe la hora de apertura de la fila."
+        "queueOpeningTimeRequired": "Informe la hora de apertura de la fila.",
+        "horizonRange": "Indique un entero de 0 a 3650."
       }
     },
     "layout": {
@@ -2944,7 +3045,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina el texto de cancelación y el límite diario de reservas activas por cliente. Vale para todos los tipos de recurso de este ambiente.",
+      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente.",
       "cancellationLabel": "Texto de cancelación",
       "cancellationHint": "Texto simple, sin formato. Hasta 2000 caracteres. En blanco, el portal muestra una nota neutra: el horario vuelve a quedar disponible y la persona debe consultar las reglas.",
       "cancellationPlaceholder": "Texto simple que se muestra al cancelar una reserva.",
@@ -2952,6 +3053,12 @@
       "dailyLimitToggle": "Limitar reservas activas por cliente por día",
       "dailyLimitHint": "Cuenta reservas pendientes de depósito y confirmadas que empiezan el mismo día. Desactivado significa sin límite.",
       "dailyLimitValue": "Máximo por día",
+      "horizonLabel": "Hasta cuántos días adelante el cliente puede reservar",
+      "horizonUnlimited": "Ilimitado",
+      "horizonDaysMode": "Número de días",
+      "horizonDays": "Días adelante",
+      "horizonHintUnlimited": "Ilimitado significa que no hay límite para reservar un recurso.",
+      "horizonHintDays": "Se acepta una fecha hasta ese número de días adelante. El día siguiente se rechaza (booking_horizon_exceeded).",
       "save": "Guardar",
       "saved": "Política de reservas guardada.",
       "loadError": "No se pudo cargar la política de reservas.",
@@ -2960,7 +3067,8 @@
       "retry": "Intentar de nuevo",
       "validation": {
         "textMax": "El texto puede tener como máximo 2000 caracteres.",
-        "limitRange": "Indique un entero de 1 a 100."
+        "limitRange": "Indique un entero de 1 a 100.",
+        "horizonRange": "Indique un entero de 0 a 3650."
       }
     }
   }

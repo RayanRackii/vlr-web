@@ -4,6 +4,7 @@ import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
 import {
   generateWorkOrderFromPlanRequestSchema,
+  parseSingleChoiceConfiguration,
   workOrderSchema,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 
@@ -42,5 +43,36 @@ describe("generateWorkOrderFromPlanRequestSchema", () => {
       assignedUserId: null,
       scheduledDate: "2026-09-18",
     })
+  })
+})
+
+describe("parseSingleChoiceConfiguration", () => {
+  it("reads string options, object options, choices, and a double-encoded payload", () => {
+    expect(
+      parseSingleChoiceConfiguration(JSON.stringify({ options: [" Ok ", ""] })),
+    ).toEqual({ options: ["Ok"] })
+
+    expect(
+      parseSingleChoiceConfiguration(
+        JSON.stringify({
+          options: [{ label: "Bom" }, { value: "Ruim" }],
+        }),
+      ),
+    ).toEqual({ options: ["Bom", "Ruim"] })
+
+    expect(
+      parseSingleChoiceConfiguration(
+        JSON.stringify({ choices: ["A", "B"] }),
+      ),
+    ).toEqual({ options: ["A", "B"] })
+
+    expect(
+      parseSingleChoiceConfiguration(
+        JSON.stringify(JSON.stringify({ options: ["Duplo"] })),
+      ),
+    ).toEqual({ options: ["Duplo"] })
+
+    expect(parseSingleChoiceConfiguration(null)).toBeNull()
+    expect(parseSingleChoiceConfiguration("{")).toBeNull()
   })
 })

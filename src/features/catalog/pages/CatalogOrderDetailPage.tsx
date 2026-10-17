@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,6 +42,7 @@ import {
   cancelCatalogOrder,
   completeCatalogOrder,
   getCatalogOrder,
+  listCatalogProducts,
   markCatalogOrderReady,
   rejectCatalogOrder,
   startPreparingCatalogOrder,
@@ -57,6 +59,10 @@ export function CatalogOrderDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busyAction, setBusyAction] = useState<B2BOrderAction | null>(null)
   const [reasonAction, setReasonAction] = useState<"reject" | "cancel" | null>(
+    null,
+  )
+  const [inactiveProductNames, setInactiveProductNames] = useState<string[]>([])
+  const [inactiveForOrderId, setInactiveForOrderId] = useState<string | null>(
     null,
   )
 
@@ -89,6 +95,46 @@ export function CatalogOrderDetailPage() {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load when id changes
   }, [orderId])
+
+  useEffect(() => {
+    if (!order || !B2B_ORDER_ACTIONS[order.status].includes("approve")) {
+      return
+    }
+
+    const orderIdForLookup = order.id
+    let cancelled = false
+    void listCatalogProducts()
+      .then((products) => {
+        if (cancelled) {
+          return
+        }
+        const inactiveIds = new Set(
+          products
+            .filter((product) => !product.isActive)
+            .map((product) => product.id),
+        )
+        setInactiveForOrderId(orderIdForLookup)
+        setInactiveProductNames(
+          order.items
+            .filter((item) => inactiveIds.has(item.productId))
+            .map((item) => item.productName),
+        )
+      })
+      .catch((error: unknown) => {
+        console.error("CatalogOrderDetailPage inactive products failed", error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [order])
+
+  const inactiveNamesForApproval =
+    order != null &&
+    inactiveForOrderId === order.id &&
+    B2B_ORDER_ACTIONS[order.status].includes("approve")
+      ? inactiveProductNames
+      : []
 
   async function runAction(action: Exclude<B2BOrderAction, "reject" | "cancel">) {
     if (!order) {
@@ -188,6 +234,17 @@ export function CatalogOrderDetailPage() {
         </div>
         <Badge variant="outline">{t(`catalog.status.${order.status}`)}</Badge>
       </div>
+
+      {inactiveNamesForApproval.length > 0 ? (
+        <Alert variant="warning">
+          <AlertTitle>{t("catalog.orders.inactiveProductWarningTitle")}</AlertTitle>
+          <AlertDescription>
+            {t("catalog.orders.inactiveProductWarning", {
+              names: inactiveNamesForApproval.join(", "),
+            })}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <Can permission="catalog.orders.manage">
         {actions.length > 0 ? (

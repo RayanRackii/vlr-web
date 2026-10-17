@@ -17,9 +17,18 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
+  BOOKING_HORIZON_DAY_MAX,
+  BOOKING_HORIZON_DAY_MIN,
   BOOKING_POLICY_DAILY_LIMIT_MAX,
   BOOKING_POLICY_DAILY_LIMIT_MIN,
   BOOKING_POLICY_TEXT_MAX_LENGTH,
@@ -43,12 +52,16 @@ export function BookingPolicyPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [loadedHorizon, setLoadedHorizon] = useState<
+    number | null | undefined
+  >(undefined)
 
   const schema = useMemo(
     () =>
       createBookingPolicyFormSchema({
         textMax: t("rentals.bookingPolicy.validation.textMax"),
         limitRange: t("rentals.bookingPolicy.validation.limitRange"),
+        horizonRange: t("rentals.bookingPolicy.validation.horizonRange"),
       }),
     [t],
   )
@@ -60,6 +73,8 @@ export function BookingPolicyPage() {
       cancellationPolicyText: "",
       dailyLimitEnabled: false,
       dailyLimit: "",
+      horizonMode: "unlimited",
+      horizonDays: "",
     },
   })
   const { control, handleSubmit, reset } = form
@@ -68,11 +83,23 @@ export function BookingPolicyPage() {
   const watchedLimitEnabled =
     useWatch({ control, name: "dailyLimitEnabled" }) ?? false
   const watchedLimit = useWatch({ control, name: "dailyLimit" }) ?? ""
+  const watchedHorizonMode =
+    useWatch({ control, name: "horizonMode" }) ?? "unlimited"
+  const watchedHorizonDays = useWatch({ control, name: "horizonDays" }) ?? ""
   const isValid = schema.safeParse({
     cancellationPolicyText: watchedText,
     dailyLimitEnabled: watchedLimitEnabled,
     dailyLimit: watchedLimit,
+    horizonMode: watchedHorizonMode,
+    horizonDays: watchedHorizonDays,
   }).success
+  const horizonItems = [
+    {
+      value: "unlimited",
+      label: t("rentals.bookingPolicy.horizonUnlimited"),
+    },
+    { value: "days", label: t("rentals.bookingPolicy.horizonDaysMode") },
+  ]
 
   const load = useCallback(
     async (isCancelled: () => boolean = () => false) => {
@@ -83,6 +110,7 @@ export function BookingPolicyPage() {
         if (isCancelled()) {
           return
         }
+        setLoadedHorizon(policy.maxAdvanceBookingDays)
         reset(bookingPolicyToFormValues(policy))
       } catch (error) {
         if (isCancelled()) {
@@ -119,8 +147,9 @@ export function BookingPolicyPage() {
     setSaving(true)
     try {
       const updated = await replaceBookingPolicy(
-        toBookingPolicyReplaceBody(values),
+        toBookingPolicyReplaceBody(values, loadedHorizon),
       )
+      setLoadedHorizon(updated.maxAdvanceBookingDays)
       reset(bookingPolicyToFormValues(updated))
       toast.success(t("rentals.bookingPolicy.saved"))
     } catch (error) {
@@ -148,7 +177,7 @@ export function BookingPolicyPage() {
         </p>
       </div>
 
-      {loading ? <FormSkeleton fields={3} /> : null}
+      {loading ? <FormSkeleton fields={4} /> : null}
 
       {!loading && loadError ? (
         <div className="space-y-3">
@@ -260,6 +289,71 @@ export function BookingPolicyPage() {
                     </FormControl>
                     <FormDescription>
                       {t("rentals.bookingPolicy.validation.limitRange")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
+
+            <FormField
+              control={control}
+              name="horizonMode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("rentals.bookingPolicy.horizonLabel")}</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "unlimited" || value === "days") {
+                        field.onChange(value)
+                      }
+                    }}
+                    value={field.value}
+                    items={horizonItems}
+                    disabled={!canEdit || saving}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {horizonItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {watchedHorizonMode === "days"
+                      ? t("rentals.bookingPolicy.horizonHintDays")
+                      : t("rentals.bookingPolicy.horizonHintUnlimited")}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            {watchedHorizonMode === "days" ? (
+              <FormField
+                control={control}
+                name="horizonDays"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("rentals.bookingPolicy.horizonDays")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        disabled={!canEdit || saving}
+                        min={BOOKING_HORIZON_DAY_MIN}
+                        max={BOOKING_HORIZON_DAY_MAX}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("rentals.bookingPolicy.validation.horizonRange")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

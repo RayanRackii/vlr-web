@@ -1,6 +1,9 @@
 import i18n from "@/lib/i18n"
+import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
+  commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
   isNetworkConnectivityError,
 } from "@/lib/offlineSync"
@@ -165,10 +168,13 @@ export async function generateWorkOrderFromPlan(
       throw error
     }
 
+    const payload = getAxiosErrorPayload(error)
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("pmoc.plans.generate.errors.generateFailed"),
+      localizeMaintenancePlanApiError(
+        localizeWorkOrderApiError(
+          payload,
+          i18n.t("pmoc.plans.generate.errors.generateFailed"),
+        ),
       ),
     )
   }
@@ -214,45 +220,50 @@ export async function updateTaskValue(
   value: string | null,
 ): Promise<WorkOrder | null> {
   const payload = updateWorkOrderTaskValueRequestSchema.parse({ value })
-
-  const queueAndSucceed = async (): Promise<null> => {
-    await enqueueTaskValuePatch({
-      workOrderId,
-      taskId,
-      value: payload.value ?? null,
-    })
-    return null
+  const patch: {
+    workOrderId: string
+    taskId: string
+    value: string | null
+  } = {
+    workOrderId,
+    taskId,
+    value: payload.value ?? null,
   }
 
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return queueAndSucceed()
+    await enqueueTaskValuePatch(patch)
+    return null
   }
 
   try {
-    const response = await api.patch<unknown>(
-      `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
-      payload,
-    )
-    const parsed = workOrderSchema.safeParse(response.data)
+    const outcome = await commitDirectTaskValuePatch(patch, async () => {
+      const response = await api.patch<unknown>(
+        `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
+        payload,
+      )
+      const parsed = workOrderSchema.safeParse(response.data)
 
-    if (!parsed.success) {
-      console.error("updateTaskValue Zod validation failed", {
-        data: response.data,
-        error: parsed.error.flatten(),
-        issues: parsed.error.issues,
-      })
-      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+      if (!parsed.success) {
+        console.error("updateTaskValue Zod validation failed", {
+          data: response.data,
+          error: parsed.error.flatten(),
+          issues: parsed.error.issues,
+        })
+        throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+      }
+
+      return parsed.data
+    })
+
+    if (outcome.status === "queued") {
+      return null
     }
 
-    return parsed.data
+    return outcome.value
   } catch (error: unknown) {
     console.error("updateTaskValue failed", error)
     if (isAxiosError(error)) {
       console.error("updateTaskValue response data", error.response?.data)
-    }
-
-    if (isNetworkConnectivityError(error)) {
-      return queueAndSucceed()
     }
 
     if (error instanceof Error && !isAxiosError(error)) {
@@ -260,7 +271,7 @@ export async function updateTaskValue(
     }
 
     throw new Error(
-      parseApiError(
+      localizeWorkOrderApiError(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.errors.updateTaskFailed"),
       ),
@@ -273,6 +284,14 @@ export async function updateWorkOrderStatus(
   status: UpdateWorkOrderStatusRequest["status"],
 ): Promise<WorkOrder> {
   const payload = updateWorkOrderStatusRequestSchema.parse({ status })
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    throw new Error(
+      status === "InProgress"
+        ? i18n.t("workOrders.offline.startFailed")
+        : i18n.t("workOrders.offline.statusFailed"),
+    )
+  }
 
   try {
     const response = await api.patch<unknown>(
@@ -297,12 +316,20 @@ export async function updateWorkOrderStatus(
       console.error("updateWorkOrderStatus response data", error.response?.data)
     }
 
+    if (isNetworkConnectivityError(error)) {
+      throw new Error(
+        status === "InProgress"
+          ? i18n.t("workOrders.offline.startFailed")
+          : i18n.t("workOrders.offline.statusFailed"),
+      )
+    }
+
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }
 
     throw new Error(
-      parseApiError(
+      localizeWorkOrderApiError(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.errors.updateStatusFailed"),
       ),

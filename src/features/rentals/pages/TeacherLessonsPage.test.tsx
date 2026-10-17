@@ -576,7 +576,10 @@ describe("TeacherLessonsPage", () => {
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
     })
     expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
-    expect(screen.getByRole("status")).toHaveTextContent("Carregando as aulas desta data.")
+    expect(screen.getByText("Carregando as aulas desta data.")).toBeInTheDocument()
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Carregando os horários deste recurso.",
+    )
 
     await act(async () => {
       resolveDay({ date: lessonDate, slots: [lesson] })
@@ -584,7 +587,9 @@ describe("TeacherLessonsPage", () => {
 
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
     expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Não há horário aberto nesta data.",
+    )
   })
 
   it("selects the first resource before lessons finish loading", async () => {
@@ -616,8 +621,9 @@ describe("TeacherLessonsPage", () => {
       expect(resource).toHaveTextContent("Quadra 1")
       expect(resource).toBeEnabled()
     })
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Carregando as aulas desta data.",
+    expect(screen.getByText("Carregando as aulas desta data.")).toBeInTheDocument()
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Carregando os horários deste recurso.",
     )
 
     await act(async () => {
@@ -625,7 +631,9 @@ describe("TeacherLessonsPage", () => {
     })
 
     expect(await screen.findByText("Treino")).toBeInTheDocument()
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Não há horário aberto nesta data.",
+    )
     expect(screen.getByRole("combobox", { name: "Quadra" })).toHaveTextContent("Quadra 1")
   })
 
@@ -697,5 +705,182 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
     expect(await screen.findByText("Nenhuma aula nesta data.")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Remover aula 12:00" })).not.toBeInTheDocument()
+  })
+
+  it("explains Saturday with no slots as missing hours and still requests that civil date", async () => {
+    const user = userEvent.setup()
+    const secondCourt = {
+      ...court,
+      id: "22222222-2222-2222-2222-222222222222",
+      name: "Quadra 2",
+    }
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([court, secondCourt])
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: [],
+    }))
+    window.history.replaceState(null, "", "/configuracoes/agenda?date=2026-10-24")
+
+    render(<TeacherLessonsPage />)
+
+    expect(await screen.findByTestId("available-time-state")).toHaveTextContent(
+      "Nenhum horário configurado para este dia da semana.",
+    )
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Configuração semanal",
+    )
+    expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-24", [court.id])
+    expect(fetchAdminScheduleDay).not.toHaveBeenCalledWith("2026-10-23", expect.anything())
+    expect(fetchAdminScheduleDay).not.toHaveBeenCalledWith("2026-10-25", expect.anything())
+    expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeDisabled()
+    expect(screen.queryByRole("option", { name: "10:00–11:00" })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("combobox", { name: "Quadra" }))
+    await user.click(await screen.findByRole("option", { name: "Quadra 2" }))
+
+    await waitFor(() => {
+      expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-24", [secondCourt.id])
+    })
+    expect(screen.getByTestId("available-time-state")).toHaveTextContent(
+      "Nenhum horário configurado para este dia da semana.",
+    )
+  })
+
+  it("explains a Saturday whose intervals are all closed", async () => {
+    vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
+      date: "2026-10-24",
+      slots: [
+        {
+          ...openSlot,
+          date: "2026-10-24",
+          occupancyKindKey: "closed",
+          occupancyKindLabel: "Fechado",
+          isBookableByCustomer: false,
+        },
+      ],
+    })
+    window.history.replaceState(null, "", "/configuracoes/agenda?date=2026-10-24")
+
+    render(<TeacherLessonsPage />)
+
+    expect(await screen.findByTestId("available-time-state")).toHaveTextContent(
+      "Este recurso está fechado nesta data.",
+    )
+    expect(screen.getByTestId("available-time-state")).not.toHaveTextContent(
+      "Nenhum horário configurado",
+    )
+    expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-24", [court.id])
+    expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeDisabled()
+  })
+
+  it("shows an error and retries the day request", async () => {
+    const user = userEvent.setup()
+    const callsAtStart = vi.mocked(fetchAdminScheduleDay).mock.calls.length
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => {
+      const index = vi.mocked(fetchAdminScheduleDay).mock.calls.length - callsAtStart
+      if (index === 1) {
+        throw new Error("network")
+      }
+      return {
+        date,
+        slots: [{ ...openSlot, date }],
+      }
+    })
+    window.history.replaceState(null, "", "/configuracoes/agenda?date=2026-10-24")
+
+    render(<TeacherLessonsPage />)
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Não foi possível carregar os horários deste recurso.",
+    )
+    expect(screen.queryByText("Selecione um horário")).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeDisabled()
+
+    const callsBeforeRetry = vi.mocked(fetchAdminScheduleDay).mock.calls.length
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }))
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchAdminScheduleDay).mock.calls.length).toBe(callsBeforeRetry + 1)
+      expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeEnabled()
+    })
+    expect(fetchAdminScheduleDay).toHaveBeenLastCalledWith("2026-10-24", [court.id])
+    await user.click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("names loading on the available time field while the day is still in flight", async () => {
+    let resolveDay: (value: { date: string; slots: typeof openSlot[] }) => void = () => undefined
+    vi.mocked(fetchAdminScheduleDay).mockReturnValue(
+      new Promise((resolve) => {
+        resolveDay = resolve
+      }),
+    )
+    window.history.replaceState(null, "", "/configuracoes/agenda?date=2026-10-24")
+
+    render(<TeacherLessonsPage />)
+
+    expect(await screen.findByTestId("available-time-state")).toHaveTextContent(
+      "Carregando os horários deste recurso.",
+    )
+    expect(screen.queryByText("Selecione um horário")).not.toBeInTheDocument()
+    expect(screen.queryByText("Nenhum horário configurado para este dia da semana.")).not.toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeDisabled()
+
+    await act(async () => {
+      resolveDay({
+        date: "2026-10-24",
+        slots: [{ ...openSlot, date: "2026-10-24" }],
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeEnabled()
+    })
+    await userEvent.setup().click(screen.getByRole("combobox", { name: "Horário disponível" }))
+    expect(await screen.findByRole("option", { name: "10:00–11:00" })).toBeInTheDocument()
+    expect(screen.queryByTestId("available-time-state")).not.toBeInTheDocument()
+  })
+
+  it("shows a lesson recreated at the same time with a new id", async () => {
+    const user = userEvent.setup()
+    const recreatedId = "d1111111-1111-4111-8111-111111111111"
+    let removed = false
+    vi.mocked(removeTeacherLesson).mockImplementation(async (body) => {
+      removed = true
+      return {
+        ...openSlot,
+        date: body.date,
+        startTime: body.startTime,
+        endTime: body.endTime,
+        occupancyKindKey: "open",
+        status: "Available",
+        reservationId: null,
+      }
+    })
+    vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date) => ({
+      date,
+      slots: removed
+        ? [
+            { ...openSlot, date },
+            {
+              ...lessonSlot,
+              date,
+              id: recreatedId,
+              label: "Aula nova",
+            },
+          ]
+        : [{ ...openSlot, date }, { ...lessonSlot, date }],
+    }))
+
+    render(<TeacherLessonsPage />)
+    await user.click(await screen.findByRole("button", { name: "Remover aula 12:00" }))
+    await confirmLessonRemoval(user)
+
+    expect(await screen.findByText("Aula nova")).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Remover aula 12:00" }),
+    ).toBeInTheDocument()
   })
 })

@@ -34,6 +34,10 @@ import {
 } from "@/components/ui/select"
 import { compareSlotsByStartTime, isUnreservedAvailable, useTeacherLessons } from "@/features/rentals/hooks/useTeacherLessons"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
+import {
+  explainAvailableTime,
+  type AvailableTimeReason,
+} from "@/features/rentals/lib/availableTimeState"
 import { isPastTenantSlotStart, withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
 import i18n from "@/lib/i18n"
 
@@ -60,6 +64,7 @@ function readLessonDateFromLocation(today: string): {
 }
 
 type PendingRemoval = {
+  id: string
   startTime: string
   endTime: string
 }
@@ -118,6 +123,16 @@ export function TeacherLessonsPage() {
   const values = { assetId: selectedAssetId, date, slotKey, label }
   const isValid = schema.safeParse(values).success
     && (!slotKey || available.some((slot) => slotKeyFor(slot) === slotKey))
+  const timeReason = explainAvailableTime({
+    resourcesPending,
+    hasResource: selectedAssetId.length > 0,
+    dayStatus,
+    slots: dayStatus === "ready" ? (day?.slots ?? []) : null,
+    openCount: openSlots.length,
+    offerableCount: available.length,
+  })
+  const timePlaceholder = t(availableTimePlaceholderKey(timeReason, resourcesPending))
+  const timeSelectable = timeReason === "ready" && available.length > 0
 
   useEffect(() => {
     if (!selectedAssetId || selectedAssetId === assetId) return
@@ -176,7 +191,13 @@ export function TeacherLessonsPage() {
     if (!pendingRemoval || !selectedAssetId || !date || removalInFlight.current) return
     removalInFlight.current = true
     try {
-      await remove(selectedAssetId, date, pendingRemoval.startTime, pendingRemoval.endTime)
+      await remove(
+        selectedAssetId,
+        date,
+        pendingRemoval.startTime,
+        pendingRemoval.endTime,
+        pendingRemoval.id,
+      )
       setPendingRemoval(null)
       await loadDay(selectedAssetId, date)
     } catch {
@@ -232,14 +253,24 @@ export function TeacherLessonsPage() {
                   field.onChange(value)
                 }}
                 items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}` }))}
-                disabled={busy || available.length === 0}
+                disabled={busy || resourcesPending || !timeSelectable}
               >
-                <FormControl><SelectTrigger aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={t("rentals.teacherLessons.chooseTime")} /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger aria-describedby={timeReason === "ready" && !pastSlotsHidden ? undefined : "available-time-state"} aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={timePlaceholder} /></SelectTrigger></FormControl>
                 <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</SelectItem>)}</SelectContent>
               </Select>
               <FormMessage />
+              {resourcesPending ? null : (
+                <AvailableTimeNotice
+                  reason={timeReason}
+                  retryDisabled={busy || selectedAssetId.length === 0 || !date}
+                  onRetry={() => {
+                    if (!selectedAssetId || !date) return
+                    void loadDay(selectedAssetId, date)
+                  }}
+                />
+              )}
               {pastSlotsHidden ? (
-                <p role="status" className="text-sm text-muted-foreground">
+                <p id="available-time-state" role="status" className="text-sm text-muted-foreground">
                   {t("rentals.teacherLessons.pastSlotsHidden")}
                 </p>
               ) : null}
@@ -263,7 +294,7 @@ export function TeacherLessonsPage() {
         ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
             <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{lesson.endTime.slice(0, 5)}</p></div>
-            <Button type="button" onClick={() => setPendingRemoval({ startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
+            <Button type="button" onClick={() => setPendingRemoval({ id: lesson.id, startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
           </article>
         ))}
       </section>
@@ -287,4 +318,91 @@ export function TeacherLessonsPage() {
 
 function slotKeyFor(slot: { startTime: string; endTime: string }) {
   return `${slot.startTime}|${slot.endTime}`
+}
+
+function availableTimePlaceholderKey(
+  reason: AvailableTimeReason,
+  resourcesPending: boolean,
+): string {
+  if (resourcesPending) {
+    return "rentals.teacherLessons.loadingResources"
+  }
+  if (reason === "loading") {
+    return "rentals.teacherLessons.loadingTimes"
+  }
+  if (reason === "error") {
+    return "rentals.teacherLessons.timesError"
+  }
+  if (reason === "closed") {
+    return "rentals.teacherLessons.closedDay"
+  }
+  if (reason === "noHours") {
+    return "rentals.teacherLessons.noHours"
+  }
+  if (reason === "noneOpen") {
+    return "rentals.teacherLessons.noneOpen"
+  }
+  return "rentals.teacherLessons.chooseTime"
+}
+
+function AvailableTimeNotice({
+  reason,
+  onRetry,
+  retryDisabled,
+}: {
+  reason: AvailableTimeReason
+  onRetry: () => void
+  retryDisabled: boolean
+}) {
+  const { t } = useTranslation()
+  if (reason === "ready" || reason === "pastOnly") {
+    return null
+  }
+  if (reason === "loading") {
+    return (
+      <p id="available-time-state" data-testid="available-time-state" role="status" className="text-sm text-muted-foreground">
+        {t("rentals.teacherLessons.loadingTimes")}
+      </p>
+    )
+  }
+  if (reason === "error") {
+    return (
+      <div id="available-time-state" data-testid="available-time-state" className="space-y-2">
+        <p role="alert" className="text-sm text-destructive">
+          {t("rentals.teacherLessons.timesError")}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          disabled={retryDisabled}
+        >
+          {t("rentals.teacherLessons.retryTimes")}
+        </Button>
+      </div>
+    )
+  }
+  if (reason === "closed") {
+    return (
+      <p id="available-time-state" data-testid="available-time-state" role="status" className="text-sm text-muted-foreground">
+        {t("rentals.teacherLessons.closedDay")}
+      </p>
+    )
+  }
+  if (reason === "noHours") {
+    return (
+      <p id="available-time-state" data-testid="available-time-state" role="status" className="text-sm text-muted-foreground">
+        {t("rentals.teacherLessons.noHours")}{" "}
+        {t("rentals.teacherLessons.noHoursHint", {
+          screen: t("rentals.schedule.tabs.templates"),
+        })}
+      </p>
+    )
+  }
+  return (
+    <p id="available-time-state" data-testid="available-time-state" role="status" className="text-sm text-muted-foreground">
+      {t("rentals.teacherLessons.noneOpen")}
+    </p>
+  )
 }

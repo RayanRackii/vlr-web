@@ -143,7 +143,7 @@ export function CreateWorkOrderPage() {
     setSubmitError(null)
 
     try {
-      await createWorkOrder({
+      const created = await createWorkOrder({
         assetId: values.assetId,
         maintenancePlanId: null,
         assignedUserId: values.assignedUserId ?? null,
@@ -155,7 +155,7 @@ export function CreateWorkOrderPage() {
             title: values.taskTitle,
             inputType: "Text",
             isMandatory: true,
-            order: 0,
+            order: 1,
             configuration: null,
           },
         ],
@@ -164,7 +164,7 @@ export function CreateWorkOrderPage() {
       setIsSubmitted(true)
       toast.success(t("workOrders.create.success"))
       redirectTimeoutRef.current = window.setTimeout(() => {
-        void navigate("/os")
+        void navigate(`/os/${created.id}`)
       }, 4000)
     } catch (error: unknown) {
       const message =

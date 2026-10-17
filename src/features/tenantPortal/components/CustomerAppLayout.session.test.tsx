@@ -9,8 +9,10 @@ import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarge
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   clearCustomerSession,
+  getCustomerAccessToken,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { UI_LANGUAGE_STORAGE_KEY } from "@/lib/uiLanguage"
 
 vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOriginal) => {
   const actual =
@@ -31,6 +33,18 @@ import {
 
 const fetchBranding = vi.mocked(fetchTenantBranding)
 const fetchMenu = vi.mocked(fetchTenantMenu)
+
+type LocationAssignImpl = { assign: (url: string) => void }
+
+function locationAssignImpl(): LocationAssignImpl {
+  const symbol = Object.getOwnPropertySymbols(window.location).find(
+    (candidate) => candidate.description === "impl",
+  )
+  if (symbol === undefined) {
+    throw new Error("location impl is missing")
+  }
+  return (window.location as unknown as Record<symbol, LocationAssignImpl>)[symbol]
+}
 
 function renderPortal(path: string) {
   return render(
@@ -191,5 +205,42 @@ describe("CustomerAppLayout session tenant", () => {
     expect(fetchBranding).toHaveBeenCalledTimes(brandingCalls)
     expect(fetchMenu).toHaveBeenCalledTimes(menuCalls)
     expect(screen.queryByText("login-form")).not.toBeInTheDocument()
+  })
+
+  it("signs out from the account menu and keeps the chosen language", async () => {
+    const user = userEvent.setup()
+    const locationImpl = locationAssignImpl()
+    const originalAssign = locationImpl.assign
+    const assigned: string[] = []
+    locationImpl.assign = (url: string) => {
+      assigned.push(url)
+    }
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    try {
+      await i18n.changeLanguage("en")
+      await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+      await user.click(
+        await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+      )
+
+      expect(getCustomerAccessToken()).toBeNull()
+      expect(window.localStorage.getItem(UI_LANGUAGE_STORAGE_KEY)).toBe("en")
+      expect(assigned).toEqual(["/t/ficc"])
+    } finally {
+      locationImpl.assign = originalAssign
+      await i18n.changeLanguage("pt-BR")
+    }
   })
 })

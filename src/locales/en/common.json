@@ -15,7 +15,9 @@
     "filter": "Filter",
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
-    "refreshing": "Updating..."
+    "refreshing": "Updating...",
+    "yes": "Yes",
+    "no": "No"
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -381,7 +383,7 @@
       "legendUnavailable": "Unavailable",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
-      "slotsError": "Could not load slots for this day.",
+      "slotsError": "Could not load times for this day.",
       "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
       "noTimes": "No times on this date",
       "pastSlotsHidden": "Times that have already started today are hidden.",
@@ -568,6 +570,17 @@
       "toastUpdated": "Product updated.",
       "toastActivated": "Product activated.",
       "toastDeactivated": "Product deactivated.",
+      "deactivateConfirmTitle": "Deactivate product?",
+      "deactivateConfirmBody": "{{name}} will no longer appear for new orders. Existing orders stay unchanged.",
+      "validation": {
+        "nameRequired": "Enter the product name.",
+        "code": "The code can be at most 80 characters.",
+        "description": "The description can be at most 4000 characters.",
+        "currency": "Currency must be 3 letters."
+      },
+      "errors": {
+        "duplicateCode": "A product with this code already exists."
+      },
       "toastFileUploaded": "File uploaded.",
       "toastFileDeleted": "File deleted.",
       "columns": {
@@ -595,7 +608,16 @@
         "sent": "Uploaded",
         "error": "Upload failed",
         "retry": "Retry",
-        "partialFailure": "Product saved, but some files were not uploaded."
+        "partialFailure": "Product saved, but some files were not uploaded.",
+        "tooLargeCustomer": "{{name}} is over 5 MB. Customer-visible images must be 5 MB or smaller.",
+        "tooLargeInternal": "{{name}} is over 25 MB. Internal files must be 25 MB or smaller.",
+        "tooLarge": "The file is over the allowed size.",
+        "typeCustomer": "{{name}} is not a jpeg, png, or webp image.",
+        "typeInternal": "{{name}} is not a pdf, stl, step, stp, or dxf file.",
+        "typeRejected": "This file type is not accepted.",
+        "contentMismatch": "The file content does not match the declared type.",
+        "extensionRequired": "{{name}} needs a file extension.",
+        "required": "Select a file."
       },
       "gallery": {
         "previous": "Previous image",
@@ -627,6 +649,8 @@
       "rejectedReason": "Rejection reason",
       "cancelledReason": "Cancellation reason",
       "toastUpdated": "Order updated.",
+      "inactiveProductWarningTitle": "Inactive product on the order",
+      "inactiveProductWarning": "These products are inactive: {{names}}. Approval is still available.",
       "saving": "Saving...",
       "columns": {
         "number": "Number",
@@ -1051,7 +1075,7 @@
     "sections": {
       "customers": {
         "title": "Portal customers",
-        "description": "Logins on the B2C portal ({subdomain}.rolvix.com.br)."
+        "description": "Logins on this environment's customer portal."
       },
       "assets": {
         "title": "Resources",
@@ -1245,6 +1269,9 @@
       "title": "Confirm deletion",
       "pendingBadge": "Pending Deletion",
       "scheduleWarning": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
+      "scheduleWarningNone": "This will schedule deletion of type \"{{name}}\" in 30 days. No resources are linked. Type the type name to confirm.",
+      "scheduleWarningOne": "This will schedule deletion of type \"{{name}}\" and the linked resource in 30 days. Type the type name to confirm.",
+      "scheduleWarningMany": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
       "permanentWarning": "This item is already scheduled for deletion. Do you want to permanently delete it now?",
       "assetScheduleWarning": "This will schedule deletion of resource \"{{tag}}\" in 30 days. Type the tag to confirm.",
       "assetPermanentWarning": "This resource is already scheduled for deletion. Do you want to permanently delete it now?",
@@ -1342,6 +1369,7 @@
         "createFailed": "Could not create the type.",
         "updateFailed": "Could not update the type.",
         "deleteFailed": "Could not delete the type.",
+        "inUse": "This type cannot be deleted because it is in use.",
         "invalidResponse": "Invalid API response."
       }
     },
@@ -1384,6 +1412,7 @@
         "bulkDeleteCount": "Bulk delete ({{count}})",
         "selectAll": "Select all",
         "selectRow": "Select {{tag}}",
+        "rowMenu": "Actions for {{tag}}",
         "create": "Create",
         "creating": "Creating..."
       },
@@ -1462,7 +1491,9 @@
         "deleteFailed": "Could not delete the resource.",
         "invalidResponse": "Invalid API response.",
         "invalidUnitsResponse": "Invalid units response.",
-        "updateFailed": "Could not update the resource."
+        "updateFailed": "Could not update the resource.",
+        "duplicateTag": "A resource with this tag already exists.",
+        "deleteBlockedByWorkOrders": "This resource cannot be deleted because it has work orders."
       },
       "flags": {
         "rentable": "Rental",
@@ -1659,6 +1690,7 @@
         "delete": "Delete plan",
         "deactivate": "Deactivate plan",
         "saveChecklist": "Save checklist",
+        "saveDetails": "Save plan details",
         "saving": "Saving...",
         "generateWorkOrder": "Generate WO",
         "generating": "Generating..."
@@ -1727,6 +1759,10 @@
           "invalidResponse": "Invalid API response."
         }
       },
+      "deleteConfirm": {
+        "title": "Delete plan?",
+        "description": "Work orders that were already generated keep their checklist snapshot. A plan that already has work orders cannot be deleted; deactivate it."
+      },
       "generate": {
         "dialogTitle": "Generate WO",
         "dialogDescription": "Choose the asset and date. The technician is optional.",
@@ -1734,9 +1770,13 @@
         "success": "Work order generated.",
         "viewWorkOrder": "Open WO",
         "emptyAssets": "There are no active assets in this unit and category to generate a work order.",
+        "inactivePlan": "This plan is inactive. Activate it to generate a work order.",
+        "noTechnicians": "No technicians are available. The work order stays unassigned.",
+        "techniciansLoadFailed": "Could not load technicians. The work order can still be generated unassigned.",
         "errors": {
           "duplicate": "An active work order already exists for this plan, asset, and period. Change the asset or the date.",
           "generateFailed": "Could not generate the work order.",
+          "planInactive": "The maintenance plan is not active.",
           "loadLookupsFailed": "Could not load assets and technicians."
         }
       },
@@ -1799,6 +1839,7 @@
         "back": "Back",
         "addTask": "Add task",
         "removeTask": "Remove task",
+        "removeTaskNamed": "Remove task {{number}}",
         "save": "Save plan",
         "saving": "Saving..."
       },
@@ -1820,7 +1861,14 @@
         "inputType": "Input type",
         "isMandatory": "Mandatory",
         "min": "Minimum",
-        "max": "Maximum"
+        "max": "Maximum",
+        "unit": "Unit of measure",
+        "options": "Options",
+        "optionLabel": "Option {{number}}",
+        "addOption": "Add option",
+        "removeOption": "Remove option {{number}}",
+        "removeConfirmTitle": "Remove task?",
+        "removeConfirmDescription": "The task leaves this plan when you save. Work orders that were already generated keep their checklist snapshot."
       },
       "validation": {
         "unitRequired": "Unit is required.",
@@ -1830,7 +1878,8 @@
         "tasksRequired": "Add at least one task.",
         "numberMinRequired": "Enter the minimum value.",
         "numberMaxRequired": "Enter the maximum value.",
-        "numberRangeInvalid": "Maximum must be greater than or equal to minimum."
+        "numberRangeInvalid": "Maximum must be greater than or equal to minimum.",
+        "optionsRequired": "Enter at least two filled options."
       },
       "success": {
         "created": "Plan created successfully."
@@ -1865,12 +1914,14 @@
     "tabs": {
       "Pending": "Pending",
       "InProgress": "In Progress",
-      "Completed": "Completed"
+      "Completed": "Completed",
+      "Canceled": "Canceled"
     },
     "empty": {
       "Pending": "No pending work orders.",
       "InProgress": "No work orders in progress.",
-      "Completed": "No completed work orders."
+      "Completed": "No completed work orders.",
+      "Canceled": "No canceled work orders."
     },
     "columns": {
       "id": "WO ID",
@@ -1940,7 +1991,14 @@
       "numberPlaceholder": "Enter the value",
       "numberRange": "Minimum: {{min}}, Maximum: {{max}}{{unit}}",
       "choicePlaceholder": "Select an option",
+      "choiceEmpty": "No options were configured for this task.",
       "imageUploadSoon": "Photo Upload (Coming Soon)",
+      "imageUnsupported": "Image upload is not supported yet",
+      "imageUnsupportedDetail": "There is no file upload for this task yet. When it is not mandatory, the other tasks can still be completed. When it is mandatory, the server can still refuse completion until a file upload exists.",
+      "notes": "Notes",
+      "noNotes": "No notes.",
+      "completedDate": "Completed on",
+      "notCompleted": "Not completed yet",
       "start": "Start WO",
       "complete": "Complete WO",
       "startedSuccess": "Work order started successfully.",
@@ -1953,11 +2011,38 @@
       "loadOneFailed": "Could not load the work order.",
       "invalidResponse": "Invalid API response.",
       "updateTaskFailed": "Could not save the task response.",
-      "updateStatusFailed": "Could not update the work order status."
+      "updateStatusFailed": "Could not update the work order status.",
+      "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
+      "mandatoryTasksIncompleteList": "Mandatory tasks are still incomplete: {{tasks}}",
+      "assetNotEligible": "This resource is not eligible for this maintenance plan.",
+      "assigneeCannotExecute": "The assigned person cannot execute work orders.",
+      "workOrderClosed": "This work order is completed or canceled and cannot be changed.",
+      "reopenNotAllowed": "A completed work order cannot be reopened.",
+      "taskValue": {
+        "invalid": "The value is not valid for this task.",
+        "notANumber": "Enter a number.",
+        "outOfRange": "The number is outside the allowed range.",
+        "notAnOption": "Choose one of the listed options.",
+        "invalidCheckbox": "Check or uncheck the task.",
+        "textTooLong": "The text is longer than allowed.",
+        "invalidConfiguration": "This task is configured incorrectly."
+      }
     },
     "offline": {
       "title": "Offline Mode",
-      "banner": "Offline Mode: Changes are being saved locally."
+      "banner": "Offline Mode: Changes are being saved locally.",
+      "waitingToSync": "Waiting to sync",
+      "startFailed": "No connection. The work order could not be started.",
+      "statusFailed": "No connection. The work order status could not be updated.",
+      "conflictTitle": "Sync conflict",
+      "conflictBody": "A change saved offline was rejected by the server and is still visible so it can be corrected.",
+      "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Value saved offline: {{value}}",
+      "conflictUnknownField": "Task",
+      "discard": "Discard",
+      "discardNamed": "Discard {{field}}",
+      "retry": "Try again",
+      "retryNamed": "Try again {{field}}"
     }
   },
   "users": {
@@ -2656,7 +2741,14 @@
       "removeSuccess": "Lesson removed for this date.",
       "changeError": "Could not change the lesson. Check for a reservation or conflict.",
       "pastDateAdjusted": "The date in the link is in the past. The times below are for today.",
-      "pastSlotsHidden": "Times that have already started today are hidden."
+      "pastSlotsHidden": "Times that have already started today are hidden.",
+      "loadingTimes": "Loading times for this resource.",
+      "timesError": "Could not load times for this resource.",
+      "retryTimes": "Try again",
+      "closedDay": "This resource is closed on this date.",
+      "noHours": "No hours configured for this weekday.",
+      "noHoursHint": "Recurring hours for this resource are set in {{screen}}.",
+      "noneOpen": "No open time on this date. Existing intervals are already reserved or are lessons."
     },
     "schedule": {
       "title": "Schedule",
@@ -2879,7 +2971,15 @@
         "queueEnabled": "Reservation queue",
         "queueOpeningTime": "Queue opening time",
         "location": "Location",
-        "locationPlaceholder": "E.g. Building A"
+        "locationPlaceholder": "E.g. Building A",
+        "horizonLabel": "Booking horizon for this resource",
+        "horizonInherit": "Use tenant default",
+        "horizonUnlimited": "Unlimited",
+        "horizonDaysMode": "A number of days",
+        "horizonDays": "Days ahead",
+        "horizonHint": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
+        "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
+        "horizonEffectiveDays": "In effect: {{count}} days ahead."
       },
       "validation": {
         "nameRequired": "Enter a name.",
@@ -2888,7 +2988,8 @@
         "categoryRequired": "Select a type.",
         "familyRequired": "Select a family.",
         "quantityMin": "Quantity must be at least 1.",
-        "queueOpeningTimeRequired": "Enter the queue opening time."
+        "queueOpeningTimeRequired": "Enter the queue opening time.",
+        "horizonRange": "Enter an integer from 0 to 3650."
       }
     },
     "layout": {
@@ -2944,7 +3045,7 @@
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text and the daily cap on active reservations per customer. It applies to every resource type in this workspace.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace.",
       "cancellationLabel": "Cancellation text",
       "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows a neutral note: the time becomes available again and the customer should check the organization's rules.",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
@@ -2952,6 +3053,12 @@
       "dailyLimitToggle": "Limit active reservations per customer per day",
       "dailyLimitHint": "Counts pending-deposit and confirmed reservations that start on the same day. Off means no limit.",
       "dailyLimitValue": "Maximum per day",
+      "horizonLabel": "How far ahead customers can book",
+      "horizonUnlimited": "Unlimited",
+      "horizonDaysMode": "A number of days",
+      "horizonDays": "Days ahead",
+      "horizonHintUnlimited": "Unlimited means no limit on how far ahead a customer can book a resource.",
+      "horizonHintDays": "A start this many days ahead is allowed. The next day is rejected (booking_horizon_exceeded).",
       "save": "Save",
       "saved": "Booking policy saved.",
       "loadError": "Could not load the booking policy.",
@@ -2960,7 +3067,8 @@
       "retry": "Try again",
       "validation": {
         "textMax": "The text can be at most 2000 characters.",
-        "limitRange": "Enter an integer from 1 to 100."
+        "limitRange": "Enter an integer from 1 to 100.",
+        "horizonRange": "Enter an integer from 0 to 3650."
       }
     }
   }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-table"
 import { CircleCheck, Layers, MoreHorizontal, Plus, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
@@ -114,6 +115,8 @@ export function AssetsPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
+  const deleteInFlightRef = useRef(false)
   const [wizardMode, setWizardMode] = useState<WizardMode | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [detailAssetId, setDetailAssetId] = useState<string | null>(null)
@@ -310,7 +313,15 @@ export function AssetsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button type="button" variant="ghost" size="icon" className="size-8" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t("assets.inventory.actions.rowMenu", {
+                    tag: row.original.tag,
+                  })}
+                />
               }
             >
               <MoreHorizontal aria-hidden="true" />
@@ -384,6 +395,10 @@ export function AssetsPage() {
     categories.length > 0 && families.length > 0 && !isTrialReadOnly
 
   function handleDeleteDialogOpenChange(open: boolean) {
+    if (!open && deleteInFlightRef.current) {
+      return
+    }
+
     if (!open) {
       setAssetToDelete(null)
       setDeleteTagConfirm("")
@@ -393,6 +408,10 @@ export function AssetsPage() {
   }
 
   function handleBulkDeleteOpenChange(open: boolean) {
+    if (!open && deleteInFlightRef.current) {
+      return
+    }
+
     setBulkDeleteOpen(open)
     if (!open) {
       setBulkDeleteConfirm("")
@@ -423,17 +442,21 @@ export function AssetsPage() {
       return
     }
 
+    const assetId = assetToDelete.id
+    deleteInFlightRef.current = true
     setIsDeleting(true)
     setDeleteError(null)
 
     try {
-      const result = await deleteAsset(assetToDelete.id)
+      const result = await deleteAsset(assetId)
+      deleteInFlightRef.current = false
       handleDeleteDialogOpenChange(false)
-      setSuccessMessage(
-        result.permanentlyDeleted
-          ? t("assets.deletion.permanentSuccess")
-          : t("assets.deletion.scheduledSuccess"),
-      )
+      setBlockedMessage(null)
+      const message = result.permanentlyDeleted
+        ? t("assets.deletion.permanentSuccess")
+        : t("assets.deletion.scheduledSuccess")
+      setSuccessMessage(message)
+      toast.success(message)
       await loadPageData()
     } catch (error: unknown) {
       console.error("AssetsPage handleDeleteConfirm failed", error)
@@ -450,7 +473,10 @@ export function AssetsPage() {
           : t("assets.inventory.errors.deleteFailed")
 
       setDeleteError(message)
+      setBlockedMessage(message)
+      toast.error(message)
     } finally {
+      deleteInFlightRef.current = false
       setIsDeleting(false)
     }
   }
@@ -460,6 +486,7 @@ export function AssetsPage() {
       return
     }
 
+    deleteInFlightRef.current = true
     setIsDeleting(true)
     setDeleteError(null)
 
@@ -471,6 +498,7 @@ export function AssetsPage() {
       let scheduled = 0
       let permanent = 0
       let failed = 0
+      let firstFailure = ""
 
       for (const result of results) {
         if (result.status === "fulfilled") {
@@ -481,29 +509,42 @@ export function AssetsPage() {
           }
         } else {
           failed += 1
+          if (firstFailure === "" && result.reason instanceof Error) {
+            firstFailure = result.reason.message
+          }
         }
       }
 
+      if (failed === results.length) {
+        const message =
+          firstFailure !== ""
+            ? firstFailure
+            : t("assets.inventory.errors.deleteFailed")
+        setDeleteError(message)
+        setBlockedMessage(message)
+        toast.error(message)
+        return
+      }
+
+      deleteInFlightRef.current = false
       handleBulkDeleteOpenChange(false)
       setRowSelection({})
+      setBlockedMessage(null)
 
-      if (failed === 0) {
-        setSuccessMessage(
-          t("assets.deletion.bulkSuccess", {
-            scheduled,
-            permanent,
-            total: scheduled + permanent,
-          }),
-        )
-      } else {
-        setSuccessMessage(
-          t("assets.deletion.bulkPartialSuccess", {
-            scheduled,
-            permanent,
-            failed,
-          }),
-        )
-      }
+      const message =
+        failed === 0
+          ? t("assets.deletion.bulkSuccess", {
+              scheduled,
+              permanent,
+              total: scheduled + permanent,
+            })
+          : t("assets.deletion.bulkPartialSuccess", {
+              scheduled,
+              permanent,
+              failed,
+            })
+      setSuccessMessage(message)
+      toast.success(message)
 
       await loadPageData()
     } catch (error: unknown) {
@@ -513,7 +554,10 @@ export function AssetsPage() {
           ? error.message
           : t("assets.inventory.errors.deleteFailed")
       setDeleteError(message)
+      setBlockedMessage(message)
+      toast.error(message)
     } finally {
+      deleteInFlightRef.current = false
       setIsDeleting(false)
     }
   }
@@ -585,6 +629,15 @@ export function AssetsPage() {
             <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
             <p className="font-medium">{successMessage}</p>
           </div>
+        </div>
+      ) : null}
+
+      {blockedMessage !== null ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+        >
+          {blockedMessage}
         </div>
       ) : null}
 

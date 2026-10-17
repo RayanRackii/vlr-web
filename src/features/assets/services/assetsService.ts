@@ -1,5 +1,10 @@
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
+import {
+  assetDeleteErrorMessage,
+  assetTagConflictMessage,
+  localizeAssetApiError,
+} from "@/features/assets/lib/assetApiErrors"
 import {
   assetListSchema,
   assetSchema,
@@ -29,7 +34,11 @@ function throwAssetsError(error: unknown, fallbackKey: string): never {
   }
 
   throw new Error(
-    parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+    localizeAssetApiError(
+      getAxiosErrorPayload(error),
+      i18n.t(fallbackKey),
+      isAxiosError(error) ? (error.response?.status ?? null) : null,
+    ),
   )
 }
 
@@ -81,7 +90,17 @@ export async function createAsset(data: CreateAssetRequest): Promise<Asset> {
 
     return parsed.data
   } catch (error: unknown) {
-    throwAssetsError(error, "assets.inventory.errors.createFailed")
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      assetTagConflictMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
+        getAxiosErrorPayload(error),
+        i18n.t("assets.inventory.errors.createFailed"),
+      ),
+    )
   }
 }
 
@@ -101,7 +120,17 @@ export async function updateAsset(
 
     return parsed.data
   } catch (error: unknown) {
-    throwAssetsError(error, "assets.inventory.errors.updateFailed")
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      assetTagConflictMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
+        getAxiosErrorPayload(error),
+        i18n.t("assets.inventory.errors.updateFailed"),
+      ),
+    )
   }
 }
 
@@ -157,6 +186,17 @@ export async function deleteAsset(id: string): Promise<DeleteAssetResult> {
 
     return parsed.data
   } catch (error: unknown) {
-    throwAssetsError(error, "assets.inventory.errors.deleteFailed")
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    throw new Error(
+      assetDeleteErrorMessage(
+        isAxiosError(error) ? (error.response?.status ?? null) : null,
+        getAxiosErrorPayload(error),
+        i18n.t("assets.inventory.errors.deleteFailed"),
+        "asset",
+      ),
+    )
   }
 }

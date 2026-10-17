@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
@@ -29,6 +29,13 @@ vi.mock("@/features/pmoc/services/pmocPlanCategoriesService", () => ({
   listPlanAssetCategories: vi.fn(),
 }))
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 vi.mock("@/features/pmoc/services/pmocService", () => ({
   createPlan: vi.fn(),
   getGlobalTemplates: vi.fn(async () => {
@@ -39,10 +46,12 @@ vi.mock("@/features/pmoc/services/pmocService", () => ({
 import { getUnits } from "@/features/assets/services/unitsService"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import { createPlan } from "@/features/pmoc/services/pmocService"
+import { toast } from "sonner"
 
 const getUnitsMock = vi.mocked(getUnits)
 const listCategoriesMock = vi.mocked(listPlanAssetCategories)
 const createPlanMock = vi.mocked(createPlan)
+const toastSuccess = vi.mocked(toast.success)
 
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 
@@ -121,8 +130,11 @@ describe("CreatePlanPage validity gate", () => {
 
   function renderPage() {
     return render(
-      <MemoryRouter>
-        <CreatePlanPage />
+      <MemoryRouter initialEntries={["/pmoc/novo"]}>
+        <Routes>
+          <Route path="/pmoc/novo" element={<CreatePlanPage />} />
+          <Route path="/pmoc/:id" element={<div>plan-detail</div>} />
+        </Routes>
       </MemoryRouter>,
     )
   }
@@ -190,6 +202,9 @@ describe("CreatePlanPage validity gate", () => {
     await user.clear(interval)
     await user.type(interval, "0")
     expect(save).toBeDisabled()
+    expect(
+      screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
+    ).toBeGreaterThan(0)
     expect(back).toBeEnabled()
     expect(cancel).toBeEnabled()
     expect(addTask).toBeEnabled()
@@ -265,7 +280,8 @@ describe("CreatePlanPage validity gate", () => {
     ).not.toBeInTheDocument()
     expect(createPlanMock).toHaveBeenCalledTimes(1)
 
-    createPlanMock.mockResolvedValueOnce({ id: "plan-1" } as Awaited<
+    const createdId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+    createPlanMock.mockResolvedValueOnce({ id: createdId } as Awaited<
       ReturnType<typeof createPlan>
     >)
     await user.click(
@@ -273,12 +289,44 @@ describe("CreatePlanPage validity gate", () => {
         name: i18n.t("pmoc.create.actions.save"),
       }),
     )
-    expect(
-      await screen.findByText(i18n.t("pmoc.create.success.created")),
-    ).toBeInTheDocument()
-    expect(screen.getByLabelText(i18n.t("pmoc.create.form.name"))).toHaveValue(
-      "PMOC Split",
-    )
+    expect(await screen.findByText("plan-detail")).toBeInTheDocument()
+    expect(toastSuccess).toHaveBeenCalledWith(i18n.t("pmoc.create.success.created"))
     expect(createPlanMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("blocks save until a single-choice task has two options and explains why", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await fillValidPlan(user)
+
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("pmoc.create.tasks.inputType"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("pmoc.inputType.SingleChoice"),
+      }),
+    )
+
+    const save = screen.getByRole("button", {
+      name: i18n.t("pmoc.create.actions.save"),
+    })
+    expect(save).toBeDisabled()
+    expect(
+      screen.getAllByText(i18n.t("pmoc.create.validation.optionsRequired")).length,
+    ).toBeGreaterThan(0)
+
+    await user.type(
+      screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 1 })),
+      "Ok",
+    )
+    expect(save).toBeDisabled()
+    await user.type(
+      screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 2 })),
+      "Revisar",
+    )
+    expect(save).toBeEnabled()
   })
 })

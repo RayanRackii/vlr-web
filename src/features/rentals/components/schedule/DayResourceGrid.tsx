@@ -263,7 +263,7 @@ function RowCells({
                     (isStartClosed?.(item.startTime) === true &&
                       item.status !== "booked")
                   }
-                  aria-label={`${asset.name}, ${item.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${item.status}`)}`}
+                  aria-label={`${asset.name}, ${formatMinutesAsTime(timeToMinutes(item.startTime))}, ${item.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${item.status}`)}`}
                   className={cn(
                     "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                     overlapIndex > 0 && "translate-x-2",

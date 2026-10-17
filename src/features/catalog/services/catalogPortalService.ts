@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
-import { customerApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { customerApi, getAxiosErrorPayload } from "@/lib/api"
+import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import {
   catalogFileUrlSchema,
   catalogOrderListSchema,
@@ -15,7 +16,10 @@ import {
 
 function throwPortalError(error: unknown, fallbackKey: string): never {
   throw new Error(
-    parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+    localizeCatalogApiError(
+      getAxiosErrorPayload(error),
+      i18n.t(fallbackKey),
+    ),
   )
 }
 

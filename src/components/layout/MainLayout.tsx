@@ -27,6 +27,7 @@ import {
   writeActiveTenantLabel,
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
+import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import appI18n from "@/lib/i18n"
 import { persistLanguage } from "@/lib/uiLanguage"
@@ -153,6 +154,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         void navigate("/login", { replace: true })
       }}
     >
+      <WorkOrderSyncHost />
       {children ?? <Outlet />}
     </AppShell>
   )

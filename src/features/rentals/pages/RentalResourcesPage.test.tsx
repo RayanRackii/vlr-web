@@ -276,6 +276,7 @@ describe("RentalResourcesPage", () => {
       familyId: FAMILY_ID,
       rentalType: "Location",
     })
+    expect(payload).not.toHaveProperty("maxAdvanceBookingDays")
   })
 
   it("updates using the rental asset id from the list, not assetId", async () => {
@@ -314,5 +315,196 @@ describe("RentalResourcesPage", () => {
     })
     expect(updateMock.mock.calls[0]?.[0]).toBe(RENTAL_ID)
     expect(updateMock.mock.calls[0]?.[0]).not.toBe(ASSET_ID)
+    expect(updateMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "maxAdvanceBookingDays",
+    )
+  })
+
+  async function chooseHorizon(
+    user: ReturnType<typeof userEvent.setup>,
+    optionKey:
+      | "rentals.resources.form.horizonInherit"
+      | "rentals.resources.form.horizonUnlimited"
+      | "rentals.resources.form.horizonDaysMode",
+  ) {
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.horizonLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: i18n.t(optionKey) }),
+    )
+  }
+
+  it("creates a resource with unlimited or a number of days", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Quadra 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await chooseHorizon(user, "rentals.resources.form.horizonUnlimited")
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+    )
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      maxAdvanceBookingDays: null,
+    })
+  })
+
+  it("rejects a resource horizon outside 0..3650 and sends a valid number", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Space 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "S-01",
+    )
+    await chooseHorizon(user, "rentals.resources.form.horizonDaysMode")
+
+    const days = screen.getByLabelText(i18n.t("rentals.resources.form.horizonDays"))
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.resources.saveCreate"),
+    })
+    expect(save).toBeDisabled()
+    await user.type(days, "3651")
+    expect(save).toBeDisabled()
+
+    await user.clear(days)
+    await user.type(days, "21")
+    expect(save).toBeEnabled()
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      maxAdvanceBookingDays: 21,
+    })
+  })
+
+  it("clears a stored override with the tenant default and keeps an unchanged number omitted", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        maxAdvanceBookingDays: 8,
+        effectiveMaxAdvanceBookingDays: 8,
+      },
+    ])
+
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveDays", { count: 8 }),
+      ),
+    ).toBeInTheDocument()
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "maxAdvanceBookingDays",
+    )
+
+    unmount()
+    updateMock.mockClear()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await chooseHorizon(user, "rentals.resources.form.horizonInherit")
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).toMatchObject({
+      maxAdvanceBookingDays: null,
+    })
+  })
+
+  it("disables the horizon when the user can only read the resource", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        maxAdvanceBookingDays: null,
+        effectiveMaxAdvanceBookingDays: null,
+      },
+    ])
+    renderPage(["rentals.assets.read"])
+
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.horizonLabel"),
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(i18n.t("rentals.resources.form.horizonEffectiveUnlimited")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    ).toBeDisabled()
+    expect(updateMock).not.toHaveBeenCalled()
   })
 })

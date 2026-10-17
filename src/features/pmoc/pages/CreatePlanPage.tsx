@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, ClipboardList, LoaderCircle, Plus } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import {
+  FormValidationSummary,
+  LiveFieldMessage,
+} from "@/features/pmoc/components/FormValidationSummary"
+import { PlanTaskEditor } from "@/features/pmoc/components/PlanTaskEditor"
 import {
   Form,
   FormControl,
@@ -23,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
 import { useAuth } from "@/contexts/AuthContext"
@@ -31,24 +36,14 @@ import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
 import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
+import { issueMessageAt, uniqueIssueMessages } from "@/features/pmoc/lib/formIssues"
 import {
   buildCreatePlanRequest,
   createPlanFormSchema,
-  taskInputTypeValues,
   type CreatePlanFormValues,
-  type TaskInputType,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { createPlan } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
-
-function parseOptionalNumber(value: string): number | null {
-  if (value.trim() === "") {
-    return null
-  }
-
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
 
 export function CreatePlanPage() {
   const { t } = useTranslation()
@@ -60,7 +55,6 @@ export function CreatePlanPage() {
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const formSchema = useMemo(
     () =>
@@ -75,6 +69,7 @@ export function CreatePlanPage() {
         numberMinRequired: t("pmoc.create.validation.numberMinRequired"),
         numberMaxRequired: t("pmoc.create.validation.numberMaxRequired"),
         numberRangeInvalid: t("pmoc.create.validation.numberRangeInvalid"),
+        optionsRequired: t("pmoc.create.validation.optionsRequired"),
       }),
     [t],
   )
@@ -109,7 +104,10 @@ export function CreatePlanPage() {
   })
 
   const watchedValues = useWatch({ control: form.control })
-  const isPlanValid = formSchema.safeParse(watchedValues).success
+  const parsedPlan = formSchema.safeParse(watchedValues)
+  const planError = parsedPlan.success ? undefined : parsedPlan.error
+  const isPlanValid = parsedPlan.success
+  const planMessages = uniqueIssueMessages(planError)
   const watchedTasks = watchedValues.tasks
 
   const loadLookups = useCallback(async () => {
@@ -151,12 +149,11 @@ export function CreatePlanPage() {
 
   async function onSubmit(values: CreatePlanFormValues) {
     setSubmitError(null)
-    setSuccessMessage(null)
 
     try {
-      await createPlan(buildCreatePlanRequest(values))
-      setSuccessMessage(t("pmoc.create.success.created"))
-      void navigate("/pmoc")
+      const created = await createPlan(buildCreatePlanRequest(values))
+      toast.success(t("pmoc.create.success.created"))
+      void navigate(`/pmoc/${created.id}`)
     } catch (error: unknown) {
       console.error("CreatePlanPage onSubmit failed", error)
       if (isAxiosError(error)) {
@@ -170,15 +167,6 @@ export function CreatePlanPage() {
       setSubmitError(message)
     }
   }
-
-  const inputTypeItems = useMemo(
-    () =>
-      taskInputTypeValues.map((inputType) => ({
-        value: inputType,
-        label: t(`pmoc.inputType.${inputType}`),
-      })),
-    [t],
-  )
 
   const unitItems = useMemo(
     () =>
@@ -231,18 +219,6 @@ export function CreatePlanPage() {
           </Button>
         </div>
       </div>
-
-      {successMessage !== null ? (
-        <div
-          role="status"
-          className="rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
-        >
-          <div className="flex items-start gap-3">
-            <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <p className="font-medium">{successMessage}</p>
-          </div>
-        </div>
-      ) : null}
 
       {loadError !== null ? (
         <div
@@ -307,8 +283,9 @@ export function CreatePlanPage() {
                           placeholder={t("pmoc.create.form.namePlaceholder")}
                           {...field}
                         />
-                      </FormControl>
+                        </FormControl>
                       <FormMessage />
+                      <LiveFieldMessage message={issueMessageAt(planError, ["name"])} />
                     </FormItem>
                   )}
                 />
@@ -362,6 +339,9 @@ export function CreatePlanPage() {
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                      <LiveFieldMessage
+                        message={issueMessageAt(planError, ["unitId"])}
+                      />
                     </FormItem>
                   )}
                 />
@@ -396,11 +376,18 @@ export function CreatePlanPage() {
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                      <LiveFieldMessage
+                        message={issueMessageAt(planError, ["assetCategoryId"])}
+                      />
                     </FormItem>
                   )}
                 />
 
-                <PlanSchedulingFields control={form.control} />
+                <PlanSchedulingFields
+                  control={form.control}
+                  intervalMessage={issueMessageAt(planError, ["intervalDays"])}
+                  firstDueMessage={issueMessageAt(planError, ["firstDueDate"])}
+                />
 
                 <FormField
                   control={form.control}
@@ -468,189 +455,17 @@ export function CreatePlanPage() {
                 </Button>
               </div>
 
-              {form.formState.errors.tasks?.root?.message ||
-              form.formState.errors.tasks?.message ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {form.formState.errors.tasks.root?.message ??
-                    form.formState.errors.tasks.message}
-                </p>
-              ) : null}
-
-              <div className="space-y-4">
-                {fields.map((field, index) => {
-                  const inputType =
-                    (watchedTasks?.[index]?.inputType as TaskInputType | undefined) ??
-                    field.inputType
-
-                  return (
-                    <div
-                      key={field.id}
-                      className="space-y-4 rounded-lg border border-border bg-muted/20 p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-sm font-medium">
-                          {t("pmoc.create.tasks.itemTitle", {
-                            number: index + 1,
-                          })}
-                        </h3>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={fields.length <= 1}
-                          aria-label={t("pmoc.create.actions.removeTask")}
-                          onClick={() => {
-                            remove(index)
-                          }}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </Button>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name={`tasks.${index}.title`}
-                          render={({ field: titleField }) => (
-                            <FormItem className="sm:col-span-2">
-                              <FormLabel>
-                                {t("pmoc.create.tasks.title")}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  autoComplete="off"
-                                  placeholder={t(
-                                    "pmoc.create.tasks.titlePlaceholder",
-                                  )}
-                                  {...titleField}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`tasks.${index}.inputType`}
-                          render={({ field: inputTypeField }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {t("pmoc.create.tasks.inputType")}
-                              </FormLabel>
-                              <Select
-                                modal={false}
-                                onValueChange={inputTypeField.onChange}
-                                value={inputTypeField.value}
-                                items={inputTypeItems}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {taskInputTypeValues.map((type) => (
-                                    <SelectItem key={type} value={type}>
-                                      {t(`pmoc.inputType.${type}`)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`tasks.${index}.isMandatory`}
-                          render={({ field: mandatoryField }) => (
-                            <FormItem className="flex flex-row items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-                              <FormLabel className="m-0">
-                                {t("pmoc.create.tasks.isMandatory")}
-                              </FormLabel>
-                              <FormControl>
-                                <Switch
-                                  checked={mandatoryField.value}
-                                  onCheckedChange={mandatoryField.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-
-                        {inputType === "Number" ? (
-                          <>
-                            <FormField
-                              control={form.control}
-                              name={`tasks.${index}.min`}
-                              render={({ field: minField }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    {t("pmoc.create.tasks.min")}
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      inputMode="decimal"
-                                      value={
-                                        minField.value == null
-                                          ? ""
-                                          : String(minField.value)
-                                      }
-                                      onChange={(event) => {
-                                        minField.onChange(
-                                          parseOptionalNumber(
-                                            event.target.value,
-                                          ),
-                                        )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name={`tasks.${index}.max`}
-                              render={({ field: maxField }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    {t("pmoc.create.tasks.max")}
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      inputMode="decimal"
-                                      value={
-                                        maxField.value == null
-                                          ? ""
-                                          : String(maxField.value)
-                                      }
-                                      onChange={(event) => {
-                                        maxField.onChange(
-                                          parseOptionalNumber(
-                                            event.target.value,
-                                          ),
-                                        )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <PlanTaskEditor
+                control={form.control}
+                fields={fields}
+                watchedTasks={watchedTasks}
+                setValue={form.setValue}
+                onRemove={remove}
+                issueMessage={(path) => issueMessageAt(planError, path)}
+              />
             </section>
+
+            <FormValidationSummary messages={planMessages} />
 
             {submitError !== null ? (
               <div

@@ -85,17 +85,20 @@ export function RentalResourcesPage() {
   }
 
   function openEdit(asset: AdminRentalAsset) {
-    if (!canWrite) {
-      return
-    }
     setEditing(asset)
     setSheetOpen(true)
   }
 
   async function handleSubmit(values: RentalResourceFormValues): Promise<boolean> {
+    if (!canWrite) {
+      return false
+    }
     setBusy(true)
     try {
-      const body = toCreateRentableRequest(values)
+      const body = toCreateRentableRequest(values, {
+        creating: editing === null,
+        stored: editing?.maxAdvanceBookingDays,
+      })
       if (editing) {
         await updateRentalAsset(editing.id, body)
         toast.success(t("rentals.resources.updateSuccess"))
@@ -176,7 +179,6 @@ export function RentalResourcesPage() {
                 onClick={() => {
                   openEdit(asset)
                 }}
-                disabled={!canWrite}
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{asset.name}</p>
@@ -190,12 +192,10 @@ export function RentalResourcesPage() {
                       : null}
                   </p>
                 </div>
-                {canWrite ? (
-                  <ChevronRight
-                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                    aria-hidden
-                  />
-                ) : null}
+                <ChevronRight
+                  className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  aria-hidden
+                />
               </button>
             </li>
           ))}
