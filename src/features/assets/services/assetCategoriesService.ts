@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { assetDeleteErrorMessage } from "@/features/assets/lib/assetApiErrors"
 import {
   assetCategoryListSchema,
   assetCategorySchema,
@@ -171,9 +172,10 @@ export async function deleteCategory(
     }
 
     throw new Error(
-      parseApiError(
+      assetDeleteErrorMessage(
         getAxiosErrorPayload(error),
         i18n.t("assets.categories.errors.deleteFailed"),
+        "category",
       ),
     )
   }

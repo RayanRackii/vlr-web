@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-table"
 import { CircleCheck, Layers, MoreHorizontal, Plus, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
@@ -429,11 +430,11 @@ export function AssetsPage() {
     try {
       const result = await deleteAsset(assetToDelete.id)
       handleDeleteDialogOpenChange(false)
-      setSuccessMessage(
-        result.permanentlyDeleted
-          ? t("assets.deletion.permanentSuccess")
-          : t("assets.deletion.scheduledSuccess"),
-      )
+      const message = result.permanentlyDeleted
+        ? t("assets.deletion.permanentSuccess")
+        : t("assets.deletion.scheduledSuccess")
+      setSuccessMessage(message)
+      toast.success(message)
       await loadPageData()
     } catch (error: unknown) {
       console.error("AssetsPage handleDeleteConfirm failed", error)
@@ -487,23 +488,20 @@ export function AssetsPage() {
       handleBulkDeleteOpenChange(false)
       setRowSelection({})
 
-      if (failed === 0) {
-        setSuccessMessage(
-          t("assets.deletion.bulkSuccess", {
-            scheduled,
-            permanent,
-            total: scheduled + permanent,
-          }),
-        )
-      } else {
-        setSuccessMessage(
-          t("assets.deletion.bulkPartialSuccess", {
-            scheduled,
-            permanent,
-            failed,
-          }),
-        )
-      }
+      const message =
+        failed === 0
+          ? t("assets.deletion.bulkSuccess", {
+              scheduled,
+              permanent,
+              total: scheduled + permanent,
+            })
+          : t("assets.deletion.bulkPartialSuccess", {
+              scheduled,
+              permanent,
+              failed,
+            })
+      setSuccessMessage(message)
+      toast.success(message)
 
       await loadPageData()
     } catch (error: unknown) {

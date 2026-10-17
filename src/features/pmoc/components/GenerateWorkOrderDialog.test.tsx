@@ -9,6 +9,7 @@ import { PLAN_ID, UNIT_ID, CATEGORY_ID } from "@/features/pmoc/test/pmocFixtures
 import {
   inactiveRegistryAsset,
   matchingRegistryAsset,
+  scheduledDeletionRegistryAsset,
   otherUnitRegistryAsset,
   makeWorkOrder,
 } from "@/features/workOrders/test/workOrderFixtures"
@@ -107,6 +108,28 @@ describe("GenerateWorkOrderDialog", () => {
     ])
     getTechniciansMock.mockResolvedValue([])
     generateMock.mockResolvedValue(makeWorkOrder())
+  })
+
+  it("hides assets scheduled for deletion when the field is present", async () => {
+    listAssetsMock.mockResolvedValue([
+      matchingRegistryAsset,
+      scheduledDeletionRegistryAsset,
+    ])
+    renderDialog()
+    const user = userEvent.setup()
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("workOrders.create.form.asset"),
+      }),
+    )
+
+    expect(
+      await screen.findByRole("option", { name: "AC-01 — Split sala 1" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: "AC-DEL — Split agendado" }),
+    ).not.toBeInTheDocument()
   })
 
   it("C: posts POST /from-plan with planId, assetId, assignedUserId and scheduledDate", async () => {

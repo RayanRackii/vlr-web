@@ -10,7 +10,9 @@ import {
 } from "@tanstack/react-table"
 import { CircleCheck, MoreHorizontal, Plus } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
+import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -65,6 +67,22 @@ import {
   updateCategory,
 } from "@/features/assets/services/assetCategoriesService"
 
+function categoryScheduleWarning(
+  t: TFunction,
+  name: string,
+  count: number,
+): string {
+  if (count <= 0) {
+    return t("assets.deletion.scheduleWarningNone", { name })
+  }
+
+  if (count === 1) {
+    return t("assets.deletion.scheduleWarningOne", { name })
+  }
+
+  return t("assets.deletion.scheduleWarningMany", { name, count })
+}
+
 export function AssetCategoriesPage() {
   const { t } = useTranslation()
   const { tTone } = useAssetCopyTone()
@@ -76,6 +94,7 @@ export function AssetCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [categoryPendingDelete, setCategoryPendingDelete] =
     useState<AssetCategory | null>(null)
   const [confirmName, setConfirmName] = useState("")
@@ -199,6 +218,7 @@ export function AssetCategoriesPage() {
       setCategoryPendingDelete(null)
       setConfirmName("")
       setIsDeleting(false)
+      setDeleteError(null)
     }
   }, [])
 
@@ -359,7 +379,9 @@ export function AssetCategoriesPage() {
           manufacturer,
           description,
         })
-        setSuccessMessage(t("assets.categories.success.created"))
+        const createdMessage = t("assets.categories.success.created")
+        setSuccessMessage(createdMessage)
+        toast.success(createdMessage)
       }
 
       setIsDialogOpen(false)
@@ -388,17 +410,18 @@ export function AssetCategoriesPage() {
     }
 
     setIsDeleting(true)
+    setDeleteError(null)
 
     try {
       const result = await deleteCategory(categoryPendingDelete.id)
 
       setCategoryPendingDelete(null)
       setConfirmName("")
-      setSuccessMessage(
-        result.permanentlyDeleted
-          ? t("assets.deletion.permanentSuccess")
-          : t("assets.deletion.scheduledSuccess"),
-      )
+      const message = result.permanentlyDeleted
+        ? t("assets.deletion.permanentSuccess")
+        : t("assets.deletion.scheduledSuccess")
+      setSuccessMessage(message)
+      toast.success(message)
       await loadCategories()
     } catch (error: unknown) {
       const message =
@@ -406,7 +429,7 @@ export function AssetCategoriesPage() {
           ? error.message
           : t("assets.categories.errors.deleteFailed")
 
-      setLoadError(message)
+      setDeleteError(message)
     } finally {
       setIsDeleting(false)
     }
@@ -631,12 +654,19 @@ export function AssetCategoriesPage() {
             <DialogDescription>
               {isHardDelete
                 ? t("assets.deletion.permanentWarning")
-                : t("assets.deletion.scheduleWarning", {
-                    name: categoryPendingDelete?.name ?? "",
-                    count: categoryPendingDelete?.linkedAssetsCount ?? 0,
-                  })}
+                : categoryScheduleWarning(
+                    t,
+                    categoryPendingDelete?.name ?? "",
+                    categoryPendingDelete?.linkedAssetsCount ?? 0,
+                  )}
             </DialogDescription>
           </DialogHeader>
+
+          {deleteError !== null ? (
+            <p role="alert" className="text-sm text-destructive">
+              {deleteError}
+            </p>
+          ) : null}
 
           {!isHardDelete ? (
             <div className="space-y-2">

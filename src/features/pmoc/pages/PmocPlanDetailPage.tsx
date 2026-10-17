@@ -52,6 +52,7 @@ import { GenerateWorkOrderDialog } from "@/features/pmoc/components/GenerateWork
 import { PlanCoverageSection } from "@/features/pmoc/components/PlanCoverageSection"
 import { PlanRelatedWorkOrders } from "@/features/pmoc/components/PlanRelatedWorkOrders"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
+import { PlanTaskOptionsField } from "@/features/pmoc/components/PlanTaskOptionsField"
 import { Can } from "@/features/users/permissions/Can"
 import { useCan, usePermissions } from "@/features/users/permissions/PermissionContext"
 import { formatCivilDateOnly } from "@/features/pmoc/lib/formatCivilDate"
@@ -631,6 +632,13 @@ export function PmocPlanDetailPage() {
                             </FormItem>
                           )}
                         />
+
+                        {inputType === "SingleChoice" ? (
+                          <PlanTaskOptionsField
+                            control={form.control}
+                            index={index}
+                          />
+                        ) : null}
 
                         {inputType === "Number" ? (
                           <>

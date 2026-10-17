@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
+import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
 import i18n from "@/lib/i18n"
 
 vi.mock("sonner", () => ({
@@ -238,4 +239,35 @@ describe("CreateWorkOrderPage validity gate", () => {
     expect(task).toHaveValue("Inspecionar equipamento")
     expect(createWorkOrderMock).toHaveBeenCalledTimes(2)
   })
+
+  it("numbers the ad-hoc task from 1 and opens the created work order", async () => {
+    const user = userEvent.setup()
+    const created = makeWorkOrder()
+    createWorkOrderMock.mockResolvedValue(created)
+
+    render(
+      <MemoryRouter initialEntries={["/os/nova"]}>
+        <Routes>
+          <Route path="/os/nova" element={<CreateWorkOrderPage />} />
+          <Route path="/os/:id" element={<div>os-detail</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const task = await screen.findByLabelText(
+      i18n.t("workOrders.create.form.task"),
+    )
+    await user.type(task, "Inspecionar equipamento")
+    await selectAsset(user)
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("workOrders.create.submit") }),
+    )
+
+    expect(createWorkOrderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tasks: [expect.objectContaining({ order: 1 })],
+      }),
+    )
+    expect(await screen.findByText("os-detail", {}, { timeout: 6000 })).toBeInTheDocument()
+  }, 10000)
 })

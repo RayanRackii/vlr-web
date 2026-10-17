@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, CircleCheck, ClipboardList, LoaderCircle, Plus, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -26,6 +27,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
+import { PlanTaskOptionsField } from "@/features/pmoc/components/PlanTaskOptionsField"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -155,7 +157,9 @@ export function CreatePlanPage() {
 
     try {
       await createPlan(buildCreatePlanRequest(values))
-      setSuccessMessage(t("pmoc.create.success.created"))
+      const message = t("pmoc.create.success.created")
+      setSuccessMessage(message)
+      toast.success(message)
       void navigate("/pmoc")
     } catch (error: unknown) {
       console.error("CreatePlanPage onSubmit failed", error)
@@ -579,6 +583,13 @@ export function CreatePlanPage() {
                             </FormItem>
                           )}
                         />
+
+                        {inputType === "SingleChoice" ? (
+                          <PlanTaskOptionsField
+                            control={form.control}
+                            index={index}
+                          />
+                        ) : null}
 
                         {inputType === "Number" ? (
                           <>

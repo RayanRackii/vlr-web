@@ -57,6 +57,7 @@ export const workOrderRegistryAssetSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
   status: assetStatusResponseSchema,
+  scheduledDeletionAt: z.string().nullish(),
 })
 
 export type WorkOrderRegistryAsset = z.infer<typeof workOrderRegistryAssetSchema>
@@ -234,6 +235,39 @@ export function parseNumberConfiguration(
   }
 }
 
+function readChoiceLabels(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const labels: string[] = []
+  for (const item of value) {
+    if (typeof item === "string") {
+      const trimmed = item.trim()
+      if (trimmed.length > 0) {
+        labels.push(trimmed)
+      }
+      continue
+    }
+
+    if (typeof item === "object" && item !== null) {
+      const record = item as Record<string, unknown>
+      const label =
+        typeof record.label === "string"
+          ? record.label
+          : typeof record.value === "string"
+            ? record.value
+            : null
+      const trimmed = label?.trim() ?? ""
+      if (trimmed.length > 0) {
+        labels.push(trimmed)
+      }
+    }
+  }
+
+  return labels
+}
+
 export function parseSingleChoiceConfiguration(
   configuration: string | null | undefined,
 ): SingleChoiceTaskConfiguration | null {
@@ -241,13 +275,37 @@ export function parseSingleChoiceConfiguration(
     return null
   }
 
+  let parsed: unknown
   try {
-    const parsed: unknown = JSON.parse(configuration)
-    const result = singleChoiceTaskConfigurationSchema.safeParse(parsed)
-    return result.success ? result.data : null
+    parsed = JSON.parse(configuration)
   } catch {
     return null
   }
+
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed)
+    } catch {
+      return null
+    }
+  }
+
+  const direct = singleChoiceTaskConfigurationSchema.safeParse(parsed)
+  if (direct.success && direct.data.options.length > 0) {
+    return {
+      options: direct.data.options
+        .map((option) => option.trim())
+        .filter((option) => option.length > 0),
+    }
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return null
+  }
+
+  const record = parsed as Record<string, unknown>
+  const options = readChoiceLabels(record.options ?? record.choices)
+  return options.length > 0 ? { options } : null
 }
 
 export type { TaskInputType }

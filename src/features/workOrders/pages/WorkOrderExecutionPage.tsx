@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import {
-  ArrowLeft,
-  CircleCheck,
-  Play,
-  WifiOff,
-} from "lucide-react"
+import { ArrowLeft, CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -14,23 +9,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
+import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
   parseNumberConfiguration,
   parseSingleChoiceConfiguration,
   type WorkOrder,
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
-import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -38,7 +27,12 @@ import {
 } from "@/features/workOrders/services/workOrdersService"
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback"
 import { isAxiosError } from "@/lib/api"
-import { processSyncQueue } from "@/lib/offlineSync"
+import {
+  listQueuedTaskIds,
+  listSyncConflicts,
+  processSyncQueue,
+  type OsSyncConflict,
+} from "@/lib/offlineSync"
 
 function formatScheduledDate(value: string, locale: string): string {
   const date = new Date(`${value}T00:00:00`)
@@ -53,20 +47,45 @@ function formatScheduledDate(value: string, locale: string): string {
   }).format(date)
 }
 
+function formatCompletedDate(value: string, locale: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return formatScheduledDate(value, locale)
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date)
+}
+
 function TaskField({
   workOrderId,
   task,
   disabled,
+  pendingSync,
   onLocalChange,
   onPersisted,
+  onQueued,
   onError,
+  onRegisterFlush,
 }: {
   workOrderId: string
   task: WorkOrderTask
   disabled: boolean
+  pendingSync: boolean
   onLocalChange: (taskId: string, value: string | null) => void
   onPersisted: (workOrder: WorkOrder) => void
+  onQueued: (taskId: string) => void
   onError: (message: string) => void
+  onRegisterFlush: (taskId: string, flush: (() => unknown) | null) => void
 }) {
   const { t } = useTranslation()
 
@@ -76,6 +95,8 @@ function TaskField({
         const updated = await updateTaskValue(workOrderId, task.id, value)
         if (updated !== null) {
           onPersisted(updated)
+        } else {
+          onQueued(task.id)
         }
       } catch (error: unknown) {
         console.error("TaskField persistValue failed", error)
@@ -90,15 +111,20 @@ function TaskField({
         )
       }
     },
-    [onError, onPersisted, t, task.id, workOrderId],
+    [onError, onPersisted, onQueued, t, task.id, workOrderId],
   )
 
   const debouncedPersist = useDebouncedCallback(
-    (value: string | null) => {
-      void persistValue(value)
-    },
+    (value: string | null) => persistValue(value),
     400,
   )
+
+  useEffect(() => {
+    onRegisterFlush(task.id, () => debouncedPersist.flush())
+    return () => {
+      onRegisterFlush(task.id, null)
+    }
+  }, [debouncedPersist, onRegisterFlush, task.id])
 
   const numberConfig = useMemo(
     () => parseNumberConfiguration(task.configuration),
@@ -110,50 +136,55 @@ function TaskField({
     [task.configuration],
   )
 
-  const choiceItems = useMemo(
-    () =>
-      (choiceConfig?.options ?? []).map((option) => ({
-        value: option,
-        label: option,
-      })),
-    [choiceConfig],
-  )
+  const choiceOptions = choiceConfig?.options ?? []
+
+  const waiting = pendingSync ? (
+    <p className="text-xs text-amber-800 dark:text-amber-200">
+      {t("workOrders.offline.waitingToSync")}
+    </p>
+  ) : null
 
   switch (task.inputType) {
     case "Checkbox": {
       const checked = task.value === "true"
 
       return (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-          <span className="text-sm text-muted-foreground">
-            {t("workOrders.execution.checkboxHint")}
-          </span>
-          <Switch
-            checked={checked}
-            disabled={disabled}
-            onCheckedChange={(nextChecked) => {
-              const nextValue = nextChecked ? "true" : "false"
-              onLocalChange(task.id, nextValue)
-              void persistValue(nextValue)
-            }}
-          />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <span className="text-sm text-muted-foreground">
+              {t("workOrders.execution.checkboxHint")}
+            </span>
+            <Switch
+              checked={checked}
+              disabled={disabled}
+              onCheckedChange={(nextChecked) => {
+                const nextValue = nextChecked ? "true" : "false"
+                onLocalChange(task.id, nextValue)
+                void persistValue(nextValue)
+              }}
+            />
+          </div>
+          {waiting}
         </div>
       )
     }
 
     case "Text":
       return (
-        <Textarea
-          value={task.value ?? ""}
-          disabled={disabled}
-          placeholder={t("workOrders.execution.textPlaceholder")}
-          onChange={(event) => {
-            const nextValue =
-              event.target.value.trim() === "" ? null : event.target.value
-            onLocalChange(task.id, nextValue)
-            debouncedPersist(nextValue)
-          }}
-        />
+        <div className="space-y-2">
+          <Textarea
+            value={task.value ?? ""}
+            disabled={disabled}
+            placeholder={t("workOrders.execution.textPlaceholder")}
+            onChange={(event) => {
+              const nextValue =
+                event.target.value.trim() === "" ? null : event.target.value
+              onLocalChange(task.id, nextValue)
+              debouncedPersist(nextValue)
+            }}
+          />
+          {waiting}
+        </div>
       )
 
     case "Number":
@@ -183,42 +214,54 @@ function TaskField({
               debouncedPersist(nextValue)
             }}
           />
+          {waiting}
         </div>
       )
 
     case "SingleChoice":
+      if (choiceOptions.length === 0) {
+        return (
+          <p className="text-sm text-muted-foreground">
+            {t("workOrders.execution.choiceEmpty")}
+          </p>
+        )
+      }
+
       return (
-        <Select
-          modal={false}
-          disabled={disabled}
-          value={task.value ?? undefined}
-          onValueChange={(value) => {
-            const nextValue = value ?? null
-            onLocalChange(task.id, nextValue)
-            void persistValue(nextValue)
-          }}
-          items={choiceItems}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue
-              placeholder={t("workOrders.execution.choicePlaceholder")}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {(choiceConfig?.options ?? []).map((option) => (
-              <SelectItem key={option} value={option}>
+        <div className="space-y-2">
+          <select
+            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={task.title}
+            disabled={disabled}
+            value={task.value ?? ""}
+            onChange={(event) => {
+              const nextValue =
+                event.target.value === "" ? null : event.target.value
+              onLocalChange(task.id, nextValue)
+              void persistValue(nextValue)
+            }}
+          >
+            <option value="">
+              {t("workOrders.execution.choicePlaceholder")}
+            </option>
+            {choiceOptions.map((option) => (
+              <option key={option} value={option}>
                 {option}
-              </SelectItem>
+              </option>
             ))}
-          </SelectContent>
-        </Select>
+          </select>
+          {waiting}
+        </div>
       )
 
     case "Image":
       return (
-        <Button type="button" variant="outline" disabled>
-          {t("workOrders.execution.imageUploadSoon")}
-        </Button>
+        <Alert>
+          <AlertTitle>{t("workOrders.execution.imageUnsupported")}</AlertTitle>
+          <AlertDescription>
+            {t("workOrders.execution.imageUnsupportedDetail")}
+          </AlertDescription>
+        </Alert>
       )
 
     default:
@@ -237,9 +280,13 @@ export function WorkOrderExecutionPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [isOffline, setIsOffline] = useState(
-    () => typeof navigator !== "undefined" && !navigator.onLine,
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
   )
+  const [conflicts, setConflicts] = useState<OsSyncConflict[]>([])
+  const loadFailedRef = useRef(false)
+  const flushersRef = useRef(new Map<string, () => unknown>())
+  const draftValuesRef = useRef(new Map<string, string | null>())
 
   const loadWorkOrder = useCallback(async () => {
     if (!session) {
@@ -259,6 +306,10 @@ export function WorkOrderExecutionPage() {
 
     try {
       const data = await getWorkOrderById(id)
+      loadFailedRef.current = false
+      draftValuesRef.current = new Map(
+        data.tasks.map((task) => [task.id, task.value ?? null]),
+      )
       setWorkOrder(data)
     } catch (error: unknown) {
       console.error("WorkOrderExecutionPage loadWorkOrder failed", error)
@@ -269,6 +320,7 @@ export function WorkOrderExecutionPage() {
         )
       }
 
+      loadFailedRef.current = true
       setErrorMessage(
         error instanceof Error
           ? error.message
@@ -279,39 +331,49 @@ export function WorkOrderExecutionPage() {
     }
   }, [id, session, t])
 
+  const refreshSyncState = useCallback(async () => {
+    const [queued, queuedConflicts] = await Promise.all([
+      listQueuedTaskIds(),
+      listSyncConflicts(),
+    ])
+    setPendingTaskIds(new Set(queued))
+    setConflicts(queuedConflicts)
+  }, [])
+
   useEffect(() => {
     void loadWorkOrder()
   }, [loadWorkOrder])
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOffline(false)
-      void processSyncQueue().catch((error: unknown) => {
-        console.error("WorkOrderExecutionPage processSyncQueue failed", error)
-      })
+    const syncAndRefresh = () => {
+      void processSyncQueue()
+        .catch((error: unknown) => {
+          console.error("WorkOrderExecutionPage processSyncQueue failed", error)
+        })
+        .finally(() => {
+          void refreshSyncState()
+        })
     }
 
-    const handleOffline = () => {
-      setIsOffline(true)
+    const handleOnline = () => {
+      syncAndRefresh()
+      if (loadFailedRef.current) {
+        setErrorMessage(null)
+        void loadWorkOrder()
+      }
     }
 
     window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
+    void refreshSyncState()
 
     if (navigator.onLine) {
-      void processSyncQueue().catch((error: unknown) => {
-        console.error(
-          "WorkOrderExecutionPage initial processSyncQueue failed",
-          error,
-        )
-      })
+      syncAndRefresh()
     }
 
     return () => {
       window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
     }
-  }, [])
+  }, [loadWorkOrder, refreshSyncState])
 
   const isReadOnly =
     workOrder?.status === "Completed" || workOrder?.status === "Canceled"
@@ -324,7 +386,26 @@ export function WorkOrderExecutionPage() {
     return [...workOrder.tasks].sort((a, b) => a.order - b.order)
   }, [workOrder])
 
+  const registerFlush = useCallback(
+    (taskId: string, flush: (() => unknown) | null) => {
+      if (flush) {
+        flushersRef.current.set(taskId, flush)
+        return
+      }
+      flushersRef.current.delete(taskId)
+    },
+    [],
+  )
+
+  function currentTaskValue(task: WorkOrderTask): string | null {
+    if (draftValuesRef.current.has(task.id)) {
+      return draftValuesRef.current.get(task.id) ?? null
+    }
+    return task.value ?? null
+  }
+
   function handleLocalTaskChange(taskId: string, value: string | null) {
+    draftValuesRef.current.set(taskId, value)
     setWorkOrder((current) => {
       if (!current) {
         return current
@@ -363,14 +444,83 @@ export function WorkOrderExecutionPage() {
     }
   }
 
+  function handleQueued(taskId: string) {
+    setPendingTaskIds((current) => {
+      const next = new Set(current)
+      next.add(taskId)
+      return next
+    })
+  }
+
+  function handlePersisted(next: WorkOrder) {
+    for (const task of next.tasks) {
+      const serverValue = task.value ?? null
+      const draft = draftValuesRef.current.get(task.id)
+      if (draft === undefined || draft === serverValue) {
+        draftValuesRef.current.set(task.id, serverValue)
+      }
+    }
+    setWorkOrder({
+      ...next,
+      tasks: next.tasks.map((task) => {
+        const draft = draftValuesRef.current.get(task.id)
+        if (draft !== undefined && draft !== (task.value ?? null)) {
+          return { ...task, value: draft }
+        }
+        return task
+      }),
+    })
+    setPendingTaskIds((current) => {
+      const stillPending = new Set(current)
+      for (const task of next.tasks) {
+        if (draftValuesRef.current.get(task.id) === (task.value ?? null)) {
+          stillPending.delete(task.id)
+        }
+      }
+      return stillPending
+    })
+    void refreshSyncState()
+  }
+
+  async function flushPendingEdits(): Promise<void> {
+    const pending: Array<Promise<unknown>> = []
+    for (const flush of flushersRef.current.values()) {
+      const result = flush()
+      if (
+        result != null &&
+        typeof result === "object" &&
+        "then" in result &&
+        typeof result.then === "function"
+      ) {
+        pending.push(result as Promise<unknown>)
+      }
+    }
+    await Promise.all(pending)
+  }
+
   async function handleComplete() {
     if (!workOrder) {
       return
     }
 
-    const missingMandatory = orderedTasks.filter(
-      (task) => task.isMandatory && (task.value == null || task.value.trim() === ""),
-    )
+    try {
+      await flushPendingEdits()
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : t("workOrders.errors.updateTaskFailed"),
+      )
+      return
+    }
+
+    const missingMandatory = orderedTasks.filter((task) => {
+      if (task.inputType === "Image") {
+        return false
+      }
+      const value = currentTaskValue(task)
+      return task.isMandatory && (value == null || value.trim() === "")
+    })
 
     if (missingMandatory.length > 0) {
       setErrorMessage(
@@ -429,12 +579,13 @@ export function WorkOrderExecutionPage() {
 
   return (
     <div className="space-y-6 pb-28">
-      {isOffline ? (
-        <Alert variant="warning">
-          <WifiOff aria-hidden="true" />
-          <AlertTitle>{t("workOrders.offline.title")}</AlertTitle>
+      <WorkOrderOfflineBanner />
+
+      {conflicts.some((conflict) => conflict.workOrderId === workOrder.id) ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t("workOrders.offline.conflictTitle")}</AlertTitle>
           <AlertDescription>
-            {t("workOrders.offline.banner")}
+            {t("workOrders.offline.conflictBody")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -516,6 +667,26 @@ export function WorkOrderExecutionPage() {
           </p>
           <p className="font-mono text-sm">{workOrder.id}</p>
         </div>
+        <div className="sm:col-span-2">
+          <p className="text-xs text-muted-foreground">
+            {t("workOrders.execution.notes")}
+          </p>
+          <p className="whitespace-pre-wrap font-medium">
+            {workOrder.notes?.trim()
+              ? workOrder.notes
+              : t("workOrders.execution.noNotes")}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {t("workOrders.execution.completedDate")}
+          </p>
+          <p className="font-medium">
+            {workOrder.completedDate
+              ? formatCompletedDate(workOrder.completedDate, i18n.language)
+              : t("workOrders.execution.notCompleted")}
+          </p>
+        </div>
       </section>
 
       {successMessage !== null ? (
@@ -550,14 +721,14 @@ export function WorkOrderExecutionPage() {
         </div>
 
         <div className="space-y-4">
-          {orderedTasks.map((task) => (
+          {orderedTasks.map((task, index) => (
             <div
               key={task.id}
               className="space-y-3 rounded-xl border border-border bg-muted/20 p-4"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-medium">
-                  {task.order}. {task.title}
+                  {index + 1}. {task.title}
                 </h3>
                 {task.isMandatory ? (
                   <Badge variant="outline">
@@ -573,9 +744,12 @@ export function WorkOrderExecutionPage() {
                 workOrderId={workOrder.id}
                 task={task}
                 disabled={isReadOnly}
+                pendingSync={pendingTaskIds.has(task.id)}
                 onLocalChange={handleLocalTaskChange}
-                onPersisted={setWorkOrder}
+                onPersisted={handlePersisted}
+                onQueued={handleQueued}
                 onError={setErrorMessage}
+                onRegisterFlush={registerFlush}
               />
             </div>
           ))}

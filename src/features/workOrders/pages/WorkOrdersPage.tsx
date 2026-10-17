@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   flexRender,
   getCoreRowModel,
@@ -30,6 +30,7 @@ import {
   type WorkOrder,
   type WorkOrderStatus,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
 import { WorkOrderOrigin, formatWorkOrderOriginText } from "@/features/workOrders/components/WorkOrderOrigin"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { isAxiosError } from "@/lib/api"
@@ -43,6 +44,7 @@ const LIST_TABS = [
   "Pending",
   "InProgress",
   "Completed",
+  "Canceled",
 ] as const satisfies readonly WorkOrderStatus[]
 
 function formatShortId(id: string): string {
@@ -72,7 +74,6 @@ function WorkOrdersTable({
   emptyLabel: string
 }) {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const columns = useMemo<ColumnDef<WorkOrderTableRow>[]>(
@@ -138,20 +139,20 @@ function WorkOrdersTable({
         enableColumnFilter: false,
         header: t("workOrders.columns.actions"),
         cell: ({ row }) => {
-          const isCompleted = row.original.status === "Completed"
-          const label = isCompleted
+          const isClosed =
+            row.original.status === "Completed" ||
+            row.original.status === "Canceled"
+          const label = isClosed
             ? t("workOrders.actions.view")
             : t("workOrders.actions.execute")
-          const Icon = isCompleted ? Eye : Play
+          const Icon = isClosed ? Eye : Play
 
           return (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => {
-                void navigate(`/os/${row.original.id}`)
-              }}
+              render={<Link to={`/os/${row.original.id}`} />}
             >
               <Icon data-icon="inline-start" />
               {label}
@@ -160,7 +161,7 @@ function WorkOrdersTable({
         },
       },
     ],
-    [i18n.language, navigate, t],
+    [i18n.language, t],
   )
 
   const table = useReactTable({
@@ -299,6 +300,7 @@ export function WorkOrdersPage() {
 
   return (
     <div className="space-y-6">
+      <WorkOrderOfflineBanner />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -336,7 +338,8 @@ export function WorkOrdersPage() {
           if (
             value === "Pending" ||
             value === "InProgress" ||
-            value === "Completed"
+            value === "Completed" ||
+            value === "Canceled"
           ) {
             setActiveTab(value)
           }

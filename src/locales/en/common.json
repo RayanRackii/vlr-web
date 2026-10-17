@@ -15,7 +15,9 @@
     "filter": "Filter",
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
-    "refreshing": "Updating..."
+    "refreshing": "Updating...",
+    "yes": "Yes",
+    "no": "No"
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -568,6 +570,17 @@
       "toastUpdated": "Product updated.",
       "toastActivated": "Product activated.",
       "toastDeactivated": "Product deactivated.",
+      "deactivateConfirmTitle": "Deactivate product?",
+      "deactivateConfirmBody": "{{name}} will no longer appear for new orders. Existing orders stay unchanged.",
+      "validation": {
+        "nameRequired": "Enter the product name.",
+        "code": "The code can be at most 80 characters.",
+        "description": "The description can be at most 4000 characters.",
+        "currency": "Currency must be 3 letters."
+      },
+      "errors": {
+        "duplicateCode": "A product with this code already exists."
+      },
       "toastFileUploaded": "File uploaded.",
       "toastFileDeleted": "File deleted.",
       "columns": {
@@ -595,7 +608,16 @@
         "sent": "Uploaded",
         "error": "Upload failed",
         "retry": "Retry",
-        "partialFailure": "Product saved, but some files were not uploaded."
+        "partialFailure": "Product saved, but some files were not uploaded.",
+        "tooLargeCustomer": "{{name}} is over 5 MB. Customer-visible images must be 5 MB or smaller.",
+        "tooLargeInternal": "{{name}} is over 25 MB. Internal files must be 25 MB or smaller.",
+        "tooLarge": "The file is over the allowed size.",
+        "typeCustomer": "{{name}} is not a jpeg, png, or webp image.",
+        "typeInternal": "{{name}} is not a pdf, stl, step, stp, or dxf file.",
+        "typeRejected": "This file type is not accepted.",
+        "contentMismatch": "The file content does not match the declared type.",
+        "extensionRequired": "{{name}} needs a file extension.",
+        "required": "Select a file."
       },
       "gallery": {
         "previous": "Previous image",
@@ -627,6 +649,8 @@
       "rejectedReason": "Rejection reason",
       "cancelledReason": "Cancellation reason",
       "toastUpdated": "Order updated.",
+      "inactiveProductWarningTitle": "Inactive product on the order",
+      "inactiveProductWarning": "These products are inactive: {{names}}. Approval is still available.",
       "saving": "Saving...",
       "columns": {
         "number": "Number",
@@ -1051,7 +1075,7 @@
     "sections": {
       "customers": {
         "title": "Portal customers",
-        "description": "Logins on the B2C portal ({subdomain}.rolvix.com.br)."
+        "description": "Logins on this environment's customer portal."
       },
       "assets": {
         "title": "Resources",
@@ -1245,6 +1269,9 @@
       "title": "Confirm deletion",
       "pendingBadge": "Pending Deletion",
       "scheduleWarning": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
+      "scheduleWarningNone": "This will schedule deletion of type \"{{name}}\" in 30 days. No resources are linked. Type the type name to confirm.",
+      "scheduleWarningOne": "This will schedule deletion of type \"{{name}}\" and the linked resource in 30 days. Type the type name to confirm.",
+      "scheduleWarningMany": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
       "permanentWarning": "This item is already scheduled for deletion. Do you want to permanently delete it now?",
       "assetScheduleWarning": "This will schedule deletion of resource \"{{tag}}\" in 30 days. Type the tag to confirm.",
       "assetPermanentWarning": "This resource is already scheduled for deletion. Do you want to permanently delete it now?",
@@ -1342,6 +1369,7 @@
         "createFailed": "Could not create the type.",
         "updateFailed": "Could not update the type.",
         "deleteFailed": "Could not delete the type.",
+        "inUse": "This type cannot be deleted because it is in use.",
         "invalidResponse": "Invalid API response."
       }
     },
@@ -1462,7 +1490,9 @@
         "deleteFailed": "Could not delete the resource.",
         "invalidResponse": "Invalid API response.",
         "invalidUnitsResponse": "Invalid units response.",
-        "updateFailed": "Could not update the resource."
+        "updateFailed": "Could not update the resource.",
+        "duplicateTag": "A resource with this tag already exists.",
+        "deleteBlockedByWorkOrders": "This resource cannot be deleted because it has work orders."
       },
       "flags": {
         "rentable": "Rental",
@@ -1819,6 +1849,9 @@
         "titlePlaceholder": "What should be done",
         "inputType": "Input type",
         "isMandatory": "Mandatory",
+        "options": "Options",
+        "optionsPlaceholder": "One option per line",
+        "optionsHint": "Each line becomes a choice on the execution screen.",
         "min": "Minimum",
         "max": "Maximum"
       },
@@ -1865,12 +1898,14 @@
     "tabs": {
       "Pending": "Pending",
       "InProgress": "In Progress",
-      "Completed": "Completed"
+      "Completed": "Completed",
+      "Canceled": "Canceled"
     },
     "empty": {
       "Pending": "No pending work orders.",
       "InProgress": "No work orders in progress.",
-      "Completed": "No completed work orders."
+      "Completed": "No completed work orders.",
+      "Canceled": "No canceled work orders."
     },
     "columns": {
       "id": "WO ID",
@@ -1940,7 +1975,14 @@
       "numberPlaceholder": "Enter the value",
       "numberRange": "Minimum: {{min}}, Maximum: {{max}}{{unit}}",
       "choicePlaceholder": "Select an option",
+      "choiceEmpty": "No options were configured for this task.",
       "imageUploadSoon": "Photo Upload (Coming Soon)",
+      "imageUnsupported": "Image upload is not supported yet",
+      "imageUnsupportedDetail": "There is no file upload for this task yet. When it is not mandatory, the other tasks can still be completed. When it is mandatory, the server can still refuse completion until a file upload exists.",
+      "notes": "Notes",
+      "noNotes": "No notes.",
+      "completedDate": "Completed on",
+      "notCompleted": "Not completed yet",
       "start": "Start WO",
       "complete": "Complete WO",
       "startedSuccess": "Work order started successfully.",
@@ -1953,11 +1995,18 @@
       "loadOneFailed": "Could not load the work order.",
       "invalidResponse": "Invalid API response.",
       "updateTaskFailed": "Could not save the task response.",
-      "updateStatusFailed": "Could not update the work order status."
+      "updateStatusFailed": "Could not update the work order status.",
+      "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
+      "assetNotEligible": "This resource is not eligible for this maintenance plan."
     },
     "offline": {
       "title": "Offline Mode",
-      "banner": "Offline Mode: Changes are being saved locally."
+      "banner": "Offline Mode: Changes are being saved locally.",
+      "waitingToSync": "Waiting to sync",
+      "startFailed": "No connection. The work order could not be started.",
+      "statusFailed": "No connection. The work order status could not be updated.",
+      "conflictTitle": "Sync conflict",
+      "conflictBody": "A change saved offline was rejected by the server and is still visible so it can be corrected."
     }
   },
   "users": {

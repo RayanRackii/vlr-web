@@ -1,6 +1,8 @@
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
+  clearSyncConflict,
   enqueueTaskValuePatch,
   isNetworkConnectivityError,
 } from "@/lib/offlineSync"
@@ -166,7 +168,7 @@ export async function generateWorkOrderFromPlan(
     }
 
     throw new Error(
-      parseApiError(
+      localizeWorkOrderApiError(
         getAxiosErrorPayload(error),
         i18n.t("pmoc.plans.generate.errors.generateFailed"),
       ),
@@ -244,6 +246,7 @@ export async function updateTaskValue(
       throw new Error(i18n.t("workOrders.errors.invalidResponse"))
     }
 
+    await clearSyncConflict(workOrderId, taskId)
     return parsed.data
   } catch (error: unknown) {
     console.error("updateTaskValue failed", error)
@@ -274,6 +277,14 @@ export async function updateWorkOrderStatus(
 ): Promise<WorkOrder> {
   const payload = updateWorkOrderStatusRequestSchema.parse({ status })
 
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    throw new Error(
+      status === "InProgress"
+        ? i18n.t("workOrders.offline.startFailed")
+        : i18n.t("workOrders.offline.statusFailed"),
+    )
+  }
+
   try {
     const response = await api.patch<unknown>(
       `${WORK_ORDERS_PATH}/${workOrderId}/status`,
@@ -297,12 +308,20 @@ export async function updateWorkOrderStatus(
       console.error("updateWorkOrderStatus response data", error.response?.data)
     }
 
+    if (isNetworkConnectivityError(error)) {
+      throw new Error(
+        status === "InProgress"
+          ? i18n.t("workOrders.offline.startFailed")
+          : i18n.t("workOrders.offline.statusFailed"),
+      )
+    }
+
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }
 
     throw new Error(
-      parseApiError(
+      localizeWorkOrderApiError(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.errors.updateStatusFailed"),
       ),

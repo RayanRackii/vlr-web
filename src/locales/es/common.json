@@ -15,7 +15,9 @@
     "filter": "Filtrar",
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando...",
-    "refreshing": "Actualizando..."
+    "refreshing": "Actualizando...",
+    "yes": "Sí",
+    "no": "No"
   },
   "apiErrors": {
     "invalidResponse": "Respuesta inválida de la API.",
@@ -568,6 +570,17 @@
       "toastUpdated": "Producto actualizado.",
       "toastActivated": "Producto activado.",
       "toastDeactivated": "Producto desactivado.",
+      "deactivateConfirmTitle": "¿Desactivar producto?",
+      "deactivateConfirmBody": "{{name}} deja de aparecer en pedidos nuevos. Los pedidos ya hechos no cambian.",
+      "validation": {
+        "nameRequired": "Indique el nombre del producto.",
+        "code": "El código puede tener como máximo 80 caracteres.",
+        "description": "La descripción puede tener como máximo 4000 caracteres.",
+        "currency": "La moneda debe tener 3 letras."
+      },
+      "errors": {
+        "duplicateCode": "Ya existe un producto con este código."
+      },
       "toastFileUploaded": "Archivo enviado.",
       "toastFileDeleted": "Archivo eliminado.",
       "columns": {
@@ -595,7 +608,16 @@
         "sent": "Enviado",
         "error": "Error al enviar",
         "retry": "Reintentar",
-        "partialFailure": "Producto guardado, pero algunos archivos no se enviaron."
+        "partialFailure": "Producto guardado, pero algunos archivos no se enviaron.",
+        "tooLargeCustomer": "{{name}} supera 5 MB. Las imágenes visibles al cliente deben tener hasta 5 MB.",
+        "tooLargeInternal": "{{name}} supera 25 MB. Los archivos internos deben tener hasta 25 MB.",
+        "tooLarge": "El archivo supera el tamaño permitido.",
+        "typeCustomer": "{{name}} no es una imagen jpeg, png o webp.",
+        "typeInternal": "{{name}} no es pdf, stl, step, stp o dxf.",
+        "typeRejected": "Este tipo de archivo no se acepta.",
+        "contentMismatch": "El contenido del archivo no coincide con el tipo indicado.",
+        "extensionRequired": "{{name}} necesita una extensión.",
+        "required": "Seleccione un archivo."
       },
       "gallery": {
         "previous": "Imagen anterior",
@@ -627,6 +649,8 @@
       "rejectedReason": "Motivo del rechazo",
       "cancelledReason": "Motivo de la cancelación",
       "toastUpdated": "Pedido actualizado.",
+      "inactiveProductWarningTitle": "Producto inactivo en el pedido",
+      "inactiveProductWarning": "Estos productos están inactivos: {{names}}. La aprobación sigue disponible.",
       "saving": "Guardando...",
       "columns": {
         "number": "Número",
@@ -1051,7 +1075,7 @@
     "sections": {
       "customers": {
         "title": "Clientes del portal",
-        "description": "Inicios de sesión en el portal B2C ({subdominio}.rolvix.com.br)."
+        "description": "Inicios de sesión en el portal de clientes de este entorno."
       },
       "assets": {
         "title": "Recursos",
@@ -1245,6 +1269,9 @@
       "title": "Confirmar eliminación",
       "pendingBadge": "Eliminación pendiente",
       "scheduleWarning": "Esta acción programará la eliminación del tipo \"{{name}}\" y de todos los {{count}} recursos vinculados dentro de 30 días. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningNone": "Esta acción programará la eliminación del tipo \"{{name}}\" dentro de 30 días. No hay recursos vinculados. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningOne": "Esta acción programará la eliminación del tipo \"{{name}}\" y del recurso vinculado dentro de 30 días. Escriba el nombre del tipo para confirmar.",
+      "scheduleWarningMany": "Esta acción programará la eliminación del tipo \"{{name}}\" y de todos los {{count}} recursos vinculados dentro de 30 días. Escriba el nombre del tipo para confirmar.",
       "permanentWarning": "Este elemento ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
       "assetScheduleWarning": "Esta acción programará la eliminación del recurso \"{{tag}}\" dentro de 30 días. Escriba la tag para confirmar.",
       "assetPermanentWarning": "Este recurso ya está programado para eliminación. ¿Desea eliminarlo permanentemente ahora?",
@@ -1342,6 +1369,7 @@
         "createFailed": "No se pudo crear el tipo.",
         "updateFailed": "No se pudo actualizar el tipo.",
         "deleteFailed": "No se pudo eliminar el tipo.",
+        "inUse": "No se puede eliminar este tipo porque está en uso.",
         "invalidResponse": "Respuesta inválida de la API."
       }
     },
@@ -1462,7 +1490,9 @@
         "deleteFailed": "No se pudo eliminar el recurso.",
         "invalidResponse": "Respuesta inválida de la API.",
         "invalidUnitsResponse": "Respuesta inválida al cargar unidades.",
-        "updateFailed": "No se pudo actualizar el recurso."
+        "updateFailed": "No se pudo actualizar el recurso.",
+        "duplicateTag": "Ya existe un recurso con esta etiqueta.",
+        "deleteBlockedByWorkOrders": "No se puede eliminar este recurso porque tiene órdenes de trabajo."
       },
       "flags": {
         "rentable": "Alquiler",
@@ -1819,6 +1849,9 @@
         "titlePlaceholder": "Qué se debe hacer",
         "inputType": "Tipo de entrada",
         "isMandatory": "Obligatorio",
+        "options": "Opciones",
+        "optionsPlaceholder": "Una opción por línea",
+        "optionsHint": "Cada línea se convierte en una opción en la ejecución.",
         "min": "Mínimo",
         "max": "Máximo"
       },
@@ -1865,12 +1898,14 @@
     "tabs": {
       "Pending": "Pendientes",
       "InProgress": "En Curso",
-      "Completed": "Completadas"
+      "Completed": "Completadas",
+      "Canceled": "Canceladas"
     },
     "empty": {
       "Pending": "No hay OT pendientes.",
       "InProgress": "No hay OT en curso.",
-      "Completed": "No hay OT completadas."
+      "Completed": "No hay OT completadas.",
+      "Canceled": "No hay OT canceladas."
     },
     "columns": {
       "id": "ID de OT",
@@ -1940,7 +1975,14 @@
       "numberPlaceholder": "Ingrese el valor",
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Seleccione una opción",
+      "choiceEmpty": "No hay opciones configuradas para esta tarea.",
       "imageUploadSoon": "Carga de Foto (Pronto)",
+      "imageUnsupported": "El envío de imagen aún no está soportado",
+      "imageUnsupportedDetail": "Todavía no hay envío de archivo para esta tarea. Si no es obligatoria, las demás pueden completarse. Si es obligatoria, el servidor aún puede rechazar la finalización hasta que exista el envío de archivo.",
+      "notes": "Observaciones",
+      "noNotes": "Sin observaciones.",
+      "completedDate": "Completada el",
+      "notCompleted": "Aún no completada",
       "start": "Iniciar OT",
       "complete": "Finalizar OT",
       "startedSuccess": "OT iniciada con éxito.",
@@ -1953,11 +1995,18 @@
       "loadOneFailed": "No se pudo cargar la orden de trabajo.",
       "invalidResponse": "Respuesta inválida de la API.",
       "updateTaskFailed": "No se pudo guardar la respuesta de la tarea.",
-      "updateStatusFailed": "No se pudo actualizar el estado de la OT."
+      "updateStatusFailed": "No se pudo actualizar el estado de la OT.",
+      "mandatoryTasksIncomplete": "Hay tareas obligatorias incompletas.",
+      "assetNotEligible": "Este recurso no es elegible para este plan de mantenimiento."
     },
     "offline": {
       "title": "Modo Sin Conexión",
-      "banner": "Modo Sin Conexión: Los cambios se están guardando localmente."
+      "banner": "Modo Sin Conexión: Los cambios se están guardando localmente.",
+      "waitingToSync": "Esperando sincronizar",
+      "startFailed": "Sin conexión. No se pudo iniciar la orden de trabajo.",
+      "statusFailed": "Sin conexión. No se pudo actualizar el estado de la orden de trabajo.",
+      "conflictTitle": "Conflicto al sincronizar",
+      "conflictBody": "Un cambio guardado sin conexión fue rechazado por el servidor y sigue visible para corregirlo."
     }
   },
   "users": {

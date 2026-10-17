@@ -1,5 +1,5 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { api } from "@/lib/api"
 import i18n from "@/lib/i18n"
@@ -25,6 +25,7 @@ import {
   getWorkOrders,
   isDuplicateWorkOrderError,
   listWorkOrderAssets,
+  updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
 
 const apiGet = vi.mocked(api.get)
@@ -127,5 +128,36 @@ describe("workOrdersService plan generation", () => {
       )
       expect((error as Error).message).not.toMatch(/^Erro$/i)
     }
+  })
+
+  it("localizes an ineligible asset without the raw id", async () => {
+    apiPost.mockRejectedValue(
+      axiosError(400, {
+        error: `Asset '${matchingRegistryAsset.id}' is not eligible for this maintenance plan.`,
+      }),
+    )
+
+    await expect(
+      generateWorkOrderFromPlan({
+        planId: PLAN_ID,
+        assetId: matchingRegistryAsset.id,
+        assignedUserId: null,
+        scheduledDate: "2026-09-18",
+      }),
+    ).rejects.toThrow(i18n.t("workOrders.errors.assetNotEligible"))
+  })
+})
+
+describe("updateWorkOrderStatus offline", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("mentions the connection when start is attempted offline", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+
+    await expect(
+      updateWorkOrderStatus(makeWorkOrder().id, "InProgress"),
+    ).rejects.toThrow(i18n.t("workOrders.offline.startFailed"))
   })
 })
