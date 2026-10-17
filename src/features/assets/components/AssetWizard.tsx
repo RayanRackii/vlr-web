@@ -1557,16 +1557,16 @@ export function AssetWizard({
                     {t("assets.detail.fields.requiresMaintenance")}:{" "}
                   </span>
                   {form.requiresMaintenance
-                    ? t("common.yes", { defaultValue: "Yes" })
-                    : t("common.no", { defaultValue: "No" })}
+                    ? t("common.yes")
+                    : t("common.no")}
                 </p>
                 <p>
                   <span className="text-muted-foreground">
                     {t("assets.detail.fields.isRentable")}:{" "}
                   </span>
                   {form.isRentable
-                    ? t("common.yes", { defaultValue: "Yes" })
-                    : t("common.no", { defaultValue: "No" })}
+                    ? t("common.yes")
+                    : t("common.no")}
                 </p>
                 {form.isRentable ? (
                   <>
@@ -1575,8 +1575,8 @@ export function AssetWizard({
                         {t("assets.detail.fields.requiresDeposit")}:{" "}
                       </span>
                       {form.requiresDeposit
-                        ? t("common.yes", { defaultValue: "Yes" })
-                        : t("common.no", { defaultValue: "No" })}
+                        ? t("common.yes")
+                        : t("common.no")}
                     </p>
                     {form.rentalType === "Location" ? (
                       <>
@@ -1585,8 +1585,8 @@ export function AssetWizard({
                             {t("assets.detail.fields.queueEnabled")}:{" "}
                           </span>
                           {form.queueEnabled
-                            ? t("common.yes", { defaultValue: "Yes" })
-                            : t("common.no", { defaultValue: "No" })}
+                            ? t("common.yes")
+                            : t("common.no")}
                         </p>
                         {form.queueEnabled ? (
                           <p>

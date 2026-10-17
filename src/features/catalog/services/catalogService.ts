@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { api, getAxiosErrorPayload } from "@/lib/api"
+import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import {
   catalogChannelConfigListSchema,
   catalogChannelConfigSchema,
@@ -27,7 +28,10 @@ import {
 
 function throwCatalogError(error: unknown, fallbackKey: string): never {
   throw new Error(
-    parseApiError(getAxiosErrorPayload(error), i18n.t(fallbackKey)),
+    localizeCatalogApiError(
+      getAxiosErrorPayload(error),
+      i18n.t(fallbackKey),
+    ),
   )
 }
 

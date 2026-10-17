@@ -60,12 +60,19 @@ function eligibleAssetsForPlan(
   unitId: string,
   assetCategoryId: string,
 ): WorkOrderRegistryAsset[] {
-  return assets.filter(
-    (asset) =>
+  return assets.filter((asset) => {
+    const scheduledDeletionAt = asset.scheduledDeletionAt
+    const scheduledForDeletion =
+      typeof scheduledDeletionAt === "string" &&
+      scheduledDeletionAt.trim().length > 0
+
+    return (
       asset.unitId === unitId &&
       asset.categoryId === assetCategoryId &&
-      asset.status === "Active",
-  )
+      asset.status === "Active" &&
+      !scheduledForDeletion
+    )
+  })
 }
 
 export function GenerateWorkOrderDialog({

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -100,9 +101,10 @@ describe("WorkOrdersPage origin", () => {
       ["os", "pmoc"],
     )
 
-    const execute = await screen.findByRole("button", {
+    const execute = await screen.findByRole("link", {
       name: i18n.t("workOrders.actions.execute"),
     })
+    expect(execute).toHaveAttribute("href", `/os/${makeWorkOrder().id}`)
     expect(execute.closest("tr")?.textContent).toMatch(
       i18n.t("workOrders.origin.manual"),
     )
@@ -111,5 +113,24 @@ describe("WorkOrdersPage origin", () => {
         name: i18n.t("workOrders.origin.viewPlan"),
       }),
     ).not.toBeInTheDocument()
+  })
+
+  it("lists canceled work orders on the Canceladas tab", async () => {
+    const user = userEvent.setup()
+    const canceled = makeWorkOrder({ status: "Canceled" })
+    getWorkOrdersMock.mockResolvedValue([canceled])
+
+    renderList(["os.work_orders.read"], ["os"])
+
+    await user.click(
+      await screen.findByRole("tab", {
+        name: new RegExp(i18n.t("workOrders.tabs.Canceled")),
+      }),
+    )
+
+    const view = await screen.findByRole("link", {
+      name: i18n.t("workOrders.actions.view"),
+    })
+    expect(view).toHaveAttribute("href", `/os/${canceled.id}`)
   })
 })

@@ -31,6 +31,16 @@ export const otherUnitRegistryAsset: WorkOrderRegistryAsset = {
   status: "Active",
 }
 
+export const scheduledDeletionRegistryAsset: WorkOrderRegistryAsset = {
+  id: "17171717-1717-4171-8171-171717171717",
+  name: "Split agendado",
+  tag: "AC-DEL",
+  unitId: UNIT_ID,
+  categoryId: CATEGORY_ID,
+  status: "Active",
+  scheduledDeletionAt: "2026-11-16T00:00:00.000Z",
+}
+
 export const inactiveRegistryAsset: WorkOrderRegistryAsset = {
   id: "15151515-1515-4151-8151-151515151515",
   name: "Split inativo",
