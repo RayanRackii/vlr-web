@@ -191,12 +191,36 @@ export type ProcessSyncQueueResult = {
   conflicts: OsSyncConflict[]
 }
 
+type SyncQueueListener = () => void
+
+const syncQueueListeners = new Set<SyncQueueListener>()
+
+/** Fires after each flush attempt so open pages can drop stale pending state. */
+export function subscribeSyncQueue(listener: SyncQueueListener): () => void {
+  syncQueueListeners.add(listener)
+  return () => {
+    syncQueueListeners.delete(listener)
+  }
+}
+
+function notifySyncQueue(): void {
+  for (const listener of syncQueueListeners) {
+    try {
+      listener()
+    } catch (error: unknown) {
+      console.error("sync queue listener failed", error)
+    }
+  }
+}
+
+let processSyncQueueTail: Promise<void> = Promise.resolve()
+
 /**
  * Flushes pending PATCH operations to the API.
  * Network and 5xx failures stay queued. 4xx failures are kept as conflicts
  * so the user can see them instead of losing the edit.
  */
-export async function processSyncQueue(): Promise<ProcessSyncQueueResult> {
+async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     const queue = await readSyncQueue()
     const conflicts = await readConflicts()
@@ -276,4 +300,21 @@ export async function processSyncQueue(): Promise<ProcessSyncQueueResult> {
     remaining: remaining.length,
     conflicts: nextConflicts,
   }
+}
+
+/**
+ * Flushes pending PATCH operations one at a time.
+ * Overlapping callers (the shell host and the open page) wait their turn so
+ * a later empty write cannot drop a 409 conflict.
+ */
+export function processSyncQueue(): Promise<ProcessSyncQueueResult> {
+  const run = processSyncQueueTail.then(processSyncQueueBody, processSyncQueueBody)
+  processSyncQueueTail = run.then(
+    () => undefined,
+    () => undefined,
+  )
+
+  return run.finally(() => {
+    notifySyncQueue()
+  })
 }

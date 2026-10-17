@@ -1442,6 +1442,7 @@
         "bulkDeleteCount": "Excluir em lote ({{count}})",
         "selectAll": "Selecionar todos",
         "selectRow": "Selecionar {{tag}}",
+        "rowMenu": "Ações de {{tag}}",
         "create": "Criar",
         "creating": "Criando..."
       },
@@ -2071,6 +2072,7 @@
       "conflictTitle": "Conflito ao sincronizar",
       "conflictBody": "Uma alteração salva offline foi recusada pelo servidor e permanece visível para correção.",
       "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Valor salvo offline: {{value}}",
       "conflictUnknownField": "Tarefa",
       "discard": "Descartar",
       "discardNamed": "Descartar {{field}}",

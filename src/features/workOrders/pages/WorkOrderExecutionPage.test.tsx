@@ -27,6 +27,7 @@ vi.mock("@/lib/offlineSync", () => ({
   isNetworkConnectivityError: () => false,
   listQueuedTaskIds: vi.fn(async () => []),
   listSyncConflicts: vi.fn(async () => []),
+  subscribeSyncQueue: vi.fn(() => () => undefined),
   clearSyncConflict: vi.fn(),
   retrySyncConflict: vi.fn(async () => ({
     processed: 0,

@@ -1412,6 +1412,7 @@
         "bulkDeleteCount": "Bulk delete ({{count}})",
         "selectAll": "Select all",
         "selectRow": "Select {{tag}}",
+        "rowMenu": "Actions for {{tag}}",
         "create": "Create",
         "creating": "Creating..."
       },
@@ -2035,6 +2036,7 @@
       "conflictTitle": "Sync conflict",
       "conflictBody": "A change saved offline was rejected by the server and is still visible so it can be corrected.",
       "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Value saved offline: {{value}}",
       "conflictUnknownField": "Task",
       "discard": "Discard",
       "discardNamed": "Discard {{field}}",

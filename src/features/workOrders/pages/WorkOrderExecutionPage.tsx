@@ -34,6 +34,7 @@ import {
   listSyncConflicts,
   processSyncQueue,
   retrySyncConflict,
+  subscribeSyncQueue,
   type OsSyncConflict,
 } from "@/lib/offlineSync"
 
@@ -69,6 +70,133 @@ function formatCompletedDate(value: string, locale: string): string {
   }).format(date)
 }
 
+function mergeWorkOrderDrafts(
+  data: WorkOrder,
+  queuedConflicts: readonly OsSyncConflict[],
+  drafts: Map<string, string | null>,
+): WorkOrder {
+  return {
+    ...data,
+    tasks: data.tasks.map((task) => {
+      const serverValue = task.value ?? null
+      const draft = drafts.get(task.id)
+      if (draft !== undefined && draft !== serverValue) {
+        return { ...task, value: draft }
+      }
+
+      const conflict = queuedConflicts.find(
+        (item) => item.workOrderId === data.id && item.taskId === task.id,
+      )
+      if (
+        (serverValue == null || serverValue === "") &&
+        conflict?.value != null &&
+        conflict.value !== ""
+      ) {
+        drafts.set(task.id, conflict.value)
+        return { ...task, value: conflict.value }
+      }
+
+      drafts.set(task.id, serverValue)
+      return task
+    }),
+  }
+}
+
+function SyncConflictList({
+  conflicts,
+  tasks,
+  busyId,
+  onDiscard,
+  onRetry,
+}: {
+  conflicts: readonly OsSyncConflict[]
+  tasks: readonly WorkOrderTask[] | null
+  busyId: string | null
+  onDiscard: (conflict: OsSyncConflict) => void
+  onRetry: (conflict: OsSyncConflict) => void
+}) {
+  const { t } = useTranslation()
+
+  if (conflicts.length === 0) {
+    return null
+  }
+
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>{t("workOrders.offline.conflictTitle")}</AlertTitle>
+      <AlertDescription>
+        <p>{t("workOrders.offline.conflictBody")}</p>
+        <ul className="mt-3 space-y-3">
+          {conflicts.map((conflict) => {
+            const task = tasks?.find((item) => item.id === conflict.taskId)
+            const field =
+              task?.title.trim() !== "" && task != null
+                ? task.title
+                : t("workOrders.offline.conflictUnknownField")
+            const reason = localizeWorkOrderApiError(
+              {
+                code: conflict.code,
+                error: conflict.message,
+                reason: conflict.reason,
+              },
+              t("workOrders.errors.updateTaskFailed"),
+            )
+            const busy = busyId === conflict.id
+
+            return (
+              <li key={conflict.id} className="space-y-2">
+                <p>
+                  {t("workOrders.offline.conflictField", {
+                    field,
+                    reason,
+                  })}
+                </p>
+                {conflict.value != null && conflict.value !== "" ? (
+                  <p>
+                    {t("workOrders.offline.conflictValue", {
+                      value: conflict.value,
+                    })}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    aria-label={t("workOrders.offline.discardNamed", {
+                      field,
+                    })}
+                    onClick={() => {
+                      onDiscard(conflict)
+                    }}
+                  >
+                    {t("workOrders.offline.discard")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    aria-label={t("workOrders.offline.retryNamed", {
+                      field,
+                    })}
+                    onClick={() => {
+                      onRetry(conflict)
+                    }}
+                  >
+                    {t("workOrders.offline.retry")}
+                  </Button>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  )
+}
+
 function TaskField({
   workOrderId,
   task,
@@ -85,7 +213,7 @@ function TaskField({
   disabled: boolean
   pendingSync: boolean
   onLocalChange: (taskId: string, value: string | null) => void
-  onPersisted: (workOrder: WorkOrder) => void
+  onPersisted: (workOrder: WorkOrder, taskId: string) => void
   onQueued: (taskId: string) => void
   onError: (message: string) => void
   onRegisterFlush: (taskId: string, flush: (() => unknown) | null) => void
@@ -97,7 +225,7 @@ function TaskField({
       try {
         const updated = await updateTaskValue(workOrderId, task.id, value)
         if (updated !== null) {
-          onPersisted(updated)
+          onPersisted(updated, task.id)
         } else {
           onQueued(task.id)
         }
@@ -289,6 +417,7 @@ export function WorkOrderExecutionPage() {
   const [conflicts, setConflicts] = useState<OsSyncConflict[]>([])
   const [conflictBusyId, setConflictBusyId] = useState<string | null>(null)
   const loadFailedRef = useRef(false)
+  const hasWorkOrderRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
   const draftValuesRef = useRef(new Map<string, string | null>())
 
@@ -305,16 +434,18 @@ export function WorkOrderExecutionPage() {
       return
     }
 
-    setIsLoading(true)
-    setErrorMessage(null)
+    const background = hasWorkOrderRef.current
+    if (!background) {
+      setIsLoading(true)
+    }
 
     try {
       const data = await getWorkOrderById(id)
+      const queuedConflicts = await listSyncConflicts()
       loadFailedRef.current = false
-      draftValuesRef.current = new Map(
-        data.tasks.map((task) => [task.id, task.value ?? null]),
-      )
-      setWorkOrder(data)
+      hasWorkOrderRef.current = true
+      setWorkOrder(mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current))
+      setErrorMessage(null)
     } catch (error: unknown) {
       console.error("WorkOrderExecutionPage loadWorkOrder failed", error)
       if (isAxiosError(error)) {
@@ -340,15 +471,33 @@ export function WorkOrderExecutionPage() {
       listQueuedTaskIds(),
       listSyncConflicts(),
     ])
+    const visibleConflicts = id
+      ? queuedConflicts.filter((conflict) => conflict.workOrderId === id)
+      : queuedConflicts
     setPendingTaskIds(new Set(queued))
-    setConflicts(queuedConflicts)
-  }, [])
+    setConflicts(visibleConflicts)
+    setWorkOrder((current) => {
+      if (!current) {
+        return current
+      }
+
+      return mergeWorkOrderDrafts(
+        current,
+        visibleConflicts,
+        draftValuesRef.current,
+      )
+    })
+  }, [id])
 
   useEffect(() => {
     void loadWorkOrder()
   }, [loadWorkOrder])
 
   useEffect(() => {
+    const unsubscribe = subscribeSyncQueue(() => {
+      void refreshSyncState()
+    })
+
     const syncAndRefresh = () => {
       void processSyncQueue()
         .catch((error: unknown) => {
@@ -360,11 +509,16 @@ export function WorkOrderExecutionPage() {
     }
 
     const handleOnline = () => {
-      syncAndRefresh()
-      if (loadFailedRef.current) {
-        setErrorMessage(null)
-        void loadWorkOrder()
-      }
+      void processSyncQueue()
+        .catch((error: unknown) => {
+          console.error("WorkOrderExecutionPage processSyncQueue failed", error)
+        })
+        .finally(() => {
+          void refreshSyncState()
+          if (hasWorkOrderRef.current || loadFailedRef.current) {
+            void loadWorkOrder()
+          }
+        })
     }
 
     window.addEventListener("online", handleOnline)
@@ -375,6 +529,7 @@ export function WorkOrderExecutionPage() {
     }
 
     return () => {
+      unsubscribe()
       window.removeEventListener("online", handleOnline)
     }
   }, [loadWorkOrder, refreshSyncState])
@@ -401,7 +556,11 @@ export function WorkOrderExecutionPage() {
       await refreshSyncState()
       if (result.processed > 0 && id) {
         const data = await getWorkOrderById(id)
-        setWorkOrder(data)
+        const queuedConflicts = await listSyncConflicts()
+        hasWorkOrderRef.current = true
+        setWorkOrder(
+          mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current),
+        )
       }
     } catch (error: unknown) {
       console.error("WorkOrderExecutionPage retryConflict failed", error)
@@ -487,7 +646,7 @@ export function WorkOrderExecutionPage() {
     })
   }
 
-  function handlePersisted(next: WorkOrder) {
+  function handlePersisted(next: WorkOrder, taskId: string) {
     for (const task of next.tasks) {
       const serverValue = task.value ?? null
       const draft = draftValuesRef.current.get(task.id)
@@ -495,6 +654,7 @@ export function WorkOrderExecutionPage() {
         draftValuesRef.current.set(task.id, serverValue)
       }
     }
+    hasWorkOrderRef.current = true
     setWorkOrder({
       ...next,
       tasks: next.tasks.map((task) => {
@@ -506,12 +666,12 @@ export function WorkOrderExecutionPage() {
       }),
     })
     setPendingTaskIds((current) => {
-      const stillPending = new Set(current)
-      for (const task of next.tasks) {
-        if (draftValuesRef.current.get(task.id) === (task.value ?? null)) {
-          stillPending.delete(task.id)
-        }
+      if (!current.has(taskId)) {
+        return current
       }
+
+      const stillPending = new Set(current)
+      stillPending.delete(taskId)
       return stillPending
     })
     void refreshSyncState()
@@ -585,13 +745,29 @@ export function WorkOrderExecutionPage() {
     }
   }
 
-  if (isLoading) {
+  const visibleConflicts = conflicts.filter(
+    (conflict) => conflict.workOrderId === (workOrder?.id ?? id),
+  )
+
+  if (isLoading && workOrder === null) {
     return <PageContentSkeleton rows={5} />
   }
 
   if (!workOrder) {
     return (
       <div className="space-y-4">
+        <WorkOrderOfflineBanner />
+        <SyncConflictList
+          conflicts={visibleConflicts}
+          tasks={null}
+          busyId={conflictBusyId}
+          onDiscard={(conflict) => {
+            void discardConflict(conflict)
+          }}
+          onRetry={(conflict) => {
+            void retryConflict(conflict)
+          }}
+        />
         <div
           role="alert"
           className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
@@ -616,77 +792,17 @@ export function WorkOrderExecutionPage() {
     <div className="space-y-6 pb-28">
       <WorkOrderOfflineBanner />
 
-      {conflicts.some((conflict) => conflict.workOrderId === workOrder.id) ? (
-        <Alert variant="destructive">
-          <AlertTitle>{t("workOrders.offline.conflictTitle")}</AlertTitle>
-          <AlertDescription>
-            <p>{t("workOrders.offline.conflictBody")}</p>
-            <ul className="mt-3 space-y-3">
-              {conflicts
-                .filter((conflict) => conflict.workOrderId === workOrder.id)
-                .map((conflict) => {
-                  const task = workOrder.tasks.find(
-                    (item) => item.id === conflict.taskId,
-                  )
-                  const field =
-                    task?.title.trim() !== "" && task != null
-                      ? task.title
-                      : t("workOrders.offline.conflictUnknownField")
-                  const reason = localizeWorkOrderApiError(
-                    {
-                      code: conflict.code,
-                      error: conflict.message,
-                      reason: conflict.reason,
-                    },
-                    t("workOrders.errors.updateTaskFailed"),
-                  )
-                  const busy = conflictBusyId === conflict.id
-
-                  return (
-                    <li key={conflict.id} className="space-y-2">
-                      <p>
-                        {t("workOrders.offline.conflictField", {
-                          field,
-                          reason,
-                        })}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          aria-label={t("workOrders.offline.discardNamed", {
-                            field,
-                          })}
-                          onClick={() => {
-                            void discardConflict(conflict)
-                          }}
-                        >
-                          {t("workOrders.offline.discard")}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          aria-label={t("workOrders.offline.retryNamed", {
-                            field,
-                          })}
-                          onClick={() => {
-                            void retryConflict(conflict)
-                          }}
-                        >
-                          {t("workOrders.offline.retry")}
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <SyncConflictList
+        conflicts={visibleConflicts}
+        tasks={workOrder.tasks}
+        busyId={conflictBusyId}
+        onDiscard={(conflict) => {
+          void discardConflict(conflict)
+        }}
+        onRetry={(conflict) => {
+          void retryConflict(conflict)
+        }}
+      />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">

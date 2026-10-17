@@ -1412,6 +1412,7 @@
         "bulkDeleteCount": "Eliminar en lote ({{count}})",
         "selectAll": "Seleccionar todos",
         "selectRow": "Seleccionar {{tag}}",
+        "rowMenu": "Acciones de {{tag}}",
         "create": "Crear",
         "creating": "Creando..."
       },
@@ -2035,6 +2036,7 @@
       "conflictTitle": "Conflicto al sincronizar",
       "conflictBody": "Un cambio guardado sin conexión fue rechazado por el servidor y sigue visible para corregirlo.",
       "conflictField": "{{field}} — {{reason}}",
+      "conflictValue": "Valor guardado sin conexión: {{value}}",
       "conflictUnknownField": "Tarea",
       "discard": "Descartar",
       "discardNamed": "Descartar {{field}}",
