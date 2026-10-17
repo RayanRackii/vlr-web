@@ -26,12 +26,46 @@ describe("asset API error copy", () => {
     ).toBe(i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders"))
   })
 
+  it("maps ASSET_TAG_DUPLICATE and ASSET_IN_USE", () => {
+    expect(
+      assetTagConflictMessage(
+        {
+          error: "An asset with this tag already exists.",
+          code: "ASSET_TAG_DUPLICATE",
+        },
+        "fallback",
+      ),
+    ).toBe(i18n.t("assets.inventory.errors.duplicateTag"))
+    expect(
+      assetDeleteErrorMessage(
+        {
+          error:
+            "Cannot permanently delete an asset that is referenced by work orders.",
+          code: "ASSET_IN_USE",
+        },
+        "fallback",
+        "asset",
+      ),
+    ).toBe(i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders"))
+  })
+
   it("maps a category in use, including the English sentence", () => {
     expect(
       assetDeleteErrorMessage(
         {
           error:
             "Cannot permanently delete an asset category that is referenced by maintenance plans.",
+        },
+        "fallback",
+        "category",
+      ),
+    ).toBe(i18n.t("assets.categories.errors.inUse"))
+    expect(
+      assetDeleteErrorMessage(
+        {
+          error:
+            "Cannot permanently delete an asset category that is referenced by maintenance plans.",
+          code: "CATEGORY_IN_USE",
         },
         "fallback",
         "category",

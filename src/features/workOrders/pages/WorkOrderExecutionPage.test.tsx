@@ -28,6 +28,11 @@ vi.mock("@/lib/offlineSync", () => ({
   listQueuedTaskIds: vi.fn(async () => []),
   listSyncConflicts: vi.fn(async () => []),
   clearSyncConflict: vi.fn(),
+  retrySyncConflict: vi.fn(async () => ({
+    processed: 0,
+    remaining: 0,
+    conflicts: [],
+  })),
 }))
 
 vi.mock("@/features/workOrders/services/workOrdersService", () => ({
@@ -43,7 +48,11 @@ vi.mock("@/features/pmoc/services/pmocService", () => ({
 }))
 
 import { getPlan } from "@/features/pmoc/services/pmocService"
-import { listSyncConflicts } from "@/lib/offlineSync"
+import {
+  clearSyncConflict,
+  listSyncConflicts,
+  retrySyncConflict,
+} from "@/lib/offlineSync"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -55,6 +64,8 @@ const getPlanMock = vi.mocked(getPlan)
 const updateTaskValueMock = vi.mocked(updateTaskValue)
 const updateWorkOrderStatusMock = vi.mocked(updateWorkOrderStatus)
 const listSyncConflictsMock = vi.mocked(listSyncConflicts)
+const clearSyncConflictMock = vi.mocked(clearSyncConflict)
+const retrySyncConflictMock = vi.mocked(retrySyncConflict)
 
 function renderExecution(
   permissions: readonly string[],
@@ -171,6 +182,13 @@ describe("WorkOrderExecutionPage tasks", () => {
     updateWorkOrderStatusMock.mockReset()
     listSyncConflictsMock.mockReset()
     listSyncConflictsMock.mockResolvedValue([])
+    clearSyncConflictMock.mockReset()
+    retrySyncConflictMock.mockReset()
+    retrySyncConflictMock.mockResolvedValue({
+      processed: 0,
+      remaining: 0,
+      conflicts: [],
+    })
   })
 
   it("opens single-choice options in a native select", async () => {
@@ -351,6 +369,8 @@ describe("WorkOrderExecutionPage tasks", () => {
         queuedAt: "2026-10-17T00:00:00.000Z",
         status: 409,
         message: "conflict",
+        code: null,
+        reason: null,
       },
     ])
     getWorkOrderByIdMock.mockResolvedValue(order)
@@ -360,5 +380,91 @@ describe("WorkOrderExecutionPage tasks", () => {
     expect(
       await screen.findByText(i18n.t("workOrders.offline.conflictTitle")),
     ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("workOrders.offline.conflictField", {
+          field: task.title,
+          reason: "conflict",
+        }),
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it("discards and retries a closed work order conflict", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder()
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    listSyncConflictsMock.mockResolvedValue([
+      {
+        id: `${order.id}:${task.id}`,
+        workOrderId: order.id,
+        taskId: task.id,
+        value: "true",
+        queuedAt: "2026-10-17T00:00:00.000Z",
+        status: 409,
+        message: "Work order is completed or canceled and cannot be changed.",
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      },
+    ])
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    clearSyncConflictMock.mockImplementation(async () => {
+      listSyncConflictsMock.mockResolvedValue([])
+    })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    expect(
+      await screen.findByText(
+        i18n.t("workOrders.offline.conflictField", {
+          field: task.title,
+          reason: i18n.t("workOrders.errors.workOrderClosed"),
+        }),
+      ),
+    ).toBeInTheDocument()
+
+    const discard = screen.getByRole("button", {
+      name: i18n.t("workOrders.offline.discardNamed", { field: task.title }),
+    })
+    expect(discard).toBeEnabled()
+    await user.click(discard)
+
+    await waitFor(() => {
+      expect(clearSyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
+      expect(
+        screen.queryByText(i18n.t("workOrders.offline.conflictTitle")),
+      ).not.toBeInTheDocument()
+    })
+
+    listSyncConflictsMock.mockResolvedValue([
+      {
+        id: `${order.id}:${task.id}`,
+        workOrderId: order.id,
+        taskId: task.id,
+        value: "true",
+        queuedAt: "2026-10-17T00:00:00.000Z",
+        status: 409,
+        message: "Work order is completed or canceled and cannot be changed.",
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      },
+    ])
+    window.dispatchEvent(new Event("online"))
+    expect(
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.offline.retryNamed", { field: task.title }),
+      }),
+    ).toBeEnabled()
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.offline.retryNamed", { field: task.title }),
+      }),
+    )
+    await waitFor(() => {
+      expect(retrySyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
+    })
   })
 })

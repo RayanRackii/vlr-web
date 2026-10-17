@@ -22,6 +22,14 @@ const syncQueueSchema = z.array(syncQueueItemSchema)
 const syncConflictSchema = syncQueueItemSchema.extend({
   status: z.number().int(),
   message: z.string(),
+  code: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  reason: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
 })
 
 export type OsSyncConflict = z.infer<typeof syncConflictSchema>
@@ -109,6 +117,26 @@ async function writeConflicts(conflicts: OsSyncConflict[]): Promise<void> {
 
 export async function listSyncConflicts(): Promise<OsSyncConflict[]> {
   return readConflicts()
+}
+
+export async function retrySyncConflict(
+  workOrderId: string,
+  taskId: string,
+): Promise<ProcessSyncQueueResult> {
+  const conflicts = await readConflicts()
+  const conflict = conflicts.find(
+    (item) => item.workOrderId === workOrderId && item.taskId === taskId,
+  )
+
+  if (conflict) {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: conflict.value,
+    })
+  }
+
+  return processSyncQueue()
 }
 
 export async function clearSyncConflict(
@@ -224,6 +252,8 @@ export async function processSyncQueue(): Promise<ProcessSyncQueueResult> {
           ...item,
           status,
           message: body.error ?? body.code ?? "conflict",
+          code: body.code,
+          reason: body.reason,
         }
         const existing = nextConflicts.findIndex((entry) => entry.id === item.id)
         if (existing >= 0) {

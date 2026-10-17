@@ -22,10 +22,12 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 import { api } from "@/lib/api"
 import {
+  clearSyncConflict,
   enqueueTaskValuePatch,
   listQueuedTaskIds,
   listSyncConflicts,
   processSyncQueue,
+  retrySyncConflict,
 } from "@/lib/offlineSync"
 
 const apiPatch = vi.mocked(api.patch)
@@ -89,5 +91,58 @@ describe("processSyncQueue", () => {
     expect(result.remaining).toBe(1)
     expect(result.conflicts).toEqual([])
     expect(await listQueuedTaskIds()).toEqual([taskId])
+  })
+
+  it("keeps a closed work order conflict with its code and allows discard", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "true",
+    })
+    apiPatch.mockRejectedValue(
+      axiosError(409, {
+        error: "Work order is completed or canceled and cannot be changed.",
+        code: "WORK_ORDER_CLOSED",
+      }),
+    )
+
+    const result = await processSyncQueue()
+
+    expect(result.conflicts).toEqual([
+      expect.objectContaining({
+        taskId,
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      }),
+    ])
+
+    await clearSyncConflict(workOrderId, taskId)
+    expect(await listSyncConflicts()).toEqual([])
+  })
+
+  it("retries a conflict by sending the stored value again", async () => {
+    await enqueueTaskValuePatch({
+      workOrderId,
+      taskId,
+      value: "12",
+    })
+    apiPatch.mockRejectedValueOnce(
+      axiosError(400, {
+        error: "Number values must be a decimal number.",
+        code: "INVALID_TASK_VALUE",
+        reason: "NOT_A_NUMBER",
+      }),
+    )
+    await processSyncQueue()
+    apiPatch.mockResolvedValueOnce({ data: {} })
+
+    const retried = await retrySyncConflict(workOrderId, taskId)
+
+    expect(apiPatch).toHaveBeenLastCalledWith(
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      { value: "12" },
+    )
+    expect(retried.processed).toBe(1)
+    expect(await listSyncConflicts()).toEqual([])
   })
 })

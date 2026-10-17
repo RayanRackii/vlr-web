@@ -1689,6 +1689,7 @@
         "delete": "Delete plan",
         "deactivate": "Deactivate plan",
         "saveChecklist": "Save checklist",
+        "saveDetails": "Save plan details",
         "saving": "Saving...",
         "generateWorkOrder": "Generate WO",
         "generating": "Generating..."
@@ -1757,6 +1758,10 @@
           "invalidResponse": "Invalid API response."
         }
       },
+      "deleteConfirm": {
+        "title": "Delete plan?",
+        "description": "Work orders that were already generated keep their checklist snapshot. A plan that already has work orders cannot be deleted; deactivate it."
+      },
       "generate": {
         "dialogTitle": "Generate WO",
         "dialogDescription": "Choose the asset and date. The technician is optional.",
@@ -1764,9 +1769,13 @@
         "success": "Work order generated.",
         "viewWorkOrder": "Open WO",
         "emptyAssets": "There are no active assets in this unit and category to generate a work order.",
+        "inactivePlan": "This plan is inactive. Activate it to generate a work order.",
+        "noTechnicians": "No technicians are available. The work order stays unassigned.",
+        "techniciansLoadFailed": "Could not load technicians. The work order can still be generated unassigned.",
         "errors": {
           "duplicate": "An active work order already exists for this plan, asset, and period. Change the asset or the date.",
           "generateFailed": "Could not generate the work order.",
+          "planInactive": "The maintenance plan is not active.",
           "loadLookupsFailed": "Could not load assets and technicians."
         }
       },
@@ -1829,6 +1838,7 @@
         "back": "Back",
         "addTask": "Add task",
         "removeTask": "Remove task",
+        "removeTaskNamed": "Remove task {{number}}",
         "save": "Save plan",
         "saving": "Saving..."
       },
@@ -1849,11 +1859,15 @@
         "titlePlaceholder": "What should be done",
         "inputType": "Input type",
         "isMandatory": "Mandatory",
-        "options": "Options",
-        "optionsPlaceholder": "One option per line",
-        "optionsHint": "Each line becomes a choice on the execution screen.",
         "min": "Minimum",
-        "max": "Maximum"
+        "max": "Maximum",
+        "unit": "Unit of measure",
+        "options": "Options",
+        "optionLabel": "Option {{number}}",
+        "addOption": "Add option",
+        "removeOption": "Remove option {{number}}",
+        "removeConfirmTitle": "Remove task?",
+        "removeConfirmDescription": "The task leaves this plan when you save. Work orders that were already generated keep their checklist snapshot."
       },
       "validation": {
         "unitRequired": "Unit is required.",
@@ -1863,7 +1877,8 @@
         "tasksRequired": "Add at least one task.",
         "numberMinRequired": "Enter the minimum value.",
         "numberMaxRequired": "Enter the maximum value.",
-        "numberRangeInvalid": "Maximum must be greater than or equal to minimum."
+        "numberRangeInvalid": "Maximum must be greater than or equal to minimum.",
+        "optionsRequired": "Enter at least two filled options."
       },
       "success": {
         "created": "Plan created successfully."
@@ -1997,7 +2012,19 @@
       "updateTaskFailed": "Could not save the task response.",
       "updateStatusFailed": "Could not update the work order status.",
       "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
-      "assetNotEligible": "This resource is not eligible for this maintenance plan."
+      "assetNotEligible": "This resource is not eligible for this maintenance plan.",
+      "assigneeCannotExecute": "The assigned person cannot execute work orders.",
+      "workOrderClosed": "This work order is completed or canceled and cannot be changed.",
+      "reopenNotAllowed": "A completed work order cannot be reopened.",
+      "taskValue": {
+        "invalid": "The value is not valid for this task.",
+        "notANumber": "Enter a number.",
+        "outOfRange": "The number is outside the allowed range.",
+        "notAnOption": "Choose one of the listed options.",
+        "invalidCheckbox": "Check or uncheck the task.",
+        "textTooLong": "The text is longer than allowed.",
+        "invalidConfiguration": "This task is configured incorrectly."
+      }
     },
     "offline": {
       "title": "Offline Mode",
@@ -2006,7 +2033,13 @@
       "startFailed": "No connection. The work order could not be started.",
       "statusFailed": "No connection. The work order status could not be updated.",
       "conflictTitle": "Sync conflict",
-      "conflictBody": "A change saved offline was rejected by the server and is still visible so it can be corrected."
+      "conflictBody": "A change saved offline was rejected by the server and is still visible so it can be corrected.",
+      "conflictField": "{{field}} — {{reason}}",
+      "conflictUnknownField": "Task",
+      "discard": "Discard",
+      "discardNamed": "Discard {{field}}",
+      "retry": "Try again",
+      "retryNamed": "Try again {{field}}"
     }
   },
   "users": {

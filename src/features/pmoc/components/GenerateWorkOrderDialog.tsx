@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -39,6 +39,7 @@ import {
   type WorkOrder,
   type WorkOrderRegistryAsset,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import {
   generateWorkOrderFromPlan,
   isDuplicateWorkOrderError,
@@ -95,6 +96,7 @@ export function GenerateWorkOrderDialog({
   const [technicians, setTechnicians] = useState<TechnicianUser[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(false)
   const [lookupError, setLookupError] = useState<string | null>(null)
+  const [technicianHint, setTechnicianHint] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
   const inFlightRef = useRef(false)
@@ -123,20 +125,31 @@ export function GenerateWorkOrderDialog({
   const loadLookups = useCallback(async () => {
     setIsLoadingLookups(true)
     setLookupError(null)
+    setTechnicianHint(null)
 
     try {
-      const [assetData, technicianData] = await Promise.all([
-        listWorkOrderAssets(),
-        getTechnicians(),
-      ])
+      const assetData = await listWorkOrderAssets()
       setAssets(eligibleAssetsForPlan(assetData, unitId, assetCategoryId))
-      setTechnicians(technicianData)
     } catch (error: unknown) {
+      setAssets([])
       setLookupError(
         error instanceof Error
           ? error.message
           : t("pmoc.plans.generate.errors.loadLookupsFailed"),
       )
+    }
+
+    try {
+      const technicianData = await getTechnicians()
+      setTechnicians(technicianData)
+      setTechnicianHint(
+        technicianData.length === 0
+          ? t("pmoc.plans.generate.noTechnicians")
+          : null,
+      )
+    } catch {
+      setTechnicians([])
+      setTechnicianHint(t("pmoc.plans.generate.techniciansLoadFailed"))
     } finally {
       setIsLoadingLookups(false)
     }
@@ -197,6 +210,11 @@ export function GenerateWorkOrderDialog({
       })
 
       toast.success(t("pmoc.plans.generate.success"), {
+        description: (
+          <Link to={`/os/${created.id}`} className="font-medium underline">
+            {t("pmoc.plans.generate.viewWorkOrder")}
+          </Link>
+        ),
         action: {
           label: t("pmoc.plans.generate.viewWorkOrder"),
           onClick: () => {
@@ -212,10 +230,11 @@ export function GenerateWorkOrderDialog({
         return
       }
 
-      const message =
+      const message = localizeMaintenancePlanApiError(
         error instanceof Error
           ? error.message
-          : t("pmoc.plans.generate.errors.generateFailed")
+          : t("pmoc.plans.generate.errors.generateFailed"),
+      )
       setSubmitError(message)
       toast.error(message)
     } finally {
@@ -351,6 +370,11 @@ export function GenerateWorkOrderDialog({
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                    {technicianHint !== null ? (
+                      <p className="text-sm text-muted-foreground">
+                        {technicianHint}
+                      </p>
+                    ) : null}
                   </FormItem>
                 )}
               />

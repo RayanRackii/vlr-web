@@ -53,7 +53,11 @@ export function PlanRelatedWorkOrders({
 
     try {
       const data = await getWorkOrders({ maintenancePlanId: planId })
-      setWorkOrders(data)
+      setWorkOrders(
+        [...data].sort((left, right) =>
+          right.scheduledDate.localeCompare(left.scheduledDate),
+        ),
+      )
     } catch (error: unknown) {
       if (isAxiosError(error)) {
         console.error(

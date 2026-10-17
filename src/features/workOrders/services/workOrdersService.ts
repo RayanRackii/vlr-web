@@ -1,4 +1,5 @@
 import i18n from "@/lib/i18n"
+import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
@@ -167,10 +168,13 @@ export async function generateWorkOrderFromPlan(
       throw error
     }
 
+    const payload = getAxiosErrorPayload(error)
     throw new Error(
-      localizeWorkOrderApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("pmoc.plans.generate.errors.generateFailed"),
+      localizeMaintenancePlanApiError(
+        localizeWorkOrderApiError(
+          payload,
+          i18n.t("pmoc.plans.generate.errors.generateFailed"),
+        ),
       ),
     )
   }
@@ -263,7 +267,7 @@ export async function updateTaskValue(
     }
 
     throw new Error(
-      parseApiError(
+      localizeWorkOrderApiError(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.errors.updateTaskFailed"),
       ),

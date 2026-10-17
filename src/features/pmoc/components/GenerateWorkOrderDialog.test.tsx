@@ -173,6 +173,17 @@ describe("GenerateWorkOrderDialog", () => {
         }),
       }),
     )
+    const toastOptions = toastSuccess.mock.calls[0]?.[1] as {
+      description?: ReactNode
+    }
+    const toastView = render(
+      <MemoryRouter>{toastOptions.description}</MemoryRouter>,
+    )
+    expect(
+      toastView.getByRole("link", {
+        name: i18n.t("pmoc.plans.generate.viewWorkOrder"),
+      }),
+    ).toHaveAttribute("href", `/os/${makeWorkOrder().id}`)
   })
 
   it("E: duplicate 409 shows dedicated copy and keeps the dialog open", async () => {
@@ -233,5 +244,50 @@ describe("GenerateWorkOrderDialog", () => {
     expect(generateMock).toHaveBeenCalledTimes(1)
 
     resolveGenerate?.(makeWorkOrder())
+  })
+
+  it("explains when no technician is available", async () => {
+    renderDialog()
+
+    expect(
+      await screen.findByText(i18n.t("pmoc.plans.generate.noTechnicians")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("workOrders.create.form.technician"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("explains when the technician lookup fails and still lists assets", async () => {
+    getTechniciansMock.mockRejectedValue(new Error("lookup failed"))
+    renderDialog()
+
+    expect(
+      await screen.findByText(i18n.t("pmoc.plans.generate.techniciansLoadFailed")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("workOrders.create.form.asset"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("translates the inactive plan error", async () => {
+    generateMock.mockRejectedValue(new Error("Maintenance plan is not active."))
+    renderDialog()
+    const user = userEvent.setup()
+    await selectMatchingAsset(user)
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("pmoc.plans.generate.submit"),
+      }),
+    )
+
+    expect(
+      await screen.findByText(i18n.t("pmoc.plans.generate.errors.planInactive")),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Maintenance plan is not active.")).not.toBeInTheDocument()
   })
 })

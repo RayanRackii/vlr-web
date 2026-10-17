@@ -1725,6 +1725,7 @@
         "delete": "Excluir plano",
         "deactivate": "Desativar plano",
         "saveChecklist": "Salvar checklist",
+        "saveDetails": "Salvar dados do plano",
         "saving": "Salvando...",
         "generateWorkOrder": "Gerar OS",
         "generating": "Gerando..."
@@ -1793,6 +1794,10 @@
           "invalidResponse": "Resposta inválida da API."
         }
       },
+      "deleteConfirm": {
+        "title": "Excluir plano?",
+        "description": "As ordens de serviço já geradas mantêm o snapshot do checklist. Um plano que já tem ordens de serviço não pode ser excluído; desative-o."
+      },
       "generate": {
         "dialogTitle": "Gerar OS",
         "dialogDescription": "Escolha o ativo e a data. O técnico é opcional.",
@@ -1800,9 +1805,13 @@
         "success": "Ordem de serviço gerada.",
         "viewWorkOrder": "Abrir OS",
         "emptyAssets": "Não há ativos ativos nesta unidade e categoria para gerar uma OS.",
+        "inactivePlan": "Este plano está inativo. Ative-o para gerar uma ordem de serviço.",
+        "noTechnicians": "Nenhum técnico disponível. A ordem de serviço fica sem atribuição.",
+        "techniciansLoadFailed": "Não foi possível carregar os técnicos. A ordem de serviço pode ser gerada sem atribuição.",
         "errors": {
           "duplicate": "Já existe uma ordem de serviço ativa para este plano, ativo e período. Altere o ativo ou a data.",
           "generateFailed": "Não foi possível gerar a ordem de serviço.",
+          "planInactive": "O plano de manutenção não está ativo.",
           "loadLookupsFailed": "Não foi possível carregar ativos e técnicos."
         }
       },
@@ -1865,6 +1874,7 @@
         "back": "Voltar",
         "addTask": "Adicionar tarefa",
         "removeTask": "Remover tarefa",
+        "removeTaskNamed": "Remover tarefa {{number}}",
         "save": "Salvar plano",
         "saving": "Salvando..."
       },
@@ -1885,11 +1895,15 @@
         "titlePlaceholder": "O que deve ser feito",
         "inputType": "Tipo de entrada",
         "isMandatory": "Obrigatório",
-        "options": "Opções",
-        "optionsPlaceholder": "Uma opção por linha",
-        "optionsHint": "Cada linha vira uma opção da lista na execução.",
         "min": "Mínimo",
-        "max": "Máximo"
+        "max": "Máximo",
+        "unit": "Unidade de medida",
+        "options": "Opções",
+        "optionLabel": "Opção {{number}}",
+        "addOption": "Adicionar opção",
+        "removeOption": "Remover opção {{number}}",
+        "removeConfirmTitle": "Remover tarefa?",
+        "removeConfirmDescription": "A tarefa sai deste plano ao salvar. Ordens de serviço já geradas mantêm o snapshot do checklist."
       },
       "validation": {
         "unitRequired": "A unidade é obrigatória.",
@@ -1899,7 +1913,8 @@
         "tasksRequired": "Adicione pelo menos uma tarefa.",
         "numberMinRequired": "Informe o valor mínimo.",
         "numberMaxRequired": "Informe o valor máximo.",
-        "numberRangeInvalid": "O máximo deve ser maior ou igual ao mínimo."
+        "numberRangeInvalid": "O máximo deve ser maior ou igual ao mínimo.",
+        "optionsRequired": "Informe pelo menos duas opções preenchidas."
       },
       "success": {
         "created": "Plano criado com sucesso."
@@ -2033,7 +2048,19 @@
       "updateTaskFailed": "Não foi possível salvar a resposta da tarefa.",
       "updateStatusFailed": "Não foi possível atualizar o status da OS.",
       "mandatoryTasksIncomplete": "Há tarefas obrigatórias incompletas.",
-      "assetNotEligible": "Este recurso não é elegível para este plano de manutenção."
+      "assetNotEligible": "Este recurso não é elegível para este plano de manutenção.",
+      "assigneeCannotExecute": "A pessoa designada não pode executar ordens de serviço.",
+      "workOrderClosed": "Esta ordem de serviço está concluída ou cancelada e não pode ser alterada.",
+      "reopenNotAllowed": "Uma ordem de serviço concluída não pode ser reaberta.",
+      "taskValue": {
+        "invalid": "O valor informado não é válido para esta tarefa.",
+        "notANumber": "Informe um número.",
+        "outOfRange": "O número está fora do intervalo permitido.",
+        "notAnOption": "Escolha uma das opções da lista.",
+        "invalidCheckbox": "Marque ou desmarque a tarefa.",
+        "textTooLong": "O texto passa do tamanho permitido.",
+        "invalidConfiguration": "Esta tarefa está configurada de forma inválida."
+      }
     },
     "offline": {
       "title": "Modo Offline",
@@ -2042,7 +2069,13 @@
       "startFailed": "Sem conexão. Não foi possível iniciar a ordem de serviço.",
       "statusFailed": "Sem conexão. Não foi possível atualizar o status da ordem de serviço.",
       "conflictTitle": "Conflito ao sincronizar",
-      "conflictBody": "Uma alteração salva offline foi recusada pelo servidor e permanece visível para correção."
+      "conflictBody": "Uma alteração salva offline foi recusada pelo servidor e permanece visível para correção.",
+      "conflictField": "{{field}} — {{reason}}",
+      "conflictUnknownField": "Tarefa",
+      "discard": "Descartar",
+      "discardNamed": "Descartar {{field}}",
+      "retry": "Tentar novamente",
+      "retryNamed": "Tentar novamente {{field}}"
     }
   },
   "users": {

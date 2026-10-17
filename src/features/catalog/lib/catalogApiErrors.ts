@@ -25,9 +25,9 @@ const MESSAGE_KEYS: Record<string, string> = {
 
 const CODE_KEYS: Record<string, string> = {
   DUPLICATE_PRODUCT_CODE: "catalog.products.errors.duplicateCode",
-  CATALOG_FILE_TOO_LARGE: "catalog.products.files.tooLarge",
-  CATALOG_FILE_TYPE: "catalog.products.files.typeRejected",
-  CATALOG_FILE_CONTENT: "catalog.products.files.contentMismatch",
+  FILE_TOO_LARGE: "catalog.products.files.tooLarge",
+  FILE_TYPE_NOT_ALLOWED: "catalog.products.files.typeRejected",
+  FILE_CONTENT_MISMATCH: "catalog.products.files.contentMismatch",
 }
 
 export function localizeCatalogApiError(

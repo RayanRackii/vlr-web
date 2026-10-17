@@ -5,8 +5,8 @@ import {
 } from "@/lib/apiErrorText"
 
 const CODE_KEYS: Record<string, string> = {
-  DUPLICATE_ASSET_TAG: "assets.inventory.errors.duplicateTag",
-  ASSET_HAS_WORK_ORDERS: "assets.inventory.errors.deleteBlockedByWorkOrders",
+  ASSET_TAG_DUPLICATE: "assets.inventory.errors.duplicateTag",
+  ASSET_IN_USE: "assets.inventory.errors.deleteBlockedByWorkOrders",
   CATEGORY_IN_USE: "assets.categories.errors.inUse",
 }
 
@@ -56,7 +56,7 @@ export function assetDeleteErrorMessage(
 
   if (
     kind === "asset" &&
-    (code === "ASSET_HAS_WORK_ORDERS" || isUnexpectedApiError(error))
+    (code === "ASSET_IN_USE" || isUnexpectedApiError(error))
   ) {
     return i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders")
   }
@@ -78,7 +78,7 @@ export function assetTagConflictMessage(
   fallback: string,
 ): string {
   const { code, error } = readApiErrorBody(payload)
-  if (code === "DUPLICATE_ASSET_TAG" || isUnexpectedApiError(error)) {
+  if (code === "ASSET_TAG_DUPLICATE" || isUnexpectedApiError(error)) {
     return i18n.t("assets.inventory.errors.duplicateTag")
   }
 

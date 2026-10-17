@@ -20,6 +20,7 @@ import {
   type WorkOrder,
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -28,9 +29,11 @@ import {
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback"
 import { isAxiosError } from "@/lib/api"
 import {
+  clearSyncConflict,
   listQueuedTaskIds,
   listSyncConflicts,
   processSyncQueue,
+  retrySyncConflict,
   type OsSyncConflict,
 } from "@/lib/offlineSync"
 
@@ -284,6 +287,7 @@ export function WorkOrderExecutionPage() {
     () => new Set(),
   )
   const [conflicts, setConflicts] = useState<OsSyncConflict[]>([])
+  const [conflictBusyId, setConflictBusyId] = useState<string | null>(null)
   const loadFailedRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
   const draftValuesRef = useRef(new Map<string, string | null>())
@@ -374,6 +378,37 @@ export function WorkOrderExecutionPage() {
       window.removeEventListener("online", handleOnline)
     }
   }, [loadWorkOrder, refreshSyncState])
+
+  async function discardConflict(conflict: OsSyncConflict) {
+    setConflictBusyId(conflict.id)
+    try {
+      await clearSyncConflict(conflict.workOrderId, conflict.taskId)
+      await refreshSyncState()
+    } catch (error: unknown) {
+      console.error("WorkOrderExecutionPage discardConflict failed", error)
+    } finally {
+      setConflictBusyId(null)
+    }
+  }
+
+  async function retryConflict(conflict: OsSyncConflict) {
+    setConflictBusyId(conflict.id)
+    try {
+      const result = await retrySyncConflict(
+        conflict.workOrderId,
+        conflict.taskId,
+      )
+      await refreshSyncState()
+      if (result.processed > 0 && id) {
+        const data = await getWorkOrderById(id)
+        setWorkOrder(data)
+      }
+    } catch (error: unknown) {
+      console.error("WorkOrderExecutionPage retryConflict failed", error)
+    } finally {
+      setConflictBusyId(null)
+    }
+  }
 
   const isReadOnly =
     workOrder?.status === "Completed" || workOrder?.status === "Canceled"
@@ -585,7 +620,70 @@ export function WorkOrderExecutionPage() {
         <Alert variant="destructive">
           <AlertTitle>{t("workOrders.offline.conflictTitle")}</AlertTitle>
           <AlertDescription>
-            {t("workOrders.offline.conflictBody")}
+            <p>{t("workOrders.offline.conflictBody")}</p>
+            <ul className="mt-3 space-y-3">
+              {conflicts
+                .filter((conflict) => conflict.workOrderId === workOrder.id)
+                .map((conflict) => {
+                  const task = workOrder.tasks.find(
+                    (item) => item.id === conflict.taskId,
+                  )
+                  const field =
+                    task?.title.trim() !== "" && task != null
+                      ? task.title
+                      : t("workOrders.offline.conflictUnknownField")
+                  const reason = localizeWorkOrderApiError(
+                    {
+                      code: conflict.code,
+                      error: conflict.message,
+                      reason: conflict.reason,
+                    },
+                    t("workOrders.errors.updateTaskFailed"),
+                  )
+                  const busy = conflictBusyId === conflict.id
+
+                  return (
+                    <li key={conflict.id} className="space-y-2">
+                      <p>
+                        {t("workOrders.offline.conflictField", {
+                          field,
+                          reason,
+                        })}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          aria-label={t("workOrders.offline.discardNamed", {
+                            field,
+                          })}
+                          onClick={() => {
+                            void discardConflict(conflict)
+                          }}
+                        >
+                          {t("workOrders.offline.discard")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          aria-label={t("workOrders.offline.retryNamed", {
+                            field,
+                          })}
+                          onClick={() => {
+                            void retryConflict(conflict)
+                          }}
+                        >
+                          {t("workOrders.offline.retry")}
+                        </Button>
+                      </div>
+                    </li>
+                  )
+                })}
+            </ul>
           </AlertDescription>
         </Alert>
       ) : null}
