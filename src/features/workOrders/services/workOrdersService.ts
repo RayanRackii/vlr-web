@@ -1,4 +1,5 @@
 import i18n from "@/lib/i18n"
+import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
   enqueueTaskValuePatch,
@@ -166,9 +167,11 @@ export async function generateWorkOrderFromPlan(
     }
 
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("pmoc.plans.generate.errors.generateFailed"),
+      localizeMaintenancePlanApiError(
+        parseApiError(
+          getAxiosErrorPayload(error),
+          i18n.t("pmoc.plans.generate.errors.generateFailed"),
+        ),
       ),
     )
   }

@@ -128,4 +128,19 @@ describe("workOrdersService plan generation", () => {
       expect((error as Error).message).not.toMatch(/^Erro$/i)
     }
   })
+
+  it("translates Maintenance plan is not active.", async () => {
+    apiPost.mockRejectedValue(
+      axiosError(400, { error: "Maintenance plan is not active." }),
+    )
+
+    await expect(
+      generateWorkOrderFromPlan({
+        planId: PLAN_ID,
+        assetId: matchingRegistryAsset.id,
+        assignedUserId: null,
+        scheduledDate: "2026-09-18",
+      }),
+    ).rejects.toThrow(i18n.t("pmoc.plans.generate.errors.planInactive"))
+  })
 })

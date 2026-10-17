@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
+import { TaskConfigurationReadout } from "@/features/pmoc/components/TaskConfigurationReadout"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -329,6 +330,10 @@ export function PmocTemplatePreviewPage() {
                     ? ` · ${t("pmoc.create.tasks.isMandatory")}`
                     : ""}
                 </p>
+                <TaskConfigurationReadout
+                  inputType={task.inputType}
+                  configuration={task.configuration}
+                />
               </div>
             </li>
           ))}

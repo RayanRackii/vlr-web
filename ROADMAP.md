@@ -156,6 +156,7 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 - [x] Detalhe empilhado: origem, ativo, auto-gerar, checklist replace-set; delete 409 `PLAN_IN_USE` → desativar
 - [x] `/pmoc/novo` só personalizado (sem import client-side / CREA)
 - [x] Gerar OS, OS relacionadas, and Coverage V3 shipped in later slices and are on PROD. This checkbox is closed; it is not open work.
+- [x] QA de planos: confirmar exclusão (snapshot das ordens e desativar quando já existem), editar nome e descrição, opções de escolha única, validação visível no salvar, confirmar remoção de tarefa, toast com link ao gerar ordem, ocultar geração em plano inativo, aviso quando não há técnico, abrir o plano criado e ordenar ordens relacionadas pela data.
 
 ## 4.9. DEV E2E / Release Certification
 
@@ -362,6 +363,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-16 | **Código (WEB, #217):** `/configuracoes/politica-reservas` e a ficha do recurso passam a gravar `maxAdvanceBookingDays`. Na política, o campo só vai no PUT quando muda (`null` ilimitado, número 0..3650, omitido conserva). No recurso, padrão do ambiente omite ou apaga com `null`, ilimitado envia `null`, N dias envia o número; a ficha mostra o horizonte em vigor. Sem permissão de escrita os controles ficam desabilitados. Sem mudança de auth. |
 | 2026-10-16 | **Fix (WEB, #208 #207 #210):** total e estimativa seguem o idioma ativo e a moeda do tenant (BRL: pt-BR `R$ 80,00`, en `R$ 80.00`, es `80,00 R$`, o mesmo formatador das outras superfícies). Aula recriada com outro id deixa de ficar oculta. Cancelar com revisão da agenda à frente avisa que já estava cancelada. Voltar restaura data e horário; data civil impossível não vai ao GET. A grade do dia fecha o início que passa com a página aberta. `?date=` além do horizonte espera a política. Sem auth, sem env, sem deploy, sem mudança no `vlr-api`. |
 | 2026-10-16 | **Fix (WEB, review #211):** clamp de data além do horizonte faz replace na history, inclusive com `time` na URL, então Voltar não fica preso no deep link. Trocar o dia enquanto a política ou o GET do dia ainda não voltou limpa a grade e a seleção e desabilita Reservar. A grade do staff usa o relógio do minuto dentro do memo. Sem auth, sem mudança no `vlr-api`. |
+| 2026-10-17 | **Fix (WEB):** planos de manutenção pedem confirmação antes de excluir (ordens já geradas mantêm o snapshot; plano com ordens não exclui e oferece desativar), editam nome e descrição no cabeçalho, editam opções de escolha única e unidade/mínimo/máximo de número, mostram o motivo quando Salvar está desabilitado, confirmam a remoção de tarefa, geram ordem com toast e link, escondem Gerar OS em plano inativo, traduzem “Maintenance plan is not active.”, avisam quando não há técnico, abrem o plano recém-criado e ordenam as ordens relacionadas pela data agendada. Sem mudança de contrato no `vlr-api` (`PUT /api/maintenance-plans/{id}` já aceita nome e descrição). |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

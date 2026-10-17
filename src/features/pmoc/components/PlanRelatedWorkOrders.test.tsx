@@ -113,4 +113,37 @@ describe("PlanRelatedWorkOrders", () => {
       }),
     ).not.toBeInTheDocument()
   })
+
+  it("lists related work orders by scheduled date descending", async () => {
+    const olderId = "12121212-1212-4121-8121-121212121212"
+    const newerId = "13131313-1313-4131-8131-131313131313"
+    getWorkOrdersMock.mockResolvedValue([
+      makeWorkOrder({
+        id: olderId,
+        scheduledDate: "2026-09-01",
+        asset: {
+          ...makeWorkOrder().asset,
+          tag: "AC-02",
+          name: "Older asset",
+        },
+      }),
+      makeWorkOrder({
+        id: newerId,
+        scheduledDate: "2026-10-02",
+        asset: {
+          ...makeWorkOrder().asset,
+          tag: "AC-03",
+          name: "Newer asset",
+        },
+      }),
+    ])
+
+    renderRelated(["os.work_orders.read"])
+
+    const items = await screen.findAllByRole("listitem")
+    expect(items[0]).toHaveTextContent("02/10/2026")
+    expect(items[0]).toHaveTextContent("AC-03 — Newer asset")
+    expect(items[1]).toHaveTextContent("01/09/2026")
+    expect(items[1]).toHaveTextContent("AC-02 — Older asset")
+  })
 })

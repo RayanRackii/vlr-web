@@ -7,6 +7,7 @@ import {
   createMaintenancePlanRequestSchema,
   createPlanFormSchema,
   maintenancePlanSchema,
+  mapGlobalTemplateTaskToFormTask,
   updateMaintenancePlanRequestSchema,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { basePlanJson } from "@/features/pmoc/test/pmocFixtures"
@@ -22,6 +23,7 @@ const formMessages = {
   numberMinRequired: "min",
   numberMaxRequired: "max",
   numberRangeInvalid: "range",
+  optionsRequired: "options",
 }
 
 describe("maintenancePlanSchema Phase 1 fields", () => {
@@ -228,5 +230,153 @@ describe("createFromTemplateRequestSchema", () => {
     })
 
     expect("autoGenerateEnabled" in parsed).toBe(false)
+  })
+})
+
+describe("task configuration", () => {
+  const formSchema = createPlanFormSchema(formMessages)
+  const base = {
+    unitId: basePlanJson.unitId,
+    name: "Custom",
+    description: "",
+    intervalDays: 30,
+    firstDueDate: "2026-10-01",
+    assetCategoryId: basePlanJson.assetCategoryId,
+    isActive: true,
+  }
+
+  it("explains an interval outside 1..3650 on the interval field", () => {
+    const parsed = formSchema.safeParse({
+      ...base,
+      intervalDays: 0,
+      tasks: [
+        {
+          title: "Tarefa",
+          inputType: "Checkbox",
+          isMandatory: true,
+        },
+      ],
+    })
+
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+
+    expect(parsed.error.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["intervalDays"],
+          message: "interval",
+        }),
+      ]),
+    )
+  })
+
+  it("requires two filled single-choice options and keeps number min, max, and unit", () => {
+    const missing = formSchema.safeParse({
+      ...base,
+      tasks: [
+        {
+          title: "Estado",
+          inputType: "SingleChoice",
+          isMandatory: true,
+          options: ["Ok", "   "],
+        },
+      ],
+    })
+    expect(missing.success).toBe(false)
+    if (!missing.success) {
+      expect(missing.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: ["tasks", 0, "options"],
+            message: "options",
+          }),
+        ]),
+      )
+    }
+
+    const parsed = formSchema.safeParse({
+      ...base,
+      tasks: [
+        {
+          title: "Medição",
+          inputType: "Number",
+          isMandatory: true,
+          min: 1,
+          max: 10,
+          unit: "bar",
+        },
+        {
+          title: "Estado",
+          inputType: "SingleChoice",
+          isMandatory: true,
+          options: [" Ok ", "Revisar"],
+        },
+      ],
+    })
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      return
+    }
+
+    expect(buildCreatePlanRequest(parsed.data).tasks).toEqual([
+      expect.objectContaining({
+        configuration: JSON.stringify({ min: 1, max: 10, unit: "bar" }),
+      }),
+      expect.objectContaining({
+        configuration: JSON.stringify({ options: ["Ok", "Revisar"] }),
+      }),
+    ])
+  })
+
+  it("blocks a number task whose minimum is greater than its maximum", () => {
+    const parsed = formSchema.safeParse({
+      ...base,
+      tasks: [
+        {
+          title: "Medição",
+          inputType: "Number",
+          isMandatory: true,
+          min: 8,
+          max: 2,
+        },
+      ],
+    })
+
+    expect(parsed.success).toBe(false)
+    if (parsed.success) {
+      return
+    }
+
+    expect(parsed.error.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["tasks", 0, "max"],
+          message: "range",
+        }),
+      ]),
+    )
+  })
+
+  it("maps copied template configuration onto the editable task", () => {
+    expect(
+      mapGlobalTemplateTaskToFormTask({
+        title: "Medição",
+        inputType: "Number",
+        isMandatory: true,
+        configuration: JSON.stringify({ min: 0, max: 12, unit: "bar" }),
+      }),
+    ).toMatchObject({ min: 0, max: 12, unit: "bar" })
+
+    expect(
+      mapGlobalTemplateTaskToFormTask({
+        title: "Estado",
+        inputType: "SingleChoice",
+        isMandatory: false,
+        configuration: JSON.stringify({ options: ["Ok", "Revisar"] }),
+      }).options,
+    ).toEqual(["Ok", "Revisar"])
   })
 })

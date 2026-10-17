@@ -1659,6 +1659,7 @@
         "delete": "Eliminar plan",
         "deactivate": "Desactivar plan",
         "saveChecklist": "Guardar checklist",
+        "saveDetails": "Guardar datos del plan",
         "saving": "Guardando...",
         "generateWorkOrder": "Generar OT",
         "generating": "Generando..."
@@ -1727,6 +1728,10 @@
           "invalidResponse": "Respuesta inválida de la API."
         }
       },
+      "deleteConfirm": {
+        "title": "¿Eliminar plan?",
+        "description": "Las órdenes de trabajo ya generadas conservan el snapshot del checklist. Un plan que ya tiene órdenes de trabajo no se puede eliminar; desactívelo."
+      },
       "generate": {
         "dialogTitle": "Generar OT",
         "dialogDescription": "Elija el activo y la fecha. El técnico es opcional.",
@@ -1734,9 +1739,13 @@
         "success": "Orden de trabajo generada.",
         "viewWorkOrder": "Abrir OT",
         "emptyAssets": "No hay activos activos en esta unidad y categoría para generar una orden de trabajo.",
+        "inactivePlan": "Este plan está inactivo. Actívelo para generar una orden de trabajo.",
+        "noTechnicians": "No hay técnicos disponibles. La orden de trabajo queda sin asignación.",
+        "techniciansLoadFailed": "No se pudieron cargar los técnicos. La orden de trabajo puede generarse sin asignación.",
         "errors": {
           "duplicate": "Ya existe una orden de trabajo activa para este plan, activo y período. Cambie el activo o la fecha.",
           "generateFailed": "No se pudo generar la orden de trabajo.",
+          "planInactive": "El plan de mantenimiento no está activo.",
           "loadLookupsFailed": "No se pudieron cargar los activos y técnicos."
         }
       },
@@ -1799,6 +1808,7 @@
         "back": "Volver",
         "addTask": "Agregar tarea",
         "removeTask": "Eliminar tarea",
+        "removeTaskNamed": "Eliminar tarea {{number}}",
         "save": "Guardar plan",
         "saving": "Guardando..."
       },
@@ -1820,7 +1830,14 @@
         "inputType": "Tipo de entrada",
         "isMandatory": "Obligatorio",
         "min": "Mínimo",
-        "max": "Máximo"
+        "max": "Máximo",
+        "unit": "Unidad de medida",
+        "options": "Opciones",
+        "optionLabel": "Opción {{number}}",
+        "addOption": "Agregar opción",
+        "removeOption": "Eliminar opción {{number}}",
+        "removeConfirmTitle": "¿Eliminar tarea?",
+        "removeConfirmDescription": "La tarea sale de este plan al guardar. Las órdenes de trabajo ya generadas conservan el snapshot del checklist."
       },
       "validation": {
         "unitRequired": "La unidad es obligatoria.",
@@ -1830,7 +1847,8 @@
         "tasksRequired": "Agregue al menos una tarea.",
         "numberMinRequired": "Ingrese el valor mínimo.",
         "numberMaxRequired": "Ingrese el valor máximo.",
-        "numberRangeInvalid": "El máximo debe ser mayor o igual al mínimo."
+        "numberRangeInvalid": "El máximo debe ser mayor o igual al mínimo.",
+        "optionsRequired": "Indique al menos dos opciones completas."
       },
       "success": {
         "created": "Plan creado con éxito."
