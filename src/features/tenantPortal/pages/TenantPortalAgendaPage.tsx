@@ -1,11 +1,21 @@
 import { Loader2 } from "lucide-react"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Navigate, useLocation, useOutletContext, useParams, useSearchParams } from "react-router-dom"
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+  useSearchParams,
+} from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
-import { LocaleDateInput } from "@/components/LocaleDateInput"
+import {
+  LocaleDateInput,
+  type LocaleDateChangeSource,
+} from "@/components/LocaleDateInput"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -68,6 +78,7 @@ import {
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
 import {
   agendaSelectionSearchParams,
+  clampTypedDateToHorizon,
   classifyAgendaDateAttempt,
   readAgendaDateParam,
   readAgendaTimeParam,
@@ -159,8 +170,9 @@ export function TenantPortalAgendaPage() {
     return formatLocaleCurrency(amount, "BRL", moneyLocale)
   }
   const dateInputId = useId()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu } =
     useOutletContext<CustomerAppOutletContext>()
@@ -214,6 +226,8 @@ export function TenantPortalAgendaPage() {
   const [dateRejection, setDateRejection] = useState<"before" | "after" | null>(
     null,
   )
+  const [seenHash, setSeenHash] = useState(location.hash)
+  const [slotReloadNonce, setSlotReloadNonce] = useState(0)
   const horizonHintId = useId()
   const dateFeedbackId = useId()
   const submittingRef = useRef(false)
@@ -489,7 +503,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, dayFetchGate, signedIn, subdomain])
+  }, [date, dayFetchGate, signedIn, slotReloadNonce, subdomain])
 
   useEffect(() => {
     const today = brazilTodayIsoDate()
@@ -497,6 +511,17 @@ export function TenantPortalAgendaPage() {
     const urlDate = readAgendaDateParam(searchParams.get("date"), today)
     const urlBeyondHorizon =
       horizonMaxDate !== null && urlDate > horizonMaxDate
+    function writeSearch(next: URLSearchParams, replace: boolean) {
+      const nextQuery = next.toString()
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextQuery.length > 0 ? `?${nextQuery}` : "",
+          hash: location.hash,
+        },
+        { replace },
+      )
+    }
     if (
       pendingSearchWrite.current &&
       current === lastWrittenSearch.current
@@ -515,6 +540,25 @@ export function TenantPortalAgendaPage() {
       pendingSearchWrite.current = false
       searchWriteBaseline.current = null
       const urlTime = readAgendaTimeParam(searchParams.get("time")) ?? ""
+      // #minhas-reservas is the same page. A link that drops ?time= must
+      // not blank the loaded choice, or Horário shows "no times".
+      if (urlTime.length === 0 && urlDate === date && startTime.length > 0) {
+        const next = agendaSelectionSearchParams(
+          searchParams,
+          date,
+          startTime,
+          today,
+        )
+        const nextQuery = next.toString()
+        if (nextQuery !== current) {
+          searchWriteBaseline.current = current
+          lastWrittenSearch.current = nextQuery
+          pendingSearchWrite.current = true
+          replaceSelectionSearch.current = true
+          writeSearch(next, true)
+        }
+        return
+      }
       lastWrittenSearch.current = current
       replaceSelectionSearch.current = urlBeyondHorizon
       setHorizonAdjusted(urlBeyondHorizon)
@@ -556,8 +600,16 @@ export function TenantPortalAgendaPage() {
     searchWriteBaseline.current = current
     lastWrittenSearch.current = nextQuery
     pendingSearchWrite.current = true
-    setSearchParams(next, { replace })
-  }, [date, horizonMaxDate, searchParams, setSearchParams, startTime])
+    writeSearch(next, replace)
+  }, [
+    date,
+    horizonMaxDate,
+    location.hash,
+    location.pathname,
+    navigate,
+    searchParams,
+    startTime,
+  ])
 
   useEffect(() => {
     return subscribeAgendaQueries((snapshot) => {
@@ -620,6 +672,34 @@ export function TenantPortalAgendaPage() {
       })),
     [timeWindows],
   )
+
+  useEffect(() => {
+    if (schedulePending || slotsError || timeWindows.length === 0) {
+      return
+    }
+    if (timeWindows.some((window) => window.startTime === startTime)) {
+      return
+    }
+    const next = timeWindows[0]?.startTime ?? ""
+    if (next.length === 0) {
+      return
+    }
+    preferredTimeRef.current = next
+    setStartTime(next)
+  }, [schedulePending, slotsError, startTime, timeWindows])
+
+  useEffect(() => {
+    if (seenHash === location.hash) {
+      return
+    }
+    if (
+      seenHash === CUSTOMER_MY_RESERVATIONS_HASH &&
+      location.hash !== CUSTOMER_MY_RESERVATIONS_HASH
+    ) {
+      setSlotReloadNonce((current) => current + 1)
+    }
+    setSeenHash(location.hash)
+  }, [location.hash, seenHash])
   const placedIds = useMemo(
     () => new Set(layoutItems.map((item) => item.rentalAssetId)),
     [layoutItems],
@@ -1043,12 +1123,28 @@ export function TenantPortalAgendaPage() {
     }
   }
 
-  function onDateChange(value: string) {
-    const attempt = classifyAgendaDateAttempt(
-      value,
-      brazilTodayIsoDate(),
-      horizonMaxDate,
-    )
+  function commitAgendaDate(nextDate: string) {
+    viewedDateRef.current = nextDate
+    if (nextDate === date) {
+      setDate(nextDate)
+      return
+    }
+    setSlotsLoading(true)
+    setSlotsError(false)
+    setPastSlotsHidden(false)
+    setSlots([])
+    setObservedSlots([])
+    setSlotsBelongToDate(nextDate)
+    setSelectedRentalAssetId(null)
+    setDate(nextDate)
+  }
+
+  function onDateChange(value: string, source: LocaleDateChangeSource = "input") {
+    const today = brazilTodayIsoDate()
+    const attempt =
+      source === "input"
+        ? clampTypedDateToHorizon(value, today, horizonMaxDate)
+        : classifyAgendaDateAttempt(value, today, horizonMaxDate)
     if (attempt.status === "empty" || attempt.status === "invalid") {
       return
     }
@@ -1056,10 +1152,14 @@ export function TenantPortalAgendaPage() {
       setDateRejection(attempt.status)
       return
     }
-    setDateRejection(null)
     setHorizonAdjusted(false)
-    viewedDateRef.current = attempt.date
-    setDate(attempt.date)
+    if (attempt.status === "clamp") {
+      setDateRejection("after")
+      commitAgendaDate(attempt.date)
+      return
+    }
+    setDateRejection(null)
+    commitAgendaDate(attempt.date)
   }
 
   function spaceState(rentalAssetId: string) {
@@ -1124,8 +1224,8 @@ export function TenantPortalAgendaPage() {
                 value={date}
                 invalid={dateRejection !== null}
                 describedBy={dateDescribedBy}
-                onChange={(nextValue) => {
-                  onDateChange(nextValue)
+                onChange={(nextValue, source) => {
+                  onDateChange(nextValue, source)
                 }}
               />
               {typeof horizonDays === "number" && horizonMaxDate !== null ? (
