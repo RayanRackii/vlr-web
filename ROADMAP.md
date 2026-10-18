@@ -203,6 +203,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] Modo suporte: Abrir ambiente = login real (membership + `tenant_id` JWT); Voltar limpa metadata
 - [x] Esqueci a senha → `POST /api/auth/forgot-password` com `X-Tenant-Subdomain`. No host ou `/t/:slug` o slug vem de `resolveTenantSubdomain`. No apex `/login` um passo pede o identificador da empresa antes do POST. Sem consulta de e-mail entre tenants. Resposta não-5xx fica na frase genérica; 5xx mostra o erro. Portal B2C já envia o header em `POST /api/auth/customer/password-reset/request`. Ship junto com `vlr-api` #100. `/reset-password` inalterado. Sem secrets.
 - [x] Onboarding público não coleta senha. `POST /api/onboarding/tenants` segue só com `isTrial: true`; o admin define a senha no e-mail de convite (`/invite?token=`). Pareia com `vlr-api` #111.
+- [x] Convite de conta existente (pareia com `vlr-api` #226, sem merge): `/invite` chama `POST /api/invites/preview`. Conta nova define senha. Conta existente entra com a senha atual e `POST /api/invites/accept` leva o JWT staff; não pede senha nova. 409 `EXISTING_ACCOUNT_SIGN_IN_REQUIRED`, 403 `INVITE_ACCOUNT_MISMATCH` e 409 `INVITE_IDENTITY_CONFLICT` têm frase em pt-BR/en/es. Mais de uma membership oferece seletor (`GET /api/users/me/tenants`, `POST /api/users/me/tenant`) e atualiza a sessão Supabase. Uma membership cujo tenant não é o do access token é selecionada e a sessão atualizada. Alto risco (auth).
 
 ## Dívidas técnicas conhecidas
 
@@ -215,6 +216,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-18 | **Código (WEB, sem merge, alto risco):** `/invite` segue o contrato de `vlr-api` #226. Preview anônimo decide senha nova ou login da conta existente. Accept de conta existente usa o JWT staff e não envia senha. 409/403 do convite têm frase. Várias memberships escolhem ambiente e a sessão Supabase é atualizada. Glossário User espelhado. |
 | 2026-08-03 | Portal + registro dinâmico. |
 | 2026-08-04 | Agenda B2C inicial. |
 | 2026-08-04 | **Executado:** shell B2C (AppShell) + menu dinâmico multi-item; admin de menu. |

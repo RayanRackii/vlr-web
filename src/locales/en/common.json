@@ -175,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Activate account",
-      "welcome": "Welcome to Rolvix. To activate your account, set a secure password below.",
+      "welcome": "Welcome to Rolvix. To activate your account at {{tenant}}, set a secure password below.",
+      "welcomeExisting": "You already have a Rolvix account. Sign in with the password for {{email}} to join {{tenant}}. Your password will not change.",
+      "checking": "Checking the invite...",
       "invalidLink": "Invite link is invalid or expired.",
       "passwordLabel": "New password",
       "confirmPasswordLabel": "Confirm new password",
@@ -183,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repeat the password",
       "submit": "Set password",
       "submitting": "Saving...",
+      "signInTitle": "Sign in to accept",
+      "existingPasswordLabel": "Password",
+      "existingPasswordPlaceholder": "Your current password",
+      "signInSubmit": "Sign in and accept",
+      "signInSubmitting": "Signing in...",
       "goToLogin": "Go to login",
       "toastSuccess": "Password set successfully!",
-      "toastError": "Could not set the password. Please try again.",
+      "toastJoined": "Invite accepted. You now belong to {{tenant}}.",
+      "toastError": "Could not complete the invite. Please try again.",
       "validation": {
         "passwordRequired": "Enter a new password.",
         "confirmRequired": "Confirm the new password.",
         "passwordMin": "Password must be at least 8 characters.",
         "mismatch": "Passwords must match."
-      }
+      },
+      "errors": {
+        "existingAccount": "This account already exists. Sign in with the current password to accept the invite. The password will not change.",
+        "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
+        "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
+      },
+      "pickerTitle": "Choose an environment",
+      "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
+      "pickerSubmit": "Continue",
+      "pickerSubmitting": "Opening...",
+      "pickerError": "Could not switch environments. Please try again.",
+      "membershipError": "Could not load your environments. Please try again.",
+      "membershipRetry": "Try again"
     },
     "login": {
       "invalidCredentials": "Invalid email or password.",
