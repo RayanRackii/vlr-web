@@ -361,10 +361,15 @@ export async function commitPortalBooking<T extends PortalReservation>(
   return run
 }
 
-export function resetAgendaQueryClientForTests(): void {
+/** Drops in-memory agenda snapshots so a later page cannot replay them. */
+export function clearAgendaQueryClient(): void {
   revision += 1
   listeners.clear()
   ownSlotKeys.clear()
   recentBySubdomain.clear()
   inflightBySlot.clear()
+}
+
+export function resetAgendaQueryClientForTests(): void {
+  clearAgendaQueryClient()
 }

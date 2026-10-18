@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -13,7 +13,6 @@ import type {
   TenantBranding,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
-  clearCustomerSession,
   fetchTenantBranding,
   fetchTenantMenu,
   getCustomerLabel,
@@ -23,7 +22,10 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import appI18n from "@/lib/i18n"
-import { persistLanguage } from "@/lib/uiLanguage"
+import {
+  isAuthenticatedRestoreBlocked,
+  signOutCustomerPortal,
+} from "@/lib/sessionRestoreGuard"
 
 export type CustomerAppOutletContext = {
   subdomain: string
@@ -36,6 +38,7 @@ export function CustomerAppLayout() {
   const { t } = useTranslation()
   const params = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const subdomain = useMemo(() => {
     const fromPath = params.subdomain?.toLowerCase()
     if (fromPath) {
@@ -52,7 +55,7 @@ export function CustomerAppLayout() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!subdomain || !signedIn) {
+    if (isAuthenticatedRestoreBlocked() || !subdomain || !signedIn) {
       setLoading(false)
       return
     }
@@ -93,6 +96,10 @@ export function CustomerAppLayout() {
     branding?.primaryColor,
     branding?.accentColor,
   )
+
+  if (isAuthenticatedRestoreBlocked()) {
+    return null
+  }
 
   if (!signedIn) {
     return (
@@ -160,9 +167,8 @@ export function CustomerAppLayout() {
         enlargeHeaderTargets
         showLanguageCode
         onSignOut={() => {
-          clearCustomerSession()
-          persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
-          window.location.assign(tenantPortalPath(subdomain))
+          const path = signOutCustomerPortal(subdomain)
+          void navigate(path, { replace: true })
         }}
       >
         <Outlet
