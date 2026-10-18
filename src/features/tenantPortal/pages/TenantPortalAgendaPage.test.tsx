@@ -1740,15 +1740,25 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(dateInput).toHaveAttribute("max", "2026-10-16")
     })
 
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.horizonHint", {
+          date: "16/10",
+          count: 2,
+        }),
+      ),
+    ).toBeInTheDocument()
+
     fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
 
-    await waitFor(() => {
-      expect(dateInput).toHaveValue("2026-10-16")
-    })
+    expect(dateInput).toHaveValue("2026-10-14")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2099-12-31")
     expect(
-      screen.getByText(i18n.t("tenantPortal.agenda.horizonAdjusted")),
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonAdjusted")),
+    ).not.toBeInTheDocument()
   })
 
   it("does not cap the date when the horizon is unlimited", async () => {
@@ -1766,6 +1776,81 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(fetchPolicy).toHaveBeenCalled()
     })
     expect(dateInput).not.toHaveAttribute("max")
+    expect(
+      screen.queryByText(/dias à frente|days ahead|días adelante/),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps a chosen date when the field is cleared or set before today", async () => {
+    renderAgenda("/agenda?date=2026-10-20")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "" } })
+    expect(dateInput).toHaveValue("2026-10-20")
+
+    fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
+    expect(dateInput).toHaveValue("2026-10-20")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).toBeInTheDocument()
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+  })
+
+  it("explains a disabled calendar day without moving the selection", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    const user = userEvent.setup()
+    renderAgenda("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+    })
+
+    await user.click(dateInput)
+    await user.click(await screen.findByRole("button", { name: "31/10/2026" }))
+
+    expect(dateInput).toHaveValue("2026-10-15")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2026-10-31")
+  })
+
+  it("keeps the URL date after cancelling a booking", async () => {
+    const user = userEvent.setup()
+    const reservedIso = "2026-10-15T11:00:00.000Z"
+    listMine.mockResolvedValue([makeReservation("Confirmed", reservedIso)])
+    cancelMine.mockResolvedValue(makeReservation("Canceled", reservedIso))
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+      expect(router.state.location.search).toContain("date=2026-10-15")
+    })
+
+    await confirmCancel(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.cancelSuccess"),
+      )
+    })
+    expect(dateInput).toHaveValue("2026-10-15")
+    expect(router.state.location.search).toContain("date=2026-10-15")
+    expect(router.state.location.search).not.toMatch(/date=2026-10-14/)
   })
 
   it("shows the horizon message when the day request is rejected", async () => {
@@ -1925,10 +2010,15 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).not.toBeInTheDocument()
     })
     expect(
-      screen.getByRole("button", {
+      screen.queryByRole("button", {
         name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
       }),
-    ).toHaveAttribute("aria-disabled", "true")
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("common.refreshing")}`,
+      }),
+    ).toHaveAttribute("aria-busy", "true")
     expect(
       screen.getByRole("button", {
         name: i18n.t("tenantPortal.agenda.reserveSlot"),
@@ -2097,9 +2187,10 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
     fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
 
-    await waitFor(() => {
-      expect(dateInput).toHaveValue(brazilTodayIsoDate())
-    })
+    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).toBeInTheDocument()
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
   })
 

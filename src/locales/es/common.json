@@ -16,6 +16,12 @@
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando...",
     "refreshing": "Actualizando...",
+    "datePicker": {
+      "today": "Hoy",
+      "clear": "Borrar",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente"
+    },
     "yes": "Sí",
     "no": "No"
   },
@@ -389,6 +395,8 @@
       "pastSlotsHidden": "Los horarios que ya empezaron hoy quedan ocultos.",
       "horizonExceeded": "La fecha pedida está fuera del horizonte de reserva.",
       "horizonAdjusted": "Esa fecha está fuera del horizonte de reserva. Mostrando la última fecha que todavía se puede reservar.",
+      "horizonHint": "Reservas disponibles hasta {{date}} ({{count}} días adelante)",
+      "dateBeforeToday": "Esa fecha es anterior a hoy.",
       "loadingTimes": "Cargando horarios...",
       "reserveSuccess": "¡Reserva creada!",
       "reserveSuccessWithTotal": "¡Reserva creada! Total {{amount}} · {{status}}",

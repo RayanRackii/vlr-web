@@ -5,6 +5,7 @@ import i18n from "@/lib/i18n"
 
 import {
   formatLocaleCivilDate,
+  formatLocaleCivilDayMonth,
   formatLocaleCurrency,
   formatLocaleDateTimeRange,
 } from "./localeFormat"
@@ -50,6 +51,9 @@ describe("localeFormat", () => {
     expect(formatLocaleCivilDate("2026-10-14", "es")).toBe("14/10/2026")
     expect(formatLocaleCivilDate("2026-10-14", "en")).toBe("10/14/2026")
     expect(formatLocaleCivilDate("not-a-date", "pt-BR")).toBe("not-a-date")
+    expect(formatLocaleCivilDayMonth("2026-10-16", "pt-BR")).toBe("16/10")
+    expect(formatLocaleCivilDayMonth("2026-10-16", "es")).toBe("16/10")
+    expect(formatLocaleCivilDayMonth("2026-10-16", "en")).toBe("10/16")
   })
 
   it("formats a business-clock range in the requested locale", () => {

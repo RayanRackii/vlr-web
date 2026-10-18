@@ -16,6 +16,12 @@
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
     "refreshing": "Updating...",
+    "datePicker": {
+      "today": "Today",
+      "clear": "Clear",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
     "yes": "Yes",
     "no": "No"
   },
@@ -389,6 +395,8 @@
       "pastSlotsHidden": "Times that have already started today are hidden.",
       "horizonExceeded": "That date is beyond the booking horizon.",
       "horizonAdjusted": "That date is beyond the booking horizon. Showing the latest date you can book.",
+      "horizonHint": "Bookings available through {{date}} ({{count}} days ahead)",
+      "dateBeforeToday": "That date is before today.",
       "loadingTimes": "Loading times...",
       "reserveSuccess": "Reservation created!",
       "reserveSuccessWithTotal": "Reservation created! Total {{amount}} · {{status}}",
