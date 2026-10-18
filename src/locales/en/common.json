@@ -1,1 +1,28 @@
-PLACEHOLDER_WILL_NOT_SEND
+{
+  "app": {
+    "name": "Rolvix",
+    "authenticatedArea": "Authenticated area"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "edit": "Edit",
+    "delete": "Delete",
+    "optional": "optional",
+    "required": "Please fill in the required fields.",
+    "filter": "Filter",
+    "searchPlaceholder": "Search...",
+    "loading": "Loading...",
+    "refreshing": "Updating...",
+    "datePicker": {
+      "today": "Today",
+      "clear": "Clear",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "yes": "Yes",
+    "no": "No"
+  }
+}
