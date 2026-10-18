@@ -7,7 +7,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { makeWorkOrder, WORK_ORDER_ID } from "@/features/workOrders/test/workOrderFixtures"
+import {
+  makeWorkOrder,
+  sampleTechnician,
+  TECHNICIAN_ID,
+  WORK_ORDER_ID,
+} from "@/features/workOrders/test/workOrderFixtures"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import i18n from "@/lib/i18n"
 
@@ -41,7 +46,17 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  updateWorkOrderAssignee: vi.fn(),
 }))
+
+vi.mock("@/features/users/services/usersService", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/users/services/usersService")>()
+  return {
+    ...actual,
+    getTechnicians: vi.fn(),
+  }
+})
 
 vi.mock("@/features/pmoc/services/pmocService", () => ({
   getPlan: vi.fn(async () => {
@@ -55,13 +70,17 @@ import {
   listSyncConflicts,
   retrySyncConflict,
 } from "@/lib/offlineSync"
+import { getTechnicians } from "@/features/users/services/usersService"
 import {
   getWorkOrderById,
   updateTaskValue,
+  updateWorkOrderAssignee,
   updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
 
 const getWorkOrderByIdMock = vi.mocked(getWorkOrderById)
+const getTechniciansMock = vi.mocked(getTechnicians)
+const updateWorkOrderAssigneeMock = vi.mocked(updateWorkOrderAssignee)
 const getPlanMock = vi.mocked(getPlan)
 const updateTaskValueMock = vi.mocked(updateTaskValue)
 const updateWorkOrderStatusMock = vi.mocked(updateWorkOrderStatus)
@@ -97,13 +116,13 @@ describe("WorkOrderExecutionPage origin", () => {
 
   it("H: generated work order detail shows PMOC origin", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({ sourcePlanName: "Nome histórico do plano" }),
+      makeWorkOrder({ sourcePlanName: "Nome hist\u00f3rico do plano" }),
     )
 
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC · Nome histórico do plano"),
+      await screen.findByText("PMOC \u00b7 Nome hist\u00f3rico do plano"),
     ).toBeInTheDocument()
   })
 
@@ -146,7 +165,7 @@ describe("WorkOrderExecutionPage origin", () => {
 
   it("K: displays sourcePlanName as historical metadata and does not fetch the live plan name", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({ sourcePlanName: "Nome histórico do plano" }),
+      makeWorkOrder({ sourcePlanName: "Nome hist\u00f3rico do plano" }),
     )
 
     renderExecution(
@@ -155,7 +174,7 @@ describe("WorkOrderExecutionPage origin", () => {
     )
 
     expect(
-      await screen.findByText("PMOC · Nome histórico do plano"),
+      await screen.findByText("PMOC \u00b7 Nome hist\u00f3rico do plano"),
     ).toBeInTheDocument()
     expect(screen.queryByText("PMOC Split Mensal")).not.toBeInTheDocument()
     expect(getPlanMock).not.toHaveBeenCalled()
@@ -167,7 +186,7 @@ describe("WorkOrderExecutionPage origin", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC · PMOC Split Mensal"),
+      await screen.findByText("PMOC \u00b7 PMOC Split Mensal"),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("link", {
@@ -325,7 +344,7 @@ describe("WorkOrderExecutionPage tasks", () => {
               },
               {
                 id: "17171717-1717-4171-8171-171717171717",
-                title: "Pressão",
+                title: "Press\u00e3o",
               },
             ],
           },
@@ -344,7 +363,7 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
-        tasks: "Foto do filtro, Pressão",
+        tasks: "Foto do filtro, Press\u00e3o",
       }),
     )
     expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
@@ -407,7 +426,7 @@ describe("WorkOrderExecutionPage tasks", () => {
   it("shows notes and the completed date", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
       makeWorkOrder({
-        notes: "Levar peça",
+        notes: "Levar pe\u00e7a",
         completedDate: "2026-09-19T15:04:00.000Z",
         status: "Completed",
       }),
@@ -415,7 +434,7 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     renderExecution(["os.work_orders.read"], ["os"])
 
-    expect(await screen.findByText("Levar peça")).toBeInTheDocument()
+    expect(await screen.findByText("Levar pe\u00e7a")).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("workOrders.execution.completedDate")),
     ).toBeInTheDocument()
@@ -559,5 +578,107 @@ describe("WorkOrderExecutionPage tasks", () => {
     await waitFor(() => {
       expect(retrySyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
     })
+  })
+})
+
+describe("WorkOrderExecutionPage assignee", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    getTechniciansMock.mockReset()
+    updateWorkOrderAssigneeMock.mockReset()
+    getTechniciansMock.mockResolvedValue([sampleTechnician])
+  })
+
+  it("shows the assignee name without a selector when the user cannot assign", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+
+    renderExecution(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(getTechniciansMock).not.toHaveBeenCalled()
+  })
+
+  it("reassigns an open work order through the assignee endpoint", async () => {
+    const user = userEvent.setup()
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    updateWorkOrderAssigneeMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+
+    renderExecution(
+      ["os.work_orders.read", "os.work_orders.assign"],
+      ["os"],
+    )
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: sampleTechnician.fullName }),
+    )
+
+    await waitFor(() => {
+      expect(updateWorkOrderAssigneeMock).toHaveBeenCalledWith(
+        WORK_ORDER_ID,
+        TECHNICIAN_ID,
+      )
+    })
+    expect(await screen.findByText(sampleTechnician.fullName)).toBeInTheDocument()
+  })
+
+  it("keeps the current assignee when the technician list is forbidden", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+    getTechniciansMock.mockRejectedValue(new Error("FORBIDDEN"))
+
+    renderExecution(
+      ["os.work_orders.read", "os.work_orders.assign"],
+      ["os"],
+    )
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(
+      await screen.findByText(i18n.t("rbac.errors.FORBIDDEN")),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("explains a 404 when the work order is not assigned to the caller", async () => {
+    getWorkOrderByIdMock.mockRejectedValue(
+      new Error(i18n.t("workOrders.errors.notAssignedOrForbidden")),
+    )
+
+    renderExecution(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+    expect(
+      screen.queryByText(i18n.t("workOrders.errors.loadOneFailed")),
+    ).not.toBeInTheDocument()
   })
 })
