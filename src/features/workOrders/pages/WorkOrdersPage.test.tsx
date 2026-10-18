@@ -133,4 +133,46 @@ describe("WorkOrdersPage origin", () => {
     })
     expect(view).toHaveAttribute("href", `/os/${canceled.id}`)
   })
+
+  it("keeps the generic empty copy for someone who can see every work order", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+
+    renderList(["os.work_orders.read", "os.work_orders.create"], ["os"])
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.empty.Pending")),
+    ).toBeInTheDocument()
+  })
+
+  it("tells an execute-only technician when nothing is assigned to them", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+
+    renderList(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.emptyAssigned.Pending")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("replaces a 403 or 404 load failure and hides the empty pending copy", async () => {
+    getWorkOrdersMock.mockRejectedValue(
+      new Error(i18n.t("workOrders.errors.notAssignedOrForbidden")),
+    )
+
+    renderList(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.emptyAssigned.Pending")),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+  })
 })
