@@ -68,10 +68,12 @@ function WorkOrdersTable({
   rows,
   isLoading,
   emptyLabel,
+  hideEmpty = false,
 }: {
   rows: WorkOrderTableRow[]
   isLoading: boolean
   emptyLabel: string
+  hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -199,7 +201,7 @@ function WorkOrdersTable({
             <TableRowsSkeleton columns={columns.length} />
           ) : null}
 
-          {!isLoading && filteredRows.length === 0 ? (
+          {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
                 {emptyLabel}
@@ -238,6 +240,8 @@ export function WorkOrdersPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<WorkOrderStatus>("Pending")
   const canCreateWorkOrder = can("os.work_orders.create")
+  const seesOnlyAssigned =
+    can("os.work_orders.execute") && !can("os.work_orders.create")
 
   const loadWorkOrders = useCallback(async () => {
     if (!session) {
@@ -286,7 +290,7 @@ export function WorkOrdersPage() {
     for (const workOrder of workOrders) {
       map[workOrder.status].push({
         ...workOrder,
-        assetLabel: `${workOrder.asset.tag} — ${workOrder.asset.name}`,
+        assetLabel: `${workOrder.asset.tag} \u2014 ${workOrder.asset.name}`,
         originLabel: formatWorkOrderOriginText(
           workOrder.maintenancePlanId,
           workOrder.sourcePlanName,
@@ -361,7 +365,12 @@ export function WorkOrdersPage() {
             <WorkOrdersTable
               rows={tableRowsByStatus[status]}
               isLoading={isLoading}
-              emptyLabel={t(`workOrders.empty.${status}`)}
+              hideEmpty={loadError !== null}
+              emptyLabel={t(
+                seesOnlyAssigned
+                  ? `workOrders.emptyAssigned.${status}`
+                  : `workOrders.empty.${status}`,
+              )}
             />
           </TabsContent>
         ))}

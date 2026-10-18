@@ -193,6 +193,14 @@ export type UpdateWorkOrderTaskValueRequest = z.infer<
   typeof updateWorkOrderTaskValueRequestSchema
 >
 
+export const updateWorkOrderAssigneeRequestSchema = z.object({
+  assignedUserId: z.string().uuid().nullable(),
+})
+
+export type UpdateWorkOrderAssigneeRequest = z.infer<
+  typeof updateWorkOrderAssigneeRequestSchema
+>
+
 export const updateWorkOrderStatusRequestSchema = z.object({
   status: workOrderStatusSchema,
 })
