@@ -1952,6 +1952,92 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toHaveTextContent("08:00")
   })
 
+  it("clears a rejected date when history returns to a valid day", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 10,
+    })
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+      expect(dateInput).toHaveAttribute("max", "2026-10-24")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+      expect(router.state.location.search).toContain("date=2026-10-20")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
+    expect(dateInput).toHaveValue("2026-10-20")
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+    expect(restored).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).not.toBeInTheDocument()
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
+      "2099-12-31",
+    )
+  })
+
+  it("clears a before-today rejection when history returns to a valid day", async () => {
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+      expect(router.state.location.search).toContain("date=2026-10-20")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
+    expect(dateInput).toHaveValue("2026-10-20")
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).not.toBeInTheDocument()
+  })
+
   it("replaces a beyond-horizon deep link so Back reaches the earlier entry", async () => {
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,

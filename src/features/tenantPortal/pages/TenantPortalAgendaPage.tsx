@@ -275,6 +275,7 @@ export function TenantPortalAgendaPage() {
       return
     }
     setHorizonAdjusted(true)
+    setDateRejection(null)
     viewedDateRef.current = horizonMaxDate
     replaceSelectionSearch.current = true
     setDate(horizonMaxDate)
@@ -520,6 +521,9 @@ export function TenantPortalAgendaPage() {
       if (urlDate !== date) {
         viewedDateRef.current = urlDate
         setDate(urlDate)
+        if (!urlBeyondHorizon) {
+          setDateRejection(null)
+        }
       }
       if (urlTime !== startTime) {
         preferredTimeRef.current = urlTime
