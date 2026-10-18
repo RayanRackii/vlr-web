@@ -1,7 +1,10 @@
 import i18n from "@/lib/i18n"
 import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
+import {
+  errorForWorkOrderStatus,
+  localizeWorkOrderApiError,
+} from "@/features/workOrders/lib/workOrderApiErrors"
 import {
   commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
@@ -330,11 +333,9 @@ export async function updateWorkOrderStatus(
       throw error
     }
 
-    throw new Error(
-      localizeWorkOrderApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("workOrders.errors.updateStatusFailed"),
-      ),
+    throw errorForWorkOrderStatus(
+      getAxiosErrorPayload(error),
+      i18n.t("workOrders.errors.updateStatusFailed"),
     )
   }
 }

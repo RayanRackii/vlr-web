@@ -12,6 +12,8 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { TaskSaveIndicator } from "@/features/workOrders/components/TaskSaveIndicator"
+import type { TaskSaveState } from "@/features/workOrders/components/TaskSaveIndicator"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
 import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
@@ -20,8 +22,15 @@ import {
   type WorkOrder,
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
-import { isWorkOrderTaskFilled } from "@/features/workOrders/lib/workOrderTaskFilled"
+import {
+  localizeWorkOrderApiError,
+  MandatoryTasksIncompleteError,
+} from "@/features/workOrders/lib/workOrderApiErrors"
+import {
+  listMissingMandatoryTaskTitles,
+  mergeMissingMandatoryTitles,
+} from "@/features/workOrders/lib/missingMandatoryTasks"
+import { useObservedHeight } from "@/hooks/useObservedHeight"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -203,6 +212,7 @@ function TaskField({
   task,
   disabled,
   pendingSync,
+  hasSyncConflict,
   onLocalChange,
   onPersisted,
   onQueued,
@@ -213,6 +223,7 @@ function TaskField({
   task: WorkOrderTask
   disabled: boolean
   pendingSync: boolean
+  hasSyncConflict: boolean
   onLocalChange: (taskId: string, value: string | null) => void
   onPersisted: (workOrder: WorkOrder, taskId: string) => void
   onQueued: (taskId: string) => void
@@ -220,15 +231,19 @@ function TaskField({
   onRegisterFlush: (taskId: string, flush: (() => unknown) | null) => void
 }) {
   const { t } = useTranslation()
+  const [saveState, setSaveState] = useState<TaskSaveState>("idle")
 
   const persistValue = useCallback(
     async (value: string | null) => {
+      setSaveState("saving")
       try {
         const updated = await updateTaskValue(workOrderId, task.id, value)
         if (updated !== null) {
           onPersisted(updated, task.id)
+          setSaveState("saved")
         } else {
           onQueued(task.id)
+          setSaveState("retrying")
         }
       } catch (error: unknown) {
         console.error("TaskField persistValue failed", error)
@@ -236,6 +251,7 @@ function TaskField({
           console.error("TaskField persistValue response", error.response?.data)
         }
 
+        setSaveState("idle")
         onError(
           error instanceof Error
             ? error.message
@@ -258,6 +274,22 @@ function TaskField({
     }
   }, [debouncedPersist, onRegisterFlush, task.id])
 
+  useEffect(() => {
+    if (pendingSync) {
+      setSaveState("retrying")
+      return
+    }
+
+    if (hasSyncConflict) {
+      setSaveState((current) =>
+        current === "saving" || current === "retrying" ? "idle" : current,
+      )
+      return
+    }
+
+    setSaveState((current) => (current === "retrying" ? "saved" : current))
+  }, [hasSyncConflict, pendingSync])
+
   const numberConfig = useMemo(
     () => parseNumberConfiguration(task.configuration),
     [task.configuration],
@@ -270,11 +302,15 @@ function TaskField({
 
   const choiceOptions = choiceConfig?.options ?? []
 
-  const waiting = pendingSync ? (
-    <p className="text-xs text-amber-800 dark:text-amber-200">
-      {t("workOrders.offline.waitingToSync")}
-    </p>
-  ) : null
+  const shownSaveState: TaskSaveState = pendingSync
+    ? "retrying"
+    : hasSyncConflict
+      ? "idle"
+      : saveState
+
+  const saveIndicator = (
+    <TaskSaveIndicator state={shownSaveState} taskTitle={task.title} />
+  )
 
   switch (task.inputType) {
     case "Checkbox": {
@@ -292,11 +328,12 @@ function TaskField({
               onCheckedChange={(nextChecked) => {
                 const nextValue = nextChecked ? "true" : "false"
                 onLocalChange(task.id, nextValue)
+                setSaveState("saving")
                 void persistValue(nextValue)
               }}
             />
           </div>
-          {waiting}
+          {saveIndicator}
         </div>
       )
     }
@@ -312,10 +349,11 @@ function TaskField({
               const nextValue =
                 event.target.value.trim() === "" ? null : event.target.value
               onLocalChange(task.id, nextValue)
+              setSaveState("saving")
               debouncedPersist(nextValue)
             }}
           />
-          {waiting}
+          {saveIndicator}
         </div>
       )
 
@@ -343,10 +381,11 @@ function TaskField({
               const raw = event.target.value
               const nextValue = raw.trim() === "" ? null : raw
               onLocalChange(task.id, nextValue)
+              setSaveState("saving")
               debouncedPersist(nextValue)
             }}
           />
-          {waiting}
+          {saveIndicator}
         </div>
       )
 
@@ -370,6 +409,7 @@ function TaskField({
               const nextValue =
                 event.target.value === "" ? null : event.target.value
               onLocalChange(task.id, nextValue)
+              setSaveState("saving")
               void persistValue(nextValue)
             }}
           >
@@ -382,7 +422,7 @@ function TaskField({
               </option>
             ))}
           </select>
-          {waiting}
+          {saveIndicator}
         </div>
       )
 
@@ -417,6 +457,10 @@ export function WorkOrderExecutionPage() {
   )
   const [conflicts, setConflicts] = useState<OsSyncConflict[]>([])
   const [conflictBusyId, setConflictBusyId] = useState<string | null>(null)
+  const [serverMissingTitles, setServerMissingTitles] = useState<readonly string[]>(
+    [],
+  )
+  const actionBar = useObservedHeight<HTMLDivElement>()
   const loadFailedRef = useRef(false)
   const hasWorkOrderRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
@@ -592,12 +636,34 @@ export function WorkOrderExecutionPage() {
     [],
   )
 
-  function currentTaskValue(task: WorkOrderTask): string | null {
+  function currentTaskValue(task: {
+    id: string
+    value?: string | null
+  }): string | null {
     if (draftValuesRef.current.has(task.id)) {
       return draftValuesRef.current.get(task.id) ?? null
     }
     return task.value ?? null
   }
+
+  const clientMissingTitles = useMemo(
+    () =>
+      listMissingMandatoryTaskTitles(orderedTasks, (task) =>
+        currentTaskValue(task),
+      ),
+    [orderedTasks],
+  )
+
+  const missingTitles = useMemo(
+    () =>
+      mergeMissingMandatoryTitles(
+        clientMissingTitles,
+        serverMissingTitles,
+        orderedTasks,
+        (task) => currentTaskValue(task),
+      ),
+    [clientMissingTitles, orderedTasks, serverMissingTitles],
+  )
 
   function handleLocalTaskChange(taskId: string, value: string | null) {
     draftValuesRef.current.set(taskId, value)
@@ -710,20 +776,10 @@ export function WorkOrderExecutionPage() {
       return
     }
 
-    const missingMandatory = orderedTasks.filter((task) => {
-      if (!task.isMandatory) {
-        return false
-      }
-
-      return !isWorkOrderTaskFilled(task, currentTaskValue(task))
-    })
-
-    if (missingMandatory.length > 0) {
-      setErrorMessage(
-        t("workOrders.execution.mandatoryIncomplete", {
-          tasks: missingMandatory.map((task) => task.title).join(", "),
-        }),
-      )
+    const missingNow = listMissingMandatoryTaskTitles(orderedTasks, (task) =>
+      currentTaskValue(task),
+    )
+    if (missingNow.length > 0) {
       return
     }
 
@@ -734,13 +790,20 @@ export function WorkOrderExecutionPage() {
     try {
       const updated = await updateWorkOrderStatus(workOrder.id, "Completed")
       setWorkOrder(updated)
+      setServerMissingTitles([])
       setSuccessMessage(t("workOrders.execution.completedSuccess"))
     } catch (error: unknown) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : t("workOrders.errors.updateStatusFailed"),
-      )
+      if (error instanceof MandatoryTasksIncompleteError) {
+        setServerMissingTitles(error.titles)
+        setErrorMessage(error.titles.length === 0 ? error.message : null)
+      } else {
+        setServerMissingTitles([])
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : t("workOrders.errors.updateStatusFailed"),
+        )
+      }
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -789,8 +852,23 @@ export function WorkOrderExecutionPage() {
     )
   }
 
+  const showActionBar =
+    workOrder.status === "Pending" || workOrder.status === "InProgress"
+
   return (
-    <div className="space-y-6 pb-28">
+    <div
+      data-work-order-execution
+      className={
+        showActionBar && actionBar.height === 0
+          ? "space-y-6 pb-28"
+          : "space-y-6"
+      }
+      style={
+        showActionBar && actionBar.height > 0
+          ? { paddingBottom: actionBar.height }
+          : undefined
+      }
+    >
       <WorkOrderOfflineBanner />
 
       <SyncConflictList
@@ -904,17 +982,24 @@ export function WorkOrderExecutionPage() {
         </div>
       </section>
 
-      {successMessage !== null ? (
-        <div
-          role="status"
-          className="rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
-        >
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="work-order-status-announcement"
+        className={
+          successMessage === null
+            ? "sr-only"
+            : "rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
+        }
+      >
+        {successMessage === null ? null : (
           <div className="flex items-start gap-3">
             <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
             <p className="font-medium">{successMessage}</p>
           </div>
-        </div>
-      ) : null}
+        )}
+      </div>
 
       {errorMessage !== null ? (
         <div
@@ -960,6 +1045,9 @@ export function WorkOrderExecutionPage() {
                 task={task}
                 disabled={isReadOnly}
                 pendingSync={pendingTaskIds.has(task.id)}
+                hasSyncConflict={visibleConflicts.some(
+                  (conflict) => conflict.taskId === task.id,
+                )}
                 onLocalChange={handleLocalTaskChange}
                 onPersisted={handlePersisted}
                 onQueued={handleQueued}
@@ -971,37 +1059,68 @@ export function WorkOrderExecutionPage() {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 p-4 sm:flex-row sm:justify-end">
-          {workOrder.status === "Pending" ? (
-            <LoadingButton
-              type="button"
-              loading={isUpdatingStatus}
-              onClick={() => {
-                void handleStart()
-              }}
-            >
-              <Play data-icon="inline-start" />
-              {t("workOrders.execution.start")}
-            </LoadingButton>
-          ) : null}
+      {showActionBar ? (
+        <div
+          ref={actionBar.ref}
+          data-work-order-action-bar
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        >
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 p-4">
+            {missingTitles.length > 0 ? (
+              <div
+                id="work-order-missing-tasks"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <p id="work-order-missing-tasks-title" className="text-sm font-medium">
+                  {t("workOrders.execution.mandatoryIncompleteTitle")}
+                </p>
+                <ul
+                  aria-labelledby="work-order-missing-tasks-title"
+                  className="mt-2 list-disc space-y-1 pl-5 text-sm"
+                >
+                  {missingTitles.map((title) => (
+                    <li key={title}>{title}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              {workOrder.status === "Pending" ? (
+                <LoadingButton
+                  type="button"
+                  loading={isUpdatingStatus}
+                  onClick={() => {
+                    void handleStart()
+                  }}
+                >
+                  <Play data-icon="inline-start" />
+                  {t("workOrders.execution.start")}
+                </LoadingButton>
+              ) : null}
 
-          {workOrder.status === "Pending" ||
-          workOrder.status === "InProgress" ? (
-            <LoadingButton
-              type="button"
-              variant="default"
-              loading={isUpdatingStatus}
-              onClick={() => {
-                void handleComplete()
-              }}
-            >
-              <CircleCheck data-icon="inline-start" />
-              {t("workOrders.execution.complete")}
-            </LoadingButton>
-          ) : null}
+              <LoadingButton
+                type="button"
+                variant="default"
+                loading={isUpdatingStatus}
+                disabled={missingTitles.length > 0}
+                aria-describedby={
+                  missingTitles.length > 0
+                    ? "work-order-missing-tasks"
+                    : undefined
+                }
+                onClick={() => {
+                  void handleComplete()
+                }}
+              >
+                <CircleCheck data-icon="inline-start" />
+                {t("workOrders.execution.complete")}
+              </LoadingButton>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }

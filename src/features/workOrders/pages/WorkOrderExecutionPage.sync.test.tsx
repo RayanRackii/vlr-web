@@ -170,7 +170,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     await user.type(field, "leitura")
 
     expect(
-      await screen.findByText(i18n.t("workOrders.offline.waitingToSync")),
+      await screen.findByText(i18n.t("workOrders.execution.save.retrying")),
     ).toBeInTheDocument()
 
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
@@ -178,9 +178,12 @@ describe("WorkOrderExecutionPage offline sync", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(i18n.t("workOrders.offline.waitingToSync")),
+        screen.queryByText(i18n.t("workOrders.execution.save.retrying")),
       ).not.toBeInTheDocument()
     })
+    expect(
+      screen.getByText(i18n.t("workOrders.execution.save.saved")),
+    ).toBeInTheDocument()
     expect(screen.getByRole("textbox")).toHaveValue("leitura")
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${WORK_ORDER_ID}/tasks/${TASK_ID}`,

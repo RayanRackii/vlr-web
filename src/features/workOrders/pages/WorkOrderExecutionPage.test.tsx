@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
+import { MandatoryTasksIncompleteError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { makeWorkOrder, WORK_ORDER_ID } from "@/features/workOrders/test/workOrderFixtures"
@@ -220,8 +220,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
   })
 
-  it("does not block completion on an image task", async () => {
-    const user = userEvent.setup()
+  it("keeps completion disabled while a required photo is empty", async () => {
     const base = makeWorkOrder()
     const task = base.tasks[0]
     if (!task) {
@@ -239,31 +238,25 @@ describe("WorkOrderExecutionPage tasks", () => {
       ],
     })
     getWorkOrderByIdMock.mockResolvedValue(imageOrder)
-    updateWorkOrderStatusMock.mockResolvedValue({
-      ...imageOrder,
-      status: "Completed",
-    })
 
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
       await screen.findByText(i18n.t("workOrders.execution.imageUnsupported")),
     ).toBeInTheDocument()
-    await user.click(
+    const missing = screen.getByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })
+    expect(within(missing).getByText("Foto")).toBeInTheDocument()
+    expect(
       screen.getByRole("button", {
         name: i18n.t("workOrders.execution.complete"),
       }),
-    )
-    await waitFor(() => {
-      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(
-        imageOrder.id,
-        "Completed",
-      )
-    })
+    ).toBeDisabled()
+    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
   })
 
   it("blocks completion when a mandatory checkbox is false", async () => {
-    const user = userEvent.setup()
     const order = makeWorkOrder({
       tasks: [
         {
@@ -281,19 +274,20 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     renderExecution(["os.work_orders.read"], ["os"])
 
-    await user.click(
-      await screen.findByRole("button", {
+    const missing = await screen.findByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })
+    expect(within(missing).getByText("Verificar filtros")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
         name: i18n.t("workOrders.execution.complete"),
       }),
-    )
-
+    ).toBeDisabled()
     expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent(
-      i18n.t("workOrders.execution.mandatoryIncomplete", {
-        tasks: "Verificar filtros",
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
       }),
-    )
+    ).toHaveAttribute("aria-describedby", "work-order-missing-tasks")
     expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
   })
 
@@ -313,25 +307,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     })
     getWorkOrderByIdMock.mockResolvedValue(order)
     updateWorkOrderStatusMock.mockRejectedValue(
-      new Error(
-        localizeWorkOrderApiError(
-          {
-            error: "Mandatory tasks are incomplete.",
-            code: "MANDATORY_TASKS_INCOMPLETE",
-            tasks: [
-              {
-                id: "16161616-1616-4161-8161-161616161616",
-                title: "Foto do filtro",
-              },
-              {
-                id: "17171717-1717-4171-8171-171717171717",
-                title: "Pressão",
-              },
-            ],
-          },
-          i18n.t("workOrders.errors.updateStatusFailed"),
-        ),
-      ),
+      new MandatoryTasksIncompleteError(["Foto do filtro", "Pressão"]),
     )
 
     renderExecution(["os.work_orders.read"], ["os"])
@@ -342,11 +318,16 @@ describe("WorkOrderExecutionPage tasks", () => {
       }),
     )
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
-        tasks: "Foto do filtro, Pressão",
+    const missing = await screen.findByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })
+    expect(within(missing).getByText("Foto do filtro")).toBeInTheDocument()
+    expect(within(missing).getByText("Pressão")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
       }),
-    )
+    ).toBeDisabled()
     expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
   })
 
@@ -404,6 +385,182 @@ describe("WorkOrderExecutionPage tasks", () => {
     expect(taskOrder).toBeLessThan(statusOrder)
   })
 
+  it("announces a started work order in the existing status region", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({
+      tasks: [
+        {
+          ...(makeWorkOrder().tasks[0] as NonNullable<
+            ReturnType<typeof makeWorkOrder>["tasks"][number]
+          >),
+          isMandatory: false,
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockResolvedValue({
+      ...order,
+      status: "InProgress",
+    })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const announcement = await screen.findByTestId(
+      "work-order-status-announcement",
+    )
+    expect(announcement).toHaveAttribute("aria-live", "polite")
+    expect(announcement).toHaveTextContent("")
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.execution.start"),
+      }),
+    )
+
+    expect(announcement).toHaveTextContent(
+      i18n.t("workOrders.execution.startedSuccess"),
+    )
+    expect(announcement.className).not.toContain("sr-only")
+  })
+
+  it("shows saving and then saved on a task", async () => {
+    const user = userEvent.setup()
+    const base = makeWorkOrder()
+    const task = base.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const order = makeWorkOrder({
+      tasks: [
+        {
+          ...task,
+          inputType: "Text",
+          isMandatory: false,
+          value: null,
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    let resolveSave: (value: ReturnType<typeof makeWorkOrder>) => void = () =>
+      undefined
+    updateTaskValueMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve
+        }),
+    )
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    await user.type(
+      await screen.findByPlaceholderText(
+        i18n.t("workOrders.execution.textPlaceholder"),
+      ),
+      "a",
+    )
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.execution.save.saving")),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalled()
+    })
+    resolveSave(
+      makeWorkOrder({
+        ...order,
+        tasks: order.tasks.map((item) => ({ ...item, value: "a" })),
+      }),
+    )
+    expect(
+      await screen.findByText(i18n.t("workOrders.execution.save.saved")),
+    ).toBeInTheDocument()
+  })
+
+  it("shows a retry label when the task answer is queued", async () => {
+    const user = userEvent.setup()
+    const base = makeWorkOrder()
+    const task = base.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        tasks: [
+          {
+            ...task,
+            inputType: "Text",
+            isMandatory: false,
+            value: null,
+          },
+        ],
+      }),
+    )
+    updateTaskValueMock.mockResolvedValue(null)
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    await user.type(
+      await screen.findByPlaceholderText(
+        i18n.t("workOrders.execution.textPlaceholder"),
+      ),
+      "a",
+    )
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.execution.save.retrying")),
+    ).toBeInTheDocument()
+  })
+
+  it("pads the page by the measured action bar height", async () => {
+    const original = HTMLElement.prototype.getBoundingClientRect
+    HTMLElement.prototype.getBoundingClientRect = function () {
+      if (this.getAttribute("data-work-order-action-bar") != null) {
+        return {
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 88,
+          top: 0,
+          right: 0,
+          bottom: 88,
+          left: 0,
+          toJSON() {
+            return {}
+          },
+        }
+      }
+
+      return original.call(this)
+    }
+
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        tasks: [
+          {
+            ...(makeWorkOrder().tasks[0] as NonNullable<
+              ReturnType<typeof makeWorkOrder>["tasks"][number]
+            >),
+            isMandatory: false,
+          },
+        ],
+      }),
+    )
+
+    try {
+      renderExecution(["os.work_orders.read"], ["os"])
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
+      })
+      await waitFor(() => {
+        expect(
+          document.querySelector("[data-work-order-execution]"),
+        ).toHaveStyle({ paddingBottom: "88px" })
+      })
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = original
+    }
+  })
+
   it("shows notes and the completed date", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
       makeWorkOrder({
@@ -438,7 +595,9 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     window.dispatchEvent(new Event("online"))
 
-    expect(await screen.findByText(/Verificar filtros/)).toBeInTheDocument()
+    expect(
+      await screen.findByRole("heading", { name: /Verificar filtros/ }),
+    ).toBeInTheDocument()
     expect(
       screen.queryByText(i18n.t("workOrders.errors.loadOneFailed")),
     ).not.toBeInTheDocument()
