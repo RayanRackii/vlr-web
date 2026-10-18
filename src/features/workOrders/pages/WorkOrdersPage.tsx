@@ -290,7 +290,7 @@ export function WorkOrdersPage() {
     for (const workOrder of workOrders) {
       map[workOrder.status].push({
         ...workOrder,
-        assetLabel: `${workOrder.asset.tag} \u2014 ${workOrder.asset.name}`,
+        assetLabel: `${workOrder.asset.tag} — ${workOrder.asset.name}`,
         originLabel: formatWorkOrderOriginText(
           workOrder.maintenancePlanId,
           workOrder.sourcePlanName,
