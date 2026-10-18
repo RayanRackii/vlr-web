@@ -23,7 +23,13 @@ import {
   processSyncQueue,
 } from "@/lib/offlineSync"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
-import { makeWorkOrder, matchingRegistryAsset } from "@/features/workOrders/test/workOrderFixtures"
+import {
+  makeWorkOrder,
+  matchingRegistryAsset,
+  sampleTechnician,
+  TECHNICIAN_ID,
+  WORK_ORDER_ID,
+} from "@/features/workOrders/test/workOrderFixtures"
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>()
@@ -41,15 +47,18 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 import {
   generateWorkOrderFromPlan,
+  getWorkOrderById,
   getWorkOrders,
   isDuplicateWorkOrderError,
   listWorkOrderAssets,
   updateTaskValue,
+  updateWorkOrderAssignee,
   updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
 
 const apiGet = vi.mocked(api.get)
 const apiPost = vi.mocked(api.post)
+const apiPut = vi.mocked(api.put)
 const apiPatch = vi.mocked(api.patch)
 
 function axiosError(status: number, data: unknown): AxiosError {
@@ -318,6 +327,68 @@ describe("updateWorkOrderStatus mandatory tasks", () => {
       i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
         tasks: "Verificar filtros, Pressão",
       }),
+    )
+  })
+})
+
+describe("work order read denial", () => {
+  beforeEach(() => {
+    apiGet.mockReset()
+  })
+
+  it("maps 404 and 403 to the assigned-or-forbidden message", async () => {
+    apiGet.mockRejectedValueOnce(axiosError(404, ""))
+    await expect(getWorkOrderById(WORK_ORDER_ID)).rejects.toThrow(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+
+    apiGet.mockRejectedValueOnce(axiosError(403, { error: "FORBIDDEN" }))
+    await expect(getWorkOrders()).rejects.toThrow(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+  })
+})
+
+describe("updateWorkOrderAssignee", () => {
+  beforeEach(() => {
+    apiPut.mockReset()
+  })
+
+  it("puts the assignee on PUT /api/work-orders/{id}/assignee", async () => {
+    const updated = makeWorkOrder({
+      assignedUserId: TECHNICIAN_ID,
+      assignedUser: sampleTechnician,
+    })
+    apiPut.mockResolvedValue({ data: updated })
+
+    const result = await updateWorkOrderAssignee(WORK_ORDER_ID, TECHNICIAN_ID)
+
+    expect(apiPut).toHaveBeenCalledWith(
+      `/api/work-orders/${WORK_ORDER_ID}/assignee`,
+      { assignedUserId: TECHNICIAN_ID },
+    )
+    expect(result.assignedUser?.fullName).toBe("Ana Souza")
+  })
+
+  it("clears the assignee with null and maps a closed order", async () => {
+    apiPut.mockResolvedValueOnce({
+      data: makeWorkOrder({ assignedUserId: null, assignedUser: null }),
+    })
+    const cleared = await updateWorkOrderAssignee(WORK_ORDER_ID, null)
+    expect(apiPut).toHaveBeenCalledWith(
+      `/api/work-orders/${WORK_ORDER_ID}/assignee`,
+      { assignedUserId: null },
+    )
+    expect(cleared.assignedUserId).toBeNull()
+
+    apiPut.mockRejectedValueOnce(
+      axiosError(409, {
+        error: "Work order is closed.",
+        code: "WORK_ORDER_CLOSED",
+      }),
+    )
+    await expect(updateWorkOrderAssignee(WORK_ORDER_ID, TECHNICIAN_ID)).rejects.toThrow(
+      i18n.t("workOrders.errors.workOrderClosed"),
     )
   })
 })
