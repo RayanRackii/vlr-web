@@ -19,11 +19,16 @@ import {
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
-  formatCatalogMoney,
-  type PortalProduct,
-} from "@/features/catalog/schemas/catalogSchemas"
+  CATALOG_CART_MAX_QUANTITY,
+  CATALOG_CART_MIN_QUANTITY,
+} from "@/features/catalog/cart"
+import {
+  formatCartTotalText,
+  formatLineSubtotal,
+} from "@/features/catalog/lib/catalogPriceSummary"
+import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { type PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import {
   createPortalCatalogOrder,
   listPortalCatalogProducts,
@@ -84,6 +89,19 @@ export function PortalCartPage() {
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   )
+  const onRequestLabel = t("tenantPortal.catalog.priceOnRequest")
+  const cartLines = cart.items.map((item) => {
+    const product = productMap.get(item.productId)
+    return {
+      price: product?.price ?? null,
+      currency: product?.currency ?? "",
+      quantity: item.quantity,
+    }
+  })
+  const cartTotalLabel = formatCartTotalText(cartLines, i18n.language, {
+    onRequest: onRequestLabel,
+    partial: (amount) => t("tenantPortal.catalog.fromAmount", { amount }),
+  })
 
   async function onSubmit(values: CheckoutFormValues) {
     if (cart.items.length === 0) {
@@ -157,34 +175,52 @@ export function PortalCartPage() {
                     {product?.name ?? item.productId}
                   </p>
                   <p className="text-muted-foreground">
-                    {product?.price == null
-                      ? t("tenantPortal.catalog.priceOnRequest")
-                      : formatCatalogMoney(
-                          product.price,
-                          product.currency,
-                          i18n.language,
-                        )}
+                    {t("tenantPortal.catalog.lineSubtotal")}:{" "}
+                    {formatLineSubtotal(
+                      product?.price ?? null,
+                      product?.currency ?? "",
+                      item.quantity,
+                      i18n.language,
+                      onRequestLabel,
+                    )}
                   </p>
                 </div>
-                <Input
-                  type="number"
-                  min={1}
-                  className="w-20"
-                  value={item.quantity}
-                  aria-label={t("tenantPortal.catalog.quantity")}
-                  onChange={(event) => {
-                    const next = Number(event.target.value)
-                    cart.update(
-                      item.productId,
-                      Number.isFinite(next) ? next : 0,
-                    )
-                  }}
-                />
+                <div className="flex shrink-0 items-center gap-2">
+                  <Input
+                    type="number"
+                    min={CATALOG_CART_MIN_QUANTITY}
+                    max={CATALOG_CART_MAX_QUANTITY}
+                    className="w-20"
+                    value={item.quantity}
+                    aria-label={t("tenantPortal.catalog.quantity")}
+                    onChange={(event) => {
+                      cart.update(item.productId, Number(event.target.value))
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      cart.remove(item.productId)
+                    }}
+                  >
+                    {t("tenantPortal.catalog.removeItem", {
+                      name: product?.name ?? item.productId,
+                    })}
+                  </Button>
+                </div>
               </li>
             )
           })}
         </ul>
       )}
+
+      {cart.items.length > 0 ? (
+        <p className="text-sm font-medium">
+          {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
+        </p>
+      ) : null}
 
       <Form {...form}>
         <form

@@ -6,6 +6,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  CATALOG_CART_MAX_QUANTITY,
+  CATALOG_CART_MIN_QUANTITY,
+  clampCatalogQuantity,
+} from "@/features/catalog/cart"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
@@ -24,8 +29,7 @@ export type PortalCatalogProductCardProps = {
 }
 
 function parseQuantity(raw: string): number {
-  const next = Number(raw)
-  return Number.isFinite(next) && next > 0 ? next : 1
+  return clampCatalogQuantity(Number(raw))
 }
 
 export function PortalCatalogProductCard({
@@ -91,16 +95,17 @@ export function PortalCatalogProductCard({
             variant="outline"
             size="icon"
             aria-label={t("tenantPortal.catalog.quantityDecrease")}
-            disabled={quantity <= 1}
+            disabled={quantity <= CATALOG_CART_MIN_QUANTITY}
             onClick={() => {
-              onQuantityChange(Math.max(1, quantity - 1))
+              onQuantityChange(clampCatalogQuantity(quantity - 1))
             }}
           >
             <Minus aria-hidden />
           </Button>
           <Input
             type="number"
-            min={1}
+            min={CATALOG_CART_MIN_QUANTITY}
+            max={CATALOG_CART_MAX_QUANTITY}
             className="h-8 min-w-0 flex-1 px-1 text-center"
             value={quantity}
             aria-label={t("tenantPortal.catalog.quantity")}
@@ -113,8 +118,9 @@ export function PortalCatalogProductCard({
             variant="outline"
             size="icon"
             aria-label={t("tenantPortal.catalog.quantityIncrease")}
+            disabled={quantity >= CATALOG_CART_MAX_QUANTITY}
             onClick={() => {
-              onQuantityChange(quantity + 1)
+              onQuantityChange(clampCatalogQuantity(quantity + 1))
             }}
           >
             <Plus aria-hidden />

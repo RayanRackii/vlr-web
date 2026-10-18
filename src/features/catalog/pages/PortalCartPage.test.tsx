@@ -217,4 +217,52 @@ describe("PortalCartPage validity gate", () => {
     expect(screen.getByRole("link", { name: i18n.t("common.back") })).toBeEnabled()
     expect(createOrderMock).toHaveBeenCalledTimes(1)
   })
+
+  it("shows the line subtotal, a partial total, and removes only through the button", async () => {
+    const unpricedId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+    listProductsMock.mockResolvedValue([
+      product,
+      {
+        ...product,
+        id: unpricedId,
+        name: "Rede",
+        price: null,
+      },
+    ])
+    const key = catalogCartStorageKey(SUBDOMAIN, CUSTOMER_ID)
+    window.sessionStorage.setItem(
+      key,
+      JSON.stringify([
+        { productId: PRODUCT_ID, quantity: 2 },
+        { productId: unpricedId, quantity: 1 },
+      ]),
+    )
+    const user = userEvent.setup()
+    renderCart()
+
+    expect(await screen.findByText("Subtotal: R$ 20,00")).toBeInTheDocument()
+    expect(screen.getByText("Subtotal: Sob consulta")).toBeInTheDocument()
+    expect(screen.getByText("Total: A partir de R$ 20,00")).toBeInTheDocument()
+
+    const pricedQuantity = screen.getAllByRole("spinbutton", {
+      name: i18n.t("tenantPortal.catalog.quantity"),
+    })[0]
+    expect(pricedQuantity).toBeDefined()
+    replaceValue(pricedQuantity ?? screen.getByRole("spinbutton"), "0")
+    expect(pricedQuantity).toHaveValue(1)
+    expect(screen.getByText("Raquete")).toBeInTheDocument()
+    expect(screen.getByText("Subtotal: R$ 10,00")).toBeInTheDocument()
+
+    replaceValue(pricedQuantity ?? screen.getByRole("spinbutton"), "250")
+    expect(pricedQuantity).toHaveValue(99)
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.catalog.removeItem", { name: "Rede" }),
+      }),
+    )
+    expect(screen.queryByText("Rede")).not.toBeInTheDocument()
+    expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()
+    expect(screen.queryByText(/A partir de/)).not.toBeInTheDocument()
+  })
 })

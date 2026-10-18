@@ -40,7 +40,11 @@ describe("localeFormat", () => {
     expect(formatLocaleCurrency(100, "BRL", "es")).not.toContain("BRL")
     expect(formatLocaleCurrency(1000, "BRL", "pt-BR")).toBe("R$ 1.000,00")
     expect(formatLocaleCurrency(1000, "BRL", "en")).toBe("R$ 1,000.00")
-    expect(formatLocaleCurrency(1000, "BRL", "es")).toBe("1000,00 R$")
+    expect(formatLocaleCurrency(1000, "BRL", "es")).toBe("1.000,00 R$")
+    expect(formatLocaleCurrency(1500, "BRL", "es")).toBe("1.500,00 R$")
+    expect(formatLocaleCurrency(1500, "BRL", "es")).not.toBe("1500,00 R$")
+    expect(formatLocaleCurrency(1500, "BRL", "pt-BR")).toBe("R$ 1.500,00")
+    expect(formatLocaleCurrency(1500, "BRL", "en")).toBe("R$ 1,500.00")
     expect(formatLocaleCurrency(-80, "BRL", "pt-BR")).toBe("-R$ 80,00")
     expect(formatLocaleCurrency(-80, "BRL", "en")).toBe("-R$ 80.00")
     expect(formatLocaleCurrency(-80, "BRL", "es")).toBe("-80,00 R$")
@@ -83,5 +87,24 @@ describe("localeFormat", () => {
     expect(formatMoney(100)).not.toContain("BRL")
     expect(formatReservationRange(START, END)).toContain("10/09/2026")
     expect(formatReservationRange(START, END)).not.toContain("09/10/2026")
+  })
+
+  it("uses one English spelling for canceled catalog and agenda copy", async () => {
+    await i18n.changeLanguage("en")
+    const visible = [
+      i18n.t("catalog.status.Cancelled"),
+      i18n.t("tenantPortal.catalog.orderCancelled"),
+      i18n.t("tenantPortal.catalog.cancelling"),
+      i18n.t("tenantPortal.catalog.cancelConfirmBody"),
+      i18n.t("tenantPortal.agenda.cancelling"),
+      i18n.t("tenantPortal.agenda.alreadyCancelled"),
+      i18n.t("catalog.events.orderCancelledBySupplier"),
+      i18n.t("rentals.reservations.statuses.Canceled"),
+      i18n.t("rentals.reservations.cancelSuccess"),
+    ].join(" ")
+
+    expect(visible).toContain("Canceled")
+    expect(visible).toContain("Canceling")
+    expect(visible).not.toMatch(/Cancelled|cancelled|Cancelling/)
   })
 })

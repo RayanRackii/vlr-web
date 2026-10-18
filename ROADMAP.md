@@ -190,6 +190,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
 - [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
+- [x] Carrinho B2C: subtotal da linha, total parcial (“A partir de” quando há item sob consulta), remover item, quantidade 0 não apaga a linha (1–99). Cancelar pedido pede confirmação. Total misto em Pedidos mostra a soma conhecida e “Sob consulta”. Solicitar produto confirma na tela com link ao catálogo: o portal não tem GET de solicitações do cliente (`POST /api/catalog/portal/product-requests` e URL de arquivo apenas). es agrupa milhar (`1.500,00 R$`). EN do portal usa “Canceled”.
 
 ## 5. Fluxo de convite B2B
 
@@ -371,6 +372,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-17 | **Fix (WEB):** o PATCH direto de uma tarefa grava o valor novo na fila antes do envio, substituindo o campo numa única escrita e com `clientSequence` maior. Rede e 5xx deixam esse valor na fila; 4xx vai para o conflito e o erro sobe; sucesso remove só essa versão e limpa o conflito. Sem mudança no `vlr-api`. |
 | 2026-10-17 | **Fix (WEB):** PATCH de tarefa com HTTP 2xx e corpo que não passa no schema sai da fila (o flush seguinte não reenvia o valor já aplicado) e a tela ainda mostra resposta inválida. Uma versão mais nova na fila apaga o conflito antigo daquele campo; Tentar de novo não grava o valor rejeitado por cima dela. Um 4xx direto avisa o banner na hora. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** agenda B2C explica o horizonte ao lado da data, avisa no campo quando a data fica fora do intervalo, não pinta os espaços como reservados enquanto o dia carrega, mantém a data da URL depois de cancelar, e o calendário usa o idioma da tela. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** carrinho B2C mostra subtotal da linha e total (soma dos itens com preço; linha sem preço “Sob consulta”; total misto “A partir de”). Remover é um botão; quantidade 0 ou negativa fica em 1 e o teto é 99. Cancelar pedido pede confirmação. Lista e detalhe de pedido com total nulo mostram a soma conhecida mais “Sob consulta”. `/catalogo/solicitar` confirma na tela com link ao catálogo — a API do cliente não lista solicitações. es usa agrupamento (`1.500,00 R$`). EN do portal usa “Canceled”. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

@@ -8,7 +8,15 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import {
+  CATALOG_CART_MAX_QUANTITY,
+  CATALOG_CART_MIN_QUANTITY,
+} from "@/features/catalog/cart"
 import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
+import {
+  formatCartTotalText,
+  formatLineSubtotal,
+} from "@/features/catalog/lib/catalogPriceSummary"
 import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { listPortalCatalogProducts } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
@@ -153,44 +161,77 @@ function PortalCartPanel({
   products: PortalProduct[]
   cart: ReturnType<typeof useCatalogCart>
 }) {
-  const { t } = useTranslation()
-  const names = new Map(products.map((product) => [product.id, product.name]))
+  const { t, i18n } = useTranslation()
+  const productMap = new Map(products.map((product) => [product.id, product]))
+  const onRequestLabel = t("tenantPortal.catalog.priceOnRequest")
+  const cartTotalLabel = formatCartTotalText(
+    cart.items.map((item) => {
+      const product = productMap.get(item.productId)
+      return {
+        price: product?.price ?? null,
+        currency: product?.currency ?? "",
+        quantity: item.quantity,
+      }
+    }),
+    i18n.language,
+    {
+      onRequest: onRequestLabel,
+      partial: (amount) => t("tenantPortal.catalog.fromAmount", { amount }),
+    },
+  )
 
   return (
     <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
       <h2 className="text-sm font-medium">{t("tenantPortal.catalog.cartTitle")}</h2>
       <ul className="space-y-2 text-sm">
-        {cart.items.map((item) => (
-          <li key={item.productId} className="flex items-center justify-between gap-2">
-            <span className="truncate">
-              {names.get(item.productId) ?? item.productId.slice(0, 8)}
-            </span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={1}
-                className="w-16"
-                value={item.quantity}
-                aria-label={t("tenantPortal.catalog.quantity")}
-                onChange={(event) => {
-                  const next = Number(event.target.value)
-                  cart.update(item.productId, Number.isFinite(next) ? next : 0)
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  cart.remove(item.productId)
-                }}
-              >
-                {t("common.delete")}
-              </Button>
-            </div>
-          </li>
-        ))}
+        {cart.items.map((item) => {
+          const product = productMap.get(item.productId)
+          const name = product?.name ?? item.productId.slice(0, 8)
+          return (
+            <li key={item.productId} className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate">{name}</p>
+                <p className="text-muted-foreground">
+                  {t("tenantPortal.catalog.lineSubtotal")}:{" "}
+                  {formatLineSubtotal(
+                    product?.price ?? null,
+                    product?.currency ?? "",
+                    item.quantity,
+                    i18n.language,
+                    onRequestLabel,
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={CATALOG_CART_MIN_QUANTITY}
+                  max={CATALOG_CART_MAX_QUANTITY}
+                  className="w-16"
+                  value={item.quantity}
+                  aria-label={t("tenantPortal.catalog.quantity")}
+                  onChange={(event) => {
+                    cart.update(item.productId, Number(event.target.value))
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    cart.remove(item.productId)
+                  }}
+                >
+                  {t("tenantPortal.catalog.removeItem", { name })}
+                </Button>
+              </div>
+            </li>
+          )
+        })}
       </ul>
+      <p className="text-sm font-medium">
+        {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
+      </p>
       <Button
         type="button"
         className="w-full"

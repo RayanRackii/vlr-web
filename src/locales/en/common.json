@@ -406,7 +406,7 @@
       "pastReservation": "Past booking",
       "empty": "No reservations yet.",
       "cancel": "Cancel",
-      "cancelling": "Cancelling...",
+      "cancelling": "Canceling...",
       "cancelConfirmTitle": "Cancel this reservation?",
       "cancelConfirmBody": "The time slot becomes available again. This screen does not collect payment or issue a refund, including when the reservation is already confirmed. When a deposit is required, only the club confirms it; canceling does not move any payment here.",
       "cancelConfirmAction": "Confirm cancellation",
@@ -417,7 +417,7 @@
       "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
       "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
       "slotTaken": "This time is already booked.",
-      "alreadyCancelled": "This reservation was already cancelled.",
+      "alreadyCancelled": "This reservation was already canceled.",
       "slotHeldByYou": "You already booked this time. See",
       "cancellationPolicyDefault": "Canceling makes this time available to other people again. Check this organization's rules.",
       "noAssets": "No spaces configured",
@@ -514,13 +514,26 @@
       "ordersSubtitle": "Track the status of your orders.",
       "ordersEmpty": "You have not placed any orders yet.",
       "cancelOrder": "Cancel order",
-      "cancelling": "Cancelling...",
-      "orderCancelled": "Order cancelled."
+      "cancelling": "Canceling...",
+      "orderCancelled": "Order canceled.",
+      "lineSubtotal": "Subtotal",
+      "removeItem": "Remove {{name}}",
+      "cartTotal": "Total",
+      "fromAmount": "From {{amount}}",
+      "cancelConfirmTitle": "Cancel this order?",
+      "cancelConfirmBody": "This order will be canceled. You cannot undo it on this screen.",
+      "cancelConfirmDismiss": "Keep order",
+      "cancelConfirmAction": "Confirm cancellation",
+      "requestSentTitle": "Request sent",
+      "requestSentBody": "We received your request. This portal does not list product requests under Orders. Keep this confirmation.",
+      "requestSentCatalog": "Back to catalog",
+      "requestSentAnother": "Send another request"
     }
   },
   "catalog": {
     "retry": "Try again",
     "priceOnRequest": "On request",
+    "knownPlusOnRequest": "{{amount}} · On request",
     "status": {
       "Requested": "Requested",
       "Approved": "Approved",
@@ -528,7 +541,7 @@
       "Ready": "Ready",
       "Completed": "Completed",
       "Rejected": "Rejected",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Canceled"
     },
     "actor": {
       "Customer": "Customer",
@@ -557,7 +570,7 @@
       "orderPreparing": "Order preparing",
       "orderReady": "Order ready",
       "orderRejected": "Order rejected",
-      "orderCancelledBySupplier": "Order cancelled by supplier"
+      "orderCancelledBySupplier": "Order canceled by supplier"
     },
     "products": {
       "title": "Products",
