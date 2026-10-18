@@ -116,7 +116,9 @@
     "loadPortalOrders": "No se pudieron cargar sus pedidos.",
     "loadPortalOrder": "No se pudo cargar el pedido.",
     "cancelPortalOrder": "No se pudo cancelar el pedido.",
-    "submitProductRequest": "No se pudo enviar la solicitud."
+    "submitProductRequest": "No se pudo enviar la solicitud.",
+    "loadPortalProductRequests": "No se pudieron cargar sus solicitudes.",
+    "loadPortalProductRequest": "No se pudo cargar la solicitud."
   },
   "trial": {
     "banner": {
@@ -481,6 +483,7 @@
     "catalog": {
       "navCatalog": "Catálogo",
       "navOrders": "Pedidos",
+      "navRequests": "Mis solicitudes",
       "title": "Catálogo",
       "subtitle": "Productos disponibles para solicitar.",
       "searchPlaceholder": "Buscar por nombre o código",
@@ -504,7 +507,7 @@
       "orderSubmitted": "Pedido enviado.",
       "requestCta": "Solicitar producto",
       "requestTitle": "Solicitar producto",
-      "requestSubtitle": "Describa lo que necesita. No hay lista de seguimiento en esta versión.",
+      "requestSubtitle": "Describa lo que necesita. Después de enviar, la solicitud queda en Mis solicitudes.",
       "requestDescription": "Descripción",
       "requestNote": "Nota",
       "requestFiles": "Archivos",
@@ -526,9 +529,22 @@
       "cancelConfirmDismiss": "Mantener pedido",
       "cancelConfirmAction": "Confirmar cancelación",
       "requestSentTitle": "Solicitud enviada",
-      "requestSentBody": "Recibimos su solicitud. Este portal todavía no lista solicitudes de producto en Pedidos. Conserve esta confirmación.",
+      "requestSentBody": "Recibimos su solicitud. Sígalo en Mis solicitudes.",
       "requestSentCatalog": "Volver al catálogo",
-      "requestSentAnother": "Enviar otra solicitud"
+      "requestSentAnother": "Enviar otra solicitud",
+      "requestsTitle": "Mis solicitudes",
+      "requestsSubtitle": "Siga las solicitudes que envió.",
+      "requestsLoading": "Cargando solicitudes...",
+      "requestsEmpty": "Todavía no ha enviado solicitudes.",
+      "requestsUnavailable": "La lista de solicitudes todavía no está disponible.",
+      "requestsPageEmpty": "Ninguna solicitud en esta página.",
+      "requestsPageSummary": "{{from}}–{{to}} de {{total}}",
+      "requestsPrevious": "Página anterior",
+      "requestsNext": "Página siguiente",
+      "requestNotFound": "No encontramos esta solicitud.",
+      "requestDetailTitle": "Solicitud",
+      "requestFilesTitle": "Archivos",
+      "requestFilesEmpty": "Ningún archivo."
     }
   },
   "catalog": {
@@ -543,6 +559,9 @@
       "Completed": "Completado",
       "Rejected": "Rechazado",
       "Cancelled": "Cancelado"
+    },
+    "productRequestStatus": {
+      "Submitted": "Enviada"
     },
     "actor": {
       "Customer": "Cliente",

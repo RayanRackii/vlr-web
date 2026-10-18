@@ -89,7 +89,10 @@ export function PortalProductRequestPage() {
       </div>
 
       {submitted ? (
-        <div className="space-y-4 rounded-xl border border-border p-4">
+        <div
+          role="status"
+          className="space-y-4 rounded-xl border border-border p-4"
+        >
           <p className="text-sm font-medium">{submitted.description}</p>
           <p className="text-sm text-muted-foreground">
             {t("tenantPortal.catalog.quantity")}: {submitted.quantity}
@@ -103,6 +106,17 @@ export function PortalProductRequestPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
+              render={
+                <Link
+                  to={tenantPortalPath(subdomain, "catalogo/solicitacoes")}
+                />
+              }
+            >
+              {t("tenantPortal.catalog.navRequests")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
             >
               {t("tenantPortal.catalog.requestSentCatalog")}

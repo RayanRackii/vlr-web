@@ -511,6 +511,12 @@ describe("ModuleMenuItemsManager", () => {
         hidden: true,
       }),
     ).not.toBeInTheDocument()
+    expect(
+      within(preview).queryByRole("button", {
+        name: i18n.t("tenantPortal.catalog.navRequests"),
+        hidden: true,
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it("does not render discovery marketing cards under the builder", async () => {
@@ -565,6 +571,9 @@ describe("ModuleMenuItemsManager", () => {
     ).toBeInTheDocument()
     expect(
       within(dialog).getByText(i18n.t("tenantPortal.catalog.navOrders")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(i18n.t("tenantPortal.catalog.navRequests")),
     ).toBeInTheDocument()
   })
 
