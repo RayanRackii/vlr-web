@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
 const authSession = vi.hoisted(() => ({ access_token: "test" }))
@@ -101,7 +102,12 @@ describe("AssetsPage permanent delete", () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
-        <AssetsPage />
+        <TestPermissionProvider
+          permissions={["inventory.assets.read", "inventory.assets.write"]}
+          activeModules={["inventory"]}
+        >
+          <AssetsPage />
+        </TestPermissionProvider>
       </MemoryRouter>,
     )
 
