@@ -1752,6 +1752,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
 
     expect(dateInput).toHaveValue("2026-10-14")
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2099-12-31")
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
@@ -1968,6 +1969,12 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).toHaveValue("2026-10-16")
       expect(router.state.location.search).not.toContain("2099-12-31")
     })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonAdjusted")),
+    ).toBeInTheDocument()
     expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
       "2099-12-31",
     )

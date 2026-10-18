@@ -1118,7 +1118,7 @@ export function TenantPortalAgendaPage() {
                 min={brazilTodayIsoDate()}
                 max={horizonMaxDate ?? undefined}
                 value={date}
-                invalid={dateFeedback !== null}
+                invalid={dateRejection !== null}
                 describedBy={dateDescribedBy}
                 onChange={(nextValue) => {
                   onDateChange(nextValue)
