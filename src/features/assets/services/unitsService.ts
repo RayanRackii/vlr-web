@@ -1,5 +1,5 @@
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
+import { api, isAxiosError } from "@/lib/api"
 import { describeApiError } from "@/features/users/permissions/rbacErrors"
 import {
   unitListSchema,

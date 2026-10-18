@@ -7,8 +7,10 @@ import { AssetsPage } from "@/features/assets/pages/AssetsPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
+const authSession = vi.hoisted(() => ({ access_token: "test" }))
+
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ session: { access_token: "test" } }),
+  useAuth: () => ({ session: authSession }),
   AuthProvider: ({ children }: { children: ReactNode }) => children,
 }))
 

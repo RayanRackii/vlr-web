@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -237,6 +237,93 @@ describe("WorkOrderExecutionPage tasks", () => {
     expect(select).toBeInstanceOf(HTMLSelectElement)
     expect(screen.getByRole("option", { name: "Ok" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
+  })
+
+  it("does not autosave a number below its minimum or complete the work order", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({ status: "InProgress" })
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    order.tasks = [{
+      ...task,
+      inputType: "Number",
+      configuration: JSON.stringify({ min: 0, unit: "A" }),
+      value: null,
+    }]
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateTaskValueMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockResolvedValue({ ...order, status: "Completed" })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const field = await screen.findByRole("spinbutton")
+    const complete = screen.getByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    })
+    fireEvent.change(field, { target: { value: "5" } })
+    fireEvent.change(field, { target: { value: "-5" } })
+
+    expect(field).toHaveValue(-5)
+    expect(field).toHaveAttribute("aria-invalid", "true")
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.taskValue.outOfRange"),
+    )
+    expect(complete).toBeDisabled()
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 450))
+    })
+    await user.click(complete)
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
+    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
+
+    fireEvent.change(field, { target: { value: "0" } })
+    expect(field).not.toHaveAttribute("aria-invalid", "true")
+    expect(complete).toBeEnabled()
+    await user.click(complete)
+
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalledWith(order.id, task.id, "0")
+      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
+    })
+  })
+
+  it.each([
+    { min: 0, value: "0" },
+    { min: 10, value: "15" },
+    { min: -10, value: "-5" },
+    { min: undefined, value: "-5" },
+  ])("saves $value when the configured minimum is $min", async ({ min, value }) => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({ status: "InProgress" })
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    order.tasks = [{
+      ...task,
+      inputType: "Number",
+      configuration: JSON.stringify({ min }),
+      value: null,
+    }]
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateTaskValueMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockResolvedValue({ ...order, status: "Completed" })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const field = await screen.findByRole("spinbutton")
+    await user.type(field, value)
+    expect(field).toHaveValue(Number(value))
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    }))
+
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalledWith(order.id, task.id, value)
+      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
+    })
   })
 
   it("does not block completion on an image task", async () => {
@@ -586,6 +673,8 @@ describe("WorkOrderExecutionPage assignee", () => {
     getWorkOrderByIdMock.mockReset()
     getTechniciansMock.mockReset()
     updateWorkOrderAssigneeMock.mockReset()
+    listSyncConflictsMock.mockReset()
+    listSyncConflictsMock.mockResolvedValue([])
     getTechniciansMock.mockResolvedValue([sampleTechnician])
   })
 
@@ -638,7 +727,9 @@ describe("WorkOrderExecutionPage assignee", () => {
         TECHNICIAN_ID,
       )
     })
-    expect(await screen.findByText(sampleTechnician.fullName)).toBeInTheDocument()
+    expect(screen.getByRole("combobox", {
+      name: i18n.t("workOrders.columns.assignee"),
+    })).toHaveTextContent(sampleTechnician.fullName)
   })
 
   it("keeps the current assignee when the technician list is forbidden", async () => {
