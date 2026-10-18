@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -54,6 +54,7 @@ import {
   clearSyncConflict,
   listSyncConflicts,
   retrySyncConflict,
+  subscribeSyncQueue,
 } from "@/lib/offlineSync"
 import {
   getWorkOrderById,
@@ -327,7 +328,7 @@ describe("WorkOrderExecutionPage tasks", () => {
       screen.getByRole("button", {
         name: i18n.t("workOrders.execution.complete"),
       }),
-    ).toBeDisabled()
+    ).toBeEnabled()
     expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
   })
 
@@ -383,6 +384,135 @@ describe("WorkOrderExecutionPage tasks", () => {
     const taskOrder = updateTaskValueMock.mock.invocationCallOrder[0] ?? 0
     const statusOrder = updateWorkOrderStatusMock.mock.invocationCallOrder[0] ?? 0
     expect(taskOrder).toBeLessThan(statusOrder)
+  })
+
+  it("keeps a server rejection for a locally filled task until completion is retried", async () => {
+    const user = userEvent.setup()
+    const task = makeWorkOrder().tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const order = makeWorkOrder({
+      status: "InProgress",
+      tasks: [{ ...task, title: "Pressão", inputType: "Number", value: "12" }],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock
+      .mockRejectedValueOnce(new MandatoryTasksIncompleteError(["Pressão"]))
+      .mockResolvedValueOnce({ ...order, status: "Completed" })
+    updateTaskValueMock.mockResolvedValue({
+      ...order,
+      tasks: order.tasks.map((item) => ({ ...item, value: "13" })),
+    })
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const complete = await screen.findByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    })
+    await user.click(complete)
+    const missing = await screen.findByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })
+    expect(within(missing).getByText("Pressão")).toBeInTheDocument()
+    expect(complete).toBeEnabled()
+
+    fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "13" } })
+    await screen.findByText(i18n.t("workOrders.execution.save.saved"))
+    expect(within(missing).getByText("Pressão")).toBeInTheDocument()
+
+    await user.click(complete)
+    expect(updateWorkOrderStatusMock).toHaveBeenCalledTimes(2)
+    expect(await screen.findByText(
+      i18n.t("workOrders.execution.completedSuccess"),
+    )).toBeInTheDocument()
+    expect(screen.queryByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["Text", "A", "AB", "persisted"],
+    ["Number", "1", "12", "persisted"],
+    ["Text", "A", "AB", "queued"],
+  ] as const)("keeps %s saving during the next debounce after an older %s/%s edit is %s", async (inputType, firstValue, nextValue, outcome) => {
+    const task = makeWorkOrder().tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const order = makeWorkOrder({
+      tasks: [{ ...task, inputType, isMandatory: false, value: null }],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    let resolveFirst: (value: typeof order | null) => void = () => undefined
+    let resolveNext: (value: typeof order) => void = () => undefined
+    updateTaskValueMock
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveFirst = resolve
+      }))
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveNext = resolve
+      }))
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const field = await screen.findByRole(inputType === "Text" ? "textbox" : "spinbutton")
+    fireEvent.change(field, { target: { value: firstValue } })
+    await waitFor(() => expect(updateTaskValueMock).toHaveBeenCalledTimes(1))
+    fireEvent.change(field, { target: { value: nextValue } })
+    await act(async () => {
+      resolveFirst(outcome === "queued" ? null : {
+        ...order,
+        tasks: order.tasks.map((item) => ({ ...item, value: firstValue })),
+      })
+    })
+
+    if (outcome === "queued") {
+      const refreshQueue = vi.mocked(subscribeSyncQueue).mock.calls.at(-1)?.[0]
+      if (!refreshQueue) {
+        throw new Error("missing sync subscriber")
+      }
+      await act(async () => { refreshQueue() })
+    }
+
+    expect(field).toHaveValue(inputType === "Text" ? nextValue : Number(nextValue))
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("workOrders.execution.save.saving"))).toBeInTheDocument()
+    await waitFor(() => expect(updateTaskValueMock).toHaveBeenCalledTimes(2))
+    expect(updateTaskValueMock).toHaveBeenLastCalledWith(order.id, task.id, nextValue)
+    await act(async () => {
+      resolveNext({
+        ...order,
+        tasks: order.tasks.map((item) => ({ ...item, value: nextValue })),
+      })
+    })
+    expect(screen.getByText(i18n.t("workOrders.execution.save.saved"))).toBeInTheDocument()
+  })
+
+  it("bounds a long mandatory list and keeps the actions outside its keyboard-scrollable area", async () => {
+    const task = makeWorkOrder().tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({
+      tasks: Array.from({ length: 80 }, (_, index) => ({
+        ...task,
+        id: `task-${index}`,
+        title: `Tarefa ${index + 1}`,
+        order: index + 1,
+      })),
+    }))
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const missing = await screen.findByRole("list", {
+      name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
+    })
+    expect(within(missing).getAllByRole("listitem")).toHaveLength(80)
+    expect(within(missing).getByText("Tarefa 80")).toBeInTheDocument()
+    expect(document.querySelector("[data-work-order-action-bar]")).toHaveClass("max-h-[50dvh]")
+    expect(missing).toHaveClass("overflow-y-auto", "min-h-0")
+    expect(missing).toHaveAttribute("tabindex", "0")
+    expect(missing).not.toContainElement(screen.getByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    }))
   })
 
   it("announces a started work order in the existing status region", async () => {

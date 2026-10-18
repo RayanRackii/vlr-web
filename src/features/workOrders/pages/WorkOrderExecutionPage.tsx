@@ -232,18 +232,32 @@ function TaskField({
 }) {
   const { t } = useTranslation()
   const [saveState, setSaveState] = useState<TaskSaveState>("idle")
+  const editVersionRef = useRef(0)
+  const queuedVersionRef = useRef(0)
+
+  function handleValueChange(value: string | null) {
+    editVersionRef.current += 1
+    onLocalChange(task.id, value)
+    setSaveState("saving")
+  }
 
   const persistValue = useCallback(
     async (value: string | null) => {
+      const version = editVersionRef.current
       setSaveState("saving")
       try {
         const updated = await updateTaskValue(workOrderId, task.id, value)
         if (updated !== null) {
           onPersisted(updated, task.id)
-          setSaveState("saved")
+          if (version === editVersionRef.current) {
+            setSaveState("saved")
+          }
         } else {
+          queuedVersionRef.current = Math.max(queuedVersionRef.current, version)
           onQueued(task.id)
-          setSaveState("retrying")
+          if (version === editVersionRef.current) {
+            setSaveState("retrying")
+          }
         }
       } catch (error: unknown) {
         console.error("TaskField persistValue failed", error)
@@ -251,7 +265,9 @@ function TaskField({
           console.error("TaskField persistValue response", error.response?.data)
         }
 
-        setSaveState("idle")
+        if (version === editVersionRef.current) {
+          setSaveState("idle")
+        }
         onError(
           error instanceof Error
             ? error.message
@@ -287,7 +303,12 @@ function TaskField({
       return
     }
 
-    setSaveState((current) => (current === "retrying" ? "saved" : current))
+    setSaveState((current) => {
+      if (current !== "retrying") {
+        return current
+      }
+      return queuedVersionRef.current === editVersionRef.current ? "saved" : "saving"
+    })
   }, [hasSyncConflict, pendingSync])
 
   const numberConfig = useMemo(
@@ -327,8 +348,7 @@ function TaskField({
               disabled={disabled}
               onCheckedChange={(nextChecked) => {
                 const nextValue = nextChecked ? "true" : "false"
-                onLocalChange(task.id, nextValue)
-                setSaveState("saving")
+                handleValueChange(nextValue)
                 void persistValue(nextValue)
               }}
             />
@@ -348,8 +368,7 @@ function TaskField({
             onChange={(event) => {
               const nextValue =
                 event.target.value.trim() === "" ? null : event.target.value
-              onLocalChange(task.id, nextValue)
-              setSaveState("saving")
+              handleValueChange(nextValue)
               debouncedPersist(nextValue)
             }}
           />
@@ -380,8 +399,7 @@ function TaskField({
             onChange={(event) => {
               const raw = event.target.value
               const nextValue = raw.trim() === "" ? null : raw
-              onLocalChange(task.id, nextValue)
-              setSaveState("saving")
+              handleValueChange(nextValue)
               debouncedPersist(nextValue)
             }}
           />
@@ -408,8 +426,7 @@ function TaskField({
             onChange={(event) => {
               const nextValue =
                 event.target.value === "" ? null : event.target.value
-              onLocalChange(task.id, nextValue)
-              setSaveState("saving")
+              handleValueChange(nextValue)
               void persistValue(nextValue)
             }}
           >
@@ -659,10 +676,8 @@ export function WorkOrderExecutionPage() {
       mergeMissingMandatoryTitles(
         clientMissingTitles,
         serverMissingTitles,
-        orderedTasks,
-        (task) => currentTaskValue(task),
       ),
-    [clientMissingTitles, orderedTasks, serverMissingTitles],
+    [clientMissingTitles, serverMissingTitles],
   )
 
   function handleLocalTaskChange(taskId: string, value: string | null) {
@@ -783,6 +798,7 @@ export function WorkOrderExecutionPage() {
       return
     }
 
+    setServerMissingTitles([])
     setIsUpdatingStatus(true)
     setErrorMessage(null)
     setSuccessMessage(null)
@@ -1063,22 +1079,24 @@ export function WorkOrderExecutionPage() {
         <div
           ref={actionBar.ref}
           data-work-order-action-bar
-          className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          className="fixed inset-x-0 bottom-0 z-20 flex max-h-[50dvh] flex-col border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         >
-          <div className="mx-auto flex max-w-5xl flex-col gap-3 p-4">
+          <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-col gap-3 p-4">
             {missingTitles.length > 0 ? (
               <div
                 id="work-order-missing-tasks"
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
+                className="flex min-h-0 flex-col"
               >
-                <p id="work-order-missing-tasks-title" className="text-sm font-medium">
+                <p id="work-order-missing-tasks-title" className="shrink-0 text-sm font-medium">
                   {t("workOrders.execution.mandatoryIncompleteTitle")}
                 </p>
                 <ul
                   aria-labelledby="work-order-missing-tasks-title"
-                  className="mt-2 list-disc space-y-1 pl-5 text-sm"
+                  tabIndex={0}
+                  className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain pl-5 text-sm"
                 >
                   {missingTitles.map((title) => (
                     <li key={title}>{title}</li>
@@ -1086,7 +1104,7 @@ export function WorkOrderExecutionPage() {
                 </ul>
               </div>
             ) : null}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
               {workOrder.status === "Pending" ? (
                 <LoadingButton
                   type="button"
@@ -1104,7 +1122,7 @@ export function WorkOrderExecutionPage() {
                 type="button"
                 variant="default"
                 loading={isUpdatingStatus}
-                disabled={missingTitles.length > 0}
+                disabled={clientMissingTitles.length > 0}
                 aria-describedby={
                   missingTitles.length > 0
                     ? "work-order-missing-tasks"

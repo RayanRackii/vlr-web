@@ -47,18 +47,11 @@ export function listMissingMandatoryTaskTitles(
 export function mergeMissingMandatoryTitles(
   clientTitles: readonly string[],
   serverTitles: readonly string[],
-  tasks: readonly MandatoryTaskRef[],
-  valueOf: (task: MandatoryTaskRef) => string | null,
 ): string[] {
   const merged = [...clientTitles]
   for (const title of serverTitles) {
     const trimmed = title.trim()
     if (trimmed === "" || merged.includes(trimmed)) {
-      continue
-    }
-
-    const task = tasks.find((item) => item.title.trim() === trimmed)
-    if (task != null && isTaskAnswerFilled(task, valueOf(task))) {
       continue
     }
 

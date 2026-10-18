@@ -58,25 +58,12 @@ describe("missing mandatory tasks", () => {
     ).toEqual(["Verificar filtros", "Foto"])
   })
 
-  it("keeps server-reported titles that are still empty and drops filled ones", () => {
-    const photo = task({ title: "Foto", inputType: "Image" })
-    const pressure = task({
-      title: "Pressão",
-      inputType: "Number",
-      order: 2,
-    })
-    const values = new Map<string, string | null>([
-      [photo.id, FILE_ID],
-      [pressure.id, null],
-    ])
-
+  it("keeps all server-reported titles until the next attempt, without duplicates or blanks", () => {
     expect(
       mergeMissingMandatoryTitles(
         ["Pressão"],
         ["Foto", "Pressão", "Leitura extra", "  "],
-        [photo, pressure],
-        (item) => values.get(item.id) ?? null,
       ),
-    ).toEqual(["Pressão", "Leitura extra"])
+    ).toEqual(["Pressão", "Foto", "Leitura extra"])
   })
 })
