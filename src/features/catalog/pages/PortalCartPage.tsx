@@ -30,6 +30,7 @@ import {
   listPortalCatalogProducts,
 } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
+import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   getCustomerId,
   tenantPortalPath,
@@ -104,6 +105,7 @@ export function PortalCartPage() {
       toast.error(t("tenantPortal.catalog.cartEmpty"))
       return
     }
+    const generation = getAgendaSessionGeneration()
     setSubmitting(true)
     try {
       const order = await createPortalCatalogOrder({
@@ -116,17 +118,25 @@ export function PortalCartPage() {
             ? values.customerNote.trim()
             : undefined,
       })
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       cart.clear()
       toast.success(t("tenantPortal.catalog.orderSubmitted"))
       void navigate(tenantPortalPath(subdomain, `pedidos/${order.id}`))
     } catch (error) {
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
           : t("apiErrors.submitPortalOrder"),
       )
     } finally {
-      setSubmitting(false)
+      if (generation === getAgendaSessionGeneration()) {
+        setSubmitting(false)
+      }
     }
   }
 

@@ -67,6 +67,7 @@ import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPol
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import {
   customerAlreadyHoldsSlot,
+  getAgendaQueryRevision,
   invalidateAgendaQueries,
   rememberOwnBooking,
   resetAgendaQueryClientForTests,
@@ -85,7 +86,10 @@ import {
   fetchReservationQueue,
   joinReservationQueue,
   listMyPortalReservations,
+  persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { signOutCustomerPortal } from "@/lib/sessionRestoreGuard"
+import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
 
 const RESERVATION_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const FUTURE_ISO = "2099-01-15T13:00:00.000Z"
@@ -390,6 +394,84 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it.each(["resolved", "rejected"] as const)("ignores a %s cancellation from the previous session", async (outcome) => {
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    listMine.mockResolvedValue([confirmed])
+    let resolveCancel: (value: PortalReservation) => void = () => undefined
+    let rejectCancel: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation>((resolve, reject) => {
+      resolveCancel = resolve
+      rejectCancel = reject
+    })
+    cancelMine.mockReturnValue(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+    await waitFor(() => expect(cancelMine).toHaveBeenCalledWith(confirmed.id))
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    const next = { ...confirmed, id: "next-reservation", customerId: "next-customer" }
+    rememberOwnBooking(next)
+    const slot = reservationCivilStart(next.startDateTime)
+    if (slot === null) {
+      throw new Error("expected a civil start")
+    }
+    expect(customerAlreadyHoldsSlot(slot.date, next.items[0]?.rentalAssetId ?? "", slot.time, [])).toBe(true)
+    const generationRevision = getAgendaQueryRevision()
+    listMine.mockClear()
+    fetchDay.mockClear()
+
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveCancel({ ...confirmed, status: "Canceled" })
+      } else {
+        rejectCancel(new Error("old cancellation failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(customerAlreadyHoldsSlot(slot.date, next.items[0]?.rentalAssetId ?? "", slot.time, [])).toBe(true)
+    expect(getAgendaQueryRevision()).toBe(generationRevision)
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it.each(["resolved", "rejected"] as const)("does not cancel with the next session after a %s preflight read", async (outcome) => {
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    let resolveList: (value: PortalReservation[]) => void = () => undefined
+    let rejectList: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation[]>((resolve, reject) => {
+      resolveList = resolve
+      rejectList = reject
+    })
+    listMine.mockResolvedValueOnce([confirmed]).mockReturnValueOnce(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+    await waitFor(() => expect(listMine).toHaveBeenCalledTimes(2))
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveList([confirmed])
+      } else {
+        rejectList(new Error("old preflight failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(cancelMine).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
   })
 
   it("shows the already-cancelled message when the agenda revision moves during confirm", async () => {
@@ -3846,6 +3928,32 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     ).toBeInTheDocument()
     expect(bookSlot).not.toHaveBeenCalled()
     expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it("does not reserve after a previous customer's join finishes in a new session", async () => {
+    let resolveJoin: (value: ReservationQueueStatus) => void = () => undefined
+    const pending = new Promise<ReservationQueueStatus>((resolve) => { resolveJoin = resolve })
+    joinQueue.mockReturnValue(pending)
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await user.click(await screen.findByRole("button", {
+      name: (name) => name === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+    }))
+    expect(joinQueue).toHaveBeenCalledWith(ASSET_A_ID)
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    await act(async () => {
+      resolveJoin(queueStatus({ myTicket: queueTicket("Active") }))
+      await pending
+    })
+
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it("shows the waiting view with position and people ahead", async () => {

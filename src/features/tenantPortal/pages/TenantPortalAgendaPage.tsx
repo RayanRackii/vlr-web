@@ -89,6 +89,7 @@ import {
   forgetOwnBooking,
   forgetRecentReservation,
   getAgendaQueryRevision,
+  getAgendaSessionGeneration,
   invalidateAgendaQueries,
   isOwnBookedSlot,
   isPortalBookingInFlight,
@@ -1005,9 +1006,13 @@ export function TenantPortalAgendaPage() {
     if (!selectedSlot || submittingRef.current || joinAndReserveLock.current) {
       return
     }
+    const generation = getAgendaSessionGeneration()
     joinAndReserveLock.current = true
     try {
       const next = await queue.join()
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       if (next?.phase === "Open" && next.myTicket?.status === "Active") {
         await onReserve()
       }
@@ -1032,12 +1037,16 @@ export function TenantPortalAgendaPage() {
     const keptDate = readAgendaDateParam(searchParams.get("date"), date)
     const existing = mine.find((reservation) => reservation.id === id) ?? null
     const seenRevision = getAgendaQueryRevision()
+    const generation = getAgendaSessionGeneration()
     cancelingRef.current = true
     setCancelingId(id)
     try {
       let current = existing
       try {
         const fresh = await listMyPortalReservations()
+        if (generation !== getAgendaSessionGeneration()) {
+          return
+        }
         const freshRow =
           fresh.find((reservation) => reservation.id === id) ?? null
         if (getAgendaQueryRevision() === seenRevision) {
@@ -1058,6 +1067,9 @@ export function TenantPortalAgendaPage() {
       } catch {
         // The cancel request still runs. The API remains the authority.
       }
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       if (current !== null && isCancelledReservationStatus(current.status)) {
         forgetOwnBooking(current)
         forgetRecentReservation(current.id)
@@ -1067,6 +1079,9 @@ export function TenantPortalAgendaPage() {
         return
       }
       const canceled = await cancelMyPortalReservation(id)
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       toast.success(t("tenantPortal.agenda.cancelSuccess"))
       setMine((current) => {
         const exists = current.some(
@@ -1089,6 +1104,9 @@ export function TenantPortalAgendaPage() {
         ),
       )
     } catch (error) {
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
@@ -1096,7 +1114,10 @@ export function TenantPortalAgendaPage() {
       )
       void listMyPortalReservations()
         .then((fresh) => {
-          if (getAgendaQueryRevision() !== seenRevision) {
+          if (
+            generation !== getAgendaSessionGeneration() ||
+            getAgendaQueryRevision() !== seenRevision
+          ) {
             return
           }
           releaseCancelledOwnSlots(fresh)
@@ -1117,9 +1138,11 @@ export function TenantPortalAgendaPage() {
         })
     } finally {
       cancelingRef.current = false
-      setCancelingId(null)
-      viewedDateRef.current = keptDate
-      setDate(keptDate)
+      if (generation === getAgendaSessionGeneration()) {
+        setCancelingId(null)
+        viewedDateRef.current = keptDate
+        setDate(keptDate)
+      }
     }
   }
 

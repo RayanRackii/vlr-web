@@ -2,9 +2,13 @@ import {
   clearPlatformTenantExited,
   writeActiveTenantLabel,
 } from "@/features/admin/hooks/usePlatformTenantSession"
-import { clearAgendaQueryClient } from "@/features/tenantPortal/lib/agendaQueryClient"
+import {
+  clearAgendaQueryClient,
+  getAgendaSessionGeneration,
+} from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   clearCustomerSession,
+  getCustomerAccessToken,
   getHostTenantSubdomain,
   isCustomerSignedInForTenant,
   tenantPortalPath,
@@ -37,6 +41,10 @@ export type AuthenticatedSurface = "staff" | "customer"
 let installed = false
 let restoreBlocked = false
 let signedOutStaffAccessToken: string | null = null
+let hiddenSession: {
+  token: string | null
+  generation: number
+} | null = null
 
 function normalizePath(pathname: string): string {
   const path = pathname.split("?")[0]?.split("#")[0] ?? pathname
@@ -177,6 +185,10 @@ function sessionStillActive(pathname: string, hostSubdomain: string | null): boo
   return true
 }
 
+function sessionAccessToken(surface: AuthenticatedSurface): string | null {
+  return surface === "staff" ? readStaffAccessToken() : getCustomerAccessToken()
+}
+
 export function isAuthenticatedRestoreBlocked(): boolean {
   return restoreBlocked
 }
@@ -196,6 +208,10 @@ function blockAndLeave(pathname: string, hostSubdomain: string | null): void {
     return
   }
 
+  blockAndReplace(target)
+}
+
+function blockAndReplace(target: string): void {
   restoreBlocked = true
   concealAuthenticatedShell()
   replaceBrowserLocation(target)
@@ -212,13 +228,24 @@ function onPageShow(event: Event): void {
 
   const pathname = window.location.pathname
   const hostSubdomain = getHostTenantSubdomain()
-  if (authenticatedSurface(pathname, hostSubdomain) === null) {
+  const surface = authenticatedSurface(pathname, hostSubdomain)
+  if (surface === null) {
     return
   }
   if (sessionStillActive(pathname, hostSubdomain)) {
+    if (
+      hiddenSession !== null &&
+      (hiddenSession.token !== sessionAccessToken(surface) ||
+        hiddenSession.generation !== getAgendaSessionGeneration())
+    ) {
+      clearAuthenticatedQueryCaches()
+      blockAndReplace(`${pathname}${window.location.search}${window.location.hash}`)
+      event.stopImmediatePropagation()
+    }
     return
   }
 
+  clearAuthenticatedQueryCaches()
   blockAndLeave(pathname, hostSubdomain)
   event.stopImmediatePropagation()
 }
@@ -240,8 +267,14 @@ function onPopState(event: Event): void {
 function onPageHide(): void {
   const pathname = window.location.pathname
   const hostSubdomain = getHostTenantSubdomain()
-  if (authenticatedSurface(pathname, hostSubdomain) === null) {
+  const surface = authenticatedSurface(pathname, hostSubdomain)
+  if (surface === null) {
+    hiddenSession = null
     return
+  }
+  hiddenSession = {
+    token: sessionAccessToken(surface),
+    generation: getAgendaSessionGeneration(),
   }
   if (sessionStillActive(pathname, hostSubdomain)) {
     return
@@ -269,6 +302,7 @@ export function resetSessionRestoreGuardForTests(): void {
   installed = false
   restoreBlocked = false
   signedOutStaffAccessToken = null
+  hiddenSession = null
 }
 
 function rememberStaffSignOut(): void {

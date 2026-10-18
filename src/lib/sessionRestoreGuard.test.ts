@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
+  commitPortalBooking,
+  getAgendaSessionGeneration,
   isOwnBookedSlot,
+  recentPortalReservations,
   rememberOwnBooking,
   resetAgendaQueryClientForTests,
 } from "@/features/tenantPortal/lib/agendaQueryClient"
@@ -9,6 +12,7 @@ import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReserva
 import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
 import {
   clearCustomerSession,
+  getCustomerAccessToken,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import {
@@ -17,6 +21,7 @@ import {
   resetCurrentUserCacheForTests,
 } from "@/features/users/services/currentUserCache"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { customerApi } from "@/lib/api"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
 import { supabase } from "@/lib/supabase"
 import {
@@ -190,10 +195,72 @@ describe("session restore guard", () => {
     expect(replaceBrowserLocation).not.toHaveBeenCalled()
     expect(document.getElementById("root")?.textContent).toBe("agenda")
 
+    window.dispatchEvent(new Event("pagehide"))
     window.dispatchEvent(pageShow(true))
     expect(replaceBrowserLocation).not.toHaveBeenCalled()
     expect(isAuthenticatedRestoreBlocked()).toBe(false)
     expect(document.getElementById("root")?.textContent).toBe("agenda")
+  })
+
+  it("invalidates the restored document after another document signs out and signs in a new customer", async () => {
+    persistCustomerSession("customer-A", "ficc", "Ana")
+    seedRoot("dados de Ana")
+    window.history.pushState({}, "", "/t/ficc/agenda?date=2026-10-18#minhas-reservas")
+    rememberOwnBooking(reservation())
+    await readCurrentUser(async () => profile)
+    let resolveBooking: (value: PortalReservation) => void = () => undefined
+    const pending = commitPortalBooking(
+      () => new Promise<PortalReservation>((resolve) => { resolveBooking = resolve }),
+      { subdomain: "ficc", dates: ["2026-10-18"] },
+    )
+    const outcome = pending.catch((error: unknown) => error)
+    const generation = getAgendaSessionGeneration()
+    const getSpy = vi.spyOn(customerApi, "get").mockResolvedValue({ data: [] })
+    window.dispatchEvent(new Event("pagehide"))
+
+    try {
+      vi.resetModules()
+      const nextDocument = await import("@/lib/sessionRestoreGuard")
+      nextDocument.signOutCustomerPortal("ficc")
+      persistCustomerSession("customer-B", "ficc", "Bruno")
+      expect(getAgendaSessionGeneration()).toBe(generation)
+
+      window.dispatchEvent(pageShow(true))
+      resolveBooking(reservation())
+
+      expect(await outcome).toMatchObject({ name: "AbortError" })
+      expect(getAgendaSessionGeneration()).toBeGreaterThan(generation)
+      expect(recentPortalReservations("ficc")).toEqual([])
+      const civil = reservationCivilStart(START)
+      if (civil === null) {
+        throw new Error("expected a civil start")
+      }
+      expect(isOwnBookedSlot(civil.date, ASSET_ID, civil.time)).toBe(false)
+      expect(peekCurrentUserCacheForTests()).toBeNull()
+      expect(getSpy).not.toHaveBeenCalled()
+      expect(getCustomerAccessToken()).toBe("customer-B")
+      expect(isAuthenticatedRestoreBlocked()).toBe(true)
+      expect(document.getElementById("root")?.textContent).toBe("")
+      expect(replaceBrowserLocation).toHaveBeenCalledWith(
+        "/t/ficc/agenda?date=2026-10-18#minhas-reservas",
+      )
+    } finally {
+      getSpy.mockRestore()
+    }
+  })
+
+  it("reloads a restored staff document after the stored session changes without signing out the new session", () => {
+    storeStaffSession("staff-A")
+    seedRoot("dados de A")
+    window.history.pushState({}, "", "/dashboard")
+    window.dispatchEvent(new Event("pagehide"))
+    storeStaffSession("staff-B")
+
+    window.dispatchEvent(pageShow(true))
+
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/dashboard")
+    expect(document.getElementById("root")?.textContent).toBe("")
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toContain("staff-B")
   })
 
   it("popstate to a staff page without a session does not let the router run", () => {
