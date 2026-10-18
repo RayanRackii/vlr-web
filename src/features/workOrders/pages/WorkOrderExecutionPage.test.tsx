@@ -606,6 +606,29 @@ describe("WorkOrderExecutionPage tasks", () => {
     ).toBeInTheDocument()
   })
 
+  it("does not show saved when the response confirms a different value from the displayed draft", async () => {
+    const base = makeWorkOrder()
+    const task = base.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const order = makeWorkOrder({
+      tasks: [{ ...task, inputType: "Text", isMandatory: false, value: "A" }],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateTaskValueMock.mockResolvedValue(order)
+    renderExecution(["os.work_orders.read"], ["os"])
+    const field = await screen.findByRole("textbox")
+    fireEvent.change(field, { target: { value: "B" } })
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalledWith(order.id, task.id, "B")
+    })
+    await act(async () => undefined)
+
+    expect(field).toHaveValue("B")
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
+  })
+
   it("shows a retry label when the task answer is queued", async () => {
     const user = userEvent.setup()
     const base = makeWorkOrder()

@@ -149,7 +149,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 ## 4.11. PMOC / OS — FEITO (PROD)
 
-- [x] Correções locais do review #235: confirmação de autosave vinculada à versão editada; rejeição de obrigatórias do servidor permanece até nova tentativa, sem impedir retry quando o cliente está válido; barra fixa limitada a metade da altura da viewport, com lista rolável por teclado e ações visíveis. Regressões de texto/número, rejeição com valor preenchido e 80 obrigatórias. Branch `fix-235`, sem push. Upload da foto obrigatória segue dependente de #234, fora desta correção.
+- [x] Correções locais do review #235: confirmação de autosave vinculada à versão editada e ao valor confirmado pela API, que precisa coincidir com o exibido; recarregar com valor diferente na fila não produz “salvo” pela igualdade de contadores zerados. Rejeição de obrigatórias do servidor permanece até nova tentativa, sem impedir retry quando o cliente está válido; barra fixa limitada a metade da altura da viewport, com lista rolável por teclado e ações visíveis. Regressões de texto/número, fila recarregada (tela A / servidor B), resposta diferente do rascunho, rejeição com valor preenchido e 80 obrigatórias. Branch `fix-235`, sem push. Upload da foto obrigatória segue dependente de #234, fora desta correção.
 
 Phases 1–3 are **COMPLETE / RELEASED PROD**. Phase 4 is **NOT PLANNED**. Canonical spec: `vlr-api/docs/plans/active/2026-09-19-pmoc-os-phase3.md`. WEB release merge `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85).
 

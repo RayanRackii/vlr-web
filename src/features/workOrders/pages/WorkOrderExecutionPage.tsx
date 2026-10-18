@@ -210,6 +210,7 @@ function SyncConflictList({
 function TaskField({
   workOrderId,
   task,
+  confirmedValue,
   disabled,
   pendingSync,
   hasSyncConflict,
@@ -221,6 +222,7 @@ function TaskField({
 }: {
   workOrderId: string
   task: WorkOrderTask
+  confirmedValue: string | null | undefined
   disabled: boolean
   pendingSync: boolean
   hasSyncConflict: boolean
@@ -233,7 +235,7 @@ function TaskField({
   const { t } = useTranslation()
   const [saveState, setSaveState] = useState<TaskSaveState>("idle")
   const editVersionRef = useRef(0)
-  const queuedVersionRef = useRef(0)
+  const queuedVersionRef = useRef<number | null>(null)
 
   function handleValueChange(value: string | null) {
     editVersionRef.current += 1
@@ -253,7 +255,7 @@ function TaskField({
             setSaveState("saved")
           }
         } else {
-          queuedVersionRef.current = Math.max(queuedVersionRef.current, version)
+          queuedVersionRef.current = Math.max(queuedVersionRef.current ?? 0, version)
           onQueued(task.id)
           if (version === editVersionRef.current) {
             setSaveState("retrying")
@@ -307,6 +309,9 @@ function TaskField({
       if (current !== "retrying") {
         return current
       }
+      if (queuedVersionRef.current === null) {
+        return "idle"
+      }
       return queuedVersionRef.current === editVersionRef.current ? "saved" : "saving"
     })
   }, [hasSyncConflict, pendingSync])
@@ -327,7 +332,9 @@ function TaskField({
     ? "retrying"
     : hasSyncConflict
       ? "idle"
-      : saveState
+      : saveState === "saved" && confirmedValue !== (task.value ?? null)
+        ? "idle"
+        : saveState
 
   const saveIndicator = (
     <TaskSaveIndicator state={shownSaveState} taskTitle={task.title} />
@@ -465,6 +472,7 @@ export function WorkOrderExecutionPage() {
   const { id } = useParams<{ id: string }>()
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
+  const [confirmedWorkOrder, setConfirmedWorkOrder] = useState<WorkOrder | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -506,6 +514,7 @@ export function WorkOrderExecutionPage() {
       const queuedConflicts = await listSyncConflicts()
       loadFailedRef.current = false
       hasWorkOrderRef.current = true
+      setConfirmedWorkOrder(data)
       setWorkOrder(mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current))
       setErrorMessage(null)
     } catch (error: unknown) {
@@ -620,6 +629,7 @@ export function WorkOrderExecutionPage() {
         const data = await getWorkOrderById(id)
         const queuedConflicts = await listSyncConflicts()
         hasWorkOrderRef.current = true
+        setConfirmedWorkOrder(data)
         setWorkOrder(
           mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current),
         )
@@ -707,6 +717,7 @@ export function WorkOrderExecutionPage() {
 
     try {
       const updated = await updateWorkOrderStatus(workOrder.id, "InProgress")
+      setConfirmedWorkOrder(updated)
       setWorkOrder(updated)
       setSuccessMessage(t("workOrders.execution.startedSuccess"))
     } catch (error: unknown) {
@@ -729,6 +740,7 @@ export function WorkOrderExecutionPage() {
   }
 
   function handlePersisted(next: WorkOrder, taskId: string) {
+    setConfirmedWorkOrder(next)
     for (const task of next.tasks) {
       const serverValue = task.value ?? null
       const draft = draftValuesRef.current.get(task.id)
@@ -805,6 +817,7 @@ export function WorkOrderExecutionPage() {
 
     try {
       const updated = await updateWorkOrderStatus(workOrder.id, "Completed")
+      setConfirmedWorkOrder(updated)
       setWorkOrder(updated)
       setServerMissingTitles([])
       setSuccessMessage(t("workOrders.execution.completedSuccess"))
@@ -1059,6 +1072,9 @@ export function WorkOrderExecutionPage() {
               <TaskField
                 workOrderId={workOrder.id}
                 task={task}
+                confirmedValue={confirmedWorkOrder?.tasks.find(
+                  (confirmed) => confirmed.id === task.id,
+                )?.value}
                 disabled={isReadOnly}
                 pendingSync={pendingTaskIds.has(task.id)}
                 hasSyncConflict={visibleConflicts.some(
