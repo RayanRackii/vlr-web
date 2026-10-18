@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/contexts/AuthContext", () => {
@@ -62,8 +63,18 @@ describe("AssetCategoriesPage validity gate", () => {
     getCategoriesMock.mockResolvedValue([])
   })
 
-  function renderPage() {
-    return render(<AssetCategoriesPage />)
+  function renderPage(permissions: readonly string[] = [
+    "inventory.categories.read",
+    "inventory.categories.write",
+  ]) {
+    return render(
+      <TestPermissionProvider
+        permissions={permissions}
+        activeModules={["inventory"]}
+      >
+        <AssetCategoriesPage />
+      </TestPermissionProvider>,
+    )
   }
 
   async function openCreateDialog(user: ReturnType<typeof userEvent.setup>) {
@@ -228,5 +239,22 @@ describe("AssetCategoriesPage validity gate", () => {
     await user.type(name, "Quadra coberta")
     expect(save).toBeEnabled()
     expect(cancel).toBeEnabled()
+  })
+
+  it("hides create and row actions without categories.write", async () => {
+    getCategoriesMock.mockResolvedValue([CATEGORY])
+    renderPage(["inventory.categories.read"])
+
+    expect(await screen.findByText("Quadra")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("assets.categories.actions.new"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("assets.categories.actions.openMenu"),
+      }),
+    ).not.toBeInTheDocument()
   })
 })

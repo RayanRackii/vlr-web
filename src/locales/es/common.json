@@ -1332,17 +1332,26 @@
     "categories": {
       "title": {
         "rentals": "Tipos de recurso",
+        "spaces": "Tipos de espacio",
+        "goods": "Tipos de bien",
+        "electrical": "Tipos de equipo",
         "maintenance": "Tipos de equipo",
         "generic": "Tipos"
       },
       "description": {
         "rentals": "Tipos para agrupar recursos (ej.: Cancha, Contenedor, Sala).",
+        "spaces": "Tipos de espacio (ej.: Cancha, Sala).",
+        "goods": "Tipos de bien (ej.: Contenedor, Equipo móvil).",
+        "electrical": "Tipos eléctricos (ej.: Tablero, Split, Transformador).",
         "maintenance": "Tipos de equipo (ej.: Split, Caldera).",
         "generic": "Tipos usados para clasificar sus recursos."
       },
       "loading": "Cargando tipos...",
       "empty": {
         "rentals": "Aún no hay tipos — cree el primero (ej.: Cancha o Contenedor).",
+        "spaces": "Aún no hay tipos — cree el primero (ej.: Cancha o Sala).",
+        "goods": "Aún no hay tipos — cree el primero (ej.: Contenedor).",
+        "electrical": "Aún no hay tipos — cree el primero (ej.: Tablero eléctrico).",
         "maintenance": "Aún no hay tipos — cree el primero (ej.: Split).",
         "generic": "Aún no hay tipos registrados."
       },
@@ -1373,11 +1382,17 @@
       "dialog": {
         "title": {
           "rentals": "Nuevo tipo",
+          "spaces": "Nuevo tipo de espacio",
+          "goods": "Nuevo tipo de bien",
+          "electrical": "Nuevo tipo eléctrico",
           "maintenance": "Nuevo tipo",
           "generic": "Nuevo tipo"
         },
         "description": {
           "rentals": "Defina un tipo para agrupar recursos reservables (ej.: Cancha de tenis).",
+          "spaces": "Defina un tipo de espacio (ej.: Cancha de tenis, Sala).",
+          "goods": "Defina un tipo de bien (ej.: Contenedor).",
+          "electrical": "Registre el modelo base de los equipos eléctricos.",
           "maintenance": "Registre el modelo base que usarán los equipos.",
           "generic": "Registre un tipo para clasificar sus recursos."
         },
@@ -1388,6 +1403,9 @@
         "name": "Nombre",
         "namePlaceholder": {
           "rentals": "Ej.: Cancha, Contenedor, Sala",
+          "spaces": "Ej.: Cancha, Sala",
+          "goods": "Ej.: Contenedor",
+          "electrical": "Ej.: Tablero eléctrico, Split",
           "maintenance": "Ej.: Aire acondicionado Split 12k BTU",
           "generic": "Ej.: Tipo de recurso"
         },
@@ -1417,22 +1435,34 @@
     "inventory": {
       "title": {
         "rentals": "Recursos",
+        "spaces": "Espacios",
+        "goods": "Bienes",
+        "electrical": "Equipos eléctricos",
         "maintenance": "Recursos",
         "generic": "Recursos"
       },
       "description": {
         "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
+        "spaces": "Espacios alquilables (canchas, salas…). Registre cada uno y marque lo que puede reservarse.",
+        "goods": "Bienes y artículos (contenedores…). Registre cada uno y organícelos por tipo.",
+        "electrical": "Equipos eléctricos del sitio. Use tipos y atributos (voltaje, fabricante).",
         "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
         "generic": "Registre los recursos de este negocio y organícelos por tipo."
       },
       "loading": "Cargando recursos...",
       "empty": {
         "rentals": "Aún no hay recursos registrados.",
+        "spaces": "Aún no hay espacios registrados.",
+        "goods": "Aún no hay bienes registrados.",
+        "electrical": "Aún no hay equipos eléctricos registrados.",
         "maintenance": "Aún no hay recursos registrados.",
         "generic": "Aún no hay recursos registrados."
       },
       "emptyNoTypes": {
         "rentals": "Antes de registrar recursos, defina los tipos (ej.: Cancha, Contenedor).",
+        "spaces": "Antes de registrar espacios, defina los tipos (ej.: Cancha, Sala).",
+        "goods": "Antes de registrar bienes, defina los tipos (ej.: Contenedor).",
+        "electrical": "Antes de registrar equipos, defina los tipos eléctricos.",
         "maintenance": "Antes de registrar recursos, defina los tipos de equipo.",
         "generic": "Antes de registrar recursos, defina los tipos."
       },
@@ -1472,11 +1502,17 @@
       "dialog": {
         "title": {
           "rentals": "Agregar recursos en lote",
+          "spaces": "Agregar espacios en lote",
+          "goods": "Agregar bienes en lote",
+          "electrical": "Agregar equipos en lote",
           "maintenance": "Agregar recursos en lote",
           "generic": "Agregar recursos en lote"
         },
         "description": {
           "rentals": "Genere una secuencia con el mismo tipo y tags numerados (ej.: Cancha-01, Cancha-02).",
+          "spaces": "Genere una secuencia de espacios con el mismo tipo y tags numerados (ej.: Cancha-01).",
+          "goods": "Genere una secuencia de bienes con el mismo tipo y tags numerados.",
+          "electrical": "Genere una secuencia de equipos eléctricos con tags numerados.",
           "maintenance": "Genere una secuencia de equipos con el mismo tipo y tags numerados.",
           "generic": "Genere una secuencia de recursos con el mismo tipo y tags numerados."
         }

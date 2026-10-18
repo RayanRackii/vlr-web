@@ -44,6 +44,11 @@ import {
 } from "@/components/ui/table"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import {
+  describeApiError,
+  isForbiddenError,
+} from "@/features/users/permissions/rbacErrors"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import type {
   Asset,
@@ -97,13 +102,17 @@ export function AssetsPage() {
   const { t } = useTranslation()
   const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
+  const { can } = usePermissions()
   const navigate = useNavigate()
   const { isTrialReadOnly } = useTrialStatus()
+  const canWriteAssets = can("inventory.assets.write")
+  const canWriteCategories = can("inventory.categories.write")
 
   const [assets, setAssets] = useState<Asset[]>([])
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [families, setFamilies] = useState<AssetFamily[]>([])
+  const [categoriesDenied, setCategoriesDenied] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -132,29 +141,82 @@ export function AssetsPage() {
     setLoadError(null)
 
     try {
-      const [assetsData, categoriesData, unitsData, familiesData] =
-        await Promise.all([
+      const [assetsResult, categoriesResult, unitsResult, familiesResult] =
+        await Promise.allSettled([
           getAssets(),
           getCategories(),
           getUnits(),
           listActiveAssetFamilies(),
         ])
 
-      setAssets(assetsData)
-      setCategories(categoriesData)
-      setUnits(unitsData)
-      setFamilies(familiesData)
+      let nextError: string | null = null
+
+      if (assetsResult.status === "fulfilled") {
+        setAssets(assetsResult.value)
+      } else {
+        console.error("AssetsPage getAssets failed", assetsResult.reason)
+        setAssets([])
+        nextError = describeApiError(
+          assetsResult.reason,
+          t("assets.inventory.errors.loadFailed"),
+        )
+      }
+
+      if (categoriesResult.status === "fulfilled") {
+        setCategories(categoriesResult.value)
+        setCategoriesDenied(false)
+      } else {
+        console.error("AssetsPage getCategories failed", categoriesResult.reason)
+        setCategories([])
+        const denied = isForbiddenError(categoriesResult.reason)
+        setCategoriesDenied(denied)
+        if (!denied && nextError === null) {
+          nextError = describeApiError(
+            categoriesResult.reason,
+            t("assets.categories.errors.loadFailed"),
+          )
+        }
+      }
+
+      if (unitsResult.status === "fulfilled") {
+        setUnits(unitsResult.value)
+      } else {
+        console.error("AssetsPage getUnits failed", unitsResult.reason)
+        setUnits([])
+        if (!isForbiddenError(unitsResult.reason) && nextError === null) {
+          nextError = describeApiError(
+            unitsResult.reason,
+            t("assets.inventory.errors.loadUnitsFailed"),
+          )
+        }
+      }
+
+      if (familiesResult.status === "fulfilled") {
+        setFamilies(familiesResult.value)
+      } else {
+        console.error(
+          "AssetsPage listActiveAssetFamilies failed",
+          familiesResult.reason,
+        )
+        setFamilies([])
+        if (!isForbiddenError(familiesResult.reason) && nextError === null) {
+          nextError = describeApiError(
+            familiesResult.reason,
+            t("apiErrors.loadAssetFamilies"),
+          )
+        }
+      }
+
+      setLoadError(nextError)
     } catch (error: unknown) {
       console.error("AssetsPage loadPageData failed", error)
       if (isAxiosError(error)) {
         console.error("AssetsPage loadPageData response", error.response?.data)
       }
 
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("assets.inventory.errors.loadFailed")
-      setLoadError(message)
+      setLoadError(
+        describeApiError(error, t("assets.inventory.errors.loadFailed")),
+      )
     } finally {
       setIsLoading(false)
     }
@@ -358,15 +420,25 @@ export function AssetsPage() {
     [isTrialReadOnly, openDeleteDialog, openWizard, t],
   )
 
+  const tableColumns = useMemo(
+    () =>
+      canWriteAssets
+        ? columns
+        : columns.filter(
+            (column) => column.id !== "select" && column.id !== "actions",
+          ),
+    [canWriteAssets, columns],
+  )
+
   const table = useReactTable({
     data: tableRows,
-    columns,
+    columns: tableColumns,
     state: {
       columnFilters,
       rowSelection,
     },
     getRowId: (row) => row.id,
-    enableRowSelection: !isTrialReadOnly,
+    enableRowSelection: canWriteAssets && !isTrialReadOnly,
     onRowSelectionChange: setRowSelection,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -574,44 +646,46 @@ export function AssetsPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={() => {
-              openWizard("create")
-            }}
-            disabled={!canOpenWizard}
-          >
-            <Plus data-icon="inline-start" />
-            {t("assets.inventory.actions.add")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              openWizard("bulk")
-            }}
-            disabled={!canOpenWizard}
-          >
-            <Layers data-icon="inline-start" />
-            {t("assets.inventory.actions.bulkAdd")}
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => {
-              openBulkDeleteDialog()
-            }}
-            disabled={selectedCount === 0 || isTrialReadOnly}
-          >
-            <Trash2 data-icon="inline-start" />
-            {selectedCount > 0
-              ? t("assets.inventory.actions.bulkDeleteCount", {
-                  count: selectedCount,
-                })
-              : t("assets.inventory.actions.bulkDelete")}
-          </Button>
-        </div>
+        {canWriteAssets ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                openWizard("create")
+              }}
+              disabled={!canOpenWizard}
+            >
+              <Plus data-icon="inline-start" />
+              {t("assets.inventory.actions.add")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                openWizard("bulk")
+              }}
+              disabled={!canOpenWizard}
+            >
+              <Layers data-icon="inline-start" />
+              {t("assets.inventory.actions.bulkAdd")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                openBulkDeleteDialog()
+              }}
+              disabled={selectedCount === 0 || isTrialReadOnly}
+            >
+              <Trash2 data-icon="inline-start" />
+              {selectedCount > 0
+                ? t("assets.inventory.actions.bulkDeleteCount", {
+                    count: selectedCount,
+                  })
+                : t("assets.inventory.actions.bulkDelete")}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {isTrialReadOnly ? (
@@ -670,19 +744,21 @@ export function AssetsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRowsSkeleton columns={columns.length} />
+              <TableRowsSkeleton columns={tableColumns.length} />
             ) : null}
 
             {!isLoading && filteredRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={tableColumns.length} className="h-24 text-center">
                   <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-2">
                     <p className="text-sm text-muted-foreground">
-                      {categories.length === 0
+                      {categories.length === 0 && !categoriesDenied
                         ? tTone("assets.inventory.emptyNoTypes")
                         : tTone("assets.inventory.empty")}
                     </p>
-                    {categories.length === 0 ? (
+                    {categories.length === 0 &&
+                    !categoriesDenied &&
+                    canWriteCategories ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -692,7 +768,8 @@ export function AssetsPage() {
                       >
                         {t("assets.inventory.emptyNoTypesCta")}
                       </Button>
-                    ) : (
+                    ) : null}
+                    {categories.length > 0 && canWriteAssets ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -702,7 +779,7 @@ export function AssetsPage() {
                       >
                         {t("assets.inventory.emptyWithTypesCta")}
                       </Button>
-                    )}
+                    ) : null}
                   </div>
                 </TableCell>
               </TableRow>

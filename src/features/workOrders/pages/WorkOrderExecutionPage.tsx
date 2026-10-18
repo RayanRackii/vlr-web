@@ -12,6 +12,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { WorkOrderAssigneeField } from "@/features/workOrders/components/WorkOrderAssigneeField"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
 import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
@@ -101,6 +102,18 @@ function mergeWorkOrderDrafts(
       return task
     }),
   }
+}
+
+function isTaskValueBelowMinimum(
+  task: WorkOrderTask,
+  value: string | null,
+): boolean {
+  if (task.inputType !== "Number" || value == null || value.trim() === "") {
+    return false
+  }
+
+  const minimum = parseNumberConfiguration(task.configuration)?.min
+  return minimum != null && Number(value) < minimum
 }
 
 function SyncConflictList({
@@ -269,6 +282,7 @@ function TaskField({
   )
 
   const choiceOptions = choiceConfig?.options ?? []
+  const belowMinimum = isTaskValueBelowMinimum(task, task.value ?? null)
 
   const waiting = pendingSync ? (
     <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -337,15 +351,25 @@ function TaskField({
             disabled={disabled}
             min={numberConfig?.min}
             max={numberConfig?.max}
+            aria-invalid={belowMinimum || undefined}
             value={task.value ?? ""}
             placeholder={t("workOrders.execution.numberPlaceholder")}
             onChange={(event) => {
               const raw = event.target.value
               const nextValue = raw.trim() === "" ? null : raw
               onLocalChange(task.id, nextValue)
+              if (isTaskValueBelowMinimum(task, nextValue)) {
+                debouncedPersist.cancel()
+                return
+              }
               debouncedPersist(nextValue)
             }}
           />
+          {belowMinimum ? (
+            <p className="text-sm text-destructive" role="alert">
+              {t("workOrders.errors.taskValue.outOfRange")}
+            </p>
+          ) : null}
           {waiting}
         </div>
       )
@@ -581,6 +605,10 @@ export function WorkOrderExecutionPage() {
     return [...workOrder.tasks].sort((a, b) => a.order - b.order)
   }, [workOrder])
 
+  const hasValueBelowMinimum = orderedTasks.some((task) =>
+    isTaskValueBelowMinimum(task, task.value ?? null),
+  )
+
   const registerFlush = useCallback(
     (taskId: string, flush: (() => unknown) | null) => {
       if (flush) {
@@ -695,7 +723,7 @@ export function WorkOrderExecutionPage() {
   }
 
   async function handleComplete() {
-    if (!workOrder) {
+    if (!workOrder || hasValueBelowMinimum) {
       return
     }
 
@@ -865,6 +893,19 @@ export function WorkOrderExecutionPage() {
             {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
           </p>
         </div>
+        <WorkOrderAssigneeField
+          workOrder={workOrder}
+          onUpdated={(updated) => {
+            hasWorkOrderRef.current = true
+            setWorkOrder(
+              mergeWorkOrderDrafts(
+                updated,
+                conflicts,
+                draftValuesRef.current,
+              ),
+            )
+          }}
+        />
         <div>
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.origin")}
@@ -992,6 +1033,7 @@ export function WorkOrderExecutionPage() {
               type="button"
               variant="default"
               loading={isUpdatingStatus}
+              disabled={hasValueBelowMinimum}
               onClick={() => {
                 void handleComplete()
               }}

@@ -3,14 +3,62 @@ import LanguageDetector from "i18next-browser-languagedetector"
 import { initReactI18next } from "react-i18next"
 
 import enCommon from "@/locales/en/common.json"
+import { enPermissionCopy } from "@/locales/en/permissionCopy"
 import esCommon from "@/locales/es/common.json"
+import { esPermissionCopy } from "@/locales/es/permissionCopy"
 import ptBRCommon from "@/locales/pt-BR/common.json"
+import { ptBRPermissionCopy } from "@/locales/pt-BR/permissionCopy"
 import {
   persistLanguage,
   readPersistedLanguage,
   supportedLanguages,
   type SupportedLanguage,
 } from "@/lib/uiLanguage"
+
+type PermissionCopy = {
+  workOrders: {
+    emptyAssigned: {
+      Pending: string
+      InProgress: string
+      Completed: string
+      Canceled: string
+    }
+    execution: {
+      assigneeLoading: string
+      assigneeUpdated: string
+      assigneeCleared: string
+    }
+    errors: {
+      notAssignedOrForbidden: string
+      assignFailed: string
+    }
+  }
+}
+
+function mergePermissionCopy<
+  T extends {
+    workOrders: {
+      execution: object
+      errors: object
+    }
+  },
+>(common: T, copy: PermissionCopy) {
+  return {
+    ...common,
+    workOrders: {
+      ...common.workOrders,
+      emptyAssigned: copy.workOrders.emptyAssigned,
+      execution: {
+        ...common.workOrders.execution,
+        ...copy.workOrders.execution,
+      },
+      errors: {
+        ...common.workOrders.errors,
+        ...copy.workOrders.errors,
+      },
+    },
+  }
+}
 
 export { supportedLanguages }
 export type { SupportedLanguage }
@@ -41,9 +89,9 @@ void i18n
   .use(initReactI18next)
   .init({
     resources: {
-      "pt-BR": { common: ptBRCommon },
-      en: { common: enCommon },
-      es: { common: esCommon },
+      "pt-BR": { common: mergePermissionCopy(ptBRCommon, ptBRPermissionCopy) },
+      en: { common: mergePermissionCopy(enCommon, enPermissionCopy) },
+      es: { common: mergePermissionCopy(esCommon, esPermissionCopy) },
     },
     fallbackLng: "pt-BR",
     // Honor an explicit choice. Otherwise lock first paint to pt-BR.
