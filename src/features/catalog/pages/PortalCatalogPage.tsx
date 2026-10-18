@@ -8,10 +8,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import {
-  CATALOG_CART_MAX_QUANTITY,
-  CATALOG_CART_MIN_QUANTITY,
-} from "@/features/catalog/cart"
+import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
 import {
   formatCartTotalText,
@@ -203,15 +200,12 @@ function PortalCartPanel({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={CATALOG_CART_MIN_QUANTITY}
-                  max={CATALOG_CART_MAX_QUANTITY}
+                <CatalogQuantityField
                   className="w-16"
-                  value={item.quantity}
-                  aria-label={t("tenantPortal.catalog.quantity")}
-                  onChange={(event) => {
-                    cart.update(item.productId, Number(event.target.value))
+                  quantity={item.quantity}
+                  productName={name}
+                  onCommit={(next) => {
+                    cart.update(item.productId, next)
                   }}
                 />
                 <Button

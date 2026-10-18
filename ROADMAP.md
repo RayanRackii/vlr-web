@@ -192,7 +192,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
 - [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
-- [x] Carrinho B2C: subtotal da linha, total parcial (“A partir de” quando há item sob consulta), remover item, quantidade 0 não apaga a linha (1–99). Cancelar pedido pede confirmação. Total misto em Pedidos mostra a soma conhecida e “Sob consulta”. Solicitar produto confirma na tela com link ao catálogo: o portal não tem GET de solicitações do cliente (`POST /api/catalog/portal/product-requests` e URL de arquivo apenas). es agrupa milhar (`1.500,00 R$`). EN do portal usa “Canceled”.
+- [x] Carrinho B2C: subtotal da linha, total parcial (“A partir de” quando há item sob consulta), remover item, quantidade 0 não apaga a linha (1–99, só ao sair do campo; vazio não vira 1 enquanto se digita). Cancelar pedido pede confirmação e ignora um segundo clique enquanto o POST está em voo. Total misto em Pedidos mostra a soma conhecida e “Sob consulta”. Solicitar produto confirma na tela com link ao catálogo: o portal não tem GET de solicitações do cliente (`POST /api/catalog/portal/product-requests` e URL de arquivo apenas). es agrupa milhar (`1.500,00 R$`). EN do portal usa “Canceled”.
 
 ## 5. Fluxo de convite B2B
 
@@ -377,6 +377,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-18 | **Fix (WEB):** data digitada além do horizonte da agenda B2C cai no último dia reservável e usa a frase do calendário, sem “já está reservado” em todos os espaços. Sair de `#minhas-reservas` recarrega os horários; o menu não apaga `date` nem `time`. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** Tentar de novo na fila offline não substitui um valor já enfileirado para o mesmo campo, mesmo se o conflito guardou um `clientSequence` maior depois de recarregar a aba. Na agenda B2C, Voltar para um dia válido limpa o aviso e o `aria-invalid` do campo de data. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** carrinho B2C mostra subtotal da linha e total (soma dos itens com preço; linha sem preço “Sob consulta”; total misto “A partir de”). Remover é um botão; quantidade 0 ou negativa fica em 1 e o teto é 99. Cancelar pedido pede confirmação. Lista e detalhe de pedido com total nulo mostram a soma conhecida mais “Sob consulta”. `/catalogo/solicitar` confirma na tela com link ao catálogo — a API do cliente não lista solicitações. es usa agrupamento (`1.500,00 R$`). EN do portal usa “Canceled”. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** a quantidade do catálogo guarda o texto digitado, inclusive vazio, e só limita a 1–99 ao sair do campo. O nome do produto entra no rótulo do campo. Mais, menos e Adicionar usam esse valor. Confirmar o cancelamento do pedido não dispara um segundo POST enquanto o primeiro ainda não voltou. O teste da agenda do professor espera o nome da quadra. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

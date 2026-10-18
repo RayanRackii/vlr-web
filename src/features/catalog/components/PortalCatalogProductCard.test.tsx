@@ -136,19 +136,46 @@ describe("PortalCatalogProductCard", () => {
     const { onQuantityChange } = renderCard({
       quantity: CATALOG_CART_MAX_QUANTITY,
     })
-    const quantity = screen.getByRole("spinbutton", { name: "Quantidade" })
+    const quantity = screen.getByRole("spinbutton", {
+      name: "Quantidade de Cadeira de praia",
+    })
 
     expect(
       screen.getByRole("button", { name: "Aumentar quantidade" }),
     ).toBeDisabled()
 
-    fireEvent.change(quantity, { target: { value: "0" } })
-    fireEvent.change(quantity, { target: { value: "-4" } })
-    fireEvent.change(quantity, { target: { value: "250" } })
+    fireEvent.change(quantity, { target: { value: "" } })
+    expect(onQuantityChange).not.toHaveBeenCalled()
+    expect(quantity).toHaveValue(null)
 
-    expect(onQuantityChange).toHaveBeenNthCalledWith(1, 1)
-    expect(onQuantityChange).toHaveBeenNthCalledWith(2, 1)
-    expect(onQuantityChange).toHaveBeenNthCalledWith(3, CATALOG_CART_MAX_QUANTITY)
+    fireEvent.change(quantity, { target: { value: "0" } })
+    expect(quantity).toHaveValue(0)
+    expect(onQuantityChange).not.toHaveBeenCalled()
+    fireEvent.blur(quantity)
+    expect(onQuantityChange).toHaveBeenCalledTimes(1)
+    expect(onQuantityChange).toHaveBeenCalledWith(1)
+
+    fireEvent.change(quantity, { target: { value: "250" } })
+    expect(quantity).toHaveValue(250)
+    fireEvent.blur(quantity)
+    expect(onQuantityChange).toHaveBeenLastCalledWith(CATALOG_CART_MAX_QUANTITY)
+  })
+
+  it("steps from the typed quantity after the field blurs", async () => {
+    const user = userEvent.setup()
+    const { onQuantityChange } = renderCard({ quantity: 1 })
+    const quantity = screen.getByRole("spinbutton", {
+      name: "Quantidade de Cadeira de praia",
+    })
+
+    quantity.focus()
+    fireEvent.change(quantity, { target: { value: "4" } })
+    expect(onQuantityChange).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole("button", { name: "Aumentar quantidade" }))
+
+    expect(onQuantityChange).toHaveBeenNthCalledWith(1, 4)
+    expect(onQuantityChange).toHaveBeenNthCalledWith(2, 5)
   })
 
   it("links the product name to the catalog detail path", () => {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -164,5 +164,34 @@ describe("PortalOrderDetailPage", () => {
         name: i18n.t("tenantPortal.catalog.cancelOrder"),
       }),
     ).not.toBeInTheDocument()
+  })
+
+  it("ignores a second confirm click while cancel is in flight", async () => {
+    const user = userEvent.setup()
+    let resolveCancel: (order: CatalogOrder) => void = () => {
+      throw new Error("missing resolve")
+    }
+    cancelOrderMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCancel = resolve
+        }),
+    )
+    renderDetail()
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("tenantPortal.catalog.cancelOrder"),
+      }),
+    )
+    const confirm = await screen.findByRole("button", {
+      name: i18n.t("tenantPortal.catalog.cancelConfirmAction"),
+    })
+    fireEvent.click(confirm)
+    fireEvent.click(confirm)
+
+    expect(cancelOrderMock).toHaveBeenCalledTimes(1)
+    resolveCancel(mixedOrder("Cancelled"))
+    expect(await screen.findByText("Cancelado")).toBeInTheDocument()
   })
 })

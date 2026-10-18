@@ -118,7 +118,7 @@ describe("PortalCartPage validity gate", () => {
       i18n.t("tenantPortal.catalog.customerNote"),
     )
     const quantity = screen.getByRole("spinbutton", {
-      name: i18n.t("tenantPortal.catalog.quantity"),
+      name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
     })
 
     expect(submit()).toBeEnabled()
@@ -211,7 +211,7 @@ describe("PortalCartPage validity gate", () => {
     expect(note).toHaveValue("Entregar na portaria")
     expect(
       screen.getByRole("spinbutton", {
-        name: i18n.t("tenantPortal.catalog.quantity"),
+        name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
       }),
     ).toHaveValue(2)
     expect(screen.getByRole("link", { name: i18n.t("common.back") })).toBeEnabled()
@@ -244,16 +244,27 @@ describe("PortalCartPage validity gate", () => {
     expect(screen.getByText("Subtotal: Sob consulta")).toBeInTheDocument()
     expect(screen.getByText("Total: A partir de R$ 20,00")).toBeInTheDocument()
 
-    const pricedQuantity = screen.getAllByRole("spinbutton", {
-      name: i18n.t("tenantPortal.catalog.quantity"),
-    })[0]
-    expect(pricedQuantity).toBeDefined()
-    replaceValue(pricedQuantity ?? screen.getByRole("spinbutton"), "0")
-    expect(pricedQuantity).toHaveValue(1)
+    const pricedQuantity = screen.getByRole("spinbutton", {
+      name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
+    })
+    replaceValue(pricedQuantity, "")
+    expect(pricedQuantity).toHaveValue(null)
     expect(screen.getByText("Raquete")).toBeInTheDocument()
+    expect(screen.getByText("Subtotal: R$ 20,00")).toBeInTheDocument()
+
+    fireEvent.blur(pricedQuantity)
+    expect(pricedQuantity).toHaveValue(1)
     expect(screen.getByText("Subtotal: R$ 10,00")).toBeInTheDocument()
 
-    replaceValue(pricedQuantity ?? screen.getByRole("spinbutton"), "250")
+    replaceValue(pricedQuantity, "0")
+    expect(pricedQuantity).toHaveValue(0)
+    expect(screen.getByText("Raquete")).toBeInTheDocument()
+    fireEvent.blur(pricedQuantity)
+    expect(pricedQuantity).toHaveValue(1)
+
+    replaceValue(pricedQuantity, "250")
+    expect(pricedQuantity).toHaveValue(250)
+    fireEvent.blur(pricedQuantity)
     expect(pricedQuantity).toHaveValue(99)
 
     await user.click(

@@ -487,6 +487,7 @@
       "empty": "No active products right now.",
       "priceOnRequest": "On request",
       "quantity": "Quantity",
+      "quantityFor": "Quantity for {{name}}",
       "quantityDecrease": "Decrease quantity",
       "quantityIncrease": "Increase quantity",
       "noImage": "No image",

@@ -1,11 +1,12 @@
 import { ImageOff, Minus, Plus } from "lucide-react"
+import { useRef } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import {
   CATALOG_CART_MAX_QUANTITY,
   CATALOG_CART_MIN_QUANTITY,
@@ -28,10 +29,6 @@ export type PortalCatalogProductCardProps = {
   primary: string
 }
 
-function parseQuantity(raw: string): number {
-  return clampCatalogQuantity(Number(raw))
-}
-
 export function PortalCatalogProductCard({
   product,
   subdomain,
@@ -41,6 +38,15 @@ export function PortalCatalogProductCard({
   primary,
 }: PortalCatalogProductCardProps) {
   const { t, i18n } = useTranslation()
+  const quantityRef = useRef(quantity)
+  quantityRef.current = quantity
+
+  function commitQuantity(next: number) {
+    const clamped = clampCatalogQuantity(next)
+    quantityRef.current = clamped
+    onQuantityChange(clamped)
+  }
+
   const images = selectCatalogProductImages(product.files)
   const detailTo = tenantPortalPath(subdomain, `catalogo/${product.id}`)
   const priceLabel =
@@ -97,21 +103,16 @@ export function PortalCatalogProductCard({
             aria-label={t("tenantPortal.catalog.quantityDecrease")}
             disabled={quantity <= CATALOG_CART_MIN_QUANTITY}
             onClick={() => {
-              onQuantityChange(clampCatalogQuantity(quantity - 1))
+              commitQuantity(quantityRef.current - 1)
             }}
           >
             <Minus aria-hidden />
           </Button>
-          <Input
-            type="number"
-            min={CATALOG_CART_MIN_QUANTITY}
-            max={CATALOG_CART_MAX_QUANTITY}
+          <CatalogQuantityField
             className="h-8 min-w-0 flex-1 px-1 text-center"
-            value={quantity}
-            aria-label={t("tenantPortal.catalog.quantity")}
-            onChange={(event) => {
-              onQuantityChange(parseQuantity(event.target.value))
-            }}
+            quantity={quantity}
+            productName={product.name}
+            onCommit={commitQuantity}
           />
           <Button
             type="button"
@@ -120,7 +121,7 @@ export function PortalCatalogProductCard({
             aria-label={t("tenantPortal.catalog.quantityIncrease")}
             disabled={quantity >= CATALOG_CART_MAX_QUANTITY}
             onClick={() => {
-              onQuantityChange(clampCatalogQuantity(quantity + 1))
+              commitQuantity(quantityRef.current + 1)
             }}
           >
             <Plus aria-hidden />

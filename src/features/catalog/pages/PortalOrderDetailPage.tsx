@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useOutletContext, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -40,6 +40,7 @@ export function PortalOrderDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const cancellingRef = useRef(false)
 
   async function load() {
     if (!orderId) {
@@ -67,9 +68,10 @@ export function PortalOrderDetailPage() {
   }, [orderId])
 
   async function onCancel() {
-    if (!order) {
+    if (!order || cancellingRef.current) {
       return
     }
+    cancellingRef.current = true
     setCancelling(true)
     try {
       const next = await cancelPortalCatalogOrder(order.id)
@@ -83,6 +85,7 @@ export function PortalOrderDetailPage() {
           : t("apiErrors.cancelPortalOrder"),
       )
     } finally {
+      cancellingRef.current = false
       setCancelling(false)
     }
   }

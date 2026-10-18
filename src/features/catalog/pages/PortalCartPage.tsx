@@ -17,12 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  CATALOG_CART_MAX_QUANTITY,
-  CATALOG_CART_MIN_QUANTITY,
-} from "@/features/catalog/cart"
+import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import {
   formatCartTotalText,
   formatLineSubtotal,
@@ -186,15 +182,12 @@ export function PortalCartPage() {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Input
-                    type="number"
-                    min={CATALOG_CART_MIN_QUANTITY}
-                    max={CATALOG_CART_MAX_QUANTITY}
+                  <CatalogQuantityField
                     className="w-20"
-                    value={item.quantity}
-                    aria-label={t("tenantPortal.catalog.quantity")}
-                    onChange={(event) => {
-                      cart.update(item.productId, Number(event.target.value))
+                    quantity={item.quantity}
+                    productName={product?.name ?? item.productId}
+                    onCommit={(next) => {
+                      cart.update(item.productId, next)
                     }}
                   />
                   <Button
