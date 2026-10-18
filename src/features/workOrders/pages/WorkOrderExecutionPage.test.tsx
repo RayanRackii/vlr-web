@@ -116,13 +116,13 @@ describe("WorkOrderExecutionPage origin", () => {
 
   it("H: generated work order detail shows PMOC origin", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({ sourcePlanName: "Nome hist\u00f3rico do plano" }),
+      makeWorkOrder({ sourcePlanName: "Nome histórico do plano" }),
     )
 
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC \u00b7 Nome hist\u00f3rico do plano"),
+      await screen.findByText("PMOC · Nome histórico do plano"),
     ).toBeInTheDocument()
   })
 
@@ -165,7 +165,7 @@ describe("WorkOrderExecutionPage origin", () => {
 
   it("K: displays sourcePlanName as historical metadata and does not fetch the live plan name", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({ sourcePlanName: "Nome hist\u00f3rico do plano" }),
+      makeWorkOrder({ sourcePlanName: "Nome histórico do plano" }),
     )
 
     renderExecution(
@@ -174,7 +174,7 @@ describe("WorkOrderExecutionPage origin", () => {
     )
 
     expect(
-      await screen.findByText("PMOC \u00b7 Nome hist\u00f3rico do plano"),
+      await screen.findByText("PMOC · Nome histórico do plano"),
     ).toBeInTheDocument()
     expect(screen.queryByText("PMOC Split Mensal")).not.toBeInTheDocument()
     expect(getPlanMock).not.toHaveBeenCalled()
@@ -186,7 +186,7 @@ describe("WorkOrderExecutionPage origin", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC \u00b7 PMOC Split Mensal"),
+      await screen.findByText("PMOC · PMOC Split Mensal"),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("link", {
@@ -344,7 +344,7 @@ describe("WorkOrderExecutionPage tasks", () => {
               },
               {
                 id: "17171717-1717-4171-8171-171717171717",
-                title: "Press\u00e3o",
+                title: "Pressão",
               },
             ],
           },
@@ -363,7 +363,7 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
-        tasks: "Foto do filtro, Press\u00e3o",
+        tasks: "Foto do filtro, Pressão",
       }),
     )
     expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
@@ -426,7 +426,7 @@ describe("WorkOrderExecutionPage tasks", () => {
   it("shows notes and the completed date", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
       makeWorkOrder({
-        notes: "Levar pe\u00e7a",
+        notes: "Levar peça",
         completedDate: "2026-09-19T15:04:00.000Z",
         status: "Completed",
       }),
@@ -434,7 +434,7 @@ describe("WorkOrderExecutionPage tasks", () => {
 
     renderExecution(["os.work_orders.read"], ["os"])
 
-    expect(await screen.findByText("Levar pe\u00e7a")).toBeInTheDocument()
+    expect(await screen.findByText("Levar peça")).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("workOrders.execution.completedDate")),
     ).toBeInTheDocument()
