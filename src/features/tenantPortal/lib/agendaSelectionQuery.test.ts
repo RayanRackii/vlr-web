@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   agendaSelectionSearchParams,
+  clampTypedDateToHorizon,
   classifyAgendaDateAttempt,
   readAgendaDateParam,
   readAgendaTimeParam,
@@ -58,6 +59,25 @@ describe("agenda selection query", () => {
       date: "2099-06-01",
     })
     expect(classifyAgendaDateAttempt("2099-12-31", TODAY, null)).toEqual({
+      status: "ok",
+      date: "2099-12-31",
+    })
+  })
+
+  it("clamps a typed day past the horizon to the last bookable day", () => {
+    expect(clampTypedDateToHorizon("2026-10-26", TODAY, "2026-10-25")).toEqual({
+      status: "clamp",
+      date: "2026-10-25",
+    })
+    expect(clampTypedDateToHorizon("2026-10-20", TODAY, "2026-10-25")).toEqual({
+      status: "ok",
+      date: "2026-10-20",
+    })
+    expect(clampTypedDateToHorizon("2020-01-01", TODAY, "2026-10-25").status).toBe(
+      "before",
+    )
+    expect(clampTypedDateToHorizon("", TODAY, "2026-10-25").status).toBe("empty")
+    expect(clampTypedDateToHorizon("2099-12-31", TODAY, null)).toEqual({
       status: "ok",
       date: "2099-12-31",
     })
