@@ -14,7 +14,9 @@ import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
+  commitPortalBooking,
   isOwnBookedSlot,
+  recentPortalReservations,
   rememberOwnBooking,
   resetAgendaQueryClientForTests,
 } from "@/features/tenantPortal/lib/agendaQueryClient"
@@ -254,6 +256,14 @@ describe("CustomerAppLayout session tenant", () => {
   it("signs out with replace, drops the agenda cache, and keeps the chosen language", async () => {
     const user = userEvent.setup()
     const reservation = ownReservation()
+    let resolveBooking: (value: PortalReservation) => void = () => undefined
+    const booking = commitPortalBooking(
+      () => new Promise<PortalReservation>((resolve) => {
+        resolveBooking = resolve
+      }),
+      { subdomain: "ficc", dates: ["2026-10-18"] },
+    )
+    const discarded = expect(booking).rejects.toMatchObject({ name: "AbortError" })
     rememberOwnBooking(reservation)
     const civil = reservationCivilStart(OWN_START)
     if (civil === null) {
@@ -301,6 +311,11 @@ describe("CustomerAppLayout session tenant", () => {
     expect(router.state.historyAction).toBe("REPLACE")
     expect(screen.queryByText("agenda-body")).not.toBeInTheDocument()
     expect(await screen.findByText("login-form")).toBeInTheDocument()
+    expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
+    persistCustomerSession("next-customer-token", "ficc", "Bruno")
+    resolveBooking(reservation)
+    await discarded
+    expect(recentPortalReservations("ficc")).toEqual([])
     expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
     expect(fetchBranding).toHaveBeenCalledTimes(1)
   })

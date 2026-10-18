@@ -30,6 +30,8 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
 - [x] Admin B2B de reservas.
 
+- [x] Correção local do review #238: logout avança a geração da sessão da agenda; reservas e conflitos pendentes da sessão anterior não repovoam o cache nem iniciam refetch/retry. Respostas tardias do shell também são descartadas. Regressão com logout real e outro cliente na mesma aba. Branch `fix-238`, sem push.
+
 ## 2.5. Dashboard B2B dinâmico — FEITO (código)
 
 - [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).

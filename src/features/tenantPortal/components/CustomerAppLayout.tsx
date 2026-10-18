@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import type {
   ModuleMenuItem,
@@ -61,13 +62,14 @@ export function CustomerAppLayout() {
     }
 
     let cancelled = false
+    const generation = getAgendaSessionGeneration()
     setLoading(true)
     void Promise.all([
       fetchTenantBranding(subdomain),
       fetchTenantMenu(subdomain),
     ])
       .then(([brandingData, menuData]) => {
-        if (cancelled) {
+        if (cancelled || generation !== getAgendaSessionGeneration()) {
           return
         }
         setBranding(brandingData)
@@ -75,14 +77,14 @@ export function CustomerAppLayout() {
         setError(null)
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!cancelled && generation === getAgendaSessionGeneration()) {
           setError(appI18n.t("tenantPortal.errors.tenantNotFound"))
           setBranding(null)
           setMenu([])
         }
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!cancelled && generation === getAgendaSessionGeneration()) {
           setLoading(false)
         }
       })

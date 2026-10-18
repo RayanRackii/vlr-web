@@ -46,6 +46,7 @@ type AgendaInvalidateOptions = {
 type Listener = (snapshot: AgendaQuerySnapshot) => void
 
 let revision = 0
+let sessionGeneration = 0
 const listeners = new Set<Listener>()
 const ownSlotKeys = new Set<string>()
 const recentBySubdomain = new Map<string, PortalReservation[]>()
@@ -167,7 +168,13 @@ export function invalidateAgendaQueries(
   }
 
   const token = ++revision
-  return retryOnce(() => loadAgendaDays(subdomain, dates))
+  const generation = sessionGeneration
+  return retryOnce(() => {
+    if (generation !== sessionGeneration) {
+      throw new DOMException("Customer session changed", "AbortError")
+    }
+    return loadAgendaDays(subdomain, dates)
+  })
     .then((loaded) => {
       if (token !== revision) {
         return
@@ -205,6 +212,10 @@ export function subscribeAgendaQueries(listener: Listener): () => void {
 
 export function getAgendaQueryRevision(): number {
   return revision
+}
+
+export function getAgendaSessionGeneration(): number {
+  return sessionGeneration
 }
 
 /**
@@ -312,6 +323,7 @@ export async function commitPortalBooking<T extends PortalReservation>(
   scope: AgendaInvalidateScope,
   slot?: PortalBookingSlot,
 ): Promise<T> {
+  const generation = sessionGeneration
   const flightKey = slot
     ? agendaReservedSlotKey(slot.date, slot.rentalAssetId, slot.startTime)
     : null
@@ -335,6 +347,9 @@ export async function commitPortalBooking<T extends PortalReservation>(
   void (async () => {
     try {
       const created = await request()
+      if (generation !== sessionGeneration) {
+        throw new DOMException("Customer session changed", "AbortError")
+      }
       rememberOwnBooking(created)
       rememberRecentReservation(scope.subdomain, created)
       const viewed = scope.dates[0] ?? ""
@@ -347,6 +362,10 @@ export async function commitPortalBooking<T extends PortalReservation>(
       )
       resolveRun(created)
     } catch (error) {
+      if (generation !== sessionGeneration) {
+        rejectRun(new DOMException("Customer session changed", "AbortError"))
+        return
+      }
       if (isSlotTakenConflict(error)) {
         void invalidateAgendaQueries(scope, { applySlots: true })
       }
@@ -363,6 +382,7 @@ export async function commitPortalBooking<T extends PortalReservation>(
 
 /** Drops in-memory agenda snapshots so a later page cannot replay them. */
 export function clearAgendaQueryClient(): void {
+  sessionGeneration += 1
   revision += 1
   listeners.clear()
   ownSlotKeys.clear()
