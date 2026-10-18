@@ -253,6 +253,47 @@ describe("processSyncQueue", () => {
     expect(readStoredQueue()).toEqual([])
   })
 
+  it("keeps a queued value whose queuedAt is earlier than the conflict", async () => {
+    const id = `${workOrderId}:${taskId}`
+    store.set("os_sync_queue", [
+      {
+        id,
+        workOrderId,
+        taskId,
+        value: "kept",
+        queuedAt: "2026-10-17T01:00:00.000Z",
+        clientSequence: 1,
+      },
+    ])
+    store.set("os_sync_conflicts", [
+      {
+        id,
+        workOrderId,
+        taskId,
+        value: "rejected",
+        queuedAt: "2026-10-17T04:00:00.000Z",
+        clientSequence: 9,
+        status: 409,
+        message: "Rejected",
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      },
+    ])
+    apiPatch.mockResolvedValue({ data: {} })
+
+    const retried = await retrySyncConflict(workOrderId, taskId)
+
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+    expect(apiPatch).toHaveBeenCalledWith(
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      { value: "kept" },
+    )
+    expect(retried.processed).toBe(1)
+    expect(await listSyncConflicts()).toEqual([])
+    expect(await listQueuedTaskIds()).toEqual([])
+    expect(readStoredQueue()).toEqual([])
+  })
+
   it("does not let an in-flight stale flush finish after a newer direct patch", async () => {
     await enqueueTaskValuePatch({
       workOrderId,
