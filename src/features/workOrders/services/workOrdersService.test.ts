@@ -17,6 +17,11 @@ vi.mock("idb-keyval", () => ({
 
 import { api } from "@/lib/api"
 import i18n from "@/lib/i18n"
+import {
+  listQueuedTaskIds,
+  listSyncConflicts,
+  processSyncQueue,
+} from "@/lib/offlineSync"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import { makeWorkOrder, matchingRegistryAsset } from "@/features/workOrders/test/workOrderFixtures"
 
@@ -221,6 +226,61 @@ describe("updateTaskValue online errors", () => {
     await expect(updateTaskValue(order.id, task.id, "abc")).rejects.toThrow(
       i18n.t("workOrders.errors.taskValue.notANumber"),
     )
+  })
+
+  it("returns the parsed work order when the task patch body is valid", async () => {
+    const order = makeWorkOrder()
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const saved = makeWorkOrder({
+      tasks: [{ ...task, value: "true" }],
+    })
+    apiPatch.mockResolvedValue({ data: saved })
+
+    await expect(
+      updateTaskValue(order.id, task.id, "true"),
+    ).resolves.toMatchObject({
+      id: order.id,
+      tasks: [expect.objectContaining({ id: task.id, value: "true" })],
+    })
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("drops the queued value when a 200 body fails Zod and still throws invalidResponse", async () => {
+    const order = makeWorkOrder()
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    syncStore.set("os_sync_conflicts", [
+      {
+        id: `${order.id}:${task.id}`,
+        workOrderId: order.id,
+        taskId: task.id,
+        value: "old",
+        queuedAt: "2026-10-17T02:00:00.000Z",
+        clientSequence: 1,
+        status: 409,
+        message: "Rejected",
+        code: "WORK_ORDER_CLOSED",
+        reason: null,
+      },
+    ])
+    apiPatch.mockResolvedValue({ data: { unexpected: true } })
+
+    await expect(updateTaskValue(order.id, task.id, "true")).rejects.toThrow(
+      i18n.t("workOrders.errors.invalidResponse"),
+    )
+
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+    expect(await listQueuedTaskIds()).toEqual([])
+    expect(await listSyncConflicts()).toEqual([])
+
+    const flushed = await processSyncQueue()
+    expect(flushed.processed).toBe(0)
+    expect(apiPatch).toHaveBeenCalledTimes(1)
   })
 })
 

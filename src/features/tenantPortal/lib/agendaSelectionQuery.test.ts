@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   agendaSelectionSearchParams,
+  classifyAgendaDateAttempt,
   readAgendaDateParam,
   readAgendaTimeParam,
 } from "@/features/tenantPortal/lib/agendaSelectionQuery"
@@ -39,5 +40,26 @@ describe("agenda selection query", () => {
     expect(later.get("reservation")).toBe("abc")
     expect(later.get("date")).toBe("2099-01-15")
     expect(later.get("time")).toBe("13:00")
+  })
+
+  it("keeps an empty or impossible day from replacing the selection", () => {
+    expect(classifyAgendaDateAttempt("", TODAY, "2026-10-16").status).toBe("empty")
+    expect(classifyAgendaDateAttempt("2026-11-31", TODAY, "2026-10-16").status).toBe(
+      "invalid",
+    )
+    expect(classifyAgendaDateAttempt("2020-01-01", TODAY, "2026-10-16").status).toBe(
+      "before",
+    )
+    expect(classifyAgendaDateAttempt("2099-12-31", TODAY, "2026-10-16").status).toBe(
+      "after",
+    )
+    expect(classifyAgendaDateAttempt("2099-06-01", TODAY, "2099-12-31")).toEqual({
+      status: "ok",
+      date: "2099-06-01",
+    })
+    expect(classifyAgendaDateAttempt("2099-12-31", TODAY, null)).toEqual({
+      status: "ok",
+      date: "2099-12-31",
+    })
   })
 })

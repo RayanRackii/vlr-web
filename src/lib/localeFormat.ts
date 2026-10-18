@@ -90,6 +90,25 @@ export function formatLocaleCurrency(
   }
 }
 
+/** Civil `YYYY-MM-DD` as day and month only. Does not shift the calendar day. */
+export function formatLocaleCivilDayMonth(value: string, locale: string): string {
+  const match = CIVIL_DATE.exec(value)
+  if (!match) {
+    return value
+  }
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  return normalizeIntlSpaces(
+    new Intl.DateTimeFormat(locale, {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: "UTC",
+    }).format(Date.UTC(year, month - 1, day)),
+  )
+}
+
 /** Civil `YYYY-MM-DD` in the active locale. Does not shift the calendar day. */
 export function formatLocaleCivilDate(value: string, locale: string): string {
   const match = CIVIL_DATE.exec(value)

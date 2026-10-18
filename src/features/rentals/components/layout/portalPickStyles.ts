@@ -7,3 +7,6 @@ export const portalPickAvailableSelectedClass =
 
 export const portalPickUnavailableClass =
   "cursor-not-allowed border-foreground/40 bg-muted text-foreground"
+
+export const portalPickPendingClass =
+  "cursor-wait border-border bg-muted/40 text-muted-foreground"
