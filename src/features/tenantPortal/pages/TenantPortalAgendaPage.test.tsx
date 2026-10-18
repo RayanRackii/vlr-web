@@ -1737,23 +1737,25 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.date"),
     )
     await waitFor(() => {
-      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
     })
-
-    expect(
-      screen.getByText(
-        i18n.t("tenantPortal.agenda.horizonHint", {
-          date: "16/10",
-          count: 2,
-        }),
-      ),
-    ).toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("max")
 
     fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
 
-    expect(dateInput).toHaveValue("2026-10-14")
+    expect(dateInput).toHaveValue("2026-10-16")
     expect(dateInput).toHaveAttribute("aria-invalid", "true")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2099-12-31")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-16")
+    })
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
     ).toBeInTheDocument()
@@ -1814,7 +1816,14 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.date"),
     )
     await waitFor(() => {
-      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
     })
 
     await user.click(dateInput)
@@ -1990,6 +1999,102 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(router.state.location.search).toContain("date=2026-10-15")
     expect(router.state.location.search).not.toContain("2099-12-31")
+  })
+
+  it("clamps a typed day past the horizon without marking every court reserved", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    renderAgenda()
+
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
+    })
+
+    fetchDay.mockImplementation(() => new Promise(() => {}))
+    fireEvent.change(dateInput, { target: { value: "2026-10-26" } })
+
+    expect(dateInput).toHaveValue("2026-10-16")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2026-10-26")
+    expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-16")
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("common.refreshing")}`,
+      }),
+    ).toHaveAttribute("aria-busy", "true")
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+  })
+
+  it("reloads the day's times after leaving my reservations", async () => {
+    const { router } = renderAgendaHistory("/agenda")
+    const timeLabel = i18n.t("tenantPortal.agenda.time")
+    const trigger = await screen.findByRole("combobox", { name: timeLabel })
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent("08:00")
+    })
+    const callsBeforeHash = fetchDay.mock.calls.length
+
+    await act(async () => {
+      await router.navigate("/agenda#minhas-reservas")
+    })
+
+    expect(router.state.location.hash).toBe("#minhas-reservas")
+    expect(screen.getByRole("combobox", { name: timeLabel })).toHaveTextContent(
+      "08:00",
+    )
+    expect(
+      screen.getByRole("combobox", { name: timeLabel }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    expect(fetchDay.mock.calls.length).toBe(callsBeforeHash)
+
+    await act(async () => {
+      await router.navigate("/agenda")
+    })
+
+    await waitFor(() => {
+      expect(fetchDay.mock.calls.length).toBeGreaterThan(callsBeforeHash)
+      expect(screen.getByRole("combobox", { name: timeLabel })).toHaveTextContent(
+        "08:00",
+      )
+    })
+    expect(
+      screen.getByRole("combobox", { name: timeLabel }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it("drops the previous grid while a later day waits on policy", async () => {

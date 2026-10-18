@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { formatLocaleCivilDate } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 
+export type LocaleDateChangeSource = "input" | "calendar"
+
 type LocaleDateInputProps = {
   id?: string
   value: string
@@ -15,7 +17,7 @@ type LocaleDateInputProps = {
   today?: string
   invalid?: boolean
   describedBy?: string
-  onChange: (value: string) => void
+  onChange: (value: string, source: LocaleDateChangeSource) => void
   className?: string
 }
 
@@ -147,7 +149,7 @@ export function LocaleDateInput({
   }, [open])
 
   function choose(next: string) {
-    onChange(next)
+    onChange(next, "calendar")
     setOpen(false)
   }
 
@@ -178,7 +180,6 @@ export function LocaleDateInput({
           type="date"
           lang={locale}
           min={min}
-          max={max}
           value={value}
           aria-invalid={invalid || undefined}
           aria-describedby={describedBy}
@@ -195,7 +196,9 @@ export function LocaleDateInput({
             }
           }}
           onChange={(event) => {
-            onChange(event.target.value)
+            // `max` stays off this control. Chrome drops a typed day past
+            // max and the field snaps back with an empty value.
+            onChange(event.target.value, "input")
           }}
           className="absolute inset-0 h-8 cursor-pointer opacity-0"
         />
