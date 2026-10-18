@@ -326,8 +326,8 @@ function TaskField({
           {numberConfig?.min != null || numberConfig?.max != null ? (
             <p className="text-xs text-muted-foreground">
               {t("workOrders.execution.numberRange", {
-                min: numberConfig.min ?? "\u2014",
-                max: numberConfig.max ?? "\u2014",
+                min: numberConfig.min ?? "—",
+                max: numberConfig.max ?? "—",
                 unit: numberConfig.unit ? ` ${numberConfig.unit}` : "",
               })}
             </p>
@@ -850,7 +850,7 @@ export function WorkOrderExecutionPage() {
             {t("workOrders.columns.asset")}
           </p>
           <p className="font-medium">
-            {workOrder.asset.tag} \u2014 {workOrder.asset.name}
+            {workOrder.asset.tag} — {workOrder.asset.name}
           </p>
           {workOrder.asset.location ? (
             <p className="text-sm text-muted-foreground">
