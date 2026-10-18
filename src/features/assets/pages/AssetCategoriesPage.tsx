@@ -54,6 +54,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { isAxiosError } from "@/lib/api"
 import {
   createAssetCategoryFormSchema,
@@ -87,6 +88,8 @@ export function AssetCategoriesPage() {
   const { t } = useTranslation()
   const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
+  const { can } = usePermissions()
+  const canWriteCategories = can("inventory.categories.write")
 
   const [categories, setCategories] = useState<AssetCategory[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -222,7 +225,7 @@ export function AssetCategoriesPage() {
     }
   }, [])
 
-  const columns = useMemo<ColumnDef<AssetCategory>[]>(
+  const categoryColumns = useMemo<ColumnDef<AssetCategory>[]>(
     () => [
       {
         accessorKey: "name",
@@ -327,6 +330,14 @@ export function AssetCategoriesPage() {
       },
     ],
     [openEditDialog, t],
+  )
+
+  const columns = useMemo(
+    () =>
+      canWriteCategories
+        ? categoryColumns
+        : categoryColumns.filter((column) => column.id !== "actions"),
+    [canWriteCategories, categoryColumns],
   )
 
   const table = useReactTable({
@@ -447,10 +458,12 @@ export function AssetCategoriesPage() {
           </p>
         </div>
 
-        <Button type="button" onClick={openCreateDialog}>
-          <Plus data-icon="inline-start" />
-          {t("assets.categories.actions.new")}
-        </Button>
+        {canWriteCategories ? (
+          <Button type="button" onClick={openCreateDialog}>
+            <Plus data-icon="inline-start" />
+            {t("assets.categories.actions.new")}
+          </Button>
+        ) : null}
       </div>
 
       {successMessage !== null ? (
