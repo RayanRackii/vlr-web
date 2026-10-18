@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 import { basePlanJson, CATEGORY_ID, PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 
@@ -43,7 +44,12 @@ describe("MaintenancePlansPage Phase 1 list", () => {
   it("shows origin and auto columns and navigates to plan detail on row click", async () => {
     render(
       <MemoryRouter>
-        <MaintenancePlansPage />
+        <TestPermissionProvider
+          permissions={["pmoc.plans.read", "pmoc.plans.write"]}
+          activeModules={["pmoc"]}
+        >
+          <MaintenancePlansPage />
+        </TestPermissionProvider>
       </MemoryRouter>,
     )
 
@@ -59,7 +65,12 @@ describe("MaintenancePlansPage Phase 1 list", () => {
   it("H6: plan list does not show coverage aggregates", async () => {
     const { container } = render(
       <MemoryRouter>
-        <MaintenancePlansPage />
+        <TestPermissionProvider
+          permissions={["pmoc.plans.read"]}
+          activeModules={["pmoc"]}
+        >
+          <MaintenancePlansPage />
+        </TestPermissionProvider>
       </MemoryRouter>,
     )
 
