@@ -116,7 +116,9 @@
     "loadPortalOrders": "Não foi possível carregar seus pedidos.",
     "loadPortalOrder": "Não foi possível carregar o pedido.",
     "cancelPortalOrder": "Não foi possível cancelar o pedido.",
-    "submitProductRequest": "Não foi possível enviar a solicitação."
+    "submitProductRequest": "Não foi possível enviar a solicitação.",
+    "loadPortalProductRequests": "Não foi possível carregar suas solicitações.",
+    "loadPortalProductRequest": "Não foi possível carregar a solicitação."
   },
   "trial": {
     "banner": {
@@ -481,6 +483,7 @@
     "catalog": {
       "navCatalog": "Catálogo",
       "navOrders": "Pedidos",
+      "navRequests": "Minhas solicitações",
       "title": "Catálogo",
       "subtitle": "Produtos disponíveis para solicitar.",
       "searchPlaceholder": "Buscar por nome ou código",
@@ -503,7 +506,7 @@
       "orderSubmitted": "Pedido enviado.",
       "requestCta": "Solicitar produto",
       "requestTitle": "Solicitar produto",
-      "requestSubtitle": "Descreva o que você precisa. Não há lista de acompanhamento neste momento.",
+      "requestSubtitle": "Descreva o que você precisa. Depois de enviar, a solicitação fica em Minhas solicitações.",
       "requestDescription": "Descrição",
       "requestNote": "Observação",
       "requestFiles": "Arquivos",
@@ -515,7 +518,19 @@
       "ordersEmpty": "Você ainda não fez pedidos.",
       "cancelOrder": "Cancelar pedido",
       "cancelling": "Cancelando...",
-      "orderCancelled": "Pedido cancelado."
+      "orderCancelled": "Pedido cancelado.",
+      "requestsTitle": "Minhas solicitações",
+      "requestsSubtitle": "Acompanhe as solicitações que você enviou.",
+      "requestsLoading": "Carregando solicitações...",
+      "requestsEmpty": "Você ainda não fez solicitações.",
+      "requestsPageEmpty": "Nenhuma solicitação nesta página.",
+      "requestsPageSummary": "{{from}}–{{to}} de {{total}}",
+      "requestsPrevious": "Página anterior",
+      "requestsNext": "Próxima página",
+      "requestNotFound": "Não encontramos esta solicitação.",
+      "requestDetailTitle": "Solicitação",
+      "requestFilesTitle": "Arquivos",
+      "requestFilesEmpty": "Nenhum arquivo."
     }
   },
   "catalog": {
@@ -529,6 +544,9 @@
       "Completed": "Concluído",
       "Rejected": "Recusado",
       "Cancelled": "Cancelado"
+    },
+    "productRequestStatus": {
+      "Submitted": "Enviada"
     },
     "actor": {
       "Customer": "Cliente",

@@ -30,6 +30,7 @@ export function PortalProductRequestPage() {
   const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const form = useForm<ProductRequestFormValues>({
     resolver: zodResolver(productRequestFormSchema),
@@ -49,6 +50,7 @@ export function PortalProductRequestPage() {
       })
       form.reset({ description: "", quantity: 1, note: "" })
       setFiles([])
+      setSubmitted(true)
       toast.success(t("tenantPortal.catalog.requestSubmitted"))
     } catch (error) {
       toast.error(
@@ -79,6 +81,25 @@ export function PortalProductRequestPage() {
           {t("tenantPortal.catalog.requestSubtitle")}
         </p>
       </div>
+
+      {submitted ? (
+        <div
+          role="status"
+          className="space-y-2 rounded-xl border border-border px-4 py-3 text-sm"
+        >
+          <p>{t("tenantPortal.catalog.requestSubmitted")}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            render={
+              <Link to={tenantPortalPath(subdomain, "catalogo/solicitacoes")} />
+            }
+          >
+            {t("tenantPortal.catalog.navRequests")}
+          </Button>
+        </div>
+      ) : null}
 
       <Form {...form}>
         <form

@@ -52,7 +52,9 @@ import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
 import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
 import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
 import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
+import { PortalProductRequestDetailPage } from "@/features/catalog/pages/PortalProductRequestDetailPage"
 import { PortalProductRequestPage } from "@/features/catalog/pages/PortalProductRequestPage"
+import { PortalProductRequestsPage } from "@/features/catalog/pages/PortalProductRequestsPage"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
@@ -99,6 +101,11 @@ export function AppRoutes() {
           <Route path="catalogo" element={<PortalCatalogPage />} />
           <Route path="catalogo/carrinho" element={<PortalCartPage />} />
           <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
+          <Route path="catalogo/solicitacoes" element={<PortalProductRequestsPage />} />
+          <Route
+            path="catalogo/solicitacoes/:requestId"
+            element={<PortalProductRequestDetailPage />}
+          />
           <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
           <Route path="pedidos" element={<PortalOrdersPage />} />
           <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />
@@ -137,6 +144,11 @@ export function AppRoutes() {
           <Route path="catalogo" element={<PortalCatalogPage />} />
           <Route path="catalogo/carrinho" element={<PortalCartPage />} />
           <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
+          <Route path="catalogo/solicitacoes" element={<PortalProductRequestsPage />} />
+          <Route
+            path="catalogo/solicitacoes/:requestId"
+            element={<PortalProductRequestDetailPage />}
+          />
           <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
           <Route path="pedidos" element={<PortalOrdersPage />} />
           <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />

@@ -78,6 +78,15 @@ export function PortalCatalogPage() {
             <Button
               type="button"
               variant="outline"
+              render={
+                <Link to={tenantPortalPath(subdomain, "catalogo/solicitacoes")} />
+              }
+            >
+              {t("tenantPortal.catalog.navRequests")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
             >
               <ShoppingBag data-icon="inline-start" />

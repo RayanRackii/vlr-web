@@ -165,6 +165,41 @@ export type ProductRequest = z.infer<typeof productRequestSchema>
 
 export const productRequestListSchema = z.array(productRequestSchema)
 
+/** Customer portal read model. POST still returns {@link productRequestSchema}. */
+export const portalProductRequestFileSchema = z.object({
+  id: z.string().uuid(),
+  fileName: z.string(),
+  url: z.string().min(1),
+})
+
+export type PortalProductRequestFile = z.infer<
+  typeof portalProductRequestFileSchema
+>
+
+export const portalProductRequestSchema = z.object({
+  id: z.string().uuid(),
+  status: z.string().trim().min(1),
+  description: z.string(),
+  quantity: z.number().int(),
+  createdAt: z.string().min(1),
+  files: z.array(portalProductRequestFileSchema),
+})
+
+export type PortalProductRequest = z.infer<typeof portalProductRequestSchema>
+
+export const PORTAL_PRODUCT_REQUEST_PAGE_SIZE = 20
+
+export const portalProductRequestPageSchema = z.object({
+  items: z.array(portalProductRequestSchema),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(50),
+  total: z.number().int().nonnegative(),
+})
+
+export type PortalProductRequestPage = z.infer<
+  typeof portalProductRequestPageSchema
+>
+
 export const portalProductFileSchema = z.object({
   id: z.string().uuid(),
   fileName: z.string(),

@@ -190,6 +190,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
 - [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
+- [x] B2C Minhas solicitações: lista paginada (`GET /api/catalog/portal/product-requests`, pageSize 20) e detalhe (`GET .../{id}`). Menu do catálogo, botão no catálogo e confirmação do envio apontam para a lista. 404/501 da lista mostra vazio até o `vlr-api` #224 existir. Sem lógica de clube.
 
 ## 5. Fluxo de convite B2B
 
@@ -371,6 +372,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-17 | **Fix (WEB):** o PATCH direto de uma tarefa grava o valor novo na fila antes do envio, substituindo o campo numa única escrita e com `clientSequence` maior. Rede e 5xx deixam esse valor na fila; 4xx vai para o conflito e o erro sobe; sucesso remove só essa versão e limpa o conflito. Sem mudança no `vlr-api`. |
 | 2026-10-17 | **Fix (WEB):** PATCH de tarefa com HTTP 2xx e corpo que não passa no schema sai da fila (o flush seguinte não reenvia o valor já aplicado) e a tela ainda mostra resposta inválida. Uma versão mais nova na fila apaga o conflito antigo daquele campo; Tentar de novo não grava o valor rejeitado por cima dela. Um 4xx direto avisa o banner na hora. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** agenda B2C explica o horizonte ao lado da data, avisa no campo quando a data fica fora do intervalo, não pinta os espaços como reservados enquanto o dia carrega, mantém a data da URL depois de cancelar, e o calendário usa o idioma da tela. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Código (WEB):** portal B2C lista e abre as próprias solicitações de produto (`GET /api/catalog/portal/product-requests` paginado, mais novo primeiro, e `GET .../{id}`). Menu do catálogo, o catálogo e a confirmação do envio levam a Minhas solicitações. 404/501 da lista vira estado vazio até o `vlr-api` #224 entrar. pt-BR/en/es. Sem lógica de um tenant. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

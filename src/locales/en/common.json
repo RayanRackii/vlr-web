@@ -116,7 +116,9 @@
     "loadPortalOrders": "Could not load your orders.",
     "loadPortalOrder": "Could not load the order.",
     "cancelPortalOrder": "Could not cancel the order.",
-    "submitProductRequest": "Could not submit the product request."
+    "submitProductRequest": "Could not submit the product request.",
+    "loadPortalProductRequests": "Could not load your requests.",
+    "loadPortalProductRequest": "Could not load the request."
   },
   "trial": {
     "banner": {
@@ -481,6 +483,7 @@
     "catalog": {
       "navCatalog": "Catalog",
       "navOrders": "Orders",
+      "navRequests": "My requests",
       "title": "Catalog",
       "subtitle": "Products available to request.",
       "searchPlaceholder": "Search by name or code",
@@ -503,7 +506,7 @@
       "orderSubmitted": "Order submitted.",
       "requestCta": "Request a product",
       "requestTitle": "Request a product",
-      "requestSubtitle": "Describe what you need. There is no tracking list in this version.",
+      "requestSubtitle": "Describe what you need. After you submit, the request is listed in My requests.",
       "requestDescription": "Description",
       "requestNote": "Note",
       "requestFiles": "Files",
@@ -515,7 +518,19 @@
       "ordersEmpty": "You have not placed any orders yet.",
       "cancelOrder": "Cancel order",
       "cancelling": "Cancelling...",
-      "orderCancelled": "Order cancelled."
+      "orderCancelled": "Order cancelled.",
+      "requestsTitle": "My requests",
+      "requestsSubtitle": "Track the requests you submitted.",
+      "requestsLoading": "Loading requests...",
+      "requestsEmpty": "You have not submitted any requests yet.",
+      "requestsPageEmpty": "No requests on this page.",
+      "requestsPageSummary": "{{from}}–{{to}} of {{total}}",
+      "requestsPrevious": "Previous page",
+      "requestsNext": "Next page",
+      "requestNotFound": "We could not find this request.",
+      "requestDetailTitle": "Request",
+      "requestFilesTitle": "Files",
+      "requestFilesEmpty": "No files."
     }
   },
   "catalog": {
@@ -529,6 +544,9 @@
       "Completed": "Completed",
       "Rejected": "Rejected",
       "Cancelled": "Cancelled"
+    },
+    "productRequestStatus": {
+      "Submitted": "Submitted"
     },
     "actor": {
       "Customer": "Customer",

@@ -1,4 +1,4 @@
-import { CircleUser, ClipboardList, ListChecks, ShoppingBag } from "lucide-react"
+import { CircleUser, ClipboardList, FileText, ListChecks, ShoppingBag } from "lucide-react"
 import type { TFunction } from "i18next"
 
 import {
@@ -174,6 +174,12 @@ export function buildCustomerNavItems(
         label: t("tenantPortal.catalog.navOrders"),
         to: tenantPortalPath(subdomain, "pedidos"),
         icon: ClipboardList,
+      })
+      items.push({
+        id: `${item.id}-requests`,
+        label: t("tenantPortal.catalog.navRequests"),
+        to: tenantPortalPath(subdomain, "catalogo/solicitacoes"),
+        icon: FileText,
       })
       catalogAdded = true
       continue

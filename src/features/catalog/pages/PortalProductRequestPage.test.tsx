@@ -179,4 +179,46 @@ describe("PortalProductRequestPage validity gate", () => {
     expect(screen.getByRole("link", { name: i18n.t("common.back") })).toBeEnabled()
     expect(createRequestMock).toHaveBeenCalledTimes(1)
   })
+
+  it("links Minhas solicitações from the confirmation after a successful submit", async () => {
+    const user = userEvent.setup()
+    createRequestMock.mockResolvedValue({
+      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      customerId: "11111111-1111-4111-8111-111111111111",
+      description: "Rede de vôlei",
+      quantity: 1,
+      note: null,
+      status: "Submitted",
+      createdAt: "2026-10-18T16:00:00.000Z",
+      files: [],
+    })
+    renderRequest()
+
+    expect(
+      screen.queryByRole("link", {
+        name: i18n.t("tenantPortal.catalog.navRequests"),
+      }),
+    ).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.catalog.requestDescription")),
+      "Rede de vôlei",
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.catalog.requestSubmit"),
+      }),
+    )
+
+    const requests = await screen.findByRole("link", {
+      name: i18n.t("tenantPortal.catalog.navRequests"),
+    })
+    expect(requests).toHaveAttribute("href", "/t/ficc/catalogo/solicitacoes")
+    expect(screen.getByRole("status")).toHaveTextContent(
+      i18n.t("tenantPortal.catalog.requestSubmitted"),
+    )
+    expect(toast.success).toHaveBeenCalledWith(
+      i18n.t("tenantPortal.catalog.requestSubmitted"),
+    )
+  })
 })

@@ -144,9 +144,11 @@ describe("buildCustomerNavItems", () => {
       RENTALS_B.label,
       i18n.t("tenantPortal.catalog.navCatalog"),
       i18n.t("tenantPortal.catalog.navOrders"),
+      i18n.t("tenantPortal.catalog.navRequests"),
     ])
     expect(nav[1]?.to).toContain("catalogo")
     expect(nav[2]?.to).toContain("pedidos")
+    expect(nav[3]?.to).toContain("catalogo/solicitacoes")
     expect(nav.some((item) => item.label === CATALOG.label)).toBe(false)
   })
 
@@ -182,9 +184,39 @@ describe("buildCustomerShellNavItems", () => {
     expect(nav.map((item) => item.label)).toEqual([
       i18n.t("tenantPortal.catalog.navCatalog"),
       i18n.t("tenantPortal.catalog.navOrders"),
+      i18n.t("tenantPortal.catalog.navRequests"),
       i18n.t("account.profile"),
     ])
     expect(nav.some((item) => item.to.includes("agenda"))).toBe(false)
+  })
+
+  it("highlights my requests on the list and detail, and keeps catalog on the catalog path", () => {
+    const nav = buildCustomerShellNavItems("clube", [CATALOG], i18n.t)
+    const catalog = nav.find((item) => item.to.endsWith("/catalogo"))
+    const requests = nav.find((item) =>
+      item.to.endsWith("/catalogo/solicitacoes"),
+    )
+    if (!catalog || !requests) {
+      throw new Error("Catalog nav items were not built.")
+    }
+
+    const listPath = "/t/clube/catalogo/solicitacoes"
+    const detailPath =
+      "/t/clube/catalogo/solicitacoes/3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+    expect(isCustomerNavItemActive(requests, nav, listPath, "")).toBe(true)
+    expect(isCustomerNavItemActive(catalog, nav, listPath, "")).toBe(false)
+    expect(isCustomerNavItemActive(requests, nav, detailPath, "")).toBe(true)
+    expect(isCustomerNavItemActive(catalog, nav, detailPath, "")).toBe(false)
+    expect(isCustomerNavItemActive(catalog, nav, "/t/clube/catalogo", "")).toBe(
+      true,
+    )
+    expect(
+      isCustomerNavItemActive(requests, nav, "/t/clube/catalogo", ""),
+    ).toBe(false)
+    expect(
+      isCustomerNavItemActive(catalog, nav, "/t/clube/catalogo/carrinho", ""),
+    ).toBe(true)
   })
 
   it("highlights my reservations only when the agenda hash is present", () => {
