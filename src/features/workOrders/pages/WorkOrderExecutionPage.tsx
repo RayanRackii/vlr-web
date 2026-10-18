@@ -12,6 +12,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { WorkOrderAssigneeField } from "@/features/workOrders/components/WorkOrderAssigneeField"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
 import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
@@ -325,8 +326,8 @@ function TaskField({
           {numberConfig?.min != null || numberConfig?.max != null ? (
             <p className="text-xs text-muted-foreground">
               {t("workOrders.execution.numberRange", {
-                min: numberConfig.min ?? "—",
-                max: numberConfig.max ?? "—",
+                min: numberConfig.min ?? "\u2014",
+                max: numberConfig.max ?? "\u2014",
                 unit: numberConfig.unit ? ` ${numberConfig.unit}` : "",
               })}
             </p>
@@ -849,7 +850,7 @@ export function WorkOrderExecutionPage() {
             {t("workOrders.columns.asset")}
           </p>
           <p className="font-medium">
-            {workOrder.asset.tag} — {workOrder.asset.name}
+            {workOrder.asset.tag} \u2014 {workOrder.asset.name}
           </p>
           {workOrder.asset.location ? (
             <p className="text-sm text-muted-foreground">
@@ -865,6 +866,19 @@ export function WorkOrderExecutionPage() {
             {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
           </p>
         </div>
+        <WorkOrderAssigneeField
+          workOrder={workOrder}
+          onUpdated={(updated) => {
+            hasWorkOrderRef.current = true
+            setWorkOrder(
+              mergeWorkOrderDrafts(
+                updated,
+                conflicts,
+                draftValuesRef.current,
+              ),
+            )
+          }}
+        />
         <div>
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.origin")}
