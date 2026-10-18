@@ -40,10 +40,10 @@ import {
 import {
   portalPickAvailableClass,
   portalPickAvailableSelectedClass,
+  portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
 import {
-  clampDateToHorizon,
   horizonEndDate,
   resolveAgendaHorizonDays,
 } from "@/features/rentals/lib/bookingHorizon"
@@ -68,6 +68,7 @@ import {
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
 import {
   agendaSelectionSearchParams,
+  classifyAgendaDateAttempt,
   readAgendaDateParam,
   readAgendaTimeParam,
 } from "@/features/tenantPortal/lib/agendaSelectionQuery"
@@ -115,7 +116,7 @@ import {
 import { withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
 import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import appI18n from "@/lib/i18n"
-import { formatLocaleCurrency } from "@/lib/localeFormat"
+import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 
 function isCancelledReservationStatus(status: string): boolean {
@@ -210,6 +211,11 @@ export function TenantPortalAgendaPage() {
   >(undefined)
   const [bookingPolicyReady, setBookingPolicyReady] = useState(false)
   const [horizonAdjusted, setHorizonAdjusted] = useState(false)
+  const [dateRejection, setDateRejection] = useState<"before" | "after" | null>(
+    null,
+  )
+  const horizonHintId = useId()
+  const dateFeedbackId = useId()
   const submittingRef = useRef(false)
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
@@ -585,6 +591,7 @@ export function TenantPortalAgendaPage() {
     })
   }, [subdomain])
 
+  const schedulePending = slotsLoading || slotsBelongToDate !== date
   const slotsForView = useMemo(
     () => (slotsBelongToDate === date ? slots : []),
     [date, slots, slotsBelongToDate],
@@ -724,6 +731,24 @@ export function TenantPortalAgendaPage() {
 
     section.scrollIntoView({ block: "start" })
   }, [loading, location.hash])
+
+  const showHorizonHint =
+    typeof horizonDays === "number" && horizonMaxDate !== null
+  const dateFeedback =
+    dateRejection === "before"
+      ? t("tenantPortal.agenda.dateBeforeToday")
+      : dateRejection === "after"
+        ? t("tenantPortal.agenda.horizonExceeded")
+        : horizonAdjusted
+          ? t("tenantPortal.agenda.horizonAdjusted")
+          : null
+  const dateDescribedBy =
+    [
+      showHorizonHint ? horizonHintId : null,
+      dateFeedback ? dateFeedbackId : null,
+    ]
+      .filter((item) => item !== null)
+      .join(" ") || undefined
 
   if (!signedIn) {
     return <Navigate to={tenantPortalPath(subdomain)} replace />
@@ -920,6 +945,7 @@ export function TenantPortalAgendaPage() {
     }
     const id = pendingCancelId
     const viewedDate = date
+    const keptDate = readAgendaDateParam(searchParams.get("date"), date)
     const existing = mine.find((reservation) => reservation.id === id) ?? null
     const seenRevision = getAgendaQueryRevision()
     cancelingRef.current = true
@@ -1008,18 +1034,40 @@ export function TenantPortalAgendaPage() {
     } finally {
       cancelingRef.current = false
       setCancelingId(null)
+      viewedDateRef.current = keptDate
+      setDate(keptDate)
     }
   }
 
   function onDateChange(value: string) {
-    const parsed = readAgendaDateParam(value, brazilTodayIsoDate())
-    const next = clampDateToHorizon(parsed, horizonMaxDate)
-    setHorizonAdjusted(next !== parsed)
-    viewedDateRef.current = next
-    setDate(next)
+    const attempt = classifyAgendaDateAttempt(
+      value,
+      brazilTodayIsoDate(),
+      horizonMaxDate,
+    )
+    if (attempt.status === "empty" || attempt.status === "invalid") {
+      return
+    }
+    if (attempt.status === "before" || attempt.status === "after") {
+      setDateRejection(attempt.status)
+      return
+    }
+    setDateRejection(null)
+    setHorizonAdjusted(false)
+    viewedDateRef.current = attempt.date
+    setDate(attempt.date)
   }
 
   function spaceState(rentalAssetId: string) {
+    if (schedulePending) {
+      return {
+        available: false,
+        disabled: true,
+        selected: false,
+        pending: true,
+        detail: t("common.refreshing"),
+      }
+    }
     const slot = startTime
       ? findSlotAtStart(slotsForView, rentalAssetId, startTime)
       : undefined
@@ -1042,6 +1090,7 @@ export function TenantPortalAgendaPage() {
       available,
       disabled: !available,
       selected: available && selectedRentalAssetId === rentalAssetId,
+      pending: false,
       detail,
     }
   }
@@ -1064,14 +1113,34 @@ export function TenantPortalAgendaPage() {
               <label htmlFor={dateInputId}>{t("tenantPortal.agenda.date")}</label>
               <LocaleDateInput
                 id={dateInputId}
-                locale={i18n.language}
+                locale={moneyLocale}
+                today={brazilTodayIsoDate()}
                 min={brazilTodayIsoDate()}
                 max={horizonMaxDate ?? undefined}
                 value={date}
+                invalid={dateRejection !== null}
+                describedBy={dateDescribedBy}
                 onChange={(nextValue) => {
                   onDateChange(nextValue)
                 }}
               />
+              {typeof horizonDays === "number" && horizonMaxDate !== null ? (
+                <p id={horizonHintId} className="text-xs text-muted-foreground">
+                  {t("tenantPortal.agenda.horizonHint", {
+                    date: formatLocaleCivilDayMonth(horizonMaxDate, moneyLocale),
+                    count: horizonDays,
+                  })}
+                </p>
+              ) : null}
+              {dateFeedback ? (
+                <p
+                  id={dateFeedbackId}
+                  className="text-xs text-muted-foreground"
+                  role="status"
+                >
+                  {dateFeedback}
+                </p>
+              ) : null}
             </div>
             <label className="space-y-1 text-sm">
               <span>{t("tenantPortal.agenda.time")}</span>
@@ -1088,13 +1157,13 @@ export function TenantPortalAgendaPage() {
                 }}
                 items={timeItems}
                 disabled={
-                  slotsLoading || slotsError || timeWindows.length === 0
+                  schedulePending || slotsError || timeWindows.length === 0
                 }
               >
-                <SelectTrigger className="w-full" aria-busy={slotsLoading}>
+                <SelectTrigger className="w-full" aria-busy={schedulePending}>
                   <SelectValue
                     placeholder={
-                      slotsLoading
+                      schedulePending
                         ? t("tenantPortal.agenda.loadingTimes")
                         : slotsError
                           ? t("tenantPortal.agenda.slotsError")
@@ -1122,13 +1191,8 @@ export function TenantPortalAgendaPage() {
               {t("tenantPortal.agenda.pastSlotsHidden")}
             </p>
           ) : null}
-          {horizonAdjusted ? (
-            <p className="text-sm text-muted-foreground" role="status">
-              {t("tenantPortal.agenda.horizonAdjusted")}
-            </p>
-          ) : null}
 
-          {slotsLoading ? (
+          {schedulePending ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Loader2 className="size-3 animate-spin" aria-hidden />
               {t("common.refreshing")}
@@ -1175,6 +1239,7 @@ export function TenantPortalAgendaPage() {
                   zIndex: item.zIndex,
                   available: inVisibleSet && state.available,
                   disabled,
+                  pending: inVisibleSet && state.pending,
                   selected: inVisibleSet && state.selected,
                   detail: inVisibleSet ? state.detail : null,
                 }
@@ -1197,6 +1262,7 @@ export function TenantPortalAgendaPage() {
                       type="button"
                       disabled={state.disabled || submitting}
                       aria-pressed={state.selected}
+                      aria-busy={state.pending || undefined}
                       aria-label={
                         state.detail
                           ? `${asset.name}. ${state.detail}`
@@ -1204,13 +1270,18 @@ export function TenantPortalAgendaPage() {
                       }
                       className={cn(
                         "rounded-lg border px-3 py-4 text-sm font-medium",
-                        state.available &&
+                        state.pending && portalPickPendingClass,
+                        !state.pending &&
+                          state.available &&
                           state.selected &&
                           portalPickAvailableSelectedClass,
-                        state.available &&
+                        !state.pending &&
+                          state.available &&
                           !state.selected &&
                           portalPickAvailableClass,
-                        !state.available && portalPickUnavailableClass,
+                        !state.pending &&
+                          !state.available &&
+                          portalPickUnavailableClass,
                       )}
                       onClick={() => {
                         setSelectedRentalAssetId(asset.id)
@@ -1358,7 +1429,7 @@ export function TenantPortalAgendaPage() {
             </p>
           ) : null}
 
-          {quote.status === "ready" && quote.amount === null ? (
+          {!schedulePending && quote.status === "ready" && quote.amount === null ? (
             <p className="text-sm text-muted-foreground">
               {t("tenantPortal.agenda.slotTaken")}
             </p>
