@@ -4,30 +4,38 @@ import {
   portalProductRequestRange,
   productRequestStatusLabel,
 } from "@/features/catalog/lib/productRequestStatusLabel"
-import i18n from "@/lib/i18n"
+import { productRequestStatusSchema } from "@/features/catalog/schemas/catalogSchemas"
+import i18n, { supportedLanguages } from "@/lib/i18n"
 
 describe("productRequestStatusLabel", () => {
   afterEach(async () => {
     await i18n.changeLanguage("pt-BR")
   })
 
-  it("translates Submitted in pt-BR, en, and es and keeps unknown statuses", async () => {
-    await i18n.changeLanguage("pt-BR")
-    expect(productRequestStatusLabel("Submitted", (key) => i18n.t(key))).toBe(
-      "Enviada",
-    )
+  it("translates every known status in pt-BR, en, and es and keeps unknown statuses", async () => {
+    for (const language of supportedLanguages) {
+      await i18n.changeLanguage(language)
+      for (const status of productRequestStatusSchema.options) {
+        const expected: unknown = i18n.getResource(
+          language,
+          "common",
+          `catalog.productRequestStatus.${status}`,
+        )
+        expect(typeof expected).toBe("string")
+        expect(expected).not.toBe(`catalog.productRequestStatus.${status}`)
+        expect(
+          productRequestStatusLabel(status, (key, options) =>
+            i18n.t(key, options),
+          ),
+        ).toBe(expected)
+      }
 
-    await i18n.changeLanguage("en")
-    expect(productRequestStatusLabel("Submitted", (key) => i18n.t(key))).toBe(
-      "Submitted",
-    )
-
-    await i18n.changeLanguage("es")
-    expect(productRequestStatusLabel("Submitted", (key) => i18n.t(key))).toBe(
-      "Enviada",
-    )
-
-    expect(productRequestStatusLabel("Quoted", (key) => key)).toBe("Quoted")
+      expect(
+        productRequestStatusLabel("Quoted", (key, options) =>
+          i18n.t(key, options),
+        ),
+      ).toBe("Quoted")
+    }
   })
 })
 

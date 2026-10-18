@@ -12,12 +12,17 @@ export function portalProductRequestRange(
   return { from, to, pageCount }
 }
 
+type TranslateStatus = (
+  key: string,
+  options: { defaultValue: string },
+) => string
+
 /** Known statuses use i18n. Any other status stays as the API sent it. */
 export function productRequestStatusLabel(
   status: string,
-  translate: (key: string) => string,
+  translate: TranslateStatus,
 ): string {
-  const key = `catalog.productRequestStatus.${status}`
-  const label = translate(key)
-  return label === key ? status : label
+  return translate(`catalog.productRequestStatus.${status}`, {
+    defaultValue: status,
+  })
 }

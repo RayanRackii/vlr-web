@@ -153,15 +153,6 @@ export async function createPortalProductRequest(body: {
   }
 }
 
-function emptyPortalProductRequestPage(page: number): PortalProductRequestPage {
-  return {
-    items: [],
-    page,
-    pageSize: PORTAL_PRODUCT_REQUEST_PAGE_SIZE,
-    total: 0,
-  }
-}
-
 /** List route from vlr-api #224. 404/501 means it is not deployed yet. */
 function isPortalProductRequestListUnavailable(error: unknown): boolean {
   if (!isAxiosError(error)) {
@@ -171,9 +162,13 @@ function isPortalProductRequestListUnavailable(error: unknown): boolean {
   return status === 404 || status === 501
 }
 
+export type PortalProductRequestListResult =
+  | { kind: "ready"; page: PortalProductRequestPage }
+  | { kind: "unavailable" }
+
 export async function listPortalProductRequests(
   page = 1,
-): Promise<PortalProductRequestPage> {
+): Promise<PortalProductRequestListResult> {
   const safePage = Number.isInteger(page) && page >= 1 ? page : 1
   try {
     const response = await customerApi.get(
@@ -185,10 +180,13 @@ export async function listPortalProductRequests(
         },
       },
     )
-    return parseOrThrow(portalProductRequestPageSchema.safeParse(response.data))
+    return {
+      kind: "ready",
+      page: parseOrThrow(portalProductRequestPageSchema.safeParse(response.data)),
+    }
   } catch (error) {
     if (isPortalProductRequestListUnavailable(error)) {
-      return emptyPortalProductRequestPage(safePage)
+      return { kind: "unavailable" }
     }
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error

@@ -9,6 +9,7 @@ import {
   buildCustomerNavItems,
   buildCustomerShellNavItems,
   CUSTOMER_MY_RESERVATIONS_HASH,
+  customerNavHref,
   getDiscoverablePortalModules,
   getEligiblePortalMenuModules,
   getVisiblePortalMenuItems,
@@ -158,6 +159,28 @@ describe("buildCustomerNavItems", () => {
     expect(nav).toHaveLength(1)
     expect(nav[0]?.id).toBe(RENTALS_A.id)
     expect(nav[0]?.label).toBe(RENTALS_A.label)
+  })
+})
+
+describe("customerNavHref", () => {
+  it("keeps the agenda search when the link only changes the hash", () => {
+    const path = "/t/clube/agenda/item"
+    expect(
+      customerNavHref(`${path}${CUSTOMER_MY_RESERVATIONS_HASH}`, path, "?time=08:00"),
+    ).toBe(`${path}?time=08:00${CUSTOMER_MY_RESERVATIONS_HASH}`)
+    expect(customerNavHref(path, path, "?date=2026-10-20&time=13:00")).toBe(
+      `${path}?date=2026-10-20&time=13:00`,
+    )
+  })
+
+  it("leaves a different page and an empty search unchanged", () => {
+    const path = "/t/clube/agenda/item"
+    expect(customerNavHref("/t/clube/app/perfil", path, "?time=08:00")).toBe(
+      "/t/clube/app/perfil",
+    )
+    expect(customerNavHref(`${path}${CUSTOMER_MY_RESERVATIONS_HASH}`, path, "")).toBe(
+      `${path}${CUSTOMER_MY_RESERVATIONS_HASH}`,
+    )
   })
 })
 

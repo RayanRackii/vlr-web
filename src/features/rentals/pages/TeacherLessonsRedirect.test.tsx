@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 
@@ -116,8 +116,12 @@ describe("teacher agenda after the dashboard redirect", () => {
     const redirected = renderAgenda("/dashboard")
 
     const courtLabel = i18n.t("rentals.teacherLessons.court")
-    const fromDashboard = await screen.findByRole("combobox", { name: courtLabel })
-    expect(fromDashboard).toHaveTextContent("Quadra 1")
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: courtLabel })).toHaveTextContent(
+        "Quadra 1",
+      )
+    })
+    const fromDashboard = screen.getByRole("combobox", { name: courtLabel })
     expect(fromDashboard).toBeEnabled()
     expect(
       screen.queryByText(i18n.t("rentals.teacherLessons.loadingResources")),
@@ -129,8 +133,12 @@ describe("teacher agenda after the dashboard redirect", () => {
     redirected.unmount()
     renderAgenda("/configuracoes/agenda")
 
-    const direct = await screen.findByRole("combobox", { name: courtLabel })
-    expect(direct).toHaveTextContent("Quadra 1")
+    await waitFor(() => {
+      expect(screen.getByRole("combobox", { name: courtLabel })).toHaveTextContent(
+        "Quadra 1",
+      )
+    })
+    const direct = screen.getByRole("combobox", { name: courtLabel })
     expect(direct).toBeEnabled()
   })
 })

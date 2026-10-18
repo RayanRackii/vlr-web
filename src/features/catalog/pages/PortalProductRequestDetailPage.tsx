@@ -137,7 +137,9 @@ export function PortalProductRequestDetailPage() {
               </p>
             </div>
             <Badge variant="outline">
-              {productRequestStatusLabel(request.status, (key) => t(key))}
+              {productRequestStatusLabel(request.status, (key, options) =>
+                t(key, options),
+              )}
             </Badge>
           </div>
 

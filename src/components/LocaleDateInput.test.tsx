@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
@@ -83,6 +83,34 @@ describe("LocaleDateInput", () => {
     await user.click(screen.getByRole("button", { name: "20/10/2026" }))
     expect(seen).toEqual(["2026-10-20"])
     expect(screen.getByLabelText("Data")).toHaveAttribute("lang", "pt-BR")
+    expect(screen.getByLabelText("Data")).not.toHaveAttribute("max")
+  })
+
+  it("reports a typed day past max instead of clearing the field", () => {
+    const seen: Array<{ value: string; source: string }> = []
+    render(
+      <div>
+        <label htmlFor="day">Data</label>
+        <LocaleDateInput
+          id="day"
+          locale="pt-BR"
+          today="2026-10-14"
+          min="2026-10-14"
+          max="2026-10-25"
+          value="2026-10-18"
+          onChange={(next, source) => {
+            seen.push({ value: next, source })
+          }}
+        />
+      </div>,
+    )
+
+    fireEvent.change(screen.getByLabelText("Data"), {
+      target: { value: "2026-10-26" },
+    })
+
+    expect(seen).toEqual([{ value: "2026-10-26", source: "input" }])
+    expect(screen.getByLabelText("Data")).not.toHaveAttribute("max")
   })
 
   it("uses English month and actions when the app language is English", async () => {

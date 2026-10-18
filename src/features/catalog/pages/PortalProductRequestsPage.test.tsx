@@ -6,6 +6,7 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
 import { PortalProductRequestsPage } from "@/features/catalog/pages/PortalProductRequestsPage"
 import type { PortalProductRequestPage } from "@/features/catalog/schemas/catalogSchemas"
+import type { PortalProductRequestListResult } from "@/features/catalog/services/catalogPortalService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
 
@@ -62,6 +63,12 @@ function pageOf(
   }
 }
 
+function ready(
+  page: PortalProductRequestPage,
+): PortalProductRequestListResult {
+  return { kind: "ready", page }
+}
+
 function renderList() {
   return render(
     <MemoryRouter initialEntries={["/t/ficc/catalogo/solicitacoes"]}>
@@ -93,7 +100,7 @@ describe("PortalProductRequestsPage", () => {
   })
 
   it("shows a loading state and then the newest request", async () => {
-    let resolvePage: (page: PortalProductRequestPage) => void = () => {
+    let resolvePage: (result: PortalProductRequestListResult) => void = () => {
       throw new Error("missing resolve")
     }
     listMock.mockImplementation(
@@ -110,7 +117,7 @@ describe("PortalProductRequestsPage", () => {
       }),
     ).toBeInTheDocument()
 
-    resolvePage(pageOf("Replacement gasket", FIRST_ID, 1, 1))
+    resolvePage(ready(pageOf("Replacement gasket", FIRST_ID, 1, 1)))
 
     expect(await screen.findByText("Replacement gasket")).toBeInTheDocument()
     expect(screen.getByText("Enviada")).toBeInTheDocument()
@@ -123,30 +130,50 @@ describe("PortalProductRequestsPage", () => {
     expect(listMock).toHaveBeenCalledWith(1)
   })
 
-  it("shows the empty state when the list is empty, including a missing endpoint", async () => {
-    listMock.mockResolvedValue({
-      items: [],
-      page: 1,
-      pageSize: 20,
-      total: 0,
-    })
+  it("shows the empty inbox only when the list responds with no rows", async () => {
+    listMock.mockResolvedValue(
+      ready({
+        items: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+      }),
+    )
     renderList()
 
     expect(
       await screen.findByText(i18n.t("tenantPortal.catalog.requestsEmpty")),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.catalog.requestsUnavailable")),
+    ).not.toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("shows unavailable instead of an empty inbox when the list endpoint is missing", async () => {
+    listMock.mockResolvedValue({ kind: "unavailable" })
+    renderList()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.catalog.requestsUnavailable")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.catalog.requestsEmpty")),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
   })
 
   it("shows an error and retries without leaving the page", async () => {
     const user = userEvent.setup()
     listMock.mockRejectedValueOnce(new Error("Não foi possível carregar suas solicitações."))
-    listMock.mockResolvedValueOnce({
-      items: [],
-      page: 1,
-      pageSize: 20,
-      total: 0,
-    })
+    listMock.mockResolvedValueOnce(
+      ready({
+        items: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+      }),
+    )
     renderList()
 
     expect(
@@ -170,9 +197,9 @@ describe("PortalProductRequestsPage", () => {
     const user = userEvent.setup()
     listMock.mockImplementation(async (page?: number) => {
       if (page === 2) {
-        return pageOf("Second gasket", SECOND_ID, 2, 2)
+        return ready(pageOf("Second gasket", SECOND_ID, 2, 2))
       }
-      return pageOf("First gasket", FIRST_ID, 1, 2)
+      return ready(pageOf("First gasket", FIRST_ID, 1, 2))
     })
     renderList()
 
@@ -204,7 +231,7 @@ describe("PortalProductRequestsPage", () => {
   })
 
   it("translates the status when the language changes", async () => {
-    listMock.mockResolvedValue(pageOf("Replacement gasket", FIRST_ID, 1, 1))
+    listMock.mockResolvedValue(ready(pageOf("Replacement gasket", FIRST_ID, 1, 1)))
     renderList()
     expect(await screen.findByText("Enviada")).toBeInTheDocument()
 

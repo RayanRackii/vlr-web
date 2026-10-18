@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Textarea } from "@/components/ui/textarea"
+import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import { Can } from "@/features/users/permissions/Can"
 import {
   B2B_ORDER_ACTIONS,
@@ -206,9 +207,10 @@ export function CatalogOrderDetailPage() {
   }
 
   const actions = B2B_ORDER_ACTIONS[order.status]
-  const totalLabel =
-    formatCatalogMoney(order.totalAmount, order.currency, i18n.language) ??
-    t("catalog.priceOnRequest")
+  const totalLabel = formatOrderTotalText(order, i18n.language, {
+    onRequest: t("catalog.priceOnRequest"),
+    partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
+  })
 
   return (
     <div className="space-y-6">

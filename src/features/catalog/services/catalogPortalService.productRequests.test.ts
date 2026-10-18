@@ -67,7 +67,7 @@ describe("listPortalProductRequests", () => {
       },
     })
 
-    const page = await listPortalProductRequests(2)
+    const result = await listPortalProductRequests(2)
 
     expect(customerGet).toHaveBeenCalledWith(
       "/api/catalog/portal/product-requests",
@@ -75,26 +75,24 @@ describe("listPortalProductRequests", () => {
         params: { page: 2, pageSize: PORTAL_PRODUCT_REQUEST_PAGE_SIZE },
       },
     )
-    expect(page.items[0]?.description).toBe("Replacement gasket")
-    expect(page.items[0]?.files[0]?.url).toContain("https://")
-    expect(page.total).toBe(21)
+    expect(result.kind).toBe("ready")
+    if (result.kind !== "ready") {
+      return
+    }
+    expect(result.page.items[0]?.description).toBe("Replacement gasket")
+    expect(result.page.items[0]?.files[0]?.url).toContain("https://")
+    expect(result.page.total).toBe(21)
   })
 
-  it("treats 404 and 501 as an empty page so a missing route does not crash", async () => {
+  it("returns unavailable for 404 and 501 instead of an empty inbox", async () => {
     customerGet.mockRejectedValueOnce(apiError(404, "<html>missing</html>"))
     await expect(listPortalProductRequests(3)).resolves.toEqual({
-      items: [],
-      page: 3,
-      pageSize: PORTAL_PRODUCT_REQUEST_PAGE_SIZE,
-      total: 0,
+      kind: "unavailable",
     })
 
     customerGet.mockRejectedValueOnce(apiError(501, { error: "Not implemented." }))
     await expect(listPortalProductRequests()).resolves.toEqual({
-      items: [],
-      page: 1,
-      pageSize: PORTAL_PRODUCT_REQUEST_PAGE_SIZE,
-      total: 0,
+      kind: "unavailable",
     })
   })
 

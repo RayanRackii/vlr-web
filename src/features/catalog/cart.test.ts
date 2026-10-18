@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   addCartItem,
+  CATALOG_CART_MAX_QUANTITY,
   catalogCartStorageKey,
   clearCatalogCart,
   loadCatalogCart,
@@ -30,7 +31,7 @@ describe("catalog cart helpers", () => {
     expect(items).toEqual([{ productId: "p1", quantity: 1 }])
   })
 
-  it("updates quantity and removes when quantity is zero", () => {
+  it("clamps quantity to 1..99 and does not remove a line at zero or below", () => {
     const items = [
       { productId: "p1", quantity: 2 },
       { productId: "p2", quantity: 1 },
@@ -41,7 +42,19 @@ describe("catalog cart helpers", () => {
       { productId: "p2", quantity: 1 },
     ])
     expect(updateCartItem(items, "p1", 0)).toEqual([
+      { productId: "p1", quantity: 1 },
       { productId: "p2", quantity: 1 },
+    ])
+    expect(updateCartItem(items, "p1", -8)).toEqual([
+      { productId: "p1", quantity: 1 },
+      { productId: "p2", quantity: 1 },
+    ])
+    expect(updateCartItem(items, "p1", 1000)).toEqual([
+      { productId: "p1", quantity: CATALOG_CART_MAX_QUANTITY },
+      { productId: "p2", quantity: 1 },
+    ])
+    expect(addCartItem([{ productId: "p1", quantity: 90 }], "p1", 20)).toEqual([
+      { productId: "p1", quantity: CATALOG_CART_MAX_QUANTITY },
     ])
   })
 
@@ -81,5 +94,10 @@ describe("catalog cart helpers", () => {
     ])
     clearCatalogCart(storage, key)
     expect(loadCatalogCart(storage, key)).toEqual([])
+
+    saveCatalogCart(storage, key, [{ productId: "p1", quantity: 250 }])
+    expect(loadCatalogCart(storage, key)).toEqual([
+      { productId: "p1", quantity: CATALOG_CART_MAX_QUANTITY },
+    ])
   })
 })

@@ -2,6 +2,7 @@ import { CalendarDays, Package, ShoppingBag, type LucideIcon } from "lucide-reac
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { customerNavHref } from "@/features/catalog/customerNav"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { Separator } from "@/components/ui/separator"
@@ -70,7 +71,7 @@ export function CustomerSidebar({
             return (
               <Link
                 key={item.id}
-                to={item.to}
+                to={customerNavHref(item.to, location.pathname, location.search)}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(

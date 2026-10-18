@@ -1,6 +1,25 @@
+export const CATALOG_CART_MIN_QUANTITY = 1
+export const CATALOG_CART_MAX_QUANTITY = 99
+
 export type CatalogCartItem = {
   productId: string
   quantity: number
+}
+
+/** Keeps a cart line. Zero and negative quantities become 1; they do not remove it. */
+export function clampCatalogQuantity(quantity: number): number {
+  if (!Number.isFinite(quantity)) {
+    return CATALOG_CART_MIN_QUANTITY
+  }
+
+  const truncated = Math.trunc(quantity)
+  if (truncated < CATALOG_CART_MIN_QUANTITY) {
+    return CATALOG_CART_MIN_QUANTITY
+  }
+  if (truncated > CATALOG_CART_MAX_QUANTITY) {
+    return CATALOG_CART_MAX_QUANTITY
+  }
+  return truncated
 }
 
 export function catalogCartStorageKey(
@@ -15,19 +34,30 @@ export function addCartItem(
   productId: string,
   quantity: number,
 ): CatalogCartItem[] {
+  if (!Number.isFinite(quantity)) {
+    return items.map((item) => ({ ...item }))
+  }
+
   const nextQuantity = Math.trunc(quantity)
   if (nextQuantity <= 0) {
     return items.map((item) => ({ ...item }))
   }
 
+  const addition = Math.min(nextQuantity, CATALOG_CART_MAX_QUANTITY)
   const existing = items.find((item) => item.productId === productId)
   if (!existing) {
-    return [...items, { productId, quantity: nextQuantity }]
+    return [...items, { productId, quantity: addition }]
   }
 
   return items.map((item) =>
     item.productId === productId
-      ? { ...item, quantity: item.quantity + nextQuantity }
+      ? {
+          ...item,
+          quantity: Math.min(
+            item.quantity + addition,
+            CATALOG_CART_MAX_QUANTITY,
+          ),
+        }
       : { ...item },
   )
 }
@@ -37,10 +67,7 @@ export function updateCartItem(
   productId: string,
   quantity: number,
 ): CatalogCartItem[] {
-  const nextQuantity = Math.trunc(quantity)
-  if (nextQuantity <= 0) {
-    return removeCartItem(items, productId)
-  }
+  const nextQuantity = clampCatalogQuantity(quantity)
 
   let found = false
   const next = items.map((item) => {
@@ -81,9 +108,9 @@ const cartItemsSchema = {
         typeof record.productId === "string" ? record.productId : null
       const quantity =
         typeof record.quantity === "number" && Number.isFinite(record.quantity)
-          ? Math.trunc(record.quantity)
+          ? clampCatalogQuantity(record.quantity)
           : null
-      if (productId && quantity && quantity > 0) {
+      if (productId && quantity != null) {
         items.push({ productId, quantity })
       }
     }

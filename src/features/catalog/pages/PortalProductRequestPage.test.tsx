@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { PortalProductRequestPage } from "@/features/catalog/pages/PortalProductRequestPage"
+import type { ProductRequest } from "@/features/catalog/schemas/catalogSchemas"
+import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
 
@@ -23,6 +25,7 @@ import { createPortalProductRequest } from "@/features/catalog/services/catalogP
 
 const createRequestMock = vi.mocked(createPortalProductRequest)
 const toastError = vi.mocked(toast.error)
+const toastSuccess = vi.mocked(toast.success)
 
 const outletContext: CustomerAppOutletContext = {
   subdomain: "ficc",
@@ -58,6 +61,7 @@ describe("PortalProductRequestPage validity gate", () => {
   beforeEach(() => {
     createRequestMock.mockReset()
     toastError.mockReset()
+    toastSuccess.mockReset()
   })
 
   it("keeps Enviar solicitação disabled until the request schema passes and leaves Voltar, quantity and files free", async () => {
@@ -180,18 +184,19 @@ describe("PortalProductRequestPage validity gate", () => {
     expect(createRequestMock).toHaveBeenCalledTimes(1)
   })
 
-  it("links Minhas solicitações from the confirmation after a successful submit", async () => {
+  it("confirms the sent request and links Minhas solicitações", async () => {
     const user = userEvent.setup()
-    createRequestMock.mockResolvedValue({
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      customerId: "11111111-1111-4111-8111-111111111111",
+    const created: ProductRequest = {
+      id: "77777777-7777-4777-8777-777777777777",
+      customerId: "88888888-8888-4888-8888-888888888888",
       description: "Rede de vôlei",
-      quantity: 1,
-      note: null,
+      quantity: 2,
+      note: "Cor azul",
       status: "Submitted",
-      createdAt: "2026-10-18T16:00:00.000Z",
+      createdAt: "2026-10-18T15:00:00.000Z",
       files: [],
-    })
+    }
+    createRequestMock.mockResolvedValue(created)
     renderRequest()
 
     expect(
@@ -204,21 +209,50 @@ describe("PortalProductRequestPage validity gate", () => {
       screen.getByLabelText(i18n.t("tenantPortal.catalog.requestDescription")),
       "Rede de vôlei",
     )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.catalog.requestNote")),
+      "Cor azul",
+    )
     await user.click(
       screen.getByRole("button", {
         name: i18n.t("tenantPortal.catalog.requestSubmit"),
       }),
     )
 
-    const requests = await screen.findByRole("link", {
-      name: i18n.t("tenantPortal.catalog.navRequests"),
-    })
-    expect(requests).toHaveAttribute("href", "/t/ficc/catalogo/solicitacoes")
+    expect(
+      await screen.findByRole("heading", {
+        name: i18n.t("tenantPortal.catalog.requestSentTitle"),
+      }),
+    ).toBeInTheDocument()
+    const body = screen.getByText(i18n.t("tenantPortal.catalog.requestSentBody"))
+    expect(body).toBeInTheDocument()
+    expect(body).not.toHaveTextContent(/não lista|does not list|no lista/i)
+    expect(screen.getByRole("status")).toHaveTextContent("Rede de vôlei")
+    expect(screen.getByRole("status")).toHaveTextContent("Cor azul")
     expect(screen.getByRole("status")).toHaveTextContent(
+      `${i18n.t("tenantPortal.catalog.quantity")}: 2`,
+    )
+    expect(
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.catalog.navRequests"),
+      }),
+    ).toHaveAttribute(
+      "href",
+      tenantPortalPath("ficc", "catalogo/solicitacoes"),
+    )
+    expect(
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.catalog.requestSentCatalog"),
+      }),
+    ).toHaveAttribute("href", tenantPortalPath("ficc", "catalogo"))
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("tenantPortal.catalog.requestSubmit"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(toastSuccess).toHaveBeenCalledWith(
       i18n.t("tenantPortal.catalog.requestSubmitted"),
     )
-    expect(toast.success).toHaveBeenCalledWith(
-      i18n.t("tenantPortal.catalog.requestSubmitted"),
-    )
+    expect(createRequestMock).toHaveBeenCalledTimes(1)
   })
 })
