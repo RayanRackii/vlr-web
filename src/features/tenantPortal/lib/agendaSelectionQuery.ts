@@ -32,6 +32,34 @@ export function readAgendaDateParam(
   return clampBrazilDateToToday(value)
 }
 
+export type AgendaDateAttempt =
+  | { status: "empty" }
+  | { status: "invalid" }
+  | { status: "before" }
+  | { status: "after" }
+  | { status: "ok"; date: string }
+
+/** A typed or picked day. Empty and impossible values are not a new choice. */
+export function classifyAgendaDateAttempt(
+  value: string,
+  today: string,
+  maxDate: string | null,
+): AgendaDateAttempt {
+  if (value.trim().length === 0) {
+    return { status: "empty" }
+  }
+  if (!isRealCivilDate(value)) {
+    return { status: "invalid" }
+  }
+  if (value < today) {
+    return { status: "before" }
+  }
+  if (maxDate !== null && value > maxDate) {
+    return { status: "after" }
+  }
+  return { status: "ok", date: value }
+}
+
 /** `HH:mm` from `time=13:00` or `time=13:00:00`. Anything else is no choice. */
 export function readAgendaTimeParam(
   value: string | null | undefined,

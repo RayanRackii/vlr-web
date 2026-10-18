@@ -12,6 +12,7 @@ import {
 import {
   portalPickAvailableClass,
   portalPickAvailableSelectedClass,
+  portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
 
@@ -27,6 +28,8 @@ export type CanvasBoardItem = {
   available?: boolean
   selected?: boolean
   disabled?: boolean
+  /** Day is still loading. Neutral, not the unavailable treatment. */
+  pending?: boolean
   /** Visible status for a space that cannot be booked. Not a hover-only tooltip. */
   detail?: string | null
 }
@@ -219,9 +222,10 @@ export function LayoutCanvasBoard({
         >
           {renderedItems.map((item) => {
             const picked = mode === "pick"
-            const unavailable = picked && item.disabled === true
-            const selected = picked && item.selected === true && !unavailable
-            const clickable = picked && !unavailable
+            const pending = picked && item.pending === true
+            const unavailable = picked && item.disabled === true && !pending
+            const selected = picked && item.selected === true && !unavailable && !pending
+            const clickable = picked && !unavailable && !pending
             const accessibleName = item.detail
               ? `${item.label}. ${item.detail}`
               : item.label
@@ -233,7 +237,8 @@ export function LayoutCanvasBoard({
                 aria-label={accessibleName}
                 title={accessibleName}
                 aria-pressed={picked ? item.selected : undefined}
-                aria-disabled={unavailable || undefined}
+                aria-busy={pending || undefined}
+                aria-disabled={unavailable || pending || undefined}
                 className={cn(
                   "absolute flex min-w-0 items-center justify-center overflow-hidden rounded-lg border px-0.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:px-1.5 sm:text-sm",
                   picked && "flex-col gap-0.5",
@@ -241,6 +246,7 @@ export function LayoutCanvasBoard({
                     "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   clickable && !selected && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
+                  pending && portalPickPendingClass,
                   unavailable && portalPickUnavailableClass,
                 )}
                 style={{
