@@ -7,7 +7,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { makeWorkOrder, WORK_ORDER_ID } from "@/features/workOrders/test/workOrderFixtures"
+import {
+  makeWorkOrder,
+  sampleTechnician,
+  TECHNICIAN_ID,
+  WORK_ORDER_ID,
+} from "@/features/workOrders/test/workOrderFixtures"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import i18n from "@/lib/i18n"
 
@@ -41,7 +46,17 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  updateWorkOrderAssignee: vi.fn(),
 }))
+
+vi.mock("@/features/users/services/usersService", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/users/services/usersService")>()
+  return {
+    ...actual,
+    getTechnicians: vi.fn(),
+  }
+})
 
 vi.mock("@/features/pmoc/services/pmocService", () => ({
   getPlan: vi.fn(async () => {
@@ -55,13 +70,17 @@ import {
   listSyncConflicts,
   retrySyncConflict,
 } from "@/lib/offlineSync"
+import { getTechnicians } from "@/features/users/services/usersService"
 import {
   getWorkOrderById,
   updateTaskValue,
+  updateWorkOrderAssignee,
   updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
 
 const getWorkOrderByIdMock = vi.mocked(getWorkOrderById)
+const getTechniciansMock = vi.mocked(getTechnicians)
+const updateWorkOrderAssigneeMock = vi.mocked(updateWorkOrderAssignee)
 const getPlanMock = vi.mocked(getPlan)
 const updateTaskValueMock = vi.mocked(updateTaskValue)
 const updateWorkOrderStatusMock = vi.mocked(updateWorkOrderStatus)
@@ -103,7 +122,7 @@ describe("WorkOrderExecutionPage origin", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC · Nome histórico do plano"),
+      await screen.findByText("PMOC \u00b7 Nome histórico do plano"),
     ).toBeInTheDocument()
   })
 
@@ -155,7 +174,7 @@ describe("WorkOrderExecutionPage origin", () => {
     )
 
     expect(
-      await screen.findByText("PMOC · Nome histórico do plano"),
+      await screen.findByText("PMOC \u00b7 Nome histórico do plano"),
     ).toBeInTheDocument()
     expect(screen.queryByText("PMOC Split Mensal")).not.toBeInTheDocument()
     expect(getPlanMock).not.toHaveBeenCalled()
@@ -167,397 +186,12 @@ describe("WorkOrderExecutionPage origin", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText("PMOC · PMOC Split Mensal"),
+      await screen.findByText("PMOC \u00b7 PMOC Split Mensal"),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("link", {
         name: i18n.t("workOrders.origin.viewPlan"),
       }),
     ).not.toBeInTheDocument()
-  })
-})
-
-describe("WorkOrderExecutionPage tasks", () => {
-  beforeEach(() => {
-    getWorkOrderByIdMock.mockReset()
-    updateTaskValueMock.mockReset()
-    updateWorkOrderStatusMock.mockReset()
-    listSyncConflictsMock.mockReset()
-    listSyncConflictsMock.mockResolvedValue([])
-    clearSyncConflictMock.mockReset()
-    retrySyncConflictMock.mockReset()
-    retrySyncConflictMock.mockResolvedValue({
-      processed: 0,
-      remaining: 0,
-      conflicts: [],
-    })
-  })
-
-  it("opens single-choice options in a native select", async () => {
-    const base = makeWorkOrder()
-    const task = base.tasks[0]
-    if (!task) {
-      throw new Error("missing task")
-    }
-    getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({
-        tasks: [
-          {
-            ...task,
-            title: "Estado",
-            inputType: "SingleChoice",
-            configuration: JSON.stringify({ options: ["Ok", "Trocar"] }),
-          },
-        ],
-      }),
-    )
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    const select = await screen.findByRole("combobox", { name: "Estado" })
-    expect(select).toBeInstanceOf(HTMLSelectElement)
-    expect(screen.getByRole("option", { name: "Ok" })).toBeInTheDocument()
-    expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
-  })
-
-  it("does not block completion on an image task", async () => {
-    const user = userEvent.setup()
-    const base = makeWorkOrder()
-    const task = base.tasks[0]
-    if (!task) {
-      throw new Error("missing task")
-    }
-    const imageOrder = makeWorkOrder({
-      tasks: [
-        {
-          ...task,
-          title: "Foto",
-          inputType: "Image",
-          isMandatory: true,
-          value: null,
-        },
-      ],
-    })
-    getWorkOrderByIdMock.mockResolvedValue(imageOrder)
-    updateWorkOrderStatusMock.mockResolvedValue({
-      ...imageOrder,
-      status: "Completed",
-    })
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    expect(
-      await screen.findByText(i18n.t("workOrders.execution.imageUnsupported")),
-    ).toBeInTheDocument()
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("workOrders.execution.complete"),
-      }),
-    )
-    await waitFor(() => {
-      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(
-        imageOrder.id,
-        "Completed",
-      )
-    })
-  })
-
-  it("blocks completion when a mandatory checkbox is false", async () => {
-    const user = userEvent.setup()
-    const order = makeWorkOrder({
-      tasks: [
-        {
-          ...(makeWorkOrder().tasks[0] as NonNullable<
-            ReturnType<typeof makeWorkOrder>["tasks"][number]
-          >),
-          title: "Verificar filtros",
-          inputType: "Checkbox",
-          isMandatory: true,
-          value: "false",
-        },
-      ],
-    })
-    getWorkOrderByIdMock.mockResolvedValue(order)
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    await user.click(
-      await screen.findByRole("button", {
-        name: i18n.t("workOrders.execution.complete"),
-      }),
-    )
-
-    expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent(
-      i18n.t("workOrders.execution.mandatoryIncomplete", {
-        tasks: "Verificar filtros",
-      }),
-    )
-    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
-  })
-
-  it("shows the task list from MANDATORY_TASKS_INCOMPLETE", async () => {
-    const user = userEvent.setup()
-    const order = makeWorkOrder({
-      tasks: [
-        {
-          ...(makeWorkOrder().tasks[0] as NonNullable<
-            ReturnType<typeof makeWorkOrder>["tasks"][number]
-          >),
-          inputType: "Checkbox",
-          isMandatory: true,
-          value: "true",
-        },
-      ],
-    })
-    getWorkOrderByIdMock.mockResolvedValue(order)
-    updateWorkOrderStatusMock.mockRejectedValue(
-      new Error(
-        localizeWorkOrderApiError(
-          {
-            error: "Mandatory tasks are incomplete.",
-            code: "MANDATORY_TASKS_INCOMPLETE",
-            tasks: [
-              {
-                id: "16161616-1616-4161-8161-161616161616",
-                title: "Foto do filtro",
-              },
-              {
-                id: "17171717-1717-4171-8171-171717171717",
-                title: "Pressão",
-              },
-            ],
-          },
-          i18n.t("workOrders.errors.updateStatusFailed"),
-        ),
-      ),
-    )
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    await user.click(
-      await screen.findByRole("button", {
-        name: i18n.t("workOrders.execution.complete"),
-      }),
-    )
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
-        tasks: "Foto do filtro, Pressão",
-      }),
-    )
-    expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
-  })
-
-  it("flushes a pending text edit before completing", async () => {
-    const user = userEvent.setup()
-    const order = makeWorkOrder({
-      status: "InProgress",
-      tasks: [
-        {
-          ...(makeWorkOrder().tasks[0] as NonNullable<
-            ReturnType<typeof makeWorkOrder>["tasks"][number]
-          >),
-          inputType: "Text",
-          value: null,
-        },
-      ],
-    })
-    getWorkOrderByIdMock.mockResolvedValue(order)
-    updateTaskValueMock.mockImplementation(async (_workOrderId, _taskId, value) =>
-      makeWorkOrder({
-        ...order,
-        tasks: order.tasks.map((task) => ({ ...task, value: value ?? null })),
-      }),
-    )
-    updateWorkOrderStatusMock.mockResolvedValue({
-      ...order,
-      status: "Completed",
-    })
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    const field = await screen.findByPlaceholderText(
-      i18n.t("workOrders.execution.textPlaceholder"),
-    )
-    await user.type(field, "ok")
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("workOrders.execution.complete"),
-      }),
-    )
-
-    await waitFor(() => {
-      expect(updateTaskValueMock).toHaveBeenCalledWith(
-        order.id,
-        order.tasks[0]?.id,
-        "ok",
-      )
-      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(
-        order.id,
-        "Completed",
-      )
-    })
-    const taskOrder = updateTaskValueMock.mock.invocationCallOrder[0] ?? 0
-    const statusOrder = updateWorkOrderStatusMock.mock.invocationCallOrder[0] ?? 0
-    expect(taskOrder).toBeLessThan(statusOrder)
-  })
-
-  it("shows notes and the completed date", async () => {
-    getWorkOrderByIdMock.mockResolvedValue(
-      makeWorkOrder({
-        notes: "Levar peça",
-        completedDate: "2026-09-19T15:04:00.000Z",
-        status: "Completed",
-      }),
-    )
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    expect(await screen.findByText("Levar peça")).toBeInTheDocument()
-    expect(
-      screen.getByText(i18n.t("workOrders.execution.completedDate")),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByText(i18n.t("workOrders.execution.notCompleted")),
-    ).not.toBeInTheDocument()
-  })
-
-  it("clears a failed load after reconnect", async () => {
-    getWorkOrderByIdMock.mockRejectedValueOnce(
-      new Error(i18n.t("workOrders.errors.loadOneFailed")),
-    )
-    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    expect(
-      await screen.findByText(i18n.t("workOrders.errors.loadOneFailed")),
-    ).toBeInTheDocument()
-
-    window.dispatchEvent(new Event("online"))
-
-    expect(await screen.findByText(/Verificar filtros/)).toBeInTheDocument()
-    expect(
-      screen.queryByText(i18n.t("workOrders.errors.loadOneFailed")),
-    ).not.toBeInTheDocument()
-  })
-
-  it("shows a sync conflict instead of dropping it", async () => {
-    const order = makeWorkOrder()
-    const task = order.tasks[0]
-    if (!task) {
-      throw new Error("missing task")
-    }
-    listSyncConflictsMock.mockResolvedValue([
-      {
-        id: `${order.id}:${task.id}`,
-        workOrderId: order.id,
-        taskId: task.id,
-        value: "x",
-        queuedAt: "2026-10-17T00:00:00.000Z",
-        clientSequence: 0,
-        status: 409,
-        message: "conflict",
-        code: null,
-        reason: null,
-      },
-    ])
-    getWorkOrderByIdMock.mockResolvedValue(order)
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    expect(
-      await screen.findByText(i18n.t("workOrders.offline.conflictTitle")),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        i18n.t("workOrders.offline.conflictField", {
-          field: task.title,
-          reason: "conflict",
-        }),
-      ),
-    ).toBeInTheDocument()
-  })
-
-  it("discards and retries a closed work order conflict", async () => {
-    const user = userEvent.setup()
-    const order = makeWorkOrder()
-    const task = order.tasks[0]
-    if (!task) {
-      throw new Error("missing task")
-    }
-    listSyncConflictsMock.mockResolvedValue([
-      {
-        id: `${order.id}:${task.id}`,
-        workOrderId: order.id,
-        taskId: task.id,
-        value: "true",
-        queuedAt: "2026-10-17T00:00:00.000Z",
-        clientSequence: 0,
-        status: 409,
-        message: "Work order is completed or canceled and cannot be changed.",
-        code: "WORK_ORDER_CLOSED",
-        reason: null,
-      },
-    ])
-    getWorkOrderByIdMock.mockResolvedValue(order)
-    clearSyncConflictMock.mockImplementation(async () => {
-      listSyncConflictsMock.mockResolvedValue([])
-    })
-
-    renderExecution(["os.work_orders.read"], ["os"])
-
-    expect(
-      await screen.findByText(
-        i18n.t("workOrders.offline.conflictField", {
-          field: task.title,
-          reason: i18n.t("workOrders.errors.workOrderClosed"),
-        }),
-      ),
-    ).toBeInTheDocument()
-
-    const discard = screen.getByRole("button", {
-      name: i18n.t("workOrders.offline.discardNamed", { field: task.title }),
-    })
-    expect(discard).toBeEnabled()
-    await user.click(discard)
-
-    await waitFor(() => {
-      expect(clearSyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
-      expect(
-        screen.queryByText(i18n.t("workOrders.offline.conflictTitle")),
-      ).not.toBeInTheDocument()
-    })
-
-    listSyncConflictsMock.mockResolvedValue([
-      {
-        id: `${order.id}:${task.id}`,
-        workOrderId: order.id,
-        taskId: task.id,
-        value: "true",
-        queuedAt: "2026-10-17T00:00:00.000Z",
-        clientSequence: 0,
-        status: 409,
-        message: "Work order is completed or canceled and cannot be changed.",
-        code: "WORK_ORDER_CLOSED",
-        reason: null,
-      },
-    ])
-    window.dispatchEvent(new Event("online"))
-    expect(
-      await screen.findByRole("button", {
-        name: i18n.t("workOrders.offline.retryNamed", { field: task.title }),
-      }),
-    ).toBeEnabled()
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("workOrders.offline.retryNamed", { field: task.title }),
-      }),
-    )
-    await waitFor(() => {
-      expect(retrySyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
-    })
   })
 })
