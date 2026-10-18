@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it, vi } from "vitest"
 
+import { CATALOG_CART_MAX_QUANTITY } from "@/features/catalog/cart"
 import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
 import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
@@ -129,6 +130,52 @@ describe("PortalCatalogProductCard", () => {
     await user.click(screen.getByRole("button", { name: "Aumentar quantidade" }))
 
     expect(onQuantityChange).toHaveBeenCalledWith(2)
+  })
+
+  it("clamps a typed quantity to 1..99 and stops the increase at the max", () => {
+    const { onQuantityChange } = renderCard({
+      quantity: CATALOG_CART_MAX_QUANTITY,
+    })
+    const quantity = screen.getByRole("spinbutton", {
+      name: "Quantidade de Cadeira de praia",
+    })
+
+    expect(
+      screen.getByRole("button", { name: "Aumentar quantidade" }),
+    ).toBeDisabled()
+
+    fireEvent.change(quantity, { target: { value: "" } })
+    expect(onQuantityChange).not.toHaveBeenCalled()
+    expect(quantity).toHaveValue(null)
+
+    fireEvent.change(quantity, { target: { value: "0" } })
+    expect(quantity).toHaveValue(0)
+    expect(onQuantityChange).not.toHaveBeenCalled()
+    fireEvent.blur(quantity)
+    expect(onQuantityChange).toHaveBeenCalledTimes(1)
+    expect(onQuantityChange).toHaveBeenCalledWith(1)
+
+    fireEvent.change(quantity, { target: { value: "250" } })
+    expect(quantity).toHaveValue(250)
+    fireEvent.blur(quantity)
+    expect(onQuantityChange).toHaveBeenLastCalledWith(CATALOG_CART_MAX_QUANTITY)
+  })
+
+  it("steps from the typed quantity after the field blurs", async () => {
+    const user = userEvent.setup()
+    const { onQuantityChange } = renderCard({ quantity: 1 })
+    const quantity = screen.getByRole("spinbutton", {
+      name: "Quantidade de Cadeira de praia",
+    })
+
+    quantity.focus()
+    fireEvent.change(quantity, { target: { value: "4" } })
+    expect(onQuantityChange).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole("button", { name: "Aumentar quantidade" }))
+
+    expect(onQuantityChange).toHaveBeenNthCalledWith(1, 4)
+    expect(onQuantityChange).toHaveBeenNthCalledWith(2, 5)
   })
 
   it("links the product name to the catalog detail path", () => {

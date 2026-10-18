@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -6,10 +6,11 @@ import { toast } from "sonner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { clampCatalogQuantity } from "@/features/catalog/cart"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
+import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogMoney,
@@ -34,6 +35,14 @@ export function PortalCatalogProductPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const quantityRef = useRef(quantity)
+  quantityRef.current = quantity
+
+  function commitQuantity(next: number) {
+    const clamped = clampCatalogQuantity(next)
+    quantityRef.current = clamped
+    setQuantity(clamped)
+  }
 
   useEffect(() => {
     if (!productId) {
@@ -130,23 +139,18 @@ export function PortalCatalogProductPage() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          min={1}
+        <CatalogQuantityField
           className="w-24"
-          value={quantity}
-          aria-label={t("tenantPortal.catalog.quantity")}
-          onChange={(event) => {
-            const next = Number(event.target.value)
-            setQuantity(Number.isFinite(next) && next > 0 ? next : 1)
-          }}
+          quantity={quantity}
+          productName={product.name}
+          onCommit={commitQuantity}
         />
         <LoadingButton
           type="button"
           className="flex-1"
           style={{ backgroundColor: primary }}
           onClick={() => {
-            cart.add(product.id, quantity)
+            cart.add(product.id, quantityRef.current)
             toast.success(t("tenantPortal.catalog.addedToCart"))
           }}
         >

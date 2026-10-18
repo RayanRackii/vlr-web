@@ -487,6 +487,7 @@
       "empty": "Nenhum produto ativo no momento.",
       "priceOnRequest": "Sob consulta",
       "quantity": "Quantidade",
+      "quantityFor": "Quantidade de {{name}}",
       "quantityDecrease": "Diminuir quantidade",
       "quantityIncrease": "Aumentar quantidade",
       "noImage": "Sem imagem",
@@ -515,12 +516,25 @@
       "ordersEmpty": "Você ainda não fez pedidos.",
       "cancelOrder": "Cancelar pedido",
       "cancelling": "Cancelando...",
-      "orderCancelled": "Pedido cancelado."
+      "orderCancelled": "Pedido cancelado.",
+      "lineSubtotal": "Subtotal",
+      "removeItem": "Remover {{name}}",
+      "cartTotal": "Total",
+      "fromAmount": "A partir de {{amount}}",
+      "cancelConfirmTitle": "Cancelar este pedido?",
+      "cancelConfirmBody": "O pedido será cancelado. Esta ação não pode ser desfeita nesta tela.",
+      "cancelConfirmDismiss": "Manter pedido",
+      "cancelConfirmAction": "Confirmar cancelamento",
+      "requestSentTitle": "Solicitação enviada",
+      "requestSentBody": "Recebemos a solicitação. O portal ainda não lista solicitações de produto em Pedidos; guarde esta confirmação.",
+      "requestSentCatalog": "Voltar ao catálogo",
+      "requestSentAnother": "Enviar outra solicitação"
     }
   },
   "catalog": {
     "retry": "Tentar novamente",
     "priceOnRequest": "Sob consulta",
+    "knownPlusOnRequest": "{{amount}} · Sob consulta",
     "status": {
       "Requested": "Solicitado",
       "Approved": "Aprovado",
