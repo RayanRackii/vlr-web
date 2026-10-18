@@ -123,9 +123,9 @@ type TaskValuePatch = {
 
 /**
  * Enqueues (or replaces) a pending task-value PATCH.
- * Latest client sequence for the same workOrderId+taskId wins.
- * An older conflict for that field is dropped in the same write, so Retry
- * cannot put the rejected value back over this version.
+ * Latest write for the same workOrderId+taskId wins.
+ * That field's conflict is dropped in the same write. Retry still will not
+ * put a rejected value back over anything left in the queue.
  * One IndexedDB write: the previous field value and the new one are never
  * both absent. Caller must already hold `withSyncQueueLock`.
  */
@@ -230,7 +230,10 @@ export async function retrySyncConflict(
 
     const queue = await readSyncQueue()
     const queued = queue.find((item) => item.id === conflict.id)
-    if (queued && queued.clientSequence > conflict.clientSequence) {
+    // clientSequence is in-memory and restarts after a reload, so an old
+    // conflict can outrank a value queued later. Any queued value for this
+    // field wins; Retry only clears the conflict.
+    if (queued) {
       await clearSyncConflictBody(workOrderId, taskId)
       return
     }
