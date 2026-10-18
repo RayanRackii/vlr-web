@@ -158,6 +158,7 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 - [x] `/pmoc/novo` só personalizado (sem import client-side / CREA)
 - [x] Gerar OS, OS relacionadas, and Coverage V3 shipped in later slices and are on PROD. This checkbox is closed; it is not open work.
 - [x] QA de planos: confirmar exclusão (snapshot das ordens e desativar quando já existem), editar nome e descrição, opções de escolha única, validação visível no salvar, confirmar remoção de tarefa, toast com link ao gerar ordem, ocultar geração em plano inativo, aviso quando não há técnico, abrir o plano criado e ordenar ordens relacionadas pela data.
+- [x] Execução de OS: foto da tarefa (`POST /api/work-orders/{id}/tasks/{taskId}/files`, jpeg/png/webp até 5 MB; `GET .../files/{fileId}/url` assinada e de curta duração). O `value` é o id do arquivo; o PATCH da tarefa não leva bytes nem data URL. Sem conexão o envio fica desabilitado e o arquivo não entra na fila. Foto obrigatória sem id bloqueia Finalizar; a API ainda pode responder `MANDATORY_TASKS_INCOMPLETE`. Pareia com `vlr-api` #225 (draft). Sem merge.
 
 ## 4.9. DEV E2E / Release Certification
 
@@ -371,6 +372,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-17 | **Fix (WEB):** o PATCH direto de uma tarefa grava o valor novo na fila antes do envio, substituindo o campo numa única escrita e com `clientSequence` maior. Rede e 5xx deixam esse valor na fila; 4xx vai para o conflito e o erro sobe; sucesso remove só essa versão e limpa o conflito. Sem mudança no `vlr-api`. |
 | 2026-10-17 | **Fix (WEB):** PATCH de tarefa com HTTP 2xx e corpo que não passa no schema sai da fila (o flush seguinte não reenvia o valor já aplicado) e a tela ainda mostra resposta inválida. Uma versão mais nova na fila apaga o conflito antigo daquele campo; Tentar de novo não grava o valor rejeitado por cima dela. Um 4xx direto avisa o banner na hora. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** agenda B2C explica o horizonte ao lado da data, avisa no campo quando a data fica fora do intervalo, não pinta os espaços como reservados enquanto o dia carrega, mantém a data da URL depois de cancelar, e o calendário usa o idioma da tela. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Código (WEB):** a execução da OS envia a foto da tarefa (`POST /api/work-orders/{id}/tasks/{taskId}/files`, campo `file`, jpeg/png/webp, até 5 MB) e mostra a prévia pela URL assinada (`GET .../files/{fileId}/url`), pedindo outra quando ela expira ou a imagem falha. O `value` fica o id do arquivo; o PATCH não leva bytes nem data URL. Sem conexão o botão fica desabilitado e o arquivo não entra na fila offline. Foto obrigatória sem id bloqueia Finalizar no cliente; `MANDATORY_TASKS_INCOMPLETE` continua traduzido. Pareia com `vlr-api` #225 (draft, sem merge). |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

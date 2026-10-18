@@ -1,7 +1,13 @@
+import type { AxiosProgressEvent } from "axios"
+
 import i18n from "@/lib/i18n"
 import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
+import { isEffectivelyOnline } from "@/lib/connectivity"
+import {
+  localizeWorkOrderApiError,
+  messageForWorkOrderFileError,
+} from "@/features/workOrders/lib/workOrderApiErrors"
 import {
   commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
@@ -15,11 +21,15 @@ import {
   workOrderListSchema,
   workOrderRegistryAssetListSchema,
   workOrderSchema,
+  workOrderTaskFileSchema,
+  workOrderTaskFileUrlSchema,
   type CreateWorkOrderRequest,
   type GenerateWorkOrderFromPlanRequest,
   type UpdateWorkOrderStatusRequest,
   type WorkOrder,
   type WorkOrderRegistryAsset,
+  type WorkOrderTaskFile,
+  type WorkOrderTaskFileUrl,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 
 export const DUPLICATE_WORK_ORDER_CODE = "DUPLICATE_WORK_ORDER"
@@ -277,6 +287,117 @@ export async function updateTaskValue(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.errors.updateTaskFailed"),
       ),
+    )
+  }
+}
+
+export type WorkOrderTaskFileProgress = (percent: number | null) => void
+
+function taskFilePath(workOrderId: string, taskId: string): string {
+  return `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}/files`
+}
+
+function throwWorkOrderFileError(error: unknown, fallback: string): never {
+  if (isNetworkConnectivityError(error) || !isEffectivelyOnline()) {
+    throw new Error(i18n.t("workOrders.execution.imageOffline"), { cause: error })
+  }
+
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+
+  const status = isAxiosError(error) ? error.response?.status : undefined
+  throw new Error(
+    messageForWorkOrderFileError(status, getAxiosErrorPayload(error), fallback),
+    { cause: error },
+  )
+}
+
+/**
+ * Stores a jpeg, png, or webp on an image task. The API writes the file id
+ * into the task answer. This does not PATCH the task and does not queue the blob.
+ */
+export async function uploadWorkOrderTaskFile(
+  workOrderId: string,
+  taskId: string,
+  file: File,
+  onProgress?: WorkOrderTaskFileProgress,
+): Promise<WorkOrderTaskFile> {
+  if (!isEffectivelyOnline()) {
+    throw new Error(i18n.t("workOrders.execution.imageOffline"))
+  }
+
+  const formData = new FormData()
+  formData.append("file", file, file.name)
+
+  try {
+    const response = await api.post<unknown>(
+      taskFilePath(workOrderId, taskId),
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (event: AxiosProgressEvent) => {
+          if (!onProgress) {
+            return
+          }
+
+          const total = event.total
+          if (total == null || total <= 0) {
+            onProgress(null)
+            return
+          }
+
+          onProgress(Math.min(100, Math.round((event.loaded / total) * 100)))
+        },
+      },
+    )
+    const parsed = workOrderTaskFileSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    console.error("uploadWorkOrderTaskFile failed", error)
+    if (isAxiosError(error)) {
+      console.error("uploadWorkOrderTaskFile response", error.response?.data)
+    }
+
+    throwWorkOrderFileError(
+      error,
+      i18n.t("workOrders.execution.imageUploadFailed"),
+    )
+  }
+}
+
+export async function getWorkOrderTaskFileUrl(
+  workOrderId: string,
+  taskId: string,
+  fileId: string,
+): Promise<WorkOrderTaskFileUrl> {
+  if (!isEffectivelyOnline()) {
+    throw new Error(i18n.t("workOrders.execution.imageOffline"))
+  }
+
+  try {
+    const response = await api.get<unknown>(
+      `${taskFilePath(workOrderId, taskId)}/${fileId}/url`,
+    )
+    const parsed = workOrderTaskFileUrlSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    console.error("getWorkOrderTaskFileUrl failed", error)
+    if (isAxiosError(error)) {
+      console.error("getWorkOrderTaskFileUrl response", error.response?.data)
+    }
+
+    throwWorkOrderFileError(
+      error,
+      i18n.t("workOrders.execution.imagePreviewFailed"),
     )
   }
 }

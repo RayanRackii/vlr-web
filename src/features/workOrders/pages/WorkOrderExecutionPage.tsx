@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
+import { WorkOrderTaskImageField } from "@/features/workOrders/components/WorkOrderTaskImageField"
 import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
   parseNumberConfiguration,
@@ -388,12 +389,14 @@ function TaskField({
 
     case "Image":
       return (
-        <Alert>
-          <AlertTitle>{t("workOrders.execution.imageUnsupported")}</AlertTitle>
-          <AlertDescription>
-            {t("workOrders.execution.imageUnsupportedDetail")}
-          </AlertDescription>
-        </Alert>
+        <WorkOrderTaskImageField
+          workOrderId={workOrderId}
+          task={task}
+          disabled={disabled}
+          onUploaded={(fileId) => {
+            onLocalChange(task.id, fileId)
+          }}
+        />
       )
 
     default:
