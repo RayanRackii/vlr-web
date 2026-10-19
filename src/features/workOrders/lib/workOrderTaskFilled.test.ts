@@ -19,7 +19,20 @@ describe("isWorkOrderTaskFilled", () => {
     expect(isWorkOrderTaskFilled({ inputType: "SingleChoice" }, "Ok")).toBe(true)
   })
 
-  it("does not treat a missing image as incomplete", () => {
-    expect(isWorkOrderTaskFilled({ inputType: "Image" }, null)).toBe(true)
+  it("treats an image as filled only when the value is a stored file id", () => {
+    expect(
+      isWorkOrderTaskFilled(
+        { inputType: "Image" },
+        "3f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e",
+      ),
+    ).toBe(true)
+    expect(isWorkOrderTaskFilled({ inputType: "Image" }, null)).toBe(false)
+    expect(isWorkOrderTaskFilled({ inputType: "Image" }, "")).toBe(false)
+    expect(
+      isWorkOrderTaskFilled(
+        { inputType: "Image" },
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+      ),
+    ).toBe(false)
   })
 })

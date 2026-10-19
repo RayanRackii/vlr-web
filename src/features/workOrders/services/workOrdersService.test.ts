@@ -16,6 +16,7 @@ vi.mock("idb-keyval", () => ({
 }))
 
 import { api } from "@/lib/api"
+import { resetConnectivityForTests } from "@/lib/connectivity"
 import i18n from "@/lib/i18n"
 import {
   listQueuedTaskIds,
@@ -48,12 +49,14 @@ vi.mock("@/lib/api", async (importOriginal) => {
 import {
   generateWorkOrderFromPlan,
   getWorkOrderById,
+  getWorkOrderTaskFileUrl,
   getWorkOrders,
   isDuplicateWorkOrderError,
   listWorkOrderAssets,
   updateTaskValue,
   updateWorkOrderAssignee,
   updateWorkOrderStatus,
+  uploadWorkOrderTaskFile,
 } from "@/features/workOrders/services/workOrdersService"
 
 const apiGet = vi.mocked(api.get)
@@ -328,6 +331,156 @@ describe("updateWorkOrderStatus mandatory tasks", () => {
         tasks: "Verificar filtros, Pressão",
       }),
     )
+  })
+})
+
+const FILE_ID = "3f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e"
+const TASK_ID = "16161616-1616-4161-8161-161616161616"
+
+function storedFile(overrides?: { value?: string }) {
+  return {
+    id: FILE_ID,
+    fileName: "court.jpg",
+    contentType: "image/jpeg",
+    sizeBytes: 128,
+    value: overrides?.value ?? FILE_ID,
+  }
+}
+
+describe("work order task photos", () => {
+  beforeEach(() => {
+    syncStore.clear()
+    apiGet.mockReset()
+    apiPost.mockReset()
+    apiPatch.mockReset()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    resetConnectivityForTests()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    resetConnectivityForTests()
+  })
+
+  it("posts the file and keeps the saved file id out of the task PATCH", async () => {
+    const order = makeWorkOrder()
+    const progress: Array<number | null> = []
+    apiPost.mockImplementation(async (_url, _body, config) => {
+      const onUploadProgress = (
+        config as { onUploadProgress?: (event: { loaded: number; total?: number }) => void }
+      ).onUploadProgress
+      onUploadProgress?.({ loaded: 64, total: 128 })
+      return { data: storedFile() }
+    })
+
+    const file = new File([new Uint8Array(128)], "court.jpg", {
+      type: "image/jpeg",
+    })
+    const result = await uploadWorkOrderTaskFile(
+      order.id,
+      TASK_ID,
+      file,
+      (percent) => {
+        progress.push(percent)
+      },
+    )
+
+    expect(result.value).toBe(FILE_ID)
+    expect(progress).toEqual([50])
+    expect(apiPost).toHaveBeenCalledWith(
+      `/api/work-orders/${order.id}/tasks/${TASK_ID}/files`,
+      expect.any(FormData),
+      expect.objectContaining({
+        onUploadProgress: expect.any(Function),
+      }),
+    )
+    const body = apiPost.mock.calls[0]?.[1]
+    expect(body).toBeInstanceOf(FormData)
+    expect(body).not.toBeInstanceOf(String)
+    const sent = (body as FormData).get("file")
+    expect(sent).toBeInstanceOf(File)
+    expect((sent as File).name).toBe("court.jpg")
+    expect(String(sent)).not.toContain("data:image")
+    expect(apiPatch).not.toHaveBeenCalled()
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("does not queue the blob when the browser is offline", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    resetConnectivityForTests()
+    const file = new File([new Uint8Array(8)], "court.jpg", {
+      type: "image/jpeg",
+    })
+
+    await expect(
+      uploadWorkOrderTaskFile(makeWorkOrder().id, TASK_ID, file),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageOffline"))
+
+    expect(apiPost).not.toHaveBeenCalled()
+    expect(apiPatch).not.toHaveBeenCalled()
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("localizes upload errors and still does not patch the task", async () => {
+    apiPost.mockRejectedValue(
+      axiosError(400, {
+        error: "File content does not match the declared image type.",
+        code: "FILE_CONTENT_MISMATCH",
+      }),
+    )
+
+    await expect(
+      uploadWorkOrderTaskFile(
+        makeWorkOrder().id,
+        TASK_ID,
+        new File([new Uint8Array(8)], "court.jpg", { type: "image/jpeg" }),
+      ),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageContentMismatch"))
+    expect(apiPatch).not.toHaveBeenCalled()
+  })
+
+  it("loads a private signed URL and rejects a public one", async () => {
+    const order = makeWorkOrder()
+    apiGet.mockResolvedValue({
+      data: {
+        url: "https://dev-storage.local/bucket/key?sig=dev&exp=2000000000",
+        isPublic: false,
+      },
+    })
+
+    await expect(
+      getWorkOrderTaskFileUrl(order.id, TASK_ID, FILE_ID),
+    ).resolves.toEqual({
+      url: "https://dev-storage.local/bucket/key?sig=dev&exp=2000000000",
+      isPublic: false,
+    })
+    expect(apiGet).toHaveBeenCalledWith(
+      `/api/work-orders/${order.id}/tasks/${TASK_ID}/files/${FILE_ID}/url`,
+    )
+
+    apiGet.mockResolvedValue({
+      data: { url: "https://cdn.example/public.jpg", isPublic: true },
+    })
+    await expect(
+      getWorkOrderTaskFileUrl(order.id, TASK_ID, FILE_ID),
+    ).rejects.toThrow(i18n.t("workOrders.errors.invalidResponse"))
+  })
+
+  it("translates a missing photo and a forbidden upload", async () => {
+    apiGet.mockRejectedValue(axiosError(404, ""))
+    await expect(
+      getWorkOrderTaskFileUrl(makeWorkOrder().id, TASK_ID, FILE_ID),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageNotFound"))
+
+    apiPost.mockRejectedValue(axiosError(403, { error: "FORBIDDEN" }))
+    await expect(
+      uploadWorkOrderTaskFile(
+        makeWorkOrder().id,
+        TASK_ID,
+        new File([new Uint8Array(8)], "court.jpg", { type: "image/jpeg" }),
+      ),
+    ).rejects.toThrow(i18n.t("rbac.errors.FORBIDDEN"))
+    expect(apiPatch).not.toHaveBeenCalled()
   })
 })
 

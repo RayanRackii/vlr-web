@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
@@ -46,6 +46,11 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  uploadWorkOrderTaskFile: vi.fn(),
+  getWorkOrderTaskFileUrl: vi.fn(async () => ({
+    url: "https://files.example/photo?exp=9999999999",
+    isPublic: false as const,
+  })),
   updateWorkOrderAssignee: vi.fn(),
 }))
 
@@ -77,6 +82,19 @@ import {
   updateWorkOrderAssignee,
   updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
+
+beforeAll(() => {
+  vi.spyOn(HTMLImageElement.prototype, "src", "set").mockImplementation(function (
+    this: HTMLImageElement,
+    value: string,
+  ) {
+    this.setAttribute("src", value)
+  })
+})
+
+afterAll(() => {
+  vi.restoreAllMocks()
+})
 
 const getWorkOrderByIdMock = vi.mocked(getWorkOrderById)
 const getTechniciansMock = vi.mocked(getTechnicians)
@@ -326,7 +344,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     })
   })
 
-  it("does not block completion on an image task", async () => {
+  it("blocks completion when a mandatory photo has no file id", async () => {
     const user = userEvent.setup()
     const base = makeWorkOrder()
     const task = base.tasks[0]
@@ -345,6 +363,50 @@ describe("WorkOrderExecutionPage tasks", () => {
       ],
     })
     getWorkOrderByIdMock.mockResolvedValue(imageOrder)
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    expect(
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.execution.imageChoose"),
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.execution.imageUnsupported")),
+    ).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
+      }),
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.execution.mandatoryIncomplete", { tasks: "Foto" }),
+    )
+    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
+  })
+
+  it("completes a mandatory photo from the stored file id without patching it", async () => {
+    const user = userEvent.setup()
+    const base = makeWorkOrder()
+    const task = base.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const imageOrder = makeWorkOrder({
+      status: "InProgress",
+      tasks: [
+        {
+          ...task,
+          title: "Foto",
+          inputType: "Image",
+          isMandatory: true,
+          value: "3f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e",
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(imageOrder)
     updateWorkOrderStatusMock.mockResolvedValue({
       ...imageOrder,
       status: "Completed",
@@ -353,8 +415,10 @@ describe("WorkOrderExecutionPage tasks", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText(i18n.t("workOrders.execution.imageUnsupported")),
-    ).toBeInTheDocument()
+      await screen.findByRole("img", {
+        name: i18n.t("workOrders.execution.imagePreviewAlt", { title: "Foto" }),
+      }),
+    ).toHaveAttribute("src", "https://files.example/photo?exp=9999999999")
     await user.click(
       screen.getByRole("button", {
         name: i18n.t("workOrders.execution.complete"),
@@ -366,6 +430,7 @@ describe("WorkOrderExecutionPage tasks", () => {
         "Completed",
       )
     })
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
   })
 
   it("blocks completion when a mandatory checkbox is false", async () => {

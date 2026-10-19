@@ -185,6 +185,25 @@ export type CreateWorkOrderFormValues = z.infer<
   ReturnType<typeof createWorkOrderFormSchema>
 >
 
+export const workOrderTaskFileSchema = z
+  .object({
+    id: z.string().uuid(),
+    fileName: z.string().min(1),
+    contentType: z.string().min(1),
+    sizeBytes: z.number().int().nonnegative(),
+    value: z.string().uuid(),
+  })
+  .refine((file) => file.id === file.value, { path: ["value"] })
+
+export type WorkOrderTaskFile = z.infer<typeof workOrderTaskFileSchema>
+
+export const workOrderTaskFileUrlSchema = z.object({
+  url: z.string().url(),
+  isPublic: z.literal(false),
+})
+
+export type WorkOrderTaskFileUrl = z.infer<typeof workOrderTaskFileUrlSchema>
+
 export const updateWorkOrderTaskValueRequestSchema = z.object({
   value: z.string().nullish(),
 })
