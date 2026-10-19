@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   fetchReservationQueue,
   getReservationQueueErrorCode,
@@ -317,20 +318,29 @@ export function useReservationQueue(options: {
     if (!rentalAssetId) {
       return null
     }
+    const generation = getAgendaSessionGeneration()
     mutating.current = true
     fetchGeneration.current += 1
     setJoining(true)
     try {
       const next = await joinReservationQueue(rentalAssetId)
+      if (generation !== getAgendaSessionGeneration()) {
+        return null
+      }
       applyStatus(next)
       return next
     } catch (error) {
+      if (generation !== getAgendaSessionGeneration()) {
+        return null
+      }
       toastQueueFailure(error, t("apiErrors.joinQueue"), t)
       void refresh()
       return null
     } finally {
-      mutating.current = false
-      setJoining(false)
+      if (generation === getAgendaSessionGeneration()) {
+        mutating.current = false
+        setJoining(false)
+      }
     }
   }, [applyStatus, refresh, rentalAssetId, t])
 

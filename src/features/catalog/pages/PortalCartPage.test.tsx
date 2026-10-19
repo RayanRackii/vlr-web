@@ -1,14 +1,16 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
+import { createMemoryRouter, MemoryRouter, Outlet, Route, RouterProvider, Routes } from "react-router-dom"
 
 import { catalogCartStorageKey } from "@/features/catalog/cart"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
-import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
+import type { CatalogOrder, PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { persistCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
+import { signOutCustomerPortal } from "@/lib/sessionRestoreGuard"
 
 vi.mock("sonner", () => ({
   toast: {
@@ -99,6 +101,7 @@ describe("PortalCartPage validity gate", () => {
     window.sessionStorage.clear()
     listProductsMock.mockReset()
     createOrderMock.mockReset()
+    vi.mocked(toast.success).mockReset()
     toastError.mockReset()
     listProductsMock.mockResolvedValue([product])
   })
@@ -275,5 +278,54 @@ describe("PortalCartPage validity gate", () => {
     expect(screen.queryByText("Rede")).not.toBeInTheDocument()
     expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()
     expect(screen.queryByText(/A partir de/)).not.toBeInTheDocument()
+  })
+
+  it.each(["resolved", "rejected"] as const)("ignores a %s checkout after logout and a new login", async (outcome) => {
+    seedCart()
+    const storageKey = catalogCartStorageKey(SUBDOMAIN, CUSTOMER_ID)
+    const originalCart = window.sessionStorage.getItem(storageKey)
+    let resolveOrder: (value: CatalogOrder) => void = () => undefined
+    let rejectOrder: (reason: Error) => void = () => undefined
+    const pending = new Promise<CatalogOrder>((resolve, reject) => {
+      resolveOrder = resolve
+      rejectOrder = reject
+    })
+    createOrderMock.mockReturnValue(pending)
+    const router = createMemoryRouter([
+      {
+        element: <Outlet context={outletContext} />,
+        children: [{ path: "/", element: <PortalCartPage /> }],
+      },
+      { path: "/next-session", element: <div>next session</div> },
+      { path: "/t/ficc/pedidos/:orderId", element: <div>old order</div> },
+    ])
+    render(<RouterProvider router={router} />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole("button", {
+      name: i18n.t("tenantPortal.catalog.submitOrder"),
+    }))
+    expect(createOrderMock).toHaveBeenCalledTimes(1)
+
+    signOutCustomerPortal(SUBDOMAIN)
+    persistCustomerSession("customer-B", SUBDOMAIN, "Bruno")
+    await act(async () => { await router.navigate("/next-session") })
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveOrder({
+          id: "old-order", orderNumber: 1, displayNumber: "PED-1", status: "Requested",
+          customerId: CUSTOMER_ID, customerName: "Ana", customerEmail: null, customerPhone: null,
+          customerNote: null, totalAmount: 20, currency: "BRL", rejectedReason: null,
+          cancelledReason: null, createdAt: "2026-10-18T12:00:00Z", items: [], history: [],
+        })
+      } else {
+        rejectOrder(new Error("old checkout failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(router.state.location.pathname).toBe("/next-session")
+    expect(window.sessionStorage.getItem(storageKey)).toBe(originalCart)
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
   })
 })

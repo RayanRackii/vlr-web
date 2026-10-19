@@ -1,9 +1,19 @@
-import type { ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
 import { render, screen } from "@testing-library/react"
 import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import { replaceBrowserLocation } from "@/lib/browserLocation"
+import {
+  installSessionRestoreGuard,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
+
+vi.mock("@/lib/browserLocation", () => ({
+  assignBrowserLocation: vi.fn(),
+  replaceBrowserLocation: vi.fn(),
+}))
 
 const authState = {
   user: null as { id: string; email: string } | null,
@@ -40,6 +50,8 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
   beforeEach(() => {
     authState.user = null
     authState.isLoading = false
+    resetSessionRestoreGuardForTests()
+    window.history.pushState({}, "", "/")
   })
 
   it("sends unauthenticated protected URLs to /login with a safe next path", () => {
@@ -66,5 +78,37 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
     renderRoutes("/t/ficc")
     expect(screen.getByText("b2c-login")).toBeInTheDocument()
     expect(screen.queryByText(/^login/)).not.toBeInTheDocument()
+  })
+
+  it("does not render protected content or call the API after a logged-out history restore", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response())
+    authState.user = { id: "user-1", email: "admin@clube.com" }
+    installSessionRestoreGuard()
+    window.history.pushState({}, "", "/catalogo/pedidos")
+    window.dispatchEvent(new PopStateEvent("popstate"))
+
+    function OrdersProbe() {
+      useEffect(() => {
+        void fetch("/api/catalog/orders")
+      }, [])
+      return <div>staff-orders</div>
+    }
+
+    render(
+      <MemoryRouter initialEntries={["/catalogo/pedidos"]}>
+        <Routes>
+          <Route path="/login" element={<div>login</div>} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/catalogo/pedidos" element={<OrdersProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
+    expect(screen.queryByText("Carregando...")).not.toBeInTheDocument()
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    fetchSpy.mockRestore()
   })
 })

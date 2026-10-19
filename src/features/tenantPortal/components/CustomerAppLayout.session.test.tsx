@@ -1,18 +1,42 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
+  commitPortalBooking,
+  isOwnBookedSlot,
+  recentPortalReservations,
+  rememberOwnBooking,
+  resetAgendaQueryClientForTests,
+} from "@/features/tenantPortal/lib/agendaQueryClient"
+import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
+import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
+import {
   clearCustomerSession,
   getCustomerAccessToken,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  installSessionRestoreGuard,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
 import { UI_LANGUAGE_STORAGE_KEY } from "@/lib/uiLanguage"
+
+vi.mock("@/lib/browserLocation", () => ({
+  assignBrowserLocation: vi.fn(),
+  replaceBrowserLocation: vi.fn(),
+}))
 
 vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOriginal) => {
   const actual =
@@ -34,16 +58,35 @@ import {
 const fetchBranding = vi.mocked(fetchTenantBranding)
 const fetchMenu = vi.mocked(fetchTenantMenu)
 
-type LocationAssignImpl = { assign: (url: string) => void }
+const OWN_ASSET_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+const OWN_START = "2026-10-18T15:00:00.000Z"
 
-function locationAssignImpl(): LocationAssignImpl {
-  const symbol = Object.getOwnPropertySymbols(window.location).find(
-    (candidate) => candidate.description === "impl",
-  )
-  if (symbol === undefined) {
-    throw new Error("location impl is missing")
+function ownReservation(): PortalReservation {
+  return {
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    tenantId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    unitId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    customerId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    customerName: "Ana",
+    customerWhatsApp: "5511999999999",
+    startDateTime: OWN_START,
+    endDateTime: "2026-10-18T16:00:00.000Z",
+    status: "Confirmed",
+    totalAmount: 80,
+    depositPaid: 0,
+    createdAt: OWN_START,
+    items: [
+      {
+        id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        assetId: OWN_ASSET_ID,
+        rentalAssetId: OWN_ASSET_ID,
+        assetName: "Quadra",
+        quantity: 1,
+        unitPrice: 80,
+        subTotal: 80,
+      },
+    ],
   }
-  return (window.location as unknown as Record<symbol, LocationAssignImpl>)[symbol]
 }
 
 function renderPortal(path: string) {
@@ -80,6 +123,9 @@ describe("CustomerAppLayout session tenant", () => {
 
   afterEach(async () => {
     clearCustomerSession()
+    resetAgendaQueryClientForTests()
+    resetSessionRestoreGuardForTests()
+    window.history.pushState({}, "", "/")
     fetchBranding.mockReset()
     fetchMenu.mockReset()
     await i18n.changeLanguage("pt-BR")
@@ -207,14 +253,24 @@ describe("CustomerAppLayout session tenant", () => {
     expect(screen.queryByText("login-form")).not.toBeInTheDocument()
   })
 
-  it("signs out from the account menu and keeps the chosen language", async () => {
+  it("signs out with replace, drops the agenda cache, and keeps the chosen language", async () => {
     const user = userEvent.setup()
-    const locationImpl = locationAssignImpl()
-    const originalAssign = locationImpl.assign
-    const assigned: string[] = []
-    locationImpl.assign = (url: string) => {
-      assigned.push(url)
+    const reservation = ownReservation()
+    let resolveBooking: (value: PortalReservation) => void = () => undefined
+    const booking = commitPortalBooking(
+      () => new Promise<PortalReservation>((resolve) => {
+        resolveBooking = resolve
+      }),
+      { subdomain: "ficc", dates: ["2026-10-18"] },
+    )
+    const discarded = expect(booking).rejects.toMatchObject({ name: "AbortError" })
+    rememberOwnBooking(reservation)
+    const civil = reservationCivilStart(OWN_START)
+    if (civil === null) {
+      throw new Error("expected a civil start")
     }
+    expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(true)
+
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
       subdomain: "ficc",
@@ -225,22 +281,54 @@ describe("CustomerAppLayout session tenant", () => {
       welcomeTagline: null,
     })
     fetchMenu.mockResolvedValue([])
-    renderPortal("/t/ficc/agenda")
+    const router = createMemoryRouter(
+      [
+        { path: "/t/:subdomain", element: <div>login-form</div> },
+        {
+          path: "/t/:subdomain/agenda",
+          element: <CustomerAppLayout />,
+          children: [{ index: true, element: <div>agenda-body</div> }],
+        },
+      ],
+      { initialEntries: ["/t/ficc/agenda"] },
+    )
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <RouterProvider router={router} />
+      </ThemeProvider>,
+    )
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
 
-    try {
-      await i18n.changeLanguage("en")
-      await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
-      await user.click(
-        await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
-      )
+    await i18n.changeLanguage("en")
+    await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+    )
 
-      expect(getCustomerAccessToken()).toBeNull()
-      expect(window.localStorage.getItem(UI_LANGUAGE_STORAGE_KEY)).toBe("en")
-      expect(assigned).toEqual(["/t/ficc"])
-    } finally {
-      locationImpl.assign = originalAssign
-      await i18n.changeLanguage("pt-BR")
-    }
+    expect(getCustomerAccessToken()).toBeNull()
+    expect(window.localStorage.getItem(UI_LANGUAGE_STORAGE_KEY)).toBe("en")
+    expect(router.state.location.pathname).toBe("/t/ficc")
+    expect(router.state.historyAction).toBe("REPLACE")
+    expect(screen.queryByText("agenda-body")).not.toBeInTheDocument()
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
+    expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
+    persistCustomerSession("next-customer-token", "ficc", "Bruno")
+    resolveBooking(reservation)
+    await discarded
+    expect(recentPortalReservations("ficc")).toEqual([])
+    expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
+    expect(fetchBranding).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not render the agenda or call the API when history restore has no session", async () => {
+    installSessionRestoreGuard()
+    window.history.pushState({}, "", "/t/ficc/app/perfil")
+    window.dispatchEvent(new PopStateEvent("popstate"))
+    renderPortal("/t/ficc/agenda")
+
+    expect(screen.queryByText("agenda-body")).not.toBeInTheDocument()
+    expect(screen.queryByText("login-form")).not.toBeInTheDocument()
+    expect(fetchBranding).not.toHaveBeenCalled()
+    expect(fetchMenu).not.toHaveBeenCalled()
   })
 })

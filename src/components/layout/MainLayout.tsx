@@ -20,7 +20,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
-  clearPlatformTenantExited,
   markPlatformTenantExited,
   refreshAuthSession,
   usePlatformTenantSession,
@@ -28,10 +27,7 @@ import {
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
-import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
-import appI18n from "@/lib/i18n"
-import { persistLanguage } from "@/lib/uiLanguage"
-import { supabase } from "@/lib/supabase"
+import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
@@ -143,14 +139,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         </>
       }
       onSignOut={async () => {
-        writeActiveTenantLabel(null)
-        invalidateCurrentUserCache()
-        const { error } = await supabase.auth.signOut()
-        persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
-        if (error !== null) {
+        const signedOut = await signOutStaffPortal()
+        if (!signedOut) {
           return
         }
-        clearPlatformTenantExited()
         void navigate("/login", { replace: true })
       }}
     >
