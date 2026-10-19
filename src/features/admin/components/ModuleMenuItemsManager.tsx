@@ -813,6 +813,7 @@ export function ModuleMenuItemsManager({
                 <ul className="list-inside list-disc space-y-0.5 pl-1">
                   <li>{t("tenantPortal.catalog.navCatalog")}</li>
                   <li>{t("tenantPortal.catalog.navOrders")}</li>
+                  <li>{t("tenantPortal.catalog.navRequests")}</li>
                 </ul>
               </div>
             ) : (

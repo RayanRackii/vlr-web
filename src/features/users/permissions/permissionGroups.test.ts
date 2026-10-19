@@ -7,6 +7,8 @@ import {
   resolvePermissionRouteAccess,
 } from "@/features/users/permissions/permissionGroups"
 import {
+  describeApiError,
+  isForbiddenError,
   isRbacErrorCode,
   mapRbacErrorMessage,
 } from "@/features/users/permissions/rbacErrors"
@@ -85,5 +87,16 @@ describe("RBAC error mapping", () => {
       "Esta função está em uso e não pode ser excluída.",
     )
     expect(message).toBe(i18n.t("rbac.errors.ROLE_IN_USE"))
+  })
+
+  it("maps a FORBIDDEN payload and a thrown FORBIDDEN error", () => {
+    expect(describeApiError(new Error("FORBIDDEN"), "fallback")).toBe(
+      i18n.t("rbac.errors.FORBIDDEN"),
+    )
+    expect(isForbiddenError(new Error("FORBIDDEN"))).toBe(true)
+    expect(isForbiddenError(new Error("fallback"))).toBe(false)
+    expect(describeApiError(new Error("Nome já cadastrado."), "fallback")).toBe(
+      "Nome já cadastrado.",
+    )
   })
 })

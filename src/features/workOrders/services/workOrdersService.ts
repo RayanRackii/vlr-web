@@ -8,6 +8,7 @@ import {
   localizeWorkOrderApiError,
   messageForWorkOrderFileError,
 } from "@/features/workOrders/lib/workOrderApiErrors"
+import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import {
   commitDirectTaskValuePatch,
   enqueueTaskValuePatch,
@@ -16,6 +17,7 @@ import {
 import {
   createWorkOrderRequestSchema,
   generateWorkOrderFromPlanRequestSchema,
+  updateWorkOrderAssigneeRequestSchema,
   updateWorkOrderStatusRequestSchema,
   updateWorkOrderTaskValueRequestSchema,
   workOrderListSchema,
@@ -50,6 +52,27 @@ export function isDuplicateWorkOrderError(
 }
 
 const WORK_ORDERS_PATH = "/api/work-orders"
+
+function throwWorkOrderReadError(error: unknown, fallbackKey: string): never {
+  if (error instanceof Error && !isAxiosError(error)) {
+    throw error
+  }
+
+  if (isAxiosError(error)) {
+    const status = error.response?.status
+    if (status === 403 || status === 404) {
+      throw new Error(i18n.t("workOrders.errors.notAssignedOrForbidden"))
+    }
+  }
+
+  const fallback = i18n.t(fallbackKey)
+  throw new Error(
+    mapRbacErrorMessage(
+      localizeWorkOrderApiError(getAxiosErrorPayload(error), fallback),
+      fallback,
+    ),
+  )
+}
 
 export async function listWorkOrderAssets(): Promise<WorkOrderRegistryAsset[]> {
   try {
@@ -131,16 +154,7 @@ export async function getWorkOrders(filters?: {
       console.error("getWorkOrders response data", error.response?.data)
     }
 
-    if (error instanceof Error && !isAxiosError(error)) {
-      throw error
-    }
-
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("workOrders.errors.loadFailed"),
-      ),
-    )
+    throwWorkOrderReadError(error, "workOrders.errors.loadFailed")
   }
 }
 
@@ -211,16 +225,7 @@ export async function getWorkOrderById(id: string): Promise<WorkOrder> {
       console.error("getWorkOrderById response data", error.response?.data)
     }
 
-    if (error instanceof Error && !isAxiosError(error)) {
-      throw error
-    }
-
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("workOrders.errors.loadOneFailed"),
-      ),
-    )
+    throwWorkOrderReadError(error, "workOrders.errors.loadOneFailed")
   }
 }
 
@@ -398,6 +403,41 @@ export async function getWorkOrderTaskFileUrl(
     throwWorkOrderFileError(
       error,
       i18n.t("workOrders.execution.imagePreviewFailed"),
+    )
+  }
+}
+
+export async function updateWorkOrderAssignee(
+  workOrderId: string,
+  assignedUserId: string | null,
+): Promise<WorkOrder> {
+  const payload = updateWorkOrderAssigneeRequestSchema.parse({
+    assignedUserId,
+  })
+
+  try {
+    const response = await api.put<unknown>(
+      `${WORK_ORDERS_PATH}/${workOrderId}/assignee`,
+      payload,
+    )
+    const parsed = workOrderSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    const fallback = i18n.t("workOrders.errors.assignFailed")
+    throw new Error(
+      mapRbacErrorMessage(
+        localizeWorkOrderApiError(getAxiosErrorPayload(error), fallback),
+        fallback,
+      ),
     )
   }
 }
