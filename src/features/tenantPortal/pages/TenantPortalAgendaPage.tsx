@@ -871,6 +871,7 @@ export function TenantPortalAgendaPage() {
     const asset = selectedAsset
     const slot = selectedSlot
     const dayDate = date
+    const generation = getAgendaSessionGeneration()
     submittingRef.current = true
     setSubmitting(true)
     try {
@@ -896,6 +897,9 @@ export function TenantPortalAgendaPage() {
           startTime: slot.startTime,
         },
       )
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
           amount: formatBookingMoney(created.totalAmount),
@@ -913,6 +917,13 @@ export function TenantPortalAgendaPage() {
         setSelectedRentalAssetId(null)
       }
     } catch (error) {
+      if (
+        generation !== getAgendaSessionGeneration()
+        || ((error instanceof DOMException || error instanceof Error)
+          && error.name === "AbortError")
+      ) {
+        return
+      }
       if (queue.applyBookingError(error)) {
         const code = getReservationQueueErrorCode(error)
         toast.error(
@@ -997,8 +1008,10 @@ export function TenantPortalAgendaPage() {
         describeBookingError(error, t("tenantPortal.agenda.reserveError")),
       )
     } finally {
-      submittingRef.current = false
-      setSubmitting(false)
+      if (generation === getAgendaSessionGeneration()) {
+        submittingRef.current = false
+        setSubmitting(false)
+      }
     }
   }
 

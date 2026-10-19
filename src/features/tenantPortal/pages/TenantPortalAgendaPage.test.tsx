@@ -1341,6 +1341,63 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
   }
 
+  it.each(["resolved", "rejected"] as const)("silently discards a %s booking from the previous session", async (outcome) => {
+    let resolveBooking: (value: PortalReservation) => void = () => undefined
+    let rejectBooking: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation>((resolve, reject) => {
+      resolveBooking = resolve
+      rejectBooking = reject
+    })
+    bookSlot.mockReturnValue(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await bookQuadra1(user)
+    expect(bookSlot).toHaveBeenCalledTimes(1)
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+    listMine.mockClear()
+    fetchDay.mockClear()
+    fetchQueue.mockClear()
+
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveBooking(makeReservation("Confirmed", FUTURE_ISO))
+      } else {
+        rejectBooking(new Error("old booking failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(fetchQueue).not.toHaveBeenCalled()
+    expect(screen.queryByRole("listitem")).not.toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+  })
+
+  it("silently handles an aborted booking", async () => {
+    bookSlot.mockRejectedValue(new DOMException("Request aborted", "AbortError"))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await bookQuadra1(user)
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    })
+
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+  })
+
   it("clears Reservando and shows the reservation before the refresh settles", async () => {
     const user = userEvent.setup()
     const created = makeReservation("Confirmed", SLOT_08_ISO, {
@@ -3930,9 +3987,13 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     expect(createReservation).not.toHaveBeenCalled()
   })
 
-  it("does not reserve after a previous customer's join finishes in a new session", async () => {
+  it.each(["resolved", "rejected"] as const)("silently discards a %s join from the previous session", async (outcome) => {
     let resolveJoin: (value: ReservationQueueStatus) => void = () => undefined
-    const pending = new Promise<ReservationQueueStatus>((resolve) => { resolveJoin = resolve })
+    let rejectJoin: (reason: Error) => void = () => undefined
+    const pending = new Promise<ReservationQueueStatus>((resolve, reject) => {
+      resolveJoin = resolve
+      rejectJoin = reject
+    })
     joinQueue.mockReturnValue(pending)
     bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
     const user = userEvent.setup()
@@ -3946,14 +4007,31 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     page.unmount()
     signOutCustomerPortal("ficc")
     persistCustomerSession("customer-B", "ficc", "Bruno")
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve"))).toBeEnabled()
+    })
+    fetchQueue.mockClear()
+    listMine.mockClear()
+    fetchDay.mockClear()
     await act(async () => {
-      resolveJoin(queueStatus({ myTicket: queueTicket("Active") }))
-      await pending
+      if (outcome === "resolved") {
+        resolveJoin(queueStatus({ myTicket: queueTicket("Active") }))
+      } else {
+        rejectJoin(new Error("old join failed"))
+      }
+      await pending.catch(() => undefined)
     })
 
     expect(bookSlot).not.toHaveBeenCalled()
     expect(createReservation).not.toHaveBeenCalled()
     expect(toastSuccess).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
+    expect(fetchQueue).not.toHaveBeenCalled()
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve"))).toBeEnabled()
   })
 
   it("shows the waiting view with position and people ahead", async () => {

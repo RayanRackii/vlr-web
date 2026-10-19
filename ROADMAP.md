@@ -31,6 +31,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Admin B2B de reservas.
 
 - [x] Correção local do review #238: logout avança a geração da sessão da agenda; reservas e conflitos pendentes da sessão anterior não repovoam o cache nem iniciam refetch/retry. Respostas tardias do shell, join antes de reservar, cancelamento (incluindo preflight) e checkout também são descartadas. Restaurar um documento por BFCache com outra sessão invalida os caches e recarrega a mesma URL sem apagar a sessão nova. Regressões com dois documentos e respostas tardias após logout/login. Branch `fix-238`, sem push.
+- [x] Review #238 (2 Medium): join confere a geração da sessão antes de aplicar resposta, mostrar toast, rebuscar a fila ou finalizar o estado local; `onReserve` descarta em silêncio respostas de outra sessão e `AbortError`. Regressões cobrem join e reserva resolvidos/rejeitados após logout de A e login de B, sem toast nem GET adicional, e abort de reserva na sessão atual. Sem mudança no `vlr-api`; sem push.
 
 ## 2.5. Dashboard B2B dinâmico — FEITO (código)
 
