@@ -1,12 +1,35 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import type { TFunction } from "i18next"
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
+import { z } from "zod"
 
+import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import {
+  EXISTING_ACCOUNT_SIGN_IN_REQUIRED,
+  INVITE_ACCOUNT_MISMATCH,
+  INVITE_IDENTITY_CONFLICT,
+  InviteAcceptError,
+  acceptExistingAccountInvite,
+  acceptNewAccountInvite,
+  previewInvite,
+} from "@/features/auth/inviteAcceptService"
+import type { InvitePreview } from "@/features/auth/inviteSchemas"
+import {
+  createSetPasswordSchema,
+  type SetPasswordFormValues,
+} from "@/features/auth/setPasswordSchema"
+import {
+  PLATFORM_ADMIN_USES_ENTER,
+  StaffTenantError,
+  listMyStaffTenants,
+  selectMyStaffTenant,
+} from "@/features/users/services/staffTenantsService"
+import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
 import { Button } from "@/components/ui/button"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
@@ -14,6 +37,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
@@ -23,13 +47,69 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  createSetPasswordSchema,
-  type SetPasswordFormValues,
-} from "@/features/auth/setPasswordSchema"
-import { submitInvitePassword } from "@/features/auth/setPasswordService"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
+
+type Phase =
+  | { status: "loading" }
+  | { status: "invalid" }
+  | { status: "password"; preview: InvitePreview }
+  | { status: "sign-in"; preview: InvitePreview }
+  | {
+      status: "picker"
+      preview: InvitePreview
+      memberships: StaffTenantMembership[]
+      initialTenantId: string
+    }
+  | { status: "membership-error"; preview: InvitePreview }
+
+function messageForInvite(error: unknown, t: TFunction): string {
+  if (!(error instanceof InviteAcceptError)) {
+    return t("auth.invite.toastError")
+  }
+
+  switch (error.code) {
+    case EXISTING_ACCOUNT_SIGN_IN_REQUIRED:
+      return t("auth.invite.errors.existingAccount")
+    case INVITE_ACCOUNT_MISMATCH:
+      return t("auth.invite.errors.accountMismatch")
+    case INVITE_IDENTITY_CONFLICT:
+      return t("auth.invite.errors.identityConflict")
+    default:
+      return t("auth.invite.toastError")
+  }
+}
+
+function loginErrorMessage(
+  error: { message: string },
+  t: TFunction,
+): string {
+  if (error.message === "Invalid login credentials") {
+    return t("auth.login.invalidCredentials")
+  }
+
+  return t("auth.login.failed")
+}
+
+function membershipLabel(membership: StaffTenantMembership): string {
+  const trade = membership.tradeName?.trim() ?? ""
+  if (trade.length > 0) {
+    return trade
+  }
+
+  return membership.legalName
+}
+
+function membershipSecondary(membership: StaffTenantMembership): string | null {
+  const trade = membership.tradeName?.trim() ?? ""
+  if (trade.length === 0 || trade === membership.legalName) {
+    return null
+  }
+
+  return membership.legalName
+}
 
 export function SetPasswordPage() {
   const { t } = useTranslation()
@@ -37,24 +117,13 @@ export function SetPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get("token")?.trim() ?? ""
   const hasToken = token.length > 0
+  const [phase, setPhase] = useState<Phase>(
+    hasToken ? { status: "loading" } : { status: "invalid" },
+  )
   const [redirectTimeoutId, setRedirectTimeoutId] = useState<
     number | undefined
   >(undefined)
-
-  const schema = useMemo(() => createSetPasswordSchema(t), [t])
-
-  const form = useForm<SetPasswordFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
-    mode: "onTouched",
-  })
-
-  const watchedValues = form.watch()
-  const isPasswordValid = schema.safeParse(watchedValues).success
-  const isSubmitting = form.formState.isSubmitting
+  const [retryingMemberships, setRetryingMemberships] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -64,40 +133,190 @@ export function SetPasswordPage() {
     }
   }, [redirectTimeoutId])
 
-  async function onSubmit(values: SetPasswordFormValues) {
-    if (!hasToken) {
+  useEffect(() => {
+    if (token.length === 0) {
+      setPhase({ status: "invalid" })
       return
     }
 
+    let cancelled = false
+    setPhase({ status: "loading" })
+    void previewInvite(token).then(
+      (preview) => {
+        if (cancelled) {
+          return
+        }
+
+        setPhase(
+          preview.existingAccount
+            ? { status: "sign-in", preview }
+            : { status: "password", preview },
+        )
+      },
+      () => {
+        if (cancelled) {
+          return
+        }
+
+        setPhase({ status: "invalid" })
+      },
+    )
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  async function openMembershipStep(preview: InvitePreview) {
     try {
-      const accepted = await submitInvitePassword({
-        token,
-        password: values.password,
-      })
+      const list = await listMyStaffTenants()
+      if (list.memberships.length > 1) {
+        const invited = list.memberships.some(
+          (membership) => membership.tenantId === preview.tenantId,
+        )
+          ? preview.tenantId
+          : ""
+        setPhase({
+          status: "picker",
+          preview,
+          memberships: list.memberships,
+          initialTenantId: invited,
+        })
+        return
+      }
 
-      noteStaffSignIn()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: accepted.email,
-        password: values.password,
-      })
+      const only = list.memberships[0]
+      if (only && only.tenantId !== list.accessTokenTenantId) {
+        await selectMyStaffTenant(only.tenantId)
+        await refreshAuthSession()
+      }
 
-      toast.success(t("auth.invite.toastSuccess"))
-      form.reset()
-
-      if (signInError === null) {
+      void navigate("/dashboard", { replace: true })
+    } catch (error: unknown) {
+      if (
+        error instanceof StaffTenantError &&
+        error.code === PLATFORM_ADMIN_USES_ENTER
+      ) {
         void navigate("/dashboard", { replace: true })
         return
       }
 
-      const timeoutId = window.setTimeout(() => {
-        void navigate("/login", { replace: true })
-      }, 1500)
-
-      setRedirectTimeoutId(timeoutId)
-    } catch {
-      toast.error(t("auth.invite.toastError"))
+      setPhase({ status: "membership-error", preview })
     }
   }
+
+  async function onCreatePassword(password: string) {
+    if (phase.status !== "password") {
+      return
+    }
+
+    const preview = phase.preview
+    try {
+      const accepted = await acceptNewAccountInvite({ token, password })
+      noteStaffSignIn()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: accepted.email,
+        password,
+      })
+      toast.success(t("auth.invite.toastSuccess"))
+      if (signInError !== null) {
+        const timeoutId = window.setTimeout(() => {
+          void navigate("/login", { replace: true })
+        }, 1500)
+        setRedirectTimeoutId(timeoutId)
+        return
+      }
+
+      await openMembershipStep(preview)
+    } catch (error: unknown) {
+      toast.error(messageForInvite(error, t))
+      if (
+        error instanceof InviteAcceptError &&
+        error.code === EXISTING_ACCOUNT_SIGN_IN_REQUIRED
+      ) {
+        setPhase({
+          status: "sign-in",
+          preview: { ...preview, existingAccount: true },
+        })
+      }
+    }
+  }
+
+  async function onExistingSignIn(
+    password: string,
+  ): Promise<{ message: string } | null> {
+    if (phase.status !== "sign-in") {
+      return null
+    }
+
+    const preview = phase.preview
+    noteStaffSignIn()
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: preview.email,
+      password,
+    })
+    if (signInError !== null) {
+      return { message: signInError.message }
+    }
+
+    try {
+      await acceptExistingAccountInvite({ token })
+      toast.success(
+        t("auth.invite.toastJoined", { tenant: preview.tenantName }),
+      )
+      await openMembershipStep(preview)
+      return null
+    } catch (error: unknown) {
+      toast.error(messageForInvite(error, t))
+      return null
+    }
+  }
+
+  async function onPickTenant(tenantId: string) {
+    try {
+      await selectMyStaffTenant(tenantId)
+      await refreshAuthSession()
+      void navigate("/dashboard", { replace: true })
+    } catch {
+      toast.error(t("auth.invite.pickerError"))
+    }
+  }
+
+  async function onRetryMemberships() {
+    if (phase.status !== "membership-error") {
+      return
+    }
+
+    setRetryingMemberships(true)
+    try {
+      await openMembershipStep(phase.preview)
+    } finally {
+      setRetryingMemberships(false)
+    }
+  }
+
+  const title =
+    phase.status === "sign-in"
+      ? t("auth.invite.signInTitle")
+      : phase.status === "picker"
+        ? t("auth.invite.pickerTitle")
+        : t("auth.invite.title")
+
+  const description =
+    phase.status === "invalid" || !hasToken
+      ? t("auth.invite.invalidLink")
+      : phase.status === "loading"
+        ? t("auth.invite.checking")
+        : phase.status === "password"
+          ? t("auth.invite.welcome", { tenant: phase.preview.tenantName })
+          : phase.status === "sign-in"
+            ? t("auth.invite.welcomeExisting", {
+                email: phase.preview.email,
+                tenant: phase.preview.tenantName,
+              })
+            : phase.status === "membership-error"
+              ? t("auth.invite.membershipError")
+              : t("auth.invite.pickerBody")
 
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center p-6 [background:var(--brand-gradient)]">
@@ -118,84 +337,323 @@ export function SetPasswordPage() {
         <Card className="border-border/80 shadow-lg shadow-black/5">
           <CardHeader className="space-y-3 text-center">
             <CardTitle className="text-2xl font-semibold tracking-tight">
-              {t("auth.invite.title")}
+              {title}
             </CardTitle>
-            <CardDescription className="text-pretty text-base leading-relaxed">
-              {hasToken
-                ? t("auth.invite.welcome")
-                : t("auth.invite.invalidLink")}
+            <CardDescription
+              className="text-pretty text-base leading-relaxed"
+              role="status"
+            >
+              {description}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {!hasToken ? (
+            {phase.status === "invalid" ? (
               <Button type="button" className="w-full" render={<Link to="/login" />}>
                 {t("auth.invite.goToLogin")}
               </Button>
-            ) : (
-              <Form {...form}>
-                <form
-                  className="space-y-5"
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  noValidate
-                >
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("auth.invite.passwordLabel")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            autoComplete="new-password"
-                            placeholder={t("auth.invite.passwordPlaceholder")}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            ) : null}
 
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {t("auth.invite.confirmPasswordLabel")}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            autoComplete="new-password"
-                            placeholder={t(
-                              "auth.invite.confirmPasswordPlaceholder",
-                            )}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            {phase.status === "loading" ? (
+              <div className="space-y-3" aria-hidden="true">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ) : null}
 
-                  <FormPrimaryButton
-                    type="submit"
-                    className="w-full"
-                    isValid={isPasswordValid}
-                    loading={isSubmitting}
-                    loadingLabel={t("auth.invite.submitting")}
-                  >
-                    {t("auth.invite.submit")}
-                  </FormPrimaryButton>
-                </form>
-              </Form>
-            )}
+            {phase.status === "password" ? (
+              <NewPasswordForm onSubmit={onCreatePassword} />
+            ) : null}
+
+            {phase.status === "sign-in" ? (
+              <ExistingAccountSignInForm
+                email={phase.preview.email}
+                onSubmit={onExistingSignIn}
+              />
+            ) : null}
+
+            {phase.status === "picker" ? (
+              <TenantPicker
+                memberships={phase.memberships}
+                initialTenantId={phase.initialTenantId}
+                onConfirm={onPickTenant}
+              />
+            ) : null}
+
+            {phase.status === "membership-error" ? (
+              <Button
+                type="button"
+                className="w-full"
+                disabled={retryingMemberships}
+                onClick={() => {
+                  void onRetryMemberships()
+                }}
+              >
+                {retryingMemberships
+                  ? t("auth.invite.pickerSubmitting")
+                  : t("auth.invite.membershipRetry")}
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       </div>
     </main>
+  )
+}
+
+function NewPasswordForm({
+  onSubmit,
+}: {
+  onSubmit: (password: string) => Promise<void>
+}) {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createSetPasswordSchema(t), [t])
+  const form = useForm<SetPasswordFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onTouched",
+  })
+  const password = useWatch({ control: form.control, name: "password" })
+  const confirmPassword = useWatch({
+    control: form.control,
+    name: "confirmPassword",
+  })
+  const isPasswordValid = schema.safeParse({
+    password: password ?? "",
+    confirmPassword: confirmPassword ?? "",
+  }).success
+
+  return (
+    <Form {...form}>
+      <form
+        className="space-y-5"
+        onSubmit={form.handleSubmit((values) => onSubmit(values.password))}
+        noValidate
+      >
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("auth.invite.passwordLabel")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={t("auth.invite.passwordPlaceholder")}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("auth.invite.confirmPasswordLabel")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={t("auth.invite.confirmPasswordPlaceholder")}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormPrimaryButton
+          type="submit"
+          className="w-full"
+          isValid={isPasswordValid}
+          loading={form.formState.isSubmitting}
+          loadingLabel={t("auth.invite.submitting")}
+        >
+          {t("auth.invite.submit")}
+        </FormPrimaryButton>
+      </form>
+    </Form>
+  )
+}
+
+function ExistingAccountSignInForm({
+  email,
+  onSubmit,
+}: {
+  email: string
+  onSubmit: (password: string) => Promise<{ message: string } | null>
+}) {
+  const { t } = useTranslation()
+  const schema = useMemo(
+    () =>
+      z.object({
+        password: z
+          .string()
+          .min(1, t("auth.login.validation.passwordRequired")),
+      }),
+    [t],
+  )
+  const form = useForm<{ password: string }>({
+    resolver: zodResolver(schema),
+    defaultValues: { password: "" },
+    mode: "onTouched",
+  })
+  const password = useWatch({ control: form.control, name: "password" })
+  const isValid = schema.safeParse({ password: password ?? "" }).success
+
+  return (
+    <Form {...form}>
+      <form
+        className="space-y-5"
+        noValidate
+        onSubmit={form.handleSubmit(async (values) => {
+          form.clearErrors("root")
+          const signInError = await onSubmit(values.password)
+          if (signInError !== null) {
+            form.setError("root", {
+              message: loginErrorMessage(signInError, t),
+            })
+          }
+        })}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="invite-existing-email">
+            {t("auth.login.emailLabel")}
+          </Label>
+          <Input
+            id="invite-existing-email"
+            type="email"
+            autoComplete="username"
+            readOnly
+            value={email}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("auth.invite.existingPasswordLabel")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder={t("auth.invite.existingPasswordPlaceholder")}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {form.formState.errors.root?.message ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {form.formState.errors.root.message}
+          </p>
+        ) : null}
+
+        <FormPrimaryButton
+          type="submit"
+          className="w-full"
+          isValid={isValid}
+          loading={form.formState.isSubmitting}
+          loadingLabel={t("auth.invite.signInSubmitting")}
+        >
+          {t("auth.invite.signInSubmit")}
+        </FormPrimaryButton>
+      </form>
+    </Form>
+  )
+}
+
+function TenantPicker({
+  memberships,
+  initialTenantId,
+  onConfirm,
+}: {
+  memberships: StaffTenantMembership[]
+  initialTenantId: string
+  onConfirm: (tenantId: string) => Promise<void>
+}) {
+  const { t } = useTranslation()
+  const [selectedTenantId, setSelectedTenantId] = useState(initialTenantId)
+  const [submitting, setSubmitting] = useState(false)
+  const selected = memberships.some(
+    (membership) => membership.tenantId === selectedTenantId,
+  )
+
+  return (
+    <form
+      className="space-y-5"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (!selected || submitting) {
+          return
+        }
+
+        setSubmitting(true)
+        void onConfirm(selectedTenantId).finally(() => {
+          setSubmitting(false)
+        })
+      }}
+    >
+      <fieldset className="space-y-2">
+        <legend className="sr-only">{t("auth.invite.pickerTitle")}</legend>
+        {memberships.map((membership) => {
+          const label = membershipLabel(membership)
+          const secondary = membershipSecondary(membership)
+          return (
+            <label
+              key={membership.tenantId}
+              className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"
+            >
+              <input
+                type="radio"
+                name="invite-tenant"
+                className="mt-0.5 size-4 accent-primary"
+                value={membership.tenantId}
+                checked={selectedTenantId === membership.tenantId}
+                disabled={submitting}
+                onChange={() => {
+                  setSelectedTenantId(membership.tenantId)
+                }}
+              />
+              <span>
+                <span className="block font-medium">{label}</span>
+                {secondary ? (
+                  <span className="block text-muted-foreground">{secondary}</span>
+                ) : null}
+              </span>
+            </label>
+          )
+        })}
+      </fieldset>
+
+      <FormPrimaryButton
+        type="submit"
+        className="w-full"
+        isValid={selected}
+        loading={submitting}
+        loadingLabel={t("auth.invite.pickerSubmitting")}
+      >
+        {t("auth.invite.pickerSubmit")}
+      </FormPrimaryButton>
+    </form>
   )
 }

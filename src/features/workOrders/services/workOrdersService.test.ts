@@ -16,6 +16,7 @@ vi.mock("idb-keyval", () => ({
 }))
 
 import { api } from "@/lib/api"
+import { resetConnectivityForTests } from "@/lib/connectivity"
 import i18n from "@/lib/i18n"
 import {
   listQueuedTaskIds,
@@ -23,7 +24,14 @@ import {
   processSyncQueue,
 } from "@/lib/offlineSync"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
-import { makeWorkOrder, matchingRegistryAsset } from "@/features/workOrders/test/workOrderFixtures"
+import { MandatoryTasksIncompleteError } from "@/features/workOrders/lib/workOrderApiErrors"
+import {
+  makeWorkOrder,
+  matchingRegistryAsset,
+  sampleTechnician,
+  TECHNICIAN_ID,
+  WORK_ORDER_ID,
+} from "@/features/workOrders/test/workOrderFixtures"
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>()
@@ -41,15 +49,20 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 import {
   generateWorkOrderFromPlan,
+  getWorkOrderById,
+  getWorkOrderTaskFileUrl,
   getWorkOrders,
   isDuplicateWorkOrderError,
   listWorkOrderAssets,
   updateTaskValue,
+  updateWorkOrderAssignee,
   updateWorkOrderStatus,
+  uploadWorkOrderTaskFile,
 } from "@/features/workOrders/services/workOrdersService"
 
 const apiGet = vi.mocked(api.get)
 const apiPost = vi.mocked(api.post)
+const apiPut = vi.mocked(api.put)
 const apiPatch = vi.mocked(api.patch)
 
 function axiosError(status: number, data: unknown): AxiosError {
@@ -314,10 +327,226 @@ describe("updateWorkOrderStatus mandatory tasks", () => {
 
     await expect(
       updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
-    ).rejects.toThrow(
-      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+    ).rejects.toMatchObject({
+      message: i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
         tasks: "Verificar filtros, Pressão",
       }),
+      titles: ["Verificar filtros", "Pressão"],
+    })
+    await expect(
+      updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
+    ).rejects.toBeInstanceOf(MandatoryTasksIncompleteError)
+  })
+})
+
+const FILE_ID = "3f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e"
+const TASK_ID = "16161616-1616-4161-8161-161616161616"
+
+function storedFile(overrides?: { value?: string }) {
+  return {
+    id: FILE_ID,
+    fileName: "court.jpg",
+    contentType: "image/jpeg",
+    sizeBytes: 128,
+    value: overrides?.value ?? FILE_ID,
+  }
+}
+
+describe("work order task photos", () => {
+  beforeEach(() => {
+    syncStore.clear()
+    apiGet.mockReset()
+    apiPost.mockReset()
+    apiPatch.mockReset()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    resetConnectivityForTests()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    resetConnectivityForTests()
+  })
+
+  it("posts the file and keeps the saved file id out of the task PATCH", async () => {
+    const order = makeWorkOrder()
+    const progress: Array<number | null> = []
+    apiPost.mockImplementation(async (_url, _body, config) => {
+      const onUploadProgress = (
+        config as { onUploadProgress?: (event: { loaded: number; total?: number }) => void }
+      ).onUploadProgress
+      onUploadProgress?.({ loaded: 64, total: 128 })
+      return { data: storedFile() }
+    })
+
+    const file = new File([new Uint8Array(128)], "court.jpg", {
+      type: "image/jpeg",
+    })
+    const result = await uploadWorkOrderTaskFile(
+      order.id,
+      TASK_ID,
+      file,
+      (percent) => {
+        progress.push(percent)
+      },
+    )
+
+    expect(result.value).toBe(FILE_ID)
+    expect(progress).toEqual([50])
+    expect(apiPost).toHaveBeenCalledWith(
+      `/api/work-orders/${order.id}/tasks/${TASK_ID}/files`,
+      expect.any(FormData),
+      expect.objectContaining({
+        onUploadProgress: expect.any(Function),
+      }),
+    )
+    const body = apiPost.mock.calls[0]?.[1]
+    expect(body).toBeInstanceOf(FormData)
+    expect(body).not.toBeInstanceOf(String)
+    const sent = (body as FormData).get("file")
+    expect(sent).toBeInstanceOf(File)
+    expect((sent as File).name).toBe("court.jpg")
+    expect(String(sent)).not.toContain("data:image")
+    expect(apiPatch).not.toHaveBeenCalled()
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("does not queue the blob when the browser is offline", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    resetConnectivityForTests()
+    const file = new File([new Uint8Array(8)], "court.jpg", {
+      type: "image/jpeg",
+    })
+
+    await expect(
+      uploadWorkOrderTaskFile(makeWorkOrder().id, TASK_ID, file),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageOffline"))
+
+    expect(apiPost).not.toHaveBeenCalled()
+    expect(apiPatch).not.toHaveBeenCalled()
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("localizes upload errors and still does not patch the task", async () => {
+    apiPost.mockRejectedValue(
+      axiosError(400, {
+        error: "File content does not match the declared image type.",
+        code: "FILE_CONTENT_MISMATCH",
+      }),
+    )
+
+    await expect(
+      uploadWorkOrderTaskFile(
+        makeWorkOrder().id,
+        TASK_ID,
+        new File([new Uint8Array(8)], "court.jpg", { type: "image/jpeg" }),
+      ),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageContentMismatch"))
+    expect(apiPatch).not.toHaveBeenCalled()
+  })
+
+  it("loads a private signed URL and rejects a public one", async () => {
+    const order = makeWorkOrder()
+    apiGet.mockResolvedValue({
+      data: {
+        url: "https://dev-storage.local/bucket/key?sig=dev&exp=2000000000",
+        isPublic: false,
+      },
+    })
+
+    await expect(
+      getWorkOrderTaskFileUrl(order.id, TASK_ID, FILE_ID),
+    ).resolves.toEqual({
+      url: "https://dev-storage.local/bucket/key?sig=dev&exp=2000000000",
+      isPublic: false,
+    })
+    expect(apiGet).toHaveBeenCalledWith(
+      `/api/work-orders/${order.id}/tasks/${TASK_ID}/files/${FILE_ID}/url`,
+    )
+
+    apiGet.mockResolvedValue({
+      data: { url: "https://cdn.example/public.jpg", isPublic: true },
+    })
+    await expect(
+      getWorkOrderTaskFileUrl(order.id, TASK_ID, FILE_ID),
+    ).rejects.toThrow(i18n.t("workOrders.errors.invalidResponse"))
+  })
+
+  it("translates a missing photo and a forbidden upload", async () => {
+    apiGet.mockRejectedValue(axiosError(404, ""))
+    await expect(
+      getWorkOrderTaskFileUrl(makeWorkOrder().id, TASK_ID, FILE_ID),
+    ).rejects.toThrow(i18n.t("workOrders.execution.imageNotFound"))
+
+    apiPost.mockRejectedValue(axiosError(403, { error: "FORBIDDEN" }))
+    await expect(
+      uploadWorkOrderTaskFile(
+        makeWorkOrder().id,
+        TASK_ID,
+        new File([new Uint8Array(8)], "court.jpg", { type: "image/jpeg" }),
+      ),
+    ).rejects.toThrow(i18n.t("rbac.errors.FORBIDDEN"))
+    expect(apiPatch).not.toHaveBeenCalled()
+  })
+})
+
+describe("work order read denial", () => {
+  beforeEach(() => {
+    apiGet.mockReset()
+  })
+
+  it("maps 404 and 403 to the assigned-or-forbidden message", async () => {
+    apiGet.mockRejectedValueOnce(axiosError(404, ""))
+    await expect(getWorkOrderById(WORK_ORDER_ID)).rejects.toThrow(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+
+    apiGet.mockRejectedValueOnce(axiosError(403, { error: "FORBIDDEN" }))
+    await expect(getWorkOrders()).rejects.toThrow(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+  })
+})
+
+describe("updateWorkOrderAssignee", () => {
+  beforeEach(() => {
+    apiPut.mockReset()
+  })
+
+  it("puts the assignee on PUT /api/work-orders/{id}/assignee", async () => {
+    const updated = makeWorkOrder({
+      assignedUserId: TECHNICIAN_ID,
+      assignedUser: sampleTechnician,
+    })
+    apiPut.mockResolvedValue({ data: updated })
+
+    const result = await updateWorkOrderAssignee(WORK_ORDER_ID, TECHNICIAN_ID)
+
+    expect(apiPut).toHaveBeenCalledWith(
+      `/api/work-orders/${WORK_ORDER_ID}/assignee`,
+      { assignedUserId: TECHNICIAN_ID },
+    )
+    expect(result.assignedUser?.fullName).toBe("Ana Souza")
+  })
+
+  it("clears the assignee with null and maps a closed order", async () => {
+    apiPut.mockResolvedValueOnce({
+      data: makeWorkOrder({ assignedUserId: null, assignedUser: null }),
+    })
+    const cleared = await updateWorkOrderAssignee(WORK_ORDER_ID, null)
+    expect(apiPut).toHaveBeenCalledWith(
+      `/api/work-orders/${WORK_ORDER_ID}/assignee`,
+      { assignedUserId: null },
+    )
+    expect(cleared.assignedUserId).toBeNull()
+
+    apiPut.mockRejectedValueOnce(
+      axiosError(409, {
+        error: "Work order is closed.",
+        code: "WORK_ORDER_CLOSED",
+      }),
+    )
+    await expect(updateWorkOrderAssignee(WORK_ORDER_ID, TECHNICIAN_ID)).rejects.toThrow(
+      i18n.t("workOrders.errors.workOrderClosed"),
     )
   })
 })

@@ -24,10 +24,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useAuth } from "@/contexts/AuthContext"
+import { Can } from "@/features/users/permissions/Can"
 import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import { type MaintenancePlan } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { getPlans } from "@/features/pmoc/services/pmocService"
+import { describeApiError } from "@/features/users/permissions/rbacErrors"
 import { isAxiosError } from "@/lib/api"
 
 type PlanTableRow = MaintenancePlan & {
@@ -74,11 +76,9 @@ export function MaintenancePlansPage() {
         )
       }
 
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("pmoc.plans.errors.loadFailed")
-      setLoadError(message)
+      setLoadError(
+        describeApiError(error, t("pmoc.plans.errors.loadFailed")),
+      )
     } finally {
       setIsLoading(false)
     }
@@ -209,15 +209,17 @@ export function MaintenancePlansPage() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          onClick={() => {
-            void navigate("/pmoc/novo")
-          }}
-        >
-          <Plus data-icon="inline-start" />
-          {t("pmoc.plans.actions.new")}
-        </Button>
+        <Can permission="pmoc.plans.write">
+          <Button
+            type="button"
+            onClick={() => {
+              void navigate("/pmoc/novo")
+            }}
+          >
+            <Plus data-icon="inline-start" />
+            {t("pmoc.plans.actions.new")}
+          </Button>
+        </Can>
       </div>
 
       {loadError !== null ? (

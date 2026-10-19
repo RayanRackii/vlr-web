@@ -175,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Activar cuenta",
-      "welcome": "Bienvenido a Rolvix. Para activar su cuenta, defina una contraseña segura a continuación.",
+      "welcome": "Bienvenido a Rolvix. Para activar su cuenta en {{tenant}}, defina una contraseña segura a continuación.",
+      "welcomeExisting": "Usted ya tiene una cuenta Rolvix. Entre con la contraseña de {{email}} para participar de {{tenant}}. Su contraseña no será cambiada.",
+      "checking": "Verificando la invitación...",
       "invalidLink": "El enlace de invitación no es válido o ha expirado.",
       "passwordLabel": "Nueva contraseña",
       "confirmPasswordLabel": "Confirmar nueva contraseña",
@@ -183,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repita la contraseña",
       "submit": "Definir contraseña",
       "submitting": "Guardando...",
+      "signInTitle": "Entrar para aceptar",
+      "existingPasswordLabel": "Contraseña",
+      "existingPasswordPlaceholder": "Su contraseña actual",
+      "signInSubmit": "Entrar y aceptar",
+      "signInSubmitting": "Entrando...",
       "goToLogin": "Ir al inicio de sesión",
       "toastSuccess": "¡Contraseña definida con éxito!",
-      "toastError": "No se pudo definir la contraseña. Inténtelo de nuevo.",
+      "toastJoined": "Invitación aceptada. Ahora forma parte de {{tenant}}.",
+      "toastError": "No se pudo completar la invitación. Inténtelo de nuevo.",
       "validation": {
         "passwordRequired": "Ingrese la nueva contraseña.",
         "confirmRequired": "Confirme la nueva contraseña.",
         "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
         "mismatch": "Las contraseñas deben coincidir."
-      }
+      },
+      "errors": {
+        "existingAccount": "Esta cuenta ya existe. Entre con la contraseña actual para aceptar la invitación. La contraseña no será cambiada.",
+        "accountMismatch": "La sesión actual es de otra cuenta. Entre con el correo de esta invitación para aceptar.",
+        "identityConflict": "No se pudo confirmar la cuenta de esta invitación. No se cambió nada. Inténtelo de nuevo o hable con el soporte."
+      },
+      "pickerTitle": "Elija el ambiente",
+      "pickerBody": "Su cuenta participa de más de un ambiente. Elija cuál abrir ahora.",
+      "pickerSubmit": "Continuar",
+      "pickerSubmitting": "Abriendo...",
+      "pickerError": "No se pudo cambiar de ambiente. Inténtelo de nuevo.",
+      "membershipError": "No se pudieron cargar sus ambientes. Inténtelo de nuevo.",
+      "membershipRetry": "Intentar de nuevo"
     },
     "login": {
       "invalidCredentials": "Correo o contraseña inválidos.",
@@ -1332,17 +1352,26 @@
     "categories": {
       "title": {
         "rentals": "Tipos de recurso",
+        "spaces": "Tipos de espacio",
+        "goods": "Tipos de bien",
+        "electrical": "Tipos de equipo",
         "maintenance": "Tipos de equipo",
         "generic": "Tipos"
       },
       "description": {
         "rentals": "Tipos para agrupar recursos (ej.: Cancha, Contenedor, Sala).",
+        "spaces": "Tipos de espacio (ej.: Cancha, Sala).",
+        "goods": "Tipos de bien (ej.: Contenedor, Equipo móvil).",
+        "electrical": "Tipos eléctricos (ej.: Tablero, Split, Transformador).",
         "maintenance": "Tipos de equipo (ej.: Split, Caldera).",
         "generic": "Tipos usados para clasificar sus recursos."
       },
       "loading": "Cargando tipos...",
       "empty": {
         "rentals": "Aún no hay tipos — cree el primero (ej.: Cancha o Contenedor).",
+        "spaces": "Aún no hay tipos — cree el primero (ej.: Cancha o Sala).",
+        "goods": "Aún no hay tipos — cree el primero (ej.: Contenedor).",
+        "electrical": "Aún no hay tipos — cree el primero (ej.: Tablero eléctrico).",
         "maintenance": "Aún no hay tipos — cree el primero (ej.: Split).",
         "generic": "Aún no hay tipos registrados."
       },
@@ -1373,11 +1402,17 @@
       "dialog": {
         "title": {
           "rentals": "Nuevo tipo",
+          "spaces": "Nuevo tipo de espacio",
+          "goods": "Nuevo tipo de bien",
+          "electrical": "Nuevo tipo eléctrico",
           "maintenance": "Nuevo tipo",
           "generic": "Nuevo tipo"
         },
         "description": {
           "rentals": "Defina un tipo para agrupar recursos reservables (ej.: Cancha de tenis).",
+          "spaces": "Defina un tipo de espacio (ej.: Cancha de tenis, Sala).",
+          "goods": "Defina un tipo de bien (ej.: Contenedor).",
+          "electrical": "Registre el modelo base de los equipos eléctricos.",
           "maintenance": "Registre el modelo base que usarán los equipos.",
           "generic": "Registre un tipo para clasificar sus recursos."
         },
@@ -1388,6 +1423,9 @@
         "name": "Nombre",
         "namePlaceholder": {
           "rentals": "Ej.: Cancha, Contenedor, Sala",
+          "spaces": "Ej.: Cancha, Sala",
+          "goods": "Ej.: Contenedor",
+          "electrical": "Ej.: Tablero eléctrico, Split",
           "maintenance": "Ej.: Aire acondicionado Split 12k BTU",
           "generic": "Ej.: Tipo de recurso"
         },
@@ -1417,22 +1455,34 @@
     "inventory": {
       "title": {
         "rentals": "Recursos",
+        "spaces": "Espacios",
+        "goods": "Bienes",
+        "electrical": "Equipos eléctricos",
         "maintenance": "Recursos",
         "generic": "Recursos"
       },
       "description": {
         "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
+        "spaces": "Espacios alquilables (canchas, salas…). Registre cada uno y marque lo que puede reservarse.",
+        "goods": "Bienes y artículos (contenedores…). Registre cada uno y organícelos por tipo.",
+        "electrical": "Equipos eléctricos del sitio. Use tipos y atributos (voltaje, fabricante).",
         "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
         "generic": "Registre los recursos de este negocio y organícelos por tipo."
       },
       "loading": "Cargando recursos...",
       "empty": {
         "rentals": "Aún no hay recursos registrados.",
+        "spaces": "Aún no hay espacios registrados.",
+        "goods": "Aún no hay bienes registrados.",
+        "electrical": "Aún no hay equipos eléctricos registrados.",
         "maintenance": "Aún no hay recursos registrados.",
         "generic": "Aún no hay recursos registrados."
       },
       "emptyNoTypes": {
         "rentals": "Antes de registrar recursos, defina los tipos (ej.: Cancha, Contenedor).",
+        "spaces": "Antes de registrar espacios, defina los tipos (ej.: Cancha, Sala).",
+        "goods": "Antes de registrar bienes, defina los tipos (ej.: Contenedor).",
+        "electrical": "Antes de registrar equipos, defina los tipos eléctricos.",
         "maintenance": "Antes de registrar recursos, defina los tipos de equipo.",
         "generic": "Antes de registrar recursos, defina los tipos."
       },
@@ -1472,11 +1522,17 @@
       "dialog": {
         "title": {
           "rentals": "Agregar recursos en lote",
+          "spaces": "Agregar espacios en lote",
+          "goods": "Agregar bienes en lote",
+          "electrical": "Agregar equipos en lote",
           "maintenance": "Agregar recursos en lote",
           "generic": "Agregar recursos en lote"
         },
         "description": {
           "rentals": "Genere una secuencia con el mismo tipo y tags numerados (ej.: Cancha-01, Cancha-02).",
+          "spaces": "Genere una secuencia de espacios con el mismo tipo y tags numerados (ej.: Cancha-01).",
+          "goods": "Genere una secuencia de bienes con el mismo tipo y tags numerados.",
+          "electrical": "Genere una secuencia de equipos eléctricos con tags numerados.",
           "maintenance": "Genere una secuencia de equipos con el mismo tipo y tags numerados.",
           "generic": "Genere una secuencia de recursos con el mismo tipo y tags numerados."
         }
@@ -1953,12 +2009,15 @@
     "description": "Ejecute checklists en campo y siga el estado de cada OT.",
     "loading": "Cargando órdenes de trabajo...",
     "tabs": {
+      "Open": "Abiertas",
       "Pending": "Pendientes",
       "InProgress": "En Curso",
       "Completed": "Completadas",
-      "Canceled": "Canceladas"
+      "Canceled": "Canceladas",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "No hay OT abiertas.",
       "Pending": "No hay OT pendientes.",
       "InProgress": "No hay OT en curso.",
       "Completed": "No hay OT completadas.",
@@ -2033,9 +2092,20 @@
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Seleccione una opción",
       "choiceEmpty": "No hay opciones configuradas para esta tarea.",
-      "imageUploadSoon": "Carga de Foto (Pronto)",
-      "imageUnsupported": "El envío de imagen aún no está soportado",
-      "imageUnsupportedDetail": "Todavía no hay envío de archivo para esta tarea. Si no es obligatoria, las demás pueden completarse. Si es obligatoria, el servidor aún puede rechazar la finalización hasta que exista el envío de archivo.",
+      "imageChoose": "Tomar o elegir foto",
+      "imageReplace": "Sustituir foto",
+      "imageEmpty": "Ninguna foto enviada.",
+      "imagePreviewAlt": "Foto de la tarea {{title}}",
+      "imageUploading": "Enviando foto…",
+      "imageProgress": "Progreso del envío",
+      "imageOffline": "Sin conexión. El envío de foto no está disponible y la foto no se guarda en este dispositivo.",
+      "imageTooLarge": "La foto debe tener entre 1 byte y 5 MB.",
+      "imageTypeRejected": "Envíe una imagen JPEG, PNG o WebP.",
+      "imageContentMismatch": "El contenido del archivo no coincide con el tipo de imagen.",
+      "imageNotFound": "No se pudo encontrar esta foto.",
+      "imageUploadFailed": "No se pudo enviar la foto.",
+      "imagePreviewFailed": "No se pudo cargar la foto.",
+      "imageUploaded": "Foto enviada.",
       "notes": "Observaciones",
       "noNotes": "Sin observaciones.",
       "completedDate": "Completada el",
@@ -2044,7 +2114,13 @@
       "complete": "Finalizar OT",
       "startedSuccess": "OT iniciada con éxito.",
       "completedSuccess": "OT finalizada con éxito.",
-      "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}"
+      "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}",
+      "mandatoryIncompleteTitle": "Complete las tareas obligatorias antes de finalizar:",
+      "save": {
+        "saving": "guardando",
+        "saved": "guardado",
+        "retrying": "no guardado, intentando de nuevo"
+      }
     },
     "errors": {
       "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",
@@ -2066,7 +2142,9 @@
         "notAnOption": "Elija una de las opciones de la lista.",
         "invalidCheckbox": "Marque o desmarque la tarea.",
         "textTooLong": "El texto supera el tamaño permitido.",
-        "invalidConfiguration": "Esta tarea está configurada de forma inválida."
+        "invalidConfiguration": "Esta tarea está configurada de forma inválida.",
+        "notAnImageTask": "Solo las tareas de imagen aceptan una foto.",
+        "invalidImageReference": "La foto debe ser un archivo ya enviado en esta tarea."
       }
     },
     "offline": {

@@ -1,6 +1,15 @@
 import i18n from "@/lib/i18n"
 import { readApiErrorBody } from "@/lib/apiErrorText"
 
+function forbiddenMessage(payload: unknown): string | null {
+  const { code, error } = readApiErrorBody(payload)
+  if (code === "FORBIDDEN" || error === "FORBIDDEN") {
+    return i18n.t("rbac.errors.FORBIDDEN")
+  }
+
+  return null
+}
+
 function conflictMessage(
   status: number | null,
   code: string | null,
@@ -19,6 +28,11 @@ export function localizeAssetApiError(
   fallback: string,
   status: number | null = null,
 ): string {
+  const denied = forbiddenMessage(payload)
+  if (denied !== null) {
+    return denied
+  }
+
   const { code } = readApiErrorBody(payload)
   return (
     conflictMessage(
@@ -49,6 +63,11 @@ export function assetDeleteErrorMessage(
   fallback: string,
   kind: "asset" | "category",
 ): string {
+  const denied = forbiddenMessage(payload)
+  if (denied !== null) {
+    return denied
+  }
+
   const { code } = readApiErrorBody(payload)
 
   if (kind === "asset") {
@@ -77,6 +96,11 @@ export function assetTagConflictMessage(
   payload: unknown,
   fallback: string,
 ): string {
+  const denied = forbiddenMessage(payload)
+  if (denied !== null) {
+    return denied
+  }
+
   const { code } = readApiErrorBody(payload)
   return (
     conflictMessage(
