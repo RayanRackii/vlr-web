@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  errorForWorkOrderStatus,
   localizeWorkOrderApiError,
+  MandatoryTasksIncompleteError,
   messageForWorkOrderFileError,
 } from "@/features/workOrders/lib/workOrderApiErrors"
 import i18n from "@/lib/i18n"
@@ -35,6 +37,25 @@ describe("localizeWorkOrderApiError", () => {
         tasks: "Foto do filtro, Pressão",
       }),
     )
+  })
+
+  it("maps MANDATORY_TASKS_INCOMPLETE onto the same task titles", () => {
+    const error = errorForWorkOrderStatus(
+      {
+        error: "Mandatory tasks are incomplete.",
+        code: "MANDATORY_TASKS_INCOMPLETE",
+        tasks: [
+          { id: "16161616-1616-4161-8161-161616161616", title: "Foto do filtro" },
+          { id: "17171717-1717-4171-8171-171717171717", title: "Pressão" },
+        ],
+      },
+      "fallback",
+    )
+
+    expect(error).toBeInstanceOf(MandatoryTasksIncompleteError)
+    if (error instanceof MandatoryTasksIncompleteError) {
+      expect(error.titles).toEqual(["Foto do filtro", "Pressão"])
+    }
   })
 
   it("translates an ineligible asset from the sentence, without a code", () => {

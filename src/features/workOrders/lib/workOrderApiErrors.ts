@@ -132,3 +132,41 @@ export function localizeWorkOrderApiError(
 
   return error
 }
+
+export class MandatoryTasksIncompleteError extends Error {
+  readonly titles: readonly string[]
+
+  constructor(titles: readonly string[]) {
+    const unique = titles
+      .map((title) => title.trim())
+      .filter((title, index, all) => title !== "" && all.indexOf(title) === index)
+    super(
+      unique.length === 0
+        ? i18n.t("workOrders.errors.mandatoryTasksIncomplete")
+        : i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+            tasks: unique.join(", "),
+          }),
+    )
+    this.name = "MandatoryTasksIncompleteError"
+    this.titles = unique
+  }
+}
+
+function isMandatoryTasksPayload(payload: unknown): boolean {
+  const { code, error } = readApiErrorBody(payload)
+  return (
+    code === "MANDATORY_TASKS_INCOMPLETE" ||
+    (error != null && /^Mandatory tasks are incomplete\b/i.test(error))
+  )
+}
+
+export function errorForWorkOrderStatus(
+  payload: unknown,
+  fallback: string,
+): Error {
+  if (isMandatoryTasksPayload(payload)) {
+    return new MandatoryTasksIncompleteError(readIncompleteTaskTitles(payload))
+  }
+
+  return new Error(localizeWorkOrderApiError(payload, fallback))
+}

@@ -1,6 +1,7 @@
 export const esPermissionCopy = {
   workOrders: {
     emptyAssigned: {
+      Open: "No hay OT abiertas asignadas a usted.",
       Pending: "No hay OT pendientes asignadas a usted.",
       InProgress: "No hay OT en curso asignadas a usted.",
       Completed: "No hay OT completadas asignadas a usted.",

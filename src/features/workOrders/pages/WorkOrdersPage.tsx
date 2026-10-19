@@ -40,12 +40,19 @@ type WorkOrderTableRow = WorkOrder & {
   originLabel: string
 }
 
-const LIST_TABS = [
+const LIST_FILTERS = [
+  "Open",
   "Pending",
   "InProgress",
   "Completed",
   "Canceled",
-] as const satisfies readonly WorkOrderStatus[]
+] as const
+
+type WorkOrderListFilter = (typeof LIST_FILTERS)[number]
+
+function isWorkOrderListFilter(value: string): value is WorkOrderListFilter {
+  return (LIST_FILTERS as readonly string[]).includes(value)
+}
 
 function formatShortId(id: string): string {
   return id.slice(0, 8).toUpperCase()
@@ -238,7 +245,7 @@ export function WorkOrdersPage() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<WorkOrderStatus>("Pending")
+  const [activeTab, setActiveTab] = useState<WorkOrderListFilter>("Open")
   const canCreateWorkOrder = can("os.work_orders.create")
   const seesOnlyAssigned =
     can("os.work_orders.execute") && !can("os.work_orders.create")
@@ -302,6 +309,17 @@ export function WorkOrdersPage() {
     return map
   }, [t, workOrders])
 
+  const rowsForFilter = useCallback(
+    (filter: WorkOrderListFilter): WorkOrderTableRow[] => {
+      if (filter === "Open") {
+        return [...tableRowsByStatus.Pending, ...tableRowsByStatus.InProgress]
+      }
+
+      return tableRowsByStatus[filter]
+    },
+    [tableRowsByStatus],
+  )
+
   return (
     <div className="space-y-6">
       <WorkOrderOfflineBanner />
@@ -339,37 +357,42 @@ export function WorkOrdersPage() {
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
-          if (
-            value === "Pending" ||
-            value === "InProgress" ||
-            value === "Completed" ||
-            value === "Canceled"
-          ) {
+          if (isWorkOrderListFilter(value)) {
             setActiveTab(value)
           }
         }}
       >
-        <TabsList>
-          {LIST_TABS.map((status) => (
-            <TabsTrigger key={status} value={status}>
-              {t(`workOrders.tabs.${status}`)}
-              <Badge variant="secondary" className="ml-1">
-                {tableRowsByStatus[status].length}
-              </Badge>
-            </TabsTrigger>
-          ))}
+        <TabsList className="!h-auto flex-wrap justify-start">
+          {LIST_FILTERS.map((filter) => {
+            const count = rowsForFilter(filter).length
+            const label = t(`workOrders.tabs.${filter}`)
+
+            return (
+              <TabsTrigger
+                key={filter}
+                value={filter}
+                className="!h-auto min-h-8 px-2 py-1"
+                aria-label={t("workOrders.tabs.withCount", { label, count })}
+              >
+                <span>{label}</span>
+                <Badge variant="secondary" className="ml-1">
+                  {count}
+                </Badge>
+              </TabsTrigger>
+            )
+          })}
         </TabsList>
 
-        {LIST_TABS.map((status) => (
-          <TabsContent key={status} value={status} className="mt-4">
+        {LIST_FILTERS.map((filter) => (
+          <TabsContent key={filter} value={filter} className="mt-4">
             <WorkOrdersTable
-              rows={tableRowsByStatus[status]}
+              rows={rowsForFilter(filter)}
               isLoading={isLoading}
               hideEmpty={loadError !== null}
               emptyLabel={t(
                 seesOnlyAssigned
-                  ? `workOrders.emptyAssigned.${status}`
-                  : `workOrders.empty.${status}`,
+                  ? `workOrders.emptyAssigned.${filter}`
+                  : `workOrders.empty.${filter}`,
               )}
             />
           </TabsContent>

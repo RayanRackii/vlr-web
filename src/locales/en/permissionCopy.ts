@@ -1,6 +1,7 @@
 export const enPermissionCopy = {
   workOrders: {
     emptyAssigned: {
+      Open: "No open work orders are assigned to you.",
       Pending: "No pending work orders are assigned to you.",
       InProgress: "No in-progress work orders are assigned to you.",
       Completed: "No completed work orders are assigned to you.",

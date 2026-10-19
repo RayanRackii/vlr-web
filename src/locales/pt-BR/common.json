@@ -2009,12 +2009,15 @@
     "description": "Execute checklists em campo e acompanhe o status de cada OS.",
     "loading": "Carregando ordens de serviço...",
     "tabs": {
+      "Open": "Abertas",
       "Pending": "Pendentes",
       "InProgress": "Em Andamento",
       "Completed": "Concluídas",
-      "Canceled": "Canceladas"
+      "Canceled": "Canceladas",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "Nenhuma OS aberta.",
       "Pending": "Nenhuma OS pendente.",
       "InProgress": "Nenhuma OS em andamento.",
       "Completed": "Nenhuma OS concluída.",
@@ -2111,7 +2114,13 @@
       "complete": "Finalizar OS",
       "startedSuccess": "OS iniciada com sucesso.",
       "completedSuccess": "OS finalizada com sucesso.",
-      "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}"
+      "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}",
+      "mandatoryIncompleteTitle": "Preencha as tarefas obrigatórias antes de finalizar:",
+      "save": {
+        "saving": "salvando",
+        "saved": "salvo",
+        "retrying": "não salvo, tentando de novo"
+      }
     },
     "errors": {
       "unauthorized": "Sessão inválida. Faça login novamente.",

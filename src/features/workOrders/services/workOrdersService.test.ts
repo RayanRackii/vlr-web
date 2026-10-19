@@ -24,6 +24,7 @@ import {
   processSyncQueue,
 } from "@/lib/offlineSync"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
+import { MandatoryTasksIncompleteError } from "@/features/workOrders/lib/workOrderApiErrors"
 import {
   makeWorkOrder,
   matchingRegistryAsset,
@@ -326,11 +327,15 @@ describe("updateWorkOrderStatus mandatory tasks", () => {
 
     await expect(
       updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
-    ).rejects.toThrow(
-      i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
+    ).rejects.toMatchObject({
+      message: i18n.t("workOrders.errors.mandatoryTasksIncompleteList", {
         tasks: "Verificar filtros, Pressão",
       }),
-    )
+      titles: ["Verificar filtros", "Pressão"],
+    })
+    await expect(
+      updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
+    ).rejects.toBeInstanceOf(MandatoryTasksIncompleteError)
   })
 })
 

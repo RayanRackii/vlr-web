@@ -1,5 +1,5 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -159,8 +159,12 @@ describe("WorkOrderExecutionPage offline sync", () => {
 
   it("clears the waiting label after sync and keeps the typed text", async () => {
     const user = userEvent.setup()
-    apiGet.mockResolvedValue({ data: textOrder(null), status: 200 })
-    apiPatch.mockResolvedValue({ data: textOrder("leitura"), status: 200 })
+    let storedOrder = textOrder(null)
+    apiGet.mockImplementation(async () => ({ data: storedOrder, status: 200 }))
+    apiPatch.mockImplementation(async () => {
+      storedOrder = textOrder("leitura")
+      return { data: storedOrder, status: 200 }
+    })
 
     renderExecution()
 
@@ -170,7 +174,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     await user.type(field, "leitura")
 
     expect(
-      await screen.findByText(i18n.t("workOrders.offline.waitingToSync")),
+      await screen.findByText(i18n.t("workOrders.execution.save.retrying")),
     ).toBeInTheDocument()
 
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
@@ -178,13 +182,58 @@ describe("WorkOrderExecutionPage offline sync", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(i18n.t("workOrders.offline.waitingToSync")),
+        screen.queryByText(i18n.t("workOrders.execution.save.retrying")),
       ).not.toBeInTheDocument()
     })
+    expect(
+      screen.getByText(i18n.t("workOrders.execution.save.saved")),
+    ).toBeInTheDocument()
     expect(screen.getByRole("textbox")).toHaveValue("leitura")
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${WORK_ORDER_ID}/tasks/${TASK_ID}`,
       { value: "leitura" },
     )
+  })
+
+  it("does not label A as saved after reloading with B queued and syncing B to the server", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    await enqueueTaskValuePatch({
+      workOrderId: WORK_ORDER_ID,
+      taskId: TASK_ID,
+      value: "B",
+    })
+    let storedOrder = textOrder("A")
+    let releaseRefresh: () => void = () => undefined
+    const refreshReady = new Promise<void>((resolve) => { releaseRefresh = resolve })
+    apiGet
+      .mockResolvedValueOnce({ data: storedOrder, status: 200 })
+      .mockImplementation(async () => {
+        await refreshReady
+        return { data: storedOrder, status: 200 }
+      })
+    apiPatch.mockImplementation(async () => {
+      storedOrder = textOrder("B")
+      return { data: storedOrder, status: 200 }
+    })
+    renderExecution()
+    const field = await screen.findByRole("textbox")
+    expect(field).toHaveValue("A")
+    await screen.findByText(i18n.t("workOrders.execution.save.retrying"))
+
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    await act(async () => { window.dispatchEvent(new Event("online")) })
+    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2))
+    expect(store.get("os_sync_queue")).toEqual([])
+    expect(field).toHaveValue("A")
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
+    await act(async () => { releaseRefresh() })
+
+    expect(apiPatch).toHaveBeenCalledWith(
+      `/api/work-orders/${WORK_ORDER_ID}/tasks/${TASK_ID}`,
+      { value: "B" },
+    )
+    expect(storedOrder.tasks[0]?.value).toBe("B")
+    expect(field).toHaveValue("A")
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
   })
 })

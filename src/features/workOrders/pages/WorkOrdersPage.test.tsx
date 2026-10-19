@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -117,6 +117,51 @@ describe("WorkOrdersPage origin", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("shows in-progress work orders on the default open filter", async () => {
+    const user = userEvent.setup()
+    const pending = makeWorkOrder()
+    const inProgress = makeWorkOrder({
+      id: "88888888-8888-4888-8888-888888888888",
+      status: "InProgress",
+    })
+    getWorkOrdersMock.mockResolvedValue([pending, inProgress])
+
+    renderList(["os.work_orders.read"], ["os"])
+
+    const openTab = await screen.findByRole("tab", {
+      name: i18n.t("workOrders.tabs.withCount", {
+        label: i18n.t("workOrders.tabs.Open"),
+        count: 2,
+      }),
+    })
+    expect(openTab).toHaveAttribute("aria-selected", "true")
+    expect(
+      await screen.findAllByRole("link", {
+        name: i18n.t("workOrders.actions.execute"),
+      }),
+    ).toHaveLength(2)
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
+    ).not.toBeInTheDocument()
+
+    const inProgressTab = screen.getByRole("tab", {
+      name: i18n.t("workOrders.tabs.withCount", {
+        label: i18n.t("workOrders.tabs.InProgress"),
+        count: 1,
+      }),
+    })
+    await user.click(within(inProgressTab).getByText("1"))
+
+    expect(inProgressTab).toHaveAttribute("aria-selected", "true")
+    const execute = await screen.findByRole("link", {
+      name: i18n.t("workOrders.actions.execute"),
+    })
+    expect(execute).toHaveAttribute("href", `/os/${inProgress.id}`)
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
+    ).not.toBeInTheDocument()
+  })
+
   it("lists canceled work orders on the Canceladas tab", async () => {
     const user = userEvent.setup()
     const canceled = makeWorkOrder({ status: "Canceled" })
@@ -142,7 +187,7 @@ describe("WorkOrdersPage origin", () => {
     renderList(["os.work_orders.read", "os.work_orders.create"], ["os"])
 
     expect(
-      await screen.findByText(i18n.t("workOrders.empty.Pending")),
+      await screen.findByText(i18n.t("workOrders.empty.Open")),
     ).toBeInTheDocument()
   })
 
@@ -152,10 +197,10 @@ describe("WorkOrdersPage origin", () => {
     renderList(["os.work_orders.read", "os.work_orders.execute"], ["os"])
 
     expect(
-      await screen.findByText(i18n.t("workOrders.emptyAssigned.Pending")),
+      await screen.findByText(i18n.t("workOrders.emptyAssigned.Open")),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
     ).not.toBeInTheDocument()
   })
 
@@ -170,10 +215,10 @@ describe("WorkOrdersPage origin", () => {
       i18n.t("workOrders.errors.notAssignedOrForbidden"),
     )
     expect(
-      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByText(i18n.t("workOrders.emptyAssigned.Pending")),
+      screen.queryByText(i18n.t("workOrders.emptyAssigned.Open")),
     ).not.toBeInTheDocument()
     expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
   })

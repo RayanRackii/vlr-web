@@ -2009,12 +2009,15 @@
     "description": "Ejecute checklists en campo y siga el estado de cada OT.",
     "loading": "Cargando órdenes de trabajo...",
     "tabs": {
+      "Open": "Abiertas",
       "Pending": "Pendientes",
       "InProgress": "En Curso",
       "Completed": "Completadas",
-      "Canceled": "Canceladas"
+      "Canceled": "Canceladas",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "No hay OT abiertas.",
       "Pending": "No hay OT pendientes.",
       "InProgress": "No hay OT en curso.",
       "Completed": "No hay OT completadas.",
@@ -2111,7 +2114,13 @@
       "complete": "Finalizar OT",
       "startedSuccess": "OT iniciada con éxito.",
       "completedSuccess": "OT finalizada con éxito.",
-      "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}"
+      "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}",
+      "mandatoryIncompleteTitle": "Complete las tareas obligatorias antes de finalizar:",
+      "save": {
+        "saving": "guardando",
+        "saved": "guardado",
+        "retrying": "no guardado, intentando de nuevo"
+      }
     },
     "errors": {
       "unauthorized": "Sesión inválida. Inicie sesión de nuevo.",

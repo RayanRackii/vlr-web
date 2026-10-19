@@ -2009,12 +2009,15 @@
     "description": "Run field checklists and track each work order status.",
     "loading": "Loading work orders...",
     "tabs": {
+      "Open": "Open",
       "Pending": "Pending",
       "InProgress": "In Progress",
       "Completed": "Completed",
-      "Canceled": "Canceled"
+      "Canceled": "Canceled",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "No open work orders.",
       "Pending": "No pending work orders.",
       "InProgress": "No work orders in progress.",
       "Completed": "No completed work orders.",
@@ -2111,7 +2114,13 @@
       "complete": "Complete WO",
       "startedSuccess": "Work order started successfully.",
       "completedSuccess": "Work order completed successfully.",
-      "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}"
+      "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}",
+      "mandatoryIncompleteTitle": "Fill the required tasks before completing:",
+      "save": {
+        "saving": "saving",
+        "saved": "saved",
+        "retrying": "not saved, trying again"
+      }
     },
     "errors": {
       "unauthorized": "Invalid session. Please sign in again.",
