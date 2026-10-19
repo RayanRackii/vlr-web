@@ -175,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Activar cuenta",
-      "welcome": "Bienvenido a Rolvix. Para activar su cuenta, defina una contraseña segura a continuación.",
+      "welcome": "Bienvenido a Rolvix. Para activar su cuenta en {{tenant}}, defina una contraseña segura a continuación.",
+      "welcomeExisting": "Usted ya tiene una cuenta Rolvix. Entre con la contraseña de {{email}} para participar de {{tenant}}. Su contraseña no será cambiada.",
+      "checking": "Verificando la invitación...",
       "invalidLink": "El enlace de invitación no es válido o ha expirado.",
       "passwordLabel": "Nueva contraseña",
       "confirmPasswordLabel": "Confirmar nueva contraseña",
@@ -183,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repita la contraseña",
       "submit": "Definir contraseña",
       "submitting": "Guardando...",
+      "signInTitle": "Entrar para aceptar",
+      "existingPasswordLabel": "Contraseña",
+      "existingPasswordPlaceholder": "Su contraseña actual",
+      "signInSubmit": "Entrar y aceptar",
+      "signInSubmitting": "Entrando...",
       "goToLogin": "Ir al inicio de sesión",
       "toastSuccess": "¡Contraseña definida con éxito!",
-      "toastError": "No se pudo definir la contraseña. Inténtelo de nuevo.",
+      "toastJoined": "Invitación aceptada. Ahora forma parte de {{tenant}}.",
+      "toastError": "No se pudo completar la invitación. Inténtelo de nuevo.",
       "validation": {
         "passwordRequired": "Ingrese la nueva contraseña.",
         "confirmRequired": "Confirme la nueva contraseña.",
         "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
         "mismatch": "Las contraseñas deben coincidir."
-      }
+      },
+      "errors": {
+        "existingAccount": "Esta cuenta ya existe. Entre con la contraseña actual para aceptar la invitación. La contraseña no será cambiada.",
+        "accountMismatch": "La sesión actual es de otra cuenta. Entre con el correo de esta invitación para aceptar.",
+        "identityConflict": "No se pudo confirmar la cuenta de esta invitación. No se cambió nada. Inténtelo de nuevo o hable con el soporte."
+      },
+      "pickerTitle": "Elija el ambiente",
+      "pickerBody": "Su cuenta participa de más de un ambiente. Elija cuál abrir ahora.",
+      "pickerSubmit": "Continuar",
+      "pickerSubmitting": "Abriendo...",
+      "pickerError": "No se pudo cambiar de ambiente. Inténtelo de nuevo.",
+      "membershipError": "No se pudieron cargar sus ambientes. Inténtelo de nuevo.",
+      "membershipRetry": "Intentar de nuevo"
     },
     "login": {
       "invalidCredentials": "Correo o contraseña inválidos.",

@@ -175,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Ativar conta",
-      "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta, defina uma senha segura abaixo.",
+      "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",
+      "welcomeExisting": "Você já tem uma conta Rolvix. Entre com a senha de {{email}} para participar de {{tenant}}. Sua senha não será alterada.",
+      "checking": "Verificando o convite...",
       "invalidLink": "Link de convite inválido ou expirado.",
       "passwordLabel": "Nova senha",
       "confirmPasswordLabel": "Confirmar nova senha",
@@ -183,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repita a senha",
       "submit": "Definir senha",
       "submitting": "Salvando...",
+      "signInTitle": "Entrar para aceitar",
+      "existingPasswordLabel": "Senha",
+      "existingPasswordPlaceholder": "Sua senha atual",
+      "signInSubmit": "Entrar e aceitar",
+      "signInSubmitting": "Entrando...",
       "goToLogin": "Ir para o login",
       "toastSuccess": "Senha definida com sucesso!",
-      "toastError": "Não foi possível definir a senha. Tente novamente.",
+      "toastJoined": "Convite aceito. Você agora faz parte de {{tenant}}.",
+      "toastError": "Não foi possível concluir o convite. Tente novamente.",
       "validation": {
         "passwordRequired": "Informe a nova senha.",
         "confirmRequired": "Confirme a nova senha.",
         "passwordMin": "A senha deve ter no mínimo 8 caracteres.",
         "mismatch": "As senhas precisam ser iguais."
-      }
+      },
+      "errors": {
+        "existingAccount": "Esta conta já existe. Entre com a senha atual para aceitar o convite. A senha não será alterada.",
+        "accountMismatch": "A sessão atual é de outra conta. Entre com o e-mail deste convite para aceitar.",
+        "identityConflict": "Não foi possível confirmar a conta deste convite. Nada foi alterado. Tente novamente ou fale com o suporte."
+      },
+      "pickerTitle": "Escolha o ambiente",
+      "pickerBody": "Sua conta participa de mais de um ambiente. Escolha qual abrir agora.",
+      "pickerSubmit": "Continuar",
+      "pickerSubmitting": "Abrindo...",
+      "pickerError": "Não foi possível trocar de ambiente. Tente novamente.",
+      "membershipError": "Não foi possível carregar seus ambientes. Tente novamente.",
+      "membershipRetry": "Tentar novamente"
     },
     "login": {
       "invalidCredentials": "E-mail ou senha inválidos.",
