@@ -184,7 +184,7 @@ describe("PortalProductRequestPage validity gate", () => {
     expect(createRequestMock).toHaveBeenCalledTimes(1)
   })
 
-  it("keeps a confirmation with a catalog link after the request is sent", async () => {
+  it("confirms the sent request and links Minhas solicitações", async () => {
     const user = userEvent.setup()
     const created: ProductRequest = {
       id: "77777777-7777-4777-8777-777777777777",
@@ -198,6 +198,12 @@ describe("PortalProductRequestPage validity gate", () => {
     }
     createRequestMock.mockResolvedValue(created)
     renderRequest()
+
+    expect(
+      screen.queryByRole("link", {
+        name: i18n.t("tenantPortal.catalog.navRequests"),
+      }),
+    ).not.toBeInTheDocument()
 
     await user.type(
       screen.getByLabelText(i18n.t("tenantPortal.catalog.requestDescription")),
@@ -218,11 +224,22 @@ describe("PortalProductRequestPage validity gate", () => {
         name: i18n.t("tenantPortal.catalog.requestSentTitle"),
       }),
     ).toBeInTheDocument()
+    const body = screen.getByText(i18n.t("tenantPortal.catalog.requestSentBody"))
+    expect(body).toBeInTheDocument()
+    expect(body).not.toHaveTextContent(/não lista|does not list|no lista/i)
+    expect(screen.getByRole("status")).toHaveTextContent("Rede de vôlei")
+    expect(screen.getByRole("status")).toHaveTextContent("Cor azul")
+    expect(screen.getByRole("status")).toHaveTextContent(
+      `${i18n.t("tenantPortal.catalog.quantity")}: 2`,
+    )
     expect(
-      screen.getByText(i18n.t("tenantPortal.catalog.requestSentBody")),
-    ).toBeInTheDocument()
-    expect(screen.getByText("Rede de vôlei")).toBeInTheDocument()
-    expect(screen.getByText("Cor azul")).toBeInTheDocument()
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.catalog.navRequests"),
+      }),
+    ).toHaveAttribute(
+      "href",
+      tenantPortalPath("ficc", "catalogo/solicitacoes"),
+    )
     expect(
       screen.getByRole("link", {
         name: i18n.t("tenantPortal.catalog.requestSentCatalog"),

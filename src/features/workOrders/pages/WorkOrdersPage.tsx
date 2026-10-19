@@ -75,10 +75,12 @@ function WorkOrdersTable({
   rows,
   isLoading,
   emptyLabel,
+  hideEmpty = false,
 }: {
   rows: WorkOrderTableRow[]
   isLoading: boolean
   emptyLabel: string
+  hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -206,7 +208,7 @@ function WorkOrdersTable({
             <TableRowsSkeleton columns={columns.length} />
           ) : null}
 
-          {!isLoading && filteredRows.length === 0 ? (
+          {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
                 {emptyLabel}
@@ -245,6 +247,8 @@ export function WorkOrdersPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<WorkOrderListFilter>("Open")
   const canCreateWorkOrder = can("os.work_orders.create")
+  const seesOnlyAssigned =
+    can("os.work_orders.execute") && !can("os.work_orders.create")
 
   const loadWorkOrders = useCallback(async () => {
     if (!session) {
@@ -384,7 +388,12 @@ export function WorkOrdersPage() {
             <WorkOrdersTable
               rows={rowsForFilter(filter)}
               isLoading={isLoading}
-              emptyLabel={t(`workOrders.empty.${filter}`)}
+              hideEmpty={loadError !== null}
+              emptyLabel={t(
+                seesOnlyAssigned
+                  ? `workOrders.emptyAssigned.${filter}`
+                  : `workOrders.empty.${filter}`,
+              )}
             />
           </TabsContent>
         ))}

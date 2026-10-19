@@ -2,12 +2,17 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { MandatoryTasksIncompleteError } from "@/features/workOrders/lib/workOrderApiErrors"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { makeWorkOrder, WORK_ORDER_ID } from "@/features/workOrders/test/workOrderFixtures"
+import {
+  makeWorkOrder,
+  sampleTechnician,
+  TECHNICIAN_ID,
+  WORK_ORDER_ID,
+} from "@/features/workOrders/test/workOrderFixtures"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import i18n from "@/lib/i18n"
 
@@ -41,7 +46,22 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  uploadWorkOrderTaskFile: vi.fn(),
+  getWorkOrderTaskFileUrl: vi.fn(async () => ({
+    url: "https://files.example/photo?exp=9999999999",
+    isPublic: false as const,
+  })),
+  updateWorkOrderAssignee: vi.fn(),
 }))
+
+vi.mock("@/features/users/services/usersService", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/users/services/usersService")>()
+  return {
+    ...actual,
+    getTechnicians: vi.fn(),
+  }
+})
 
 vi.mock("@/features/pmoc/services/pmocService", () => ({
   getPlan: vi.fn(async () => {
@@ -56,13 +76,30 @@ import {
   retrySyncConflict,
   subscribeSyncQueue,
 } from "@/lib/offlineSync"
+import { getTechnicians } from "@/features/users/services/usersService"
 import {
   getWorkOrderById,
   updateTaskValue,
+  updateWorkOrderAssignee,
   updateWorkOrderStatus,
 } from "@/features/workOrders/services/workOrdersService"
 
+beforeAll(() => {
+  vi.spyOn(HTMLImageElement.prototype, "src", "set").mockImplementation(function (
+    this: HTMLImageElement,
+    value: string,
+  ) {
+    this.setAttribute("src", value)
+  })
+})
+
+afterAll(() => {
+  vi.restoreAllMocks()
+})
+
 const getWorkOrderByIdMock = vi.mocked(getWorkOrderById)
+const getTechniciansMock = vi.mocked(getTechnicians)
+const updateWorkOrderAssigneeMock = vi.mocked(updateWorkOrderAssignee)
 const getPlanMock = vi.mocked(getPlan)
 const updateTaskValueMock = vi.mocked(updateTaskValue)
 const updateWorkOrderStatusMock = vi.mocked(updateWorkOrderStatus)
@@ -221,6 +258,93 @@ describe("WorkOrderExecutionPage tasks", () => {
     expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
   })
 
+  it("does not autosave a number below its minimum or complete the work order", async () => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({ status: "InProgress" })
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    order.tasks = [{
+      ...task,
+      inputType: "Number",
+      configuration: JSON.stringify({ min: 0, unit: "A" }),
+      value: null,
+    }]
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateTaskValueMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockResolvedValue({ ...order, status: "Completed" })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const field = await screen.findByRole("spinbutton")
+    const complete = screen.getByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    })
+    fireEvent.change(field, { target: { value: "5" } })
+    fireEvent.change(field, { target: { value: "-5" } })
+
+    expect(field).toHaveValue(-5)
+    expect(field).toHaveAttribute("aria-invalid", "true")
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.taskValue.outOfRange"),
+    )
+    expect(complete).toBeDisabled()
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 450))
+    })
+    await user.click(complete)
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
+    expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
+
+    fireEvent.change(field, { target: { value: "0" } })
+    expect(field).not.toHaveAttribute("aria-invalid", "true")
+    expect(complete).toBeEnabled()
+    await user.click(complete)
+
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalledWith(order.id, task.id, "0")
+      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
+    })
+  })
+
+  it.each([
+    { min: 0, value: "0" },
+    { min: 10, value: "15" },
+    { min: -10, value: "-5" },
+    { min: undefined, value: "-5" },
+  ])("saves $value when the configured minimum is $min", async ({ min, value }) => {
+    const user = userEvent.setup()
+    const order = makeWorkOrder({ status: "InProgress" })
+    const task = order.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    order.tasks = [{
+      ...task,
+      inputType: "Number",
+      configuration: JSON.stringify({ min }),
+      value: null,
+    }]
+    getWorkOrderByIdMock.mockResolvedValue(order)
+    updateTaskValueMock.mockResolvedValue(order)
+    updateWorkOrderStatusMock.mockResolvedValue({ ...order, status: "Completed" })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const field = await screen.findByRole("spinbutton")
+    await user.type(field, value)
+    expect(field).toHaveValue(Number(value))
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("workOrders.execution.complete"),
+    }))
+
+    await waitFor(() => {
+      expect(updateTaskValueMock).toHaveBeenCalledWith(order.id, task.id, value)
+      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(order.id, "Completed")
+    })
+  })
+
   it("keeps completion disabled while a required photo is empty", async () => {
     const base = makeWorkOrder()
     const task = base.tasks[0]
@@ -243,8 +367,13 @@ describe("WorkOrderExecutionPage tasks", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     expect(
-      await screen.findByText(i18n.t("workOrders.execution.imageUnsupported")),
+      await screen.findByRole("button", {
+        name: i18n.t("workOrders.execution.imageChoose"),
+      }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.execution.imageUnsupported")),
+    ).not.toBeInTheDocument()
     const missing = screen.getByRole("list", {
       name: i18n.t("workOrders.execution.mandatoryIncompleteTitle"),
     })
@@ -255,6 +384,53 @@ describe("WorkOrderExecutionPage tasks", () => {
       }),
     ).toBeDisabled()
     expect(updateWorkOrderStatusMock).not.toHaveBeenCalled()
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
+  })
+
+  it("completes a mandatory photo from the stored file id without patching it", async () => {
+    const user = userEvent.setup()
+    const base = makeWorkOrder()
+    const task = base.tasks[0]
+    if (!task) {
+      throw new Error("missing task")
+    }
+    const imageOrder = makeWorkOrder({
+      status: "InProgress",
+      tasks: [
+        {
+          ...task,
+          title: "Foto",
+          inputType: "Image",
+          isMandatory: true,
+          value: "3f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e",
+        },
+      ],
+    })
+    getWorkOrderByIdMock.mockResolvedValue(imageOrder)
+    updateWorkOrderStatusMock.mockResolvedValue({
+      ...imageOrder,
+      status: "Completed",
+    })
+
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    expect(
+      await screen.findByRole("img", {
+        name: i18n.t("workOrders.execution.imagePreviewAlt", { title: "Foto" }),
+      }),
+    ).toHaveAttribute("src", "https://files.example/photo?exp=9999999999")
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("workOrders.execution.complete"),
+      }),
+    )
+    await waitFor(() => {
+      expect(updateWorkOrderStatusMock).toHaveBeenCalledWith(
+        imageOrder.id,
+        "Completed",
+      )
+    })
+    expect(updateTaskValueMock).not.toHaveBeenCalled()
   })
 
   it("blocks completion when a mandatory checkbox is false", async () => {
@@ -871,5 +1047,111 @@ describe("WorkOrderExecutionPage tasks", () => {
     await waitFor(() => {
       expect(retrySyncConflictMock).toHaveBeenCalledWith(order.id, task.id)
     })
+  })
+})
+
+describe("WorkOrderExecutionPage assignee", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    getTechniciansMock.mockReset()
+    updateWorkOrderAssigneeMock.mockReset()
+    listSyncConflictsMock.mockReset()
+    listSyncConflictsMock.mockResolvedValue([])
+    getTechniciansMock.mockResolvedValue([sampleTechnician])
+  })
+
+  it("shows the assignee name without a selector when the user cannot assign", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+
+    renderExecution(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(getTechniciansMock).not.toHaveBeenCalled()
+  })
+
+  it("reassigns an open work order through the assignee endpoint", async () => {
+    const user = userEvent.setup()
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    updateWorkOrderAssigneeMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+
+    renderExecution(
+      ["os.work_orders.read", "os.work_orders.assign"],
+      ["os"],
+    )
+
+    await user.click(
+      await screen.findByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: sampleTechnician.fullName }),
+    )
+
+    await waitFor(() => {
+      expect(updateWorkOrderAssigneeMock).toHaveBeenCalledWith(
+        WORK_ORDER_ID,
+        TECHNICIAN_ID,
+      )
+    })
+    expect(screen.getByRole("combobox", {
+      name: i18n.t("workOrders.columns.assignee"),
+    })).toHaveTextContent(sampleTechnician.fullName)
+  })
+
+  it("keeps the current assignee when the technician list is forbidden", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(
+      makeWorkOrder({
+        assignedUserId: TECHNICIAN_ID,
+        assignedUser: sampleTechnician,
+      }),
+    )
+    getTechniciansMock.mockRejectedValue(new Error("FORBIDDEN"))
+
+    renderExecution(
+      ["os.work_orders.read", "os.work_orders.assign"],
+      ["os"],
+    )
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(
+      await screen.findByText(i18n.t("rbac.errors.FORBIDDEN")),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("combobox", {
+        name: i18n.t("workOrders.columns.assignee"),
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("explains a 404 when the work order is not assigned to the caller", async () => {
+    getWorkOrderByIdMock.mockRejectedValue(
+      new Error(i18n.t("workOrders.errors.notAssignedOrForbidden")),
+    )
+
+    renderExecution(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+    expect(
+      screen.queryByText(i18n.t("workOrders.errors.loadOneFailed")),
+    ).not.toBeInTheDocument()
   })
 })

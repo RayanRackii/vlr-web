@@ -9,6 +9,10 @@ const CODE_KEYS: Record<string, string> = {
   ASSIGNEE_CANNOT_EXECUTE: "workOrders.errors.assigneeCannotExecute",
   WORK_ORDER_CLOSED: "workOrders.errors.workOrderClosed",
   WORK_ORDER_REOPEN_NOT_ALLOWED: "workOrders.errors.reopenNotAllowed",
+  FILE_TOO_LARGE: "workOrders.execution.imageTooLarge",
+  FILE_TYPE_NOT_ALLOWED: "workOrders.execution.imageTypeRejected",
+  FILE_CONTENT_MISMATCH: "workOrders.execution.imageContentMismatch",
+  FORBIDDEN: "rbac.errors.FORBIDDEN",
 }
 
 function readIncompleteTaskTitles(payload: unknown): string[] {
@@ -59,6 +63,28 @@ const TASK_VALUE_REASON_KEYS: Record<string, string> = {
   INVALID_CHECKBOX: "workOrders.errors.taskValue.invalidCheckbox",
   TEXT_TOO_LONG: "workOrders.errors.taskValue.textTooLong",
   INVALID_CONFIGURATION: "workOrders.errors.taskValue.invalidConfiguration",
+  NOT_AN_IMAGE_TASK: "workOrders.errors.taskValue.notAnImageTask",
+  INVALID_IMAGE_REFERENCE: "workOrders.errors.taskValue.invalidImageReference",
+}
+
+export function messageForWorkOrderFileError(
+  status: number | undefined,
+  payload: unknown,
+  fallback: string,
+): string {
+  if (status === 403) {
+    return i18n.t("rbac.errors.FORBIDDEN")
+  }
+
+  if (status === 404) {
+    return i18n.t("workOrders.execution.imageNotFound")
+  }
+
+  if (status === 413) {
+    return i18n.t("workOrders.execution.imageTooLarge")
+  }
+
+  return localizeWorkOrderApiError(payload, fallback)
 }
 
 export function localizeWorkOrderApiError(
@@ -94,6 +120,10 @@ export function localizeWorkOrderApiError(
   // The API rejects an ineligible asset with this sentence and no code.
   if (/is not eligible for this maintenance plan/i.test(error)) {
     return i18n.t("workOrders.errors.assetNotEligible")
+  }
+
+  if (error === "FORBIDDEN") {
+    return i18n.t("rbac.errors.FORBIDDEN")
   }
 
   if (isUnexpectedApiError(error)) {

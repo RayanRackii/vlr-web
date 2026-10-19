@@ -31,6 +31,38 @@ export function mapRbacErrorMessage(rawError: string, fallback: string): string 
   return fallback
 }
 
+export function describeApiError(error: unknown, fallback: string): string {
+  if (isAxiosError(error) && error.response?.status === 403) {
+    const raw = parseApiError(getAxiosErrorPayload(error), "FORBIDDEN")
+    return mapRbacErrorMessage(
+      raw.trim().length > 0 ? raw : "FORBIDDEN",
+      i18n.t("rbac.errors.FORBIDDEN"),
+    )
+  }
+
+  if (error instanceof Error && !isAxiosError(error)) {
+    return mapRbacErrorMessage(error.message, fallback)
+  }
+
+  const raw = parseApiError(getAxiosErrorPayload(error), "")
+  return mapRbacErrorMessage(raw, fallback)
+}
+
+export function isForbiddenError(error: unknown): boolean {
+  if (isAxiosError(error) && error.response?.status === 403) {
+    return true
+  }
+
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  return (
+    error.message === "FORBIDDEN" ||
+    error.message === i18n.t("rbac.errors.FORBIDDEN")
+  )
+}
+
 export function throwRbacServiceError(
   error: unknown,
   fallbackKey: string,

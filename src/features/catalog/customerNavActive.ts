@@ -32,6 +32,23 @@ export function isCustomerNavItemActive(
     return false
   }
 
+  const longerSiblingOwnsPath = items.some((other) => {
+    const otherTarget = splitNavTarget(other.to)
+    if (otherTarget.hash.length > 0 || otherTarget.path === target.path) {
+      return false
+    }
+    if (!otherTarget.path.startsWith(`${target.path}/`)) {
+      return false
+    }
+    return (
+      pathname === otherTarget.path ||
+      pathname.startsWith(`${otherTarget.path}/`)
+    )
+  })
+  if (longerSiblingOwnsPath) {
+    return false
+  }
+
   if (item.end) {
     return pathname === target.path
   }

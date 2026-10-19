@@ -10,8 +10,10 @@ import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
 import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import i18n from "@/lib/i18n"
 
+const authSession = vi.hoisted(() => ({ access_token: "test" }))
+
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ session: { access_token: "test" } }),
+  useAuth: () => ({ session: authSession }),
   AuthProvider: ({ children }: { children: ReactNode }) => children,
 }))
 
@@ -139,7 +141,7 @@ describe("WorkOrdersPage origin", () => {
       }),
     ).toHaveLength(2)
     expect(
-      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
     ).not.toBeInTheDocument()
 
     const inProgressTab = screen.getByRole("tab", {
@@ -156,7 +158,7 @@ describe("WorkOrdersPage origin", () => {
     })
     expect(execute).toHaveAttribute("href", `/os/${inProgress.id}`)
     expect(
-      screen.queryByText(i18n.t("workOrders.empty.Pending")),
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
     ).not.toBeInTheDocument()
   })
 
@@ -177,5 +179,47 @@ describe("WorkOrdersPage origin", () => {
       name: i18n.t("workOrders.actions.view"),
     })
     expect(view).toHaveAttribute("href", `/os/${canceled.id}`)
+  })
+
+  it("keeps the generic empty copy for someone who can see every work order", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+
+    renderList(["os.work_orders.read", "os.work_orders.create"], ["os"])
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.empty.Open")),
+    ).toBeInTheDocument()
+  })
+
+  it("tells an execute-only technician when nothing is assigned to them", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+
+    renderList(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(
+      await screen.findByText(i18n.t("workOrders.emptyAssigned.Open")),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("replaces a 403 or 404 load failure and hides the empty pending copy", async () => {
+    getWorkOrdersMock.mockRejectedValue(
+      new Error(i18n.t("workOrders.errors.notAssignedOrForbidden")),
+    )
+
+    renderList(["os.work_orders.read", "os.work_orders.execute"], ["os"])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.errors.notAssignedOrForbidden"),
+    )
+    expect(
+      screen.queryByText(i18n.t("workOrders.empty.Open")),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("workOrders.emptyAssigned.Open")),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
   })
 })
