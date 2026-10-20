@@ -116,8 +116,8 @@ function normalizeMenuLabel(value: string): string {
 
 /**
  * Stock rentals chrome ("Reservar horário" / "Book a time" / "Reservar horario")
- * follows the active language. Any other label is tenant-entered data and stays
- * as stored — including resource names.
+ * follows the active language, including the booking prefix around a resource
+ * name. Resource names and other tenant labels stay as stored.
  */
 export function localizedCustomerMenuLabel(
   moduleName: string,
@@ -137,6 +137,20 @@ export function localizedCustomerMenuLabel(
   })
 
   if (!isStockLabel) {
+    for (const language of supportedLanguages) {
+      const template = i18n.t("admin.moduleMenu.suggestedLabelRentalsAsset", {
+        lng: language,
+        name: "{{name}}",
+      })
+      const [prefix, suffix = ""] = template.split("{{name}}")
+      const trimmed = label.trim()
+      if (prefix && trimmed.startsWith(prefix) && trimmed.endsWith(suffix)) {
+        const name = trimmed.slice(prefix.length, suffix ? -suffix.length : undefined).trim()
+        if (name) {
+          return t("admin.moduleMenu.suggestedLabelRentalsAsset", { name })
+        }
+      }
+    }
     return label
   }
 

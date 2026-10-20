@@ -3,6 +3,7 @@ import { z } from "zod"
 
 import { api, isAxiosError } from "@/lib/api"
 import { readApiErrorBody } from "@/lib/apiErrorText"
+import { noteTransportSuccess, readBrowserOffline } from "@/lib/connectivity"
 
 const OS_SYNC_QUEUE_KEY = "os_sync_queue"
 const OS_SYNC_CONFLICTS_KEY = "os_sync_conflicts"
@@ -484,7 +485,16 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
 export function processSyncQueue(): Promise<ProcessSyncQueueResult> {
   const run = withSyncQueueLock(processSyncQueueBody)
 
-  return run.finally(() => {
-    notifySyncQueue()
-  })
+  return run
+    .then((result) => {
+      // An empty queue needs no connectivity probe on reconnect. A successful
+      // flush must also clear the offline latch before the detail reload.
+      if (!readBrowserOffline() && result.remaining === 0) {
+        noteTransportSuccess()
+      }
+      return result
+    })
+    .finally(() => {
+      notifySyncQueue()
+    })
 }

@@ -264,6 +264,7 @@
     }
   },
   "tenantPortal": {
+    "sessionExpired": "Sessão expirada",
     "defaultTagline": "Entre para reservar e receber avisos.",
     "header": {
       "ctaRegister": "Cadastrar"
@@ -509,6 +510,7 @@
       "subtitle": "Produtos disponíveis para solicitar.",
       "searchPlaceholder": "Buscar por nome ou código",
       "empty": "Nenhum produto ativo no momento.",
+      "searchEmpty": "Nenhum produto encontrado para \"{{term}}\"",
       "priceOnRequest": "Sob consulta",
       "quantity": "Quantidade",
       "quantityFor": "Quantidade de {{name}}",
@@ -2149,6 +2151,7 @@
       }
     },
     "offline": {
+      "synced": "Sincronizado",
       "title": "Modo Offline",
       "banner": "Modo Offline: Alterações sendo salvas localmente.",
       "waitingToSync": "Aguardando sincronizar",

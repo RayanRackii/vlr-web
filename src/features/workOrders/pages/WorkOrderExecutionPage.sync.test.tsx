@@ -12,8 +12,11 @@ import {
   WORK_ORDER_ID,
 } from "@/features/workOrders/test/workOrderFixtures"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
-import { resetConnectivityForTests } from "@/lib/connectivity"
+import { noteTransportFailure, resetConnectivityForTests } from "@/lib/connectivity"
 import i18n from "@/lib/i18n"
+import { toast } from "sonner"
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
 
 const store = new Map<string, unknown>()
 const authSession = vi.hoisted(() => ({ access_token: "test" }))
@@ -103,6 +106,7 @@ function renderExecution() {
 
 describe("WorkOrderExecutionPage offline sync", () => {
   beforeEach(() => {
+    vi.mocked(toast.success).mockClear()
     store.clear()
     apiGet.mockReset()
     apiPatch.mockReset()
@@ -113,6 +117,70 @@ describe("WorkOrderExecutionPage offline sync", () => {
   afterEach(() => {
     vi.restoreAllMocks()
     resetConnectivityForTests()
+  })
+
+  it.each([false, true])("clears offline immediately on reconnect with queued edits=%s, before the detail reload", async (queued) => {
+    apiGet.mockResolvedValueOnce({ data: textOrder(null), status: 200 })
+    // The UI must not wait for this slow background GET to clear its banners.
+    let releaseReload: () => void = () => undefined
+    const reload = new Promise<void>((resolve) => { releaseReload = resolve })
+    apiGet.mockImplementation(async () => {
+      await reload
+      return { data: textOrder("offline value"), status: 200 }
+    })
+    apiPatch.mockResolvedValue({ data: textOrder("offline value"), status: 200 })
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    resetConnectivityForTests()
+    if (queued) {
+      await enqueueTaskValuePatch({ workOrderId: WORK_ORDER_ID, taskId: TASK_ID, value: "offline value" })
+    }
+    renderExecution()
+    await screen.findByRole("textbox")
+    expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
+    if (queued) await screen.findByText(i18n.t("workOrders.execution.save.retrying"))
+    expect(toast.success).not.toHaveBeenCalled()
+
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    await act(async () => { window.dispatchEvent(new Event("online")) })
+
+    expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.retrying"))).not.toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledExactlyOnceWith(i18n.t("workOrders.offline.synced"), { duration: 3000 })
+    expect(apiGet).toHaveBeenCalledTimes(2)
+    await act(async () => { releaseReload() })
+  })
+
+  it.each([0, 503, 409])("does not announce sync when a queued edit fails with status %s", async (status) => {
+    apiGet.mockResolvedValue({ data: textOrder(null), status: 200 })
+    apiPatch.mockRejectedValue(status === 0 ? networkError() : axiosError(status, { error: "Rejected" }))
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
+    resetConnectivityForTests()
+    await enqueueTaskValuePatch({ workOrderId: WORK_ORDER_ID, taskId: TASK_ID, value: "offline value" })
+    renderExecution()
+    await screen.findByRole("textbox")
+    await screen.findByText(i18n.t("workOrders.execution.save.retrying"))
+
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    await act(async () => { window.dispatchEvent(new Event("online")) })
+
+    expect(toast.success).not.toHaveBeenCalled()
+    if (status === 409) {
+      expect(screen.getByText(i18n.t("workOrders.offline.conflictTitle"))).toBeInTheDocument()
+    } else {
+      expect(screen.getByText(i18n.t("workOrders.execution.save.retrying"))).toBeInTheDocument()
+    }
+  })
+
+  it("announces recovery from a transport failure with no queued edits", async () => {
+    apiGet.mockResolvedValue({ data: textOrder(null), status: 200 })
+    renderExecution()
+    await screen.findByRole("textbox")
+    expect(toast.success).not.toHaveBeenCalled()
+    act(() => { noteTransportFailure() })
+    expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
+    await act(async () => { window.dispatchEvent(new Event("online")) })
+    expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledExactlyOnceWith(i18n.t("workOrders.offline.synced"), { duration: 3000 })
   })
 
   it("shows discard and the saved value when sync returns 409 and reload fails", async () => {

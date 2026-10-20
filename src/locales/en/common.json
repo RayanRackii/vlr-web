@@ -264,6 +264,7 @@
     }
   },
   "tenantPortal": {
+    "sessionExpired": "Session expired",
     "defaultTagline": "Sign in to book and get updates.",
     "header": {
       "ctaRegister": "Register"
@@ -509,6 +510,7 @@
       "subtitle": "Products available to request.",
       "searchPlaceholder": "Search by name or code",
       "empty": "No active products right now.",
+      "searchEmpty": "No products found for \"{{term}}\"",
       "priceOnRequest": "On request",
       "quantity": "Quantity",
       "quantityFor": "Quantity for {{name}}",
@@ -2149,6 +2151,7 @@
       }
     },
     "offline": {
+      "synced": "Synced",
       "title": "Offline Mode",
       "banner": "Offline Mode: Changes are being saved locally.",
       "waitingToSync": "Waiting to sync",

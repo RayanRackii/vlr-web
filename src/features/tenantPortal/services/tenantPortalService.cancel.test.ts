@@ -78,6 +78,11 @@ describe("cancelMyPortalReservation", () => {
     expect(result.id).toBe(RESERVATION_ID)
   })
 
+  it("translates an expired session", async () => {
+    customerPost.mockRejectedValue(apiError(401, "Unauthorized"))
+    await expect(cancelMyPortalReservation(RESERVATION_ID)).rejects.toThrow(i18n.t("tenantPortal.sessionExpired"))
+  })
+
   it("surfaces a 409 conflict message from the API", async () => {
     customerPost.mockRejectedValue(
       apiError(409, "Cannot cancel a reservation that has already started."),

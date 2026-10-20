@@ -1,3 +1,4 @@
+import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
 import { Loader2 } from "lucide-react"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -365,6 +366,10 @@ export function TenantPortalAgendaPage() {
         }
       })
       .catch((error) => {
+        if (error instanceof PortalSessionExpiredError) {
+          notifyPortalSessionExpired()
+          return
+        }
         toast.error(
           error instanceof Error
             ? error.message
@@ -1120,7 +1125,8 @@ export function TenantPortalAgendaPage() {
             rows.map((row) => (row.id === freshRow.id ? freshRow : row)),
           )
         }
-      } catch {
+      } catch (error) {
+        if (error instanceof PortalSessionExpiredError) throw error
         // The cancel request still runs. The API remains the authority.
       }
       if (generation !== getAgendaSessionGeneration()) {
@@ -1161,6 +1167,10 @@ export function TenantPortalAgendaPage() {
       )
     } catch (error) {
       if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
+      if (error instanceof PortalSessionExpiredError) {
+        notifyPortalSessionExpired()
         return
       }
       toast.error(
@@ -1301,6 +1311,7 @@ export function TenantPortalAgendaPage() {
                 min={brazilTodayIsoDate()}
                 max={horizonMaxDate ?? undefined}
                 value={date}
+                onBlur={() => onDateChange(date, "calendar")}
                 invalid={dateRejection !== null}
                 describedBy={dateDescribedBy}
                 onChange={(nextValue, source) => {

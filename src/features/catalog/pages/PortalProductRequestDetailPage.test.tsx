@@ -106,6 +106,13 @@ describe("PortalProductRequestDetailPage", () => {
     expect(getMock).toHaveBeenCalledWith(REQUEST_ID)
   })
 
+  it.each(["note", "observation"] as const)("shows the submitted %s", async (field) => {
+    getMock.mockResolvedValue({ ...request, [field]: "Deliver at reception" })
+    renderDetail()
+    expect(await screen.findByText("Deliver at reception")).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("tenantPortal.catalog.requestNote"))).toBeInTheDocument()
+  })
+
   it("shows an empty file list", async () => {
     getMock.mockResolvedValue({ ...request, files: [], status: "Submitted" })
     renderDetail()

@@ -177,6 +177,8 @@ export type PortalProductRequestFile = z.infer<
 >
 
 export const portalProductRequestSchema = z.object({
+  note: z.string().nullish(),
+  observation: z.string().nullish(),
   id: z.string().uuid(),
   status: z.string().trim().min(1),
   description: z.string(),
