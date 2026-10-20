@@ -1,4 +1,5 @@
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
+import { clearAgendaSelectionNotices } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { z } from "zod"
 
 import {
@@ -579,6 +580,7 @@ export function persistCustomerSession(
   customerId?: string,
   tenantId?: string,
 ): void {
+  clearAgendaSelectionNotices()
   window.localStorage.setItem(CUSTOMER_TOKEN_KEY, token)
   window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain.trim().toLowerCase())
   if (label && label.trim().length > 0) {
@@ -596,6 +598,7 @@ export function persistCustomerSession(
 }
 
 export function clearCustomerSession(): void {
+  clearAgendaSelectionNotices()
   window.localStorage.removeItem(CUSTOMER_TOKEN_KEY)
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_KEY)
   window.localStorage.removeItem(CUSTOMER_LABEL_KEY)

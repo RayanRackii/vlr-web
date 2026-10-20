@@ -43,6 +43,27 @@ export function clearAgendaSelectionNotice(subdomain: string): void {
   notifyNoticeChange()
 }
 
+/** A notice describes an abandoned selection, never a newly authenticated customer. */
+export function clearAgendaSelectionNotices(): void {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  const keys = Array.from({ length: window.sessionStorage.length }, (_, index) =>
+    window.sessionStorage.key(index),
+  )
+  let changed = false
+  for (const key of keys) {
+    if (key?.startsWith(`${STORAGE_PREFIX}.`)) {
+      window.sessionStorage.removeItem(key)
+      changed = true
+    }
+  }
+  if (changed) {
+    notifyNoticeChange()
+  }
+}
+
 export function subscribeAgendaSelectionNotice(onStoreChange: () => void) {
   if (typeof window === "undefined") {
     return () => {}

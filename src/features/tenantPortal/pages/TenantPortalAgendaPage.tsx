@@ -224,7 +224,8 @@ export function TenantPortalAgendaPage() {
   >(null)
   const selectionRef = useRef(selectedRentalAssetId)
   selectionRef.current = selectedRentalAssetId
-  const clearUnavailableSelection = useCallback(() => {
+  const clearUnavailableSelection = useCallback((force = false) => {
+    if (submittingRef.current && !force) return
     if (selectionRef.current === null) return
     selectionRef.current = null
     setSelectedRentalAssetId(null)
@@ -783,6 +784,7 @@ export function TenantPortalAgendaPage() {
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = selectedSlot?.endTime.slice(0, 5) ?? null
+  const quoteUnavailable = quote.status === "ready" && quote.amount === null
 
   useEffect(() => {
     if (!quoteAssetId || !quoteStart || !quoteEnd) {
@@ -834,7 +836,7 @@ export function TenantPortalAgendaPage() {
   })
 
   useEffect(() => {
-    if (loading || schedulePending || slotsError || submitting || !selectedRentalAssetId) return
+    if (loading || schedulePending || slotsError || submittingRef.current || !selectedRentalAssetId) return
     const key = agendaReservedSlotKey(date, selectedRentalAssetId, startTime)
     if (
       !selectedAsset || (!queueEnabled && (
@@ -857,6 +859,9 @@ export function TenantPortalAgendaPage() {
     }
 
     const checkSelectedSlotStart = () => {
+      if (submittingRef.current) {
+        return
+      }
       if (!isPastTenantSlotStart(date, selectedSlot.startTime)) {
         return
       }
@@ -998,7 +1003,8 @@ export function TenantPortalAgendaPage() {
       !selectedSlot ||
       !spaceState(selectedAsset.id).available ||
       submittingRef.current ||
-      quote.status === "loading"
+      quote.status === "loading" ||
+      quoteUnavailable
     ) {
       return
     }
@@ -1163,7 +1169,7 @@ export function TenantPortalAgendaPage() {
           if (heldByCustomer) {
             setSelectedRentalAssetId(null)
           } else {
-            clearUnavailableSelection()
+            clearUnavailableSelection(true)
           }
         }
         return
@@ -1171,7 +1177,7 @@ export function TenantPortalAgendaPage() {
       if (isSlotUnavailableConflict(error)) {
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
-          clearUnavailableSelection()
+          clearUnavailableSelection(true)
         }
         return
       }
@@ -1189,7 +1195,7 @@ export function TenantPortalAgendaPage() {
   async function onJoinAndReserve() {
     if (schedulePending || slotsError || !selectedSlot ||
       !spaceState(selectedSlot.rentalAssetId).available ||
-      submittingRef.current || joinAndReserveLock.current) {
+      submittingRef.current || joinAndReserveLock.current || quoteUnavailable) {
       return
     }
     const generation = getAgendaSessionGeneration()
@@ -1653,7 +1659,8 @@ export function TenantPortalAgendaPage() {
                 }
                 disabled={queue.view.joinAndReserve && (
                   schedulePending || slotsError || !selectedSlot ||
-                  !spaceState(selectedSlot.rentalAssetId).available
+                  !spaceState(selectedSlot.rentalAssetId).available ||
+                  quoteUnavailable
                 )}
                 loading={queue.joining}
                 loadingLabel={
@@ -1784,7 +1791,7 @@ export function TenantPortalAgendaPage() {
                 !spaceState(selectedRentalAssetId).available) ||
               !queue.canReserve ||
               quote.status === "loading" ||
-              (quote.status === "ready" && quote.amount === null)
+              quoteUnavailable
             }
             onClick={() => {
               void onReserve()
