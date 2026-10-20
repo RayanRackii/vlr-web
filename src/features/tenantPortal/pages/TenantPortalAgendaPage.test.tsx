@@ -1762,7 +1762,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastError).not.toHaveBeenCalled()
   })
 
-  it("recognises a reservation made in another tab instead of saying someone else took it", async () => {
+  it("treats a reservation made in another tab as the customer's successful booking", async () => {
     const user = userEvent.setup()
     const held = makeReservation("Confirmed", SLOT_08_ISO, {
       items: [
@@ -1794,18 +1794,13 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalled()
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(held.totalAmount),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      )
     })
-    const notice = toastError.mock.calls.at(-1)?.[0]
-    const view = render(<>{notice}</>)
-    expect(
-      view.getByRole("link", {
-        name: i18n.t("tenantPortal.agenda.myReservations"),
-      }),
-    ).toBeInTheDocument()
-    expect(view.container).toHaveTextContent(
-      i18n.t("tenantPortal.agenda.slotHeldByYou"),
-    )
     expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -2647,6 +2642,101 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
   })
 
+  it("treats an interval conflict as success when Minhas reservas confirms this customer owns it", async () => {
+    const user = userEvent.setup()
+    const created = makeReservation("Confirmed", SLOT_08_ISO)
+    listMine.mockResolvedValueOnce([]).mockResolvedValue([created])
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(created.totalAmount),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      )
+    })
+    expect(toastError).not.toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.slotTaken"),
+    )
+  })
+
+  it("does not restore a previous customer's booking when the conflict lookup resolves after a session change", async () => {
+    const user = userEvent.setup()
+    const previousCustomerReservation = makeReservation("Confirmed", SLOT_08_ISO)
+    let resolveMine: (reservations: PortalReservation[]) => void = () => undefined
+    const pendingMine = new Promise<PortalReservation[]>((resolve) => {
+      resolveMine = resolve
+    })
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+    const page = renderAgenda()
+    await screen.findByRole("button", { name: "Quadra 1" })
+    listMine.mockClear()
+    listMine.mockReturnValue(pendingMine)
+
+    await bookQuadra1(user)
+    await waitFor(() => expect(listMine).toHaveBeenCalled())
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    listMine.mockResolvedValue([])
+    renderAgenda()
+
+    await act(async () => {
+      resolveMine([previousCustomerReservation])
+      await pendingMine
+    })
+
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(
+      customerAlreadyHoldsSlot(VIEWED_DATE, ASSET_A_ID, "08:00:00", []),
+    ).toBe(false)
+  })
+
+  it("uses the active reservation when a cancelled reservation has the same slot", async () => {
+    const user = userEvent.setup()
+    const active = makeReservation("Confirmed", SLOT_08_ISO)
+    const cancelled = makeReservation("Canceled", SLOT_08_ISO, {
+      id: "99999999-9999-4999-8999-999999999999",
+    })
+    listMine.mockResolvedValueOnce([]).mockResolvedValue([cancelled, active])
+    bookSlot.mockRejectedValue(
+      new PortalBookingError(
+        "O local 'Sala 1' não está disponível para o intervalo solicitado.",
+        409,
+        null,
+      ),
+    )
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(active.totalAmount),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      )
+    })
+  })
+
   it("translates the daily booking limit without refreshing the agenda", async () => {
     const user = userEvent.setup()
     bookSlot.mockRejectedValue(
@@ -3404,6 +3494,49 @@ describe("TenantPortalAgendaPage time selector", () => {
     await act(async () => window.dispatchEvent(new Event("focus")))
     expect(toastMessage).toHaveBeenCalledWith(i18n.t("tenantPortal.agenda.selectionExpired"))
     expect(router.state.location.pathname).toBe(expected)
+  })
+
+  it.each(["snapshot", "same-day refetch"])("notifies before a late %s can discard an expired idle selection", async (source) => {
+    const router = createMemoryRouter([{
+      element: <Outlet context={outletContext} />,
+      children: [
+        { path: "/agenda", element: <TenantPortalAgendaPage /> },
+        { path: "/t/ficc/app", element: <div>Portal destination</div> },
+      ],
+    }], { initialEntries: ["/agenda"] })
+    const user = userEvent.setup()
+    render(<RouterProvider router={router} />)
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    if (source === "same-day refetch") {
+      await act(async () => {
+        await router.navigate(`/agenda${router.state.location.search}#minhas-reservas`)
+      })
+    }
+    let resolveRefresh!: (value: typeof day) => void
+    fetchDay.mockImplementation(() => new Promise((resolve) => { resolveRefresh = resolve }))
+    let refresh: Promise<void> | undefined
+    await act(async () => {
+      if (source === "snapshot") {
+        refresh = invalidateAgendaQueries({ subdomain: "ficc", dates: [VIEWED_DATE] }, { applySlots: true })
+      } else {
+        await router.navigate(`/agenda${router.state.location.search}`)
+      }
+    })
+    // Background timers may be throttled: availability arrives after the idle
+    // deadline, before either the timeout callback or a foreground event runs.
+    vi.setSystemTime(Date.now() + 660_000)
+    await act(async () => {
+      resolveRefresh({ ...day, slots: day.slots.filter((slot) => slot.rentalAssetId !== ASSET_A_ID) })
+      await refresh
+    })
+
+    expect(toastMessage).toHaveBeenCalledExactlyOnceWith(i18n.t("tenantPortal.agenda.selectionExpired"))
+    expect(router.state.location.pathname).toBe("/t/ficc/app")
+    expect(screen.getByText("Portal destination")).toBeInTheDocument()
+    expect(bookSlot).not.toHaveBeenCalled()
   })
 
   it("keeps the selected date, time, and resource when the language changes", async () => {

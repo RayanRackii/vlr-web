@@ -2114,6 +2114,7 @@
       "checkboxHint": "Marcar como hecho",
       "textPlaceholder": "Describa el resultado...",
       "textCharacterCount": "{{count}}/{{max}} caracteres",
+      "textCharacterLimitReached": "Se alcanzó el límite de 1000 caracteres",
       "numberPlaceholder": "Ingrese el valor",
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Seleccione una opción",

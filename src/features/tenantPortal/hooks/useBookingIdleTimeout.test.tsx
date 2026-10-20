@@ -101,6 +101,22 @@ describe("useBookingIdleTimeout", () => {
     expect(onExpire).toHaveBeenCalledTimes(1)
   })
 
+  it.each([null, "next-slot", "space"])(
+    "lets refresh check a throttled deadline before rendering selection %s",
+    (nextKey) => {
+      const onExpire = vi.fn()
+      const { result, rerender } = renderHook(({ key }: { key: string | null }) =>
+        useBookingIdleTimeout({ selectionKey: key, paused: false, onExpire }),
+      { initialProps: { key: "space" as string | null } })
+
+      // Move the clock without executing the background timer.
+      vi.setSystemTime(Date.now() + 660_000)
+      act(() => expect(result.current()).toBe(true))
+      rerender({ key: nextKey })
+      expect(onExpire).toHaveBeenCalledTimes(1)
+    },
+  )
+
   it.each(["focus", "visibilitychange", "pointerdown"])(
     "checks an elapsed background deadline on %s before accepting more activity",
     (event) => {
