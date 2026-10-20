@@ -12,7 +12,11 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { TaskSaveIndicator } from "@/features/workOrders/components/TaskSaveIndicator"
+import type { TaskSaveState } from "@/features/workOrders/components/TaskSaveIndicator"
+import { WorkOrderAssigneeField } from "@/features/workOrders/components/WorkOrderAssigneeField"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
+import { WorkOrderTaskImageField } from "@/features/workOrders/components/WorkOrderTaskImageField"
 import { WorkOrderOrigin } from "@/features/workOrders/components/WorkOrderOrigin"
 import {
   parseNumberConfiguration,
@@ -20,8 +24,15 @@ import {
   type WorkOrder,
   type WorkOrderTask,
 } from "@/features/workOrders/schemas/workOrderSchemas"
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
-import { isWorkOrderTaskFilled } from "@/features/workOrders/lib/workOrderTaskFilled"
+import {
+  localizeWorkOrderApiError,
+  MandatoryTasksIncompleteError,
+} from "@/features/workOrders/lib/workOrderApiErrors"
+import {
+  listMissingMandatoryTaskTitles,
+  mergeMissingMandatoryTitles,
+} from "@/features/workOrders/lib/missingMandatoryTasks"
+import { useObservedHeight } from "@/hooks/useObservedHeight"
 import {
   getWorkOrderById,
   updateTaskValue,
@@ -101,6 +112,18 @@ function mergeWorkOrderDrafts(
       return task
     }),
   }
+}
+
+function isTaskValueBelowMinimum(
+  task: WorkOrderTask,
+  value: string | null,
+): boolean {
+  if (task.inputType !== "Number" || value == null || value.trim() === "") {
+    return false
+  }
+
+  const minimum = parseNumberConfiguration(task.configuration)?.min
+  return minimum != null && Number(value) < minimum
 }
 
 function SyncConflictList({
@@ -201,8 +224,10 @@ function SyncConflictList({
 function TaskField({
   workOrderId,
   task,
+  confirmedValue,
   disabled,
   pendingSync,
+  hasSyncConflict,
   onLocalChange,
   onPersisted,
   onQueued,
@@ -211,8 +236,10 @@ function TaskField({
 }: {
   workOrderId: string
   task: WorkOrderTask
+  confirmedValue: string | null | undefined
   disabled: boolean
   pendingSync: boolean
+  hasSyncConflict: boolean
   onLocalChange: (taskId: string, value: string | null) => void
   onPersisted: (workOrder: WorkOrder, taskId: string) => void
   onQueued: (taskId: string) => void
@@ -220,15 +247,33 @@ function TaskField({
   onRegisterFlush: (taskId: string, flush: (() => unknown) | null) => void
 }) {
   const { t } = useTranslation()
+  const [saveState, setSaveState] = useState<TaskSaveState>("idle")
+  const editVersionRef = useRef(0)
+  const queuedVersionRef = useRef<number | null>(null)
+
+  function handleValueChange(value: string | null) {
+    editVersionRef.current += 1
+    onLocalChange(task.id, value)
+    setSaveState("saving")
+  }
 
   const persistValue = useCallback(
     async (value: string | null) => {
+      const version = editVersionRef.current
+      setSaveState("saving")
       try {
         const updated = await updateTaskValue(workOrderId, task.id, value)
         if (updated !== null) {
           onPersisted(updated, task.id)
+          if (version === editVersionRef.current) {
+            setSaveState("saved")
+          }
         } else {
+          queuedVersionRef.current = Math.max(queuedVersionRef.current ?? 0, version)
           onQueued(task.id)
+          if (version === editVersionRef.current) {
+            setSaveState("retrying")
+          }
         }
       } catch (error: unknown) {
         console.error("TaskField persistValue failed", error)
@@ -236,6 +281,9 @@ function TaskField({
           console.error("TaskField persistValue response", error.response?.data)
         }
 
+        if (version === editVersionRef.current) {
+          setSaveState("idle")
+        }
         onError(
           error instanceof Error
             ? error.message
@@ -258,6 +306,30 @@ function TaskField({
     }
   }, [debouncedPersist, onRegisterFlush, task.id])
 
+  useEffect(() => {
+    if (pendingSync) {
+      setSaveState("retrying")
+      return
+    }
+
+    if (hasSyncConflict) {
+      setSaveState((current) =>
+        current === "saving" || current === "retrying" ? "idle" : current,
+      )
+      return
+    }
+
+    setSaveState((current) => {
+      if (current !== "retrying") {
+        return current
+      }
+      if (queuedVersionRef.current === null) {
+        return "idle"
+      }
+      return queuedVersionRef.current === editVersionRef.current ? "saved" : "saving"
+    })
+  }, [hasSyncConflict, pendingSync])
+
   const numberConfig = useMemo(
     () => parseNumberConfiguration(task.configuration),
     [task.configuration],
@@ -269,12 +341,19 @@ function TaskField({
   )
 
   const choiceOptions = choiceConfig?.options ?? []
+  const belowMinimum = isTaskValueBelowMinimum(task, task.value ?? null)
 
-  const waiting = pendingSync ? (
-    <p className="text-xs text-amber-800 dark:text-amber-200">
-      {t("workOrders.offline.waitingToSync")}
-    </p>
-  ) : null
+  const shownSaveState: TaskSaveState = pendingSync
+    ? "retrying"
+    : hasSyncConflict
+      ? "idle"
+      : saveState === "saved" && confirmedValue !== (task.value ?? null)
+        ? "idle"
+        : saveState
+
+  const saveIndicator = (
+    <TaskSaveIndicator state={shownSaveState} taskTitle={task.title} />
+  )
 
   switch (task.inputType) {
     case "Checkbox": {
@@ -291,12 +370,12 @@ function TaskField({
               disabled={disabled}
               onCheckedChange={(nextChecked) => {
                 const nextValue = nextChecked ? "true" : "false"
-                onLocalChange(task.id, nextValue)
+                handleValueChange(nextValue)
                 void persistValue(nextValue)
               }}
             />
           </div>
-          {waiting}
+          {saveIndicator}
         </div>
       )
     }
@@ -311,11 +390,11 @@ function TaskField({
             onChange={(event) => {
               const nextValue =
                 event.target.value.trim() === "" ? null : event.target.value
-              onLocalChange(task.id, nextValue)
+              handleValueChange(nextValue)
               debouncedPersist(nextValue)
             }}
           />
-          {waiting}
+          {saveIndicator}
         </div>
       )
 
@@ -337,16 +416,26 @@ function TaskField({
             disabled={disabled}
             min={numberConfig?.min}
             max={numberConfig?.max}
+            aria-invalid={belowMinimum || undefined}
             value={task.value ?? ""}
             placeholder={t("workOrders.execution.numberPlaceholder")}
             onChange={(event) => {
               const raw = event.target.value
               const nextValue = raw.trim() === "" ? null : raw
-              onLocalChange(task.id, nextValue)
+              handleValueChange(nextValue)
+              if (isTaskValueBelowMinimum(task, nextValue)) {
+                debouncedPersist.cancel()
+                return
+              }
               debouncedPersist(nextValue)
             }}
           />
-          {waiting}
+          {belowMinimum ? (
+            <p className="text-sm text-destructive" role="alert">
+              {t("workOrders.errors.taskValue.outOfRange")}
+            </p>
+          ) : null}
+          {saveIndicator}
         </div>
       )
 
@@ -369,7 +458,7 @@ function TaskField({
             onChange={(event) => {
               const nextValue =
                 event.target.value === "" ? null : event.target.value
-              onLocalChange(task.id, nextValue)
+              handleValueChange(nextValue)
               void persistValue(nextValue)
             }}
           >
@@ -382,18 +471,20 @@ function TaskField({
               </option>
             ))}
           </select>
-          {waiting}
+          {saveIndicator}
         </div>
       )
 
     case "Image":
       return (
-        <Alert>
-          <AlertTitle>{t("workOrders.execution.imageUnsupported")}</AlertTitle>
-          <AlertDescription>
-            {t("workOrders.execution.imageUnsupportedDetail")}
-          </AlertDescription>
-        </Alert>
+        <WorkOrderTaskImageField
+          workOrderId={workOrderId}
+          task={task}
+          disabled={disabled}
+          onUploaded={(fileId) => {
+            onLocalChange(task.id, fileId)
+          }}
+        />
       )
 
     default:
@@ -408,6 +499,7 @@ export function WorkOrderExecutionPage() {
   const { id } = useParams<{ id: string }>()
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
+  const [confirmedWorkOrder, setConfirmedWorkOrder] = useState<WorkOrder | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -417,6 +509,10 @@ export function WorkOrderExecutionPage() {
   )
   const [conflicts, setConflicts] = useState<OsSyncConflict[]>([])
   const [conflictBusyId, setConflictBusyId] = useState<string | null>(null)
+  const [serverMissingTitles, setServerMissingTitles] = useState<readonly string[]>(
+    [],
+  )
+  const actionBar = useObservedHeight<HTMLDivElement>()
   const loadFailedRef = useRef(false)
   const hasWorkOrderRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
@@ -445,6 +541,7 @@ export function WorkOrderExecutionPage() {
       const queuedConflicts = await listSyncConflicts()
       loadFailedRef.current = false
       hasWorkOrderRef.current = true
+      setConfirmedWorkOrder(data)
       setWorkOrder(mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current))
       setErrorMessage(null)
     } catch (error: unknown) {
@@ -559,6 +656,7 @@ export function WorkOrderExecutionPage() {
         const data = await getWorkOrderById(id)
         const queuedConflicts = await listSyncConflicts()
         hasWorkOrderRef.current = true
+        setConfirmedWorkOrder(data)
         setWorkOrder(
           mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current),
         )
@@ -581,6 +679,10 @@ export function WorkOrderExecutionPage() {
     return [...workOrder.tasks].sort((a, b) => a.order - b.order)
   }, [workOrder])
 
+  const hasValueBelowMinimum = orderedTasks.some((task) =>
+    isTaskValueBelowMinimum(task, task.value ?? null),
+  )
+
   const registerFlush = useCallback(
     (taskId: string, flush: (() => unknown) | null) => {
       if (flush) {
@@ -592,12 +694,32 @@ export function WorkOrderExecutionPage() {
     [],
   )
 
-  function currentTaskValue(task: WorkOrderTask): string | null {
+  function currentTaskValue(task: {
+    id: string
+    value?: string | null
+  }): string | null {
     if (draftValuesRef.current.has(task.id)) {
       return draftValuesRef.current.get(task.id) ?? null
     }
     return task.value ?? null
   }
+
+  const clientMissingTitles = useMemo(
+    () =>
+      listMissingMandatoryTaskTitles(orderedTasks, (task) =>
+        currentTaskValue(task),
+      ),
+    [orderedTasks],
+  )
+
+  const missingTitles = useMemo(
+    () =>
+      mergeMissingMandatoryTitles(
+        clientMissingTitles,
+        serverMissingTitles,
+      ),
+    [clientMissingTitles, serverMissingTitles],
+  )
 
   function handleLocalTaskChange(taskId: string, value: string | null) {
     draftValuesRef.current.set(taskId, value)
@@ -626,6 +748,7 @@ export function WorkOrderExecutionPage() {
 
     try {
       const updated = await updateWorkOrderStatus(workOrder.id, "InProgress")
+      setConfirmedWorkOrder(updated)
       setWorkOrder(updated)
       setSuccessMessage(t("workOrders.execution.startedSuccess"))
     } catch (error: unknown) {
@@ -648,6 +771,7 @@ export function WorkOrderExecutionPage() {
   }
 
   function handlePersisted(next: WorkOrder, taskId: string) {
+    setConfirmedWorkOrder(next)
     for (const task of next.tasks) {
       const serverValue = task.value ?? null
       const draft = draftValuesRef.current.get(task.id)
@@ -695,7 +819,7 @@ export function WorkOrderExecutionPage() {
   }
 
   async function handleComplete() {
-    if (!workOrder) {
+    if (!workOrder || hasValueBelowMinimum) {
       return
     }
 
@@ -710,37 +834,36 @@ export function WorkOrderExecutionPage() {
       return
     }
 
-    const missingMandatory = orderedTasks.filter((task) => {
-      if (!task.isMandatory) {
-        return false
-      }
-
-      return !isWorkOrderTaskFilled(task, currentTaskValue(task))
-    })
-
-    if (missingMandatory.length > 0) {
-      setErrorMessage(
-        t("workOrders.execution.mandatoryIncomplete", {
-          tasks: missingMandatory.map((task) => task.title).join(", "),
-        }),
-      )
+    const missingNow = listMissingMandatoryTaskTitles(orderedTasks, (task) =>
+      currentTaskValue(task),
+    )
+    if (missingNow.length > 0) {
       return
     }
 
+    setServerMissingTitles([])
     setIsUpdatingStatus(true)
     setErrorMessage(null)
     setSuccessMessage(null)
 
     try {
       const updated = await updateWorkOrderStatus(workOrder.id, "Completed")
+      setConfirmedWorkOrder(updated)
       setWorkOrder(updated)
+      setServerMissingTitles([])
       setSuccessMessage(t("workOrders.execution.completedSuccess"))
     } catch (error: unknown) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : t("workOrders.errors.updateStatusFailed"),
-      )
+      if (error instanceof MandatoryTasksIncompleteError) {
+        setServerMissingTitles(error.titles)
+        setErrorMessage(error.titles.length === 0 ? error.message : null)
+      } else {
+        setServerMissingTitles([])
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : t("workOrders.errors.updateStatusFailed"),
+        )
+      }
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -789,8 +912,23 @@ export function WorkOrderExecutionPage() {
     )
   }
 
+  const showActionBar =
+    workOrder.status === "Pending" || workOrder.status === "InProgress"
+
   return (
-    <div className="space-y-6 pb-28">
+    <div
+      data-work-order-execution
+      className={
+        showActionBar && actionBar.height === 0
+          ? "space-y-6 pb-28"
+          : "space-y-6"
+      }
+      style={
+        showActionBar && actionBar.height > 0
+          ? { paddingBottom: actionBar.height }
+          : undefined
+      }
+    >
       <WorkOrderOfflineBanner />
 
       <SyncConflictList
@@ -865,6 +1003,19 @@ export function WorkOrderExecutionPage() {
             {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
           </p>
         </div>
+        <WorkOrderAssigneeField
+          workOrder={workOrder}
+          onUpdated={(updated) => {
+            hasWorkOrderRef.current = true
+            setWorkOrder(
+              mergeWorkOrderDrafts(
+                updated,
+                conflicts,
+                draftValuesRef.current,
+              ),
+            )
+          }}
+        />
         <div>
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.origin")}
@@ -904,17 +1055,24 @@ export function WorkOrderExecutionPage() {
         </div>
       </section>
 
-      {successMessage !== null ? (
-        <div
-          role="status"
-          className="rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
-        >
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="work-order-status-announcement"
+        className={
+          successMessage === null
+            ? "sr-only"
+            : "rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
+        }
+      >
+        {successMessage === null ? null : (
           <div className="flex items-start gap-3">
             <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
             <p className="font-medium">{successMessage}</p>
           </div>
-        </div>
-      ) : null}
+        )}
+      </div>
 
       {errorMessage !== null ? (
         <div
@@ -958,8 +1116,14 @@ export function WorkOrderExecutionPage() {
               <TaskField
                 workOrderId={workOrder.id}
                 task={task}
+                confirmedValue={confirmedWorkOrder?.tasks.find(
+                  (confirmed) => confirmed.id === task.id,
+                )?.value}
                 disabled={isReadOnly}
                 pendingSync={pendingTaskIds.has(task.id)}
+                hasSyncConflict={visibleConflicts.some(
+                  (conflict) => conflict.taskId === task.id,
+                )}
                 onLocalChange={handleLocalTaskChange}
                 onPersisted={handlePersisted}
                 onQueued={handleQueued}
@@ -971,37 +1135,70 @@ export function WorkOrderExecutionPage() {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 p-4 sm:flex-row sm:justify-end">
-          {workOrder.status === "Pending" ? (
-            <LoadingButton
-              type="button"
-              loading={isUpdatingStatus}
-              onClick={() => {
-                void handleStart()
-              }}
-            >
-              <Play data-icon="inline-start" />
-              {t("workOrders.execution.start")}
-            </LoadingButton>
-          ) : null}
+      {showActionBar ? (
+        <div
+          ref={actionBar.ref}
+          data-work-order-action-bar
+          className="fixed inset-x-0 bottom-0 z-20 flex max-h-[50dvh] flex-col border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        >
+          <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-col gap-3 p-4">
+            {missingTitles.length > 0 ? (
+              <div
+                id="work-order-missing-tasks"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="flex min-h-0 flex-col"
+              >
+                <p id="work-order-missing-tasks-title" className="shrink-0 text-sm font-medium">
+                  {t("workOrders.execution.mandatoryIncompleteTitle")}
+                </p>
+                <ul
+                  aria-labelledby="work-order-missing-tasks-title"
+                  tabIndex={0}
+                  className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain pl-5 text-sm"
+                >
+                  {missingTitles.map((title) => (
+                    <li key={title}>{title}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
+              {workOrder.status === "Pending" ? (
+                <LoadingButton
+                  type="button"
+                  loading={isUpdatingStatus}
+                  onClick={() => {
+                    void handleStart()
+                  }}
+                >
+                  <Play data-icon="inline-start" />
+                  {t("workOrders.execution.start")}
+                </LoadingButton>
+              ) : null}
 
-          {workOrder.status === "Pending" ||
-          workOrder.status === "InProgress" ? (
-            <LoadingButton
-              type="button"
-              variant="default"
-              loading={isUpdatingStatus}
-              onClick={() => {
-                void handleComplete()
-              }}
-            >
-              <CircleCheck data-icon="inline-start" />
-              {t("workOrders.execution.complete")}
-            </LoadingButton>
-          ) : null}
+              <LoadingButton
+                type="button"
+                variant="default"
+                loading={isUpdatingStatus}
+                disabled={clientMissingTitles.length > 0 || hasValueBelowMinimum}
+                aria-describedby={
+                  missingTitles.length > 0
+                    ? "work-order-missing-tasks"
+                    : undefined
+                }
+                onClick={() => {
+                  void handleComplete()
+                }}
+              >
+                <CircleCheck data-icon="inline-start" />
+                {t("workOrders.execution.complete")}
+              </LoadingButton>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }

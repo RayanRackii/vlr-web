@@ -23,9 +23,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import {
   formatCatalogDate,
-  formatCatalogMoney,
   type CatalogOrder,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listCatalogOrders } from "@/features/catalog/services/catalogService"
@@ -112,8 +112,10 @@ export function CatalogOrdersPage() {
       {
         id: "total",
         accessorFn: (row) =>
-          formatCatalogMoney(row.totalAmount, row.currency, i18n.language) ??
-          t("catalog.priceOnRequest"),
+          formatOrderTotalText(row, i18n.language, {
+            onRequest: t("catalog.priceOnRequest"),
+            partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
+          }),
         header: ({ column }) => (
           <DataTableColumnFilterHeader
             column={column}

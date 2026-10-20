@@ -19,17 +19,20 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
+  formatCatalogDate,
   productRequestFormSchema,
+  type ProductRequest,
   type ProductRequestFormValues,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { createPortalProductRequest } from "@/features/catalog/services/catalogPortalService"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function PortalProductRequestPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState<ProductRequest | null>(null)
 
   const form = useForm<ProductRequestFormValues>({
     resolver: zodResolver(productRequestFormSchema),
@@ -41,7 +44,7 @@ export function PortalProductRequestPage() {
   async function onSubmit(values: ProductRequestFormValues) {
     setSubmitting(true)
     try {
-      await createPortalProductRequest({
+      const created = await createPortalProductRequest({
         description: values.description,
         quantity: values.quantity,
         note: values.note.trim().length > 0 ? values.note.trim() : undefined,
@@ -49,6 +52,7 @@ export function PortalProductRequestPage() {
       })
       form.reset({ description: "", quantity: 1, note: "" })
       setFiles([])
+      setSubmitted(created)
       toast.success(t("tenantPortal.catalog.requestSubmitted"))
     } catch (error) {
       toast.error(
@@ -73,13 +77,64 @@ export function PortalProductRequestPage() {
       </Button>
       <div className="space-y-1">
         <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.catalog.requestTitle")}
+          {submitted
+            ? t("tenantPortal.catalog.requestSentTitle")
+            : t("tenantPortal.catalog.requestTitle")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.requestSubtitle")}
+          {submitted
+            ? t("tenantPortal.catalog.requestSentBody")
+            : t("tenantPortal.catalog.requestSubtitle")}
         </p>
       </div>
 
+      {submitted ? (
+        <div
+          role="status"
+          className="space-y-4 rounded-xl border border-border p-4"
+        >
+          <p className="text-sm font-medium">{submitted.description}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("tenantPortal.catalog.quantity")}: {submitted.quantity}
+          </p>
+          {submitted.note ? (
+            <p className="text-sm text-muted-foreground">{submitted.note}</p>
+          ) : null}
+          <p className="text-sm text-muted-foreground">
+            {formatCatalogDate(submitted.createdAt, i18n.language)}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              render={
+                <Link
+                  to={tenantPortalPath(subdomain, "catalogo/solicitacoes")}
+                />
+              }
+            >
+              {t("tenantPortal.catalog.navRequests")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSubmitted(null)
+              }}
+            >
+              {t("tenantPortal.catalog.requestSentAnother")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {submitted ? null : (
       <Form {...form}>
         <form
           className="space-y-4"
@@ -165,6 +220,7 @@ export function PortalProductRequestPage() {
           </FormPrimaryButton>
         </form>
       </Form>
+      )}
     </div>
   )
 }

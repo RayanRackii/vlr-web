@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { api, isAxiosError } from "@/lib/api"
+import { describeApiError } from "@/features/users/permissions/rbacErrors"
 import {
   unitListSchema,
   type Unit,
@@ -34,10 +35,7 @@ export async function getUnits(): Promise<Unit[]> {
     }
 
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.inventory.errors.loadUnitsFailed"),
-      ),
+      describeApiError(error, i18n.t("assets.inventory.errors.loadUnitsFailed")),
     )
   }
 }

@@ -67,6 +67,7 @@ import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPol
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import {
   customerAlreadyHoldsSlot,
+  getAgendaQueryRevision,
   invalidateAgendaQueries,
   rememberOwnBooking,
   resetAgendaQueryClientForTests,
@@ -85,7 +86,10 @@ import {
   fetchReservationQueue,
   joinReservationQueue,
   listMyPortalReservations,
+  persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { signOutCustomerPortal } from "@/lib/sessionRestoreGuard"
+import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
 
 const RESERVATION_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const FUTURE_ISO = "2099-01-15T13:00:00.000Z"
@@ -390,6 +394,84 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it.each(["resolved", "rejected"] as const)("ignores a %s cancellation from the previous session", async (outcome) => {
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    listMine.mockResolvedValue([confirmed])
+    let resolveCancel: (value: PortalReservation) => void = () => undefined
+    let rejectCancel: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation>((resolve, reject) => {
+      resolveCancel = resolve
+      rejectCancel = reject
+    })
+    cancelMine.mockReturnValue(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+    await waitFor(() => expect(cancelMine).toHaveBeenCalledWith(confirmed.id))
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    const next = { ...confirmed, id: "next-reservation", customerId: "next-customer" }
+    rememberOwnBooking(next)
+    const slot = reservationCivilStart(next.startDateTime)
+    if (slot === null) {
+      throw new Error("expected a civil start")
+    }
+    expect(customerAlreadyHoldsSlot(slot.date, next.items[0]?.rentalAssetId ?? "", slot.time, [])).toBe(true)
+    const generationRevision = getAgendaQueryRevision()
+    listMine.mockClear()
+    fetchDay.mockClear()
+
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveCancel({ ...confirmed, status: "Canceled" })
+      } else {
+        rejectCancel(new Error("old cancellation failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(customerAlreadyHoldsSlot(slot.date, next.items[0]?.rentalAssetId ?? "", slot.time, [])).toBe(true)
+    expect(getAgendaQueryRevision()).toBe(generationRevision)
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it.each(["resolved", "rejected"] as const)("does not cancel with the next session after a %s preflight read", async (outcome) => {
+    const confirmed = makeReservation("Confirmed", FUTURE_ISO)
+    let resolveList: (value: PortalReservation[]) => void = () => undefined
+    let rejectList: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation[]>((resolve, reject) => {
+      resolveList = resolve
+      rejectList = reject
+    })
+    listMine.mockResolvedValueOnce([confirmed]).mockReturnValueOnce(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await waitForMineList()
+    await confirmCancel(user)
+    await waitFor(() => expect(listMine).toHaveBeenCalledTimes(2))
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveList([confirmed])
+      } else {
+        rejectList(new Error("old preflight failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(cancelMine).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
   })
 
   it("shows the already-cancelled message when the agenda revision moves during confirm", async () => {
@@ -1259,6 +1341,63 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
   }
 
+  it.each(["resolved", "rejected"] as const)("silently discards a %s booking from the previous session", async (outcome) => {
+    let resolveBooking: (value: PortalReservation) => void = () => undefined
+    let rejectBooking: (reason: Error) => void = () => undefined
+    const pending = new Promise<PortalReservation>((resolve, reject) => {
+      resolveBooking = resolve
+      rejectBooking = reject
+    })
+    bookSlot.mockReturnValue(pending)
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await bookQuadra1(user)
+    expect(bookSlot).toHaveBeenCalledTimes(1)
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+    listMine.mockClear()
+    fetchDay.mockClear()
+    fetchQueue.mockClear()
+
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveBooking(makeReservation("Confirmed", FUTURE_ISO))
+      } else {
+        rejectBooking(new Error("old booking failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(fetchQueue).not.toHaveBeenCalled()
+    expect(screen.queryByRole("listitem")).not.toBeInTheDocument()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+  })
+
+  it("silently handles an aborted booking", async () => {
+    bookSlot.mockRejectedValue(new DOMException("Request aborted", "AbortError"))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await bookQuadra1(user)
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+    })
+
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+  })
+
   it("clears Reservando and shows the reservation before the refresh settles", async () => {
     const user = userEvent.setup()
     const created = makeReservation("Confirmed", SLOT_08_ISO, {
@@ -1737,23 +1876,25 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.date"),
     )
     await waitFor(() => {
-      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
     })
-
-    expect(
-      screen.getByText(
-        i18n.t("tenantPortal.agenda.horizonHint", {
-          date: "16/10",
-          count: 2,
-        }),
-      ),
-    ).toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("max")
 
     fireEvent.change(dateInput, { target: { value: "2099-12-31" } })
 
-    expect(dateInput).toHaveValue("2026-10-14")
+    expect(dateInput).toHaveValue("2026-10-16")
     expect(dateInput).toHaveAttribute("aria-invalid", "true")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2099-12-31")
+    await waitFor(() => {
+      expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-16")
+    })
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
     ).toBeInTheDocument()
@@ -1814,7 +1955,14 @@ describe("TenantPortalAgendaPage time selector", () => {
       i18n.t("tenantPortal.agenda.date"),
     )
     await waitFor(() => {
-      expect(dateInput).toHaveAttribute("max", "2026-10-16")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
     })
 
     await user.click(dateInput)
@@ -1952,6 +2100,153 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toHaveTextContent("08:00")
   })
 
+  it("clears a rejected date when history returns to a valid day", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 10,
+    })
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "24/10",
+            count: 10,
+          }),
+        ),
+      ).toBeInTheDocument()
+    })
+    expect(dateInput).not.toHaveAttribute("max")
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+      expect(router.state.location.search).toContain("date=2026-10-20")
+    })
+
+    await user.click(dateInput)
+    await user.click(await screen.findByRole("button", { name: "31/10/2026" }))
+    expect(dateInput).toHaveValue("2026-10-20")
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+    expect(restored).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).not.toBeInTheDocument()
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
+      "2026-10-31",
+    )
+  })
+
+  it("clears the horizon message when history returns after a clamp", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-26" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-16")
+      expect(router.state.location.search).toContain("date=2026-10-16")
+    })
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+    expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
+      "2026-10-26",
+    )
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+    expect(restored).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("clears a before-today rejection when history returns to a valid day", async () => {
+    const { router } = renderAgendaHistory("/agenda?date=2026-10-15")
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-15")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2026-10-20" } })
+    await waitFor(() => {
+      expect(dateInput).toHaveValue("2026-10-20")
+      expect(router.state.location.search).toContain("date=2026-10-20")
+    })
+
+    fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
+    expect(dateInput).toHaveValue("2026-10-20")
+    expect(dateInput).toHaveAttribute("aria-invalid", "true")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+      ).toHaveValue("2026-10-15")
+    })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
+    ).not.toHaveAttribute("aria-invalid")
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+    ).not.toBeInTheDocument()
+  })
+
   it("replaces a beyond-horizon deep link so Back reaches the earlier entry", async () => {
     fetchPolicy.mockResolvedValue({
       cancellationPolicyText: null,
@@ -1990,6 +2285,102 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(router.state.location.search).toContain("date=2026-10-15")
     expect(router.state.location.search).not.toContain("2099-12-31")
+  })
+
+  it("clamps a typed day past the horizon without marking every court reserved", async () => {
+    fetchPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 2,
+    })
+    renderAgenda()
+
+    await screen.findByRole("button", { name: "Quadra 1" })
+    const dateInput = await screen.findByLabelText(
+      i18n.t("tenantPortal.agenda.date"),
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          i18n.t("tenantPortal.agenda.horizonHint", {
+            date: "16/10",
+            count: 2,
+          }),
+        ),
+      ).toBeInTheDocument()
+    })
+
+    fetchDay.mockImplementation(() => new Promise(() => {}))
+    fireEvent.change(dateInput, { target: { value: "2026-10-26" } })
+
+    expect(dateInput).toHaveValue("2026-10-16")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+    ).toBeInTheDocument()
+    expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2026-10-26")
+    expect(fetchDay).toHaveBeenCalledWith("ficc", "2026-10-16")
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 2. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: `Quadra 1. ${i18n.t("common.refreshing")}`,
+      }),
+    ).toHaveAttribute("aria-busy", "true")
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+  })
+
+  it("reloads the day's times after leaving my reservations", async () => {
+    const { router } = renderAgendaHistory("/agenda")
+    const timeLabel = i18n.t("tenantPortal.agenda.time")
+    const trigger = await screen.findByRole("combobox", { name: timeLabel })
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent("08:00")
+    })
+    const callsBeforeHash = fetchDay.mock.calls.length
+
+    await act(async () => {
+      await router.navigate("/agenda#minhas-reservas")
+    })
+
+    expect(router.state.location.hash).toBe("#minhas-reservas")
+    expect(screen.getByRole("combobox", { name: timeLabel })).toHaveTextContent(
+      "08:00",
+    )
+    expect(
+      screen.getByRole("combobox", { name: timeLabel }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    expect(fetchDay.mock.calls.length).toBe(callsBeforeHash)
+
+    await act(async () => {
+      await router.navigate("/agenda")
+    })
+
+    await waitFor(() => {
+      expect(fetchDay.mock.calls.length).toBeGreaterThan(callsBeforeHash)
+      expect(screen.getByRole("combobox", { name: timeLabel })).toHaveTextContent(
+        "08:00",
+      )
+    })
+    expect(
+      screen.getByRole("combobox", { name: timeLabel }),
+    ).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    expect(
+      screen.queryByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it("drops the previous grid while a later day waits on policy", async () => {
@@ -3594,6 +3985,53 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     ).toBeInTheDocument()
     expect(bookSlot).not.toHaveBeenCalled()
     expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it.each(["resolved", "rejected"] as const)("silently discards a %s join from the previous session", async (outcome) => {
+    let resolveJoin: (value: ReservationQueueStatus) => void = () => undefined
+    let rejectJoin: (reason: Error) => void = () => undefined
+    const pending = new Promise<ReservationQueueStatus>((resolve, reject) => {
+      resolveJoin = resolve
+      rejectJoin = reject
+    })
+    joinQueue.mockReturnValue(pending)
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO))
+    const user = userEvent.setup()
+    const page = renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await user.click(await screen.findByRole("button", {
+      name: (name) => name === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+    }))
+    expect(joinQueue).toHaveBeenCalledWith(ASSET_A_ID)
+
+    page.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await waitFor(() => {
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve"))).toBeEnabled()
+    })
+    fetchQueue.mockClear()
+    listMine.mockClear()
+    fetchDay.mockClear()
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveJoin(queueStatus({ myTicket: queueTicket("Active") }))
+      } else {
+        rejectJoin(new Error("old join failed"))
+      }
+      await pending.catch(() => undefined)
+    })
+
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
+    expect(fetchQueue).not.toHaveBeenCalled()
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve"))).toBeEnabled()
   })
 
   it("shows the waiting view with position and people ahead", async () => {

@@ -1,8 +1,12 @@
-import { renderHook, waitFor } from "@testing-library/react"
+import { act, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import i18n from "@/lib/i18n"
 import type { ReservationQueueStatus } from "@/features/tenantPortal/services/tenantPortalService"
+
+vi.mock("sonner", () => ({
+  toast: { error: vi.fn() },
+}))
 
 vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOriginal) => {
   const actual =
@@ -18,9 +22,12 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 })
 
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
+import { toast } from "sonner"
+import { signOutCustomerPortal } from "@/lib/sessionRestoreGuard"
 import {
   fetchReservationQueue,
   joinReservationQueue,
+  persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
 const ASSET_ID = "11111111-1111-4111-8111-111111111111"
@@ -72,6 +79,7 @@ describe("useReservationQueue views", () => {
     })
     fetchQueue.mockReset()
     joinQueue.mockReset()
+    vi.mocked(toast.error).mockClear()
   })
 
   afterEach(() => {
@@ -248,5 +256,45 @@ describe("useReservationQueue views", () => {
     })
     await expect(result.current.join()).resolves.toEqual(joined)
     expect(joinQueue).toHaveBeenCalledWith(ASSET_ID)
+  })
+
+  it.each(["resolved", "rejected"] as const)("discards a %s join before any effects in the next session", async (outcome) => {
+    let resolveJoin: (value: ReservationQueueStatus) => void = () => undefined
+    let rejectJoin: (reason: Error) => void = () => undefined
+    const pending = new Promise<ReservationQueueStatus>((resolve, reject) => {
+      resolveJoin = resolve
+      rejectJoin = reject
+    })
+    fetchQueue.mockResolvedValue(queueStatus())
+    joinQueue.mockReturnValue(pending)
+    const previous = renderHook(() =>
+      useReservationQueue({ rentalAssetId: ASSET_ID, enabled: true }),
+    )
+    await waitFor(() => expect(previous.result.current.view.kind).toBe("join"))
+    let joining: Promise<ReservationQueueStatus | null> = Promise.resolve(null)
+    act(() => { joining = previous.result.current.join() })
+
+    previous.unmount()
+    signOutCustomerPortal("ficc")
+    persistCustomerSession("customer-B", "ficc", "Bruno")
+    const next = renderHook(() =>
+      useReservationQueue({ rentalAssetId: ASSET_ID, enabled: true }),
+    )
+    await waitFor(() => expect(next.result.current.view.kind).toBe("join"))
+    fetchQueue.mockClear()
+
+    await act(async () => {
+      if (outcome === "resolved") {
+        resolveJoin(queueStatus({ myTicket: queueTicket("Active") }))
+      } else {
+        rejectJoin(new Error("old join failed"))
+      }
+      await expect(joining).resolves.toBeNull()
+    })
+
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(fetchQueue).not.toHaveBeenCalled()
+    expect(next.result.current.view.kind).toBe("join")
+    expect(next.result.current.joining).toBe(false)
   })
 })

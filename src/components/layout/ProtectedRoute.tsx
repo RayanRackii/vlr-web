@@ -6,6 +6,7 @@ import {
   isSafeStaffNextPath,
   staffLoginPath,
 } from "@/lib/safeStaffNextPath"
+import { isAuthenticatedRestoreBlocked } from "@/lib/sessionRestoreGuard"
 
 type ProtectedRouteProps = {
   children?: ReactNode
@@ -14,6 +15,10 @@ type ProtectedRouteProps = {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth()
   const location = useLocation()
+
+  if (isAuthenticatedRestoreBlocked()) {
+    return null
+  }
 
   if (isLoading) {
     return (

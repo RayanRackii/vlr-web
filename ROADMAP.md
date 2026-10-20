@@ -30,6 +30,9 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
 - [x] Admin B2B de reservas.
 
+- [x] Correção local do review #238: logout avança a geração da sessão da agenda; reservas e conflitos pendentes da sessão anterior não repovoam o cache nem iniciam refetch/retry. Respostas tardias do shell, join antes de reservar, cancelamento (incluindo preflight) e checkout também são descartadas. Restaurar um documento por BFCache com outra sessão invalida os caches e recarrega a mesma URL sem apagar a sessão nova. Regressões com dois documentos e respostas tardias após logout/login. Branch `fix-238`, sem push.
+- [x] Review #238 (2 Medium): join confere a geração da sessão antes de aplicar resposta, mostrar toast, rebuscar a fila ou finalizar o estado local; `onReserve` descarta em silêncio respostas de outra sessão e `AbortError`. Regressões cobrem join e reserva resolvidos/rejeitados após logout de A e login de B, sem toast nem GET adicional, e abort de reserva na sessão atual. Sem mudança no `vlr-api`; sem push.
+
 ## 2.5. Dashboard B2B dinâmico — FEITO (código)
 
 - [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).
@@ -113,6 +116,8 @@ API `vlr-api` #174 em `develop` (migration DEV aplicada). O contrato é genéric
 
 - [x] Agenda B2C (#189): o seletor de data usa `max` quando a política pública traz `maxAdvanceBookingDays` ou o recurso traz `effectiveMaxAdvanceBookingDays`. O maior horizonte entre os recursos visíveis vale; `null` não limita. Sem o campo, o seletor não ganha teto. `400` `booking_horizon_exceeded` vira a frase do horizonte (pt-BR/en/es) no dia, na reserva e na estimativa.
 - [x] Agenda B2C: com horizonte, o campo de data diz até qual dia (`Reservas disponíveis até DD/MM (N dias à frente)`). Data fora do intervalo (digitada ou dia desabilitado) avisa no campo e não troca a seleção. Trocar o dia mostra carregamento neutro, sem “já está reservado” em todos os espaços. Cancelar mantém a data da URL. O calendário segue o idioma (pt-BR/en/es).
+- [x] Agenda B2C: uma data digitada além do horizonte vai para o último dia reservável, com a mesma frase do calendário, sem pintar os espaços como reservados. Voltar de `#minhas-reservas` recarrega os horários do dia. O menu conserva `date` e `time` nesse salto.
+- [x] Agenda B2C: Voltar troca a data pela URL e, se o dia é válido, o campo deixa de ficar inválido e some o aviso de limite ou de data anterior.
 
 - [x] Admin `/configuracoes/politica-reservas` (`rentals.booking_policy.read` para ver, `rentals.booking_policy.write` para salvar): texto simples até 2000 caracteres (em branco = null) e limite 1–100 ou sem limite (`null`). i18n pt-BR/en/es. Validity gate no salvar.
 - [x] #217: a política grava o horizonte só quando muda (ilimitado envia `null`; N dias envia o número; sem mudança o campo sai do body). No recurso, “usar o padrão do ambiente” omite (ou envia `null` para apagar um número gravado), “ilimitado” envia `null`, e N dias envia o número. A ficha mostra `effectiveMaxAdvanceBookingDays`. Sem `rentals.booking_policy.write` ou `rentals.assets.write` os controles ficam desabilitados. Uma data N+1 dias à frente é recusada (`booking_horizon_exceeded`). pt-BR/en/es.
@@ -147,6 +152,8 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 ## 4.11. PMOC / OS — FEITO (PROD)
 
+- [x] Correções locais do review #235: confirmação de autosave vinculada à versão editada e ao valor confirmado pela API, que precisa coincidir com o exibido; recarregar com valor diferente na fila não produz “salvo” pela igualdade de contadores zerados. Rejeição de obrigatórias do servidor permanece até nova tentativa, sem impedir retry quando o cliente está válido; barra fixa limitada a metade da altura da viewport, com lista rolável por teclado e ações visíveis. Regressões de texto/número, fila recarregada (tela A / servidor B), resposta diferente do rascunho, rejeição com valor preenchido e 80 obrigatórias. Branch `fix-235`, sem push. Upload da foto obrigatória segue dependente de #234, fora desta correção.
+
 Phases 1–3 are **COMPLETE / RELEASED PROD**. Phase 4 is **NOT PLANNED**. Canonical spec: `vlr-api/docs/plans/active/2026-09-19-pmoc-os-phase3.md`. WEB release merge `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85).
 
 Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-os-phase1.md`. Branch `feat/pmoc-os-phase1-web-library-detail`.
@@ -158,6 +165,9 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 - [x] `/pmoc/novo` só personalizado (sem import client-side / CREA)
 - [x] Gerar OS, OS relacionadas, and Coverage V3 shipped in later slices and are on PROD. This checkbox is closed; it is not open work.
 - [x] QA de planos: confirmar exclusão (snapshot das ordens e desativar quando já existem), editar nome e descrição, opções de escolha única, validação visível no salvar, confirmar remoção de tarefa, toast com link ao gerar ordem, ocultar geração em plano inativo, aviso quando não há técnico, abrir o plano criado e ordenar ordens relacionadas pela data.
+- [x] Execução de OS: foto da tarefa (`POST /api/work-orders/{id}/tasks/{taskId}/files`, jpeg/png/webp até 5 MB; `GET .../files/{fileId}/url` assinada e de curta duração). O `value` é o id do arquivo; o PATCH da tarefa não leva bytes nem data URL. Sem conexão o envio fica desabilitado e o arquivo não entra na fila. Foto obrigatória sem id bloqueia Finalizar; a API ainda pode responder `MANDATORY_TASKS_INCOMPLETE`. Pareia com `vlr-api` #225 (draft). Sem merge.
+- [x] PR #239: execução de OS bloqueia autosave e Finalizar para valores numéricos abaixo do `min` configurado, cancela o debounce anterior e mantém o rascunho para correção. Sem `min`, não presume zero; mínimo negativo continua permitido. Regressões cobrem rejeição, correção, zero, mínimo positivo e negativo e ausência de mínimo.
+- [x] Validação local do PR #239: `npm ci`, `npx tsc -b` (sem diagnósticos), `npx vite build` e `npm test -- --maxWorkers=2` concluídos; 1.113 testes aprovados em 164 arquivos. Build completo também validado com variáveis Supabase fictícias (`https://validation.invalid` / `validation-only`), sem conexão externa; avisos existentes de CSS e tamanho do bundle mantidos fora deste escopo.
 
 ## 4.9. DEV E2E / Release Certification
 
@@ -190,6 +200,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] P2 create UX: código gerado do nome até edição manual; arquivos na criação; um save sem virar edição
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
 - [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
+- [x] Carrinho B2C: subtotal da linha, total parcial (“A partir de” quando há item sob consulta), remover item, quantidade 0 não apaga a linha (1–99, só ao sair do campo; vazio não vira 1 enquanto se digita). Cancelar pedido pede confirmação e ignora um segundo clique enquanto o POST está em voo. Total misto em Pedidos mostra a soma conhecida e “Sob consulta”. Solicitar produto confirma na tela com link ao catálogo: o portal não tem GET de solicitações do cliente (`POST /api/catalog/portal/product-requests` e URL de arquivo apenas). es agrupa milhar (`1.500,00 R$`). EN do portal usa “Canceled”.
+- [x] B2C Minhas solicitações: lista paginada (`GET /api/catalog/portal/product-requests`, pageSize 20) e detalhe (`GET .../{id}`). Menu do catálogo, botão no catálogo e confirmação do envio apontam para a lista. 404/501 da lista é um estado de indisponível, separado da caixa vazia, até o `vlr-api` #224 existir. Sem lógica de clube.
 
 ## 5. Fluxo de convite B2B
 
@@ -199,6 +211,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] Modo suporte: Abrir ambiente = login real (membership + `tenant_id` JWT); Voltar limpa metadata
 - [x] Esqueci a senha → `POST /api/auth/forgot-password` com `X-Tenant-Subdomain`. No host ou `/t/:slug` o slug vem de `resolveTenantSubdomain`. No apex `/login` um passo pede o identificador da empresa antes do POST. Sem consulta de e-mail entre tenants. Resposta não-5xx fica na frase genérica; 5xx mostra o erro. Portal B2C já envia o header em `POST /api/auth/customer/password-reset/request`. Ship junto com `vlr-api` #100. `/reset-password` inalterado. Sem secrets.
 - [x] Onboarding público não coleta senha. `POST /api/onboarding/tenants` segue só com `isTrial: true`; o admin define a senha no e-mail de convite (`/invite?token=`). Pareia com `vlr-api` #111.
+- [x] Convite de conta existente (pareia com `vlr-api` #226, sem merge): `/invite` chama `POST /api/invites/preview`. Conta nova define senha. Conta existente entra com a senha atual e `POST /api/invites/accept` leva o JWT staff; não pede senha nova. 409 `EXISTING_ACCOUNT_SIGN_IN_REQUIRED`, 403 `INVITE_ACCOUNT_MISMATCH` e 409 `INVITE_IDENTITY_CONFLICT` têm frase em pt-BR/en/es. Mais de uma membership oferece seletor (`GET /api/users/me/tenants`, `POST /api/users/me/tenant`) e atualiza a sessão Supabase. Uma membership cujo tenant não é o do access token é selecionada e a sessão atualizada. Alto risco (auth).
 
 ## Dívidas técnicas conhecidas
 
@@ -211,6 +224,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-18 | **Código (WEB, sem merge, alto risco):** `/invite` segue o contrato de `vlr-api` #226. Preview anônimo decide senha nova ou login da conta existente. Accept de conta existente usa o JWT staff e não envia senha. 409/403 do convite têm frase. Várias memberships escolhem ambiente e a sessão Supabase é atualizada. Glossário User espelhado. |
 | 2026-08-03 | Portal + registro dinâmico. |
 | 2026-08-04 | Agenda B2C inicial. |
 | 2026-08-04 | **Executado:** shell B2C (AppShell) + menu dinâmico multi-item; admin de menu. |
@@ -371,6 +385,18 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-17 | **Fix (WEB):** o PATCH direto de uma tarefa grava o valor novo na fila antes do envio, substituindo o campo numa única escrita e com `clientSequence` maior. Rede e 5xx deixam esse valor na fila; 4xx vai para o conflito e o erro sobe; sucesso remove só essa versão e limpa o conflito. Sem mudança no `vlr-api`. |
 | 2026-10-17 | **Fix (WEB):** PATCH de tarefa com HTTP 2xx e corpo que não passa no schema sai da fila (o flush seguinte não reenvia o valor já aplicado) e a tela ainda mostra resposta inválida. Uma versão mais nova na fila apaga o conflito antigo daquele campo; Tentar de novo não grava o valor rejeitado por cima dela. Um 4xx direto avisa o banner na hora. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Fix (WEB):** agenda B2C explica o horizonte ao lado da data, avisa no campo quando a data fica fora do intervalo, não pinta os espaços como reservados enquanto o dia carrega, mantém a data da URL depois de cancelar, e o calendário usa o idioma da tela. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** depois de sair, Voltar não reabre páginas autenticadas em cache (agenda, `/app`, `/app/perfil`, reservas, pedidos) no staff nem no portal. O logout limpa a sessão e os caches e troca o login com replace; bfcache (`pageshow`) e `popstate` conferem a sessão antes de pintar ou chamar a API. O shell HTML na Vercel fica `Cache-Control: no-store` (assets com hash continuam imutáveis). Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Código (WEB):** a execução da OS envia a foto da tarefa (`POST /api/work-orders/{id}/tasks/{taskId}/files`, campo `file`, jpeg/png/webp, até 5 MB) e mostra a prévia pela URL assinada (`GET .../files/{fileId}/url`), pedindo outra quando ela expira ou a imagem falha. O `value` fica o id do arquivo; o PATCH não leva bytes nem data URL. Sem conexão o botão fica desabilitado e o arquivo não entra na fila offline. Foto obrigatória sem id bloqueia Finalizar no cliente; `MANDATORY_TASKS_INCOMPLETE` continua traduzido. Pareia com `vlr-api` #225 (draft, sem merge). |
+| 2026-10-18 | **Fix (WEB):** data digitada além do horizonte da agenda B2C cai no último dia reservável e usa a frase do calendário, sem “já está reservado” em todos os espaços. Sair de `#minhas-reservas` recarrega os horários; o menu não apaga `date` nem `time`. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** Tentar de novo na fila offline não substitui um valor já enfileirado para o mesmo campo, mesmo se o conflito guardou um `clientSequence` maior depois de recarregar a aba. Na agenda B2C, Voltar para um dia válido limpa o aviso e o `aria-invalid` do campo de data. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** carrinho B2C mostra subtotal da linha e total (soma dos itens com preço; linha sem preço “Sob consulta”; total misto “A partir de”). Remover é um botão; quantidade 0 ou negativa fica em 1 e o teto é 99. Cancelar pedido pede confirmação. Lista e detalhe de pedido com total nulo mostram a soma conhecida mais “Sob consulta”. `/catalogo/solicitar` confirma na tela com link ao catálogo — a API do cliente não lista solicitações. es usa agrupamento (`1.500,00 R$`). EN do portal usa “Canceled”. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB):** a quantidade do catálogo guarda o texto digitado, inclusive vazio, e só limita a 1–99 ao sair do campo. O nome do produto entra no rótulo do campo. Mais, menos e Adicionar usam esse valor. Confirmar o cancelamento do pedido não dispara um segundo POST enquanto o primeiro ainda não voltou. O teste da agenda do professor espera o nome da quadra. |
+| 2026-10-18 | **Fix (WEB):** execução de OS para o técnico. Finalizar fica desabilitado enquanto houver tarefa obrigatória vazia (incluindo foto sem resposta) e a barra lista o que falta; `MANDATORY_TASKS_INCOMPLETE` usa a mesma lista. Cada tarefa mostra salvando / salvo / não salvo, tentando de novo. O aviso de OS iniciada fica numa região `aria-live`. A lista `/os` abre em Abertas (pendente + em andamento) e o contador de cada aba filtra. O miolo ganha padding igual à altura da barra fixa. Sem mudança no `vlr-api`. O envio de foto continua no PR #234. |
+| 2026-10-18 | **Código (WEB):** portal B2C lista e abre as próprias solicitações de produto (`GET /api/catalog/portal/product-requests` paginado, mais novo primeiro, e `GET .../{id}`). Menu do catálogo, o catálogo e a confirmação do envio levam a Minhas solicitações. 404/501 da lista é indisponível, não a caixa vazia, até o `vlr-api` #224 entrar. Status conhecidos em pt-BR/en/es; status desconhecido permanece o texto da API. Sem lógica de um tenant. |
+| 2026-10-18 | **Fix (WEB):** Bens deixa de mostrar `FORBIDDEN` cru quando tipos, unidades ou famílias são negados e esconde criar/editar/excluir sem a permissão de escrita. O detalhe da OS reatribui o técnico com `PUT /api/work-orders/{id}/assignee` (`os.work_orders.assign`); sem a lista de técnicos a OS continua visível. 403/404 na lista e no detalhe dizem que não há permissão ou a OS não está atribuída. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Fix (WEB, validação local do PR #239):** removido import não usado em unidades; mocks de sessão estáveis em testes de Bens e lista de OS; teste de reatribuição consulta o seletor e não texto duplicado; conflitos offline são limpos entre cenários. EN/ES recebem as 36 chaves de famílias já presentes em pt-BR: 2.388 chaves por catálogo, sem truncamento nem duplicação, e 2.397 por idioma em runtime com o copy de permissões. Autosave e Finalizar respeitam o `min` da tarefa; campos sem mínimo não recebem regra presumida. Testes de integridade cobrem os três idiomas. Sem mudança no `vlr-api`; commit local em `fix-239`, sem push. |
+| 2026-10-18 | **Fix (WEB):** o teste de Tentar de novo cobre um item da fila offline cujo `queuedAt` é anterior ao do conflito. O PATCH continua com o valor enfileirado e o conflito é limpo. Sem mudança no `vlr-api`. |
+| 2026-10-18 | **Integração local (WEB, PR #239):** merge de `origin/develop` com #236 em `fix-239`; histórico dos dois lados preservado. Validação com `npx tsc -b` e `npm test`; sem push. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

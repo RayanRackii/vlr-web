@@ -1,5 +1,5 @@
 import i18n from "@/lib/i18n"
-import { customerApi, getAxiosErrorPayload } from "@/lib/api"
+import { customerApi, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import {
   catalogFileUrlSchema,
@@ -7,10 +7,15 @@ import {
   catalogOrderSchema,
   portalProductListSchema,
   portalProductSchema,
+  PORTAL_PRODUCT_REQUEST_PAGE_SIZE,
+  portalProductRequestPageSchema,
+  portalProductRequestSchema,
   productRequestSchema,
   type CatalogFileUrl,
   type CatalogOrder,
   type PortalProduct,
+  type PortalProductRequest,
+  type PortalProductRequestPage,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
 
@@ -145,6 +150,69 @@ export async function createPortalProductRequest(body: {
       throw error
     }
     throwPortalError(error, "apiErrors.submitProductRequest")
+  }
+}
+
+/** List route from vlr-api #224. 404/501 means it is not deployed yet. */
+function isPortalProductRequestListUnavailable(error: unknown): boolean {
+  if (!isAxiosError(error)) {
+    return false
+  }
+  const status = error.response?.status
+  return status === 404 || status === 501
+}
+
+export type PortalProductRequestListResult =
+  | { kind: "ready"; page: PortalProductRequestPage }
+  | { kind: "unavailable" }
+
+export async function listPortalProductRequests(
+  page = 1,
+): Promise<PortalProductRequestListResult> {
+  const safePage = Number.isInteger(page) && page >= 1 ? page : 1
+  try {
+    const response = await customerApi.get(
+      "/api/catalog/portal/product-requests",
+      {
+        params: {
+          page: safePage,
+          pageSize: PORTAL_PRODUCT_REQUEST_PAGE_SIZE,
+        },
+      },
+    )
+    return {
+      kind: "ready",
+      page: parseOrThrow(portalProductRequestPageSchema.safeParse(response.data)),
+    }
+  } catch (error) {
+    if (isPortalProductRequestListUnavailable(error)) {
+      return { kind: "unavailable" }
+    }
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwPortalError(error, "apiErrors.loadPortalProductRequests")
+  }
+}
+
+export async function getPortalProductRequest(
+  id: string,
+): Promise<PortalProductRequest> {
+  try {
+    const response = await customerApi.get(
+      `/api/catalog/portal/product-requests/${id}`,
+    )
+    return parseOrThrow(portalProductRequestSchema.safeParse(response.data))
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      throw new Error(i18n.t("tenantPortal.catalog.requestNotFound"), {
+        cause: error,
+      })
+    }
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwPortalError(error, "apiErrors.loadPortalProductRequest")
   }
 }
 

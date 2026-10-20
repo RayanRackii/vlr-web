@@ -116,7 +116,9 @@
     "loadPortalOrders": "Não foi possível carregar seus pedidos.",
     "loadPortalOrder": "Não foi possível carregar o pedido.",
     "cancelPortalOrder": "Não foi possível cancelar o pedido.",
-    "submitProductRequest": "Não foi possível enviar a solicitação."
+    "submitProductRequest": "Não foi possível enviar a solicitação.",
+    "loadPortalProductRequests": "Não foi possível carregar suas solicitações.",
+    "loadPortalProductRequest": "Não foi possível carregar a solicitação."
   },
   "trial": {
     "banner": {
@@ -173,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Ativar conta",
-      "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta, defina uma senha segura abaixo.",
+      "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",
+      "welcomeExisting": "Você já tem uma conta Rolvix. Entre com a senha de {{email}} para participar de {{tenant}}. Sua senha não será alterada.",
+      "checking": "Verificando o convite...",
       "invalidLink": "Link de convite inválido ou expirado.",
       "passwordLabel": "Nova senha",
       "confirmPasswordLabel": "Confirmar nova senha",
@@ -181,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repita a senha",
       "submit": "Definir senha",
       "submitting": "Salvando...",
+      "signInTitle": "Entrar para aceitar",
+      "existingPasswordLabel": "Senha",
+      "existingPasswordPlaceholder": "Sua senha atual",
+      "signInSubmit": "Entrar e aceitar",
+      "signInSubmitting": "Entrando...",
       "goToLogin": "Ir para o login",
       "toastSuccess": "Senha definida com sucesso!",
-      "toastError": "Não foi possível definir a senha. Tente novamente.",
+      "toastJoined": "Convite aceito. Você agora faz parte de {{tenant}}.",
+      "toastError": "Não foi possível concluir o convite. Tente novamente.",
       "validation": {
         "passwordRequired": "Informe a nova senha.",
         "confirmRequired": "Confirme a nova senha.",
         "passwordMin": "A senha deve ter no mínimo 8 caracteres.",
         "mismatch": "As senhas precisam ser iguais."
-      }
+      },
+      "errors": {
+        "existingAccount": "Esta conta já existe. Entre com a senha atual para aceitar o convite. A senha não será alterada.",
+        "accountMismatch": "A sessão atual é de outra conta. Entre com o e-mail deste convite para aceitar.",
+        "identityConflict": "Não foi possível confirmar a conta deste convite. Nada foi alterado. Tente novamente ou fale com o suporte."
+      },
+      "pickerTitle": "Escolha o ambiente",
+      "pickerBody": "Sua conta participa de mais de um ambiente. Escolha qual abrir agora.",
+      "pickerSubmit": "Continuar",
+      "pickerSubmitting": "Abrindo...",
+      "pickerError": "Não foi possível trocar de ambiente. Tente novamente.",
+      "membershipError": "Não foi possível carregar seus ambientes. Tente novamente.",
+      "membershipRetry": "Tentar novamente"
     },
     "login": {
       "invalidCredentials": "E-mail ou senha inválidos.",
@@ -481,12 +503,14 @@
     "catalog": {
       "navCatalog": "Catálogo",
       "navOrders": "Pedidos",
+      "navRequests": "Minhas solicitações",
       "title": "Catálogo",
       "subtitle": "Produtos disponíveis para solicitar.",
       "searchPlaceholder": "Buscar por nome ou código",
       "empty": "Nenhum produto ativo no momento.",
       "priceOnRequest": "Sob consulta",
       "quantity": "Quantidade",
+      "quantityFor": "Quantidade de {{name}}",
       "quantityDecrease": "Diminuir quantidade",
       "quantityIncrease": "Aumentar quantidade",
       "noImage": "Sem imagem",
@@ -503,7 +527,7 @@
       "orderSubmitted": "Pedido enviado.",
       "requestCta": "Solicitar produto",
       "requestTitle": "Solicitar produto",
-      "requestSubtitle": "Descreva o que você precisa. Não há lista de acompanhamento neste momento.",
+      "requestSubtitle": "Descreva o que você precisa. Depois de enviar, a solicitação fica em Minhas solicitações.",
       "requestDescription": "Descrição",
       "requestNote": "Observação",
       "requestFiles": "Arquivos",
@@ -515,12 +539,38 @@
       "ordersEmpty": "Você ainda não fez pedidos.",
       "cancelOrder": "Cancelar pedido",
       "cancelling": "Cancelando...",
-      "orderCancelled": "Pedido cancelado."
+      "orderCancelled": "Pedido cancelado.",
+      "lineSubtotal": "Subtotal",
+      "removeItem": "Remover {{name}}",
+      "cartTotal": "Total",
+      "fromAmount": "A partir de {{amount}}",
+      "cancelConfirmTitle": "Cancelar este pedido?",
+      "cancelConfirmBody": "O pedido será cancelado. Esta ação não pode ser desfeita nesta tela.",
+      "cancelConfirmDismiss": "Manter pedido",
+      "cancelConfirmAction": "Confirmar cancelamento",
+      "requestSentTitle": "Solicitação enviada",
+      "requestSentBody": "Recebemos a solicitação. Acompanhe em Minhas solicitações.",
+      "requestSentCatalog": "Voltar ao catálogo",
+      "requestSentAnother": "Enviar outra solicitação",
+      "requestsTitle": "Minhas solicitações",
+      "requestsSubtitle": "Acompanhe as solicitações que você enviou.",
+      "requestsLoading": "Carregando solicitações...",
+      "requestsEmpty": "Você ainda não fez solicitações.",
+      "requestsUnavailable": "A lista de solicitações ainda não está disponível.",
+      "requestsPageEmpty": "Nenhuma solicitação nesta página.",
+      "requestsPageSummary": "{{from}}–{{to}} de {{total}}",
+      "requestsPrevious": "Página anterior",
+      "requestsNext": "Próxima página",
+      "requestNotFound": "Não encontramos esta solicitação.",
+      "requestDetailTitle": "Solicitação",
+      "requestFilesTitle": "Arquivos",
+      "requestFilesEmpty": "Nenhum arquivo."
     }
   },
   "catalog": {
     "retry": "Tentar novamente",
     "priceOnRequest": "Sob consulta",
+    "knownPlusOnRequest": "{{amount}} · Sob consulta",
     "status": {
       "Requested": "Solicitado",
       "Approved": "Aprovado",
@@ -529,6 +579,9 @@
       "Completed": "Concluído",
       "Rejected": "Recusado",
       "Cancelled": "Cancelado"
+    },
+    "productRequestStatus": {
+      "Submitted": "Enviada"
     },
     "actor": {
       "Customer": "Cliente",
@@ -1956,12 +2009,15 @@
     "description": "Execute checklists em campo e acompanhe o status de cada OS.",
     "loading": "Carregando ordens de serviço...",
     "tabs": {
+      "Open": "Abertas",
       "Pending": "Pendentes",
       "InProgress": "Em Andamento",
       "Completed": "Concluídas",
-      "Canceled": "Canceladas"
+      "Canceled": "Canceladas",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "Nenhuma OS aberta.",
       "Pending": "Nenhuma OS pendente.",
       "InProgress": "Nenhuma OS em andamento.",
       "Completed": "Nenhuma OS concluída.",
@@ -2036,9 +2092,20 @@
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Selecione uma opção",
       "choiceEmpty": "Nenhuma opção foi configurada para esta tarefa.",
-      "imageUploadSoon": "Upload de Foto (Em Breve)",
-      "imageUnsupported": "Envio de imagem ainda não suportado",
-      "imageUnsupportedDetail": "Ainda não há envio de arquivo para esta tarefa. Se ela não for obrigatória, a conclusão das demais segue. Se for obrigatória, o servidor ainda pode recusar a finalização até existir envio de arquivo.",
+      "imageChoose": "Tirar ou escolher foto",
+      "imageReplace": "Substituir foto",
+      "imageEmpty": "Nenhuma foto enviada.",
+      "imagePreviewAlt": "Foto da tarefa {{title}}",
+      "imageUploading": "Enviando foto…",
+      "imageProgress": "Progresso do envio",
+      "imageOffline": "Sem conexão. O envio de foto fica indisponível e a foto não é salva neste aparelho.",
+      "imageTooLarge": "A foto deve ter entre 1 byte e 5 MB.",
+      "imageTypeRejected": "Envie uma imagem JPEG, PNG ou WebP.",
+      "imageContentMismatch": "O conteúdo do arquivo não corresponde ao tipo da imagem.",
+      "imageNotFound": "Não foi possível encontrar esta foto.",
+      "imageUploadFailed": "Não foi possível enviar a foto.",
+      "imagePreviewFailed": "Não foi possível carregar a foto.",
+      "imageUploaded": "Foto enviada.",
       "notes": "Observações",
       "noNotes": "Sem observações.",
       "completedDate": "Concluída em",
@@ -2047,7 +2114,13 @@
       "complete": "Finalizar OS",
       "startedSuccess": "OS iniciada com sucesso.",
       "completedSuccess": "OS finalizada com sucesso.",
-      "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}"
+      "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}",
+      "mandatoryIncompleteTitle": "Preencha as tarefas obrigatórias antes de finalizar:",
+      "save": {
+        "saving": "salvando",
+        "saved": "salvo",
+        "retrying": "não salvo, tentando de novo"
+      }
     },
     "errors": {
       "unauthorized": "Sessão inválida. Faça login novamente.",
@@ -2069,7 +2142,9 @@
         "notAnOption": "Escolha uma das opções da lista.",
         "invalidCheckbox": "Marque ou desmarque a tarefa.",
         "textTooLong": "O texto passa do tamanho permitido.",
-        "invalidConfiguration": "Esta tarefa está configurada de forma inválida."
+        "invalidConfiguration": "Esta tarefa está configurada de forma inválida.",
+        "notAnImageTask": "Só tarefas de imagem aceitam foto.",
+        "invalidImageReference": "A foto precisa ser um arquivo já enviado nesta tarefa."
       }
     },
     "offline": {

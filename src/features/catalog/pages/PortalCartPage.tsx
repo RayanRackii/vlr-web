@@ -17,18 +17,20 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import {
-  formatCatalogMoney,
-  type PortalProduct,
-} from "@/features/catalog/schemas/catalogSchemas"
+  formatCartTotalText,
+  formatLineSubtotal,
+} from "@/features/catalog/lib/catalogPriceSummary"
+import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { type PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import {
   createPortalCatalogOrder,
   listPortalCatalogProducts,
 } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
+import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   getCustomerId,
   tenantPortalPath,
@@ -84,12 +86,26 @@ export function PortalCartPage() {
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   )
+  const onRequestLabel = t("tenantPortal.catalog.priceOnRequest")
+  const cartLines = cart.items.map((item) => {
+    const product = productMap.get(item.productId)
+    return {
+      price: product?.price ?? null,
+      currency: product?.currency ?? "",
+      quantity: item.quantity,
+    }
+  })
+  const cartTotalLabel = formatCartTotalText(cartLines, i18n.language, {
+    onRequest: onRequestLabel,
+    partial: (amount) => t("tenantPortal.catalog.fromAmount", { amount }),
+  })
 
   async function onSubmit(values: CheckoutFormValues) {
     if (cart.items.length === 0) {
       toast.error(t("tenantPortal.catalog.cartEmpty"))
       return
     }
+    const generation = getAgendaSessionGeneration()
     setSubmitting(true)
     try {
       const order = await createPortalCatalogOrder({
@@ -102,17 +118,25 @@ export function PortalCartPage() {
             ? values.customerNote.trim()
             : undefined,
       })
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       cart.clear()
       toast.success(t("tenantPortal.catalog.orderSubmitted"))
       void navigate(tenantPortalPath(subdomain, `pedidos/${order.id}`))
     } catch (error) {
+      if (generation !== getAgendaSessionGeneration()) {
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
           : t("apiErrors.submitPortalOrder"),
       )
     } finally {
-      setSubmitting(false)
+      if (generation === getAgendaSessionGeneration()) {
+        setSubmitting(false)
+      }
     }
   }
 
@@ -157,34 +181,49 @@ export function PortalCartPage() {
                     {product?.name ?? item.productId}
                   </p>
                   <p className="text-muted-foreground">
-                    {product?.price == null
-                      ? t("tenantPortal.catalog.priceOnRequest")
-                      : formatCatalogMoney(
-                          product.price,
-                          product.currency,
-                          i18n.language,
-                        )}
+                    {t("tenantPortal.catalog.lineSubtotal")}:{" "}
+                    {formatLineSubtotal(
+                      product?.price ?? null,
+                      product?.currency ?? "",
+                      item.quantity,
+                      i18n.language,
+                      onRequestLabel,
+                    )}
                   </p>
                 </div>
-                <Input
-                  type="number"
-                  min={1}
-                  className="w-20"
-                  value={item.quantity}
-                  aria-label={t("tenantPortal.catalog.quantity")}
-                  onChange={(event) => {
-                    const next = Number(event.target.value)
-                    cart.update(
-                      item.productId,
-                      Number.isFinite(next) ? next : 0,
-                    )
-                  }}
-                />
+                <div className="flex shrink-0 items-center gap-2">
+                  <CatalogQuantityField
+                    className="w-20"
+                    quantity={item.quantity}
+                    productName={product?.name ?? item.productId}
+                    onCommit={(next) => {
+                      cart.update(item.productId, next)
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      cart.remove(item.productId)
+                    }}
+                  >
+                    {t("tenantPortal.catalog.removeItem", {
+                      name: product?.name ?? item.productId,
+                    })}
+                  </Button>
+                </div>
               </li>
             )
           })}
         </ul>
       )}
+
+      {cart.items.length > 0 ? (
+        <p className="text-sm font-medium">
+          {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
+        </p>
+      ) : null}
 
       <Form {...form}>
         <form

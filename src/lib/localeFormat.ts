@@ -56,7 +56,8 @@ function joinCurrencyParts(parts: readonly Intl.NumberFormatPart[]): string {
  * Money for any tenant currency. `locale` is the active UI language
  * (`pt-BR`, `en`, `es`), not a resource type. The symbol is the currency
  * symbol (`R$`, `€`), including when the locale would otherwise print the
- * ISO code.
+ * ISO code. Grouping follows that locale, including amounts under 10_000
+ * (`es` prints `1.500,00 R$`, not `1500,00 R$`).
  */
 export function formatLocaleCurrency(
   amount: number,
@@ -71,6 +72,7 @@ export function formatLocaleCurrency(
       style: "currency",
       currency: normalizedCurrency,
       currencyDisplay: "symbol",
+      useGrouping: "always",
       maximumFractionDigits: options?.maximumFractionDigits,
       minimumFractionDigits: options?.minimumFractionDigits,
     }).formatToParts(amount)

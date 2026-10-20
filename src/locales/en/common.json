@@ -116,7 +116,9 @@
     "loadPortalOrders": "Could not load your orders.",
     "loadPortalOrder": "Could not load the order.",
     "cancelPortalOrder": "Could not cancel the order.",
-    "submitProductRequest": "Could not submit the product request."
+    "submitProductRequest": "Could not submit the product request.",
+    "loadPortalProductRequests": "Could not load your requests.",
+    "loadPortalProductRequest": "Could not load the request."
   },
   "trial": {
     "banner": {
@@ -173,7 +175,9 @@
   "auth": {
     "invite": {
       "title": "Activate account",
-      "welcome": "Welcome to Rolvix. To activate your account, set a secure password below.",
+      "welcome": "Welcome to Rolvix. To activate your account at {{tenant}}, set a secure password below.",
+      "welcomeExisting": "You already have a Rolvix account. Sign in with the password for {{email}} to join {{tenant}}. Your password will not change.",
+      "checking": "Checking the invite...",
       "invalidLink": "Invite link is invalid or expired.",
       "passwordLabel": "New password",
       "confirmPasswordLabel": "Confirm new password",
@@ -181,15 +185,33 @@
       "confirmPasswordPlaceholder": "Repeat the password",
       "submit": "Set password",
       "submitting": "Saving...",
+      "signInTitle": "Sign in to accept",
+      "existingPasswordLabel": "Password",
+      "existingPasswordPlaceholder": "Your current password",
+      "signInSubmit": "Sign in and accept",
+      "signInSubmitting": "Signing in...",
       "goToLogin": "Go to login",
       "toastSuccess": "Password set successfully!",
-      "toastError": "Could not set the password. Please try again.",
+      "toastJoined": "Invite accepted. You now belong to {{tenant}}.",
+      "toastError": "Could not complete the invite. Please try again.",
       "validation": {
         "passwordRequired": "Enter a new password.",
         "confirmRequired": "Confirm the new password.",
         "passwordMin": "Password must be at least 8 characters.",
         "mismatch": "Passwords must match."
-      }
+      },
+      "errors": {
+        "existingAccount": "This account already exists. Sign in with the current password to accept the invite. The password will not change.",
+        "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
+        "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
+      },
+      "pickerTitle": "Choose an environment",
+      "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
+      "pickerSubmit": "Continue",
+      "pickerSubmitting": "Opening...",
+      "pickerError": "Could not switch environments. Please try again.",
+      "membershipError": "Could not load your environments. Please try again.",
+      "membershipRetry": "Try again"
     },
     "login": {
       "invalidCredentials": "Invalid email or password.",
@@ -406,7 +428,7 @@
       "pastReservation": "Past booking",
       "empty": "No reservations yet.",
       "cancel": "Cancel",
-      "cancelling": "Cancelling...",
+      "cancelling": "Canceling...",
       "cancelConfirmTitle": "Cancel this reservation?",
       "cancelConfirmBody": "The time slot becomes available again. This screen does not collect payment or issue a refund, including when the reservation is already confirmed. When a deposit is required, only the club confirms it; canceling does not move any payment here.",
       "cancelConfirmAction": "Confirm cancellation",
@@ -417,7 +439,7 @@
       "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
       "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
       "slotTaken": "This time is already booked.",
-      "alreadyCancelled": "This reservation was already cancelled.",
+      "alreadyCancelled": "This reservation was already canceled.",
       "slotHeldByYou": "You already booked this time. See",
       "cancellationPolicyDefault": "Canceling makes this time available to other people again. Check this organization's rules.",
       "noAssets": "No spaces configured",
@@ -481,12 +503,14 @@
     "catalog": {
       "navCatalog": "Catalog",
       "navOrders": "Orders",
+      "navRequests": "My requests",
       "title": "Catalog",
       "subtitle": "Products available to request.",
       "searchPlaceholder": "Search by name or code",
       "empty": "No active products right now.",
       "priceOnRequest": "On request",
       "quantity": "Quantity",
+      "quantityFor": "Quantity for {{name}}",
       "quantityDecrease": "Decrease quantity",
       "quantityIncrease": "Increase quantity",
       "noImage": "No image",
@@ -503,7 +527,7 @@
       "orderSubmitted": "Order submitted.",
       "requestCta": "Request a product",
       "requestTitle": "Request a product",
-      "requestSubtitle": "Describe what you need. There is no tracking list in this version.",
+      "requestSubtitle": "Describe what you need. After you submit, the request is listed in My requests.",
       "requestDescription": "Description",
       "requestNote": "Note",
       "requestFiles": "Files",
@@ -514,13 +538,39 @@
       "ordersSubtitle": "Track the status of your orders.",
       "ordersEmpty": "You have not placed any orders yet.",
       "cancelOrder": "Cancel order",
-      "cancelling": "Cancelling...",
-      "orderCancelled": "Order cancelled."
+      "cancelling": "Canceling...",
+      "orderCancelled": "Order canceled.",
+      "lineSubtotal": "Subtotal",
+      "removeItem": "Remove {{name}}",
+      "cartTotal": "Total",
+      "fromAmount": "From {{amount}}",
+      "cancelConfirmTitle": "Cancel this order?",
+      "cancelConfirmBody": "This order will be canceled. You cannot undo it on this screen.",
+      "cancelConfirmDismiss": "Keep order",
+      "cancelConfirmAction": "Confirm cancellation",
+      "requestSentTitle": "Request sent",
+      "requestSentBody": "We received your request. Follow it in My requests.",
+      "requestSentCatalog": "Back to catalog",
+      "requestSentAnother": "Send another request",
+      "requestsTitle": "My requests",
+      "requestsSubtitle": "Track the requests you submitted.",
+      "requestsLoading": "Loading requests...",
+      "requestsEmpty": "You have not submitted any requests yet.",
+      "requestsUnavailable": "The request list is not available yet.",
+      "requestsPageEmpty": "No requests on this page.",
+      "requestsPageSummary": "{{from}}–{{to}} of {{total}}",
+      "requestsPrevious": "Previous page",
+      "requestsNext": "Next page",
+      "requestNotFound": "We could not find this request.",
+      "requestDetailTitle": "Request",
+      "requestFilesTitle": "Files",
+      "requestFilesEmpty": "No files."
     }
   },
   "catalog": {
     "retry": "Try again",
     "priceOnRequest": "On request",
+    "knownPlusOnRequest": "{{amount}} · On request",
     "status": {
       "Requested": "Requested",
       "Approved": "Approved",
@@ -528,7 +578,10 @@
       "Ready": "Ready",
       "Completed": "Completed",
       "Rejected": "Rejected",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Canceled"
+    },
+    "productRequestStatus": {
+      "Submitted": "Submitted"
     },
     "actor": {
       "Customer": "Customer",
@@ -557,7 +610,7 @@
       "orderPreparing": "Order preparing",
       "orderReady": "Order ready",
       "orderRejected": "Order rejected",
-      "orderCancelledBySupplier": "Order cancelled by supplier"
+      "orderCancelledBySupplier": "Order canceled by supplier"
     },
     "products": {
       "title": "Products",
@@ -1299,17 +1352,26 @@
     "categories": {
       "title": {
         "rentals": "Resource types",
+        "spaces": "Space types",
+        "goods": "Goods types",
+        "electrical": "Equipment types",
         "maintenance": "Equipment types",
         "generic": "Types"
       },
       "description": {
         "rentals": "Types used to group resources (e.g. Court, Dumpster, Room).",
+        "spaces": "Space types (e.g. Court, Room).",
+        "goods": "Goods types (e.g. Dumpster, Mobile equipment).",
+        "electrical": "Electrical equipment types (e.g. Panel, Split AC, Transformer).",
         "maintenance": "Equipment types (e.g. Split AC, Boiler).",
         "generic": "Types used to classify your resources."
       },
       "loading": "Loading types...",
       "empty": {
         "rentals": "No types yet — create the first one (e.g. Court or Dumpster).",
+        "spaces": "No types yet — create the first one (e.g. Court or Room).",
+        "goods": "No types yet — create the first one (e.g. Dumpster).",
+        "electrical": "No types yet — create the first one (e.g. Electrical panel).",
         "maintenance": "No types yet — create the first one (e.g. Split AC).",
         "generic": "No types registered yet."
       },
@@ -1340,11 +1402,17 @@
       "dialog": {
         "title": {
           "rentals": "New type",
+          "spaces": "New space type",
+          "goods": "New goods type",
+          "electrical": "New electrical equipment type",
           "maintenance": "New type",
           "generic": "New type"
         },
         "description": {
           "rentals": "Define a type to group bookable resources (e.g. Tennis court).",
+          "spaces": "Define a space type (e.g. Tennis court, Room).",
+          "goods": "Define a goods type (e.g. Dumpster).",
+          "electrical": "Register the base model used by electrical equipment.",
           "maintenance": "Register the base model used by equipment.",
           "generic": "Register a type to classify your resources."
         },
@@ -1355,6 +1423,9 @@
         "name": "Name",
         "namePlaceholder": {
           "rentals": "e.g. Court, Dumpster, Room",
+          "spaces": "e.g. Court, Room",
+          "goods": "e.g. Dumpster",
+          "electrical": "e.g. Electrical panel, Split AC",
           "maintenance": "e.g. Split Air Conditioner 12k BTU",
           "generic": "e.g. Resource type"
         },
@@ -1384,22 +1455,34 @@
     "inventory": {
       "title": {
         "rentals": "Resources",
+        "spaces": "Spaces",
+        "goods": "Goods",
+        "electrical": "Electrical equipment",
         "maintenance": "Resources",
         "generic": "Resources"
       },
       "description": {
         "rentals": "Resources you offer (spaces, goods…). Register each one and mark what can be booked.",
+        "spaces": "Rentable spaces (courts, rooms…). Register each one and mark what can be booked.",
+        "goods": "Goods and items (dumpsters…). Register each one and organize them by type.",
+        "electrical": "Site electrical equipment. Use types and attributes (voltage, manufacturer).",
         "maintenance": "Site equipment and installations. Use types to organize and link maintenance.",
         "generic": "Register this business’s resources and organize them by type."
       },
       "loading": "Loading resources...",
       "empty": {
         "rentals": "No resources registered yet.",
+        "spaces": "No spaces registered yet.",
+        "goods": "No goods registered yet.",
+        "electrical": "No electrical equipment registered yet.",
         "maintenance": "No resources registered yet.",
         "generic": "No resources registered yet."
       },
       "emptyNoTypes": {
         "rentals": "Before adding resources, define types (e.g. Court, Dumpster).",
+        "spaces": "Before adding spaces, define types (e.g. Court, Room).",
+        "goods": "Before adding goods, define types (e.g. Dumpster).",
+        "electrical": "Before adding equipment, define electrical equipment types.",
         "maintenance": "Before adding resources, define equipment types.",
         "generic": "Before adding resources, define types."
       },
@@ -1439,11 +1522,17 @@
       "dialog": {
         "title": {
           "rentals": "Bulk add resources",
+          "spaces": "Bulk add spaces",
+          "goods": "Bulk add goods",
+          "electrical": "Bulk add equipment",
           "maintenance": "Bulk add resources",
           "generic": "Bulk add resources"
         },
         "description": {
           "rentals": "Generate a sequence with the same type and numbered tags (e.g. Court-01, Court-02).",
+          "spaces": "Generate a sequence of spaces with the same type and numbered tags (e.g. Court-01).",
+          "goods": "Generate a sequence of goods with the same type and numbered tags.",
+          "electrical": "Generate a sequence of electrical equipment with numbered tags.",
           "maintenance": "Generate a sequence of equipment with the same type and numbered tags.",
           "generic": "Generate a sequence of resources with the same type and numbered tags."
         }
@@ -1920,12 +2009,15 @@
     "description": "Run field checklists and track each work order status.",
     "loading": "Loading work orders...",
     "tabs": {
+      "Open": "Open",
       "Pending": "Pending",
       "InProgress": "In Progress",
       "Completed": "Completed",
-      "Canceled": "Canceled"
+      "Canceled": "Canceled",
+      "withCount": "{{label}}, {{count}}"
     },
     "empty": {
+      "Open": "No open work orders.",
       "Pending": "No pending work orders.",
       "InProgress": "No work orders in progress.",
       "Completed": "No completed work orders.",
@@ -2000,9 +2092,20 @@
       "numberRange": "Minimum: {{min}}, Maximum: {{max}}{{unit}}",
       "choicePlaceholder": "Select an option",
       "choiceEmpty": "No options were configured for this task.",
-      "imageUploadSoon": "Photo Upload (Coming Soon)",
-      "imageUnsupported": "Image upload is not supported yet",
-      "imageUnsupportedDetail": "There is no file upload for this task yet. When it is not mandatory, the other tasks can still be completed. When it is mandatory, the server can still refuse completion until a file upload exists.",
+      "imageChoose": "Take or choose a photo",
+      "imageReplace": "Replace photo",
+      "imageEmpty": "No photo uploaded.",
+      "imagePreviewAlt": "Photo for {{title}}",
+      "imageUploading": "Uploading photo…",
+      "imageProgress": "Upload progress",
+      "imageOffline": "No connection. Photo upload is unavailable and the photo is not saved on this device.",
+      "imageTooLarge": "The photo must be between 1 byte and 5 MB.",
+      "imageTypeRejected": "Upload a JPEG, PNG, or WebP image.",
+      "imageContentMismatch": "The file content does not match the image type.",
+      "imageNotFound": "This photo could not be found.",
+      "imageUploadFailed": "The photo could not be uploaded.",
+      "imagePreviewFailed": "The photo could not be loaded.",
+      "imageUploaded": "Photo uploaded.",
       "notes": "Notes",
       "noNotes": "No notes.",
       "completedDate": "Completed on",
@@ -2011,7 +2114,13 @@
       "complete": "Complete WO",
       "startedSuccess": "Work order started successfully.",
       "completedSuccess": "Work order completed successfully.",
-      "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}"
+      "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}",
+      "mandatoryIncompleteTitle": "Fill the required tasks before completing:",
+      "save": {
+        "saving": "saving",
+        "saved": "saved",
+        "retrying": "not saved, trying again"
+      }
     },
     "errors": {
       "unauthorized": "Invalid session. Please sign in again.",
@@ -2033,7 +2142,9 @@
         "notAnOption": "Choose one of the listed options.",
         "invalidCheckbox": "Check or uncheck the task.",
         "textTooLong": "The text is longer than allowed.",
-        "invalidConfiguration": "This task is configured incorrectly."
+        "invalidConfiguration": "This task is configured incorrectly.",
+        "notAnImageTask": "Only image tasks accept a photo.",
+        "invalidImageReference": "The photo must be a file already uploaded for this task."
       }
     },
     "offline": {

@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
+import { describeApiError } from "@/features/users/permissions/rbacErrors"
 import { assetDeleteErrorMessage } from "@/features/assets/lib/assetApiErrors"
 import {
   assetCategoryListSchema,
@@ -40,10 +41,7 @@ export async function getCategories(): Promise<AssetCategory[]> {
     }
 
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.categories.errors.loadFailed"),
-      ),
+      describeApiError(error, i18n.t("assets.categories.errors.loadFailed")),
     )
   }
 }
@@ -83,10 +81,7 @@ export async function createCategory(
     }
 
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.categories.errors.createFailed"),
-      ),
+      describeApiError(error, i18n.t("assets.categories.errors.createFailed")),
     )
   }
 }
@@ -127,10 +122,7 @@ export async function updateCategory(
     }
 
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("assets.categories.errors.updateFailed"),
-      ),
+      describeApiError(error, i18n.t("assets.categories.errors.updateFailed")),
     )
   }
 }

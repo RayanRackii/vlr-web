@@ -21,6 +21,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 
 import { toast } from "sonner"
 import {
+  clearAgendaQueryClient,
   commitPortalBooking,
   customerAlreadyHoldsSlot,
   forgetOwnBooking,
@@ -351,6 +352,107 @@ describe("agendaQueryClient", () => {
       created.id,
     ])
     unsubscribe()
+  })
+
+  it("discards a booking that finishes after logout without touching the next session", async () => {
+    const slot = {
+      date: "2026-10-14",
+      rentalAssetId: RENTAL_ASSET_ID,
+      startTime: "08:00",
+    }
+    const scope = { subdomain: "ficc", dates: [slot.date] }
+    let resolvePrevious: (value: PortalReservation) => void = () => undefined
+    let resolveCurrent: (value: PortalReservation) => void = () => undefined
+    const previous = commitPortalBooking(
+      () => new Promise<PortalReservation>((resolve) => {
+        resolvePrevious = resolve
+      }),
+      scope,
+      slot,
+    )
+    const discarded = expect(previous).rejects.toMatchObject({ name: "AbortError" })
+
+    clearAgendaQueryClient()
+    const seen = vi.fn()
+    subscribeAgendaQueries(seen)
+    const currentRequest = vi.fn(
+      () => new Promise<PortalReservation>((resolve) => {
+        resolveCurrent = resolve
+      }),
+    )
+    const current = commitPortalBooking(currentRequest, scope, slot)
+    resolvePrevious(reservation())
+    await discarded
+
+    expect(currentRequest).toHaveBeenCalledTimes(1)
+    expect(recentPortalReservations("ficc")).toEqual([])
+    expect(isOwnBookedSlot(slot.date, slot.rentalAssetId, slot.startTime)).toBe(false)
+    expect(isPortalBookingInFlight(slot.date, slot.rentalAssetId, slot.startTime)).toBe(true)
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+    expect(seen).not.toHaveBeenCalled()
+
+    const created = { ...reservation(), customerId: "next-customer", id: "next-reservation" }
+    resolveCurrent(created)
+    await current
+    await vi.waitFor(() => expect(seen).toHaveBeenCalledTimes(1))
+    expect(recentPortalReservations("ficc")).toEqual([created])
+    expect(seen.mock.calls[0]?.[0].reservations).toEqual([created])
+  })
+
+  it("does not refetch a conflict from a signed-out session", async () => {
+    let rejectRequest: (reason: unknown) => void = () => undefined
+    const pending = commitPortalBooking(
+      () => new Promise<PortalReservation>((_resolve, reject) => {
+        rejectRequest = reject
+      }),
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+    )
+    const discarded = expect(pending).rejects.toMatchObject({ name: "AbortError" })
+    clearAgendaQueryClient()
+    rejectRequest(new PortalBookingError("Already reserved for this interval.", 409, null))
+    await discarded
+    expect(listMine).not.toHaveBeenCalled()
+    expect(fetchDay).not.toHaveBeenCalled()
+  })
+
+  it("discards an old refresh and does not retry it with the next session", async () => {
+    let rejectList: (reason: unknown) => void = () => undefined
+    listMine.mockImplementationOnce(() => new Promise((_resolve, reject) => {
+      rejectList = reject
+    }))
+    const pending = invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      { applySlots: true },
+    )
+    clearAgendaQueryClient()
+    const seen = vi.fn()
+    subscribeAgendaQueries(seen)
+    rejectList(new Error("old session failed"))
+    await pending
+    expect(listMine).toHaveBeenCalledTimes(1)
+    expect(fetchDay).toHaveBeenCalledTimes(1)
+    expect(seen).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("does not deliver a previous customer's pending list to a new subscriber", async () => {
+    let resolveList: (rows: PortalReservation[]) => void = () => undefined
+    listMine.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveList = resolve
+    }))
+    const pending = invalidateAgendaQueries(
+      { subdomain: "ficc", dates: ["2026-10-14"] },
+      { applySlots: true },
+    )
+    clearAgendaQueryClient()
+    const seen = vi.fn()
+    subscribeAgendaQueries(seen)
+    resolveList([reservation()])
+    await pending
+
+    expect(seen).not.toHaveBeenCalled()
+    expect(recentPortalReservations("ficc")).toEqual([])
   })
 
   it("drops a cancelled reservation so an empty list cannot restore it", async () => {

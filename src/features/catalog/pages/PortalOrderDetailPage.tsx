@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useOutletContext, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   formatCatalogDate,
@@ -29,6 +39,8 @@ export function PortalOrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const cancellingRef = useRef(false)
 
   async function load() {
     if (!orderId) {
@@ -56,13 +68,15 @@ export function PortalOrderDetailPage() {
   }, [orderId])
 
   async function onCancel() {
-    if (!order) {
+    if (!order || cancellingRef.current) {
       return
     }
+    cancellingRef.current = true
     setCancelling(true)
     try {
       const next = await cancelPortalCatalogOrder(order.id)
       setOrder(next)
+      setConfirmCancel(false)
       toast.success(t("tenantPortal.catalog.orderCancelled"))
     } catch (error) {
       toast.error(
@@ -71,6 +85,7 @@ export function PortalOrderDetailPage() {
           : t("apiErrors.cancelPortalOrder"),
       )
     } finally {
+      cancellingRef.current = false
       setCancelling(false)
     }
   }
@@ -98,9 +113,10 @@ export function PortalOrderDetailPage() {
     )
   }
 
-  const totalLabel =
-    formatCatalogMoney(order.totalAmount, order.currency, i18n.language) ??
-    t("catalog.priceOnRequest")
+  const totalLabel = formatOrderTotalText(order, i18n.language, {
+    onRequest: t("catalog.priceOnRequest"),
+    partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
+  })
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -130,12 +146,48 @@ export function PortalOrderDetailPage() {
           loading={cancelling}
           loadingLabel={t("tenantPortal.catalog.cancelling")}
           onClick={() => {
-            void onCancel()
+            setConfirmCancel(true)
           }}
         >
           {t("tenantPortal.catalog.cancelOrder")}
         </LoadingButton>
       ) : null}
+
+      <AlertDialog
+        open={confirmCancel}
+        onOpenChange={(open) => {
+          if (!open && !cancelling) {
+            setConfirmCancel(false)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("tenantPortal.catalog.cancelConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("tenantPortal.catalog.cancelConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>
+              {t("tenantPortal.catalog.cancelConfirmDismiss")}
+            </AlertDialogCancel>
+            <LoadingButton
+              type="button"
+              variant="destructive"
+              loading={cancelling}
+              loadingLabel={t("tenantPortal.catalog.cancelling")}
+              onClick={() => {
+                void onCancel()
+              }}
+            >
+              {t("tenantPortal.catalog.cancelConfirmAction")}
+            </LoadingButton>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {order.customerNote ? (
         <p className="text-sm text-muted-foreground">

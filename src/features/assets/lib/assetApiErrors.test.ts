@@ -111,6 +111,12 @@ describe("asset API error copy", () => {
       ),
     ).toBe("fallback")
     expect(
+      localizeAssetApiError({ error: "FORBIDDEN" }, "fallback", 403),
+    ).toBe(i18n.t("rbac.errors.FORBIDDEN"))
+    expect(localizeAssetApiError({ error: "FORBIDDEN" }, "fallback", 403)).not.toBe(
+      "FORBIDDEN",
+    )
+    expect(
       localizeAssetApiError(
         { error: "An asset with this tag already exists.", code: "ASSET_TAG_DUPLICATE" },
         "fallback",

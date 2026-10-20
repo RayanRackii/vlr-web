@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { localizeWorkOrderApiError } from "@/features/workOrders/lib/workOrderApiErrors"
+import {
+  errorForWorkOrderStatus,
+  localizeWorkOrderApiError,
+  MandatoryTasksIncompleteError,
+  messageForWorkOrderFileError,
+} from "@/features/workOrders/lib/workOrderApiErrors"
 import i18n from "@/lib/i18n"
 
 describe("localizeWorkOrderApiError", () => {
@@ -34,6 +39,25 @@ describe("localizeWorkOrderApiError", () => {
     )
   })
 
+  it("maps MANDATORY_TASKS_INCOMPLETE onto the same task titles", () => {
+    const error = errorForWorkOrderStatus(
+      {
+        error: "Mandatory tasks are incomplete.",
+        code: "MANDATORY_TASKS_INCOMPLETE",
+        tasks: [
+          { id: "16161616-1616-4161-8161-161616161616", title: "Foto do filtro" },
+          { id: "17171717-1717-4171-8171-171717171717", title: "Pressão" },
+        ],
+      },
+      "fallback",
+    )
+
+    expect(error).toBeInstanceOf(MandatoryTasksIncompleteError)
+    if (error instanceof MandatoryTasksIncompleteError) {
+      expect(error.titles).toEqual(["Foto do filtro", "Pressão"])
+    }
+  })
+
   it("translates an ineligible asset from the sentence, without a code", () => {
     expect(
       localizeWorkOrderApiError(
@@ -65,6 +89,8 @@ describe("localizeWorkOrderApiError", () => {
     ["INVALID_CHECKBOX", "workOrders.errors.taskValue.invalidCheckbox"],
     ["TEXT_TOO_LONG", "workOrders.errors.taskValue.textTooLong"],
     ["INVALID_CONFIGURATION", "workOrders.errors.taskValue.invalidConfiguration"],
+    ["NOT_AN_IMAGE_TASK", "workOrders.errors.taskValue.notAnImageTask"],
+    ["INVALID_IMAGE_REFERENCE", "workOrders.errors.taskValue.invalidImageReference"],
   ] as const)("translates INVALID_TASK_VALUE reason %s", (reason, key) => {
     expect(
       localizeWorkOrderApiError(
@@ -109,5 +135,39 @@ describe("localizeWorkOrderApiError", () => {
     expect(i18n.t("workOrders.errors.assigneeCannotExecute")).not.toMatch(
       /12121212/,
     )
+  })
+
+  it("translates photo upload failures", () => {
+    expect(
+      messageForWorkOrderFileError(
+        400,
+        { error: "Too big.", code: "FILE_TOO_LARGE" },
+        "fallback",
+      ),
+    ).toBe(i18n.t("workOrders.execution.imageTooLarge"))
+    expect(
+      messageForWorkOrderFileError(
+        400,
+        { error: "Type.", code: "FILE_TYPE_NOT_ALLOWED" },
+        "fallback",
+      ),
+    ).toBe(i18n.t("workOrders.execution.imageTypeRejected"))
+    expect(
+      messageForWorkOrderFileError(
+        400,
+        { error: "Mismatch.", code: "FILE_CONTENT_MISMATCH" },
+        "fallback",
+      ),
+    ).toBe(i18n.t("workOrders.execution.imageContentMismatch"))
+    expect(
+      messageForWorkOrderFileError(403, { error: "FORBIDDEN" }, "fallback"),
+    ).toBe(i18n.t("rbac.errors.FORBIDDEN"))
+    expect(messageForWorkOrderFileError(404, "", "fallback")).toBe(
+      i18n.t("workOrders.execution.imageNotFound"),
+    )
+    expect(messageForWorkOrderFileError(413, null, "fallback")).toBe(
+      i18n.t("workOrders.execution.imageTooLarge"),
+    )
+    expect(i18n.t("rbac.errors.FORBIDDEN")).not.toBe("FORBIDDEN")
   })
 })

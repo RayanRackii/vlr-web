@@ -60,6 +60,26 @@ export function classifyAgendaDateAttempt(
   return { status: "ok", date: value }
 }
 
+/**
+ * A day typed past the horizon becomes the last bookable day.
+ * The calendar still reports `after` and leaves the current day in place.
+ */
+export function clampTypedDateToHorizon(
+  value: string,
+  today: string,
+  maxDate: string | null,
+): AgendaDateAttempt | { status: "clamp"; date: string } {
+  const attempt = classifyAgendaDateAttempt(value, today, maxDate)
+  if (
+    attempt.status === "after" &&
+    maxDate !== null &&
+    isRealCivilDate(maxDate)
+  ) {
+    return { status: "clamp", date: maxDate }
+  }
+  return attempt
+}
+
 /** `HH:mm` from `time=13:00` or `time=13:00:00`. Anything else is no choice. */
 export function readAgendaTimeParam(
   value: string | null | undefined,

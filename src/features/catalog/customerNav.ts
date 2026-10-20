@@ -1,4 +1,4 @@
-import { CircleUser, ClipboardList, ListChecks, ShoppingBag } from "lucide-react"
+import { CircleUser, ClipboardList, FileText, ListChecks, ShoppingBag } from "lucide-react"
 import type { TFunction } from "i18next"
 
 import {
@@ -40,6 +40,24 @@ export type PortalCustomerModule = (typeof PORTAL_CUSTOMER_MODULES)[number]
 
 /** Fragment on the rentals agenda that scrolls to the customer's reservations. */
 export const CUSTOMER_MY_RESERVATIONS_HASH = "#minhas-reservas"
+
+/**
+ * Same-page agenda links keep the current search (date and time).
+ * A hash-only target would otherwise drop `?date=` and `?time=`.
+ */
+export function customerNavHref(
+  to: string,
+  pathname: string,
+  search: string,
+): string {
+  const hashIndex = to.indexOf("#")
+  const path = hashIndex < 0 ? to : to.slice(0, hashIndex)
+  const hash = hashIndex < 0 ? "" : to.slice(hashIndex)
+  if (path !== pathname || search.length === 0) {
+    return to
+  }
+  return `${path}${search}${hash}`
+}
 
 export function isCustomerNavModule(moduleName: string): boolean {
   const canonical = toCanonicalModuleName(moduleName)
@@ -174,6 +192,12 @@ export function buildCustomerNavItems(
         label: t("tenantPortal.catalog.navOrders"),
         to: tenantPortalPath(subdomain, "pedidos"),
         icon: ClipboardList,
+      })
+      items.push({
+        id: `${item.id}-requests`,
+        label: t("tenantPortal.catalog.navRequests"),
+        to: tenantPortalPath(subdomain, "catalogo/solicitacoes"),
+        icon: FileText,
       })
       catalogAdded = true
       continue
