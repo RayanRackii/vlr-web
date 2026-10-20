@@ -5,6 +5,7 @@ import {
 } from "@/lib/apiErrorText"
 
 const CODE_KEYS: Record<string, string> = {
+  TASK_NOTE_TOO_LONG: "workOrders.errors.taskValue.textTooLong",
   DUPLICATE_WORK_ORDER: "pmoc.plans.generate.errors.duplicate",
   ASSIGNEE_CANNOT_EXECUTE: "workOrders.errors.assigneeCannotExecute",
   WORK_ORDER_CLOSED: "workOrders.errors.workOrderClosed",
