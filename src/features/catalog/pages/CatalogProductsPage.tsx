@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -34,6 +34,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -87,6 +88,10 @@ import {
   updateCatalogProduct,
   uploadCatalogProductFile,
 } from "@/features/catalog/services/catalogService"
+import { TaxonomyAssignmentFields } from "@/features/taxonomy/components/TaxonomyAssignmentFields"
+import { TaxonomyFilters } from "@/features/taxonomy/components/TaxonomyFilters"
+import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
+import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
 const CUSTOMER_VISIBLE_FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
@@ -112,6 +117,8 @@ export function CatalogProductsPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
+  const [taxonomyFilter, setTaxonomyFilter] = useState({ categoryId: null as string | null, tagIds: [] as string[] })
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CatalogProduct | null>(null)
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null)
@@ -135,11 +142,11 @@ export function CatalogProductsPage() {
   const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
   const saveBlockers = catalogProductSaveBlockerKeys(watchedValues)
 
-  async function reload() {
+  const reload = useCallback(async () => {
     setLoading(true)
     try {
       const [nextProducts, nextRequests] = await Promise.all([
-        listCatalogProducts(),
+        listCatalogProducts({ category: taxonomyFilter.categoryId, tags: taxonomyFilter.tagIds }),
         listProductRequests(),
       ])
       setProducts(nextProducts)
@@ -152,12 +159,26 @@ export function CatalogProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t, taxonomyFilter.categoryId, taxonomyFilter.tagIds])
 
   useEffect(() => {
     void reload()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
+  }, [reload])
+
+  useEffect(() => {
+    void getCatalogTaxonomyOptions()
+      .then(setTaxonomyOptions)
+      .catch(() => setTaxonomyOptions({ categories: [], tags: [] }))
   }, [])
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      return
+    }
+    void getCatalogTaxonomyOptions()
+      .then(setTaxonomyOptions)
+      .catch(() => setTaxonomyOptions({ categories: [], tags: [] }))
+  }, [dialogOpen])
 
   function resetDialogState() {
     setEditing(null)
@@ -187,6 +208,10 @@ export function CatalogProductsPage() {
       description: product.description ?? "",
       price: product.price == null ? "" : String(product.price),
       currency: product.currency,
+      ...(product.taxonomy ? { taxonomy: {
+        categoryIds: product.taxonomy.categories.map((item) => item.id),
+        tagIds: product.taxonomy.tags.map((item) => item.id),
+      } } : {}),
     })
     setDialogOpen(true)
   }
@@ -481,6 +506,18 @@ export function CatalogProductsPage() {
         },
       },
       {
+        id: "categories",
+        accessorFn: (row) => row.taxonomy?.categories.map((item) => item.name).join(", ") ?? "",
+        header: () => <TaxonomyFilterHeader title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={setTaxonomyFilter} />,
+        cell: ({ row }) => row.original.taxonomy?.categories.map((item) => item.name).join(", ") || "—",
+      },
+      {
+        id: "tags",
+        accessorFn: (row) => row.taxonomy?.tags.map((item) => item.name).join(", ") ?? "",
+        header: () => <TaxonomyFilterHeader title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={setTaxonomyFilter} />,
+        cell: ({ row }) => row.original.taxonomy?.tags.map((item) => item.name).join(", ") || "—",
+      },
+      {
         id: "actions",
         enableColumnFilter: false,
         header: t("catalog.products.columns.actions"),
@@ -515,7 +552,7 @@ export function CatalogProductsPage() {
         ),
       },
     ],
-    [i18n.language, statusBusyId, t],
+    [i18n.language, statusBusyId, t, taxonomyFilter, taxonomyOptions],
   )
 
   const table = useReactTable({
@@ -623,10 +660,10 @@ export function CatalogProductsPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRowsSkeleton columns={5} rows={4} />
+              <TableRowsSkeleton columns={7} rows={4} />
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {t("catalog.products.empty")}
                 </TableCell>
               </TableRow>
@@ -843,6 +880,15 @@ export function CatalogProductsPage() {
                   )}
                 />
               </div>
+
+              <section className="space-y-2 rounded-lg border border-border p-3">
+                <p className="text-sm font-medium">{t("taxonomy.assignment")}</p>
+                <TaxonomyAssignmentFields
+                  control={form.control}
+                  options={taxonomyOptions}
+                  disabled={!canManage || loading}
+                />
+              </section>
 
               {canManage && editing == null ? (
                 <div className="space-y-3 rounded-lg border border-border p-3">
@@ -1096,6 +1142,32 @@ export function CatalogProductsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function TaxonomyFilterHeader({
+  title,
+  options,
+  filter,
+  onChange,
+}: {
+  title: string
+  options: TaxonomyOptions
+  filter: { categoryId: string | null; tagIds: string[] }
+  onChange: (value: { categoryId: string | null; tagIds: string[] }) => void
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger render={<Button type="button" variant="ghost" size="sm" />}>{title}</PopoverTrigger>
+      <PopoverContent className="w-72" align="start">
+        <TaxonomyFilters
+          options={options}
+          categoryId={filter.categoryId}
+          tagIds={filter.tagIds}
+          onChange={onChange}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
 

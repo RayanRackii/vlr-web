@@ -26,6 +26,22 @@ import {
   type NotificationDeliveryStatus,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { taxonomyQueryParams, type TaxonomyQuery } from "@/features/taxonomy/lib/taxonomyQuery"
+
+export type CatalogProductQuery = {
+  name?: string
+  code?: string
+  isActive?: boolean
+} & TaxonomyQuery
+
+export type CatalogProductWriteRequest = {
+  name: string
+  code?: string | null
+  description?: string | null
+  price?: number | null
+  currency?: string
+  taxonomy?: { categoryIds: string[]; tagIds: string[] }
+}
 
 function throwCatalogError(error: unknown, fallbackKey: string): never {
   throw new Error(
@@ -45,13 +61,10 @@ function parseOrThrow<T>(
   return parsed.data
 }
 
-export async function listCatalogProducts(query?: {
-  name?: string
-  code?: string
-  isActive?: boolean
-}): Promise<CatalogProduct[]> {
+export async function listCatalogProducts(query?: CatalogProductQuery): Promise<CatalogProduct[]> {
   try {
-    const response = await api.get("/api/catalog/products", { params: query })
+    const { category, tags, ...rest } = query ?? {}
+    const response = await api.get("/api/catalog/products", { params: { ...rest, ...taxonomyQueryParams({ category, tags }) } })
     return parseOrThrow(catalogProductListSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
@@ -73,13 +86,7 @@ export async function getCatalogProduct(id: string): Promise<CatalogProduct> {
   }
 }
 
-export async function createCatalogProduct(body: {
-  name: string
-  code?: string | null
-  description?: string | null
-  price?: number | null
-  currency?: string
-}): Promise<CatalogProduct> {
+export async function createCatalogProduct(body: CatalogProductWriteRequest): Promise<CatalogProduct> {
   try {
     const response = await api.post("/api/catalog/products", body)
     return parseOrThrow(catalogProductSchema.safeParse(response.data))
@@ -93,13 +100,7 @@ export async function createCatalogProduct(body: {
 
 export async function updateCatalogProduct(
   id: string,
-  body: {
-    name: string
-    code?: string | null
-    description?: string | null
-    price?: number | null
-    currency?: string
-  },
+  body: CatalogProductWriteRequest,
 ): Promise<CatalogProduct> {
   try {
     const response = await api.put(`/api/catalog/products/${id}`, body)

@@ -19,6 +19,7 @@ import {
   type PortalProductRequestPage,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { taxonomyQueryParams, type TaxonomyQuery } from "@/features/taxonomy/lib/taxonomyQuery"
 
 function throwPortalError(error: unknown, fallbackKey: string): never {
   throw new Error(
@@ -38,12 +39,19 @@ function parseOrThrow<T>(
   return parsed.data
 }
 
+export type PortalCatalogQuery = TaxonomyQuery & { search?: string }
+
 export async function listPortalCatalogProducts(
-  search?: string,
+  query?: string | PortalCatalogQuery,
+  options?: { signal?: AbortSignal },
 ): Promise<PortalProduct[]> {
   try {
+    const normalized = typeof query === "string" ? { search: query } : (query ?? {})
+    const search = normalized.search?.trim()
+    const params = { ...(search ? { search } : {}), ...taxonomyQueryParams(normalized) }
     const response = await customerApi.get("/api/catalog/portal/products", {
-      params: search && search.trim().length > 0 ? { search: search.trim() } : undefined,
+      params: Object.keys(params).length > 0 ? params : undefined,
+      ...(options?.signal ? { signal: options.signal } : {}),
     })
     return parseOrThrow(portalProductListSchema.safeParse(response.data))
   } catch (error) {

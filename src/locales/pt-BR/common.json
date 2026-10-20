@@ -118,7 +118,10 @@
     "cancelPortalOrder": "Não foi possível cancelar o pedido.",
     "submitProductRequest": "Não foi possível enviar a solicitação.",
     "loadPortalProductRequests": "Não foi possível carregar suas solicitações.",
-    "loadPortalProductRequest": "Não foi possível carregar a solicitação."
+    "loadPortalProductRequest": "Não foi possível carregar a solicitação.",
+    "loadTaxonomy": "Não foi possível carregar categorias e tags.",
+    "saveTaxonomy": "Não foi possível salvar categorias e tags.",
+    "deleteTaxonomy": "Não foi possível excluir a categoria ou tag."
   },
   "trial": {
     "banner": {
@@ -1101,6 +1104,7 @@
     "catalogProducts": "Produtos",
     "catalogOrders": "Pedidos",
     "catalogNotifications": "Notificações",
+    "taxonomy": "Categorias e tags",
     "notifications": "Notificações",
     "peopleAccess": "Pessoas e acesso",
     "admin": "Super-Admin",
@@ -1118,6 +1122,15 @@
     },
     "dashboardRedirectNotice": "Você não tem acesso ao painel. Abrimos a primeira página permitida para o seu acesso.",
     "catalogSettings": "Configurações"
+  },
+  "taxonomy": {
+    "title": "Categorias e tags",
+    "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",
+    "categories": "Categorias", "tags": "Tags", "newCategory": "Nova categoria", "newTag": "Nova tag",
+    "name": "Nome", "slug": "Slug", "parent": "Categoria pai", "icon": "Ícone", "order": "Ordem",
+    "assignment": "Categorias e tags", "saved": "Categorias e tags salvas.", "deleted": "Definição excluída.",
+    "deleteConfirm": "Excluir {{name}}? Esta ação só é permitida quando a definição não estiver em uso.",
+    "errors": { "duplicate": "Já existe uma definição com esse slug ou nome.", "inUse": "Esta definição está em uso e não pode ser excluída." }
   },
   "account": {
     "title": "Conta",
@@ -2294,6 +2307,8 @@
       "core.module_menu.write": "Editar menu do portal",
       "core.notifications.read": "Ver notificações",
       "core.notifications.write": "Editar canais de notificação",
+      "core.taxonomy.read": "Ver categorias e tags",
+      "core.taxonomy.manage": "Gerenciar categorias e tags",
       "inventory.assets.read": "Ver recursos",
       "inventory.assets.write": "Editar recursos",
       "inventory.categories.read": "Ver tipos",
