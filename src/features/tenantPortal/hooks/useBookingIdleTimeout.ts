@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
 
 export const DEFAULT_BOOKING_IDLE_TIMEOUT_MINUTES = 10
 
@@ -16,8 +16,9 @@ export function useBookingIdleTimeout({
   timeoutMinutes,
   paused,
   onExpire,
-}: BookingIdleTimeoutOptions): void {
+}: BookingIdleTimeoutOptions): () => boolean {
   const onExpireRef = useRef(onExpire)
+  const checkElapsedDeadlineRef = useRef<(() => boolean) | null>(null)
   useLayoutEffect(() => {
     onExpireRef.current = onExpire
   }, [onExpire])
@@ -64,6 +65,11 @@ export function useBookingIdleTimeout({
       if (document.visibilityState === "visible") checkDeadline()
     }
 
+    checkElapsedDeadlineRef.current = () => {
+      if (Date.now() < deadline) return false
+      checkDeadline()
+      return true
+    }
     const activityEvents = [
       "pointerdown", "pointermove", "keydown", "touchstart", "touchmove", "scroll",
     ] as const
@@ -74,6 +80,7 @@ export function useBookingIdleTimeout({
     window.addEventListener("focus", checkDeadline)
     document.addEventListener("visibilitychange", onVisible)
     return () => {
+      checkElapsedDeadlineRef.current = null
       clearTimeout(timer)
       for (const event of activityEvents) {
         window.removeEventListener(event, onActivity, true)
@@ -82,4 +89,8 @@ export function useBookingIdleTimeout({
       document.removeEventListener("visibilitychange", onVisible)
     }
   }, [durationMs, paused, selectionKey])
+
+  // Refresh callers must check before replacing availability/selection: those
+  // updates can otherwise cancel an elapsed but throttled timeout silently.
+  return useCallback(() => checkElapsedDeadlineRef.current?.() ?? false, [])
 }

@@ -2114,6 +2114,7 @@
       "checkboxHint": "Mark as done",
       "textPlaceholder": "Describe the result...",
       "textCharacterCount": "{{count}}/{{max}} characters",
+      "textCharacterLimitReached": "1000-character limit reached",
       "numberPlaceholder": "Enter the value",
       "numberRange": "Minimum: {{min}}, Maximum: {{max}}{{unit}}",
       "choicePlaceholder": "Select an option",
