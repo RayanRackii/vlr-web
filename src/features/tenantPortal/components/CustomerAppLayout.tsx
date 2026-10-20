@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { X } from "lucide-react"
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -8,6 +9,11 @@ import { getEmailInitials } from "@/components/layout/navigation"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
 import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
+import {
+  clearAgendaSelectionNotice,
+  readAgendaSelectionNotice,
+  subscribeAgendaSelectionNotice,
+} from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import type {
   ModuleMenuItem,
@@ -98,6 +104,11 @@ export function CustomerAppLayout() {
     branding?.primaryColor,
     branding?.accentColor,
   )
+  const selectionNotice = useSyncExternalStore(
+    subscribeAgendaSelectionNotice,
+    () => readAgendaSelectionNotice(subdomain ?? ""),
+    () => null,
+  )
 
   if (isAuthenticatedRestoreBlocked()) {
     return null
@@ -168,6 +179,30 @@ export function CustomerAppLayout() {
         profileTo={profileTo}
         enlargeHeaderTargets
         showLanguageCode
+        banner={
+          selectionNotice !== null ? (
+            <div
+              className="mx-auto flex w-full max-w-4xl items-center gap-3 border-b border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100"
+              role="alert"
+            >
+              <p className="flex-1 font-medium">
+                {t(
+                  selectionNotice === "expired"
+                    ? "tenantPortal.agenda.selectionExpired"
+                    : "tenantPortal.agenda.selectionUnavailable",
+                )}
+              </p>
+              <button
+                type="button"
+                className="rounded-sm p-1 hover:bg-amber-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-50/10"
+                aria-label={t("common.close")}
+                onClick={() => clearAgendaSelectionNotice(subdomain)}
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </div>
+          ) : null
+        }
         onSignOut={() => {
           const path = signOutCustomerPortal(subdomain)
           void navigate(path, { replace: true })

@@ -1,4 +1,12 @@
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
+import { clearAgendaSelectionNotices } from "@/features/tenantPortal/lib/agendaSelectionNotice"
+import {
+  CUSTOMER_ID_STORAGE_KEY,
+  CUSTOMER_LABEL_STORAGE_KEY,
+  CUSTOMER_SUBDOMAIN_STORAGE_KEY,
+  CUSTOMER_TENANT_ID_STORAGE_KEY,
+  CUSTOMER_TOKEN_STORAGE_KEY,
+} from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { z } from "zod"
 
 import {
@@ -37,12 +45,7 @@ import {
   type TenantBranding,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
-const CUSTOMER_TOKEN_KEY = "rolvix.customer.token"
-const CUSTOMER_SUBDOMAIN_KEY = "rolvix.customer.subdomain"
-const CUSTOMER_LABEL_KEY = "rolvix.customer.label"
-const CUSTOMER_ID_KEY = "rolvix.customer.id"
 /** Must match `CUSTOMER_TENANT_ID_STORAGE_KEY` in `src/lib/api.ts`. */
-const CUSTOMER_TENANT_ID_KEY = "rolvix.customer.tenantId"
 const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
   "rolvix.customer.pendingEmailVerification"
 
@@ -579,32 +582,36 @@ export function persistCustomerSession(
   customerId?: string,
   tenantId?: string,
 ): void {
-  window.localStorage.setItem(CUSTOMER_TOKEN_KEY, token)
-  window.localStorage.setItem(CUSTOMER_SUBDOMAIN_KEY, subdomain.trim().toLowerCase())
+  clearAgendaSelectionNotices()
+  window.localStorage.setItem(CUSTOMER_TOKEN_STORAGE_KEY, token)
+  window.localStorage.setItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY, subdomain.trim().toLowerCase())
   if (label && label.trim().length > 0) {
-    window.localStorage.setItem(CUSTOMER_LABEL_KEY, label.trim())
+    window.localStorage.setItem(CUSTOMER_LABEL_STORAGE_KEY, label.trim())
   }
   if (customerId && customerId.trim().length > 0) {
-    window.localStorage.setItem(CUSTOMER_ID_KEY, customerId.trim())
+    window.localStorage.setItem(CUSTOMER_ID_STORAGE_KEY, customerId.trim())
+  } else {
+    window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
   }
   const normalizedTenantId = normalizeGuid(tenantId)
   if (normalizedTenantId) {
-    window.localStorage.setItem(CUSTOMER_TENANT_ID_KEY, normalizedTenantId)
+    window.localStorage.setItem(CUSTOMER_TENANT_ID_STORAGE_KEY, normalizedTenantId)
   } else {
-    window.localStorage.removeItem(CUSTOMER_TENANT_ID_KEY)
+    window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
   }
 }
 
 export function clearCustomerSession(): void {
-  window.localStorage.removeItem(CUSTOMER_TOKEN_KEY)
-  window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_KEY)
-  window.localStorage.removeItem(CUSTOMER_LABEL_KEY)
-  window.localStorage.removeItem(CUSTOMER_ID_KEY)
-  window.localStorage.removeItem(CUSTOMER_TENANT_ID_KEY)
+  clearAgendaSelectionNotices()
+  window.localStorage.removeItem(CUSTOMER_TOKEN_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
+  window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
 }
 
 export function getCustomerAccessToken(): string | null {
-  const stored = window.localStorage.getItem(CUSTOMER_TOKEN_KEY)
+  const stored = window.localStorage.getItem(CUSTOMER_TOKEN_STORAGE_KEY)
   if (stored === null || stored.length === 0) {
     return null
   }
@@ -612,7 +619,7 @@ export function getCustomerAccessToken(): string | null {
 }
 
 export function getCustomerSubdomain(): string | null {
-  return normalizeTenantSlug(window.localStorage.getItem(CUSTOMER_SUBDOMAIN_KEY))
+  return normalizeTenantSlug(window.localStorage.getItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY))
 }
 
 /**
@@ -632,7 +639,7 @@ export function isCustomerSignedInForTenant(subdomain: string): boolean {
   }
 
   const storedTenantId = normalizeGuid(
-    window.localStorage.getItem(CUSTOMER_TENANT_ID_KEY),
+    window.localStorage.getItem(CUSTOMER_TENANT_ID_STORAGE_KEY),
   )
   const tokenTenantId = normalizeGuid(decodeJwtClaim(token, "tenant_id"))
   if (
@@ -647,11 +654,11 @@ export function isCustomerSignedInForTenant(subdomain: string): boolean {
 }
 
 export function getCustomerLabel(): string | null {
-  return window.localStorage.getItem(CUSTOMER_LABEL_KEY)
+  return window.localStorage.getItem(CUSTOMER_LABEL_STORAGE_KEY)
 }
 
 export function getCustomerId(): string | null {
-  const stored = window.localStorage.getItem(CUSTOMER_ID_KEY)
+  const stored = window.localStorage.getItem(CUSTOMER_ID_STORAGE_KEY)
   if (stored && stored.trim().length > 0) {
     return stored
   }

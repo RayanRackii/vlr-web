@@ -5,6 +5,10 @@ import {
   isCustomerSignedInForTenant,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  readAgendaSelectionNotice,
+  showAgendaSelectionNotice,
+} from "@/features/tenantPortal/lib/agendaSelectionNotice"
 
 const TENANT_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const TENANT_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
@@ -53,5 +57,19 @@ describe("customer session tenant binding", () => {
 
     expect(isCustomerSignedInForTenant("ficc")).toBe(true)
     expect(isCustomerSignedInForTenant("other-club")).toBe(false)
+  })
+
+  it("clears agenda notices when a customer session ends or is replaced", () => {
+    persistCustomerSession(customerToken(TENANT_A), "ficc", "Ana", "c1", TENANT_A)
+    showAgendaSelectionNotice("ficc", "unavailable")
+
+    clearCustomerSession()
+    expect(readAgendaSelectionNotice("ficc")).toBeNull()
+
+    persistCustomerSession(customerToken(TENANT_A), "ficc", "Ana", "c1", TENANT_A)
+    showAgendaSelectionNotice("ficc", "expired")
+    persistCustomerSession(customerToken(TENANT_A), "ficc", "Bruno", "c2", TENANT_A)
+
+    expect(readAgendaSelectionNotice("ficc")).toBeNull()
   })
 })
