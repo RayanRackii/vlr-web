@@ -470,6 +470,8 @@
           "QUEUE_WAITING_ROOM_CLOSED": "A fila ainda não está aberta."
         }
       },
+      "selectionUnavailable": "Este horário não está mais disponível",
+      "yourReservation": "Sua reserva",
       "selectionExpired": "Sua seleção expirou"
     },
     "menu": {

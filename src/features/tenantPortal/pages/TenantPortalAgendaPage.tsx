@@ -1,6 +1,6 @@
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
 import { Loader2 } from "lucide-react"
-import { useEffect, useId, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   Navigate,
@@ -96,7 +96,6 @@ import {
   getAgendaQueryRevision,
   getAgendaSessionGeneration,
   invalidateAgendaQueries,
-  isOwnBookedSlot,
   isPortalBookingInFlight,
   mergeServerReservations,
   rememberOwnBooking,
@@ -216,6 +215,14 @@ export function TenantPortalAgendaPage() {
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
   >(null)
+  const selectionRef = useRef(selectedRentalAssetId)
+  selectionRef.current = selectedRentalAssetId
+  const clearUnavailableSelection = useCallback(() => {
+    if (selectionRef.current === null) return
+    selectionRef.current = null
+    setSelectedRentalAssetId(null)
+    toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
+  }, [])
   const [loading, setLoading] = useState(true)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
@@ -439,7 +446,7 @@ export function TenantPortalAgendaPage() {
     const contextChanged = fetchedSelectionScope.current !== scope
     fetchedSelectionScope.current = scope
     if (contextChanged) {
-      setSelectedRentalAssetId(null)
+      clearUnavailableSelection()
     }
     if (!signedIn || !date) {
       setSlots([])
@@ -450,7 +457,7 @@ export function TenantPortalAgendaPage() {
       setPastSlotsHidden(false)
       setSlotsLoading(false)
       setSlotsError(false)
-      setSelectedRentalAssetId(null)
+      clearUnavailableSelection()
       return
     }
 
@@ -461,7 +468,7 @@ export function TenantPortalAgendaPage() {
       setSlots([])
       setObservedSlots([])
       setSlotsBelongToDate(date)
-      setSelectedRentalAssetId(null)
+      clearUnavailableSelection()
       return
     }
 
@@ -505,9 +512,11 @@ export function TenantPortalAgendaPage() {
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
         if (nextTime !== preferred) {
           // The queue belongs to the Location's daily opening, not a slot.
-          setSelectedRentalAssetId((current) =>
-            current && queueAssetIdsRef.current.has(current) ? current : null,
-          )
+          if (selectionRef.current && queueAssetIdsRef.current.has(selectionRef.current)) {
+            toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
+          } else {
+            clearUnavailableSelection()
+          }
         }
         preferredTimeRef.current = nextTime
         setStartTime(nextTime)
@@ -536,7 +545,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain])
+  }, [clearUnavailableSelection, date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain])
 
   useEffect(() => {
     const today = brazilTodayIsoDate()
@@ -718,9 +727,16 @@ export function TenantPortalAgendaPage() {
     if (next.length === 0) {
       return
     }
+    if (selectionRef.current && startTime.length > 0) {
+      if (queueAssetIdsRef.current.has(selectionRef.current)) {
+        toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
+      } else {
+        clearUnavailableSelection()
+      }
+    }
     preferredTimeRef.current = next
     setStartTime(next)
-  }, [schedulePending, slotsError, startTime, timeWindows])
+  }, [clearUnavailableSelection, schedulePending, slotsError, startTime, timeWindows])
 
   useEffect(() => {
     if (seenHash === location.hash) {
@@ -803,7 +819,7 @@ export function TenantPortalAgendaPage() {
   })
 
   useEffect(() => {
-    if (loading || schedulePending || slotsError || !selectedRentalAssetId) return
+    if (loading || schedulePending || slotsError || submitting || !selectedRentalAssetId) return
     const key = agendaReservedSlotKey(date, selectedRentalAssetId, startTime)
     if (
       !selectedAsset || (!queueEnabled && (
@@ -813,16 +829,18 @@ export function TenantPortalAgendaPage() {
     ) {
       // Reconcile the user's choice only after asynchronous availability settles.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedRentalAssetId(null)
+      clearUnavailableSelection()
     }
   }, [
-    date, derivedReservedKeys, loading, optimisticReservedKeys, queueEnabled, schedulePending,
+    clearUnavailableSelection, submitting, date, derivedReservedKeys, loading, optimisticReservedKeys, queueEnabled, schedulePending,
     selectedAsset, selectedRentalAssetId, selectedSlot, slotsError, startTime,
   ])
 
   const checkIdleTimeout = useBookingIdleTimeout({
+    // Explicit time changes clear the asset. Automatic time fallback must not
+    // extend an idle deadline for the Location's daily queue.
     selectionKey: signedIn && selectedRentalAssetId
-      ? JSON.stringify([subdomain, menuItemId, date, startTime, selectedRentalAssetId])
+      ? JSON.stringify([subdomain, menuItemId, date, selectedRentalAssetId])
       : null,
     timeoutMinutes: menuItem?.bookingIdleTimeoutMinutes,
     paused: submitting || queue.joining || queue.leaving || queue.view.kind === "active" ||
@@ -1076,15 +1094,13 @@ export function TenantPortalAgendaPage() {
           applyReservationSuccess(existingReservation)
           return
         }
-        toast.error(
-          heldByCustomer ? (
+        if (heldByCustomer) {
+          toast.error(
             <SlotHeldByYouNotice
               href={`${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`}
-            />
-          ) : (
-            t("tenantPortal.agenda.slotTaken")
-          ),
-        )
+            />,
+          )
+        }
         if (viewedDateRef.current === dayDate) {
           const reservedKey = agendaReservedSlotKey(
             dayDate,
@@ -1099,19 +1115,18 @@ export function TenantPortalAgendaPage() {
             next.add(reservedKey)
             return next
           })
-          setSelectedRentalAssetId(null)
+          if (heldByCustomer) {
+            setSelectedRentalAssetId(null)
+          } else {
+            clearUnavailableSelection()
+          }
         }
         return
       }
       if (isSlotUnavailableConflict(error)) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : t("tenantPortal.agenda.slotTaken"),
-        )
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
-          setSelectedRentalAssetId(null)
+          clearUnavailableSelection()
         }
         return
       }
@@ -1333,11 +1348,12 @@ export function TenantPortalAgendaPage() {
       startTime.length > 0
         ? agendaReservedSlotKey(date, rentalAssetId, startTime)
         : ""
+    const ownReservation = customerAlreadyHoldsSlot(date, rentalAssetId, startTime, mine)
     const reserved =
       reservedKey.length > 0 &&
       (optimisticReservedKeys.has(reservedKey) ||
         derivedReservedKeys.has(reservedKey) ||
-        isOwnBookedSlot(date, rentalAssetId, startTime) ||
+        ownReservation ||
         isPortalBookingInFlight(date, rentalAssetId, startTime))
     const available = Boolean(slot) && !reserved
     // Selecting a queued Location opens its waiting room even without a slot.
@@ -1348,7 +1364,7 @@ export function TenantPortalAgendaPage() {
     const detail =
       startTime.length === 0 || available
         ? null
-        : t("tenantPortal.agenda.slotTaken")
+        : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
     return {
       available,
       disabled: !available && !queueSelectable,
