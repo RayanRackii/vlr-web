@@ -4,6 +4,7 @@ import {
   formatLocaleCurrency,
   formatLocaleDateTime,
 } from "@/lib/localeFormat"
+import { taxonomyAssignmentSchema } from "@/features/taxonomy/schemas/taxonomySchemas"
 
 export const catalogFileVisibilitySchema = z.enum([
   "CustomerVisible",
@@ -71,6 +72,7 @@ export const catalogProductSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   files: z.array(catalogProductFileSchema),
+  taxonomy: taxonomyAssignmentSchema.optional(),
 })
 
 export type CatalogProduct = z.infer<typeof catalogProductSchema>
@@ -90,6 +92,10 @@ export const catalogProductFormSchema = z.object({
   description: z.string().trim().max(4000),
   price: z.string().trim(),
   currency: z.string().trim().length(3),
+  taxonomy: z.object({
+    categoryIds: z.array(z.string().uuid()).max(20),
+    tagIds: z.array(z.string().uuid()).max(20),
+  }).optional(),
 })
 
 export type CatalogProductFormValues = z.infer<typeof catalogProductFormSchema>
@@ -218,6 +224,7 @@ export const portalProductSchema = z.object({
   price: z.number().nullable(),
   currency: z.string(),
   files: z.array(portalProductFileSchema),
+  taxonomy: taxonomyAssignmentSchema.optional(),
 })
 
 export type PortalProduct = z.infer<typeof portalProductSchema>

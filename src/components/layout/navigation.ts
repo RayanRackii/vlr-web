@@ -5,6 +5,7 @@ import {
   Boxes,
   CalendarCheck,
   CalendarClock,
+  Tags,
   ClipboardList,
   ClipboardPen,
   FormInput,
@@ -36,6 +37,7 @@ export type AppNavigationChildItem = {
     | "nav.catalogOrders"
     | "nav.catalogNotifications"
     | "nav.catalogSettings"
+    | "nav.taxonomy"
   to: string
   /** Every key is required. An entry with none is hidden. */
   permission?: string
@@ -59,6 +61,7 @@ export type AppNavigationItem = {
     | "nav.admin"
     | "nav.catalog"
     | "nav.notifications"
+    | "nav.taxonomy"
   to: string
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
@@ -112,6 +115,12 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
     icon: MenuSquare,
     modules: ["rentals"],
     permission: "core.module_menu.read",
+  },
+  {
+    labelKey: "nav.taxonomy",
+    to: "/configuracoes/categorias-tags",
+    icon: Tags,
+    permission: "core.taxonomy.read",
   },
   {
     labelKey: "nav.notifications",

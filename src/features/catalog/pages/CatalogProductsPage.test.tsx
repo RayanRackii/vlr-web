@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { MemoryRouter, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -27,17 +28,23 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   uploadCatalogProductFile: vi.fn(),
 }))
 
+vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
+  getCatalogTaxonomyOptions: vi.fn(),
+}))
+
 import {
   createCatalogProduct,
   listCatalogProducts,
   listProductRequests,
   updateCatalogProduct,
 } from "@/features/catalog/services/catalogService"
+import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
 const listProductsMock = vi.mocked(listCatalogProducts)
 const listRequestsMock = vi.mocked(listProductRequests)
 const createProductMock = vi.mocked(createCatalogProduct)
 const updateProductMock = vi.mocked(updateCatalogProduct)
+const getTaxonomyOptionsMock = vi.mocked(getCatalogTaxonomyOptions)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
 
@@ -59,17 +66,21 @@ describe("CatalogProductsPage validity gate", () => {
     listRequestsMock.mockReset()
     createProductMock.mockReset()
     updateProductMock.mockReset()
+    getTaxonomyOptionsMock.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
     listProductsMock.mockResolvedValue([])
     listRequestsMock.mockResolvedValue([])
+    getTaxonomyOptionsMock.mockResolvedValue({ categories: [], tags: [] })
   })
 
-  function renderPage() {
+  function renderPage(initialEntry = "/") {
     return render(
-      <TestPermissionProvider permissions={["catalog.products.manage"]}>
-        <CatalogProductsPage />
-      </TestPermissionProvider>,
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <TestPermissionProvider permissions={["catalog.products.manage"]}>
+          <CatalogProductsPage />
+        </TestPermissionProvider>
+      </MemoryRouter>,
     )
   }
 
@@ -403,4 +414,52 @@ describe("CatalogProductsPage validity gate", () => {
     expect(price).toHaveValue("12,00")
     expect(updateProductMock).toHaveBeenCalledTimes(2)
   })
+
+  it("restores taxonomy filters from the URL and sends them with product requests", async () => {
+    const category = "11111111-1111-4111-8111-111111111111"
+    const tag = "22222222-2222-4222-8222-222222222222"
+    renderPage(`/?category=${category}&tags=${tag}`)
+
+    await waitFor(() => {
+      expect(listProductsMock).toHaveBeenCalledWith(
+        { category, tags: [tag] },
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      )
+    })
+  })
+
+  it("does not let an older taxonomy request overwrite the current products", async () => {
+    const category = "11111111-1111-4111-8111-111111111111"
+    const oldProduct = { ...PRODUCT, name: "Old result" }
+    const currentProduct = { ...PRODUCT, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Current result" }
+    let resolveOld: (products: CatalogProduct[]) => void = () => undefined
+    listProductsMock
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve }))
+      .mockResolvedValueOnce([currentProduct])
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TestPermissionProvider permissions={["catalog.products.manage"]}>
+          <CatalogProductsPage />
+          <TaxonomyNavigation category={category} />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole("button", { name: "Change taxonomy" }))
+    await waitFor(() => expect(listProductsMock).toHaveBeenCalledTimes(2))
+
+    resolveOld([oldProduct])
+    expect(await screen.findByText("Current result")).toBeInTheDocument()
+    expect(screen.queryByText("Old result")).not.toBeInTheDocument()
+  })
 })
+
+function TaxonomyNavigation({ category }: { category: string }) {
+  const [, setSearchParams] = useSearchParams()
+  return (
+    <button type="button" onClick={() => setSearchParams({ category })}>
+      Change taxonomy
+    </button>
+  )
+}

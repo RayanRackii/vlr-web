@@ -118,7 +118,10 @@
     "cancelPortalOrder": "Could not cancel the order.",
     "submitProductRequest": "Could not submit the product request.",
     "loadPortalProductRequests": "Could not load your requests.",
-    "loadPortalProductRequest": "Could not load the request."
+    "loadPortalProductRequest": "Could not load the request.",
+    "loadTaxonomy": "Could not load categories and tags.",
+    "saveTaxonomy": "Could not save categories and tags.",
+    "deleteTaxonomy": "Could not delete the category or tag."
   },
   "trial": {
     "banner": {
@@ -524,6 +527,9 @@
       "cartCount": "Cart ({{count}})",
       "cartTitle": "Cart",
       "cartEmpty": "Your cart is empty.",
+      "cartProductLoading": "Loading product information…",
+      "cartProductUnavailable": "Could not load this product.",
+      "cartTotalUnavailable": "Total unavailable until products load.",
       "checkout": "Review order",
       "checkoutHint": "Confirm quantities. Server prices will be used.",
       "customerNote": "Note",
@@ -1101,6 +1107,7 @@
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
     "catalogNotifications": "Notifications",
+    "taxonomy": "Categories and tags",
     "notifications": "Notifications",
     "peopleAccess": "People and access",
     "admin": "Super-Admin",
@@ -1118,6 +1125,15 @@
     },
     "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
     "catalogSettings": "Settings"
+  },
+  "taxonomy": {
+    "title": "Categories and tags",
+    "sharedHint": "These definitions are shared by every consumer in this tenant.",
+    "categories": "Categories", "tags": "Tags", "newCategory": "New category", "newTag": "New tag",
+    "name": "Name", "slug": "Slug", "parent": "Parent category", "icon": "Icon", "order": "Order",
+    "assignment": "Categories and tags", "saved": "Categories and tags saved.", "deleted": "Definition deleted.",
+    "deleteConfirm": "Delete {{name}}? This is allowed only when the definition is unused.",
+    "errors": { "duplicate": "A definition with this slug or name already exists.", "inUse": "This definition is in use and cannot be deleted." }
   },
   "account": {
     "title": "Account",
@@ -2294,6 +2310,8 @@
       "core.module_menu.write": "Edit portal menu",
       "core.notifications.read": "View notifications",
       "core.notifications.write": "Edit notification channels",
+      "core.taxonomy.read": "View categories and tags",
+      "core.taxonomy.manage": "Manage categories and tags",
       "inventory.assets.read": "View resources",
       "inventory.assets.write": "Edit resources",
       "inventory.categories.read": "View types",

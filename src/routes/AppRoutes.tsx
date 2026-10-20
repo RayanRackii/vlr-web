@@ -48,6 +48,7 @@ import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDet
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
+import { TaxonomyPage } from "@/features/taxonomy/pages/TaxonomyPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
 import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
@@ -235,6 +236,9 @@ export function AppRoutes() {
               path="/configuracoes/notificacoes"
               element={<NotificationsSettingsPage />}
             />
+          </Route>
+          <Route element={<PermissionRoute permission="core.taxonomy.read" />}>
+            <Route path="/configuracoes/categorias-tags" element={<TaxonomyPage />} />
           </Route>
           <Route
             element={
