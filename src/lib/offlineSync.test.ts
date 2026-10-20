@@ -167,6 +167,7 @@ describe("processSyncQueue", () => {
     expect(apiPatch).toHaveBeenLastCalledWith(
       `/api/work-orders/${workOrderId}/tasks/${taskId}`,
       { value: "12" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
@@ -206,6 +207,7 @@ describe("processSyncQueue", () => {
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${workOrderId}/tasks/${taskId}`,
       { value: "newer" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
@@ -246,6 +248,7 @@ describe("processSyncQueue", () => {
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${workOrderId}/tasks/${taskId}`,
       { value: "queued-after-reload" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
@@ -287,6 +290,7 @@ describe("processSyncQueue", () => {
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${workOrderId}/tasks/${taskId}`,
       { value: "kept" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(retried.processed).toBe(1)
     expect(await listSyncConflicts()).toEqual([])
@@ -734,6 +738,7 @@ describe("commitDirectTaskValuePatch", () => {
     expect(vi.mocked(apiModule.api.patch)).toHaveBeenCalledWith(
       `/api/work-orders/${workOrderId}/tasks/${taskId}`,
       { value: "kept" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(await reloaded.listQueuedTaskIds()).toEqual([])
   })

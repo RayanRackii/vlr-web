@@ -2113,6 +2113,7 @@
       "mandatory": "Mandatory",
       "checkboxHint": "Mark as done",
       "textPlaceholder": "Describe the result...",
+      "textCharacterCount": "{{count}}/{{max}} characters",
       "numberPlaceholder": "Enter the value",
       "numberRange": "Minimum: {{min}}, Maximum: {{max}}{{unit}}",
       "choicePlaceholder": "Select an option",
