@@ -18,6 +18,7 @@ type LocaleDateInputProps = {
   invalid?: boolean
   describedBy?: string
   onChange: (value: string, source: LocaleDateChangeSource) => void
+  onBlur?: () => void
   className?: string
 }
 
@@ -104,6 +105,7 @@ export function LocaleDateInput({
   invalid,
   describedBy,
   onChange,
+  onBlur,
   className,
 }: LocaleDateInputProps) {
   const { t } = useTranslation()
@@ -195,6 +197,7 @@ export function LocaleDateInput({
               setOpen(true)
             }
           }}
+          onBlur={onBlur}
           onChange={(event) => {
             // `max` stays off this control. Chrome drops a typed day past
             // max and the field snaps back with an empty value.

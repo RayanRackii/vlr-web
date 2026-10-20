@@ -264,6 +264,7 @@
     }
   },
   "tenantPortal": {
+    "sessionExpired": "Sessão expirada",
     "defaultTagline": "Entre para reservar e receber avisos.",
     "header": {
       "ctaRegister": "Cadastrar"
@@ -468,7 +469,8 @@
           "QUEUE_TURN_ALREADY_USED": "Você já usou esta vez para reservar.",
           "QUEUE_WAITING_ROOM_CLOSED": "A fila ainda não está aberta."
         }
-      }
+      },
+      "selectionExpired": "Sua seleção expirou"
     },
     "menu": {
       "empty": "Nenhum módulo disponível.",
@@ -508,6 +510,7 @@
       "subtitle": "Produtos disponíveis para solicitar.",
       "searchPlaceholder": "Buscar por nome ou código",
       "empty": "Nenhum produto ativo no momento.",
+      "searchEmpty": "Nenhum produto encontrado para \"{{term}}\"",
       "priceOnRequest": "Sob consulta",
       "quantity": "Quantidade",
       "quantityFor": "Quantidade de {{name}}",
@@ -564,7 +567,12 @@
       "requestNotFound": "Não encontramos esta solicitação.",
       "requestDetailTitle": "Solicitação",
       "requestFilesTitle": "Arquivos",
-      "requestFilesEmpty": "Nenhum arquivo."
+      "requestFilesEmpty": "Nenhum arquivo.",
+      "cancelRequest": "Cancelar solicitação",
+      "cancelRequestTitle": "Cancelar esta solicitação?",
+      "cancelRequestBody": "Confirme o cancelamento da solicitação. Esta ação não pode ser desfeita.",
+      "requestCancelled": "Solicitação cancelada.",
+      "cancelRequestError": "Não foi possível cancelar a solicitação."
     }
   },
   "catalog": {
@@ -581,7 +589,8 @@
       "Cancelled": "Cancelado"
     },
     "productRequestStatus": {
-      "Submitted": "Enviada"
+      "Submitted": "Enviada",
+      "Cancelled": "Cancelada"
     },
     "actor": {
       "Customer": "Cliente",
@@ -756,6 +765,21 @@
         "createdAt": "Criado em",
         "actions": "Ações"
       }
+    },
+    "policy": {
+      "title": "Configurações do catálogo",
+      "description": "Defina quando clientes podem cancelar pedidos e solicitações neste catálogo.",
+      "ordersEnabled": "Cliente pode cancelar pedidos",
+      "ordersUpTo": "Cancelar pedidos até o status (inclusive)",
+      "requestsEnabled": "Cliente pode cancelar solicitações",
+      "requestsUpTo": "Cancelar solicitações até o status (inclusive)",
+      "text": "Texto da política de cancelamento (opcional)",
+      "placeholder": "Ex.: sem reembolso.",
+      "textHint": "{{length}} / 2000 caracteres. Este texto aparece na confirmação de cancelamento.",
+      "saved": "Política do catálogo salva.",
+      "loadError": "Não foi possível carregar a política do catálogo.",
+      "saveError": "Não foi possível salvar a política do catálogo.",
+      "readOnly": "Sem permissão para alterar a política do catálogo."
     }
   },
   "notifications": {
@@ -1090,7 +1114,8 @@
       "operations": "Operação",
       "platform": "Plataforma"
     },
-    "dashboardRedirectNotice": "Você não tem acesso ao painel. Abrimos a primeira página permitida para o seu acesso."
+    "dashboardRedirectNotice": "Você não tem acesso ao painel. Abrimos a primeira página permitida para o seu acesso.",
+    "catalogSettings": "Configurações"
   },
   "account": {
     "title": "Conta",
@@ -2148,6 +2173,7 @@
       }
     },
     "offline": {
+      "synced": "Sincronizado",
       "title": "Modo Offline",
       "banner": "Modo Offline: Alterações sendo salvas localmente.",
       "waitingToSync": "Aguardando sincronizar",
@@ -2505,7 +2531,11 @@
         "OS": "Permite vincular serviços aos recursos do ambiente."
       },
       "noEligibleFunctionality": "Nenhuma outra funcionalidade ativa disponível.",
-      "catalogAutoNav": "O módulo adiciona automaticamente:"
+      "catalogAutoNav": "O módulo adiciona automaticamente:",
+      "bookingIdleTimeoutMinutes": "Tempo de inatividade da seleção (minutos, opcional)",
+      "bookingIdleTimeoutHint": "Informe um número inteiro de 1 a 120. Em branco: 10 minutos.",
+      "bookingIdleRedirectPath": "Destino após expirar (opcional)",
+      "bookingIdleRedirectHint": "Caminho dentro do portal, começando com / (ex.: /agenda). Em branco: início do portal."
     },
     "dashboard": {
       "title": "Painel Super-Admin",

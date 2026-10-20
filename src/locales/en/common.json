@@ -264,6 +264,7 @@
     }
   },
   "tenantPortal": {
+    "sessionExpired": "Session expired",
     "defaultTagline": "Sign in to book and get updates.",
     "header": {
       "ctaRegister": "Register"
@@ -468,7 +469,8 @@
           "QUEUE_TURN_ALREADY_USED": "You already used this turn to book.",
           "QUEUE_WAITING_ROOM_CLOSED": "The queue is not open yet."
         }
-      }
+      },
+      "selectionExpired": "Your selection expired"
     },
     "menu": {
       "empty": "No modules available.",
@@ -508,6 +510,7 @@
       "subtitle": "Products available to request.",
       "searchPlaceholder": "Search by name or code",
       "empty": "No active products right now.",
+      "searchEmpty": "No products found for \"{{term}}\"",
       "priceOnRequest": "On request",
       "quantity": "Quantity",
       "quantityFor": "Quantity for {{name}}",
@@ -564,7 +567,12 @@
       "requestNotFound": "We could not find this request.",
       "requestDetailTitle": "Request",
       "requestFilesTitle": "Files",
-      "requestFilesEmpty": "No files."
+      "requestFilesEmpty": "No files.",
+      "cancelRequest": "Cancel request",
+      "cancelRequestTitle": "Cancel this request?",
+      "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
+      "requestCancelled": "Request canceled.",
+      "cancelRequestError": "Could not cancel the request."
     }
   },
   "catalog": {
@@ -581,7 +589,8 @@
       "Cancelled": "Canceled"
     },
     "productRequestStatus": {
-      "Submitted": "Submitted"
+      "Submitted": "Submitted",
+      "Cancelled": "Canceled"
     },
     "actor": {
       "Customer": "Customer",
@@ -756,6 +765,21 @@
         "createdAt": "Created",
         "actions": "Actions"
       }
+    },
+    "policy": {
+      "title": "Catalog settings",
+      "description": "Choose when customers can cancel orders and requests in this catalog.",
+      "ordersEnabled": "Customers can cancel orders",
+      "ordersUpTo": "Cancel orders up to status (inclusive)",
+      "requestsEnabled": "Customers can cancel requests",
+      "requestsUpTo": "Cancel requests up to status (inclusive)",
+      "text": "Cancellation policy text (optional)",
+      "placeholder": "E.g. no refunds.",
+      "textHint": "{{length}} / 2000 characters. This text appears in the cancellation confirmation.",
+      "saved": "Catalog policy saved.",
+      "loadError": "Could not load the catalog policy.",
+      "saveError": "Could not save the catalog policy.",
+      "readOnly": "You do not have permission to change the catalog policy."
     }
   },
   "notifications": {
@@ -1090,7 +1114,8 @@
       "operations": "Operations",
       "platform": "Platform"
     },
-    "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows."
+    "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
+    "catalogSettings": "Settings"
   },
   "account": {
     "title": "Account",
@@ -2148,6 +2173,7 @@
       }
     },
     "offline": {
+      "synced": "Synced",
       "title": "Offline Mode",
       "banner": "Offline Mode: Changes are being saved locally.",
       "waitingToSync": "Waiting to sync",
@@ -2505,7 +2531,11 @@
         "OS": "Lets you link services to the environment's resources."
       },
       "noEligibleFunctionality": "No other active features are available.",
-      "catalogAutoNav": "The module automatically adds:"
+      "catalogAutoNav": "The module automatically adds:",
+      "bookingIdleTimeoutMinutes": "Selection idle timeout (minutes, optional)",
+      "bookingIdleTimeoutHint": "Enter a whole number from 1 to 120. Leave blank for 10 minutes.",
+      "bookingIdleRedirectPath": "Destination after expiry (optional)",
+      "bookingIdleRedirectHint": "Path within the portal, starting with / (e.g. /agenda). Leave blank for the portal home."
     },
     "dashboard": {
       "title": "Super-Admin Panel",

@@ -1,3 +1,4 @@
+import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -870,6 +871,20 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
     expect(cancelButton()).not.toBeInTheDocument()
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it.each(["preflight", "cancel"])("shows only session expired on %s failure", async (stage) => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+    toastError.mockClear()
+    if (stage === "preflight") listMine.mockRejectedValue(new PortalSessionExpiredError())
+    else cancelMine.mockRejectedValue(new PortalSessionExpiredError())
+    await confirmCancel(user)
+    await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
+    expect(toastError).toHaveBeenCalledWith(i18n.t("tenantPortal.sessionExpired"), { id: "portal-session-expired" })
+    if (stage === "preflight") expect(cancelMine).not.toHaveBeenCalled()
   })
 
   it("clears Cancelando and toasts when cancel fails even if refetch hangs", async () => {
@@ -1851,6 +1866,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).toHaveTextContent("08:00")
     })
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {
@@ -1941,6 +1959,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("explains a disabled calendar day without moving the selection", async () => {
@@ -2455,10 +2476,10 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).toBeInTheDocument()
 
       await i18n.changeLanguage("es")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total 80,00 R$")
+      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
       expect(screen.getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
       expect(
-        screen.getByText("Disponible. Estimación: 80,00 R$"),
+        screen.getByText("Disponible. Estimación: R$ 80,00"),
       ).toBeInTheDocument()
     } finally {
       await i18n.changeLanguage("pt-BR")
@@ -2590,6 +2611,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("says the time was just taken and refreshes the agenda after a booking conflict", async () => {
@@ -3264,6 +3288,123 @@ describe("TenantPortalAgendaPage time selector", () => {
     }
   })
 
+  it("does not expire while a booking request is pending", async () => {
+    const user = userEvent.setup()
+    bookSlot.mockImplementation(() => new Promise(() => {}))
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const reserve = screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })
+    await waitFor(() => expect(reserve).toBeEnabled())
+    await user.click(reserve)
+    await waitFor(() => expect(bookSlot).toHaveBeenCalledTimes(1))
+    vi.setSystemTime(Date.now() + 660_000)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    expect(toastMessage).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserving") })).toBeDisabled()
+  })
+
+  it.each(["pending", "failed"] as const)("blocks reserve during a %s same-day refresh", async (state) => {
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const actionName = i18n.t("tenantPortal.agenda.reserveSlot")
+    const action = await screen.findByRole("button", { name: (name) => name === actionName })
+    await waitFor(() => expect(action).toBeEnabled())
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    let resolveRefresh!: (value: typeof day) => void
+    let rejectRefresh!: (reason: Error) => void
+    fetchDay.mockImplementation(() => new Promise((resolve, reject) => {
+      resolveRefresh = resolve
+      rejectRefresh = reject
+    }))
+    const reads = fetchDay.mock.calls.length
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}`) })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(reads))
+    expect(action).toBeDisabled()
+    if (state === "failed") {
+      await act(async () => rejectRefresh(new Error("schedule refresh failed")))
+      await waitFor(() => expect(toastError).toHaveBeenCalledWith("schedule refresh failed"))
+      expect(action).toBeDisabled()
+    }
+    await user.click(action)
+    expect(joinQueue).not.toHaveBeenCalled()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    if (state === "pending") {
+      await act(async () => resolveRefresh(day))
+      await waitFor(() => expect(action).toBeEnabled())
+      expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    }
+  })
+
+  it("keeps a bookable selection across foreground refresh and a same-day effect refetch", async () => {
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    vi.setSystemTime(Date.now() + 180_000)
+    const initialReads = fetchDay.mock.calls.length
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(initialReads))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    const beforeRefetch = fetchDay.mock.calls.length
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}`) })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(beforeRefetch))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    expect(toastMessage).not.toHaveBeenCalled()
+  })
+
+  it("clears a selection when foreground refresh makes that resource unbookable", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const current: Awaited<ReturnType<typeof fetchPublicScheduleDay>> = await fetchDay.mock.results[0].value
+    fetchDay.mockResolvedValue({
+      ...current,
+      slots: current.slots.map((slot) => slot.rentalAssetId === ASSET_A_ID
+        ? { ...slot, status: "booked", isBookableByCustomer: false } : slot),
+    })
+    vi.setSystemTime(Date.now() + 180_000)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    await waitFor(() => expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "false"))
+    expect(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })).toBeDisabled()
+    expect(toastMessage).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { minutes: 1, path: "/agenda", expected: "/t/ficc/agenda" },
+    { minutes: null, path: null, expected: "/t/ficc/app" },
+  ])("expires using the current space settings ($minutes minutes, $path)", async ({ minutes, path, expected }) => {
+    const context: CustomerAppOutletContext = {
+      ...outletContext,
+      menu: [{
+        id: ASSET_A_ID, moduleName: "rentals", label: "Espaço", sortOrder: 0,
+        isActive: true, bookingIdleTimeoutMinutes: minutes, bookingIdleRedirectPath: path,
+      }],
+    }
+    const router = createMemoryRouter([{
+      element: <Outlet context={context} />,
+      children: [
+        { path: "/agenda/:menuItemId", element: <TenantPortalAgendaPage /> },
+        { path: "/t/ficc/*", element: <div>Portal destination</div> },
+      ],
+    }], { initialEntries: [`/agenda/${ASSET_A_ID}`] })
+    const user = userEvent.setup()
+    render(<RouterProvider router={router} />)
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    vi.setSystemTime(Date.now() + (minutes ?? 10) * 60_000 - 1)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    expect(toastMessage).not.toHaveBeenCalled()
+    vi.setSystemTime(Date.now() + 1)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    expect(toastMessage).toHaveBeenCalledWith(i18n.t("tenantPortal.agenda.selectionExpired"))
+    expect(router.state.location.pathname).toBe(expected)
+  })
+
   it("keeps the selected date, time, and resource when the language changes", async () => {
     const user = userEvent.setup()
     renderAgenda()
@@ -3300,7 +3441,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(
         screen.getByRole("button", { name: "Quadra 1" }),
       ).toHaveAttribute("aria-pressed", "true")
-      expect(formatMoney(80)).toBe("80,00 R$")
+      expect(formatMoney(80)).toBe("R$ 80,00")
       expect(
         screen.getByText(
           i18n.t("tenantPortal.agenda.available", {
@@ -3847,6 +3988,18 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     await user.click(await screen.findByRole("button", { name }))
   }
 
+  it("does not expire the selection while a queue turn is active", async () => {
+    fetchQueue.mockResolvedValue(queueStatus({ myTicket: queueTicket("Active") }))
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await screen.findByText(i18n.t("tenantPortal.agenda.queue.yourTurn"))
+    vi.setSystemTime(Date.now() + 660_000)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    expect(toastMessage).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+  })
+
   it("explains the ticket only for a resource that requires a queue", async () => {
     const user = userEvent.setup()
     renderAgenda()
@@ -3919,6 +4072,41 @@ describe("TenantPortalAgendaPage queue explainer", () => {
       queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
     ).not.toBeInTheDocument()
     expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+  })
+
+  it.each(["pending", "failed"] as const)("blocks join-and-reserve during a %s same-day refresh", async (state) => {
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const actionName = i18n.t("tenantPortal.agenda.queue.joinAndReserve")
+    const action = await screen.findByRole("button", { name: (name) => name === actionName })
+    await waitFor(() => expect(action).toBeEnabled())
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    let resolveRefresh!: (value: typeof day) => void
+    let rejectRefresh!: (reason: Error) => void
+    fetchDay.mockImplementation(() => new Promise((resolve, reject) => {
+      resolveRefresh = resolve
+      rejectRefresh = reject
+    }))
+    const reads = fetchDay.mock.calls.length
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}`) })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(reads))
+    expect(action).toBeDisabled()
+    if (state === "failed") {
+      await act(async () => rejectRefresh(new Error("schedule refresh failed")))
+      await waitFor(() => expect(toastError).toHaveBeenCalledWith("schedule refresh failed"))
+      expect(action).toBeDisabled()
+    }
+    await user.click(action)
+    expect(joinQueue).not.toHaveBeenCalled()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    if (state === "pending") {
+      await act(async () => resolveRefresh(day))
+      await waitFor(() => expect(action).toBeEnabled())
+      expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    }
   })
 
   it("offers one join-and-reserve action when the queue is open and nobody is ahead", async () => {

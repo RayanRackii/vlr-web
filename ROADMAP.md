@@ -26,6 +26,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
 - [x] Cadastro B2C verifica **e-mail** (código); `/verify-email` + redirect de `/verify-phone`. Celular coletado, não bloqueia. **Não PROD.**
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
+- [x] Seleção da agenda preservada em refresh do mesmo dia e revalidada quando a disponibilidade chega. Expiração por espaço (`bookingIdleTimeoutMinutes`, 1–120; padrão 10) e destino dentro do portal (`bookingIdleRedirectPath`; padrão início), configuráveis na edição Super-Admin do item. Interação reinicia o prazo; reserva em andamento e turno ativo da fila suspendem a expiração. Toast pt-BR/en/es e regressões Vitest. Alterações locais, sem commit por instrução do Rayan.
 - [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
 - [x] Admin B2B de reservas.
@@ -92,6 +93,8 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] #200: o horário da aula explica por que está vazio. Carregando, erro com “Tentar novamente”, recurso fechado na data, e dia da semana sem horário (aponta para Configuração semanal) são estados diferentes. Sábado 24/10 continua sendo a data civil pedida em `GET /api/schedule/days/{date}`; a resposta `{ date, slots }` não traz um motivo, então `slots` vazio é “sem horário configurado” e slots só `closed` são “fechado”. Não é índice de dia nem fuso.
 - [x] #207: uma aula recriada no mesmo intervalo, com outro id, volta a aparecer nesta aba. O mesmo id continua oculto enquanto o GET antigo o lista.
 
+- [x] Review do timeout B2C: edição e reordenação pelo tenant preservam os dois campos de inatividade em todos os PUTs; Reservar e Entrar e reservar bloqueados por carga/erro do dia, inclusive nos handlers. Destino limitado a 200 caracteres e sem controles C0/C1, com regressões de edição, reordenação, refresh pendente/falho e fronteiras. `npx vitest run && npm run build`: 1.314 testes aprovados em 174 arquivos e build concluído (avisos de CSS). Sem commit.
+
 ### 3.7. Cancelamento B2C pelo cliente
 
 Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch `feat/rentals-b2c-self-cancel`. API already on `develop` (`89b3e6d` / PR #64). Wave 1 remains **PROD_COMPLETE**.
@@ -152,6 +155,8 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 
 ## 4.11. PMOC / OS — FEITO (PROD)
 
+- [x] Execução offline: concluir o flush ou reconectar sem pendências limpa imediatamente o estado offline e os indicadores de retry, sem esperar o GET da OS nem probe de conectividade. Toast “Sincronizado” por 3s (pt-BR/en/es); fila pendente e conflitos não mostram sucesso. Regressões com GET lento, fila vazia, falha de rede, 5xx e 409. Validação: 1.320 testes em 174 arquivos com `npx vitest run --maxWorkers=2` e `npm run build` aprovados; execução padrão teve três falhas em telas não alteradas (duas por timeout). Alterações locais, sem commit.
+
 - [x] Correções locais do review #235: confirmação de autosave vinculada à versão editada e ao valor confirmado pela API, que precisa coincidir com o exibido; recarregar com valor diferente na fila não produz “salvo” pela igualdade de contadores zerados. Rejeição de obrigatórias do servidor permanece até nova tentativa, sem impedir retry quando o cliente está válido; barra fixa limitada a metade da altura da viewport, com lista rolável por teclado e ações visíveis. Regressões de texto/número, fila recarregada (tela A / servidor B), resposta diferente do rascunho, rejeição com valor preenchido e 80 obrigatórias. Branch `fix-235`, sem push. Upload da foto obrigatória segue dependente de #234, fora desta correção.
 
 Phases 1–3 are **COMPLETE / RELEASED PROD**. Phase 4 is **NOT PLANNED**. Canonical spec: `vlr-api/docs/plans/active/2026-09-19-pmoc-os-phase3.md`. WEB release merge `254bd333ef2b2c3b4f798ef6327091f85890fd36` (PR #85).
@@ -201,6 +206,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] Carrossel de imagens do produto (jpeg/png/webp) na lista/detalhe B2C e no diálogo de edição B2B; `object-contain`; sem lib extra
 - [x] Grade B2C de produtos: cards compactos 1–4 colunas, placeholder sem foto, stepper de quantidade; sem mudança de contrato/API
 - [x] Carrinho B2C: subtotal da linha, total parcial (“A partir de” quando há item sob consulta), remover item, quantidade 0 não apaga a linha (1–99, só ao sair do campo; vazio não vira 1 enquanto se digita). Cancelar pedido pede confirmação e ignora um segundo clique enquanto o POST está em voo. Total misto em Pedidos mostra a soma conhecida e “Sob consulta”. Solicitar produto confirma na tela com link ao catálogo: o portal não tem GET de solicitações do cliente (`POST /api/catalog/portal/product-requests` e URL de arquivo apenas). es agrupa milhar (`1.500,00 R$`). EN do portal usa “Canceled”.
+- [x] Busca do catálogo B2C permanece na API (case/acento corrigidos em paralelo no backend); busca sem resultados mostra o termo em pt-BR/en/es, distinta do catálogo vazio. Regressões de UI e envio do termo; alteração local sem commit.
+- [x] Política de cancelamento do catálogo por tenant: `/catalogo/configuracoes` (`catalog.products.manage`, sessão de tenant existente para Super-Admin), flags de pedidos/solicitações, limites inclusivos e texto opcional até 2000 caracteres; pt-BR/en/es. Detalhes B2C consomem `/api/catalog/portal/policy`, ocultam Cancelar sem política válida ou em status não permitido, confirmam com texto simples da política e exibem mensagens 400/409. Solicitações aceitam `Cancelled`; POST sem body usa DTO de mutação e preserva URLs do detalhe. Testes Vitest de contrato, limites, configuração e cancelamento.
 - [x] B2C Minhas solicitações: lista paginada (`GET /api/catalog/portal/product-requests`, pageSize 20) e detalhe (`GET .../{id}`). Menu do catálogo, botão no catálogo e confirmação do envio apontam para a lista. 404/501 da lista é um estado de indisponível, separado da caixa vazia, até o `vlr-api` #224 existir. Sem lógica de clube.
 
 ## 5. Fluxo de convite B2B
@@ -224,6 +231,9 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-20 | **Código (WEB, local, sem commit):** configuração da política de cancelamento do catálogo por tenant e consumo nos detalhes de pedidos/solicitações B2C, genérico e em pt-BR/en/es. API do contrato `2026-10-20-catalog-cancellation-policy.md`; solicitações canceladas traduzidas, erro do servidor preservado e confirmação protegida contra envio duplicado. Validação: 181 arquivos / 1376 testes com `--maxWorkers=2` e build aprovados (avisos CSS `@theme`/`@utility`). Próximo WEB: validar integração em DEV com a API/migration disponível. Próximo API: suíte completa com sockets habilitados e validação PostgreSQL; aplicar migration somente em etapa autorizada. |
+| 2026-10-20 | **Fix (WEB, local, sem commit):** [x] UTF-8 da lista de OS; [x] Voltar em Acesso negado com fallback `/`; [x] correção da data limpa o aviso da agenda (inclusive ao sair do campo com a data ajustada); [x] expiração no cancelamento interrompe chamadas subsequentes e usa um aviso i18n; [x] labels padrão com nome genérico do recurso em EN/ES, BRL em ES no padrão `R$ 100,00`; [x] observação do pedido limitada a 1000 com contador; [x] checkout oculto no carrinho vazio; [x] detalhe da solicitação aceita `note`/`observation` opcionais. Regressões automatizadas. Próximo WEB: validar os fluxos em DEV. Próximo API: validar read model com `note` em DEV e migrations pendentes em ambiente autorizado. |
+| 2026-10-19 | **Fix (WEB, local):** removido o reset incondicional da seleção ao refazer o GET do mesmo dia. Refresh conserva recurso ainda reservável; indisponibilidade confirmada limpa a seleção. Timeout explícito por item do menu público, editor Super-Admin com validação e destino relativo ao portal. Não altera os interceptors de sessão nem o guard de logout. Testes e build validados; lint global também falha no HEAD limpo (177 erros e 22 avisos preexistentes). Sem commit. Próximo: validar o fluxo integrado no DEV com os novos campos da API. |
 | 2026-10-18 | **Código (WEB, sem merge, alto risco):** `/invite` segue o contrato de `vlr-api` #226. Preview anônimo decide senha nova ou login da conta existente. Accept de conta existente usa o JWT staff e não envia senha. 409/403 do convite têm frase. Várias memberships escolhem ambiente e a sessão Supabase é atualizada. Glossário User espelhado. |
 | 2026-08-03 | Portal + registro dinâmico. |
 | 2026-08-04 | Agenda B2C inicial. |

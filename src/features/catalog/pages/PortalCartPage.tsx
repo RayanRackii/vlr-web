@@ -37,7 +37,7 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 
 const checkoutSchema = z.object({
-  customerNote: z.string().trim().max(2000),
+  customerNote: z.string().max(1000),
 })
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>
@@ -225,38 +225,43 @@ export function PortalCartPage() {
         </p>
       ) : null}
 
-      <Form {...form}>
-        <form
-          className="space-y-4"
-          onSubmit={form.handleSubmit(onSubmit)}
-          noValidate
-        >
-          <FormField
-            control={form.control}
-            name="customerNote"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("tenantPortal.catalog.customerNote")}</FormLabel>
-                <FormControl>
-                  <Textarea rows={3} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormPrimaryButton
-            type="submit"
-            className="w-full"
-            isValid={isCheckoutValid}
-            loading={submitting}
-            disabled={cart.items.length === 0}
-            loadingLabel={t("tenantPortal.catalog.submitting")}
-            style={{ backgroundColor: primary }}
+      {cart.items.length > 0 ? (
+        <Form {...form}>
+          <form
+            className="space-y-4"
+            onSubmit={form.handleSubmit(onSubmit)}
+            noValidate
           >
-            {t("tenantPortal.catalog.submitOrder")}
-          </FormPrimaryButton>
-        </form>
-      </Form>
+            <FormField
+              control={form.control}
+              name="customerNote"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("tenantPortal.catalog.customerNote")}</FormLabel>
+                  <FormControl>
+                    <Textarea rows={3} maxLength={1000} {...field} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground" aria-live="polite">
+                    {field.value.length}/1000
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormPrimaryButton
+              type="submit"
+              className="w-full"
+              isValid={isCheckoutValid}
+              loading={submitting}
+              disabled={cart.items.length === 0}
+              loadingLabel={t("tenantPortal.catalog.submitting")}
+              style={{ backgroundColor: primary }}
+            >
+              {t("tenantPortal.catalog.submitOrder")}
+            </FormPrimaryButton>
+          </form>
+        </Form>
+      ) : null}
     </div>
   )
 }

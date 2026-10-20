@@ -35,6 +35,7 @@ export type AppNavigationChildItem = {
     | "nav.catalogProducts"
     | "nav.catalogOrders"
     | "nav.catalogNotifications"
+    | "nav.catalogSettings"
   to: string
   /** Every key is required. An entry with none is hidden. */
   permission?: string
@@ -229,6 +230,11 @@ const operationsItems: readonly AppNavigationItem[] = [
         labelKey: "nav.catalogOrders",
         to: "/catalogo/pedidos",
         permission: "catalog.orders.read",
+      },
+      {
+        labelKey: "nav.catalogSettings",
+        to: "/catalogo/configuracoes",
+        permission: "catalog.products.manage",
       },
       {
         labelKey: "nav.catalogNotifications",

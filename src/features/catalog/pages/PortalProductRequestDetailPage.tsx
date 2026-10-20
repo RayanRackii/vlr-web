@@ -10,7 +10,8 @@ import {
   formatCatalogDate,
   type PortalProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
-import { getPortalProductRequest } from "@/features/catalog/services/catalogPortalService"
+import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
+import { cancelPortalProductRequest, getPortalProductRequest } from "@/features/catalog/services/catalogPortalService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
@@ -35,9 +36,10 @@ export function PortalProductRequestDetailPage() {
   const [request, setRequest] = useState<PortalProductRequest | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [seenId, setSeenId] = useState(requestId)
-  if (seenId !== requestId) {
-    setSeenId(requestId)
+  const identity = `${subdomain}:${requestId}`
+  const [seenId, setSeenId] = useState(identity)
+  if (seenId !== identity) {
+    setSeenId(identity)
     setLoading(true)
     setRequest(null)
     setLoadError(null)
@@ -75,7 +77,7 @@ export function PortalProductRequestDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [i18n, reloadKey, requestId])
+  }, [i18n, reloadKey, requestId, subdomain])
 
   const back = (
     <Button
@@ -143,10 +145,22 @@ export function PortalProductRequestDetailPage() {
             </Badge>
           </div>
 
+          <PortalCancelAction key={`${subdomain}:${request.id}`} kind="requests" status={request.status} cancel={async () => {
+            const next = await cancelPortalProductRequest(request.id)
+            // Cancel returns metadata without the signed file URLs from the read model.
+            setRequest((current) => current?.id === next.id ? { ...current, status: next.status } : current)
+          }} />
           <p className="whitespace-pre-wrap text-sm">{request.description}</p>
           <p className="text-sm">
             {t("tenantPortal.catalog.quantity")}: {request.quantity}
           </p>
+
+          {(request.note ?? request.observation)?.trim() ? (
+            <section className="space-y-2">
+              <h2 className="text-sm font-medium">{t("tenantPortal.catalog.requestNote")}</h2>
+              <p className="whitespace-pre-wrap text-sm">{request.note ?? request.observation}</p>
+            </section>
+          ) : null}
 
           <section className="space-y-2">
             <h2 className="text-sm font-medium">

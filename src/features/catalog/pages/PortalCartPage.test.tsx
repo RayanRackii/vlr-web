@@ -129,14 +129,16 @@ describe("PortalCartPage validity gate", () => {
     expect(quantity).toBeEnabled()
     expect(quantity).toHaveValue(2)
 
-    replaceValue(note, "a".repeat(2001))
+    replaceValue(note, "a".repeat(1001))
     expect(submit()).toBeDisabled()
     expect(back).toBeEnabled()
     expect(quantity).toBeEnabled()
     expect(createOrderMock).not.toHaveBeenCalled()
 
-    replaceValue(note, "a".repeat(2000))
+    replaceValue(note, "a".repeat(1000))
     expect(submit()).toBeEnabled()
+    expect(note).toHaveAttribute("maxlength", "1000")
+    expect(screen.getByText("1000/1000")).toBeInTheDocument()
     expect(back).toBeEnabled()
     expect(quantity).toHaveValue(2)
 
@@ -146,25 +148,11 @@ describe("PortalCartPage validity gate", () => {
     expect(back).toBeEnabled()
   })
 
-  it("keeps Enviar pedido disabled when the cart is empty even with a valid note", async () => {
+  it("hides checkout controls when the cart is empty", async () => {
     renderCart()
-
-    const note = await screen.findByLabelText(
-      i18n.t("tenantPortal.catalog.customerNote"),
-    )
-    const submit = screen.getByRole("button", {
-      name: i18n.t("tenantPortal.catalog.submitOrder"),
-    })
-    const back = screen.getByRole("link", { name: i18n.t("common.back") })
-
-    expect(screen.getByText(i18n.t("tenantPortal.catalog.cartEmpty"))).toBeInTheDocument()
-    expect(submit).toBeDisabled()
-    expect(back).toBeEnabled()
-
-    await userEvent.setup().type(note, "Sem pressa")
-    expect(note).toHaveValue("Sem pressa")
-    expect(submit).toBeDisabled()
-    expect(back).toBeEnabled()
+    expect(await screen.findByText(i18n.t("tenantPortal.catalog.cartEmpty"))).toBeInTheDocument()
+    expect(screen.queryByLabelText(i18n.t("tenantPortal.catalog.customerNote"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("tenantPortal.catalog.submitOrder") })).not.toBeInTheDocument()
     expect(createOrderMock).not.toHaveBeenCalled()
   })
 

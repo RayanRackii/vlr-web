@@ -1,3 +1,4 @@
+import { portalCatalogPolicySchema, type PortalCatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
 import i18n from "@/lib/i18n"
 import { customerApi, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
@@ -230,5 +231,25 @@ export async function getPortalProductRequestFileUrl(
       throw error
     }
     throwPortalError(error, "apiErrors.loadCatalogFileUrl")
+  }
+}
+
+export async function getPortalCatalogPolicy(): Promise<PortalCatalogPolicy> {
+  try {
+    const response = await customerApi.get("/api/catalog/portal/policy")
+    return parseOrThrow(portalCatalogPolicySchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) throw error
+    throwPortalError(error, "catalog.policy.loadError")
+  }
+}
+
+export async function cancelPortalProductRequest(id: string): Promise<ProductRequest> {
+  try {
+    const response = await customerApi.post(`/api/catalog/portal/product-requests/${id}/cancel`)
+    return parseOrThrow(productRequestSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) throw error
+    throwPortalError(error, "tenantPortal.catalog.cancelRequestError")
   }
 }

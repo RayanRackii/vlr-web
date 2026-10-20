@@ -1,21 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useOutletContext, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
@@ -38,57 +28,31 @@ export function PortalOrderDetailPage() {
   const [order, setOrder] = useState<CatalogOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [cancelling, setCancelling] = useState(false)
-  const [confirmCancel, setConfirmCancel] = useState(false)
-  const cancellingRef = useRef(false)
-
-  async function load() {
+  const [reload, setReload] = useState(0)
+  const identity = `${subdomain}:${orderId}`
+  const [seenIdentity, setSeenIdentity] = useState(identity)
+  if (seenIdentity !== identity) {
+    setSeenIdentity(identity)
+    setOrder(null)
+    setLoading(true)
+    setLoadError(null)
+  }
+  useEffect(() => {
+    let stale = false
+    setLoading(true)
+    setLoadError(null)
     if (!orderId) {
       setLoadError(t("apiErrors.loadPortalOrder"))
       setLoading(false)
       return
     }
-    setLoading(true)
-    try {
-      const data = await getPortalCatalogOrder(orderId)
-      setOrder(data)
-      setLoadError(null)
-    } catch (error) {
-      setLoadError(
-        error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"),
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- load when id changes
-  }, [orderId])
-
-  async function onCancel() {
-    if (!order || cancellingRef.current) {
-      return
-    }
-    cancellingRef.current = true
-    setCancelling(true)
-    try {
-      const next = await cancelPortalCatalogOrder(order.id)
-      setOrder(next)
-      setConfirmCancel(false)
-      toast.success(t("tenantPortal.catalog.orderCancelled"))
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.cancelPortalOrder"),
-      )
-    } finally {
-      cancellingRef.current = false
-      setCancelling(false)
-    }
-  }
+    void getPortalCatalogOrder(orderId).then((data) => {
+      if (!stale) setOrder(data)
+    }).catch((error: unknown) => {
+      if (!stale) setLoadError(error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"))
+    }).finally(() => { if (!stale) setLoading(false) })
+    return () => { stale = true }
+  }, [orderId, subdomain, reload, t])
 
   if (loading) {
     return <PageContentSkeleton rows={4} />
@@ -104,7 +68,7 @@ export function PortalOrderDetailPage() {
           type="button"
           variant="outline"
           onClick={() => {
-            void load()
+            setReload((value) => value + 1)
           }}
         >
           {t("catalog.retry")}
@@ -139,55 +103,10 @@ export function PortalOrderDetailPage() {
         <Badge variant="outline">{t(`catalog.status.${order.status}`)}</Badge>
       </div>
 
-      {order.status === "Requested" ? (
-        <LoadingButton
-          type="button"
-          variant="outline"
-          loading={cancelling}
-          loadingLabel={t("tenantPortal.catalog.cancelling")}
-          onClick={() => {
-            setConfirmCancel(true)
-          }}
-        >
-          {t("tenantPortal.catalog.cancelOrder")}
-        </LoadingButton>
-      ) : null}
-
-      <AlertDialog
-        open={confirmCancel}
-        onOpenChange={(open) => {
-          if (!open && !cancelling) {
-            setConfirmCancel(false)
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("tenantPortal.catalog.cancelConfirmTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("tenantPortal.catalog.cancelConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelling}>
-              {t("tenantPortal.catalog.cancelConfirmDismiss")}
-            </AlertDialogCancel>
-            <LoadingButton
-              type="button"
-              variant="destructive"
-              loading={cancelling}
-              loadingLabel={t("tenantPortal.catalog.cancelling")}
-              onClick={() => {
-                void onCancel()
-              }}
-            >
-              {t("tenantPortal.catalog.cancelConfirmAction")}
-            </LoadingButton>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
+        const next = await cancelPortalCatalogOrder(order.id)
+        setOrder((current) => current?.id === next.id ? next : current)
+      }} />
 
       {order.customerNote ? (
         <p className="text-sm text-muted-foreground">

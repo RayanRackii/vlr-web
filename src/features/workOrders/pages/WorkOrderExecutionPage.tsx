@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +41,7 @@ import {
 } from "@/features/workOrders/services/workOrdersService"
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback"
 import { isAxiosError } from "@/lib/api"
+import { readBrowserOffline } from "@/lib/connectivity"
 import {
   clearSyncConflict,
   listQueuedTaskIds,
@@ -48,6 +50,7 @@ import {
   retrySyncConflict,
   subscribeSyncQueue,
   type OsSyncConflict,
+  type ProcessSyncQueueResult,
 } from "@/lib/offlineSync"
 
 function formatScheduledDate(value: string, locale: string): string {
@@ -596,8 +599,17 @@ export function WorkOrderExecutionPage() {
       void refreshSyncState()
     })
 
+    const announceSync = (result: ProcessSyncQueueResult) => {
+      if (!readBrowserOffline() && result.remaining === 0 && result.conflicts.length === 0) {
+        toast.success(t("workOrders.offline.synced"), { duration: 3000 })
+      }
+    }
+
     const syncAndRefresh = () => {
       void processSyncQueue()
+        .then((result) => {
+          if (result.processed > 0) announceSync(result)
+        })
         .catch((error: unknown) => {
           console.error("WorkOrderExecutionPage processSyncQueue failed", error)
         })
@@ -608,6 +620,7 @@ export function WorkOrderExecutionPage() {
 
     const handleOnline = () => {
       void processSyncQueue()
+        .then(announceSync)
         .catch((error: unknown) => {
           console.error("WorkOrderExecutionPage processSyncQueue failed", error)
         })
@@ -630,7 +643,7 @@ export function WorkOrderExecutionPage() {
       unsubscribe()
       window.removeEventListener("online", handleOnline)
     }
-  }, [loadWorkOrder, refreshSyncState])
+  }, [loadWorkOrder, refreshSyncState, t])
 
   async function discardConflict(conflict: OsSyncConflict) {
     setConflictBusyId(conflict.id)

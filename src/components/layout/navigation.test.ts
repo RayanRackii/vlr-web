@@ -109,6 +109,14 @@ describe("filterNavigationItemsByAccess", () => {
     ])
   })
 
+  it.each(["catalog.products.manage"])("shows catalog settings with %s", (permission) => {
+    const visible = filterNavigationItemsByAccess(appNavigationItems, ["catalog"], [permission])
+    const catalog = visible.find((item) => item.labelKey === "nav.catalog")
+    expect(catalog?.children?.some((item) => item.to === "/catalogo/configuracoes")).toBe(true)
+    const disabled = filterNavigationItemsByAccess(appNavigationItems, [], [permission])
+    expect(disabled.some((item) => item.labelKey === "nav.catalog")).toBe(false)
+  })
+
   it("shows Recursos and hides Ativos when rentals is on and inventory is off", () => {
     const visible = filterNavigationItemsByAccess(
       appNavigationItems,
