@@ -2113,6 +2113,7 @@
       "mandatory": "Obligatoria",
       "checkboxHint": "Marcar como hecho",
       "textPlaceholder": "Describa el resultado...",
+      "textCharacterCount": "{{count}}/{{max}} caracteres",
       "numberPlaceholder": "Ingrese el valor",
       "numberRange": "Mínimo: {{min}}, Máximo: {{max}}{{unit}}",
       "choicePlaceholder": "Seleccione una opción",

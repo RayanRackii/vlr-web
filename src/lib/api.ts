@@ -88,6 +88,10 @@ function createApiClient() {
 }
 
 function noteTransportFromSettled(error: unknown): void {
+  // An intentional cancellation says nothing about current reachability. In
+  // particular an old offline PATCH must not relatch a recovered connection.
+  if (axios.isCancel(error)) return
+
   if (isAxiosError(error) && error.response) {
     noteTransportSuccess()
     return

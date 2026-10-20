@@ -1,9 +1,10 @@
+import { CanceledError } from "axios"
 import { get, set, setMany } from "idb-keyval"
 import { z } from "zod"
 
 import { api, isAxiosError } from "@/lib/api"
 import { readApiErrorBody } from "@/lib/apiErrorText"
-import { noteTransportSuccess, readBrowserOffline } from "@/lib/connectivity"
+import { noteTransportFailure, noteTransportSuccess, readBrowserOffline } from "@/lib/connectivity"
 
 const OS_SYNC_QUEUE_KEY = "os_sync_queue"
 const OS_SYNC_CONFLICTS_KEY = "os_sync_conflicts"
@@ -298,6 +299,37 @@ async function settleQueuedVersion(
   await writeQueueAndConflicts(remaining, nextConflicts)
 }
 
+const TASK_PATCH_TIMEOUT_MS = 10_000
+
+/** Bound the lock even if the auth interceptor is still awaiting a session. */
+async function sendTaskPatch<T>(send: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  const interrupted = new Promise<never>((_resolve, reject) => {
+    controller.signal.addEventListener("abort", () => {
+      reject(new CanceledError("Task PATCH interrupted; value remains queued"))
+    }, { once: true })
+  })
+  window.addEventListener("offline", abort)
+  const timer = window.setTimeout(() => {
+    noteTransportFailure()
+    abort()
+  }, TASK_PATCH_TIMEOUT_MS)
+  try {
+    if (readBrowserOffline()) abort()
+    // Axios also receives the aborted signal: a delayed auth lookup cannot
+    // later send this old PATCH after the reconnect flush has applied it.
+    return await Promise.race([send(controller.signal), interrupted])
+  } finally {
+    window.clearTimeout(timer)
+    window.removeEventListener("offline", abort)
+  }
+}
+
+function isInterruptedPatch(error: unknown): boolean {
+  return isAxiosError(error) && error.code === "ERR_CANCELED"
+}
+
 /**
  * Online PATCH for one field. The new value replaces any queued value for
  * that field in one write (newer clientSequence) before the request, and
@@ -310,18 +342,18 @@ async function settleQueuedVersion(
  */
 export async function commitDirectTaskValuePatch<T>(
   item: TaskValuePatch,
-  send: () => Promise<T>,
+  send: (signal: AbortSignal) => Promise<T>,
 ): Promise<DirectTaskValueResult<T>> {
   try {
     return await withSyncQueueLock(async () => {
       const queued = await putTaskValuePatch(item)
 
       try {
-        const value = await send()
+        const value = await sendTaskPatch(send)
         await settleQueuedVersion(queued, null)
         return { status: "sent", value }
       } catch (error: unknown) {
-        if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
+        if (isNetworkConnectivityError(error) || isServerHttpError(error) || isInterruptedPatch(error)) {
           console.error("commitDirectTaskValuePatch kept queued", error)
           return { status: "queued" }
         }
@@ -381,11 +413,11 @@ export type ProcessSyncQueueResult = {
   conflicts: OsSyncConflict[]
 }
 
-type SyncQueueListener = () => void
+type SyncQueueListener = (result?: ProcessSyncQueueResult) => void
 
 const syncQueueListeners = new Set<SyncQueueListener>()
 
-/** Fires after each flush attempt so open pages can drop stale pending state. */
+/** Publishes each flush result once, regardless of which host started it. */
 export function subscribeSyncQueue(listener: SyncQueueListener): () => void {
   syncQueueListeners.add(listener)
   return () => {
@@ -393,10 +425,10 @@ export function subscribeSyncQueue(listener: SyncQueueListener): () => void {
   }
 }
 
-function notifySyncQueue(): void {
+function notifySyncQueue(result?: ProcessSyncQueueResult): void {
   for (const listener of syncQueueListeners) {
     try {
-      listener()
+      listener(result)
     } catch (error: unknown) {
       console.error("sync queue listener failed", error)
     }
@@ -429,10 +461,12 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
 
   for (const item of queue) {
     try {
-      await api.patch(
+      await sendTaskPatch((signal) => api.patch(
         `/api/work-orders/${item.workOrderId}/tasks/${item.taskId}`,
         { value: item.value },
-      )
+        { signal },
+      ))
+      noteTransportSuccess()
       processed += 1
       processedKeys.add(queueVersionKey(item))
       removedConflictIds.add(item.id)
@@ -443,7 +477,7 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
         error,
       })
 
-      if (isNetworkConnectivityError(error) || isServerHttpError(error)) {
+      if (isNetworkConnectivityError(error) || isServerHttpError(error) || isInterruptedPatch(error)) {
         break
       }
 
@@ -485,16 +519,14 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
 export function processSyncQueue(): Promise<ProcessSyncQueueResult> {
   const run = withSyncQueueLock(processSyncQueueBody)
 
-  return run
-    .then((result) => {
-      // An empty queue needs no connectivity probe on reconnect. A successful
-      // flush must also clear the offline latch before the detail reload.
-      if (!readBrowserOffline() && result.remaining === 0) {
-        noteTransportSuccess()
-      }
+  return run.then(
+    (result) => {
+      notifySyncQueue(result)
       return result
-    })
-    .finally(() => {
+    },
+    (error: unknown) => {
       notifySyncQueue()
-    })
+      throw error
+    },
+  )
 }

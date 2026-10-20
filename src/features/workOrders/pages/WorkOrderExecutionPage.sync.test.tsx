@@ -12,7 +12,7 @@ import {
   WORK_ORDER_ID,
 } from "@/features/workOrders/test/workOrderFixtures"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
-import { noteTransportFailure, resetConnectivityForTests } from "@/lib/connectivity"
+import { noteTransportFailure, noteTransportSuccess, resetConnectivityForTests } from "@/lib/connectivity"
 import i18n from "@/lib/i18n"
 import { toast } from "sonner"
 
@@ -143,9 +143,10 @@ describe("WorkOrderExecutionPage offline sync", () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
     await act(async () => { window.dispatchEvent(new Event("online")) })
 
-    expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
+    // An empty queue is not an HTTP response: keep the latch until reload.
+    expect(Boolean(screen.queryByText(i18n.t("workOrders.offline.title")))).toBe(!queued)
     expect(screen.queryByText(i18n.t("workOrders.execution.save.retrying"))).not.toBeInTheDocument()
-    expect(toast.success).toHaveBeenCalledExactlyOnceWith(i18n.t("workOrders.offline.synced"), { duration: 3000 })
+    expect(toast.success).toHaveBeenCalledTimes(queued ? 1 : 0)
     expect(apiGet).toHaveBeenCalledTimes(2)
     await act(async () => { releaseReload() })
   })
@@ -171,7 +172,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     }
   })
 
-  it("announces recovery from a transport failure with no queued edits", async () => {
+  it("does not announce synchronization with no queued edits", async () => {
     apiGet.mockResolvedValue({ data: textOrder(null), status: 200 })
     renderExecution()
     await screen.findByRole("textbox")
@@ -179,8 +180,10 @@ describe("WorkOrderExecutionPage offline sync", () => {
     act(() => { noteTransportFailure() })
     expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
     await act(async () => { window.dispatchEvent(new Event("online")) })
+    expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
+    act(() => { noteTransportSuccess() })
     expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
-    expect(toast.success).toHaveBeenCalledExactlyOnceWith(i18n.t("workOrders.offline.synced"), { duration: 3000 })
+    expect(toast.success).not.toHaveBeenCalled()
   })
 
   it("shows discard and the saved value when sync returns 409 and reload fails", async () => {
@@ -260,6 +263,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${WORK_ORDER_ID}/tasks/${TASK_ID}`,
       { value: "leitura" },
+      { signal: expect.any(AbortSignal) },
     )
   })
 
@@ -299,6 +303,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     expect(apiPatch).toHaveBeenCalledWith(
       `/api/work-orders/${WORK_ORDER_ID}/tasks/${TASK_ID}`,
       { value: "B" },
+      { signal: expect.any(AbortSignal) },
     )
     expect(storedOrder.tasks[0]?.value).toBe("B")
     expect(field).toHaveValue("A")

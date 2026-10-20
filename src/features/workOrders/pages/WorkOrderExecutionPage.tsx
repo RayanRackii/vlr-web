@@ -263,9 +263,10 @@ function TaskField({
   const persistValue = useCallback(
     async (value: string | null) => {
       const version = editVersionRef.current
+      const valueToSave = value?.trimEnd() || null
       setSaveState("saving")
       try {
-        const updated = await updateTaskValue(workOrderId, task.id, value)
+        const updated = await updateTaskValue(workOrderId, task.id, valueToSave)
         if (updated !== null) {
           onPersisted(updated, task.id)
           if (version === editVersionRef.current) {
@@ -388,6 +389,7 @@ function TaskField({
         <div className="space-y-2">
           <Textarea
             value={task.value ?? ""}
+            maxLength={1000}
             disabled={disabled}
             placeholder={t("workOrders.execution.textPlaceholder")}
             onChange={(event) => {
@@ -396,7 +398,21 @@ function TaskField({
               handleValueChange(nextValue)
               debouncedPersist(nextValue)
             }}
+            onBlur={() => {
+              const trimmedValue = task.value?.trimEnd() || null
+              if (trimmedValue !== (task.value ?? null)) {
+                debouncedPersist.cancel()
+                handleValueChange(trimmedValue)
+                void persistValue(trimmedValue)
+              }
+            }}
           />
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {t("workOrders.execution.textCharacterCount", {
+              count: (task.value ?? "").length,
+              max: 1000,
+            })}
+          </p>
           {saveIndicator}
         </div>
       )
@@ -595,21 +611,26 @@ export function WorkOrderExecutionPage() {
   }, [loadWorkOrder])
 
   useEffect(() => {
-    const unsubscribe = subscribeSyncQueue(() => {
-      void refreshSyncState()
-    })
-
     const announceSync = (result: ProcessSyncQueueResult) => {
-      if (!readBrowserOffline() && result.remaining === 0 && result.conflicts.length === 0) {
+      if (
+        result.processed > 0 &&
+        !readBrowserOffline() &&
+        result.remaining === 0 &&
+        result.conflicts.length === 0
+      ) {
         toast.success(t("workOrders.offline.synced"), { duration: 3000 })
       }
     }
 
+    // The host may own the successful flush. Observe its result too, once,
+    // rather than announcing only the page's (often empty) flush.
+    const unsubscribe = subscribeSyncQueue((result) => {
+      if (result) announceSync(result)
+      void refreshSyncState()
+    })
+
     const syncAndRefresh = () => {
       void processSyncQueue()
-        .then((result) => {
-          if (result.processed > 0) announceSync(result)
-        })
         .catch((error: unknown) => {
           console.error("WorkOrderExecutionPage processSyncQueue failed", error)
         })
@@ -620,7 +641,6 @@ export function WorkOrderExecutionPage() {
 
     const handleOnline = () => {
       void processSyncQueue()
-        .then(announceSync)
         .catch((error: unknown) => {
           console.error("WorkOrderExecutionPage processSyncQueue failed", error)
         })

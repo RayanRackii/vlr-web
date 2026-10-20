@@ -252,10 +252,11 @@ export async function updateTaskValue(
   }
 
   try {
-    const outcome = await commitDirectTaskValuePatch(patch, async () => {
+    const outcome = await commitDirectTaskValuePatch(patch, async (signal) => {
       const response = await api.patch<unknown>(
         `${WORK_ORDERS_PATH}/${workOrderId}/tasks/${taskId}`,
         payload,
+        { signal },
       )
       return response.data
     })

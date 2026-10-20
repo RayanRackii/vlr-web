@@ -9,6 +9,12 @@ import {
 import i18n from "@/lib/i18n"
 
 describe("localizeWorkOrderApiError", () => {
+  it("translates TASK_NOTE_TOO_LONG", () => {
+    expect(
+      localizeWorkOrderApiError({ code: "TASK_NOTE_TOO_LONG", error: "too long" }, "fallback"),
+    ).toBe(i18n.t("workOrders.errors.taskValue.textTooLong"))
+  })
+
   it("translates incomplete mandatory tasks without the server sentence", () => {
     expect(
       localizeWorkOrderApiError(
