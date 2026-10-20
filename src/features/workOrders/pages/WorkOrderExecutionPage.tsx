@@ -415,6 +415,11 @@ function TaskField({
               max: 1000,
             })}
           </p>
+          {(task.value ?? "").length === 1000 ? (
+            <p className="text-xs text-muted-foreground" role="status">
+              {t("workOrders.execution.textCharacterLimitReached")}
+            </p>
+          ) : null}
           {saveIndicator}
         </div>
       )

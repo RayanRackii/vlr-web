@@ -606,7 +606,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     })).not.toBeInTheDocument()
   })
 
-  it("limits task text to 1000 characters and displays its counter", async () => {
+  it("limits task text to 1000 characters and displays its counter and cap message", async () => {
     const task = makeWorkOrder().tasks[0]
     if (!task) throw new Error("missing task")
     getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({
@@ -616,6 +616,9 @@ describe("WorkOrderExecutionPage tasks", () => {
     const field = await screen.findByRole("textbox")
     expect(field).toHaveAttribute("maxlength", "1000")
     expect(screen.getByText(i18n.t("workOrders.execution.textCharacterCount", { count: 0, max: 1000 }))).toBeInTheDocument()
+    fireEvent.change(field, { target: { value: "a".repeat(1000) } })
+    expect(screen.getByText(i18n.t("workOrders.execution.textCharacterCount", { count: 1000, max: 1000 }))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("workOrders.execution.textCharacterLimitReached"))).toBeInTheDocument()
   })
 
   it.each([

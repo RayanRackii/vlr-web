@@ -75,6 +75,8 @@ import {
   agendaRefreshDates,
   agendaReservedSlotKey,
   findVisibleAgendaReservation,
+  isBlockingReservationStatus,
+  reservationCivilStart,
   parseAgendaReservationQuery,
   reservedSlotKeysForDate,
   withoutBookableReservedKeys,
@@ -97,6 +99,7 @@ import {
   isOwnBookedSlot,
   isPortalBookingInFlight,
   mergeServerReservations,
+  rememberOwnBooking,
   recentPortalReservations,
   releaseCancelledOwnSlots,
   subscribeAgendaQueries,
@@ -239,6 +242,7 @@ export function TenantPortalAgendaPage() {
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
   const scheduleRequest = useRef(0)
+  const checkIdleTimeoutRef = useRef<() => boolean>(() => false)
   const fetchedSelectionScope = useRef<string | null>(null)
   const lastWrittenSearch = useRef<string | null>(null)
   const pendingSearchWrite = useRef(false)
@@ -487,6 +491,7 @@ export function TenantPortalAgendaPage() {
         ) {
           return
         }
+        if (checkIdleTimeoutRef.current()) return
         const selected = partitionAgendaSlots(day.slots, date)
         setSlots(selected.bookable)
         setObservedSlots(selected.observed)
@@ -661,6 +666,7 @@ export function TenantPortalAgendaPage() {
         return
       }
 
+      if (checkIdleTimeoutRef.current()) return
       scheduleRequest.current += 1
       const selected = partitionAgendaSlots(match.day.slots, viewed)
       setSlotsLoading(false)
@@ -814,7 +820,7 @@ export function TenantPortalAgendaPage() {
     selectedAsset, selectedRentalAssetId, selectedSlot, slotsError, startTime,
   ])
 
-  useBookingIdleTimeout({
+  const checkIdleTimeout = useBookingIdleTimeout({
     selectionKey: signedIn && selectedRentalAssetId
       ? JSON.stringify([subdomain, menuItemId, date, startTime, selectedRentalAssetId])
       : null,
@@ -827,6 +833,10 @@ export function TenantPortalAgendaPage() {
       navigate(bookingIdleRedirectTarget(subdomain, menuItem?.bookingIdleRedirectPath), { replace: true })
     },
   })
+
+  useEffect(() => {
+    checkIdleTimeoutRef.current = checkIdleTimeout
+  }, [checkIdleTimeout])
 
   useRefreshOnForeground(() => {
     const day = viewedDateRef.current
@@ -933,6 +943,46 @@ export function TenantPortalAgendaPage() {
     const slot = selectedSlot
     const dayDate = date
     const generation = getAgendaSessionGeneration()
+
+    const applyReservationSuccess = (reservation: PortalReservation) => {
+      rememberOwnBooking(reservation)
+      toast.success(
+        t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatBookingMoney(reservation.totalAmount),
+          status: t(`rentals.reservations.statuses.${reservation.status}`, {
+            defaultValue: reservation.status,
+          }),
+        }),
+      )
+      setMine((current) => [
+        reservation,
+        ...current.filter((currentReservation) => currentReservation.id !== reservation.id),
+      ])
+      if (viewedDateRef.current === dayDate) {
+        setSlots((current) => dropScheduleSlot(current, slot))
+        setSelectedRentalAssetId(null)
+      }
+    }
+
+    const reservationForSlot = (
+      reservations: readonly PortalReservation[],
+    ): PortalReservation | null => {
+      const targetKey = agendaReservedSlotKey(
+        dayDate,
+        slot.rentalAssetId,
+        slot.startTime,
+      )
+      return reservations.find((reservation) => {
+        if (!isBlockingReservationStatus(reservation.status)) {
+          return false
+        }
+        const start = reservationCivilStart(reservation.startDateTime)
+        return start !== null && reservation.items.some((item) =>
+          agendaReservedSlotKey(start.date, item.rentalAssetId, start.time) === targetKey,
+        )
+      }) ?? null
+    }
+
     submittingRef.current = true
     setSubmitting(true)
     try {
@@ -961,22 +1011,7 @@ export function TenantPortalAgendaPage() {
       if (generation !== getAgendaSessionGeneration()) {
         return
       }
-      toast.success(
-        t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatBookingMoney(created.totalAmount),
-          status: t(`rentals.reservations.statuses.${created.status}`, {
-            defaultValue: created.status,
-          }),
-        }),
-      )
-      setMine((current) => [
-        created,
-        ...current.filter((reservation) => reservation.id !== created.id),
-      ])
-      if (viewedDateRef.current === dayDate) {
-        setSlots((current) => dropScheduleSlot(current, slot))
-        setSelectedRentalAssetId(null)
-      }
+      applyReservationSuccess(created)
     } catch (error) {
       if (
         generation !== getAgendaSessionGeneration()
@@ -1015,10 +1050,16 @@ export function TenantPortalAgendaPage() {
         ) {
           try {
             reservations = await listMyPortalReservations()
+            if (generation !== getAgendaSessionGeneration()) {
+              return
+            }
             setMine(reservations)
           } catch {
             // Keep the list already on screen when Minhas reservas cannot refresh.
           }
+        }
+        if (generation !== getAgendaSessionGeneration()) {
+          return
         }
         const heldByCustomer = customerAlreadyHoldsSlot(
           dayDate,
@@ -1026,6 +1067,15 @@ export function TenantPortalAgendaPage() {
           slot.startTime,
           reservations,
         )
+        const existingReservation = heldByCustomer
+          ? reservationForSlot(reservations)
+          : null
+        if (existingReservation) {
+          // The request may have timed out after the API created the booking.
+          // `/mine` is scoped to this customer, so this conflict is success.
+          applyReservationSuccess(existingReservation)
+          return
+        }
         toast.error(
           heldByCustomer ? (
             <SlotHeldByYouNotice

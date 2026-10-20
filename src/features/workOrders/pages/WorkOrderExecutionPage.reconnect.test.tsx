@@ -174,6 +174,36 @@ describe("execution reconnect with the real Axios interceptors and global sync h
     expect(toast.success).not.toHaveBeenCalled()
   })
 
+  it("does not render the load-failed banner while an already-loaded order refreshes offline", async () => {
+    let reads = 0
+    api.defaults.adapter = async (config) => {
+      reads += 1
+      if (!navigator.onLine) {
+        throw new AxiosError("Network Error", "ERR_NETWORK", config)
+      }
+      return { data: textOrder(null), status: 200, statusText: "OK", headers: {}, config }
+    }
+    const tree = () => (
+      <MemoryRouter initialEntries={[`/os/${WORK_ORDER_ID}`]}>
+        <TestPermissionProvider permissions={["os.work_orders.read"]} activeModules={["os"]}>
+          <Routes><Route path="/os/:id" element={<WorkOrderExecutionPage />} /></Routes>
+        </TestPermissionProvider>
+      </MemoryRouter>
+    )
+    const view = render(tree())
+    await settle()
+    expect(screen.getByRole("textbox")).toBeInTheDocument()
+
+    connection(false)
+    authSession.current = { access_token: "refreshed-offline" }
+    view.rerender(tree())
+    await settle()
+
+    expect(reads).toBeGreaterThan(1)
+    expect(screen.getByRole("textbox")).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.errors.loadOneFailed"))).not.toBeInTheDocument()
+  })
+
   it.each(["offline edit", "pending PATCH", "network failure", "timeout", "pending auth"])("clears the banner and announces exactly once after %s reconnects", async (scenario) => {
     let saved: string | null = null
     let holdPatch = scenario !== "offline edit" && scenario !== "pending auth"
