@@ -280,6 +280,13 @@ export function TenantPortalAgendaPage() {
     })
   }, [assets, lockedAssetId, lockedRentalAssetId])
 
+  const queueAssetIdsRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    queueAssetIdsRef.current = new Set(
+      visibleAssets.filter(isLocationQueueEnabled).map((asset) => asset.id),
+    )
+  }, [visibleAssets])
+
   const horizonDays = resolveAgendaHorizonDays(visibleAssets, policyHorizonDays)
   const horizonMaxDate = horizonEndDate(brazilTodayIsoDate(), horizonDays)
   const dayFetchGate =
@@ -492,7 +499,10 @@ export function TenantPortalAgendaPage() {
         const kept = times.find((window) => window.startTime === preferred)
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
         if (nextTime !== preferred) {
-          setSelectedRentalAssetId(null)
+          // The queue belongs to the Location's daily opening, not a slot.
+          setSelectedRentalAssetId((current) =>
+            current && queueAssetIdsRef.current.has(current) ? current : null,
+          )
         }
         preferredTimeRef.current = nextTime
         setStartTime(nextTime)
@@ -790,15 +800,17 @@ export function TenantPortalAgendaPage() {
     if (loading || schedulePending || slotsError || !selectedRentalAssetId) return
     const key = agendaReservedSlotKey(date, selectedRentalAssetId, startTime)
     if (
-      !selectedAsset || !selectedSlot || !isCustomerBookableSlot(selectedSlot) ||
-      optimisticReservedKeys.has(key) || derivedReservedKeys.has(key)
+      !selectedAsset || (!queueEnabled && (
+        !selectedSlot || !isCustomerBookableSlot(selectedSlot) ||
+        optimisticReservedKeys.has(key) || derivedReservedKeys.has(key)
+      ))
     ) {
       // Reconcile the user's choice only after asynchronous availability settles.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedRentalAssetId(null)
     }
   }, [
-    date, derivedReservedKeys, loading, optimisticReservedKeys, schedulePending,
+    date, derivedReservedKeys, loading, optimisticReservedKeys, queueEnabled, schedulePending,
     selectedAsset, selectedRentalAssetId, selectedSlot, slotsError, startTime,
   ])
 
@@ -911,6 +923,7 @@ export function TenantPortalAgendaPage() {
       schedulePending || slotsError ||
       !selectedAsset ||
       !selectedSlot ||
+      !spaceState(selectedAsset.id).available ||
       submittingRef.current ||
       quote.status === "loading"
     ) {
@@ -1064,7 +1077,9 @@ export function TenantPortalAgendaPage() {
   }
 
   async function onJoinAndReserve() {
-    if (schedulePending || slotsError || !selectedSlot || submittingRef.current || joinAndReserveLock.current) {
+    if (schedulePending || slotsError || !selectedSlot ||
+      !spaceState(selectedSlot.rentalAssetId).available ||
+      submittingRef.current || joinAndReserveLock.current) {
       return
     }
     const generation = getAgendaSessionGeneration()
@@ -1275,14 +1290,19 @@ export function TenantPortalAgendaPage() {
         isOwnBookedSlot(date, rentalAssetId, startTime) ||
         isPortalBookingInFlight(date, rentalAssetId, startTime))
     const available = Boolean(slot) && !reserved
+    // Selecting a queued Location opens its waiting room even without a slot.
+    // Availability still controls booking; queue access only controls selection.
+    const queueSelectable = isLocationQueueEnabled(
+      visibleAssets.find((asset) => asset.id === rentalAssetId),
+    )
     const detail =
       startTime.length === 0 || available
         ? null
         : t("tenantPortal.agenda.slotTaken")
     return {
       available,
-      disabled: !available,
-      selected: available && selectedRentalAssetId === rentalAssetId,
+      disabled: !available && !queueSelectable,
+      selected: (available || queueSelectable) && selectedRentalAssetId === rentalAssetId,
       pending: false,
       detail,
     }
@@ -1520,7 +1540,10 @@ export function TenantPortalAgendaPage() {
                     ? { backgroundColor: primary }
                     : undefined
                 }
-                disabled={queue.view.joinAndReserve && (schedulePending || slotsError || !selectedSlot)}
+                disabled={queue.view.joinAndReserve && (
+                  schedulePending || slotsError || !selectedSlot ||
+                  !spaceState(selectedSlot.rentalAssetId).available
+                )}
                 loading={queue.joining}
                 loadingLabel={
                   queue.view.joinAndReserve

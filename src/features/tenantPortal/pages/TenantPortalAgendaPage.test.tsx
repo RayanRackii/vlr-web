@@ -17,6 +17,7 @@ import enCommon from "@/locales/en/common.json"
 import esCommon from "@/locales/es/common.json"
 import ptBRCommon from "@/locales/pt-BR/common.json"
 import i18n from "@/lib/i18n"
+import { customerApi, publicApi } from "@/lib/api"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import type {
   PortalRentalAsset,
@@ -3987,6 +3988,178 @@ describe("TenantPortalAgendaPage queue explainer", () => {
   ) {
     await user.click(await screen.findByRole("button", { name }))
   }
+
+  it.each([
+    ["Closed", "absent"], ["Closed", "booked"],
+    ["WaitingRoom", "absent"], ["WaitingRoom", "booked"],
+  ] as const)("keeps Q-1 selectable with queue %s and slot %s", async (phase, slotState) => {
+    fetchAssets.mockResolvedValue([{
+      ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Q-1"),
+      queueEnabled: true, queueOpeningTime: "07:00:00",
+      effectiveMaxAdvanceBookingDays: 7,
+    }])
+    fetchDay.mockResolvedValue({ date: OTHER_DATE, slots: slotState === "absent" ? [] : [makeSlot({
+      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", rentalAssetId: ASSET_A_ID,
+      assetName: "Q-1", date: OTHER_DATE, startTime: "08:00:00", endTime: "09:00:00",
+      status: "booked", isBookableByCustomer: false,
+    })] })
+    const serverNow = phase === "Closed" ? "2026-10-15T09:00:00.000Z" : "2026-10-15T09:45:00.000Z"
+    vi.setSystemTime(new Date(serverNow))
+    fetchQueue.mockResolvedValue(queueStatus({
+      phase, serverNow,
+      opensAt: "2026-10-15T10:00:00.000Z",
+      waitingRoomOpensAt: "2026-10-15T09:30:00.000Z",
+    }))
+    const user = userEvent.setup()
+    renderAgenda()
+    const resource = await screen.findByRole("button", { name: /Q-1/ })
+    await waitFor(() => expect(resource).toBeEnabled())
+    await user.click(resource)
+    await screen.findByText(i18n.t("tenantPortal.agenda.queue.requiresTicket"))
+    expect(fetchQueue).toHaveBeenCalledWith(ASSET_A_ID)
+    expect(resource).toHaveAttribute("aria-pressed", "true")
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+    if (phase === "WaitingRoom") {
+      expect(await screen.findByRole("button", { name: (name) => name === i18n.t("tenantPortal.agenda.queue.join") })).toBeEnabled()
+    } else {
+      expect(await screen.findByText(i18n.t("tenantPortal.agenda.queue.closed", {
+        waitingRoom: "06:30", opensAt: "07:00",
+      }))).toBeInTheDocument()
+    }
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["foreground", "absent"], ["foreground", "booked"], ["foreground", "no-times"],
+    ["same-day", "absent"], ["same-day", "booked"], ["same-day", "no-times"],
+  ] as const)("keeps the waiting room after %s refresh with %s slots", async (refresh, slotState) => {
+    fetchQueue.mockResolvedValue(queueStatus({ phase: "WaitingRoom" }))
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await chooseCourt(user, "Quadra 1")
+    await screen.findByRole("button", { name: (name) => name === i18n.t("tenantPortal.agenda.queue.join") })
+    if (refresh === "same-day") {
+      await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    }
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    fetchDay.mockResolvedValue({ ...day, slots: slotState === "no-times" ? [] : day.slots.flatMap((slot) => {
+      if (slot.rentalAssetId !== ASSET_A_ID) return [slot]
+      return slotState === "absent" ? [] : [{ ...slot, status: "booked", isBookableByCustomer: false }]
+    }) })
+    const reads = fetchDay.mock.calls.length
+    vi.setSystemTime(Date.now() + 180_000)
+    await act(async () => {
+      if (refresh === "foreground") window.dispatchEvent(new Event("focus"))
+      else await router.navigate(`${router.state.location.pathname}${router.state.location.search}`)
+    })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(reads))
+    await waitFor(() => expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "true"))
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.queue.join"))).toBeEnabled()
+    expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+    expect(toastMessage).not.toHaveBeenCalled()
+  })
+
+  it.each(["join", "active"] as const)("preserves the FICC %s queue with an unbound menu and real response parsing", async (state) => {
+    const actualService = await vi.importActual<
+      typeof import("@/features/tenantPortal/services/tenantPortalService")
+    >("@/features/tenantPortal/services/tenantPortalService")
+    const assets = [
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Q-1"),
+        queueEnabled: true,
+        queueOpeningTime: "07:00:00",
+      },
+      ...Array.from({ length: 5 }, (_, index) => {
+        const number = index + 2
+        return makeAsset(
+          `22222222-2222-4222-8222-22222222222${number}`,
+          `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa0${number}`,
+          `Q-${number}`,
+        )
+      }),
+    ]
+    const publicGet = vi.spyOn(publicApi, "get").mockResolvedValue({ data: assets })
+    const customerGet = vi.spyOn(customerApi, "get").mockResolvedValue({
+      data: queueStatus({ myTicket: state === "active" ? queueTicket("Active") : null }),
+    })
+    fetchAssets.mockImplementation(actualService.fetchPortalRentalAssets)
+    fetchQueue.mockImplementation(actualService.fetchReservationQueue)
+    const menuId = "77777777-7777-4777-8777-777777777777"
+    const context: CustomerAppOutletContext = {
+      ...outletContext,
+      menu: [{ id: menuId, moduleName: "rentals", label: "Quadras", sortOrder: 0, isActive: true }],
+    }
+    const user = userEvent.setup()
+    try {
+      render(
+        <MemoryRouter initialEntries={[`/agenda/${menuId}`]}>
+          <Routes>
+            <Route element={<Outlet context={context} />}>
+              <Route path="/agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>,
+      )
+      await chooseCourt(user, "Q-1")
+      if (state === "join") {
+        expect(await screen.findByRole("button", {
+          name: (name) => name === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+        })).toBeEnabled()
+        expect(queryButtonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).not.toBeInTheDocument()
+      } else {
+        expect(await screen.findByText(i18n.t("tenantPortal.agenda.queue.yourTurn"))).toBeInTheDocument()
+        expect(screen.getByText(i18n.t("tenantPortal.agenda.queue.countdown", { time: "01:30" }))).toBeInTheDocument()
+      }
+      expect(publicGet).toHaveBeenCalledWith("/api/public/tenants/ficc/rental-assets")
+      expect(customerGet).toHaveBeenCalledWith(`/api/rental-assets/${ASSET_A_ID}/queue`)
+      expect(bookSlot).not.toHaveBeenCalled()
+      expect(createReservation).not.toHaveBeenCalled()
+      expect(screen.getByRole("button", { name: "Q-1" })).toHaveAttribute("aria-pressed", "true")
+    } finally {
+      publicGet.mockRestore()
+      customerGet.mockRestore()
+    }
+  })
+
+  it("keeps queue access but blocks join-and-reserve for an already reserved slot", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", "2026-10-15T11:00:00.000Z", {
+      endDateTime: "2026-10-15T12:00:00.000Z",
+    })])
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    const action = await screen.findByRole("button", { name: (name) => name === i18n.t("tenantPortal.agenda.queue.joinAndReserve") })
+    expect(action).toBeDisabled()
+    await user.click(action)
+    expect(joinQueue).not.toHaveBeenCalled()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("still expires an idle waiting-room selection without a slot", async () => {
+    fetchDay.mockResolvedValue({ date: OTHER_DATE, slots: [] })
+    fetchQueue.mockResolvedValue(queueStatus({ phase: "WaitingRoom" }))
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={["/agenda"]}>
+        <Routes>
+          <Route element={<Outlet context={outletContext} />}>
+            <Route path="/agenda" element={<TenantPortalAgendaPage />} />
+            <Route path="/t/ficc/app" element={<div>Portal destination</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByRole("button", { name: (name) => name === i18n.t("tenantPortal.agenda.queue.join") })
+    vi.setSystemTime(Date.now() + 660_000)
+    await act(async () => window.dispatchEvent(new Event("focus")))
+    expect(await screen.findByText("Portal destination")).toBeInTheDocument()
+    expect(toastMessage).toHaveBeenCalledWith(i18n.t("tenantPortal.agenda.selectionExpired"))
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(joinQueue).not.toHaveBeenCalled()
+  })
 
   it("does not expire the selection while a queue turn is active", async () => {
     fetchQueue.mockResolvedValue(queueStatus({ myTicket: queueTicket("Active") }))
