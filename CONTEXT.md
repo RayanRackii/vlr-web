@@ -138,6 +138,10 @@ _Avoid_: A module key `asset-registry`; forcing Inventory on for Rentals/PMOC/OS
 A Tenant-defined label for grouping Rentables (for example padel, society, tennis, meeting room, van). Used for filters, legends, and layout meaning — not a hard-coded enum in the platform. In inventory UI this is **AssetCategory** (Tipo) within an AssetFamily.
 _Avoid_: Fixed platform enum of sport types
 
+**Taxonomy**:
+Shared Tenant-scoped categories (a maximum three-level hierarchy) and free tags for consumer discovery. CatalogProduct is its first consumer through typed assignments; category filtering includes descendants and selected tags combine with AND. This is distinct from ResourceCategory/AssetCategory: taxonomy is commercial classification, not a rental or asset operational type.
+_Avoid_: Reusing AssetCategory or ResourceCategory as Catalog taxonomy; platform-wide labels
+
 **OccupancyKind**:
 A Tenant-defined kind of time occupancy on a Rentable (for example Open, Closed, Lesson, Event). Controls whether Customers may book that cell and whether it blocks capacity. Catalog is per Tenant, not a global closed set. When several kinds cover the same weekday interval, a higher-precedence kind occupies the overlap on unpublished days (Closed over Lesson over Open; a custom kind that blocks capacity sits with Lesson).
 _Avoid_: Hard-coded Lesson/Open/Closed-only enums as the only kinds; last-write-wins between overlapping templates

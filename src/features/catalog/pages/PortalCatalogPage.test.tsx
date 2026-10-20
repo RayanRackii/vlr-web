@@ -3,15 +3,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
-import { listPortalCatalogProducts } from "@/features/catalog/services/catalogPortalService"
+import { getPortalCatalogProduct, listPortalCatalogProducts } from "@/features/catalog/services/catalogPortalService"
+import { getPortalCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   listPortalCatalogProducts: vi.fn(),
+  getPortalCatalogProduct: vi.fn(),
+}))
+
+vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
+  getPortalCatalogTaxonomyOptions: vi.fn(),
 }))
 
 const listProductsMock = vi.mocked(listPortalCatalogProducts)
+const getProductMock = vi.mocked(getPortalCatalogProduct)
+const getTaxonomyOptionsMock = vi.mocked(getPortalCatalogTaxonomyOptions)
 const outletContext: CustomerAppOutletContext = {
   subdomain: "loja",
   branding: {
@@ -26,22 +34,31 @@ const outletContext: CustomerAppOutletContext = {
   menu: [],
 }
 
-function renderPage() {
-  render(
-    <MemoryRouter>
+function pageTree(context = outletContext, initialEntry = "/") {
+  return (
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route element={<Outlet context={outletContext} />}>
+        <Route element={<Outlet context={context} />}>
           <Route path="/" element={<PortalCatalogPage />} />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+}
+
+function renderPage(context = outletContext, initialEntry = "/") {
+  return render(pageTree(context, initialEntry))
 }
 
 describe("PortalCatalogPage search", () => {
   beforeEach(() => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
     listProductsMock.mockReset()
+    getProductMock.mockReset()
+    getTaxonomyOptionsMock.mockReset()
     listProductsMock.mockResolvedValue([])
+    getTaxonomyOptionsMock.mockResolvedValue({ categories: [], tags: [] })
   })
 
   afterEach(async () => {
@@ -93,4 +110,103 @@ describe("PortalCatalogPage search", () => {
       expect(listProductsMock).toHaveBeenLastCalledWith(term)
     },
   )
+
+  it("makes a bounded number of requests when taxonomy filters are unchanged", async () => {
+    renderPage()
+
+    await waitFor(() => expect(listProductsMock).toHaveBeenCalledTimes(1))
+    await new Promise((resolve) => window.setTimeout(resolve, 25))
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("clears an explicit category selection instead of preserving it", async () => {
+    const category = "11111111-1111-4111-8111-111111111111"
+    getTaxonomyOptionsMock.mockResolvedValue({
+      categories: [{ id: category, name: "Furniture", slug: "furniture", parentId: null, icon: "folder", sortOrder: 0 }],
+      tags: [],
+    })
+    renderPage(outletContext, `/?category=${category}`)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Limpar filtros" }))
+
+    await waitFor(() => expect(listProductsMock).toHaveBeenLastCalledWith(""))
+  })
+
+  it("does not let an old portal identity response populate the replacement tenant", async () => {
+    let resolveOld: (products: Awaited<ReturnType<typeof listPortalCatalogProducts>>) => void = () => undefined
+    listProductsMock
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve }))
+      .mockResolvedValueOnce([])
+    const view = renderPage()
+    await waitFor(() => expect(listProductsMock).toHaveBeenCalledTimes(1))
+
+    const replacement = { ...outletContext, subdomain: "other", branding: { ...outletContext.branding, subdomain: "other" } }
+    view.rerender(pageTree(replacement))
+    await waitFor(() => expect(listProductsMock).toHaveBeenCalledTimes(2))
+
+    resolveOld([{
+      id: "11111111-1111-4111-8111-111111111111",
+      name: "Old tenant product",
+      code: null,
+      description: null,
+      price: 12,
+      currency: "BRL",
+      files: [],
+    }])
+
+    await screen.findByText("Nenhum produto ativo no momento.")
+    expect(screen.queryByText("Old tenant product")).not.toBeInTheDocument()
+  })
+
+  it("keeps an unresolved cart product explicit and offers a retry", async () => {
+    window.localStorage.setItem("rolvix.customer.id", "customer")
+    window.sessionStorage.setItem(
+      "rolvix.catalog.cart.loja.customer",
+      JSON.stringify([{ productId: "11111111-1111-4111-8111-111111111111", quantity: 1 }]),
+    )
+    getProductMock.mockRejectedValue(new Error("network"))
+    renderPage()
+
+    expect(await screen.findByText("Não foi possível carregar este produto.")).toBeInTheDocument()
+    expect(screen.queryByText("Sob consulta")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
+    await waitFor(() => expect(getProductMock).toHaveBeenCalledTimes(2))
+  })
+
+  it("keeps a hidden cart detail request alive when the catalog list changes", async () => {
+    const productId = "11111111-1111-4111-8111-111111111111"
+    window.localStorage.setItem("rolvix.customer.id", "customer")
+    window.sessionStorage.setItem(
+      "rolvix.catalog.cart.loja.customer",
+      JSON.stringify([{ productId, quantity: 1 }]),
+    )
+
+    let resolveList: (products: Awaited<ReturnType<typeof listPortalCatalogProducts>>) => void = () => undefined
+    let resolveDetail: (product: Awaited<ReturnType<typeof getPortalCatalogProduct>>) => void = () => undefined
+    let detailSignal: AbortSignal | undefined
+    listProductsMock.mockImplementationOnce(() => new Promise((resolve) => { resolveList = resolve }))
+    getProductMock.mockImplementation((_id, options) => {
+      detailSignal = options?.signal
+      return new Promise((resolve) => { resolveDetail = resolve })
+    })
+
+    renderPage()
+    await waitFor(() => expect(getProductMock).toHaveBeenCalledWith(productId, expect.anything()))
+
+    resolveList([])
+    await screen.findByText("Nenhum produto ativo no momento.")
+    expect(detailSignal?.aborted).toBe(false)
+
+    resolveDetail({
+      id: productId,
+      name: "Produto oculto",
+      code: null,
+      description: null,
+      price: 12,
+      currency: "BRL",
+      files: [],
+    })
+
+    expect(await screen.findByText("Produto oculto")).toBeInTheDocument()
+  })
 })
