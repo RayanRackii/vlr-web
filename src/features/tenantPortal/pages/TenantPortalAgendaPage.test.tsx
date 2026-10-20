@@ -1,3 +1,4 @@
+import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -870,6 +871,20 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
     expect(cancelButton()).not.toBeInTheDocument()
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it.each(["preflight", "cancel"])("shows only session expired on %s failure", async (stage) => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
+    renderAgenda()
+    await waitForMineList()
+    toastError.mockClear()
+    if (stage === "preflight") listMine.mockRejectedValue(new PortalSessionExpiredError())
+    else cancelMine.mockRejectedValue(new PortalSessionExpiredError())
+    await confirmCancel(user)
+    await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
+    expect(toastError).toHaveBeenCalledWith(i18n.t("tenantPortal.sessionExpired"), { id: "portal-session-expired" })
+    if (stage === "preflight") expect(cancelMine).not.toHaveBeenCalled()
   })
 
   it("clears Cancelando and toasts when cancel fails even if refetch hangs", async () => {
@@ -1851,6 +1866,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).toHaveTextContent("08:00")
     })
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("does not offer a date before today in America/Sao_Paulo", async () => {
@@ -1941,6 +1959,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("explains a disabled calendar day without moving the selection", async () => {
@@ -2455,10 +2476,10 @@ describe("TenantPortalAgendaPage time selector", () => {
       ).toBeInTheDocument()
 
       await i18n.changeLanguage("es")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total 80,00 R$")
+      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
       expect(screen.getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
       expect(
-        screen.getByText("Disponible. Estimación: 80,00 R$"),
+        screen.getByText("Disponible. Estimación: R$ 80,00"),
       ).toBeInTheDocument()
     } finally {
       await i18n.changeLanguage("pt-BR")
@@ -2590,6 +2611,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
+    fireEvent.blur(dateInput)
+    expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
+    expect(dateInput).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("says the time was just taken and refreshes the agenda after a booking conflict", async () => {
@@ -3417,7 +3441,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(
         screen.getByRole("button", { name: "Quadra 1" }),
       ).toHaveAttribute("aria-pressed", "true")
-      expect(formatMoney(80)).toBe("80,00 R$")
+      expect(formatMoney(80)).toBe("R$ 80,00")
       expect(
         screen.getByText(
           i18n.t("tenantPortal.agenda.available", {

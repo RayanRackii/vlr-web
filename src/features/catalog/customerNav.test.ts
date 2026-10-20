@@ -277,6 +277,13 @@ describe("localizedCustomerMenuLabel", () => {
     await i18n.changeLanguage("pt-BR")
   })
 
+  it("localizes resource booking labels without translating the resource name", async () => {
+    await i18n.changeLanguage("en")
+    expect(localizedCustomerMenuLabel("rentals", "Reservar Sala A", i18n.t)).toBe("Book Sala A")
+    await i18n.changeLanguage("es")
+    expect(localizedCustomerMenuLabel("rentals", "Book Sala A", i18n.t)).toBe("Reservar Sala A")
+  })
+
   it("translates the stock rentals label and keeps tenant resource names", async () => {
     const stock: ModuleMenuItem = {
       ...RENTALS_B,

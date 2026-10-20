@@ -1,7 +1,7 @@
 export const ptBRPermissionCopy = {
   workOrders: {
     emptyAssigned: {
-      Open: "Nenhuma OS aberta atribu?da a voc?.",
+      Open: "Nenhuma OS aberta atribuída a você.",
       Pending: "Nenhuma OS pendente atribuída a você.",
       InProgress: "Nenhuma OS em andamento atribuída a você.",
       Completed: "Nenhuma OS concluída atribuída a você.",

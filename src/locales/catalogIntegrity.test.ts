@@ -22,6 +22,9 @@ function leafKeys(value: unknown, prefix = ""): string[] {
 }
 
 describe("translation catalog integrity", () => {
+  it("keeps the assigned work order empty state in UTF-8", () => {
+    expect(i18n.t("workOrders.emptyAssigned.Open", { lng: "pt-BR" })).toBe("Nenhuma OS aberta atribuída a você.")
+  })
   it.each([
     { locale: "en", catalog: en },
     { locale: "es", catalog: es },

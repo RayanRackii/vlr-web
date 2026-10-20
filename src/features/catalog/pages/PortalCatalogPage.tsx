@@ -121,7 +121,9 @@ export function PortalCatalogPage() {
         <PageContentSkeleton rows={4} />
       ) : products.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.empty")}
+          {search.trim()
+            ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
+            : t("tenantPortal.catalog.empty")}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

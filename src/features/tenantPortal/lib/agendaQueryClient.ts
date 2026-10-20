@@ -1,3 +1,4 @@
+import { PortalSessionExpiredError, notifyPortalSessionExpired } from "./portalSessionError"
 import { toast } from "sonner"
 
 import {
@@ -127,6 +128,10 @@ export function isPortalBookingInFlight(
 }
 
 function reportRefreshError(error: unknown): void {
+  if (error instanceof PortalSessionExpiredError) {
+    notifyPortalSessionExpired()
+    return
+  }
   toast.error(
     describeBookingError(error, appI18n.t("tenantPortal.agenda.slotsError")),
   )

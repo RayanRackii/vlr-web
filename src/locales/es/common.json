@@ -264,6 +264,7 @@
     }
   },
   "tenantPortal": {
+    "sessionExpired": "Sesión expirada",
     "defaultTagline": "Inicie sesión para reservar y recibir avisos.",
     "header": {
       "ctaRegister": "Registrarse"
@@ -509,6 +510,7 @@
       "subtitle": "Productos disponibles para solicitar.",
       "searchPlaceholder": "Buscar por nombre o código",
       "empty": "No hay productos activos en este momento.",
+      "searchEmpty": "No se encontraron productos para \"{{term}}\"",
       "priceOnRequest": "Bajo consulta",
       "quantity": "Cantidad",
       "quantityFor": "Cantidad de {{name}}",
@@ -1067,7 +1069,7 @@
     "workOrders": "OT",
     "registrationFields": "Registro portal",
     "moduleMenu": "Menú del portal",
-    "schedule": "Escala / agenda",
+    "schedule": "Horarios / agenda",
     "layout": "Layout",
     "reservations": "Reservas",
     "bookingPolicy": "Política de reservas",
@@ -1710,7 +1712,7 @@
         "status": "Estado",
         "isRentable": "Disponible para reserva / alquiler",
         "requiresDeposit": "¿Es necesario un pago previo?",
-        "queueEnabled": "Fila de reservas",
+        "queueEnabled": "Cola de reservas",
         "queueOpeningTime": "Hora de apertura de la fila de reservas",
         "requiresMaintenance": "Requiere mantenimiento",
         "rentalType": "Tipo de alquiler",
@@ -2149,6 +2151,7 @@
       }
     },
     "offline": {
+      "synced": "Sincronizado",
       "title": "Modo Sin Conexión",
       "banner": "Modo Sin Conexión: Los cambios se están guardando localmente.",
       "waitingToSync": "Esperando sincronizar",
@@ -2284,7 +2287,7 @@
       "rentals.schedule.read": "Ver agenda",
       "rentals.schedule.write": "Editar agenda",
       "rentals.assets.read": "Ver recursos de alquiler",
-      "rentals.assets.write": "Editar política de escala",
+      "rentals.assets.write": "Editar política de horarios",
       "rentals.pricing.read": "Ver precios",
       "rentals.pricing.write": "Editar precios",
       "rentals.pricing.bulk_write": "Editar precios en lote",
@@ -2875,7 +2878,7 @@
       "noneOpen": "No hay horario abierto en esta fecha. Los intervalos existentes ya están reservados o son clases."
     },
     "schedule": {
-      "title": "Escala / agenda",
+      "title": "Horarios / agenda",
       "description": "Operación de un día concreto y configuración semanal recurrente de los espacios.",
       "descriptionOperational": "Visualice la ocupación, ajuste un día y configure reglas semanales para espacios y bienes.",
       "rentable": "Espacio / bien",
@@ -3092,7 +3095,7 @@
         "rentalType": "Tipo de alquiler",
         "totalQuantity": "Cantidad",
         "requiresDeposit": "¿Es necesario un pago previo?",
-        "queueEnabled": "Fila de reservas",
+        "queueEnabled": "Cola de reservas",
         "queueOpeningTime": "Hora de apertura de la fila",
         "location": "Ubicación",
         "locationPlaceholder": "Ej.: Bloque A",

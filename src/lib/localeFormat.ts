@@ -57,7 +57,7 @@ function joinCurrencyParts(parts: readonly Intl.NumberFormatPart[]): string {
  * (`pt-BR`, `en`, `es`), not a resource type. The symbol is the currency
  * symbol (`R$`, `€`), including when the locale would otherwise print the
  * ISO code. Grouping follows that locale, including amounts under 10_000
- * (`es` prints `1.500,00 R$`, not `1500,00 R$`).
+ * (Spanish uses pt-BR for BRL: `R$ 1.500,00`).
  */
 export function formatLocaleCurrency(
   amount: number,
@@ -68,7 +68,10 @@ export function formatLocaleCurrency(
   const normalizedCurrency = currency.trim().toUpperCase()
   try {
     const symbol = currencySymbol(normalizedCurrency)
-    const parts = new Intl.NumberFormat(locale, {
+    const moneyLocale = normalizedCurrency === "BRL" && locale.toLowerCase().startsWith("es")
+      ? "pt-BR"
+      : locale
+    const parts = new Intl.NumberFormat(moneyLocale, {
       style: "currency",
       currency: normalizedCurrency,
       currencyDisplay: "symbol",

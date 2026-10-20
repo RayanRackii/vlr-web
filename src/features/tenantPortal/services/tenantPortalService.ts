@@ -1,3 +1,4 @@
+import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { z } from "zod"
 
 import {
@@ -1037,6 +1038,9 @@ export async function listMyPortalReservations(): Promise<PortalReservation[]> {
     }
     return parsed.data
   } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 401) {
+      throw new PortalSessionExpiredError()
+    }
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),
     )
@@ -1056,6 +1060,9 @@ export async function cancelMyPortalReservation(
     }
     return parsed.data
   } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 401) {
+      throw new PortalSessionExpiredError()
+    }
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }

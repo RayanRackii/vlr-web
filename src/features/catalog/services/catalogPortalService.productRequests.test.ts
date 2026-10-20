@@ -149,3 +149,8 @@ describe("getPortalProductRequest", () => {
     )
   })
 })
+
+ it.each(["note", "observation"] as const)("preserves the %s returned by the API", async (field) => {
+   customerGet.mockResolvedValue({ data: { ...portalItem, [field]: "Handle carefully" } })
+   expect((await getPortalProductRequest(REQUEST_ID))[field]).toBe("Handle carefully")
+ })

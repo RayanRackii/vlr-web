@@ -148,6 +148,13 @@ export function PortalProductRequestDetailPage() {
             {t("tenantPortal.catalog.quantity")}: {request.quantity}
           </p>
 
+          {(request.note ?? request.observation)?.trim() ? (
+            <section className="space-y-2">
+              <h2 className="text-sm font-medium">{t("tenantPortal.catalog.requestNote")}</h2>
+              <p className="whitespace-pre-wrap text-sm">{request.note ?? request.observation}</p>
+            </section>
+          ) : null}
+
           <section className="space-y-2">
             <h2 className="text-sm font-medium">
               {t("tenantPortal.catalog.requestFilesTitle")}
