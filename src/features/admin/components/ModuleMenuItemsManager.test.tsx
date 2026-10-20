@@ -12,6 +12,7 @@ import {
   deleteModuleMenuItem,
   fetchPortalRentalAssets,
   fetchTenantBranding,
+  listAdminModuleMenuItems,
   listTenantModuleMenuItems,
   updateModuleMenuItem,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -344,6 +345,57 @@ describe("ModuleMenuItemsManager", () => {
       }),
     )
     expect(body).not.toHaveProperty("moduleName")
+  })
+
+  it("validates and saves the super-admin idle settings, including clearing both to null", async () => {
+    const user = userEvent.setup()
+    vi.mocked(listAdminModuleMenuItems).mockResolvedValue([{
+      ...RENTALS_ITEM, bookingIdleTimeoutMinutes: 15, bookingIdleRedirectPath: "/agenda",
+    }])
+    render(<MemoryRouter>
+      <ModuleMenuItemsManager tenantId="tenant-id" activeModules={ACTIVE_MODULES} canWrite />
+    </MemoryRouter>)
+    await user.click(within(await screen.findByRole("listitem")).getByRole("button", {
+      name: i18n.t("common.edit"),
+    }))
+    const dialog = await screen.findByRole("dialog")
+    const minutes = within(dialog).getByLabelText(i18n.t("admin.moduleMenu.bookingIdleTimeoutMinutes"))
+    const redirect = within(dialog).getByLabelText(i18n.t("admin.moduleMenu.bookingIdleRedirectPath"))
+    const save = within(dialog).getByRole("button", { name: i18n.t("admin.moduleMenu.save") })
+    expect(minutes).toHaveValue(15)
+    expect(redirect).toHaveValue("/agenda")
+    for (const value of ["0", "121", "1.5"]) {
+      await user.clear(minutes)
+      await user.type(minutes, value)
+      expect(minutes).toHaveAttribute("aria-invalid", "true")
+      expect(save).toBeDisabled()
+    }
+    await user.clear(minutes)
+    await user.type(minutes, "120")
+    for (const value of ["agenda", "https://example.com", "//example.com", "/\\\\example.com"]) {
+      await user.clear(redirect)
+      await user.type(redirect, value)
+      expect(redirect).toHaveAttribute("aria-invalid", "true")
+      expect(save).toBeDisabled()
+    }
+    await user.clear(redirect)
+    await user.type(redirect, "/agenda?view=spaces")
+    expect(save).toBeEnabled()
+    await user.click(save)
+    await waitFor(() => expect(updateMock).toHaveBeenCalledWith(RENTALS_ITEM.id,
+      expect.objectContaining({ bookingIdleTimeoutMinutes: 120, bookingIdleRedirectPath: "/agenda?view=spaces" }),
+      "tenant-id",
+    ))
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    await user.click(within(listRow(RENTALS_ITEM.label)).getByRole("button", { name: i18n.t("common.edit") }))
+    await user.clear(screen.getByLabelText(i18n.t("admin.moduleMenu.bookingIdleTimeoutMinutes")))
+    await user.clear(screen.getByLabelText(i18n.t("admin.moduleMenu.bookingIdleRedirectPath")))
+    await user.click(screen.getByRole("button", { name: i18n.t("admin.moduleMenu.save") }))
+    await waitFor(() => expect(updateMock).toHaveBeenLastCalledWith(RENTALS_ITEM.id,
+      expect.objectContaining({ bookingIdleTimeoutMinutes: null, bookingIdleRedirectPath: null }),
+      "tenant-id",
+    ))
   })
 
   it("confirms delete before calling the API", async () => {

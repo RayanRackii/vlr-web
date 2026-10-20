@@ -468,7 +468,8 @@
           "QUEUE_TURN_ALREADY_USED": "Ya usaste este turno para reservar.",
           "QUEUE_WAITING_ROOM_CLOSED": "La fila aún no está abierta."
         }
-      }
+      },
+      "selectionExpired": "Tu selección ha expirado"
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -2505,7 +2506,11 @@
         "OS": "Permite vincular servicios a los recursos del entorno."
       },
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
-      "catalogAutoNav": "El módulo añade automáticamente:"
+      "catalogAutoNav": "El módulo añade automáticamente:",
+      "bookingIdleTimeoutMinutes": "Tiempo de inactividad de la selección (minutos, opcional)",
+      "bookingIdleTimeoutHint": "Introduce un número entero de 1 a 120. En blanco: 10 minutos.",
+      "bookingIdleRedirectPath": "Destino tras expirar (opcional)",
+      "bookingIdleRedirectHint": "Ruta dentro del portal que empiece por / (p. ej., /agenda). En blanco: inicio del portal."
     },
     "dashboard": {
       "title": "Panel Super-Admin",

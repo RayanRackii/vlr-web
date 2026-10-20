@@ -51,6 +51,10 @@ import type {
   TenantBranding,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  bookingIdleRedirectPathSchema,
+  bookingIdleTimeoutMinutesSchema,
+} from "@/features/tenantPortal/schemas/bookingIdleSettingsSchema"
+import {
   createModuleMenuItem,
   deleteModuleMenuItem,
   fetchPortalRentalAssets,
@@ -69,6 +73,12 @@ const editorSchema = z.object({
   label: z.string().trim().min(1),
   isActive: z.boolean(),
   rentalAssetId: z.string(),
+  bookingIdleTimeoutMinutes: z.string().refine((value) =>
+    value.trim() === "" || bookingIdleTimeoutMinutesSchema.safeParse(Number(value)).success,
+  ),
+  bookingIdleRedirectPath: z.string().trim().refine((value) =>
+    value === "" || bookingIdleRedirectPathSchema.safeParse(value).success,
+  ),
 })
 
 type EditorValues = z.infer<typeof editorSchema>
@@ -181,6 +191,8 @@ export function ModuleMenuItemsManager({
     label: "",
     isActive: true,
     rentalAssetId: "",
+    bookingIdleTimeoutMinutes: "",
+    bookingIdleRedirectPath: "",
   })
   const [activeNavId, setActiveNavId] = useState<string | null>(null)
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop")
@@ -332,6 +344,8 @@ export function ModuleMenuItemsManager({
       }),
       isActive: true,
       rentalAssetId: "",
+      bookingIdleTimeoutMinutes: "",
+      bookingIdleRedirectPath: "",
     }
     setEditor(next)
     setDialog({ mode: "create" })
@@ -344,6 +358,8 @@ export function ModuleMenuItemsManager({
       label: item.label,
       isActive: item.isActive,
       rentalAssetId: item.rentalAssetId ?? "",
+      bookingIdleTimeoutMinutes: item.bookingIdleTimeoutMinutes?.toString() ?? "",
+      bookingIdleRedirectPath: item.bookingIdleRedirectPath ?? "",
     })
     setDialog({ mode: "edit", item })
   }
@@ -397,6 +413,11 @@ export function ModuleMenuItemsManager({
             sortOrder: dialog.item.sortOrder,
             isActive: parsed.data.isActive,
             rentalAssetId,
+            ...(tenantId && canonicalModule === "rentals" ? {
+              bookingIdleTimeoutMinutes: parsed.data.bookingIdleTimeoutMinutes.trim() === ""
+                ? null : Number(parsed.data.bookingIdleTimeoutMinutes),
+              bookingIdleRedirectPath: parsed.data.bookingIdleRedirectPath || null,
+            } : {}),
           },
           tenantId,
         )
@@ -454,6 +475,10 @@ export function ModuleMenuItemsManager({
           sortOrder: swap.sortOrder,
           isActive: current.isActive,
           rentalAssetId: current.rentalAssetId ?? null,
+          ...(tenantId ? {
+            bookingIdleTimeoutMinutes: current.bookingIdleTimeoutMinutes ?? null,
+            bookingIdleRedirectPath: current.bookingIdleRedirectPath ?? null,
+          } : {}),
         },
         tenantId,
       )
@@ -464,6 +489,10 @@ export function ModuleMenuItemsManager({
           sortOrder: current.sortOrder,
           isActive: swap.isActive,
           rentalAssetId: swap.rentalAssetId ?? null,
+          ...(tenantId ? {
+            bookingIdleTimeoutMinutes: swap.bookingIdleTimeoutMinutes ?? null,
+            bookingIdleRedirectPath: swap.bookingIdleRedirectPath ?? null,
+          } : {}),
         },
         tenantId,
       )
@@ -835,6 +864,51 @@ export function ModuleMenuItemsManager({
                 />
               </div>
             )}
+
+            {tenantId && isRentals && dialog?.mode === "edit" ? (
+              <>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="module-menu-idle-minutes">
+                    {t("admin.moduleMenu.bookingIdleTimeoutMinutes")}
+                  </Label>
+                  <Input
+                    id="module-menu-idle-minutes"
+                    type="number"
+                    min={1}
+                    max={120}
+                    step={1}
+                    value={editor.bookingIdleTimeoutMinutes}
+                    aria-describedby="module-menu-idle-minutes-hint"
+                    aria-invalid={editor.bookingIdleTimeoutMinutes !== "" &&
+                      !bookingIdleTimeoutMinutesSchema.safeParse(Number(editor.bookingIdleTimeoutMinutes)).success}
+                    onChange={(event) => setEditor((current) => ({
+                      ...current, bookingIdleTimeoutMinutes: event.target.value,
+                    }))}
+                  />
+                  <p id="module-menu-idle-minutes-hint" className="text-xs text-muted-foreground">
+                    {t("admin.moduleMenu.bookingIdleTimeoutHint")}
+                  </p>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="module-menu-idle-redirect">
+                    {t("admin.moduleMenu.bookingIdleRedirectPath")}
+                  </Label>
+                  <Input
+                    id="module-menu-idle-redirect"
+                    value={editor.bookingIdleRedirectPath}
+                    aria-describedby="module-menu-idle-redirect-hint"
+                    aria-invalid={editor.bookingIdleRedirectPath.trim() !== "" &&
+                      !bookingIdleRedirectPathSchema.safeParse(editor.bookingIdleRedirectPath.trim()).success}
+                    onChange={(event) => setEditor((current) => ({
+                      ...current, bookingIdleRedirectPath: event.target.value,
+                    }))}
+                  />
+                  <p id="module-menu-idle-redirect-hint" className="text-xs text-muted-foreground">
+                    {t("admin.moduleMenu.bookingIdleRedirectHint")}
+                  </p>
+                </div>
+              </>
+            ) : null}
 
             <div className="flex items-center gap-2">
               <Checkbox

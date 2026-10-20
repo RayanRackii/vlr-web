@@ -1,5 +1,10 @@
 import { z } from "zod"
 
+import {
+  bookingIdleRedirectPathSchema,
+  bookingIdleTimeoutMinutesSchema,
+} from "./bookingIdleSettingsSchema"
+
 export const tenantBrandingSchema = z.object({
   subdomain: z.string(),
   displayName: z.string(),
@@ -31,6 +36,8 @@ export const moduleMenuItemSchema = z.object({
   isActive: z.boolean(),
   rentalAssetId: z.string().uuid().nullable().optional(),
   assetId: z.string().uuid().nullable().optional(),
+  bookingIdleTimeoutMinutes: bookingIdleTimeoutMinutesSchema.nullable().optional(),
+  bookingIdleRedirectPath: bookingIdleRedirectPathSchema.nullable().optional(),
 })
 
 export type ModuleMenuItem = z.infer<typeof moduleMenuItemSchema>
