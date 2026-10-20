@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -21,6 +21,10 @@ import {
   resetAgendaQueryClientForTests,
 } from "@/features/tenantPortal/lib/agendaQueryClient"
 import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
+import {
+  clearAgendaSelectionNotice,
+  showAgendaSelectionNotice,
+} from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
 import {
   clearCustomerSession,
@@ -123,6 +127,7 @@ describe("CustomerAppLayout session tenant", () => {
 
   afterEach(async () => {
     clearCustomerSession()
+    clearAgendaSelectionNotice("ficc")
     resetAgendaQueryClientForTests()
     resetSessionRestoreGuardForTests()
     window.history.pushState({}, "", "/")
@@ -165,6 +170,63 @@ describe("CustomerAppLayout session tenant", () => {
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
     expect(screen.queryByText("login-form")).not.toBeInTheDocument()
     expect(fetchBranding).toHaveBeenCalledWith("ficc")
+  })
+
+  it.each([
+    ["expired", "tenantPortal.agenda.selectionExpired"],
+    ["unavailable", "tenantPortal.agenda.selectionUnavailable"],
+  ] as const)("keeps the %s selection notice across a shell remount until dismissed", async (notice, translationKey) => {
+    const user = userEvent.setup()
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    showAgendaSelectionNotice("ficc", notice)
+
+    renderPortal("/t/ficc/agenda")
+
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(i18n.t(translationKey))
+    await user.click(within(alert).getByRole("button", { name: i18n.t("common.close") }))
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("does not show an agenda notice left by a different customer in another tab", async () => {
+    persistCustomerSession("customer-token-a", "ficc", "Ana", "customer-a")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    showAgendaSelectionNotice("ficc", "unavailable")
+
+    renderPortal("/t/ficc/agenda")
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+
+    // A different tab replaces the shared customer session without running
+    // this tab's login helper, so the session-scoped notice must not leak.
+    window.localStorage.setItem("rolvix.customer.token", "customer-token-b")
+    window.localStorage.setItem("rolvix.customer.id", "customer-b")
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "rolvix.customer.id",
+      oldValue: "customer-a",
+      newValue: "customer-b",
+      storageArea: window.localStorage,
+    }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    })
   })
 
   it("lists book, my reservations, and profile in the mobile menu", async () => {
