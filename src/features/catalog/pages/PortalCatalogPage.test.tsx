@@ -172,4 +172,41 @@ describe("PortalCatalogPage search", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
     await waitFor(() => expect(getProductMock).toHaveBeenCalledTimes(2))
   })
+
+  it("keeps a hidden cart detail request alive when the catalog list changes", async () => {
+    const productId = "11111111-1111-4111-8111-111111111111"
+    window.localStorage.setItem("rolvix.customer.id", "customer")
+    window.sessionStorage.setItem(
+      "rolvix.catalog.cart.loja.customer",
+      JSON.stringify([{ productId, quantity: 1 }]),
+    )
+
+    let resolveList: (products: Awaited<ReturnType<typeof listPortalCatalogProducts>>) => void = () => undefined
+    let resolveDetail: (product: Awaited<ReturnType<typeof getPortalCatalogProduct>>) => void = () => undefined
+    let detailSignal: AbortSignal | undefined
+    listProductsMock.mockImplementationOnce(() => new Promise((resolve) => { resolveList = resolve }))
+    getProductMock.mockImplementation((_id, options) => {
+      detailSignal = options?.signal
+      return new Promise((resolve) => { resolveDetail = resolve })
+    })
+
+    renderPage()
+    await waitFor(() => expect(getProductMock).toHaveBeenCalledWith(productId, expect.anything()))
+
+    resolveList([])
+    await screen.findByText("Nenhum produto ativo no momento.")
+    expect(detailSignal?.aborted).toBe(false)
+
+    resolveDetail({
+      id: productId,
+      name: "Produto oculto",
+      code: null,
+      description: null,
+      price: 12,
+      currency: "BRL",
+      files: [],
+    })
+
+    expect(await screen.findByText("Produto oculto")).toBeInTheDocument()
+  })
 })

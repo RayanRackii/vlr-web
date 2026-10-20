@@ -58,7 +58,18 @@ export function PortalCatalogPage() {
   const [searchDraft, setSearchDraft] = useState(search)
   const generationRef = useRef(0)
   const portalIdentityRef = useRef(portalIdentity)
-  portalIdentityRef.current = portalIdentity
+  const productsRef = useRef<PortalProduct[]>([])
+  const cartProductsRef = useRef<PortalProduct[]>([])
+  const cartProductResolutionsRef = useRef<Record<string, CartProductResolution>>({})
+  const cartDetailControllersRef = useRef(new Set<AbortController>())
+
+  useEffect(() => {
+    portalIdentityRef.current = portalIdentity
+  }, [portalIdentity])
+
+  useEffect(() => {
+    productsRef.current = products
+  }, [products])
 
   const updateQuery = useCallback((next: { search?: string; categoryId?: string | null; tagIds?: string[] }) => {
     setSearchParams((current) => {
@@ -97,10 +108,16 @@ export function PortalCatalogPage() {
 
   useEffect(() => {
     generationRef.current += 1
+    for (const controller of cartDetailControllersRef.current) {
+      controller.abort()
+    }
+    cartDetailControllersRef.current.clear()
     // eslint-disable-next-line react-hooks/set-state-in-effect -- identity-scoped data must disappear before the next portal request resolves
     setProducts([])
     setCartProducts([])
     setCartProductResolutions({})
+    cartProductsRef.current = []
+    cartProductResolutionsRef.current = {}
     setCartResolutionRevision(0)
     setQuantities({})
     setLoadError(null)
@@ -130,25 +147,34 @@ export function PortalCatalogPage() {
     if (visibleCartProducts.length === 0) {
       return
     }
-    setCartProducts((current) => mergeProducts(current, visibleCartProducts))
+    setCartProducts((current) => {
+      const next = mergeProducts(current, visibleCartProducts)
+      cartProductsRef.current = next
+      return next
+    })
   }, [cart.items, products])
 
   useEffect(() => {
-    const visible = new Set(products.map((product) => product.id))
-    const cached = new Set(cartProducts.map((product) => product.id))
+    const visible = new Set(productsRef.current.map((product) => product.id))
+    const cached = new Set(cartProductsRef.current.map((product) => product.id))
     const missing = cart.items
       .map((item) => item.productId)
-      .filter((id) => !visible.has(id) && !cached.has(id) && cartProductResolutions[id] == null)
+      .filter((id) => !visible.has(id) && !cached.has(id) && cartProductResolutionsRef.current[id] == null)
     if (missing.length === 0) {
       return
     }
 
     const controller = new AbortController()
     const requestIdentity = portalIdentity
-    setCartProductResolutions((current) => Object.fromEntries([
-      ...Object.entries(current),
-      ...missing.map((id) => [id, "loading"] as const),
-    ]))
+    cartDetailControllersRef.current.add(controller)
+    setCartProductResolutions((current) => {
+      const next = Object.fromEntries([
+        ...Object.entries(current),
+        ...missing.map((id) => [id, "loading"] as const),
+      ])
+      cartProductResolutionsRef.current = next
+      return next
+    })
     void Promise.all(missing.map(async (id) => {
       try {
         return { id, product: await getPortalCatalogProduct(id, { signal: controller.signal }) }
@@ -160,23 +186,30 @@ export function PortalCatalogPage() {
         return
       }
       const resolved = details.flatMap((detail) => detail.product ? [detail.product] : [])
-      setCartProducts((current) => mergeProducts(current, resolved))
+      setCartProducts((current) => {
+        const next = mergeProducts(current, resolved)
+        cartProductsRef.current = next
+        return next
+      })
       setCartProductResolutions((current) => {
         const next = { ...current }
         for (const detail of details) {
           if (detail.product) delete next[detail.id]
           else next[detail.id] = "error"
         }
+        cartProductResolutionsRef.current = next
         return next
       })
+    }).finally(() => {
+      cartDetailControllersRef.current.delete(controller)
     })
-    return () => controller.abort()
-  }, [cart.items, cartProducts, cartResolutionRevision, portalIdentity, products])
+  }, [cart.items, cartResolutionRevision, portalIdentity])
 
   const retryCartProduct = useCallback((productId: string) => {
     setCartProductResolutions((current) => {
       const next = { ...current }
       delete next[productId]
+      cartProductResolutionsRef.current = next
       return next
     })
     setCartResolutionRevision((current) => current + 1)

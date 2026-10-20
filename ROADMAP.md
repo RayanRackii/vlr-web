@@ -425,6 +425,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | 2026-10-18 | **Fix (WEB):** o teste de Tentar de novo cobre um item da fila offline cujo `queuedAt` é anterior ao do conflito. O PATCH continua com o valor enfileirado e o conflito é limpo. Sem mudança no `vlr-api`. |
 | 2026-10-18 | **Integração local (WEB, PR #239):** merge de `origin/develop` com #236 em `fix-239`; histórico dos dois lados preservado. Validação com `npx tsc -b` e `npm test`; sem push. |
 | 2026-10-20 | **Código (WEB, sem commit):** Taxonomy compartilhada: gestão de categorias/tags em `/configuracoes/categorias-tags` sob `core.taxonomy.read/manage`; Catálogo e portal consomem opções, assignments e filtros `category`/`tags` CSV. URL do portal preserva busca/filtros; filtro não altera carrinho e detalhes ocultos são resolvidos separadamente. Pareia com a API Taxonomy; `Taxonomy` permanece distinta de `ResourceCategory`/`AssetCategory`. |
+| 2026-10-20 | **Fix (WEB, sem commit):** detalhes de itens ocultos do carrinho no portal têm ciclo independente da lista filtrada: uma atualização do catálogo não aborta a busca nem deixa o item preso em “Carregando produto…”. A troca de identidade do portal ainda cancela e limpa essas buscas. Teste de regressão cobre a lista mudando enquanto o detalhe está pendente. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 
