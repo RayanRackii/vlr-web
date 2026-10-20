@@ -769,6 +769,8 @@ export async function updateModuleMenuItem(
     sortOrder: number
     isActive: boolean
     rentalAssetId?: string | null
+    bookingIdleTimeoutMinutes?: number | null
+    bookingIdleRedirectPath?: string | null
   },
   tenantId?: string,
 ): Promise<ModuleMenuItem> {

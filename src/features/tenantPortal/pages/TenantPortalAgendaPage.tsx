@@ -67,7 +67,9 @@ import {
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeldByYouNotice"
 import { useRefreshOnForeground } from "@/features/tenantPortal/hooks/useRefreshOnForeground"
+import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
+import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingIdleSettings"
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
@@ -236,6 +238,7 @@ export function TenantPortalAgendaPage() {
   const cancelingRef = useRef(false)
   const viewedDateRef = useRef(date)
   const scheduleRequest = useRef(0)
+  const fetchedSelectionScope = useRef<string | null>(null)
   const lastWrittenSearch = useRef<string | null>(null)
   const pendingSearchWrite = useRef(false)
   const searchWriteBaseline = useRef<string | null>(null)
@@ -416,6 +419,12 @@ export function TenantPortalAgendaPage() {
 
   useEffect(() => {
     viewedDateRef.current = date
+    const scope = JSON.stringify([subdomain, menuItemId, date])
+    const contextChanged = fetchedSelectionScope.current !== scope
+    fetchedSelectionScope.current = scope
+    if (contextChanged) {
+      setSelectedRentalAssetId(null)
+    }
     if (!signedIn || !date) {
       setSlots([])
       setObservedSlots([])
@@ -447,13 +456,16 @@ export function TenantPortalAgendaPage() {
     setSlotsLoading(true)
     setSlotsError(false)
     setPastSlotsHidden(false)
-    setSlots([])
-    setObservedSlots([])
+    // Keep the current choice and data during a same-day refresh. Controls
+    // stay disabled until the new availability has been checked.
+    if (contextChanged) {
+      setSlots([])
+      setObservedSlots([])
+    }
     setSlotsBelongToDate(date)
     if (preferredTimeRef.current.length === 0) {
       setStartTime("")
     }
-    setSelectedRentalAssetId(null)
     void fetchPublicScheduleDay(subdomain, date)
       .then((day) => {
         if (
@@ -474,6 +486,9 @@ export function TenantPortalAgendaPage() {
         const preferred = normalizeClock(preferredTimeRef.current)
         const kept = times.find((window) => window.startTime === preferred)
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
+        if (nextTime !== preferred) {
+          setSelectedRentalAssetId(null)
+        }
         preferredTimeRef.current = nextTime
         setStartTime(nextTime)
       })
@@ -483,9 +498,6 @@ export function TenantPortalAgendaPage() {
           scheduleRequest.current === requestId &&
           getAgendaQueryRevision() === seenRevision
         ) {
-          setSlots([])
-          setObservedSlots([])
-          setStartTime("")
           setSlotsError(true)
           toast.error(
             describeBookingError(
@@ -504,7 +516,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, dayFetchGate, signedIn, slotReloadNonce, subdomain])
+  }, [date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain])
 
   useEffect(() => {
     const today = brazilTodayIsoDate()
@@ -769,6 +781,36 @@ export function TenantPortalAgendaPage() {
     enabled: queueEnabled,
   })
 
+  useEffect(() => {
+    if (loading || schedulePending || slotsError || !selectedRentalAssetId) return
+    const key = agendaReservedSlotKey(date, selectedRentalAssetId, startTime)
+    if (
+      !selectedAsset || !selectedSlot || !isCustomerBookableSlot(selectedSlot) ||
+      optimisticReservedKeys.has(key) || derivedReservedKeys.has(key)
+    ) {
+      // Reconcile the user's choice only after asynchronous availability settles.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedRentalAssetId(null)
+    }
+  }, [
+    date, derivedReservedKeys, loading, optimisticReservedKeys, schedulePending,
+    selectedAsset, selectedRentalAssetId, selectedSlot, slotsError, startTime,
+  ])
+
+  useBookingIdleTimeout({
+    selectionKey: signedIn && selectedRentalAssetId
+      ? JSON.stringify([subdomain, menuItemId, date, startTime, selectedRentalAssetId])
+      : null,
+    timeoutMinutes: menuItem?.bookingIdleTimeoutMinutes,
+    paused: submitting || queue.joining || queue.leaving || queue.view.kind === "active" ||
+      (selectedRentalAssetId !== null && isPortalBookingInFlight(date, selectedRentalAssetId, startTime)),
+    onExpire: () => {
+      setSelectedRentalAssetId(null)
+      toast.message(t("tenantPortal.agenda.selectionExpired"))
+      navigate(bookingIdleRedirectTarget(subdomain, menuItem?.bookingIdleRedirectPath), { replace: true })
+    },
+  })
+
   useRefreshOnForeground(() => {
     const day = viewedDateRef.current
     if (day.length === 0) {
@@ -861,6 +903,7 @@ export function TenantPortalAgendaPage() {
 
   async function onReserve() {
     if (
+      schedulePending || slotsError ||
       !selectedAsset ||
       !selectedSlot ||
       submittingRef.current ||
@@ -1016,7 +1059,7 @@ export function TenantPortalAgendaPage() {
   }
 
   async function onJoinAndReserve() {
-    if (!selectedSlot || submittingRef.current || joinAndReserveLock.current) {
+    if (schedulePending || slotsError || !selectedSlot || submittingRef.current || joinAndReserveLock.current) {
       return
     }
     const generation = getAgendaSessionGeneration()
@@ -1199,13 +1242,13 @@ export function TenantPortalAgendaPage() {
   }
 
   function spaceState(rentalAssetId: string) {
-    if (schedulePending) {
+    if (schedulePending || slotsError) {
       return {
         available: false,
         disabled: true,
         selected: false,
         pending: true,
-        detail: t("common.refreshing"),
+        detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
       }
     }
     const slot = startTime
@@ -1466,7 +1509,7 @@ export function TenantPortalAgendaPage() {
                     ? { backgroundColor: primary }
                     : undefined
                 }
-                disabled={queue.view.joinAndReserve && !selectedSlot}
+                disabled={queue.view.joinAndReserve && (schedulePending || slotsError || !selectedSlot)}
                 loading={queue.joining}
                 loadingLabel={
                   queue.view.joinAndReserve
@@ -1590,7 +1633,7 @@ export function TenantPortalAgendaPage() {
             loading={submitting}
             loadingLabel={t("tenantPortal.agenda.reserving")}
             disabled={
-              slotsLoading ||
+              schedulePending || slotsError ||
               !selectedSlot ||
               (selectedRentalAssetId !== null &&
                 !spaceState(selectedRentalAssetId).available) ||

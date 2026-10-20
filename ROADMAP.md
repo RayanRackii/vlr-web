@@ -26,6 +26,7 @@ Prioridade geral: beachhead **Rentals** (clube). Ver também `CONTEXT.md` e o `R
 - [x] Login/register/verify permanecem no card branded (`TenantPortalLayout`).
 - [x] Cadastro B2C verifica **e-mail** (código); `/verify-email` + redirect de `/verify-phone`. Celular coletado, não bloqueia. **Não PROD.**
 - [x] Agenda em `agenda/:menuItemId` com asset pré-selecionado quando configurado.
+- [x] Seleção da agenda preservada em refresh do mesmo dia e revalidada quando a disponibilidade chega. Expiração por espaço (`bookingIdleTimeoutMinutes`, 1–120; padrão 10) e destino dentro do portal (`bookingIdleRedirectPath`; padrão início), configuráveis na edição Super-Admin do item. Interação reinicia o prazo; reserva em andamento e turno ativo da fila suspendem a expiração. Toast pt-BR/en/es e regressões Vitest. Alterações locais, sem commit por instrução do Rayan.
 - [x] Admin: `/configuracoes/menu` + seção no edit de tenant (platform).
 - [x] B2C agenda por Slot + admin mínimo de escala (ver §3.5).
 - [x] Admin B2B de reservas.
@@ -91,6 +92,8 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] #201: depois de remover uma aula com sucesso, um GET antigo do mesmo dia não volta a mostrar a aula nesta aba. O GET do dia pede para não reutilizar cache.
 - [x] #200: o horário da aula explica por que está vazio. Carregando, erro com “Tentar novamente”, recurso fechado na data, e dia da semana sem horário (aponta para Configuração semanal) são estados diferentes. Sábado 24/10 continua sendo a data civil pedida em `GET /api/schedule/days/{date}`; a resposta `{ date, slots }` não traz um motivo, então `slots` vazio é “sem horário configurado” e slots só `closed` são “fechado”. Não é índice de dia nem fuso.
 - [x] #207: uma aula recriada no mesmo intervalo, com outro id, volta a aparecer nesta aba. O mesmo id continua oculto enquanto o GET antigo o lista.
+
+- [x] Review do timeout B2C: edição e reordenação pelo tenant preservam os dois campos de inatividade em todos os PUTs; Reservar e Entrar e reservar bloqueados por carga/erro do dia, inclusive nos handlers. Destino limitado a 200 caracteres e sem controles C0/C1, com regressões de edição, reordenação, refresh pendente/falho e fronteiras. `npx vitest run && npm run build`: 1.314 testes aprovados em 174 arquivos e build concluído (avisos de CSS). Sem commit.
 
 ### 3.7. Cancelamento B2C pelo cliente
 
@@ -224,6 +227,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-19 | **Fix (WEB, local):** removido o reset incondicional da seleção ao refazer o GET do mesmo dia. Refresh conserva recurso ainda reservável; indisponibilidade confirmada limpa a seleção. Timeout explícito por item do menu público, editor Super-Admin com validação e destino relativo ao portal. Não altera os interceptors de sessão nem o guard de logout. Testes e build validados; lint global também falha no HEAD limpo (177 erros e 22 avisos preexistentes). Sem commit. Próximo: validar o fluxo integrado no DEV com os novos campos da API. |
 | 2026-10-18 | **Código (WEB, sem merge, alto risco):** `/invite` segue o contrato de `vlr-api` #226. Preview anônimo decide senha nova ou login da conta existente. Accept de conta existente usa o JWT staff e não envia senha. 409/403 do convite têm frase. Várias memberships escolhem ambiente e a sessão Supabase é atualizada. Glossário User espelhado. |
 | 2026-08-03 | Portal + registro dinâmico. |
 | 2026-08-04 | Agenda B2C inicial. |

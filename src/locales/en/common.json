@@ -468,7 +468,8 @@
           "QUEUE_TURN_ALREADY_USED": "You already used this turn to book.",
           "QUEUE_WAITING_ROOM_CLOSED": "The queue is not open yet."
         }
-      }
+      },
+      "selectionExpired": "Your selection expired"
     },
     "menu": {
       "empty": "No modules available.",
@@ -2505,7 +2506,11 @@
         "OS": "Lets you link services to the environment's resources."
       },
       "noEligibleFunctionality": "No other active features are available.",
-      "catalogAutoNav": "The module automatically adds:"
+      "catalogAutoNav": "The module automatically adds:",
+      "bookingIdleTimeoutMinutes": "Selection idle timeout (minutes, optional)",
+      "bookingIdleTimeoutHint": "Enter a whole number from 1 to 120. Leave blank for 10 minutes.",
+      "bookingIdleRedirectPath": "Destination after expiry (optional)",
+      "bookingIdleRedirectHint": "Path within the portal, starting with / (e.g. /agenda). Leave blank for the portal home."
     },
     "dashboard": {
       "title": "Super-Admin Panel",
