@@ -1094,15 +1094,13 @@ export function TenantPortalAgendaPage() {
           applyReservationSuccess(existingReservation)
           return
         }
-        toast.error(
-          heldByCustomer ? (
+        if (heldByCustomer) {
+          toast.error(
             <SlotHeldByYouNotice
               href={`${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`}
-            />
-          ) : (
-            t("tenantPortal.agenda.slotTaken")
-          ),
-        )
+            />,
+          )
+        }
         if (viewedDateRef.current === dayDate) {
           const reservedKey = agendaReservedSlotKey(
             dayDate,
@@ -1117,19 +1115,18 @@ export function TenantPortalAgendaPage() {
             next.add(reservedKey)
             return next
           })
-          setSelectedRentalAssetId(null)
+          if (heldByCustomer) {
+            setSelectedRentalAssetId(null)
+          } else {
+            clearUnavailableSelection()
+          }
         }
         return
       }
       if (isSlotUnavailableConflict(error)) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : t("tenantPortal.agenda.slotTaken"),
-        )
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
-          setSelectedRentalAssetId(null)
+          clearUnavailableSelection()
         }
         return
       }

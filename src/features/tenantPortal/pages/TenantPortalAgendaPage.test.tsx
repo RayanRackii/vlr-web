@@ -2629,13 +2629,14 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.slotTaken"),
+      expect(toastMessage).toHaveBeenCalledExactlyOnceWith(
+        i18n.t("tenantPortal.agenda.selectionUnavailable"),
       )
     })
-    expect(toastError).not.toHaveBeenCalledWith(
-      expect.stringContaining("não está disponível"),
-    )
+    expect(toastError).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    })).toBeDisabled()
     await waitFor(() => {
       expect(fetchDay.mock.calls.length).toBeGreaterThan(dayCalls)
       expect(listMine.mock.calls.length).toBeGreaterThan(mineCalls)
@@ -2665,6 +2666,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         }),
       )
     })
+    expect(toastMessage).not.toHaveBeenCalled()
     expect(toastError).not.toHaveBeenCalledWith(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -3121,8 +3123,8 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.slotTaken"),
+      expect(toastMessage).toHaveBeenCalledExactlyOnceWith(
+        i18n.t("tenantPortal.agenda.selectionUnavailable"),
       )
     })
     expect(
@@ -3145,7 +3147,7 @@ describe("TenantPortalAgendaPage time selector", () => {
   it.each([
     "Slot is not available for booking.",
     "Insufficient quantity for this slot.",
-  ])("toasts %s without marking the card reserved", async (message) => {
+  ])("clears the selection with a translated notice for %s", async (message) => {
     const user = userEvent.setup()
     bookSlot.mockRejectedValue(new PortalBookingError(message, 409, null))
     renderAgenda()
@@ -3153,11 +3155,15 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith(message)
+      expect(toastMessage).toHaveBeenCalledExactlyOnceWith(
+        i18n.t("tenantPortal.agenda.selectionUnavailable"),
+      )
     })
-    expect(toastError).not.toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.slotTaken"),
-    )
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastMessage).not.toHaveBeenCalledWith(message)
+    expect(screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    })).toBeDisabled()
     const card = screen.getByRole("button", {
       name: `Quadra 1. ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
