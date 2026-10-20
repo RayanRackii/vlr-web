@@ -72,6 +72,7 @@ function throwWorkOrderReadError(error: unknown, fallbackKey: string): never {
       localizeWorkOrderApiError(getAxiosErrorPayload(error), fallback),
       fallback,
     ),
+    { cause: error },
   )
 }
 

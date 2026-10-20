@@ -33,6 +33,7 @@ import {
   listMissingMandatoryTaskTitles,
   mergeMissingMandatoryTitles,
 } from "@/features/workOrders/lib/missingMandatoryTasks"
+import { useOnlineStatus } from "@/hooks/useOnlineStatus"
 import { useObservedHeight } from "@/hooks/useObservedHeight"
 import {
   getWorkOrderById,
@@ -46,6 +47,7 @@ import {
   clearSyncConflict,
   listQueuedTaskIds,
   listSyncConflicts,
+  isNetworkConnectivityError,
   processSyncQueue,
   retrySyncConflict,
   subscribeSyncQueue,
@@ -531,8 +533,8 @@ export function WorkOrderExecutionPage() {
   const [serverMissingTitles, setServerMissingTitles] = useState<readonly string[]>(
     [],
   )
+  const online = useOnlineStatus()
   const actionBar = useObservedHeight<HTMLDivElement>()
-  const loadFailedRef = useRef(false)
   const hasWorkOrderRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
   const draftValuesRef = useRef(new Map<string, string | null>())
@@ -558,11 +560,11 @@ export function WorkOrderExecutionPage() {
     try {
       const data = await getWorkOrderById(id)
       const queuedConflicts = await listSyncConflicts()
-      loadFailedRef.current = false
       hasWorkOrderRef.current = true
       setConfirmedWorkOrder(data)
       setWorkOrder(mergeWorkOrderDrafts(data, queuedConflicts, draftValuesRef.current))
       setErrorMessage(null)
+      return true
     } catch (error: unknown) {
       console.error("WorkOrderExecutionPage loadWorkOrder failed", error)
       if (isAxiosError(error)) {
@@ -572,12 +574,18 @@ export function WorkOrderExecutionPage() {
         )
       }
 
-      loadFailedRef.current = true
+      const transportError = error instanceof Error ? error.cause ?? error : error
+      if (readBrowserOffline() || isNetworkConnectivityError(transportError)) {
+        // Keep the loaded detail and local drafts usable during an outage.
+        setErrorMessage(null)
+        return false
+      }
       setErrorMessage(
         error instanceof Error
           ? error.message
           : t("workOrders.errors.loadOneFailed"),
       )
+      return true
     } finally {
       setIsLoading(false)
     }
@@ -629,39 +637,70 @@ export function WorkOrderExecutionPage() {
       void refreshSyncState()
     })
 
-    const syncAndRefresh = () => {
-      void processSyncQueue()
-        .catch((error: unknown) => {
-          console.error("WorkOrderExecutionPage processSyncQueue failed", error)
-        })
-        .finally(() => {
-          void refreshSyncState()
-        })
+    let disposed = false
+    let running = false
+    let requested = false
+    let reloadNeeded = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
+    const syncAndRefresh = async () => {
+      if (disposed || readBrowserOffline()) return
+      if (running) {
+        requested = true
+        return
+      }
+      running = true
+      try {
+        const result = await processSyncQueue()
+        if (disposed) return
+        reloadNeeded ||= result.processed > 0
+        await refreshSyncState()
+        if (disposed) return
+        if (reloadNeeded) {
+          // Retry transport failures even when PATCH succeeded but GET did not.
+          reloadNeeded = (await loadWorkOrder()) === false
+        }
+        if (!disposed && !readBrowserOffline() && (result.remaining > 0 || reloadNeeded)) {
+          retryTimer = setTimeout(() => { void syncAndRefresh() }, 1000)
+        }
+      } catch (error: unknown) {
+        console.error("WorkOrderExecutionPage processSyncQueue failed", error)
+        if (!disposed && !readBrowserOffline()) {
+          retryTimer = setTimeout(() => { void syncAndRefresh() }, 1000)
+        }
+      } finally {
+        running = false
+        if (requested && !disposed) {
+          requested = false
+          clearTimeout(retryTimer)
+          void syncAndRefresh()
+        }
+      }
     }
 
     const handleOnline = () => {
-      void processSyncQueue()
-        .catch((error: unknown) => {
-          console.error("WorkOrderExecutionPage processSyncQueue failed", error)
-        })
-        .finally(() => {
-          void refreshSyncState()
-          if (hasWorkOrderRef.current || loadFailedRef.current) {
-            void loadWorkOrder()
-          }
-        })
+      clearTimeout(retryTimer)
+      reloadNeeded = true
+      void syncAndRefresh()
+    }
+    const handleOffline = () => {
+      clearTimeout(retryTimer)
     }
 
     window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
     void refreshSyncState()
 
     if (navigator.onLine) {
-      syncAndRefresh()
+      void syncAndRefresh()
     }
 
     return () => {
+      disposed = true
+      clearTimeout(retryTimer)
       unsubscribe()
       window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
     }
   }, [loadWorkOrder, refreshSyncState, t])
 
@@ -925,12 +964,14 @@ export function WorkOrderExecutionPage() {
             void retryConflict(conflict)
           }}
         />
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {errorMessage ?? t("workOrders.errors.loadOneFailed")}
-        </div>
+        {errorMessage !== null || online ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          >
+            {errorMessage ?? t("workOrders.errors.loadOneFailed")}
+          </div>
+        ) : null}
         <Button
           type="button"
           variant="outline"
