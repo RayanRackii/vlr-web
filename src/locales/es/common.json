@@ -567,7 +567,12 @@
       "requestNotFound": "No encontramos esta solicitud.",
       "requestDetailTitle": "Solicitud",
       "requestFilesTitle": "Archivos",
-      "requestFilesEmpty": "Ningún archivo."
+      "requestFilesEmpty": "Ningún archivo.",
+      "cancelRequest": "Cancelar solicitud",
+      "cancelRequestTitle": "¿Cancelar esta solicitud?",
+      "cancelRequestBody": "Confirma la cancelación de la solicitud. Esta acción no se puede deshacer.",
+      "requestCancelled": "Solicitud cancelada.",
+      "cancelRequestError": "No se pudo cancelar la solicitud."
     }
   },
   "catalog": {
@@ -584,7 +589,8 @@
       "Cancelled": "Cancelado"
     },
     "productRequestStatus": {
-      "Submitted": "Enviada"
+      "Submitted": "Enviada",
+      "Cancelled": "Cancelada"
     },
     "actor": {
       "Customer": "Cliente",
@@ -759,6 +765,21 @@
         "createdAt": "Creado",
         "actions": "Acciones"
       }
+    },
+    "policy": {
+      "title": "Configuración del catálogo",
+      "description": "Define cuándo los clientes pueden cancelar pedidos y solicitudes en este catálogo.",
+      "ordersEnabled": "Los clientes pueden cancelar pedidos",
+      "ordersUpTo": "Cancelar pedidos hasta el estado (inclusive)",
+      "requestsEnabled": "Los clientes pueden cancelar solicitudes",
+      "requestsUpTo": "Cancelar solicitudes hasta el estado (inclusive)",
+      "text": "Texto de la política de cancelación (opcional)",
+      "placeholder": "Ej.: sin reembolso.",
+      "textHint": "{{length}} / 2000 caracteres. Este texto aparece en la confirmación de cancelación.",
+      "saved": "Política del catálogo guardada.",
+      "loadError": "No se pudo cargar la política del catálogo.",
+      "saveError": "No se pudo guardar la política del catálogo.",
+      "readOnly": "No tienes permiso para cambiar la política del catálogo."
     }
   },
   "notifications": {
@@ -1093,7 +1114,8 @@
       "operations": "Operación",
       "platform": "Plataforma"
     },
-    "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso."
+    "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso.",
+    "catalogSettings": "Configuración"
   },
   "account": {
     "title": "Cuenta",

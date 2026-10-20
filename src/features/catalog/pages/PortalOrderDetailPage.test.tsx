@@ -10,11 +10,13 @@ import i18n from "@/lib/i18n"
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   getPortalCatalogOrder: vi.fn(),
+  getPortalCatalogPolicy: vi.fn(),
   cancelPortalCatalogOrder: vi.fn(),
 }))
 
 import {
   cancelPortalCatalogOrder,
+  getPortalCatalogPolicy,
   getPortalCatalogOrder,
 } from "@/features/catalog/services/catalogPortalService"
 
@@ -93,6 +95,7 @@ function renderDetail() {
 
 describe("PortalOrderDetailPage", () => {
   beforeEach(() => {
+    vi.mocked(getPortalCatalogPolicy).mockResolvedValue({ canCancelOrders: true, canCancelRequests: false, upToStatus: { orders: "Requested", requests: "Submitted" }, policyText: null })
     getOrderMock.mockReset()
     cancelOrderMock.mockReset()
     getOrderMock.mockResolvedValue(mixedOrder())

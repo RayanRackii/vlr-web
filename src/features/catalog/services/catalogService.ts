@@ -1,3 +1,4 @@
+import { catalogPolicySchema, type CatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
@@ -366,5 +367,25 @@ export async function upsertCatalogNotificationChannel(body: {
       throw error
     }
     throwCatalogError(error, "apiErrors.saveCatalogChannel")
+  }
+}
+
+export async function getCatalogPolicy(): Promise<CatalogPolicy> {
+  try {
+    const response = await api.get("/api/catalog/policy")
+    return parseOrThrow(catalogPolicySchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) throw error
+    throwCatalogError(error, "catalog.policy.loadError")
+  }
+}
+
+export async function saveCatalogPolicy(body: CatalogPolicy): Promise<CatalogPolicy> {
+  try {
+    const response = await api.put("/api/catalog/policy", body)
+    return parseOrThrow(catalogPolicySchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) throw error
+    throwCatalogError(error, "catalog.policy.saveError")
   }
 }
