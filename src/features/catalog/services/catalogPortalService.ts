@@ -64,9 +64,13 @@ export async function listPortalCatalogProducts(
 
 export async function getPortalCatalogProduct(
   id: string,
+  options?: { signal?: AbortSignal },
 ): Promise<PortalProduct> {
   try {
-    const response = await customerApi.get(`/api/catalog/portal/products/${id}`)
+    const response = await customerApi.get(
+      `/api/catalog/portal/products/${id}`,
+      options?.signal ? { signal: options.signal } : undefined,
+    )
     return parseOrThrow(portalProductSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {

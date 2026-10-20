@@ -6,9 +6,11 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   useReactTable,
+  type CellContext,
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
+import { useSearchParams } from "react-router-dom"
 import { Check, CircleAlert, Loader2, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -90,6 +92,7 @@ import {
 } from "@/features/catalog/services/catalogService"
 import { TaxonomyAssignmentFields } from "@/features/taxonomy/components/TaxonomyAssignmentFields"
 import { TaxonomyFilters } from "@/features/taxonomy/components/TaxonomyFilters"
+import { taxonomyQueryFromSearch, setTaxonomySearchParams } from "@/features/taxonomy/lib/taxonomyQuery"
 import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
@@ -118,7 +121,19 @@ export function CatalogProductsPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
-  const [taxonomyFilter, setTaxonomyFilter] = useState({ categoryId: null as string | null, tagIds: [] as string[] })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const categoryParam = searchParams.get("category")
+  const tagsParam = searchParams.get("tags")
+  const taxonomyFilter = useMemo(() => {
+    const query = taxonomyQueryFromSearch(new URLSearchParams({
+      ...(categoryParam == null ? {} : { category: categoryParam }),
+      ...(tagsParam == null ? {} : { tags: tagsParam }),
+    }))
+    return {
+      categoryId: query.category ?? null,
+      tagIds: [...(query.tags ?? [])],
+    }
+  }, [categoryParam, tagsParam])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CatalogProduct | null>(null)
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null)
@@ -133,6 +148,8 @@ export function CatalogProductsPage() {
   const [codeManuallyEdited, setCodeManuallyEdited] = useState(false)
   const [operationInFlight, setOperationInFlight] = useState(false)
   const saveLockRef = useRef<SaveCatalogProductCreateLock>({ inFlight: false })
+  const loadGenerationRef = useRef(0)
+  const loadAbortControllerRef = useRef<AbortController | null>(null)
 
   const form = useForm<CatalogProductFormValues>({
     resolver: zodResolver(catalogProductFormSchema),
@@ -143,27 +160,50 @@ export function CatalogProductsPage() {
   const saveBlockers = catalogProductSaveBlockerKeys(watchedValues)
 
   const reload = useCallback(async () => {
+    loadAbortControllerRef.current?.abort()
+    const controller = new AbortController()
+    loadAbortControllerRef.current = controller
+    const generation = ++loadGenerationRef.current
     setLoading(true)
     try {
       const [nextProducts, nextRequests] = await Promise.all([
-        listCatalogProducts({ category: taxonomyFilter.categoryId, tags: taxonomyFilter.tagIds }),
-        listProductRequests(),
+        listCatalogProducts(
+          { category: taxonomyFilter.categoryId, tags: taxonomyFilter.tagIds },
+          { signal: controller.signal },
+        ),
+        listProductRequests({ signal: controller.signal }),
       ])
+      if (controller.signal.aborted || generation !== loadGenerationRef.current) {
+        return
+      }
       setProducts(nextProducts)
       setRequests(nextRequests)
       setLoadError(null)
     } catch (error) {
+      if (controller.signal.aborted || generation !== loadGenerationRef.current) {
+        return
+      }
       setLoadError(
         error instanceof Error ? error.message : t("apiErrors.loadCatalogProducts"),
       )
     } finally {
-      setLoading(false)
+      if (generation === loadGenerationRef.current) {
+        setLoading(false)
+      }
     }
   }, [t, taxonomyFilter.categoryId, taxonomyFilter.tagIds])
 
   useEffect(() => {
     void reload()
+    return () => loadAbortControllerRef.current?.abort()
   }, [reload])
+
+  const updateTaxonomyFilter = useCallback((next: { categoryId: string | null; tagIds: string[] }) => {
+    setSearchParams((current) => setTaxonomySearchParams(current, {
+      category: next.categoryId,
+      tags: next.tagIds,
+    }))
+  }, [setSearchParams])
 
   useEffect(() => {
     void getCatalogTaxonomyOptions()
@@ -508,51 +548,23 @@ export function CatalogProductsPage() {
       {
         id: "categories",
         accessorFn: (row) => row.taxonomy?.categories.map((item) => item.name).join(", ") ?? "",
-        header: () => <TaxonomyFilterHeader title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={setTaxonomyFilter} />,
+        header: () => <TaxonomyFilterHeader title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />,
         cell: ({ row }) => row.original.taxonomy?.categories.map((item) => item.name).join(", ") || "—",
       },
       {
         id: "tags",
         accessorFn: (row) => row.taxonomy?.tags.map((item) => item.name).join(", ") ?? "",
-        header: () => <TaxonomyFilterHeader title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={setTaxonomyFilter} />,
+        header: () => <TaxonomyFilterHeader title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />,
         cell: ({ row }) => row.original.taxonomy?.tags.map((item) => item.name).join(", ") || "—",
       },
       {
         id: "actions",
         enableColumnFilter: false,
         header: t("catalog.products.columns.actions"),
-        cell: ({ row }) => (
-          <div className="flex flex-wrap gap-2">
-            <Can permission="catalog.products.manage">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  openEdit(row.original)
-                }}
-              >
-                {t("common.edit")}
-              </Button>
-              <LoadingButton
-                type="button"
-                variant="outline"
-                size="sm"
-                loading={statusBusyId === row.original.id}
-                onClick={() => {
-                  requestToggleActive(row.original)
-                }}
-              >
-                {row.original.isActive
-                  ? t("catalog.products.deactivate")
-                  : t("catalog.products.activate")}
-              </LoadingButton>
-            </Can>
-          </div>
-        ),
+        cell: CatalogProductActionsCell,
       },
     ],
-    [i18n.language, statusBusyId, t, taxonomyFilter, taxonomyOptions],
+    [i18n.language, t, taxonomyFilter, taxonomyOptions, updateTaxonomyFilter],
   )
 
   const table = useReactTable({
@@ -560,6 +572,11 @@ export function CatalogProductsPage() {
     columns,
     state: { columnFilters },
     onColumnFiltersChange: setColumnFilters,
+    meta: {
+      onEdit: openEdit,
+      onToggleActive: requestToggleActive,
+      statusBusyId,
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
@@ -1141,6 +1158,44 @@ export function CatalogProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+type CatalogProductsTableMeta = {
+  onEdit: (product: CatalogProduct) => void
+  onToggleActive: (product: CatalogProduct) => void
+  statusBusyId: string | null
+}
+
+function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, unknown>) {
+  const { t } = useTranslation()
+  const { onEdit, onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
+  const product = row.original
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Can permission="catalog.products.manage">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(product)}
+        >
+          {t("common.edit")}
+        </Button>
+        <LoadingButton
+          type="button"
+          variant="outline"
+          size="sm"
+          loading={statusBusyId === product.id}
+          onClick={() => onToggleActive(product)}
+        >
+          {product.isActive
+            ? t("catalog.products.deactivate")
+            : t("catalog.products.activate")}
+        </LoadingButton>
+      </Can>
     </div>
   )
 }

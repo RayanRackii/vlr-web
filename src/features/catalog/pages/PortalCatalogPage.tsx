@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useOutletContext, useSearchParams } from "react-router-dom"
 import { ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -27,29 +27,44 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback"
 
+type CartProductResolution = "loading" | "error"
+
 export function PortalCatalogPage() {
   const { t } = useTranslation()
   const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
   const customerId = getCustomerId()
   const cart = useCatalogCart(subdomain, customerId)
   const [searchParams, setSearchParams] = useSearchParams()
-  const taxonomyQuery = taxonomyQueryFromSearch(searchParams)
+  const categoryParam = searchParams.get("category")
+  const tagsParam = searchParams.get("tags")
+  const taxonomyQuery = useMemo(
+    () => taxonomyQueryFromSearch(new URLSearchParams({
+      ...(categoryParam == null ? {} : { category: categoryParam }),
+      ...(tagsParam == null ? {} : { tags: tagsParam }),
+    })),
+    [categoryParam, tagsParam],
+  )
   const search = searchParams.get("search") ?? ""
+  const portalIdentity = `${subdomain}:${customerId ?? ""}`
 
   const [products, setProducts] = useState<PortalProduct[]>([])
   const [cartProducts, setCartProducts] = useState<PortalProduct[]>([])
+  const [cartProductResolutions, setCartProductResolutions] = useState<Record<string, CartProductResolution>>({})
+  const [cartResolutionRevision, setCartResolutionRevision] = useState(0)
   const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [searchDraft, setSearchDraft] = useState(search)
   const generationRef = useRef(0)
+  const portalIdentityRef = useRef(portalIdentity)
+  portalIdentityRef.current = portalIdentity
 
   const updateQuery = useCallback((next: { search?: string; categoryId?: string | null; tagIds?: string[] }) => {
     setSearchParams((current) => {
       const params = setTaxonomySearchParams(current, {
-        category: next.categoryId ?? taxonomyQuery.category,
-        tags: next.tagIds ?? taxonomyQuery.tags,
+        category: next.categoryId === undefined ? taxonomyQuery.category : next.categoryId,
+        tags: next.tagIds === undefined ? taxonomyQuery.tags : next.tagIds,
       })
       const nextSearch = next.search ?? search
       if (nextSearch) params.set("search", nextSearch)
@@ -65,20 +80,32 @@ export function PortalCatalogPage() {
         const data = taxonomyQuery.category || taxonomyQuery.tags?.length
           ? await listPortalCatalogProducts({ search, category: taxonomyQuery.category, tags: taxonomyQuery.tags }, { signal })
           : await listPortalCatalogProducts(search)
-        if (generation !== generationRef.current) return
+        if (generation !== generationRef.current || portalIdentityRef.current !== portalIdentity) return
         setProducts(data)
         setLoadError(null)
       } catch (error) {
-        if (signal?.aborted || generation !== generationRef.current) return
+        if (signal?.aborted || generation !== generationRef.current || portalIdentityRef.current !== portalIdentity) return
         setLoadError(
           error instanceof Error
             ? error.message
             : t("apiErrors.loadPortalCatalog"),
         )
       } finally {
-        if (generation === generationRef.current) setLoading(false)
+        if (generation === generationRef.current && portalIdentityRef.current === portalIdentity) setLoading(false)
       }
-  }, [search, t, taxonomyQuery.category, taxonomyQuery.tags])
+  }, [portalIdentity, search, t, taxonomyQuery.category, taxonomyQuery.tags])
+
+  useEffect(() => {
+    generationRef.current += 1
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- identity-scoped data must disappear before the next portal request resolves
+    setProducts([])
+    setCartProducts([])
+    setCartProductResolutions({})
+    setCartResolutionRevision(0)
+    setQuantities({})
+    setLoadError(null)
+    setLoading(true)
+  }, [portalIdentity])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -95,22 +122,65 @@ export function PortalCatalogPage() {
       if (!controller.signal.aborted) setTaxonomyOptions(options)
     }).catch(() => { if (!controller.signal.aborted) setTaxonomyOptions({ categories: [], tags: [] }) })
     return () => controller.abort()
-  }, [subdomain, customerId])
+  }, [portalIdentity])
+
+  useEffect(() => {
+    const cartIds = new Set(cart.items.map((item) => item.productId))
+    const visibleCartProducts = products.filter((product) => cartIds.has(product.id))
+    if (visibleCartProducts.length === 0) {
+      return
+    }
+    setCartProducts((current) => mergeProducts(current, visibleCartProducts))
+  }, [cart.items, products])
 
   useEffect(() => {
     const visible = new Set(products.map((product) => product.id))
-    const missing = cart.items.map((item) => item.productId).filter((id) => !visible.has(id))
+    const cached = new Set(cartProducts.map((product) => product.id))
+    const missing = cart.items
+      .map((item) => item.productId)
+      .filter((id) => !visible.has(id) && !cached.has(id) && cartProductResolutions[id] == null)
     if (missing.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived cart summaries must clear with filtered results
-      setCartProducts(products)
       return
     }
-    let active = true
-    void Promise.all(missing.map((id) => getPortalCatalogProduct(id).catch(() => null))).then((details) => {
-      if (active) setCartProducts([...products, ...details.filter((item): item is PortalProduct => item != null)])
+
+    const controller = new AbortController()
+    const requestIdentity = portalIdentity
+    setCartProductResolutions((current) => Object.fromEntries([
+      ...Object.entries(current),
+      ...missing.map((id) => [id, "loading"] as const),
+    ]))
+    void Promise.all(missing.map(async (id) => {
+      try {
+        return { id, product: await getPortalCatalogProduct(id, { signal: controller.signal }) }
+      } catch {
+        return { id, product: null }
+      }
+    })).then((details) => {
+      if (controller.signal.aborted || portalIdentityRef.current !== requestIdentity) {
+        return
+      }
+      const resolved = details.flatMap((detail) => detail.product ? [detail.product] : [])
+      setCartProducts((current) => mergeProducts(current, resolved))
+      setCartProductResolutions((current) => {
+        const next = { ...current }
+        for (const detail of details) {
+          if (detail.product) delete next[detail.id]
+          else next[detail.id] = "error"
+        }
+        return next
+      })
     })
-    return () => { active = false }
-  }, [cart.items, products])
+    return () => controller.abort()
+  }, [cart.items, cartProducts, cartResolutionRevision, portalIdentity, products])
+
+  const retryCartProduct = useCallback((productId: string) => {
+    setCartProductResolutions((current) => {
+      const next = { ...current }
+      delete next[productId]
+      return next
+    })
+    setCartResolutionRevision((current) => current + 1)
+  }, [])
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     updateQuery({ search: value })
@@ -219,25 +289,46 @@ export function PortalCatalogPage() {
       )}
 
       {cart.items.length > 0 ? (
-        <PortalCartPanel subdomain={subdomain} products={cartProducts} cart={cart} />
+        <PortalCartPanel
+          subdomain={subdomain}
+          products={mergeProducts(cartProducts, products)}
+          resolutions={cartProductResolutions}
+          onRetryProduct={retryCartProduct}
+          cart={cart}
+        />
       ) : null}
     </div>
   )
 }
 
+function mergeProducts(current: PortalProduct[], additions: PortalProduct[]): PortalProduct[] {
+  const byId = new Map(current.map((product) => [product.id, product]))
+  for (const product of additions) {
+    byId.set(product.id, product)
+  }
+  return [...byId.values()]
+}
+
 function PortalCartPanel({
   subdomain,
   products,
+  resolutions,
+  onRetryProduct,
   cart,
 }: {
   subdomain: string
   products: PortalProduct[]
+  resolutions: Record<string, CartProductResolution>
+  onRetryProduct: (productId: string) => void
   cart: ReturnType<typeof useCatalogCart>
 }) {
   const { t, i18n } = useTranslation()
   const productMap = new Map(products.map((product) => [product.id, product]))
   const onRequestLabel = t("tenantPortal.catalog.priceOnRequest")
-  const cartTotalLabel = formatCartTotalText(
+  const hasUnresolvedProduct = cart.items.some((item) => !productMap.has(item.productId))
+  const cartTotalLabel = hasUnresolvedProduct
+    ? t("tenantPortal.catalog.cartTotalUnavailable")
+    : formatCartTotalText(
     cart.items.map((item) => {
       const product = productMap.get(item.productId)
       return {
@@ -259,21 +350,33 @@ function PortalCartPanel({
       <ul className="space-y-2 text-sm">
         {cart.items.map((item) => {
           const product = productMap.get(item.productId)
+          const resolution = resolutions[item.productId]
           const name = product?.name ?? item.productId.slice(0, 8)
           return (
             <li key={item.productId} className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate">{name}</p>
-                <p className="text-muted-foreground">
-                  {t("tenantPortal.catalog.lineSubtotal")}:{" "}
-                  {formatLineSubtotal(
-                    product?.price ?? null,
-                    product?.currency ?? "",
-                    item.quantity,
-                    i18n.language,
-                    onRequestLabel,
-                  )}
-                </p>
+                {product ? (
+                  <p className="text-muted-foreground">
+                    {t("tenantPortal.catalog.lineSubtotal")}:{" "}
+                    {formatLineSubtotal(
+                      product.price,
+                      product.currency,
+                      item.quantity,
+                      i18n.language,
+                      onRequestLabel,
+                    )}
+                  </p>
+                ) : resolution === "error" ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <p>{t("tenantPortal.catalog.cartProductUnavailable")}</p>
+                    <Button type="button" variant="link" size="sm" onClick={() => onRetryProduct(item.productId)}>
+                      {t("catalog.retry")}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">{t("tenantPortal.catalog.cartProductLoading")}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <CatalogQuantityField

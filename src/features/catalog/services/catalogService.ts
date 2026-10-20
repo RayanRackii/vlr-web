@@ -61,10 +61,16 @@ function parseOrThrow<T>(
   return parsed.data
 }
 
-export async function listCatalogProducts(query?: CatalogProductQuery): Promise<CatalogProduct[]> {
+export async function listCatalogProducts(
+  query?: CatalogProductQuery,
+  options?: { signal?: AbortSignal },
+): Promise<CatalogProduct[]> {
   try {
     const { category, tags, ...rest } = query ?? {}
-    const response = await api.get("/api/catalog/products", { params: { ...rest, ...taxonomyQueryParams({ category, tags }) } })
+    const response = await api.get("/api/catalog/products", {
+      params: { ...rest, ...taxonomyQueryParams({ category, tags }) },
+      ...(options?.signal ? { signal: options.signal } : {}),
+    })
     return parseOrThrow(catalogProductListSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
@@ -193,9 +199,9 @@ export async function getCatalogProductFileUrl(
   }
 }
 
-export async function listProductRequests(): Promise<ProductRequest[]> {
+export async function listProductRequests(options?: { signal?: AbortSignal }): Promise<ProductRequest[]> {
   try {
-    const response = await api.get("/api/catalog/product-requests")
+    const response = await api.get("/api/catalog/product-requests", options?.signal ? { signal: options.signal } : undefined)
     return parseOrThrow(productRequestListSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {

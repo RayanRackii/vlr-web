@@ -3,15 +3,14 @@ export type TaxonomyQuery = {
   tags?: readonly string[] | null
 }
 
-function validId(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-}
-
 export function normalizeTaxonomyQuery(query: TaxonomyQuery): TaxonomyQuery {
   const category = query.category?.trim()
-  const tags = [...new Set((query.tags ?? []).map((tag) => tag.trim()).filter(validId))]
+  // Keep malformed identifiers in the request. The API owns UUID validation and
+  // must be able to return its explicit invalid-filter response instead of this
+  // client silently broadening a customer's search.
+  const tags = [...new Set((query.tags ?? []).map((tag) => tag.trim()))]
   return {
-    ...(category && validId(category) ? { category } : {}),
+    ...(category ? { category } : {}),
     ...(tags.length > 0 ? { tags } : {}),
   }
 }

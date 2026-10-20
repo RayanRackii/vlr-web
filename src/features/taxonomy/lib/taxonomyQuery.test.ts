@@ -16,4 +16,10 @@ describe("taxonomy query serialization", () => {
     expect(next.toString()).toBe(`search=chair&page=2&category=${category}&tags=${tagA}%2C${tagB}`)
     expect(taxonomyQueryFromSearch(next)).toEqual({ category, tags: [tagA, tagB] })
   })
+
+  it("forwards malformed URL values instead of silently broadening the filter", () => {
+    const query = taxonomyQueryFromSearch(new URLSearchParams("category=not-a-uuid&tags=also-not-a-uuid,"))
+    expect(query).toEqual({ category: "not-a-uuid", tags: ["also-not-a-uuid", ""] })
+    expect(taxonomyQueryParams(query)).toEqual({ category: "not-a-uuid", tags: "also-not-a-uuid," })
+  })
 })
