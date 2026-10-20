@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -195,6 +195,38 @@ describe("CustomerAppLayout session tenant", () => {
     expect(alert).toHaveTextContent(i18n.t(translationKey))
     await user.click(within(alert).getByRole("button", { name: i18n.t("common.close") }))
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("does not show an agenda notice left by a different customer in another tab", async () => {
+    persistCustomerSession("customer-token-a", "ficc", "Ana", "customer-a")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    showAgendaSelectionNotice("ficc", "unavailable")
+
+    renderPortal("/t/ficc/agenda")
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+
+    // A different tab replaces the shared customer session without running
+    // this tab's login helper, so the session-scoped notice must not leak.
+    window.localStorage.setItem("rolvix.customer.token", "customer-token-b")
+    window.localStorage.setItem("rolvix.customer.id", "customer-b")
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "rolvix.customer.id",
+      oldValue: "customer-a",
+      newValue: "customer-b",
+      storageArea: window.localStorage,
+    }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    })
   })
 
   it("lists book, my reservations, and profile in the mobile menu", async () => {

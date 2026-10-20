@@ -1,7 +1,14 @@
+import { currentCustomerSessionIdentity } from "@/features/tenantPortal/lib/customerSessionIdentity"
+
 export type AgendaSelectionNotice = "expired" | "unavailable"
 
 const STORAGE_PREFIX = "rolvix.portal.agenda-selection-notice"
 const NOTICE_EVENT = "rolvix:portal-agenda-selection-notice"
+
+type StoredAgendaSelectionNotice = {
+  customerIdentity: string
+  notice: AgendaSelectionNotice
+}
 
 function storageKey(subdomain: string): string {
   return `${STORAGE_PREFIX}.${subdomain.trim().toLowerCase()}`
@@ -15,7 +22,29 @@ export function readAgendaSelectionNotice(
   }
 
   const value = window.sessionStorage.getItem(storageKey(subdomain))
-  return value === "expired" || value === "unavailable" ? value : null
+  if (!value) {
+    return null
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(value)
+  } catch {
+    return null
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    return null
+  }
+  const record = parsed as Partial<StoredAgendaSelectionNotice>
+  const identity = currentCustomerSessionIdentity()
+  if (
+    (record.notice !== "expired" && record.notice !== "unavailable")
+    || typeof record.customerIdentity !== "string"
+    || record.customerIdentity !== identity
+  ) {
+    return null
+  }
+  return record.notice
 }
 
 function notifyNoticeChange() {
@@ -30,7 +59,13 @@ export function showAgendaSelectionNotice(
     return
   }
 
-  window.sessionStorage.setItem(storageKey(subdomain), notice)
+  const customerIdentity = currentCustomerSessionIdentity()
+  if (customerIdentity === null) {
+    return
+  }
+
+  const value: StoredAgendaSelectionNotice = { customerIdentity, notice }
+  window.sessionStorage.setItem(storageKey(subdomain), JSON.stringify(value))
   notifyNoticeChange()
 }
 
@@ -70,7 +105,9 @@ export function subscribeAgendaSelectionNotice(onStoreChange: () => void) {
   }
 
   window.addEventListener(NOTICE_EVENT, onStoreChange)
+  window.addEventListener("storage", onStoreChange)
   return () => {
     window.removeEventListener(NOTICE_EVENT, onStoreChange)
+    window.removeEventListener("storage", onStoreChange)
   }
 }

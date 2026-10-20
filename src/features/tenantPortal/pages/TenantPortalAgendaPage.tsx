@@ -524,7 +524,7 @@ export function TenantPortalAgendaPage() {
         const preferred = normalizeClock(preferredTimeRef.current)
         const kept = times.find((window) => window.startTime === preferred)
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
-        if (nextTime !== preferred) {
+        if (nextTime !== preferred && !submittingRef.current) {
           // The queue belongs to the Location's daily opening, not a slot.
           if (selectionRef.current && queueAssetIdsRef.current.has(selectionRef.current)) {
             showAgendaSelectionNotice(subdomain, "unavailable")
@@ -742,7 +742,7 @@ export function TenantPortalAgendaPage() {
     if (next.length === 0) {
       return
     }
-    if (selectionRef.current && startTime.length > 0) {
+    if (selectionRef.current && startTime.length > 0 && !submittingRef.current) {
       if (queueAssetIdsRef.current.has(selectionRef.current)) {
         showAgendaSelectionNotice(subdomain, "unavailable")
         toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
