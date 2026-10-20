@@ -92,6 +92,7 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { signOutCustomerPortal } from "@/lib/sessionRestoreGuard"
 import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
+import { readAgendaSelectionNotice } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 
 const RESERVATION_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const FUTURE_ISO = "2099-01-15T13:00:00.000Z"
@@ -1197,6 +1198,44 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(
       screen.queryByText(i18n.t("tenantPortal.agenda.quoteLoading")),
     ).not.toBeInTheDocument()
+  })
+
+  it("disables Reservar horário when the selected slot is no longer available", async () => {
+    checkAvailability.mockResolvedValue({
+      isAvailable: false,
+      requestedQuantity: 1,
+      availableQuantity: 0,
+      estimatedTotalAmount: null,
+      reason: "already reserved",
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    const reserve = screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    })
+    await waitFor(() => expect(reserve).toBeDisabled())
+    expect(screen.getAllByText(i18n.t("tenantPortal.agenda.slotTaken")).length).toBeGreaterThan(0)
+  })
+
+  it("clears a selected slot when its tenant-clock start time passes on focus", async () => {
+    vi.setSystemTime(new Date("2026-10-14T10:59:50.000Z"))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    vi.setSystemTime(new Date("2026-10-14T11:00:00.000Z"))
+    await act(async () => window.dispatchEvent(new Event("focus")))
+
+    expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "false")
+    expect(readAgendaSelectionNotice("ficc")).toBe("unavailable")
+    expect(toastMessage).toHaveBeenCalledWith(
+      i18n.t("tenantPortal.agenda.selectionUnavailable"),
+    )
   })
 
   it("disables the time selector when the day has no bookable slots", async () => {
@@ -3499,6 +3538,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     vi.setSystemTime(Date.now() + 1)
     await act(async () => window.dispatchEvent(new Event("focus")))
     expect(toastMessage).toHaveBeenCalledWith(i18n.t("tenantPortal.agenda.selectionExpired"))
+    expect(readAgendaSelectionNotice("ficc")).toBe("expired")
     expect(router.state.location.pathname).toBe(expected)
   })
 
@@ -4300,6 +4340,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     await act(async () => window.dispatchEvent(new Event("focus")))
     expect(await screen.findByText("Portal destination")).toBeInTheDocument()
     expect(toastMessage).toHaveBeenCalledWith(i18n.t("tenantPortal.agenda.selectionExpired"))
+    expect(readAgendaSelectionNotice("ficc")).toBe("expired")
     expect(bookSlot).not.toHaveBeenCalled()
     expect(joinQueue).not.toHaveBeenCalled()
   })

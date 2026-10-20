@@ -70,6 +70,10 @@ import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeld
 import { useRefreshOnForeground } from "@/features/tenantPortal/hooks/useRefreshOnForeground"
 import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
+import {
+  clearAgendaSelectionNotice,
+  showAgendaSelectionNotice,
+} from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingIdleSettings"
 import {
   agendaRefreshDates,
@@ -130,7 +134,10 @@ import {
   type PortalReservation,
   type PortalScheduleSlot,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { withoutPastTenantSlots } from "@/features/rentals/lib/offerableSlot"
+import {
+  isPastTenantSlotStart,
+  withoutPastTenantSlots,
+} from "@/features/rentals/lib/offerableSlot"
 import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
@@ -221,8 +228,14 @@ export function TenantPortalAgendaPage() {
     if (selectionRef.current === null) return
     selectionRef.current = null
     setSelectedRentalAssetId(null)
+    showAgendaSelectionNotice(subdomain, "unavailable")
     toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
-  }, [])
+  }, [subdomain])
+  const selectRentalAsset = useCallback((rentalAssetId: string) => {
+    clearAgendaSelectionNotice(subdomain)
+    selectionRef.current = rentalAssetId
+    setSelectedRentalAssetId(rentalAssetId)
+  }, [subdomain])
   const [loading, setLoading] = useState(true)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
@@ -513,6 +526,7 @@ export function TenantPortalAgendaPage() {
         if (nextTime !== preferred) {
           // The queue belongs to the Location's daily opening, not a slot.
           if (selectionRef.current && queueAssetIdsRef.current.has(selectionRef.current)) {
+            showAgendaSelectionNotice(subdomain, "unavailable")
             toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
           } else {
             clearUnavailableSelection()
@@ -729,6 +743,7 @@ export function TenantPortalAgendaPage() {
     }
     if (selectionRef.current && startTime.length > 0) {
       if (queueAssetIdsRef.current.has(selectionRef.current)) {
+        showAgendaSelectionNotice(subdomain, "unavailable")
         toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
       } else {
         clearUnavailableSelection()
@@ -736,7 +751,7 @@ export function TenantPortalAgendaPage() {
     }
     preferredTimeRef.current = next
     setStartTime(next)
-  }, [clearUnavailableSelection, schedulePending, slotsError, startTime, timeWindows])
+  }, [clearUnavailableSelection, schedulePending, slotsError, startTime, subdomain, timeWindows])
 
   useEffect(() => {
     if (seenHash === location.hash) {
@@ -836,6 +851,34 @@ export function TenantPortalAgendaPage() {
     selectedAsset, selectedRentalAssetId, selectedSlot, slotsError, startTime,
   ])
 
+  useEffect(() => {
+    if (!selectedSlot || !selectedRentalAssetId) {
+      return
+    }
+
+    const checkSelectedSlotStart = () => {
+      if (!isPastTenantSlotStart(date, selectedSlot.startTime)) {
+        return
+      }
+      clearUnavailableSelection()
+    }
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        checkSelectedSlotStart()
+      }
+    }
+
+    checkSelectedSlotStart()
+    const interval = window.setInterval(checkSelectedSlotStart, 30_000)
+    window.addEventListener("focus", checkSelectedSlotStart)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener("focus", checkSelectedSlotStart)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [clearUnavailableSelection, date, selectedRentalAssetId, selectedSlot])
+
   const checkIdleTimeout = useBookingIdleTimeout({
     // Explicit time changes clear the asset. Automatic time fallback must not
     // extend an idle deadline for the Location's daily queue.
@@ -846,7 +889,9 @@ export function TenantPortalAgendaPage() {
     paused: submitting || queue.joining || queue.leaving || queue.view.kind === "active" ||
       (selectedRentalAssetId !== null && isPortalBookingInFlight(date, selectedRentalAssetId, startTime)),
     onExpire: () => {
+      selectionRef.current = null
       setSelectedRentalAssetId(null)
+      showAgendaSelectionNotice(subdomain, "expired")
       toast.message(t("tenantPortal.agenda.selectionExpired"))
       navigate(bookingIdleRedirectTarget(subdomain, menuItem?.bookingIdleRedirectPath), { replace: true })
     },
@@ -1524,7 +1569,7 @@ export function TenantPortalAgendaPage() {
                   detail: inVisibleSet ? state.detail : null,
                 }
               })}
-              onSelect={setSelectedRentalAssetId}
+              onSelect={selectRentalAsset}
             />
           )}
 
@@ -1564,7 +1609,7 @@ export function TenantPortalAgendaPage() {
                           portalPickUnavailableClass,
                       )}
                       onClick={() => {
-                        setSelectedRentalAssetId(asset.id)
+                        selectRentalAsset(asset.id)
                       }}
                     >
                       <span className="block">{asset.name}</span>
@@ -1738,7 +1783,8 @@ export function TenantPortalAgendaPage() {
               (selectedRentalAssetId !== null &&
                 !spaceState(selectedRentalAssetId).available) ||
               !queue.canReserve ||
-              quote.status === "loading"
+              quote.status === "loading" ||
+              (quote.status === "ready" && quote.amount === null)
             }
             onClick={() => {
               void onReserve()
