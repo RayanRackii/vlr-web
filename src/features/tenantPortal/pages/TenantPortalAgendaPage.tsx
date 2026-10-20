@@ -903,6 +903,7 @@ export function TenantPortalAgendaPage() {
 
   async function onReserve() {
     if (
+      schedulePending || slotsError ||
       !selectedAsset ||
       !selectedSlot ||
       submittingRef.current ||
@@ -1058,7 +1059,7 @@ export function TenantPortalAgendaPage() {
   }
 
   async function onJoinAndReserve() {
-    if (!selectedSlot || submittingRef.current || joinAndReserveLock.current) {
+    if (schedulePending || slotsError || !selectedSlot || submittingRef.current || joinAndReserveLock.current) {
       return
     }
     const generation = getAgendaSessionGeneration()
@@ -1508,7 +1509,7 @@ export function TenantPortalAgendaPage() {
                     ? { backgroundColor: primary }
                     : undefined
                 }
-                disabled={queue.view.joinAndReserve && !selectedSlot}
+                disabled={queue.view.joinAndReserve && (schedulePending || slotsError || !selectedSlot)}
                 loading={queue.joining}
                 loadingLabel={
                   queue.view.joinAndReserve

@@ -3279,6 +3279,41 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserving") })).toBeDisabled()
   })
 
+  it.each(["pending", "failed"] as const)("blocks reserve during a %s same-day refresh", async (state) => {
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const actionName = i18n.t("tenantPortal.agenda.reserveSlot")
+    const action = await screen.findByRole("button", { name: (name) => name === actionName })
+    await waitFor(() => expect(action).toBeEnabled())
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    let resolveRefresh!: (value: typeof day) => void
+    let rejectRefresh!: (reason: Error) => void
+    fetchDay.mockImplementation(() => new Promise((resolve, reject) => {
+      resolveRefresh = resolve
+      rejectRefresh = reject
+    }))
+    const reads = fetchDay.mock.calls.length
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}`) })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(reads))
+    expect(action).toBeDisabled()
+    if (state === "failed") {
+      await act(async () => rejectRefresh(new Error("schedule refresh failed")))
+      await waitFor(() => expect(toastError).toHaveBeenCalledWith("schedule refresh failed"))
+      expect(action).toBeDisabled()
+    }
+    await user.click(action)
+    expect(joinQueue).not.toHaveBeenCalled()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    if (state === "pending") {
+      await act(async () => resolveRefresh(day))
+      await waitFor(() => expect(action).toBeEnabled())
+      expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    }
+  })
+
   it("keeps a bookable selection across foreground refresh and a same-day effect refetch", async () => {
     const user = userEvent.setup()
     const { router } = renderAgendaHistory()
@@ -4013,6 +4048,41 @@ describe("TenantPortalAgendaPage queue explainer", () => {
       queryButtonNamed(i18n.t("tenantPortal.agenda.queue.joinAndReserve")),
     ).not.toBeInTheDocument()
     expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
+  })
+
+  it.each(["pending", "failed"] as const)("blocks join-and-reserve during a %s same-day refresh", async (state) => {
+    const user = userEvent.setup()
+    const { router } = renderAgendaHistory()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const actionName = i18n.t("tenantPortal.agenda.queue.joinAndReserve")
+    const action = await screen.findByRole("button", { name: (name) => name === actionName })
+    await waitFor(() => expect(action).toBeEnabled())
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}#minhas-reservas`) })
+    const day = await fetchDay.mock.results[0].value as Awaited<ReturnType<typeof fetchPublicScheduleDay>>
+    let resolveRefresh!: (value: typeof day) => void
+    let rejectRefresh!: (reason: Error) => void
+    fetchDay.mockImplementation(() => new Promise((resolve, reject) => {
+      resolveRefresh = resolve
+      rejectRefresh = reject
+    }))
+    const reads = fetchDay.mock.calls.length
+    await act(async () => { await router.navigate(`${router.state.location.pathname}${router.state.location.search}`) })
+    await waitFor(() => expect(fetchDay.mock.calls.length).toBeGreaterThan(reads))
+    expect(action).toBeDisabled()
+    if (state === "failed") {
+      await act(async () => rejectRefresh(new Error("schedule refresh failed")))
+      await waitFor(() => expect(toastError).toHaveBeenCalledWith("schedule refresh failed"))
+      expect(action).toBeDisabled()
+    }
+    await user.click(action)
+    expect(joinQueue).not.toHaveBeenCalled()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    if (state === "pending") {
+      await act(async () => resolveRefresh(day))
+      await waitFor(() => expect(action).toBeEnabled())
+      expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    }
   })
 
   it("offers one join-and-reserve action when the queue is open and nobody is ahead", async () => {

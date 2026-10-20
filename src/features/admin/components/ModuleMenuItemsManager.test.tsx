@@ -347,6 +347,38 @@ describe("ModuleMenuItemsManager", () => {
     expect(body).not.toHaveProperty("moduleName")
   })
 
+  it("preserves idle settings when a tenant edits an item", async () => {
+    const user = userEvent.setup()
+    const item = { ...RENTALS_ITEM, bookingIdleTimeoutMinutes: 17, bookingIdleRedirectPath: "/app" }
+    renderManager({ items: [item] })
+    await waitForLoaded()
+    await user.click(within(listRow(item.label)).getByRole("button", { name: i18n.t("common.edit") }))
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).queryByLabelText(i18n.t("admin.moduleMenu.bookingIdleTimeoutMinutes"))).not.toBeInTheDocument()
+    const label = within(dialog).getByLabelText(i18n.t("admin.moduleMenu.label"))
+    await user.clear(label)
+    await user.type(label, "Quadra coberta")
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("admin.moduleMenu.save") }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledWith(item.id,
+      expect.objectContaining({ label: "Quadra coberta", bookingIdleTimeoutMinutes: 17, bookingIdleRedirectPath: "/app" }),
+      undefined,
+    ))
+  })
+
+  it("preserves each item's idle settings when a tenant reorders the menu", async () => {
+    const user = userEvent.setup()
+    const first = { ...RENTALS_ITEM, bookingIdleTimeoutMinutes: 17, bookingIdleRedirectPath: "/app" }
+    const second = { ...INACTIVE_ITEM, bookingIdleTimeoutMinutes: 30, bookingIdleRedirectPath: "/agenda" }
+    renderManager({ items: [first, second] })
+    await waitForLoaded()
+    await user.click(within(listRow(first.label)).getByRole("button", { name: i18n.t("admin.moduleMenu.moveDown") }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(2))
+    expect(updateMock).toHaveBeenNthCalledWith(1, first.id,
+      expect.objectContaining({ sortOrder: second.sortOrder, bookingIdleTimeoutMinutes: 17, bookingIdleRedirectPath: "/app" }), undefined)
+    expect(updateMock).toHaveBeenNthCalledWith(2, second.id,
+      expect.objectContaining({ sortOrder: first.sortOrder, bookingIdleTimeoutMinutes: 30, bookingIdleRedirectPath: "/agenda" }), undefined)
+  })
+
   it("validates and saves the super-admin idle settings, including clearing both to null", async () => {
     const user = userEvent.setup()
     vi.mocked(listAdminModuleMenuItems).mockResolvedValue([{

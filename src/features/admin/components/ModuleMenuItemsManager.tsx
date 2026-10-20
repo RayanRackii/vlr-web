@@ -417,7 +417,10 @@ export function ModuleMenuItemsManager({
               bookingIdleTimeoutMinutes: parsed.data.bookingIdleTimeoutMinutes.trim() === ""
                 ? null : Number(parsed.data.bookingIdleTimeoutMinutes),
               bookingIdleRedirectPath: parsed.data.bookingIdleRedirectPath || null,
-            } : {}),
+            } : {
+              bookingIdleTimeoutMinutes: dialog.item.bookingIdleTimeoutMinutes ?? null,
+              bookingIdleRedirectPath: dialog.item.bookingIdleRedirectPath ?? null,
+            }),
           },
           tenantId,
         )
@@ -475,10 +478,8 @@ export function ModuleMenuItemsManager({
           sortOrder: swap.sortOrder,
           isActive: current.isActive,
           rentalAssetId: current.rentalAssetId ?? null,
-          ...(tenantId ? {
-            bookingIdleTimeoutMinutes: current.bookingIdleTimeoutMinutes ?? null,
-            bookingIdleRedirectPath: current.bookingIdleRedirectPath ?? null,
-          } : {}),
+          bookingIdleTimeoutMinutes: current.bookingIdleTimeoutMinutes ?? null,
+          bookingIdleRedirectPath: current.bookingIdleRedirectPath ?? null,
         },
         tenantId,
       )
@@ -489,10 +490,8 @@ export function ModuleMenuItemsManager({
           sortOrder: current.sortOrder,
           isActive: swap.isActive,
           rentalAssetId: swap.rentalAssetId ?? null,
-          ...(tenantId ? {
-            bookingIdleTimeoutMinutes: swap.bookingIdleTimeoutMinutes ?? null,
-            bookingIdleRedirectPath: swap.bookingIdleRedirectPath ?? null,
-          } : {}),
+          bookingIdleTimeoutMinutes: swap.bookingIdleTimeoutMinutes ?? null,
+          bookingIdleRedirectPath: swap.bookingIdleRedirectPath ?? null,
         },
         tenantId,
       )

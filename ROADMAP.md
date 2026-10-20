@@ -93,6 +93,8 @@ Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 - [x] #200: o horário da aula explica por que está vazio. Carregando, erro com “Tentar novamente”, recurso fechado na data, e dia da semana sem horário (aponta para Configuração semanal) são estados diferentes. Sábado 24/10 continua sendo a data civil pedida em `GET /api/schedule/days/{date}`; a resposta `{ date, slots }` não traz um motivo, então `slots` vazio é “sem horário configurado” e slots só `closed` são “fechado”. Não é índice de dia nem fuso.
 - [x] #207: uma aula recriada no mesmo intervalo, com outro id, volta a aparecer nesta aba. O mesmo id continua oculto enquanto o GET antigo o lista.
 
+- [x] Review do timeout B2C: edição e reordenação pelo tenant preservam os dois campos de inatividade em todos os PUTs; Reservar e Entrar e reservar bloqueados por carga/erro do dia, inclusive nos handlers. Destino limitado a 200 caracteres e sem controles C0/C1, com regressões de edição, reordenação, refresh pendente/falho e fronteiras. `npx vitest run && npm run build`: 1.314 testes aprovados em 174 arquivos e build concluído (avisos de CSS). Sem commit.
+
 ### 3.7. Cancelamento B2C pelo cliente
 
 Spec: `vlr-api/docs/plans/active/2026-09-07-rentals-b2c-self-cancel.md`. Branch `feat/rentals-b2c-self-cancel`. API already on `develop` (`89b3e6d` / PR #64). Wave 1 remains **PROD_COMPLETE**.
