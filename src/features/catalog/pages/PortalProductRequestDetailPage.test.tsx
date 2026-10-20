@@ -10,9 +10,11 @@ import i18n from "@/lib/i18n"
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   getPortalProductRequest: vi.fn(),
+  getPortalCatalogPolicy: vi.fn(),
+  cancelPortalProductRequest: vi.fn(),
 }))
 
-import { getPortalProductRequest } from "@/features/catalog/services/catalogPortalService"
+import { getPortalCatalogPolicy, cancelPortalProductRequest, getPortalProductRequest } from "@/features/catalog/services/catalogPortalService"
 
 const getMock = vi.mocked(getPortalProductRequest)
 
@@ -75,6 +77,7 @@ function renderDetail() {
 
 describe("PortalProductRequestDetailPage", () => {
   beforeEach(() => {
+    vi.mocked(getPortalCatalogPolicy).mockResolvedValue({ canCancelOrders: true, canCancelRequests: true, upToStatus: { orders: "Requested", requests: "Submitted" }, policyText: "Sem reembolso." })
     getMock.mockReset()
   })
 
@@ -141,6 +144,20 @@ describe("PortalProductRequestDetailPage", () => {
     )
     expect(await screen.findByText("Replacement gasket")).toBeInTheDocument()
     expect(getMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("cancels a submitted request, shows the policy and preserves signed files", async () => {
+    getMock.mockResolvedValue({ ...request, status: "Submitted" })
+    vi.mocked(cancelPortalProductRequest).mockResolvedValue({ id: REQUEST_ID, customerId: REQUEST_ID, description: request.description, quantity: 2, note: null, status: "Cancelled", createdAt: request.createdAt, files: [] })
+    const user = userEvent.setup()
+    renderDetail()
+    await user.click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.cancelRequest") }))
+    expect(await screen.findByText("Sem reembolso.")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.cancelConfirmAction") }))
+    expect(await screen.findByText(i18n.t("catalog.productRequestStatus.Cancelled"))).toBeInTheDocument()
+    expect(cancelPortalProductRequest).toHaveBeenCalledWith(REQUEST_ID)
+    expect(screen.getByRole("link", { name: "gasket.pdf" })).toHaveAttribute("href", "https://signed.example/catalog-private/gasket.pdf")
+    expect(screen.queryByRole("button", { name: i18n.t("tenantPortal.catalog.cancelRequest") })).not.toBeInTheDocument()
   })
 
   it("returns to the list", async () => {

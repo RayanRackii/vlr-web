@@ -46,6 +46,7 @@ import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotifi
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
+import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -274,6 +275,9 @@ export function AppRoutes() {
               path="/configuracoes/politica-reservas"
               element={<BookingPolicyPage />}
             />
+          </Route>
+          <Route element={<PermissionRoute permission="catalog.products.manage" />}>
+            <Route path="/catalogo/configuracoes" element={<CatalogPolicyPage />} />
           </Route>
           <Route
             element={<PermissionRoute permission="catalog.products.read" />}

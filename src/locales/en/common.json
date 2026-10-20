@@ -567,7 +567,12 @@
       "requestNotFound": "We could not find this request.",
       "requestDetailTitle": "Request",
       "requestFilesTitle": "Files",
-      "requestFilesEmpty": "No files."
+      "requestFilesEmpty": "No files.",
+      "cancelRequest": "Cancel request",
+      "cancelRequestTitle": "Cancel this request?",
+      "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
+      "requestCancelled": "Request canceled.",
+      "cancelRequestError": "Could not cancel the request."
     }
   },
   "catalog": {
@@ -584,7 +589,8 @@
       "Cancelled": "Canceled"
     },
     "productRequestStatus": {
-      "Submitted": "Submitted"
+      "Submitted": "Submitted",
+      "Cancelled": "Canceled"
     },
     "actor": {
       "Customer": "Customer",
@@ -759,6 +765,21 @@
         "createdAt": "Created",
         "actions": "Actions"
       }
+    },
+    "policy": {
+      "title": "Catalog settings",
+      "description": "Choose when customers can cancel orders and requests in this catalog.",
+      "ordersEnabled": "Customers can cancel orders",
+      "ordersUpTo": "Cancel orders up to status (inclusive)",
+      "requestsEnabled": "Customers can cancel requests",
+      "requestsUpTo": "Cancel requests up to status (inclusive)",
+      "text": "Cancellation policy text (optional)",
+      "placeholder": "E.g. no refunds.",
+      "textHint": "{{length}} / 2000 characters. This text appears in the cancellation confirmation.",
+      "saved": "Catalog policy saved.",
+      "loadError": "Could not load the catalog policy.",
+      "saveError": "Could not save the catalog policy.",
+      "readOnly": "You do not have permission to change the catalog policy."
     }
   },
   "notifications": {
@@ -1093,7 +1114,8 @@
       "operations": "Operations",
       "platform": "Platform"
     },
-    "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows."
+    "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
+    "catalogSettings": "Settings"
   },
   "account": {
     "title": "Account",

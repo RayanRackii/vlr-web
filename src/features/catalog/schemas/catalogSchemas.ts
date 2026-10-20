@@ -26,7 +26,7 @@ export type CatalogOrderStatus = z.infer<typeof catalogOrderStatusSchema>
 
 export const catalogActorTypeSchema = z.enum(["Customer", "B2BUser", "System"])
 
-export const productRequestStatusSchema = z.enum(["Submitted"])
+export const productRequestStatusSchema = z.enum(["Submitted", "Cancelled"])
 
 export const notificationChannelSchema = z.enum([
   "InApp",
