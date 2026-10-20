@@ -18,7 +18,7 @@ import { toast } from "sonner"
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
 
 const store = new Map<string, unknown>()
-const authSession = vi.hoisted(() => ({ access_token: "test" }))
+const authSession = vi.hoisted(() => ({ current: { access_token: "test" } }))
 
 vi.mock("idb-keyval", () => ({
   get: vi.fn(async (key: string) => store.get(key)),
@@ -33,7 +33,7 @@ vi.mock("idb-keyval", () => ({
 }))
 
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ session: authSession }),
+  useAuth: () => ({ session: authSession.current }),
   AuthProvider: ({ children }: { children: ReactNode }) => children,
 }))
 
@@ -72,6 +72,106 @@ describe("execution reconnect with the real Axios interceptors and global sync h
     vi.useRealTimers()
     vi.restoreAllMocks()
     resetConnectivityForTests()
+  })
+
+  it.each(["immediate", "transport recovers late", "PATCH recovers late", "GET recovers late"])("recovers without reload when %s, retaining the offline detail and draft", async (scenario) => {
+    let saved: string | null = null
+    let readyAt = 0
+    let offlineGets = 0
+    let failedPatches = 0
+    let failedGets = 0
+    let detailReads = 0
+    let started = false
+    api.defaults.adapter = async (config) => {
+      const detail = config.method === "get" && config.url === `/api/work-orders/${WORK_ORDER_ID}`
+      if (detail) detailReads += 1
+      const recovering = Date.now() < readyAt && (
+        scenario === "transport recovers late" ||
+        (scenario === "PATCH recovers late" && config.method === "patch") ||
+        (scenario === "GET recovers late" && detail)
+      )
+      if (!navigator.onLine || recovering) {
+        if (detail) {
+          failedGets += 1
+          if (!navigator.onLine) offlineGets += 1
+        }
+        if (config.method === "patch") failedPatches += 1
+        throw new AxiosError("Network Error", "ERR_NETWORK", config)
+      }
+      if (config.method === "patch") {
+        if (config.url?.endsWith("/status")) started = true
+        else saved = (JSON.parse(config.data as string) as { value: string }).value
+      }
+      return { data: { ...textOrder(saved), status: started ? "InProgress" : "Pending" }, status: 200, statusText: "OK", headers: {}, config }
+    }
+    const tree = () => (
+      <MemoryRouter initialEntries={[`/os/${WORK_ORDER_ID}`]}>
+        <WorkOrderSyncHost />
+        <TestPermissionProvider permissions={["os.work_orders.read"]} activeModules={["os"]}>
+          <Routes><Route path="/os/:id" element={<WorkOrderExecutionPage />} /></Routes>
+        </TestPermissionProvider>
+      </MemoryRouter>
+    )
+    const view = render(tree())
+    await settle()
+    fireEvent.click(screen.getByRole("button", { name: i18n.t("workOrders.execution.start") }))
+    await settle()
+    expect(started).toBe(true)
+    connection(false)
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "nota sem reload" } })
+    await act(async () => { await vi.advanceTimersByTimeAsync(400) })
+    // A refreshed auth session can rerun the page's GET while DevTools is offline.
+    authSession.current = { access_token: "refreshed" }
+    view.rerender(tree())
+    await settle()
+    expect(offlineGets).toBeGreaterThan(0)
+    expect(screen.getByRole("textbox")).toHaveValue("nota sem reload")
+    expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("workOrders.execution.save.retrying"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.errors.loadOneFailed"))).not.toBeInTheDocument()
+
+    readyAt = Date.now() + (scenario === "immediate" ? 0 : 1500)
+    const readsBeforeOnline = detailReads
+    connection(true)
+    await act(async () => { await vi.advanceTimersByTimeAsync(4000) })
+    expect(saved).toBe("nota sem reload")
+    expect(detailReads).toBeGreaterThan(readsBeforeOnline)
+    if (scenario === "transport recovers late" || scenario === "PATCH recovers late") expect(failedPatches).toBeGreaterThan(0)
+    if (scenario === "transport recovers late" || scenario === "GET recovers late") expect(failedGets).toBeGreaterThan(1)
+    expect(screen.getByRole("textbox")).toHaveValue("nota sem reload")
+    expect(store.get("os_sync_queue")).toEqual([])
+    expect(screen.getByText(i18n.t("workOrders.execution.save.saved"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.execution.save.retrying"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.errors.loadOneFailed"))).not.toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledExactlyOnceWith(i18n.t("workOrders.offline.synced"), { duration: 3000 })
+    connection(true)
+    await settle()
+    expect(toast.success).toHaveBeenCalledTimes(1)
+  })
+
+  it("loads after online when the initial GET failed offline, without a false load error or sync toast", async () => {
+    connection(false)
+    api.defaults.adapter = async (config) => {
+      if (!navigator.onLine) throw new AxiosError("Network Error", "ERR_NETWORK", config)
+      return { data: textOrder(null), status: 200, statusText: "OK", headers: {}, config }
+    }
+    render(
+      <MemoryRouter initialEntries={[`/os/${WORK_ORDER_ID}`]}>
+        <WorkOrderSyncHost />
+        <TestPermissionProvider permissions={["os.work_orders.read"]} activeModules={["os"]}>
+          <Routes><Route path="/os/:id" element={<WorkOrderExecutionPage />} /></Routes>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    await settle()
+    expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.errors.loadOneFailed"))).not.toBeInTheDocument()
+    connection(true)
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000) })
+    expect(screen.getByRole("textbox")).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
+    expect(toast.success).not.toHaveBeenCalled()
   })
 
   it.each(["offline edit", "pending PATCH", "network failure", "timeout", "pending auth"])("clears the banner and announces exactly once after %s reconnects", async (scenario) => {
