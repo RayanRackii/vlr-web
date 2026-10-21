@@ -48,25 +48,32 @@ function totalViolations(counts) {
 }
 
 async function readBaseline(filePath) {
-  return JSON.parse(await readFile(filePath, "utf8"))
+  const baseline = JSON.parse(await readFile(filePath, "utf8"))
+
+  if (
+    baseline?.version !== 2 ||
+    !baseline.files ||
+    typeof baseline.files !== "object" ||
+    Array.isArray(baseline.files) ||
+    Object.entries(baseline.files).some(
+      ([file, rules]) =>
+        !file ||
+        !rules ||
+        typeof rules !== "object" ||
+        Array.isArray(rules) ||
+        Object.entries(rules).some(
+          ([rule, count]) => !rule || !Number.isInteger(count) || count < 0,
+        ),
+    )
+  ) {
+    throw new Error(`Invalid ESLint baseline at ${filePath}: expected v2 file+rule format.`)
+  }
+
+  return baseline
 }
 
 function regressionsAgainstBaseline(counts, baseline) {
   const regressions = []
-
-  if (baseline.version === 1) {
-    const ruleCounts = {}
-    for (const rules of Object.values(counts)) {
-      for (const [rule, count] of Object.entries(rules)) {
-        ruleCounts[rule] = (ruleCounts[rule] ?? 0) + count
-      }
-    }
-    for (const [rule, count] of Object.entries(ruleCounts)) {
-      const allowed = baseline.rules?.[rule] ?? 0
-      if (count > allowed) regressions.push(`${rule}: ${allowed} -> ${count}`)
-    }
-    return regressions
-  }
 
   for (const [file, rules] of Object.entries(counts)) {
     for (const [rule, count] of Object.entries(rules)) {
@@ -78,8 +85,6 @@ function regressionsAgainstBaseline(counts, baseline) {
 }
 
 function baselineRegressions(candidate, base) {
-  if (base.version === 1 || candidate.version === 1) return []
-
   const regressions = []
   for (const [file, rules] of Object.entries(candidate.files ?? {})) {
     for (const [rule, count] of Object.entries(rules)) {
@@ -107,8 +112,12 @@ const candidateBaselinePath = optionValue("--verify-baseline")
 const regressions = regressionsAgainstBaseline(counts, baseline)
 
 if (candidateBaselinePath) {
+  const candidateBaseline = await readBaseline(candidateBaselinePath)
   regressions.push(
-    ...baselineRegressions(await readBaseline(candidateBaselinePath), baseline).map(
+    ...regressionsAgainstBaseline(counts, candidateBaseline).map(
+      (regression) => `candidate baseline ${regression}`,
+    ),
+    ...baselineRegressions(candidateBaseline, baseline).map(
       (regression) => `baseline ${regression}`,
     ),
   )
