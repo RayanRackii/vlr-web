@@ -237,6 +237,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 ## Histórico
 
+| 2026-10-21 | **CI (WEB, local):** GitHub Actions em PR e push para `develop`/`main` usa Node 22, `npm ci`, typecheck, Vitest limitado a dois workers, build Vite e ratchet de ESLint. O baseline versionado permite o passivo atual, mas bloqueia aumentos por regra. Testes de agenda foram reexecutados com relógio falso e histórico assíncrono aguardado. Próximo WEB: reduzir gradualmente o baseline de lint. Próximo API: nenhum contrato ou trabalho necessário. |
+
 | Data | Mudança |
 |------|---------|
 | 2026-10-20 | **Fix (WEB, review Taxonomy, local sem commit):** filtros do catálogo staff passam a restaurar `category`/`tags` da URL e cancelam/ignoram respostas antigas; o portal usa filtros derivados estáveis, invalida resultados/opções/resumos/quantidades por identidade Customer+tenant e distingue falha de detalhe do produto de “Sob consulta”, com retry. Assignments preservam múltiplas categorias; identificadores inválidos da URL seguem à API para validação. Mocks de opções e células de ação estáveis fazem `CatalogProductsPage.test.tsx` passar. Regressões cobrem corrida, troca de identidade, URL, carrinho, seleção múltipla e serialização. Validação: `npx vitest run src/features/catalog src/features/taxonomy` (176 testes), `npx tsc -b`, `npm run build` e lint dos arquivos alterados aprovados. Próximo WEB: smoke integrado em DEV com API Taxonomy. Próximo API: migration/permissões e filtros Taxonomy em DEV, conforme spec cross-repo. |

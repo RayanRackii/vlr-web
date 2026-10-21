@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --configLoader runner",
     "lint": "eslint .",
+    "lint:baseline": "node scripts/lint-ratchet.mjs --write-baseline",
+    "lint:ratchet": "node scripts/lint-ratchet.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",

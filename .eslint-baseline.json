@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "rules": {
+    "@typescript-eslint/no-unused-vars": 2,
+    "fatal": 1,
+    "no-control-regex": 1,
+    "no-extra-boolean-cast": 1,
+    "preserve-caught-error": 66,
+    "react-hooks/exhaustive-deps": 4,
+    "react-hooks/immutability": 1,
+    "react-hooks/incompatible-library": 17,
+    "react-hooks/refs": 30,
+    "react-hooks/set-state-in-effect": 66,
+    "react-refresh/only-export-components": 14
+  }
+}
