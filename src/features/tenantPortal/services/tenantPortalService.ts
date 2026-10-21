@@ -54,6 +54,77 @@ export type PendingEmailVerification = {
   verificationSendFailed: boolean
 }
 
+const CONTRACT_TIME = /^\d{2}:\d{2}:\d{2}(\.\d{1,7})?$/
+
+const dailyAvailabilityWindowSchema = z
+  .object({
+    slotId: z.uuid().nullable(),
+    startTime: z.string().regex(CONTRACT_TIME),
+    endTime: z.string().regex(CONTRACT_TIME),
+    isDerived: z.boolean(),
+    state: z.enum([
+      "Available",
+      "Taken",
+      "Blocked",
+      "Past",
+      "OutsideHorizon",
+      "Unpriced",
+    ]),
+    reasonCode: z
+      .enum([
+        "START_IN_THE_PAST",
+        "booking_horizon_exceeded",
+        "SCHEDULE_BLOCKED",
+        "INSUFFICIENT_CAPACITY",
+        "PRICE_UNAVAILABLE",
+      ])
+      .nullable(),
+    availableQuantity: z.number().int().nonnegative(),
+    totalAmount: z.number().nonnegative().nullable(),
+  })
+  .strict()
+
+const dailyAvailabilityResourceSchema = z
+  .object({
+    rentalAssetId: z.uuid(),
+    assetId: z.uuid(),
+    unitId: z.uuid(),
+    name: z.string(),
+    type: z.enum(["Location", "Good"]),
+    totalQuantity: z.number().int().positive(),
+    requiresDeposit: z.boolean(),
+    queueEnabled: z.boolean(),
+    effectiveMaxAdvanceBookingDays: z.number().int().nonnegative().nullable(),
+    windows: z.array(dailyAvailabilityWindowSchema).max(10_000),
+  })
+  .strict()
+
+const dailyAvailabilitySchema = z
+  .object({
+    date: z.iso.date().refine((date) => date !== "9999-12-31"),
+    timeZone: z.literal("America/Sao_Paulo"),
+    serverNow: z.iso.datetime({ offset: true }),
+    quoteExpiresAt: z.iso.datetime({ offset: true }),
+    currency: z.literal("BRL"),
+    resources: z.array(dailyAvailabilityResourceSchema).max(100),
+  })
+  .strict()
+  .superRefine((availability, context) => {
+    const windowCount = availability.resources.reduce(
+      (total, resource) => total + resource.windows.length,
+      0,
+    )
+    if (windowCount > 10_000) {
+      context.addIssue({
+        code: "custom",
+        message: "Daily availability exceeds the contract window limit.",
+        path: ["resources"],
+      })
+    }
+  })
+export type PortalDailyAvailability = z.infer<typeof dailyAvailabilitySchema>
+export type PortalDailyAvailabilityWindow = z.infer<typeof dailyAvailabilityWindowSchema>
+
 export function pendingEmailVerificationStorageKey(subdomain: string): string {
   return `${PENDING_EMAIL_VERIFICATION_KEY_PREFIX}.${subdomain.trim().toLowerCase()}`
 }
@@ -290,6 +361,18 @@ export async function fetchTenantBranding(
     throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
   return parsed.data
+}
+
+export async function fetchPortalDailyAvailability(subdomain: string, date: string, quantity = 1): Promise<PortalDailyAvailability> {
+  try {
+    const response = await publicApi.get(`/api/public/tenants/${subdomain}/availability/days/${date}`, { params: { quantity }, headers: { "Cache-Control": "no-cache" } })
+    const parsed = dailyAvailabilitySchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidPayload"))
+    return parsed.data
+  } catch (error) {
+    if (error instanceof Error && !isAxiosError(error)) throw error
+    throw portalBookingErrorFromUnknown(error, i18n.t("apiErrors.loadScheduleDay"))
+  }
 }
 
 export async function fetchRegistrationSchema(
