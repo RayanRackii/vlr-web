@@ -1,0 +1,323 @@
+{
+  "version": 2,
+  "files": {
+    "src/components/layout/ThemeToggle.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/loading/TopProgressBar.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/LocaleDateInput.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/components/profile/profileFields.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/components/ui/alert.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/components/ui/badge.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/components/ui/button.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/components/ui/form.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/components/ui/tabs.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/contexts/AuthContext.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/features/admin/components/ModuleMenuItemsManager.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/features/admin/components/RegistrationFieldsManager.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/admin/components/TenantEditForm.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/admin/components/TenantOnboardingWizard.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/admin/components/TenantUsersManager.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/admin/hooks/useAdminModuleCatalog.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/admin/hooks/usePlatformAdmin.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/admin/hooks/usePlatformTenantSession.ts": {
+      "react-hooks/exhaustive-deps": 1
+    },
+    "src/features/admin/pages/AdminAssetFamiliesPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/admin/pages/AdminDashboardPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/admin/pages/AdminUsersPage.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/features/admin/pages/EditTenantPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/admin/services/adminTenantsService.ts": {
+      "preserve-caught-error": 6
+    },
+    "src/features/admin/services/platformUsersService.ts": {
+      "preserve-caught-error": 2
+    },
+    "src/features/admin/services/tenantUsersService.ts": {
+      "preserve-caught-error": 5
+    },
+    "src/features/assets/components/AssetWizard.tsx": {
+      "react-hooks/set-state-in-effect": 2
+    },
+    "src/features/assets/pages/AssetCategoriesPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/assets/pages/AssetsPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/assets/services/assetCategoriesService.ts": {
+      "preserve-caught-error": 4
+    },
+    "src/features/assets/services/assetsService.ts": {
+      "preserve-caught-error": 3
+    },
+    "src/features/assets/services/rentalPricingService.ts": {
+      "preserve-caught-error": 4
+    },
+    "src/features/assets/services/unitsService.ts": {
+      "preserve-caught-error": 1
+    },
+    "src/features/auth/ResetPasswordPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/auth/SetPasswordPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/components/CatalogProductImageGallery.tsx": {
+      "react-hooks/refs": 1
+    },
+    "src/features/catalog/components/CatalogQuantityField.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/components/PortalCancelAction.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/components/PortalCatalogProductCard.tsx": {
+      "react-hooks/refs": 1
+    },
+    "src/features/catalog/pages/CatalogNotificationsPage.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/catalog/pages/CatalogOrderDetailPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/pages/CatalogOrdersPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/catalog/pages/CatalogPolicyPage.tsx": {
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/pages/CatalogProductsPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/catalog/pages/PortalCartPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/pages/PortalCatalogProductPage.tsx": {
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/pages/PortalOrderDetailPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/catalog/pages/PortalOrdersPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/catalog/pages/PortalProductRequestsPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/catalog/useCatalogCart.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/dashboard/components/TechnicianDashboard.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/dashboard/pages/DashboardPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/dashboard/services/dashboardService.ts": {
+      "preserve-caught-error": 1
+    },
+    "src/features/landing/components/IntelligenceHubBridge.tsx": {
+      "no-extra-boolean-cast": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/landing/components/ProductionBeamLine.tsx": {
+      "react-hooks/refs": 3,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/landing/components/StoryStep.tsx": {
+      "react-refresh/only-export-components": 2
+    },
+    "src/features/onboarding/createTenant.ts": {
+      "preserve-caught-error": 1
+    },
+    "src/features/pmoc/components/GenerateWorkOrderDialog.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/components/PlanCoverageSection.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/components/PlanRelatedWorkOrders.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/pages/CreatePlanPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/pages/MaintenancePlansPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/pmoc/pages/PmocLibraryPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/pages/PmocPlanDetailPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/pages/PmocTemplatePreviewPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/pmoc/services/pmocPlanCategoriesService.ts": {
+      "preserve-caught-error": 1
+    },
+    "src/features/pmoc/services/pmocService.test.ts": {
+      "@typescript-eslint/no-unused-vars": 1
+    },
+    "src/features/rentals/components/layout/LayoutCanvasBoard.tsx": {
+      "react-hooks/refs": 4
+    },
+    "src/features/rentals/components/RentalResourceSheet.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/features/rentals/components/schedule/OccupancyKindSheet.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/components/schedule/TemplateSheet.tsx": {
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/pages/BookingPolicyPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/pages/RentalLayoutsPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/pages/RentalResourcesPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/pages/ReservationsPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/rentals/pages/SchedulePage.tsx": {
+      "react-hooks/set-state-in-effect": 4
+    },
+    "src/features/rentals/services/reservationsService.ts": {
+      "preserve-caught-error": 4
+    },
+    "src/features/rentals/services/scheduleService.ts": {
+      "preserve-caught-error": 11
+    },
+    "src/features/tenantPortal/components/CustomerAppLayout.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/tenantPortal/components/CustomerSidebar.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/features/tenantPortal/components/TenantPortalLayout.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/tenantPortal/hooks/useReservationQueue.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/tenantPortal/pages/TenantPortalAgendaPage.tsx": {
+      "fatal": 1,
+      "react-hooks/exhaustive-deps": 1,
+      "react-hooks/immutability": 1,
+      "react-hooks/refs": 2,
+      "react-hooks/set-state-in-effect": 8
+    },
+    "src/features/tenantPortal/pages/TenantPortalProfilePage.tsx": {
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/tenantPortal/pages/TenantPortalRegisterPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/tenantPortal/pages/TenantPortalResetPasswordPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/tenantPortal/pages/TenantPortalVerifyEmailPage.tsx": {
+      "react-hooks/incompatible-library": 1
+    },
+    "src/features/tenantPortal/services/tenantPortalService.ts": {
+      "preserve-caught-error": 17
+    },
+    "src/features/users/components/PeopleCustomersTab.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/users/components/PeopleUsersTab.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/users/pages/PeopleAccessPage.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/users/permissions/PermissionContext.tsx": {
+      "react-hooks/refs": 13,
+      "react-refresh/only-export-components": 2
+    },
+    "src/features/workOrders/components/WorkOrderAssigneeField.tsx": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/workOrders/components/WorkOrderOrigin.tsx": {
+      "react-refresh/only-export-components": 1
+    },
+    "src/features/workOrders/pages/CreateWorkOrderPage.tsx": {
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/workOrders/pages/WorkOrderExecutionPage.tsx": {
+      "react-hooks/refs": 1,
+      "react-hooks/set-state-in-effect": 3
+    },
+    "src/features/workOrders/pages/WorkOrdersPage.tsx": {
+      "react-hooks/incompatible-library": 1,
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/features/workOrders/services/workOrdersService.ts": {
+      "preserve-caught-error": 6
+    },
+    "src/hooks/useDebouncedCallback.test.ts": {
+      "@typescript-eslint/no-unused-vars": 1
+    },
+    "src/hooks/useObservedHeight.test.tsx": {
+      "react-hooks/refs": 1
+    },
+    "src/hooks/useObservedHeight.ts": {
+      "react-hooks/set-state-in-effect": 1
+    },
+    "src/lib/safeStaffNextPath.ts": {
+      "no-control-regex": 1
+    }
+  }
+}

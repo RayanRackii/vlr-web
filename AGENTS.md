@@ -10,7 +10,7 @@ ADRs de domínio (ex.: slots) vivem em **`vlr-api/docs/adr/`**.
 
 ## Repos
 - **Este:** `vlr-web` (React + Vite, Vercel).
-- **Irmão:** `vlr-api` (.NET 10, Railway) — API e domínio.
+- **Irmão:** `vlr-api` (.NET 10, Fly.io app `rolvix-api-prod`) — API e domínio. Web em Vercel; banco em Supabase.
 - Workspace Cursor pretendido: roots `backend` + `frontend` (dois Git repos, **não** monorepo). O diretório pai no disco não precisa ser workspace root.
 
 ## Ao concluir trabalho
@@ -53,7 +53,7 @@ parent
   ├─ build / test
   ├─ reviewer
   ├─ PR
-  ├─ Merge Risk Gate (dossier GLM ± Fable)
+  ├─ Merge Risk Gate (dossier + revisão de risco Sol)
   ├─ approve → merge em develop (quando os gates passarem)
   └─ git checkpoint
 ```
@@ -158,13 +158,13 @@ Se não estiver seguro continuar noutro PC, dizer o motivo explicitamente.
 
 ## Autonomous Delivery Workflow
 
-Canônico (contrato Fable, blockers, merge methods, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
+Canônico (contrato de revisão, blockers, merge methods, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
 
 O parent é dono do ciclo técnico completo. O usuário não precisa pedir branch/commit/push/PR/review/approve/merge. “MR” = Pull Request.
 
 Neste repo: `web-implementer` ou `ui-implementer` (um writer por working tree) → `npm`/Vite build → `web-reviewer` em `origin/develop...HEAD` depois do parent `git fetch origin --prune`. Critical = 0, High = 0. Medium corrigido ou justificado como non-blocking.
 
-Merge Risk Gate: GLM prepara dossier compacto. Fable (`rolvix-deep-architect` no `vlr-api`) é **obrigatório** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `FABLE_MERGE_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
+Merge Risk Gate: Sol (`gpt-6.1-sol`) prepara o dossier compacto e a revisão de risco é **obrigatória** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `DEEP_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
 
 Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates (**Squash and merge**). Nunca `main`/PROD automático. Release `develop` → `main` (Human Gate): **Create a merge commit**. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
 
@@ -176,24 +176,24 @@ Fila: `READY` / `IN_PROGRESS` / `BLOCKED_HUMAN` / `BLOCKED_TECHNICAL` / `PR_OPEN
 
 Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-O parent/orchestrator é **Grok 4.7 xhigh**. Dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, `web-reviewer`, PR, merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Não substitua modelos em silêncio. Se o subagent configurado não puder rodar, emita `SUBAGENT_UNAVAILABLE` (agent, modelo esperado, **root esperado**, motivo, ação do usuário) e **pare**. Não simule o papel e não use outro agent/modelo no lugar.
+Selecione o modelo por capacidade: **Luna (`gpt-6-luna`)** para mudanças pequenas, testes e documentação; **Terra (`gpt-5.6-terra`)** para endpoints e componentes; **Sol (`gpt-6.1-sol`)** para trabalho complexo ou transversal, segurança e reviews. O parent/orchestrator é dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, review, PR e merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Se um agente nomeado não estiver disponível, use o próximo modelo adequado à capacidade necessária e prossiga; não pare nem simule uma indisponibilidade.
 
 Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
-1. **rolvix-architect** (`glm-5.2-high`, readonly) — arquitetura do Rolvix (API + web); Merge Review Dossier.
-2. **rolvix-deep-architect** (`claude-fable-5-thinking-high`, readonly) — arquitetura profunda com aprovação explícita **ou** Merge Risk Gate quando o `AGENTS.md` da API o tornar obrigatório.
+1. Architect (readonly) — Sol (`gpt-6.1-sol`) para arquitetura do Rolvix e Merge Review Dossier.
+2. Revisão profunda readonly — Sol (`gpt-6.1-sol`) para arquitetura profunda com aprovação explícita ou Merge Risk Gate quando o `AGENTS.md` da API o exigir.
 
 Ownership de implementação **neste** repo:
 
-3. **web-implementer** (`grok-4.7-xhigh`, write) — engenharia frontend geral (React, TypeScript, API, Zod, auth, estado, forms, routing, i18n técnico). Segue esta Git Work Policy. **Não** é substituído pelo Kimi só porque o repo é frontend.
-4. **ui-implementer** (`kimi-k3`, write) — visual/layout/UX/browser, **somente** quando isso for central. Não altera contrato/domínio/auth por conta própria.
-5. **web-reviewer** (`grok-4.7-xhigh`, readonly) — Standards × Spec no diff `origin/develop...HEAD` de `vlr-web`, inclusive após Kimi. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
+3. Implementação web geral — Terra (`gpt-5.6-terra`) para endpoints e componentes; Luna (`gpt-6-luna`) para alterações pequenas/testes/docs. Segue esta Git Work Policy.
+4. Implementação visual/layout/UX/browser — Terra (`gpt-5.6-terra`) quando isso for central; não altera contrato/domínio/auth por conta própria.
+5. Review web readonly — Sol (`gpt-6.1-sol`) no diff `origin/develop...HEAD` de `vlr-web`. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
 
-Um writer ativo por working tree: `web-implementer` **ou** `ui-implementer`, nunca os dois ao mesmo tempo neste repo. Sequência ok. Paralelo com `api-implementer` só no outro repo, e só se a spec não exigir ordem API→UI.
+Um writer ativo por working tree, nunca dois ao mesmo tempo neste repo. Paralelo com implementação API só no outro repo, e só se a spec não exigir ordem API→UI.
 
 Cross-repo: `rolvix-architect` → uma spec → `api-implementer` **e** `web-implementer` / `ui-implementer` → `api-reviewer` **e** `web-reviewer`.
 
-Tarefa trivial/localizada neste repo: pular architect. Tarefa arquitetural: `rolvix-architect` → spec → writers deste repo → `web-reviewer`.
+Tarefa trivial/localizada neste repo: pular architect. Tarefa arquitetural: Sol → spec → implementação adequada → Sol review.
 
 Prompt cache do provider ≠ memória do projeto ≠ context pack. Nenhuma decisão do fluxo depende de cache hit.
 

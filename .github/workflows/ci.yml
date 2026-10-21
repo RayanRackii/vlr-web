@@ -1,0 +1,33 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc -b --noEmit
+      - run: npx vitest run --maxWorkers=2
+      - run: npx vite build --configLoader runner
+      - name: Load pull request base lint baseline
+        if: github.event_name == 'pull_request'
+        run: git show "origin/${GITHUB_BASE_REF}:.eslint-baseline.json" > "$RUNNER_TEMP/eslint-baseline.base.json" || { echo "Base has no lint baseline yet; bootstrapping from this PR"; cp .eslint-baseline.json "$RUNNER_TEMP/eslint-baseline.base.json"; }
+      - name: Check ESLint ratchet
+        run: >-
+          node scripts/lint-ratchet.mjs
+          ${{ github.event_name == 'pull_request' && format('--baseline {0}/eslint-baseline.base.json --verify-baseline .eslint-baseline.json', runner.temp) || '' }}
