@@ -72,7 +72,7 @@ Export a small helper if useful, e.g. `isTenantOnboardingStepValid(step, values,
 
 - Blindly `disabled={!isValid}` on every screen
 - Change API contracts, business rules, i18n copy except if a new a11y string is required (prefer none)
-- Touch main, PROD, API, migrations, Railway, Twilio, WhatsApp
+- Touch main, PROD, API, migrations, Fly.io (replaces obsolete Railway), Twilio, WhatsApp
 - ui-implementer / visual redesign
 
 ## Verify
