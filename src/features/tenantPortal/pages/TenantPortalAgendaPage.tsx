@@ -67,6 +67,7 @@ import {
 } from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeldByYouNotice"
+import { TenantPortalNewBookingPage } from "@/features/tenantPortal/pages/TenantPortalNewBookingPage"
 import { useRefreshOnForeground } from "@/features/tenantPortal/hooks/useRefreshOnForeground"
 import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
@@ -177,6 +178,15 @@ function partitionAgendaSlots(
 }
 
 export function TenantPortalAgendaPage() {
+  const { branding } = useOutletContext<CustomerAppOutletContext>()
+  const [searchParams] = useSearchParams()
+  if (branding.newBookingUiEnabled === true && searchParams.get("legacyBooking") !== "1") {
+    return <TenantPortalNewBookingPage />
+  }
+  return <TenantPortalLegacyAgendaPage />
+}
+
+function TenantPortalLegacyAgendaPage() {
   const { t, i18n } = useTranslation()
   const moneyLocale = i18n.resolvedLanguage ?? i18n.language
   function formatBookingMoney(amount: number): string {
@@ -190,6 +200,7 @@ export function TenantPortalAgendaPage() {
   const { subdomain, primary, menu } =
     useOutletContext<CustomerAppOutletContext>()
   const signedIn = isCustomerSignedInForTenant(subdomain)
+  const hasNewGridHandoff = searchParams.get("legacyBooking") === "1"
 
   const menuItem = useMemo(
     () => menu.find((item) => item.id === menuItemId) ?? null,
@@ -221,7 +232,7 @@ export function TenantPortalAgendaPage() {
   const preferredTimeRef = useRef(startTime)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
-  >(null)
+  >(() => searchParams.get("rentalAssetId"))
   const selectionRef = useRef(selectedRentalAssetId)
   selectionRef.current = selectedRentalAssetId
   const clearUnavailableSelection = useCallback((force = false) => {
@@ -459,7 +470,7 @@ export function TenantPortalAgendaPage() {
     const scope = JSON.stringify([subdomain, menuItemId, date])
     const contextChanged = fetchedSelectionScope.current !== scope
     fetchedSelectionScope.current = scope
-    if (contextChanged) {
+    if (contextChanged && !hasNewGridHandoff) {
       clearUnavailableSelection()
     }
     if (!signedIn || !date) {
@@ -560,7 +571,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [clearUnavailableSelection, date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain])
+  }, [clearUnavailableSelection, date, dayFetchGate, hasNewGridHandoff, menuItemId, signedIn, slotReloadNonce, subdomain])
 
   useEffect(() => {
     const today = brazilTodayIsoDate()

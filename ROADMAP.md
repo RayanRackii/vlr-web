@@ -79,6 +79,8 @@ Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
+- [x] Rollout booking UI PR 3 (código): flag `newBookingUiEnabled` no branding mantém a agenda legada como padrão. Tenant habilitado recebe faixa de sete dias e tabela recurso × intervalo com disponibilidade/preço do contrato diário, estados de loading/vazio/erro, foco/teclado e i18n pt-BR/en/es. A seleção transfere data, recurso, intervalo e quantidade 1 ao fluxo legado de cotação/reserva; barra fixa, guarda de preço e fluxo de fila permanecem no PR 4.
+
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
