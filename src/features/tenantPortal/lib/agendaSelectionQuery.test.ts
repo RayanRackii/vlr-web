@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   agendaSelectionSearchParams,
@@ -7,11 +7,19 @@ import {
   readAgendaDateParam,
   readAgendaTimeParam,
 } from "@/features/tenantPortal/lib/agendaSelectionQuery"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
-
-const TODAY = brazilTodayIsoDate()
+// These are pure query helpers; a fixed civil day keeps the boundary cases
+// independent from the machine clock and from other suites' fake timers.
+const TODAY = "2026-10-14"
 
 describe("agenda selection query", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-14T12:00:00.000Z") })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it("falls back to today and no time when the params are missing or invalid", () => {
     expect(readAgendaDateParam(null, TODAY)).toBe(TODAY)
     expect(readAgendaDateParam("yesterday", TODAY)).toBe(TODAY)

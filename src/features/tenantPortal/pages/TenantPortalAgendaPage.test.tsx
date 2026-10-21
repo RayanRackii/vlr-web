@@ -2236,15 +2236,13 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
 
     await waitFor(() => {
+      const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+      expect(restored).toHaveValue("2026-10-15")
+      expect(restored).not.toHaveAttribute("aria-invalid")
       expect(
-        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
-      ).toHaveValue("2026-10-15")
+        screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+      ).not.toBeInTheDocument()
     })
-    const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
-    expect(restored).not.toHaveAttribute("aria-invalid")
-    expect(
-      screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
-    ).not.toBeInTheDocument()
     expect(fetchDay.mock.calls.map((call) => call[1])).not.toContain(
       "2026-10-31",
     )
@@ -2290,15 +2288,13 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
 
     await waitFor(() => {
+      const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+      expect(restored).toHaveValue("2026-10-15")
+      expect(restored).not.toHaveAttribute("aria-invalid")
       expect(
-        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
-      ).toHaveValue("2026-10-15")
+        screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
+      ).not.toBeInTheDocument()
     })
-    const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
-    expect(restored).not.toHaveAttribute("aria-invalid")
-    expect(
-      screen.queryByText(i18n.t("tenantPortal.agenda.horizonExceeded")),
-    ).not.toBeInTheDocument()
   })
 
   it("clears a before-today rejection when history returns to a valid day", async () => {
@@ -2328,16 +2324,13 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
 
     await waitFor(() => {
+      const restored = screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))
+      expect(restored).toHaveValue("2026-10-15")
+      expect(restored).not.toHaveAttribute("aria-invalid")
       expect(
-        screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
-      ).toHaveValue("2026-10-15")
+        screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
+      ).not.toBeInTheDocument()
     })
-    expect(
-      screen.getByLabelText(i18n.t("tenantPortal.agenda.date")),
-    ).not.toHaveAttribute("aria-invalid")
-    expect(
-      screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
-    ).not.toBeInTheDocument()
   })
 
   it("replaces a beyond-horizon deep link so Back reaches the earlier entry", async () => {
@@ -3500,7 +3493,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     vi.setSystemTime(new Date("2026-10-14T11:00:00.000Z"))
     await act(async () => {
-      vi.advanceTimersByTime(30_000)
+      await vi.advanceTimersByTimeAsync(30_000)
     })
 
     expect(readAgendaSelectionNotice("ficc")).toBeNull()
