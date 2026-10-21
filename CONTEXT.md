@@ -229,7 +229,7 @@ vlr-web (este repo)                 vlr-api (repo irmão)
 
 ## 6. Stack deste repo
 - React + Vite, shadcn/ui, Tailwind. Deploy **Vercel**.
-- `VITE_API_URL` → `vlr-api` (Railway). JWT Bearer (Supabase B2B ou Customer JWT B2C).
+- `VITE_API_URL` → API no Fly.io (app `rolvix-api-prod`). Web em Vercel; banco em Supabase. JWT Bearer (Supabase B2B ou Customer JWT B2C).
 - Hosts: apex = landing + app B2B; `{subdomain}.rolvix.com.br` = portal B2C.
 - **Loading (produto):** Skeleton shimmer (default) na 1ª carga; `LoadingButton` em ações pontuais; `TopProgressBar` nas navegações React Router (delay ~250ms). Não sobrepor indicadores para o mesmo evento.
 
