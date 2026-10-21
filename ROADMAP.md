@@ -79,7 +79,7 @@ Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
-- [x] Rollout booking UI PR 3 (código): flag `newBookingUiEnabled` no branding mantém a agenda legada como padrão. Tenant habilitado recebe faixa de sete dias e tabela recurso × intervalo com disponibilidade/preço do contrato diário, estados de loading/vazio/erro, foco/teclado e i18n pt-BR/en/es. A seleção transfere data, recurso, intervalo e quantidade 1 ao fluxo legado de cotação/reserva; barra fixa, guarda de preço e fluxo de fila permanecem no PR 4.
+- [x] Rollout booking UI PR 3 (código): flag `newBookingUiEnabled` no branding mantém a agenda legada como padrão. Tenant habilitado recebe faixa de sete dias e tabela recurso × intervalo com disponibilidade/preço do contrato diário, estados de loading/vazio/erro, foco/teclado e i18n pt-BR/en/es. A seleção transfere data, recurso, intervalo completo e quantidade escolhida ao fluxo legado de cotação/reserva; barra fixa, guarda de preço e fluxo de fila permanecem no PR 4.
 
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
@@ -241,6 +241,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 ## Histórico
 
+| 2026-10-21 | **Fix (WEB, Booking UI PR 3):** a grade B2C preserva a seleção de handoff futuro enquanto a política carrega e o fluxo legado reconcilia recurso + início + fim + quantidade, sem ativar parâmetros `legacyBooking` para tenant com flag desligada. A data de URL é sanitizada; o contrato diário é validado estritamente; seleção expira/revalida em foreground; estados, contagens, fila e quantidade de Goods receberam a UX/a11y especificada. Testes cobrem gate, grade e handoff. Próximo WEB: PR 4 (guarda de preço, barra de resumo, fila e confirmação). Próximo API: PR 4 (guarda `expectedTotalAmount` sob lock). |
 | 2026-10-21 | **Fix (WEB, lint ratchet):** removido o suporte a baseline ESLint v1; base e candidate agora precisam do formato v2 por arquivo+regra. O ratchet compara o lint atual contra ambas, além de impedir aumentos na candidate em relação à base. Validação: `node scripts/lint-ratchet.mjs` e controles manuais para rejeição de v1 e candidate mais restritiva. Próximo WEB: reduzir gradualmente o baseline de lint. Próximo API: nenhum contrato ou trabalho necessário. |
 | 2026-10-21 | **CI (WEB, local):** GitHub Actions em PR e push para `develop`/`main` usa Node 22, `npm ci`, typecheck, Vitest limitado a dois workers, build Vite e ratchet de ESLint. Em PR, o workflow lê a baseline da branch-base com histórico completo, compara também a baseline alterada do PR e bloqueia qualquer aumento por arquivo+regra; a baseline v2 permite somente reduzir cada contagem. Testes de agenda foram reexecutados com relógio falso e histórico assíncrono aguardado. Próximo WEB: reduzir gradualmente o baseline de lint. Próximo API: nenhum contrato ou trabalho necessário. |
 

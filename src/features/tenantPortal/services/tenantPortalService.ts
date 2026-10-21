@@ -54,15 +54,74 @@ export type PendingEmailVerification = {
   verificationSendFailed: boolean
 }
 
-const dailyAvailabilityWindowSchema = z.object({
-  slotId: z.string().uuid().nullable(), startTime: z.string(), endTime: z.string(), isDerived: z.boolean(),
-  state: z.enum(["Available", "Taken", "Blocked", "Past", "OutsideHorizon", "Unpriced"]), reasonCode: z.string().nullable(),
-  availableQuantity: z.number().int().nonnegative(), totalAmount: z.number().nonnegative().nullable(),
-})
-const dailyAvailabilitySchema = z.object({
-  date: z.string(), timeZone: z.literal("America/Sao_Paulo"), serverNow: z.string(), quoteExpiresAt: z.string(), currency: z.literal("BRL"),
-  resources: z.array(z.object({ rentalAssetId: z.string().uuid(), assetId: z.string().uuid(), unitId: z.string().uuid(), name: z.string(), type: z.enum(["Location", "Good"]), totalQuantity: z.number().int().positive(), requiresDeposit: z.boolean(), queueEnabled: z.boolean(), effectiveMaxAdvanceBookingDays: z.number().int().nonnegative().nullable(), windows: z.array(dailyAvailabilityWindowSchema) })),
-})
+const CONTRACT_TIME = /^\d{2}:\d{2}:\d{2}(\.\d{1,7})?$/
+
+const dailyAvailabilityWindowSchema = z
+  .object({
+    slotId: z.uuid().nullable(),
+    startTime: z.string().regex(CONTRACT_TIME),
+    endTime: z.string().regex(CONTRACT_TIME),
+    isDerived: z.boolean(),
+    state: z.enum([
+      "Available",
+      "Taken",
+      "Blocked",
+      "Past",
+      "OutsideHorizon",
+      "Unpriced",
+    ]),
+    reasonCode: z
+      .enum([
+        "START_IN_THE_PAST",
+        "booking_horizon_exceeded",
+        "SCHEDULE_BLOCKED",
+        "INSUFFICIENT_CAPACITY",
+        "PRICE_UNAVAILABLE",
+      ])
+      .nullable(),
+    availableQuantity: z.number().int().nonnegative(),
+    totalAmount: z.number().nonnegative().nullable(),
+  })
+  .strict()
+
+const dailyAvailabilityResourceSchema = z
+  .object({
+    rentalAssetId: z.uuid(),
+    assetId: z.uuid(),
+    unitId: z.uuid(),
+    name: z.string(),
+    type: z.enum(["Location", "Good"]),
+    totalQuantity: z.number().int().positive(),
+    requiresDeposit: z.boolean(),
+    queueEnabled: z.boolean(),
+    effectiveMaxAdvanceBookingDays: z.number().int().nonnegative().nullable(),
+    windows: z.array(dailyAvailabilityWindowSchema).max(10_000),
+  })
+  .strict()
+
+const dailyAvailabilitySchema = z
+  .object({
+    date: z.iso.date().refine((date) => date !== "9999-12-31"),
+    timeZone: z.literal("America/Sao_Paulo"),
+    serverNow: z.iso.datetime({ offset: true }),
+    quoteExpiresAt: z.iso.datetime({ offset: true }),
+    currency: z.literal("BRL"),
+    resources: z.array(dailyAvailabilityResourceSchema).max(100),
+  })
+  .strict()
+  .superRefine((availability, context) => {
+    const windowCount = availability.resources.reduce(
+      (total, resource) => total + resource.windows.length,
+      0,
+    )
+    if (windowCount > 10_000) {
+      context.addIssue({
+        code: "custom",
+        message: "Daily availability exceeds the contract window limit.",
+        path: ["resources"],
+      })
+    }
+  })
 export type PortalDailyAvailability = z.infer<typeof dailyAvailabilitySchema>
 export type PortalDailyAvailabilityWindow = z.infer<typeof dailyAvailabilityWindowSchema>
 

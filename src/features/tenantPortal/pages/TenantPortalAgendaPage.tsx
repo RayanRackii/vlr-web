@@ -41,7 +41,6 @@ import {
   compareResourceNames,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
-  findSlotAtStart,
   isCustomerBookableSlot,
   listDistinctStartTimes,
   normalizeClock,
@@ -93,6 +92,7 @@ import {
   readAgendaDateParam,
   readAgendaTimeParam,
 } from "@/features/tenantPortal/lib/agendaSelectionQuery"
+import { shouldUseNewBookingUi } from "@/features/tenantPortal/lib/bookingUiRollout"
 import {
   commitPortalBooking,
   customerAlreadyHoldsSlot,
@@ -177,10 +177,36 @@ function partitionAgendaSlots(
   }
 }
 
+function findSlotAtWindow<
+  T extends { rentalAssetId: string; startTime: string; endTime: string },
+>(
+  slots: readonly T[],
+  rentalAssetId: string,
+  startTime: string,
+  endTime: string | null,
+): T | undefined {
+  const start = normalizeClock(startTime)
+  const end = endTime === null ? null : normalizeClock(endTime)
+  return slots.find(
+    (slot) =>
+      slot.rentalAssetId === rentalAssetId &&
+      normalizeClock(slot.startTime) === start &&
+      (end === null || normalizeClock(slot.endTime) === end),
+  )
+}
+
+function readNewGridHandoffQuantity(value: string | null): number {
+  if (value === null || !/^\d+$/.test(value)) return 1
+  const quantity = Number(value)
+  return Number.isSafeInteger(quantity) && quantity >= 1 && quantity <= 1_000_000
+    ? quantity
+    : 1
+}
+
 export function TenantPortalAgendaPage() {
   const { branding } = useOutletContext<CustomerAppOutletContext>()
   const [searchParams] = useSearchParams()
-  if (branding.newBookingUiEnabled === true && searchParams.get("legacyBooking") !== "1") {
+  if (shouldUseNewBookingUi(branding.newBookingUiEnabled, searchParams.get("legacyBooking"))) {
     return <TenantPortalNewBookingPage />
   }
   return <TenantPortalLegacyAgendaPage />
@@ -197,10 +223,18 @@ function TenantPortalLegacyAgendaPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
-  const { subdomain, primary, menu } =
+  const { subdomain, primary, menu, branding } =
     useOutletContext<CustomerAppOutletContext>()
   const signedIn = isCustomerSignedInForTenant(subdomain)
-  const hasNewGridHandoff = searchParams.get("legacyBooking") === "1"
+  // A legacy query parameter is inert until this tenant has the rollout enabled.
+  const hasNewGridHandoff =
+    branding.newBookingUiEnabled === true && searchParams.get("legacyBooking") === "1"
+  const handoffEndTime = hasNewGridHandoff
+    ? readAgendaTimeParam(searchParams.get("endTime"))
+    : null
+  const handoffQuantity = hasNewGridHandoff
+    ? readNewGridHandoffQuantity(searchParams.get("quantity"))
+    : 1
 
   const menuItem = useMemo(
     () => menu.find((item) => item.id === menuItemId) ?? null,
@@ -229,6 +263,9 @@ function TenantPortalLegacyAgendaPage() {
   const [startTime, setStartTime] = useState(
     () => readAgendaTimeParam(searchParams.get("time")) ?? "",
   )
+  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(
+    handoffEndTime,
+  )
   const preferredTimeRef = useRef(startTime)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
@@ -240,11 +277,15 @@ function TenantPortalLegacyAgendaPage() {
     if (selectionRef.current === null) return
     selectionRef.current = null
     setSelectedRentalAssetId(null)
+    setSelectedEndTime(null)
     showAgendaSelectionNotice(subdomain, "unavailable")
     toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
   }, [subdomain])
   const selectRentalAsset = useCallback((rentalAssetId: string) => {
     clearAgendaSelectionNotice(subdomain)
+    if (selectionRef.current !== rentalAssetId) {
+      setSelectedEndTime(null)
+    }
     selectionRef.current = rentalAssetId
     setSelectedRentalAssetId(rentalAssetId)
   }, [subdomain])
@@ -493,7 +534,11 @@ function TenantPortalLegacyAgendaPage() {
       setSlots([])
       setObservedSlots([])
       setSlotsBelongToDate(date)
-      clearUnavailableSelection()
+      // Future-date handoffs wait for policy before fetching. Keep their exact
+      // resource/window selection until that fetch can reconcile it.
+      if (!hasNewGridHandoff) {
+        clearUnavailableSelection()
+      }
       return
     }
 
@@ -640,6 +685,7 @@ function TenantPortalLegacyAgendaPage() {
       if (urlTime !== startTime) {
         preferredTimeRef.current = urlTime
         setStartTime(urlTime)
+        setSelectedEndTime(null)
       }
       return
     }
@@ -787,7 +833,12 @@ function TenantPortalLegacyAgendaPage() {
   )
 
   const selectedSlot = selectedRentalAssetId
-    ? findSlotAtStart(slotsForView, selectedRentalAssetId, startTime)
+    ? findSlotAtWindow(
+        slotsForView,
+        selectedRentalAssetId,
+        startTime,
+        selectedEndTime,
+      )
     : undefined
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
@@ -810,7 +861,7 @@ function TenantPortalLegacyAgendaPage() {
       date,
       startTime: quoteStart,
       endTime: quoteEnd,
-      quantity: 1,
+      quantity: handoffQuantity,
     })
       .then((result) => {
         if (cancelled) {
@@ -838,7 +889,7 @@ function TenantPortalLegacyAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, quoteAssetId, quoteEnd, quoteStart, subdomain])
+  }, [date, handoffQuantity, quoteAssetId, quoteEnd, quoteStart, subdomain])
 
   const queueEnabled = isLocationQueueEnabled(selectedAsset)
   const queue = useReservationQueue({
@@ -1072,14 +1123,14 @@ function TenantPortalLegacyAgendaPage() {
             ? bookPortalSlot({
                 slotId: slot.id,
                 unitId: asset.unitId,
-                quantity: 1,
+                quantity: handoffQuantity,
               })
             : createPortalReservation({
                 unitId: asset.unitId,
                 date: dayDate,
                 startTime: slot.startTime.slice(0, 5),
                 endTime: slot.endTime.slice(0, 5),
-                items: [{ assetId: asset.assetId, quantity: 1 }],
+                items: [{ assetId: asset.assetId, quantity: handoffQuantity }],
               }),
         { subdomain, dates: [dayDate] },
         {
@@ -1404,7 +1455,12 @@ function TenantPortalLegacyAgendaPage() {
       }
     }
     const slot = startTime
-      ? findSlotAtStart(slotsForView, rentalAssetId, startTime)
+      ? findSlotAtWindow(
+          slotsForView,
+          rentalAssetId,
+          startTime,
+          rentalAssetId === selectedRentalAssetId ? selectedEndTime : null,
+        )
       : undefined
     const reservedKey =
       startTime.length > 0
@@ -1495,6 +1551,7 @@ function TenantPortalLegacyAgendaPage() {
                   }
                   preferredTimeRef.current = value
                   setStartTime(value)
+                  setSelectedEndTime(null)
                   setSelectedRentalAssetId(null)
                 }}
                 items={timeItems}

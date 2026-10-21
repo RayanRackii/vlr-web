@@ -26,4 +26,23 @@ describe("daily availability contract", () => {
     publicGet.mockResolvedValue({ data: { ...fixture, currency: "USD" } })
     await expect(fetchPortalDailyAvailability("ficc", fixture.date)).rejects.toThrow()
   })
+
+  it("enforces documented formats, reason codes, and response limits", async () => {
+    publicGet.mockResolvedValue({
+      data: {
+        ...fixture,
+        date: "2026/10/21",
+        resources: [{
+          ...fixture.resources[0],
+          windows: [{ ...fixture.resources[0].windows[0], startTime: "13:00", reasonCode: "private reason" }],
+        }],
+      },
+    })
+    await expect(fetchPortalDailyAvailability("ficc", fixture.date)).rejects.toThrow()
+
+    publicGet.mockResolvedValue({
+      data: { ...fixture, resources: Array.from({ length: 101 }, () => fixture.resources[0]) },
+    })
+    await expect(fetchPortalDailyAvailability("ficc", fixture.date)).rejects.toThrow()
+  })
 })
