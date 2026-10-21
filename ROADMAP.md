@@ -237,7 +237,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 ## Histórico
 
-| 2026-10-21 | **CI (WEB, local):** GitHub Actions em PR e push para `develop`/`main` usa Node 22, `npm ci`, typecheck, Vitest limitado a dois workers, build Vite e ratchet de ESLint. O baseline versionado permite o passivo atual, mas bloqueia aumentos por regra. Testes de agenda foram reexecutados com relógio falso e histórico assíncrono aguardado. Próximo WEB: reduzir gradualmente o baseline de lint. Próximo API: nenhum contrato ou trabalho necessário. |
+| 2026-10-21 | **CI (WEB, local):** GitHub Actions em PR e push para `develop`/`main` usa Node 22, `npm ci`, typecheck, Vitest limitado a dois workers, build Vite e ratchet de ESLint. Em PR, o workflow lê a baseline da branch-base com histórico completo, compara também a baseline alterada do PR e bloqueia qualquer aumento por arquivo+regra; a baseline v2 permite somente reduzir cada contagem. Testes de agenda foram reexecutados com relógio falso e histórico assíncrono aguardado. Próximo WEB: reduzir gradualmente o baseline de lint. Próximo API: nenhum contrato ou trabalho necessário. |
 
 | Data | Mudança |
 |------|---------|
