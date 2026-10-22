@@ -204,9 +204,7 @@ describe("staff api 401 retry", () => {
     expect(calls[0]).toBe(`Bearer ${OLD_STAFF_TOKEN}`)
     expect(calls[1]).toBe(`Bearer ${NEW_STAFF_TOKEN}`)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
-    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-      refresh_token: REFRESH_SECRET,
-    })
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     expect(assignBrowserLocation).not.toHaveBeenCalled()
@@ -238,9 +236,7 @@ describe("staff api 401 retry", () => {
 
     expect(calls).toHaveLength(1)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
-    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-      refresh_token: REFRESH_SECRET,
-    })
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" })
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
@@ -397,9 +393,7 @@ describe("staff api 401 retry", () => {
     const pending = api.get("/api/users/me")
 
     await vi.waitFor(() => {
-      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-        refresh_token: REFRESH_SECRET,
-      })
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     })
     await supabase.auth.signOut()
     pendingRefresh.release(refreshedStaffSession("user-1"))
@@ -427,9 +421,7 @@ describe("staff api 401 retry", () => {
     const pending = api.get("/api/users/me")
 
     await vi.waitFor(() => {
-      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-        refresh_token: REFRESH_SECRET,
-      })
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     })
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
@@ -527,7 +519,9 @@ function createAuthJsSession() {
 
     vi.mocked(supabase.auth.refreshSession).mockImplementation(async (args) => {
       const refreshToken =
-        typeof args?.refresh_token === "string" ? args.refresh_token : ""
+        typeof args?.refresh_token === "string"
+          ? args.refresh_token
+          : stored?.refreshToken ?? ""
       refreshCalls.push(refreshToken)
       const started = stored
       const script = await scriptFor(refreshToken)

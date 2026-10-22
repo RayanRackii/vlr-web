@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
 import { RENTAL_RESOURCES_PERMISSIONS } from "@/components/layout/navigation"
@@ -78,6 +78,16 @@ function RedirectVerifyPhoneToEmail() {
   )
 }
 
+function RedirectTenantStaffRoute() {
+  const location = useLocation()
+  const { subdomain } = useParams<{ subdomain: string }>()
+  const prefix = `/t/${subdomain ?? ""}`
+  const rootPath = location.pathname.startsWith(prefix)
+    ? location.pathname.slice(prefix.length) || "/dashboard"
+    : "/dashboard"
+  return <Navigate to={`${rootPath}${location.search}`} replace />
+}
+
 export function AppRoutes() {
   const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
 
@@ -128,6 +138,14 @@ export function AppRoutes() {
       <Route path="/invite" element={<SetPasswordPage />} />
 
       <Route path="/t/:subdomain">
+        <Route path="configuracoes/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="dashboard/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="ativos/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="os/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="perfil/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
         <Route element={<TenantPortalLayout />}>
           <Route index element={<TenantPortalLoginPage />} />
           <Route path="register" element={<TenantPortalRegisterPage />} />
