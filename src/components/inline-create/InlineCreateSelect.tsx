@@ -108,7 +108,13 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
               <SheetDescription>{drawerDescription}</SheetDescription>
             ) : null}
           </SheetHeader>
-          <div className="px-4 py-4">
+          <div
+            className="px-4 py-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+          >
             {renderCreateForm({ complete, close: () => setOpen(false) })}
           </div>
         </SheetContent>

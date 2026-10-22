@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -17,6 +18,13 @@ type InlineCreateFormProps = {
 
 const nameSchema = z.object({ name: z.string().trim().min(1) })
 type NameValues = z.infer<typeof nameSchema>
+
+type VisualTemplateCreationProgress = {
+  title: string
+  templateId: string
+  draftRevisionId?: string
+  publishedRevisionId?: string
+}
 
 function slugify(value: string): string {
   return value
@@ -70,6 +78,7 @@ export function InlineCreateCategoryForm({ complete, close }: InlineCreateFormPr
 
 export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreateFormProps) {
   const { t } = useTranslation()
+  const [progress, setProgress] = useState<VisualTemplateCreationProgress | null>(null)
   const form = useForm<NameValues>({
     resolver: zodResolver(nameSchema),
     defaultValues: { name: "" },
@@ -83,27 +92,57 @@ export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreate
         onSubmit={form.handleSubmit(async ({ name }) => {
           try {
             const title = name.trim()
-            const template = await saveVisualTemplate({
-              slug: slugify(title),
-              nameI18n: { "pt-BR": title, en: title, es: title },
-              descriptionI18n: { "pt-BR": null, en: null, es: null },
-              tagIds: [],
-              isActive: true,
-              sortOrder: 0,
-            })
-            const draft = await saveVisualRevision(template.id, {
-              floorSvg: '<rect width="100" height="60" fill="#D1D5DB"/>',
-              linesSvg: null,
-              netSvg: null,
-              viewBox: "0 0 100 60",
-              aspectRatio: 1.6667,
-              defaultColor: "#4D6A92",
-              defaultIcon: "layout-template",
-              suggestedSlotMinutes: null,
-              suggestedCapacityPeople: null,
-            })
-            const published = await publishVisualRevision(template.id, draft.metadata.id)
-            await complete({ value: published.id, label: title })
+            let current = progress?.title === title ? progress : null
+
+            if (!current) {
+              const template = await saveVisualTemplate({
+                slug: slugify(title),
+                nameI18n: { "pt-BR": title, en: title, es: title },
+                descriptionI18n: { "pt-BR": null, en: null, es: null },
+                tagIds: [],
+                isActive: true,
+                sortOrder: 0,
+              })
+              current = { title, templateId: template.id }
+              setProgress(current)
+            }
+
+            if (!current.draftRevisionId) {
+              const draft = await saveVisualRevision(current.templateId, {
+                floorSvg: '<rect width="100" height="60" fill="#D1D5DB"/>',
+                linesSvg: null,
+                netSvg: null,
+                viewBox: "0 0 100 60",
+                aspectRatio: 1.6667,
+                defaultColor: "#4D6A92",
+                defaultIcon: "layout-template",
+                suggestedSlotMinutes: null,
+                suggestedCapacityPeople: null,
+              })
+              current = { ...current, draftRevisionId: draft.metadata.id }
+              setProgress(current)
+            }
+
+            const draftRevisionId = current.draftRevisionId
+            if (!draftRevisionId) {
+              throw new Error("Visual template revision was not created")
+            }
+
+            if (!current.publishedRevisionId) {
+              const published = await publishVisualRevision(
+                current.templateId,
+                draftRevisionId,
+              )
+              current = { ...current, publishedRevisionId: published.id }
+              setProgress(current)
+            }
+
+            const publishedRevisionId = current.publishedRevisionId
+            if (!publishedRevisionId) {
+              throw new Error("Visual template revision was not published")
+            }
+
+            await complete({ value: publishedRevisionId, label: title })
           } catch (error) {
             toast.error(error instanceof Error ? error.message : t("resourceVisual.error"))
           }

@@ -46,6 +46,28 @@ import { listRentalAssetCategories } from "@/features/rentals/services/rentalRes
 import { InlineCreateCategoryForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
 import { buildRentalResourceFormValues } from "@/features/rentals/components/rentalResourceFormDefaults"
 
+type TemplateOption = { value: string; label: string }
+
+export function mergeTemplateOptions(
+  templates: readonly VisualTemplate[],
+  createdOptions: readonly TemplateOption[],
+  noTemplateLabel: string,
+): TemplateOption[] {
+  const options = [
+    { value: "__no-template__", label: noTemplateLabel },
+    ...templates.flatMap((template) =>
+      template.publishedRevision
+        ? [{
+            value: template.publishedRevision.id,
+            label: template.nameI18n["pt-BR"] ?? template.slug,
+          }]
+        : [],
+    ),
+    ...createdOptions,
+  ]
+  return [...new Map(options.map((option) => [option.value, option])).values()]
+}
+
 type RentalResourceSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -74,6 +96,7 @@ export function RentalResourceSheet({
   const [categoryOptions, setCategoryOptions] = useState<readonly RegistryCategoryListItem[]>(categories)
   const [previousCategories, setPreviousCategories] = useState(categories)
   const [tags, setTags] = useState<VisualTag[]>([])
+  const [createdTemplateOptions, setCreatedTemplateOptions] = useState<TemplateOption[]>([])
   const [templateSearch, setTemplateSearch] = useState("")
   const [allSegments, setAllSegments] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -154,6 +177,11 @@ export function RentalResourceSheet({
     { value: "Location", label: t("rentals.resources.typeLocation") },
     { value: "Good", label: t("rentals.resources.typeGood") },
   ]
+  const templateOptions = mergeTemplateOptions(
+    templates,
+    createdTemplateOptions,
+    t("resourceVisual.noTemplate"),
+  )
 
   async function refreshCategories() {
     const refreshed = await listRentalAssetCategories()
@@ -168,12 +196,11 @@ export function RentalResourceSheet({
       allSegments,
     })
     setTemplates(refreshed.items)
-    return refreshed.items
-      .filter((template) => template.publishedRevision)
-      .map((template) => ({
-        value: template.publishedRevision?.id ?? "",
-        label: template.nameI18n["pt-BR"] ?? template.slug,
-      }))
+    return mergeTemplateOptions(
+      refreshed.items,
+      createdTemplateOptions,
+      t("resourceVisual.noTemplate"),
+    )
   }
 
   function applyTemplateDefaults(revisionId: string) {
@@ -368,7 +395,7 @@ export function RentalResourceSheet({
                 {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
               </div>
               <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={[{ value: "__no-template__", label: t("resourceVisual.noTemplate") }, ...templates.filter((template) => template.publishedRevision).map((template) => ({ value: template.publishedRevision?.id ?? "", label: template.nameI18n["pt-BR"] ?? template.slug }))]} onRefreshOptions={async () => [{ value: "__no-template__", label: t("resourceVisual.noTemplate") }, ...(await refreshTemplates())]} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={complete} close={close} />} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={field.onChange} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
