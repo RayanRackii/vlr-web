@@ -228,17 +228,16 @@ describe("RentalResourcesPage", () => {
     await waitFor(() => expect(getUnitsMock).toHaveBeenCalledTimes(2))
   })
 
-  it("guides configuration when there are no categories and never links to Ativos", async () => {
+  it("keeps resource creation available when there are no categories", async () => {
     listCategoriesMock.mockResolvedValue([])
     const { container } = renderPage()
 
     expect(
-      await screen.findByText(i18n.t("rentals.resources.emptyCategoriesTitle")),
+      await screen.findByText(i18n.t("rentals.resources.emptyTitle")),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("rentals.resources.emptyCategoriesDescription")),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: /ativos/i })).not.toBeInTheDocument()
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") }).length,
+    ).toBeGreaterThan(0)
     expectNoForbiddenCopy(container)
   })
 
@@ -256,8 +255,9 @@ describe("RentalResourcesPage", () => {
       screen.getByLabelText(i18n.t("rentals.resources.form.name")),
       "Quadra 1",
     )
-    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }))
-    await user.click(await screen.findByRole("option", { name: "Sede" }))
+    expect(
+      screen.queryByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    ).not.toBeInTheDocument()
 
     await user.click(
       screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.category") }),
@@ -282,6 +282,39 @@ describe("RentalResourcesPage", () => {
     })
     expect(payload).not.toHaveProperty("maxAdvanceBookingDays")
     expect(payload).not.toHaveProperty("tag")
+  })
+
+  it("shows the unit field when the tenant has multiple units", async () => {
+    const user = userEvent.setup()
+    const secondUnitId = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+    getUnitsMock.mockResolvedValueOnce([
+      {
+        id: UNIT_ID,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Sede",
+        code: "SEDE",
+        isActive: true,
+      },
+      {
+        id: secondUnitId,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Anexo",
+        code: "ANEXO",
+        isActive: true,
+      },
+    ])
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+
+    await user.click(
+      screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    )
+    expect(await screen.findByRole("option", { name: "Sede" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Anexo" })).toBeInTheDocument()
   })
 
   it("updates using the rental asset id from the list, not assetId", async () => {

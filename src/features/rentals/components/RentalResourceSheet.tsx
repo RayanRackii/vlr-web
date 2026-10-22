@@ -4,6 +4,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
+import { InlineCreateSelect } from "@/components/inline-create/InlineCreateSelect"
 import { FieldHelp } from "@/components/ui/field-label"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
@@ -32,21 +33,40 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
-import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import {
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
-import {
-  createRentalResourceFormSchema,
-  type RegistryCategoryListItem,
-  type RentalResourceFormValues,
-  type ResourceHorizonMode,
-} from "@/features/rentals/schemas/rentalResourceSchemas"
+import { createRentalResourceFormSchema, type RegistryCategoryListItem, type RentalResourceFormValues, type ResourceHorizonMode } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
+import { listRentalAssetCategories } from "@/features/rentals/services/rentalResourcesService"
+import { InlineCreateCategoryForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
+import { buildRentalResourceFormValues } from "@/features/rentals/components/rentalResourceFormDefaults"
+
+type TemplateOption = { value: string; label: string }
+
+export function mergeTemplateOptions(
+  templates: readonly VisualTemplate[],
+  createdOptions: readonly TemplateOption[],
+  noTemplateLabel: string,
+): TemplateOption[] {
+  const options = [
+    { value: "__no-template__", label: noTemplateLabel },
+    ...templates.flatMap((template) =>
+      template.publishedRevision
+        ? [{
+            value: template.publishedRevision.id,
+            label: template.nameI18n["pt-BR"] ?? template.slug,
+          }]
+        : [],
+    ),
+    ...createdOptions,
+  ]
+  return [...new Map(options.map((option) => [option.value, option])).values()]
+}
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -58,42 +78,6 @@ type RentalResourceSheetProps = {
   busy: boolean
   readOnly: boolean
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
-}
-
-function pickSingleId(items: readonly { id: string }[]): string {
-  return items.length === 1 ? (items[0]?.id ?? "") : ""
-}
-
-export function buildRentalResourceFormValues(
-  editing: AdminRentalAsset | null,
-  units: readonly Unit[],
-  categories: readonly RegistryCategoryListItem[],
-  families: readonly AssetFamily[],
-): RentalResourceFormValues {
-  const rentalType = editing?.type === "Good" ? "Good" : "Location"
-
-  return {
-    name: editing?.name ?? "",
-    tag: "",
-    unitId: editing?.unitId ?? pickSingleId(units),
-    categoryId: editing?.categoryId ?? pickSingleId(categories),
-    familyId: pickSingleId(families),
-    rentalType,
-    totalQuantity: editing?.totalQuantity ?? 1,
-    requiresDeposit: editing?.requiresDeposit ?? true,
-    queueEnabled: rentalType === "Location" ? (editing?.queueEnabled ?? false) : false,
-    queueOpeningTime: toHtmlTimeInput(editing?.queueOpeningTime),
-    location: "",
-    horizonMode:
-      typeof editing?.maxAdvanceBookingDays === "number" ? "days" : "inherit",
-    horizonDays:
-      typeof editing?.maxAdvanceBookingDays === "number"
-        ? String(editing.maxAdvanceBookingDays)
-        : "",
-    visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
-    capacityPeople: editing?.capacityPeople?.toString() ?? "",
-    confirmVisualSuggestions: false,
-  }
 }
 
 export function RentalResourceSheet({
@@ -109,7 +93,10 @@ export function RentalResourceSheet({
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
   const [templates, setTemplates] = useState<VisualTemplate[]>([])
+  const [categoryOptions, setCategoryOptions] = useState<readonly RegistryCategoryListItem[]>(categories)
+  const [previousCategories, setPreviousCategories] = useState(categories)
   const [tags, setTags] = useState<VisualTag[]>([])
+  const [createdTemplateOptions, setCreatedTemplateOptions] = useState<TemplateOption[]>([])
   const [templateSearch, setTemplateSearch] = useState("")
   const [allSegments, setAllSegments] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -120,6 +107,11 @@ export function RentalResourceSheet({
       .then(([page, tagList]) => { setTemplates(page.items); setTags(tagList) })
       .catch(() => { setTemplates([]); setTags([]) })
   }, [allSegments, open, selectedTagIds, templateSearch])
+
+  if (categories !== previousCategories) {
+    setPreviousCategories(categories)
+    setCategoryOptions(categories)
+  }
 
   const formSchema = useMemo(
     () =>
@@ -173,7 +165,7 @@ export function RentalResourceSheet({
   ]
 
   const unitItems = units.map((unit) => ({ value: unit.id, label: unit.name }))
-  const categoryItems = categories.map((category) => ({
+  const categoryItems = categoryOptions.map((category) => ({
     value: category.id,
     label: category.name,
   }))
@@ -185,6 +177,47 @@ export function RentalResourceSheet({
     { value: "Location", label: t("rentals.resources.typeLocation") },
     { value: "Good", label: t("rentals.resources.typeGood") },
   ]
+  const templateOptions = mergeTemplateOptions(
+    templates,
+    createdTemplateOptions,
+    t("resourceVisual.noTemplate"),
+  )
+
+  async function refreshCategories() {
+    const refreshed = await listRentalAssetCategories()
+    setCategoryOptions(refreshed)
+    return refreshed.map((category) => ({ value: category.id, label: category.name }))
+  }
+
+  async function refreshTemplates() {
+    const refreshed = await listVisualTemplates({
+      search: templateSearch,
+      tagIds: selectedTagIds,
+      allSegments,
+    })
+    setTemplates(refreshed.items)
+    return mergeTemplateOptions(
+      refreshed.items,
+      createdTemplateOptions,
+      t("resourceVisual.noTemplate"),
+    )
+  }
+
+  function applyTemplateDefaults(revisionId: string) {
+    const template = templates.find(
+      (candidate) => candidate.publishedRevision?.id === revisionId,
+    )
+    const suggestedCapacity = template?.publishedRevision?.suggestedCapacityPeople
+    if (
+      suggestedCapacity != null &&
+      !form.getFieldState("capacityPeople").isDirty &&
+      !form.getValues("capacityPeople").trim()
+    ) {
+      form.setValue("capacityPeople", String(suggestedCapacity), {
+        shouldDirty: false,
+      })
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -257,38 +290,34 @@ export function RentalResourceSheet({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="unitId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("rentals.resources.form.unit")}</FormLabel>
-                  <Select
-                    modal={false}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    items={unitItems}
-                    disabled={readOnly}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={t("rentals.resources.form.unitPlaceholder")}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {units.map((unit) => (
-                        <SelectItem key={unit.id} value={unit.id}>
-                          {unit.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {units.length !== 1 ? (
+              <FormField
+                control={form.control}
+                name="unitId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("rentals.resources.form.unit")}</FormLabel>
+                    <Select
+                      modal={false}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      items={unitItems}
+                      disabled={readOnly}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {units.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <FormField
               control={form.control}
@@ -296,30 +325,22 @@ export function RentalResourceSheet({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("rentals.resources.form.category")}</FormLabel>
-                  <Select
-                    modal={false}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    items={categoryItems}
-                    disabled={readOnly}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={t(
-                            "rentals.resources.form.categoryPlaceholder",
-                          )}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <InlineCreateSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={categoryItems}
+                      onRefreshOptions={refreshCategories}
+                      placeholder={t("rentals.resources.form.categoryPlaceholder")}
+                      createLabel={t("rentals.resources.inlineCreate.categoryAction")}
+                      drawerTitle={t("rentals.resources.inlineCreate.categoryTitle")}
+                      drawerDescription={t("rentals.resources.inlineCreate.categoryDescription")}
+                      disabled={readOnly}
+                      renderCreateForm={({ complete, close }) => (
+                        <InlineCreateCategoryForm complete={complete} close={close} />
+                      )}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -374,10 +395,7 @@ export function RentalResourceSheet({
                 {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
               </div>
               <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><Select modal={false} value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? "" : value)} items={[{ value: "none", label: t("resourceVisual.noTemplate") }, ...templates.filter((template) => template.publishedRevision).map((template) => ({ value: template.publishedRevision?.id ?? "", label: template.nameI18n["pt-BR"] ?? template.slug }))]} disabled={readOnly}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue placeholder={t("resourceVisual.noTemplate")} /></SelectTrigger></FormControl>
-                  <SelectContent><SelectItem value="none">{t("resourceVisual.noTemplate")}</SelectItem>{templates.filter((template) => template.publishedRevision).map((template) => <SelectItem key={template.id} value={template.publishedRevision?.id ?? ""}>{template.nameI18n["pt-BR"] ?? template.slug}</SelectItem>)}</SelectContent>
-                </Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={field.onChange} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />

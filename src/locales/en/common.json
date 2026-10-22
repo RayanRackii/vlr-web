@@ -3164,6 +3164,18 @@
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
         "horizonEffectiveDays": "In effect: {{count}} days ahead."
       },
+      "inlineCreate": {
+        "categoryAction": "+ create type",
+        "categoryTitle": "Create type",
+        "categoryDescription": "Create the type without leaving the resource form.",
+        "categoryName": "Type name",
+        "saveCategory": "Create type",
+        "templateAction": "+ create visual template",
+        "templateTitle": "Create visual template",
+        "templateDescription": "The new basic template will be published and selected for this resource.",
+        "templateName": "Template name",
+        "saveTemplate": "Create template"
+      },
       "validation": {
         "nameRequired": "Enter a name.",
         "tagRequired": "Enter a tag.",

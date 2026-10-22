@@ -3164,6 +3164,18 @@
         "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
         "horizonEffectiveDays": "En vigor: {{count}} días adelante."
       },
+      "inlineCreate": {
+        "categoryAction": "+ crear tipo",
+        "categoryTitle": "Crear tipo",
+        "categoryDescription": "Cree el tipo sin salir del formulario del recurso.",
+        "categoryName": "Nombre del tipo",
+        "saveCategory": "Crear tipo",
+        "templateAction": "+ crear modelo visual",
+        "templateTitle": "Crear modelo visual",
+        "templateDescription": "El nuevo modelo básico se publicará y seleccionará para este recurso.",
+        "templateName": "Nombre del modelo",
+        "saveTemplate": "Crear modelo"
+      },
       "validation": {
         "nameRequired": "Informe el nombre.",
         "tagRequired": "Informe el identificador.",

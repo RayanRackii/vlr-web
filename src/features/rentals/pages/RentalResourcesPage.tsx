@@ -143,7 +143,7 @@ export function RentalResourcesPage() {
           <Button
             type="button"
             className="w-full sm:w-auto"
-            disabled={!canWrite || loading || loadError !== null || categories.length === 0}
+            disabled={!canWrite || loading || loadError !== null}
             onClick={openCreate}
           >
             <Plus data-icon="inline-start" />
@@ -156,12 +156,6 @@ export function RentalResourcesPage() {
         <PageContentSkeleton rows={4} />
       ) : loadError !== null ? (
         <ErrorState message={loadError} onRetry={() => void load()} />
-      ) : categories.length === 0 ? (
-        <ScheduleEmptyState
-          icon={Boxes}
-          title={t("rentals.resources.emptyCategoriesTitle")}
-          description={t("rentals.resources.emptyCategoriesDescription")}
-        />
       ) : assets.length === 0 ? (
         <ScheduleEmptyState
           icon={Boxes}
