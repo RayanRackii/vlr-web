@@ -3184,8 +3184,15 @@
       "paletteEmpty": "Todos los espacios ya están en el mapa.",
       "clickToRemove": "Use × en el bloque para quitarlo del mapa.",
       "resizeCanvasHelp": "Arrastre la esquina del mapa (cuadrado inferior derecho) para cambiar el tamaño del layout.",
+      "blockSize": "Tamaño del bloque",
+      "width": "Ancho",
+      "height": "Alto",
+      "courtPreset": "Cancha 2:1",
+      "squarePreset": "Cuadrado",
+      "stripPreset": "Franja",
       "organize": "Organizar solo",
       "save": "Guardar layout",
+      "saved": "Guardado",
       "loadError": "No se pudieron cargar los layouts.",
       "saveError": "No se pudo guardar el layout.",
       "createSuccess": "Layout creado.",
@@ -3248,7 +3255,7 @@
   },
   "resourceVisual": {
     "tenantSegmentsTitle": "Segmentos del tenant: {{tenantName}}",
-    "title": "Catálogo visual de recursos", "help": "Gestione modelos globales, arte publicada y clasificaciones.", "newTemplate": "Nuevo modelo", "editTemplate": "Editar modelo", "cancelEdit": "Cancelar edición", "name": "Nombre", "slug": "Identificador", "description": "Descripción", "tags": "Etiquetas", "revision": "Nueva revisión", "floor": "Arte SVG del piso", "lines": "Arte SVG de líneas", "publish": "Publicar", "draft": "Borrador", "publishedStatus": "Publicado", "noRevision": "Sin revisión publicada", "saved": "Cambios guardados.", "published": "Revisión publicada.", "error": "No se pudo completar el cambio.", "validation": "Ingrese el nombre y el identificador.", "deleteTagTitle": "¿Eliminar etiqueta?", "deleteTagDescription": "Esta acción no se puede deshacer.", "segmentsTitle": "Segmentos del tenant", "segmentsHelp": "Defina los segmentos mostrados primero al elegir un modelo.", "enabledTemplates": "Modelos habilitados", "noEnabledTemplates": "Ningún modelo coincide con los segmentos seleccionados.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "noTemplate": "Sin modelo", "capacityPeople": "Capacidad de personas (opcional)", "applySuggestions": "Aplicar sugerencias del modelo", "mapSettings": "Configuración del mapa", "showPrice": "Mostrar precio en el bloque", "defaultView": "Vista predeterminada", "timeFilter": "Filtro de horario", "fromTime": "Desde el horario", "availableColor": "Color disponible", "takenColor": "Color ocupado", "setDefaultMap": "Definir mapa predeterminado"
+    "title": "Catálogo visual de recursos", "help": "Gestione modelos globales, arte publicada y clasificaciones.", "newTemplate": "Nuevo modelo", "editTemplate": "Editar modelo", "cancelEdit": "Cancelar edición", "name": "Nombre", "slug": "Identificador", "description": "Descripción", "tags": "Etiquetas", "revision": "Nueva revisión", "floor": "Arte SVG del piso", "lines": "Arte SVG de líneas", "publish": "Publicar", "draft": "Borrador", "publishedStatus": "Publicado", "noRevision": "Sin revisión publicada", "saved": "Cambios guardados.", "published": "Revisión publicada.", "error": "No se pudo completar la modificación.", "validation": "Ingrese el nombre y el identificador.", "deleteTagTitle": "¿Eliminar etiqueta?", "deleteTagDescription": "Esta acción no se puede deshacer.", "segmentsTitle": "Segmentos del tenant", "segmentsHelp": "Defina los segmentos que aparecen primero al elegir un modelo.", "enabledTemplates": "Modelos habilitados", "noEnabledTemplates": "Ningún modelo corresponde a los segmentos seleccionados.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "noTemplate": "Sin modelo", "capacityPeople": "Capacidad de personas (opcional)", "applySuggestions": "Aplicar sugerencias del modelo", "mapSettings": "Configuración del mapa", "mapSettingsHelp": "Predeterminado es el mapa que los clientes abren primero. Visible en el portal es un mapa listado para ellos.", "defaultMap": "Predeterminado", "alreadyDefault": "Ya es el predeterminado", "showPrice": "Mostrar precio en el bloque", "defaultView": "Vista predeterminada", "timeFilter": "Filtro de horario", "fromTime": "Desde el horario", "availableColor": "Color disponible", "takenColor": "Color ocupado", "setDefaultMap": "Definir mapa predeterminado"
   },
   "bookingMap": {
     "area": "Área",

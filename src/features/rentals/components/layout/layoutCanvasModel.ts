@@ -1,4 +1,5 @@
-export const DEFAULT_ASPECT_RATIO = 1.6
+/** A court-shaped canvas avoids unused vertical space for the default blocks. */
+export const DEFAULT_ASPECT_RATIO = 2
 export const MIN_ASPECT_RATIO = 0.7
 export const MAX_ASPECT_RATIO = 2.8
 export const DEFAULT_CANVAS_WIDTH_PERCENT = 100
@@ -52,8 +53,12 @@ export function clampCanvasWidthPercent(value: number): number {
 }
 
 export function fitPlacement(item: LayoutPlacement): LayoutPlacement {
-  const widthPercent = Math.min(100, Math.max(8, item.widthPercent))
-  const heightPercent = Math.min(100, Math.max(8, item.heightPercent))
+  const widthPercent = Number.isFinite(item.widthPercent)
+    ? Math.min(100, Math.max(8, item.widthPercent))
+    : 8
+  const heightPercent = Number.isFinite(item.heightPercent)
+    ? Math.min(100, Math.max(8, item.heightPercent))
+    : 8
   return {
     ...item,
     widthPercent,
@@ -115,7 +120,25 @@ export function arrangeEvenly(
 export function autoPlaceItems(
   rentalAssetIds: readonly string[],
 ): LayoutPlacement[] {
-  return arrangeEvenly(rentalAssetIds)
+  const widthPercent = 20
+  const heightPercent = 10
+  const columns = 4
+  const horizontalGap = 4
+  const verticalGap = 4
+  const margin = 4
+
+  return rentalAssetIds.map((rentalAssetId, index) => {
+    const column = index % columns
+    const row = Math.floor(index / columns)
+    return fitPlacement({
+      rentalAssetId,
+      xPercent: margin + column * (widthPercent + horizontalGap),
+      yPercent: margin + row * (heightPercent + verticalGap),
+      widthPercent,
+      heightPercent,
+      zIndex: index,
+    })
+  })
 }
 
 /** Q-2 before Q-10. Generic for any resource name. */
