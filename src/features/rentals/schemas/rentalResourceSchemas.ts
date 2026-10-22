@@ -25,7 +25,6 @@ export const registryCategoryListSchema = z.array(registryCategoryListItemSchema
 
 export const createRentableRequestSchema = z.object({
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
   unitId: guidLikeIdSchema,
   categoryId: guidLikeIdSchema,
   familyId: guidLikeIdSchema,
@@ -60,7 +59,6 @@ export type ResourceHorizonMode = (typeof resourceHorizonModes)[number]
 
 export function createRentalResourceFormSchema(messages: {
   nameRequired: string
-  tagRequired: string
   unitRequired: string
   categoryRequired: string
   familyRequired: string
@@ -71,7 +69,9 @@ export function createRentalResourceFormSchema(messages: {
   return z
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
-      tag: z.string().trim().min(1, messages.tagRequired),
+      // RentalAssetResponse does not expose the registry tag, so this UI-only
+      // value must remain optional and cannot be sent back on an edit.
+      tag: z.string(),
       unitId: guidLikeIdSchema.min(1, messages.unitRequired),
       categoryId: guidLikeIdSchema.min(1, messages.categoryRequired),
       familyId: z
@@ -175,7 +175,6 @@ export function toCreateRentableRequest(
   const isLocation = values.rentalType === "Location"
   const payload: CreateRentableRequest = {
     name: values.name.trim(),
-    tag: values.tag.trim(),
     unitId: values.unitId,
     categoryId: values.categoryId,
     familyId: values.familyId,
