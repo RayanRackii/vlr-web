@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-const uuid = z.string().uuid()
+// Catalog IDs are deterministic GUIDs generated from hashes; they do not
+// necessarily carry RFC 4122 version and variant bits.
+const uuid = z.guid()
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 const i18nText = z.record(z.string(), z.string().nullable())
 

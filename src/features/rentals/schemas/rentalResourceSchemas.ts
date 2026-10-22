@@ -47,7 +47,7 @@ export const createRentableRequestSchema = z.object({
     .max(BOOKING_HORIZON_DAY_MAX)
     .nullable()
     .optional(),
-  visualTemplateRevisionId: z.string().uuid().nullable().optional(),
+  visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().positive().nullable().optional(),
   confirmVisualSuggestions: z.boolean().optional(),
 })

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import i18n from "@/lib/i18n"
+import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
 function lessonChangeError(error: unknown): Error {
   const fallback = i18n.t("rentals.teacherLessons.changeError")
@@ -160,7 +161,7 @@ export const rentalAssetSchema = z.object({
     .max(3650)
     .nullable()
     .optional(),
-  visualTemplateRevisionId: z.string().uuid().nullable().optional(),
+  visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().nullable().optional(),
 })
 
