@@ -33,6 +33,7 @@ type InlineCreateSelectProps<TOption extends InlineCreateOption> = {
   drawerTitle: string
   drawerDescription?: string
   disabled?: boolean
+  canCreate?: boolean
   renderCreateForm: (props: InlineCreateFormProps<TOption>) => ReactNode
 } & Pick<
   ComponentProps<typeof SelectTrigger>,
@@ -56,6 +57,7 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
   drawerTitle,
   drawerDescription,
   disabled = false,
+  canCreate = true,
   renderCreateForm,
   ...triggerProps
 }: InlineCreateSelectProps<TOption>) {
@@ -83,7 +85,7 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
         }}
         items={[
           ...options,
-          { value: CREATE_VALUE, label: createLabel },
+          ...(canCreate ? [{ value: CREATE_VALUE, label: createLabel }] : []),
         ]}
         disabled={disabled}
       >
@@ -96,7 +98,7 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
               {option.label}
             </SelectItem>
           ))}
-          <SelectItem value={CREATE_VALUE}>{createLabel}</SelectItem>
+          {canCreate ? <SelectItem value={CREATE_VALUE}>{createLabel}</SelectItem> : null}
         </SelectContent>
       </Select>
 

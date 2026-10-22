@@ -11,6 +11,9 @@ let isTrialReadOnly = false
 vi.mock("@/features/users/hooks/useTrialStatus", () => ({
   useTrialStatus: () => ({ isTrialReadOnly }),
 }))
+vi.mock("@/features/admin/hooks/usePlatformAdmin", () => ({
+  useIsPlatformAdmin: () => false,
+}))
 vi.mock("@/features/rentals/components/layout/LayoutCanvasBoard", () => ({
   LayoutCanvasBoard: () => <div data-testid="layout-canvas" />,
 }))

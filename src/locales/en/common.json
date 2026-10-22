@@ -3177,9 +3177,9 @@
         "saveUnit": "Create unit",
         "unitDuplicate": "A unit with this name or code already exists.",
         "unitCreateError": "Could not create the unit.",
-        "templateAction": "+ create visual template",
-        "templateTitle": "Create visual template",
-        "templateDescription": "The new basic template will be published and selected for this resource.",
+        "templateAction": "+ create global template (Rolvix)",
+        "templateTitle": "Create global template (Rolvix)",
+        "templateDescription": "The new global Rolvix template will be published and selected for this resource.",
         "templateName": "Template name",
         "saveTemplate": "Create template"
       },

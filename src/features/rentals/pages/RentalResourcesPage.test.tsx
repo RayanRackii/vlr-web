@@ -17,6 +17,10 @@ vi.mock("@/features/users/hooks/useTrialStatus", () => ({
   }),
 }))
 
+vi.mock("@/features/admin/hooks/usePlatformAdmin", () => ({
+  useIsPlatformAdmin: () => false,
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -31,6 +35,7 @@ vi.mock("@/features/assets/services/assetsService", () => ({
 }))
 
 vi.mock("@/features/assets/services/assetCategoriesService", () => ({
+  canCreateAssetCategory: () => false,
   getCategories: vi.fn(async () => {
     throw new Error("must not call GET /api/asset-categories")
   }),

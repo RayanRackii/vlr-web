@@ -35,7 +35,9 @@ import {
 import { Switch } from "@/components/ui/switch"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import { canCreateAssetCategory } from "@/features/assets/services/assetCategoriesService"
 import { getUnits } from "@/features/assets/services/unitsService"
+import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import {
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
@@ -78,7 +80,8 @@ export function RentalResourceSheet({
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
-  const { can } = usePermissions()
+  const { can, activeModules } = usePermissions()
+  const isPlatformAdmin = useIsPlatformAdmin()
   const [templates, setTemplates] = useState<VisualTemplate[]>([])
   const [unitOptions, setUnitOptions] = useState<readonly Unit[]>(units)
   const [previousUnits, setPreviousUnits] = useState(units)
@@ -161,6 +164,8 @@ export function RentalResourceSheet({
 
   const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
   const canCreateUnit = can("core.units.write") && !readOnly
+  const canCreateCategory = !readOnly && canCreateAssetCategory(activeModules, can)
+  const canCreateGlobalTemplate = !readOnly && isPlatformAdmin
   const categoryItems = categoryOptions.map((category) => ({
     value: category.id,
     label: category.name,
@@ -366,6 +371,7 @@ export function RentalResourceSheet({
                       drawerTitle={t("rentals.resources.inlineCreate.categoryTitle")}
                       drawerDescription={t("rentals.resources.inlineCreate.categoryDescription")}
                       disabled={readOnly}
+                      canCreate={canCreateCategory}
                       renderCreateForm={({ complete, close }) => (
                         <InlineCreateCategoryForm complete={complete} close={close} />
                       )}
@@ -425,7 +431,7 @@ export function RentalResourceSheet({
                 {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
               </div>
               <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
