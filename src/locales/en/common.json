@@ -3247,6 +3247,7 @@
     }
   },
   "resourceVisual": {
+    "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
     "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "cancelEdit": "Cancel editing", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish", "draft": "Draft", "publishedStatus": "Published", "noRevision": "No published revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "validation": "Enter a name and slug.", "deleteTagTitle": "Delete tag?", "deleteTagDescription": "This action cannot be undone.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "enabledTemplates": "Enabled templates", "noEnabledTemplates": "No template matches the selected segments.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "mapSettings": "Map settings", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
   },
   "bookingMap": {

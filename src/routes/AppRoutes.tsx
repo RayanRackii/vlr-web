@@ -178,6 +178,10 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<PlatformAdminRoute />}>
+          <Route
+            path="/admin/tenants"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
           <Route path="/admin/tenants/new" element={<NewTenantPage />} />
           <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
           <Route path="/admin/recursos-visuais" element={<ResourceVisualCatalogPage />} />
