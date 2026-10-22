@@ -247,6 +247,7 @@ export function LayoutCanvasBoard({
                   picked && "flex-col gap-0.5",
                   mode === "edit" &&
                     "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                  mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
                   clickable && !selected && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
                   pending && portalPickPendingClass,
@@ -263,7 +264,7 @@ export function LayoutCanvasBoard({
                   startTileDrag(event, item, "move")
                 }}
                 onClick={() => {
-                  if (clickable) {
+                  if (clickable || mode === "edit") {
                     onSelect?.(item.rentalAssetId)
                   }
                 }}

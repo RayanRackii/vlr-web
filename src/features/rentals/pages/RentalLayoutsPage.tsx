@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -64,6 +65,8 @@ export function RentalLayoutsPage() {
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<BookingMapSettings | null>(null)
   const [composition, setComposition] = useState<MapComposition | null>(null)
+  const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null)
+  const [saveState, setSaveState] = useState<"idle" | "saved">("idle")
 
   const selectedLayout =
     selectedId !== "" && selectedId !== "new"
@@ -89,6 +92,12 @@ export function RentalLayoutsPage() {
     setAspectRatio(layout.aspectRatio)
     setCanvasWidthPercent(layout.widthPercent)
     setComposition(loadedComposition ?? null)
+    setSelectedPlacementId(null)
+    setSaveState("idle")
+  }
+
+  function markEdited() {
+    setSaveState("idle")
   }
 
   const load = useCallback(async () => {
@@ -115,6 +124,7 @@ export function RentalLayoutsPage() {
         setAspectRatio(DEFAULT_ASPECT_RATIO)
         setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
         setComposition(null)
+        setSelectedPlacementId(null)
       }
     } catch (error) {
       toast.error(
@@ -139,6 +149,8 @@ export function RentalLayoutsPage() {
     setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
     setPlacements(autoPlaceItems(assets.map((asset) => asset.id)))
     setComposition(null)
+    setSelectedPlacementId(null)
+    setSaveState("idle")
   }
 
   async function selectLayout(id: string) {
@@ -154,6 +166,7 @@ export function RentalLayoutsPage() {
   }
 
   function organizeEvenly() {
+    markEdited()
     setPlacements(
       arrangeEvenly(placements.map((item) => item.rentalAssetId)),
     )
@@ -163,6 +176,7 @@ export function RentalLayoutsPage() {
     rentalAssetId: string,
     patch: Partial<LayoutPlacement>,
   ) {
+    markEdited()
     setPlacements((current) =>
       current.map((item) =>
         item.rentalAssetId === rentalAssetId
@@ -180,16 +194,20 @@ export function RentalLayoutsPage() {
     const occupied = placements.length
     const auto = autoPlaceItems([...placements.map((p) => p.rentalAssetId), rentalAssetId])
     const placed = auto[occupied] ?? next
+    markEdited()
     setPlacements((current) => [
       ...current,
       { ...placed, zIndex: current.length },
     ])
+    setSelectedPlacementId(rentalAssetId)
   }
 
   function removeAsset(rentalAssetId: string) {
+    markEdited()
     setPlacements((current) =>
       current.filter((item) => item.rentalAssetId !== rentalAssetId),
     )
+    setSelectedPlacementId((current) => current === rentalAssetId ? null : current)
   }
 
   function compositionPayload(current: MapComposition) {
@@ -223,6 +241,7 @@ export function RentalLayoutsPage() {
       return
     }
     setSaving(true)
+    const scrollPosition = { x: window.scrollX, y: window.scrollY }
     try {
       const legacyPayload = {
         name: name.trim(),
@@ -255,6 +274,8 @@ export function RentalLayoutsPage() {
         )
         applyLayout(updated, savedComposition)
       }
+      setSaveState("saved")
+      requestAnimationFrame(() => window.scrollTo(scrollPosition.x, scrollPosition.y))
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -297,6 +318,10 @@ export function RentalLayoutsPage() {
   }
 
   const editorOpen = selectedId !== ""
+  const isDefaultLayout = selectedLayout?.id === settings?.defaultLayoutId
+  const selectedPlacement = placements.find(
+    (item) => item.rentalAssetId === selectedPlacementId,
+  ) ?? null
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
@@ -392,6 +417,7 @@ export function RentalLayoutsPage() {
                     value={name}
                     disabled={isTrialReadOnly}
                     onChange={(event) => {
+                      markEdited()
                       setName(event.target.value)
                     }}
                   />
@@ -402,13 +428,28 @@ export function RentalLayoutsPage() {
                     checked={isActive}
                     disabled={isTrialReadOnly}
                     onCheckedChange={(checked) => {
+                      markEdited()
                       setIsActive(Boolean(checked))
                     }}
                   />
                 </label>
               </div>
 
-              {settings ? <section className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2"><span className="font-medium sm:col-span-2">{t("resourceVisual.mapSettings")}</span><label className="flex items-center gap-2"><input type="checkbox" checked={settings.showPriceOnBlock} onChange={(event) => void saveSettings({ showPriceOnBlock: event.target.checked })} disabled={isTrialReadOnly || saving}/>{t("resourceVisual.showPrice")}</label><label>{t("resourceVisual.defaultView")}<Select modal={false} value={settings.defaultView} onValueChange={(value) => { if (value === "Map" || value === "List") void saveSettings({ defaultView: value }) }} items={[{ value: "Map", label: t("bookingMap.map") }, { value: "List", label: t("bookingMap.list") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Map">{t("bookingMap.map")}</SelectItem><SelectItem value="List">{t("bookingMap.list")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.timeFilter")}<Select modal={false} value={settings.timeFilterMode} onValueChange={(value) => { if (value === "Periods" || value === "FromTime") void saveSettings({ timeFilterMode: value }) }} items={[{ value: "Periods", label: t("bookingMap.periods") }, { value: "FromTime", label: t("resourceVisual.fromTime") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Periods">{t("bookingMap.periods")}</SelectItem><SelectItem value="FromTime">{t("resourceVisual.fromTime")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.availableColor")}<Input type="color" value={settings.availableColor} onChange={(event) => void saveSettings({ availableColor: event.target.value })}/></label><label>{t("resourceVisual.takenColor")}<Input type="color" value={settings.takenColor} onChange={(event) => void saveSettings({ takenColor: event.target.value })}/></label><Button type="button" variant="outline" disabled={isTrialReadOnly || saving} onClick={() => void saveSettings({ defaultLayoutId: selectedLayout?.id ?? null })}>{t("resourceVisual.setDefaultMap")}</Button></section> : null}
+              {settings ? (
+                <section className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2">
+                  <div className="flex items-center gap-2 sm:col-span-2">
+                    <span className="font-medium">{t("resourceVisual.mapSettings")}</span>
+                    {isDefaultLayout ? <Badge variant="success">{t("resourceVisual.defaultMap")}</Badge> : null}
+                  </div>
+                  <p className="text-xs text-muted-foreground sm:col-span-2">{t("resourceVisual.mapSettingsHelp")}</p>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={settings.showPriceOnBlock} onChange={(event) => void saveSettings({ showPriceOnBlock: event.target.checked })} disabled={isTrialReadOnly || saving}/>{t("resourceVisual.showPrice")}</label>
+                  <label>{t("resourceVisual.defaultView")}<Select modal={false} value={settings.defaultView} onValueChange={(value) => { if (value === "Map" || value === "List") void saveSettings({ defaultView: value }) }} items={[{ value: "Map", label: t("bookingMap.map") }, { value: "List", label: t("bookingMap.list") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Map">{t("bookingMap.map")}</SelectItem><SelectItem value="List">{t("bookingMap.list")}</SelectItem></SelectContent></Select></label>
+                  <label>{t("resourceVisual.timeFilter")}<Select modal={false} value={settings.timeFilterMode} onValueChange={(value) => { if (value === "Periods" || value === "FromTime") void saveSettings({ timeFilterMode: value }) }} items={[{ value: "Periods", label: t("bookingMap.periods") }, { value: "FromTime", label: t("resourceVisual.fromTime") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Periods">{t("bookingMap.periods")}</SelectItem><SelectItem value="FromTime">{t("resourceVisual.fromTime")}</SelectItem></SelectContent></Select></label>
+                  <label>{t("resourceVisual.availableColor")}<Input type="color" value={settings.availableColor} onChange={(event) => void saveSettings({ availableColor: event.target.value })}/></label>
+                  <label>{t("resourceVisual.takenColor")}<Input type="color" value={settings.takenColor} onChange={(event) => void saveSettings({ takenColor: event.target.value })}/></label>
+                  <div className="space-y-1"><Button type="button" variant="outline" title={isDefaultLayout ? t("resourceVisual.alreadyDefault") : undefined} disabled={isTrialReadOnly || saving || isDefaultLayout || !selectedLayout} onClick={() => void saveSettings({ defaultLayoutId: selectedLayout?.id ?? null })}>{t("resourceVisual.setDefaultMap")}</Button>{isDefaultLayout ? <p className="text-xs text-muted-foreground">{t("resourceVisual.alreadyDefault")}</p> : null}</div>
+                </section>
+              ) : null}
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <LayoutCanvasBoard
@@ -426,6 +467,7 @@ export function RentalLayoutsPage() {
                     widthPercent: item.widthPercent,
                     heightPercent: item.heightPercent,
                     zIndex: item.zIndex,
+                    selected: item.rentalAssetId === selectedPlacementId,
                   }))}
                   onMove={(rentalAssetId, xPercent, yPercent) => {
                     patchPlacement(rentalAssetId, { xPercent, yPercent })
@@ -436,13 +478,25 @@ export function RentalLayoutsPage() {
                       heightPercent,
                     })
                   }}
+                  onSelect={setSelectedPlacementId}
                   onFrameResize={(nextAspect, nextWidth) => {
+                    markEdited()
                     setAspectRatio(nextAspect)
                     setCanvasWidthPercent(nextWidth)
                   }}
                   onRemove={isTrialReadOnly ? undefined : removeAsset}
                 />
                 <div className="space-y-2">
+                  {selectedPlacement ? (
+                    <fieldset className="space-y-2 rounded-lg border p-3">
+                      <legend className="px-1 text-sm font-medium">{t("rentals.layout.blockSize")}</legend>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="space-y-1 text-xs"><span>{t("rentals.layout.width")}</span><Input type="number" min="8" max="100" value={selectedPlacement.widthPercent} disabled={isTrialReadOnly} onChange={(event) => patchPlacement(selectedPlacement.rentalAssetId, { widthPercent: Number(event.target.value) })}/></label>
+                        <label className="space-y-1 text-xs"><span>{t("rentals.layout.height")}</span><Input type="number" min="8" max="100" value={selectedPlacement.heightPercent} disabled={isTrialReadOnly} onChange={(event) => patchPlacement(selectedPlacement.rentalAssetId, { heightPercent: Number(event.target.value) })}/></label>
+                      </div>
+                      <div className="flex flex-wrap gap-1"><Button type="button" size="sm" variant="outline" disabled={isTrialReadOnly} onClick={() => patchPlacement(selectedPlacement.rentalAssetId, { widthPercent: 20, heightPercent: 10 })}>{t("rentals.layout.courtPreset")}</Button><Button type="button" size="sm" variant="outline" disabled={isTrialReadOnly} onClick={() => patchPlacement(selectedPlacement.rentalAssetId, { widthPercent: 16, heightPercent: 16 })}>{t("rentals.layout.squarePreset")}</Button><Button type="button" size="sm" variant="outline" disabled={isTrialReadOnly} onClick={() => patchPlacement(selectedPlacement.rentalAssetId, { widthPercent: 32, heightPercent: 8 })}>{t("rentals.layout.stripPreset")}</Button></div>
+                    </fieldset>
+                  ) : null}
                   <p className="text-sm font-medium">
                     {t("rentals.layout.palette")}
                   </p>
@@ -490,7 +544,7 @@ export function RentalLayoutsPage() {
                     void onSave()
                   }}
                 >
-                  {t("rentals.layout.save")}
+                  {t(saveState === "saved" ? "rentals.layout.saved" : "rentals.layout.save")}
                 </LoadingButton>
                 <Button
                   type="button"

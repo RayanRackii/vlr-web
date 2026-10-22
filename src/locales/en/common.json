@@ -3184,8 +3184,15 @@
       "paletteEmpty": "Every space is already on the map.",
       "clickToRemove": "Use × on a block to remove it from the map.",
       "resizeCanvasHelp": "Drag the map corner (square at the bottom right) to resize the layout.",
+      "blockSize": "Block size",
+      "width": "Width",
+      "height": "Height",
+      "courtPreset": "Court 2:1",
+      "squarePreset": "Square",
+      "stripPreset": "Strip",
       "organize": "Auto arrange",
       "save": "Save layout",
+      "saved": "Saved",
       "loadError": "Could not load layouts.",
       "saveError": "Could not save the layout.",
       "createSuccess": "Layout created.",
@@ -3248,7 +3255,7 @@
   },
   "resourceVisual": {
     "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
-    "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "cancelEdit": "Cancel editing", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish", "draft": "Draft", "publishedStatus": "Published", "noRevision": "No published revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "validation": "Enter a name and slug.", "deleteTagTitle": "Delete tag?", "deleteTagDescription": "This action cannot be undone.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "enabledTemplates": "Enabled templates", "noEnabledTemplates": "No template matches the selected segments.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "mapSettings": "Map settings", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
+    "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "cancelEdit": "Cancel editing", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish", "draft": "Draft", "publishedStatus": "Published", "noRevision": "No published revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "validation": "Enter a name and slug.", "deleteTagTitle": "Delete tag?", "deleteTagDescription": "This action cannot be undone.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "enabledTemplates": "Enabled templates", "noEnabledTemplates": "No template matches the selected segments.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "mapSettings": "Map settings", "mapSettingsHelp": "Default is the map customers open first. Visible on the portal is a map listed to customers.", "defaultMap": "Default", "alreadyDefault": "Already the default", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
   },
   "bookingMap": {
     "area": "Area",
