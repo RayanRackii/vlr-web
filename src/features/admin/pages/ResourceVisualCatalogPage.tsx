@@ -22,7 +22,7 @@ export function ResourceVisualCatalogPage() {
   const [segments, setSegments] = useState<string[]>([])
   const segmentsDirty = useRef(false)
   const currentTenantId = useRef(tenantId)
-  currentTenantId.current = tenantId
+  useEffect(() => { currentTenantId.current = tenantId }, [tenantId])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [search, setSearch] = useState("")
