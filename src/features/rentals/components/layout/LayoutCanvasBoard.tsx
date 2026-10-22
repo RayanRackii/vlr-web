@@ -32,6 +32,7 @@ export type CanvasBoardItem = {
   pending?: boolean
   /** Visible status for a space that cannot be booked. Not a hover-only tooltip. */
   detail?: string | null
+  artUrl?: string | null
 }
 
 type TileDrag = {
@@ -271,6 +272,7 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
+                {item.artUrl ? <img src={item.artUrl} alt="" className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" /> : null}
                 <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                   {item.label}
                 </span>

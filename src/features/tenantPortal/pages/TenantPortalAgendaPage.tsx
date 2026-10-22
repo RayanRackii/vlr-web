@@ -67,6 +67,7 @@ import {
 } from "@/features/catalog/customerNav"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { SlotHeldByYouNotice } from "@/features/tenantPortal/components/SlotHeldByYouNotice"
+import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
 import { useRefreshOnForeground } from "@/features/tenantPortal/hooks/useRefreshOnForeground"
 import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
@@ -187,7 +188,7 @@ export function TenantPortalAgendaPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { menuItemId } = useParams<{ menuItemId?: string }>()
-  const { subdomain, primary, menu } =
+  const { subdomain, primary, menu, branding } =
     useOutletContext<CustomerAppOutletContext>()
   const signedIn = isCustomerSignedInForTenant(subdomain)
 
@@ -238,6 +239,7 @@ export function TenantPortalAgendaPage() {
     setSelectedRentalAssetId(rentalAssetId)
   }, [subdomain])
   const [loading, setLoading] = useState(true)
+  const [mapUiUnavailable, setMapUiUnavailable] = useState(false)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -1062,6 +1064,7 @@ export function TenantPortalAgendaPage() {
                 slotId: slot.id,
                 unitId: asset.unitId,
                 quantity: 1,
+                expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
               })
             : createPortalReservation({
                 unitId: asset.unitId,
@@ -1069,6 +1072,7 @@ export function TenantPortalAgendaPage() {
                 startTime: slot.startTime.slice(0, 5),
                 endTime: slot.endTime.slice(0, 5),
                 items: [{ assetId: asset.assetId, quantity: 1 }],
+                expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
               }),
         { subdomain, dates: [dayDate] },
         {
@@ -1423,6 +1427,10 @@ export function TenantPortalAgendaPage() {
       pending: false,
       detail,
     }
+  }
+
+  if (branding.newBookingUiEnabled && !mapUiUnavailable) {
+    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} onUnavailable={() => setMapUiUnavailable(true)} />
   }
 
   return (

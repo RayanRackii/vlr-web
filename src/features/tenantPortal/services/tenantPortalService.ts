@@ -1018,6 +1018,7 @@ export async function createPortalReservation(body: {
   startTime: string
   endTime: string
   items: { assetId: string; quantity: number }[]
+  expectedTotalAmount?: number | null
 }): Promise<PortalReservation> {
   try {
     const response = await customerApi.post("/api/reservations", body)
@@ -1159,12 +1160,14 @@ export async function bookPortalSlot(body: {
   slotId: string
   unitId: string
   quantity?: number
+  expectedTotalAmount?: number | null
 }): Promise<PortalReservation> {
   try {
     const response = await customerApi.post("/api/schedule/slots/book", {
       slotId: body.slotId,
       unitId: body.unitId,
       quantity: body.quantity ?? 1,
+      expectedTotalAmount: body.expectedTotalAmount ?? undefined,
     })
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {

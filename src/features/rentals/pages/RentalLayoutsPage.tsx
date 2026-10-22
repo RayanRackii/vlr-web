@@ -30,6 +30,7 @@ import {
   updateRentalLayout,
   type RentalLayout,
 } from "@/features/rentals/services/rentalLayoutService"
+import { getBookingMapSettings, getComposition, saveBookingMapSettings, saveComposition, type BookingMapSettings } from "@/features/rentals/services/resourceVisualService"
 import {
   listAdminRentalAssets,
   type AdminRentalAsset,
@@ -62,6 +63,7 @@ export function RentalLayoutsPage() {
   )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [settings, setSettings] = useState<BookingMapSettings | null>(null)
 
   const selectedLayout =
     selectedId !== "" && selectedId !== "new"
@@ -91,12 +93,14 @@ export function RentalLayoutsPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [layoutList, assetList] = await Promise.all([
+      const [layoutList, assetList, mapSettings] = await Promise.all([
         listRentalLayouts(),
         listAdminRentalAssets(),
+        getBookingMapSettings(),
       ])
       setLayouts(layoutList)
       setAssets(assetList)
+      setSettings(mapSettings)
       const first = layoutList[0]
       if (first) {
         applyLayout(first)
@@ -195,6 +199,8 @@ export function RentalLayoutsPage() {
       }
       if (selectedId === "new" || selectedId === "") {
         const created = await createRentalLayout(payload)
+        const composition = await getComposition(created.id)
+        await saveComposition(created.id, { ...payload, expectedVersion: composition.version, sortOrder: composition.sortOrder, unitId: composition.unitId, decorations: composition.decorations })
         toast.success(t("rentals.layout.createSuccess"))
         setLayouts((current) => {
           const without = current.filter((item) => item.id !== created.id)
@@ -204,6 +210,8 @@ export function RentalLayoutsPage() {
         })
         applyLayout(created)
       } else {
+        const composition = await getComposition(selectedId)
+        await saveComposition(selectedId, { ...payload, expectedVersion: composition.version, sortOrder: composition.sortOrder, unitId: composition.unitId, decorations: composition.decorations })
         const updated = await updateRentalLayout(selectedId, payload)
         toast.success(t("rentals.layout.updateSuccess"))
         setLayouts((current) =>
@@ -220,6 +228,16 @@ export function RentalLayoutsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function saveSettings(patch: Partial<BookingMapSettings>) {
+    if (!settings) return
+    setSaving(true)
+    try {
+      const saved = await saveBookingMapSettings({ ...settings, ...patch, expectedVersion: settings.version })
+      setSettings(saved)
+      toast.success(t("resourceVisual.saved"))
+    } catch (error) { toast.error(error instanceof Error ? error.message : t("rentals.layout.saveError")) } finally { setSaving(false) }
   }
 
   async function onDelete() {
@@ -353,6 +371,8 @@ export function RentalLayoutsPage() {
                   />
                 </label>
               </div>
+
+              {settings ? <section className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2"><span className="font-medium sm:col-span-2">{t("resourceVisual.mapSettings")}</span><label className="flex items-center gap-2"><input type="checkbox" checked={settings.showPriceOnBlock} onChange={(event) => void saveSettings({ showPriceOnBlock: event.target.checked })} disabled={isTrialReadOnly || saving}/>{t("resourceVisual.showPrice")}</label><label>{t("resourceVisual.defaultView")}<Select modal={false} value={settings.defaultView} onValueChange={(value) => { if (value === "Map" || value === "List") void saveSettings({ defaultView: value }) }} items={[{ value: "Map", label: t("bookingMap.map") }, { value: "List", label: t("bookingMap.list") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Map">{t("bookingMap.map")}</SelectItem><SelectItem value="List">{t("bookingMap.list")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.timeFilter")}<Select modal={false} value={settings.timeFilterMode} onValueChange={(value) => { if (value === "Periods" || value === "FromTime") void saveSettings({ timeFilterMode: value }) }} items={[{ value: "Periods", label: t("bookingMap.periods") }, { value: "FromTime", label: t("resourceVisual.fromTime") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Periods">{t("bookingMap.periods")}</SelectItem><SelectItem value="FromTime">{t("resourceVisual.fromTime")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.availableColor")}<Input type="color" value={settings.availableColor} onChange={(event) => void saveSettings({ availableColor: event.target.value })}/></label><label>{t("resourceVisual.takenColor")}<Input type="color" value={settings.takenColor} onChange={(event) => void saveSettings({ takenColor: event.target.value })}/></label><Button type="button" variant="outline" disabled={isTrialReadOnly || saving} onClick={() => void saveSettings({ defaultLayoutId: selectedLayout?.id ?? null })}>{t("resourceVisual.setDefaultMap")}</Button></section> : null}
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <LayoutCanvasBoard

@@ -47,6 +47,9 @@ export const createRentableRequestSchema = z.object({
     .max(BOOKING_HORIZON_DAY_MAX)
     .nullable()
     .optional(),
+  visualTemplateRevisionId: z.string().uuid().nullable().optional(),
+  capacityPeople: z.number().int().positive().nullable().optional(),
+  confirmVisualSuggestions: z.boolean().optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -89,6 +92,9 @@ export function createRentalResourceFormSchema(messages: {
       location: z.string(),
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
+      visualTemplateRevisionId: z.string(),
+      capacityPeople: z.string(),
+      confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
       if (
@@ -191,6 +197,15 @@ export function toCreateRentableRequest(
   )
   if (horizonWrite !== undefined) {
     payload.maxAdvanceBookingDays = horizonWrite
+  }
+  if (values.visualTemplateRevisionId.trim()) {
+    payload.visualTemplateRevisionId = values.visualTemplateRevisionId
+  }
+  if (values.capacityPeople.trim()) {
+    payload.capacityPeople = Number(values.capacityPeople)
+  }
+  if (values.confirmVisualSuggestions) {
+    payload.confirmVisualSuggestions = true
   }
 
   return createRentableRequestSchema.parse(payload)

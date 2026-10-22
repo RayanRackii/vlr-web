@@ -12,6 +12,7 @@ export const tenantBrandingSchema = z.object({
   primaryColor: z.string().nullable(),
   accentColor: z.string().nullable(),
   welcomeTagline: z.string().nullable(),
+  newBookingUiEnabled: z.boolean().optional().default(false),
 })
 
 export type TenantBranding = z.infer<typeof tenantBrandingSchema>
