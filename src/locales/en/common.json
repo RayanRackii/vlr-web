@@ -23,7 +23,9 @@
       "nextMonth": "Next month"
     },
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "save": "Save",
+    "add": "Add"
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -3242,5 +3244,13 @@
         "horizonRange": "Enter an integer from 0 to 3650."
       }
     }
+  },
+  "resourceVisual": {
+    "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "mapSettings": "Map settings", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
+  },
+  "bookingMap": {
+    "area": "Area",
+    "quantity": "Quantity",
+    "title": "Book", "help": "Choose a date, a resource, and a time.", "loading": "Loading map…", "dateStrip": "Dates", "periods": "Periods", "all": "All", "morning": "Morning", "afternoon": "Afternoon", "night": "Night", "map": "Map", "list": "List", "freeFrom": "{{count}} free · from {{amount}}", "noAvailability": "No open times", "continue": "Continue", "chooseSlot": "Choose a time", "success": "Reservation created.", "error": "Could not create the reservation.", "state": { "Taken": "Taken", "Blocked": "Unavailable", "Past": "Past", "OutsideHorizon": "Outside booking window", "Unpriced": "No price", "Available": "Available" }
   }
 }

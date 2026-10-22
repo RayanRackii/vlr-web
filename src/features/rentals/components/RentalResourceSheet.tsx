@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -45,6 +45,7 @@ import {
   type ResourceHorizonMode,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -88,6 +89,9 @@ export function buildRentalResourceFormValues(
       typeof editing?.maxAdvanceBookingDays === "number"
         ? String(editing.maxAdvanceBookingDays)
         : "",
+    visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
+    capacityPeople: editing?.capacityPeople?.toString() ?? "",
+    confirmVisualSuggestions: false,
   }
 }
 
@@ -103,6 +107,18 @@ export function RentalResourceSheet({
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
+  const [templates, setTemplates] = useState<VisualTemplate[]>([])
+  const [tags, setTags] = useState<VisualTag[]>([])
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [allSegments, setAllSegments] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    void Promise.all([listVisualTemplates({ search: templateSearch, tagIds: selectedTagIds, allSegments }), listPickerTags()])
+      .then(([page, tagList]) => { setTemplates(page.items); setTags(tagList) })
+      .catch(() => { setTemplates([]); setTags([]) })
+  }, [allSegments, open, selectedTagIds, templateSearch])
 
   const formSchema = useMemo(
     () =>
@@ -339,6 +355,27 @@ export function RentalResourceSheet({
                 </FormItem>
               )}
             />
+
+            <section className="space-y-2 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setAllSegments((current) => !current)}>
+                  {allSegments ? t("resourceVisual.useSegments") : t("resourceVisual.seeAll")}
+                </Button>
+              </div>
+              <Input value={templateSearch} onChange={(event) => setTemplateSearch(event.target.value)} placeholder={t("resourceVisual.searchTemplates")} />
+              <div className="flex flex-wrap gap-1" aria-label={t("resourceVisual.tags")}>
+                {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
+              </div>
+              <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
+                <Select modal={false} value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? "" : value)} items={templates.filter((template) => template.publishedRevision).map((template) => ({ value: template.publishedRevision?.id ?? "", label: template.nameI18n["pt-BR"] ?? template.slug }))} disabled={readOnly}>
+                  <FormControl><SelectTrigger className="w-full"><SelectValue placeholder={t("resourceVisual.noTemplate")} /></SelectTrigger></FormControl>
+                  <SelectContent><SelectItem value="none">{t("resourceVisual.noTemplate")}</SelectItem>{templates.filter((template) => template.publishedRevision).map((template) => <SelectItem key={template.id} value={template.publishedRevision?.id ?? ""}>{template.nameI18n["pt-BR"] ?? template.slug}</SelectItem>)}</SelectContent>
+                </Select>
+              )} />
+              <FormField control={form.control} name="capacityPeople" render={({ field }) => <Input type="number" min={1} value={field.value} onChange={field.onChange} disabled={readOnly} placeholder={t("resourceVisual.capacityPeople")} />} />
+              <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label>} />
+            </section>
 
             <FormField
               control={form.control}

@@ -47,6 +47,9 @@ export const createRentableRequestSchema = z.object({
     .max(BOOKING_HORIZON_DAY_MAX)
     .nullable()
     .optional(),
+  visualTemplateRevisionId: z.string().uuid().nullable().optional(),
+  capacityPeople: z.number().int().positive().nullable().optional(),
+  confirmVisualSuggestions: z.boolean().optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -89,6 +92,9 @@ export function createRentalResourceFormSchema(messages: {
       location: z.string(),
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
+      visualTemplateRevisionId: z.string(),
+      capacityPeople: z.string(),
+      confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
       if (
@@ -123,6 +129,8 @@ export type RentalResourceFormValues = z.infer<
 export type ResourceHorizonWriteContext = {
   creating: boolean
   stored: number | null | undefined
+  storedVisualTemplateRevisionId?: string | null
+  storedCapacityPeople?: number | null
 }
 
 /**
@@ -191,6 +199,21 @@ export function toCreateRentableRequest(
   )
   if (horizonWrite !== undefined) {
     payload.maxAdvanceBookingDays = horizonWrite
+  }
+  if (values.visualTemplateRevisionId.trim()) {
+    payload.visualTemplateRevisionId = values.visualTemplateRevisionId
+  } else if (!horizon.creating && horizon.storedVisualTemplateRevisionId != null) {
+    // UpdateRentable uses JsonOptional: omission retains the old assignment.
+    payload.visualTemplateRevisionId = null
+  }
+  if (values.capacityPeople.trim()) {
+    payload.capacityPeople = Number(values.capacityPeople)
+  } else if (!horizon.creating && horizon.storedCapacityPeople != null) {
+    // Same PATCH semantics as the visual template assignment.
+    payload.capacityPeople = null
+  }
+  if (values.confirmVisualSuggestions) {
+    payload.confirmVisualSuggestions = true
   }
 
   return createRentableRequestSchema.parse(payload)

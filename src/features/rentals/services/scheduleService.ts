@@ -160,6 +160,8 @@ export const rentalAssetSchema = z.object({
     .max(3650)
     .nullable()
     .optional(),
+  visualTemplateRevisionId: z.string().uuid().nullable().optional(),
+  capacityPeople: z.number().int().nullable().optional(),
 })
 
 export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>

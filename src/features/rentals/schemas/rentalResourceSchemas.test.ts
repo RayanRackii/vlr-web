@@ -38,6 +38,9 @@ function formValues(
     queueEnabled: false,
     queueOpeningTime: "",
     location: "Block A",
+    visualTemplateRevisionId: "",
+    capacityPeople: "",
+    confirmVisualSuggestions: false,
     ...horizon,
   }
 }
@@ -157,5 +160,20 @@ describe("resource booking horizon", () => {
         maxAdvanceBookingDays: null,
       }).success,
     ).toBe(true)
+  })
+
+  it("sends explicit nulls when an existing visual assignment or capacity is cleared", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      visualTemplateRevisionId: "",
+      capacityPeople: "",
+      confirmVisualSuggestions: false,
+    }
+    expect(toCreateRentableRequest(values, {
+      creating: false,
+      stored: undefined,
+      storedVisualTemplateRevisionId: FAMILY_ID,
+      storedCapacityPeople: 8,
+    })).toMatchObject({ visualTemplateRevisionId: null, capacityPeople: null })
   })
 })

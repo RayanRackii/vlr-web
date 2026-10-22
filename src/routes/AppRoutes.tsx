@@ -14,6 +14,7 @@ import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
 import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
+import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
@@ -161,6 +162,8 @@ export function AppRoutes() {
         <Route element={<PlatformAdminRoute />}>
           <Route path="/admin/tenants/new" element={<NewTenantPage />} />
           <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
+          <Route path="/admin/recursos-visuais" element={<ResourceVisualCatalogPage />} />
+          <Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} />
         </Route>
 
         <Route element={<MainLayout />}>

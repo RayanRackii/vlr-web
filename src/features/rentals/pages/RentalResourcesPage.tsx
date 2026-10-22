@@ -98,6 +98,8 @@ export function RentalResourcesPage() {
       const body = toCreateRentableRequest(values, {
         creating: editing === null,
         stored: editing?.maxAdvanceBookingDays,
+        storedVisualTemplateRevisionId: editing?.visualTemplateRevisionId,
+        storedCapacityPeople: editing?.capacityPeople,
       })
       if (editing) {
         await updateRentalAsset(editing.id, body)

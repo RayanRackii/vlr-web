@@ -4618,6 +4618,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
         slotId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
         unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
         quantity: 1,
+        expectedTotalAmount: 80,
       })
     })
     expect(joinQueue).toHaveBeenCalledWith(ASSET_A_ID)

@@ -27,9 +27,9 @@ import {
   createRentalLayout,
   deleteRentalLayout,
   listRentalLayouts,
-  updateRentalLayout,
   type RentalLayout,
 } from "@/features/rentals/services/rentalLayoutService"
+import { getBookingMapSettings, getComposition, saveBookingMapSettings, saveComposition, type BookingMapSettings, type MapComposition } from "@/features/rentals/services/resourceVisualService"
 import {
   listAdminRentalAssets,
   type AdminRentalAsset,
@@ -62,6 +62,8 @@ export function RentalLayoutsPage() {
   )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [settings, setSettings] = useState<BookingMapSettings | null>(null)
+  const [composition, setComposition] = useState<MapComposition | null>(null)
 
   const selectedLayout =
     selectedId !== "" && selectedId !== "new"
@@ -79,13 +81,14 @@ export function RentalLayoutsPage() {
     [assets],
   )
 
-  function applyLayout(layout: RentalLayout) {
+  function applyLayout(layout: RentalLayout, loadedComposition?: MapComposition) {
     setSelectedId(layout.id)
     setName(layout.name)
     setIsActive(layout.isActive)
-    setPlacements(placementsFromLayout(layout).map(fitPlacement))
+    setPlacements((loadedComposition ? loadedComposition.items : placementsFromLayout(layout)).map((item) => fitPlacement({ rentalAssetId: item.rentalAssetId, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex })))
     setAspectRatio(layout.aspectRatio)
     setCanvasWidthPercent(layout.widthPercent)
+    setComposition(loadedComposition ?? null)
   }
 
   const load = useCallback(async () => {
@@ -97,9 +100,13 @@ export function RentalLayoutsPage() {
       ])
       setLayouts(layoutList)
       setAssets(assetList)
+      // Map settings have a distinct permission from layouts.read. A 403 here
+      // must not hide layouts a read-only layout editor may inspect.
+      void getBookingMapSettings().then(setSettings).catch(() => setSettings(null))
       const first = layoutList[0]
       if (first) {
-        applyLayout(first)
+        const loadedComposition = await getComposition(first.id)
+        applyLayout(first, loadedComposition)
       } else {
         setSelectedId("")
         setName("")
@@ -107,6 +114,7 @@ export function RentalLayoutsPage() {
         setPlacements([])
         setAspectRatio(DEFAULT_ASPECT_RATIO)
         setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
+        setComposition(null)
       }
     } catch (error) {
       toast.error(
@@ -130,14 +138,19 @@ export function RentalLayoutsPage() {
     setAspectRatio(DEFAULT_ASPECT_RATIO)
     setCanvasWidthPercent(DEFAULT_CANVAS_WIDTH_PERCENT)
     setPlacements(autoPlaceItems(assets.map((asset) => asset.id)))
+    setComposition(null)
   }
 
-  function selectLayout(id: string) {
+  async function selectLayout(id: string) {
     const layout = layouts.find((item) => item.id === id)
     if (!layout) {
       return
     }
-    applyLayout(layout)
+    try {
+      applyLayout(layout, await getComposition(id))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("rentals.layout.loadError"))
+    }
   }
 
   function organizeEvenly() {
@@ -179,6 +192,31 @@ export function RentalLayoutsPage() {
     )
   }
 
+  function compositionPayload(current: MapComposition) {
+    const originalByAssetId = new Map(
+      current.items.map((item) => [item.rentalAssetId, item]),
+    )
+    return {
+      expectedVersion: current.version,
+      unitId: current.unitId,
+      name: name.trim(),
+      isActive,
+      sortOrder: current.sortOrder,
+      aspectRatio,
+      widthPercent: canvasWidthPercent,
+      decorations: current.decorations,
+      items: placements.map((placement) => {
+        const original = originalByAssetId.get(placement.rentalAssetId)
+        return {
+          ...fitPlacement(placement),
+          id: original?.id,
+          rotation: original?.rotation ?? 0,
+          lockAspectRatio: original?.lockAspectRatio ?? true,
+        }
+      }),
+    }
+  }
+
   async function onSave() {
     if (!name.trim()) {
       toast.error(t("rentals.layout.nameRequired"))
@@ -186,7 +224,7 @@ export function RentalLayoutsPage() {
     }
     setSaving(true)
     try {
-      const payload = {
+      const legacyPayload = {
         name: name.trim(),
         isActive,
         aspectRatio,
@@ -194,7 +232,9 @@ export function RentalLayoutsPage() {
         items: placements.map(fitPlacement),
       }
       if (selectedId === "new" || selectedId === "") {
-        const created = await createRentalLayout(payload)
+        const created = await createRentalLayout(legacyPayload)
+        const loadedComposition = await getComposition(created.id)
+        const savedComposition = await saveComposition(created.id, compositionPayload(loadedComposition))
         toast.success(t("rentals.layout.createSuccess"))
         setLayouts((current) => {
           const without = current.filter((item) => item.id !== created.id)
@@ -202,14 +242,18 @@ export function RentalLayoutsPage() {
             left.name.localeCompare(right.name),
           )
         })
-        applyLayout(created)
+        applyLayout(created, savedComposition)
       } else {
-        const updated = await updateRentalLayout(selectedId, payload)
+        if (!composition) {
+          throw new Error(t("rentals.layout.loadError"))
+        }
+        const savedComposition = await saveComposition(selectedId, compositionPayload(composition))
+        const updated = { ...selectedLayout!, ...savedComposition, items: savedComposition.items }
         toast.success(t("rentals.layout.updateSuccess"))
         setLayouts((current) =>
           current.map((item) => (item.id === updated.id ? updated : item)),
         )
-        applyLayout(updated)
+        applyLayout(updated, savedComposition)
       }
     } catch (error) {
       toast.error(
@@ -220,6 +264,16 @@ export function RentalLayoutsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function saveSettings(patch: Partial<BookingMapSettings>) {
+    if (!settings) return
+    setSaving(true)
+    try {
+      const saved = await saveBookingMapSettings({ ...settings, ...patch, expectedVersion: settings.version })
+      setSettings(saved)
+      toast.success(t("resourceVisual.saved"))
+    } catch (error) { toast.error(error instanceof Error ? error.message : t("rentals.layout.saveError")) } finally { setSaving(false) }
   }
 
   async function onDelete() {
@@ -277,7 +331,7 @@ export function RentalLayoutsPage() {
                     return
                   }
                   if (typeof value === "string") {
-                    selectLayout(value)
+                    void selectLayout(value)
                   }
                 }}
                 items={[
@@ -353,6 +407,8 @@ export function RentalLayoutsPage() {
                   />
                 </label>
               </div>
+
+              {settings ? <section className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2"><span className="font-medium sm:col-span-2">{t("resourceVisual.mapSettings")}</span><label className="flex items-center gap-2"><input type="checkbox" checked={settings.showPriceOnBlock} onChange={(event) => void saveSettings({ showPriceOnBlock: event.target.checked })} disabled={isTrialReadOnly || saving}/>{t("resourceVisual.showPrice")}</label><label>{t("resourceVisual.defaultView")}<Select modal={false} value={settings.defaultView} onValueChange={(value) => { if (value === "Map" || value === "List") void saveSettings({ defaultView: value }) }} items={[{ value: "Map", label: t("bookingMap.map") }, { value: "List", label: t("bookingMap.list") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Map">{t("bookingMap.map")}</SelectItem><SelectItem value="List">{t("bookingMap.list")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.timeFilter")}<Select modal={false} value={settings.timeFilterMode} onValueChange={(value) => { if (value === "Periods" || value === "FromTime") void saveSettings({ timeFilterMode: value }) }} items={[{ value: "Periods", label: t("bookingMap.periods") }, { value: "FromTime", label: t("resourceVisual.fromTime") }]}><SelectTrigger className="mt-1 w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Periods">{t("bookingMap.periods")}</SelectItem><SelectItem value="FromTime">{t("resourceVisual.fromTime")}</SelectItem></SelectContent></Select></label><label>{t("resourceVisual.availableColor")}<Input type="color" value={settings.availableColor} onChange={(event) => void saveSettings({ availableColor: event.target.value })}/></label><label>{t("resourceVisual.takenColor")}<Input type="color" value={settings.takenColor} onChange={(event) => void saveSettings({ takenColor: event.target.value })}/></label><Button type="button" variant="outline" disabled={isTrialReadOnly || saving} onClick={() => void saveSettings({ defaultLayoutId: selectedLayout?.id ?? null })}>{t("resourceVisual.setDefaultMap")}</Button></section> : null}
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
                 <LayoutCanvasBoard

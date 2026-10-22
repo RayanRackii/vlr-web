@@ -23,7 +23,9 @@
       "nextMonth": "Mes siguiente"
     },
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "save": "Guardar",
+    "add": "Agregar"
   },
   "apiErrors": {
     "invalidResponse": "Respuesta inválida de la API.",
@@ -3242,5 +3244,13 @@
         "horizonRange": "Indique un entero de 0 a 3650."
       }
     }
+  },
+  "resourceVisual": {
+    "title": "Catálogo visual de recursos", "help": "Gestione modelos globales, arte publicada y clasificaciones.", "newTemplate": "Nuevo modelo", "editTemplate": "Editar modelo", "name": "Nombre", "slug": "Identificador", "description": "Descripción", "tags": "Etiquetas", "revision": "Nueva revisión", "floor": "Arte SVG del piso", "lines": "Arte SVG de líneas", "publish": "Publicar revisión", "saved": "Cambios guardados.", "published": "Revisión publicada.", "error": "No se pudo completar el cambio.", "segmentsTitle": "Segmentos del tenant", "segmentsHelp": "Defina los segmentos mostrados primero al elegir un modelo.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "noTemplate": "Sin modelo", "capacityPeople": "Capacidad de personas (opcional)", "applySuggestions": "Aplicar sugerencias del modelo", "mapSettings": "Configuración del mapa", "showPrice": "Mostrar precio en el bloque", "defaultView": "Vista predeterminada", "timeFilter": "Filtro de horario", "fromTime": "Desde el horario", "availableColor": "Color disponible", "takenColor": "Color ocupado", "setDefaultMap": "Definir mapa predeterminado"
+  },
+  "bookingMap": {
+    "area": "Área",
+    "quantity": "Cantidad",
+    "title": "Reservar", "help": "Elija una fecha, un recurso y un horario.", "loading": "Cargando mapa…", "dateStrip": "Fechas", "periods": "Períodos", "all": "Todos", "morning": "Mañana", "afternoon": "Tarde", "night": "Noche", "map": "Mapa", "list": "Lista", "freeFrom": "{{count}} libres · desde {{amount}}", "noAvailability": "Sin horarios libres", "continue": "Continuar", "chooseSlot": "Elija un horario", "success": "Reserva creada.", "error": "No se pudo crear la reserva.", "state": { "Taken": "Ocupado", "Blocked": "No disponible", "Past": "Finalizado", "OutsideHorizon": "Fuera del plazo", "Unpriced": "Sin precio", "Available": "Disponible" }
   }
 }
