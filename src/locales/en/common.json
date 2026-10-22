@@ -3197,6 +3197,7 @@
       "width": "Width",
       "height": "Height",
       "courtPreset": "Court 2:1",
+      "widePreset": "Wide",
       "squarePreset": "Square",
       "stripPreset": "Strip",
       "organize": "Auto arrange",
@@ -3207,7 +3208,30 @@
       "createSuccess": "Layout created.",
       "updateSuccess": "Layout saved.",
       "deleteSuccess": "Layout deleted.",
-      "deleteError": "Could not delete the layout."
+      "deleteError": "Could not delete the layout.",
+      "steps": {
+        "spaces": "Spaces",
+        "templates": "Type and template",
+        "map": "Map",
+        "review": "Review"
+      },
+      "next": "Continue",
+      "back": "Back",
+      "spacesTitle": "Choose spaces",
+      "spacesHelp": "Select the spaces on this map or create a new bookable resource.",
+      "createSpace": "Create new space",
+      "spaceType": "Bookable space",
+      "bookableItemType": "Bookable item",
+      "templatesTitle": "Type and visual template",
+      "templatesHelp": "The listed templates match this tenant's enabled segments.",
+      "mapTitle": "Position blocks",
+      "mapHelp": "Drag blocks and choose an appropriate size for each space.",
+      "reviewSpaces_one": "{{count}} space on the map",
+      "reviewSpaces_other": "{{count}} spaces on the map",
+      "advanced": "Advanced",
+      "validation": {
+        "spaces": "Choose at least one space to continue."
+      }
     },
     "reservations": {
       "title": "Reservations",

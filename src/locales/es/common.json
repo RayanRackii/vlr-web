@@ -3197,6 +3197,7 @@
       "width": "Ancho",
       "height": "Alto",
       "courtPreset": "Cancha 2:1",
+      "widePreset": "Rectangular",
       "squarePreset": "Cuadrado",
       "stripPreset": "Franja",
       "organize": "Organizar solo",
@@ -3207,7 +3208,30 @@
       "createSuccess": "Layout creado.",
       "updateSuccess": "Layout guardado.",
       "deleteSuccess": "Layout eliminado.",
-      "deleteError": "No se pudo eliminar el layout."
+      "deleteError": "No se pudo eliminar el layout.",
+      "steps": {
+        "spaces": "Espacios",
+        "templates": "Tipo y modelo",
+        "map": "Mapa",
+        "review": "Revisar"
+      },
+      "next": "Continuar",
+      "back": "Volver",
+      "spacesTitle": "Elija los espacios",
+      "spacesHelp": "Seleccione los espacios de este mapa o cree un nuevo recurso reservable.",
+      "createSpace": "Crear nuevo espacio",
+      "spaceType": "Espacio reservable",
+      "bookableItemType": "Elemento reservable",
+      "templatesTitle": "Tipo y modelo visual",
+      "templatesHelp": "Los modelos listados coinciden con los segmentos habilitados del tenant.",
+      "mapTitle": "Posicione los bloques",
+      "mapHelp": "Arrastre los bloques y elija un tamaño adecuado para cada espacio.",
+      "reviewSpaces_one": "{{count}} espacio en el mapa",
+      "reviewSpaces_other": "{{count}} espacios en el mapa",
+      "advanced": "Avanzado",
+      "validation": {
+        "spaces": "Elija al menos un espacio para continuar."
+      }
     },
     "reservations": {
       "title": "Reservas",

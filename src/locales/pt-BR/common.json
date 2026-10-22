@@ -3197,6 +3197,7 @@
       "width": "Largura",
       "height": "Altura",
       "courtPreset": "Quadra 2:1",
+      "widePreset": "Retangular",
       "squarePreset": "Quadrado",
       "stripPreset": "Faixa",
       "organize": "Organizar sozinho",
@@ -3207,7 +3208,30 @@
       "createSuccess": "Layout criado.",
       "updateSuccess": "Layout salvo.",
       "deleteSuccess": "Layout excluído.",
-      "deleteError": "Não foi possível excluir o layout."
+      "deleteError": "Não foi possível excluir o layout.",
+      "steps": {
+        "spaces": "Espaços",
+        "templates": "Tipo e modelo",
+        "map": "Mapa",
+        "review": "Revisar"
+      },
+      "next": "Continuar",
+      "back": "Voltar",
+      "spacesTitle": "Escolha os espaços",
+      "spacesHelp": "Selecione os espaços que estarão neste mapa ou crie um novo recurso.",
+      "createSpace": "Criar novo espaço",
+      "spaceType": "Espaço reservável",
+      "bookableItemType": "Item reservável",
+      "templatesTitle": "Tipo e modelo visual",
+      "templatesHelp": "Os modelos listados correspondem aos segmentos habilitados para este tenant.",
+      "mapTitle": "Posicione os blocos",
+      "mapHelp": "Arraste os blocos e escolha um tamanho adequado para cada espaço.",
+      "reviewSpaces_one": "{{count}} espaço no mapa",
+      "reviewSpaces_other": "{{count}} espaços no mapa",
+      "advanced": "Avançado",
+      "validation": {
+        "spaces": "Escolha pelo menos um espaço para continuar."
+      }
     },
     "reservations": {
       "title": "Reservas",
