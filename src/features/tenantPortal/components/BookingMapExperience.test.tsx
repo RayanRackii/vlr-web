@@ -48,4 +48,27 @@ describe("BookingMapExperience", () => {
     fireEvent.click(screen.getByRole("button", { name: /Continuar/i }))
     await waitFor(() => expect(portalService.createPortalReservation).toHaveBeenLastCalledWith(expect.objectContaining({ expectedTotalAmount: 100, items: [{ assetId: ASSET, quantity: 2 }] })))
   })
+
+  it("shows compact free-slot chips and keeps ended slots behind a toggle", async () => {
+    const visualService = await import("@/features/rentals/services/resourceVisualService")
+    vi.mocked(visualService.fetchDailyAvailability).mockResolvedValue({
+      date: "2026-10-21", timeZone: "America/Sao_Paulo", serverNow: "2030-10-21T12:00:00Z", quoteExpiresAt: "2030-10-21T13:00:00Z", currency: "BRL", resources: [{ rentalAssetId: ID, assetId: ASSET, unitId: UNIT, name: "Sala A", type: "Location", totalQuantity: 1, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [
+        { slotId: null, startTime: "08:00", endTime: "09:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 },
+        { slotId: null, startTime: "09:00", endTime: "10:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 },
+        { slotId: null, startTime: "10:00", endTime: "11:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 },
+        { slotId: null, startTime: "07:00", endTime: "08:00", isDerived: true, state: "Past", reasonCode: null, availableQuantity: 0, totalAmount: null },
+      ] }],
+    })
+
+    render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} />)
+    fireEvent.click(await screen.findByRole("button", { name: /Lista/i }))
+    expect(await screen.findByText("08:00")).toBeInTheDocument()
+    expect(screen.getByText("09:00")).toBeInTheDocument()
+    expect(screen.getByText("10:00")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /Sala A/i }))
+    expect(screen.queryByText(/07:00.*Encerrado/i)).not.toBeInTheDocument()
+    fireEvent.click(await screen.findByRole("button", { name: /Mostrar encerrados \(1\)/i }))
+    expect(screen.getByText(/07:00.*Encerrado/i)).toBeInTheDocument()
+  })
 })
