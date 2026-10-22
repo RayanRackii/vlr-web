@@ -72,7 +72,7 @@ describe("resource booking horizon", () => {
     )
   })
 
-  it("includes template defaults only when explicitly requested for a new resource", () => {
+  it("does not defer template defaults to the API", () => {
     const values = {
       ...formValues({ horizonMode: "inherit", horizonDays: "" }),
       visualTemplateRevisionId: DETERMINISTIC_GUID,
@@ -81,15 +81,10 @@ describe("resource booking horizon", () => {
     expect(toCreateRentableRequest(values, {
       creating: true,
       stored: undefined,
-      applyTemplateDefaults: true,
-    })).toMatchObject({
-      visualTemplateRevisionId: DETERMINISTIC_GUID,
-      applyTemplateDefaults: true,
-    })
+    })).toMatchObject({ visualTemplateRevisionId: DETERMINISTIC_GUID })
     expect(toCreateRentableRequest(values, {
-      creating: false,
+      creating: true,
       stored: undefined,
-      applyTemplateDefaults: true,
     })).not.toHaveProperty("applyTemplateDefaults")
   })
 

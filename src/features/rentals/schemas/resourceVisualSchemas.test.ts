@@ -49,6 +49,22 @@ describe("resource visual API schemas", () => {
     expect(visualRevisionSchema.parse(adminTemplates.items[0]?.publishedRevision)).not.toHaveProperty("defaultSchedulePolicy")
   })
 
+  it("accepts explicit null defaults from a published revision", () => {
+    const revision = visualRevisionSchema.parse({
+      ...adminTemplates.items[0]?.publishedRevision,
+      defaultSchedulePolicy: null,
+      defaultOpenTime: null,
+      defaultCloseTime: null,
+      defaultAllowedDurationMinutes: null,
+      defaultPricings: null,
+      defaultRequiresDeposit: null,
+      defaultMaxAdvanceBookingDays: null,
+    })
+
+    expect(revision.defaultRequiresDeposit).toBeNull()
+    expect(revision.defaultMaxAdvanceBookingDays).toBeNull()
+  })
+
   it("parses public map list and map payloads including visual revisions", () => {
     expect(publicMapListSchema.parse(publicMaps).maps[0]?.id).toBe("3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b")
     const parsed = publicMapSchema.parse(publicMap)
