@@ -599,25 +599,6 @@ export function TenantPortalAgendaPage() {
       pendingSearchWrite.current = false
       searchWriteBaseline.current = null
       const urlTime = readAgendaTimeParam(searchParams.get("time")) ?? ""
-      // #minhas-reservas is the same page. A link that drops ?time= must
-      // not blank the loaded choice, or Horário shows "no times".
-      if (urlTime.length === 0 && urlDate === date && startTime.length > 0) {
-        const next = agendaSelectionSearchParams(
-          searchParams,
-          date,
-          startTime,
-          today,
-        )
-        const nextQuery = next.toString()
-        if (nextQuery !== current) {
-          searchWriteBaseline.current = current
-          lastWrittenSearch.current = nextQuery
-          pendingSearchWrite.current = true
-          replaceSelectionSearch.current = true
-          writeSearch(next, true)
-        }
-        return
-      }
       lastWrittenSearch.current = current
       replaceSelectionSearch.current = urlBeyondHorizon
       setHorizonAdjusted(urlBeyondHorizon)

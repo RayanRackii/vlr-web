@@ -6,6 +6,12 @@
 @tailwind utilities;
 
 @layer base {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
   :root {
     --brand-primary: #4d6a92;
     --brand-accent: #5a8fa0;

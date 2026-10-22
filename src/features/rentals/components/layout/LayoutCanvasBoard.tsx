@@ -32,6 +32,8 @@ export type CanvasBoardItem = {
   pending?: boolean
   /** Visible status for a space that cannot be booked. Not a hover-only tooltip. */
   detail?: string | null
+  /** A solid label fixed to the bottom of a pick tile, clear of its visual art. */
+  footer?: string | null
   artUrl?: string | null
 }
 
@@ -273,12 +275,19 @@ export function LayoutCanvasBoard({
                 }}
               >
                 {item.artUrl ? <img src={item.artUrl} alt="" className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" /> : null}
-                <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
-                  {item.label}
-                </span>
+                {item.footer ? null : (
+                  <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
+                    {item.label}
+                  </span>
+                )}
                 {item.detail ? (
                   <span className="line-clamp-2 max-w-full px-0.5 text-xs font-semibold leading-tight">
                     {item.detail}
+                  </span>
+                ) : null}
+                {item.footer ? (
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 min-w-0 bg-background/95 px-1.5 py-1 text-center text-xs font-semibold leading-tight text-foreground shadow-[0_-1px_0_rgb(0_0_0_/_0.12)]">
+                    <span className="line-clamp-2 break-normal hyphens-none">{item.footer}</span>
                   </span>
                 ) : null}
                 {mode === "edit" && onRemove ? (
