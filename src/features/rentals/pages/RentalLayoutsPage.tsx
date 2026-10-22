@@ -253,7 +253,7 @@ export function RentalLayoutsPage() {
         setLayouts((current) =>
           current.map((item) => (item.id === updated.id ? updated : item)),
         )
-        applyLayout(updated)
+        applyLayout(updated, savedComposition)
       }
     } catch (error) {
       toast.error(

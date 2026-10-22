@@ -1429,8 +1429,10 @@ export function TenantPortalAgendaPage() {
     }
   }
 
-  if (branding.newBookingUiEnabled && !mapUiUnavailable) {
-    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} />
+  const isReservationRoute = searchParams.has("reservation") || location.hash === CUSTOMER_MY_RESERVATIONS_HASH
+
+  if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
+    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} />
   }
 
   return (

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { archiveVisualTemplate, deleteVisualTag, getTenantSegments, listAdminVisualTemplates, listVisualTags, publishVisualRevision, replaceTenantSegments, saveVisualRevision, saveVisualTag, saveVisualTemplate, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
+import { archiveVisualTemplate, deleteVisualTag, getTenantSegments, listAdminVisualTemplates, listVisualRevisions, listVisualTags, publishVisualRevision, replaceTenantSegments, saveVisualRevision, saveVisualTag, saveVisualTemplate, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
 
 const blankRevision = { floorSvg: "<rect width=\"100\" height=\"60\" fill=\"#D1D5DB\"/>", linesSvg: "", netSvg: "", viewBox: "0 0 100 60", aspectRatio: "1.6667", defaultColor: "#4D6A92", defaultIcon: "layout-template", suggestedSlotMinutes: "60", suggestedCapacityPeople: "" }
 const localized = (value: Record<string, string | null> | undefined, language: string) => value?.[language] ?? value?.["pt-BR"] ?? ""
@@ -41,6 +41,27 @@ export function ResourceVisualCatalogPage() {
     } catch (error) { toast.error(error instanceof Error ? error.message : t("resourceVisual.error")) } finally { setLoading(false) }
   }, [search, t, tenantId])
   useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    if (!editing) return
+    let cancelled = false
+    void listVisualRevisions(editing.id).then((revisions) => {
+      const draft = revisions.find((entry) => entry.publishedAt === null)
+      if (cancelled || !draft) return
+      setDraftRevision({ id: draft.metadata.id, version: draft.metadata.version })
+      setRevision({
+        floorSvg: draft.floorSvg,
+        linesSvg: draft.linesSvg ?? "",
+        netSvg: draft.netSvg ?? "",
+        viewBox: draft.metadata.viewBox,
+        aspectRatio: String(draft.metadata.aspectRatio),
+        defaultColor: draft.metadata.defaultColor,
+        defaultIcon: draft.metadata.defaultIcon,
+        suggestedSlotMinutes: String(draft.metadata.suggestedSlotMinutes ?? ""),
+        suggestedCapacityPeople: String(draft.metadata.suggestedCapacityPeople ?? ""),
+      })
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [editing])
   const segmentTags = useMemo(() => tags.filter((tag) => tag.kind === "Segment"), [tags])
   const openTemplate = (template: VisualTemplate | null) => { setEditing(template); setName(template ? localized(template.nameI18n, i18n.resolvedLanguage ?? "pt-BR") : ""); setSlug(template?.slug ?? ""); setDescription(template ? localized(template.descriptionI18n, i18n.resolvedLanguage ?? "pt-BR") : ""); setSelectedTags(template?.tags.map((tag) => tag.id) ?? []); setRevision(blankRevision); setDraftRevision(null) }
   async function saveTemplate() { if (!name.trim() || !slug.trim()) return; setBusy(true); try { const language = i18n.resolvedLanguage ?? "pt-BR"; const saved = await saveVisualTemplate({ slug: slug.trim(), nameI18n: { ...(editing?.nameI18n ?? {}), [language]: name.trim() }, descriptionI18n: { ...(editing?.descriptionI18n ?? {}), [language]: description.trim() || null }, tagIds: selectedTags, isActive: editing?.isActive ?? true, sortOrder: editing?.sortOrder ?? 0, expectedVersion: editing?.version }, editing?.id); openTemplate(saved); await load(); toast.success(t("resourceVisual.saved")) } catch (error) { toast.error(error instanceof Error ? error.message : t("resourceVisual.error")) } finally { setBusy(false) } }

@@ -11,7 +11,7 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   fetchDailyAvailability: vi.fn(async () => ({ date: "2026-10-21", timeZone: "America/Sao_Paulo", serverNow: "2030-10-21T12:00:00Z", quoteExpiresAt: "2030-10-21T13:00:00Z", currency: "BRL", resources: [{ rentalAssetId: ID, assetId: ASSET, unitId: UNIT, name: "Sala A", type: "Location", totalQuantity: 1, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [{ slotId: null, startTime: "08:00", endTime: "09:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 }] }] })),
   visualArtUrl: vi.fn(),
 }))
-vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({ createPortalReservation: vi.fn(async () => ({})), bookPortalSlot: vi.fn(async () => ({ })), isLocationQueueEnabled: () => false }))
+vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({ createPortalReservation: vi.fn(async () => ({})), bookPortalSlot: vi.fn(async () => ({ })), checkPortalAvailability: vi.fn(), listMyPortalReservations: vi.fn(async () => []), isLocationQueueEnabled: () => false }))
 vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReservationQueue: () => ({ canReserve: true, applyBookingError: () => false, view: { kind: "hidden" }, explanation: null, joining: false }) }))
 
 describe("BookingMapExperience", () => {
@@ -24,5 +24,28 @@ describe("BookingMapExperience", () => {
     fireEvent.click(screen.getByRole("button", { name: /Continuar/i }))
     const { createPortalReservation } = await import("@/features/tenantPortal/services/tenantPortalService")
     await waitFor(() => expect(createPortalReservation).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalAmount: 50, items: [{ assetId: ASSET, quantity: 1 }] })))
+  })
+
+  it("does not submit a stale Good quote while quantity is being requoted", async () => {
+    const visualService = await import("@/features/rentals/services/resourceVisualService")
+    const portalService = await import("@/features/tenantPortal/services/tenantPortalService")
+    vi.mocked(visualService.fetchDailyAvailability).mockResolvedValue({
+      date: "2026-10-21", timeZone: "America/Sao_Paulo", serverNow: "2030-10-21T12:00:00Z", quoteExpiresAt: "2030-10-21T13:00:00Z", currency: "BRL", resources: [{ rentalAssetId: ID, assetId: ASSET, unitId: UNIT, name: "Bola", type: "Good", totalQuantity: 5, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [{ slotId: null, startTime: "08:00", endTime: "09:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 5, totalAmount: 50 }] }],
+    })
+    let resolveRequote: ((value: { isAvailable: boolean; requestedQuantity: number; availableQuantity: number; estimatedTotalAmount: number; reason: null }) => void) | undefined
+    vi.mocked(portalService.checkPortalAvailability)
+      .mockResolvedValueOnce({ isAvailable: true, requestedQuantity: 1, availableQuantity: 5, estimatedTotalAmount: 50, reason: null })
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveRequote = resolve }))
+    render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} />)
+    fireEvent.click(await screen.findByRole("button", { name: /Sala A/i }))
+    fireEvent.click(await screen.findByRole("button", { name: /08:00/i }))
+    const quantity = await screen.findByRole("spinbutton")
+    await waitFor(() => expect(screen.getByRole("button", { name: /Continuar/i })).toBeEnabled())
+    fireEvent.change(quantity, { target: { value: "2" } })
+    expect(screen.getByRole("button", { name: /Continuar/i })).toBeDisabled()
+    resolveRequote?.({ isAvailable: true, requestedQuantity: 2, availableQuantity: 4, estimatedTotalAmount: 100, reason: null })
+    await waitFor(() => expect(screen.getByRole("button", { name: /Continuar/i })).toBeEnabled())
+    fireEvent.click(screen.getByRole("button", { name: /Continuar/i }))
+    await waitFor(() => expect(portalService.createPortalReservation).toHaveBeenLastCalledWith(expect.objectContaining({ expectedTotalAmount: 100, items: [{ assetId: ASSET, quantity: 2 }] })))
   })
 })
