@@ -35,6 +35,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import { getUnits } from "@/features/assets/services/unitsService"
 import {
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
@@ -43,8 +44,9 @@ import { createRentalResourceFormSchema, type RegistryCategoryListItem, type Ren
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
 import { listRentalAssetCategories } from "@/features/rentals/services/rentalResourcesService"
-import { InlineCreateCategoryForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
+import { InlineCreateCategoryForm, InlineCreateUnitForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
 import { buildRentalResourceFormValues } from "@/features/rentals/components/rentalResourceFormDefaults"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 type TemplateOption = { value: string; label: string }
 
@@ -77,7 +79,10 @@ type RentalResourceSheetProps = {
   families: readonly AssetFamily[]
   busy: boolean
   readOnly: boolean
-  onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
+  onSubmit: (
+    values: RentalResourceFormValues,
+    options: { applyTemplateDefaults: boolean },
+  ) => Promise<boolean>
 }
 
 export function RentalResourceSheet({
@@ -92,7 +97,10 @@ export function RentalResourceSheet({
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
+  const { can } = usePermissions()
   const [templates, setTemplates] = useState<VisualTemplate[]>([])
+  const [unitOptions, setUnitOptions] = useState<readonly Unit[]>(units)
+  const [previousUnits, setPreviousUnits] = useState(units)
   const [categoryOptions, setCategoryOptions] = useState<readonly RegistryCategoryListItem[]>(categories)
   const [previousCategories, setPreviousCategories] = useState(categories)
   const [tags, setTags] = useState<VisualTag[]>([])
@@ -111,6 +119,10 @@ export function RentalResourceSheet({
   if (categories !== previousCategories) {
     setPreviousCategories(categories)
     setCategoryOptions(categories)
+  }
+  if (units !== previousUnits) {
+    setPreviousUnits(units)
+    setUnitOptions(units)
   }
 
   const formSchema = useMemo(
@@ -164,7 +176,8 @@ export function RentalResourceSheet({
     { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
   ]
 
-  const unitItems = units.map((unit) => ({ value: unit.id, label: unit.name }))
+  const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
+  const canCreateUnit = can("core.units.write") && !readOnly
   const categoryItems = categoryOptions.map((category) => ({
     value: category.id,
     label: category.name,
@@ -187,6 +200,12 @@ export function RentalResourceSheet({
     const refreshed = await listRentalAssetCategories()
     setCategoryOptions(refreshed)
     return refreshed.map((category) => ({ value: category.id, label: category.name }))
+  }
+
+  async function refreshUnits() {
+    const refreshed = await getUnits()
+    setUnitOptions(refreshed)
+    return refreshed.map((unit) => ({ value: unit.id, label: unit.name }))
   }
 
   async function refreshTemplates() {
@@ -219,6 +238,16 @@ export function RentalResourceSheet({
     }
   }
 
+  function shouldApplyTemplateDefaults() {
+    return (
+      editing === null &&
+      Boolean(form.getValues("visualTemplateRevisionId").trim()) &&
+      !form.getFieldState("requiresDeposit").isDirty &&
+      !form.getFieldState("horizonMode").isDirty &&
+      !form.getFieldState("horizonDays").isDirty
+    )
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -245,7 +274,9 @@ export function RentalResourceSheet({
                 return
               }
               void form.handleSubmit(async (values) => {
-                const ok = await onSubmit(values)
+                const ok = await onSubmit(values, {
+                  applyTemplateDefaults: shouldApplyTemplateDefaults(),
+                })
                 if (ok) {
                   onOpenChange(false)
                 }
@@ -290,29 +321,48 @@ export function RentalResourceSheet({
               )}
             />
 
-            {units.length !== 1 ? (
+            {unitOptions.length !== 1 || canCreateUnit ? (
               <FormField
                 control={form.control}
                 name="unitId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("rentals.resources.form.unit")}</FormLabel>
-                    <Select
-                      modal={false}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      items={unitItems}
-                      disabled={readOnly}
-                    >
+                    {canCreateUnit ? (
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
-                        </SelectTrigger>
+                        <InlineCreateSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          options={unitItems}
+                          onRefreshOptions={refreshUnits}
+                          placeholder={t("rentals.resources.form.unitPlaceholder")}
+                          createLabel={t("rentals.resources.inlineCreate.unitAction")}
+                          drawerTitle={t("rentals.resources.inlineCreate.unitTitle")}
+                          drawerDescription={t("rentals.resources.inlineCreate.unitDescription")}
+                          disabled={readOnly}
+                          renderCreateForm={({ complete, close }) => (
+                            <InlineCreateUnitForm complete={complete} close={close} />
+                          )}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {units.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    ) : (
+                      <Select
+                        modal={false}
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        items={unitItems}
+                        disabled={readOnly}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {unitOptions.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

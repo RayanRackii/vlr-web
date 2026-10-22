@@ -149,10 +149,10 @@ export function RentalLayoutsPage() {
       setCategories(categoryList); setFamilies(familyList); setUnits(unitList); setResourceSheetOpen(true)
     } catch (error) { toast.error(error instanceof Error ? error.message : t("rentals.resources.loadError")) }
   }
-  async function createResource(values: RentalResourceFormValues): Promise<boolean> {
+  async function createResource(values: RentalResourceFormValues, options: { applyTemplateDefaults: boolean }): Promise<boolean> {
     setSaving(true)
     try {
-      const created = await createRentalAsset(toCreateRentableRequest(values))
+      const created = await createRentalAsset(toCreateRentableRequest(values, { creating: true, stored: undefined, applyTemplateDefaults: options.applyTemplateDefaults }))
       setAssets((current) => [...current, created])
       setPlacements((current) => {
         const placement = autoPlaceItems([...current.map((item) => item.rentalAssetId), created.id]).at(-1)

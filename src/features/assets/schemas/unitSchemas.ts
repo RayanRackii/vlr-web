@@ -11,3 +11,10 @@ export const unitSchema = z.object({
 export type Unit = z.infer<typeof unitSchema>
 
 export const unitListSchema = z.array(unitSchema)
+
+export const createUnitRequestSchema = z.object({
+  name: z.string().trim().min(1),
+  code: z.string().trim().min(1).optional(),
+})
+
+export type CreateUnitRequest = z.infer<typeof createUnitRequestSchema>

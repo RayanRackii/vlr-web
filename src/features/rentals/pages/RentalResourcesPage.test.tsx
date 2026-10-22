@@ -47,6 +47,7 @@ vi.mock("@/features/assets/services/assetFamiliesService", () => ({
 
 vi.mock("@/features/assets/services/unitsService", () => ({
   getUnits: vi.fn(),
+  createUnit: vi.fn(),
 }))
 
 vi.mock("@/features/rentals/services/scheduleService", () => ({
@@ -315,6 +316,25 @@ describe("RentalResourcesPage", () => {
     )
     expect(await screen.findByRole("option", { name: "Sede" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Anexo" })).toBeInTheDocument()
+  })
+
+  it("offers inline unit creation only with core.units.write", async () => {
+    const user = userEvent.setup()
+    renderPage([...WRITE_PERMS, "core.units.write"])
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+
+    await user.click(
+      screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    )
+    expect(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.resources.inlineCreate.unitAction"),
+      }),
+    ).toBeInTheDocument()
   })
 
   it("updates using the rental asset id from the list, not assetId", async () => {

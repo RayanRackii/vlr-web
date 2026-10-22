@@ -90,7 +90,10 @@ export function RentalResourcesPage() {
     setSheetOpen(true)
   }
 
-  async function handleSubmit(values: RentalResourceFormValues): Promise<boolean> {
+  async function handleSubmit(
+    values: RentalResourceFormValues,
+    options: { applyTemplateDefaults: boolean },
+  ): Promise<boolean> {
     if (!canWrite) {
       return false
     }
@@ -101,6 +104,7 @@ export function RentalResourcesPage() {
         stored: editing?.maxAdvanceBookingDays,
         storedVisualTemplateRevisionId: editing?.visualTemplateRevisionId,
         storedCapacityPeople: editing?.capacityPeople,
+        applyTemplateDefaults: options.applyTemplateDefaults,
       })
       if (editing) {
         await updateRentalAsset(editing.id, body)

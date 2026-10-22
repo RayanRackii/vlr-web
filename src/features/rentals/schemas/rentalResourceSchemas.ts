@@ -47,6 +47,8 @@ export const createRentableRequestSchema = z.object({
     .nullable()
     .optional(),
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
+  /** Lets the API apply published visual-template defaults on a new resource. */
+  applyTemplateDefaults: z.boolean().optional(),
   capacityPeople: z.number().int().positive().nullable().optional(),
   confirmVisualSuggestions: z.boolean().optional(),
 })
@@ -128,6 +130,7 @@ export type ResourceHorizonWriteContext = {
   stored: number | null | undefined
   storedVisualTemplateRevisionId?: string | null
   storedCapacityPeople?: number | null
+  applyTemplateDefaults?: boolean
 }
 
 /**
@@ -210,6 +213,9 @@ export function toCreateRentableRequest(
   }
   if (values.confirmVisualSuggestions) {
     payload.confirmVisualSuggestions = true
+  }
+  if (horizon.creating && horizon.applyTemplateDefaults) {
+    payload.applyTemplateDefaults = true
   }
 
   return createRentableRequestSchema.parse(payload)
