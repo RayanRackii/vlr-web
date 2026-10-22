@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-22",
+  "timeZone": "America/Sao_Paulo",
+  "serverNow": "2026-10-22T12:00:00Z",
+  "quoteExpiresAt": "2026-10-22T12:05:00Z",
+  "currency": "BRL",
+  "resources": [
+    {
+      "rentalAssetId": "3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b",
+      "assetId": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
+      "unitId": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+      "name": "Quadra 1",
+      "type": "Location",
+      "totalQuantity": 1,
+      "requiresDeposit": true,
+      "queueEnabled": false,
+      "effectiveMaxAdvanceBookingDays": null,
+      "windows": [
+        { "slotId": null, "startTime": "18:00:00", "endTime": "19:00:00", "isDerived": true, "state": "Available", "reasonCode": null, "availableQuantity": 1, "totalAmount": 80 }
+      ]
+    }
+  ]
+}

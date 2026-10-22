@@ -2,10 +2,11 @@ import { z } from "zod"
 
 import { api, publicApi, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
+import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
 const layoutItemSchema = z.object({
-  id: z.string().uuid(),
-  rentalAssetId: z.string().uuid(),
+  id: guidLikeIdSchema,
+  rentalAssetId: guidLikeIdSchema,
   assetName: z.string(),
   xPercent: z.coerce.number(),
   yPercent: z.coerce.number(),
@@ -15,8 +16,8 @@ const layoutItemSchema = z.object({
 })
 
 const layoutSchema = z.object({
-  id: z.string().uuid(),
-  unitId: z.string().uuid().nullable().optional(),
+  id: guidLikeIdSchema,
+  unitId: guidLikeIdSchema.nullable().optional(),
   name: z.string(),
   isActive: z.boolean(),
   aspectRatio: z.coerce.number().optional().default(1.6),
