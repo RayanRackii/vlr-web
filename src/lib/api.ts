@@ -4,6 +4,7 @@ import {
 } from "@supabase/supabase-js"
 import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { z } from "zod"
+import { toast } from "sonner"
 
 import {
   logAuthSessionEvent,
@@ -16,6 +17,7 @@ import {
   noteTransportSuccess,
 } from "@/lib/connectivity"
 import { supabase } from "@/lib/supabase"
+import { safeStaffNextPath, staffLoginPath } from "@/lib/safeStaffNextPath"
 
 declare module "axios" {
   interface AxiosRequestConfig {
@@ -66,6 +68,7 @@ let staffAuthEpoch = 0
 let staffSignOutEpochInstalled = false
 let staffRefreshInflight: Promise<StaffRefreshResult> | null = null
 let staffRefreshInflightToken: string | null = null
+let staffSessionExpiryHandled = false
 const staffSenderUserId = new WeakMap<InternalAxiosRequestConfig, string>()
 
 export function getApiBaseUrl(): string {
@@ -147,6 +150,7 @@ export function resetStaffSessionRefreshForTests(): void {
   staffRefreshInflight = null
   staffRefreshInflightToken = null
   staffAuthEpoch = 0
+  staffSessionExpiryHandled = false
 }
 
 /**
@@ -365,13 +369,11 @@ function staffBindingMatches(
   )
 }
 
-async function performStaffRefresh(
-  refreshToken: string,
-): Promise<StaffRefreshResult> {
+async function performStaffRefresh(): Promise<StaffRefreshResult> {
   try {
-    const result = await supabase.auth.refreshSession({
-      refresh_token: refreshToken,
-    })
+    // GoTrue owns refresh-token rotation. Passing a snapshot races its
+    // auto-refresh and can exchange the same rotated token twice.
+    const result = await supabase.auth.refreshSession()
     if (result.error) {
       return { kind: "failed", error: result.error }
     }
@@ -416,7 +418,7 @@ function refreshStaffSession(
   }
 
   staffRefreshInflightToken = binding.refreshToken
-  const promise = performStaffRefresh(binding.refreshToken).finally(() => {
+  const promise = performStaffRefresh().finally(() => {
     if (staffRefreshInflight === promise) {
       staffRefreshInflight = null
       staffRefreshInflightToken = null
@@ -424,6 +426,20 @@ function refreshStaffSession(
   })
   staffRefreshInflight = promise
   return promise
+}
+
+function redirectExpiredStaffSession(): void {
+  if (staffSessionExpiryHandled || typeof window === "undefined") {
+    return
+  }
+
+  staffSessionExpiryHandled = true
+  void import("@/lib/i18n").then(({ default: i18n }) => {
+    toast.error(i18n.t("auth.sessionExpired"))
+  })
+  const currentPath = `${window.location.pathname}${window.location.search}`
+  const nextPath = safeStaffNextPath(currentPath)
+  assignBrowserLocation(nextPath ? staffLoginPath(nextPath) : "/login")
 }
 
 function customerLoginPath(): string {
@@ -572,11 +588,30 @@ async function settleStaff401(
 
   if (refresh.kind === "failed") {
     if (isTerminalStaffRefreshError(refresh.error)) {
+      // A concurrent GoTrue refresh may have rotated storage while ours was
+      // failing. Never discard that newer session.
+      const latest = await readStaffSession()
+      if (
+        latest === null ||
+        latest.userId !== binding.userId ||
+        staffAuthEpoch !== binding.epoch
+      ) {
+        return Promise.reject(error)
+      }
+      if (
+        (latest.refreshToken !== binding.refreshToken ||
+          latest.accessToken !== current.accessToken)
+      ) {
+        config.rolvixStaffAuthRetry = true
+        setAuthorization(config, latest.accessToken)
+        return api.request(config)
+      }
       try {
         await supabase.auth.signOut({ scope: "local" })
       } catch {
         // Keep rejecting the original 401 if local sign-out fails.
       }
+      redirectExpiredStaffSession()
     }
     return Promise.reject(error)
   }

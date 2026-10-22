@@ -178,6 +178,7 @@
     }
   },
   "auth": {
+    "sessionExpired": "Sessão expirada. Entre novamente.",
     "invite": {
       "title": "Ativar conta",
       "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",
@@ -3246,7 +3247,7 @@
     }
   },
   "resourceVisual": {
-    "title": "Catálogo visual de recursos", "help": "Gerencie modelos, arte publicada e classificações globais.", "newTemplate": "Novo modelo", "editTemplate": "Editar modelo", "name": "Nome", "slug": "Identificador", "description": "Descrição", "tags": "Tags", "revision": "Nova revisão", "floor": "Arte do piso SVG", "lines": "Arte das linhas SVG", "publish": "Publicar revisão", "saved": "Alterações salvas.", "published": "Revisão publicada.", "error": "Não foi possível concluir a alteração.", "validation": "Informe o nome e o identificador.", "segmentsTitle": "Segmentos do tenant", "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "noTemplate": "Sem modelo", "capacityPeople": "Capacidade de pessoas (opcional)", "applySuggestions": "Aplicar sugestões do modelo", "mapSettings": "Configurações do mapa", "showPrice": "Exibir preço no bloco", "defaultView": "Visualização padrão", "timeFilter": "Filtro de horário", "fromTime": "A partir do horário", "availableColor": "Cor disponível", "takenColor": "Cor ocupado", "setDefaultMap": "Definir mapa padrão"
+    "title": "Catálogo visual de recursos", "help": "Gerencie modelos, arte publicada e classificações globais.", "newTemplate": "Novo modelo", "editTemplate": "Editar modelo", "cancelEdit": "Cancelar edição", "name": "Nome", "slug": "Identificador", "description": "Descrição", "tags": "Tags", "revision": "Nova revisão", "floor": "Arte do piso SVG", "lines": "Arte das linhas SVG", "publish": "Publicar", "draft": "Rascunho", "publishedStatus": "Publicado", "noRevision": "Sem revisão publicada", "saved": "Alterações salvas.", "published": "Revisão publicada.", "error": "Não foi possível concluir a alteração.", "validation": "Informe o nome e o identificador.", "deleteTagTitle": "Excluir tag?", "deleteTagDescription": "Esta ação não pode ser desfeita.", "segmentsTitle": "Segmentos do tenant", "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.", "enabledTemplates": "Modelos habilitados", "noEnabledTemplates": "Nenhum modelo corresponde aos segmentos selecionados.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "noTemplate": "Sem modelo", "capacityPeople": "Capacidade de pessoas (opcional)", "applySuggestions": "Aplicar sugestões do modelo", "mapSettings": "Configurações do mapa", "showPrice": "Exibir preço no bloco", "defaultView": "Visualização padrão", "timeFilter": "Filtro de horário", "fromTime": "A partir do horário", "availableColor": "Cor disponível", "takenColor": "Cor ocupado", "setDefaultMap": "Definir mapa padrão"
   },
   "bookingMap": {
     "area": "Área",

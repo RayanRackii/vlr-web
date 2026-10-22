@@ -30,4 +30,21 @@ describe("AppRoutes PMOC static paths", () => {
       /PermissionRoute permission="pmoc\.plans\.read"[\s\S]*path="\/pmoc\/:id"/,
     )
   })
+
+  it("redirects staff paths accidentally opened below a tenant path back to root", () => {
+    for (const prefix of [
+      "configuracoes",
+      "dashboard",
+      "ativos",
+      "pmoc",
+      "os",
+      "pessoas-e-acesso",
+      "perfil",
+      "catalogo/configuracoes",
+    ]) {
+      expect(appRoutesSource).toContain(
+        `path="${prefix}/*" element={<RedirectTenantStaffRoute />}`,
+      )
+    }
+  })
 })
