@@ -3177,9 +3177,9 @@
         "saveUnit": "Crear unidad",
         "unitDuplicate": "Ya existe una unidad con este nombre o código.",
         "unitCreateError": "No se pudo crear la unidad.",
-        "templateAction": "+ crear modelo visual",
-        "templateTitle": "Crear modelo visual",
-        "templateDescription": "El nuevo modelo básico se publicará y seleccionará para este recurso.",
+        "templateAction": "+ crear modelo global (Rolvix)",
+        "templateTitle": "Crear modelo global (Rolvix)",
+        "templateDescription": "El nuevo modelo global de Rolvix se publicará y seleccionará para este recurso.",
         "templateName": "Nombre del modelo",
         "saveTemplate": "Crear modelo"
       },
