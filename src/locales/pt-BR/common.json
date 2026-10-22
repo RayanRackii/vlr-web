@@ -25,7 +25,13 @@
     "yes": "Sim",
     "no": "Não",
     "save": "Salvar",
-    "add": "Adicionar"
+    "add": "Adicionar",
+    "retry": "Tentar novamente",
+    "saveStatus": {
+      "saving": "Salvando…",
+      "saved": "Salvo",
+      "error": "Erro ao salvar"
+    }
   },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
@@ -2581,7 +2587,8 @@
       "actions": {
         "edit": "Editar cliente",
         "delete": "Excluir cliente",
-        "openEnvironment": "Abrir ambiente"
+        "openEnvironment": "Entrar",
+        "visualResources": "Recursos visuais"
       },
       "delete": {
         "title": "Excluir cliente",
@@ -2873,9 +2880,10 @@
       "loadFailed": "Não foi possível carregar os clientes."
     },
     "support": {
-      "banner": "Ambiente · {{tenant}} — você está logado como admin deste cliente.",
+      "banner": "Você está no tenant {{tenant}} como super-admin",
+      "platformPanel": "Painel da plataforma",
       "tenantFallback": "cliente",
-      "exit": "Voltar à plataforma",
+      "exit": "Sair do tenant",
       "exiting": "Saindo...",
       "exitErrorTitle": "Erro",
       "exitFailed": "Não foi possível voltar à plataforma.",

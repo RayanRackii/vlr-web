@@ -92,54 +92,27 @@ export function TenantAdminCard({
                 : t("admin.dashboard.statusInactive")}
             </Badge>
 
-            <div className="flex gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={!tenant.isActive || isEntering}
-                aria-label={t("admin.dashboard.actions.openEnvironment")}
-                title={t("admin.dashboard.actions.openEnvironment")}
-                onClick={() => {
-                  void handleOpenEnvironment()
-                }}
-              >
-                <ExternalLink className="size-4 text-muted-foreground transition-colors hover:text-foreground" />
-              </Button>
+          </div>
+        </div>
 
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={t("admin.dashboard.actions.edit")}
-                onClick={() => {
-                  void navigate(`/admin/tenants/${tenant.id}/edit`)
-                }}
-              >
-                <Pencil className="size-4 text-muted-foreground transition-colors hover:text-foreground" />
-              </Button>
-
-              <AlertDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={onDeleteDialogOpenChange}
-              >
-                <AlertDialogTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("admin.dashboard.actions.delete")}
-                    />
-                  }
-                >
-                  <Trash2
-                    className={cn(
-                      "size-4 text-muted-foreground transition-colors",
-                      "hover:text-destructive",
-                    )}
-                  />
-                </AlertDialogTrigger>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" disabled={!tenant.isActive || isEntering} onClick={() => { void handleOpenEnvironment() }}>
+            <ExternalLink className="size-4" />
+            {t("admin.dashboard.actions.openEnvironment")}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/edit`) }}>
+            <Pencil className="size-4" />
+            {t("admin.dashboard.actions.edit")}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/recursos-visuais`) }}>
+            {t("admin.dashboard.actions.visualResources")}
+          </Button>
+          <div className="ml-auto border-l pl-2">
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={onDeleteDialogOpenChange}>
+              <AlertDialogTrigger render={<Button type="button" variant="destructive" />}>
+                <Trash2 className={cn("size-4")} />
+                {t("admin.dashboard.actions.delete")}
+              </AlertDialogTrigger>
 
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -173,8 +146,7 @@ export function TenantAdminCard({
                     </Button>
                   </AlertDialogFooter>
                 </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            </AlertDialog>
           </div>
         </div>
 

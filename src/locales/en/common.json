@@ -25,7 +25,13 @@
     "yes": "Yes",
     "no": "No",
     "save": "Save",
-    "add": "Add"
+    "add": "Add",
+    "retry": "Try again",
+    "saveStatus": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Error saving"
+    }
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -2581,7 +2587,8 @@
       "actions": {
         "edit": "Edit client",
         "delete": "Delete client",
-        "openEnvironment": "Open environment"
+        "openEnvironment": "Enter",
+        "visualResources": "Visual resources"
       },
       "delete": {
         "title": "Delete client",
@@ -2873,9 +2880,10 @@
       "loadFailed": "Could not load clients."
     },
     "support": {
-      "banner": "Environment · {{tenant}} — you are signed in as this client’s admin.",
+      "banner": "You are in tenant {{tenant}} as a super-admin",
+      "platformPanel": "Platform panel",
       "tenantFallback": "client",
-      "exit": "Back to platform",
+      "exit": "Leave tenant",
       "exiting": "Leaving...",
       "exitErrorTitle": "Error",
       "exitFailed": "Could not return to the platform.",

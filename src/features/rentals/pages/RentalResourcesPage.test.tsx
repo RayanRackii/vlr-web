@@ -218,6 +218,16 @@ describe("RentalResourcesPage", () => {
     expect(toast.error).toHaveBeenCalledWith(i18n.t("rbac.errors.FORBIDDEN"))
   })
 
+  it("offers a retry after a loading failure", async () => {
+    getUnitsMock.mockRejectedValueOnce(new Error("network failed"))
+    renderPage()
+
+    const retry = await screen.findByRole("button", { name: i18n.t("common.retry") })
+    await userEvent.setup().click(retry)
+
+    await waitFor(() => expect(getUnitsMock).toHaveBeenCalledTimes(2))
+  })
+
   it("guides configuration when there are no categories and never links to Ativos", async () => {
     listCategoriesMock.mockResolvedValue([])
     const { container } = renderPage()

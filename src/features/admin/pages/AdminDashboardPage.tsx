@@ -14,6 +14,7 @@ import {
   listAdminTenants,
 } from "@/features/admin/services/adminTenantsService"
 import { Button } from "@/components/ui/button"
+import { ErrorState } from "@/components/ErrorState"
 import {
   Card,
   CardContent,
@@ -206,11 +207,7 @@ export function AdminDashboardPage() {
         </div>
       ) : null}
 
-      {loadError ? (
-        <p className="text-sm text-destructive" role="alert">
-          {loadError}
-        </p>
-      ) : null}
+      {loadError ? <ErrorState message={loadError} onRetry={() => void loadTenants()} /> : null}
 
       {!isLoading && !loadError ? (
         <div className="grid gap-4 sm:grid-cols-3">

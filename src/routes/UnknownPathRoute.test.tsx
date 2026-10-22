@@ -102,6 +102,7 @@ describe("UnknownPathRoute", () => {
     expect(
       screen.getByRole("link", { name: i18n.t("notFound.home") }),
     ).toHaveAttribute("href", "/dashboard")
+    expect(screen.getByRole("button", { name: i18n.t("common.back") })).toBeInTheDocument()
 
     await user.click(
       screen.getByRole("button", { name: i18n.t("account.openMenu") }),
