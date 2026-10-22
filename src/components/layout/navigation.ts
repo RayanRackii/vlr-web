@@ -106,14 +106,14 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
     icon: FormInput,
-    modules: ["rentals"],
+    modules: ["rentals", "catalog"],
     permission: "core.registration_fields.read",
   },
   {
     labelKey: "nav.moduleMenu",
     to: "/configuracoes/menu",
     icon: MenuSquare,
-    modules: ["rentals"],
+    modules: ["rentals", "catalog"],
     permission: "core.module_menu.read",
   },
   {
