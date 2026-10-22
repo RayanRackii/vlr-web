@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { api, publicApi } from "@/lib/api"
 
-vi.mock("@/lib/api", () => ({ api: { get: vi.fn(), put: vi.fn() }, publicApi: { get: vi.fn() }, getAxiosErrorPayload: vi.fn(), parseApiError: vi.fn((_payload: unknown, fallback: string) => fallback) }))
+vi.mock("@/lib/api", () => ({ api: { get: vi.fn(), put: vi.fn(), post: vi.fn() }, publicApi: { get: vi.fn() }, getAxiosErrorPayload: vi.fn(), parseApiError: vi.fn((_payload: unknown, fallback: string) => fallback) }))
 
 const ID = "11111111-1111-4111-8111-111111111111"
 const tag = { id: ID, slug: "sports", kind: "Segment", facet: "segment", nameI18n: { "pt-BR": "Esportes" }, isActive: true, sortOrder: 0 }
 
 describe("resource visual service", () => {
-  beforeEach(() => { vi.mocked(api.get).mockReset(); vi.mocked(api.put).mockReset(); vi.mocked(publicApi.get).mockReset() })
+  beforeEach(() => { vi.mocked(api.get).mockReset(); vi.mocked(api.put).mockReset(); vi.mocked(api.post).mockReset(); vi.mocked(publicApi.get).mockReset() })
   it("uses the picker filters with bracketed repeated ids", async () => {
     vi.mocked(api.get).mockResolvedValue({ data: { items: [], total: 0, page: 1, pageSize: 30, filterSemantics: "x" } })
     const { listVisualTemplates } = await import("@/features/rentals/services/resourceVisualService")
@@ -26,5 +26,15 @@ describe("resource visual service", () => {
     const { replaceTenantSegments } = await import("@/features/rentals/services/resourceVisualService")
     await replaceTenantSegments(ID, [ID])
     expect(api.put).toHaveBeenCalledWith(`/api/admin/tenants/${ID}/resource-segments`, { segmentIds: [ID] })
+  })
+  it("accepts the public composition contract without admin-only fields", async () => {
+    vi.mocked(publicApi.get).mockResolvedValue({ data: { id: ID, unitId: null, name: "Public", aspectRatio: 1.6, widthPercent: 100, version: 2, items: [], decorations: [], visualRevisions: [] } })
+    const { fetchPublicBookingMap } = await import("@/features/rentals/services/resourceVisualService")
+    await expect(fetchPublicBookingMap("demo", ID)).resolves.toMatchObject({ id: ID, name: "Public" })
+  })
+  it("parses a published revision instead of a template", async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { id: ID, templateId: ID, revisionNo: 1, status: "Published", viewBox: "0 0 10 10", aspectRatio: 1, defaultColor: "#000000", defaultIcon: "x", suggestedSlotMinutes: null, suggestedCapacityPeople: null, artSha256: "hash", artUrl: null, version: 2 } })
+    const { publishVisualRevision } = await import("@/features/rentals/services/resourceVisualService")
+    await expect(publishVisualRevision(ID, ID)).resolves.toMatchObject({ status: "Published" })
   })
 })

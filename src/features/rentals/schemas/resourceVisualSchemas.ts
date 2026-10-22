@@ -16,7 +16,22 @@ export const bookingMapSettingsSchema = z.object({ availableColor: hexColor, tak
 export const publicMapSummarySchema = z.object({ id: uuid, unitId: uuid.nullable(), name: z.string(), aspectRatio: z.coerce.number(), widthPercent: z.coerce.number(), sortOrder: z.number(), version: z.number() })
 export const publicMapListSchema = z.object({ maps: z.array(publicMapSummarySchema), defaultLayoutId: uuid.nullable(), settings: bookingMapSettingsSchema })
 export const publicVisualRevisionSchema = z.object({ id: uuid, templateId: uuid, revisionNo: z.number(), floorSvg: z.string(), linesSvg: z.string().nullable(), netSvg: z.string().nullable(), viewBox: z.string(), aspectRatio: z.coerce.number(), defaultColor: hexColor, defaultIcon: z.string(), artSha256: z.string() })
-export const publicMapSchema = mapCompositionSchema.extend({ visualRevisions: z.array(publicVisualRevisionSchema) })
+/**
+ * The public endpoint intentionally does not expose admin-only map fields
+ * (`isActive` and `sortOrder`). Keep its contract separate from the editor
+ * composition so a valid public map never falls back to the legacy picker.
+ */
+export const publicMapSchema = z.object({
+  id: uuid,
+  unitId: uuid.nullable(),
+  name: z.string(),
+  aspectRatio: z.coerce.number(),
+  widthPercent: z.coerce.number(),
+  version: z.number(),
+  items: z.array(mapItemSchema),
+  decorations: z.array(mapDecorationSchema),
+  visualRevisions: z.array(publicVisualRevisionSchema),
+})
 export const dailyAvailabilitySchema = z.object({ date: z.string(), timeZone: z.string(), serverNow: z.string(), quoteExpiresAt: z.string(), currency: z.string(), resources: z.array(z.object({ rentalAssetId: uuid, assetId: uuid, unitId: uuid, name: z.string(), type: z.string(), totalQuantity: z.number(), requiresDeposit: z.boolean(), queueEnabled: z.boolean(), effectiveMaxAdvanceBookingDays: z.number().nullable(), windows: z.array(z.object({ slotId: uuid.nullable(), startTime: z.string(), endTime: z.string(), isDerived: z.boolean(), state: z.enum(["Available", "Taken", "Blocked", "Past", "OutsideHorizon", "Unpriced"]), reasonCode: z.string().nullable(), availableQuantity: z.number(), totalAmount: z.number().nullable() })) })) })
 
 export type VisualTag = z.infer<typeof visualTagSchema>

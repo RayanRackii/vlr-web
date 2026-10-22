@@ -40,23 +40,12 @@ function isEmailOnAllowlist(
   )
 }
 
-/**
- * Platform-admin decision table (pure): SUPER_ADMIN from /me, else email allowlist.
- * `tenantId` is part of the public contract (enter-tenant still uses the allowlist).
- */
+/** Platform identity is the API's configured email allowlist, never a tenant role. */
 export function resolveIsPlatformAdmin({
-  role,
   email,
   allowlistEmails,
-  meFailed = false,
 }: ResolveIsPlatformAdminInput): boolean {
   const emailOnAllowlist = isEmailOnAllowlist(email, allowlistEmails)
-  const effectiveRole = meFailed ? undefined : role
-
-  if (effectiveRole === "SUPER_ADMIN") {
-    return true
-  }
-
   return emailOnAllowlist
 }
 

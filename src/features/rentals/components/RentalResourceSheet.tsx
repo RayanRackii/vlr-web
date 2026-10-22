@@ -358,7 +358,7 @@ export function RentalResourceSheet({
 
             <section className="space-y-2 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-2">
-                <FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel>
+                <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setAllSegments((current) => !current)}>
                   {allSegments ? t("resourceVisual.useSegments") : t("resourceVisual.seeAll")}
                 </Button>

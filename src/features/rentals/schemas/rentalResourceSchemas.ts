@@ -129,6 +129,8 @@ export type RentalResourceFormValues = z.infer<
 export type ResourceHorizonWriteContext = {
   creating: boolean
   stored: number | null | undefined
+  storedVisualTemplateRevisionId?: string | null
+  storedCapacityPeople?: number | null
 }
 
 /**
@@ -200,9 +202,15 @@ export function toCreateRentableRequest(
   }
   if (values.visualTemplateRevisionId.trim()) {
     payload.visualTemplateRevisionId = values.visualTemplateRevisionId
+  } else if (!horizon.creating && horizon.storedVisualTemplateRevisionId != null) {
+    // UpdateRentable uses JsonOptional: omission retains the old assignment.
+    payload.visualTemplateRevisionId = null
   }
   if (values.capacityPeople.trim()) {
     payload.capacityPeople = Number(values.capacityPeople)
+  } else if (!horizon.creating && horizon.storedCapacityPeople != null) {
+    // Same PATCH semantics as the visual template assignment.
+    payload.capacityPeople = null
   }
   if (values.confirmVisualSuggestions) {
     payload.confirmVisualSuggestions = true

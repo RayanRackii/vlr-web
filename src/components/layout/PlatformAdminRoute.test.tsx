@@ -84,18 +84,19 @@ describe("platform admin routing", () => {
     vi.unstubAllEnvs()
   })
 
-  it("redirects /admin to /admin/dashboard for a SUPER_ADMIN", async () => {
+  it("does not treat a tenant SUPER_ADMIN as a platform identity", async () => {
     getCurrentUserMock.mockResolvedValue(platformUser({ role: "SUPER_ADMIN" }))
 
     renderAdminRoutes("/admin")
 
     expect(
-      await screen.findByText("platform-admin-dashboard"),
+      await screen.findByText("tenant-dashboard"),
     ).toBeInTheDocument()
     expect(screen.queryByText("landing")).not.toBeInTheDocument()
   })
 
-  it("lets SUPER_ADMIN access platform admin routes", async () => {
+  it("lets an allowlisted platform identity access platform admin routes", async () => {
+    vi.stubEnv("VITE_PLATFORM_ADMIN_EMAILS", "pat@example.com")
     getCurrentUserMock.mockResolvedValue(
       platformUser({ role: "SUPER_ADMIN", tenantId: null }),
     )

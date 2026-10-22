@@ -1430,7 +1430,7 @@ export function TenantPortalAgendaPage() {
   }
 
   if (branding.newBookingUiEnabled && !mapUiUnavailable) {
-    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} onUnavailable={() => setMapUiUnavailable(true)} />
+    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} />
   }
 
   return (
