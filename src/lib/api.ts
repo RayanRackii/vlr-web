@@ -592,9 +592,13 @@ async function settleStaff401(
       // failing. Never discard that newer session.
       const latest = await readStaffSession()
       if (
-        latest !== null &&
-        latest.userId === binding.userId &&
-        staffAuthEpoch === binding.epoch &&
+        latest === null ||
+        latest.userId !== binding.userId ||
+        staffAuthEpoch !== binding.epoch
+      ) {
+        return Promise.reject(error)
+      }
+      if (
         (latest.refreshToken !== binding.refreshToken ||
           latest.accessToken !== current.accessToken)
       ) {
@@ -607,8 +611,8 @@ async function settleStaff401(
       } catch {
         // Keep rejecting the original 401 if local sign-out fails.
       }
+      redirectExpiredStaffSession()
     }
-    redirectExpiredStaffSession()
     return Promise.reject(error)
   }
 

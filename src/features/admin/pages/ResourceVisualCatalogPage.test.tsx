@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -13,6 +13,12 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   saveVisualRevision: vi.fn(), saveVisualTag: vi.fn(), saveVisualTemplate: vi.fn(),
 }))
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+
+function TenantCatalogHarness() {
+  const navigate = useNavigate()
+
+  return <><button type="button" onClick={() => navigate("/admin/tenants/tenant-2/recursos-visuais")}>Trocar tenant</button><Routes><Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} /></Routes></>
+}
 
 describe("ResourceVisualCatalogPage tag creation", () => {
   beforeEach(() => {
@@ -75,6 +81,9 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     expect(screen.getByRole("heading", { name: "Editar modelo" })).toBeInTheDocument()
     expect(screen.getByDisplayValue("padel")).toBeInTheDocument()
     expect(screen.getByLabelText("Esporte")).toBeChecked()
+    await user.click(screen.getByText("Nova revisão"))
+    expect(screen.getByLabelText("Aspect ratio")).toHaveValue("1.6667")
+    expect(screen.getByLabelText("Color")).toHaveValue("#4D6A92")
     await user.click(screen.getByRole("button", { name: "Cancelar edição" }))
     expect(screen.getByRole("heading", { name: "Novo modelo" })).toBeInTheDocument()
   })
@@ -92,5 +101,38 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     await waitFor(() => expect(replaceTenantSegments).toHaveBeenCalledWith("tenant-1", [segment.id]))
     expect(toast.success).toHaveBeenCalledWith("Alterações salvas.")
     expect(screen.getByLabelText("Esporte")).toBeChecked()
+  })
+
+  it("resets dirty segment selection when changing tenants", async () => {
+    const user = userEvent.setup()
+    const first = { id: "segment-1", slug: "first", kind: "Segment" as const, facet: "segment", nameI18n: { "pt-BR": "Primeiro" }, isActive: true, sortOrder: 0 }
+    const second = { id: "segment-2", slug: "second", kind: "Segment" as const, facet: "segment", nameI18n: { "pt-BR": "Segundo" }, isActive: true, sortOrder: 0 }
+    vi.mocked(listVisualTags).mockResolvedValue([first, second])
+    vi.mocked(getTenantSegments).mockImplementation(async (tenantId) => tenantId === "tenant-1" ? [] : [second])
+    render(<MemoryRouter initialEntries={["/admin/tenants/tenant-1/recursos-visuais"]}><TenantCatalogHarness /></MemoryRouter>)
+
+    await user.click(await screen.findByLabelText("Primeiro"))
+    await user.click(screen.getByRole("button", { name: "Trocar tenant" }))
+
+    expect(await screen.findByLabelText("Segundo")).toBeChecked()
+    expect(screen.getByLabelText("Primeiro")).not.toBeChecked()
+  })
+
+  it("ignores a stale segment response after changing tenants", async () => {
+    const user = userEvent.setup()
+    const first = { id: "segment-1", slug: "first", kind: "Segment" as const, facet: "segment", nameI18n: { "pt-BR": "Primeiro" }, isActive: true, sortOrder: 0 }
+    const second = { id: "segment-2", slug: "second", kind: "Segment" as const, facet: "segment", nameI18n: { "pt-BR": "Segundo" }, isActive: true, sortOrder: 0 }
+    let resolveFirst: ((value: (typeof first)[]) => void) | undefined
+    const firstSegments = new Promise<(typeof first)[]>((resolve) => { resolveFirst = resolve })
+    vi.mocked(listVisualTags).mockResolvedValue([first, second])
+    vi.mocked(getTenantSegments).mockImplementation(async (tenantId) => tenantId === "tenant-1" ? firstSegments : [second])
+    render(<MemoryRouter initialEntries={["/admin/tenants/tenant-1/recursos-visuais"]}><TenantCatalogHarness /></MemoryRouter>)
+
+    await user.click(screen.getByRole("button", { name: "Trocar tenant" }))
+    expect(await screen.findByLabelText("Segundo")).toBeChecked()
+    resolveFirst?.([first])
+
+    await waitFor(() => expect(screen.getByLabelText("Segundo")).toBeChecked())
+    expect(screen.getByLabelText("Primeiro")).not.toBeChecked()
   })
 })
