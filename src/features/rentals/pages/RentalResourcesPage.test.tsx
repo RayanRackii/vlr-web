@@ -232,7 +232,7 @@ describe("RentalResourcesPage", () => {
     expectNoForbiddenCopy(container)
   })
 
-  it("creates a rentable with the Wave 2 payload and PUT uses the rental id", async () => {
+  it("creates a rentable without requiring or sending an identifier", async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -246,11 +246,6 @@ describe("RentalResourcesPage", () => {
       screen.getByLabelText(i18n.t("rentals.resources.form.name")),
       "Quadra 1",
     )
-    await user.type(
-      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
-      "Q-01",
-    )
-
     await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }))
     await user.click(await screen.findByRole("option", { name: "Sede" }))
 
@@ -270,13 +265,13 @@ describe("RentalResourcesPage", () => {
     const payload = createMock.mock.calls[0]?.[0]
     expect(payload).toMatchObject({
       name: "Quadra 1",
-      tag: "Q-01",
       unitId: UNIT_ID,
       categoryId: CATEGORY_ID,
       familyId: FAMILY_ID,
       rentalType: "Location",
     })
     expect(payload).not.toHaveProperty("maxAdvanceBookingDays")
+    expect(payload).not.toHaveProperty("tag")
   })
 
   it("updates using the rental asset id from the list, not assetId", async () => {

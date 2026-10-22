@@ -15,7 +15,6 @@ const DETERMINISTIC_GUID = "3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b"
 
 const schema = createRentalResourceFormSchema({
   nameRequired: "name",
-  tagRequired: "tag",
   unitRequired: "unit",
   categoryRequired: "category",
   familyRequired: "family",
@@ -47,6 +46,16 @@ function formValues(
 }
 
 describe("resource booking horizon", () => {
+  it("accepts a blank identifier and omits it from the rentable payload", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      tag: "",
+    }
+
+    expect(schema.safeParse(values).success).toBe(true)
+    expect(toCreateRentableRequest(values)).not.toHaveProperty("tag")
+  })
+
   it("accepts deterministic GUIDs while editing a resource with visual data", () => {
     const values = {
       ...formValues({ horizonMode: "inherit", horizonDays: "" }),
@@ -148,7 +157,6 @@ describe("resource booking horizon", () => {
 
     const request = {
       name: "Space 1",
-      tag: "S-01",
       unitId: UNIT_ID,
       categoryId: CATEGORY_ID,
       familyId: FAMILY_ID,

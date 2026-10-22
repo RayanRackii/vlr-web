@@ -83,16 +83,35 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     vi.mocked(listVisualTags).mockResolvedValue(apiTemplate?.tags ?? [])
     render(<ResourceVisualCatalogPage />)
 
-    await user.click(await screen.findByRole("button", { name: /Quadra de padel/ }))
+    const card = await screen.findByRole("button", { name: /Quadra de padel/ })
+    await user.click(card)
     expect(screen.getByRole("heading", { name: "Editar modelo" })).toBeInTheDocument()
-    expect(screen.getByDisplayValue("quadra-padel")).toBeInTheDocument()
-    expect(screen.getByText("Sem revisão publicada")).toBeInTheDocument()
+    expect(card).toHaveAttribute("aria-pressed", "true")
+    expect(card).toHaveClass("border-primary")
+    expect(screen.getByDisplayValue("Quadra de padel")).toHaveFocus()
+    expect(screen.getAllByText("Sem revisão publicada")).toHaveLength(2)
     expect(screen.getByRole("button", { name: "Publicar" })).toBeInTheDocument()
     await user.click(screen.getByText("Nova revisão"))
     expect(screen.getByLabelText("Aspect ratio")).toHaveValue("1.6667")
     expect(screen.getByLabelText("Color")).toHaveValue("#4D6A92")
     await user.click(screen.getByRole("button", { name: "Cancelar edição" }))
     expect(screen.getByRole("heading", { name: "Novo modelo" })).toBeInTheDocument()
+  })
+
+  it("opens the edit form and reports revision-list failures", async () => {
+    const user = userEvent.setup()
+    const apiTemplate = visualPageSchema.parse(apiTemplates).items[0]
+    vi.mocked(listAdminVisualTemplates).mockResolvedValue({
+      ...visualPageSchema.parse(apiTemplates),
+      items: [apiTemplate!],
+    })
+    vi.mocked(listVisualRevisions).mockRejectedValue(new Error("Revision load failed"))
+    render(<ResourceVisualCatalogPage />)
+
+    await user.click(await screen.findByRole("button", { name: /Quadra de padel/ }))
+
+    expect(screen.getByRole("heading", { name: "Editar modelo" })).toBeInTheDocument()
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Revision load failed"))
   })
 
   it("keeps saved tenant segments and confirms success", async () => {

@@ -124,7 +124,6 @@ export function RentalResourceSheet({
     () =>
       createRentalResourceFormSchema({
         nameRequired: t("rentals.resources.validation.nameRequired"),
-        tagRequired: t("rentals.resources.validation.tagRequired"),
         unitRequired: t("rentals.resources.validation.unitRequired"),
         categoryRequired: t("rentals.resources.validation.categoryRequired"),
         familyRequired: t("rentals.resources.validation.familyRequired"),
