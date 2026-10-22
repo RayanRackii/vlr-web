@@ -5,7 +5,12 @@ import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
+import { getAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { getTenantSegments, listAdminVisualTemplates, listVisualRevisions, listVisualTags, replaceTenantSegments, saveVisualTag, saveVisualTemplate } from "@/features/rentals/services/resourceVisualService"
+import apiTemplates from "@/features/rentals/schemas/__fixtures__/admin-visual-templates.json"
+import { visualPageSchema } from "@/features/rentals/schemas/resourceVisualSchemas"
+
+vi.mock("@/features/admin/services/adminTenantsService", () => ({ getAdminTenant: vi.fn() }))
 
 vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   archiveVisualTemplate: vi.fn(), deleteVisualTag: vi.fn(), getTenantSegments: vi.fn(), listAdminVisualTemplates: vi.fn(),
@@ -26,6 +31,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     vi.mocked(listVisualTags).mockReset().mockResolvedValue([])
     vi.mocked(listVisualRevisions).mockReset().mockResolvedValue([])
     vi.mocked(getTenantSegments).mockReset()
+    vi.mocked(getAdminTenant).mockReset().mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111", legalName: "FICC", taxId: "1", subdomain: "ficc", isActive: true, createdAt: "2026-01-01", activeModules: [], assetFamilyKeys: [] })
     vi.mocked(saveVisualTag).mockReset()
     vi.mocked(saveVisualTemplate).mockReset()
     vi.mocked(replaceTenantSegments).mockReset()
@@ -70,17 +76,18 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     expect(toast.error).toHaveBeenCalledWith("Informe o nome e o identificador.")
   })
 
-  it("loads a selected template into the edit form, including its tags, and can cancel", async () => {
+  it("renders an API-shaped template card that opens the edit form with status and publish action", async () => {
     const user = userEvent.setup()
-    vi.mocked(listAdminVisualTemplates).mockResolvedValue({
-      items: [{ id: "3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b", slug: "padel", nameI18n: { "pt-BR": "Padel" }, descriptionI18n: { "pt-BR": "Quadra" }, isActive: true, sortOrder: 0, version: 1, tags: [{ id: "5f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b", slug: "sport", kind: "Segment", facet: "segment", nameI18n: { "pt-BR": "Esporte" }, isActive: true, sortOrder: 0 }], publishedRevision: null }], total: 1, page: 1, pageSize: 30, filterSemantics: "all" })
-    vi.mocked(listVisualTags).mockResolvedValue([{ id: "5f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b", slug: "sport", kind: "Segment", facet: "segment", nameI18n: { "pt-BR": "Esporte" }, isActive: true, sortOrder: 0 }])
+    const apiTemplate = visualPageSchema.parse(apiTemplates).items[0]
+    vi.mocked(listAdminVisualTemplates).mockResolvedValue({ ...visualPageSchema.parse(apiTemplates), items: [{ ...apiTemplate!, publishedRevision: null }] })
+    vi.mocked(listVisualTags).mockResolvedValue(apiTemplate?.tags ?? [])
     render(<ResourceVisualCatalogPage />)
 
-    await user.click(await screen.findByRole("button", { name: /Padel/ }))
+    await user.click(await screen.findByRole("button", { name: /Quadra de padel/ }))
     expect(screen.getByRole("heading", { name: "Editar modelo" })).toBeInTheDocument()
-    expect(screen.getByDisplayValue("padel")).toBeInTheDocument()
-    expect(screen.getByLabelText("Esporte")).toBeChecked()
+    expect(screen.getByDisplayValue("quadra-padel")).toBeInTheDocument()
+    expect(screen.getByText("Sem revisão publicada")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Publicar" })).toBeInTheDocument()
     await user.click(screen.getByText("Nova revisão"))
     expect(screen.getByLabelText("Aspect ratio")).toHaveValue("1.6667")
     expect(screen.getByLabelText("Color")).toHaveValue("#4D6A92")
@@ -96,6 +103,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     vi.mocked(replaceTenantSegments).mockResolvedValue([segment])
     render(<MemoryRouter initialEntries={["/admin/tenants/tenant-1/recursos-visuais"]}><Routes><Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} /></Routes></MemoryRouter>)
 
+    expect(await screen.findByRole("heading", { name: "Segmentos do tenant: FICC" })).toBeInTheDocument()
     await user.click(await screen.findByLabelText("Esporte"))
     await user.click(screen.getByRole("button", { name: "Salvar" }))
     await waitFor(() => expect(replaceTenantSegments).toHaveBeenCalledWith("tenant-1", [segment.id]))

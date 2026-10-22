@@ -11,6 +11,7 @@ import {
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 const CATEGORY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 const FAMILY_ID = "11111111-1111-4111-8111-111111111111"
+const DETERMINISTIC_GUID = "3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b"
 
 const schema = createRentalResourceFormSchema({
   nameRequired: "name",
@@ -46,6 +47,22 @@ function formValues(
 }
 
 describe("resource booking horizon", () => {
+  it("accepts deterministic GUIDs while editing a resource with visual data", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      unitId: DETERMINISTIC_GUID,
+      categoryId: DETERMINISTIC_GUID,
+      visualTemplateRevisionId: DETERMINISTIC_GUID,
+      capacityPeople: "8",
+      location: "Quadra externa",
+    }
+
+    expect(schema.safeParse(values).success).toBe(true)
+    expect(toCreateRentableRequest(values).visualTemplateRevisionId).toBe(
+      DETERMINISTIC_GUID,
+    )
+  })
+
   it("omits the tenant default, sends null for unlimited, and sends a number of days", () => {
     const inherit = toCreateRentableRequest(
       formValues({ horizonMode: "inherit", horizonDays: "" }),

@@ -13,7 +13,7 @@ export const rentalTypeValues = ["Location", "Good"] as const
 export type RentalType = (typeof rentalTypeValues)[number]
 
 export const registryCategoryListItemSchema = z.object({
-  id: z.string().uuid(),
+  id: guidLikeIdSchema,
   name: z.string().min(1),
 })
 
@@ -26,8 +26,8 @@ export const registryCategoryListSchema = z.array(registryCategoryListItemSchema
 export const createRentableRequestSchema = z.object({
   name: z.string().trim().min(1),
   tag: z.string().trim().min(1),
-  unitId: z.string().uuid(),
-  categoryId: z.string().uuid(),
+  unitId: guidLikeIdSchema,
+  categoryId: guidLikeIdSchema,
   familyId: guidLikeIdSchema,
   rentalType: z.enum(rentalTypeValues),
   totalQuantity: z.number().int().min(1),
@@ -72,11 +72,8 @@ export function createRentalResourceFormSchema(messages: {
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
       tag: z.string().trim().min(1, messages.tagRequired),
-      unitId: z.string().min(1, messages.unitRequired).uuid(messages.unitRequired),
-      categoryId: z
-        .string()
-        .min(1, messages.categoryRequired)
-        .uuid(messages.categoryRequired),
+      unitId: guidLikeIdSchema.min(1, messages.unitRequired),
+      categoryId: guidLikeIdSchema.min(1, messages.categoryRequired),
       familyId: z
         .string()
         .min(1, messages.familyRequired)

@@ -161,7 +161,11 @@ export function RentalResourceSheet({
   const rentalType = watched.rentalType ?? "Location"
   const queueEnabled = watched.queueEnabled ?? false
   const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
-  const isValid = formSchema.safeParse(watched).success
+  const validation = formSchema.safeParse(watched)
+  const isValid = validation.success
+  const firstValidationError = validation.success
+    ? null
+    : validation.error.issues[0]?.message ?? null
   const horizonItems = [
     { value: "inherit", label: t("rentals.resources.form.horizonInherit") },
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
@@ -368,7 +372,7 @@ export function RentalResourceSheet({
                 {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
               </div>
               <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                <Select modal={false} value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? "" : value)} items={templates.filter((template) => template.publishedRevision).map((template) => ({ value: template.publishedRevision?.id ?? "", label: template.nameI18n["pt-BR"] ?? template.slug }))} disabled={readOnly}>
+                <Select modal={false} value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? "" : value)} items={[{ value: "none", label: t("resourceVisual.noTemplate") }, ...templates.filter((template) => template.publishedRevision).map((template) => ({ value: template.publishedRevision?.id ?? "", label: template.nameI18n["pt-BR"] ?? template.slug }))]} disabled={readOnly}>
                   <FormControl><SelectTrigger className="w-full"><SelectValue placeholder={t("resourceVisual.noTemplate")} /></SelectTrigger></FormControl>
                   <SelectContent><SelectItem value="none">{t("resourceVisual.noTemplate")}</SelectItem>{templates.filter((template) => template.publishedRevision).map((template) => <SelectItem key={template.id} value={template.publishedRevision?.id ?? ""}>{template.nameI18n["pt-BR"] ?? template.slug}</SelectItem>)}</SelectContent>
                 </Select>
@@ -627,6 +631,11 @@ export function RentalResourceSheet({
                   ? t("rentals.resources.saveEdit")
                   : t("rentals.resources.saveCreate")}
               </FormPrimaryButton>
+              {!isValid && firstValidationError ? (
+                <p className="basis-full text-sm text-destructive" role="alert">
+                  {firstValidationError}
+                </p>
+              ) : null}
             </SheetFooter>
           </form>
         </Form>
