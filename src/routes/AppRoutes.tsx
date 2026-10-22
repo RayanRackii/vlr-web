@@ -184,8 +184,6 @@ export function AppRoutes() {
           />
           <Route path="/admin/tenants/new" element={<NewTenantPage />} />
           <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
-          <Route path="/admin/recursos-visuais" element={<ResourceVisualCatalogPage />} />
-          <Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} />
         </Route>
 
         <Route element={<MainLayout />}>
@@ -344,6 +342,8 @@ export function AppRoutes() {
             />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/recursos-visuais" element={<ResourceVisualCatalogPage />} />
+            <Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} />
             <Route
               path="/admin/asset-families"
               element={<AdminAssetFamiliesPage />}

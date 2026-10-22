@@ -15,7 +15,7 @@ vi.mock("@/features/admin/services/adminTenantsService", () => ({ getAdminTenant
 vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   archiveVisualTemplate: vi.fn(), deleteVisualTag: vi.fn(), getTenantSegments: vi.fn(), listAdminVisualTemplates: vi.fn(),
   listVisualRevisions: vi.fn(), listVisualTags: vi.fn(), publishVisualRevision: vi.fn(), replaceTenantSegments: vi.fn(),
-  saveVisualRevision: vi.fn(), saveVisualTag: vi.fn(), saveVisualTemplate: vi.fn(),
+  saveVisualRevision: vi.fn(), saveVisualTag: vi.fn(), saveVisualTemplate: vi.fn(), visualArtUrl: (id: string) => `/art/${id}.svg`,
 }))
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
@@ -46,6 +46,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     const name = await screen.findByPlaceholderText("Nome")
     const slug = screen.getByPlaceholderText("Identificador")
     await user.type(name, "Padel")
+    await user.clear(slug)
     await user.type(slug, "padel")
     const button = screen.getByRole("button", { name: "Adicionar" })
     expect(button).toHaveAttribute("type", "button")
@@ -64,6 +65,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     const name = await screen.findByPlaceholderText("Nome")
     const slug = screen.getByPlaceholderText("Identificador")
     await user.type(name, "Padel")
+    await user.clear(slug)
     await user.type(slug, "padel")
     await user.click(screen.getByRole("button", { name: "Adicionar" }))
 
@@ -74,6 +76,23 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     await user.click(screen.getByRole("button", { name: "Adicionar" }))
     expect(saveVisualTag).toHaveBeenCalledTimes(1)
     expect(toast.error).toHaveBeenCalledWith("Informe o nome e o identificador.")
+  })
+
+  it("generates the tag slug until it is edited manually and keeps one new-template action", async () => {
+    const user = userEvent.setup()
+    render(<ResourceVisualCatalogPage />)
+
+    await screen.findByPlaceholderText("Nome")
+    const name = screen.getAllByLabelText("Nome")[1]!
+    const slug = screen.getAllByLabelText("Identificador")[1]!
+    await user.type(name, "Pádel coberto")
+    expect(slug).toHaveValue("padel-coberto")
+
+    await user.clear(slug)
+    await user.type(slug, "meu-modelo")
+    await user.type(name, " premium")
+    expect(slug).toHaveValue("meu-modelo")
+    expect(screen.getAllByRole("button", { name: "Novo modelo" })).toHaveLength(1)
   })
 
   it("renders an API-shaped template card that opens the edit form with status and publish action", async () => {
