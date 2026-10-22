@@ -9,6 +9,7 @@ import { InlineCreateDrawerFooter, type InlineCreateOption } from "@/components/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { createCategory } from "@/features/assets/services/assetCategoriesService"
+import { createUnit } from "@/features/assets/services/unitsService"
 import { publishVisualRevision, saveVisualRevision, saveVisualTemplate } from "@/features/rentals/services/resourceVisualService"
 
 type InlineCreateFormProps = {
@@ -67,6 +68,46 @@ export function InlineCreateCategoryForm({ complete, close }: InlineCreateFormPr
         <InlineCreateDrawerFooter
           cancelLabel={t("common.cancel")}
           saveLabel={t("rentals.resources.inlineCreate.saveCategory")}
+          isValid={nameSchema.safeParse(values).success}
+          busy={form.formState.isSubmitting}
+          onCancel={close}
+        />
+      </form>
+    </Form>
+  )
+}
+
+export function InlineCreateUnitForm({ complete, close }: InlineCreateFormProps) {
+  const { t } = useTranslation()
+  const form = useForm<NameValues>({
+    resolver: zodResolver(nameSchema),
+    defaultValues: { name: "" },
+  })
+  const values = useWatch({ control: form.control })
+
+  return (
+    <Form {...form}>
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(async ({ name }) => {
+          try {
+            const created = await createUnit({ name })
+            await complete({ value: created.id, label: created.name })
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : t("rentals.resources.inlineCreate.unitCreateError"))
+          }
+        })}
+      >
+        <FormField control={form.control} name="name" render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("rentals.resources.inlineCreate.unitName")}</FormLabel>
+            <FormControl><Input autoFocus autoComplete="off" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+        <InlineCreateDrawerFooter
+          cancelLabel={t("common.cancel")}
+          saveLabel={t("rentals.resources.inlineCreate.saveUnit")}
           isValid={nameSchema.safeParse(values).success}
           busy={form.formState.isSubmitting}
           onCancel={close}

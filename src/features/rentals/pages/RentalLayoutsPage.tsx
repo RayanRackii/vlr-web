@@ -152,7 +152,7 @@ export function RentalLayoutsPage() {
   async function createResource(values: RentalResourceFormValues): Promise<boolean> {
     setSaving(true)
     try {
-      const created = await createRentalAsset(toCreateRentableRequest(values))
+      const created = await createRentalAsset(toCreateRentableRequest(values, { creating: true, stored: undefined }))
       setAssets((current) => [...current, created])
       setPlacements((current) => {
         const placement = autoPlaceItems([...current.map((item) => item.rentalAssetId), created.id]).at(-1)

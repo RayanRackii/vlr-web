@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -35,6 +35,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+import { getUnits } from "@/features/assets/services/unitsService"
 import {
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
@@ -43,30 +44,15 @@ import { createRentalResourceFormSchema, type RegistryCategoryListItem, type Ren
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
 import { listRentalAssetCategories } from "@/features/rentals/services/rentalResourcesService"
-import { InlineCreateCategoryForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
-import { buildRentalResourceFormValues } from "@/features/rentals/components/rentalResourceFormDefaults"
-
-type TemplateOption = { value: string; label: string }
-
-export function mergeTemplateOptions(
-  templates: readonly VisualTemplate[],
-  createdOptions: readonly TemplateOption[],
-  noTemplateLabel: string,
-): TemplateOption[] {
-  const options = [
-    { value: "__no-template__", label: noTemplateLabel },
-    ...templates.flatMap((template) =>
-      template.publishedRevision
-        ? [{
-            value: template.publishedRevision.id,
-            label: template.nameI18n["pt-BR"] ?? template.slug,
-          }]
-        : [],
-    ),
-    ...createdOptions,
-  ]
-  return [...new Map(options.map((option) => [option.value, option])).values()]
-}
+import { InlineCreateCategoryForm, InlineCreateUnitForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
+import {
+  buildRentalResourceFormValues,
+  getTemplateRevisionFormDefaults,
+  mergeTemplateOptions,
+  type TemplateDefaultField,
+  type TemplateOption,
+} from "@/features/rentals/components/rentalResourceFormDefaults"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -92,7 +78,10 @@ export function RentalResourceSheet({
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
+  const { can } = usePermissions()
   const [templates, setTemplates] = useState<VisualTemplate[]>([])
+  const [unitOptions, setUnitOptions] = useState<readonly Unit[]>(units)
+  const [previousUnits, setPreviousUnits] = useState(units)
   const [categoryOptions, setCategoryOptions] = useState<readonly RegistryCategoryListItem[]>(categories)
   const [previousCategories, setPreviousCategories] = useState(categories)
   const [tags, setTags] = useState<VisualTag[]>([])
@@ -100,6 +89,7 @@ export function RentalResourceSheet({
   const [templateSearch, setTemplateSearch] = useState("")
   const [allSegments, setAllSegments] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
 
   useEffect(() => {
     if (!open) return
@@ -111,6 +101,10 @@ export function RentalResourceSheet({
   if (categories !== previousCategories) {
     setPreviousCategories(categories)
     setCategoryOptions(categories)
+  }
+  if (units !== previousUnits) {
+    setPreviousUnits(units)
+    setUnitOptions(units)
   }
 
   const formSchema = useMemo(
@@ -147,6 +141,7 @@ export function RentalResourceSheet({
     form.reset(
       buildRentalResourceFormValues(editing, units, categories, families),
     )
+    editedTemplateFieldsRef.current = new Set()
   }, [categories, editing, families, form, open, units])
 
   const watched = useWatch({ control: form.control })
@@ -164,7 +159,8 @@ export function RentalResourceSheet({
     { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
   ]
 
-  const unitItems = units.map((unit) => ({ value: unit.id, label: unit.name }))
+  const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
+  const canCreateUnit = can("core.units.write") && !readOnly
   const categoryItems = categoryOptions.map((category) => ({
     value: category.id,
     label: category.name,
@@ -189,6 +185,12 @@ export function RentalResourceSheet({
     return refreshed.map((category) => ({ value: category.id, label: category.name }))
   }
 
+  async function refreshUnits() {
+    const refreshed = await getUnits()
+    setUnitOptions(refreshed)
+    return refreshed.map((unit) => ({ value: unit.id, label: unit.name }))
+  }
+
   async function refreshTemplates() {
     const refreshed = await listVisualTemplates({
       search: templateSearch,
@@ -203,19 +205,27 @@ export function RentalResourceSheet({
     )
   }
 
+  function markTemplateFieldEdited(field: TemplateDefaultField) {
+    editedTemplateFieldsRef.current.add(field)
+  }
+
   function applyTemplateDefaults(revisionId: string) {
     const template = templates.find(
       (candidate) => candidate.publishedRevision?.id === revisionId,
     )
-    const suggestedCapacity = template?.publishedRevision?.suggestedCapacityPeople
-    if (
-      suggestedCapacity != null &&
-      !form.getFieldState("capacityPeople").isDirty &&
-      !form.getValues("capacityPeople").trim()
-    ) {
-      form.setValue("capacityPeople", String(suggestedCapacity), {
-        shouldDirty: false,
-      })
+    const defaults = getTemplateRevisionFormDefaults(
+      template?.publishedRevision,
+      editedTemplateFieldsRef.current,
+    )
+    if (defaults.capacityPeople !== undefined) {
+      form.setValue("capacityPeople", defaults.capacityPeople, { shouldDirty: false })
+    }
+    if (defaults.requiresDeposit !== undefined) {
+      form.setValue("requiresDeposit", defaults.requiresDeposit, { shouldDirty: false })
+    }
+    if (defaults.horizonMode !== undefined && defaults.horizonDays !== undefined) {
+      form.setValue("horizonMode", defaults.horizonMode, { shouldDirty: false })
+      form.setValue("horizonDays", defaults.horizonDays, { shouldDirty: false })
     }
   }
 
@@ -245,6 +255,7 @@ export function RentalResourceSheet({
                 return
               }
               void form.handleSubmit(async (values) => {
+                // Template defaults are already shown above, so submit precisely these form values.
                 const ok = await onSubmit(values)
                 if (ok) {
                   onOpenChange(false)
@@ -290,29 +301,48 @@ export function RentalResourceSheet({
               )}
             />
 
-            {units.length !== 1 ? (
+            {unitOptions.length !== 1 || canCreateUnit ? (
               <FormField
                 control={form.control}
                 name="unitId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("rentals.resources.form.unit")}</FormLabel>
-                    <Select
-                      modal={false}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      items={unitItems}
-                      disabled={readOnly}
-                    >
+                    {canCreateUnit ? (
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
-                        </SelectTrigger>
+                        <InlineCreateSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          options={unitItems}
+                          onRefreshOptions={refreshUnits}
+                          placeholder={t("rentals.resources.form.unitPlaceholder")}
+                          createLabel={t("rentals.resources.inlineCreate.unitAction")}
+                          drawerTitle={t("rentals.resources.inlineCreate.unitTitle")}
+                          drawerDescription={t("rentals.resources.inlineCreate.unitDescription")}
+                          disabled={readOnly}
+                          renderCreateForm={({ complete, close }) => (
+                            <InlineCreateUnitForm complete={complete} close={close} />
+                          )}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {units.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    ) : (
+                      <Select
+                        modal={false}
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        items={unitItems}
+                        disabled={readOnly}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {unitOptions.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -397,7 +427,7 @@ export function RentalResourceSheet({
               <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
                 <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={field.onChange} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
               <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
             </section>
 
@@ -480,7 +510,7 @@ export function RentalResourceSheet({
                     <Switch
                       checked={field.value}
                       disabled={readOnly}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => { markTemplateFieldEdited("requiresDeposit"); field.onChange(checked) }}
                     />
                   </FormControl>
                 </FormItem>
@@ -542,6 +572,7 @@ export function RentalResourceSheet({
                         value === "unlimited" ||
                         value === "days"
                       ) {
+                        markTemplateFieldEdited("horizon")
                         field.onChange(value)
                       }
                     }}
@@ -593,6 +624,7 @@ export function RentalResourceSheet({
                     <FormControl>
                       <Input
                         {...field}
+                        onChange={(event) => { markTemplateFieldEdited("horizon"); field.onChange(event) }}
                         inputMode="numeric"
                         disabled={readOnly}
                         min={BOOKING_HORIZON_DAY_MIN}

@@ -72,6 +72,22 @@ describe("resource booking horizon", () => {
     )
   })
 
+  it("does not defer template defaults to the API", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      visualTemplateRevisionId: DETERMINISTIC_GUID,
+    }
+
+    expect(toCreateRentableRequest(values, {
+      creating: true,
+      stored: undefined,
+    })).toMatchObject({ visualTemplateRevisionId: DETERMINISTIC_GUID })
+    expect(toCreateRentableRequest(values, {
+      creating: true,
+      stored: undefined,
+    })).not.toHaveProperty("applyTemplateDefaults")
+  })
+
   it("omits the tenant default, sends null for unlimited, and sends a number of days", () => {
     const inherit = toCreateRentableRequest(
       formValues({ horizonMode: "inherit", horizonDays: "" }),

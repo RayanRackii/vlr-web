@@ -211,6 +211,5 @@ export function toCreateRentableRequest(
   if (values.confirmVisualSuggestions) {
     payload.confirmVisualSuggestions = true
   }
-
   return createRentableRequestSchema.parse(payload)
 }

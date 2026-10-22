@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import type { MapComposition } from "@/features/rentals/services/resourceVisualService"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 
 let isTrialReadOnly = false
 
@@ -39,6 +40,14 @@ function prepare(existing = false, loadedComposition = composition) {
   vi.mocked(visualService.getBookingMapSettings).mockRejectedValue(new Error("not available"))
 }
 
+function renderPage() {
+  return render(
+    <TestPermissionProvider>
+      <RentalLayoutsPage />
+    </TestPermissionProvider>,
+  )
+}
+
 describe("RentalLayoutsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -48,7 +57,7 @@ describe("RentalLayoutsPage", () => {
   it("blocks the first step until a space is selected, then follows the wizard", async () => {
     prepare()
     const user = userEvent.setup()
-    render(<RentalLayoutsPage />)
+    renderPage()
     await user.click(await screen.findByRole("button", { name: "Novo layout" }))
     await user.click(screen.getByRole("button", { name: "Continuar" }))
     expect(screen.getByRole("alert")).toHaveTextContent("Escolha pelo menos um espaço")
@@ -59,7 +68,7 @@ describe("RentalLayoutsPage", () => {
 
   it("opens an existing layout directly on the map step", async () => {
     prepare(true)
-    render(<RentalLayoutsPage />)
+    renderPage()
     expect(await screen.findByRole("heading", { name: "Posicione os blocos" })).toBeInTheDocument()
     expect(screen.getByTestId("layout-canvas")).toBeInTheDocument()
   })
@@ -73,7 +82,7 @@ describe("RentalLayoutsPage", () => {
     })
     vi.mocked(visualService.saveComposition).mockResolvedValue(templateComposition)
     const user = userEvent.setup()
-    render(<RentalLayoutsPage />)
+    renderPage()
 
     await user.click(await screen.findByRole("button", { name: "Voltar" }))
     await user.click(screen.getByRole("combobox", { name: "Sala A" }))
@@ -92,7 +101,7 @@ describe("RentalLayoutsPage", () => {
     vi.mocked(layoutService.listRentalLayouts).mockResolvedValueOnce([layout]).mockResolvedValueOnce([])
     vi.mocked(layoutService.deleteRentalLayout).mockResolvedValue()
     const user = userEvent.setup()
-    render(<RentalLayoutsPage />)
+    renderPage()
 
     await user.click(await screen.findByRole("button", { name: "Excluir" }))
     expect(await screen.findByText("Crie um layout para posicionar os espaços no mapa do portal.")).toBeInTheDocument()
@@ -102,7 +111,7 @@ describe("RentalLayoutsPage", () => {
   it("rejects a final save without placements with the translated validation error", async () => {
     prepare(true, { ...composition, items: [] })
     const user = userEvent.setup()
-    render(<RentalLayoutsPage />)
+    renderPage()
 
     await user.click(await screen.findByRole("button", { name: "Continuar" }))
     await user.click(screen.getByRole("button", { name: "Salvar layout" }))
@@ -116,7 +125,7 @@ describe("RentalLayoutsPage", () => {
     prepare(true)
     vi.mocked(visualService.getBookingMapSettings).mockResolvedValue({ availableColor: "#000000", takenColor: "#111111", unavailableColor: "#222222", selectedColor: "#333333", showPriceOnBlock: true, timeFilterMode: "Periods", defaultView: "Map", defaultLayoutId: null, version: 1 })
     const user = userEvent.setup()
-    render(<RentalLayoutsPage />)
+    renderPage()
 
     await user.click(await screen.findByText("Avançado"))
     expect(screen.getByRole("checkbox", { name: "Exibir preço no bloco" })).toBeDisabled()

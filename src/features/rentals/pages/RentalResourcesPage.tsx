@@ -90,7 +90,9 @@ export function RentalResourcesPage() {
     setSheetOpen(true)
   }
 
-  async function handleSubmit(values: RentalResourceFormValues): Promise<boolean> {
+  async function handleSubmit(
+    values: RentalResourceFormValues,
+  ): Promise<boolean> {
     if (!canWrite) {
       return false
     }
