@@ -36,17 +36,21 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const [submitting, setSubmitting] = useState(false)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const unavailableRef = useRef(onUnavailable)
-  unavailableRef.current = onUnavailable
 
+  useEffect(() => { unavailableRef.current = onUnavailable }, [onUnavailable])
   useEffect(() => { if (initialDate) setDate(initialDate) }, [initialDate])
   useEffect(() => { let cancelled = false; setLoading(true); void fetchPublicBookingMaps(subdomain).then(async (result) => { if (cancelled) return; setList(result); setView(result.settings.defaultView); const id = result.defaultLayoutId ?? result.maps[0]?.id; if (!id) return; const composition = await fetchPublicBookingMap(subdomain, id); if (!cancelled) setMap(composition) }).catch(() => { if (!cancelled) setMap(null) }).finally(() => { if (!cancelled) setLoading(false) }); return () => { cancelled = true } }, [subdomain])
   const scopedIds = useMemo(() => scopedAssets.map((asset) => asset.id), [scopedAssets])
   const requestedIds = useMemo(() => [...new Set([...(map?.items.map((item) => item.rentalAssetId) ?? []), ...scopedIds])], [map, scopedIds])
   useEffect(() => { if (!map || requestedIds.length === 0) return; let cancelled = false; setAvailabilityLoading(true); setSelectedWindow(null); setSelectedId(null); void fetchDailyAvailability(subdomain, date, requestedIds).then((result) => { if (!cancelled) setAvailability(result) }).catch(() => { if (!cancelled) setAvailability(null) }).finally(() => { if (!cancelled) setAvailabilityLoading(false) }); return () => { cancelled = true } }, [date, map, requestedIds, subdomain])
   useEffect(() => { if (!loading && (!map || !list)) unavailableRef.current() }, [list, loading, map])
-  const resources = availability?.resources ?? []
+  const resources = useMemo(() => availability?.resources ?? [], [availability])
   const resourceById = useMemo(() => new Map(resources.map((resource) => [resource.rentalAssetId, resource])), [resources])
   const selectedResource = selectedId ? resourceById.get(selectedId) : null
+  const selectedResourceType = selectedResource?.type
+  const selectedWindowAssetId = selectedWindow?.assetId
+  const selectedWindowStartTime = selectedWindow?.startTime
+  const selectedWindowEndTime = selectedWindow?.endTime
   const selectedAsset = selectedId ? scopedAssets.find((asset) => asset.id === selectedId) : undefined
   const queue = useReservationQueue({ rentalAssetId: selectedId, enabled: isLocationQueueEnabled(selectedAsset) || (selectedResource?.queueEnabled === true && selectedResource.type === "Location") })
   const summary = (id: string) => { const windows = (resourceById.get(id)?.windows ?? []).filter((window) => periodMatches(window.startTime, period)); const free = windows.filter((window) => window.state === "Available" && window.totalAmount !== null); const min = free.reduce<number | null>((current, window) => current === null || (window.totalAmount ?? Infinity) < current ? window.totalAmount : current, null); return { windows, free, min } }
@@ -54,7 +58,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const visualById = useMemo(() => new Map((map?.visualRevisions ?? []).map((revision) => [revision.id, revision])), [map])
   const placedIds = useMemo(() => new Set(map?.items.map((item) => item.rentalAssetId) ?? []), [map])
   const listResourceIds = useMemo(() => [...new Set([...placedIds, ...scopedIds])], [placedIds, scopedIds])
-  useEffect(() => { if (!selectedWindow || selectedResource?.type !== "Good") return; let cancelled = false; void checkPortalAvailability(subdomain, { assetId: selectedWindow.assetId, date, startTime: selectedWindow.startTime.slice(0, 5), endTime: selectedWindow.endTime.slice(0, 5), quantity }).then((result) => { if (!cancelled) setSelectedWindow((current) => current ? { ...current, quantity, amount: result.isAvailable ? (result.estimatedTotalAmount ?? -1) : -1 } : null) }).catch(() => { if (!cancelled) setSelectedWindow(null) }); return () => { cancelled = true } }, [date, quantity, selectedResource?.type, selectedWindow?.assetId, selectedWindow?.endTime, selectedWindow?.startTime, subdomain])
+  useEffect(() => { if (!selectedWindowAssetId || !selectedWindowStartTime || !selectedWindowEndTime || selectedResourceType !== "Good") return; let cancelled = false; void checkPortalAvailability(subdomain, { assetId: selectedWindowAssetId, date, startTime: selectedWindowStartTime.slice(0, 5), endTime: selectedWindowEndTime.slice(0, 5), quantity }).then((result) => { if (!cancelled) setSelectedWindow((current) => current ? { ...current, quantity, amount: result.isAvailable ? (result.estimatedTotalAmount ?? -1) : -1 } : null) }).catch(() => { if (!cancelled) setSelectedWindow(null) }); return () => { cancelled = true } }, [date, quantity, selectedResourceType, selectedWindowAssetId, selectedWindowEndTime, selectedWindowStartTime, subdomain])
   async function continueBooking() { if (!selectedWindow || submitting || availabilityLoading || !quoteIsCurrent(availability?.quoteExpiresAt) || !queue.canReserve || selectedWindow.amount < 0) return; setSubmitting(true); try { if (selectedWindow.slotId) await bookPortalSlot({ slotId: selectedWindow.slotId, unitId: selectedWindow.unitId, expectedTotalAmount: selectedWindow.amount }); else await createPortalReservation({ unitId: selectedWindow.unitId, date, startTime: selectedWindow.startTime.slice(0, 5), endTime: selectedWindow.endTime.slice(0, 5), items: [{ assetId: selectedWindow.assetId, quantity: selectedWindow.quantity }], expectedTotalAmount: selectedWindow.amount }); toast.success(t("bookingMap.success")); setSelectedWindow(null); setSelectedId(null) } catch (error) { if (!queue.applyBookingError(error)) toast.error(error instanceof Error ? error.message : t("bookingMap.error")) } finally { setSubmitting(false) } }
   if (loading) return <div className="p-6" aria-busy="true">{t("bookingMap.loading")}</div>
   if (!map || !list) return null
