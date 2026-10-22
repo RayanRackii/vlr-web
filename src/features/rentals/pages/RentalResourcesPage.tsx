@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { ErrorState } from "@/components/ErrorState"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
@@ -154,9 +155,7 @@ export function RentalResourcesPage() {
       {loading ? (
         <PageContentSkeleton rows={4} />
       ) : loadError !== null ? (
-        <p className="text-sm text-destructive" role="alert">
-          {loadError}
-        </p>
+        <ErrorState message={loadError} onRetry={() => void load()} />
       ) : categories.length === 0 ? (
         <ScheduleEmptyState
           icon={Boxes}

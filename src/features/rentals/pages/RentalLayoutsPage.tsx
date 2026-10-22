@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { ErrorState } from "@/components/ErrorState"
+import { SaveStatus } from "@/components/SaveStatus"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +38,7 @@ import {
   type AdminRentalAsset,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
+import { useSavedState } from "@/hooks/useSavedState"
 
 function placementsFromLayout(layout: RentalLayout): LayoutPlacement[] {
   return layout.items.map((item) => ({
@@ -62,11 +65,12 @@ export function RentalLayoutsPage() {
     DEFAULT_CANVAS_WIDTH_PERCENT,
   )
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<BookingMapSettings | null>(null)
   const [composition, setComposition] = useState<MapComposition | null>(null)
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null)
-  const [saveState, setSaveState] = useState<"idle" | "saved">("idle")
+  const { saveState, markSaving, markSaved, markError, markEdited: resetSaveState } = useSavedState()
 
   const selectedLayout =
     selectedId !== "" && selectedId !== "new"
@@ -93,15 +97,21 @@ export function RentalLayoutsPage() {
     setCanvasWidthPercent(layout.widthPercent)
     setComposition(loadedComposition ?? null)
     setSelectedPlacementId(null)
-    setSaveState("idle")
+    markEdited()
   }
 
   function markEdited() {
-    setSaveState("idle")
+    resetSaveState()
   }
+
+  const applyLayoutRef = useRef(applyLayout)
+  useEffect(() => {
+    applyLayoutRef.current = applyLayout
+  })
 
   const load = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const [layoutList, assetList] = await Promise.all([
         listRentalLayouts(),
@@ -115,7 +125,7 @@ export function RentalLayoutsPage() {
       const first = layoutList[0]
       if (first) {
         const loadedComposition = await getComposition(first.id)
-        applyLayout(first, loadedComposition)
+        applyLayoutRef.current(first, loadedComposition)
       } else {
         setSelectedId("")
         setName("")
@@ -127,11 +137,7 @@ export function RentalLayoutsPage() {
         setSelectedPlacementId(null)
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("rentals.layout.loadError"),
-      )
+      setLoadError(error instanceof Error ? error.message : t("rentals.layout.loadError"))
     } finally {
       setLoading(false)
     }
@@ -150,7 +156,7 @@ export function RentalLayoutsPage() {
     setPlacements(autoPlaceItems(assets.map((asset) => asset.id)))
     setComposition(null)
     setSelectedPlacementId(null)
-    setSaveState("idle")
+    markEdited()
   }
 
   async function selectLayout(id: string) {
@@ -241,6 +247,7 @@ export function RentalLayoutsPage() {
       return
     }
     setSaving(true)
+    markSaving()
     const scrollPosition = { x: window.scrollX, y: window.scrollY }
     try {
       const legacyPayload = {
@@ -274,9 +281,10 @@ export function RentalLayoutsPage() {
         )
         applyLayout(updated, savedComposition)
       }
-      setSaveState("saved")
+      markSaved()
       requestAnimationFrame(() => window.scrollTo(scrollPosition.x, scrollPosition.y))
     } catch (error) {
+      markError()
       toast.error(
         error instanceof Error
           ? error.message
@@ -290,11 +298,13 @@ export function RentalLayoutsPage() {
   async function saveSettings(patch: Partial<BookingMapSettings>) {
     if (!settings) return
     setSaving(true)
+    markSaving()
     try {
       const saved = await saveBookingMapSettings({ ...settings, ...patch, expectedVersion: settings.version })
       setSettings(saved)
+      markSaved()
       toast.success(t("resourceVisual.saved"))
-    } catch (error) { toast.error(error instanceof Error ? error.message : t("rentals.layout.saveError")) } finally { setSaving(false) }
+    } catch (error) { markError(); toast.error(error instanceof Error ? error.message : t("rentals.layout.saveError")) } finally { setSaving(false) }
   }
 
   async function onDelete() {
@@ -342,6 +352,8 @@ export function RentalLayoutsPage() {
 
       {loading ? (
         <PageContentSkeleton rows={4} />
+      ) : loadError ? (
+        <ErrorState message={loadError} onRetry={() => void load()} />
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -434,6 +446,7 @@ export function RentalLayoutsPage() {
                   />
                 </label>
               </div>
+              <SaveStatus state={saveState} />
 
               {settings ? (
                 <section className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-2">

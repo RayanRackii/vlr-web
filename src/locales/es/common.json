@@ -25,7 +25,13 @@
     "yes": "Sí",
     "no": "No",
     "save": "Guardar",
-    "add": "Agregar"
+    "add": "Agregar",
+    "retry": "Intentar de nuevo",
+    "saveStatus": {
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "error": "Error al guardar"
+    }
   },
   "apiErrors": {
     "invalidResponse": "Respuesta inválida de la API.",
@@ -2581,7 +2587,8 @@
       "actions": {
         "edit": "Editar cliente",
         "delete": "Eliminar cliente",
-        "openEnvironment": "Abrir entorno"
+        "openEnvironment": "Entrar",
+        "visualResources": "Recursos visuales"
       },
       "delete": {
         "title": "Eliminar cliente",
@@ -2873,9 +2880,10 @@
       "loadFailed": "No se pudieron cargar los clientes."
     },
     "support": {
-      "banner": "Entorno · {{tenant}} — ha iniciado sesión como admin de este cliente.",
+      "banner": "Está en el tenant {{tenant}} como super-admin",
+      "platformPanel": "Panel de la plataforma",
       "tenantFallback": "cliente",
-      "exit": "Volver a la plataforma",
+      "exit": "Salir del tenant",
       "exiting": "Saliendo...",
       "exitErrorTitle": "Error",
       "exitFailed": "No se pudo volver a la plataforma.",
