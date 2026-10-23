@@ -9,6 +9,10 @@ import { assetsManifest } from "@/features/assets/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
+import { adminManifest } from "@/features/admin/manifest"
+import { authManifest } from "@/features/auth/manifest"
+import { landingManifest } from "@/features/landing/manifest"
+import { onboardingManifest } from "@/features/onboarding/manifest"
 import { dashboardManifest } from "@/features/dashboard/manifest"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
@@ -100,6 +104,43 @@ describe("feature manifests", () => {
     expect(navigationSource).toContain("...notificationsManifest.navigationItems")
     expect(appRoutesSource).toContain("taxonomyManifest.routes.staff")
     expect(appRoutesSource).toContain("notificationsManifest.routes.staff")
+  })
+
+  it("keeps admin routes and platform navigation in its manifest", () => {
+    expect(adminManifest.routes.platformStandalone.map((route) => route.path)).toEqual([
+      "/admin/tenants",
+      "/admin/tenants/new",
+      "/admin/tenants/:id/edit",
+    ])
+    expect(adminManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/configuracoes/cadastro",
+      "/configuracoes/menu",
+    ])
+    expect(adminManifest.routes.platformShell.map((route) => route.path)).toEqual([
+      "/admin",
+      "/admin/dashboard",
+      "/admin/users",
+      "/admin/recursos-visuais",
+      "/admin/tenants/:id/recursos-visuais",
+      "/admin/asset-families",
+    ])
+    expect(navigationSource).toContain("items: adminManifest.navigationItems")
+    expect(appRoutesSource).toContain("adminManifest.routes.platformStandalone")
+    expect(appRoutesSource).toContain("adminManifest.routes.staff")
+    expect(appRoutesSource).toContain("adminManifest.routes.platformShell")
+  })
+
+  it("keeps public landing, onboarding, and auth routes in their manifests", () => {
+    expect(landingManifest.routes.public.map((route) => route.path)).toEqual(["/", "/landing"])
+    expect(onboardingManifest.routes.public.map((route) => route.path)).toEqual(["/onboarding"])
+    expect(authManifest.routes.public.map((route) => route.path)).toEqual([
+      "/login",
+      "/reset-password",
+      "/invite",
+    ])
+    expect(appRoutesSource).toContain("landingManifest.routes.public")
+    expect(appRoutesSource).toContain("onboardingManifest.routes.public")
+    expect(appRoutesSource).toContain("authManifest.routes.public")
   })
 
   it("keeps dashboard, users and work orders routes and navigation in their manifests", () => {

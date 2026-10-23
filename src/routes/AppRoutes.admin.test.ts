@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import appRoutesSource from "@/routes/AppRoutes.tsx?raw"
+import { adminManifest } from "@/features/admin/manifest"
 
 describe("platform admin routes", () => {
   it("redirects the exact tenants index to the platform dashboard", () => {
-    expect(appRoutesSource).toMatch(
-      /path="\/admin\/tenants"[\s\S]*Navigate to="\/admin\/dashboard" replace/,
+    const tenantsIndexRoute = adminManifest.routes.platformStandalone.find(
+      (route) => route.path === "/admin/tenants",
     )
+
+    expect(tenantsIndexRoute?.element.props).toMatchObject({
+      to: "/admin/dashboard",
+      replace: true,
+    })
   })
 })
