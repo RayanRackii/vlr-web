@@ -9,6 +9,9 @@ import { assetsManifest } from "@/features/assets/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
+import { dashboardManifest } from "@/features/dashboard/manifest"
+import { usersManifest } from "@/features/users/manifest"
+import { workOrdersManifest } from "@/features/workOrders/manifest"
 
 describe("feature manifests", () => {
   it("keeps tenant portal and catalog routes in their manifests", () => {
@@ -97,5 +100,33 @@ describe("feature manifests", () => {
     expect(navigationSource).toContain("...notificationsManifest.navigationItems")
     expect(appRoutesSource).toContain("taxonomyManifest.routes.staff")
     expect(appRoutesSource).toContain("notificationsManifest.routes.staff")
+  })
+
+  it("keeps dashboard, users and work orders routes and navigation in their manifests", () => {
+    expect(dashboardManifest.modules).toEqual([])
+    expect(dashboardManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/dashboard",
+    ])
+    expect(usersManifest.modules).toEqual([])
+    expect(usersManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/pessoas-e-acesso",
+      "/perfil",
+    ])
+    expect(workOrdersManifest.modules).toEqual(["os"])
+    expect(workOrdersManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/os",
+      "/os/:id",
+      "/os/nova",
+    ])
+
+    expect(appNavigationItems).toContain(dashboardManifest.navigationItems[0])
+    expect(appNavigationItems).toContain(usersManifest.navigationItems[0])
+    expect(appNavigationItems).toContain(workOrdersManifest.navigationItems[0])
+    expect(navigationSource).toContain("dashboardManifest.navigationItems[0]")
+    expect(navigationSource).toContain("...usersManifest.navigationItems")
+    expect(navigationSource).toContain("...workOrdersManifest.navigationItems")
+    expect(appRoutesSource).toContain("dashboardManifest.routes.staff")
+    expect(appRoutesSource).toContain("usersManifest.routes.staff")
+    expect(appRoutesSource).toContain("workOrdersManifest.routes.staff")
   })
 })

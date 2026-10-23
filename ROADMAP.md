@@ -288,6 +288,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-23 | **Código (passo 19, quarta fatia):** manifestos de feature para `dashboard`, `users` e `workOrders` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, terceira fatia):** manifestos de feature para `taxonomy` e `notifications` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, segunda fatia):** manifestos de feature para `pmoc` e `assets` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, primeira fatia):** manifestos de feature para `tenantPortal` e `catalog` passaram a fornecer suas rotas; o catálogo também fornece seu item de navegação B2B, preservando URLs, ordem, módulos e permissões. |
