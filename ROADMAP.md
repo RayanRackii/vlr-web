@@ -289,6 +289,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | Data | Mudança |
 |------|---------|
+| 2026-10-23 | **Código (passo 19, sexta e última fatia):** manifesto de `rentals` passou a fornecer as rotas e itens B2B de Recursos, Agenda, Mapa, Reservas e Política, preservando URLs, ordem, módulos, permissões e guards; o teste agora relaciona todas as features que possuem rotas aos seus manifestos. |
 | 2026-10-23 | **Código (passo 19, quinta fatia):** manifestos de feature para `admin`, `onboarding`, `landing` e `auth` passaram a fornecer suas rotas; `admin` também fornece sua navegação de plataforma, preservando URLs, ordem, permissões e guards. Testes de manifesto cobrem as quatro features. |
 | 2026-10-23 | **Código (passo 19, quarta fatia):** manifestos de feature para `dashboard`, `users` e `workOrders` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, terceira fatia):** manifestos de feature para `taxonomy` e `notifications` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |

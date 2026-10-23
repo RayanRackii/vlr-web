@@ -1,13 +1,8 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  Boxes,
-  CalendarCheck,
-  CalendarClock,
   FormInput,
-  Map,
   MenuSquare,
-  ScrollText,
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
@@ -17,11 +12,14 @@ import { catalogManifest } from "@/features/catalog/manifest"
 import { dashboardManifest } from "@/features/dashboard/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
+import { rentalsManifest } from "@/features/rentals/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+
+export { RENTAL_RESOURCES_PERMISSIONS } from "@/features/rentals/manifest"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -110,54 +108,11 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
   ...notificationsManifest.navigationItems,
 ]
 
-/**
- * Recursos lists rentable assets and loads `GET /api/units` (`core.units.read`).
- * Court listing for lessons stays on `rentals.assets.read` alone.
- */
-export const RENTAL_RESOURCES_PERMISSIONS = [
-  "rentals.assets.read",
-  "core.units.read",
-] as const
-
 const operationsItems: readonly AppNavigationItem[] = [
   ...assetsManifest.navigationItems,
   ...pmocManifest.navigationItems,
   ...workOrdersManifest.navigationItems,
-  {
-    labelKey: "nav.rentalsResources",
-    to: "/configuracoes/recursos",
-    icon: Boxes,
-    modules: ["rentals"],
-    permissions: RENTAL_RESOURCES_PERMISSIONS,
-  },
-  {
-    labelKey: "nav.schedule",
-    to: "/configuracoes/agenda",
-    icon: CalendarClock,
-    modules: ["rentals"],
-    permission: "rentals.schedule.read",
-  },
-  {
-    labelKey: "nav.layout",
-    to: "/configuracoes/layout",
-    icon: Map,
-    modules: ["rentals"],
-    permission: "rentals.layouts.read",
-  },
-  {
-    labelKey: "nav.reservations",
-    to: "/configuracoes/reservas",
-    icon: CalendarCheck,
-    modules: ["rentals"],
-    permission: "rentals.reservations.read",
-  },
-  {
-    labelKey: "nav.bookingPolicy",
-    to: "/configuracoes/politica-reservas",
-    icon: ScrollText,
-    modules: ["rentals"],
-    permission: "rentals.booking_policy.read",
-  },
+  ...rentalsManifest.navigationItems,
   ...catalogManifest.navigationItems,
 ]
 

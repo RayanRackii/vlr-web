@@ -7,6 +7,7 @@ import { catalogManifest } from "@/features/catalog/manifest"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
+import { rentalsManifest } from "@/features/rentals/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { adminManifest } from "@/features/admin/manifest"
@@ -169,5 +170,66 @@ describe("feature manifests", () => {
     expect(appRoutesSource).toContain("dashboardManifest.routes.staff")
     expect(appRoutesSource).toContain("usersManifest.routes.staff")
     expect(appRoutesSource).toContain("workOrdersManifest.routes.staff")
+  })
+
+  it("keeps rentals routes and navigation in its manifest", () => {
+    expect(rentalsManifest.modules).toEqual(["rentals"])
+    expect(rentalsManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/configuracoes/recursos",
+      "/configuracoes/agenda",
+      "/configuracoes/layout",
+      "/configuracoes/reservas",
+      "/configuracoes/politica-reservas",
+    ])
+
+    expect(appNavigationItems).toEqual(
+      expect.arrayContaining(rentalsManifest.navigationItems),
+    )
+    expect(navigationSource).toContain("...rentalsManifest.navigationItems")
+    expect(appRoutesSource).toContain("rentalsManifest.routes.staff")
+    expect(appRoutesSource).not.toContain("features/rentals/pages")
+  })
+
+  it("has a manifest for every feature that owns routes", () => {
+    const manifestsByFeature = {
+      admin: adminManifest,
+      assets: assetsManifest,
+      auth: authManifest,
+      catalog: catalogManifest,
+      dashboard: dashboardManifest,
+      landing: landingManifest,
+      notifications: notificationsManifest,
+      onboarding: onboardingManifest,
+      pmoc: pmocManifest,
+      rentals: rentalsManifest,
+      taxonomy: taxonomyManifest,
+      tenantPortal: tenantPortalManifest,
+      users: usersManifest,
+      workOrders: workOrdersManifest,
+    }
+
+    expect(Object.keys(manifestsByFeature)).toEqual([
+      "admin",
+      "assets",
+      "auth",
+      "catalog",
+      "dashboard",
+      "landing",
+      "notifications",
+      "onboarding",
+      "pmoc",
+      "rentals",
+      "taxonomy",
+      "tenantPortal",
+      "users",
+      "workOrders",
+    ])
+    for (const manifest of Object.values(manifestsByFeature)) {
+      expect(
+        (Object.values(manifest.routes) as readonly (readonly unknown[])[]).some(
+          (routes) => routes.length > 0,
+        ),
+      ).toBe(true)
+    }
   })
 })
