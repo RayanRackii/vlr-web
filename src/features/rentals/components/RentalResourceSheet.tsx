@@ -35,7 +35,6 @@ import {
 import { Switch } from "@/components/ui/switch"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
-import { canCreateAssetCategory } from "@/features/assets/services/assetCategoriesService"
 import { getUnits } from "@/features/assets/services/unitsService"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 import {
@@ -80,7 +79,7 @@ export function RentalResourceSheet({
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
-  const { can, activeModules } = usePermissions()
+  const { can } = usePermissions()
   const isPlatformAdmin = useIsPlatformAdmin()
   const [templates, setTemplates] = useState<VisualTemplate[]>([])
   const [unitOptions, setUnitOptions] = useState<readonly Unit[]>(units)
@@ -164,7 +163,7 @@ export function RentalResourceSheet({
 
   const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
   const canCreateUnit = can("core.units.write") && !readOnly
-  const canCreateCategory = !readOnly && canCreateAssetCategory(activeModules, can)
+  const canCreateCategory = !readOnly && can("rentals.assets.write")
   const canCreateGlobalTemplate = !readOnly && isPlatformAdmin
   const categoryItems = categoryOptions.map((category) => ({
     value: category.id,

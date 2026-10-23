@@ -7,8 +7,11 @@ import {
   type AssetFamily,
 } from "@/features/assets/schemas/assetFamilySchemas"
 import {
+  createRentalCategoryRequestSchema,
   createRentableRequestSchema,
   registryCategoryListSchema,
+  registryCategoryListItemSchema,
+  type CreateRentalCategoryRequest,
   type CreateRentableRequest,
   type RegistryCategoryListItem,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
@@ -44,6 +47,23 @@ export async function listRentalAssetCategories(): Promise<
     return parsed.data
   } catch (error: unknown) {
     throwResourcesError(error, i18n.t("rentals.resources.loadError"))
+  }
+}
+
+export async function createRentalCategory(
+  body: CreateRentalCategoryRequest,
+): Promise<RegistryCategoryListItem> {
+  const payload = createRentalCategoryRequestSchema.parse(body)
+
+  try {
+    const response = await api.post<unknown>("/api/rental-assets/categories", payload)
+    const parsed = registryCategoryListItemSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return parsed.data
+  } catch (error: unknown) {
+    throwResourcesError(error, i18n.t("rentals.resources.createError"))
   }
 }
 

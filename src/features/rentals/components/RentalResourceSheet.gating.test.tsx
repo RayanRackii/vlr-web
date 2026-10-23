@@ -18,7 +18,7 @@ import { TestPermissionProvider } from "@/features/users/permissions/PermissionC
 
 const id = "11111111-1111-1111-1111-111111111111"
 
-function renderSheet(options: { activeModules: string[]; permissions?: string[]; isPlatformAdmin: boolean }) {
+function renderSheet(options: { activeModules?: string[]; permissions?: string[]; isPlatformAdmin: boolean }) {
   vi.mocked(useIsPlatformAdmin).mockReturnValue(options.isPlatformAdmin)
 
   return render(
@@ -39,20 +39,19 @@ function renderSheet(options: { activeModules: string[]; permissions?: string[];
 }
 
 describe("RentalResourceSheet inline dependency creation", () => {
-  it("hides type creation for a rentals-only tenant", () => {
+  it("hides type creation without rentals assets write", () => {
     renderSheet({
       activeModules: ["rentals"],
-      permissions: ["inventory.categories.write"],
+      permissions: ["rentals.assets.read"],
       isPlatformAdmin: false,
     })
 
     expect(screen.queryByRole("button", { name: "+ criar tipo" })).not.toBeInTheDocument()
   })
 
-  it("shows type creation only with inventory and its category-write permission", () => {
+  it("shows type creation with rentals assets write", () => {
     renderSheet({
-      activeModules: ["rentals", "inventory"],
-      permissions: ["inventory.categories.write"],
+      permissions: ["rentals.assets.write"],
       isPlatformAdmin: false,
     })
 
