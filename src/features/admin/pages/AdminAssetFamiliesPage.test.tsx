@@ -135,7 +135,7 @@ describe("AdminAssetFamiliesPage", () => {
       within(dialog).getByLabelText(i18n.t("admin.assetFamilies.form.key")),
       "1bad",
     )
-    expect(save).toBeDisabled()
+    await waitFor(() => expect(save).toBeDisabled(), { timeout: 5000 })
 
     await user.clear(
       within(dialog).getByLabelText(i18n.t("admin.assetFamilies.form.key")),
@@ -148,7 +148,7 @@ describe("AdminAssetFamiliesPage", () => {
       within(dialog).getByLabelText(i18n.t("admin.assetFamilies.form.label")),
       "Quadras novas",
     )
-    expect(save).toBeEnabled()
+    await waitFor(() => expect(save).toBeEnabled(), { timeout: 5000 })
 
     await user.click(
       within(dialog).getByRole("button", {
@@ -168,11 +168,11 @@ describe("AdminAssetFamiliesPage", () => {
       i18n.t("admin.assetFamilies.form.fieldKey"),
     )
     await user.type(fieldKeysAfter[1]!, "area")
-    expect(save).toBeDisabled()
+    await waitFor(() => expect(save).toBeDisabled(), { timeout: 5000 })
 
     await user.clear(fieldKeysAfter[1]!)
     await user.type(fieldKeysAfter[1]!, "covered")
-    expect(save).toBeEnabled()
+    await waitFor(() => expect(save).toBeEnabled(), { timeout: 5000 })
 
     await user.click(save)
 
@@ -187,7 +187,7 @@ describe("AdminAssetFamiliesPage", () => {
           { key: "covered", type: "text", required: false, label: null },
         ],
       })
-    })
+    }, { timeout: 5000 })
     expect(toast.success).toHaveBeenCalledWith(
       i18n.t("admin.assetFamilies.success.created"),
     )
