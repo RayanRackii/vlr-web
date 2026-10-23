@@ -1,11 +1,9 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  Bell,
   Boxes,
   CalendarCheck,
   CalendarClock,
-  Tags,
   ClipboardPen,
   FormInput,
   LayoutDashboard,
@@ -19,7 +17,9 @@ import {
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
+import { notificationsManifest } from "@/features/notifications/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
+import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
@@ -116,19 +116,8 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
     modules: ["rentals", "catalog"],
     permission: "core.module_menu.read",
   },
-  {
-    labelKey: "nav.taxonomy",
-    to: "/configuracoes/categorias-tags",
-    icon: Tags,
-    permission: "core.taxonomy.read",
-  },
-  {
-    labelKey: "nav.notifications",
-    to: "/configuracoes/notificacoes",
-    icon: Bell,
-    modules: ["catalog", "rentals"],
-    permission: "core.notifications.read",
-  },
+  ...taxonomyManifest.navigationItems,
+  ...notificationsManifest.navigationItems,
 ]
 
 /**
