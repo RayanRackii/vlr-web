@@ -243,6 +243,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 ## Histórico
 
+| 2026-10-23 | **Correção local:** o array de rotas do manifesto de usuários agora é explicitamente `readonly FeatureRoute[]`, para que consumidores possam ler `permission` opcionalmente também na rota `/perfil`, sem alterar o roteamento ou o RBAC. |
 | 2026-10-23 | **Passo 12 (WEB, local):** dashboard B2B exibe checklist de configuração de Rentals para módulo ativo e `rentals.assets.read`, com links para Recursos, Agenda, Política e Mapa; some ao ficar pronto e em erro/404. Service Zod, i18n pt-BR/en/es e testes Vitest adicionados. Correção posterior: título é `h2` e o gating não atualiza estado no effect (lint). Vitest bloqueado neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar as regressões fora do sandbox. Próximo API: regenerar o snapshot OpenAPI completo do endpoint readiness. |
 
 | 2026-10-23 | **F1-4 (WEB, local):** login B2C trata `429` de `POST /api/auth/customer/login`: traduz espera com `Retry-After` arredondado para minutos ou aviso genérico sem header; 401 preserva a mensagem de credenciais. Testes Vitest adicionados; bloqueados neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar os testes de login fora do sandbox. Próximo API: migration e release do throttle para PROD. |
@@ -289,6 +290,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 | Data | Mudança |
 |------|---------|
 | 2026-10-23 | **Código (passo 19, quinta fatia):** manifestos de feature para `admin`, `onboarding`, `landing` e `auth` passaram a fornecer suas rotas; `admin` também fornece sua navegação de plataforma, preservando URLs, ordem, permissões e guards. Testes de manifesto cobrem as quatro features. |
+| 2026-10-23 | **Código (passo 19, quarta fatia):** manifestos de feature para `dashboard`, `users` e `workOrders` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, terceira fatia):** manifestos de feature para `taxonomy` e `notifications` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, segunda fatia):** manifestos de feature para `pmoc` e `assets` passaram a fornecer rotas e itens B2B, preservando URLs, ordem, módulos, permissões e guards. |
 | 2026-10-23 | **Código (passo 19, primeira fatia):** manifestos de feature para `tenantPortal` e `catalog` passaram a fornecer suas rotas; o catálogo também fornece seu item de navegação B2B, preservando URLs, ordem, módulos e permissões. |

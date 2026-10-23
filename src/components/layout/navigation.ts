@@ -4,22 +4,22 @@ import {
   Boxes,
   CalendarCheck,
   CalendarClock,
-  ClipboardPen,
   FormInput,
-  LayoutDashboard,
   Map,
   MenuSquare,
   ScrollText,
-  Users,
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
+import { dashboardManifest } from "@/features/dashboard/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
+import { usersManifest } from "@/features/users/manifest"
+import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
@@ -88,20 +88,10 @@ export type AppNavigationState = {
   isLoading: boolean
 }
 
-const overviewItem: AppNavigationItem = {
-  labelKey: "nav.dashboard",
-  to: "/dashboard",
-  icon: LayoutDashboard,
-  permission: "core.dashboard.read",
-}
+const overviewItem = dashboardManifest.navigationItems[0]
 
 const peoplePortalItems: readonly AppNavigationItem[] = [
-  {
-    labelKey: "nav.peopleAccess",
-    to: "/pessoas-e-acesso",
-    icon: Users,
-    permission: "core.users.read",
-  },
+  ...usersManifest.navigationItems,
   {
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
@@ -132,13 +122,7 @@ export const RENTAL_RESOURCES_PERMISSIONS = [
 const operationsItems: readonly AppNavigationItem[] = [
   ...assetsManifest.navigationItems,
   ...pmocManifest.navigationItems,
-  {
-    labelKey: "nav.workOrders",
-    to: "/os",
-    icon: ClipboardPen,
-    modules: ["os"],
-    permission: "os.work_orders.read",
-  },
+  ...workOrdersManifest.navigationItems,
   {
     labelKey: "nav.rentalsResources",
     to: "/configuracoes/recursos",
