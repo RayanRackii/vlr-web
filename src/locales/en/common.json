@@ -1188,6 +1188,17 @@
     "title": "Command Center",
     "description": "KPIs based on the modules and asset families active in this environment.",
     "emptyModules": "No operational modules active beyond the customer portal.",
+    "rentalsReadiness": {
+      "title": "Configure Rentals",
+      "description": "Complete the items below to get reservations ready.",
+      "items": {
+        "hasUnits": "Units",
+        "hasRentableAssets": "Rentable resources",
+        "hasScheduleTemplateOrRule": "Schedule",
+        "hasBookingPolicy": "Booking policy",
+        "hasVisualOrMap": "Visual or map"
+      }
+    },
     "sections": {
       "customers": {
         "title": "Portal customers",

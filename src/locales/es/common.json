@@ -1188,6 +1188,17 @@
     "title": "Centro de Comando",
     "description": "Indicadores según los módulos y familias activos en este entorno.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
+    "rentalsReadiness": {
+      "title": "Configure Alquileres",
+      "description": "Complete los elementos siguientes para preparar las reservas.",
+      "items": {
+        "hasUnits": "Unidades",
+        "hasRentableAssets": "Recursos alquilables",
+        "hasScheduleTemplateOrRule": "Agenda",
+        "hasBookingPolicy": "Política de reservas",
+        "hasVisualOrMap": "Visual o mapa"
+      }
+    },
     "sections": {
       "customers": {
         "title": "Clientes del portal",

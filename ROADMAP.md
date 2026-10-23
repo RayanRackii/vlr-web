@@ -45,6 +45,7 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 
 - [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).
 - [x] i18n pt-BR / en / es.
+- [x] Passo 12 (WEB, local): card de readiness de Rentals no dashboard, gated por módulo + `rentals.assets.read`; consome `GET /api/rentals/readiness`, links de configuração e falha/404 silenciosa; título semântico e sem violação de hooks.
 
 ## 2.9. Meu Perfil B2C — FEITO (código)
 
@@ -240,6 +241,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
 ## Histórico
+
+| 2026-10-23 | **Passo 12 (WEB, local):** dashboard B2B exibe checklist de configuração de Rentals para módulo ativo e `rentals.assets.read`, com links para Recursos, Agenda, Política e Mapa; some ao ficar pronto e em erro/404. Service Zod, i18n pt-BR/en/es e testes Vitest adicionados. Correção posterior: título é `h2` e o gating não atualiza estado no effect (lint). Vitest bloqueado neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar as regressões fora do sandbox. Próximo API: regenerar o snapshot OpenAPI completo do endpoint readiness. |
 
 | 2026-10-23 | **F1-4 (WEB, local):** login B2C trata `429` de `POST /api/auth/customer/login`: traduz espera com `Retry-After` arredondado para minutos ou aviso genérico sem header; 401 preserva a mensagem de credenciais. Testes Vitest adicionados; bloqueados neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar os testes de login fora do sandbox. Próximo API: migration e release do throttle para PROD. |
 
