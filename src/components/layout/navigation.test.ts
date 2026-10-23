@@ -109,6 +109,19 @@ describe("filterNavigationItemsByAccess", () => {
     ])
   })
 
+  it("shows the portal menu and registration fields for a catalog-only tenant", () => {
+    const visible = filterNavigationItemsByAccess(
+      appNavigationItems,
+      ["catalog"],
+      ["core.module_menu.read", "core.registration_fields.read"],
+    )
+
+    expect(visible.map((item) => item.to)).toEqual([
+      "/configuracoes/cadastro",
+      "/configuracoes/menu",
+    ])
+  })
+
   it.each(["catalog.products.manage"])("shows catalog settings with %s", (permission) => {
     const visible = filterNavigationItemsByAccess(appNavigationItems, ["catalog"], [permission])
     const catalog = visible.find((item) => item.labelKey === "nav.catalog")

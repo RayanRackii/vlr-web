@@ -23,7 +23,15 @@
       "nextMonth": "Próximo mês"
     },
     "yes": "Sim",
-    "no": "Não"
+    "no": "Não",
+    "save": "Salvar",
+    "add": "Adicionar",
+    "retry": "Tentar novamente",
+    "saveStatus": {
+      "saving": "Salvando…",
+      "saved": "Salvo",
+      "error": "Erro ao salvar"
+    }
   },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
@@ -176,6 +184,7 @@
     }
   },
   "auth": {
+    "sessionExpired": "Sessão expirada. Entre novamente.",
     "invite": {
       "title": "Ativar conta",
       "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",
@@ -318,6 +327,9 @@
       "toastError": "Não foi possível entrar.",
       "invalidCredentials": "E-mail ou senha inválidos.",
       "emailNotVerified": "Confirme seu e-mail antes de entrar.",
+      "rateLimited": "Muitas tentativas. Tente novamente mais tarde.",
+      "rateLimitedWithMinutes_one": "Muitas tentativas. Tente novamente em {{count}} minuto.",
+      "rateLimitedWithMinutes_other": "Muitas tentativas. Tente novamente em {{count}} minutos.",
       "noAccount": "Ainda não tem conta?",
       "registerLink": "Cadastre-se",
       "forgotPassword": "Esqueci a senha"
@@ -1176,6 +1188,21 @@
     "title": "Centro de Comando",
     "description": "Indicadores conforme os módulos e famílias ativos neste ambiente.",
     "emptyModules": "Nenhum módulo operacional ativo além do portal de clientes.",
+    "rentalsReadiness": {
+      "title": "Configure os Aluguéis",
+      "description": "Conclua os itens abaixo para deixar as reservas prontas.",
+      "items": {
+        "hasUnits": "Unidades",
+        "hasRentableAssets": "Recursos alugáveis",
+        "hasScheduleTemplateOrRule": "Agenda",
+        "hasBookingPolicy": "Política de reservas",
+        "hasVisualOrMap": "Visual ou mapa"
+      },
+      "status": {
+        "done": "Concluído",
+        "pending": "Pendente"
+      }
+    },
     "sections": {
       "customers": {
         "title": "Clientes no portal",
@@ -2578,7 +2605,8 @@
       "actions": {
         "edit": "Editar cliente",
         "delete": "Excluir cliente",
-        "openEnvironment": "Abrir ambiente"
+        "openEnvironment": "Entrar",
+        "visualResources": "Recursos visuais"
       },
       "delete": {
         "title": "Excluir cliente",
@@ -2870,9 +2898,10 @@
       "loadFailed": "Não foi possível carregar os clientes."
     },
     "support": {
-      "banner": "Ambiente · {{tenant}} — você está logado como admin deste cliente.",
+      "banner": "Você está no tenant {{tenant}} como super-admin",
+      "platformPanel": "Painel da plataforma",
       "tenantFallback": "cliente",
-      "exit": "Voltar à plataforma",
+      "exit": "Sair do tenant",
       "exiting": "Saindo...",
       "exitErrorTitle": "Erro",
       "exitFailed": "Não foi possível voltar à plataforma.",
@@ -3143,14 +3172,34 @@
         "queueOpeningTime": "Horário de abertura da fila",
         "location": "Localização",
         "locationPlaceholder": "Ex.: Bloco A",
-        "horizonLabel": "Horizonte de reserva deste recurso",
+        "horizonLabel": "Horizonte",
         "horizonInherit": "Usar o padrão do ambiente",
         "horizonUnlimited": "Ilimitado",
         "horizonDaysMode": "Número de dias",
         "horizonDays": "Dias à frente",
-        "horizonHint": "Usar o padrão do ambiente segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
+        "horizonHint": "Defina até quando clientes podem reservar este recurso.",
+        "horizonTechnicalHelp": "Usar o padrão do ambiente segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "Em vigor: ilimitado (sem limite).",
         "horizonEffectiveDays": "Em vigor: {{count}} dias à frente."
+      },
+      "inlineCreate": {
+        "categoryAction": "+ criar tipo",
+        "categoryTitle": "Criar tipo",
+        "categoryDescription": "Crie o tipo sem sair do cadastro do recurso.",
+        "categoryName": "Nome do tipo",
+        "saveCategory": "Criar tipo",
+        "unitAction": "+ criar unidade",
+        "unitTitle": "Criar unidade",
+        "unitDescription": "Crie a unidade sem sair do cadastro do recurso.",
+        "unitName": "Nome da unidade",
+        "saveUnit": "Criar unidade",
+        "unitDuplicate": "Já existe uma unidade com este nome ou código.",
+        "unitCreateError": "Não foi possível criar a unidade.",
+        "templateAction": "+ criar modelo global (Rolvix)",
+        "templateTitle": "Criar modelo global (Rolvix)",
+        "templateDescription": "O novo modelo global da Rolvix será publicado e selecionado neste recurso.",
+        "templateName": "Nome do modelo",
+        "saveTemplate": "Criar modelo"
       },
       "validation": {
         "nameRequired": "Informe o nome.",
@@ -3181,14 +3230,45 @@
       "paletteEmpty": "Todos os espaços já estão no mapa.",
       "clickToRemove": "Use × no bloco para tirá-lo do mapa.",
       "resizeCanvasHelp": "Arraste o canto do mapa (quadrado no canto inferior direito) para redimensionar o layout.",
+      "blockSize": "Tamanho do bloco",
+      "width": "Largura",
+      "height": "Altura",
+      "courtPreset": "Quadra 2:1",
+      "widePreset": "Retangular",
+      "squarePreset": "Quadrado",
+      "stripPreset": "Faixa",
       "organize": "Organizar sozinho",
       "save": "Salvar layout",
+      "saved": "Salvo",
       "loadError": "Não foi possível carregar os layouts.",
       "saveError": "Não foi possível salvar o layout.",
       "createSuccess": "Layout criado.",
       "updateSuccess": "Layout salvo.",
       "deleteSuccess": "Layout excluído.",
-      "deleteError": "Não foi possível excluir o layout."
+      "deleteError": "Não foi possível excluir o layout.",
+      "steps": {
+        "spaces": "Espaços",
+        "templates": "Tipo e modelo",
+        "map": "Mapa",
+        "review": "Revisar"
+      },
+      "next": "Continuar",
+      "back": "Voltar",
+      "spacesTitle": "Escolha os espaços",
+      "spacesHelp": "Selecione os espaços que estarão neste mapa ou crie um novo recurso.",
+      "createSpace": "Criar novo espaço",
+      "spaceType": "Espaço reservável",
+      "bookableItemType": "Item reservável",
+      "templatesTitle": "Tipo e modelo visual",
+      "templatesHelp": "Os modelos listados correspondem aos segmentos habilitados para este tenant.",
+      "mapTitle": "Posicione os blocos",
+      "mapHelp": "Arraste os blocos e escolha um tamanho adequado para cada espaço.",
+      "reviewSpaces_one": "{{count}} espaço no mapa",
+      "reviewSpaces_other": "{{count}} espaços no mapa",
+      "advanced": "Avançado",
+      "validation": {
+        "spaces": "Escolha pelo menos um espaço para continuar."
+      }
     },
     "reservations": {
       "title": "Reservas",
@@ -3242,5 +3322,14 @@
         "horizonRange": "Informe um inteiro de 0 a 3650."
       }
     }
+  },
+  "resourceVisual": {
+    "tenantSegmentsTitle": "Segmentos do tenant: {{tenantName}}",
+    "title": "Catálogo visual de recursos", "help": "Gerencie modelos, arte publicada e classificações globais.", "newTemplate": "Novo modelo", "editTemplate": "Editar modelo", "cancelEdit": "Cancelar edição", "name": "Nome", "slug": "Identificador", "description": "Descrição", "tags": "Tags", "revision": "Nova revisão", "floor": "Arte do piso SVG", "lines": "Arte das linhas SVG", "publish": "Publicar", "draft": "Rascunho", "publishedStatus": "Publicado", "noRevision": "Sem revisão publicada", "saved": "Alterações salvas.", "published": "Revisão publicada.", "error": "Não foi possível concluir a alteração.", "validation": "Informe o nome e o identificador.", "deleteTagTitle": "Excluir tag?", "deleteTagDescription": "Esta ação não pode ser desfeita.", "segmentsTitle": "Segmentos do tenant", "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.", "enabledTemplates": "Modelos habilitados", "noEnabledTemplates": "Nenhum modelo corresponde aos segmentos selecionados.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "filterByTag": "Filtrar por tag", "noTemplate": "Sem modelo", "capacityPeople": "Capacidade de pessoas (opcional)", "applySuggestions": "Aplicar sugestões do modelo", "applySuggestionsHelp": "Preenche a capacidade e os horários sugeridos pelo modelo.", "tagKindSegment": "Segmento", "tagKindAttribute": "Atributo", "thumbnailAlt": "Prévia de {{name}}", "thumbnailPlaceholder": "Prévia indisponível", "mapSettings": "Configurações do mapa", "mapSettingsHelp": "Padrão é o mapa aberto primeiro pelos clientes. Visível no portal é um mapa listado para eles.", "defaultMap": "Padrão", "alreadyDefault": "Já é o padrão", "showPrice": "Exibir preço no bloco", "defaultView": "Visualização padrão", "timeFilter": "Filtro de horário", "fromTime": "A partir do horário", "availableColor": "Cor disponível", "takenColor": "Cor ocupado", "setDefaultMap": "Definir mapa padrão"
+  },
+  "bookingMap": {
+    "area": "Área",
+    "quantity": "Quantidade",
+    "title": "Reservar", "help": "Escolha uma data, um recurso e um horário.", "loading": "Carregando mapa…", "dateStrip": "Datas", "today": "Hoje", "periods": "Períodos", "all": "Todos ({{count}})", "morning": "Manhã ({{count}})", "afternoon": "Tarde ({{count}})", "night": "Noite ({{count}})", "map": "Mapa", "list": "Lista", "freeFrom": "{{count}} livres · a partir de {{amount}}", "noAvailability": "Sem horários livres", "emptyPeriod": "Não há horários livres neste período. Escolha outro período ou outra data.", "showPast": "Mostrar encerrados ({{count}})", "hidePast": "Ocultar encerrados", "close": "Fechar", "continue": "Continuar", "chooseSlot": "Escolha um horário", "success": "Reserva criada.", "error": "Não foi possível criar a reserva.", "state": { "Taken": "Ocupado", "Blocked": "Indisponível", "Past": "Encerrado", "OutsideHorizon": "Fora do prazo", "Unpriced": "Sem preço", "Available": "Disponível" }
   }
 }

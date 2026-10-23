@@ -37,18 +37,18 @@ describe("agenda selection query", () => {
     expect(readAgendaTimeParam("13:00:00")).toBe("13:00")
   })
 
-  it("writes the chosen time and keeps reservation while omitting today", () => {
+  it("consumes the chosen time and keeps reservation while omitting today", () => {
     const current = new URLSearchParams("reservation=abc&date=2026-10-01")
     const next = agendaSelectionSearchParams(current, TODAY, "15:00", TODAY)
 
     expect(next.get("reservation")).toBe("abc")
     expect(next.get("date")).toBeNull()
-    expect(next.get("time")).toBe("15:00")
+    expect(next.get("time")).toBeNull()
 
     const later = agendaSelectionSearchParams(next, "2099-01-15", "13:00:00", TODAY)
     expect(later.get("reservation")).toBe("abc")
     expect(later.get("date")).toBe("2099-01-15")
-    expect(later.get("time")).toBe("13:00")
+    expect(later.get("time")).toBeNull()
   })
 
   it("keeps an empty or impossible day from replacing the selection", () => {

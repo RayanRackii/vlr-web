@@ -32,7 +32,6 @@ const family = {
 
 const createBody = {
   name: "Quadra 1",
-  tag: "Q-01",
   unitId: UNIT_ID,
   categoryId: CATEGORY_ID,
   familyId: FAMILY_ID,
@@ -104,6 +103,30 @@ describe("rentalResourcesService catalog URLs", () => {
     expectNoInventoryAssetUrls()
   })
 
+  it("creates a category via POST /api/rental-assets/categories and parses its response", async () => {
+    apiPost.mockResolvedValue({ data: category })
+    const { createRentalCategory } = await import(
+      "@/features/rentals/services/rentalResourcesService"
+    )
+
+    const result = await createRentalCategory({ name: " Quadra " })
+
+    expect(apiPost).toHaveBeenCalledWith("/api/rental-assets/categories", {
+      name: "Quadra",
+    })
+    expect(result).toEqual(category)
+    expectNoInventoryAssetUrls()
+  })
+
+  it("rejects an invalid category response", async () => {
+    apiPost.mockResolvedValue({ data: { id: "not-a-uuid", name: "" } })
+    const { createRentalCategory } = await import(
+      "@/features/rentals/services/rentalResourcesService"
+    )
+
+    await expect(createRentalCategory({ name: "Quadra" })).rejects.toThrow()
+  })
+
   it("lists families from GET /api/rental-assets/families, not /api/asset-families", async () => {
     apiGet.mockResolvedValue({ data: [family] })
     const { listRentalAssetFamilies } = await import(
@@ -117,7 +140,7 @@ describe("rentalResourcesService catalog URLs", () => {
     expectNoInventoryAssetUrls()
   })
 
-  it("creates a rentable via POST /api/rental-assets with the Wave 2 body", async () => {
+  it("creates a rentable via POST /api/rental-assets without a registry tag", async () => {
     apiPost.mockResolvedValue({ data: rentalResponse })
     const { createRentalAsset } = await import(
       "@/features/rentals/services/rentalResourcesService"
@@ -126,6 +149,7 @@ describe("rentalResourcesService catalog URLs", () => {
     await createRentalAsset(createBody)
 
     expect(apiPost).toHaveBeenCalledWith("/api/rental-assets", createBody)
+    expect(apiPost.mock.calls[0]?.[1]).not.toHaveProperty("tag")
     expectNoInventoryAssetUrls()
   })
 

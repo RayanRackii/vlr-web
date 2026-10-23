@@ -23,7 +23,15 @@
       "nextMonth": "Next month"
     },
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "save": "Save",
+    "add": "Add",
+    "retry": "Try again",
+    "saveStatus": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Error saving"
+    }
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -176,6 +184,7 @@
     }
   },
   "auth": {
+    "sessionExpired": "Session expired. Sign in again.",
     "invite": {
       "title": "Activate account",
       "welcome": "Welcome to Rolvix. To activate your account at {{tenant}}, set a secure password below.",
@@ -318,6 +327,9 @@
       "toastError": "Could not sign in.",
       "invalidCredentials": "Invalid email or password.",
       "emailNotVerified": "Confirm your email before signing in.",
+      "rateLimited": "Too many attempts. Please try again later.",
+      "rateLimitedWithMinutes_one": "Too many attempts. Try again in {{count}} minute.",
+      "rateLimitedWithMinutes_other": "Too many attempts. Try again in {{count}} minutes.",
       "noAccount": "No account yet?",
       "registerLink": "Register",
       "forgotPassword": "Forgot password"
@@ -1176,6 +1188,21 @@
     "title": "Command Center",
     "description": "KPIs based on the modules and asset families active in this environment.",
     "emptyModules": "No operational modules active beyond the customer portal.",
+    "rentalsReadiness": {
+      "title": "Configure Rentals",
+      "description": "Complete the items below to get reservations ready.",
+      "items": {
+        "hasUnits": "Units",
+        "hasRentableAssets": "Rentable resources",
+        "hasScheduleTemplateOrRule": "Schedule",
+        "hasBookingPolicy": "Booking policy",
+        "hasVisualOrMap": "Visual or map"
+      },
+      "status": {
+        "done": "Completed",
+        "pending": "Pending"
+      }
+    },
     "sections": {
       "customers": {
         "title": "Portal customers",
@@ -2578,7 +2605,8 @@
       "actions": {
         "edit": "Edit client",
         "delete": "Delete client",
-        "openEnvironment": "Open environment"
+        "openEnvironment": "Enter",
+        "visualResources": "Visual resources"
       },
       "delete": {
         "title": "Delete client",
@@ -2870,9 +2898,10 @@
       "loadFailed": "Could not load clients."
     },
     "support": {
-      "banner": "Environment · {{tenant}} — you are signed in as this client’s admin.",
+      "banner": "You are in tenant {{tenant}} as a super-admin",
+      "platformPanel": "Platform panel",
       "tenantFallback": "client",
-      "exit": "Back to platform",
+      "exit": "Leave tenant",
       "exiting": "Leaving...",
       "exitErrorTitle": "Error",
       "exitFailed": "Could not return to the platform.",
@@ -3143,14 +3172,34 @@
         "queueOpeningTime": "Queue opening time",
         "location": "Location",
         "locationPlaceholder": "E.g. Building A",
-        "horizonLabel": "Booking horizon for this resource",
+        "horizonLabel": "Horizon",
         "horizonInherit": "Use tenant default",
         "horizonUnlimited": "Unlimited",
         "horizonDaysMode": "A number of days",
         "horizonDays": "Days ahead",
-        "horizonHint": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
+        "horizonHint": "Set how far ahead customers can book this resource.",
+        "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
         "horizonEffectiveDays": "In effect: {{count}} days ahead."
+      },
+      "inlineCreate": {
+        "categoryAction": "+ create type",
+        "categoryTitle": "Create type",
+        "categoryDescription": "Create the type without leaving the resource form.",
+        "categoryName": "Type name",
+        "saveCategory": "Create type",
+        "unitAction": "+ create unit",
+        "unitTitle": "Create unit",
+        "unitDescription": "Create the unit without leaving the resource form.",
+        "unitName": "Unit name",
+        "saveUnit": "Create unit",
+        "unitDuplicate": "A unit with this name or code already exists.",
+        "unitCreateError": "Could not create the unit.",
+        "templateAction": "+ create global template (Rolvix)",
+        "templateTitle": "Create global template (Rolvix)",
+        "templateDescription": "The new global Rolvix template will be published and selected for this resource.",
+        "templateName": "Template name",
+        "saveTemplate": "Create template"
       },
       "validation": {
         "nameRequired": "Enter a name.",
@@ -3181,14 +3230,45 @@
       "paletteEmpty": "Every space is already on the map.",
       "clickToRemove": "Use × on a block to remove it from the map.",
       "resizeCanvasHelp": "Drag the map corner (square at the bottom right) to resize the layout.",
+      "blockSize": "Block size",
+      "width": "Width",
+      "height": "Height",
+      "courtPreset": "Court 2:1",
+      "widePreset": "Wide",
+      "squarePreset": "Square",
+      "stripPreset": "Strip",
       "organize": "Auto arrange",
       "save": "Save layout",
+      "saved": "Saved",
       "loadError": "Could not load layouts.",
       "saveError": "Could not save the layout.",
       "createSuccess": "Layout created.",
       "updateSuccess": "Layout saved.",
       "deleteSuccess": "Layout deleted.",
-      "deleteError": "Could not delete the layout."
+      "deleteError": "Could not delete the layout.",
+      "steps": {
+        "spaces": "Spaces",
+        "templates": "Type and template",
+        "map": "Map",
+        "review": "Review"
+      },
+      "next": "Continue",
+      "back": "Back",
+      "spacesTitle": "Choose spaces",
+      "spacesHelp": "Select the spaces on this map or create a new bookable resource.",
+      "createSpace": "Create new space",
+      "spaceType": "Bookable space",
+      "bookableItemType": "Bookable item",
+      "templatesTitle": "Type and visual template",
+      "templatesHelp": "The listed templates match this tenant's enabled segments.",
+      "mapTitle": "Position blocks",
+      "mapHelp": "Drag blocks and choose an appropriate size for each space.",
+      "reviewSpaces_one": "{{count}} space on the map",
+      "reviewSpaces_other": "{{count}} spaces on the map",
+      "advanced": "Advanced",
+      "validation": {
+        "spaces": "Choose at least one space to continue."
+      }
     },
     "reservations": {
       "title": "Reservations",
@@ -3242,5 +3322,14 @@
         "horizonRange": "Enter an integer from 0 to 3650."
       }
     }
+  },
+  "resourceVisual": {
+    "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
+    "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "cancelEdit": "Cancel editing", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish", "draft": "Draft", "publishedStatus": "Published", "noRevision": "No published revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "validation": "Enter a name and slug.", "deleteTagTitle": "Delete tag?", "deleteTagDescription": "This action cannot be undone.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "enabledTemplates": "Enabled templates", "noEnabledTemplates": "No template matches the selected segments.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "filterByTag": "Filter by tag", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "applySuggestionsHelp": "Fills the capacity and time suggestions from the template.", "tagKindSegment": "Segment", "tagKindAttribute": "Attribute", "thumbnailAlt": "Preview of {{name}}", "thumbnailPlaceholder": "Preview unavailable", "mapSettings": "Map settings", "mapSettingsHelp": "Default is the map customers open first. Visible on the portal is a map listed to customers.", "defaultMap": "Default", "alreadyDefault": "Already the default", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
+  },
+  "bookingMap": {
+    "area": "Area",
+    "quantity": "Quantity",
+    "title": "Book", "help": "Choose a date, a resource, and a time.", "loading": "Loading map…", "dateStrip": "Dates", "today": "Today", "periods": "Periods", "all": "All ({{count}})", "morning": "Morning ({{count}})", "afternoon": "Afternoon ({{count}})", "night": "Night ({{count}})", "map": "Map", "list": "List", "freeFrom": "{{count}} free · from {{amount}}", "noAvailability": "No open times", "emptyPeriod": "There are no open times in this period. Choose another period or date.", "showPast": "Show ended ({{count}})", "hidePast": "Hide ended", "close": "Close", "continue": "Continue", "chooseSlot": "Choose a time", "success": "Reservation created.", "error": "Could not create the reservation.", "state": { "Taken": "Taken", "Blocked": "Unavailable", "Past": "Past", "OutsideHorizon": "Outside booking window", "Unpriced": "No price", "Available": "Available" }
   }
 }

@@ -13,7 +13,7 @@ export const rentalTypeValues = ["Location", "Good"] as const
 export type RentalType = (typeof rentalTypeValues)[number]
 
 export const registryCategoryListItemSchema = z.object({
-  id: z.string().uuid(),
+  id: guidLikeIdSchema,
   name: z.string().min(1),
 })
 
@@ -23,11 +23,18 @@ export type RegistryCategoryListItem = z.infer<
 
 export const registryCategoryListSchema = z.array(registryCategoryListItemSchema)
 
+export const createRentalCategoryRequestSchema = z.object({
+  name: z.string().trim().min(1),
+})
+
+export type CreateRentalCategoryRequest = z.infer<
+  typeof createRentalCategoryRequestSchema
+>
+
 export const createRentableRequestSchema = z.object({
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
-  unitId: z.string().uuid(),
-  categoryId: z.string().uuid(),
+  unitId: guidLikeIdSchema,
+  categoryId: guidLikeIdSchema,
   familyId: guidLikeIdSchema,
   rentalType: z.enum(rentalTypeValues),
   totalQuantity: z.number().int().min(1),
@@ -47,6 +54,9 @@ export const createRentableRequestSchema = z.object({
     .max(BOOKING_HORIZON_DAY_MAX)
     .nullable()
     .optional(),
+  visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
+  capacityPeople: z.number().int().positive().nullable().optional(),
+  confirmVisualSuggestions: z.boolean().optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -57,7 +67,6 @@ export type ResourceHorizonMode = (typeof resourceHorizonModes)[number]
 
 export function createRentalResourceFormSchema(messages: {
   nameRequired: string
-  tagRequired: string
   unitRequired: string
   categoryRequired: string
   familyRequired: string
@@ -68,12 +77,11 @@ export function createRentalResourceFormSchema(messages: {
   return z
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
-      tag: z.string().trim().min(1, messages.tagRequired),
-      unitId: z.string().min(1, messages.unitRequired).uuid(messages.unitRequired),
-      categoryId: z
-        .string()
-        .min(1, messages.categoryRequired)
-        .uuid(messages.categoryRequired),
+      // RentalAssetResponse does not expose the registry tag, so this UI-only
+      // value must remain optional and cannot be sent back on an edit.
+      tag: z.string(),
+      unitId: guidLikeIdSchema.min(1, messages.unitRequired),
+      categoryId: guidLikeIdSchema.min(1, messages.categoryRequired),
       familyId: z
         .string()
         .min(1, messages.familyRequired)
@@ -89,6 +97,9 @@ export function createRentalResourceFormSchema(messages: {
       location: z.string(),
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
+      visualTemplateRevisionId: z.string(),
+      capacityPeople: z.string(),
+      confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
       if (
@@ -123,6 +134,8 @@ export type RentalResourceFormValues = z.infer<
 export type ResourceHorizonWriteContext = {
   creating: boolean
   stored: number | null | undefined
+  storedVisualTemplateRevisionId?: string | null
+  storedCapacityPeople?: number | null
 }
 
 /**
@@ -170,7 +183,6 @@ export function toCreateRentableRequest(
   const isLocation = values.rentalType === "Location"
   const payload: CreateRentableRequest = {
     name: values.name.trim(),
-    tag: values.tag.trim(),
     unitId: values.unitId,
     categoryId: values.categoryId,
     familyId: values.familyId,
@@ -192,6 +204,20 @@ export function toCreateRentableRequest(
   if (horizonWrite !== undefined) {
     payload.maxAdvanceBookingDays = horizonWrite
   }
-
+  if (values.visualTemplateRevisionId.trim()) {
+    payload.visualTemplateRevisionId = values.visualTemplateRevisionId
+  } else if (!horizon.creating && horizon.storedVisualTemplateRevisionId != null) {
+    // UpdateRentable uses JsonOptional: omission retains the old assignment.
+    payload.visualTemplateRevisionId = null
+  }
+  if (values.capacityPeople.trim()) {
+    payload.capacityPeople = Number(values.capacityPeople)
+  } else if (!horizon.creating && horizon.storedCapacityPeople != null) {
+    // Same PATCH semantics as the visual template assignment.
+    payload.capacityPeople = null
+  }
+  if (values.confirmVisualSuggestions) {
+    payload.confirmVisualSuggestions = true
+  }
   return createRentableRequestSchema.parse(payload)
 }

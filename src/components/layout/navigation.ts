@@ -1,27 +1,25 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  Bell,
-  Boxes,
-  CalendarCheck,
-  CalendarClock,
-  Tags,
-  ClipboardList,
-  ClipboardPen,
   FormInput,
-  LayoutDashboard,
-  Map,
   MenuSquare,
-  Package,
-  ScrollText,
-  Shield,
-  Users,
-  Wrench,
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { adminManifest } from "@/features/admin/manifest"
+import { assetsManifest } from "@/features/assets/manifest"
+import { catalogManifest } from "@/features/catalog/manifest"
+import { dashboardManifest } from "@/features/dashboard/manifest"
+import { notificationsManifest } from "@/features/notifications/manifest"
+import { pmocManifest } from "@/features/pmoc/manifest"
+import { rentalsManifest } from "@/features/rentals/manifest"
+import { taxonomyManifest } from "@/features/taxonomy/manifest"
+import { usersManifest } from "@/features/users/manifest"
+import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+
+export { RENTAL_RESOURCES_PERMISSIONS } from "@/features/rentals/manifest"
 
 export type AppNavigationChildItem = {
   labelKey:
@@ -88,170 +86,34 @@ export type AppNavigationState = {
   isLoading: boolean
 }
 
-const overviewItem: AppNavigationItem = {
-  labelKey: "nav.dashboard",
-  to: "/dashboard",
-  icon: LayoutDashboard,
-  permission: "core.dashboard.read",
-}
+const overviewItem = dashboardManifest.navigationItems[0]
 
 const peoplePortalItems: readonly AppNavigationItem[] = [
-  {
-    labelKey: "nav.peopleAccess",
-    to: "/pessoas-e-acesso",
-    icon: Users,
-    permission: "core.users.read",
-  },
+  ...usersManifest.navigationItems,
   {
     labelKey: "nav.registrationFields",
     to: "/configuracoes/cadastro",
     icon: FormInput,
-    modules: ["rentals"],
+    modules: ["rentals", "catalog"],
     permission: "core.registration_fields.read",
   },
   {
     labelKey: "nav.moduleMenu",
     to: "/configuracoes/menu",
     icon: MenuSquare,
-    modules: ["rentals"],
+    modules: ["rentals", "catalog"],
     permission: "core.module_menu.read",
   },
-  {
-    labelKey: "nav.taxonomy",
-    to: "/configuracoes/categorias-tags",
-    icon: Tags,
-    permission: "core.taxonomy.read",
-  },
-  {
-    labelKey: "nav.notifications",
-    to: "/configuracoes/notificacoes",
-    icon: Bell,
-    modules: ["catalog", "rentals"],
-    permission: "core.notifications.read",
-  },
+  ...taxonomyManifest.navigationItems,
+  ...notificationsManifest.navigationItems,
 ]
 
-/**
- * Recursos lists rentable assets and loads `GET /api/units` (`core.units.read`).
- * Court listing for lessons stays on `rentals.assets.read` alone.
- */
-export const RENTAL_RESOURCES_PERMISSIONS = [
-  "rentals.assets.read",
-  "core.units.read",
-] as const
-
 const operationsItems: readonly AppNavigationItem[] = [
-  {
-    labelKey: "nav.assets",
-    to: "/ativos",
-    icon: Wrench,
-    modules: ["inventory"],
-    children: [
-      {
-        labelKey: "nav.assetsInventory",
-        to: "/ativos",
-        permission: "inventory.assets.read",
-      },
-      {
-        labelKey: "nav.assetsCategories",
-        to: "/ativos/categorias",
-        permission: "inventory.categories.read",
-      },
-    ],
-  },
-  {
-    labelKey: "nav.pmoc",
-    to: "/pmoc",
-    icon: ClipboardList,
-    modules: ["pmoc"],
-    children: [
-      {
-        labelKey: "nav.pmocPlans",
-        to: "/pmoc",
-        permission: "pmoc.plans.read",
-      },
-      {
-        labelKey: "nav.pmocLibrary",
-        to: "/pmoc/biblioteca",
-        permission: "pmoc.templates.read",
-      },
-      {
-        labelKey: "nav.pmocNew",
-        to: "/pmoc/novo",
-        permission: "pmoc.plans.write",
-      },
-    ],
-  },
-  {
-    labelKey: "nav.workOrders",
-    to: "/os",
-    icon: ClipboardPen,
-    modules: ["os"],
-    permission: "os.work_orders.read",
-  },
-  {
-    labelKey: "nav.rentalsResources",
-    to: "/configuracoes/recursos",
-    icon: Boxes,
-    modules: ["rentals"],
-    permissions: RENTAL_RESOURCES_PERMISSIONS,
-  },
-  {
-    labelKey: "nav.schedule",
-    to: "/configuracoes/agenda",
-    icon: CalendarClock,
-    modules: ["rentals"],
-    permission: "rentals.schedule.read",
-  },
-  {
-    labelKey: "nav.layout",
-    to: "/configuracoes/layout",
-    icon: Map,
-    modules: ["rentals"],
-    permission: "rentals.layouts.read",
-  },
-  {
-    labelKey: "nav.reservations",
-    to: "/configuracoes/reservas",
-    icon: CalendarCheck,
-    modules: ["rentals"],
-    permission: "rentals.reservations.read",
-  },
-  {
-    labelKey: "nav.bookingPolicy",
-    to: "/configuracoes/politica-reservas",
-    icon: ScrollText,
-    modules: ["rentals"],
-    permission: "rentals.booking_policy.read",
-  },
-  {
-    labelKey: "nav.catalog",
-    to: "/catalogo/produtos",
-    icon: Package,
-    modules: ["catalog"],
-    children: [
-      {
-        labelKey: "nav.catalogProducts",
-        to: "/catalogo/produtos",
-        permission: "catalog.products.read",
-      },
-      {
-        labelKey: "nav.catalogOrders",
-        to: "/catalogo/pedidos",
-        permission: "catalog.orders.read",
-      },
-      {
-        labelKey: "nav.catalogSettings",
-        to: "/catalogo/configuracoes",
-        permission: "catalog.products.manage",
-      },
-      {
-        labelKey: "nav.catalogNotifications",
-        to: "/catalogo/notificacoes",
-        permission: "catalog.notifications.read",
-      },
-    ],
-  },
+  ...assetsManifest.navigationItems,
+  ...pmocManifest.navigationItems,
+  ...workOrdersManifest.navigationItems,
+  ...rentalsManifest.navigationItems,
+  ...catalogManifest.navigationItems,
 ]
 
 /** Flat catalog used for title resolution and module filtering helpers. */
@@ -422,27 +284,7 @@ export function useAppNavigationSections(): AppNavigationState {
         },
         {
           titleKey: "nav.sections.platform",
-          items: [
-            {
-              labelKey: "nav.admin",
-              to: "/admin/dashboard",
-              icon: Shield,
-              children: [
-                {
-                  labelKey: "nav.adminTenants",
-                  to: "/admin/dashboard",
-                },
-                {
-                  labelKey: "nav.adminUsers",
-                  to: "/admin/users",
-                },
-                {
-                  labelKey: "nav.adminAssetFamilies",
-                  to: "/admin/asset-families",
-                },
-              ],
-            },
-          ],
+          items: adminManifest.navigationItems,
         },
       ]
     }

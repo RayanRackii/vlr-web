@@ -111,6 +111,32 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(tile.className).toContain("text-foreground")
   })
 
+  it("keeps a footer label clear of the visual art", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q3",
+            rentalAssetId: "33333333-3333-4333-8333-333333333333",
+            label: "Quadra 3",
+            footer: "Quadra 3 · Tênis",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: true,
+          },
+        ]}
+      />,
+    )
+
+    const tile = screen.getByRole("button", { name: "Quadra 3" })
+    expect(tile).toHaveTextContent("Quadra 3 · Tênis")
+    expect(tile.querySelector(".absolute.inset-x-0.bottom-0")).not.toBeNull()
+  })
+
   it("puts focus and screen-reader order in visual reading order", () => {
     render(
       <LayoutCanvasBoard

@@ -113,7 +113,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         <>
           <StaffHomeRedirectNotice />
           <TrialBanner />
-          {isInTenantEnvironment ? (
+          {isPlatformAdmin && location.pathname.startsWith("/admin") ? (
+            <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-sm text-foreground">
+              {t("admin.support.platformPanel")}
+            </div>
+          ) : isInTenantEnvironment ? (
           <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 dark:text-amber-100">
             <p className="min-w-0 truncate">
               {t("admin.support.banner", {

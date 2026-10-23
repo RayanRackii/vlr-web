@@ -27,6 +27,7 @@ import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTena
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
+import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
@@ -348,6 +349,8 @@ export function TenantAdminDashboard() {
           {t("dashboard.description")}
         </p>
       </div>
+
+      <RentalsReadinessCard />
 
       {loadError !== null ? (
         <div

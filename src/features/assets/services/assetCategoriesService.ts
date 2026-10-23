@@ -14,6 +14,24 @@ import {
 
 const ASSET_CATEGORIES_PATH = "/api/asset-categories"
 
+/** Authorization required by POST /api/asset-categories. */
+export const ASSET_CATEGORY_WRITE_REQUIREMENT = {
+  endpoint: ASSET_CATEGORIES_PATH,
+  module: "inventory",
+  permission: "inventory.categories.write",
+} as const
+
+export function canCreateAssetCategory(
+  activeModules: readonly string[],
+  can: (permission: string) => boolean,
+): boolean {
+  const inventoryIsActive = activeModules.some(
+    (moduleName) => moduleName.trim().toLowerCase() === ASSET_CATEGORY_WRITE_REQUIREMENT.module,
+  )
+
+  return inventoryIsActive && can(ASSET_CATEGORY_WRITE_REQUIREMENT.permission)
+}
+
 export async function getCategories(): Promise<AssetCategory[]> {
   try {
     const response = await api.get<unknown>(ASSET_CATEGORIES_PATH)

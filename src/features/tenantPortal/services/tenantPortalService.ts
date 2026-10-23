@@ -54,6 +54,16 @@ export type PendingEmailVerification = {
   verificationSendFailed: boolean
 }
 
+export class CustomerLoginRateLimitedError extends Error {
+  readonly retryAfterSeconds: number | null
+
+  constructor(retryAfterSeconds: number | null) {
+    super("Customer login is rate limited")
+    this.name = "CustomerLoginRateLimitedError"
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
 export function pendingEmailVerificationStorageKey(subdomain: string): string {
   return `${PENDING_EMAIL_VERIFICATION_KEY_PREFIX}.${subdomain.trim().toLowerCase()}`
 }
@@ -566,6 +576,17 @@ export async function loginCustomer(
     )
     return parsed.data
   } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 429) {
+      const retryAfter = error.response.headers?.["retry-after"]
+      const retryAfterSeconds =
+        typeof retryAfter === "string" &&
+        Number.isFinite(Number(retryAfter)) &&
+        Number(retryAfter) >= 0
+          ? Number(retryAfter)
+          : null
+      throw new CustomerLoginRateLimitedError(retryAfterSeconds)
+    }
+
     throw new Error(
       parseCustomerAuthError(
         getAxiosErrorPayload(error),
@@ -1018,6 +1039,7 @@ export async function createPortalReservation(body: {
   startTime: string
   endTime: string
   items: { assetId: string; quantity: number }[]
+  expectedTotalAmount?: number | null
 }): Promise<PortalReservation> {
   try {
     const response = await customerApi.post("/api/reservations", body)
@@ -1159,12 +1181,14 @@ export async function bookPortalSlot(body: {
   slotId: string
   unitId: string
   quantity?: number
+  expectedTotalAmount?: number | null
 }): Promise<PortalReservation> {
   try {
     const response = await customerApi.post("/api/schedule/slots/book", {
       slotId: body.slotId,
       unitId: body.unitId,
       quantity: body.quantity ?? 1,
+      expectedTotalAmount: body.expectedTotalAmount ?? undefined,
     })
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {

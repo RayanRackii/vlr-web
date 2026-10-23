@@ -17,6 +17,10 @@ vi.mock("@/features/users/hooks/useTrialStatus", () => ({
   }),
 }))
 
+vi.mock("@/features/admin/hooks/usePlatformAdmin", () => ({
+  useIsPlatformAdmin: () => false,
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -31,6 +35,7 @@ vi.mock("@/features/assets/services/assetsService", () => ({
 }))
 
 vi.mock("@/features/assets/services/assetCategoriesService", () => ({
+  canCreateAssetCategory: () => false,
   getCategories: vi.fn(async () => {
     throw new Error("must not call GET /api/asset-categories")
   }),
@@ -47,6 +52,7 @@ vi.mock("@/features/assets/services/assetFamiliesService", () => ({
 
 vi.mock("@/features/assets/services/unitsService", () => ({
   getUnits: vi.fn(),
+  createUnit: vi.fn(),
 }))
 
 vi.mock("@/features/rentals/services/scheduleService", () => ({
@@ -218,21 +224,30 @@ describe("RentalResourcesPage", () => {
     expect(toast.error).toHaveBeenCalledWith(i18n.t("rbac.errors.FORBIDDEN"))
   })
 
-  it("guides configuration when there are no categories and never links to Ativos", async () => {
+  it("offers a retry after a loading failure", async () => {
+    getUnitsMock.mockRejectedValueOnce(new Error("network failed"))
+    renderPage()
+
+    const retry = await screen.findByRole("button", { name: i18n.t("common.retry") })
+    await userEvent.setup().click(retry)
+
+    await waitFor(() => expect(getUnitsMock).toHaveBeenCalledTimes(2))
+  })
+
+  it("keeps resource creation available when there are no categories", async () => {
     listCategoriesMock.mockResolvedValue([])
     const { container } = renderPage()
 
     expect(
-      await screen.findByText(i18n.t("rentals.resources.emptyCategoriesTitle")),
+      await screen.findByText(i18n.t("rentals.resources.emptyTitle")),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("rentals.resources.emptyCategoriesDescription")),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: /ativos/i })).not.toBeInTheDocument()
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") }).length,
+    ).toBeGreaterThan(0)
     expectNoForbiddenCopy(container)
   })
 
-  it("creates a rentable with the Wave 2 payload and PUT uses the rental id", async () => {
+  it("creates a rentable without requiring or sending an identifier", async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -246,13 +261,9 @@ describe("RentalResourcesPage", () => {
       screen.getByLabelText(i18n.t("rentals.resources.form.name")),
       "Quadra 1",
     )
-    await user.type(
-      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
-      "Q-01",
-    )
-
-    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }))
-    await user.click(await screen.findByRole("option", { name: "Sede" }))
+    expect(
+      screen.queryByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    ).not.toBeInTheDocument()
 
     await user.click(
       screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.category") }),
@@ -270,13 +281,99 @@ describe("RentalResourcesPage", () => {
     const payload = createMock.mock.calls[0]?.[0]
     expect(payload).toMatchObject({
       name: "Quadra 1",
-      tag: "Q-01",
       unitId: UNIT_ID,
       categoryId: CATEGORY_ID,
       familyId: FAMILY_ID,
       rentalType: "Location",
     })
     expect(payload).not.toHaveProperty("maxAdvanceBookingDays")
+    expect(payload).not.toHaveProperty("tag")
+  })
+
+  it("shows the unit field when the tenant has multiple units", async () => {
+    const user = userEvent.setup()
+    const secondUnitId = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+    getUnitsMock.mockResolvedValueOnce([
+      {
+        id: UNIT_ID,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Sede",
+        code: "SEDE",
+        isActive: true,
+      },
+      {
+        id: secondUnitId,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Anexo",
+        code: "ANEXO",
+        isActive: true,
+      },
+    ])
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+
+    await user.click(
+      screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    )
+    expect(await screen.findByRole("option", { name: "Sede" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Anexo" })).toBeInTheDocument()
+  })
+
+  it("offers inline unit creation only with core.units.write", async () => {
+    const user = userEvent.setup()
+    renderPage([...WRITE_PERMS, "core.units.write"])
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+
+    await user.click(
+      screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    )
+    expect(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.resources.inlineCreate.unitAction"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("does not offer inline unit creation without core.units.write", async () => {
+    const user = userEvent.setup()
+    const secondUnitId = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+    getUnitsMock.mockResolvedValueOnce([
+      {
+        id: UNIT_ID,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Sede",
+        code: "SEDE",
+        isActive: true,
+      },
+      {
+        id: secondUnitId,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Anexo",
+        code: "ANEXO",
+        isActive: true,
+      },
+    ])
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await user.click(
+      screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.unit") }),
+    )
+
+    expect(screen.queryByRole("option", {
+      name: i18n.t("rentals.resources.inlineCreate.unitAction"),
+    })).not.toBeInTheDocument()
   })
 
   it("updates using the rental asset id from the list, not assetId", async () => {

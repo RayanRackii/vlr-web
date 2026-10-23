@@ -11,10 +11,10 @@ import {
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 const CATEGORY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 const FAMILY_ID = "11111111-1111-4111-8111-111111111111"
+const DETERMINISTIC_GUID = "3f2a9c1e-7b4d-1a2b-ff00-9c8d7e6f5a4b"
 
 const schema = createRentalResourceFormSchema({
   nameRequired: "name",
-  tagRequired: "tag",
   unitRequired: "unit",
   categoryRequired: "category",
   familyRequired: "family",
@@ -38,11 +38,56 @@ function formValues(
     queueEnabled: false,
     queueOpeningTime: "",
     location: "Block A",
+    visualTemplateRevisionId: "",
+    capacityPeople: "",
+    confirmVisualSuggestions: false,
     ...horizon,
   }
 }
 
 describe("resource booking horizon", () => {
+  it("accepts a blank identifier and omits it from the rentable payload", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      tag: "",
+    }
+
+    expect(schema.safeParse(values).success).toBe(true)
+    expect(toCreateRentableRequest(values)).not.toHaveProperty("tag")
+  })
+
+  it("accepts deterministic GUIDs while editing a resource with visual data", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      unitId: DETERMINISTIC_GUID,
+      categoryId: DETERMINISTIC_GUID,
+      visualTemplateRevisionId: DETERMINISTIC_GUID,
+      capacityPeople: "8",
+      location: "Quadra externa",
+    }
+
+    expect(schema.safeParse(values).success).toBe(true)
+    expect(toCreateRentableRequest(values).visualTemplateRevisionId).toBe(
+      DETERMINISTIC_GUID,
+    )
+  })
+
+  it("does not defer template defaults to the API", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      visualTemplateRevisionId: DETERMINISTIC_GUID,
+    }
+
+    expect(toCreateRentableRequest(values, {
+      creating: true,
+      stored: undefined,
+    })).toMatchObject({ visualTemplateRevisionId: DETERMINISTIC_GUID })
+    expect(toCreateRentableRequest(values, {
+      creating: true,
+      stored: undefined,
+    })).not.toHaveProperty("applyTemplateDefaults")
+  })
+
   it("omits the tenant default, sends null for unlimited, and sends a number of days", () => {
     const inherit = toCreateRentableRequest(
       formValues({ horizonMode: "inherit", horizonDays: "" }),
@@ -128,7 +173,6 @@ describe("resource booking horizon", () => {
 
     const request = {
       name: "Space 1",
-      tag: "S-01",
       unitId: UNIT_ID,
       categoryId: CATEGORY_ID,
       familyId: FAMILY_ID,
@@ -157,5 +201,20 @@ describe("resource booking horizon", () => {
         maxAdvanceBookingDays: null,
       }).success,
     ).toBe(true)
+  })
+
+  it("sends explicit nulls when an existing visual assignment or capacity is cleared", () => {
+    const values = {
+      ...formValues({ horizonMode: "inherit", horizonDays: "" }),
+      visualTemplateRevisionId: "",
+      capacityPeople: "",
+      confirmVisualSuggestions: false,
+    }
+    expect(toCreateRentableRequest(values, {
+      creating: false,
+      stored: undefined,
+      storedVisualTemplateRevisionId: FAMILY_ID,
+      storedCapacityPeople: 8,
+    })).toMatchObject({ visualTemplateRevisionId: null, capacityPeople: null })
   })
 })

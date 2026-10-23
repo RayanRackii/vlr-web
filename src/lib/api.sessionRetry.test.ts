@@ -204,9 +204,7 @@ describe("staff api 401 retry", () => {
     expect(calls[0]).toBe(`Bearer ${OLD_STAFF_TOKEN}`)
     expect(calls[1]).toBe(`Bearer ${NEW_STAFF_TOKEN}`)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
-    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-      refresh_token: REFRESH_SECRET,
-    })
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     expect(assignBrowserLocation).not.toHaveBeenCalled()
@@ -238,11 +236,10 @@ describe("staff api 401 retry", () => {
 
     expect(calls).toHaveLength(1)
     expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
-    expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-      refresh_token: REFRESH_SECRET,
-    })
+    expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" })
+    expect(assignBrowserLocation).toHaveBeenCalledWith("/login")
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     const logged = loggedText(info)
     expect(logged).toContain("\"errorName\":\"AuthApiError\"")
@@ -309,6 +306,7 @@ describe("staff api 401 retry", () => {
       expect(calls).toHaveLength(1)
       expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1)
       expect(supabase.auth.signOut).not.toHaveBeenCalled()
+      expect(assignBrowserLocation).not.toHaveBeenCalled()
       expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     },
   )
@@ -325,7 +323,58 @@ describe("staff api 401 retry", () => {
 
     expect(calls).toHaveLength(1)
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
+  })
+
+  it("does not sign out or redirect when a terminal refresh re-read belongs to another user", async () => {
+    const oldSession = {
+      data: { session: { access_token: OLD_STAFF_TOKEN, refresh_token: REFRESH_SECRET, user: { id: "user-1", email: STAFF_EMAIL } } },
+      error: null,
+    }
+    vi.mocked(supabase.auth.getSession)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockResolvedValueOnce({
+        data: { session: { access_token: "other-staff-access-token", refresh_token: OTHER_REFRESH_SECRET, user: { id: "user-2", email: OTHER_STAFF_EMAIL } } },
+        error: null,
+      } as never)
+    vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Invalid Refresh Token", 400, "refresh_token_not_found"),
+    } as never)
+    installAdapter(api, [{ kind: "status", status: 401 }])
+
+    await expect(api.get("/api/users/me")).rejects.toMatchObject({ response: { status: 401 } })
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
+  })
+
+  it("does not sign out or redirect when the staff auth epoch changes during a terminal refresh", async () => {
+    const oldSession = {
+      data: { session: { access_token: OLD_STAFF_TOKEN, refresh_token: REFRESH_SECRET, user: { id: "user-1", email: STAFF_EMAIL } } },
+      error: null,
+    }
+    vi.mocked(supabase.auth.getSession)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockResolvedValueOnce(oldSession as never)
+      .mockImplementationOnce(async () => {
+        noteStaffSignIn()
+        return oldSession as never
+      })
+    vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Invalid Refresh Token", 400, "refresh_token_not_found"),
+    } as never)
+    installAdapter(api, [{ kind: "status", status: 401 }])
+
+    await expect(api.get("/api/users/me")).rejects.toMatchObject({ response: { status: 401 } })
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(assignBrowserLocation).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -397,9 +446,7 @@ describe("staff api 401 retry", () => {
     const pending = api.get("/api/users/me")
 
     await vi.waitFor(() => {
-      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-        refresh_token: REFRESH_SECRET,
-      })
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     })
     await supabase.auth.signOut()
     pendingRefresh.release(refreshedStaffSession("user-1"))
@@ -427,9 +474,7 @@ describe("staff api 401 retry", () => {
     const pending = api.get("/api/users/me")
 
     await vi.waitFor(() => {
-      expect(supabase.auth.refreshSession).toHaveBeenCalledWith({
-        refresh_token: REFRESH_SECRET,
-      })
+      expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     })
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: {
@@ -527,7 +572,9 @@ function createAuthJsSession() {
 
     vi.mocked(supabase.auth.refreshSession).mockImplementation(async (args) => {
       const refreshToken =
-        typeof args?.refresh_token === "string" ? args.refresh_token : ""
+        typeof args?.refresh_token === "string"
+          ? args.refresh_token
+          : stored?.refreshToken ?? ""
       refreshCalls.push(refreshToken)
       const started = stored
       const script = await scriptFor(refreshToken)

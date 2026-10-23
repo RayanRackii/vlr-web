@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { ErrorState } from "@/components/ErrorState"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
@@ -89,7 +90,9 @@ export function RentalResourcesPage() {
     setSheetOpen(true)
   }
 
-  async function handleSubmit(values: RentalResourceFormValues): Promise<boolean> {
+  async function handleSubmit(
+    values: RentalResourceFormValues,
+  ): Promise<boolean> {
     if (!canWrite) {
       return false
     }
@@ -98,6 +101,8 @@ export function RentalResourcesPage() {
       const body = toCreateRentableRequest(values, {
         creating: editing === null,
         stored: editing?.maxAdvanceBookingDays,
+        storedVisualTemplateRevisionId: editing?.visualTemplateRevisionId,
+        storedCapacityPeople: editing?.capacityPeople,
       })
       if (editing) {
         await updateRentalAsset(editing.id, body)
@@ -140,7 +145,7 @@ export function RentalResourcesPage() {
           <Button
             type="button"
             className="w-full sm:w-auto"
-            disabled={!canWrite || loading || loadError !== null || categories.length === 0}
+            disabled={!canWrite || loading || loadError !== null}
             onClick={openCreate}
           >
             <Plus data-icon="inline-start" />
@@ -152,15 +157,7 @@ export function RentalResourcesPage() {
       {loading ? (
         <PageContentSkeleton rows={4} />
       ) : loadError !== null ? (
-        <p className="text-sm text-destructive" role="alert">
-          {loadError}
-        </p>
-      ) : categories.length === 0 ? (
-        <ScheduleEmptyState
-          icon={Boxes}
-          title={t("rentals.resources.emptyCategoriesTitle")}
-          description={t("rentals.resources.emptyCategoriesDescription")}
-        />
+        <ErrorState message={loadError} onRetry={() => void load()} />
       ) : assets.length === 0 ? (
         <ScheduleEmptyState
           icon={Boxes}

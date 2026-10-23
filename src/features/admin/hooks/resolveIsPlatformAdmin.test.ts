@@ -5,7 +5,7 @@ import { resolveIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
 const ALLOWLIST = ["boss@rolvix.com"]
 
 describe("resolveIsPlatformAdmin", () => {
-  it("treats SUPER_ADMIN with no tenant as platform admin", () => {
+  it("does not treat a tenant SUPER_ADMIN role as platform identity", () => {
     expect(
       resolveIsPlatformAdmin({
         role: "SUPER_ADMIN",
@@ -13,7 +13,7 @@ describe("resolveIsPlatformAdmin", () => {
         email: "other@example.com",
         allowlistEmails: ALLOWLIST,
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it("treats ADMIN on the email allowlist as platform admin (enter-tenant / bootstrap)", () => {

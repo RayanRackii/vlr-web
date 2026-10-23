@@ -41,5 +41,6 @@ vi.mock("@/lib/supabase", () => ({
 
 afterEach(() => {
   resetCurrentUserCacheForTests()
+  localStorage.clear()
   cleanup()
 })

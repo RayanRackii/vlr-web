@@ -97,8 +97,8 @@ export function readAgendaTimeParam(
 }
 
 /**
- * Today omits `date`. A chosen time is always written so a reload does not
- * fall back to the first slot. Other params, including `reservation`, stay.
+ * Today omits `date`. `time` is a one-shot deep-link hint and is removed
+ * after it initializes the selection. Other params, including `reservation`, stay.
  */
 export function agendaSelectionSearchParams(
   current: URLSearchParams,
@@ -113,12 +113,8 @@ export function agendaSelectionSearchParams(
     next.set("date", date)
   }
 
-  const clock = readAgendaTimeParam(time)
-  if (clock === null) {
-    next.delete("time")
-  } else {
-    next.set("time", clock)
-  }
+  void time
+  next.delete("time")
 
   return next
 }
