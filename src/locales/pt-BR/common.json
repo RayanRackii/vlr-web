@@ -1197,6 +1197,10 @@
         "hasScheduleTemplateOrRule": "Agenda",
         "hasBookingPolicy": "Política de reservas",
         "hasVisualOrMap": "Visual ou mapa"
+      },
+      "status": {
+        "done": "Concluído",
+        "pending": "Pendente"
       }
     },
     "sections": {

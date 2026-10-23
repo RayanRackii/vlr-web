@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -55,6 +55,26 @@ describe("RentalsReadinessCard", () => {
     expect(screen.getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasScheduleTemplateOrRule") })).toHaveAttribute("href", "/configuracoes/agenda")
     expect(screen.getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasBookingPolicy") })).toHaveAttribute("href", "/configuracoes/politica-reservas")
     expect(screen.getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasVisualOrMap") })).toHaveAttribute("href", "/configuracoes/layout")
+  })
+
+  it("announces each setup item's completion status to assistive technology", async () => {
+    getReadiness.mockResolvedValue({
+      ready: false,
+      items: [
+        { key: "hasUnits", done: true, count: 1 },
+        { key: "hasRentableAssets", done: false, count: 0 },
+      ],
+    })
+
+    renderCard()
+
+    const completedItem = (await screen.findByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasUnits") })).closest("li")
+    const pendingItem = screen.getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasRentableAssets") }).closest("li")
+
+    expect(completedItem).not.toBeNull()
+    expect(pendingItem).not.toBeNull()
+    expect(within(completedItem!).getByText(i18n.t("dashboard.rentalsReadiness.status.done"))).toBeInTheDocument()
+    expect(within(pendingItem!).getByText(i18n.t("dashboard.rentalsReadiness.status.pending"))).toBeInTheDocument()
   })
 
   it("does not load or render without the rentals module or read permission", () => {

@@ -46,6 +46,7 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 - [x] Centro de comando por módulo (clientes portal + inventory/rentals/os/pmoc/maintenance).
 - [x] i18n pt-BR / en / es.
 - [x] Passo 12 (WEB, local): card de readiness de Rentals no dashboard, gated por módulo + `rentals.assets.read`; consome `GET /api/rentals/readiness`, links de configuração e falha/404 silenciosa; título semântico e sem violação de hooks.
+- [x] Acessibilidade do card de readiness: cada item anuncia seu status concluído/pendente em texto `sr-only`, com i18n pt-BR/en/es e regressão RTL/Vitest.
 
 ## 2.9. Meu Perfil B2C — FEITO (código)
 

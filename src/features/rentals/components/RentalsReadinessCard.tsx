@@ -61,6 +61,7 @@ export function RentalsReadinessCard() {
           {readiness.items.map((item) => {
             const Icon = item.done ? CheckCircle2 : Circle
             const label = t(`dashboard.rentalsReadiness.items.${item.key}`)
+            const status = t(`dashboard.rentalsReadiness.status.${item.done ? "done" : "pending"}`)
 
             return (
               <li key={item.key} className="flex items-center gap-2 text-sm">
@@ -68,6 +69,7 @@ export function RentalsReadinessCard() {
                   aria-hidden="true"
                   className={item.done ? "size-4 text-emerald-600" : "size-4 text-muted-foreground"}
                 />
+                <span className="sr-only">{status}</span>
                 <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
                   {label}
                 </Link>
