@@ -1,5 +1,6 @@
+import userEvent from "@testing-library/user-event"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
 
 const ID = "11111111-1111-4111-8111-111111111111"
@@ -15,18 +16,29 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({ createP
 vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReservationQueue: () => ({ canReserve: true, applyBookingError: () => false, view: { kind: "hidden" }, explanation: null, joining: false }) }))
 
 describe("BookingMapExperience", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const visualService = await import("@/features/rentals/services/resourceVisualService")
+    vi.mocked(visualService.fetchDailyAvailability).mockResolvedValue({
+      date: "2026-10-21", timeZone: "America/Sao_Paulo", serverNow: "2030-10-21T12:00:00Z", quoteExpiresAt: "2030-10-21T13:00:00Z", currency: "BRL", resources: [{ rentalAssetId: ID, assetId: ASSET, unitId: UNIT, name: "Sala A", type: "Location", totalQuantity: 1, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [{ slotId: null, startTime: "08:00", endTime: "09:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 }] }],
+    })
+  })
+
   it("opens the panel, selects a valid time, and forwards the quoted total", async () => {
+    const user = userEvent.setup()
     render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} />)
     const resource = await screen.findByRole("button", { name: /Sala A/i })
-    fireEvent.click(resource)
+    await waitFor(() => expect(resource).toBeEnabled())
+    await user.click(resource)
     const time = await screen.findByRole("button", { name: /08:00/i })
-    fireEvent.click(time)
-    fireEvent.click(screen.getByRole("button", { name: /Continuar/i }))
+    await user.click(time)
+    await user.click(screen.getByRole("button", { name: /Continuar/i }))
     const { createPortalReservation } = await import("@/features/tenantPortal/services/tenantPortalService")
     await waitFor(() => expect(createPortalReservation).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalAmount: 50, items: [{ assetId: ASSET, quantity: 1 }] })))
   })
 
   it("does not submit a stale Good quote while quantity is being requoted", async () => {
+    const user = userEvent.setup()
     const visualService = await import("@/features/rentals/services/resourceVisualService")
     const portalService = await import("@/features/tenantPortal/services/tenantPortalService")
     vi.mocked(visualService.fetchDailyAvailability).mockResolvedValue({
@@ -37,19 +49,22 @@ describe("BookingMapExperience", () => {
       .mockResolvedValueOnce({ isAvailable: true, requestedQuantity: 1, availableQuantity: 5, estimatedTotalAmount: 50, reason: null })
       .mockImplementationOnce(() => new Promise((resolve) => { resolveRequote = resolve }))
     render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} />)
-    fireEvent.click(await screen.findByRole("button", { name: /Sala A/i }))
-    fireEvent.click(await screen.findByRole("button", { name: /08:00/i }))
+    const resource = await screen.findByRole("button", { name: /Sala A/i })
+    await waitFor(() => expect(resource).toBeEnabled())
+    await user.click(resource)
+    await user.click(await screen.findByRole("button", { name: /08:00/i }))
     const quantity = await screen.findByRole("spinbutton")
     await waitFor(() => expect(screen.getByRole("button", { name: /Continuar/i })).toBeEnabled())
     fireEvent.change(quantity, { target: { value: "2" } })
     expect(screen.getByRole("button", { name: /Continuar/i })).toBeDisabled()
     resolveRequote?.({ isAvailable: true, requestedQuantity: 2, availableQuantity: 4, estimatedTotalAmount: 100, reason: null })
     await waitFor(() => expect(screen.getByRole("button", { name: /Continuar/i })).toBeEnabled())
-    fireEvent.click(screen.getByRole("button", { name: /Continuar/i }))
+    await user.click(screen.getByRole("button", { name: /Continuar/i }))
     await waitFor(() => expect(portalService.createPortalReservation).toHaveBeenLastCalledWith(expect.objectContaining({ expectedTotalAmount: 100, items: [{ assetId: ASSET, quantity: 2 }] })))
   })
 
   it("shows compact free-slot chips and keeps ended slots behind a toggle", async () => {
+    const user = userEvent.setup()
     const visualService = await import("@/features/rentals/services/resourceVisualService")
     vi.mocked(visualService.fetchDailyAvailability).mockResolvedValue({
       date: "2026-10-21", timeZone: "America/Sao_Paulo", serverNow: "2030-10-21T12:00:00Z", quoteExpiresAt: "2030-10-21T13:00:00Z", currency: "BRL", resources: [{ rentalAssetId: ID, assetId: ASSET, unitId: UNIT, name: "Sala A", type: "Location", totalQuantity: 1, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [
@@ -61,14 +76,14 @@ describe("BookingMapExperience", () => {
     })
 
     render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} />)
-    fireEvent.click(await screen.findByRole("button", { name: /Lista/i }))
+    await user.click(await screen.findByRole("button", { name: /Lista/i }))
     expect(await screen.findByText("08:00")).toBeInTheDocument()
     expect(screen.getByText("09:00")).toBeInTheDocument()
     expect(screen.getByText("10:00")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Sala A/i }))
+    await user.click(screen.getByRole("button", { name: /Sala A/i }))
     expect(screen.queryByText(/07:00.*Encerrado/i)).not.toBeInTheDocument()
-    fireEvent.click(await screen.findByRole("button", { name: /Mostrar encerrados \(1\)/i }))
+    await user.click(await screen.findByRole("button", { name: /Mostrar encerrados \(1\)/i }))
     expect(screen.getByText(/07:00.*Encerrado/i)).toBeInTheDocument()
   })
 })
