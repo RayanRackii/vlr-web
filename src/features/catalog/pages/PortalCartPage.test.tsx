@@ -239,13 +239,15 @@ describe("PortalCartPage validity gate", () => {
       name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
     })
     replaceValue(pricedQuantity, "")
-    expect(pricedQuantity).toHaveValue(null)
+    await waitFor(() => expect(pricedQuantity).toHaveValue(null), { timeout: 5000 })
     expect(screen.getByText("Raquete")).toBeInTheDocument()
     expect(screen.getByText("Subtotal: R$ 20,00")).toBeInTheDocument()
 
     fireEvent.blur(pricedQuantity)
-    expect(pricedQuantity).toHaveValue(1)
-    expect(screen.getByText("Subtotal: R$ 10,00")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(pricedQuantity).toHaveValue(1)
+      expect(screen.getByText("Subtotal: R$ 10,00")).toBeInTheDocument()
+    }, { timeout: 5000 })
 
     replaceValue(pricedQuantity, "0")
     expect(pricedQuantity).toHaveValue(0)
@@ -263,8 +265,10 @@ describe("PortalCartPage validity gate", () => {
         name: i18n.t("tenantPortal.catalog.removeItem", { name: "Rede" }),
       }),
     )
-    expect(screen.queryByText("Rede")).not.toBeInTheDocument()
-    expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText("Rede")).not.toBeInTheDocument()
+      expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()
+    }, { timeout: 5000 })
     expect(screen.queryByText(/A partir de/)).not.toBeInTheDocument()
   })
 

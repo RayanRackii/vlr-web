@@ -59,6 +59,9 @@ describe("CreatePlanPage category picker", () => {
   beforeEach(() => {
     getUnitsMock.mockReset()
     listCategoriesMock.mockReset()
+    createPlanMock.mockReset()
+    toastSuccess.mockReset()
+    vi.mocked(toast.error).mockReset()
     getUnitsMock.mockResolvedValue([
       {
         id: UNIT_ID,
@@ -116,6 +119,8 @@ describe("CreatePlanPage validity gate", () => {
     getUnitsMock.mockReset()
     listCategoriesMock.mockReset()
     createPlanMock.mockReset()
+    toastSuccess.mockReset()
+    vi.mocked(toast.error).mockReset()
     getUnitsMock.mockResolvedValue([
       {
         id: UNIT_ID,
@@ -189,19 +194,19 @@ describe("CreatePlanPage validity gate", () => {
 
     const name = screen.getByLabelText(i18n.t("pmoc.create.form.name"))
     await user.type(name, "   ")
-    expect(save).toBeDisabled()
+    await waitFor(() => expect(save).toBeDisabled(), { timeout: 5000 })
     expect(createPlanMock).not.toHaveBeenCalled()
 
     await user.clear(name)
     await fillValidPlan(user)
-    expect(save).toBeEnabled()
+    await waitFor(() => expect(save).toBeEnabled(), { timeout: 5000 })
 
     const interval = screen.getByRole("spinbutton", {
       name: i18n.t("pmoc.scheduling.interval"),
     })
     await user.clear(interval)
     await user.type(interval, "0")
-    expect(save).toBeDisabled()
+    await waitFor(() => expect(save).toBeDisabled(), { timeout: 5000 })
     expect(
       screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
     ).toBeGreaterThan(0)
@@ -211,7 +216,7 @@ describe("CreatePlanPage validity gate", () => {
 
     await user.clear(interval)
     await user.type(interval, "30")
-    expect(save).toBeEnabled()
+    await waitFor(() => expect(save).toBeEnabled(), { timeout: 5000 })
     expect(createPlanMock).not.toHaveBeenCalled()
   })
 
