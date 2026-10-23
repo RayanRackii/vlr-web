@@ -33,6 +33,6 @@ export const usersManifest = {
         path: "/perfil",
         element: <StaffProfilePage />,
       },
-    ] satisfies readonly FeatureRoute[],
+    ] as readonly FeatureRoute[],
   },
 } as const
