@@ -2,7 +2,6 @@ import { useMemo } from "react"
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
-import { RENTAL_RESOURCES_PERMISSIONS } from "@/components/layout/navigation"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
@@ -16,11 +15,7 @@ import { dashboardManifest } from "@/features/dashboard/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { onboardingManifest } from "@/features/onboarding/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
-import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
-import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
-import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
-import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
-import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
+import { rentalsManifest } from "@/features/rentals/manifest"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
@@ -146,46 +141,11 @@ export function AppRoutes() {
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
-          <Route
-            element={
-              <PermissionRoute permissions={RENTAL_RESOURCES_PERMISSIONS} />
-            }
-          >
-            <Route
-              path="/configuracoes/recursos"
-              element={<RentalResourcesPage />}
-            />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="rentals.schedule.read" />}
-          >
-            <Route path="/configuracoes/agenda" element={<SchedulePage />} />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="rentals.layouts.read" />}
-          >
-            <Route path="/configuracoes/layout" element={<RentalLayoutsPage />} />
-          </Route>
-          <Route
-            element={
-              <PermissionRoute permission="rentals.reservations.read" />
-            }
-          >
-            <Route
-              path="/configuracoes/reservas"
-              element={<ReservationsPage />}
-            />
-          </Route>
-          <Route
-            element={
-              <PermissionRoute permission="rentals.booking_policy.read" />
-            }
-          >
-            <Route
-              path="/configuracoes/politica-reservas"
-              element={<BookingPolicyPage />}
-            />
-          </Route>
+          {rentalsManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permissions={route.permissions} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           {catalogManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
               <Route path={route.path} element={route.element} />
