@@ -5,6 +5,8 @@ import navigationSource from "@/components/layout/navigation.ts?raw"
 import { appNavigationItems } from "@/components/layout/navigation"
 import { catalogManifest } from "@/features/catalog/manifest"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
+import { assetsManifest } from "@/features/assets/manifest"
+import { pmocManifest } from "@/features/pmoc/manifest"
 
 describe("feature manifests", () => {
   it("keeps tenant portal and catalog routes in their manifests", () => {
@@ -52,5 +54,28 @@ describe("feature manifests", () => {
     expect(appNavigationItems).toContain(catalogManifest.navigationItems[0])
     expect(navigationSource).toContain("...catalogManifest.navigationItems")
     expect(tenantPortalManifest.navigationItems).toEqual([])
+  })
+
+  it("keeps assets and PMOC routes and navigation in their manifests", () => {
+    expect(assetsManifest.modules).toEqual(["inventory"])
+    expect(assetsManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/ativos",
+      "/ativos/categorias",
+    ])
+    expect(pmocManifest.modules).toEqual(["pmoc"])
+    expect(pmocManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/pmoc",
+      "/pmoc/biblioteca",
+      "/pmoc/biblioteca/:templateId",
+      "/pmoc/novo",
+      "/pmoc/:id",
+    ])
+
+    expect(appNavigationItems).toContain(assetsManifest.navigationItems[0])
+    expect(appNavigationItems).toContain(pmocManifest.navigationItems[0])
+    expect(navigationSource).toContain("...assetsManifest.navigationItems")
+    expect(navigationSource).toContain("...pmocManifest.navigationItems")
+    expect(appRoutesSource).toContain("assetsManifest.routes.staff")
+    expect(appRoutesSource).toContain("pmocManifest.routes.staff")
   })
 })

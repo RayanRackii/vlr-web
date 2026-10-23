@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   CalendarClock,
   Tags,
-  ClipboardList,
   ClipboardPen,
   FormInput,
   LayoutDashboard,
@@ -15,11 +14,12 @@ import {
   ScrollText,
   Shield,
   Users,
-  Wrench,
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
+import { pmocManifest } from "@/features/pmoc/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
@@ -141,47 +141,8 @@ export const RENTAL_RESOURCES_PERMISSIONS = [
 ] as const
 
 const operationsItems: readonly AppNavigationItem[] = [
-  {
-    labelKey: "nav.assets",
-    to: "/ativos",
-    icon: Wrench,
-    modules: ["inventory"],
-    children: [
-      {
-        labelKey: "nav.assetsInventory",
-        to: "/ativos",
-        permission: "inventory.assets.read",
-      },
-      {
-        labelKey: "nav.assetsCategories",
-        to: "/ativos/categorias",
-        permission: "inventory.categories.read",
-      },
-    ],
-  },
-  {
-    labelKey: "nav.pmoc",
-    to: "/pmoc",
-    icon: ClipboardList,
-    modules: ["pmoc"],
-    children: [
-      {
-        labelKey: "nav.pmocPlans",
-        to: "/pmoc",
-        permission: "pmoc.plans.read",
-      },
-      {
-        labelKey: "nav.pmocLibrary",
-        to: "/pmoc/biblioteca",
-        permission: "pmoc.templates.read",
-      },
-      {
-        labelKey: "nav.pmocNew",
-        to: "/pmoc/novo",
-        permission: "pmoc.plans.write",
-      },
-    ],
-  },
+  ...assetsManifest.navigationItems,
+  ...pmocManifest.navigationItems,
   {
     labelKey: "nav.workOrders",
     to: "/os",
