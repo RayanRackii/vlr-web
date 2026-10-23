@@ -7,23 +7,14 @@ import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
-import { AdminAssetFamiliesPage } from "@/features/admin/pages/AdminAssetFamiliesPage"
-import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
-import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage"
+import { adminManifest } from "@/features/admin/manifest"
+import { authManifest } from "@/features/auth/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
-import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
-import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
-import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
-import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
-import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
-import { LoginPage } from "@/features/auth/LoginPage"
-import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
-import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { assetsManifest } from "@/features/assets/manifest"
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
-import { LandingPage } from "@/features/landing/pages/LandingPage"
+import { landingManifest } from "@/features/landing/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
-import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
+import { onboardingManifest } from "@/features/onboarding/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
@@ -90,12 +81,9 @@ export function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/landing" element={<Navigate to="/" replace />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/invite" element={<SetPasswordPage />} />
+      {landingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+      {onboardingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+      {authManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
 
       <Route path="/t/:subdomain">
         <Route path="configuracoes/*" element={<RedirectTenantStaffRoute />} />
@@ -122,12 +110,7 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<PlatformAdminRoute />}>
-          <Route
-            path="/admin/tenants"
-            element={<Navigate to="/admin/dashboard" replace />}
-          />
-          <Route path="/admin/tenants/new" element={<NewTenantPage />} />
-          <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
+          {adminManifest.routes.platformStandalone.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
         </Route>
 
         <Route element={<MainLayout />}>
@@ -155,24 +138,11 @@ export function AppRoutes() {
           >
             <Route path="/os/nova" element={<CreateWorkOrderPage />} />
           </Route>
-          <Route
-            element={
-              <PermissionRoute permission="core.registration_fields.read" />
-            }
-          >
-            <Route
-              path="/configuracoes/cadastro"
-              element={<TenantRegistrationFieldsPage />}
-            />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="core.module_menu.read" />}
-          >
-            <Route
-              path="/configuracoes/menu"
-              element={<TenantModuleMenuPage />}
-            />
-          </Route>
+          {adminManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           {taxonomyManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
               <Route path={route.path} element={route.element} />
@@ -234,18 +204,7 @@ export function AppRoutes() {
           <Route path="/perfil" element={<StaffProfilePage />} />
 
           <Route element={<PlatformAdminRoute />}>
-            <Route
-              path="/admin"
-              element={<Navigate to="/admin/dashboard" replace />}
-            />
-            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/recursos-visuais" element={<ResourceVisualCatalogPage />} />
-            <Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} />
-            <Route
-              path="/admin/asset-families"
-              element={<AdminAssetFamiliesPage />}
-            />
+            {adminManifest.routes.platformShell.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
           </Route>
         </Route>
       </Route>

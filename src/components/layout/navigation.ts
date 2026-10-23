@@ -10,11 +10,11 @@ import {
   Map,
   MenuSquare,
   ScrollText,
-  Shield,
   Users,
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
@@ -345,27 +345,7 @@ export function useAppNavigationSections(): AppNavigationState {
         },
         {
           titleKey: "nav.sections.platform",
-          items: [
-            {
-              labelKey: "nav.admin",
-              to: "/admin/dashboard",
-              icon: Shield,
-              children: [
-                {
-                  labelKey: "nav.adminTenants",
-                  to: "/admin/dashboard",
-                },
-                {
-                  labelKey: "nav.adminUsers",
-                  to: "/admin/users",
-                },
-                {
-                  labelKey: "nav.adminAssetFamilies",
-                  to: "/admin/asset-families",
-                },
-              ],
-            },
-          ],
+          items: adminManifest.navigationItems,
         },
       ]
     }
