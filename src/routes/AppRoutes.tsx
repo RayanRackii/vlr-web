@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
 import { AdminAssetFamiliesPage } from "@/features/admin/pages/AdminAssetFamiliesPage"
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
 import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage"
+import { catalogManifest } from "@/features/catalog/manifest"
 import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
@@ -35,29 +36,9 @@ import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPag
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
-import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
-import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
-import { TenantPortalForgotPasswordPage } from "@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"
-import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
-import { TenantPortalResetPasswordPage } from "@/features/tenantPortal/pages/TenantPortalResetPasswordPage"
-import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
-import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
-import { TenantPortalVerifyEmailPage } from "@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"
-import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
-import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
-import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
-import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
-import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { TaxonomyPage } from "@/features/taxonomy/pages/TaxonomyPage"
-import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
-import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
-import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
-import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
-import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
-import { PortalProductRequestDetailPage } from "@/features/catalog/pages/PortalProductRequestDetailPage"
-import { PortalProductRequestPage } from "@/features/catalog/pages/PortalProductRequestPage"
-import { PortalProductRequestsPage } from "@/features/catalog/pages/PortalProductRequestsPage"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
@@ -96,32 +77,16 @@ export function AppRoutes() {
     return (
       <Routes>
         <Route element={<TenantPortalLayout />}>
-          <Route index element={<TenantPortalLoginPage />} />
-          <Route path="register" element={<TenantPortalRegisterPage />} />
-          <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
-          <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
-          <Route path="forgot-password" element={<TenantPortalForgotPasswordPage />} />
-          <Route
-            path="forgot-password/confirm"
-            element={<TenantPortalResetPasswordPage />}
-          />
+          {tenantPortalManifest.routes.public.map((route) =>
+            route.redirectToEmail ? (
+              <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
+            ) : (
+              <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
+            ),
+          )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          <Route path="app" element={<TenantPortalHomePage />} />
-          <Route path="app/perfil" element={<TenantPortalProfilePage />} />
-          <Route path="agenda" element={<TenantPortalAgendaPage />} />
-          <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
-          <Route path="catalogo" element={<PortalCatalogPage />} />
-          <Route path="catalogo/carrinho" element={<PortalCartPage />} />
-          <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
-          <Route path="catalogo/solicitacoes" element={<PortalProductRequestsPage />} />
-          <Route
-            path="catalogo/solicitacoes/:requestId"
-            element={<PortalProductRequestDetailPage />}
-          />
-          <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
-          <Route path="pedidos" element={<PortalOrdersPage />} />
-          <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />
+          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -147,32 +112,16 @@ export function AppRoutes() {
         <Route path="perfil/*" element={<RedirectTenantStaffRoute />} />
         <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
         <Route element={<TenantPortalLayout />}>
-          <Route index element={<TenantPortalLoginPage />} />
-          <Route path="register" element={<TenantPortalRegisterPage />} />
-          <Route path="verify-email" element={<TenantPortalVerifyEmailPage />} />
-          <Route path="verify-phone" element={<RedirectVerifyPhoneToEmail />} />
-          <Route path="forgot-password" element={<TenantPortalForgotPasswordPage />} />
-          <Route
-            path="forgot-password/confirm"
-            element={<TenantPortalResetPasswordPage />}
-          />
+          {tenantPortalManifest.routes.public.map((route) =>
+            route.redirectToEmail ? (
+              <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
+            ) : (
+              <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
+            ),
+          )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          <Route path="app" element={<TenantPortalHomePage />} />
-          <Route path="app/perfil" element={<TenantPortalProfilePage />} />
-          <Route path="agenda" element={<TenantPortalAgendaPage />} />
-          <Route path="agenda/:menuItemId" element={<TenantPortalAgendaPage />} />
-          <Route path="catalogo" element={<PortalCatalogPage />} />
-          <Route path="catalogo/carrinho" element={<PortalCartPage />} />
-          <Route path="catalogo/solicitar" element={<PortalProductRequestPage />} />
-          <Route path="catalogo/solicitacoes" element={<PortalProductRequestsPage />} />
-          <Route
-            path="catalogo/solicitacoes/:requestId"
-            element={<PortalProductRequestDetailPage />}
-          />
-          <Route path="catalogo/:productId" element={<PortalCatalogProductPage />} />
-          <Route path="pedidos" element={<PortalOrdersPage />} />
-          <Route path="pedidos/:orderId" element={<PortalOrderDetailPage />} />
+          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
         </Route>
       </Route>
 
@@ -303,33 +252,11 @@ export function AppRoutes() {
               element={<BookingPolicyPage />}
             />
           </Route>
-          <Route element={<PermissionRoute permission="catalog.products.manage" />}>
-            <Route path="/catalogo/configuracoes" element={<CatalogPolicyPage />} />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="catalog.products.read" />}
-          >
-            <Route path="/catalogo/produtos" element={<CatalogProductsPage />} />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="catalog.orders.read" />}
-          >
-            <Route path="/catalogo/pedidos" element={<CatalogOrdersPage />} />
-            <Route
-              path="/catalogo/pedidos/:orderId"
-              element={<CatalogOrderDetailPage />}
-            />
-          </Route>
-          <Route
-            element={
-              <PermissionRoute permission="catalog.notifications.read" />
-            }
-          >
-            <Route
-              path="/catalogo/notificacoes"
-              element={<CatalogNotificationsPage />}
-            />
-          </Route>
+          {catalogManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           <Route element={<PermissionRoute permission="core.users.read" />}>
             <Route path="/pessoas-e-acesso" element={<PeopleAccessPage />} />
           </Route>

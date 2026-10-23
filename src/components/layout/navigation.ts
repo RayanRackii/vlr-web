@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   Map,
   MenuSquare,
-  Package,
   ScrollText,
   Shield,
   Users,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react"
 
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { catalogManifest } from "@/features/catalog/manifest"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
@@ -224,34 +224,7 @@ const operationsItems: readonly AppNavigationItem[] = [
     modules: ["rentals"],
     permission: "rentals.booking_policy.read",
   },
-  {
-    labelKey: "nav.catalog",
-    to: "/catalogo/produtos",
-    icon: Package,
-    modules: ["catalog"],
-    children: [
-      {
-        labelKey: "nav.catalogProducts",
-        to: "/catalogo/produtos",
-        permission: "catalog.products.read",
-      },
-      {
-        labelKey: "nav.catalogOrders",
-        to: "/catalogo/pedidos",
-        permission: "catalog.orders.read",
-      },
-      {
-        labelKey: "nav.catalogSettings",
-        to: "/catalogo/configuracoes",
-        permission: "catalog.products.manage",
-      },
-      {
-        labelKey: "nav.catalogNotifications",
-        to: "/catalogo/notificacoes",
-        permission: "catalog.notifications.read",
-      },
-    ],
-  },
+  ...catalogManifest.navigationItems,
 ]
 
 /** Flat catalog used for title resolution and module filtering helpers. */
