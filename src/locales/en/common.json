@@ -327,6 +327,9 @@
       "toastError": "Could not sign in.",
       "invalidCredentials": "Invalid email or password.",
       "emailNotVerified": "Confirm your email before signing in.",
+      "rateLimited": "Too many attempts. Please try again later.",
+      "rateLimitedWithMinutes_one": "Too many attempts. Try again in {{count}} minute.",
+      "rateLimitedWithMinutes_other": "Too many attempts. Try again in {{count}} minutes.",
       "noAccount": "No account yet?",
       "registerLink": "Register",
       "forgotPassword": "Forgot password"
