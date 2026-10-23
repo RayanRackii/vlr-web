@@ -327,6 +327,9 @@
       "toastError": "No fue posible entrar.",
       "invalidCredentials": "Correo o contraseña inválidos.",
       "emailNotVerified": "Confirme su correo antes de entrar.",
+      "rateLimited": "Demasiados intentos. Inténtelo de nuevo más tarde.",
+      "rateLimitedWithMinutes_one": "Demasiados intentos. Inténtelo de nuevo en {{count}} minuto.",
+      "rateLimitedWithMinutes_other": "Demasiados intentos. Inténtelo de nuevo en {{count}} minutos.",
       "noAccount": "¿Aún no tiene cuenta?",
       "registerLink": "Regístrese",
       "forgotPassword": "Olvidé mi contraseña"

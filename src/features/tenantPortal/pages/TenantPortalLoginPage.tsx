@@ -21,6 +21,7 @@ import {
   type CustomerLoginFormValues,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  CustomerLoginRateLimitedError,
   isCustomerSignedInForTenant,
   loginCustomer,
   tenantPortalPath,
@@ -58,6 +59,17 @@ export function TenantPortalLoginPage() {
       toast.success(t("tenantPortal.login.toastSuccess"))
       void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
+      if (error instanceof CustomerLoginRateLimitedError) {
+        toast.error(
+          error.retryAfterSeconds === null
+            ? t("tenantPortal.login.rateLimited")
+            : t("tenantPortal.login.rateLimitedWithMinutes", {
+                count: Math.ceil(error.retryAfterSeconds / 60),
+              }),
+        )
+        return
+      }
+
       toast.error(
         error instanceof Error
           ? error.message

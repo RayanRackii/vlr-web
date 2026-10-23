@@ -27,6 +27,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 import { toast } from "sonner"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import {
+  CustomerLoginRateLimitedError,
   clearCustomerSession,
   loginCustomer,
   persistCustomerSession,
@@ -157,6 +158,52 @@ describe("TenantPortalLoginPage", () => {
       screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
     ).toBeEnabled()
     expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
+  })
+
+  it("shows the rounded-up retry time after a rate-limited login", async () => {
+    const user = userEvent.setup()
+    login.mockRejectedValue(new CustomerLoginRateLimitedError(61))
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "wrong-password",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Muitas tentativas. Tente novamente em 2 minutos.",
+      )
+    })
+  })
+
+  it("shows a generic message when a rate-limited login has no retry time", async () => {
+    const user = userEvent.setup()
+    login.mockRejectedValue(new CustomerLoginRateLimitedError(null))
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "wrong-password",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("Muitas tentativas. Tente novamente mais tarde.")
+    })
   })
 
   it("opens the signed-in portal when this tenant already has a session", async () => {
