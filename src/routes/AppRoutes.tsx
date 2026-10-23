@@ -22,6 +22,7 @@ import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { assetsManifest } from "@/features/assets/manifest"
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
 import { LandingPage } from "@/features/landing/pages/LandingPage"
+import { notificationsManifest } from "@/features/notifications/manifest"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
@@ -32,8 +33,7 @@ import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
-import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
-import { TaxonomyPage } from "@/features/taxonomy/pages/TaxonomyPage"
+import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
@@ -173,19 +173,16 @@ export function AppRoutes() {
               element={<TenantModuleMenuPage />}
             />
           </Route>
-          <Route
-            element={
-              <PermissionRoute permission="core.notifications.read" />
-            }
-          >
-            <Route
-              path="/configuracoes/notificacoes"
-              element={<NotificationsSettingsPage />}
-            />
-          </Route>
-          <Route element={<PermissionRoute permission="core.taxonomy.read" />}>
-            <Route path="/configuracoes/categorias-tags" element={<TaxonomyPage />} />
-          </Route>
+          {taxonomyManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
+          {notificationsManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           <Route
             element={
               <PermissionRoute permissions={RENTAL_RESOURCES_PERMISSIONS} />

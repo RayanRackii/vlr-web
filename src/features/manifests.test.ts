@@ -7,6 +7,8 @@ import { catalogManifest } from "@/features/catalog/manifest"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
+import { taxonomyManifest } from "@/features/taxonomy/manifest"
+import { notificationsManifest } from "@/features/notifications/manifest"
 
 describe("feature manifests", () => {
   it("keeps tenant portal and catalog routes in their manifests", () => {
@@ -77,5 +79,23 @@ describe("feature manifests", () => {
     expect(navigationSource).toContain("...pmocManifest.navigationItems")
     expect(appRoutesSource).toContain("assetsManifest.routes.staff")
     expect(appRoutesSource).toContain("pmocManifest.routes.staff")
+  })
+
+  it("keeps taxonomy and notifications routes and navigation in their manifests", () => {
+    expect(taxonomyManifest.modules).toEqual([])
+    expect(taxonomyManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/configuracoes/categorias-tags",
+    ])
+    expect(notificationsManifest.modules).toEqual(["catalog", "rentals"])
+    expect(notificationsManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/configuracoes/notificacoes",
+    ])
+
+    expect(appNavigationItems).toContain(taxonomyManifest.navigationItems[0])
+    expect(appNavigationItems).toContain(notificationsManifest.navigationItems[0])
+    expect(navigationSource).toContain("...taxonomyManifest.navigationItems")
+    expect(navigationSource).toContain("...notificationsManifest.navigationItems")
+    expect(appRoutesSource).toContain("taxonomyManifest.routes.staff")
+    expect(appRoutesSource).toContain("notificationsManifest.routes.staff")
   })
 })
