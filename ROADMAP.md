@@ -47,6 +47,7 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 - [x] i18n pt-BR / en / es.
 - [x] Passo 12 (WEB, local): card de readiness de Rentals no dashboard, gated por módulo + `rentals.assets.read`; consome `GET /api/rentals/readiness`, links de configuração e falha/404 silenciosa; título semântico e sem violação de hooks.
 - [x] Acessibilidade do card de readiness: cada item anuncia seu status concluído/pendente em texto `sr-only`, com i18n pt-BR/en/es e regressão RTL/Vitest.
+- [x] Passo 21 (WEB, local): snapshot OpenAPI local e geração verificável do cliente/schema Zod para `GET /api/rentals/readiness`; o card preserva a ocultação em payload inválido.
 
 ## 2.9. Meu Perfil B2C — FEITO (código)
 
@@ -245,6 +246,7 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 | 2026-10-23 | **Correção local:** o array de rotas do manifesto de usuários agora é explicitamente `readonly FeatureRoute[]`, para que consumidores possam ler `permission` opcionalmente também na rota `/perfil`, sem alterar o roteamento ou o RBAC. |
 | 2026-10-23 | **Passo 12 (WEB, local):** dashboard B2B exibe checklist de configuração de Rentals para módulo ativo e `rentals.assets.read`, com links para Recursos, Agenda, Política e Mapa; some ao ficar pronto e em erro/404. Service Zod, i18n pt-BR/en/es e testes Vitest adicionados. Correção posterior: título é `h2` e o gating não atualiza estado no effect (lint). Vitest bloqueado neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar as regressões fora do sandbox. Próximo API: regenerar o snapshot OpenAPI completo do endpoint readiness. |
+| 2026-10-23 | **Passo 21 (WEB, local):** `openapi/openapi.json` espelha o snapshot OpenAPI commitado da API; `npm run gen:api` gera e `npm run check:api` verifica o cliente/schema Zod de `GET /api/rentals/readiness`. O service do card usa o artefato gerado e mantém a rejeição dos campos que o card exige. Próximo WEB: gerar o próximo endpoint novo a partir do mesmo snapshot. Próximo API: manter/regenerar o snapshot canônico ao mudar contratos. |
 
 | 2026-10-23 | **F1-4 (WEB, local):** login B2C trata `429` de `POST /api/auth/customer/login`: traduz espera com `Retry-After` arredondado para minutos ou aviso genérico sem header; 401 preserva a mensagem de credenciais. Testes Vitest adicionados; bloqueados neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar os testes de login fora do sandbox. Próximo API: migration e release do throttle para PROD. |
 

@@ -4,8 +4,10 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import type { RentalsReadiness } from "@/features/rentals/schemas/rentalsReadinessSchemas"
-import { getRentalsReadiness } from "@/features/rentals/services/rentalsReadinessService"
+import {
+  getRentalsReadiness,
+  type RentalsReadiness,
+} from "@/features/rentals/services/rentalsReadinessService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const READINESS_LINKS = {
