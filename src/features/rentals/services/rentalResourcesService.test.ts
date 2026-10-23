@@ -103,6 +103,30 @@ describe("rentalResourcesService catalog URLs", () => {
     expectNoInventoryAssetUrls()
   })
 
+  it("creates a category via POST /api/rental-assets/categories and parses its response", async () => {
+    apiPost.mockResolvedValue({ data: category })
+    const { createRentalCategory } = await import(
+      "@/features/rentals/services/rentalResourcesService"
+    )
+
+    const result = await createRentalCategory({ name: " Quadra " })
+
+    expect(apiPost).toHaveBeenCalledWith("/api/rental-assets/categories", {
+      name: "Quadra",
+    })
+    expect(result).toEqual(category)
+    expectNoInventoryAssetUrls()
+  })
+
+  it("rejects an invalid category response", async () => {
+    apiPost.mockResolvedValue({ data: { id: "not-a-uuid", name: "" } })
+    const { createRentalCategory } = await import(
+      "@/features/rentals/services/rentalResourcesService"
+    )
+
+    await expect(createRentalCategory({ name: "Quadra" })).rejects.toThrow()
+  })
+
   it("lists families from GET /api/rental-assets/families, not /api/asset-families", async () => {
     apiGet.mockResolvedValue({ data: [family] })
     const { listRentalAssetFamilies } = await import(

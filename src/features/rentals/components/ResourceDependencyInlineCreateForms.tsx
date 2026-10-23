@@ -8,8 +8,8 @@ import { z } from "zod"
 import { InlineCreateDrawerFooter, type InlineCreateOption } from "@/components/inline-create/InlineCreateSelect"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createCategory } from "@/features/assets/services/assetCategoriesService"
 import { createUnit } from "@/features/assets/services/unitsService"
+import { createRentalCategory } from "@/features/rentals/services/rentalResourcesService"
 import { publishVisualRevision, saveVisualRevision, saveVisualTemplate } from "@/features/rentals/services/resourceVisualService"
 
 type InlineCreateFormProps = {
@@ -51,7 +51,7 @@ export function InlineCreateCategoryForm({ complete, close }: InlineCreateFormPr
         className="space-y-4"
         onSubmit={form.handleSubmit(async ({ name }) => {
           try {
-            const created = await createCategory({ name })
+            const created = await createRentalCategory({ name })
             await complete({ value: created.id, label: created.name })
           } catch (error) {
             toast.error(error instanceof Error ? error.message : t("rentals.resources.createError"))

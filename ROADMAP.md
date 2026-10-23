@@ -202,6 +202,7 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 - [x] Wizard Location: “Fila de reservas” + horário de abertura (`queueEnabled` / `queueOpeningTime`); oculto para Good
 - [x] F-16: lote — tipo Location gera N recursos numerados; tipo Good gera um recurso com quantidade em estoque (sem toggle extra)
 - [x] Wave 4: cadastro de recursos alugáveis via Rentals (`POST/PUT /api/rental-assets`) quando `inventory` está off. Ativos permanece o CRUD geral quando Inventory está on. Sem serial number / data de instalação / RequiresMaintenance / exclusão em lote nesta tela.
+- [x] F1-1: criação inline de Tipo em Recursos usa `POST /api/rental-assets/categories`, seleciona o item criado e só aparece com `rentals.assets.write`; Ativos continua no seu service de categorias.
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
@@ -239,6 +240,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
 ## Histórico
+
+| 2026-10-22 | **F1-1 (WEB, local):** a criação inline de Tipo em Recursos passou a usar `POST /api/rental-assets/categories`, com payload `{ name }` e validação Zod da resposta no service de Rentals; não altera o CRUD de Tipos em Ativos. A ação só é exibida para `rentals.assets.write`, como o endpoint. Testes cobrem URL/payload/parse, criação+seleção inline e gate com/sem permissão. Próximo WEB: smoke DEV da criação inline de Tipo no cadastro de Recursos. Próximo API: validar o endpoint novo em DEV com 201, 400 e 409. |
 
 | 2026-10-22 | **Review/test fix (WEB, local):** criação inline de Tipo em Recursos agora só aparece quando o tenant tem Inventory ativo e o usuário possui `inventory.categories.write`, exatamente como exige `POST /api/asset-categories`; tenants só-Rentals continuam selecionando tipos existentes. Criação inline de modelo visual agora só aparece para super-admin e declara que cria um modelo global da Rolvix. Os mocks das páginas de Recursos/Layout agora isolam esse contexto de plataforma, e o mock administrativo do serviço visual usa `vi.hoisted`, permitindo carregar e executar a suíte. Regressões dos gates, Recursos, Layouts e endpoint administrativo: 24 testes aprovados. Próximo WEB: smoke DEV dos drawers de Tipo/Modelo. Próximo API: não há endpoint tenant-scoped para criar tipo de recurso; avaliar a criação indicada pelo review se o produto precisar desse fluxo. |
 

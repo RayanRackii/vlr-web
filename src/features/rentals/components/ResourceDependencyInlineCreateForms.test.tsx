@@ -8,12 +8,38 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   saveVisualRevision: vi.fn(),
   publishVisualRevision: vi.fn(),
 }))
+vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
+  createRentalCategory: vi.fn(),
+}))
 
-import { InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
+import {
+  InlineCreateCategoryForm,
+  InlineCreateVisualTemplateForm,
+} from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
+import * as rentalResourcesService from "@/features/rentals/services/rentalResourcesService"
 import * as visualService from "@/features/rentals/services/resourceVisualService"
 
-describe("InlineCreateVisualTemplateForm", () => {
+describe("ResourceDependencyInlineCreateForms", () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it("creates and selects a rental category through the Rentals service", async () => {
+    const user = userEvent.setup()
+    const complete = vi.fn(async () => undefined)
+    vi.mocked(rentalResourcesService.createRentalCategory).mockResolvedValue({
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      name: "Quadra",
+    })
+
+    render(<InlineCreateCategoryForm complete={complete} close={vi.fn()} />)
+    await user.type(screen.getByLabelText("Nome do tipo"), "Quadra")
+    await user.click(screen.getByRole("button", { name: "Criar tipo" }))
+
+    await waitFor(() => expect(rentalResourcesService.createRentalCategory).toHaveBeenCalledWith({ name: "Quadra" }))
+    expect(complete).toHaveBeenCalledWith({
+      value: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      label: "Quadra",
+    })
+  })
 
   it("resumes at revision creation after a retry instead of recreating the template", async () => {
     const user = userEvent.setup()

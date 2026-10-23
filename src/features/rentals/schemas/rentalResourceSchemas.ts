@@ -23,6 +23,14 @@ export type RegistryCategoryListItem = z.infer<
 
 export const registryCategoryListSchema = z.array(registryCategoryListItemSchema)
 
+export const createRentalCategoryRequestSchema = z.object({
+  name: z.string().trim().min(1),
+})
+
+export type CreateRentalCategoryRequest = z.infer<
+  typeof createRentalCategoryRequestSchema
+>
+
 export const createRentableRequestSchema = z.object({
   name: z.string().trim().min(1),
   unitId: guidLikeIdSchema,
