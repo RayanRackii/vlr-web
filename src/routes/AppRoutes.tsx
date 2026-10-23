@@ -20,7 +20,7 @@ import { LoginPage } from "@/features/auth/LoginPage"
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import { assetsManifest } from "@/features/assets/manifest"
-import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
+import { dashboardManifest } from "@/features/dashboard/manifest"
 import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
@@ -35,11 +35,8 @@ import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPor
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
-import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
-import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
-import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
-import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
-import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
+import { usersManifest } from "@/features/users/manifest"
+import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
 
 function RedirectVerifyPhoneToEmail() {
@@ -132,7 +129,9 @@ export function AppRoutes() {
 
         <Route element={<MainLayout />}>
           <Route element={<DashboardHomeRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            {dashboardManifest.routes.staff.map((route) => (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ))}
           </Route>
           {assetsManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
@@ -144,17 +143,11 @@ export function AppRoutes() {
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
-          <Route
-            element={<PermissionRoute permission="os.work_orders.read" />}
-          >
-            <Route path="/os" element={<WorkOrdersPage />} />
-            <Route path="/os/:id" element={<WorkOrderExecutionPage />} />
-          </Route>
-          <Route
-            element={<PermissionRoute permission="os.work_orders.create" />}
-          >
-            <Route path="/os/nova" element={<CreateWorkOrderPage />} />
-          </Route>
+          {workOrdersManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           <Route
             element={
               <PermissionRoute permission="core.registration_fields.read" />
@@ -228,10 +221,15 @@ export function AppRoutes() {
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
-          <Route element={<PermissionRoute permission="core.users.read" />}>
-            <Route path="/pessoas-e-acesso" element={<PeopleAccessPage />} />
-          </Route>
-          <Route path="/perfil" element={<StaffProfilePage />} />
+          {usersManifest.routes.staff.map((route) =>
+            route.permission ? (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ) : (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ),
+          )}
 
           <Route element={<PlatformAdminRoute />}>
             <Route
