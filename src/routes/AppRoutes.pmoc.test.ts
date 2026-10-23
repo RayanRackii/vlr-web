@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import appRoutesSource from "@/routes/AppRoutes.tsx?raw"
+import { pmocManifest } from "@/features/pmoc/manifest"
 
 describe("AppRoutes PMOC static paths", () => {
   it("declares static PMOC routes before /pmoc/:id", () => {
-    const paths = [...appRoutesSource.matchAll(/path="(\/pmoc[^"]*)"/g)].map(
-      (match) => match[1],
-    )
+    const paths = pmocManifest.routes.staff.map((route) => route.path)
 
     expect(paths).toEqual([
       "/pmoc",
@@ -26,9 +25,8 @@ describe("AppRoutes PMOC static paths", () => {
   })
 
   it("R: /pmoc/:id remains gated by pmoc.plans.read", () => {
-    expect(appRoutesSource).toMatch(
-      /PermissionRoute permission="pmoc\.plans\.read"[\s\S]*path="\/pmoc\/:id"/,
-    )
+    expect(pmocManifest.routes.staff.find((route) => route.path === "/pmoc/:id")?.permission).toBe("pmoc.plans.read")
+    expect(appRoutesSource).toContain("pmocManifest.routes.staff")
   })
 
   it("redirects staff paths accidentally opened below a tenant path back to root", () => {

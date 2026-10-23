@@ -19,16 +19,11 @@ import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisual
 import { LoginPage } from "@/features/auth/LoginPage"
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
-import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
-import { AssetsPage } from "@/features/assets/pages/AssetsPage"
+import { assetsManifest } from "@/features/assets/manifest"
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
 import { LandingPage } from "@/features/landing/pages/LandingPage"
 import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
-import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
-import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
-import { PmocLibraryPage } from "@/features/pmoc/pages/PmocLibraryPage"
-import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
-import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
+import { pmocManifest } from "@/features/pmoc/manifest"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
@@ -139,37 +134,16 @@ export function AppRoutes() {
           <Route element={<DashboardHomeRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
-          <Route
-            element={<PermissionRoute permission="inventory.assets.read" />}
-          >
-            <Route path="/ativos" element={<AssetsPage />} />
-          </Route>
-          <Route
-            element={
-              <PermissionRoute permission="inventory.categories.read" />
-            }
-          >
-            <Route
-              path="/ativos/categorias"
-              element={<AssetCategoriesPage />}
-            />
-          </Route>
-          <Route element={<PermissionRoute permission="pmoc.plans.read" />}>
-            <Route path="/pmoc" element={<MaintenancePlansPage />} />
-          </Route>
-          <Route element={<PermissionRoute permission="pmoc.templates.read" />}>
-            <Route path="/pmoc/biblioteca" element={<PmocLibraryPage />} />
-            <Route
-              path="/pmoc/biblioteca/:templateId"
-              element={<PmocTemplatePreviewPage />}
-            />
-          </Route>
-          <Route element={<PermissionRoute permission="pmoc.plans.write" />}>
-            <Route path="/pmoc/novo" element={<CreatePlanPage />} />
-          </Route>
-          <Route element={<PermissionRoute permission="pmoc.plans.read" />}>
-            <Route path="/pmoc/:id" element={<PmocPlanDetailPage />} />
-          </Route>
+          {assetsManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
+          {pmocManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           <Route
             element={<PermissionRoute permission="os.work_orders.read" />}
           >
