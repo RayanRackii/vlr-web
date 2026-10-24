@@ -32,11 +32,20 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+type CardTitleProps = React.ComponentProps<"div"> & {
+  /** Emphasize the title (foreground color, heavier weight) for prominent cards. */
+  strong?: boolean
+}
+
+function CardTitle({ className, strong = false, ...props }: CardTitleProps) {
   return (
     <div
       data-slot="card-title"
-      className={cn("text-sm font-semibold text-foreground", className)}
+      className={cn(
+        "text-sm font-medium text-muted-foreground",
+        strong && "font-semibold text-foreground",
+        className,
+      )}
       {...props}
     />
   )

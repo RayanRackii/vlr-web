@@ -8,6 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // `default` and `primary` are intentionally identical: `primary` is an
+        // explicit alias of the default variant for call sites that prefer to
+        // name the intent. Keep the two class strings in sync.
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:bg-primary/95",
         primary:

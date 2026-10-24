@@ -12,9 +12,9 @@ const alertVariants = cva(
         destructive:
           "border-[color-mix(in_oklch,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklch,var(--destructive)_8%,var(--card))] text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
         warning:
-          "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_12%,var(--card))] text-[color-mix(in_oklch,var(--warning)_82%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
+          "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_12%,var(--card))] text-[color-mix(in_oklch,var(--warning)_60%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
         success:
-          "border-[color-mix(in_oklch,var(--success)_32%,transparent)] bg-[color-mix(in_oklch,var(--success)_10%,var(--card))] text-[color-mix(in_oklch,var(--success)_80%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
+          "border-[color-mix(in_oklch,var(--success)_32%,transparent)] bg-[color-mix(in_oklch,var(--success)_10%,var(--card))] text-[color-mix(in_oklch,var(--success)_72%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
         info:
           "border-[color-mix(in_oklch,var(--info)_30%,transparent)] bg-[color-mix(in_oklch,var(--info)_9%,var(--card))] text-[color-mix(in_oklch,var(--info)_80%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
       },

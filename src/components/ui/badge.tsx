@@ -15,9 +15,9 @@ const badgeVariants = cva(
         destructive:
           "bg-[color-mix(in_oklch,var(--destructive)_14%,transparent)] text-[color-mix(in_oklch,var(--destructive)_78%,var(--foreground))] focus-visible:ring-destructive/20 dark:bg-[color-mix(in_oklch,var(--destructive)_24%,transparent)]",
         success:
-          "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-[color-mix(in_oklch,var(--success)_78%,var(--foreground))] dark:bg-[color-mix(in_oklch,var(--success)_26%,transparent)]",
+          "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-[color-mix(in_oklch,var(--success)_72%,var(--foreground))] dark:bg-[color-mix(in_oklch,var(--success)_26%,transparent)]",
         warning:
-          "bg-[color-mix(in_oklch,var(--warning)_22%,transparent)] text-[color-mix(in_oklch,var(--warning)_80%,var(--foreground))] dark:bg-[color-mix(in_oklch,var(--warning)_30%,transparent)]",
+          "bg-[color-mix(in_oklch,var(--warning)_22%,transparent)] text-[color-mix(in_oklch,var(--warning)_55%,var(--foreground))] dark:bg-[color-mix(in_oklch,var(--warning)_30%,transparent)]",
         info:
           "bg-[color-mix(in_oklch,var(--info)_16%,transparent)] text-[color-mix(in_oklch,var(--info)_78%,var(--foreground))] dark:bg-[color-mix(in_oklch,var(--info)_26%,transparent)]",
         outline:
