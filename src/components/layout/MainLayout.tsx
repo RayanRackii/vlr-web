@@ -100,11 +100,14 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
 
   return (
     <AppShell
-      sidebar={({ onNavigate }) => <Sidebar onNavigate={onNavigate} />}
+      sidebar={(opts) => <Sidebar {...opts} />}
       pageTitle={pageTitle}
       userLabel={userEmail}
       initials={initials}
       profileTo="/perfil"
+      collapsible
+      constrainContent
+      enlargeHeaderTargets
       contextLabel={staffHeaderContextLabel(
         currentUser,
         t("app.authenticatedArea"),
