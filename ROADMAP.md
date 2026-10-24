@@ -235,6 +235,12 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - [x] Onboarding público não coleta senha. `POST /api/onboarding/tenants` segue só com `isTrial: true`; o admin define a senha no e-mail de convite (`/invite?token=`). Pareia com `vlr-api` #111.
 - [x] Convite de conta existente (pareia com `vlr-api` #226, sem merge): `/invite` chama `POST /api/invites/preview`. Conta nova define senha. Conta existente entra com a senha atual e `POST /api/invites/accept` leva o JWT staff; não pede senha nova. 409 `EXISTING_ACCOUNT_SIGN_IN_REQUIRED`, 403 `INVITE_ACCOUNT_MISMATCH` e 409 `INVITE_IDENTITY_CONFLICT` têm frase em pt-BR/en/es. Mais de uma membership oferece seletor (`GET /api/users/me/tenants`, `POST /api/users/me/tenant`) e atualiza a sessão Supabase. Uma membership cujo tenant não é o do access token é selecionada e a sessão atualizada. Alto risco (auth).
 
+## 7. Refresh visual da UI (fundação)
+
+PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (PR 2/3).
+
+- [x] Refresh 1 — fundação (`ui/refresh-1-foundation`): tokens coesos em `src/index.css`/`tailwind.config.ts` (paleta neutra + um primário confiante, semânticos success/warning/danger/info, escala de raio/elevação/tipografia Geist com tabular-nums, focus rings acessíveis, paridade dark); primitivas em `src/components/ui` (button com variantes/tamanhos/icon/loading via `LoadingButton`, input/select/textarea 40px, card com `hoverable`, badge soft, table com header sticky e divisores sutis, skeleton, novo `EmptyState`); ícones padronizados em lucide (stroke 1.75) via `src/lib/icon.ts`; transições 150ms ease-out com `prefers-reduced-motion`. APIs públicas retrocompatíveis; i18n inalterado. PR 2/3 fazem o restyling de telas/shell.
+
 ## Dívidas técnicas conhecidas
 
 - [x] Branding inconsistente (`Platform` vs Rolvix).
@@ -243,6 +249,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 - Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
 ## Histórico
+
+| 2026-10-24 | **Refresh visual PR 1 — fundação (WEB, local, `ui/refresh-1-foundation`):** tokens de design refinados (`src/index.css`, `tailwind.config.ts`) — paleta neutra com um primário confiante, semânticos success/warning/danger/info com foregrounds, escalas de raio/sombra/tipografia (Geist, tabular-nums), focus rings visíveis e paridade dark. Primitivas em `src/components/ui`: `button` (variantes incl. `primary`, tamanhos, icon; loading segue em `LoadingButton`), `input`/`select`/`textarea` em 40px com estados focus/invalid, `card` com `hoverable`, `badge` soft tintado, `table` com header sticky e divisores sutis sem zebra, `skeleton` por tokens, novo `EmptyState` (ícone/título/descrição/ação). Ícones padronizados em lucide-react (stroke 1.75) via novo `src/lib/icon.ts`; transições 150ms ease-out respeitando `prefers-reduced-motion`. APIs públicas retrocompatíveis; i18n inalterado. Validação: `npx tsc -b --noEmit`, `npx vite build` e `npm run lint:ratchet` (201 ≤ baseline) aprovados; Vitest não executa neste sandbox (jsdom/undici `markAsUncloneable` na inicialização do worker, independente das mudanças). Sem restyling de telas/shell (PR 2/3). Sem mudança no `vlr-api`. Próximo WEB: PR 2 (app shell + navegação). |
 
 | 2026-10-23 | **Correção local:** o array de rotas do manifesto de usuários agora é explicitamente `readonly FeatureRoute[]`, para que consumidores possam ler `permission` opcionalmente também na rota `/perfil`, sem alterar o roteamento ou o RBAC. |
 | 2026-10-23 | **Passo 12 (WEB, local):** dashboard B2B exibe checklist de configuração de Rentals para módulo ativo e `rentals.assets.read`, com links para Recursos, Agenda, Política e Mapa; some ao ficar pronto e em erro/404. Service Zod, i18n pt-BR/en/es e testes Vitest adicionados. Correção posterior: título é `h2` e o gating não atualiza estado no effect (lint). Vitest bloqueado neste sandbox por `EROFS` em `node_modules/.vite-temp`. Próximo WEB: executar as regressões fora do sandbox. Próximo API: regenerar o snapshot OpenAPI completo do endpoint readiness. |

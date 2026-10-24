@@ -17,10 +17,9 @@ function Skeleton({
       data-slot="skeleton"
       data-variant={variant}
       className={cn(
-        "rounded-md",
-        variant === "pulse" && "animate-pulse bg-zinc-200 dark:bg-zinc-700",
-        variant === "shimmer" &&
-          "relative overflow-hidden bg-zinc-200 dark:bg-zinc-700",
+        "rounded-md bg-muted",
+        variant === "pulse" && "animate-pulse",
+        variant === "shimmer" && "relative overflow-hidden",
         className,
       )}
       {...props}
@@ -28,7 +27,7 @@ function Skeleton({
       {variant === "shimmer" ? (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 -translate-x-full animate-skeleton-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent dark:via-white/25"
+          className="pointer-events-none absolute inset-0 -translate-x-full animate-skeleton-shimmer bg-gradient-to-r from-transparent via-foreground/10 to-transparent dark:via-foreground/15"
         />
       ) : null}
     </div>
