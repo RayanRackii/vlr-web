@@ -10,7 +10,7 @@ const alertVariants = cva(
       variant: {
         default: "bg-card text-card-foreground",
         destructive:
-          "border-[color-mix(in_oklch,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklch,var(--destructive)_8%,var(--card))] text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+          "border-[color-mix(in_oklch,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklch,var(--destructive)_8%,var(--card))] text-[color-mix(in_oklch,var(--destructive)_80%,var(--foreground))] *:data-[slot=alert-description]:text-current *:[svg]:text-current",
         warning:
           "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_12%,var(--card))] text-[color-mix(in_oklch,var(--warning)_60%,var(--foreground))] *:data-[slot=alert-description]:text-current/90 *:[svg]:text-current",
         success:
