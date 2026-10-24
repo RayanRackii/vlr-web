@@ -4,6 +4,7 @@ import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-rou
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
@@ -208,16 +209,18 @@ export function CustomerAppLayout() {
           void navigate(path, { replace: true })
         }}
       >
-        <Outlet
-          context={
-            {
-              subdomain,
-              branding,
-              primary: tokens.primary,
-              menu,
-            } satisfies CustomerAppOutletContext
-          }
-        />
+        <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
+          <Outlet
+            context={
+              {
+                subdomain,
+                branding,
+                primary: tokens.primary,
+                menu,
+              } satisfies CustomerAppOutletContext
+            }
+          />
+        </TenantTimeZoneProvider>
       </AppShell>
     </div>
   )

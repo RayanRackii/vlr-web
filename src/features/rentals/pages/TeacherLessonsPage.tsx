@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -71,6 +72,7 @@ type PendingRemoval = {
 
 export function TeacherLessonsPage() {
   const { t } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { assets, day, dayStatus, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
   const removalInFlight = useRef(false)
@@ -98,7 +100,9 @@ export function TeacherLessonsPage() {
     })
   }, [openSlots, t])
   type FormValues = z.infer<typeof schema>
-  const [dateRequest] = useState(() => readLessonDateFromLocation(todayIsoDate()))
+  const [dateRequest] = useState(() =>
+    readLessonDateFromLocation(todayIsoDate(timeZoneId)),
+  )
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -117,8 +121,8 @@ export function TeacherLessonsPage() {
     if (!date || !ISO_DATE.test(date)) {
       return openSlots
     }
-    return withoutPastTenantSlots(date, openSlots)
-  }, [date, openSlots])
+    return withoutPastTenantSlots(date, openSlots, timeZoneId)
+  }, [date, openSlots, timeZoneId])
   const pastSlotsHidden = available.length < openSlots.length
   const values = { assetId: selectedAssetId, date, slotKey, label }
   const isValid = schema.safeParse(values).success
@@ -142,12 +146,12 @@ export function TeacherLessonsPage() {
   useEffect(() => {
     if (!date || !ISO_DATE.test(date)) return
     const url = new URL(window.location.href)
-    if (date === todayIsoDate()) url.searchParams.delete("date")
+    if (date === todayIsoDate(timeZoneId)) url.searchParams.delete("date")
     else url.searchParams.set("date", date)
     const next = `${url.pathname}${url.search}${url.hash}`
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
     if (current !== next) window.history.replaceState(window.history.state, "", next)
-  }, [date])
+  }, [date, timeZoneId])
 
   useEffect(() => {
     if (!selectedAssetId || !date) return
@@ -157,7 +161,7 @@ export function TeacherLessonsPage() {
       const selected = getValues("slotKey") || selectedBeforeRefresh
       const selectedStart = selected?.split("|")[0] ?? ""
       const stillOffered = Boolean(selected)
-        && !isPastTenantSlotStart(date, selectedStart)
+        && !isPastTenantSlotStart(date, selectedStart, timeZoneId)
         && result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))
       if (!selected || stillOffered) return
       const message = i18n.t("rentals.teacherLessons.slotUnavailable")
@@ -165,7 +169,7 @@ export function TeacherLessonsPage() {
       setError("slotKey", { type: "validate", message })
       toast.error(message)
     })
-  }, [date, getValues, loadDay, selectedAssetId, setError, setValue])
+  }, [date, getValues, loadDay, selectedAssetId, setError, setValue, timeZoneId])
 
   async function onSubmit(valuesToSubmit: FormValues) {
     const slot = available.find((item) => slotKeyFor(item) === valuesToSubmit.slotKey)
@@ -217,7 +221,7 @@ export function TeacherLessonsPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("rentals.teacherLessons.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.description")}</p>
-        {dateRequest.adjustedFromPast && date === todayIsoDate() ? (
+        {dateRequest.adjustedFromPast && date === todayIsoDate(timeZoneId) ? (
           <p role="status" className="text-sm text-foreground">
             {t("rentals.teacherLessons.pastDateAdjusted")}
           </p>
@@ -237,7 +241,7 @@ export function TeacherLessonsPage() {
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("rentals.teacherLessons.date")}</FormLabel>
-              <FormControl><Input {...field} aria-label={t("rentals.teacherLessons.date")} type="date" min={todayIsoDate()} disabled={busy} /></FormControl>
+              <FormControl><Input {...field} aria-label={t("rentals.teacherLessons.date")} type="date" min={todayIsoDate(timeZoneId)} disabled={busy} /></FormControl>
             </FormItem>
           )} />
           <FormField control={form.control} name="slotKey" render={({ field }) => (

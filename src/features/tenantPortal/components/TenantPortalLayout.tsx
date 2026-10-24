@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { useTenantThemeStyle } from "@/lib/useTenantTheme"
 import { inspectTenantLogoSvg } from "@/features/tenantPortal/lib/inspectTenantLogoSvg"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
@@ -193,7 +194,9 @@ export function TenantPortalLayout() {
               color: tokens.text,
             }}
           >
-            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
+              <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            </TenantTimeZoneProvider>
           </div>
         </div>
       </main>

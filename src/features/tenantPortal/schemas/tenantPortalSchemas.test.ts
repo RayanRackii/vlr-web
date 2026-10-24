@@ -10,6 +10,7 @@ import {
   isValidBrazilianPhoneDigits,
   normalizeBrazilianPhoneDigits,
   registerResponseSchema,
+  tenantBrandingSchema,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
 const CORE = {
@@ -19,6 +20,21 @@ const CORE = {
   confirmPassword: "password1",
   phone: "11988880001",
 }
+
+describe("tenantBrandingSchema", () => {
+  it("preserves the tenant IANA timezone", () => {
+    const parsed = tenantBrandingSchema.parse({
+      subdomain: "club",
+      displayName: "Club",
+      primaryColor: null,
+      accentColor: null,
+      welcomeTagline: null,
+      timeZoneId: "Asia/Tokyo",
+    })
+
+    expect(parsed.timeZoneId).toBe("Asia/Tokyo")
+  })
+})
 
 describe("buildCustomerRegisterSchema PF/PJ", () => {
   const schema = buildCustomerRegisterSchema([], "mismatch", {

@@ -1,8 +1,13 @@
 import type { UpsertOccupancyKindInput } from "@/features/rentals/services/scheduleService"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  tenantTodayIsoDate,
+} from "@/lib/tenantTimeZone"
 
-export function todayIsoDate(): string {
-  return brazilTodayIsoDate()
+export function todayIsoDate(
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
+): string {
+  return tenantTodayIsoDate(timeZoneId)
 }
 
 export function emptyKindForm(): UpsertOccupancyKindInput {

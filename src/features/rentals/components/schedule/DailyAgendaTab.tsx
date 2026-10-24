@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -20,7 +21,7 @@ import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import { isPastTenantSlotStart } from "@/features/rentals/lib/offerableSlot"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import {
   occupancyFromDaySlot,
   occupancyIdFromSlot,
@@ -127,6 +128,7 @@ export function DailyAgendaTab({
 }: DailyAgendaTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const timeZoneId = useTenantTimeZone()
   const clock = useTenantClock()
   const now = useMemo(() => new Date(clock), [clock])
 
@@ -137,19 +139,19 @@ export function DailyAgendaTab({
   )
 
   const occupancies = useMemo(() => {
-    const today = brazilTodayIsoDate(now)
+    const today = tenantTodayIsoDate(timeZoneId, now)
     return (day?.slots ?? []).map((slot) => {
       const occupancy = occupancyFromDaySlot(slot)
       if (
         date === today &&
         occupancy.status === "available" &&
-        isPastTenantSlotStart(date, slot.startTime, now)
+        isPastTenantSlotStart(date, slot.startTime, timeZoneId, now)
       ) {
         return { ...occupancy, status: "unavailable" as const }
       }
       return occupancy
     })
-  }, [date, day, now])
+  }, [date, day, now, timeZoneId])
 
   const hasSlotGrid = selectedAssets.some(
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
@@ -204,7 +206,7 @@ export function DailyAgendaTab({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => onDateChange(todayIsoDate())}
+            onClick={() => onDateChange(todayIsoDate(timeZoneId))}
           >
             {t("rentals.schedule.toolbar.today")}
           </Button>
@@ -288,8 +290,8 @@ export function DailyAgendaTab({
             busyTargetKey={busyTargetKey}
             readOnly={readOnly}
             isStartClosed={(startTime) =>
-              date === brazilTodayIsoDate(now) &&
-              isPastTenantSlotStart(date, startTime, now)
+              date === tenantTodayIsoDate(timeZoneId, now) &&
+              isPastTenantSlotStart(date, startTime, timeZoneId, now)
             }
             onCellClick={(cell) => {
               const slot = cell.occupancy

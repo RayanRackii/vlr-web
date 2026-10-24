@@ -26,6 +26,7 @@ const payload = {
   isTrial: false,
   isTrialReadOnly: false,
   notificationsEmailOnly: false,
+  timeZoneId: "America/Manaus",
   roles: [],
   permissions: ["core.notifications.read"],
 }
@@ -45,6 +46,9 @@ describe("getCurrentUser HTTP dedup", () => {
     expect(apiGet).toHaveBeenCalledTimes(1)
     expect(apiGet).toHaveBeenCalledWith("/api/users/me")
     expect(profiles.every((item) => item.email === payload.email)).toBe(true)
+    expect(profiles.every((item) => item.timeZoneId === "America/Manaus")).toBe(
+      true,
+    )
   })
 
   it("force refresh bypasses the session cache", async () => {

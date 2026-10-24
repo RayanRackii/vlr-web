@@ -21,6 +21,7 @@ import {
   type PortalReservation,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import appI18n from "@/lib/i18n"
+import { DEFAULT_TENANT_TIME_ZONE } from "@/lib/tenantTimeZone"
 
 export type AgendaDaySnapshot = {
   dayDate: string
@@ -38,6 +39,7 @@ export type AgendaQuerySnapshot = {
 export type AgendaInvalidateScope = {
   subdomain: string
   dates: readonly string[]
+  timeZoneId?: string
 }
 
 type AgendaInvalidateOptions = {
@@ -184,7 +186,7 @@ export function invalidateAgendaQueries(
       if (token !== revision) {
         return
       }
-      releaseCancelledOwnSlots(loaded.reservations)
+      releaseCancelledOwnSlots(loaded.reservations, scope.timeZoneId)
       syncRecentReservations(subdomain, loaded.reservations)
       const snapshot: AgendaQuerySnapshot = {
         revision: token,
@@ -244,11 +246,12 @@ export function releaseCancelledOwnSlots(
     startDateTime: string
     items: readonly { rentalAssetId: string }[]
   }[],
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): void {
   for (const reservation of reservations) {
     const normalized = reservation.status.trim().toLowerCase()
     if (normalized === "cancelled" || normalized === "canceled") {
-      forgetOwnBooking(reservation)
+      forgetOwnBooking(reservation, timeZoneId)
     }
   }
 }
@@ -256,8 +259,8 @@ export function releaseCancelledOwnSlots(
 function ownKeysFor(reservation: {
   startDateTime: string
   items: readonly { rentalAssetId: string }[]
-}): string[] {
-  const civil = reservationCivilStart(reservation.startDateTime)
+}, timeZoneId: string = DEFAULT_TENANT_TIME_ZONE): string[] {
+  const civil = reservationCivilStart(reservation.startDateTime, timeZoneId)
   if (civil === null) {
     return []
   }
@@ -273,11 +276,14 @@ function ownKeysFor(reservation: {
 }
 
 /** Remember a booking this browser just created, even if the page unmounted. */
-export function rememberOwnBooking(reservation: PortalReservation): void {
+export function rememberOwnBooking(
+  reservation: PortalReservation,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
+): void {
   if (!isBlockingReservationStatus(reservation.status)) {
     return
   }
-  for (const key of ownKeysFor(reservation)) {
+  for (const key of ownKeysFor(reservation, timeZoneId)) {
     ownSlotKeys.add(key)
   }
 }
@@ -285,8 +291,8 @@ export function rememberOwnBooking(reservation: PortalReservation): void {
 export function forgetOwnBooking(reservation: {
   startDateTime: string
   items: readonly { rentalAssetId: string }[]
-}): void {
-  for (const key of ownKeysFor(reservation)) {
+}, timeZoneId: string = DEFAULT_TENANT_TIME_ZONE): void {
+  for (const key of ownKeysFor(reservation, timeZoneId)) {
     ownSlotKeys.delete(key)
   }
 }
@@ -308,13 +314,14 @@ export function customerAlreadyHoldsSlot(
   rentalAssetId: string,
   startTime: string,
   reservations: readonly AgendaReservationHold[],
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): boolean {
   if (isOwnBookedSlot(date, rentalAssetId, startTime)) {
     return true
   }
 
   const key = agendaReservedSlotKey(date, rentalAssetId, startTime)
-  return reservedSlotKeysForDate(date, reservations, []).has(key)
+  return reservedSlotKeysForDate(date, reservations, [], timeZoneId).has(key)
 }
 
 /**
@@ -355,13 +362,14 @@ export async function commitPortalBooking<T extends PortalReservation>(
       if (generation !== sessionGeneration) {
         throw new DOMException("Customer session changed", "AbortError")
       }
-      rememberOwnBooking(created)
+      rememberOwnBooking(created, scope.timeZoneId)
       rememberRecentReservation(scope.subdomain, created)
       const viewed = scope.dates[0] ?? ""
       void invalidateAgendaQueries(
         {
           subdomain: scope.subdomain,
-          dates: agendaRefreshDates(viewed, [created]),
+          dates: agendaRefreshDates(viewed, [created], scope.timeZoneId),
+          timeZoneId: scope.timeZoneId,
         },
         { applySlots: true },
       )

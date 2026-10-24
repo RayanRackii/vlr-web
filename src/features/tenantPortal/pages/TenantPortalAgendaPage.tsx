@@ -139,7 +139,7 @@ import {
   isPastTenantSlotStart,
   withoutPastTenantSlots,
 } from "@/features/rentals/lib/offerableSlot"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
@@ -166,10 +166,15 @@ function dropScheduleSlot(
 function partitionAgendaSlots(
   daySlots: readonly PortalScheduleSlot[],
   dayDate: string,
+  timeZoneId: string,
 ) {
-  const observed = withoutPastTenantSlots(dayDate, daySlots)
+  const observed = withoutPastTenantSlots(dayDate, daySlots, timeZoneId)
   const bookableIncludingPast = daySlots.filter(isCustomerBookableSlot)
-  const bookable = withoutPastTenantSlots(dayDate, bookableIncludingPast)
+  const bookable = withoutPastTenantSlots(
+    dayDate,
+    bookableIncludingPast,
+    timeZoneId,
+  )
   return {
     observed,
     bookable,
@@ -190,6 +195,7 @@ export function TenantPortalAgendaPage() {
   const { menuItemId } = useParams<{ menuItemId?: string }>()
   const { subdomain, primary, menu, branding } =
     useOutletContext<CustomerAppOutletContext>()
+  const timeZoneId = useTenantTimeZone()
   const signedIn = isCustomerSignedInForTenant(subdomain)
 
   const menuItem = useMemo(
@@ -212,7 +218,11 @@ export function TenantPortalAgendaPage() {
     ReadonlySet<string>
   >(() => new Set())
   const [date, setDate] = useState(() =>
-    readAgendaDateParam(searchParams.get("date"), brazilTodayIsoDate()),
+    readAgendaDateParam(
+      searchParams.get("date"),
+      tenantTodayIsoDate(timeZoneId),
+      timeZoneId,
+    ),
   )
   const [slotsBelongToDate, setSlotsBelongToDate] = useState(date)
   const [pastSlotsHidden, setPastSlotsHidden] = useState(false)
@@ -315,11 +325,14 @@ export function TenantPortalAgendaPage() {
   }, [visibleAssets])
 
   const horizonDays = resolveAgendaHorizonDays(visibleAssets, policyHorizonDays)
-  const horizonMaxDate = horizonEndDate(brazilTodayIsoDate(), horizonDays)
+  const horizonMaxDate = horizonEndDate(
+    tenantTodayIsoDate(timeZoneId),
+    horizonDays,
+  )
   const dayFetchGate =
     horizonMaxDate !== null && date > horizonMaxDate
       ? "hold"
-      : !bookingPolicyReady && date > brazilTodayIsoDate()
+      : !bookingPolicyReady && date > tenantTodayIsoDate(timeZoneId)
         ? "wait"
         : "go"
 
@@ -515,7 +528,7 @@ export function TenantPortalAgendaPage() {
           return
         }
         if (checkIdleTimeoutRef.current()) return
-        const selected = partitionAgendaSlots(day.slots, date)
+        const selected = partitionAgendaSlots(day.slots, date, timeZoneId)
         setSlots(selected.bookable)
         setObservedSlots(selected.observed)
         setPastSlotsHidden(selected.pastHidden)
@@ -562,12 +575,16 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [clearUnavailableSelection, date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain])
+  }, [clearUnavailableSelection, date, dayFetchGate, menuItemId, signedIn, slotReloadNonce, subdomain, timeZoneId])
 
   useEffect(() => {
-    const today = brazilTodayIsoDate()
+    const today = tenantTodayIsoDate(timeZoneId)
     const current = searchParams.toString()
-    const urlDate = readAgendaDateParam(searchParams.get("date"), today)
+    const urlDate = readAgendaDateParam(
+      searchParams.get("date"),
+      today,
+      timeZoneId,
+    )
     const urlBeyondHorizon =
       horizonMaxDate !== null && urlDate > horizonMaxDate
     function writeSearch(next: URLSearchParams, replace: boolean) {
@@ -649,6 +666,7 @@ export function TenantPortalAgendaPage() {
     navigate,
     searchParams,
     startTime,
+    timeZoneId,
   ])
 
   useEffect(() => {
@@ -675,7 +693,11 @@ export function TenantPortalAgendaPage() {
 
       if (checkIdleTimeoutRef.current()) return
       scheduleRequest.current += 1
-      const selected = partitionAgendaSlots(match.day.slots, viewed)
+      const selected = partitionAgendaSlots(
+        match.day.slots,
+        viewed,
+        timeZoneId,
+      )
       setSlotsLoading(false)
       setSlotsBelongToDate(viewed)
       setSlots(selected.bookable)
@@ -686,7 +708,7 @@ export function TenantPortalAgendaPage() {
         withoutBookableReservedKeys(current, viewed, selected.bookable),
       )
     })
-  }, [subdomain])
+  }, [subdomain, timeZoneId])
 
   const schedulePending = slotsLoading || slotsBelongToDate !== date
   const slotsForView = useMemo(
@@ -698,8 +720,8 @@ export function TenantPortalAgendaPage() {
     [date, observedSlots, slotsBelongToDate],
   )
   const derivedReservedKeys = useMemo(
-    () => reservedSlotKeysForDate(date, mine, observedForView),
-    [date, mine, observedForView],
+    () => reservedSlotKeysForDate(date, mine, observedForView, timeZoneId),
+    [date, mine, observedForView, timeZoneId],
   )
   const timeWindows = useMemo(
     () => listDistinctStartTimes(slotsForView),
@@ -845,7 +867,7 @@ export function TenantPortalAgendaPage() {
       if (submittingRef.current) {
         return
       }
-      if (!isPastTenantSlotStart(date, selectedSlot.startTime)) {
+      if (!isPastTenantSlotStart(date, selectedSlot.startTime, timeZoneId)) {
         return
       }
       clearUnavailableSelection()
@@ -865,7 +887,13 @@ export function TenantPortalAgendaPage() {
       window.removeEventListener("focus", checkSelectedSlotStart)
       document.removeEventListener("visibilitychange", onVisible)
     }
-  }, [clearUnavailableSelection, date, selectedRentalAssetId, selectedSlot])
+  }, [
+    clearUnavailableSelection,
+    date,
+    selectedRentalAssetId,
+    selectedSlot,
+    timeZoneId,
+  ])
 
   const checkIdleTimeout = useBookingIdleTimeout({
     // Explicit time changes clear the asset. Automatic time fallback must not
@@ -895,7 +923,7 @@ export function TenantPortalAgendaPage() {
       return
     }
     void invalidateAgendaQueries(
-      { subdomain, dates: [day] },
+      { subdomain, dates: [day], timeZoneId },
       { applySlots: true },
     )
   }, signedIn)
@@ -974,7 +1002,7 @@ export function TenantPortalAgendaPage() {
 
   function refreshAgenda(dayDates: readonly string[]) {
     void invalidateAgendaQueries(
-      { subdomain, dates: dayDates },
+      { subdomain, dates: dayDates, timeZoneId },
       { applySlots: true },
     )
   }
@@ -997,7 +1025,7 @@ export function TenantPortalAgendaPage() {
     const generation = getAgendaSessionGeneration()
 
     const applyReservationSuccess = (reservation: PortalReservation) => {
-      rememberOwnBooking(reservation)
+      rememberOwnBooking(reservation, timeZoneId)
       toast.success(
         t("tenantPortal.agenda.reserveSuccessWithTotal", {
           amount: formatBookingMoney(reservation.totalAmount),
@@ -1028,7 +1056,10 @@ export function TenantPortalAgendaPage() {
         if (!isBlockingReservationStatus(reservation.status)) {
           return false
         }
-        const start = reservationCivilStart(reservation.startDateTime)
+        const start = reservationCivilStart(
+          reservation.startDateTime,
+          timeZoneId,
+        )
         return start !== null && reservation.items.some((item) =>
           agendaReservedSlotKey(start.date, item.rentalAssetId, start.time) === targetKey,
         )
@@ -1055,7 +1086,7 @@ export function TenantPortalAgendaPage() {
                 items: [{ assetId: asset.assetId, quantity: 1 }],
                 expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
               }),
-        { subdomain, dates: [dayDate] },
+        { subdomain, dates: [dayDate], timeZoneId },
         {
           date: dayDate,
           rentalAssetId: slot.rentalAssetId,
@@ -1100,6 +1131,7 @@ export function TenantPortalAgendaPage() {
             slot.rentalAssetId,
             slot.startTime,
             reservations,
+            timeZoneId,
           )
         ) {
           try {
@@ -1120,6 +1152,7 @@ export function TenantPortalAgendaPage() {
           slot.rentalAssetId,
           slot.startTime,
           reservations,
+          timeZoneId,
         )
         const existingReservation = heldByCustomer
           ? reservationForSlot(reservations)
@@ -1211,7 +1244,11 @@ export function TenantPortalAgendaPage() {
     }
     const id = pendingCancelId
     const viewedDate = date
-    const keptDate = readAgendaDateParam(searchParams.get("date"), date)
+    const keptDate = readAgendaDateParam(
+      searchParams.get("date"),
+      date,
+      timeZoneId,
+    )
     const existing = mine.find((reservation) => reservation.id === id) ?? null
     const seenRevision = getAgendaQueryRevision()
     const generation = getAgendaSessionGeneration()
@@ -1227,7 +1264,7 @@ export function TenantPortalAgendaPage() {
         const freshRow =
           fresh.find((reservation) => reservation.id === id) ?? null
         if (getAgendaQueryRevision() === seenRevision) {
-          releaseCancelledOwnSlots(fresh)
+          releaseCancelledOwnSlots(fresh, timeZoneId)
           const merged = mergeServerReservations(mineRef.current, fresh)
           mineRef.current = merged
           setMine(merged)
@@ -1249,11 +1286,11 @@ export function TenantPortalAgendaPage() {
         return
       }
       if (current !== null && isCancelledReservationStatus(current.status)) {
-        forgetOwnBooking(current)
+        forgetOwnBooking(current, timeZoneId)
         forgetRecentReservation(current.id)
         toast.message(t("tenantPortal.agenda.alreadyCancelled"))
         setPendingCancelId(null)
-        refreshAgenda(agendaRefreshDates(viewedDate, [current]))
+        refreshAgenda(agendaRefreshDates(viewedDate, [current], timeZoneId))
         return
       }
       const canceled = await cancelMyPortalReservation(id)
@@ -1273,12 +1310,13 @@ export function TenantPortalAgendaPage() {
         )
       })
       setPendingCancelId(null)
-      forgetOwnBooking(existing ?? canceled)
+      forgetOwnBooking(existing ?? canceled, timeZoneId)
       forgetRecentReservation(canceled.id)
       refreshAgenda(
         agendaRefreshDates(
           viewedDate,
           existing === null ? [canceled] : [existing, canceled],
+          timeZoneId,
         ),
       )
     } catch (error) {
@@ -1302,17 +1340,17 @@ export function TenantPortalAgendaPage() {
           ) {
             return
           }
-          releaseCancelledOwnSlots(fresh)
+          releaseCancelledOwnSlots(fresh, timeZoneId)
           const merged = mergeServerReservations(mineRef.current, fresh)
           mineRef.current = merged
           setMine(merged)
           const row =
             merged.find((reservation) => reservation.id === id) ?? null
           if (row !== null && isCancelledReservationStatus(row.status)) {
-            forgetOwnBooking(row)
+            forgetOwnBooking(row, timeZoneId)
             forgetRecentReservation(row.id)
             setPendingCancelId(null)
-            refreshAgenda(agendaRefreshDates(viewedDate, [row]))
+            refreshAgenda(agendaRefreshDates(viewedDate, [row], timeZoneId))
           }
         })
         .catch(() => {
@@ -1345,7 +1383,7 @@ export function TenantPortalAgendaPage() {
   }
 
   function onDateChange(value: string, source: LocaleDateChangeSource = "input") {
-    const today = brazilTodayIsoDate()
+    const today = tenantTodayIsoDate(timeZoneId)
     const attempt =
       source === "input"
         ? clampTypedDateToHorizon(value, today, horizonMaxDate)
@@ -1384,7 +1422,13 @@ export function TenantPortalAgendaPage() {
       startTime.length > 0
         ? agendaReservedSlotKey(date, rentalAssetId, startTime)
         : ""
-    const ownReservation = customerAlreadyHoldsSlot(date, rentalAssetId, startTime, mine)
+    const ownReservation = customerAlreadyHoldsSlot(
+      date,
+      rentalAssetId,
+      startTime,
+      mine,
+      timeZoneId,
+    )
     const reserved =
       reservedKey.length > 0 &&
       (optimisticReservedKeys.has(reservedKey) ||
@@ -1435,8 +1479,8 @@ export function TenantPortalAgendaPage() {
               <LocaleDateInput
                 id={dateInputId}
                 locale={moneyLocale}
-                today={brazilTodayIsoDate()}
-                min={brazilTodayIsoDate()}
+                today={tenantTodayIsoDate(timeZoneId)}
+                min={tenantTodayIsoDate(timeZoneId)}
                 max={horizonMaxDate ?? undefined}
                 value={date}
                 onBlur={() => onDateChange(date, "calendar")}
@@ -1829,6 +1873,7 @@ export function TenantPortalAgendaPage() {
                         {formatReservationRange(
                           reservation.startDateTime,
                           reservation.endDateTime,
+                          timeZoneId,
                         )}{" "}
                         ·{" "}
                         {t(`rentals.reservations.statuses.${reservation.status}`, {
@@ -1933,3 +1978,4 @@ function visibleCancellationPolicyText(value: string | null): string | null {
   const trimmed = value.trim()
   return trimmed.length === 0 ? null : trimmed
 }
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"

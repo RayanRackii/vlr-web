@@ -12,7 +12,10 @@ import {
 } from "react-router-dom"
 
 import { formatMoney } from "@/features/rentals/services/reservationsService"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  tenantTodayIsoDate,
+} from "@/lib/tenantTimeZone"
 import enCommon from "@/locales/en/common.json"
 import esCommon from "@/locales/es/common.json"
 import ptBRCommon from "@/locales/pt-BR/common.json"
@@ -1929,7 +1932,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const dateInput = await screen.findByLabelText(
       i18n.t("tenantPortal.agenda.date"),
     )
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
     await waitFor(() => {
       expect(
         screen.getByRole("combobox", {
@@ -1949,9 +1952,12 @@ describe("TenantPortalAgendaPage time selector", () => {
     const dateInput = await screen.findByLabelText(
       i18n.t("tenantPortal.agenda.date"),
     )
-    expect(dateInput).toHaveAttribute("min", brazilTodayIsoDate())
+    expect(dateInput).toHaveAttribute(
+      "min",
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+    )
     expect(dateInput).not.toHaveAttribute("max")
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
   })
 
   it("caps the date at the horizon the API exposes", async () => {
@@ -2671,7 +2677,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
     fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
 
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
@@ -3998,7 +4004,10 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     })
     fetchAssets.mockResolvedValue([])
     fetchLayouts.mockResolvedValue([])
-    fetchDay.mockResolvedValue({ date: brazilTodayIsoDate(), slots: [] })
+    fetchDay.mockResolvedValue({
+      date: tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+      slots: [],
+    })
     listMine.mockResolvedValue([])
     scrollIntoView = vi.fn()
     HTMLElement.prototype.scrollIntoView =
@@ -4041,9 +4050,12 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     })
     expect(scrollIntoView.mock.instances).toContain(focused)
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
-      brazilTodayIsoDate(),
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
     )
-    expect(fetchDay).toHaveBeenCalledWith("ficc", brazilTodayIsoDate())
+    expect(fetchDay).toHaveBeenCalledWith(
+      "ficc",
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+    )
     expect(
       fetchDay.mock.calls.some((call) => String(call[1]).startsWith("2099")),
     ).toBe(false)
@@ -4108,7 +4120,7 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     expect(document.body).not.toHaveTextContent(RESERVATION_ID)
     expect(toastError).not.toHaveBeenCalled()
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
-      brazilTodayIsoDate(),
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
     )
   })
 })
