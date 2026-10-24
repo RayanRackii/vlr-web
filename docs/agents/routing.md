@@ -2,9 +2,9 @@
 
 ## Roteamento multi-agent
 
-Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
+Arquivos em [`.cursor/agents/`](../../.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
 
-Selecione o modelo por capacidade: **Luna (`gpt-6-luna`)** para mudanças pequenas, testes e documentação; **Terra (`gpt-5.6-terra`)** para endpoints e componentes; **Sol (`gpt-6.1-sol`)** para trabalho complexo ou transversal, segurança e reviews. O parent/orchestrator é dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, review, PR e merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Se um agente nomeado não estiver disponível, use o próximo modelo adequado à capacidade necessária e prossiga; não pare nem simule uma indisponibilidade.
+Selecione o modelo por capacidade: **Luna (`gpt-6-luna`)** para mudanças pequenas, testes e documentação; **Terra (`gpt-5.6-terra`)** para endpoints e componentes; **Sol (`gpt-6.1-sol`)** para trabalho complexo ou transversal, segurança e reviews. O parent/orchestrator é dono do [Autonomous Delivery Workflow](./delivery-and-merge-gate.md#autonomous-delivery-workflow) neste repo (Git, review, PR e merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Se um agente nomeado não estiver disponível, use o próximo modelo adequado à capacidade necessária e prossiga; não pare nem simule uma indisponibilidade.
 
 Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
 
