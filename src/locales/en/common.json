@@ -1129,6 +1129,8 @@
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu",
     "loading": "Loading navigation menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu",
     "sections": {
       "overview": "Overview",
       "peoplePortal": "People & portal",
