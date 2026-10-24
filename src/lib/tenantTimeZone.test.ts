@@ -1,0 +1,76 @@
+import { describe, expect, it } from "vitest"
+
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  clampTenantDateToToday,
+  formatTenantDateTimeRange,
+  formatTenantTime,
+  isTenantSlotStartInPast,
+  tenantTodayIsoDate,
+} from "@/lib/tenantTimeZone"
+
+describe("tenantTimeZone", () => {
+  it("falls back to America/Sao_Paulo", () => {
+    expect(DEFAULT_TENANT_TIME_ZONE).toBe("America/Sao_Paulo")
+  })
+
+  it("uses the tenant civil date in America/Manaus", () => {
+    const instant = new Date("2026-09-10T03:30:00.000Z")
+
+    expect(tenantTodayIsoDate("America/Manaus", instant)).toBe("2026-09-09")
+    expect(formatTenantTime(instant, "America/Manaus", "en-GB")).toBe("23:30")
+  })
+
+  it("uses the tenant civil date and clock in Asia/Tokyo", () => {
+    const instant = new Date("2026-09-10T16:00:00.000Z")
+
+    expect(tenantTodayIsoDate("Asia/Tokyo", instant)).toBe("2026-09-11")
+    expect(formatTenantTime(instant, "Asia/Tokyo", "en-GB")).toBe("01:00")
+  })
+
+  it("formats the New York DST jump without inventing a nonexistent local time", () => {
+    const range = formatTenantDateTimeRange(
+      "2026-03-08T06:30:00.000Z",
+      "2026-03-08T07:30:00.000Z",
+      "America/New_York",
+      "en-GB",
+    )
+
+    expect(range).toContain("01:30")
+    expect(range).toContain("03:30")
+    expect(range).not.toContain("02:30")
+  })
+
+  it("compares slot starts on the requested tenant clock", () => {
+    const now = new Date("2026-03-08T07:15:00.000Z")
+
+    expect(
+      isTenantSlotStartInPast(
+        "2026-03-08",
+        "03:00:00",
+        "America/New_York",
+        now,
+      ),
+    ).toBe(true)
+    expect(
+      isTenantSlotStartInPast(
+        "2026-03-08",
+        "03:30:00",
+        "America/New_York",
+        now,
+      ),
+    ).toBe(false)
+  })
+
+  it("clamps only complete civil dates before tenant today", () => {
+    const now = new Date("2026-09-10T03:30:00.000Z")
+
+    expect(clampTenantDateToToday("2026-09-08", "America/Manaus", now)).toBe(
+      "2026-09-09",
+    )
+    expect(clampTenantDateToToday("2026-09-10", "America/Manaus", now)).toBe(
+      "2026-09-10",
+    )
+    expect(clampTenantDateToToday("", "America/Manaus", now)).toBe("")
+  })
+})

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   cancelAdminReservation,
   completeAdminReservation,
@@ -26,15 +27,16 @@ import {
   type AdminReservation,
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 
 const ALL_STATUSES = "__all__"
 
 export function ReservationsPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
+  const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
-  const [date, setDate] = useState(brazilTodayIsoDate())
+  const [date, setDate] = useState(() => tenantTodayIsoDate(timeZoneId))
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
   const [loading, setLoading] = useState(true)
@@ -213,7 +215,11 @@ export function ReservationsPage() {
                     {formatReservationAssets(row)}
                   </p>
                   <p className="text-muted-foreground">
-                    {formatReservationRange(row.startDateTime, row.endDateTime)}
+                    {formatReservationRange(
+                      row.startDateTime,
+                      row.endDateTime,
+                      timeZoneId,
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t(`rentals.reservations.statuses.${row.status}`)}

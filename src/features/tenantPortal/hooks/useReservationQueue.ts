@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   fetchReservationQueue,
@@ -10,7 +11,7 @@ import {
   leaveReservationQueue,
   type ReservationQueueStatus,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { SAO_PAULO_TZ } from "@/lib/brazilTimeZone"
+import { formatTenantTime } from "@/lib/tenantTimeZone"
 
 const POLL_INTERVAL_MS = 4000
 const COUNTDOWN_TICK_MS = 1000
@@ -46,7 +47,11 @@ function toastQueueFailure(
   )
 }
 
-function formatQueueClockTime(iso: string | null | undefined, locale: string): string {
+function formatQueueClockTime(
+  iso: string | null | undefined,
+  locale: string,
+  timeZoneId: string,
+): string {
   if (!iso) {
     return ""
   }
@@ -54,12 +59,7 @@ function formatQueueClockTime(iso: string | null | undefined, locale: string): s
   if (Number.isNaN(date.getTime())) {
     return ""
   }
-  return date.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: SAO_PAULO_TZ,
-  })
+  return formatTenantTime(date, timeZoneId, locale)
 }
 
 function remainingTurnMs(
@@ -100,6 +100,7 @@ export function useReservationQueue(options: {
 } {
   const { rentalAssetId, enabled } = options
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const [status, setStatus] = useState<ReservationQueueStatus | null>(null)
   const [receivedAtMs, setReceivedAtMs] = useState(0)
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -294,15 +295,20 @@ export function useReservationQueue(options: {
         waitingRoomTime: formatQueueClockTime(
           status.waitingRoomOpensAt,
           i18n.language,
+          timeZoneId,
         ),
-        opensTime: formatQueueClockTime(status.opensAt, i18n.language),
+        opensTime: formatQueueClockTime(
+          status.opensAt,
+          i18n.language,
+          timeZoneId,
+        ),
       }
     }
     return {
       kind: "join",
       joinAndReserve: isOpenWithNobodyAhead(status),
     }
-  }, [enabled, i18n.language, remainingMs, status])
+  }, [enabled, i18n.language, remainingMs, status, timeZoneId])
 
   const explanation =
     enabled && (status == null || status.queueEnabled === true)

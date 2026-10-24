@@ -1,6 +1,9 @@
 import { z } from "zod"
 
-import { brazilCivilDateTime } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  tenantCivilDateTime,
+} from "@/lib/tenantTimeZone"
 
 const reservationIdSchema = z.string().uuid()
 
@@ -100,18 +103,22 @@ export function agendaReservedSlotKey(
 /** Start of a reservation on the Rolvix clock, or null when the instant is unreadable. */
 export function reservationCivilStart(
   startDateTime: string,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): { date: string; time: string } | null {
   const instant = new Date(startDateTime)
   if (Number.isNaN(instant.getTime())) {
     return null
   }
 
-  const civil = brazilCivilDateTime(instant)
+  const civil = tenantCivilDateTime(instant, timeZoneId)
   return { date: civil.date, time: clockKey(civil.time) }
 }
 
-export function reservationCivilDate(startDateTime: string): string | null {
-  return reservationCivilStart(startDateTime)?.date ?? null
+export function reservationCivilDate(
+  startDateTime: string,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
+): string | null {
+  return reservationCivilStart(startDateTime, timeZoneId)?.date ?? null
 }
 
 function isBookableObservation(slot: AgendaSlotHold): boolean {
@@ -130,6 +137,7 @@ export function reservedSlotKeysForDate(
   date: string,
   reservations: readonly AgendaReservationHold[],
   slots: readonly AgendaSlotHold[],
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): ReadonlySet<string> {
   const blocking = reservations.filter((reservation) =>
     isBlockingReservationStatus(reservation.status),
@@ -140,7 +148,7 @@ export function reservedSlotKeysForDate(
   const keys = new Set<string>()
 
   for (const reservation of blocking) {
-    const civil = reservationCivilStart(reservation.startDateTime)
+    const civil = reservationCivilStart(reservation.startDateTime, timeZoneId)
     if (civil === null || civil.date !== date) {
       continue
     }
@@ -199,6 +207,7 @@ export function withoutBookableReservedKeys(
 export function agendaRefreshDates(
   viewedDate: string,
   reservations: readonly { startDateTime: string }[],
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): string[] {
   const dates: string[] = []
   const seen = new Set<string>()
@@ -213,7 +222,7 @@ export function agendaRefreshDates(
 
   add(viewedDate)
   for (const reservation of reservations) {
-    add(reservationCivilDate(reservation.startDateTime))
+    add(reservationCivilDate(reservation.startDateTime, timeZoneId))
   }
 
   return dates

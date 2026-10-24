@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   DailyAgendaTab,
   type ScheduleBusyAction,
@@ -87,6 +88,7 @@ export function SchedulePage() {
 function AdminSchedulePage() {
   const { t } = useTranslation()
   const { isTrialReadOnly } = useTrialStatus()
+  const timeZoneId = useTenantTimeZone()
 
   const [tab, setTab] = useState<ScheduleTab>("daily")
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
@@ -94,7 +96,7 @@ function AdminSchedulePage() {
     [],
   )
   const [weekday, setWeekday] = useState<DayOfWeekName>(todayWeekdayName)
-  const [date, setDate] = useState(todayIsoDate())
+  const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
   const [day, setDay] = useState<AdminDaySchedule | null>(null)

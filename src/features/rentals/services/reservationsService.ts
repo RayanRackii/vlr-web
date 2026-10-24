@@ -6,6 +6,7 @@ import {
   formatLocaleDateTimeRange,
 } from "@/lib/localeFormat"
 import i18n from "@/lib/i18n"
+import { DEFAULT_TENANT_TIME_ZONE } from "@/lib/tenantTimeZone"
 
 export const reservationStatuses = [
   "PendingDeposit",
@@ -151,11 +152,13 @@ export function formatReservationAssets(reservation: AdminReservation): string {
 export function formatReservationRange(
   startDateTime: string,
   endDateTime: string,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): string {
   return formatLocaleDateTimeRange(
     startDateTime,
     endDateTime,
     i18n.language,
+    timeZoneId,
   )
 }
 

@@ -1,4 +1,7 @@
-import { formatBrazilDateTimeRange } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  formatTenantDateTimeRange,
+} from "@/lib/tenantTimeZone"
 
 const CIVIL_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 
@@ -151,15 +154,16 @@ export function formatLocaleDateTime(value: string, locale: string): string {
 }
 
 /**
- * Reservation start/end on the Rolvix business clock (`America/Sao_Paulo`).
+ * Reservation start/end on the tenant business clock.
  * Generic for every resource type.
  */
 export function formatLocaleDateTimeRange(
   startIso: string,
   endIso: string,
   locale: string,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): string {
   return normalizeIntlSpaces(
-    formatBrazilDateTimeRange(startIso, endIso, locale),
+    formatTenantDateTimeRange(startIso, endIso, timeZoneId, locale),
   )
 }
