@@ -1,9 +1,18 @@
 import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CircleCheck } from "lucide-react"
+import {
+  Building2,
+  CircleCheck,
+  Hash,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
+import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
@@ -14,8 +23,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
+import { iconProps } from "@/lib/icon"
 import { createTenant } from "@/features/onboarding/createTenant"
 import {
   createTenantRequestSchema,
@@ -133,38 +143,29 @@ export function OnboardingPage() {
 
   if (inviteEmail !== null) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 p-6">
+      <AuthLayout
+        title={t("trial.onboarding.successTitle")}
+        widthClassName="max-w-lg"
+      >
         <div
           role="status"
-          className="space-y-3 rounded-lg border border-green-600/30 bg-green-600/10 p-6 text-green-900 dark:text-green-300"
+          className="flex items-start gap-3 rounded-lg border border-green-600/30 bg-green-600/10 p-6 text-green-900 dark:text-green-300"
         >
-          <div className="flex items-start gap-3">
-            <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {t("trial.onboarding.successTitle")}
-              </h1>
-              <p className="text-sm">
-                {t("trial.onboarding.successBody", { email: inviteEmail })}
-              </p>
-            </div>
-          </div>
+          <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <p className="text-sm">
+            {t("trial.onboarding.successBody", { email: inviteEmail })}
+          </p>
         </div>
-      </main>
+      </AuthLayout>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 p-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("trial.onboarding.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("trial.onboarding.description")}
-        </p>
-      </header>
-
+    <AuthLayout
+      title={t("trial.onboarding.title")}
+      subtitle={t("trial.onboarding.description")}
+      widthClassName="max-w-2xl"
+    >
       <WizardPanelsStepper
         steps={panelSteps}
         ariaLabel={t("trial.onboarding.stepsAria")}
@@ -174,6 +175,7 @@ export function OnboardingPage() {
             setStep(index)
           }
         }}
+        className="mb-6"
       />
 
       <Form {...form}>
@@ -194,7 +196,11 @@ export function OnboardingPage() {
                     <FormItem>
                       <FormLabel>{t("trial.onboarding.fields.legalName")}</FormLabel>
                       <FormControl>
-                        <Input autoComplete="organization" {...field} />
+                        <InputWithIcon
+                          icon={<Building2 {...iconProps("sm")} />}
+                          autoComplete="organization"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -207,7 +213,10 @@ export function OnboardingPage() {
                     <FormItem>
                       <FormLabel>{t("trial.onboarding.fields.taxId")}</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <InputWithIcon
+                          icon={<Hash {...iconProps("sm")} />}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -222,7 +231,10 @@ export function OnboardingPage() {
                         {t("trial.onboarding.fields.headquarters")}
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <InputWithIcon
+                          icon={<MapPin {...iconProps("sm")} />}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -243,7 +255,11 @@ export function OnboardingPage() {
                     <FormItem>
                       <FormLabel>{t("trial.onboarding.fields.adminName")}</FormLabel>
                       <FormControl>
-                        <Input autoComplete="name" {...field} />
+                        <InputWithIcon
+                          icon={<UserRound {...iconProps("sm")} />}
+                          autoComplete="name"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -256,7 +272,12 @@ export function OnboardingPage() {
                     <FormItem>
                       <FormLabel>{t("trial.onboarding.fields.adminEmail")}</FormLabel>
                       <FormControl>
-                        <Input type="email" autoComplete="email" {...field} />
+                        <InputWithIcon
+                          icon={<Mail {...iconProps("sm")} />}
+                          type="email"
+                          autoComplete="email"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -269,7 +290,8 @@ export function OnboardingPage() {
                     <FormItem>
                       <FormLabel>{t("trial.onboarding.fields.adminPhone")}</FormLabel>
                       <FormControl>
-                        <Input
+                        <InputWithIcon
+                          icon={<Phone {...iconProps("sm")} />}
                           type="tel"
                           placeholder={t("trial.onboarding.fields.phonePlaceholder")}
                           autoComplete="tel"
@@ -363,6 +385,6 @@ export function OnboardingPage() {
           </div>
         </form>
       </Form>
-    </main>
+    </AuthLayout>
   )
 }
