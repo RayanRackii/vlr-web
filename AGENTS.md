@@ -18,184 +18,41 @@ ADRs de domínio (ex.: slots) vivem em **`vlr-api/docs/adr/`**.
 - Se glossário/beachhead mudou → atualizar também o canônico em `vlr-api`.
 - No chat: próximo passo deste roadmap **e** do `vlr-api`; **como testar**.
 
+## Regras duras (resumo — detalhe nos docs abaixo)
+- Base `develop`; nunca commit/push direto em `main` ou `develop`; uma task = uma branch (`feat|fix|refactor|test|chore/<slug>`) = um PR pequeno. Detalhe: [`docs/agents/git-workflow.md`](./docs/agents/git-workflow.md).
+- Feature → `develop`: **Squash and merge**, só com CI verde e todos os gates. Release `develop` → `main`: **Create a merge commit**, nunca squash/rebase, nunca automático (`PRODUCTION_HUMAN_APPROVAL_REQUIRED`).
+- Proibido sem humano: force push, `reset --hard`, stash/`clean` silencioso, deploy/dados/segredos/infra/DNS de PROD, migration destrutiva, deletar dados.
+- Nunca imprimir senhas, tokens ou segredos. Trabalho autônomo só em DEV.
+- Sempre `git fetch origin --prune` antes de alterar o repo (refs locais podem estar stale); bloqueios → `SESSION_BOOTSTRAP_BLOCKED`, nunca resolver em silêncio.
+- Reviewer gate: Critical = 0, High = 0; Medium corrigido ou justificado. Review só do diff (`origin/develop...HEAD`).
+- **Revisão profunda (canônica) obrigatória** se tocar: auth/authz, tenant isolation, segurança, concorrência, transação/integridade, migration/schema, dados persistidos, contrato FE↔BE, clients compartilhados, DEV/PROD, Fly/Vercel/Supabase, notificações, Hangfire, fronteiras de arquitetura, cross-repo, blast radius alto. Dossier ≤ ~1200 palavras, sem crawl; ≤ 1 chamada por PR. Detalhe e contrato `FABLE_MERGE_REVIEW`/`MERGE_BLOCKED`: [`docs/agents/delivery-and-merge-gate.md`](./docs/agents/delivery-and-merge-gate.md).
+- Bug de alta severidade (concorrência, auth, tenant, pricing) não pode depender só de build.
+
+## Roteamento de modelo/esforço
+Resumo: Luna/mini para mecânico, testes e docs; Terra para endpoints/componentes; Sol medium por padrão, Sol high só em passos de dados/tenant/preço; Opus só na revisão canônica. Não trocar modelo/esforço no meio de uma sessão; sessão nova por task, começando pela nota de handoff. Detalhe: [`docs/agents/routing.md`](./docs/agents/routing.md) e `~/rolvix-ai-docs/ROUTING.md`.
+
+## Skills por tipo de task (não carregar todas sempre)
+Skills user-level por nome (`grilling`, `domain-modeling`, `implement`, `tdd`, `code-review`); não duplicar o corpo; não usar caminhos de workspace (`C:\Free\...`, `../.agents/...`); se a skill exigida pela task não for descoberta, parar e informar — não improvisar cópia.
+- `implement`: toda task que escreve código.
+- `tdd`: mudança de lógica ou correção de bug (não para docs, copy, CSS, rename).
+- `grilling` + `domain-modeling`: só passo novo de domínio/design/arquitetura ou spec.
+- `code-review`: só no papel de reviewer.
+- Docs/config/mecânico: nenhuma skill além de `implement` (ou nenhuma, se for só docs).
+
+## Saída quieta (economia de tokens)
+- Testes: `npx vitest run --reporter=dot --silent`; rodar só o projeto/arquivo afetado antes da suíte inteira.
+- CI: `gh run view <id> --log-failed | tail -n 200`; nunca colar log inteiro no contexto.
+- Saída grande → redirecionar para arquivo e ler só o trecho necessário.
+
 ## Human Decision Gate
 
 Agentes podem decidir detalhes técnicos locais, reversíveis e já cobertos por regras/padrões existentes.
 
 Se surgir uma dúvida cuja resposta possa afetar arquitetura, modelo de domínio, outra funcionalidade, contrato frontend/backend, compatibilidade retroativa, autenticação/autorização, isolamento multi-tenant, segurança, dados persistidos ou comportamento em produção, o agente **não assume**.
 
-Deve parar, explicar a decisão necessária, apresentar alternativas relevantes, recomendar uma opção com motivo e pedir decisão ao usuário antes de continuar. Depois da escolha, o parent retoma o [Autonomous Delivery Workflow](#autonomous-delivery-workflow) sozinho.
+Deve parar, explicar a decisão necessária, apresentar alternativas relevantes, recomendar uma opção com motivo e pedir decisão ao usuário antes de continuar. Depois da escolha, o parent retoma o [Autonomous Delivery Workflow](./docs/agents/delivery-and-merge-gate.md) sozinho.
 
 Regra: *Escalate uncertainty, not implementation.*
-
-## Git Work Policy
-
-Uma implementação = uma branch própria + N commits + uma review.
-
-**Base:** `develop`. Nunca implementar, commitar ou fazer push diretamente em `main` ou `develop`.
-
-**Branches:** `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `test/<slug>`, `chore/<slug>`. Mudança cross-repo usa o **mesmo nome** em `vlr-api` e `vlr-web`.
-
-`main` permanece PROD-ready. `develop` permanece integration/DEV. Implementação só em `feat` / `fix` / `refactor` / `test` / `chore`. Commits diretos em `main` são proibidos.
-
-Merge methods (canônico em `vlr-api/AGENTS.md`): feature → `develop` = **Squash and merge**; production `develop` → `main` = **Create a merge commit**. Nunca squash nem rebase-and-merge de release. Não abrir reconciliação rotineira `main` → `develop` após release; hotfix em `main` que não está em `develop` exige back-merge.
-
-O usuário trabalha nos mesmos repos a partir de mais de um computador. Nenhum agente pode assumir que a branch local, os refs `origin/*` locais, os commits locais ou a working tree representam o estado remoto atual.
-
-**Quem coordena Git:** o parent/orchestrator. Subagentes (architect, implementer, reviewer) **não** repetem `git fetch` nem o bootstrap completo durante a mesma tarefa.
-
-```
-parent
-  ├─ git bootstrap
-  ├─ classify risk / Human Decision Gate
-  ├─ architect (se necessário)
-  ├─ implementer
-  ├─ build / test
-  ├─ reviewer
-  ├─ PR
-  ├─ Merge Risk Gate (dossier + revisão de risco Sol)
-  ├─ approve → merge em develop (quando os gates passarem)
-  └─ git checkpoint
-```
-
-Detecção por **evento**, não por adivinhar se uma janela do Cursor abriu ou vai fechar:
-
-| Evento | Ação |
-|---|---|
-| Antes da primeira operação que altere o repo | Automatic Session Bootstrap |
-| Depois de implementação concluída e validada | Automatic Task Checkpoint |
-| Usuário indica parar / trocar de PC / encerrar sessão | Explicit Session Handoff |
-
-Fluxo: pedido do usuário → parent → Git bootstrap **uma vez** → agentes → implementação → review → PR → Merge Risk Gate → merge em `develop` (se os gates passarem) → checkpoint.
-
-### Automatic Session Bootstrap
-
-Antes da primeira operação que altere o repositório de qualquer tarefa (editar arquivos, criar branch de implementação, continuar uma implementação, chamar agente com escrita, commit, push), o parent executa:
-
-```bash
-git status --short --branch
-git fetch origin --prune
-git status --short --branch
-git branch -vv
-```
-
-**Nunca confie em refs `origin/*` locais antes do fetch.** `git status` sem fetch pode mostrar a branch "sincronizada" com um `origin/*` stale.
-
-Não repetir este bootstrap a cada subagente da mesma tarefa. Exemplo: se o usuário abre outro PC e diz "vamos continuar Slots", o parent faz o bootstrap **antes** de qualquer alteração — o usuário não precisa perguntar se houve fetch.
-
-**Nova implementação** (working tree limpa; refs já atualizados pelo fetch acima):
-
-```bash
-git switch develop
-git pull --ff-only origin develop
-git switch -c <new-branch>
-```
-
-**Continuar uma feature existente noutro PC** (refs já atualizados pelo fetch acima): localizar a branch remota, switch para a local/tracking, atualizar só por fast-forward:
-
-```bash
-git switch <feature-branch>
-git pull --ff-only origin <feature-branch>
-```
-
-Não fazer automaticamente merge de `develop` na feature nem rebase da feature sobre `develop`. Se for necessário, é decisão explícita da tarefa ou Human Decision Gate.
-
-Parar com `SESSION_BOOTSTRAP_BLOCKED` se encontrar: uncommitted changes inesperadas; local e remote divergidos; branch atual inesperada; tracking ausente; fast-forward impossível; conflito; commit local não publicado cuja origem não esteja clara.
-
-Nesses casos: explicar o estado, apresentar opções, pedir decisão humana. Nunca resolver em silêncio com stash, reset, rebase, force, `clean`, restore ou checkout para esconder trabalho.
-
-### Automatic Task Checkpoint
-
-Não depender do usuário dizer que está encerrando a sessão. Depois de cada implementação concluída e validada, **antes** de anunciar que a tarefa terminou, o parent executa:
-
-```bash
-git status --short --branch
-git log -5 --oneline
-```
-
-e verifica: branch atual, working tree, commits locais, commits ainda não no remote, tracking.
-
-Se a implementação estiver concluída, validada, numa branch `feat` / `fix` / `refactor` / `test` / `chore`, e as regras deste arquivo permitirem: **commit**, **push**, e o restante do [Autonomous Delivery Workflow](#autonomous-delivery-workflow). Trabalho completo e validado não deve ficar só numa máquina.
-
-Não commitar código incompleto só para "limpar" a máquina. Trabalho incompleto deve ser reportado como incompleto.
-
-### Explicit Session Handoff
-
-Quando o usuário indicar que vai parar, trocar de PC, continuar noutro computador, encerrar por hoje, finalizar por hoje, fazer o handoff ou encerrar sessão, o parent faz um handoff completo:
-
-```bash
-git status --short --branch
-git log -5 --oneline
-```
-
-e, quando necessário, `git diff --stat`.
-
-Retornar:
-
-```
-SESSION_HANDOFF
-
-Repository:
-Branch:
-HEAD:
-Tracking:
-Working tree:
-Ahead:
-Behind:
-Last pushed commit:
-Uncommitted changes:
-Unpushed commits:
-Safe to continue on another PC:
-```
-
-Se não estiver seguro continuar noutro PC, dizer o motivo explicitamente.
-
-### Autonomia do implementer
-
-**O implementer pode autonomamente** (na feature branch, depois do Session Bootstrap do parent nesta tarefa): consultar status; editar; stage controlado; commits (incluindo vários coerentes); push da feature branch; configurar upstream.
-
-**O implementer NÃO pode autonomamente:** trabalhar/commitar/push em `main` ou `develop`; force push; merge; rebase automático; `reset --hard`; stash silencioso; `clean`; deploy de produção; alterar dados, segredos ou infraestrutura de produção; iniciar um segundo Session Bootstrap (`fetch` + sync de `develop` + criar branch) na mesma tarefa. PR, aprovação e merge em `develop` são do **parent**, depois dos gates.
-
-## Autonomous Delivery Workflow
-
-Canônico (contrato de revisão, blockers, merge methods, GitHub): **`vlr-api/AGENTS.md`** + `vlr-api/docs/runbooks/autonomous-delivery.md`. Este arquivo só afirma o que o parent faz **neste** repo.
-
-O parent é dono do ciclo técnico completo. O usuário não precisa pedir branch/commit/push/PR/review/approve/merge. “MR” = Pull Request.
-
-Neste repo: `web-implementer` ou `ui-implementer` (um writer por working tree) → `npm`/Vite build → `web-reviewer` em `origin/develop...HEAD` depois do parent `git fetch origin --prune`. Critical = 0, High = 0. Medium corrigido ou justificado como non-blocking.
-
-Merge Risk Gate: Sol (`gpt-6.1-sol`) prepara o dossier compacto e a revisão de risco é **obrigatória** se o PR tocar auth, tenant, contrato FE↔BE, clients de API compartilhados (`api` / `customerApi` / `publicApi`), roteamento DEV/PROD, ou blast radius alto — critérios completos no `AGENTS.md` da API. Copy/i18n/CSS isolado/docs: `DEEP_REVIEW_NOT_REQUIRED` se reviewers e build estiverem limpos.
-
-Merge automático só `feat` / `fix` / `refactor` / `test` / `chore` → `develop` após todos os gates (**Squash and merge**). Nunca `main`/PROD automático. Release `develop` → `main` (Human Gate): **Create a merge commit**. Cross-repo: mesmo nome de branch; não mergear metade incompatível (`COORDINATED_MERGE_REQUIRED`). Sem `gh`: `PR_AUTOMATION_UNAVAILABLE` + compare URL; não parar o review.
-
-Testes: se houver infra, adicionar regressão automática; senão `TEST_INFRASTRUCTURE_MISSING`. Auth/tenant/contrato de API compartilhado não devem depender só de build.
-
-Fila: `READY` / `IN_PROGRESS` / `BLOCKED_HUMAN` / `BLOCKED_TECHNICAL` / `PR_OPEN` / `MERGE_REVIEW` / `MERGED_DEVELOP` / `VALIDATION_REQUIRED`. Task bloqueada não encerra o sprint.
-
-## Roteamento multi-agent
-
-Arquivos em [`.cursor/agents/`](./.cursor/agents/). São roteadores — não copiam produto, arquitetura, convenções nem o corpo dos skills.
-
-Selecione o modelo por capacidade: **Luna (`gpt-6-luna`)** para mudanças pequenas, testes e documentação; **Terra (`gpt-5.6-terra`)** para endpoints e componentes; **Sol (`gpt-6.1-sol`)** para trabalho complexo ou transversal, segurança e reviews. O parent/orchestrator é dono do [Autonomous Delivery Workflow](#autonomous-delivery-workflow) neste repo (Git, review, PR e merge em `develop`). Subagentes não repetem `git fetch` na mesma tarefa. Se um agente nomeado não estiver disponível, use o próximo modelo adequado à capacidade necessária e prossiga; não pare nem simule uma indisponibilidade.
-
-Architects canônicos (definidos no **vlr-api**, não duplicar aqui):
-
-1. Architect (readonly) — Sol (`gpt-6.1-sol`) para arquitetura do Rolvix e Merge Review Dossier.
-2. Revisão profunda readonly — Sol (`gpt-6.1-sol`) para arquitetura profunda com aprovação explícita ou Merge Risk Gate quando o `AGENTS.md` da API o exigir.
-
-Ownership de implementação **neste** repo:
-
-3. Implementação web geral — Terra (`gpt-5.6-terra`) para endpoints e componentes; Luna (`gpt-6-luna`) para alterações pequenas/testes/docs. Segue esta Git Work Policy.
-4. Implementação visual/layout/UX/browser — Terra (`gpt-5.6-terra`) quando isso for central; não altera contrato/domínio/auth por conta própria.
-5. Review web readonly — Sol (`gpt-6.1-sol`) no diff `origin/develop...HEAD` de `vlr-web`. O parent faz `git fetch --prune origin` **antes**; o reviewer não faz fetch.
-
-Um writer ativo por working tree, nunca dois ao mesmo tempo neste repo. Paralelo com implementação API só no outro repo, e só se a spec não exigir ordem API→UI.
-
-Cross-repo: `rolvix-architect` → uma spec → `api-implementer` **e** `web-implementer` / `ui-implementer` → `api-reviewer` **e** `web-reviewer`.
-
-Tarefa trivial/localizada neste repo: pular architect. Tarefa arquitetural: Sol → spec → implementação adequada → Sol review.
-
-Prompt cache do provider ≠ memória do projeto ≠ context pack. Nenhuma decisão do fluxo depende de cache hit.
 
 ## Context packs
 
@@ -215,8 +72,3 @@ Specs só deste repo: [`docs/plans/`](./docs/plans/). Não substituem `ROADMAP.m
 
 Nome: `YYYY-MM-DD-descricao-curta.md`. Spec com decisão humana pendente **não** está pronta para implementar.
 
-## User-level skills
-
-Required user-level Cursor skills (descoberta do Cursor, tipicamente `~/.agents/skills/`): `grilling`, `domain-modeling`, `implement`, `tdd`, `code-review`.
-
-Agents referem skills **por nome**. Não duplicar o corpo. Não usar caminhos de workspace (`C:\Free\...`, `../.agents/...`). Se a skill não for descoberta, parar e informar — não improvisar cópia.
