@@ -47,10 +47,14 @@ export type ScheduleGridOccupancy = {
   reservationId?: string | null
   status: "available" | "booked" | "unavailable"
   badge?: "dailyOverride" | "inactive" | null
-  /** Set when this occupancy stands in for several concurrent bookings of a multi-unit resource. */
+  /** Units a single booking occupies on a multi-unit resource; defaults to 1 when absent. */
+  quantity?: number | null
+  /** Set when this occupancy stands in for one or more concurrent bookings of a multi-unit resource. */
   unitsBooked?: number | null
   unitsTotal?: number | null
   unitsFree?: number | null
+  /** The raw bookings this aggregated occupancy represents, for drilling into one of them. */
+  members?: ScheduleGridOccupancy[] | null
 }
 
 export function timeToMinutes(value: string): number {
@@ -295,10 +299,15 @@ export function dedupeOpenHoursOccupancies(
 }
 
 /**
- * A multi-unit resource (totalQuantity > 1) can have several concurrent
- * bookings covering the exact same window, each a distinct derived occupancy.
- * Collapse those into one occupancy carrying a units counter so the grid
- * renders a single cell instead of overlapping "Reservado" cards.
+ * A multi-unit resource (totalQuantity > 1) can have several bookings whose
+ * windows overlap, nest, or merely touch. Sweep every start/end boundary to
+ * cut the booked time into non-overlapping segments, count how many units
+ * are active in each, and merge consecutive segments with the exact same
+ * active bookings into one span. The grid then renders one "Reservado · N de
+ * M" cell per span (even for a single booking) instead of overlapping cards,
+ * while each span keeps its member bookings so staff can still open any of
+ * their details. Touching-but-distinct bookings (e.g. 08-09 and 09-10) are
+ * never merged, since they never share an active segment.
  */
 export function aggregateMultiUnitOccupancies(
   occupancies: readonly ScheduleGridOccupancy[],
@@ -308,34 +317,74 @@ export function aggregateMultiUnitOccupancies(
     return [...occupancies]
   }
 
-  const byWindow = new Map<string, ScheduleGridOccupancy[]>()
-  for (const item of occupancies) {
-    const key = `${item.startTime}|${item.endTime}`
-    const list = byWindow.get(key) ?? []
-    list.push(item)
-    byWindow.set(key, list)
+  const booked = occupancies.filter((item) => item.status === "booked")
+  const others = occupancies.filter((item) => item.status !== "booked")
+  if (booked.length === 0) {
+    return [...others]
   }
 
-  const result: ScheduleGridOccupancy[] = []
-  for (const items of byWindow.values()) {
-    const booked = items.filter((item) => item.status === "booked")
-    if (booked.length <= 1) {
-      result.push(...items)
+  const boundaries = [
+    ...new Set(
+      booked.flatMap((item) => [
+        timeToMinutes(item.startTime),
+        timeToMinutes(item.endTime),
+      ]),
+    ),
+  ].sort((a, b) => a - b)
+
+  type Span = { start: number; end: number; members: ScheduleGridOccupancy[] }
+  const spans: Span[] = []
+  for (let index = 0; index < boundaries.length - 1; index += 1) {
+    const segStart = boundaries[index]
+    const segEnd = boundaries[index + 1]
+    if (segStart === undefined || segEnd === undefined || segEnd <= segStart) continue
+
+    const active = booked.filter(
+      (item) =>
+        timeToMinutes(item.startTime) <= segStart &&
+        timeToMinutes(item.endTime) >= segEnd,
+    )
+    if (active.length === 0) continue
+
+    const previous = spans.at(-1)
+    if (previous && previous.end === segStart && sameMembers(previous.members, active)) {
+      previous.end = segEnd
       continue
     }
-    const representative = booked[0]
-    if (!representative) continue
-    result.push({
+    spans.push({ start: segStart, end: segEnd, members: active })
+  }
+
+  const aggregated = spans.map((span) => {
+    const representative = span.members[0]
+    if (!representative) throw new Error("Booked span has no active member")
+    const unitsBooked = span.members.reduce(
+      (sum, member) => sum + (member.quantity ?? 1),
+      0,
+    )
+    return {
       ...representative,
-      id: `units:${representative.rentalAssetId}:${representative.startTime}-${representative.endTime}`,
+      id: `units:${representative.rentalAssetId}:${formatMinutesAsTime(span.start)}-${formatMinutesAsTime(span.end)}`,
+      startTime: formatMinutesAsTime(span.start),
+      endTime: formatMinutesAsTime(span.end),
       label: null,
       reservationId: null,
-      unitsBooked: booked.length,
+      unitsBooked,
       unitsTotal: totalQuantity,
-      unitsFree: Math.max(0, totalQuantity - booked.length),
-    })
-  }
-  return result
+      unitsFree: Math.max(0, totalQuantity - unitsBooked),
+      members: span.members,
+    }
+  })
+
+  return [...others, ...aggregated]
+}
+
+function sameMembers(
+  a: readonly ScheduleGridOccupancy[],
+  b: readonly ScheduleGridOccupancy[],
+): boolean {
+  if (a.length !== b.length) return false
+  const ids = new Set(a.map((item) => item.id))
+  return b.every((item) => ids.has(item.id))
 }
 
 function collapseBookedReservations(

@@ -3079,7 +3079,9 @@
           "unavailable": "Indisponible"
         },
         "unitsBooked": "Reservado · {{booked}} de {{total}}",
-        "unitsFree": "{{count}} libre",
+        "unitsFree_one": "{{count}} libre",
+        "unitsFree_other": "{{count}} libres",
+        "unitsChooserTitle": "Elija una reserva",
         "source": {
           "weeklyDefault": "Estándar semanal",
           "dailyOverride": "Ajuste de este día"

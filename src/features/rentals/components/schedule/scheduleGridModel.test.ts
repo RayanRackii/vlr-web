@@ -222,7 +222,27 @@ describe("aggregateMultiUnitOccupancies", () => {
     expect(aggregateMultiUnitOccupancies(occupancies, 1)).toEqual(occupancies)
   })
 
-  it("merges concurrent bookings of the same window into one occupancy with a units counter", () => {
+  it("wraps a lone booking with a units counter (1 of N), not just overlapping ones", () => {
+    const occupancies = [
+      occupancy({ id: "r1", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      startTime: "08:00",
+      endTime: "09:00",
+      status: "booked",
+      unitsBooked: 1,
+      unitsTotal: 3,
+      unitsFree: 2,
+    })
+    expect(result[0]?.members).toHaveLength(1)
+    expect(result[0]?.members?.[0]?.id).toBe("r1")
+  })
+
+  it("merges concurrent bookings of the exact same window into one occupancy with a units counter", () => {
     const occupancies = [
       occupancy({
         id: "derived:projetor:12:00-16:00:r:r1",
@@ -251,17 +271,90 @@ describe("aggregateMultiUnitOccupancies", () => {
       unitsTotal: 3,
       unitsFree: 1,
     })
+    expect(result[0]?.members).toHaveLength(2)
   })
 
-  it("keeps a lone booking separate from an unrelated window on the same resource", () => {
+  it("splits partially overlapping bookings into segments with their own counts", () => {
     const occupancies = [
-      occupancy({ startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
+      occupancy({ id: "a", startTime: "10:00", endTime: "12:00", status: "booked", reservationId: "a" }),
+      occupancy({ id: "b", startTime: "11:00", endTime: "13:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(3)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "10:00", endTime: "11:00", unitsBooked: 1, unitsFree: 2 })
+    expect(sorted[0]?.members?.map((m) => m.id)).toEqual(["a"])
+    expect(sorted[1]).toMatchObject({ startTime: "11:00", endTime: "12:00", unitsBooked: 2, unitsFree: 1 })
+    expect(sorted[1]?.members?.map((m) => m.id).sort()).toEqual(["a", "b"])
+    expect(sorted[2]).toMatchObject({ startTime: "12:00", endTime: "13:00", unitsBooked: 1, unitsFree: 2 })
+    expect(sorted[2]?.members?.map((m) => m.id)).toEqual(["b"])
+  })
+
+  it("splits a booking nested inside a longer one into three segments", () => {
+    const occupancies = [
+      occupancy({ id: "outer", startTime: "10:00", endTime: "14:00", status: "booked", reservationId: "outer" }),
+      occupancy({ id: "inner", startTime: "11:00", endTime: "12:00", status: "booked", reservationId: "inner" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(3)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "10:00", endTime: "11:00", unitsBooked: 1 })
+    expect(sorted[1]).toMatchObject({ startTime: "11:00", endTime: "12:00", unitsBooked: 2 })
+    expect(sorted[2]).toMatchObject({ startTime: "12:00", endTime: "14:00", unitsBooked: 1 })
+    // The two outer segments are not merged into one span: they are not
+    // adjacent to each other once the inner segment splits them apart.
+    expect(sorted[0]?.id).not.toBe(sorted[2]?.id)
+  })
+
+  it("does not merge adjacent, non-overlapping bookings of distinct reservations", () => {
+    const occupancies = [
+      occupancy({ id: "a", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "a" }),
+      occupancy({ id: "b", startTime: "09:00", endTime: "10:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(2)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "08:00", endTime: "09:00", unitsBooked: 1 })
+    expect(sorted[1]).toMatchObject({ startTime: "09:00", endTime: "10:00", unitsBooked: 1 })
+  })
+
+  it("sums per-booking quantity instead of counting bookings when quantity is set", () => {
+    const occupancies = [
+      occupancy({ id: "a", startTime: "10:00", endTime: "11:00", status: "booked", reservationId: "a", quantity: 2 }),
+      occupancy({ id: "b", startTime: "10:00", endTime: "11:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ unitsBooked: 3, unitsTotal: 3, unitsFree: 0 })
+  })
+
+  it("keeps a lone booking separate from an unrelated available window on the same resource", () => {
+    const occupancies = [
+      occupancy({ id: "r1", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
       occupancy({ startTime: "09:00", endTime: "10:00", status: "available" }),
     ]
 
     const result = aggregateMultiUnitOccupancies(occupancies, 3)
 
-    expect(result).toEqual(occupancies)
+    expect(result).toHaveLength(2)
+    expect(result.find((item) => item.status === "available")).toMatchObject({
+      startTime: "09:00",
+      endTime: "10:00",
+    })
+    expect(result.find((item) => item.status === "booked")).toMatchObject({
+      startTime: "08:00",
+      endTime: "09:00",
+      unitsBooked: 1,
+      unitsTotal: 3,
+    })
   })
 })
 

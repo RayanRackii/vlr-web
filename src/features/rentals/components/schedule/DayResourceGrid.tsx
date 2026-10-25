@@ -3,6 +3,14 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
   aggregateMultiUnitOccupancies,
   dedupeOpenHoursOccupancies,
   durationValues,
@@ -345,43 +353,36 @@ function RowCells({
                   })
                 : t(`rentals.schedule.occurrence.status.${item.status}`)
               const timeRangeLabel = `${formatMinutesAsTime(timeToMinutes(item.startTime))}–${formatMinutesAsTime(timeToMinutes(item.endTime))}`
+              const freeUnitsLabel = item.unitsFree
+                ? t("rentals.schedule.occurrence.unitsFree", { count: item.unitsFree })
+                : null
               const StatusIcon = STATUS_ICON[item.status]
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  disabled={
-                    readOnly ||
-                    isMultiUnit ||
-                    busyTargetKey === item.id ||
-                    (isStartClosed?.(item.startTime) === true &&
-                      item.status !== "booked")
-                  }
-                  aria-label={`${asset.name}, ${formatMinutesAsTime(timeToMinutes(item.startTime))}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}`}
-                  className={cn(
-                    "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
-                    overlapIndex > 0 && "translate-x-2",
-                  )}
-                  style={{
-                    left: 4,
-                    right: 4 + overlapIndex * 8,
-                    height: rows * ROW_HEIGHT - 8,
-                    zIndex: 5 + overlapIndex,
-                    borderColor: item.occupancyKindColorHex ?? "var(--border)",
-                    backgroundColor: item.occupancyKindColorHex
-                      ? `${item.occupancyKindColorHex}20`
-                      : "var(--muted)",
-                  }}
-                  onClick={() =>
-                    onCellClick({
-                      rentalAssetId: asset.id,
-                      assetName: asset.name,
-                      startTime: item.startTime,
-                      endTime: item.endTime,
-                      occupancy: item,
-                    })
-                  }
-                >
+              const members = item.members ?? null
+              const hasChooser = Boolean(members && members.length > 1)
+              const soleMember = members && members.length === 1 ? members[0] : null
+              const relevantIds =
+                members && members.length > 0 ? members.map((member) => member.id) : [item.id]
+              const disabled =
+                readOnly ||
+                (busyTargetKey !== null && relevantIds.includes(busyTargetKey)) ||
+                (isStartClosed?.(item.startTime) === true && item.status !== "booked")
+              const ariaLabel = `${asset.name}, ${timeRangeLabel}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}${freeUnitsLabel ? `, ${freeUnitsLabel}` : ""}`
+              const cardClassName = cn(
+                "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                overlapIndex > 0 && "translate-x-2",
+              )
+              const cardStyle = {
+                left: 4,
+                right: 4 + overlapIndex * 8,
+                height: rows * ROW_HEIGHT - 8,
+                zIndex: 5 + overlapIndex,
+                borderColor: item.occupancyKindColorHex ?? "var(--border)",
+                backgroundColor: item.occupancyKindColorHex
+                  ? `${item.occupancyKindColorHex}20`
+                  : "var(--muted)",
+              }
+              const cardContent = (
+                <>
                   <span className="block truncate text-xs text-muted-foreground">
                     {itemLabel ? `${itemLabel} · ` : ""}
                     {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
@@ -400,9 +401,9 @@ function RowCells({
                     <StatusIcon className="size-2.5" aria-hidden />
                     {statusLabel}
                   </span>
-                  {item.unitsFree ? (
+                  {freeUnitsLabel ? (
                     <span className="ml-1 mt-1 inline-flex items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
-                      {t("rentals.schedule.occurrence.unitsFree", { count: item.unitsFree })}
+                      {freeUnitsLabel}
                     </span>
                   ) : null}
                   {item.badge === "dailyOverride" ? (
@@ -415,6 +416,80 @@ function RowCells({
                       {t("rentals.schedule.inactive")}
                     </span>
                   ) : null}
+                </>
+              )
+
+              const dispatch = (target: ScheduleGridOccupancy) => {
+                onCellClick({
+                  rentalAssetId: asset.id,
+                  assetName: asset.name,
+                  startTime: target.startTime,
+                  endTime: target.endTime,
+                  occupancy: target,
+                })
+              }
+
+              if (hasChooser && members) {
+                return (
+                  <Popover key={item.id}>
+                    <PopoverTrigger
+                      render={
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          aria-label={ariaLabel}
+                          className={cardClassName}
+                          style={cardStyle}
+                        />
+                      }
+                    >
+                      {cardContent}
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-64">
+                      <PopoverHeader>
+                        <PopoverTitle>
+                          {t("rentals.schedule.occurrence.unitsChooserTitle")}
+                        </PopoverTitle>
+                      </PopoverHeader>
+                      <ul className="flex flex-col gap-1">
+                        {members.map((member) => {
+                          const memberRange = `${formatMinutesAsTime(timeToMinutes(member.startTime))}–${formatMinutesAsTime(timeToMinutes(member.endTime))}`
+                          const memberStatus = t(
+                            `rentals.schedule.occurrence.status.${member.status}`,
+                          )
+                          return (
+                            <li key={member.id}>
+                              <PopoverClose
+                                render={
+                                  <button
+                                    type="button"
+                                    className="w-full rounded-md px-2 py-1.5 text-left text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                  />
+                                }
+                                onClick={() => dispatch(member)}
+                              >
+                                {memberRange} · {memberStatus}
+                              </PopoverClose>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                )
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  disabled={disabled}
+                  aria-label={ariaLabel}
+                  className={cardClassName}
+                  style={cardStyle}
+                  onClick={() => dispatch(soleMember ?? item)}
+                >
+                  {cardContent}
                 </button>
               )
             })}

@@ -165,12 +165,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Indisponível, Tipo: Aberto",
+        name: "Sala 1, 08:00–09:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
   })
@@ -182,7 +182,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -193,7 +193,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
 
@@ -203,7 +203,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -214,7 +214,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
   })
@@ -226,12 +226,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Indisponível, Tipo: Aberto",
+        name: "Sala 1, 08:00–09:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -241,7 +241,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
   })
@@ -263,12 +263,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Reservado, Tipo: Aberto",
+        name: "Sala 1, 08:00–09:00, Reservado, Tipo: Aberto",
       }),
     ).toBeEnabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
   })
@@ -280,12 +280,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 08:00–09:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
+        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
   })
@@ -426,20 +426,20 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
 
     const grid = screen.getByRole("grid")
     expect(
-      within(grid).getByRole("button", { name: "Sala 1, 08:00, Disponível, Tipo: Aberto" }),
+      within(grid).getByRole("button", { name: "Sala 1, 08:00–09:00, Disponível, Tipo: Aberto" }),
     ).toBeInTheDocument()
     expect(
-      within(grid).getByRole("button", { name: "Sala 1, 09:00, Disponível, Tipo: Aberto" }),
+      within(grid).getByRole("button", { name: "Sala 1, 09:00–10:00, Disponível, Tipo: Aberto" }),
     ).toBeInTheDocument()
 
     // The 10:00-12:00 booking should render as a single two-row span, not
     // three overlapping buttons (1h+1h+2h+4h all covering that range), and the
     // 11:00 row is covered by that span rather than getting its own button.
     expect(
-      within(grid).getAllByRole("button", { name: /Sala 1, 10:00,/ }),
+      within(grid).getAllByRole("button", { name: /Sala 1, 10:00–12:00,/ }),
     ).toHaveLength(1)
     expect(
-      within(grid).getByRole("button", { name: "Sala 1, 10:00, Reservado, Tipo: Aberto" }),
+      within(grid).getByRole("button", { name: "Sala 1, 10:00–12:00, Reservado, Tipo: Aberto" }),
     ).toBeInTheDocument()
   })
 
@@ -476,10 +476,10 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
     )
 
     expect(
-      screen.getByRole("button", { name: "Sala 1, 08:00, Disponível, Tipo: Aberto" }),
+      screen.getByRole("button", { name: "Sala 1, 08:00–10:00, Disponível, Tipo: Aberto" }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: "Sala 1, 10:00, Disponível, Tipo: Aberto" }),
+      screen.getByRole("button", { name: "Sala 1, 10:00–12:00, Disponível, Tipo: Aberto" }),
     ).toBeInTheDocument()
   })
 })
@@ -552,5 +552,90 @@ describe("DailyAgendaTab multi-unit resource", () => {
     expect(within(grid).getByText("Reservado · 2 de 3")).toBeInTheDocument()
     expect(within(grid).getByText("1 livre")).toBeInTheDocument()
     expect(within(grid).getByText("12:00–16:00")).toBeInTheDocument()
+  })
+
+  it("opens a chooser for an aggregated cell and reaches the existing details flow for the picked booking", async () => {
+    const user = userEvent.setup()
+    const date = "2026-10-17"
+    const day = twoConcurrentBookingsDay(date)
+    const onSlotOrCellClick = vi.fn()
+    render(
+      <MemoryRouter>
+        <DailyAgendaTab
+          assets={[multiUnitAsset()]}
+          selectedRentalAssetIds={[ASSET_ID]}
+          date={date}
+          day={day}
+          loading={false}
+          showSkeleton={false}
+          busy={false}
+          busyAction={null}
+          busyTargetKey={null}
+          readOnly={false}
+          onSelectedRentalAssetIdsChange={() => undefined}
+          onDateChange={() => undefined}
+          onPublish={() => undefined}
+          onSlotOrCellClick={onSlotOrCellClick}
+        />
+      </MemoryRouter>,
+    )
+
+    const grid = screen.getByRole("grid")
+    await user.click(within(grid).getByRole("button", { name: /Reservado · 2 de 3/ }))
+
+    const chooser = await screen.findByRole("dialog")
+    expect(
+      within(chooser).getByText(i18n.t("rentals.schedule.occurrence.unitsChooserTitle")),
+    ).toBeInTheDocument()
+    const entries = within(chooser).getAllByRole("button", { name: /12:00–16:00/ })
+    expect(entries).toHaveLength(2)
+
+    await user.click(entries[1] as HTMLElement)
+
+    expect(onSlotOrCellClick).toHaveBeenCalledTimes(1)
+    const payload = onSlotOrCellClick.mock.calls[0]?.[0]
+    expect(payload.occupancy?.reservationId).toBe("r2")
+    expect(payload.slot?.reservationId).toBe("r2")
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("keeps a lone booking on a multi-unit resource directly actionable, without a chooser", async () => {
+    const user = userEvent.setup()
+    const date = "2026-10-17"
+    const day: AdminDaySchedule = {
+      date,
+      slots: [twoConcurrentBookingsDay(date).slots[0]!],
+    }
+    const onSlotOrCellClick = vi.fn()
+    render(
+      <MemoryRouter>
+        <DailyAgendaTab
+          assets={[multiUnitAsset()]}
+          selectedRentalAssetIds={[ASSET_ID]}
+          date={date}
+          day={day}
+          loading={false}
+          showSkeleton={false}
+          busy={false}
+          busyAction={null}
+          busyTargetKey={null}
+          readOnly={false}
+          onSelectedRentalAssetIdsChange={() => undefined}
+          onDateChange={() => undefined}
+          onPublish={() => undefined}
+          onSlotOrCellClick={onSlotOrCellClick}
+        />
+      </MemoryRouter>,
+    )
+
+    const grid = screen.getByRole("grid")
+    expect(within(grid).getByText("Reservado · 1 de 3")).toBeInTheDocument()
+    await user.click(within(grid).getByRole("button", { name: /Reservado · 1 de 3/ }))
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(onSlotOrCellClick).toHaveBeenCalledTimes(1)
+    const payload = onSlotOrCellClick.mock.calls[0]?.[0]
+    expect(payload.occupancy?.reservationId).toBe("r1")
+    expect(payload.slot?.reservationId).toBe("r1")
   })
 })

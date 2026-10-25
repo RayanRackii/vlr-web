@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
@@ -206,6 +206,8 @@ describe("ReservationsPage Cancel confirmation", () => {
     ).toBeInTheDocument()
     expect(screen.getAllByText("Ana Souza").length).toBeGreaterThan(0)
     expect(screen.getAllByText("Quadra 1").length).toBeGreaterThan(0)
+    expect(within(dialog).getByText(/10:00/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/11:00/)).toBeInTheDocument()
     expect(dialog).toBeInTheDocument()
   })
 
