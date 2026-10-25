@@ -285,6 +285,8 @@ export function TenantPortalAgendaPage() {
   )
   const preferredDurationRef = useRef<number | null>(null)
   const preserveUnavailableDurationRef = useRef(false)
+  const [preserveUnavailableDuration, setPreserveUnavailableDuration] =
+    useState(false)
   const skipTimeResetRef = useRef(false)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
@@ -802,17 +804,17 @@ export function TenantPortalAgendaPage() {
   )
   const durationOptions = useMemo(
     () =>
-      !preserveUnavailableDurationRef.current ||
+      !preserveUnavailableDuration ||
       selectedDuration === null ||
       availableDurations.includes(selectedDuration)
         ? availableDurations
         : [...availableDurations, selectedDuration].sort(
             (left, right) => left - right,
           ),
-    [availableDurations, selectedDuration],
+    [availableDurations, preserveUnavailableDuration, selectedDuration],
   )
   const selectedDurationUnavailable =
-    preserveUnavailableDurationRef.current &&
+    preserveUnavailableDuration &&
     selectedDuration !== null &&
     !availableDurations.includes(selectedDuration)
   const effectiveDuration = useMemo(
@@ -1524,6 +1526,7 @@ export function TenantPortalAgendaPage() {
       return
     }
     preserveUnavailableDurationRef.current = true
+    setPreserveUnavailableDuration(true)
     preferredDurationRef.current = minutes
     setSelectedDuration(minutes)
     preferredTimeRef.current = ""
