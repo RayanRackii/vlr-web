@@ -168,6 +168,7 @@ async function fillNewPassword(password = "password1", confirm = password) {
 describe("SetPasswordPage", () => {
   beforeEach(() => {
     resetStaffSessionRefreshForTests()
+    window.sessionStorage.clear()
     preview.mockReset()
     acceptNew.mockReset()
     acceptExisting.mockReset()
@@ -577,10 +578,10 @@ describe("SetPasswordPage", () => {
     expect(refreshSession).not.toHaveBeenCalled()
   })
 
-  it("keeps the invalid-link login action enabled", () => {
+  it("keeps the invalid-link login action enabled", async () => {
     renderInvite(null)
     expect(
-      screen.getByRole("link", { name: i18n.t("auth.invite.goToLogin") }),
+      await screen.findByRole("link", { name: i18n.t("auth.invite.goToLogin") }),
     ).toBeEnabled()
     expect(preview).not.toHaveBeenCalled()
     expect(
@@ -663,5 +664,83 @@ describe("SetPasswordPage", () => {
     expect((await screen.findAllByText(i18n.t("auth.invite.pickerTitle"))).length).toBeGreaterThan(0)
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/invite$/)
     expect(preview).toHaveBeenCalledTimes(1)
+  })
+
+  describe("token kept out of the address bar", () => {
+    const getSession = vi.mocked(supabase.auth.getSession)
+    const twoTenants = () =>
+      tenantList(
+        [
+          membership(tenantId, "Clube Norte Ltda", "Clube Norte"),
+          membership(otherTenantId, "Clube Sul Ltda", "Clube Sul"),
+        ],
+        tenantId,
+      )
+
+    it("strips ?token= on load and still accepts with the in-memory token", async () => {
+      renderInvite("invite-token")
+
+      await waitFor(() => {
+        expect(screen.getByTestId("location")).toHaveTextContent(/^\/invite$/)
+      })
+      const user = await fillNewPassword()
+      await user.click(submitButton())
+
+      await waitFor(() => {
+        expect(acceptNew).toHaveBeenCalledWith({ token: "invite-token", password: "password1" })
+      })
+      expect(preview).toHaveBeenCalledTimes(1)
+    })
+
+    it("strips ?token= in the signed-out already-accepted state", async () => {
+      preview.mockRejectedValue(new InviteAcceptError(INVITE_ALREADY_ACCEPTED, 409))
+      renderInvite("used-token")
+
+      expect(await screen.findByText(i18n.t("auth.invite.alreadyAccepted"))).toBeInTheDocument()
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/invite$/)
+    })
+
+    it("strips ?token= in the signed-in already-accepted picker", async () => {
+      preview.mockRejectedValue(new InviteAcceptError(INVITE_ALREADY_ACCEPTED, 409))
+      getSession.mockResolvedValueOnce({ data: { session: { access_token: "t" } }, error: null } as never)
+      listTenants.mockResolvedValue(twoTenants())
+      renderInvite("used-token")
+
+      expect((await screen.findAllByText(i18n.t("auth.invite.pickerTitle"))).length).toBeGreaterThan(0)
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/invite$/)
+    })
+
+    it("after F5 without ?token= re-previews the tab's stored token (already accepted)", async () => {
+      window.sessionStorage.setItem("rolvix.invite.token", "used-token")
+      preview.mockRejectedValue(new InviteAcceptError(INVITE_ALREADY_ACCEPTED, 409))
+      renderInvite(null)
+
+      expect(await screen.findByText(i18n.t("auth.invite.alreadyAccepted"))).toBeInTheDocument()
+      expect(preview).toHaveBeenCalledWith("used-token")
+    })
+
+    it("without any token goes to the picker when signed in", async () => {
+      getSession.mockResolvedValueOnce({ data: { session: { access_token: "t" } }, error: null } as never)
+      listTenants.mockResolvedValue(twoTenants())
+      renderInvite(null)
+
+      expect((await screen.findAllByText(i18n.t("auth.invite.pickerTitle"))).length).toBeGreaterThan(0)
+      expect(preview).not.toHaveBeenCalled()
+    })
+
+    it("without any token shows invalid link when signed out", async () => {
+      renderInvite(null)
+
+      expect(await screen.findByText(i18n.t("auth.invite.invalidLink"))).toBeInTheDocument()
+      expect(screen.getByRole("link", { name: i18n.t("auth.invite.goToLogin") })).toHaveAttribute("href", "/login")
+    })
+
+    it("forgets a stored token that turned out invalid", async () => {
+      preview.mockRejectedValue(new InviteAcceptError("Invite was revoked.", 409))
+      renderInvite("revoked-token")
+
+      expect(await screen.findByText(i18n.t("auth.invite.invalidLink"))).toBeInTheDocument()
+      expect(window.sessionStorage.getItem("rolvix.invite.token")).toBeNull()
+    })
   })
 })
