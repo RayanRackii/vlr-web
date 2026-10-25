@@ -212,8 +212,10 @@ function dropScheduleSlot(
     (candidate) =>
       !(
         candidate.rentalAssetId === slot.rentalAssetId &&
-        candidate.startTime === slot.startTime &&
-        candidate.endTime === slot.endTime
+        // Overlap, not exact match: a multi-slot window (e.g. 08:00–09:30)
+        // must also drop the 30-min cells it covers.
+        candidate.startTime < slot.endTime &&
+        candidate.endTime > slot.startTime
       ),
   )
 }
