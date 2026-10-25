@@ -199,6 +199,7 @@
       "welcomeExisting": "Usted ya tiene una cuenta Rolvix. Entre con la contraseña de {{email}} para participar de {{tenant}}. Su contraseña no será cambiada.",
       "checking": "Verificando la invitación...",
       "invalidLink": "El enlace de invitación no es válido o ha expirado.",
+      "alreadyAccepted": "Esta invitación ya fue aceptada. Inicia sesión para continuar.",
       "passwordLabel": "Nueva contraseña",
       "confirmPasswordLabel": "Confirmar nueva contraseña",
       "passwordPlaceholder": "Mínimo 8 caracteres",
