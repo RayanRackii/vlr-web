@@ -3121,7 +3121,8 @@
         "derivedSlotsHint": "Intervalos generados automáticamente a partir del horario estándar (no hace falta publicar el día).",
         "durationMinutes": "Duraciones (min; separe con comas)",
         "durationMinutesHint": "Separe los valores con comas. Ejemplo: 60, 120, 240.",
-        "durationMinutesInvalid": "Ingrese duraciones positivas en minutos enteros, separadas por comas."
+        "durationMinutesInvalid": "Ingrese duraciones positivas en minutos enteros, separadas por comas.",
+        "slotGridDurationsHint": "Opcional. Duraciones (en minutos) que el cliente puede reservar uniendo horarios consecutivos, p. ej. 30,60,90. Vacío = un horario por reserva."
       },
       "weeklyRule": {
         "title": "Crear regla semanal",

@@ -3121,7 +3121,8 @@
         "derivedSlotsHint": "Intervalos gerados automaticamente a partir do horário padrão (não é preciso publicar o dia).",
         "durationMinutes": "Durações (min; separe por vírgula)",
         "durationMinutesHint": "Separe os valores por vírgula. Exemplo: 60, 120, 240.",
-        "durationMinutesInvalid": "Informe durações em minutos inteiros positivos, separadas por vírgula."
+        "durationMinutesInvalid": "Informe durações em minutos inteiros positivos, separadas por vírgula.",
+        "slotGridDurationsHint": "Opcional. Durações (em minutos) que o cliente pode reservar juntando horários seguidos, ex.: 30,60,90. Vazio = um horário por reserva."
       },
       "weeklyRule": {
         "title": "Criar regra semanal",

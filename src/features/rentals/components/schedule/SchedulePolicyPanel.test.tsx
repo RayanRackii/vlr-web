@@ -37,6 +37,27 @@ function renderPanel(allowedDurationMinutes = "60") {
   return onSave
 }
 
+function renderSlotGridPanel(allowedDurationMinutes: string | null = null) {
+  const onSave = vi.fn().mockResolvedValue(undefined)
+  render(
+    <SchedulePolicyPanel
+      assets={[{
+        ...asset,
+        schedulePolicy: "SlotGrid",
+        openTime: null,
+        closeTime: null,
+        allowedDurationMinutes,
+      }]}
+      busy={false}
+      busyAction={null}
+      readOnly={false}
+      onSave={onSave}
+      onSeedSlotGrid={vi.fn()}
+    />,
+  )
+  return onSave
+}
+
 describe("SchedulePolicyPanel", () => {
   it("derives standard hours from the saved weekly grid and does not offer reseeding", async () => {
     const user = userEvent.setup()
@@ -192,6 +213,64 @@ describe("SchedulePolicyPanel", () => {
         name: i18n.t("rentals.schedule.policy.saveOpenHours"),
       }),
     )
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      i18n.t("rentals.schedule.policy.durationMinutesInvalid"),
+    )
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it("saves SlotGrid multi-slot durations", async () => {
+    const user = userEvent.setup()
+    const onSave = renderSlotGridPanel()
+    const input = screen.getByLabelText(
+      i18n.t("rentals.schedule.policy.durationMinutes"),
+    )
+
+    await user.type(input, "30,60,90")
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("rentals.schedule.policy.saveSlotGrid"),
+    }))
+
+    expect(onSave).toHaveBeenCalledWith({
+      schedulePolicy: "SlotGrid",
+      openTime: null,
+      closeTime: null,
+      allowedDurationMinutes: "30,60,90",
+    })
+  })
+
+  it("saves blank SlotGrid multi-slot durations as null", async () => {
+    const user = userEvent.setup()
+    const onSave = renderSlotGridPanel("30,60,90")
+    const input = screen.getByLabelText(
+      i18n.t("rentals.schedule.policy.durationMinutes"),
+    )
+
+    await user.clear(input)
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("rentals.schedule.policy.saveSlotGrid"),
+    }))
+
+    expect(onSave).toHaveBeenCalledWith({
+      schedulePolicy: "SlotGrid",
+      openTime: null,
+      closeTime: null,
+      allowedDurationMinutes: null,
+    })
+  })
+
+  it("does not save invalid SlotGrid multi-slot durations", async () => {
+    const user = userEvent.setup()
+    const onSave = renderSlotGridPanel()
+    const input = screen.getByLabelText(
+      i18n.t("rentals.schedule.policy.durationMinutes"),
+    )
+
+    await user.type(input, "30,nope")
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("rentals.schedule.policy.saveSlotGrid"),
+    }))
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       i18n.t("rentals.schedule.policy.durationMinutesInvalid"),
