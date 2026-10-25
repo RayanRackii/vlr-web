@@ -145,6 +145,7 @@ export const rentalAssetSchema = z.object({
   queueOpeningTime: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   categoryName: z.string().nullable().optional(),
+  familyId: z.string().uuid().nullable().optional(),
   cancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   effectiveCancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
