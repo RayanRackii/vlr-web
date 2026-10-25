@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Outlet, Route, Routes, useOutletContext } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -50,5 +50,29 @@ describe("portal route guards", () => {
 
     expect(screen.queryByText("catalog content")).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: i18n.t("notFound.title") })).toBeInTheDocument()
+  })
+
+  it("mounts an active module route and forwards the layout context", () => {
+    function ContextConsumer() {
+      const { subdomain } = useOutletContext<CustomerAppOutletContext>()
+      return <p>catalog for {subdomain}</p>
+    }
+    const withCatalog = {
+      ...context,
+      menu: [{ moduleName: "catalog", label: "Catálogo", isActive: true, sortOrder: 0 }],
+    } as unknown as CustomerAppOutletContext
+    render(
+      <MemoryRouter initialEntries={["/t/ficc/catalogo"]}>
+        <Routes>
+          <Route path="/t/:subdomain" element={<Outlet context={withCatalog} />}>
+            <Route element={<PortalModuleGuard moduleName="catalog" />}>
+              <Route path="catalogo" element={<ContextConsumer />} />
+            </Route>
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText("catalog for ficc")).toBeInTheDocument()
   })
 })

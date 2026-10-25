@@ -10,11 +10,13 @@ type PortalModuleGuardProps = {
 
 /** Mounts a customer module only when the public portal menu exposes it. */
 export function PortalModuleGuard({ moduleName }: PortalModuleGuardProps) {
-  const { menu } = useOutletContext<CustomerAppOutletContext>()
+  const context = useOutletContext<CustomerAppOutletContext>()
+  const { menu } = context
   const canonicalModule = toCanonicalModuleName(moduleName)
   const isAvailable = isCustomerNavModule(canonicalModule) && menu.some(
     (item) => toCanonicalModuleName(item.moduleName) === canonicalModule,
   )
 
-  return isAvailable ? <Outlet /> : <PortalNotFoundRoute />
+  // Forward the layout context: module pages read it via useOutletContext.
+  return isAvailable ? <Outlet context={context} /> : <PortalNotFoundRoute />
 }
