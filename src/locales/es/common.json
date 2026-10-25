@@ -2993,7 +2993,8 @@
       },
       "grid": {
         "empty": "Horario vacío",
-        "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla."
+        "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla.",
+        "legendLabel": "Leyenda"
       },
       "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. Para cambiar la regla semanal, use Configuración semanal.",
       "weeklyBanner": "Esta grilla es la regla de todos los {{day}}. La Agenda del día solo cambia una fecha.",

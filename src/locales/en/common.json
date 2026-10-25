@@ -2993,7 +2993,8 @@
       },
       "grid": {
         "empty": "Empty time slot",
-        "noSelection": "Select one or more spaces / goods to view the grid."
+        "noSelection": "Select one or more spaces / goods to view the grid.",
+        "legendLabel": "Legend"
       },
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid is the rule for every {{day}}. Day agenda only changes one date.",

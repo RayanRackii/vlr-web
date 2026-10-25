@@ -21,11 +21,12 @@ import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import { isPastTenantSlotStart } from "@/features/rentals/lib/offerableSlot"
-import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
+import { tenantCivilDateTime, tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import {
   occupancyFromDaySlot,
   occupancyIdFromSlot,
   resolveScheduleSurface,
+  timeToMinutes,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
 import type {
   AdminDaySchedule,
@@ -152,6 +153,13 @@ export function DailyAgendaTab({
       return occupancy
     })
   }, [date, day, now, timeZoneId])
+
+  const nowMinutes = useMemo(() => {
+    if (date !== tenantTodayIsoDate(timeZoneId, now)) {
+      return null
+    }
+    return timeToMinutes(tenantCivilDateTime(now, timeZoneId).time)
+  }, [date, now, timeZoneId])
 
   const hasSlotGrid = selectedAssets.some(
     (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
@@ -289,6 +297,7 @@ export function DailyAgendaTab({
             occupancies={occupancies}
             busyTargetKey={busyTargetKey}
             readOnly={readOnly}
+            nowMinutes={nowMinutes}
             isStartClosed={(startTime) =>
               date === tenantTodayIsoDate(timeZoneId, now) &&
               isPastTenantSlotStart(date, startTime, timeZoneId, now)
