@@ -509,6 +509,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 | 2026-10-22 | **Fix (WEB, batch 6A):** submits de formulários de criação inline no drawer não chegam ao formulário pai através do portal React. Modelo visual criado permanece selecionável mesmo quando busca/tags ativas o excluem da lista. O fluxo de criar modelo preserva ids de template, revisão e publicação para retomar no passo que falhou, sem criar outro template no retry. Testes Vitest cobrem contenção, opções filtradas e retries. Sem mudança no `vlr-api`. |
 | 2026-10-22 | **Follow-up (WEB):** F1-6: setup global não chama `vi.useRealTimers()`/`vi.restoreAllMocks()` (quebrava mocks de módulo); migrar testes que usam fake timers/spies para restaurar localmente e então reavaliar (Medium do review Sol). |
 | 2026-10-25 | **Fix (WEB):** o card de prontidão de Rentals ignora recursos inativos ao decidir ocultar a contagem da agenda; detalhes de recursos unem somente valores presentes, sem separadores nas traduções, e capacidade usa plural i18next em pt-BR/en/es. Sem mudança no `vlr-api`. |
+| 2026-10-25 | **Fix (WEB, PR #307):** campos de hora da agenda propagam todo rascunho ao estado pai e bloqueiam salvar horários fora de `HH:mm`; normalização rejeita segmentos com `:` inválidos. Removido rótulo de fuso duplicado na agenda diária. Sem mudança no `vlr-api`. |
 
 ### Auditoria de formulários (2026-09-01) — FOLLOWUP fora do wizard/edit
 

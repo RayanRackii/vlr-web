@@ -13,7 +13,7 @@ describe("normalizeTime24", () => {
     expect(normalizeTime24(raw)).toBe(expected)
   })
 
-  it.each(["", "24:00", "8:75", "abc", "12345"])("rejects %s", (raw) => {
+  it.each(["", "24:00", "8:75", "abc", "12345", "8::", "8:30:", "a:30"])("rejects %s", (raw) => {
     expect(normalizeTime24(raw)).toBeNull()
   })
 })

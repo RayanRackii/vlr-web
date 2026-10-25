@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { HH_MM } from "@/lib/time24"
 import {
   Select,
   SelectContent,
@@ -68,6 +69,7 @@ export function WeeklyRuleSheet({
   const [slotMinutes, setSlotMinutes] = useState(60)
   const [occupancyKindId, setOccupancyKindId] = useState(defaultKindId)
   const ruleKindId = occupancyKindId || defaultKindId
+  const hasValidTimes = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
   return (
     <Sheet
@@ -198,8 +200,7 @@ export function WeeklyRuleSheet({
               selectedRentalAssetIds.length === 0 ||
               days.length === 0 ||
               !ruleKindId ||
-              !openTime ||
-              !closeTime ||
+              !hasValidTimes ||
               slotMinutes < 1
             }
             onClick={() => {

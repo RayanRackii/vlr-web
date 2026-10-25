@@ -9,7 +9,15 @@ export function normalizeTime24(raw: string): string | null {
   let hours: string
   let minutes: string
   if (trimmed.includes(":")) {
-    ;[hours, minutes = "00"] = trimmed.split(":")
+    const segments = trimmed.split(":")
+    if (
+      segments.length !== 2 ||
+      !/^\d{1,2}$/.test(segments[0]) ||
+      !/^\d{1,2}$/.test(segments[1])
+    ) {
+      return null
+    }
+    ;[hours, minutes] = segments
   } else if (/^\d{1,2}$/.test(trimmed)) {
     hours = trimmed
     minutes = "00"

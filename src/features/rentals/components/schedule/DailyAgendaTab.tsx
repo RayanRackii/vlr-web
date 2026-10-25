@@ -2,7 +2,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "luci
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { LocaleDateInput } from "@/components/LocaleDateInput"
-import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { formatLocaleCivilDate } from "@/lib/localeFormat"
 import { useNavigate } from "react-router-dom"
 
@@ -239,9 +238,6 @@ export function DailyAgendaTab({
             if (value) onDateChange(value)
           }}
         />
-        <span className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
-          {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
-        </span>
         <Popover>
           <PopoverTrigger
             render={<Button type="button" variant="outline" size="sm" />}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { HH_MM } from "@/lib/time24"
 import {
   Select,
   SelectContent,
@@ -68,6 +69,8 @@ export function TemplateSheet({
   const [draft, setDraft] = useState<TemplateDraft>(
     emptyTemplateDraft(defaultKindId),
   )
+  const hasValidTimes =
+    HH_MM.test(formatScheduleTime(draft.startTime)) && HH_MM.test(formatScheduleTime(draft.endTime))
 
   useEffect(() => {
     if (!open) {
@@ -288,7 +291,7 @@ export function TemplateSheet({
           <LoadingButton
             type="button"
             loading={busyAction === "template"}
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || !hasValidTimes}
             onClick={() => {
               void onSubmit(draft).then((ok) => {
                 if (ok) {

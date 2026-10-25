@@ -1,7 +1,7 @@
 import { useState } from "react"
 
 import { Input } from "@/components/ui/input"
-import { HH_MM, normalizeTime24 } from "@/lib/time24"
+import { normalizeTime24 } from "@/lib/time24"
 
 type Time24InputProps = Omit<
   React.ComponentProps<"input">,
@@ -33,17 +33,13 @@ export function Time24Input({ value, onValueChange, onBlur, ...props }: Time24In
       onChange={(event) => {
         const next = event.target.value
         setDraft(next)
-        if (HH_MM.test(next)) {
-          onValueChange(next)
-        }
+        onValueChange(next)
       }}
       onBlur={(event) => {
         const normalized = normalizeTime24(draft)
         if (normalized) {
           setDraft(normalized)
-          if (normalized !== value.slice(0, 5)) {
-            onValueChange(normalized)
-          }
+          onValueChange(normalized)
         }
         onBlur?.(event)
       }}
