@@ -983,9 +983,11 @@ const reservationSchema = z.object({
       assetId: z.string().uuid(),
       rentalAssetId: z.string().uuid(),
       assetName: z.string(),
-      quantity: z.number(),
+      quantity: z.number().optional(),
       unitPrice: z.number(),
       subTotal: z.number(),
+      pricingUnit: pricingUnitSchema.nullish(),
+      days: z.number().nullish(),
     }),
   ),
 })

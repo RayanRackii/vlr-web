@@ -167,7 +167,7 @@ import {
 import type { PricingUnit } from "@/api/generated/rentalPricing"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
-import { formatUnitPriceText, unitPriceForWindow } from "@/lib/pricingUnitText"
+import { formatUnitPriceText, reservationUnitWording, unitPriceForWindow } from "@/lib/pricingUnitText"
 import { cn } from "@/lib/utils"
 
 function isCancelledReservationStatus(status: string): boolean {
@@ -1321,6 +1321,9 @@ export function TenantPortalAgendaPage() {
   const pendingCancelReservation = mine.find(
     (reservation) => reservation.id === pendingCancelId,
   )
+  const pendingCancelWording = pendingCancelReservation
+    ? reservationTotalWording(pendingCancelReservation, true)
+    : { totalText: "", unitPriceText: null, multiplierText: null }
 
   function refreshAgenda(dayDates: readonly string[]) {
     void invalidateAgendaQueries(
@@ -1397,7 +1400,7 @@ export function TenantPortalAgendaPage() {
         )
         return start !== null && reservation.items.some((item) =>
           agendaReservedSlotKey(start.date, item.rentalAssetId, start.time) === targetKey &&
-          item.quantity === quantity,
+          (item.quantity ?? 1) === quantity,
         )
       }) ?? null
     }
@@ -1854,10 +1857,10 @@ export function TenantPortalAgendaPage() {
         : exceedsAssetHorizon
           ? t("tenantPortal.agenda.horizonExceeded")
           : ownReservation && asset && asset.totalQuantity > 1 && ownReservationUnits > 0
-            ? t("tenantPortal.agenda.yourReservationUnits", {
+            ? `${t("tenantPortal.agenda.yourReservationUnits", {
                 count: ownReservationUnits,
                 total: asset.totalQuantity,
-              })
+              })} ${t("tenantPortal.agenda.yourReservationUnitsReason")}`
             : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
     return {
       available,
@@ -1924,6 +1927,48 @@ export function TenantPortalAgendaPage() {
         })()
       : null
 
+  function reservationTotalWording(reservation: PortalReservation, includeSingular = false) {
+    const item = reservation.items[0]
+    const totalText = t("tenantPortal.agenda.total", { amount: formatBookingMoney(reservation.totalAmount) })
+    if (reservation.items.length !== 1) {
+      return { totalText, unitPriceText: null, multiplierText: null }
+    }
+    const wording = reservationUnitWording(
+      {
+        pricingUnit: item?.pricingUnit,
+        quantity: item?.quantity,
+        days: item?.days,
+        startDateTime: reservation.startDateTime,
+        endDateTime: reservation.endDateTime,
+      },
+      timeZoneId,
+    )
+    const unitPriceText = wording.unit && item
+      ? formatUnitPriceText(
+          item.unitPrice,
+          wording.unit,
+          "BRL",
+          moneyLocale,
+          t,
+          "bookingMap.prices",
+        )
+      : null
+    const multiplierParts: string[] = []
+    if (wording.quantity > 1 || includeSingular) {
+      multiplierParts.push(
+        t("tenantPortal.agenda.reservationQuantitySuffix", { count: wording.quantity }),
+      )
+    }
+    if (wording.days !== null && (wording.days > 1 || includeSingular)) {
+      multiplierParts.push(t("tenantPortal.agenda.reservationDaysSuffix", { count: wording.days }))
+    }
+    return {
+      totalText,
+      unitPriceText,
+      multiplierText: multiplierParts.length > 0 ? multiplierParts.join(" · ") : null,
+    }
+  }
+
   function renderReservationItem(reservation: PortalReservation) {
     const focused = reservation.id === focusedReservationId
     const cancelled = isCancelledReservationStatus(reservation.status)
@@ -1932,6 +1977,7 @@ export function TenantPortalAgendaPage() {
       timeZoneId,
       moneyLocale,
     )
+    const { totalText, unitPriceText, multiplierText } = reservationTotalWording(reservation)
     return (
       <li
         key={reservation.id}
@@ -1962,7 +2008,7 @@ export function TenantPortalAgendaPage() {
           <p className="font-semibold text-foreground">
             {reservation.items
               .map((item) =>
-                item.quantity > 1 ? `${item.assetName} ×${item.quantity}` : item.assetName,
+                (item.quantity ?? 1) > 1 ? `${item.assetName} ×${item.quantity}` : item.assetName,
               )
               .join(", ")}
           </p>
@@ -1987,14 +2033,15 @@ export function TenantPortalAgendaPage() {
           {cancelled ? null : (
             <>
               {" · "}
-              {t("tenantPortal.agenda.total", {
-                amount: formatBookingMoney(
-                  reservation.totalAmount,
-                ),
-              })}
+              {totalText}
             </>
           )}
         </p>
+        {!cancelled && (unitPriceText || multiplierText) ? (
+          <p className="text-xs text-muted-foreground">
+            {[unitPriceText, multiplierText].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
         {!cancelled && reservation.cancelDeadlineUtc && !isCancelDeadlinePassed(reservation) ? (
           <p className="text-xs text-muted-foreground">
             {t("tenantPortal.agenda.cancelDeadline", {
@@ -2640,6 +2687,13 @@ export function TenantPortalAgendaPage() {
                   )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              {pendingCancelReservation ? (
+                <p className="text-sm text-muted-foreground">
+                  {pendingCancelWording.totalText}
+                  {pendingCancelWording.unitPriceText ? ` · ${pendingCancelWording.unitPriceText}` : ""}
+                  {pendingCancelWording.multiplierText ? ` · ${pendingCancelWording.multiplierText}` : ""}
+                </p>
+              ) : null}
               {pendingCancelReservation?.cancelDeadlineUtc ? (
                 <p className="text-sm text-muted-foreground">
                   {t("tenantPortal.agenda.cancelDeadline", {
