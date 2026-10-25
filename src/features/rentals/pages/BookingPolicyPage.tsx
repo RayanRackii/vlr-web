@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ShieldCheck } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
@@ -185,41 +189,42 @@ export function BookingPolicyPage() {
       className="mx-auto w-full max-w-3xl space-y-6"
       data-testid="booking-policy-page"
     >
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("rentals.bookingPolicy.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("rentals.bookingPolicy.description")}
-        </p>
-        <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
-          {formatTenantTimeZoneLabel(timeZoneId, i18n.language)}
-        </p>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title={t("rentals.bookingPolicy.title")}
+        description={t("rentals.bookingPolicy.description")}
+        className="mb-0"
+      />
+      <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
+        {formatTenantTimeZoneLabel(timeZoneId, i18n.language)}
+      </p>
 
       {loading ? <FormSkeleton fields={4} /> : null}
 
       {!loading && loadError ? (
-        <div className="space-y-3">
-          <p className="text-sm text-destructive">{loadError}</p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void load()
-            }}
-          >
-            {t("rentals.bookingPolicy.retry")}
-          </Button>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription className="flex flex-col gap-3">
+            <span>{loadError}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={() => {
+                void load()
+              }}
+            >
+              {t("rentals.bookingPolicy.retry")}
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       {!loading && !loadError ? (
         <Form {...form}>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6 rounded-lg border border-border p-4"
-          >
+          <form onSubmit={handleSubmit(onSubmit)}>
+          <Card>
+          <CardContent className="space-y-6">
             {!canEdit ? (
               <p className="text-sm text-muted-foreground">
                 {t("rentals.bookingPolicy.readOnly")}
@@ -449,6 +454,8 @@ export function BookingPolicyPage() {
                 {t("rentals.bookingPolicy.save")}
               </FormPrimaryButton>
             ) : null}
+          </CardContent>
+          </Card>
           </form>
         </Form>
       ) : null}

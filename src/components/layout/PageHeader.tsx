@@ -1,5 +1,7 @@
+import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
+import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
 export type PageHeaderProps = {
@@ -7,6 +9,8 @@ export type PageHeaderProps = {
   title: ReactNode
   /** Optional supporting copy shown under the title. */
   description?: ReactNode
+  /** Optional lucide icon shown in a soft badge beside the title. */
+  icon?: LucideIcon
   /** Primary/secondary actions aligned to the end of the header row. */
   actions?: ReactNode
   className?: string
@@ -20,6 +24,7 @@ export type PageHeaderProps = {
 export function PageHeader({
   title,
   description,
+  icon: Icon,
   actions,
   className,
 }: PageHeaderProps) {
@@ -30,15 +35,22 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="min-w-0 space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          {title}
-        </h1>
-        {description ? (
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {description}
-          </p>
+      <div className="flex min-w-0 items-start gap-3">
+        {Icon ? (
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="size-5" strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+          </div>
         ) : null}
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            {title}
+          </h1>
+          {description ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {actions ? (

@@ -3,6 +3,7 @@ import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import {
@@ -131,12 +132,9 @@ export function PeopleCustomersTab() {
       {isLoading ? <PageContentSkeleton rows={4} /> : null}
 
       {loadError !== null ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {loadError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
       {!isLoading && loadError === null && customers.length === 0 ? (
@@ -160,7 +158,7 @@ export function PeopleCustomersTab() {
           {customers.map((customer) => (
             <li
               key={customer.id}
-              className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm motion-safe:transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 space-y-1">
                 <p className="truncate text-sm font-medium">{customer.name}</p>

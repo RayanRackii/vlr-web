@@ -1,3 +1,4 @@
+import { displayEndClock } from "@/lib/tenantTimeZone"
 import { normalizeClock } from "@/features/rentals/components/layout/layoutCanvasModel"
 
 export type TimeWindow = { startTime: string; endTime: string }
@@ -47,7 +48,7 @@ export function listStartTimesForDuration(
     }
     const startTime = normalizeClock(slot.startTime)
     const endTime = normalizeClock(slot.endTime)
-    byStart.set(startTime, endTime === "23:59" ? "00:00" : endTime)
+    byStart.set(startTime, displayEndClock(endTime))
   }
   return [...byStart.entries()]
     .sort(([left], [right]) => left.localeCompare(right))

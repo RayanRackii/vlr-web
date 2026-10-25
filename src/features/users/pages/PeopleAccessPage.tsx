@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
+import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { PeopleCustomersTab } from "@/features/users/components/PeopleCustomersTab"
 import { PeopleRolesTab } from "@/features/users/components/PeopleRolesTab"
 import { PeopleUsersTab } from "@/features/users/components/PeopleUsersTab"
@@ -75,19 +78,17 @@ export function PeopleAccessPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
-      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("peopleAccess.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("peopleAccess.description")}
-          </p>
-        </div>
+      <PageHeader
+        icon={Users}
+        title={t("peopleAccess.title")}
+        description={t("peopleAccess.description")}
+        className="mb-0 sm:mb-0"
+      />
 
+      <div>
         <div className="border-b border-border">
           <nav
-            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
+            className="-mb-px flex gap-6 overflow-x-auto sm:gap-8"
             aria-label={t("peopleAccess.title")}
           >
             {tabItems.map((item) => {
@@ -115,12 +116,9 @@ export function PeopleAccessPage() {
       </div>
 
       {loadError !== null ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {loadError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
       {canReadRoles && isLoading ? (

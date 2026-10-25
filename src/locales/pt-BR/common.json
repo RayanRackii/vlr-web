@@ -3210,6 +3210,12 @@
       "updateSuccess": "Recurso atualizado.",
       "createError": "Não foi possível criar o recurso.",
       "updateError": "Não foi possível atualizar o recurso.",
+      "errorKinds": {
+        "network": "Sem conexão com o servidor. Verifique sua internet e tente novamente.",
+        "permission": "Você não tem permissão para esta ação ou sua sessão expirou.",
+        "validation": "Dados inválidos. Revise os campos e tente novamente.",
+        "server": "Erro no servidor. Tente novamente em instantes."
+      },
       "typeLocation": "Espaço",
       "typeGood": "Item alugável",
       "details": {
