@@ -184,6 +184,7 @@ export function AssetWizardPricingStep({
                   id={`pricing-day-${day}`}
                   value={pricing.perDayPrices[day]}
                   invalid={invalid}
+                  allowEmpty
                   onChange={(next) => {
                     onChange({
                       perDayPrices: {

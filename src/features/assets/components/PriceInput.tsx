@@ -8,11 +8,13 @@ type PriceInputProps = {
   id?: string
   value: number
   invalid?: boolean
+  /** Blank is allowed and emitted as 0 (e.g. a day without a price in the per-day editor). */
+  allowEmpty?: boolean
   onChange: (value: number) => void
 }
 
 /** Text price field that accepts pt-BR decimals ("12,5") and shows inline errors. Emits NaN when invalid. */
-export function PriceInput({ id, value, invalid, onChange }: PriceInputProps) {
+export function PriceInput({ id, value, invalid, allowEmpty = false, onChange }: PriceInputProps) {
   const { t, i18n } = useTranslation()
   const [text, setText] = useState(() => formatPriceForInput(value))
   const [touched, setTouched] = useState(false)
@@ -23,12 +25,13 @@ export function PriceInput({ id, value, invalid, onChange }: PriceInputProps) {
   if (!Object.is(value, syncedValue)) {
     setSyncedValue(value)
     const current = parseLocalePrice(text)
-    const externalChange = current.ok ? current.value !== value : Number.isFinite(value)
+    const externalChange = current.ok ? current.value !== value : Number.isFinite(value) && value !== 0
     if (externalChange) setText(formatPriceForInput(value))
   }
 
   const parsed = parseLocalePrice(text)
-  const showError = !parsed.ok && (touched || Boolean(invalid))
+  const blankAllowed = allowEmpty && !parsed.ok && parsed.error === "required"
+  const showError = !parsed.ok && !blankAllowed && (touched || Boolean(invalid))
   const errorId = id ? `${id}-error` : undefined
 
   return (
@@ -49,7 +52,8 @@ export function PriceInput({ id, value, invalid, onChange }: PriceInputProps) {
           const next = event.target.value
           setText(next)
           const result = parseLocalePrice(next)
-          onChange(result.ok ? result.value : Number.NaN)
+          if (result.ok) onChange(result.value)
+          else onChange(allowEmpty && result.error === "required" ? 0 : Number.NaN)
         }}
       />
       {showError ? (

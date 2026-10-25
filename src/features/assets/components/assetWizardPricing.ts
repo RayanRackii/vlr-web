@@ -222,5 +222,9 @@ export function isPricingEditorValid(state: PricingEditorState): boolean {
     return isValidPrice(state.weekdayPrice) && isValidPrice(state.weekendPrice)
   }
 
-  return DAYS.every((day) => isValidPrice(state.perDayPrices[day]))
+  // Per day: a blank day (0) keeps the previous "no price that day" behavior; typed values must be valid.
+  return (
+    DAYS.some((day) => isValidPrice(state.perDayPrices[day])) &&
+    DAYS.every((day) => state.perDayPrices[day] === 0 || isValidPrice(state.perDayPrices[day]))
+  )
 }
