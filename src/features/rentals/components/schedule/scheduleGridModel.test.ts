@@ -6,7 +6,10 @@ import {
 } from "@/features/rentals/components/schedule/scheduleGridModel"
 
 function occupancy(
-  overrides: Partial<ScheduleGridOccupancy> & Pick<ScheduleGridOccupancy, "startTime" | "endTime">,
+  overrides: Partial<ScheduleGridOccupancy> &
+    Pick<ScheduleGridOccupancy, "startTime" | "endTime"> & {
+      reservationId?: string | null
+    },
 ): ScheduleGridOccupancy {
   return {
     id: `${overrides.startTime}-${overrides.endTime}-${overrides.status ?? "available"}`,
@@ -14,7 +17,7 @@ function occupancy(
     occupancyKindLabel: "Aberto",
     status: "available",
     ...overrides,
-  }
+  } as ScheduleGridOccupancy
 }
 
 describe("dedupeOpenHoursOccupancies", () => {
@@ -60,5 +63,53 @@ describe("dedupeOpenHoursOccupancies", () => {
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ startTime: "14:00", endTime: "16:00", status: "booked" })
+  })
+
+  it("keeps a longer unavailable window as a span instead of an empty base cell", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({ startTime: "08:00", endTime: "09:00" }),
+        occupancy({ startTime: "09:00", endTime: "10:00" }),
+        occupancy({ startTime: "08:00", endTime: "10:00", status: "unavailable", label: "Fechado" }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        startTime: "08:00",
+        endTime: "10:00",
+        status: "unavailable",
+        label: "Fechado",
+      }),
+    ])
+  })
+
+  it("keeps overlapping booked windows from separate reservations distinct", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          id: "reservation-a-short",
+          startTime: "10:00",
+          endTime: "11:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+        occupancy({
+          id: "reservation-b",
+          startTime: "11:00",
+          endTime: "12:00",
+          status: "booked",
+          reservationId: "reservation-b",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result.map((item) => item.reservationId).sort()).toEqual([
+      "reservation-a",
+      "reservation-b",
+    ])
   })
 })

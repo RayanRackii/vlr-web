@@ -442,4 +442,44 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
       within(grid).getByRole("button", { name: "Sala 1, 10:00, Reservado, Tipo: Aberto" }),
     ).toBeInTheDocument()
   })
+
+  it("keeps first-configured 120-minute OpenHours windows visible when 60 is also allowed", () => {
+    const day = overlappingOpenHoursDay("2026-10-17")
+    const first = day.slots[0]
+    const second = day.slots[1]
+    if (!first || !second) throw new Error("missing OpenHours windows")
+    day.slots = [
+      { ...first, startTime: "08:00:00", endTime: "10:00:00" },
+      { ...second, startTime: "10:00:00", endTime: "12:00:00" },
+    ]
+    const asset = { ...openHoursAsset(), allowedDurationMinutes: "120,60" }
+
+    render(
+      <MemoryRouter>
+        <DailyAgendaTab
+          assets={[asset]}
+          selectedRentalAssetIds={[ASSET_ID]}
+          date="2026-10-17"
+          day={day}
+          loading={false}
+          showSkeleton={false}
+          busy={false}
+          busyAction={null}
+          busyTargetKey={null}
+          readOnly={false}
+          onSelectedRentalAssetIdsChange={() => undefined}
+          onDateChange={() => undefined}
+          onPublish={() => undefined}
+          onSlotOrCellClick={() => undefined}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByRole("button", { name: "Sala 1, 08:00, Disponível, Tipo: Aberto" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Sala 1, 10:00, Disponível, Tipo: Aberto" }),
+    ).toBeInTheDocument()
+  })
 })

@@ -117,7 +117,7 @@ export function DayResourceGrid({
       if ((asset.schedulePolicy ?? "SlotGrid") !== "OpenHours") continue
       const list = grouped.get(asset.id)
       if (!list) continue
-      const baseStep = Math.min(...durationValues(asset))
+      const baseStep = durationValues(asset)[0]
       if (!Number.isFinite(baseStep) || baseStep <= 0) continue
       grouped.set(asset.id, dedupeOpenHoursOccupancies(list, baseStep))
     }
