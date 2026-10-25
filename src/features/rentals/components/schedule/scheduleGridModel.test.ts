@@ -85,6 +85,41 @@ describe("dedupeOpenHoursOccupancies", () => {
     ])
   })
 
+  it("merges overlapping unavailable durations into one span per resource", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({ startTime: "08:00", endTime: "09:00", status: "unavailable" }),
+        occupancy({ startTime: "08:00", endTime: "10:00", status: "unavailable" }),
+        occupancy({ startTime: "09:00", endTime: "11:00", status: "unavailable" }),
+        occupancy({
+          rentalAssetId: "asset-2",
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          rentalAssetId: "asset-1",
+          startTime: "08:00",
+          endTime: "11:00",
+          status: "unavailable",
+        }),
+        expect.objectContaining({
+          rentalAssetId: "asset-2",
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+        }),
+      ]),
+    )
+  })
+
   it("keeps overlapping booked windows from separate reservations distinct", () => {
     const result = dedupeOpenHoursOccupancies(
       [
@@ -110,6 +145,37 @@ describe("dedupeOpenHoursOccupancies", () => {
     expect(result.map((item) => item.reservationId).sort()).toEqual([
       "reservation-a",
       "reservation-b",
+    ])
+  })
+
+  it("collapses partially overlapping windows for the same reservation", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          id: "reservation-a-first",
+          startTime: "09:00",
+          endTime: "11:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+        occupancy({
+          id: "reservation-a-second",
+          startTime: "10:00",
+          endTime: "12:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        reservationId: "reservation-a",
+        startTime: "09:00",
+        endTime: "12:00",
+        status: "booked",
+      }),
     ])
   })
 })

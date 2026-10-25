@@ -243,7 +243,9 @@ export function dedupeOpenHoursOccupancies(
 ): ScheduleGridOccupancy[] {
   const booked = occupancies.filter((item) => item.status === "booked")
   const notBooked = occupancies.filter((item) => item.status !== "booked")
-  const unavailable = notBooked.filter((item) => item.status === "unavailable")
+  const unavailable = collapseUnavailableOccupancies(
+    notBooked.filter((item) => item.status === "unavailable"),
+  )
 
   const bookedWithReservation = booked.filter((item) => item.reservationId)
   const bookedWithoutReservation = booked.filter((item) => !item.reservationId)
@@ -310,5 +312,38 @@ function collapseBookedReservations(
         Math.max(...items.map((item) => timeToMinutes(item.endTime))),
       ),
     }
+  })
+}
+
+function collapseUnavailableOccupancies(
+  unavailable: readonly ScheduleGridOccupancy[],
+): ScheduleGridOccupancy[] {
+  const byResource = new Map<string, ScheduleGridOccupancy[]>()
+  for (const item of unavailable) {
+    const items = byResource.get(item.rentalAssetId) ?? []
+    items.push(item)
+    byResource.set(item.rentalAssetId, items)
+  }
+
+  return [...byResource.values()].flatMap((items) => {
+    const sorted = [...items].sort(
+      (a, b) =>
+        timeToMinutes(a.startTime) - timeToMinutes(b.startTime) ||
+        timeToMinutes(b.endTime) - timeToMinutes(a.endTime),
+    )
+    const merged: ScheduleGridOccupancy[] = []
+
+    for (const item of sorted) {
+      const previous = merged.at(-1)
+      if (!previous || timeToMinutes(item.startTime) >= timeToMinutes(previous.endTime)) {
+        merged.push({ ...item })
+        continue
+      }
+      if (timeToMinutes(item.endTime) > timeToMinutes(previous.endTime)) {
+        previous.endTime = item.endTime
+      }
+    }
+
+    return merged
   })
 }
