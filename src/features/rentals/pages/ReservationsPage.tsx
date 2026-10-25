@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { CalendarRange } from "lucide-react"
+
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,6 +36,16 @@ import {
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 
 const ALL_STATUSES = "__all__"
+
+const STATUS_BADGE_VARIANT: Record<
+  ReservationStatus,
+  "secondary" | "success" | "destructive" | "info"
+> = {
+  PendingDeposit: "secondary",
+  Confirmed: "info",
+  Completed: "success",
+  Canceled: "destructive",
+}
 
 export function ReservationsPage() {
   const { t } = useTranslation()
@@ -119,19 +135,15 @@ export function ReservationsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("rentals.reservations.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("rentals.reservations.description")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("rentals.reservations.title")}
+        description={t("rentals.reservations.description")}
+      />
 
       {isTrialReadOnly ? (
-        <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
-          {t("trial.readOnlyHint")}
-        </p>
+        <Alert variant="warning" role="status">
+          <AlertDescription>{t("trial.readOnlyHint")}</AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -191,11 +203,9 @@ export function ReservationsPage() {
       {loading ? (
         <PageContentSkeleton rows={3} />
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {t("rentals.reservations.empty")}
-        </p>
+        <EmptyState icon={CalendarRange} title={t("rentals.reservations.empty")} />
       ) : (
-        <ul className="divide-y divide-border rounded-md border border-border">
+        <ul className="divide-y divide-border rounded-xl border border-border">
           {rows.map((row) => {
             const canConfirm = row.status === "PendingDeposit"
             const canComplete =
@@ -207,10 +217,15 @@ export function ReservationsPage() {
             return (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 px-3 py-3 text-sm transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 space-y-1">
-                  <p className="font-medium">{row.customerName}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{row.customerName}</p>
+                    <Badge variant={STATUS_BADGE_VARIANT[row.status]}>
+                      {t(`rentals.reservations.statuses.${row.status}`)}
+                    </Badge>
+                  </div>
                   <p className="text-muted-foreground">
                     {formatReservationAssets(row)}
                   </p>
@@ -222,8 +237,6 @@ export function ReservationsPage() {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t(`rentals.reservations.statuses.${row.status}`)}
-                    {" · "}
                     {formatMoney(row.totalAmount)}
                   </p>
                 </div>

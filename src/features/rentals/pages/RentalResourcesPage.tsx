@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { ErrorState } from "@/components/ErrorState"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
@@ -129,30 +130,22 @@ export function RentalResourcesPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("rentals.resources.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("rentals.resources.description")}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex sm:justify-end">
-        <Can permission="rentals.assets.write">
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            disabled={!canWrite || loading || loadError !== null}
-            onClick={openCreate}
-          >
-            <Plus data-icon="inline-start" />
-            {t("rentals.resources.add")}
-          </Button>
-        </Can>
-      </div>
+      <PageHeader
+        title={t("rentals.resources.title")}
+        description={t("rentals.resources.description")}
+        actions={
+          <Can permission="rentals.assets.write">
+            <Button
+              type="button"
+              disabled={!canWrite || loading || loadError !== null}
+              onClick={openCreate}
+            >
+              <Plus data-icon="inline-start" />
+              {t("rentals.resources.add")}
+            </Button>
+          </Can>
+        }
+      />
 
       {loading ? (
         <PageContentSkeleton rows={4} />

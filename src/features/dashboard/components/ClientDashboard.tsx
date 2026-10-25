@@ -1,6 +1,7 @@
 import { CalendarRange, TicketCheck } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import {
   Card,
   CardContent,
@@ -8,20 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export function ClientDashboard() {
   const { t } = useTranslation()
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("dashboard.client.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.client.description")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("dashboard.client.title")}
+        description={t("dashboard.client.description")}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -35,9 +33,11 @@ export function ClientDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t("dashboard.client.tickets.empty")}
-            </p>
+            <EmptyState
+              size="sm"
+              icon={TicketCheck}
+              title={t("dashboard.client.tickets.empty")}
+            />
           </CardContent>
         </Card>
 
@@ -52,9 +52,11 @@ export function ClientDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t("dashboard.client.rentals.empty")}
-            </p>
+            <EmptyState
+              size="sm"
+              icon={CalendarRange}
+              title={t("dashboard.client.rentals.empty")}
+            />
           </CardContent>
         </Card>
       </div>

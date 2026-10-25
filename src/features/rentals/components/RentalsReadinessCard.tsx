@@ -55,7 +55,7 @@ export function RentalsReadinessCard() {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-base font-medium text-muted-foreground">{t("dashboard.rentalsReadiness.title")}</h2>
+        <h2 className="text-base font-medium text-foreground">{t("dashboard.rentalsReadiness.title")}</h2>
         <CardDescription>{t("dashboard.rentalsReadiness.description")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,7 +69,11 @@ export function RentalsReadinessCard() {
               <li key={item.key} className="flex items-center gap-2 text-sm">
                 <Icon
                   aria-hidden="true"
-                  className={item.done ? "size-4 text-emerald-600" : "size-4 text-muted-foreground"}
+                  className={
+                    item.done
+                      ? "size-4 text-[color-mix(in_oklch,var(--success)_70%,var(--foreground))]"
+                      : "size-4 text-muted-foreground"
+                  }
                 />
                 <span className="sr-only">{status}</span>
                 <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
