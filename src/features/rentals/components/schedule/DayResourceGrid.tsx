@@ -30,6 +30,7 @@ const TIME_COLUMN_WIDTH = 76
 const MIN_RESOURCE_COLUMN_WIDTH = 160
 const HEADER_HEIGHT = 48
 const ROW_HEIGHT = 54
+const SINGLE_COLUMN_ROW_HEIGHT = 64
 
 const STATUS_ICON: Record<ScheduleGridOccupancy["status"], typeof CircleCheck> = {
   available: CircleCheck,
@@ -149,6 +150,7 @@ export function DayResourceGrid({
     )
   }
 
+  const rowHeight = assets.length <= 1 ? SINGLE_COLUMN_ROW_HEIGHT : ROW_HEIGHT
   const columns = `${TIME_COLUMN_WIDTH}px repeat(${assets.length}, minmax(${MIN_RESOURCE_COLUMN_WIDTH}px, 1fr))`
   const showNowLine =
     typeof nowMinutes === "number" &&
@@ -156,7 +158,7 @@ export function DayResourceGrid({
     nowMinutes <= axis.end
   const nowLineTop =
     HEADER_HEIGHT +
-    (((nowMinutes ?? 0) - axis.start) / axis.step) * ROW_HEIGHT
+    (((nowMinutes ?? 0) - axis.start) / axis.step) * rowHeight
 
   return (
     <div className="min-w-0 space-y-2">
@@ -200,6 +202,7 @@ export function DayResourceGrid({
                   rowIndex={rowIndex}
                   axisStart={axis.start}
                   axisStep={axis.step}
+                  rowHeight={rowHeight}
                   busyTargetKey={busyTargetKey}
                   readOnly={readOnly}
                   isStartClosed={isStartClosed}
@@ -258,6 +261,7 @@ function RowCells({
   rowIndex,
   axisStart,
   axisStep,
+  rowHeight,
   busyTargetKey,
   readOnly,
   isStartClosed,
@@ -270,6 +274,7 @@ function RowCells({
   rowIndex: number
   axisStart: number
   axisStep: number
+  rowHeight: number
   busyTargetKey: string | null
   readOnly: boolean
   isStartClosed?: (startTime: string) => boolean
@@ -284,7 +289,7 @@ function RowCells({
       <div
         role="rowheader"
         className="sticky left-0 z-10 flex items-start justify-end border-b border-r border-border bg-background px-2 pt-2 text-xs tabular-nums text-muted-foreground"
-        style={{ height: ROW_HEIGHT }}
+        style={{ height: rowHeight }}
       >
         {formatMinutesAsTime(rowStart)}
       </div>
@@ -306,7 +311,7 @@ function RowCells({
             key={asset.id}
             role="gridcell"
             className="relative overflow-visible border-b border-r border-border/70 p-1"
-            style={{ height: ROW_HEIGHT }}
+            style={{ height: rowHeight }}
           >
             {!isCovered ? (
               <button
@@ -383,7 +388,7 @@ function RowCells({
               const cardStyle = {
                 left: 4,
                 right: 4 + overlapIndex * 8,
-                height: rows * ROW_HEIGHT - 8,
+                height: rows * rowHeight - 8,
                 zIndex: 5 + overlapIndex,
                 borderColor:
                   item.status === "booked"
@@ -395,27 +400,39 @@ function RowCells({
                     : item.occupancyKindColorHex
                       ? `${item.occupancyKindColorHex}20`
                       : "var(--muted)",
+                // Status isn't colour-only: unavailable cards also get a hatch pattern on top of the tint.
+                backgroundImage:
+                  item.status === "unavailable"
+                    ? "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted-foreground) 22%, transparent) 0px, color-mix(in oklab, var(--muted-foreground) 22%, transparent) 1px, transparent 1px, transparent 7px)"
+                    : undefined,
               }
+              const singleColumn = rowHeight === SINGLE_COLUMN_ROW_HEIGHT
               const cardContent = (
                 <>
                   {/* Booked cards: the occupancy kind of a derived row is the open-hours kind
                       ("Aberto"), which reads like a free slot; show the time range instead so the
-                      status pill fits in a one-row (46px) card. */}
-                  <span className="block truncate text-xs text-muted-foreground">
+                      status pill fits in a one-row (46px) card. The kind itself drops the generic
+                      "Tipo:" prefix — it reads as a label on its own, not a form field. */}
+                  <span
+                    className={cn(
+                      singleColumn ? "block text-xs" : "block truncate text-xs",
+                      item.status === "unavailable"
+                        ? "text-foreground/75"
+                        : "text-muted-foreground",
+                    )}
+                  >
                     {itemLabel ? `${itemLabel} · ` : ""}
                     <span className="tabular-nums">{timeRangeLabel}</span>
                     {item.status === "booked" ? null : (
                       <>
                         {" · "}
-                        <span>
-                          {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
-                        </span>
+                        <span>{kindLabel}</span>
                       </>
                     )}
                   </span>
                   <span
                     className={cn(
-                      "mt-0.5 inline-flex whitespace-nowrap items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                      "mt-0.5 inline-flex whitespace-nowrap items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[11px] font-semibold leading-none",
                       STATUS_TEXT_CLASS[item.status],
                     )}
                   >
@@ -423,17 +440,17 @@ function RowCells({
                     {statusLabel}
                   </span>
                   {freeUnitsLabel ? (
-                    <span className="ml-1 mt-1 inline-flex whitespace-nowrap items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+                    <span className="ml-1 mt-1 inline-flex whitespace-nowrap items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[11px] font-semibold text-success">
                       {freeUnitsLabel}
                     </span>
                   ) : null}
                   {item.badge === "dailyOverride" ? (
-                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary">
                       {t("rentals.schedule.occurrence.source.dailyOverride")}
                     </span>
                   ) : null}
                   {item.badge === "inactive" ? (
-                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
                       {t("rentals.schedule.inactive")}
                     </span>
                   ) : null}

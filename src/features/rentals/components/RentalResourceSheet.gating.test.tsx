@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 vi.mock("@/components/inline-create/InlineCreateSelect", () => ({
@@ -59,8 +60,11 @@ describe("RentalResourceSheet inline dependency creation", () => {
     expect(screen.queryByRole("button", { name: /criar modelo global/i })).not.toBeInTheDocument()
   })
 
-  it("shows global template creation only for a super-admin", () => {
+  it("shows global template creation only for a super-admin", async () => {
+    const user = userEvent.setup()
     renderSheet({ activeModules: ["rentals"], isPlatformAdmin: true })
+
+    await user.click(screen.getByRole("tab", { name: "Visual" }))
 
     expect(screen.getByRole("button", { name: "+ criar modelo global (Rolvix)" })).toBeInTheDocument()
   })

@@ -51,8 +51,8 @@ import {
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
-import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
@@ -648,11 +648,12 @@ function AdminSchedulePage() {
   const tabItems: {
     id: ScheduleTab
     labelKey: string
+    shortLabelKey: string
     icon: typeof CalendarDays
   }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily", icon: CalendarDays },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates", icon: CalendarRange },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", icon: Tag },
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily", shortLabelKey: "rentals.schedule.tabs.dailyShort", icon: CalendarDays },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates", shortLabelKey: "rentals.schedule.tabs.templatesShort", icon: CalendarRange },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", shortLabelKey: "rentals.schedule.tabs.kindsShort", icon: Tag },
   ]
 
   const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
@@ -677,34 +678,32 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <nav
-            aria-label={t("nav.menu")}
-            className="mx-auto flex w-max min-w-full items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:min-w-0"
-          >
-            {tabItems.map((item) => {
-              const isActive = tab === item.id
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => {
-                    setTab(item.id)
-                  }}
-                  className={cn(
-                    "inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    isActive
-                      ? "bg-background text-foreground shadow-sm"
-                      : "hover:text-foreground",
-                  )}
-                >
-                  <item.icon aria-hidden className="size-3.5" />
-                  {t(item.labelKey)}
-                </button>
-              )
-            })}
-          </nav>
+        <div
+          role="group"
+          aria-label={t("nav.menu")}
+          className="mx-auto grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
+        >
+          {tabItems.map((item) => {
+            const isActive = tab === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => {
+                  setTab(item.id)
+                }}
+                className={cn(
+                  "inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
+                  isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
+                )}
+              >
+                <item.icon aria-hidden className="size-3.5 shrink-0" />
+                <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
+                <span className="hidden sm:inline">{t(item.labelKey)}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
