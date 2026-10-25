@@ -462,6 +462,7 @@
       "dailyLimitReachedUnknown": "Você atingiu o limite de reservas ativas neste dia.",
       "slotJustTaken": "Este horário acabou de ser reservado. A agenda foi atualizada — escolha outro.",
       "slotTaken": "Este horário já está reservado.",
+      "alreadyReserved": "Você já tem esta reserva.",
       "alreadyCancelled": "Esta reserva já estava cancelada.",
       "slotHeldByYou": "Você já reservou este horário. Veja em",
       "cancellationPolicyDefault": "Ao cancelar, o horário volta a ficar disponível para outras pessoas. Consulte as regras do estabelecimento.",

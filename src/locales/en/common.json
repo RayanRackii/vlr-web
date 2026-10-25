@@ -462,6 +462,7 @@
       "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
       "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
       "slotTaken": "This time is already booked.",
+      "alreadyReserved": "You already have this reservation.",
       "alreadyCancelled": "This reservation was already canceled.",
       "slotHeldByYou": "You already booked this time. See",
       "cancellationPolicyDefault": "Canceling makes this time available to other people again. Check this organization's rules.",
