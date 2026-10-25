@@ -90,7 +90,7 @@ export function buildRentalResourceFormValues(
         ? String(editing.maxAdvanceBookingDays)
         : "",
     visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
-    capacityPeople: editing?.capacityPeople?.toString() ?? "",
+    capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
   }
 }

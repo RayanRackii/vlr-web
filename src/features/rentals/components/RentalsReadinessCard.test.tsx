@@ -9,10 +9,16 @@ vi.mock("@/features/rentals/services/rentalsReadinessService", () => ({
   getRentalsReadiness: vi.fn(),
 }))
 
+vi.mock("@/features/rentals/services/scheduleService", () => ({
+  listAdminRentalAssets: vi.fn(),
+}))
+
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
 import { getRentalsReadiness } from "@/features/rentals/services/rentalsReadinessService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 
 const getReadiness = vi.mocked(getRentalsReadiness)
+const listAssets = vi.mocked(listAdminRentalAssets)
 
 function renderCard(options: {
   activeModules?: readonly string[]
@@ -33,6 +39,8 @@ function renderCard(options: {
 describe("RentalsReadinessCard", () => {
   beforeEach(() => {
     getReadiness.mockReset()
+    listAssets.mockReset()
+    listAssets.mockResolvedValue([])
   })
 
   it("links each incomplete setup item to its configuration screen", async () => {
@@ -77,7 +85,7 @@ describe("RentalsReadinessCard", () => {
     expect(within(pendingItem!).getByText(i18n.t("dashboard.rentalsReadiness.status.pending"))).toBeInTheDocument()
   })
 
-  it("hides the schedule item's count, since OpenHours resources never have templates to count", async () => {
+  it("keeps the schedule count for tenants that use the slot grid", async () => {
     getReadiness.mockResolvedValue({
       ready: false,
       items: [
@@ -85,6 +93,20 @@ describe("RentalsReadinessCard", () => {
         { key: "hasUnits", done: false, count: 0 },
       ],
     })
+    listAssets.mockResolvedValue([
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Resource",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+    ])
 
     renderCard()
 
@@ -97,8 +119,82 @@ describe("RentalsReadinessCard", () => {
       .getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasUnits") })
       .closest("li")
 
-    expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
+    expect(within(scheduleItem!).getByText("(0)")).toBeInTheDocument()
     expect(within(unitsItem!).getByText("(0)")).toBeInTheDocument()
+  })
+
+  it("hides the schedule count when every resource uses OpenHours", async () => {
+    getReadiness.mockResolvedValue({
+      ready: false,
+      items: [{ key: "hasScheduleTemplateOrRule", done: false, count: 0 }],
+    })
+    listAssets.mockResolvedValue([
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Resource",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "OpenHours",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+    ])
+
+    renderCard()
+
+    const scheduleItem = (
+      await screen.findByRole("link", {
+        name: i18n.t("dashboard.rentalsReadiness.items.hasScheduleTemplateOrRule"),
+      })
+    ).closest("li")
+
+    expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
+  })
+
+  it("ignores inactive SlotGrid resources when every active resource uses OpenHours", async () => {
+    getReadiness.mockResolvedValue({
+      ready: false,
+      items: [{ key: "hasScheduleTemplateOrRule", done: false, count: 0 }],
+    })
+    listAssets.mockResolvedValue([
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Inactive SlotGrid resource",
+        isActive: false,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+      {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        assetId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Active OpenHours resource",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "OpenHours",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+    ])
+
+    renderCard()
+
+    const scheduleItem = (
+      await screen.findByRole("link", {
+        name: i18n.t("dashboard.rentalsReadiness.items.hasScheduleTemplateOrRule"),
+      })
+    ).closest("li")
+
+    expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
   })
 
   it("does not load or render without the rentals module or read permission", () => {

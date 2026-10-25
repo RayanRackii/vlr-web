@@ -7,6 +7,7 @@ import {
   toCreateRentableRequest,
   type RentalResourceFormValues,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
+import { rentalAssetSchema } from "@/features/rentals/services/scheduleService"
 
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 const CATEGORY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
@@ -46,6 +47,19 @@ function formValues(
 }
 
 describe("resource booking horizon", () => {
+  it("normalizes a legacy capacity response so the resource form can retain it", () => {
+    const asset = rentalAssetSchema.parse({
+      id: UNIT_ID,
+      assetId: UNIT_ID,
+      name: "Space 1",
+      isActive: true,
+      unitId: UNIT_ID,
+      capacity: 8,
+    })
+
+    expect(asset.capacityPeople).toBe(8)
+  })
+
   it("accepts a blank identifier and omits it from the rentable payload", () => {
     const values = {
       ...formValues({ horizonMode: "inherit", horizonDays: "" }),

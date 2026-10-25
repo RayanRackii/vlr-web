@@ -55,6 +55,10 @@ vi.mock("@/features/assets/services/unitsService", () => ({
   createUnit: vi.fn(),
 }))
 
+vi.mock("@/features/assets/services/rentalPricingService", () => ({
+  getAssetPricings: vi.fn(),
+}))
+
 vi.mock("@/features/rentals/services/scheduleService", () => ({
   listAdminRentalAssets: vi.fn(),
 }))
@@ -67,6 +71,7 @@ vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
 }))
 
 import { getUnits } from "@/features/assets/services/unitsService"
+import { getAssetPricings } from "@/features/assets/services/rentalPricingService"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import {
   createRentalAsset,
@@ -88,8 +93,9 @@ const listCategoriesMock = vi.mocked(listRentalAssetCategories)
 const listFamiliesMock = vi.mocked(listRentalAssetFamilies)
 const createMock = vi.mocked(createRentalAsset)
 const updateMock = vi.mocked(updateRentalAsset)
+const getAssetPricingsMock = vi.mocked(getAssetPricings)
 
-const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write"] as const
+const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write", "rentals.pricing.read"] as const
 
 function renderPage(permissions: readonly string[] = WRITE_PERMS) {
   return render(
@@ -117,6 +123,7 @@ describe("RentalResourcesPage", () => {
     listFamiliesMock.mockReset()
     createMock.mockReset()
     updateMock.mockReset()
+    getAssetPricingsMock.mockReset()
 
     getUnitsMock.mockResolvedValue([
       {
@@ -139,6 +146,7 @@ describe("RentalResourcesPage", () => {
       },
     ])
     listAssetsMock.mockResolvedValue([])
+    getAssetPricingsMock.mockResolvedValue([])
     createMock.mockResolvedValue({
       id: RENTAL_ID,
       assetId: ASSET_ID,
@@ -195,6 +203,54 @@ describe("RentalResourcesPage", () => {
     expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
     expect(listAssetsMock).toHaveBeenCalled()
     expectNoForbiddenCopy(container)
+  })
+
+  it("shows an existing resource's price, allowed durations, and capacity in the list and drawer", async () => {
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "OpenHours",
+        allowedDurationMinutes: "60,90",
+        capacityPeople: 8,
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+      },
+    ])
+    getAssetPricingsMock.mockResolvedValue([
+      {
+        id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        assetId: ASSET_ID,
+        rentalAssetId: RENTAL_ID,
+        dayOfWeek: "Monday",
+        startTime: "08:00:00",
+        endTime: "18:00:00",
+        pricePerHour: 45,
+        requiresDeposit: false,
+        depositPercentage: 0,
+        createdAt: "2026-10-01T12:00:00Z",
+        updatedAt: null,
+      },
+    ])
+
+    const user = userEvent.setup()
+    renderPage()
+
+    const details = await screen.findByText(/A partir de: R\$ 45,00\/h/)
+    expect(details.parentElement).toHaveTextContent("Durações: 1 h, 90 min")
+    expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
+
+    await user.click(screen.getByRole("button", { name: /Quadra 1/ }))
+    expect(await screen.findAllByText(/A partir de: R\$ 45,00\/h/)).toHaveLength(2)
   })
 
   it("shows empty rentables CTA when categories exist", async () => {

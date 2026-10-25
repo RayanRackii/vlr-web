@@ -54,6 +54,7 @@ import {
   type TemplateOption,
 } from "@/features/rentals/components/rentalResourceFormDefaults"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -64,6 +65,7 @@ type RentalResourceSheetProps = {
   families: readonly AssetFamily[]
   busy: boolean
   readOnly: boolean
+  pricePerHour?: number | null
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
 }
 
@@ -76,6 +78,7 @@ export function RentalResourceSheet({
   families,
   busy,
   readOnly,
+  pricePerHour,
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
@@ -259,6 +262,7 @@ export function RentalResourceSheet({
           <SheetDescription>
             {t("rentals.resources.formDescription")}
           </SheetDescription>
+          {editing ? <RentalResourceDetails asset={editing} pricePerHour={pricePerHour} /> : null}
         </SheetHeader>
 
         <Form {...form}>

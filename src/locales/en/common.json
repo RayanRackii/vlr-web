@@ -3197,6 +3197,14 @@
       "updateError": "Could not update the resource.",
       "typeLocation": "Space",
       "typeGood": "Rentable item",
+      "details": {
+        "pricePerHour": "From: {{amount}}/h",
+        "allowedDurations": "Durations: {{durations}}",
+        "capacity_one": "Capacity: {{count}} person",
+        "capacity_other": "Capacity: {{count}} people",
+        "durationHours": "{{count}} h",
+        "durationMinutes": "{{count}} min"
+      },
       "form": {
         "name": "Name",
         "namePlaceholder": "E.g. Space 1",
