@@ -39,12 +39,14 @@ const SLOT_UNAVAILABLE_PATTERNS = [
 export class PortalBookingError extends Error {
   readonly status: number | null
   readonly code: string | null
+  readonly cancelCutoffHours: number | null
 
-  constructor(message: string, status: number | null, code: string | null) {
+  constructor(message: string, status: number | null, code: string | null, cancelCutoffHours: number | null = null) {
     super(message)
     this.name = "PortalBookingError"
     this.status = status
     this.code = code
+    this.cancelCutoffHours = cancelCutoffHours
   }
 }
 
@@ -72,11 +74,23 @@ export function portalBookingErrorFromUnknown(
 
   const payload = getAxiosErrorPayload(error)
   const status = isAxiosError(error) ? (error.response?.status ?? null) : null
+  const code = readApiCode(payload)
+  const hours = typeof payload === "object" && payload !== null && "cancelCutoffHours" in payload
+    && typeof payload.cancelCutoffHours === "number" && Number.isInteger(payload.cancelCutoffHours)
+    && payload.cancelCutoffHours >= 0 && payload.cancelCutoffHours <= 8760
+      ? payload.cancelCutoffHours : null
   return new PortalBookingError(
-    parseApiError(payload, fallback),
+    status === 409 && code === "cancel_cutoff_passed"
+      ? i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: hours ?? "" })
+      : parseApiError(payload, fallback),
     status,
-    readApiCode(payload),
+    code,
+    hours,
   )
+}
+
+export function isCancelCutoffError(error: unknown): error is PortalBookingError {
+  return error instanceof PortalBookingError && error.status === 409 && error.code === "cancel_cutoff_passed"
 }
 
 export function isDailyBookingLimitError(
@@ -103,6 +117,9 @@ export function describeBookingError(
   fallback: string,
   horizonDays?: number | null,
 ): string {
+  if (isCancelCutoffError(error)) {
+    return i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: error.cancelCutoffHours ?? "" })
+  }
   if (isBookingHorizonError(error)) {
     return typeof horizonDays === "number"
       ? i18n.t("tenantPortal.agenda.horizonExceededDays", {

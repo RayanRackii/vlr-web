@@ -971,6 +971,7 @@ const reservationSchema = z.object({
   startDateTime: z.string(),
   endDateTime: z.string(),
   status: z.string(),
+  cancelDeadlineUtc: z.string().datetime({ offset: true }).nullable().optional(),
   totalAmount: z.number(),
   depositPaid: z.number(),
   createdAt: z.string(),
@@ -1095,12 +1096,7 @@ export async function cancelMyPortalReservation(
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("apiErrors.cancelReservation"),
-      ),
-    )
+    throw portalBookingErrorFromUnknown(error, i18n.t("apiErrors.cancelReservation"))
   }
 }
 

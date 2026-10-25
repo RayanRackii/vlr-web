@@ -218,3 +218,21 @@ describe("resource booking horizon", () => {
     })).toMatchObject({ visualTemplateRevisionId: null, capacityPeople: null })
   })
 })
+
+
+describe("resource cancellation cutoff", () => {
+  const base = () => ({ ...formValues({ horizonMode: "inherit", horizonDays: "" }), cancelCutoffMode: "inherit" as const, cancelCutoffHours: "" })
+  it("omits unchanged overrides, clears inheritance and replaces hours", () => {
+    expect(toCreateRentableRequest(base())).not.toHaveProperty("cancelCutoffHours")
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffStored: 24 })).toHaveProperty("cancelCutoffHours", null)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none" })).toHaveProperty("cancelCutoffHours", null)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "24", cancelCutoffStored: 24 })).not.toHaveProperty("cancelCutoffHours")
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "0" })).toHaveProperty("cancelCutoffHours", 0)
+  })
+  it.each(["", "-1", "2.5", "8761"])("rejects invalid cutoff %s", (hours) => {
+    expect(schema.safeParse({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: hours }).success).toBe(false)
+  })
+  it.each([0, 8760])("preserves boundary %i in requests", (hours) => {
+    expect(createRentableRequestSchema.parse({ ...toCreateRentableRequest(base()), cancelCutoffHours: hours }).cancelCutoffHours).toBe(hours)
+  })
+})

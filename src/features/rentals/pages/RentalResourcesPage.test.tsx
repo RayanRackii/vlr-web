@@ -604,4 +604,193 @@ describe("RentalResourcesPage", () => {
     ).toBeDisabled()
     expect(updateMock).not.toHaveBeenCalled()
   })
+
+
+  async function chooseCancelCutoff(
+    user: ReturnType<typeof userEvent.setup>,
+    optionKey:
+      | "rentals.resources.form.cancelCutoffInherit"
+      | "rentals.resources.form.cancelCutoffNone"
+      | "rentals.resources.form.cancelCutoffHours",
+  ) {
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: i18n.t(optionKey) }),
+    )
+  }
+
+  it("creates a resource with unlimited or a number of days", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Quadra 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffNone")
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+    )
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      cancelCutoffHours: null,
+    })
+  })
+
+  it("rejects a resource cancelCutoff outside 0..8760 and sends a valid number", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Space 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "S-01",
+    )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffHours")
+
+    const days = screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours"))
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.resources.saveCreate"),
+    })
+    expect(save).toBeDisabled()
+    await user.type(days, "8761")
+    expect(save).toBeDisabled()
+
+    await user.clear(days)
+    await user.type(days, "21")
+    expect(save).toBeEnabled()
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      cancelCutoffHours: 21,
+    })
+  })
+
+  it("clears a stored override with the tenant default and keeps an unchanged number omitted", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: 8,
+        effectiveCancelCutoffHours: 8,
+      },
+    ])
+
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { hours: 8 }),
+      ),
+    ).toBeInTheDocument()
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "cancelCutoffHours",
+    )
+
+    unmount()
+    updateMock.mockClear()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffInherit")
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).toMatchObject({
+      cancelCutoffHours: null,
+    })
+  })
+
+  it("disables the cancelCutoff when the user can only read the resource", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: null,
+        effectiveCancelCutoffHours: null,
+      },
+    ])
+    renderPage(["rentals.assets.read"])
+
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(i18n.t("rentals.resources.form.cancelCutoffEffectiveNone")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    ).toBeDisabled()
+    expect(updateMock).not.toHaveBeenCalled()
+  })
 })

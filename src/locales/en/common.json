@@ -501,7 +501,9 @@
       },
       "selectionUnavailable": "This time is no longer available",
       "yourReservation": "Your reservation",
-      "selectionExpired": "Your selection expired"
+      "selectionExpired": "Your selection expired",
+      "cancelDeadline": "Cancellable until {{when}}",
+      "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed."
     },
     "menu": {
       "empty": "No modules available.",
@@ -3200,7 +3202,13 @@
         "horizonHint": "Set how far ahead customers can book this resource.",
         "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
-        "horizonEffectiveDays": "In effect: {{count}} days ahead."
+        "horizonEffectiveDays": "In effect: {{count}} days ahead.",
+        "cancelCutoffLabel": "Cancellation cutoff",
+        "cancelCutoffInherit": "Inherit policy",
+        "cancelCutoffNone": "No cutoff (use policy)",
+        "cancelCutoffHours": "Hours before the start",
+        "cancelCutoffEffectiveNone": "Effective: no cutoff",
+        "cancelCutoffEffectiveHours": "Effective: {{hours}} hours before the start"
       },
       "inlineCreate": {
         "categoryAction": "+ create type",
@@ -3229,7 +3237,8 @@
         "familyRequired": "Select a family.",
         "quantityMin": "Quantity must be at least 1.",
         "queueOpeningTimeRequired": "Enter the queue opening time.",
-        "horizonRange": "Enter an integer from 0 to 3650."
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
       }
     },
     "layout": {
@@ -3339,8 +3348,14 @@
       "validation": {
         "textMax": "The text can be at most 2000 characters.",
         "limitRange": "Enter an integer from 1 to 100.",
-        "horizonRange": "Enter an integer from 0 to 3650."
-      }
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
+      },
+      "cancelCutoffLabel": "Cancellation cutoff",
+      "cancelCutoffNone": "No cutoff",
+      "cancelCutoffHoursMode": "N hours before the start",
+      "cancelCutoffHours": "Hours before the start",
+      "cancelCutoffHint": "Customers can cancel until this many hours before the start."
     }
   },
   "resourceVisual": {

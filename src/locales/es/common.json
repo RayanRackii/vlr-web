@@ -501,7 +501,9 @@
       },
       "selectionUnavailable": "Este horario ya no está disponible",
       "yourReservation": "Tu reserva",
-      "selectionExpired": "Tu selección ha expirado"
+      "selectionExpired": "Tu selección ha expirado",
+      "cancelDeadline": "Se puede cancelar hasta {{when}}",
+      "cancelCutoffPassed": "Ya pasó el plazo de cancelación de {{hours}} horas antes del inicio."
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -3200,7 +3202,13 @@
         "horizonHint": "Defina hasta cuándo los clientes pueden reservar este recurso.",
         "horizonTechnicalHelp": "Usar el valor del ambiente sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
-        "horizonEffectiveDays": "En vigor: {{count}} días adelante."
+        "horizonEffectiveDays": "En vigor: {{count}} días adelante.",
+        "cancelCutoffLabel": "Plazo de cancelación",
+        "cancelCutoffInherit": "Heredar de la política",
+        "cancelCutoffNone": "Sin plazo (usar política)",
+        "cancelCutoffHours": "Horas antes del inicio",
+        "cancelCutoffEffectiveNone": "Efectivo: sin plazo",
+        "cancelCutoffEffectiveHours": "Efectivo: {{hours}} horas antes del inicio"
       },
       "inlineCreate": {
         "categoryAction": "+ crear tipo",
@@ -3229,7 +3237,8 @@
         "familyRequired": "Seleccione la familia.",
         "quantityMin": "La cantidad debe ser al menos 1.",
         "queueOpeningTimeRequired": "Informe la hora de apertura de la fila.",
-        "horizonRange": "Indique un entero de 0 a 3650."
+        "horizonRange": "Indique un entero de 0 a 3650.",
+        "cancelCutoffRange": "Introduce un número entero de 0 a 8760 horas."
       }
     },
     "layout": {
@@ -3339,8 +3348,14 @@
       "validation": {
         "textMax": "El texto puede tener como máximo 2000 caracteres.",
         "limitRange": "Indique un entero de 1 a 100.",
-        "horizonRange": "Indique un entero de 0 a 3650."
-      }
+        "horizonRange": "Indique un entero de 0 a 3650.",
+        "cancelCutoffRange": "Introduce un número entero de 0 a 8760 horas."
+      },
+      "cancelCutoffLabel": "Plazo de cancelación",
+      "cancelCutoffNone": "Sin plazo",
+      "cancelCutoffHoursMode": "N horas antes del inicio",
+      "cancelCutoffHours": "Horas antes del inicio",
+      "cancelCutoffHint": "El cliente puede cancelar hasta este plazo antes del inicio."
     }
   },
   "resourceVisual": {
