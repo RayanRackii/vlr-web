@@ -270,6 +270,9 @@ function SchedulePolicyPanelForm({
               disabled={busy || readOnly}
               onClick={() => {
                 setPolicy(option.id)
+                if (option.id === "OpenHours" && !durationMinutes.trim()) {
+                  setDurationMinutes(templateValues?.durationMinutes ?? "60")
+                }
               }}
               className={cn(
                 "rounded-lg border px-3 py-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
