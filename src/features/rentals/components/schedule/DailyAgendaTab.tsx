@@ -422,7 +422,7 @@ function ResourceFocusChips({
   const { t } = useTranslation()
   return (
     <div
-      role="tablist"
+      role="group"
       aria-label={t("rentals.schedule.rentables")}
       className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
     >
@@ -433,8 +433,7 @@ function ResourceFocusChips({
           <button
             key={asset.id}
             type="button"
-            role="tab"
-            aria-selected={isActive}
+            aria-pressed={isActive}
             onClick={() => onSelect(asset.id)}
             className={cn(
               "flex shrink-0 min-h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors motion-safe:transition-colors",
