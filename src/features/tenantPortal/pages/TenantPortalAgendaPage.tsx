@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner"
 
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   LocaleDateInput,
   type LocaleDateChangeSource,
@@ -1200,7 +1201,11 @@ export function TenantPortalAgendaPage() {
         return
       }
       toast.error(
-        describeBookingError(error, t("tenantPortal.agenda.reserveError")),
+        describeBookingError(
+          error,
+          t("tenantPortal.agenda.reserveError"),
+          horizonDays,
+        ),
       )
     } finally {
       if (generation === getAgendaSessionGeneration()) {
@@ -1929,7 +1934,12 @@ export function TenantPortalAgendaPage() {
                   {t("tenantPortal.agenda.cancelConfirmTitle")}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("tenantPortal.agenda.cancelConfirmBody")}
+                  {t(
+                    (mine.find((reservation) => reservation.id === pendingCancelId)
+                      ?.depositPaid ?? 0) > 0
+                      ? "tenantPortal.agenda.cancelConfirmBodyPaid"
+                      : "tenantPortal.agenda.cancelConfirmBodyUnpaid",
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {cancellationPolicyNote ? (
@@ -1978,4 +1988,3 @@ function visibleCancellationPolicyText(value: string | null): string | null {
   const trimmed = value.trim()
   return trimmed.length === 0 ? null : trimmed
 }
-import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"

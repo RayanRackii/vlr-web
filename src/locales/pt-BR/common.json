@@ -101,6 +101,7 @@
     "loadCustomerProfile": "Não foi possível carregar o perfil.",
     "updateCustomerProfile": "Não foi possível atualizar o perfil.",
     "invalidPayload": "Dados inválidos recebidos da API.",
+    "moduleInactive": "Este módulo não está ativo neste ambiente.",
     "loadCatalogProducts": "Não foi possível carregar os produtos.",
     "loadCatalogProduct": "Não foi possível carregar o produto.",
     "saveCatalogProduct": "Não foi possível salvar o produto.",
@@ -228,6 +229,7 @@
     "login": {
       "invalidCredentials": "E-mail ou senha inválidos.",
       "failed": "Não foi possível entrar. Tente novamente.",
+      "rateLimited": "Muitas tentativas de login. Aguarde um pouco e tente novamente.",
       "title": "Login",
       "subtitle": "Entre com suas credenciais para acessar a plataforma.",
       "emailLabel": "E-mail",
@@ -255,7 +257,7 @@
       "resetCompanyBack": "Voltar",
       "resetCompanyMin": "O identificador deve ter pelo menos 2 caracteres.",
       "resetCompanyMax": "O identificador deve ter no máximo 63 caracteres.",
-      "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou acme-clube)."
+      "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou rolvix-sp)."
     },
     "resetPassword": {
       "title": "Nova senha",
@@ -379,7 +381,8 @@
     "verify": {
       "title": "Confirmar e-mail",
       "subtitle": "Digite o código de 6 dígitos enviado para {{maskedEmail}}.",
-      "expiresHint": "O código expira em 10 minutos. Se não chegar, reenvie após a espera.",
+      "expiresHint_one": "O código expira em {{count}} minuto. Se não chegar, reenvie após a espera.",
+      "expiresHint_other": "O código expira em {{count}} minutos. Se não chegar, reenvie após a espera.",
       "submit": "Confirmar",
       "submitting": "Verificando...",
       "resend": "Reenviar código",
@@ -419,7 +422,7 @@
       "reserving": "Reservando...",
       "available": "Disponível. Estimativa: {{amount}}",
       "quoteLoading": "Calculando o valor...",
-      "depositRequired": "Este espaço exige depósito. A reserva fica aguardando a confirmação do clube; esta tela não cobra.",
+      "depositRequired": "Este espaço exige depósito. A reserva fica aguardando a confirmação da equipe responsável; esta tela não cobra.",
       "total": "Total {{amount}}",
       "unavailable": "Horário indisponível.",
       "slotReserved": "Horário já reservado.",
@@ -428,10 +431,12 @@
       "unplaced": "Outros espaços",
       "availabilityError": "Não foi possível verificar disponibilidade.",
       "slotsError": "Não foi possível carregar os horários do dia.",
-      "noSlots": "Nenhum horário disponível nesta data. O clube ainda pode não ter publicado a escala.",
+      "noSlots": "Nenhum horário disponível nesta data. A equipe responsável ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",
       "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos.",
-      "horizonExceeded": "A data solicitada está além do horizonte de reserva.",
+      "horizonExceeded": "A data solicitada está além do limite de reserva.",
+      "horizonExceededDays_one": "Você pode reservar com até {{count}} dia de antecedência.",
+      "horizonExceededDays_other": "Você pode reservar com até {{count}} dias de antecedência.",
       "horizonAdjusted": "Essa data passa do horizonte de reserva. Mostrando a última data que ainda pode ser reservada.",
       "horizonHint": "Reservas disponíveis até {{date}} ({{count}} dias à frente)",
       "dateBeforeToday": "Essa data é anterior a hoje.",
@@ -446,7 +451,8 @@
       "cancel": "Cancelar",
       "cancelling": "Cancelando...",
       "cancelConfirmTitle": "Cancelar esta reserva?",
-      "cancelConfirmBody": "O horário volta a ficar disponível. Esta tela não cobra e não emite reembolso, inclusive se a reserva já estiver confirmada. O depósito, quando exigido, só é confirmado pelo clube; o cancelamento não movimenta pagamento aqui.",
+      "cancelConfirmBodyPaid": "O horário volta a ficar disponível. Qualquer reembolso de valores pagos será tratado pela empresa conforme a política dela; esta tela não processa reembolsos.",
+      "cancelConfirmBodyUnpaid": "O horário volta a ficar disponível. Esta reserva não tem valor pago, e esta tela não cobra nem processa pagamentos.",
       "cancelConfirmAction": "Confirmar cancelamento",
       "cancelConfirmDismiss": "Manter reserva",
       "cancelSuccess": "Reserva cancelada.",
@@ -492,7 +498,7 @@
     "menu": {
       "empty": "Nenhum módulo disponível.",
       "emptyTitle": "Nada por aqui ainda",
-      "emptyDescription": "O administrador do clube ainda não configurou itens de menu para o portal."
+      "emptyDescription": "O administrador ainda não configurou itens de menu para o portal."
     },
     "profile": {
       "title": "Meu Perfil",
@@ -2284,7 +2290,7 @@
     "role": "Função",
     "permissions": "Permissões",
     "accessProfile": "Perfil de acesso",
-    "moduleInactive": "Módulo não ativo para este tenant",
+    "moduleInactive": "Este módulo não está ativo neste ambiente.",
     "status": {
       "active": "Ativo",
       "inactive": "Inativo"
@@ -2885,7 +2891,7 @@
         "taxIdMax": "O documento deve ter no máximo 20 caracteres.",
         "subdomainMin": "O subdomínio deve ter pelo menos 2 caracteres.",
         "subdomainMax": "O subdomínio deve ter no máximo 63 caracteres.",
-        "subdomainFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou acme-clube).",
+        "subdomainFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou rolvix-sp).",
         "logoSvgInvalid": "O logo deve ser um markup SVG (incluir <svg).",
         "hexColorInvalid": "Informe uma cor hexadecimal válida (ex.: #1E293B).",
         "welcomeTaglineMax": "A frase de boas-vindas deve ter no máximo 120 caracteres.",
@@ -2979,7 +2985,7 @@
         "empty": "Horário vazio",
         "noSelection": "Selecione um ou mais espaços / bens para ver a grade."
       },
-      "dayOnlyBanner": "Alterações nesta grade valem somente para {{date}}. A regra semanal fica em Configuração semanal.",
+      "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
       "weeklyBanner": "Esta grade é a regra de todas as {{day}}. A Agenda do dia só altera uma data.",
       "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
       "weekly": {
@@ -3311,7 +3317,7 @@
       "horizonDaysMode": "Número de dias",
       "horizonDays": "Dias à frente",
       "horizonHintUnlimited": "Ilimitado significa sem limite para reservar um recurso.",
-      "horizonHintDays": "Uma data até esse número de dias à frente é aceita. O dia seguinte é recusado (booking_horizon_exceeded).",
+      "horizonHintDays": "Uma data até esse número de dias à frente é aceita. O dia seguinte fica fora do limite de reserva.",
       "save": "Salvar",
       "saved": "Política de reservas salva.",
       "loadError": "Não foi possível carregar a política de reservas.",

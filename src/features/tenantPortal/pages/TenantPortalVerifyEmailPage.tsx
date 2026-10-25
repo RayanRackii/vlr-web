@@ -188,7 +188,7 @@ export function TenantPortalVerifyEmailPage() {
           </p>
         ) : null}
         <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.verify.expiresHint")}
+          {t("tenantPortal.verify.expiresHint", { count: 10 })}
         </p>
         {sendFailed ? (
           <p

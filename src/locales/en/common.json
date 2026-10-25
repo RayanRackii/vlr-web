@@ -101,6 +101,7 @@
     "loadCustomerProfile": "Could not load the profile.",
     "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API.",
+    "moduleInactive": "This module is not active in this workspace.",
     "loadCatalogProducts": "Could not load products.",
     "loadCatalogProduct": "Could not load the product.",
     "saveCatalogProduct": "Could not save the product.",
@@ -228,6 +229,7 @@
     "login": {
       "invalidCredentials": "Invalid email or password.",
       "failed": "Could not sign in. Please try again.",
+      "rateLimited": "Too many login attempts. Wait a little and try again.",
       "title": "Sign in",
       "subtitle": "Sign in with your credentials to access the platform.",
       "emailLabel": "Email",
@@ -255,7 +257,7 @@
       "resetCompanyBack": "Back",
       "resetCompanyMin": "The identifier must be at least 2 characters.",
       "resetCompanyMax": "The identifier must be at most 63 characters.",
-      "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club)."
+      "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp)."
     },
     "resetPassword": {
       "title": "New password",
@@ -283,7 +285,7 @@
     },
     "errors": {
       "title": "Portal unavailable",
-      "missingSubdomain": "Open the company address (e.g. /t/tennis-club).",
+      "missingSubdomain": "Open the company address (e.g. /t/rolvix-sp).",
       "tenantNotFound": "Company not found or inactive."
     },
     "fields": {
@@ -379,7 +381,8 @@
     "verify": {
       "title": "Confirm email",
       "subtitle": "Enter the 6-digit code sent to {{maskedEmail}}.",
-      "expiresHint": "The code expires in 10 minutes. If it does not arrive, resend after the wait.",
+      "expiresHint_one": "The code expires in {{count}} minute. If it does not arrive, resend after the wait.",
+      "expiresHint_other": "The code expires in {{count}} minutes. If it does not arrive, resend after the wait.",
       "submit": "Confirm",
       "submitting": "Verifying...",
       "resend": "Resend code",
@@ -419,7 +422,7 @@
       "reserving": "Booking...",
       "available": "Available. Estimate: {{amount}}",
       "quoteLoading": "Calculating the price...",
-      "depositRequired": "This space requires a deposit. The reservation stays pending until the club confirms it. This screen does not collect payment.",
+      "depositRequired": "This space requires a deposit. The reservation stays pending until the responsible team confirms it. This screen does not collect payment.",
       "total": "Total {{amount}}",
       "unavailable": "Slot unavailable.",
       "slotReserved": "This time is already booked.",
@@ -428,11 +431,13 @@
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
       "slotsError": "Could not load times for this day.",
-      "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
+      "noSlots": "No slots are available on this date. The responsible team may not have published the schedule yet.",
       "noTimes": "No times on this date",
       "pastSlotsHidden": "Times that have already started today are hidden.",
-      "horizonExceeded": "That date is beyond the booking horizon.",
-      "horizonAdjusted": "That date is beyond the booking horizon. Showing the latest date you can book.",
+      "horizonExceeded": "That date is beyond the booking limit.",
+      "horizonExceededDays_one": "You can book up to {{count}} day ahead.",
+      "horizonExceededDays_other": "You can book up to {{count}} days ahead.",
+      "horizonAdjusted": "That date is beyond the booking limit. Showing the latest date you can book.",
       "horizonHint": "Bookings available through {{date}} ({{count}} days ahead)",
       "dateBeforeToday": "That date is before today.",
       "loadingTimes": "Loading times...",
@@ -446,7 +451,8 @@
       "cancel": "Cancel",
       "cancelling": "Canceling...",
       "cancelConfirmTitle": "Cancel this reservation?",
-      "cancelConfirmBody": "The time slot becomes available again. This screen does not collect payment or issue a refund, including when the reservation is already confirmed. When a deposit is required, only the club confirms it; canceling does not move any payment here.",
+      "cancelConfirmBodyPaid": "The time slot becomes available again. The business will handle any refund for paid amounts according to its policy; this screen does not issue refunds.",
+      "cancelConfirmBodyUnpaid": "The time slot becomes available again. No amount has been paid for this reservation, and this screen does not collect or process payments.",
       "cancelConfirmAction": "Confirm cancellation",
       "cancelConfirmDismiss": "Keep reservation",
       "cancelSuccess": "Reservation canceled.",
@@ -492,7 +498,7 @@
     "menu": {
       "empty": "No modules available.",
       "emptyTitle": "Nothing here yet",
-      "emptyDescription": "The club admin has not configured portal menu items yet."
+      "emptyDescription": "The administrator has not configured portal menu items yet."
     },
     "profile": {
       "title": "My Profile",
@@ -2284,7 +2290,7 @@
     "role": "Function",
     "permissions": "Permissions",
     "accessProfile": "Access profile",
-    "moduleInactive": "Module is not active for this tenant",
+    "moduleInactive": "This module is not active in this workspace.",
     "status": {
       "active": "Active",
       "inactive": "Inactive"
@@ -2885,7 +2891,7 @@
         "taxIdMax": "Tax ID must be at most 20 characters.",
         "subdomainMin": "Subdomain must be at least 2 characters.",
         "subdomainMax": "Subdomain must be at most 63 characters.",
-        "subdomainFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club).",
+        "subdomainFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp).",
         "logoSvgInvalid": "The logo must be SVG markup (include <svg).",
         "hexColorInvalid": "Enter a valid hex color (e.g. #1E293B).",
         "welcomeTaglineMax": "Welcome tagline must be at most 120 characters.",
@@ -2979,7 +2985,7 @@
         "empty": "Empty time slot",
         "noSelection": "Select one or more spaces / goods to view the grid."
       },
-      "dayOnlyBanner": "Changes in this grid apply only to {{date}}. Weekly rules live under Weekly setup.",
+      "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid is the rule for every {{day}}. Day agenda only changes one date.",
       "weeklyCellHint": "The change applies to this weekday on all future dates.",
       "weekly": {
@@ -3311,7 +3317,7 @@
       "horizonDaysMode": "A number of days",
       "horizonDays": "Days ahead",
       "horizonHintUnlimited": "Unlimited means no limit on how far ahead a customer can book a resource.",
-      "horizonHintDays": "A start this many days ahead is allowed. The next day is rejected (booking_horizon_exceeded).",
+      "horizonHintDays": "A start this many days ahead is allowed. The next day is outside the booking limit.",
       "save": "Save",
       "saved": "Booking policy saved.",
       "loadError": "Could not load the booking policy.",

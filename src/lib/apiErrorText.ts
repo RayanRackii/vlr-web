@@ -22,3 +22,19 @@ export function readApiErrorBody(payload: unknown): ApiErrorBody {
 export function isUnexpectedApiError(message: string | null | undefined): boolean {
   return message?.trim() === UNEXPECTED_API_ERROR
 }
+
+/** Module-inactive 403: current API message ("Module is not active for this tenant.") or a stable code. */
+export function isModuleInactiveValue(value: unknown): boolean {
+  if (typeof value !== "string") return false
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z_]/g, "")
+  return (
+    normalized === "module_inactive" ||
+    normalized === "module_not_active" ||
+    normalized === "module_is_not_active" ||
+    normalized === "module_is_not_active_for_this_tenant"
+  )
+}

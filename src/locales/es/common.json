@@ -101,6 +101,7 @@
     "loadCustomerProfile": "No se pudo cargar el perfil.",
     "updateCustomerProfile": "No se pudo actualizar el perfil.",
     "invalidPayload": "Datos inválidos recibidos de la API.",
+    "moduleInactive": "Este módulo no está activo en este espacio.",
     "loadCatalogProducts": "No se pudieron cargar los productos.",
     "loadCatalogProduct": "No se pudo cargar el producto.",
     "saveCatalogProduct": "No se pudo guardar el producto.",
@@ -228,6 +229,7 @@
     "login": {
       "invalidCredentials": "Correo o contraseña inválidos.",
       "failed": "No se pudo iniciar sesión. Inténtelo de nuevo.",
+      "rateLimited": "Demasiados intentos de inicio de sesión. Espere un momento e inténtelo de nuevo.",
       "title": "Iniciar sesión",
       "subtitle": "Inicie sesión con sus credenciales para acceder a la plataforma.",
       "emailLabel": "Correo electrónico",
@@ -255,7 +257,7 @@
       "resetCompanyBack": "Volver",
       "resetCompanyMin": "El identificador debe tener al menos 2 caracteres.",
       "resetCompanyMax": "El identificador debe tener como máximo 63 caracteres.",
-      "resetCompanyFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o acme-club)."
+      "resetCompanyFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o rolvix-sp)."
     },
     "resetPassword": {
       "title": "Nueva contraseña",
@@ -283,7 +285,7 @@
     },
     "errors": {
       "title": "Portal no disponible",
-      "missingSubdomain": "Abra la dirección de la empresa (ej.: /t/club-tenis).",
+      "missingSubdomain": "Abra la dirección de la empresa (ej.: /t/rolvix-sp).",
       "tenantNotFound": "Empresa no encontrada o inactiva."
     },
     "fields": {
@@ -379,7 +381,8 @@
     "verify": {
       "title": "Confirmar correo",
       "subtitle": "Ingrese el código de 6 dígitos enviado a {{maskedEmail}}.",
-      "expiresHint": "El código caduca en 10 minutos. Si no llega, reenvíelo después de la espera.",
+      "expiresHint_one": "El código caduca en {{count}} minuto. Si no llega, reenvíelo después de la espera.",
+      "expiresHint_other": "El código caduca en {{count}} minutos. Si no llega, reenvíelo después de la espera.",
       "submit": "Confirmar",
       "submitting": "Verificando...",
       "resend": "Reenviar código",
@@ -419,7 +422,7 @@
       "reserving": "Reservando...",
       "available": "Disponible. Estimación: {{amount}}",
       "quoteLoading": "Calculando el valor...",
-      "depositRequired": "Este espacio exige depósito. La reserva queda pendiente de confirmación del club; esta pantalla no cobra.",
+      "depositRequired": "Este espacio exige depósito. La reserva queda pendiente de confirmación del equipo responsable; esta pantalla no cobra.",
       "total": "Total {{amount}}",
       "unavailable": "Horario no disponible.",
       "slotReserved": "Este horario ya está reservado.",
@@ -428,10 +431,12 @@
       "unplaced": "Otros espacios",
       "availabilityError": "No se pudo verificar la disponibilidad.",
       "slotsError": "No se pudieron cargar los horarios del día.",
-      "noSlots": "No hay horarios disponibles en esta fecha. Es posible que el club aún no haya publicado la escala.",
+      "noSlots": "No hay horarios disponibles en esta fecha. Es posible que el equipo responsable aún no haya publicado la escala.",
       "noTimes": "No hay horarios en esta fecha",
       "pastSlotsHidden": "Los horarios que ya empezaron hoy quedan ocultos.",
-      "horizonExceeded": "La fecha pedida está fuera del horizonte de reserva.",
+      "horizonExceeded": "La fecha pedida supera el límite de reserva.",
+      "horizonExceededDays_one": "Puede reservar con hasta {{count}} día de antelación.",
+      "horizonExceededDays_other": "Puede reservar con hasta {{count}} días de antelación.",
       "horizonAdjusted": "Esa fecha está fuera del horizonte de reserva. Mostrando la última fecha que todavía se puede reservar.",
       "horizonHint": "Reservas disponibles hasta {{date}} ({{count}} días adelante)",
       "dateBeforeToday": "Esa fecha es anterior a hoy.",
@@ -446,7 +451,8 @@
       "cancel": "Cancelar",
       "cancelling": "Cancelando...",
       "cancelConfirmTitle": "¿Cancelar esta reserva?",
-      "cancelConfirmBody": "El horario vuelve a quedar disponible. Esta pantalla no cobra ni emite reembolso, aunque la reserva ya esté confirmada. Cuando se exige depósito, solo el club lo confirma; cancelar no mueve ningún pago aquí.",
+      "cancelConfirmBodyPaid": "El horario vuelve a quedar disponible. La empresa gestionará cualquier reembolso de valores pagados según su política; esta pantalla no emite reembolsos.",
+      "cancelConfirmBodyUnpaid": "El horario vuelve a quedar disponible. No se ha pagado ningún importe por esta reserva y esta pantalla no cobra ni procesa pagos.",
       "cancelConfirmAction": "Confirmar cancelación",
       "cancelConfirmDismiss": "Mantener la reserva",
       "cancelSuccess": "Reserva cancelada.",
@@ -492,7 +498,7 @@
     "menu": {
       "empty": "No hay módulos disponibles.",
       "emptyTitle": "Aún no hay nada aquí",
-      "emptyDescription": "El administrador del club aún no configuró ítems de menú para el portal."
+      "emptyDescription": "El administrador aún no configuró ítems de menú para el portal."
     },
     "profile": {
       "title": "Mi perfil",
@@ -2284,7 +2290,7 @@
     "role": "Función",
     "permissions": "Permisos",
     "accessProfile": "Perfil de acceso",
-    "moduleInactive": "Módulo no activo para este tenant",
+    "moduleInactive": "Este módulo no está activo en este espacio.",
     "status": {
       "active": "Activo",
       "inactive": "Inactivo"
@@ -2885,7 +2891,7 @@
         "taxIdMax": "El documento debe tener como máximo 20 caracteres.",
         "subdomainMin": "El subdominio debe tener al menos 2 caracteres.",
         "subdomainMax": "El subdominio debe tener como máximo 63 caracteres.",
-        "subdomainFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o acme-club).",
+        "subdomainFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o rolvix-sp).",
         "logoSvgInvalid": "El logo debe ser un markup SVG (incluir <svg).",
         "hexColorInvalid": "Ingrese un color hexadecimal válido (ej.: #1E293B).",
         "welcomeTaglineMax": "La frase de bienvenida debe tener como máximo 120 caracteres.",
@@ -2979,7 +2985,7 @@
         "empty": "Horario vacío",
         "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla."
       },
-      "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. La regla semanal está en Configuración semanal.",
+      "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. Para cambiar la regla semanal, use Configuración semanal.",
       "weeklyBanner": "Esta grilla es la regla de todos los {{day}}. La Agenda del día solo cambia una fecha.",
       "weeklyCellHint": "El cambio vale para este día semanal, en todas las fechas futuras.",
       "weekly": {
@@ -3311,7 +3317,7 @@
       "horizonDaysMode": "Número de días",
       "horizonDays": "Días adelante",
       "horizonHintUnlimited": "Ilimitado significa que no hay límite para reservar un recurso.",
-      "horizonHintDays": "Se acepta una fecha hasta ese número de días adelante. El día siguiente se rechaza (booking_horizon_exceeded).",
+      "horizonHintDays": "Se acepta una fecha hasta ese número de días adelante. El día siguiente queda fuera del límite de reserva.",
       "save": "Guardar",
       "saved": "Política de reservas guardada.",
       "loadError": "No se pudo cargar la política de reservas.",

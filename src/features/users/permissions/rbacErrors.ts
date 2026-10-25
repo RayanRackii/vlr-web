@@ -1,5 +1,10 @@
 import i18n from "@/lib/i18n"
-import { getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
+import {
+  getAxiosErrorPayload,
+  isAxiosError,
+  isModuleInactiveValue,
+  parseApiError,
+} from "@/lib/api"
 
 export const RBAC_ERROR_CODES = [
   "PRIVILEGE_ESCALATION_BLOCKED",
@@ -20,6 +25,10 @@ export function isRbacErrorCode(value: string): value is RbacErrorCode {
 }
 
 export function mapRbacErrorMessage(rawError: string, fallback: string): string {
+  if (isModuleInactiveValue(rawError)) {
+    return i18n.t("apiErrors.moduleInactive")
+  }
+
   if (isRbacErrorCode(rawError)) {
     return i18n.t(`rbac.errors.${rawError}`)
   }
@@ -31,9 +40,21 @@ export function mapRbacErrorMessage(rawError: string, fallback: string): string 
   return fallback
 }
 
+function moduleInactiveCode(payload: unknown): string | null {
+  if (typeof payload !== "object" || payload === null) return null
+  const record = payload as Record<string, unknown>
+  for (const key of ["code", "errorCode"]) {
+    const value = record[key]
+    if (typeof value === "string" && isModuleInactiveValue(value)) return value
+  }
+  return null
+}
+
 export function describeApiError(error: unknown, fallback: string): string {
   if (isAxiosError(error) && error.response?.status === 403) {
-    const raw = parseApiError(getAxiosErrorPayload(error), "FORBIDDEN")
+    const payload = getAxiosErrorPayload(error)
+    const raw =
+      moduleInactiveCode(payload) ?? parseApiError(payload, "FORBIDDEN")
     return mapRbacErrorMessage(
       raw.trim().length > 0 ? raw : "FORBIDDEN",
       i18n.t("rbac.errors.FORBIDDEN"),

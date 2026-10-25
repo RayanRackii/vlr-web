@@ -35,6 +35,10 @@ function getLoginErrorMessage(
   error: AuthError,
   t: (key: string) => string,
 ): string {
+  if (error.status === 429 || /too many login attempts/i.test(error.message)) {
+    return t("auth.login.rateLimited")
+  }
+
   if (error.message === "Invalid login credentials") {
     return t("auth.login.invalidCredentials")
   }

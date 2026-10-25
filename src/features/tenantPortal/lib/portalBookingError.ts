@@ -98,9 +98,17 @@ export function isBookingHorizonError(
 }
 
 /** Message for a booking failure. A horizon rejection uses the translated sentence. */
-export function describeBookingError(error: unknown, fallback: string): string {
+export function describeBookingError(
+  error: unknown,
+  fallback: string,
+  horizonDays?: number | null,
+): string {
   if (isBookingHorizonError(error)) {
-    return i18n.t("tenantPortal.agenda.horizonExceeded")
+    return typeof horizonDays === "number"
+      ? i18n.t("tenantPortal.agenda.horizonExceededDays", {
+          count: horizonDays,
+        })
+      : i18n.t("tenantPortal.agenda.horizonExceeded")
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
