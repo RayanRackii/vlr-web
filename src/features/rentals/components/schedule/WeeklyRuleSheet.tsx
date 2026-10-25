@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -119,20 +120,18 @@ export function WeeklyRuleSheet({
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1 text-xs">
               <span>{t("rentals.schedule.policy.openTime")}</span>
-              <Input
-                type="time"
+              <Time24Input
                 value={openTime}
                 disabled={busy || readOnly}
-                onChange={(event) => setOpenTime(event.target.value)}
+                onValueChange={(next) => setOpenTime(next)}
               />
             </label>
             <label className="space-y-1 text-xs">
               <span>{t("rentals.schedule.policy.closeTime")}</span>
-              <Input
-                type="time"
+              <Time24Input
                 value={closeTime}
                 disabled={busy || readOnly}
-                onChange={(event) => setCloseTime(event.target.value)}
+                onValueChange={(next) => setCloseTime(next)}
               />
             </label>
           </div>

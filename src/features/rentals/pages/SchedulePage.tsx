@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -86,7 +87,7 @@ export function SchedulePage() {
 }
 
 function AdminSchedulePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isTrialReadOnly } = useTrialStatus()
   const timeZoneId = useTenantTimeZone()
 
@@ -592,6 +593,9 @@ function AdminSchedulePage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             {t("rentals.schedule.descriptionOperational")}
+          </p>
+          <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
+            {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
           </p>
         </div>
 

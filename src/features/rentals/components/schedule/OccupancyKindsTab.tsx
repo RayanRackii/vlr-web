@@ -1,6 +1,7 @@
 import { Tags } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
@@ -68,10 +69,7 @@ export function OccupancyKindsTab({
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
-                    {kind.label}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {kind.key}
-                    </span>
+                    {occupancyKindDisplayLabel(t, kind)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {kind.isBookableByCustomer

@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
@@ -216,23 +217,21 @@ function SchedulePolicyPanelForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.openTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={openTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setOpenTime(event.target.value)
+              onValueChange={(next) => {
+                setOpenTime(next)
               }}
             />
           </label>
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.closeTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={closeTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setCloseTime(event.target.value)
+              onValueChange={(next) => {
+                setCloseTime(next)
               }}
             />
           </label>
