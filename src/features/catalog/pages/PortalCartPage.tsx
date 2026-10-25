@@ -167,6 +167,15 @@ export function PortalCartPage() {
         <EmptyState
           icon={ShoppingCartIcon}
           title={t("tenantPortal.catalog.cartEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+          }
         />
       ) : (
         <ul className="divide-y rounded-xl border border-border">

@@ -152,7 +152,12 @@ import {
   isPastTenantSlotStart,
   withoutPastTenantSlots,
 } from "@/features/rentals/lib/offerableSlot"
-import { formatTenantDate, formatTenantTime, tenantTodayIsoDate } from "@/lib/tenantTimeZone"
+import {
+  formatTenantDate,
+  formatTenantTime,
+  resolveTenantTimeZone,
+  tenantTodayIsoDate,
+} from "@/lib/tenantTimeZone"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
@@ -176,6 +181,24 @@ function reservationStatusBadgeVariant(
     return "warning"
   }
   return "secondary"
+}
+
+/** Day + short month in the tenant clock — the calendar chip on a reservation card. */
+function reservationDateParts(
+  startDateTime: string,
+  timeZoneId: string,
+  locale: string,
+): { day: string; month: string } {
+  const date = new Date(startDateTime)
+  if (Number.isNaN(date.getTime())) {
+    return { day: "--", month: "" }
+  }
+  const zone = resolveTenantTimeZone(timeZoneId)
+  const day = date.toLocaleDateString(locale, { day: "2-digit", timeZone: zone })
+  const month = date
+    .toLocaleDateString(locale, { month: "short", timeZone: zone })
+    .replace(".", "")
+  return { day, month: month.toUpperCase() }
 }
 
 function dropScheduleSlot(
@@ -2096,6 +2119,11 @@ export function TenantPortalAgendaPage() {
                   const cancelled = isCancelledReservationStatus(
                     reservation.status,
                   )
+                  const dateParts = reservationDateParts(
+                    reservation.startDateTime,
+                    timeZoneId,
+                    moneyLocale,
+                  )
                   return (
                     <li
                       key={reservation.id}
@@ -2103,13 +2131,25 @@ export function TenantPortalAgendaPage() {
                       aria-current={focused ? "true" : undefined}
                       data-reservation-focused={focused ? "true" : undefined}
                       className={cn(
-                        "scroll-mt-16 rounded-xl border bg-card px-4 py-3 text-sm shadow-sm",
+                        "scroll-mt-16 flex gap-3 rounded-xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
                         focused
                           ? "border-primary bg-primary/10 ring-2 ring-primary"
                           : "border-border",
                         cancelled && "opacity-60",
                       )}
                     >
+                      <div
+                        aria-hidden
+                        className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
+                      >
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {dateParts.month}
+                        </span>
+                        <span className="text-lg leading-none font-semibold text-foreground">
+                          {dateParts.day}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <p className="font-semibold text-foreground">
                           {reservation.items
@@ -2186,6 +2226,7 @@ export function TenantPortalAgendaPage() {
                           </LoadingButton>
                         )
                       ) : null}
+                      </div>
                     </li>
                   )
                 })}

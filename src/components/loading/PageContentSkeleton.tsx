@@ -75,6 +75,44 @@ export function TableRowsSkeleton({
   )
 }
 
+type CardGridSkeletonProps = {
+  /** Number of placeholder cards. */
+  count?: number
+  className?: string
+}
+
+/** Placeholder grid matching a product-card layout (image + text + action rows). */
+export function CardGridSkeleton({
+  count = 8,
+  className,
+}: CardGridSkeletonProps) {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className={cn(
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+        className,
+      )}
+    >
+      {Array.from({ length: count }, (_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-xl border border-border bg-card"
+        >
+          <Skeleton className="aspect-[4/3] w-full rounded-none" />
+          <div className="space-y-2 p-3">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="mt-2 h-8 w-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 type FormSkeletonProps = {
   fields?: number
   className?: string
