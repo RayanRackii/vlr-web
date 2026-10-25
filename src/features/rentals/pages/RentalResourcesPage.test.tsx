@@ -241,7 +241,12 @@ describe("RentalResourcesPage", () => {
         createdAt: "2026-10-01T12:00:00Z",
         updatedAt: null,
       },
-    ].flatMap((row) => [{ ...row, pricePerHour: 90, pricingUnit: "Day" as const }, row]))
+    ].flatMap((row) => [
+      // Legacy blank per-day row (R$ 0) must not become "A partir de: R$ 0,00".
+      { ...row, dayOfWeek: "Tuesday" as const, pricePerHour: 0, pricingUnit: "Hour" as const },
+      { ...row, pricePerHour: 90, pricingUnit: "Day" as const },
+      row,
+    ]))
 
     const user = userEvent.setup()
     renderPage()

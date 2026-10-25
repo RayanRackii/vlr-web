@@ -136,9 +136,11 @@ export function inferPricingPattern(
 }
 
 export function pricingEditorFromRows(
-  rows: readonly ExpandedPricingRow[],
+  allRows: readonly ExpandedPricingRow[],
 ): PricingEditorState {
   const base = emptyPricingEditor()
+  // R$ 0 rows are legacy blank per-day days; treat them as unset so the per-day mode round-trips.
+  const rows = allRows.filter((row) => row.pricePerHour > 0)
   if (rows.length === 0) {
     return base
   }
@@ -200,7 +202,8 @@ export function expandPricingEditor(
     }))
   }
 
-  return DAYS.map((dayOfWeek) => ({
+  // Per day: a blank day (0) is "no price that day" and is not saved as an R$ 0 row.
+  return DAYS.filter((dayOfWeek) => state.perDayPrices[dayOfWeek] > 0).map((dayOfWeek) => ({
     dayOfWeek,
     pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
     startTime: state.startTime,

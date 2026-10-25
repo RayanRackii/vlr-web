@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { emptyPricingEditor, expandPricingEditor, isPricingEditorValid, pricingEditorFromRows, type ExpandedPricingRow } from "./assetWizardPricing"
+import { DAYS, emptyPricingEditor, expandPricingEditor, isPricingEditorValid, pricingEditorFromRows, type ExpandedPricingRow } from "./assetWizardPricing"
 
 const row = (dayOfWeek: ExpandedPricingRow["dayOfWeek"], pricingUnit: ExpandedPricingRow["pricingUnit"], pricePerHour = 50): ExpandedPricingRow => ({
   dayOfWeek, pricingUnit, startTime: "08:00", endTime: "22:00", pricePerHour,
@@ -40,5 +40,27 @@ describe("isPricingEditorValid price rules (R11)", () => {
     expect(isPricingEditorValid({ ...base, pattern: "perDay", perDayPrices })).toBe(true)
     expect(isPricingEditorValid({ ...base, pattern: "perDay", perDayPrices: { ...perDayPrices, Tuesday: Number.NaN } })).toBe(false)
     expect(isPricingEditorValid({ ...base, pattern: "perDay", perDayPrices: base.perDayPrices })).toBe(false)
+  })
+})
+
+describe("per-day pricing round-trip (R11 retest)", () => {
+  const base = { ...emptyPricingEditor(), pattern: "perDay" as const, startTime: "08:00", endTime: "22:00" }
+  const weekendOnly = { ...base, perDayPrices: { ...base.perDayPrices, Sunday: 50, Saturday: 100 } }
+
+  it("does not save blank per-day days as R$ 0 rows", () => {
+    const rows = expandPricingEditor(weekendOnly)
+    expect(rows.map((r) => [r.dayOfWeek, r.pricePerHour])).toEqual([["Sunday", 50], ["Saturday", 100]])
+  })
+
+  it("reopens weekend-only per-day prices in per-day mode", () => {
+    const state = pricingEditorFromRows(expandPricingEditor({ ...base, perDayPrices: { ...base.perDayPrices, Sunday: 50, Saturday: 50 } }))
+    expect(state.pattern).toBe("perDay")
+    expect(state.perDayPrices.Sunday).toBe(50)
+    expect(state.perDayPrices.Monday).toBe(0)
+  })
+
+  it("treats legacy R$ 0 rows as unset when reopening", () => {
+    const legacy = DAYS.map((day) => row(day, "Hour", day === "Sunday" || day === "Saturday" ? 50 : 0))
+    expect(pricingEditorFromRows(legacy).pattern).toBe("perDay")
   })
 })
