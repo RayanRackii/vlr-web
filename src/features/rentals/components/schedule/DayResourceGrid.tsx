@@ -1,3 +1,4 @@
+import { displayEndClock } from "@/lib/tenantTimeZone"
 import { Ban, CalendarCheck2, CircleCheck } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
@@ -358,7 +359,7 @@ function RowCells({
                     total: item.unitsTotal,
                   })
                 : t(`rentals.schedule.occurrence.status.${item.status}`)
-              const timeRangeLabel = `${formatMinutesAsTime(timeToMinutes(item.startTime))}–${formatMinutesAsTime(timeToMinutes(item.endTime))}`
+              const timeRangeLabel = `${formatMinutesAsTime(timeToMinutes(item.startTime))}–${displayEndClock(formatMinutesAsTime(timeToMinutes(item.endTime)))}`
               const freeUnitsLabel = item.unitsFree
                 ? t("rentals.schedule.occurrence.unitsFree", { count: item.unitsFree })
                 : null

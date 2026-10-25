@@ -123,6 +123,27 @@ export function formatTenantTime(
   })
 }
 
+/** A day-closing end stored as 23:59 or 23:59:59 reads as 00:00 (midnight), without a date. */
+export function displayEndClock(clock: string): string {
+  const hhmm = clock.length >= 5 ? clock.slice(0, 5) : clock
+  return hhmm === "23:59" ? "00:00" : hhmm
+}
+
+/** End clock sent to the API: HH:mm, keeping seconds when not :00 so 23:59:59 matches the slot. */
+export function bookingEndClock(endTime: string): string {
+  const seconds = endTime.slice(5, 8)
+  return seconds.length === 3 && seconds !== ":00" ? endTime.slice(0, 8) : endTime.slice(0, 5)
+}
+
+/** Reservation end instant for display: 23:59:59 local (legacy rows) shows as the next 00:00. */
+export function displayEndInstant(end: Date, timeZoneId: string): Date {
+  const clock = end.toLocaleTimeString("en-GB", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    timeZone: resolveTenantTimeZone(timeZoneId),
+  })
+  return clock === "23:59:59" ? new Date(end.getTime() + 1000 - end.getMilliseconds()) : end
+}
+
 /**
  * Formats true instants in the tenant zone. Intl maps instants across DST
  * transitions, so a spring-forward range skips nonexistent civil clocks.
@@ -143,5 +164,5 @@ export function formatTenantDateTimeRange(
     return `${startIso} – ${endIso}`
   }
 
-  return `${formatTenantDate(start, timeZoneId, locale)} ${formatTenantTime(start, timeZoneId, locale)} – ${formatTenantTime(end, timeZoneId, locale)}`
+  return `${formatTenantDate(start, timeZoneId, locale)} ${formatTenantTime(start, timeZoneId, locale)} – ${formatTenantTime(displayEndInstant(end, timeZoneId), timeZoneId, locale)}`
 }
