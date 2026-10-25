@@ -38,6 +38,6 @@ describe("BookingMapExperience", () => {
 
     await user.click(await screen.findByRole("button", { name: "Mapa" }))
     const tile = await screen.findByRole("button", { name: "Raquete" })
-    expect(tile).toHaveTextContent("Raquete · R$ 20,00 por hora · 3 de 4 disponíveis")
+    expect(tile).toHaveTextContent("Raquete · R$ 20,00/h · 3 de 4 disponíveis")
   })
 })

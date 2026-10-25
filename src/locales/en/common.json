@@ -459,7 +459,7 @@
       "cancelling": "Canceling...",
       "cancelConfirmTitle": "Cancel this reservation?",
       "cancelConfirmBodyPaid": "The time slot becomes available again. The business will handle any refund for paid amounts according to its policy; this screen does not issue refunds.",
-      "cancelConfirmBodyUnpaid": "The time slot becomes available again. No amount has been paid for this reservation, and this screen does not collect or process payments.",
+      "cancelConfirmBodyUnpaid": "The time slot becomes available again. This screen does not process payments or refunds.",
       "cancelConfirmAction": "Confirm cancellation",
       "cancelConfirmDismiss": "Keep reservation",
       "cancelSuccess": "Reservation canceled.",
@@ -505,7 +505,9 @@
       "cancelDeadline": "Cancellable until {{when}}",
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
-      "durationLabel": "Duration"
+      "durationLabel": "Duration",
+      "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
+      "cancelCutoffReason": "Cancellation window closed"
     },
     "menu": {
       "empty": "No modules available.",
@@ -3479,7 +3481,7 @@
       "Unpriced": "No price",
       "Available": "Available"
     },
-    "pricePerHour": "{{amount}} per hour",
+    "pricePerHour": "{{amount}}/h",
     "unitsLeft": "{{left}} of {{total}} available"
   }
 }

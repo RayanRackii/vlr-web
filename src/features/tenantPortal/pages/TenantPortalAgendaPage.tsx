@@ -90,6 +90,7 @@ import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingId
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
+  customerHeldSlotQuantity,
   findVisibleAgendaReservation,
   isBlockingReservationStatus,
   reservationCivilStart,
@@ -1127,6 +1128,9 @@ export function TenantPortalAgendaPage() {
   )
   const cancellationPolicyNote =
     tenantCancellationNote ?? t("tenantPortal.agenda.cancellationPolicyDefault")
+  const pendingCancelReservation = mine.find(
+    (reservation) => reservation.id === pendingCancelId,
+  )
 
   function refreshAgenda(dayDates: readonly string[]) {
     void invalidateAgendaQueries(
@@ -1587,6 +1591,13 @@ export function TenantPortalAgendaPage() {
       mine,
       timeZoneId,
     )
+    const ownReservationUnits = customerHeldSlotQuantity(
+      date,
+      rentalAssetId,
+      startTime,
+      mine,
+      timeZoneId,
+    )
     const reserved =
       reservedKey.length > 0 &&
       (optimisticReservedKeys.has(reservedKey) ||
@@ -1599,10 +1610,16 @@ export function TenantPortalAgendaPage() {
     const queueSelectable = isLocationQueueEnabled(
       visibleAssets.find((asset) => asset.id === rentalAssetId),
     )
+    const asset = visibleAssets.find((candidate) => candidate.id === rentalAssetId)
     const detail =
       startTime.length === 0 || available
         ? null
-        : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
+        : ownReservation && asset && asset.totalQuantity > 1 && ownReservationUnits > 0
+          ? t("tenantPortal.agenda.yourReservationUnits", {
+              count: ownReservationUnits,
+              total: asset.totalQuantity,
+            })
+          : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
     return {
       available,
       disabled: !available && !queueSelectable,
@@ -2114,7 +2131,7 @@ export function TenantPortalAgendaPage() {
                           </>
                         )}
                       </p>
-                      {reservation.cancelDeadlineUtc ? (
+                      {!cancelled && reservation.cancelDeadlineUtc ? (
                         <p className="text-xs text-muted-foreground">
                           {t("tenantPortal.agenda.cancelDeadline", {
                             when: `${formatTenantDate(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)} ${formatTenantTime(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)}`,
@@ -2126,25 +2143,30 @@ export function TenantPortalAgendaPage() {
                           {t("tenantPortal.agenda.pastReservation")}
                         </p>
                       ) : null}
-                      {!isCancelDeadlinePassed(reservation) &&
-                      !isPastReservation(reservation.endDateTime) &&
+                      {!isPastReservation(reservation.endDateTime) &&
                       canCustomerSelfCancel(
                         reservation.status,
                         reservation.startDateTime,
                       ) ? (
-                        <LoadingButton
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="mt-3"
-                          loading={cancelingId === reservation.id}
-                          loadingLabel={t("tenantPortal.agenda.cancelling")}
-                          onClick={() => {
-                            requestCancel(reservation.id)
-                          }}
-                        >
-                          {t("tenantPortal.agenda.cancel")}
-                        </LoadingButton>
+                        isCancelDeadlinePassed(reservation) ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {t("tenantPortal.agenda.cancelCutoffReason")}
+                          </p>
+                        ) : (
+                          <LoadingButton
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-3"
+                            loading={cancelingId === reservation.id}
+                            loadingLabel={t("tenantPortal.agenda.cancelling")}
+                            onClick={() => {
+                              requestCancel(reservation.id)
+                            }}
+                          >
+                            {t("tenantPortal.agenda.cancel")}
+                          </LoadingButton>
+                        )
                       ) : null}
                     </li>
                   )
@@ -2168,13 +2190,25 @@ export function TenantPortalAgendaPage() {
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {t(
-                    (mine.find((reservation) => reservation.id === pendingCancelId)
-                      ?.depositPaid ?? 0) > 0
+                    (pendingCancelReservation?.depositPaid ?? 0) > 0
                       ? "tenantPortal.agenda.cancelConfirmBodyPaid"
                       : "tenantPortal.agenda.cancelConfirmBodyUnpaid",
                   )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              {pendingCancelReservation?.cancelDeadlineUtc ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("tenantPortal.agenda.cancelDeadline", {
+                    when: `${formatTenantDate(new Date(pendingCancelReservation.cancelDeadlineUtc), timeZoneId, moneyLocale)} ${formatTenantTime(new Date(pendingCancelReservation.cancelDeadlineUtc), timeZoneId, moneyLocale)}`,
+                  })}
+                  {" · "}
+                  {formatTenantTimeZoneLabel(
+                    branding.timeZoneId,
+                    moneyLocale,
+                    pendingCancelReservation.cancelDeadlineUtc,
+                  )}
+                </p>
+              ) : null}
               {cancellationPolicyNote ? (
                 <div className="space-y-1">
                   <p className="font-medium">
@@ -2196,7 +2230,7 @@ export function TenantPortalAgendaPage() {
                 <LoadingButton
                   type="button"
                   variant="destructive"
-                  disabled={isCancelDeadlinePassed(mine.find((row) => row.id === pendingCancelId))}
+                  disabled={isCancelDeadlinePassed(pendingCancelReservation)}
                   loading={cancelingId !== null}
                   loadingLabel={t("tenantPortal.agenda.cancelling")}
                   onClick={() => {

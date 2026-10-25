@@ -459,7 +459,7 @@
       "cancelling": "Cancelando...",
       "cancelConfirmTitle": "¿Cancelar esta reserva?",
       "cancelConfirmBodyPaid": "El horario vuelve a quedar disponible. La empresa gestionará cualquier reembolso de valores pagados según su política; esta pantalla no emite reembolsos.",
-      "cancelConfirmBodyUnpaid": "El horario vuelve a quedar disponible. No se ha pagado ningún importe por esta reserva y esta pantalla no cobra ni procesa pagos.",
+      "cancelConfirmBodyUnpaid": "El horario vuelve a quedar disponible. Esta pantalla no procesa pagos ni reembolsos.",
       "cancelConfirmAction": "Confirmar cancelación",
       "cancelConfirmDismiss": "Mantener la reserva",
       "cancelSuccess": "Reserva cancelada.",
@@ -505,7 +505,9 @@
       "cancelDeadline": "Se puede cancelar hasta {{when}}",
       "cancelCutoffPassed": "Ya pasó el plazo de cancelación de {{hours}} horas antes del inicio.",
       "unitsBadge": "x{{count}}",
-      "durationLabel": "Duración"
+      "durationLabel": "Duración",
+      "yourReservationUnits": "Tu reserva · {{count}} de {{total}} unidades",
+      "cancelCutoffReason": "Plazo de cancelación cerrado"
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -3479,7 +3481,7 @@
       "Unpriced": "Sin precio",
       "Available": "Disponible"
     },
-    "pricePerHour": "{{amount}} por hora",
+    "pricePerHour": "{{amount}}/h",
     "unitsLeft": "{{left}} de {{total}} disponibles"
   }
 }
