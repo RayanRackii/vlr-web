@@ -7,7 +7,7 @@ export const portalPickAvailableSelectedClass =
 
 /** A space the customer already holds — distinct brand tone, not grey. */
 export const portalPickOwnReservationClass =
-  "cursor-not-allowed border-primary/70 bg-primary/10 text-primary dark:border-primary/50 dark:bg-primary/15 dark:text-primary-foreground"
+  "cursor-not-allowed border-primary/70 bg-primary/10 text-primary dark:border-primary/50 dark:bg-primary/15 dark:text-foreground"
 
 /** Hatched fill (not color alone) so "taken by someone else" reads at a glance. */
 export const portalPickUnavailableClass =
