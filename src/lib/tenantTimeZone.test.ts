@@ -114,6 +114,26 @@ describe("multi-day civil spans", () => {
     ).toBe(3)
   })
 
+  it("keeps a 23:59:59 day-closing end on its inclusive civil date", () => {
+    expect(
+      tenantCivilDaySpan(
+        "2026-09-08T11:00:00.000Z",
+        "2026-09-09T02:59:59.000Z",
+        "America/Sao_Paulo",
+      ),
+    ).toBe(1)
+  })
+
+  it("treats an exact midnight end as exclusive", () => {
+    expect(
+      tenantCivilDaySpan(
+        "2026-09-08T11:00:00.000Z",
+        "2026-09-11T03:00:00.000Z",
+        "America/Sao_Paulo",
+      ),
+    ).toBe(3)
+  })
+
   it("formats a civil instant as dd/MM without a year", () => {
     expect(
       formatTenantDayMonth(

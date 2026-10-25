@@ -8,7 +8,6 @@ import {
 import i18n from "@/lib/i18n"
 import {
   DEFAULT_TENANT_TIME_ZONE,
-  displayEndInstant,
   formatTenantDayMonth,
   tenantCivilDaySpan,
 } from "@/lib/tenantTimeZone"
@@ -163,11 +162,7 @@ export function formatReservationRange(
   if (days > 1) {
     return i18n.t("rentals.reservations.multiDayRange", {
       start: formatTenantDayMonth(new Date(startDateTime), timeZoneId, i18n.language),
-      end: formatTenantDayMonth(
-        displayEndInstant(new Date(endDateTime), timeZoneId),
-        timeZoneId,
-        i18n.language,
-      ),
+      end: formatTenantDayMonth(new Date(endDateTime), timeZoneId, i18n.language),
       days,
     })
   }

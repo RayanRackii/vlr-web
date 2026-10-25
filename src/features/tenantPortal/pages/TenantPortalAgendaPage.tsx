@@ -1,4 +1,4 @@
-import { bookingEndClock, formatTenantDayMonth } from "@/lib/tenantTimeZone"
+import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
 import { CalendarIcon, Check, CheckCheck, Loader2, Minus, Plus } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
@@ -1004,11 +1004,30 @@ export function TenantPortalAgendaPage() {
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
-  const isDayPricing = lastPricingUnit === "Day"
+  const isDayPricing = lastPricingUnit === "Day" &&
+    (selectedAsset?.schedulePolicy ?? "").toLowerCase() === "openhours"
   const daysRemainingToHorizon = horizonMaxDate === null
     ? MAX_MULTI_DAY_SPAN
     : Math.max(1, civilDaysBetween(date, horizonMaxDate) + 1)
   const daysMax = Math.min(MAX_MULTI_DAY_SPAN, daysRemainingToHorizon)
+
+  useEffect(() => {
+    if (days <= daysMax) {
+      return
+    }
+    // The tenant policy may arrive after a multi-day quote was selected.
+    let cancelled = false
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setDays(daysMax)
+        setQuote({ status: "idle" })
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [days, daysMax])
+
   const endDate = isDayPricing && days > 1 ? addCivilDays(date, days - 1) : undefined
   const quoteSelectionKey = quoteAssetId && quoteStart && quoteEnd
     ? `${date}:${endDate ?? ""}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
@@ -2364,7 +2383,7 @@ export function TenantPortalAgendaPage() {
                 <span className="text-xs text-muted-foreground">
                   {t("tenantPortal.agenda.daysSummary", {
                     count: days,
-                    until: formatTenantDayMonth(new Date(`${endDate}T00:00:00`), timeZoneId, moneyLocale),
+                    until: formatLocaleCivilDayMonth(endDate, moneyLocale),
                   })}
                 </span>
               ) : null}

@@ -1049,6 +1049,16 @@ function makeAsset(id: string, assetId: string, name: string): PortalRentalAsset
   }
 }
 
+function makeOpenHoursAsset(id: string, assetId: string, name: string): PortalRentalAsset {
+  return {
+    ...makeAsset(id, assetId, name),
+    schedulePolicy: "OpenHours",
+    openTime: "08:00:00",
+    closeTime: "22:00:00",
+    allowedDurationMinutes: "60",
+  }
+}
+
 function makeSlot(
   overrides: Pick<
     PortalScheduleSlot,
@@ -1902,6 +1912,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       pricingUnit: "Day",
       reason: null,
     })
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
     renderAgenda()
     await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
     expect(
@@ -1922,6 +1935,9 @@ describe("TenantPortalAgendaPage time selector", () => {
       }
     })
     createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
     const user = userEvent.setup()
     renderAgenda()
 
@@ -1945,6 +1961,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await screen.findByText(
       i18n.t("tenantPortal.agenda.available", { amount: formatMoney(240) }),
     )
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.daysSummary", { count: 3, until: "16/10" }),
+      ),
+    ).toBeInTheDocument()
 
     await user.click(
       screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
@@ -1961,6 +1982,48 @@ describe("TenantPortalAgendaPage time selector", () => {
       )
     })
     expect(bookSlot).not.toHaveBeenCalled()
+  })
+
+  it("clamps selected days and replaces the quote when the policy horizon arrives", async () => {
+    let resolvePolicy!: (value: Awaited<ReturnType<typeof fetchPublicBookingPolicy>>) => void
+    fetchPolicy.mockReturnValue(new Promise((resolve) => {
+      resolvePolicy = resolve
+    }))
+    checkAvailability.mockImplementation(async (_subdomain, request) => ({
+      isAvailable: true,
+      requestedQuantity: request.quantity ?? 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: request.endDate ? 160 : 80,
+      pricingUnit: "Day",
+      reason: null,
+    }))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const increase = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increase)
+    await user.click(increase)
+    expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("3")
+
+    resolvePolicy({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 1,
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("2")
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-15" }),
+      )
+    })
   })
 
   it("keeps a single day booking on bookPortalSlot without an endDate", async () => {
@@ -2006,7 +2069,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
     fetchAssets.mockResolvedValue([
       {
-        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        ...makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
         type: "Good",
         totalQuantity: 3,
       },

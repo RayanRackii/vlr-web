@@ -165,7 +165,10 @@ function civilDateDiffDays(startDate: string, endDate: string): number {
   )
 }
 
-/** Civil days covered by an instant range in the tenant timezone, inclusive of both ends. */
+/** Civil days covered by an instant range in the tenant timezone.
+ * A day-closing 23:59:59 is inclusive; an exact midnight is the exclusive
+ * boundary of the preceding civil day.
+ */
 export function tenantCivilDaySpan(
   startIso: string,
   endIso: string,
@@ -177,11 +180,12 @@ export function tenantCivilDaySpan(
     return 1
   }
   const startDate = tenantCivilDateTime(start, timeZoneId).date
-  const endDate = tenantCivilDateTime(
-    displayEndInstant(end, timeZoneId),
-    timeZoneId,
-  ).date
-  return civilDateDiffDays(startDate, endDate) + 1
+  const endCivil = tenantCivilDateTime(end, timeZoneId)
+  const isExclusiveMidnight = endCivil.time === "00:00:00"
+  return Math.max(
+    1,
+    civilDateDiffDays(startDate, endCivil.date) + (isExclusiveMidnight ? 0 : 1),
+  )
 }
 
 /**
