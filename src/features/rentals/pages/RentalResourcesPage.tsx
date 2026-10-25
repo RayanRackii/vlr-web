@@ -8,10 +8,12 @@ import { ErrorState } from "@/components/ErrorState"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
+import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
+import { getAssetPricings } from "@/features/assets/services/rentalPricingService"
 import {
   toCreateRentableRequest,
   type RegistryCategoryListItem,
@@ -38,6 +40,7 @@ export function RentalResourcesPage() {
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const [pricePerHourByAssetId, setPricePerHourByAssetId] = useState<Record<string, number>>({})
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [families, setFamilies] = useState<AssetFamily[]>([])
   const [units, setUnits] = useState<Unit[]>([])
@@ -48,6 +51,7 @@ export function RentalResourcesPage() {
   const [editing, setEditing] = useState<AdminRentalAsset | null>(null)
 
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
+  const canReadPricing = can("rentals.pricing.read")
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -60,6 +64,23 @@ export function RentalResourcesPage() {
         getUnits(),
       ])
       setAssets(assetList)
+      if (canReadPricing) {
+        const prices = await Promise.all(assetList.map(async (asset) => {
+          try {
+            const pricings = await getAssetPricings(asset.assetId)
+            const pricePerHour = pricings.reduce<number | null>(
+              (lowest, pricing) => lowest === null ? pricing.pricePerHour : Math.min(lowest, pricing.pricePerHour),
+              null,
+            )
+            return pricePerHour === null ? null : [asset.assetId, pricePerHour] as const
+          } catch {
+            return null
+          }
+        }))
+        setPricePerHourByAssetId(Object.fromEntries(prices.filter((price): price is readonly [string, number] => price !== null)))
+      } else {
+        setPricePerHourByAssetId({})
+      }
       setCategories(categoryList)
       setFamilies(familyList)
       setUnits(unitList)
@@ -75,7 +96,7 @@ export function RentalResourcesPage() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [canReadPricing, t])
 
   useEffect(() => {
     void load()
@@ -181,6 +202,7 @@ export function RentalResourcesPage() {
                       ? ` · ${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
                       : null}
                   </p>
+                  <RentalResourceDetails asset={asset} pricePerHour={pricePerHourByAssetId[asset.assetId]} />
                 </div>
                 <ChevronRight
                   className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -206,6 +228,7 @@ export function RentalResourcesPage() {
         families={families}
         busy={busy}
         readOnly={!canWrite}
+        pricePerHour={pricePerHourByAssetId[editing?.assetId ?? ""]}
         onSubmit={handleSubmit}
       />
     </div>

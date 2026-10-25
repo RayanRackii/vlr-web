@@ -165,9 +165,17 @@ export const rentalAssetSchema = z.object({
     .optional(),
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().nullable().optional(),
-})
+  // Older API responses named this field `capacity`. Normalize it at the
+  // boundary so edit defaults do not silently lose an existing capacity.
+  capacity: z.number().int().nullable().optional(),
+}).transform(({ capacity, capacityPeople, ...asset }) => ({
+  ...asset,
+  capacityPeople: capacityPeople ?? capacity,
+}))
 
-export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>
+export type AdminRentalAsset = Omit<z.infer<typeof rentalAssetSchema>, "capacityPeople"> & {
+  capacityPeople?: number | null
+}
 
 export type SchedulePolicy = "SlotGrid" | "OpenHours"
 

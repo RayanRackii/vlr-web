@@ -8,6 +8,7 @@ import {
   getRentalsReadiness,
   type RentalsReadiness,
 } from "@/features/rentals/services/rentalsReadinessService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const READINESS_LINKS = {
@@ -22,6 +23,7 @@ export function RentalsReadinessCard() {
   const { t } = useTranslation()
   const { activeModules, can } = usePermissions()
   const [readiness, setReadiness] = useState<RentalsReadiness | null>(null)
+  const [hasOnlyOpenHoursResources, setHasOnlyOpenHoursResources] = useState(false)
   const canView = activeModules.includes("rentals") && can("rentals.assets.read")
 
   useEffect(() => {
@@ -31,15 +33,24 @@ export function RentalsReadinessCard() {
 
     let cancelled = false
 
-    void getRentalsReadiness()
-      .then((data) => {
+    void Promise.all([
+      getRentalsReadiness(),
+      listAdminRentalAssets().catch(() => null),
+    ])
+      .then(([data, assets]) => {
         if (!cancelled) {
           setReadiness(data)
+          setHasOnlyOpenHoursResources(
+            assets !== null &&
+              assets.length > 0 &&
+              assets.every((asset) => asset.schedulePolicy === "OpenHours"),
+          )
         }
       })
       .catch(() => {
         if (!cancelled) {
           setReadiness(null)
+          setHasOnlyOpenHoursResources(false)
         }
       })
 
@@ -79,8 +90,8 @@ export function RentalsReadinessCard() {
                 <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
                   {label}
                 </Link>
-                {/* OpenHours resources have no template rows, so this count is always 0 and misleading even when the schedule is actually set up. */}
-                {item.count !== undefined && item.key !== "hasScheduleTemplateOrRule" ? (
+                {item.count !== undefined &&
+                !(item.key === "hasScheduleTemplateOrRule" && hasOnlyOpenHoursResources) ? (
                   <span className="text-muted-foreground">({item.count})</span>
                 ) : null}
               </li>
