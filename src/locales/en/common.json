@@ -3370,7 +3370,7 @@
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace, except where a resource sets its own value.",
       "cancellationLabel": "Cancellation text",
       "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows a neutral note: the time becomes available again and the customer should check the organization's rules.",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",

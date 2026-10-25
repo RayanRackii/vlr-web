@@ -3370,7 +3370,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente.",
+      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente, salvo donde un recurso define su propio valor.",
       "cancellationLabel": "Texto de cancelación",
       "cancellationHint": "Texto simple, sin formato. Hasta 2000 caracteres. En blanco, el portal muestra una nota neutra: el horario vuelve a quedar disponible y la persona debe consultar las reglas.",
       "cancellationPlaceholder": "Texto simple que se muestra al cancelar una reserva.",
