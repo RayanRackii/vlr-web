@@ -356,4 +356,35 @@ describe("AssetWizard pricing units", () => {
     await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: DAYS.map((_, index) => expect.objectContaining({ pricingUnit: index === 0 ? "Slot" : "Day", pricePerHour: 45 })) }))
   })
 
+  it("explains why Proximo is blocked when every per-day price is empty, and shows a dash for empty days on Revisao", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await fillGeneralStep(user)
+    await user.click(nextButton())
+    await user.click(
+      screen.getByRole("button", { name: /Disponível para reserva \/ aluguel/ }),
+    )
+    await user.click(nextButton())
+
+    await user.click(
+      screen.getByRole("button", { name: /Definir pre.o espec.fico por dia/ }),
+    )
+    expect(
+      screen.getByText(i18n.t("assets.inventory.validation.pricingRequired")),
+    ).toBeInTheDocument()
+    expect(nextButton()).toBeDisabled()
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Segunda" }), {
+      target: { value: "25,00" },
+    })
+    expect(
+      screen.queryByText(i18n.t("assets.inventory.validation.pricingRequired")),
+    ).not.toBeInTheDocument()
+    expect(nextButton()).toBeEnabled()
+
+    await user.click(nextButton())
+    expect(screen.getByText("Segunda: R$ 25,00/hora")).toBeInTheDocument()
+    expect(screen.getByText("Terça: —")).toBeInTheDocument()
+  })
+
 })

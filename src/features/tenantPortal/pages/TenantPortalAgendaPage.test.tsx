@@ -1608,6 +1608,55 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
   })
 
+  it("shows the per-hour rate next to the total estimate and in the success toast", async () => {
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+      ],
+    })
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 160,
+      pricingUnit: "Hour",
+      reason: null,
+    })
+    const user = userEvent.setup()
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 160 }))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(160) }),
+    )
+    expect(screen.getByText("R$ 80,00/hora")).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalled()
+    })
+    expect(toastSuccess).toHaveBeenCalledWith(
+      expect.stringContaining(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(160),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      ),
+    )
+    expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("R$ 80,00/hora"))
+  })
+
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
     await screen.findByText(
@@ -1780,6 +1829,160 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnits", { count: 2, total: 3 })}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("uses the selected resource's own horizon instead of the widest visible one", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveMaxAdvanceBookingDays: 7 },
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), effectiveMaxAdvanceBookingDays: 30 },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    // Nothing selected yet: falls back to the widest horizon among visible resources.
+    await waitFor(() => {
+      expect(
+        screen.getByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "13/11", count: 30 })),
+      ).toBeInTheDocument()
+    })
+
+    // Quadra 1 only allows booking 7 days out — the hint must track its own horizon, not the 30-day one.
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await waitFor(() => {
+      expect(
+        screen.getByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "21/10", count: 7 })),
+      ).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "13/11", count: 30 })),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the horizon reason on a tile whose own horizon excludes the viewed date", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveMaxAdvanceBookingDays: 7 },
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), effectiveMaxAdvanceBookingDays: 30 },
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-25",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          date: "2026-10-25",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+      ],
+    })
+
+    // 2026-10-25 is 11 days out: past Quadra 1's 7-day horizon but within Quadra 2's 30-day one.
+    renderAgenda("/agenda?date=2026-10-25")
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.horizonExceeded")}`,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Quadra 2" })).toBeInTheDocument()
+  })
+
+  it("keeps the selected time and tile when changing duration if still valid, and resets only when not", async () => {
+    fetchAssets.mockResolvedValue([
+      makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    fetchDay.mockResolvedValue({
+      date: VIEWED_DATE,
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+
+    // 2h: Quadra 1 still has a slot at 08:00 for this duration — time and tile stay.
+    await user.click(await screen.findByRole("button", { name: "2h" }))
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    // 3h: only Quadra 2 offers this duration at 08:00 — time stays, but Quadra 1 is no longer valid and is deselected.
+    await user.click(await screen.findByRole("button", { name: "3h" }))
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+    expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("shows a unit-aware price on the agenda tile from the portal's daily availability", async () => {
+    fetchAssets.mockResolvedValue([makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1")])
+    const publicGet = vi.spyOn(publicApi, "get").mockResolvedValue({
+      data: {
+        date: VIEWED_DATE,
+        timeZone: "America/Sao_Paulo",
+        serverNow: "2026-10-14T11:00:00.000Z",
+        quoteExpiresAt: "2099-01-01T00:00:00.000Z",
+        currency: "BRL",
+        resources: [
+          {
+            rentalAssetId: ASSET_A_ID,
+            assetId: ASSET_A_ASSET_ID,
+            unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            name: "Quadra 1",
+            type: "Location",
+            totalQuantity: 1,
+            requiresDeposit: true,
+            queueEnabled: false,
+            effectiveMaxAdvanceBookingDays: null,
+            windows: [
+              {
+                slotId: null,
+                startTime: "08:00:00",
+                endTime: "09:00:00",
+                isDerived: false,
+                state: "Available",
+                reasonCode: null,
+                availableQuantity: 1,
+                totalAmount: 40,
+                pricingUnit: "Hour",
+              },
+            ],
+          },
+        ],
+      },
+    })
+    try {
+      renderAgenda()
+      await screen.findByRole("button", { name: /Quadra 1/ })
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveTextContent("R$ 40,00/hora")
+      })
+    } finally {
+      publicGet.mockRestore()
+    }
   })
 
   it("shows the quantity stepper only for multi-unit goods", async () => {

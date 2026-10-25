@@ -18,7 +18,7 @@ import { bookPortalSlot, checkPortalAvailability, createPortalReservation, isLoc
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
-import { formatUnitPriceText } from "@/lib/pricingUnitText"
+import { formatUnitPriceText, unitPriceForWindow } from "@/lib/pricingUnitText"
 
 type Props = { subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; onBooked?: () => void }
 type Period = "all" | "morning" | "afternoon" | "night"
@@ -94,13 +94,9 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const tileDetails = (resource: DailyAvailability["resources"][number], result: ReturnType<typeof summary>) => {
     const window = result.free[0] ?? result.windows.find((candidate) => candidate.state !== "Past")
     const details: string[] = []
-    if (window?.totalAmount !== null && window?.totalAmount !== undefined) {
-      const hours = (Date.parse(`1970-01-01T${window.endTime}`) - Date.parse(`1970-01-01T${window.startTime}`)) / 3_600_000
-      if (hours > 0) {
-        const unit = window.pricingUnit ?? "Hour"
-        const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, Math.ceil(hours / 24)) : 1
-        details.push(formatUnitPriceText(window.totalAmount / divisor, unit, availability?.currency ?? "BRL", locale, t, "bookingMap.prices"))
-      }
+    const unitPrice = window ? unitPriceForWindow(window) : null
+    if (unitPrice) {
+      details.push(formatUnitPriceText(unitPrice.amount, unitPrice.unit, availability?.currency ?? "BRL", locale, t, "bookingMap.prices"))
     }
     if (resource.totalQuantity > 1 && window) details.push(t("bookingMap.unitsLeft", { left: window.availableQuantity, total: resource.totalQuantity }))
     return details.join(" · ")

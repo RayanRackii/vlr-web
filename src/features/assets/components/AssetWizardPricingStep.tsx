@@ -197,6 +197,11 @@ export function AssetWizardPricingStep({
               </li>
             ))}
           </ul>
+          {DAYS.every((day) => pricing.perDayPrices[day] === 0) ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              {t("assets.inventory.validation.pricingRequired")}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -1635,14 +1635,16 @@ export function AssetWizard({
                           {DAYS.map((day) => (
                             <li key={day}>
                               {t(`assets.detail.days.${day}`)}:{" "}
-                              {formatUnitPriceText(
-                                pricing.perDayPrices[day],
-                                pricing.perDayUnits?.[day] ?? pricing.pricingUnit,
-                                "BRL",
-                                i18n.language,
-                                t,
-                                "assets.wizard.review.unitPrice",
-                              )}
+                              {pricing.perDayPrices[day] > 0
+                                ? formatUnitPriceText(
+                                    pricing.perDayPrices[day],
+                                    pricing.perDayUnits?.[day] ?? pricing.pricingUnit,
+                                    "BRL",
+                                    i18n.language,
+                                    t,
+                                    "assets.wizard.review.unitPrice",
+                                  )
+                                : "—"}
                             </li>
                           ))}
                         </ul>
