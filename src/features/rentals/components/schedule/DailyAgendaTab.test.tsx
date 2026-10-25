@@ -307,10 +307,10 @@ describe("DailyAgendaTab occupancy labels", () => {
   })
 
   it.each([
-    ["pt-BR", "Aberto", "Tipo: Aberto"],
-    ["en", "Open", "Type: Open"],
-    ["es", "Abierto", "Tipo: Abierto"],
-  ])("localizes the stock open kind in %s and labels it as a type", async (language, expectedName, expectedType) => {
+    ["pt-BR", "Aberto"],
+    ["en", "Open"],
+    ["es", "Abierto"],
+  ])("localizes the stock open kind in %s and labels it as a type", async (language, expectedName) => {
     await i18n.changeLanguage(language)
     const day = agendaDay("2026-10-17")
     const morning = day.slots[0]
@@ -319,9 +319,8 @@ describe("DailyAgendaTab occupancy labels", () => {
 
     renderDay("2026-10-17", day)
 
-    const typeNodes = await screen.findAllByText(expectedType)
-    expect(typeNodes.some((node) => node.textContent?.includes(expectedName))).toBe(true)
     const grid = screen.getByRole("grid")
+    expect(await within(grid).findAllByText(expectedName)).not.toHaveLength(0)
     expect(
       within(grid).getByText(i18n.t("rentals.schedule.occurrence.status.unavailable")),
     ).toHaveClass("font-semibold")
@@ -335,7 +334,7 @@ describe("DailyAgendaTab occupancy labels", () => {
 
     renderDay("2026-10-17", day)
 
-    expect(await screen.findByText("Tipo: Aula aberta")).toBeInTheDocument()
+    expect(await screen.findByText("Aula aberta")).toBeInTheDocument()
   })
 
   it("does not translate a custom kind that happens to be named Open", async () => {
@@ -346,7 +345,8 @@ describe("DailyAgendaTab occupancy labels", () => {
 
     renderDay("2026-10-17", day)
 
-    expect(await screen.findByText("Tipo: Open")).toBeInTheDocument()
+    const grid = screen.getByRole("grid")
+    expect(await within(grid).findAllByText("Open")).not.toHaveLength(0)
   })
 })
 

@@ -1145,7 +1145,7 @@
     "catalog": "Catalog & Orders",
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
-    "catalogNotifications": "Notifications",
+    "catalogNotifications": "Catalog notifications",
     "taxonomy": "Categories and tags",
     "notifications": "Notifications",
     "peopleAccess": "People and access",
@@ -3133,7 +3133,10 @@
       "tabs": {
         "daily": "Day agenda",
         "templates": "Weekly setup",
-        "kinds": "Occupancy kinds"
+        "kinds": "Occupancy kinds",
+        "dailyShort": "Day",
+        "templatesShort": "Week",
+        "kindsShort": "Kinds"
       },
       "days": {
         "Sunday": "Sunday",
@@ -3223,6 +3226,11 @@
       },
       "typeLocation": "Space",
       "typeGood": "Rentable item",
+      "sheetTabs": {
+        "basic": "Basic",
+        "pricingRules": "Pricing & rules",
+        "visual": "Visual"
+      },
       "details": {
         "pricePerHour": "From: {{amount}}/h",
         "prices": {"Hour": "From: {{amount}} per hour", "Slot": "From: {{amount}} per slot", "Day": "From: {{amount}} per day", "Fixed": "From: {{amount}} fixed"},
@@ -3368,6 +3376,9 @@
       "date": "Date",
       "status": "Status",
       "statusAll": "All",
+      "viewDay": "Day",
+      "viewWeek": "Week",
+      "viewMonth": "Month",
       "empty": "No reservations for this filter.",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -3459,6 +3470,8 @@
     "useSegments": "Use segments",
     "searchTemplates": "Search templates",
     "filterByTag": "Filter by tag",
+    "showMoreTags": "+{{count}} more",
+    "showFewerTags": "Show fewer",
     "noTemplate": "No template",
     "capacityPeople": "People capacity (optional)",
     "applySuggestions": "Apply template suggestions",

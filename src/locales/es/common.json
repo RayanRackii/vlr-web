@@ -1145,7 +1145,7 @@
     "catalog": "Catálogo y pedidos",
     "catalogProducts": "Productos",
     "catalogOrders": "Pedidos",
-    "catalogNotifications": "Notificaciones",
+    "catalogNotifications": "Notificaciones del catálogo",
     "taxonomy": "Categorías y etiquetas",
     "notifications": "Notificaciones",
     "peopleAccess": "Personas y acceso",
@@ -3133,7 +3133,10 @@
       "tabs": {
         "daily": "Agenda del día",
         "templates": "Configuración semanal",
-        "kinds": "Tipos de ocupación"
+        "kinds": "Tipos de ocupación",
+        "dailyShort": "Día",
+        "templatesShort": "Semana",
+        "kindsShort": "Tipos"
       },
       "days": {
         "Sunday": "Domingo",
@@ -3223,6 +3226,11 @@
       },
       "typeLocation": "Espacio",
       "typeGood": "Ítem alquilable",
+      "sheetTabs": {
+        "basic": "Básico",
+        "pricingRules": "Precio y reglas",
+        "visual": "Visual"
+      },
       "details": {
         "pricePerHour": "Desde: {{amount}}/h",
         "prices": {"Hour": "Desde: {{amount}} por hora", "Slot": "Desde: {{amount}} por horario", "Day": "Desde: {{amount}} por día", "Fixed": "Desde: {{amount}} fijo"},
@@ -3368,6 +3376,9 @@
       "date": "Fecha",
       "status": "Estado",
       "statusAll": "Todos",
+      "viewDay": "Día",
+      "viewWeek": "Semana",
+      "viewMonth": "Mes",
       "empty": "Ninguna reserva con este filtro.",
       "confirm": "Confirmar",
       "cancel": "Cancelar",
@@ -3459,6 +3470,8 @@
     "useSegments": "Usar segmentos",
     "searchTemplates": "Buscar modelos",
     "filterByTag": "Filtrar por etiqueta",
+    "showMoreTags": "+{{count}} más",
+    "showFewerTags": "Mostrar menos",
     "noTemplate": "Sin modelo",
     "capacityPeople": "Capacidad de personas (opcional)",
     "applySuggestions": "Aplicar sugerencias del modelo",

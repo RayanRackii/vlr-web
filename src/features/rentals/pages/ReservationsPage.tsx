@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { LocaleDateInput } from "@/components/LocaleDateInput"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
@@ -21,13 +21,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -44,8 +37,7 @@ import {
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
-
-const ALL_STATUSES = "__all__"
+import { cn } from "@/lib/utils"
 
 const STATUS_BADGE_VARIANT: Record<
   ReservationStatus,
@@ -57,12 +49,48 @@ const STATUS_BADGE_VARIANT: Record<
   Canceled: "destructive",
 }
 
+type ReservationsView = "day" | "week" | "month"
+
+/** Civil yyyy-mm-dd from local date parts (no UTC conversion). */
+function toIso(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
+/** Monday-start week containing the anchor date, noon-anchored to dodge DST day shifts. */
+function startOfWeek(iso: string): string {
+  const date = new Date(`${iso}T12:00:00`)
+  const sinceMonday = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - sinceMonday)
+  return toIso(date)
+}
+
+function endOfWeek(iso: string): string {
+  const date = new Date(`${startOfWeek(iso)}T12:00:00`)
+  date.setDate(date.getDate() + 6)
+  return toIso(date)
+}
+
+function startOfMonth(iso: string): string {
+  return `${iso.slice(0, 7)}-01`
+}
+
+function endOfMonth(iso: string): string {
+  const date = new Date(`${startOfMonth(iso)}T12:00:00`)
+  date.setMonth(date.getMonth() + 1)
+  date.setDate(0)
+  return toIso(date)
+}
+
 export function ReservationsPage() {
   const { t, i18n } = useTranslation()
   const { can } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
   const [date, setDate] = useState(() => tenantTodayIsoDate(timeZoneId))
+  const [view, setView] = useState<ReservationsView>("day")
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,6 +98,19 @@ export function ReservationsPage() {
   const [cancelTarget, setCancelTarget] = useState<AdminReservation | null>(null)
 
   const requestSeq = useRef(0)
+
+  const range = useMemo(() => {
+    if (!date) {
+      return { from: undefined, to: undefined }
+    }
+    if (view === "week") {
+      return { from: startOfWeek(date), to: endOfWeek(date) }
+    }
+    if (view === "month") {
+      return { from: startOfMonth(date), to: endOfMonth(date) }
+    }
+    return { from: date, to: date }
+  }, [date, view])
 
   const load = useCallback(async (options?: { keepRows?: boolean }) => {
     const seq = ++requestSeq.current
@@ -79,8 +120,8 @@ export function ReservationsPage() {
     }
     try {
       const items = await listAdminReservations({
-        from: date || undefined,
-        to: date || undefined,
+        from: range.from,
+        to: range.to,
         status,
       })
       if (seq !== requestSeq.current) return
@@ -95,7 +136,7 @@ export function ReservationsPage() {
     } finally {
       if (seq === requestSeq.current) setLoading(false)
     }
-  }, [date, status, t])
+  }, [range.from, range.to, status, t])
 
   useEffect(() => {
     void load()
@@ -154,7 +195,7 @@ export function ReservationsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
       <PageHeader
         icon={CalendarRange}
         title={t("rentals.reservations.title")}
@@ -170,59 +211,70 @@ export function ReservationsPage() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2">
-        <label className="space-y-1 text-sm">
-          <span>{t("rentals.reservations.date")}</span>
-          <LocaleDateInput
-            value={date}
-            locale={i18n.language}
-            today={tenantTodayIsoDate(timeZoneId)}
-            onChange={(value) => {
-              setDate(value)
-            }}
-          />
-        </label>
-        <label className="space-y-1 text-sm">
-          <span>{t("rentals.reservations.status")}</span>
-          <Select
-            modal={false}
-            value={status || ALL_STATUSES}
-            onValueChange={(value) => {
-              if (typeof value !== "string") {
-                return
-              }
-              setStatus(
-                value === ALL_STATUSES ? "" : (value as ReservationStatus),
-              )
-            }}
-            items={[
-              {
-                value: ALL_STATUSES,
-                label: t("rentals.reservations.statusAll"),
-              },
-              ...reservationStatuses.map((value) => ({
-                value,
-                label: t(`rentals.reservations.statuses.${value}`),
-              })),
-            ]}
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            role="group"
+            aria-label={t("rentals.reservations.date")}
+            className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground"
           >
-            <SelectTrigger className="w-full">
-              <SelectValue
-                placeholder={t("rentals.reservations.statusAll")}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_STATUSES}>
-                {t("rentals.reservations.statusAll")}
-              </SelectItem>
-              {reservationStatuses.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {t(`rentals.reservations.statuses.${value}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
+            {(["day", "week", "month"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={view === value}
+                onClick={() => setView(value)}
+                className={cn(
+                  "min-h-9 rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  view === value ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
+                )}
+              >
+                {t(`rentals.reservations.view${value[0].toUpperCase()}${value.slice(1)}`)}
+              </button>
+            ))}
+          </div>
+          <label className="flex min-w-0 items-center gap-2 text-sm">
+            <span className="sr-only">{t("rentals.reservations.date")}</span>
+            <LocaleDateInput
+              value={date}
+              locale={i18n.language}
+              today={tenantTodayIsoDate(timeZoneId)}
+              className="min-w-0"
+              onChange={(value) => {
+                setDate(value)
+              }}
+            />
+          </label>
+        </div>
+
+        <fieldset className="flex flex-wrap items-center gap-1.5">
+          <legend className="sr-only">{t("rentals.reservations.status")}</legend>
+          {[
+            { value: "" as const, label: t("rentals.reservations.statusAll") },
+            ...reservationStatuses.map((value) => ({
+              value,
+              label: t(`rentals.reservations.statuses.${value}`),
+            })),
+          ].map((option) => {
+            const isActive = status === option.value
+            return (
+              <button
+                key={option.value || "all"}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setStatus(option.value)}
+                className={cn(
+                  "min-h-10 rounded-full border px-3 text-xs font-medium transition-colors motion-safe:transition-colors",
+                  isActive
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </fieldset>
       </div>
 
       {loading ? (
@@ -242,7 +294,7 @@ export function ReservationsPage() {
             return (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 px-4 py-3.5 text-sm motion-safe:transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 px-4 py-3.5 text-sm motion-safe:transition-colors hover:bg-muted/40 sm:grid sm:grid-cols-[1.4fr_1.4fr_auto] sm:items-center sm:gap-4"
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -254,6 +306,8 @@ export function ReservationsPage() {
                   <p className="text-muted-foreground">
                     {formatReservationAssets(row)}
                   </p>
+                </div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-muted-foreground">
                     {formatReservationRange(
                       row.startDateTime,
@@ -261,11 +315,11 @@ export function ReservationsPage() {
                       timeZoneId,
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     {formatMoney(row.totalAmount)}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
+                <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
                   {canConfirm ? (
                     <LoadingButton
                       type="button"

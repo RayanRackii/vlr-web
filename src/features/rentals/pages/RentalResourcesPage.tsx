@@ -71,7 +71,7 @@ export function RentalResourcesPage() {
         const prices = await Promise.all(assetList.map(async (asset) => {
           try {
             const pricings = await getAssetPricings(asset.assetId)
-            const lowestPrice = pricings.reduce<RentalPricing | null>(
+            const lowestPrice = pricings.filter((pricing) => pricing.pricePerHour > 0).reduce<RentalPricing | null>(
               (lowest, pricing) => lowest === null || pricing.pricePerHour < lowest.pricePerHour ? pricing : lowest,
               null,
             )
@@ -195,25 +195,35 @@ export function RentalResourcesPage() {
                   openEdit(asset)
                 }}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium">{asset.name}</p>
                     {asset.scheduledDeletionAt ? (
                       <Badge variant="destructive" className="shrink-0">
                         {t("assets.deletion.pendingBadge")}
                       </Badge>
                     ) : null}
+                    <Badge variant="outline">
+                      {asset.type === "Good"
+                        ? t("rentals.resources.typeGood")
+                        : t("rentals.resources.typeLocation")}
+                    </Badge>
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {asset.type === "Good"
-                      ? t("rentals.resources.typeGood")
-                      : t("rentals.resources.typeLocation")}
-                    {asset.categoryName ? ` · ${asset.categoryName}` : null}
-                    {asset.type === "Good"
-                      ? ` · ${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
-                      : null}
-                  </p>
-                  <RentalResourceDetails asset={asset} pricePerHour={priceByAssetId[asset.assetId]?.pricePerHour} pricingUnit={priceByAssetId[asset.assetId]?.pricingUnit} />
+                  {asset.categoryName || asset.type === "Good" ? (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {asset.categoryName}
+                      {asset.categoryName && asset.type === "Good" ? " · " : null}
+                      {asset.type === "Good"
+                        ? `${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
+                        : null}
+                    </p>
+                  ) : null}
+                  <RentalResourceDetails
+                    asset={asset}
+                    pricePerHour={priceByAssetId[asset.assetId]?.pricePerHour}
+                    pricingUnit={priceByAssetId[asset.assetId]?.pricingUnit}
+                    compact
+                  />
                 </div>
                 <ChevronRight
                   className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
