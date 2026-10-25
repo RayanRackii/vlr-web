@@ -3208,6 +3208,12 @@
       "updateSuccess": "Resource updated.",
       "createError": "Could not create the resource.",
       "updateError": "Could not update the resource.",
+      "errorKinds": {
+        "network": "No connection to the server. Check your internet and try again.",
+        "permission": "You don't have permission for this action or your session expired.",
+        "validation": "Invalid data. Review the fields and try again.",
+        "server": "Server error. Please try again shortly."
+      },
       "typeLocation": "Space",
       "typeGood": "Rentable item",
       "details": {
