@@ -213,12 +213,12 @@ export function LocaleDateInput({
           role="dialog"
           lang={locale}
           aria-label={label}
-          className="absolute z-50 mt-1 w-full min-w-72 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-md"
+          className="absolute z-50 mt-1 w-full min-w-80 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-md"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <button
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted"
+              className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-muted"
               aria-label={t("common.datePicker.previousMonth")}
               onClick={() => {
                 setCursor((current) => shiftMonth(current.year, current.month, -1))
@@ -229,7 +229,7 @@ export function LocaleDateInput({
             <p className="text-sm font-medium">{label}</p>
             <button
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted"
+              className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-muted"
               aria-label={t("common.datePicker.nextMonth")}
               onClick={() => {
                 setCursor((current) => shiftMonth(current.year, current.month, 1))
@@ -262,7 +262,7 @@ export function LocaleDateInput({
                   aria-disabled={outside || undefined}
                   aria-pressed={selected}
                   className={cn(
-                    "inline-flex h-9 items-center justify-center rounded-lg text-sm",
+                    "inline-flex h-11 items-center justify-center rounded-lg text-sm",
                     selected && "bg-primary text-primary-foreground",
                     !selected && !outside && "hover:bg-muted",
                     outside && "cursor-not-allowed text-muted-foreground/50",

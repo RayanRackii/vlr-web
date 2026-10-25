@@ -509,6 +509,7 @@
       "selectionExpired": "Sua seleção expirou",
       "cancelDeadline": "Cancelável até {{when}}",
       "noCancelDeadline": "Sem prazo de cancelamento",
+      "cancelEffectiveCutoff": "Prazo de cancelamento: {{hours}} horas antes do início.",
       "cancelCutoffPassed": "O prazo de cancelamento de {{hours}} horas antes do início já passou.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duração",
@@ -1788,7 +1789,11 @@
       "back": "Voltar",
       "finish": "Concluir",
       "review": {
-        "stockQuantity": "Quantidade em estoque"
+        "stockQuantity": "Quantidade em estoque",
+        "pricingUnitLabel": "Unidade de preço",
+        "priceLabel": "Preço",
+        "perDayPricesLabel": "Preços por dia",
+        "unitPrice": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"}
       },
       "success": {
         "create": "Recurso criado com sucesso.",
@@ -3526,8 +3531,7 @@
       "Unpriced": "Sem preço",
       "Available": "Disponível"
     },
-    "pricePerHour": "{{amount}}/h",
-    "prices": {"Slot": "{{amount}} por horário", "Day": "{{amount}} por dia", "Fixed": "{{amount}} (preço fixo)"},
+    "prices": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"},
     "unitsLeft": "{{left}} de {{total}} disponíveis"
   }
 }

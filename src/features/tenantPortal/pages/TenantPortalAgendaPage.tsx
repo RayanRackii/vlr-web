@@ -243,6 +243,22 @@ function isCancelDeadlinePassed(reservation: PortalReservation | undefined): boo
   return reservation?.cancelDeadlineUtc != null && Date.now() > Date.parse(reservation.cancelDeadlineUtc)
 }
 
+/**
+ * Hours between the cancel deadline and the reservation start. The API
+ * does not expose a resource/category/tenant policy source, only this
+ * resolved deadline — so this is the only "where it comes from" text we
+ * can show without inventing data.
+ */
+function effectiveCancelCutoffHours(reservation: PortalReservation | undefined): number | null {
+  if (!reservation?.cancelDeadlineUtc) {
+    return null
+  }
+  const hours = Math.round(
+    (Date.parse(reservation.startDateTime) - Date.parse(reservation.cancelDeadlineUtc)) / 3_600_000,
+  )
+  return Number.isFinite(hours) && hours > 0 ? hours : null
+}
+
 export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
   const moneyLocale = i18n.resolvedLanguage ?? i18n.language
@@ -2353,6 +2369,13 @@ export function TenantPortalAgendaPage() {
               ) : pendingCancelReservation ? (
                 <p className="text-sm text-muted-foreground">
                   {t("tenantPortal.agenda.noCancelDeadline")}
+                </p>
+              ) : null}
+              {effectiveCancelCutoffHours(pendingCancelReservation) !== null ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("tenantPortal.agenda.cancelEffectiveCutoff", {
+                    hours: effectiveCancelCutoffHours(pendingCancelReservation),
+                  })}
                 </p>
               ) : null}
               {cancellationPolicyNote ? (

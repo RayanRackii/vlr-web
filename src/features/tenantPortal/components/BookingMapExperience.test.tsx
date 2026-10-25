@@ -34,12 +34,12 @@ vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBooki
 
 describe("BookingMapExperience", () => {
   it.each([
-    ["Hour", "R$ 60,00/h"],
-    ["Slot", "R$ 120,00 por horário"],
-    ["Day", "R$ 120,00 por dia"],
-    ["Fixed", "R$ 120,00 (preço fixo)"],
-    [null, "R$ 60,00/h"],
-    [undefined, "R$ 60,00/h"],
+    ["Hour", "R$ 60,00/hora"],
+    ["Slot", "R$ 120,00/horário"],
+    ["Day", "R$ 120,00/dia"],
+    ["Fixed", "R$ 120,00 fixo"],
+    [null, "R$ 60,00/hora"],
+    [undefined, "R$ 60,00/hora"],
   ] as const)("shows the quoted %s unit for a two-hour window", async (pricingUnit, expected) => {
     const current = await fetchDailyAvailability("ficc", "2026-10-25", [RENTAL_ID])
     vi.mocked(fetchDailyAvailability).mockResolvedValueOnce({
@@ -58,6 +58,6 @@ describe("BookingMapExperience", () => {
 
     await user.click(await screen.findByRole("button", { name: "Mapa" }))
     const tile = await screen.findByRole("button", { name: "Raquete" })
-    expect(tile).toHaveTextContent("Raquete · R$ 20,00/h · 3 de 4 disponíveis")
+    expect(tile).toHaveTextContent("Raquete · R$ 20,00/hora · 3 de 4 disponíveis")
   })
 })

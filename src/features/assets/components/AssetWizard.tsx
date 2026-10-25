@@ -25,7 +25,9 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { cn } from "@/lib/utils"
+import { formatUnitPriceText } from "@/lib/pricingUnitText"
 import {
+  DAYS,
   emptyPricingEditor,
   expandPricingEditor,
   isPricingEditorValid,
@@ -191,7 +193,7 @@ export function AssetWizard({
   onCompleted,
   readOnly = false,
 }: AssetWizardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<WizardFormState>(() => emptyForm())
   const [pricing, setPricing] = useState<PricingEditorState>(emptyPricingEditor)
@@ -1616,6 +1618,53 @@ export function AssetWizard({
                       {" · "}
                       {pricing.startTime}–{pricing.endTime}
                     </p>
+                    <p>
+                      <span className="text-muted-foreground">
+                        {t("assets.wizard.review.pricingUnitLabel")}:{" "}
+                      </span>
+                      {pricing.perDayUnits
+                        ? t("assets.wizard.pricing.units.mixed")
+                        : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}
+                    </p>
+                    {pricing.pattern === "perDay" ? (
+                      <div>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.perDayPricesLabel")}:{" "}
+                        </span>
+                        <ul className="mt-1 ml-4 list-disc">
+                          {DAYS.map((day) => (
+                            <li key={day}>
+                              {t(`assets.detail.days.${day}`)}:{" "}
+                              {formatUnitPriceText(
+                                pricing.perDayPrices[day],
+                                pricing.perDayUnits?.[day] ?? pricing.pricingUnit,
+                                "BRL",
+                                i18n.language,
+                                t,
+                                "assets.wizard.review.unitPrice",
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.priceLabel")}:{" "}
+                        </span>
+                        {pricing.pattern === "weekendSpecial" ? (
+                          <>
+                            {t("assets.wizard.pricing.weekdayPrice")}:{" "}
+                            {formatUnitPriceText(pricing.weekdayPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")}
+                            {" · "}
+                            {t("assets.wizard.pricing.weekendPrice")}:{" "}
+                            {formatUnitPriceText(pricing.weekendPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")}
+                          </>
+                        ) : (
+                          formatUnitPriceText(pricing.everydayPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")
+                        )}
+                      </p>
+                    )}
                   </>
                 ) : null}
               </div>

@@ -509,6 +509,7 @@
       "selectionExpired": "Your selection expired",
       "cancelDeadline": "Cancellable until {{when}}",
       "noCancelDeadline": "No cancellation deadline",
+      "cancelEffectiveCutoff": "Cancellation cutoff: {{hours}} hours before the start.",
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
@@ -1788,7 +1789,11 @@
       "back": "Back",
       "finish": "Finish",
       "review": {
-        "stockQuantity": "Stock quantity"
+        "stockQuantity": "Stock quantity",
+        "pricingUnitLabel": "Pricing unit",
+        "priceLabel": "Price",
+        "perDayPricesLabel": "Per-day prices",
+        "unitPrice": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"}
       },
       "success": {
         "create": "Resource created successfully.",
@@ -3526,8 +3531,7 @@
       "Unpriced": "No price",
       "Available": "Available"
     },
-    "pricePerHour": "{{amount}}/h",
-    "prices": {"Slot": "{{amount}} per slot", "Day": "{{amount}} per day", "Fixed": "{{amount}} (fixed price)"},
+    "prices": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"},
     "unitsLeft": "{{left}} of {{total}} available"
   }
 }
