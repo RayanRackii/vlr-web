@@ -9,6 +9,7 @@ import {
 } from "@/features/rentals/services/bookingPolicyService"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
 const trial = vi.hoisted(() => ({ readOnly: false }))
@@ -62,6 +63,14 @@ describe("BookingPolicyPage", () => {
       maxActiveReservationsPerCustomerPerDay: 3,
     })
     replacePolicy.mockImplementation(async (policy) => policy)
+  })
+
+  it("shows the tenant timezone alongside the policy", async () => {
+    renderPage()
+
+    expect(await screen.findByTestId("tenant-tz-label")).toHaveTextContent(
+      formatTenantTimeZoneLabel("America/Sao_Paulo", i18n.language),
+    )
   })
 
   it("loads both fields and saves a full replacement", async () => {

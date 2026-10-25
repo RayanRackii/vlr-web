@@ -34,7 +34,9 @@ export function RentalResourceDetails({ asset, pricePerHour }: RentalResourceDet
       ? t("rentals.resources.details.pricePerHour", { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })
       : null,
     durations !== null ? t("rentals.resources.details.allowedDurations", { durations }) : null,
-    asset.capacityPeople != null ? t("rentals.resources.details.capacity", { count: asset.capacityPeople }) : null,
+    typeof asset.capacityPeople === "number" && asset.capacityPeople > 0
+      ? t("rentals.resources.details.capacity", { count: asset.capacityPeople })
+      : t("rentals.resources.details.capacityUnknown"),
   ].filter((detail): detail is string => detail !== null)
 
   if (details.length === 0) return null

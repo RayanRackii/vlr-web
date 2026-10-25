@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
 
+import { DayResourceGrid } from "@/features/rentals/components/schedule/DayResourceGrid"
 import { DailyAgendaTab } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import i18n from "@/lib/i18n"
 import type {
@@ -231,6 +232,12 @@ describe("DailyAgendaTab past starts", () => {
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
+        name: "Sala 1, 08:00–09:00, Indisponível, Tipo: Aberto",
+      }),
+    ).toHaveAttribute("title", i18n.t("rentals.schedule.grid.minimumLeadTime"))
+    expect(screen.getByText(i18n.t("rentals.schedule.grid.minimumLeadTime"))).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
         name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
@@ -340,6 +347,32 @@ describe("DailyAgendaTab occupancy labels", () => {
     renderDay("2026-10-17", day)
 
     expect(await screen.findByText("Tipo: Open")).toBeInTheDocument()
+  })
+})
+
+describe("DayResourceGrid compact slots", () => {
+  it("shows a compact time range for a 30-minute slot ending at 23:59:59", () => {
+    render(
+      <DayResourceGrid
+        assets={[{ ...agendaAsset(), openTime: "23:30:00", closeTime: "23:59:59" }]}
+        occupancies={[{
+          id: "short-slot",
+          rentalAssetId: ASSET_ID,
+          startTime: "23:30:00",
+          endTime: "23:59:59",
+          status: "available",
+          occupancyKindKey: "open",
+          occupancyKindLabel: "Aberto",
+        }]}
+        busyTargetKey={null}
+        readOnly={false}
+        onCellClick={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole("button", {
+      name: "Sala 1, 23:30–23:59, Disponível, Tipo: Aberto",
+    })).toHaveTextContent("23:30–23:59")
   })
 })
 

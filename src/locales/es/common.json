@@ -3012,10 +3012,11 @@
       "grid": {
         "empty": "Horario vacío",
         "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla.",
-        "legendLabel": "Leyenda"
+        "legendLabel": "Leyenda",
+        "minimumLeadTime": "Fuera del plazo mínimo de antelación"
       },
       "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. Para cambiar la regla semanal, use Configuración semanal.",
-      "weeklyBanner": "Esta grilla es la regla de todos los {{day}}. La Agenda del día solo cambia una fecha.",
+      "weeklyBanner": "Esta grilla se repite semanalmente el {{day}}. La Agenda del día solo cambia una fecha.",
       "weeklyCellHint": "El cambio vale para este día semanal, en todas las fechas futuras.",
       "weekly": {
         "configureHours": "Configurar horarios"
@@ -3209,6 +3210,7 @@
         "allowedDurations": "Duraciones: {{durations}}",
         "capacity_one": "Capacidad: {{count}} persona",
         "capacity_other": "Capacidad: {{count}} personas",
+        "capacityUnknown": "Capacidad no informada",
         "durationHours": "{{count}} h",
         "durationMinutes": "{{count}} min"
       },

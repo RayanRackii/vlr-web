@@ -63,11 +63,12 @@ function weekStart(locale: string): number {
 }
 
 function monthLabel(year: number, month: number, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
+  const label = new Intl.DateTimeFormat(locale, {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(Date.UTC(year, month - 1, 1)))
+  return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1)
 }
 
 function weekdayLabels(locale: string, start: number): string[] {
@@ -225,7 +226,7 @@ export function LocaleDateInput({
             >
               <ChevronLeft className="size-4" aria-hidden />
             </button>
-            <p className="text-sm font-medium capitalize">{label}</p>
+            <p className="text-sm font-medium">{label}</p>
             <button
               type="button"
               className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted"

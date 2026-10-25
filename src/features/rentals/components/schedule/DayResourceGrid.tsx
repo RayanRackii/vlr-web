@@ -241,6 +241,10 @@ function ScheduleGridLegend() {
           </li>
         )
       })}
+      <li className="flex items-center gap-1.5">
+        <Ban className="size-3.5 text-muted-foreground" aria-hidden />
+        <span>{t("rentals.schedule.grid.minimumLeadTime")}</span>
+      </li>
     </ul>
   )
 }
@@ -272,6 +276,7 @@ function RowCells({
 }) {
   const rowClosed = isStartClosed?.(formatMinutesAsTime(rowStart)) === true
   const { t } = useTranslation()
+  const minimumLeadTime = t("rentals.schedule.grid.minimumLeadTime")
 
   return (
     <>
@@ -306,6 +311,7 @@ function RowCells({
               <button
                 type="button"
                 disabled={readOnly || rowClosed}
+                title={rowClosed ? minimumLeadTime : undefined}
                 aria-label={`${asset.name}, ${formatMinutesAsTime(rowStart)}–${formatMinutesAsTime(rowEnd)}`}
                 className="h-full w-full rounded-md border border-dashed border-transparent text-left transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
                 onClick={() =>
@@ -366,6 +372,8 @@ function RowCells({
                 readOnly ||
                 (busyTargetKey !== null && relevantIds.includes(busyTargetKey)) ||
                 (isStartClosed?.(item.startTime) === true && item.status !== "booked")
+              const unavailableForLeadTime =
+                isStartClosed?.(item.startTime) === true && item.status !== "booked"
               const ariaLabel = `${asset.name}, ${timeRangeLabel}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}${freeUnitsLabel ? `, ${freeUnitsLabel}` : ""}`
               const cardClassName = cn(
                 "absolute top-1 overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
@@ -394,11 +402,13 @@ function RowCells({
                       status pill fits in a one-row (46px) card. */}
                   <span className="block truncate text-xs text-muted-foreground">
                     {itemLabel ? `${itemLabel} · ` : ""}
-                    {item.status === "booked" ? (
-                      <span className="tabular-nums">{timeRangeLabel}</span>
-                    ) : (
+                    <span className="tabular-nums">{timeRangeLabel}</span>
+                    {item.status === "booked" ? null : (
                       <>
-                        {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                        {" · "}
+                        <span>
+                          {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                        </span>
                       </>
                     )}
                   </span>
@@ -447,6 +457,7 @@ function RowCells({
                         <button
                           type="button"
                           disabled={disabled}
+                          title={unavailableForLeadTime ? minimumLeadTime : undefined}
                           aria-label={ariaLabel}
                           className={cardClassName}
                           style={cardStyle}
@@ -494,6 +505,7 @@ function RowCells({
                   key={item.id}
                   type="button"
                   disabled={disabled}
+                  title={unavailableForLeadTime ? minimumLeadTime : undefined}
                   aria-label={ariaLabel}
                   className={cardClassName}
                   style={cardStyle}

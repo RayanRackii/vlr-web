@@ -65,6 +65,8 @@ type WeeklyTemplatesTabProps = {
   selectedRentalAssetIds: readonly string[]
   weekday: DayOfWeekName
   templates: readonly ScheduleTemplate[]
+  scheduleTemplates: readonly ScheduleTemplate[]
+  loadingScheduleTemplates: boolean
   kinds: readonly OccupancyKind[]
   defaultKindId: string
   loading: boolean
@@ -86,6 +88,8 @@ export function WeeklyTemplatesTab({
   selectedRentalAssetIds,
   weekday,
   templates,
+  scheduleTemplates,
+  loadingScheduleTemplates,
   kinds,
   defaultKindId,
   loading,
@@ -150,6 +154,12 @@ export function WeeklyTemplatesTab({
 
   const showInlineRefresh = loading && surface === "grid"
   const hasSelection = selectedAssets.length > 0
+  const hasExistingSchedule = loadingScheduleTemplates ||
+    scheduleTemplates.some((template) => template.isActive) ||
+    selectedAssets.some((asset) =>
+      (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
+      Boolean(asset.openTime && asset.closeTime),
+    )
 
   return (
     <div className="w-full space-y-4">
@@ -237,7 +247,7 @@ export function WeeklyTemplatesTab({
             <Settings2 aria-hidden />
             {t("rentals.schedule.weekly.configureHours")}
           </Button>
-          {selectedAssets.some(
+          {!hasExistingSchedule && selectedAssets.some(
             (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
           ) ? (
             <LoadingButton
@@ -331,6 +341,8 @@ export function WeeklyTemplatesTab({
             {selectedAssets.length > 0 ? (
               <SchedulePolicyPanel
                 assets={selectedAssets}
+                templates={scheduleTemplates}
+                loadingTemplates={loadingScheduleTemplates}
                 busy={busy}
                 busyAction={busyAction}
                 readOnly={readOnly}

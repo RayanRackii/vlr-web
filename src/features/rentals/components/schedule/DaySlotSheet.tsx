@@ -173,7 +173,7 @@ function DaySlotSheetForm({
                   }}
                   items={activeKinds.map((kind) => ({
                     value: kind.id,
-                    label: kind.label,
+                    label: occupancyKindDisplayLabel(t, kind),
                   }))}
                 >
                   <SelectTrigger className="w-full">

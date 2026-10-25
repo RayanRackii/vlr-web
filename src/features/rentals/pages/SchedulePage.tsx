@@ -100,6 +100,10 @@ function AdminSchedulePage() {
   const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
+  const [scheduleTemplatesState, setScheduleTemplatesState] = useState<{
+    key: string
+    list: ScheduleTemplate[]
+  } | null>(null)
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
@@ -238,6 +242,19 @@ function AdminSchedulePage() {
     templatesCacheRef.current.set(key, list)
   }, [selectedRentalAssetIds, weekday])
 
+  const refreshScheduleTemplates = useCallback(async () => {
+    if (selectedRentalAssetIds.length === 0) return
+    const list = await listScheduleTemplates(
+      undefined,
+      selectedRentalAssetIds,
+      undefined,
+    )
+    setScheduleTemplatesState({
+      key: selectedRentalAssetIds.join(","),
+      list: list.filter((template) => template.isActive),
+    })
+  }, [selectedRentalAssetIds])
+
   useEffect(() => {
     if (selectedRentalAssetIds.length === 0 || !date) {
       setDay(null)
@@ -289,6 +306,34 @@ function AdminSchedulePage() {
       cancelled = true
     }
   }, [selectedRentalAssetIds, date, t])
+
+  useEffect(() => {
+    if (selectedRentalAssetIds.length === 0) return
+    let cancelled = false
+    const key = selectedRentalAssetIds.join(",")
+    void listScheduleTemplates(undefined, selectedRentalAssetIds, undefined)
+      .then((list) => {
+        if (!cancelled) {
+          setScheduleTemplatesState({
+            key,
+            list: list.filter((template) => template.isActive),
+          })
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : t("rentals.schedule.loadError"),
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedRentalAssetIds, t])
 
   useEffect(() => {
     if (tab !== "templates" || selectedRentalAssetIds.length === 0) {
@@ -399,7 +444,11 @@ function AdminSchedulePage() {
         await createScheduleTemplate(body)
         toast.success(t("rentals.schedule.templates.createSuccess"))
       }
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
       return true
     } catch (error) {
       toast.error(
@@ -423,7 +472,11 @@ function AdminSchedulePage() {
         setEditingTemplate(null)
         setWeeklyTarget(null)
       }
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -443,7 +496,11 @@ function AdminSchedulePage() {
     try {
       const created = await seedDefaultHourlyTemplates(selectedRentalAssetIds)
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -471,7 +528,11 @@ function AdminSchedulePage() {
           ? t("rentals.schedule.policy.saveOpenHoursSuccess")
           : t("rentals.schedule.policy.saveSlotGridSuccess"),
       )
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -516,7 +577,12 @@ function AdminSchedulePage() {
           count: result.created + result.updated,
         }),
       )
-      await Promise.all([refreshAssets(), refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshAssets(),
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
       return true
     } catch (error) {
       toast.error(
@@ -584,6 +650,13 @@ function AdminSchedulePage() {
     { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
   ]
 
+  const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
+  const loadingScheduleTemplates = selectedRentalAssetIds.length > 0 &&
+    scheduleTemplatesState?.key !== scheduleTemplatesKey
+  const scheduleTemplates = loadingScheduleTemplates || !scheduleTemplatesState
+    ? []
+    : scheduleTemplatesState.list
+
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
@@ -599,9 +672,9 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="border-b border-border">
+        <div className="overflow-x-auto border-b border-border">
           <nav
-            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
+            className="-mb-px flex w-max min-w-full justify-start gap-6 sm:justify-center sm:gap-8"
             aria-label={t("nav.menu")}
           >
             {tabItems.map((item) => {
@@ -663,6 +736,8 @@ function AdminSchedulePage() {
             selectedRentalAssetIds={selectedRentalAssetIds}
             weekday={weekday}
             templates={templates}
+            scheduleTemplates={scheduleTemplates}
+            loadingScheduleTemplates={loadingScheduleTemplates}
             kinds={kinds}
             defaultKindId={defaultKindId}
             loading={loadingAssets || loadingTemplates}
