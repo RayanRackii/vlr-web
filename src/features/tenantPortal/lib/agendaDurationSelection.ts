@@ -5,6 +5,109 @@ export type TimeWindow = { startTime: string; endTime: string }
 
 type DurationSlot = { startTime: string; endTime: string }
 
+type MultiSlotAsset = {
+  id: string
+  schedulePolicy?: string
+  allowedDurationMinutes?: string | null
+}
+
+type MultiSlotWindow = DurationSlot & {
+  id: string
+  rentalAssetId: string
+  assetName: string
+  date: string
+  occupancyKindId: string
+  occupancyKindKey: string
+  occupancyKindLabel: string
+  isBookableByCustomer: boolean
+  status: string
+  reservationId?: string | null
+  isDerived: boolean
+}
+
+const EMPTY_SLOT_ID = "00000000-0000-0000-0000-000000000000"
+
+function allowedDurations(value: string | null | undefined): number[] {
+  return [...new Set(
+    (value ?? "")
+      .split(",")
+      .map((part) => Number(part.trim()))
+      .filter((minutes) => Number.isInteger(minutes) && minutes > 0),
+  )].sort((left, right) => left - right)
+}
+
+function normalizedRangeKey(slot: Pick<DurationSlot & { rentalAssetId: string }, "rentalAssetId" | "startTime" | "endTime">): string {
+  return `${slot.rentalAssetId}:${normalizeClock(slot.startTime)}:${normalizeClock(slot.endTime)}`
+}
+
+/**
+ * Builds customer-bookable, contiguous SlotGrid ranges permitted by a resource.
+ * The returned ranges are synthetic so reservations use their explicit times.
+ */
+export function buildMultiSlotWindows<T extends MultiSlotWindow>(
+  slots: readonly T[],
+  assets: readonly MultiSlotAsset[],
+): T[] {
+  const realRanges = new Set(slots.map(normalizedRangeKey))
+  const windows: T[] = []
+
+  for (const asset of assets) {
+    if (asset.schedulePolicy?.toLowerCase() !== "slotgrid") {
+      continue
+    }
+    const durations = allowedDurations(asset.allowedDurationMinutes)
+    if (durations.length === 0) {
+      continue
+    }
+
+    const maxDuration = durations[durations.length - 1] ?? 0
+    const assetSlots = slots
+      .filter((slot) =>
+        slot.rentalAssetId === asset.id &&
+        slot.isBookableByCustomer &&
+        slot.status.toLowerCase() === "available",
+      )
+      .sort((left, right) => normalizeClock(left.startTime).localeCompare(normalizeClock(right.startTime)))
+
+    for (let index = 0; index < assetSlots.length; index += 1) {
+      const first = assetSlots[index]
+      if (!first) continue
+      const firstDuration = slotDurationMinutes(first)
+      let totalDuration = 0
+      let previous: T | undefined
+
+      for (let candidateIndex = index; candidateIndex < assetSlots.length; candidateIndex += 1) {
+        const candidate = assetSlots[candidateIndex]
+        if (!candidate) continue
+        if (previous && normalizeClock(candidate.startTime) !== normalizeClock(previous.endTime)) {
+          break
+        }
+        totalDuration += slotDurationMinutes(candidate)
+        if (totalDuration > maxDuration) {
+          break
+        }
+        if (totalDuration > firstDuration && durations.includes(totalDuration)) {
+          const window = {
+            ...first,
+            id: EMPTY_SLOT_ID,
+            startTime: first.startTime,
+            endTime: candidate.endTime,
+            isDerived: true,
+            status: "Available",
+            reservationId: null,
+          } as T
+          if (!realRanges.has(normalizedRangeKey(window))) {
+            windows.push(window)
+          }
+        }
+        previous = candidate
+      }
+    }
+  }
+
+  return windows
+}
+
 /** Minutes between two `HH:mm` or `HH:mm:ss` clocks on the same civil day. */
 export function slotDurationMinutes(slot: DurationSlot): number {
   const [startHour, startMinute] = normalizeClock(slot.startTime)
