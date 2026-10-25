@@ -222,6 +222,8 @@ describe("AssetWizard validity gate", () => {
     expect(nextButton()).toBeEnabled()
 
     await user.click(nextButton())
+    expect(nextButton()).toBeDisabled()
+    fireEvent.change(screen.getByRole("textbox", { name: /^Preço por hora/ }), { target: { value: "12,5" } })
     expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
 
@@ -324,12 +326,12 @@ describe("AssetWizard pricing units", () => {
 
     await user.click(screen.getByRole("combobox", { name: "Unidade de preço" }))
     await user.click(await screen.findByRole("option", { name: option }))
-    expect(screen.getByRole("spinbutton", { name: new RegExp(`^${priceLabel}`) })).toBeInTheDocument()
-    fireEvent.change(screen.getByRole("spinbutton", { name: new RegExp(`^${priceLabel}`) }), { target: { value: "45" } })
+    expect(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) }), { target: { value: "45" } })
     await user.click(nextButton())
     await user.click(backButton())
     expect(screen.getByRole("combobox", { name: "Unidade de preço" })).toHaveTextContent(option)
-    expect(screen.getByRole("spinbutton", { name: new RegExp(`^${priceLabel}`) })).toHaveValue(45)
+    expect(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) })).toHaveValue("45,00")
     await user.click(nextButton())
     await user.click(finishButton())
 

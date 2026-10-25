@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { ErrorState } from "@/components/ErrorState"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
@@ -195,7 +196,14 @@ export function RentalResourcesPage() {
                 }}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{asset.name}</p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-medium">{asset.name}</p>
+                    {asset.scheduledDeletionAt ? (
+                      <Badge variant="destructive" className="shrink-0">
+                        {t("assets.deletion.pendingBadge")}
+                      </Badge>
+                    ) : null}
+                  </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {asset.type === "Good"
                       ? t("rentals.resources.typeGood")

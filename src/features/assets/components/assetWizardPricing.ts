@@ -1,4 +1,5 @@
 import type { PricingUnit } from "@/api/generated/rentalPricing"
+import { isValidPrice } from "@/lib/parseLocalePrice"
 
 export type DayOfWeek =
   | "Sunday"
@@ -214,21 +215,16 @@ export function isPricingEditorValid(state: PricingEditorState): boolean {
   }
 
   if (state.pattern === "sameEveryDay") {
-    return Number.isFinite(state.everydayPrice) && state.everydayPrice >= 0
+    return isValidPrice(state.everydayPrice)
   }
 
   if (state.pattern === "weekendSpecial") {
-    return (
-      Number.isFinite(state.weekdayPrice) &&
-      state.weekdayPrice >= 0 &&
-      Number.isFinite(state.weekendPrice) &&
-      state.weekendPrice >= 0
-    )
+    return isValidPrice(state.weekdayPrice) && isValidPrice(state.weekendPrice)
   }
 
-  return DAYS.some(
-    (day) =>
-      Number.isFinite(state.perDayPrices[day]) &&
-      state.perDayPrices[day] >= 0,
+  // Per day: a blank day (0) keeps the previous "no price that day" behavior; typed values must be valid.
+  return (
+    DAYS.some((day) => isValidPrice(state.perDayPrices[day])) &&
+    DAYS.every((day) => state.perDayPrices[day] === 0 || isValidPrice(state.perDayPrices[day]))
   )
 }
