@@ -318,14 +318,21 @@ function collapseBookedReservations(
 function collapseUnavailableOccupancies(
   unavailable: readonly ScheduleGridOccupancy[],
 ): ScheduleGridOccupancy[] {
-  const byResource = new Map<string, ScheduleGridOccupancy[]>()
+  const byResourceAndPresentation = new Map<string, ScheduleGridOccupancy[]>()
   for (const item of unavailable) {
-    const items = byResource.get(item.rentalAssetId) ?? []
+    const key = JSON.stringify([
+      item.rentalAssetId,
+      item.occupancyKindKey,
+      item.occupancyKindLabel,
+      item.label,
+      item.badge,
+    ])
+    const items = byResourceAndPresentation.get(key) ?? []
     items.push(item)
-    byResource.set(item.rentalAssetId, items)
+    byResourceAndPresentation.set(key, items)
   }
 
-  return [...byResource.values()].flatMap((items) => {
+  return [...byResourceAndPresentation.values()].flatMap((items) => {
     const sorted = [...items].sort(
       (a, b) =>
         timeToMinutes(a.startTime) - timeToMinutes(b.startTime) ||

@@ -120,6 +120,35 @@ describe("dedupeOpenHoursOccupancies", () => {
     )
   })
 
+  it("keeps overlapping unavailable occupancies with distinct labels separate", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+          occupancyKindKey: "closed",
+          label: "Closed",
+        }),
+        occupancy({
+          startTime: "09:00",
+          endTime: "11:00",
+          status: "unavailable",
+          occupancyKindKey: "closed",
+          label: "Lesson",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ startTime: "08:00", endTime: "10:00", label: "Closed" }),
+        expect.objectContaining({ startTime: "09:00", endTime: "11:00", label: "Lesson" }),
+      ]),
+    )
+  })
+
   it("keeps overlapping booked windows from separate reservations distinct", () => {
     const result = dedupeOpenHoursOccupancies(
       [
