@@ -84,6 +84,7 @@ import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingI
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import {
   clearAgendaSelectionNotice,
+  readAgendaSelectionNotice,
   showAgendaSelectionNotice,
 } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingIdleSettings"
@@ -210,6 +211,12 @@ function partitionAgendaSlots(
   }
 }
 
+/** HH:mm, keeping seconds when the slot has them (a day-closing 23:59:59 must match exactly). */
+function bookingEndClock(endTime: string): string {
+  const seconds = endTime.slice(5, 8)
+  return seconds.length === 3 && seconds !== ":00" ? endTime.slice(0, 8) : endTime.slice(0, 5)
+}
+
 function isCancelDeadlinePassed(reservation: PortalReservation | undefined): boolean {
   return reservation?.cancelDeadlineUtc != null && Date.now() > Date.parse(reservation.cancelDeadlineUtc)
 }
@@ -301,6 +308,13 @@ export function TenantPortalAgendaPage() {
     setSelectedRentalAssetId(null)
     showAgendaSelectionNotice(subdomain, "unavailable")
     toast.message(appI18n.t("tenantPortal.agenda.selectionUnavailable"))
+  }, [subdomain])
+  useEffect(() => {
+    // A fresh agenda load has no selection, so an "unavailable" notice stored
+    // by an earlier visit (sessionStorage survives F5) no longer applies.
+    if (readAgendaSelectionNotice(subdomain) === "unavailable") {
+      clearAgendaSelectionNotice(subdomain)
+    }
   }, [subdomain])
   const selectRentalAsset = useCallback((rentalAssetId: string) => {
     clearAgendaSelectionNotice(subdomain)
@@ -917,7 +931,7 @@ export function TenantPortalAgendaPage() {
   )
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
-  const quoteEnd = selectedSlot?.endTime.slice(0, 5) ?? null
+  const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
   const quoteUnavailable = quote.status === "ready" && quote.amount === null
 
   useEffect(() => {
@@ -1215,7 +1229,7 @@ export function TenantPortalAgendaPage() {
                 unitId: asset.unitId,
                 date: dayDate,
                 startTime: slot.startTime.slice(0, 5),
-                endTime: slot.endTime.slice(0, 5),
+                endTime: bookingEndClock(slot.endTime),
                 items: [{ assetId: asset.assetId, quantity: 1 }],
                 expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
               }),
@@ -2131,11 +2145,15 @@ export function TenantPortalAgendaPage() {
                           </>
                         )}
                       </p>
-                      {!cancelled && reservation.cancelDeadlineUtc ? (
+                      {!cancelled && reservation.cancelDeadlineUtc && !isCancelDeadlinePassed(reservation) ? (
                         <p className="text-xs text-muted-foreground">
                           {t("tenantPortal.agenda.cancelDeadline", {
                             when: `${formatTenantDate(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)} ${formatTenantTime(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)}`,
                           })}
+                        </p>
+                      ) : !cancelled && !reservation.cancelDeadlineUtc && !isPastReservation(reservation.endDateTime) ? (
+                        <p className="text-xs text-muted-foreground">
+                          {t("tenantPortal.agenda.noCancelDeadline")}
                         </p>
                       ) : null}
                       {isPastReservation(reservation.endDateTime) ? (
@@ -2207,6 +2225,10 @@ export function TenantPortalAgendaPage() {
                     moneyLocale,
                     pendingCancelReservation.cancelDeadlineUtc,
                   )}
+                </p>
+              ) : pendingCancelReservation ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("tenantPortal.agenda.noCancelDeadline")}
                 </p>
               ) : null}
               {cancellationPolicyNote ? (

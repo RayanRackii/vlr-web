@@ -98,3 +98,13 @@ describe("resolveEffectiveDuration", () => {
     expect(resolveEffectiveDuration([], 60)).toBeNull()
   })
 })
+
+describe("day-closing slots", () => {
+  it("treats 23:59:59 and 00:00 ends as midnight", () => {
+    expect(slotDurationMinutes({ startTime: "23:30:00", endTime: "23:59:59" })).toBe(30)
+    expect(slotDurationMinutes({ startTime: "23:00", endTime: "23:59" })).toBe(60)
+    expect(slotDurationMinutes({ startTime: "23:00", endTime: "00:00" })).toBe(60)
+    expect(listStartTimesForDuration([{ startTime: "23:30:00", endTime: "23:59:59" }], 30))
+      .toEqual([{ startTime: "23:30", endTime: "00:00" }])
+  })
+})

@@ -504,6 +504,7 @@
       "yourReservation": "Sua reserva",
       "selectionExpired": "Sua seleção expirou",
       "cancelDeadline": "Cancelável até {{when}}",
+      "noCancelDeadline": "Sem prazo de cancelamento",
       "cancelCutoffPassed": "O prazo de cancelamento de {{hours}} horas antes do início já passou.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duração",
