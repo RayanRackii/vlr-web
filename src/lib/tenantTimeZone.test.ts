@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  bookingEndClock,
+  displayEndClock,
   DEFAULT_TENANT_TIME_ZONE,
   clampTenantDateToToday,
   formatTenantDateTimeRange,
@@ -72,5 +74,19 @@ describe("tenantTimeZone", () => {
       "2026-09-10",
     )
     expect(clampTenantDateToToday("", "America/Manaus", now)).toBe("")
+  })
+})
+
+describe("day-closing reservation ends", () => {
+  it("shows 00:00 for legacy 23:59:59 and for next-day 00:00, without the next date", () => {
+    // Sao Paulo is UTC-3: 23:30 local = 02:30Z next day
+    expect(formatTenantDateTimeRange("2026-10-27T02:30:00Z", "2026-10-27T02:59:59Z", "America/Sao_Paulo", "pt-BR"))
+      .toBe("26/10/2026 23:30 – 00:00")
+    expect(formatTenantDateTimeRange("2026-10-27T02:30:00Z", "2026-10-27T03:00:00Z", "America/Sao_Paulo", "pt-BR"))
+      .toBe("26/10/2026 23:30 – 00:00")
+    expect(displayEndClock("23:59:59")).toBe("00:00")
+    expect(displayEndClock("23:30:00")).toBe("23:30")
+    expect(bookingEndClock("23:59:59")).toBe("23:59:59")
+    expect(bookingEndClock("23:30:00")).toBe("23:30")
   })
 })
