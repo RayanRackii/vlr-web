@@ -261,9 +261,9 @@ export function AppShell({
 
         {banner}
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           {constrainContent ? (
-            <div className="mx-auto w-full max-w-7xl">{children}</div>
+            <div className="mx-auto min-w-0 w-full max-w-7xl">{children}</div>
           ) : (
             children
           )}

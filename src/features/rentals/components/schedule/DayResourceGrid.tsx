@@ -158,10 +158,10 @@ export function DayResourceGrid({
     (((nowMinutes ?? 0) - axis.start) / axis.step) * ROW_HEIGHT
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <ScheduleGridLegend />
-      <div className="max-h-[70vh] w-full overflow-auto rounded-xl border border-border bg-background shadow-sm">
-        <div className="relative min-w-full">
+      <div className="min-w-0 max-h-[70vh] w-full overflow-x-auto overflow-y-auto rounded-xl border border-border bg-background shadow-sm">
+        <div className="relative w-max min-w-full">
           <div
             role="grid"
             aria-rowcount={axis.rows.length + 1}
@@ -414,7 +414,7 @@ function RowCells({
                   </span>
                   <span
                     className={cn(
-                      "mt-0.5 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                      "mt-0.5 inline-flex whitespace-nowrap items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold leading-none",
                       STATUS_TEXT_CLASS[item.status],
                     )}
                   >
@@ -422,7 +422,7 @@ function RowCells({
                     {statusLabel}
                   </span>
                   {freeUnitsLabel ? (
-                    <span className="ml-1 mt-1 inline-flex items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+                    <span className="ml-1 mt-1 inline-flex whitespace-nowrap items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
                       {freeUnitsLabel}
                     </span>
                   ) : null}
