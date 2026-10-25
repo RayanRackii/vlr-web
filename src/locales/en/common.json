@@ -3419,7 +3419,8 @@
       "cancelCutoffNone": "No cutoff",
       "cancelCutoffHoursMode": "N hours before the start",
       "cancelCutoffHours": "Hours before the start",
-      "cancelCutoffHint": "Customers can cancel until this many hours before the start."
+      "cancelCutoffHint": "Customers can cancel until this many hours before the start.",
+      "categories": {"title": "By category", "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.", "horizonDays": "Max advance (days)", "cancelCutoffHours": "Cancel up to (hours before)", "inherit": "General", "save": "Save", "saved": "Category policy saved.", "invalid": "Use a whole number or leave blank.", "empty": "No categories with bookable resources."}
     }
   },
   "resourceVisual": {

@@ -166,6 +166,8 @@ export const rentalAssetSchema = z.object({
     .optional(),
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().nullable().optional(),
+  /** Asset location. The drawer hydrates it so an edit does not clear it. */
+  location: z.string().nullable().optional(),
   // Older API responses named this field `capacity`. Normalize it at the
   // boundary so edit defaults do not silently lose an existing capacity.
   capacity: z.number().int().nullable().optional(),
