@@ -124,7 +124,7 @@ export function PortalOrderDetailPage() {
             key={item.id}
             className="flex items-center justify-between gap-2 px-4 py-3 text-sm transition-colors duration-150 ease-out hover:bg-muted/40"
           >
-            <span className="min-w-0 truncate">
+            <span className="min-w-0 break-words">
               {item.productName} × {item.quantity}
             </span>
             <span className="shrink-0 font-medium tabular-nums">
