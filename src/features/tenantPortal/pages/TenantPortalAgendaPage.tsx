@@ -1929,6 +1929,10 @@ export function TenantPortalAgendaPage() {
 
   function reservationTotalWording(reservation: PortalReservation, includeSingular = false) {
     const item = reservation.items[0]
+    const totalText = t("tenantPortal.agenda.total", { amount: formatBookingMoney(reservation.totalAmount) })
+    if (reservation.items.length !== 1) {
+      return { totalText, unitPriceText: null, multiplierText: null }
+    }
     const wording = reservationUnitWording(
       {
         pricingUnit: item?.pricingUnit,
@@ -1939,7 +1943,6 @@ export function TenantPortalAgendaPage() {
       },
       timeZoneId,
     )
-    const totalText = t("tenantPortal.agenda.total", { amount: formatBookingMoney(reservation.totalAmount) })
     const unitPriceText = wording.unit && item
       ? formatUnitPriceText(
           item.unitPrice,

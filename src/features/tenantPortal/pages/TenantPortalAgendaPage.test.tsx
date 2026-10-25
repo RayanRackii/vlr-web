@@ -310,6 +310,37 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(row).toHaveTextContent("x 2 unidades · 3 dias")
   })
 
+  it("shows only the total for a reservation with two differently priced items", async () => {
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 120 })
+    reservation.items = [
+      { ...reservation.items[0], pricingUnit: "Hour", quantity: 1, unitPrice: 80, subTotal: 80 },
+      {
+        ...reservation.items[0],
+        id: "abababab-abab-4bab-8bab-abababababab",
+        assetId: "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd",
+        rentalAssetId: "dededede-dede-4ede-8ede-dededededede",
+        assetName: "Sala 2",
+        pricingUnit: "Day",
+        quantity: 1,
+        unitPrice: 40,
+        subTotal: 40,
+      },
+    ]
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+
+    const row = (await screen.findByText("Quadra 1, Sala 2")).closest("li")!
+    expect(row).toHaveTextContent(`Total ${formatMoney(120)}`)
+    expect(row).not.toHaveTextContent(`${formatMoney(80)}/hora`)
+    expect(row).not.toHaveTextContent(`${formatMoney(40)}/dia`)
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(`Total ${formatMoney(120)}`)
+    expect(dialog).not.toHaveTextContent(`${formatMoney(80)}/hora`)
+    expect(dialog).not.toHaveTextContent(`${formatMoney(40)}/dia`)
+  })
+
   it("shows the cancelled reservation's quantity, days, total and deadline", async () => {
     const user = userEvent.setup()
     const reservation = makeReservation("Confirmed", FUTURE_ISO, {
