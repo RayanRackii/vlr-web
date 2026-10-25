@@ -26,4 +26,13 @@ describe("formatTenantTimeZoneLabel", () => {
     expect(es.toLowerCase()).toContain("manaus")
     expect(en).not.toBe(es)
   })
+
+  it("uses the displayed instant to resolve a DST-aware offset", () => {
+    expect(
+      formatTenantTimeZoneLabel("America/New_York", "en", "2026-01-15T12:00:00Z"),
+    ).toContain("GMT-5")
+    expect(
+      formatTenantTimeZoneLabel("America/New_York", "en", "2026-07-15T12:00:00Z"),
+    ).toContain("GMT-4")
+  })
 })

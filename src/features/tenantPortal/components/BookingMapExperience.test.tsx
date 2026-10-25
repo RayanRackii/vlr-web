@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
@@ -32,10 +33,11 @@ vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBooki
 
 describe("BookingMapExperience", () => {
   it("shows the quoted hourly price and remaining units on a multi-unit tile", async () => {
+    const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
 
-    expect(await screen.findByText("Raquete")).toBeInTheDocument()
-    expect(screen.getByText(/20,00 por hora/)).toBeInTheDocument()
-    expect(screen.getByText(/3 de 4 disponíveis/)).toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    const tile = await screen.findByRole("button", { name: "Raquete" })
+    expect(tile).toHaveTextContent("Raquete · R$ 20,00 por hora · 3 de 4 disponíveis")
   })
 })

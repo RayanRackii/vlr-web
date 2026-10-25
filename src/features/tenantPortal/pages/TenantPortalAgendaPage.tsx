@@ -284,6 +284,7 @@ export function TenantPortalAgendaPage() {
     null,
   )
   const preferredDurationRef = useRef<number | null>(null)
+  const preserveUnavailableDurationRef = useRef(false)
   const skipTimeResetRef = useRef(false)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
@@ -591,8 +592,15 @@ export function TenantPortalAgendaPage() {
           withoutBookableReservedKeys(current, date, selected.bookable),
         )
         const durations = listDistinctDurations(selected.bookable)
+        const durationOptions =
+          !preserveUnavailableDurationRef.current ||
+          preferredDurationRef.current === null
+            ? durations
+            : [...new Set([...durations, preferredDurationRef.current])].sort(
+                (left, right) => left - right,
+              )
         const effectiveDuration = resolveEffectiveDuration(
-          durations,
+          durationOptions,
           preferredDurationRef.current,
         )
         preferredDurationRef.current = effectiveDuration
@@ -792,9 +800,24 @@ export function TenantPortalAgendaPage() {
     () => listDistinctDurations(slotsForView),
     [slotsForView],
   )
-  const effectiveDuration = useMemo(
-    () => resolveEffectiveDuration(availableDurations, selectedDuration),
+  const durationOptions = useMemo(
+    () =>
+      !preserveUnavailableDurationRef.current ||
+      selectedDuration === null ||
+      availableDurations.includes(selectedDuration)
+        ? availableDurations
+        : [...availableDurations, selectedDuration].sort(
+            (left, right) => left - right,
+          ),
     [availableDurations, selectedDuration],
+  )
+  const selectedDurationUnavailable =
+    preserveUnavailableDurationRef.current &&
+    selectedDuration !== null &&
+    !availableDurations.includes(selectedDuration)
+  const effectiveDuration = useMemo(
+    () => resolveEffectiveDuration(durationOptions, selectedDuration),
+    [durationOptions, selectedDuration],
   )
   const timeWindows = useMemo(
     () =>
@@ -813,7 +836,15 @@ export function TenantPortalAgendaPage() {
   )
 
   useEffect(() => {
-    if (schedulePending || slotsError || timeWindows.length === 0) {
+    if (schedulePending || slotsError) {
+      return
+    }
+    if (timeWindows.length === 0) {
+      if (selectedDurationUnavailable && startTime.length > 0) {
+        skipTimeResetRef.current = false
+        preferredTimeRef.current = ""
+        setStartTime("")
+      }
       return
     }
     if (timeWindows.some((window) => window.startTime === startTime)) {
@@ -839,7 +870,15 @@ export function TenantPortalAgendaPage() {
     }
     preferredTimeRef.current = next
     setStartTime(next)
-  }, [clearUnavailableSelection, schedulePending, slotsError, startTime, subdomain, timeWindows])
+  }, [
+    clearUnavailableSelection,
+    schedulePending,
+    selectedDurationUnavailable,
+    slotsError,
+    startTime,
+    subdomain,
+    timeWindows,
+  ])
 
   useEffect(() => {
     if (seenHash === location.hash) {
@@ -1119,7 +1158,7 @@ export function TenantPortalAgendaPage() {
           status: t(`rentals.reservations.statuses.${reservation.status}`, {
             defaultValue: reservation.status,
           }),
-        })} · ${formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale)}`,
+        })} · ${formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, reservation.startDateTime)}`,
       )
       setMine((current) => [
         reservation,
@@ -1484,6 +1523,7 @@ export function TenantPortalAgendaPage() {
     if (minutes === effectiveDuration) {
       return
     }
+    preserveUnavailableDurationRef.current = true
     preferredDurationRef.current = minutes
     setSelectedDuration(minutes)
     preferredTimeRef.current = ""
@@ -1681,11 +1721,11 @@ export function TenantPortalAgendaPage() {
               </Select>
             </label>
             <span className="-mt-1 block text-xs text-muted-foreground sm:col-start-2">
-              {formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale)}
+              {formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, date)}
             </span>
           </div>
 
-          {availableDurations.length > 1 ? (
+          {durationOptions.length > 1 ? (
             <div
               className="flex flex-wrap items-center gap-2"
               role="group"
@@ -1694,7 +1734,7 @@ export function TenantPortalAgendaPage() {
               <span className="text-sm text-muted-foreground">
                 {t("tenantPortal.agenda.durationLabel")}
               </span>
-              {availableDurations.map((minutes) => (
+              {durationOptions.map((minutes) => (
                 <Button
                   key={minutes}
                   type="button"
@@ -2058,6 +2098,7 @@ export function TenantPortalAgendaPage() {
                         {formatTenantTimeZoneLabel(
                           branding.timeZoneId,
                           moneyLocale,
+                          reservation.startDateTime,
                         )}
                         {cancelled ? null : (
                           <>
