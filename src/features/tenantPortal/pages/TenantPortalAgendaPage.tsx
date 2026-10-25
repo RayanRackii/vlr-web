@@ -2327,7 +2327,7 @@ export function TenantPortalAgendaPage() {
               </Button>
               <span className="text-xs text-muted-foreground">
                 {t("bookingMap.unitsLeft", {
-                  left: quantityMax,
+                  left: Math.max(0, Math.min(selectedAssetQuantity, lastAvailableQuantity ?? selectedAssetQuantity)),
                   total: selectedAssetQuantity,
                 })}
               </span>
