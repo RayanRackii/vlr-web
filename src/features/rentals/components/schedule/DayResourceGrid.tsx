@@ -427,12 +427,12 @@ function RowCells({
                     </span>
                   ) : null}
                   {item.badge === "dailyOverride" ? (
-                    <span className="ml-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
                       {t("rentals.schedule.occurrence.source.dailyOverride")}
                     </span>
                   ) : null}
                   {item.badge === "inactive" ? (
-                    <span className="ml-1 inline-flex rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                       {t("rentals.schedule.inactive")}
                     </span>
                   ) : null}
