@@ -339,3 +339,107 @@ describe("DailyAgendaTab occupancy labels", () => {
     expect(await screen.findByText("Tipo: Open")).toBeInTheDocument()
   })
 })
+
+describe("DailyAgendaTab OpenHours overlapping windows", () => {
+  function openHoursAsset(): AdminRentalAsset {
+    return {
+      ...agendaAsset(),
+      schedulePolicy: "OpenHours",
+      openTime: "08:00:00",
+      closeTime: "12:00:00",
+      allowedDurationMinutes: "60,120,240",
+    }
+  }
+
+  function overlappingOpenHoursDay(date: string): AdminDaySchedule {
+    const slot = (
+      id: string,
+      startTime: string,
+      endTime: string,
+      extra: Partial<AdminDaySchedule["slots"][number]> = {},
+    ) => ({
+      id,
+      rentalAssetId: ASSET_ID,
+      assetName: "Sala 1",
+      date,
+      startTime,
+      endTime,
+      occupancyKindId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      occupancyKindKey: "open",
+      occupancyKindLabel: "Aberto",
+      isBookableByCustomer: true,
+      label: null,
+      status: "Available" as const,
+      reservationId: null,
+      isDerived: false,
+      source: "WeeklyDefault" as const,
+      schedulePolicy: "OpenHours" as const,
+      supportsEntireRecurrence: false,
+      ...extra,
+    })
+
+    return {
+      date,
+      slots: [
+        // 1h windows (base duration)
+        slot("1", "08:00:00", "09:00:00"),
+        slot("2", "09:00:00", "10:00:00"),
+        slot("3", "10:00:00", "11:00:00", {
+          status: "Booked",
+          reservationId: "ffffffff-ffff-4fff-8fff-fffffffffff1",
+        }),
+        slot("4", "11:00:00", "12:00:00"),
+        // 2h windows, overlapping the 1h windows above
+        slot("5", "08:00:00", "10:00:00"),
+        slot("6", "10:00:00", "12:00:00", {
+          status: "Booked",
+          reservationId: "ffffffff-ffff-4fff-8fff-fffffffffff1",
+        }),
+        // 4h window, overlapping everything
+        slot("7", "08:00:00", "12:00:00"),
+      ],
+    }
+  }
+
+  it("renders one grid row per base duration slot and a single span for a booked window", () => {
+    const day = overlappingOpenHoursDay("2026-10-17")
+    render(
+      <MemoryRouter>
+        <DailyAgendaTab
+          assets={[openHoursAsset()]}
+          selectedRentalAssetIds={[ASSET_ID]}
+          date="2026-10-17"
+          day={day}
+          loading={false}
+          showSkeleton={false}
+          busy={false}
+          busyAction={null}
+          busyTargetKey={null}
+          readOnly={false}
+          onSelectedRentalAssetIdsChange={() => undefined}
+          onDateChange={() => undefined}
+          onPublish={() => undefined}
+          onSlotOrCellClick={() => undefined}
+        />
+      </MemoryRouter>,
+    )
+
+    const grid = screen.getByRole("grid")
+    expect(
+      within(grid).getByRole("button", { name: "Sala 1, 08:00, Disponível, Tipo: Aberto" }),
+    ).toBeInTheDocument()
+    expect(
+      within(grid).getByRole("button", { name: "Sala 1, 09:00, Disponível, Tipo: Aberto" }),
+    ).toBeInTheDocument()
+
+    // The 10:00-12:00 booking should render as a single two-row span, not
+    // three overlapping buttons (1h+1h+2h+4h all covering that range), and the
+    // 11:00 row is covered by that span rather than getting its own button.
+    expect(
+      within(grid).getAllByRole("button", { name: /Sala 1, 10:00,/ }),
+    ).toHaveLength(1)
+    expect(
+      within(grid).getByRole("button", { name: "Sala 1, 10:00, Reservado, Tipo: Aberto" }),
+    ).toBeInTheDocument()
+  })
+})

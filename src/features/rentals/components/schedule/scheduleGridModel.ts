@@ -209,3 +209,69 @@ function slotStatus(slot: AdminDaySlot): ScheduleGridOccupancy["status"] {
 export function isOpenHoursOccupancyId(id: string): boolean {
   return id.startsWith("openhours:")
 }
+
+/** Stock occupancy kinds seeded in English; a tenant-renamed kind keeps its configured name. */
+const SEED_OCCUPANCY_KIND_LABELS: Record<string, string> = {
+  open: "Open",
+  closed: "Closed",
+  lesson: "Lesson",
+}
+
+export function localizedOccupancyKindLabel(
+  occupancyKindKey: string | null | undefined,
+  occupancyKindLabel: string,
+  t: (key: string) => string,
+): string {
+  const key = occupancyKindKey ?? ""
+  if (SEED_OCCUPANCY_KIND_LABELS[key] === occupancyKindLabel) {
+    return t(`rentals.schedule.occupancyKinds.${key}`)
+  }
+  return occupancyKindLabel
+}
+
+/**
+ * OpenHours availability is computed on the fly per allowed duration (1h/2h/4h),
+ * so the same asset/day can return several windows that overlap in time. Collapse
+ * them to the base (smallest) duration grid, keeping longer windows only where an
+ * actual booking spans them.
+ */
+export function dedupeOpenHoursOccupancies(
+  occupancies: readonly ScheduleGridOccupancy[],
+  baseStepMinutes: number,
+): ScheduleGridOccupancy[] {
+  const booked = occupancies.filter((item) => item.status === "booked")
+  const notBooked = occupancies.filter((item) => item.status !== "booked")
+
+  const keptBooked: ScheduleGridOccupancy[] = []
+  const bookedByDurationDesc = [...booked].sort((a, b) => {
+    const durationA = timeToMinutes(a.endTime) - timeToMinutes(a.startTime)
+    const durationB = timeToMinutes(b.endTime) - timeToMinutes(b.startTime)
+    if (durationA !== durationB) return durationB - durationA
+    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+  })
+  for (const item of bookedByDurationDesc) {
+    const start = timeToMinutes(item.startTime)
+    const end = timeToMinutes(item.endTime)
+    const alreadyCovered = keptBooked.some((kept) => {
+      const keptStart = timeToMinutes(kept.startTime)
+      const keptEnd = timeToMinutes(kept.endTime)
+      return keptStart <= start && keptEnd >= end
+    })
+    if (!alreadyCovered) {
+      keptBooked.push(item)
+    }
+  }
+
+  const baseNotBooked = notBooked.filter((item) => {
+    const duration = timeToMinutes(item.endTime) - timeToMinutes(item.startTime)
+    if (duration !== baseStepMinutes) return false
+    const start = timeToMinutes(item.startTime)
+    const end = timeToMinutes(item.endTime)
+    return !keptBooked.some(
+      (kept) =>
+        timeToMinutes(kept.startTime) < end && timeToMinutes(kept.endTime) > start,
+    )
+  })
+
+  return [...baseNotBooked, ...keptBooked]
+}

@@ -77,6 +77,30 @@ describe("RentalsReadinessCard", () => {
     expect(within(pendingItem!).getByText(i18n.t("dashboard.rentalsReadiness.status.pending"))).toBeInTheDocument()
   })
 
+  it("hides the schedule item's count, since OpenHours resources never have templates to count", async () => {
+    getReadiness.mockResolvedValue({
+      ready: false,
+      items: [
+        { key: "hasScheduleTemplateOrRule", done: false, count: 0 },
+        { key: "hasUnits", done: false, count: 0 },
+      ],
+    })
+
+    renderCard()
+
+    const scheduleItem = (
+      await screen.findByRole("link", {
+        name: i18n.t("dashboard.rentalsReadiness.items.hasScheduleTemplateOrRule"),
+      })
+    ).closest("li")
+    const unitsItem = screen
+      .getByRole("link", { name: i18n.t("dashboard.rentalsReadiness.items.hasUnits") })
+      .closest("li")
+
+    expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
+    expect(within(unitsItem!).getByText("(0)")).toBeInTheDocument()
+  })
+
   it("does not load or render without the rentals module or read permission", () => {
     renderCard({ activeModules: [] })
     expect(getReadiness).not.toHaveBeenCalled()
