@@ -17,6 +17,8 @@ import { toast } from "sonner"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -636,29 +638,27 @@ export function CatalogProductsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("catalog.products.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("catalog.products.subtitle")}
-          </p>
-        </div>
-        <Can permission="catalog.products.manage">
-          <Button type="button" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            {t("catalog.products.create")}
-          </Button>
-        </Can>
-      </div>
+      <PageHeader
+        title={t("catalog.products.title")}
+        description={t("catalog.products.subtitle")}
+        actions={
+          <Can permission="catalog.products.manage">
+            <Button type="button" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              {t("catalog.products.create")}
+            </Button>
+          </Can>
+        }
+      />
 
       {loadError ? (
-        <p className="text-sm text-destructive">{loadError}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <div className="rounded-xl border border-border">
-        <Table>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <Table stickyHeader containerClassName="max-h-[32rem]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -686,7 +686,10 @@ export function CatalogProductsPage() {
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="odd:bg-card even:bg-muted/20"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -711,7 +714,7 @@ export function CatalogProductsPage() {
             {t("catalog.requests.subtitle")}
           </p>
         </div>
-        <div className="rounded-xl border border-border">
+        <div className="overflow-hidden rounded-xl border border-border">
           <Table>
             <TableHeader>
               {requestTable.getHeaderGroups().map((headerGroup) => (
@@ -740,7 +743,7 @@ export function CatalogProductsPage() {
                 </TableRow>
               ) : (
                 requestTable.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow key={row.id} className="odd:bg-card even:bg-muted/20">
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(

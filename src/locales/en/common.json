@@ -502,6 +502,8 @@
       "selectionUnavailable": "This time is no longer available",
       "yourReservation": "Your reservation",
       "selectionExpired": "Your selection expired",
+      "cancelDeadline": "Cancellable until {{when}}",
+      "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration"
     },
@@ -3006,7 +3008,8 @@
       },
       "grid": {
         "empty": "Empty time slot",
-        "noSelection": "Select one or more spaces / goods to view the grid."
+        "noSelection": "Select one or more spaces / goods to view the grid.",
+        "legendLabel": "Legend"
       },
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid is the rule for every {{day}}. Day agenda only changes one date.",
@@ -3095,7 +3098,10 @@
         "saveOpenHoursSuccess": "Standard hours saved. The day’s intervals appear automatically.",
         "saveSlotGridSuccess": "Custom grid is active.",
         "saveError": "Could not save the schedule setup.",
-        "derivedSlotsHint": "Intervals generated automatically from standard hours (no need to publish the day)."
+        "derivedSlotsHint": "Intervals generated automatically from standard hours (no need to publish the day).",
+        "durationMinutes": "Durations (min; separate with commas)",
+        "durationMinutesHint": "Separate values with commas. Example: 60, 120, 240.",
+        "durationMinutesInvalid": "Enter positive whole-minute durations separated by commas."
       },
       "weeklyRule": {
         "title": "Create weekly rule",
@@ -3215,7 +3221,19 @@
         "horizonHint": "Set how far ahead customers can book this resource.",
         "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
-        "horizonEffectiveDays": "In effect: {{count}} days ahead."
+        "horizonEffectiveDays": "In effect: {{count}} days ahead.",
+        "cancelCutoffLabel": "Cancellation cutoff",
+        "cancelCutoffInherit": "Inherit policy",
+        "cancelCutoffNone": "No cutoff (use policy)",
+        "cancelCutoffHours": "Hours before the start",
+        "cancelCutoffEffectiveNone": "Effective: no cutoff",
+        "cancelCutoffEffectiveHours": "Effective: {{hours}} hours before the start",
+        "horizonEffectiveSourceResource_one": "In effect: {{count}} day (set on this resource)",
+        "horizonEffectiveSourceResource_other": "In effect: {{count}} days (set on this resource)",
+        "horizonEffectiveSourceResource_unlimited": "In effect: unlimited (set on this resource)",
+        "horizonEffectiveSourcePolicy_one": "In effect: {{count}} day (from the Booking policy)",
+        "horizonEffectiveSourcePolicy_other": "In effect: {{count}} days (from the Booking policy)",
+        "horizonEffectiveSourcePolicy_unlimited": "In effect: unlimited (from the Booking policy)"
       },
       "inlineCreate": {
         "categoryAction": "+ create type",
@@ -3244,7 +3262,8 @@
         "familyRequired": "Select a family.",
         "quantityMin": "Quantity must be at least 1.",
         "queueOpeningTimeRequired": "Enter the queue opening time.",
-        "horizonRange": "Enter an integer from 0 to 3650."
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
       }
     },
     "layout": {
@@ -3354,8 +3373,14 @@
       "validation": {
         "textMax": "The text can be at most 2000 characters.",
         "limitRange": "Enter an integer from 1 to 100.",
-        "horizonRange": "Enter an integer from 0 to 3650."
-      }
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
+      },
+      "cancelCutoffLabel": "Cancellation cutoff",
+      "cancelCutoffNone": "No cutoff",
+      "cancelCutoffHoursMode": "N hours before the start",
+      "cancelCutoffHours": "Hours before the start",
+      "cancelCutoffHint": "Customers can cancel until this many hours before the start."
     }
   },
   "resourceVisual": {

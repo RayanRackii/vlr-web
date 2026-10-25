@@ -7,8 +7,9 @@ import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
+import { Badge, type badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import type { VariantProps } from "class-variance-authority"
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,19 @@ import {
   rejectCatalogOrder,
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
+
+const ORDER_STATUS_BADGE_VARIANT: Record<
+  CatalogOrder["status"],
+  NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+> = {
+  Requested: "secondary",
+  Approved: "info",
+  Preparing: "info",
+  Ready: "warning",
+  Completed: "success",
+  Rejected: "destructive",
+  Cancelled: "destructive",
+}
 
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
@@ -196,9 +210,11 @@ export function CatalogOrderDetailPage() {
   if (loadError || !order) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-destructive">
-          {loadError ?? t("apiErrors.loadCatalogOrder")}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>
+            {loadError ?? t("apiErrors.loadCatalogOrder")}
+          </AlertDescription>
+        </Alert>
         <Button type="button" variant="outline" onClick={() => void load()}>
           {t("catalog.retry")}
         </Button>
@@ -234,7 +250,9 @@ export function CatalogOrderDetailPage() {
             {order.customerEmail ? ` · ${order.customerEmail}` : ""}
           </p>
         </div>
-        <Badge variant="outline">{t(`catalog.status.${order.status}`)}</Badge>
+        <Badge variant={ORDER_STATUS_BADGE_VARIANT[order.status]}>
+          {t(`catalog.status.${order.status}`)}
+        </Badge>
       </div>
 
       {inactiveNamesForApproval.length > 0 ? (

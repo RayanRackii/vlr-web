@@ -13,6 +13,8 @@ import {
 } from "recharts"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -35,6 +37,7 @@ import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
+import { cn } from "@/lib/utils"
 
 const ASSET_PIE_COLORS = [
   "hsl(var(--chart-1, 142 76% 36%))",
@@ -78,27 +81,23 @@ function KpiCard({
   subtitle: string
   highlight?: boolean
 }) {
+  const highlightText = highlight
+    ? "text-[color-mix(in_oklch,var(--warning)_55%,var(--foreground))]"
+    : undefined
+
   return (
     <Card
       className={
-        highlight ? "border-amber-500/40 bg-amber-500/5" : undefined
+        highlight
+          ? "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_6%,var(--card))]"
+          : undefined
       }
     >
       <CardHeader>
-        <CardTitle
-          className={
-            highlight ? "text-amber-800 dark:text-amber-200" : undefined
-          }
-        >
-          {title}
-        </CardTitle>
+        <CardTitle className={highlightText}>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p
-          className={`text-3xl font-semibold tracking-tight ${
-            highlight ? "text-amber-800 dark:text-amber-200" : ""
-          }`}
-        >
+        <p className={cn("text-3xl font-semibold tracking-tight", highlightText)}>
           {value}
         </p>
         <CardDescription className="mt-1">{subtitle}</CardDescription>
@@ -199,12 +198,11 @@ export function DashboardPage() {
 
   if (roleError || !currentUser) {
     return (
-      <div
-        role="alert"
-        className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-      >
-        {roleError ?? t("dashboard.role.errors.loadFailed")}
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>
+          {roleError ?? t("dashboard.role.errors.loadFailed")}
+        </AlertDescription>
+      </Alert>
     )
   }
 
@@ -341,24 +339,14 @@ export function TenantAdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("dashboard.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.description")}
-        </p>
-      </div>
+      <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
 
       <RentalsReadinessCard />
 
       {loadError !== null ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {loadError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
       <section className="space-y-4">

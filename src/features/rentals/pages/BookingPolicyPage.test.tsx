@@ -400,4 +400,94 @@ describe("BookingPolicyPage", () => {
       })
     })
   })
+  it("sends null when the cancelCutoff changes to unlimited", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      cancelCutoffHours: 30,
+    })
+    renderPage()
+
+    await screen.findByLabelText(i18n.t("rentals.bookingPolicy.cancelCutoffHours"))
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffNone"),
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.bookingPolicy.save"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        cancelCutoffHours: null,
+      })
+    })
+  })
+
+  it("sends a number when a cancelCutoff is set and blocks values outside 0..8760", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      cancelCutoffHours: null,
+    })
+    renderPage()
+
+    await screen.findByLabelText(
+      i18n.t("rentals.bookingPolicy.cancellationLabel"),
+    )
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffHoursMode"),
+      }),
+    )
+
+    const days = screen.getByLabelText(
+      i18n.t("rentals.bookingPolicy.cancelCutoffHours"),
+    )
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.bookingPolicy.save"),
+    })
+    expect(save).toBeDisabled()
+
+    await user.type(days, "8761")
+    expect(save).toBeDisabled()
+    expect(replacePolicy).not.toHaveBeenCalled()
+
+    await user.clear(days)
+    await user.type(days, "0")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "8760")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "14")
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        cancelCutoffHours: 14,
+      })
+    })
+  })
 })

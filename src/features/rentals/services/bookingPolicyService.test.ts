@@ -180,3 +180,12 @@ describe("bookingPolicyService", () => {
     expect(apiGet).not.toHaveBeenCalled()
   })
 })
+
+
+it.each([undefined, null, 0, 8760])("preserves cutoff presence in PUT: %s", async (hours) => {
+  const base = { cancellationPolicyText: null, maxActiveReservationsPerCustomerPerDay: null }
+  const policy = hours === undefined ? base : { ...base, cancelCutoffHours: hours }
+  apiPut.mockResolvedValue({ data: policy })
+  await expect(replaceBookingPolicy(policy)).resolves.toEqual(policy)
+  expect(apiPut).toHaveBeenLastCalledWith("/api/rentals/booking-policy", policy)
+})

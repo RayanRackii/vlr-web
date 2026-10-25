@@ -1,3 +1,4 @@
+import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -177,15 +178,17 @@ function makeReservation(
   }
 }
 
-function renderAgenda(initialEntry = "/agenda") {
+function renderAgenda(initialEntry = "/agenda", timeZone = DEFAULT_TENANT_TIME_ZONE) {
   return render(
+    <TenantTimeZoneContext.Provider value={timeZone}>
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route element={<Outlet context={outletContext} />}>
           <Route path="/agenda" element={<TenantPortalAgendaPage />} />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </TenantTimeZoneContext.Provider>,
   )
 }
 
@@ -284,6 +287,44 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     fetchLayouts.mockResolvedValue([])
     fetchDay.mockResolvedValue({ date: "2026-09-08", slots: [] })
     listMine.mockResolvedValue([])
+  })
+
+  it("shows the cancellation deadline in the tenant timezone", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: "2099-01-15T12:00:00Z" })])
+    renderAgenda("/agenda", "Asia/Tokyo")
+    await waitForMineList()
+    expect(screen.getByText(i18n.t("tenantPortal.agenda.cancelDeadline", { when: "15/01/2099 21:00" }))).toBeInTheDocument()
+    expect(cancelButton()).toBeInTheDocument()
+  })
+
+  it("hides cancellation after the deadline even before the reservation starts", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: PAST_ISO })])
+    renderAgenda()
+    await waitForMineList()
+    expect(cancelButton()).not.toBeInTheDocument()
+  })
+
+  it("keeps cancellation available when the deadline is null", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: null })])
+    renderAgenda()
+    await waitForMineList()
+    expect(cancelButton()).toBeInTheDocument()
+    expect(screen.queryByText(/Cancelável até/)).not.toBeInTheDocument()
+  })
+
+  it("expires cancellation while the list is open", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] })
+    vi.setSystemTime(new Date("2026-10-14T12:00:00Z"))
+    try {
+      listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: "2026-10-14T12:00:01Z" })])
+      renderAgenda()
+      await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+      expect(cancelButton()).toBeInTheDocument()
+      await act(async () => { await vi.advanceTimersByTimeAsync(1001) })
+      expect(cancelButton()).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("shows Cancelar for a future PendingDeposit reservation", async () => {

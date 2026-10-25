@@ -120,6 +120,7 @@ export function RentalResourceSheet({
         queueOpeningTimeRequired: t(
           "rentals.resources.validation.queueOpeningTimeRequired",
         ),
+        cancelCutoffRange: t("rentals.resources.validation.cancelCutoffRange"),
         horizonRange: t("rentals.resources.validation.horizonRange"),
       }),
     [t],
@@ -149,6 +150,12 @@ export function RentalResourceSheet({
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
   const queueEnabled = watched.queueEnabled ?? false
+  const cancelCutoffMode = watched.cancelCutoffMode ?? "inherit"
+  const cancelCutoffItems = [
+    { value: "inherit", label: t("rentals.resources.form.cancelCutoffInherit") },
+    { value: "none", label: t("rentals.resources.form.cancelCutoffNone") },
+    { value: "hours", label: t("rentals.resources.form.cancelCutoffHours") },
+  ]
   const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
   const validation = formSchema.safeParse(watched)
   const isValid = validation.success
@@ -160,6 +167,10 @@ export function RentalResourceSheet({
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
     { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
   ]
+  const horizonEffectiveSourceKey =
+    editing?.maxAdvanceBookingDays != null
+      ? "rentals.resources.form.horizonEffectiveSourceResource"
+      : "rentals.resources.form.horizonEffectiveSourcePolicy"
 
   const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
   const canCreateUnit = can("core.units.write") && !readOnly
@@ -605,10 +616,8 @@ export function RentalResourceSheet({
                   editing.effectiveMaxAdvanceBookingDays !== undefined ? (
                     <p className="text-sm text-muted-foreground">
                       {editing.effectiveMaxAdvanceBookingDays === null
-                        ? t(
-                            "rentals.resources.form.horizonEffectiveUnlimited",
-                          )
-                        : t("rentals.resources.form.horizonEffectiveDays", {
+                        ? t(horizonEffectiveSourceKey, { context: "unlimited" })
+                        : t(horizonEffectiveSourceKey, {
                             count: editing.effectiveMaxAdvanceBookingDays,
                           })}
                     </p>
@@ -638,6 +647,83 @@ export function RentalResourceSheet({
                     </FormControl>
                     <FormDescription>
                       {t("rentals.resources.validation.horizonRange")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
+
+            <FormField
+              control={form.control}
+              name="cancelCutoffMode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("rentals.resources.form.cancelCutoffLabel")}</FormLabel>
+                  <Select
+                    modal={false}
+                    onValueChange={(value) => {
+                      if (
+                        value === "inherit" ||
+                        value === "none" ||
+                        value === "hours"
+                      ) {
+                        field.onChange(value)
+                      }
+                    }}
+                    value={field.value}
+                    items={cancelCutoffItems}
+                    disabled={readOnly}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cancelCutoffItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editing &&
+                  editing.effectiveCancelCutoffHours !== undefined ? (
+                    <p className="text-sm text-muted-foreground">
+                      {editing.effectiveCancelCutoffHours === null
+                        ? t(
+                            "rentals.resources.form.cancelCutoffEffectiveNone",
+                          )
+                        : t("rentals.resources.form.cancelCutoffEffectiveHours", {
+                            hours: editing.effectiveCancelCutoffHours,
+                          })}
+                    </p>
+                  ) : null}
+                </FormItem>
+              )}
+            />
+
+            {cancelCutoffMode === "hours" ? (
+              <FormField
+                control={form.control}
+                name="cancelCutoffHours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("rentals.resources.form.cancelCutoffHours")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        disabled={readOnly}
+                        min={0}
+                        max={8760}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("rentals.resources.validation.cancelCutoffRange")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

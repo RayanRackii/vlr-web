@@ -52,6 +52,7 @@ export function BookingPolicyPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [loadedCancelCutoff, setLoadedCancelCutoff] = useState<number | null | undefined>(undefined)
   const [loadedHorizon, setLoadedHorizon] = useState<
     number | null | undefined
   >(undefined)
@@ -61,6 +62,7 @@ export function BookingPolicyPage() {
       createBookingPolicyFormSchema({
         textMax: t("rentals.bookingPolicy.validation.textMax"),
         limitRange: t("rentals.bookingPolicy.validation.limitRange"),
+        cancelCutoffRange: t("rentals.bookingPolicy.validation.cancelCutoffRange"),
         horizonRange: t("rentals.bookingPolicy.validation.horizonRange"),
       }),
     [t],
@@ -75,6 +77,8 @@ export function BookingPolicyPage() {
       dailyLimit: "",
       horizonMode: "unlimited",
       horizonDays: "",
+      cancelCutoffMode: "none",
+      cancelCutoffHours: "",
     },
   })
   const { control, handleSubmit, reset } = form
@@ -86,13 +90,21 @@ export function BookingPolicyPage() {
   const watchedHorizonMode =
     useWatch({ control, name: "horizonMode" }) ?? "unlimited"
   const watchedHorizonDays = useWatch({ control, name: "horizonDays" }) ?? ""
+  const watchedCancelCutoffMode = useWatch({ control, name: "cancelCutoffMode" }) ?? "none"
+  const watchedCancelCutoffHours = useWatch({ control, name: "cancelCutoffHours" }) ?? ""
   const isValid = schema.safeParse({
     cancellationPolicyText: watchedText,
     dailyLimitEnabled: watchedLimitEnabled,
     dailyLimit: watchedLimit,
     horizonMode: watchedHorizonMode,
     horizonDays: watchedHorizonDays,
+    cancelCutoffMode: watchedCancelCutoffMode,
+    cancelCutoffHours: watchedCancelCutoffHours,
   }).success
+  const cancelCutoffItems = [
+    { value: "none", label: t("rentals.bookingPolicy.cancelCutoffNone") },
+    { value: "hours", label: t("rentals.bookingPolicy.cancelCutoffHoursMode") },
+  ]
   const horizonItems = [
     {
       value: "unlimited",
@@ -111,6 +123,7 @@ export function BookingPolicyPage() {
           return
         }
         setLoadedHorizon(policy.maxAdvanceBookingDays)
+        setLoadedCancelCutoff(policy.cancelCutoffHours)
         reset(bookingPolicyToFormValues(policy))
       } catch (error) {
         if (isCancelled()) {
@@ -147,9 +160,10 @@ export function BookingPolicyPage() {
     setSaving(true)
     try {
       const updated = await replaceBookingPolicy(
-        toBookingPolicyReplaceBody(values, loadedHorizon),
+        toBookingPolicyReplaceBody(values, loadedHorizon, loadedCancelCutoff),
       )
       setLoadedHorizon(updated.maxAdvanceBookingDays)
+      setLoadedCancelCutoff(updated.cancelCutoffHours)
       reset(bookingPolicyToFormValues(updated))
       toast.success(t("rentals.bookingPolicy.saved"))
     } catch (error) {
@@ -354,6 +368,69 @@ export function BookingPolicyPage() {
                     </FormControl>
                     <FormDescription>
                       {t("rentals.bookingPolicy.validation.horizonRange")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
+
+            <FormField
+              control={control}
+              name="cancelCutoffMode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("rentals.bookingPolicy.cancelCutoffLabel")}</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "none" || value === "hours") {
+                        field.onChange(value)
+                      }
+                    }}
+                    value={field.value}
+                    items={cancelCutoffItems}
+                    disabled={!canEdit || saving}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cancelCutoffItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {t("rentals.bookingPolicy.cancelCutoffHint")}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            {watchedCancelCutoffMode === "hours" ? (
+              <FormField
+                control={control}
+                name="cancelCutoffHours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("rentals.bookingPolicy.cancelCutoffHours")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        disabled={!canEdit || saving}
+                        min={0}
+                        max={8760}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("rentals.bookingPolicy.validation.cancelCutoffRange")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

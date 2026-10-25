@@ -3,6 +3,9 @@ import { z } from "zod"
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
 import {
+  cancelCutoffHoursSchema,
+  parseCancelCutoffHoursInput,
+  resolveCancelCutoffWrite,
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
   parseHorizonDaysInput,
@@ -33,6 +36,7 @@ export type CreateRentalCategoryRequest = z.infer<
 
 export const createRentableRequestSchema = z.object({
   name: z.string().trim().min(1),
+  cancelCutoffHours: cancelCutoffHoursSchema,
   unitId: guidLikeIdSchema,
   categoryId: guidLikeIdSchema,
   familyId: guidLikeIdSchema,
@@ -73,6 +77,7 @@ export function createRentalResourceFormSchema(messages: {
   quantityMin: string
   queueOpeningTimeRequired: string
   horizonRange: string
+  cancelCutoffRange?: string
 }) {
   return z
     .object({
@@ -95,6 +100,10 @@ export function createRentalResourceFormSchema(messages: {
       queueEnabled: z.boolean(),
       queueOpeningTime: z.string(),
       location: z.string(),
+      cancelCutoffMode: z.enum(["inherit", "none", "hours"]).optional(),
+      cancelCutoffHours: z.string().optional(),
+      // Loaded override travels with the form so unchanged writes stay omitted.
+      cancelCutoffStored: cancelCutoffHoursSchema,
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
       visualTemplateRevisionId: z.string(),
@@ -102,6 +111,9 @@ export function createRentalResourceFormSchema(messages: {
       confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
+      if (values.cancelCutoffMode === "hours" && parseCancelCutoffHoursInput(values.cancelCutoffHours ?? "") === null) {
+        ctx.addIssue({ code: "custom", path: ["cancelCutoffHours"], message: messages.cancelCutoffRange })
+      }
       if (
         values.rentalType === "Location" &&
         values.queueEnabled &&
@@ -196,6 +208,8 @@ export function toCreateRentableRequest(
         : null,
     location: values.location.trim() ? values.location.trim() : null,
   }
+  const cutoff = resolveCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
+  if (cutoff !== undefined) payload.cancelCutoffHours = cutoff
   const horizonWrite = resolveResourceHorizonWrite(
     values.horizonMode,
     values.horizonDays,
