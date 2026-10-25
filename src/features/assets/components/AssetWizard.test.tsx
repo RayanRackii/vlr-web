@@ -336,7 +336,7 @@ describe("AssetWizard pricing units", () => {
     await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: expect.arrayContaining([expect.objectContaining({ pricingUnit: unit, pricePerHour: 45 })]) }))
   })
 
-  it("loads the first row's unit when rows disagree and retains it on replacement bulk save", async () => {
+  it("keeps each row's unit when rows disagree and the user does not pick a unit", async () => {
     vi.mocked(getAssetPricings).mockResolvedValue(DAYS.map((dayOfWeek, index) => rentalPricingSchema.parse({
       id: CREATED_ID, tenantId: UNIT_ID, assetId: CREATED_ID, rentalAssetId: CREATED_ID,
       dayOfWeek, startTime: "08:00:00", endTime: "22:00:00", pricePerHour: 45,
@@ -352,7 +352,7 @@ describe("AssetWizard pricing units", () => {
     expect(screen.getByRole("spinbutton", { name: /^Preço por horário/ })).toHaveValue(45)
     await user.click(nextButton())
     await user.click(finishButton())
-    await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: Array(7).fill(expect.objectContaining({ pricingUnit: "Slot", pricePerHour: 45 })) }))
+    await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: DAYS.map((_, index) => expect.objectContaining({ pricingUnit: index === 0 ? "Slot" : "Day", pricePerHour: 45 })) }))
   })
 
 })

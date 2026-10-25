@@ -31,6 +31,8 @@ export type PricingPattern = "sameEveryDay" | "weekendSpecial" | "perDay"
 
 export type PricingEditorState = {
   pricingUnit: PricingUnit
+  /** Per-day units loaded from rows that disagree; kept on save until the user picks a unit. */
+  perDayUnits?: Partial<Record<DayOfWeek, PricingUnit>> | null
   pattern: PricingPattern
   startTime: string
   endTime: string
@@ -153,9 +155,16 @@ export function pricingEditorFromRows(
   const weekendPrice =
     pricesMatch(rows, ["Saturday", "Sunday"]) ?? everydayPrice
 
+  const firstUnit = rows[0]?.pricingUnit ?? "Hour"
+  const mixedUnits = rows.some((row) => (row.pricingUnit ?? "Hour") !== firstUnit)
+  const perDayUnits: Partial<Record<DayOfWeek, PricingUnit>> | null = mixedUnits
+    ? Object.fromEntries(rows.map((row) => [row.dayOfWeek, row.pricingUnit ?? "Hour"]))
+    : null
+
   return {
     pattern,
-    pricingUnit: rows[0]?.pricingUnit ?? "Hour",
+    pricingUnit: firstUnit,
+    perDayUnits,
     startTime,
     endTime,
     everydayPrice,
@@ -171,7 +180,7 @@ export function expandPricingEditor(
   if (state.pattern === "sameEveryDay") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
-      pricingUnit: state.pricingUnit,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: state.everydayPrice,
@@ -181,7 +190,7 @@ export function expandPricingEditor(
   if (state.pattern === "weekendSpecial") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
-      pricingUnit: state.pricingUnit,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: isWeekendDay(dayOfWeek)
@@ -192,7 +201,7 @@ export function expandPricingEditor(
 
   return DAYS.map((dayOfWeek) => ({
     dayOfWeek,
-    pricingUnit: state.pricingUnit,
+    pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
     startTime: state.startTime,
     endTime: state.endTime,
     pricePerHour: state.perDayPrices[dayOfWeek],

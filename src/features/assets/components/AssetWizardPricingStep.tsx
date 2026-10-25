@@ -37,7 +37,7 @@ export function AssetWizardPricingStep({
         <Label htmlFor="pricing-unit">{t("assets.wizard.pricing.unitLabel")}</Label>
         <Select value={pricing.pricingUnit} onValueChange={(value) => {
           const parsed = pricingUnitSchema.safeParse(value)
-          if (parsed.success) onChange({ pricingUnit: parsed.data })
+          if (parsed.success) onChange({ pricingUnit: parsed.data, perDayUnits: null })
         }}>
           <SelectTrigger id="pricing-unit"><SelectValue>{t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
           <SelectContent>
