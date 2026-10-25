@@ -156,6 +156,7 @@ export function ReservationsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
       <PageHeader
+        icon={CalendarRange}
         title={t("rentals.reservations.title")}
         description={t("rentals.reservations.description")}
       />
@@ -169,7 +170,7 @@ export function ReservationsPage() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:grid-cols-2">
         <label className="space-y-1 text-sm">
           <span>{t("rentals.reservations.date")}</span>
           <LocaleDateInput
@@ -229,7 +230,7 @@ export function ReservationsPage() {
       ) : rows.length === 0 ? (
         <EmptyState icon={CalendarRange} title={t("rentals.reservations.empty")} />
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border">
+        <ul className="divide-y divide-border rounded-xl border border-border bg-card shadow-sm">
           {rows.map((row) => {
             const canConfirm = row.status === "PendingDeposit"
             const canComplete =
@@ -241,7 +242,7 @@ export function ReservationsPage() {
             return (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 px-3 py-3 text-sm transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 px-4 py-3.5 text-sm motion-safe:transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">

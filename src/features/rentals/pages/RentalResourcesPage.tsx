@@ -154,6 +154,7 @@ export function RentalResourcesPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader
+        icon={Boxes}
         title={t("rentals.resources.title")}
         description={t("rentals.resources.description")}
         actions={
@@ -188,7 +189,7 @@ export function RentalResourcesPage() {
             <li key={asset.id}>
               <button
                 type="button"
-                className="group flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 text-left shadow-sm motion-safe:transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
                   openEdit(asset)
                 }}
