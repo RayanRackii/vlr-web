@@ -1,6 +1,6 @@
 import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
-import { CalendarIcon, Check, CheckCheck, Loader2 } from "lucide-react"
+import { CalendarIcon, Check, CheckCheck, Loader2, Minus, Plus } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -357,6 +357,8 @@ export function TenantPortalAgendaPage() {
   }, [subdomain])
   const selectRentalAsset = useCallback((rentalAssetId: string) => {
     clearAgendaSelectionNotice(subdomain)
+    setQuantity(1)
+    setLastAvailableQuantity(null)
     selectionRef.current = rentalAssetId
     setSelectedRentalAssetId(rentalAssetId)
   }, [subdomain])
@@ -398,9 +400,17 @@ export function TenantPortalAgendaPage() {
   const [quote, setQuote] = useState<
     | { status: "idle" }
     | { status: "loading" }
-    | { status: "ready"; amount: number | null }
+    | {
+        status: "ready"
+        amount: number | null
+        availableQuantity: number
+        quantity: number
+        selectionKey: string
+      }
     | { status: "error" }
   >({ status: "idle" })
+  const [quantity, setQuantity] = useState(1)
+  const [lastAvailableQuantity, setLastAvailableQuantity] = useState<number | null>(null)
   const [layoutItems, setLayoutItems] = useState<
     {
       rentalAssetId: string
@@ -982,30 +992,48 @@ export function TenantPortalAgendaPage() {
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
-  const quoteUnavailable = quote.status === "ready" && quote.amount === null
+  const quoteSelectionKey = quoteAssetId && quoteStart && quoteEnd
+    ? `${date}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
+    : null
+  const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
+  const isMultiUnitGood = selectedAsset !== undefined &&
+    selectedAsset.type.toLowerCase() === "good" && selectedAssetQuantity > 1
+  const quantityMax = isMultiUnitGood
+    ? Math.max(1, Math.min(selectedAssetQuantity, lastAvailableQuantity ?? selectedAssetQuantity))
+    : 1
+  const quoteCurrent = quote.status === "ready" && quote.selectionKey === quoteSelectionKey
+  const quoteUnavailable = quoteCurrent && quote.amount === null
 
   useEffect(() => {
-    if (!quoteAssetId || !quoteStart || !quoteEnd) {
+    if (!quoteAssetId || !quoteStart || !quoteEnd || quoteSelectionKey === null) {
       setQuote({ status: "idle" })
       return
     }
 
     let cancelled = false
+    const selectionKey = quoteSelectionKey
     setQuote({ status: "loading" })
     void checkPortalAvailability(subdomain, {
       assetId: quoteAssetId,
       date,
       startTime: quoteStart,
       endTime: quoteEnd,
-      quantity: 1,
+      quantity,
     })
       .then((result) => {
         if (cancelled) {
           return
         }
+        setLastAvailableQuantity(result.availableQuantity)
+        if (result.availableQuantity < quantity) {
+          setQuantity(Math.max(1, result.availableQuantity))
+        }
         setQuote({
           status: "ready",
           amount: result.isAvailable ? result.estimatedTotalAmount : null,
+          availableQuantity: result.availableQuantity,
+          quantity,
+          selectionKey,
         })
       })
       .catch((error: unknown) => {
@@ -1025,7 +1053,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, quoteAssetId, quoteEnd, quoteStart, subdomain])
+  }, [date, quantity, quoteAssetId, quoteEnd, quoteSelectionKey, quoteStart, subdomain])
 
   const queueEnabled = isLocationQueueEnabled(selectedAsset)
   const queue = useReservationQueue({
@@ -1210,7 +1238,7 @@ export function TenantPortalAgendaPage() {
       !selectedSlot ||
       !spaceState(selectedAsset.id).available ||
       submittingRef.current ||
-      quote.status === "loading" ||
+      !quoteCurrent ||
       quoteUnavailable
     ) {
       return
@@ -1258,7 +1286,8 @@ export function TenantPortalAgendaPage() {
           timeZoneId,
         )
         return start !== null && reservation.items.some((item) =>
-          agendaReservedSlotKey(start.date, item.rentalAssetId, start.time) === targetKey,
+          agendaReservedSlotKey(start.date, item.rentalAssetId, start.time) === targetKey &&
+          item.quantity === quantity,
         )
       }) ?? null
     }
@@ -1272,16 +1301,16 @@ export function TenantPortalAgendaPage() {
             ? bookPortalSlot({
                 slotId: slot.id,
                 unitId: asset.unitId,
-                quantity: 1,
-                expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
+                quantity,
+                expectedTotalAmount: quoteCurrent ? quote.amount : null,
               })
             : createPortalReservation({
                 unitId: asset.unitId,
                 date: dayDate,
                 startTime: slot.startTime.slice(0, 5),
                 endTime: bookingEndClock(slot.endTime),
-                items: [{ assetId: asset.assetId, quantity: 1 }],
-                expectedTotalAmount: quote.status === "ready" ? quote.amount : null,
+                items: [{ assetId: asset.assetId, quantity }],
+                expectedTotalAmount: quoteCurrent ? quote.amount : null,
               }),
         { subdomain, dates: [dayDate], timeZoneId },
         {
@@ -1419,7 +1448,7 @@ export function TenantPortalAgendaPage() {
   async function onJoinAndReserve() {
     if (schedulePending || slotsError || !selectedSlot ||
       !spaceState(selectedSlot.rentalAssetId).available ||
-      submittingRef.current || joinAndReserveLock.current || quoteUnavailable) {
+      submittingRef.current || joinAndReserveLock.current || !quoteCurrent || quoteUnavailable) {
       return
     }
     const generation = getAgendaSessionGeneration()
@@ -1585,6 +1614,8 @@ export function TenantPortalAgendaPage() {
     setSlots([])
     setObservedSlots([])
     setSlotsBelongToDate(nextDate)
+    setQuantity(1)
+    setLastAvailableQuantity(null)
     setSelectedRentalAssetId(null)
     setDate(nextDate)
   }
@@ -1599,6 +1630,8 @@ export function TenantPortalAgendaPage() {
     setSelectedDuration(minutes)
     preferredTimeRef.current = ""
     setStartTime("")
+    setQuantity(1)
+    setLastAvailableQuantity(null)
     selectionRef.current = null
     setSelectedRentalAssetId(null)
   }
@@ -1770,7 +1803,9 @@ export function TenantPortalAgendaPage() {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <p className="font-semibold text-foreground">
             {reservation.items
-              .map((item) => item.assetName)
+              .map((item) =>
+                item.quantity > 1 ? `${item.assetName} ×${item.quantity}` : item.assetName,
+              )
               .join(", ")}
           </p>
           <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
@@ -1905,6 +1940,8 @@ export function TenantPortalAgendaPage() {
                   }
                   preferredTimeRef.current = value
                   setStartTime(value)
+                  setQuantity(1)
+                  setLastAvailableQuantity(null)
                   setSelectedRentalAssetId(null)
                 }}
                 items={timeItems}
@@ -2143,6 +2180,7 @@ export function TenantPortalAgendaPage() {
                 disabled={queue.view.joinAndReserve && (
                   schedulePending || slotsError || !selectedSlot ||
                   !spaceState(selectedSlot.rentalAssetId).available ||
+                  !quoteCurrent ||
                   quoteUnavailable
                 )}
                 loading={queue.joining}
@@ -2233,13 +2271,48 @@ export function TenantPortalAgendaPage() {
             </p>
           ) : null}
 
+          {isMultiUnitGood ? (
+            <div className="flex items-center gap-2" role="group" aria-label={t("bookingMap.quantity")}>
+              <span className="text-sm font-medium">{t("bookingMap.quantity")}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label={`${t("bookingMap.quantity")} −`}
+                disabled={quantity <= 1}
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+              >
+                <Minus className="size-4" aria-hidden />
+              </Button>
+              <output className="min-w-6 text-center tabular-nums" aria-label={t("bookingMap.quantity")}>
+                {quantity}
+              </output>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label={`${t("bookingMap.quantity")} +`}
+                disabled={quantity >= quantityMax}
+                onClick={() => setQuantity((current) => Math.min(quantityMax, current + 1))}
+              >
+                <Plus className="size-4" aria-hidden />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {t("bookingMap.unitsLeft", {
+                  left: quantityMax,
+                  total: selectedAssetQuantity,
+                })}
+              </span>
+            </div>
+          ) : null}
+
           {quote.status === "loading" ? (
             <p className="text-sm text-muted-foreground">
               {t("tenantPortal.agenda.quoteLoading")}
             </p>
           ) : null}
 
-          {quote.status === "ready" && quote.amount !== null ? (
+          {quoteCurrent && quote.amount !== null ? (
             <p className="text-sm font-medium">
               {t("tenantPortal.agenda.available", {
                 amount: formatBookingMoney(quote.amount),
@@ -2247,7 +2320,7 @@ export function TenantPortalAgendaPage() {
             </p>
           ) : null}
 
-          {!schedulePending && quote.status === "ready" && quote.amount === null ? (
+          {!schedulePending && quoteUnavailable ? (
             <p className="text-sm text-muted-foreground">
               {t("tenantPortal.agenda.slotTaken")}
             </p>
@@ -2273,7 +2346,7 @@ export function TenantPortalAgendaPage() {
               (selectedRentalAssetId !== null &&
                 !spaceState(selectedRentalAssetId).available) ||
               !queue.canReserve ||
-              quote.status === "loading" ||
+              !quoteCurrent ||
               quoteUnavailable
             }
             onClick={() => {
