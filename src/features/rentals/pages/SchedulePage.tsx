@@ -1,8 +1,10 @@
+import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   DailyAgendaTab,
@@ -51,10 +53,13 @@ import {
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
-import { cn } from "@/lib/utils"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
+
+function isScheduleTab(value: unknown): value is ScheduleTab {
+  return value === "daily" || value === "templates" || value === "kinds"
+}
 
 function dayCacheKey(rentalAssetIds: readonly string[], date: string): string {
   return `${[...rentalAssetIds].sort().join(",")}|${date}`
@@ -644,10 +649,14 @@ function AdminSchedulePage() {
     }
   }
 
-  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
+  const tabItems: {
+    id: ScheduleTab
+    labelKey: string
+    icon: typeof CalendarDays
+  }[] = [
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily", icon: CalendarDays },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates", icon: CalendarRange },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", icon: Tag },
   ]
 
   const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
@@ -672,32 +681,28 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto border-b border-border">
-          <nav
-            className="-mb-px flex w-max min-w-full justify-start gap-6 sm:justify-center sm:gap-8"
-            aria-label={t("nav.menu")}
+        <div className="overflow-x-auto">
+          <Tabs
+            value={tab}
+            onValueChange={(value) => {
+              if (isScheduleTab(value)) {
+                setTab(value)
+              }
+            }}
           >
-            {tabItems.map((item) => {
-              const isActive = tab === item.id
-              return (
-                <button
+            <TabsList className="mx-auto h-auto w-max min-w-full sm:min-w-0">
+              {tabItems.map((item) => (
+                <TabsTrigger
                   key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setTab(item.id)
-                  }}
-                  className={cn(
-                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
-                    isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                  )}
+                  value={item.id}
+                  className="!h-auto gap-1.5 px-3 py-1.5"
                 >
+                  <item.icon aria-hidden className="size-3.5" />
                   {t(item.labelKey)}
-                </button>
-              )
-            })}
-          </nav>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 

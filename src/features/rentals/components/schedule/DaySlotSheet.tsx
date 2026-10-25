@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { CalendarClock } from "lucide-react"
 
 import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -114,14 +115,21 @@ function DaySlotSheetForm({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-[420px]">
         <SheetHeader className="border-b border-border">
-          <SheetTitle>{t("rentals.schedule.occurrence.editTitle")}</SheetTitle>
-          <SheetDescription>
-            {target.assetName}
-            <span className="block">
-              {formatDisplayDate(target.date)} · {formatScheduleTime(target.startTime)}–
-              {formatScheduleTime(target.endTime)}
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <CalendarClock className="size-4" aria-hidden />
             </span>
-          </SheetDescription>
+            <div className="space-y-0.5">
+              <SheetTitle>{t("rentals.schedule.occurrence.editTitle")}</SheetTitle>
+              <SheetDescription>
+                {target.assetName}
+                <span className="block">
+                  {formatDisplayDate(target.date)} · {formatScheduleTime(target.startTime)}–
+                  {formatScheduleTime(target.endTime)}
+                </span>
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4">
@@ -281,7 +289,7 @@ function DaySlotSheetForm({
           )}
         </div>
 
-        <SheetFooter className="border-t border-border bg-background">
+        <SheetFooter>
           {isBooked ? (
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.close")}
