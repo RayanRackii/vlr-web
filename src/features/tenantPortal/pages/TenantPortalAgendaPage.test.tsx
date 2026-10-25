@@ -297,11 +297,31 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelButton()).toBeInTheDocument()
   })
 
+  it("shows the cancellation deadline in the confirm dialog", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, {
+        cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+      }),
+    ])
+    renderAgenda("/agenda", "Asia/Tokyo")
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(dialog).toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancelDeadline", { when: "15/01/2099 21:00" }),
+    )
+  })
+
   it("hides cancellation after the deadline even before the reservation starts", async () => {
     listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: PAST_ISO })])
     renderAgenda()
     await waitForMineList()
     expect(cancelButton()).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.cancelCutoffReason")),
+    ).toBeInTheDocument()
   })
 
   it("keeps cancellation available when the deadline is null", async () => {
@@ -382,7 +402,11 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
   })
 
   it("hides Cancelar for Canceled", async () => {
-    listMine.mockResolvedValue([makeReservation("Canceled", FUTURE_ISO)])
+    listMine.mockResolvedValue([
+      makeReservation("Canceled", FUTURE_ISO, {
+        cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+      }),
+    ])
     renderAgenda()
     const row = (await screen.findByText("Quadra 1")).closest("li")
 
@@ -391,6 +415,10 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(row).not.toHaveTextContent(formatMoney(80))
     expect(row).not.toHaveTextContent(
       i18n.t("tenantPortal.agenda.total", { amount: formatMoney(80) }),
+    )
+    expect(row).not.toHaveTextContent(/Cancelável até/)
+    expect(row).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancelCutoffReason"),
     )
   })
 
@@ -1684,6 +1712,35 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(
       screen.getByRole("button", {
         name: `Quadra 1. ${i18n.t("tenantPortal.agenda.yourReservation")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("shows remaining free units on the Sua reserva tile for a multi-unit resource", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), totalQuantity: 3 },
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", SLOT_08_ISO, {
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            assetId: ASSET_A_ASSET_ID,
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            quantity: 1,
+            unitPrice: 80,
+            subTotal: 80,
+          },
+        ],
+      }),
+    ])
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnitsFree", { left: 2, total: 3 })}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
   })
