@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/PageHeader"
-import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { CardGridSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
@@ -292,7 +292,7 @@ export function PortalCatalogPage() {
 
       <div className="mt-6">
         {loading ? (
-          <PageContentSkeleton rows={4} />
+          <CardGridSkeleton />
         ) : products.length === 0 ? (
           <EmptyState
             icon={ShoppingBag}

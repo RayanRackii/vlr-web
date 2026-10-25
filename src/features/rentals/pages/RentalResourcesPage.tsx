@@ -198,6 +198,11 @@ export function RentalResourcesPage() {
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium">{asset.name}</p>
+                    {asset.scheduledDeletionAt ? (
+                      <Badge variant="destructive" className="shrink-0">
+                        {t("assets.deletion.pendingBadge")}
+                      </Badge>
+                    ) : null}
                     <Badge variant="outline">
                       {asset.type === "Good"
                         ? t("rentals.resources.typeGood")

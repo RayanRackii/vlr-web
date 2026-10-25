@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { PriceInput } from "@/features/assets/components/PriceInput"
 import {
   DAYS,
   type PricingEditorState,
@@ -112,15 +113,11 @@ export function AssetWizardPricingStep({
             help={t("assets.wizard.pricing.everydayPriceHelp")}
             required
           />
-          <Input
+          <PriceInput
             id="pricing-everyday"
-            type="number"
-            min={0}
-            step="0.01"
             value={pricing.everydayPrice}
-            aria-invalid={invalid || undefined}
-            onChange={(event) => {
-              const next = event.target.valueAsNumber
+            invalid={invalid}
+            onChange={(next) => {
               onChange({
                 everydayPrice: next,
                 weekdayPrice: next,
@@ -140,15 +137,12 @@ export function AssetWizardPricingStep({
               help={t("assets.wizard.pricing.weekdayPriceHelp")}
               required
             />
-            <Input
+            <PriceInput
               id="pricing-weekday"
-              type="number"
-              min={0}
-              step="0.01"
               value={pricing.weekdayPrice}
-              aria-invalid={invalid || undefined}
-              onChange={(event) => {
-                onChange({ weekdayPrice: event.target.valueAsNumber })
+              invalid={invalid}
+              onChange={(next) => {
+                onChange({ weekdayPrice: next })
               }}
             />
           </div>
@@ -159,15 +153,12 @@ export function AssetWizardPricingStep({
               help={t("assets.wizard.pricing.weekendPriceHelp")}
               required
             />
-            <Input
+            <PriceInput
               id="pricing-weekend"
-              type="number"
-              min={0}
-              step="0.01"
               value={pricing.weekendPrice}
-              aria-invalid={invalid || undefined}
-              onChange={(event) => {
-                onChange({ weekendPrice: event.target.valueAsNumber })
+              invalid={invalid}
+              onChange={(next) => {
+                onChange({ weekendPrice: next })
               }}
             />
           </div>
@@ -184,23 +175,21 @@ export function AssetWizardPricingStep({
             {DAYS.map((day) => (
               <li
                 key={day}
-                className="grid grid-cols-[1fr_8rem] items-center gap-3"
+                className="grid grid-cols-[1fr_8rem] items-start gap-3"
               >
                 <Label htmlFor={`pricing-day-${day}`}>
                   {t(`assets.detail.days.${day}`)}
                 </Label>
-                <Input
+                <PriceInput
                   id={`pricing-day-${day}`}
-                  type="number"
-                  min={0}
-                  step="0.01"
                   value={pricing.perDayPrices[day]}
-                  aria-invalid={invalid || undefined}
-                  onChange={(event) => {
+                  invalid={invalid}
+                  allowEmpty
+                  onChange={(next) => {
                     onChange({
                       perDayPrices: {
                         ...pricing.perDayPrices,
-                        [day]: event.target.valueAsNumber,
+                        [day]: next,
                       },
                     })
                   }}
