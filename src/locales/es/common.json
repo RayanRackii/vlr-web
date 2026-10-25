@@ -3078,6 +3078,10 @@
           "booked": "Reservado",
           "unavailable": "Indisponible"
         },
+        "unitsBooked": "Reservado · {{booked}} de {{total}}",
+        "unitsFree_one": "{{count}} libre",
+        "unitsFree_other": "{{count}} libres",
+        "unitsChooserTitle": "Elija una reserva",
         "source": {
           "weeklyDefault": "Estándar semanal",
           "dailyOverride": "Ajuste de este día"
@@ -3351,6 +3355,10 @@
       "confirmError": "No se pudo confirmar la reserva.",
       "cancelSuccess": "Reserva cancelada.",
       "cancelError": "No se pudo cancelar la reserva.",
+      "cancelConfirmTitle": "¿Cancelar la reserva?",
+      "cancelConfirmDescription": "Esta acción no se puede deshacer.",
+      "cancelConfirmDismiss": "Mantener reserva",
+      "cancelConfirmAction": "Cancelar reserva",
       "completeSuccess": "Reserva completada.",
       "completeError": "No se pudo completar la reserva.",
       "statuses": {

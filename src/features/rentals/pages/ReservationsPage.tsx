@@ -9,6 +9,15 @@ import { CalendarRange } from "lucide-react"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -58,6 +67,7 @@ export function ReservationsPage() {
   const [rows, setRows] = useState<AdminReservation[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<AdminReservation | null>(null)
 
   const requestSeq = useRef(0)
 
@@ -113,6 +123,7 @@ export function ReservationsPage() {
     try {
       await cancelAdminReservation(id)
       toast.success(t("rentals.reservations.cancelSuccess"))
+      setCancelTarget(null)
       await load({ keepRows: true })
     } catch (error) {
       toast.error(
@@ -288,7 +299,7 @@ export function ReservationsPage() {
                       loading={busyId === row.id}
                       disabled={isTrialReadOnly}
                       onClick={() => {
-                        void onCancel(row.id)
+                        setCancelTarget(row)
                       }}
                     >
                       {t("rentals.reservations.cancel")}
@@ -300,6 +311,51 @@ export function ReservationsPage() {
           })}
         </ul>
       )}
+
+      <AlertDialog
+        open={cancelTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && busyId === null) setCancelTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("rentals.reservations.cancelConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("rentals.reservations.cancelConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {cancelTarget ? (
+            <div className="space-y-1 text-sm">
+              <p className="font-medium">{cancelTarget.customerName}</p>
+              <p className="text-muted-foreground">
+                {formatReservationAssets(cancelTarget)}
+              </p>
+              <p className="text-muted-foreground">
+                {formatReservationRange(
+                  cancelTarget.startDateTime,
+                  cancelTarget.endDateTime,
+                  timeZoneId,
+                )}
+              </p>
+            </div>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelTarget !== null && busyId === cancelTarget.id}>
+              {t("rentals.reservations.cancelConfirmDismiss")}
+            </AlertDialogCancel>
+            <LoadingButton
+              variant="destructive"
+              loading={cancelTarget !== null && busyId === cancelTarget.id}
+              onClick={() => {
+                if (cancelTarget) void onCancel(cancelTarget.id)
+              }}
+            >
+              {t("rentals.reservations.cancelConfirmAction")}
+            </LoadingButton>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
