@@ -100,14 +100,16 @@ function AdminSchedulePage() {
   const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
-  const [scheduleTemplates, setScheduleTemplates] = useState<ScheduleTemplate[]>([])
+  const [scheduleTemplatesState, setScheduleTemplatesState] = useState<{
+    key: string
+    list: ScheduleTemplate[]
+  } | null>(null)
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
   const [loadingDay, setLoadingDay] = useState(false)
   const [showDaySkeleton, setShowDaySkeleton] = useState(false)
   const [loadingTemplates, setLoadingTemplates] = useState(false)
-  const [loadingScheduleTemplates, setLoadingScheduleTemplates] = useState(false)
   const [showTemplateSkeleton, setShowTemplateSkeleton] = useState(false)
   const [busy, setBusy] = useState(false)
   const [busyAction, setBusyAction] = useState<ScheduleBusyAction>(null)
@@ -241,16 +243,16 @@ function AdminSchedulePage() {
   }, [selectedRentalAssetIds, weekday])
 
   const refreshScheduleTemplates = useCallback(async () => {
-    if (selectedRentalAssetIds.length === 0) {
-      setScheduleTemplates([])
-      return
-    }
+    if (selectedRentalAssetIds.length === 0) return
     const list = await listScheduleTemplates(
       undefined,
       selectedRentalAssetIds,
       undefined,
     )
-    setScheduleTemplates(list.filter((template) => template.isActive))
+    setScheduleTemplatesState({
+      key: selectedRentalAssetIds.join(","),
+      list: list.filter((template) => template.isActive),
+    })
   }, [selectedRentalAssetIds])
 
   useEffect(() => {
@@ -306,20 +308,16 @@ function AdminSchedulePage() {
   }, [selectedRentalAssetIds, date, t])
 
   useEffect(() => {
-    if (selectedRentalAssetIds.length === 0) {
-      setScheduleTemplates([])
-      setLoadingScheduleTemplates(false)
-      return
-    }
-
+    if (selectedRentalAssetIds.length === 0) return
     let cancelled = false
-    setLoadingScheduleTemplates(true)
-    setScheduleTemplates([])
-
+    const key = selectedRentalAssetIds.join(",")
     void listScheduleTemplates(undefined, selectedRentalAssetIds, undefined)
       .then((list) => {
         if (!cancelled) {
-          setScheduleTemplates(list.filter((template) => template.isActive))
+          setScheduleTemplatesState({
+            key,
+            list: list.filter((template) => template.isActive),
+          })
         }
       })
       .catch((error) => {
@@ -329,11 +327,6 @@ function AdminSchedulePage() {
               ? error.message
               : t("rentals.schedule.loadError"),
           )
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoadingScheduleTemplates(false)
         }
       })
 
@@ -656,6 +649,13 @@ function AdminSchedulePage() {
     { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
     { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
   ]
+
+  const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
+  const loadingScheduleTemplates = selectedRentalAssetIds.length > 0 &&
+    scheduleTemplatesState?.key !== scheduleTemplatesKey
+  const scheduleTemplates = loadingScheduleTemplates || !scheduleTemplatesState
+    ? []
+    : scheduleTemplatesState.list
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6">
