@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -13,12 +15,17 @@ export function PageContentSkeleton({
   rows = 4,
   className,
 }: PageContentSkeletonProps) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn("space-y-4", className)}
       role="status"
       aria-busy="true"
     >
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
+        {t("common.loading")}
+      </p>
       <div className="space-y-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72 max-w-full" />

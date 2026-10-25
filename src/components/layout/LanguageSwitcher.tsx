@@ -59,6 +59,7 @@ export function LanguageSwitcher({
             size="sm"
             className={className}
             aria-label={t("language.label")}
+            title={t("language.label")}
           />
         }
       >

@@ -107,6 +107,12 @@ function renderPage(permissions: readonly string[] = WRITE_PERMS) {
   )
 }
 
+async function openPricingTab(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }),
+  )
+}
+
 function expectNoForbiddenCopy(container: HTMLElement) {
   const text = container.textContent ?? ""
   expect(text).not.toMatch(/Asset Registry/i)
@@ -481,6 +487,7 @@ describe("RentalResourcesPage", () => {
       | "rentals.resources.form.horizonUnlimited"
       | "rentals.resources.form.horizonDaysMode",
   ) {
+    await openPricingTab(user)
     await user.click(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.horizonLabel"),
@@ -585,6 +592,11 @@ describe("RentalResourcesPage", () => {
 
     const { unmount } = renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await openPricingTab(user)
     expect(
       screen.getByText(
         i18n.t("rentals.resources.form.horizonEffectiveSourceResource", {
@@ -592,10 +604,6 @@ describe("RentalResourcesPage", () => {
         }),
       ),
     ).toBeInTheDocument()
-    await user.type(
-      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
-      "Q-01",
-    )
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -610,11 +618,11 @@ describe("RentalResourcesPage", () => {
     updateMock.mockClear()
     renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
-    await chooseHorizon(user, "rentals.resources.form.horizonInherit")
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
     )
+    await chooseHorizon(user, "rentals.resources.form.horizonInherit")
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -650,6 +658,7 @@ describe("RentalResourcesPage", () => {
 
     renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
 
     expect(
       screen.getByText(
@@ -684,6 +693,7 @@ describe("RentalResourcesPage", () => {
     renderPage(["rentals.assets.read"])
 
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
     expect(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.horizonLabel"),
@@ -710,6 +720,7 @@ describe("RentalResourcesPage", () => {
       | "rentals.resources.form.cancelCutoffNone"
       | "rentals.resources.form.cancelCutoffHours",
   ) {
+    await openPricingTab(user)
     await user.click(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
@@ -814,15 +825,16 @@ describe("RentalResourcesPage", () => {
 
     const { unmount } = renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await openPricingTab(user)
     expect(
       screen.getByText(
         i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { hours: 8 }),
       ),
     ).toBeInTheDocument()
-    await user.type(
-      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
-      "Q-01",
-    )
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -837,11 +849,11 @@ describe("RentalResourcesPage", () => {
     updateMock.mockClear()
     renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
-    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffInherit")
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
     )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffInherit")
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -877,6 +889,7 @@ describe("RentalResourcesPage", () => {
     renderPage(["rentals.assets.read"])
 
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
     expect(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.cancelCutoffLabel"),

@@ -8,6 +8,8 @@ type RentalResourceDetailsProps = {
   asset: AdminRentalAsset
   pricePerHour: number | null | undefined
   pricingUnit?: PricingUnit
+  /** List rows: price as a bold chip, duration/capacity as quiet text, empty capacity hidden. */
+  compact?: boolean
 }
 
 function formatAllowedDurations(
@@ -28,22 +30,41 @@ function formatAllowedDurations(
     .join(", ")
 }
 
-export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour" }: RentalResourceDetailsProps) {
+export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour", compact = false }: RentalResourceDetailsProps) {
   const { i18n, t } = useTranslation()
   const durations = formatAllowedDurations(asset.allowedDurationMinutes, t)
-  const details = [
+  const priceLabel =
     pricePerHour != null
       ? t(`rentals.resources.details.prices.${pricingUnit}`, { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })
-      : null,
+      : null
+  const hasCapacity = typeof asset.capacityPeople === "number" && asset.capacityPeople > 0
+  const meta = [
     durations !== null ? t("rentals.resources.details.allowedDurations", { durations }) : null,
-    typeof asset.capacityPeople === "number" && asset.capacityPeople > 0
+    hasCapacity
       ? t("rentals.resources.details.capacity", { count: asset.capacityPeople })
-      : t("rentals.resources.details.capacityUnknown"),
+      : compact
+        ? null
+        : t("rentals.resources.details.capacityUnknown"),
   ].filter((detail): detail is string => detail !== null)
 
-  if (details.length === 0) return null
+  if (!compact) {
+    const details = [priceLabel, ...meta].filter((detail): detail is string => detail !== null)
+    if (details.length === 0) return null
+    return <p className="text-xs text-muted-foreground">{details.join(" · ")}</p>
+  }
+
+  if (priceLabel === null && meta.length === 0) return null
 
   return (
-    <p className="text-xs text-muted-foreground">{details.join(" · ")}</p>
+    <div className="flex flex-wrap items-center gap-1.5">
+      {priceLabel ? (
+        <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+          {priceLabel}
+        </span>
+      ) : null}
+      {meta.length > 0 ? (
+        <span className="text-xs text-muted-foreground">{meta.join(" · ")}</span>
+      ) : null}
+    </div>
   )
 }

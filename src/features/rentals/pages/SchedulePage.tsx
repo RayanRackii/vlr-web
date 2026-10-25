@@ -652,11 +652,12 @@ function AdminSchedulePage() {
   const tabItems: {
     id: ScheduleTab
     labelKey: string
+    shortLabelKey: string
     icon: typeof CalendarDays
   }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily", icon: CalendarDays },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates", icon: CalendarRange },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", icon: Tag },
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily", shortLabelKey: "rentals.schedule.tabs.dailyShort", icon: CalendarDays },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates", shortLabelKey: "rentals.schedule.tabs.templatesShort", icon: CalendarRange },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", shortLabelKey: "rentals.schedule.tabs.kindsShort", icon: Tag },
   ]
 
   const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
@@ -681,29 +682,28 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <Tabs
-            value={tab}
-            onValueChange={(value) => {
-              if (isScheduleTab(value)) {
-                setTab(value)
-              }
-            }}
-          >
-            <TabsList className="mx-auto h-auto w-max min-w-full sm:min-w-0">
-              {tabItems.map((item) => (
-                <TabsTrigger
-                  key={item.id}
-                  value={item.id}
-                  className="!h-auto gap-1.5 px-3 py-1.5"
-                >
-                  <item.icon aria-hidden className="size-3.5" />
-                  {t(item.labelKey)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            if (isScheduleTab(value)) {
+              setTab(value)
+            }
+          }}
+        >
+          <TabsList className="mx-auto grid h-auto w-full grid-cols-3 gap-1 sm:flex sm:w-max">
+            {tabItems.map((item) => (
+              <TabsTrigger
+                key={item.id}
+                value={item.id}
+                className="!h-auto gap-1.5 px-2 py-1.5 sm:px-3"
+              >
+                <item.icon aria-hidden className="size-3.5 shrink-0" />
+                <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
+                <span className="hidden sm:inline">{t(item.labelKey)}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       <div className="mt-8">

@@ -42,6 +42,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       size="icon-sm"
       className={className}
       aria-label={t("theme.toggle")}
+      title={t("theme.toggle")}
       onClick={() => {
         setTheme(isDark ? "light" : "dark")
       }}

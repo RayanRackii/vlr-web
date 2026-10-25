@@ -173,15 +173,19 @@ export function AppShell({
                 setIsMobileMenuOpen(true)
               }}
               aria-label={t("nav.openMenu")}
+              title={t("nav.openMenu")}
             >
               <Menu strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight">
+              {/* The page body already renders its own H1; keep the top-bar title for
+                  mobile (sidebar/nav hidden there) and demote it on larger screens so it
+                  doesn't read as a duplicate heading. */}
+              <p className="truncate text-sm font-semibold tracking-tight lg:hidden">
                 {pageTitle}
               </p>
-              <p className="hidden truncate text-xs text-muted-foreground sm:block">
+              <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">
                 {contextLabel ?? t("app.authenticatedArea")}
               </p>
             </div>
@@ -203,6 +207,7 @@ export function AppShell({
                     size="icon"
                     className={cn("rounded-full", headerIconClassName)}
                     aria-label={t("account.openMenu")}
+                    title={userLabel}
                   />
                 }
               >
