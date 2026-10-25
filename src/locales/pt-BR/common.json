@@ -1756,6 +1756,7 @@
         "review": "Revisão"
       },
       "pricing": {
+        "priceErrors": {"required": "Informe o valor.", "invalid": "Valor inválido. Use o formato 12,50.", "notPositive": "O valor deve ser maior que zero.", "tooLarge": "O valor máximo é R$ {{max}}."},
         "unitLabel": "Unidade de preço",
         "units": {"Hour": "Por hora", "Slot": "Por horário", "Day": "Por dia", "Fixed": "Fixo", "mixed": "Unidades diferentes por dia (escolha uma para unificar)"},
         "priceLabels": {"Hour": "Preço por hora", "Slot": "Preço por horário", "Day": "Preço por dia", "Fixed": "Preço fixo"},

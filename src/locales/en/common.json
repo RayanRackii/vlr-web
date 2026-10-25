@@ -1756,6 +1756,7 @@
         "review": "Review"
       },
       "pricing": {
+        "priceErrors": {"required": "Enter a price.", "invalid": "Invalid price. Use the format 12.50.", "notPositive": "The price must be greater than zero.", "tooLarge": "The maximum price is R$ {{max}}."},
         "unitLabel": "Pricing unit",
         "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
         "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
