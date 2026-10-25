@@ -164,9 +164,12 @@ function SchedulePolicyPanelForm({
     toTimeInput(first?.closeTime, templateValues?.closeTime ?? "22:00"),
   )
   const [durationMinutes, setDurationMinutes] = useState(
+    first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60",
+  )
+  const [slotGridDurations, setSlotGridDurations] = useState(
     (first?.schedulePolicy ?? "SlotGrid") === "SlotGrid"
       ? (first?.allowedDurationMinutes ?? "")
-      : (first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60"),
+      : "",
   )
   const [durationError, setDurationError] = useState<string | null>(null)
   const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
@@ -197,10 +200,10 @@ function SchedulePolicyPanelForm({
   }
 
   function saveSlotGrid(onSuccess?: () => void) {
-    const allowedDurationMinutes = durationMinutes.trim()
-      ? normalizeDurations(durationMinutes)
+    const allowedDurationMinutes = slotGridDurations.trim()
+      ? normalizeDurations(slotGridDurations)
       : null
-    if (durationMinutes.trim() && !allowedDurationMinutes) {
+    if (slotGridDurations.trim() && !allowedDurationMinutes) {
       setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
       return
     }
@@ -362,13 +365,13 @@ function SchedulePolicyPanelForm({
             <Input
               type="text"
               inputMode="numeric"
-              value={durationMinutes}
+              value={slotGridDurations}
               disabled={busy || readOnly}
               aria-label={t("rentals.schedule.policy.durationMinutes")}
               aria-invalid={durationError ? true : undefined}
               aria-describedby={durationError ? "duration-minutes-error" : undefined}
               onChange={(event) => {
-                setDurationMinutes(event.target.value)
+                setSlotGridDurations(event.target.value)
                 setDurationError(null)
               }}
             />
