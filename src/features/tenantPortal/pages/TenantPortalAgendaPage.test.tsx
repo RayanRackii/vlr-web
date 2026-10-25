@@ -1049,6 +1049,16 @@ function makeAsset(id: string, assetId: string, name: string): PortalRentalAsset
   }
 }
 
+function makeOpenHoursAsset(id: string, assetId: string, name: string): PortalRentalAsset {
+  return {
+    ...makeAsset(id, assetId, name),
+    schedulePolicy: "OpenHours",
+    openTime: "08:00:00",
+    closeTime: "22:00:00",
+    allowedDurationMinutes: "60",
+  }
+}
+
 function makeSlot(
   overrides: Pick<
     PortalScheduleSlot,
@@ -1880,6 +1890,223 @@ describe("TenantPortalAgendaPage time selector", () => {
     const increase = await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` })
     await user.click(increase)
     await waitFor(() => expect(increase).toBeDisabled())
+  })
+
+  it("shows the days stepper only for Day-priced resources", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+    expect(
+      screen.queryByRole("group", { name: i18n.t("tenantPortal.agenda.days") }),
+    ).not.toBeInTheDocument()
+    unmount()
+
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      pricingUnit: "Day",
+      reason: null,
+    })
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(
+      await screen.findByRole("group", { name: i18n.t("tenantPortal.agenda.days") }),
+    ).toBeInTheDocument()
+  })
+
+  it("requests and books 3 days with the computed end date and multiplied total", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const days = request.endDate ? 3 : 1
+      return {
+        isAvailable: true,
+        requestedQuantity: request.quantity ?? 1,
+        availableQuantity: 1,
+        estimatedTotalAmount: days * 80,
+        pricingUnit: "Day",
+        reason: null,
+      }
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+
+    const increase = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increase)
+    await user.click(increase)
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-16", quantity: 1 }),
+      )
+    })
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(240) }),
+    )
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.daysSummary", { count: 3, until: "16/10" }),
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          date: "2026-10-14",
+          endDate: "2026-10-16",
+          items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
+          expectedTotalAmount: 240,
+        }),
+      )
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
+  })
+
+  it("clamps selected days and replaces the quote when the policy horizon arrives", async () => {
+    let resolvePolicy!: (value: Awaited<ReturnType<typeof fetchPublicBookingPolicy>>) => void
+    fetchPolicy.mockReturnValue(new Promise((resolve) => {
+      resolvePolicy = resolve
+    }))
+    checkAvailability.mockImplementation(async (_subdomain, request) => ({
+      isAvailable: true,
+      requestedQuantity: request.quantity ?? 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: request.endDate ? 160 : 80,
+      pricingUnit: "Day",
+      reason: null,
+    }))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const increase = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increase)
+    await user.click(increase)
+    expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("3")
+
+    resolvePolicy({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 1,
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("2")
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-15" }),
+      )
+    })
+  })
+
+  it("keeps a single day booking on bookPortalSlot without an endDate", async () => {
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      pricingUnit: "Day",
+      reason: null,
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 1, expectedTotalAmount: 80 }),
+      )
+    })
+    expect(createReservation).not.toHaveBeenCalled()
+    expect(checkAvailability).toHaveBeenCalledWith(
+      "ficc",
+      expect.not.objectContaining({ endDate: expect.anything() }),
+    )
+  })
+
+  it("combines quantity and days for a multi-unit good priced by day", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const quantity = request.quantity ?? 1
+      const days = request.endDate ? 3 : 1
+      return {
+        isAvailable: true,
+        requestedQuantity: quantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: quantity * days * 80,
+        pricingUnit: "Day",
+        reason: null,
+      }
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(
+      await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }),
+    )
+    const increaseDays = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increaseDays)
+    await user.click(increaseDays)
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-16", quantity: 2 }),
+      )
+    })
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endDate: "2026-10-16",
+          items: [{ assetId: ASSET_A_ASSET_ID, quantity: 2 }],
+          expectedTotalAmount: 480,
+        }),
+      )
+    })
   })
 
   it("clears Reservando and toasts when booking fails", async () => {

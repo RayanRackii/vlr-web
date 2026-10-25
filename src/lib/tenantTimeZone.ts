@@ -123,6 +123,19 @@ export function formatTenantTime(
   })
 }
 
+/** Civil `dd/MM` of an instant in the tenant timezone, without a year. */
+export function formatTenantDayMonth(
+  value: Date,
+  timeZoneId: string,
+  locale?: string,
+): string {
+  return value.toLocaleDateString(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: resolveTenantTimeZone(timeZoneId),
+  })
+}
+
 /** A day-closing end stored as 23:59 or 23:59:59 reads as 00:00 (midnight), without a date. */
 export function displayEndClock(clock: string): string {
   const hhmm = clock.length >= 5 ? clock.slice(0, 5) : clock
@@ -142,6 +155,37 @@ export function displayEndInstant(end: Date, timeZoneId: string): Date {
     timeZone: resolveTenantTimeZone(timeZoneId),
   })
   return clock === "23:59:59" ? new Date(end.getTime() + 1000 - end.getMilliseconds()) : end
+}
+
+function civilDateDiffDays(startDate: string, endDate: string): number {
+  const [sy, sm, sd] = startDate.split("-").map(Number)
+  const [ey, em, ed] = endDate.split("-").map(Number)
+  return Math.round(
+    (Date.UTC(ey, em - 1, ed) - Date.UTC(sy, sm - 1, sd)) / 86400000,
+  )
+}
+
+/** Civil days covered by an instant range in the tenant timezone.
+ * A day-closing 23:59:59 is inclusive; an exact midnight is the exclusive
+ * boundary of the preceding civil day.
+ */
+export function tenantCivilDaySpan(
+  startIso: string,
+  endIso: string,
+  timeZoneId: string,
+): number {
+  const start = new Date(startIso)
+  const end = new Date(endIso)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return 1
+  }
+  const startDate = tenantCivilDateTime(start, timeZoneId).date
+  const endCivil = tenantCivilDateTime(end, timeZoneId)
+  const isExclusiveMidnight = endCivil.time === "00:00:00"
+  return Math.max(
+    1,
+    civilDateDiffDays(startDate, endCivil.date) + (isExclusiveMidnight ? 0 : 1),
+  )
 }
 
 /**
