@@ -69,6 +69,8 @@ import {
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
 import {
+  addCivilDays,
+  civilDaysBetween,
   horizonEndDate,
   resolveAgendaHorizonDays,
 } from "@/features/rentals/lib/bookingHorizon"
@@ -162,10 +164,10 @@ import {
   resolveTenantTimeZone,
   tenantTodayIsoDate,
 } from "@/lib/tenantTimeZone"
+import type { PricingUnit } from "@/api/generated/rentalPricing"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
 import { formatUnitPriceText, unitPriceForWindow } from "@/lib/pricingUnitText"
-import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { cn } from "@/lib/utils"
 
 function isCancelledReservationStatus(status: string): boolean {
@@ -261,6 +263,8 @@ function effectiveCancelCutoffHours(reservation: PortalReservation | undefined):
   )
   return Number.isFinite(hours) && hours > 0 ? hours : null
 }
+
+const MAX_MULTI_DAY_SPAN = 31
 
 export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
@@ -360,10 +364,16 @@ export function TenantPortalAgendaPage() {
   }, [subdomain])
   const [quantity, setQuantity] = useState(1)
   const [lastAvailableQuantity, setLastAvailableQuantity] = useState<number | null>(null)
+  const [days, setDays] = useState(1)
+  const [lastPricingUnit, setLastPricingUnit] = useState<
+    PricingUnit | null | undefined
+  >(undefined)
   const selectRentalAsset = useCallback((rentalAssetId: string) => {
     clearAgendaSelectionNotice(subdomain)
     setQuantity(1)
     setLastAvailableQuantity(null)
+    setDays(1)
+    setLastPricingUnit(undefined)
     selectionRef.current = rentalAssetId
     setSelectedRentalAssetId(rentalAssetId)
   }, [subdomain])
@@ -1048,8 +1058,33 @@ export function TenantPortalAgendaPage() {
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
+  const isDayPricing = lastPricingUnit === "Day" &&
+    (selectedAsset?.schedulePolicy ?? "").toLowerCase() === "openhours"
+  const daysRemainingToHorizon = horizonMaxDate === null
+    ? MAX_MULTI_DAY_SPAN
+    : Math.max(1, civilDaysBetween(date, horizonMaxDate) + 1)
+  const daysMax = Math.min(MAX_MULTI_DAY_SPAN, daysRemainingToHorizon)
+
+  useEffect(() => {
+    if (days <= daysMax) {
+      return
+    }
+    // The tenant policy may arrive after a multi-day quote was selected.
+    let cancelled = false
+    void Promise.resolve().then(() => {
+      if (!cancelled) {
+        setDays(daysMax)
+        setQuote({ status: "idle" })
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [days, daysMax])
+
+  const endDate = isDayPricing && days > 1 ? addCivilDays(date, days - 1) : undefined
   const quoteSelectionKey = quoteAssetId && quoteStart && quoteEnd
-    ? `${date}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
+    ? `${date}:${endDate ?? ""}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
     : null
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
   const isMultiUnitGood = selectedAsset !== undefined &&
@@ -1072,6 +1107,7 @@ export function TenantPortalAgendaPage() {
     void checkPortalAvailability(subdomain, {
       assetId: quoteAssetId,
       date,
+      endDate,
       startTime: quoteStart,
       endTime: quoteEnd,
       quantity,
@@ -1081,6 +1117,7 @@ export function TenantPortalAgendaPage() {
           return
         }
         setLastAvailableQuantity(result.availableQuantity)
+        setLastPricingUnit(result.pricingUnit)
         if (result.availableQuantity < quantity) {
           setQuantity(Math.max(1, result.availableQuantity))
         }
@@ -1110,7 +1147,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, quantity, quoteAssetId, quoteEnd, quoteSelectionKey, quoteStart, subdomain])
+  }, [date, endDate, quantity, quoteAssetId, quoteEnd, quoteSelectionKey, quoteStart, subdomain])
 
   const queueEnabled = isLocationQueueEnabled(selectedAsset)
   const queue = useReservationQueue({
@@ -1364,7 +1401,7 @@ export function TenantPortalAgendaPage() {
     try {
       const created = await commitPortalBooking(
         () =>
-          canBookViaSlotId(slot)
+          canBookViaSlotId(slot) && !endDate
             ? bookPortalSlot({
                 slotId: slot.id,
                 unitId: asset.unitId,
@@ -1374,6 +1411,7 @@ export function TenantPortalAgendaPage() {
             : createPortalReservation({
                 unitId: asset.unitId,
                 date: dayDate,
+                endDate,
                 startTime: slot.startTime.slice(0, 5),
                 endTime: bookingEndClock(slot.endTime),
                 items: [{ assetId: asset.assetId, quantity }],
@@ -1683,6 +1721,8 @@ export function TenantPortalAgendaPage() {
     setSlotsBelongToDate(nextDate)
     setQuantity(1)
     setLastAvailableQuantity(null)
+    setDays(1)
+    setLastPricingUnit(undefined)
     setSelectedRentalAssetId(null)
     setDate(nextDate)
   }
@@ -1704,6 +1744,8 @@ export function TenantPortalAgendaPage() {
       setStartTime("")
       setQuantity(1)
       setLastAvailableQuantity(null)
+      setDays(1)
+      setLastPricingUnit(undefined)
       selectionRef.current = null
       setSelectedRentalAssetId(null)
       return
@@ -1715,6 +1757,8 @@ export function TenantPortalAgendaPage() {
     if (!tileStillValid) {
       setQuantity(1)
       setLastAvailableQuantity(null)
+      setDays(1)
+      setLastPricingUnit(undefined)
       selectionRef.current = null
       setSelectedRentalAssetId(null)
     }
@@ -2048,6 +2092,8 @@ export function TenantPortalAgendaPage() {
                   setStartTime(value)
                   setQuantity(1)
                   setLastAvailableQuantity(null)
+                  setDays(1)
+                  setLastPricingUnit(undefined)
                   setSelectedRentalAssetId(null)
                 }}
                 items={timeItems}
@@ -2417,6 +2463,43 @@ export function TenantPortalAgendaPage() {
                   total: selectedAssetQuantity,
                 })}
               </span>
+            </div>
+          ) : null}
+
+          {isDayPricing ? (
+            <div className="flex items-center gap-2" role="group" aria-label={t("tenantPortal.agenda.days")}>
+              <span className="text-sm font-medium">{t("tenantPortal.agenda.days")}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label={`${t("tenantPortal.agenda.days")} −`}
+                disabled={days <= 1}
+                onClick={() => setDays((current) => Math.max(1, current - 1))}
+              >
+                <Minus className="size-4" aria-hidden />
+              </Button>
+              <output className="min-w-6 text-center tabular-nums" aria-label={t("tenantPortal.agenda.days")}>
+                {days}
+              </output>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label={`${t("tenantPortal.agenda.days")} +`}
+                disabled={days >= daysMax}
+                onClick={() => setDays((current) => Math.min(daysMax, current + 1))}
+              >
+                <Plus className="size-4" aria-hidden />
+              </Button>
+              {days > 1 && endDate ? (
+                <span className="text-xs text-muted-foreground">
+                  {t("tenantPortal.agenda.daysSummary", {
+                    count: days,
+                    until: formatLocaleCivilDayMonth(endDate, moneyLocale),
+                  })}
+                </span>
+              ) : null}
             </div>
           ) : null}
 
