@@ -40,6 +40,8 @@ export type ScheduleGridOccupancy = {
   startTime: string
   endTime: string
   occupancyKindLabel: string
+  /** Stable kind key (e.g. "open"); label stays tenant-editable. */
+  occupancyKindKey?: string | null
   occupancyKindColorHex?: string | null
   label?: string | null
   status: "available" | "booked" | "unavailable"
@@ -105,6 +107,7 @@ export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy 
     startTime: slot.startTime,
     endTime: slot.endTime,
     occupancyKindLabel: slot.occupancyKindLabel,
+    occupancyKindKey: slot.occupancyKindKey,
     occupancyKindColorHex: slot.occupancyKindColorHex,
     label: slot.label,
     status: slotStatus(slot),
@@ -145,6 +148,7 @@ export function buildWeeklyGridOccupancies(
         startTime: row.startTime,
         endTime: row.endTime,
         occupancyKindLabel: row.occupancyKindLabel,
+        occupancyKindKey: kind?.key ?? null,
         occupancyKindColorHex: kind?.colorHex,
         label: row.label,
         status:
@@ -182,6 +186,7 @@ function openHoursOccupancies(
       startTime: formatMinutesAsTime(cursor),
       endTime: formatMinutesAsTime(cursor + step),
       occupancyKindLabel: openKind.label,
+      occupancyKindKey: openKind.key,
       occupancyKindColorHex: openKind.colorHex,
       label: null,
       status: openKind.isBookableByCustomer ? "available" : "unavailable",

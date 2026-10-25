@@ -729,7 +729,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(completeButton()).not.toBeInTheDocument()
   })
 
-  it("explains the deposit and refund consequence before calling cancel", async () => {
+  it("explains that an unpaid reservation has no payment to refund", async () => {
     const user = userEvent.setup()
     listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
     renderAgenda()
@@ -739,7 +739,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
 
     expect(cancelMine).not.toHaveBeenCalled()
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
 
     await user.click(
@@ -754,7 +754,25 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
   })
 
-  it("shows the same payment note before canceling a pending deposit", async () => {
+  it("explains that the business handles refunds for paid reservations", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, { depositPaid: 40 }),
+    ])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(
+        i18n.t("tenantPortal.agenda.cancelConfirmBodyPaid"),
+      ),
+    ).toBeInTheDocument()
+    expect(cancelMine).not.toHaveBeenCalled()
+  })
+
+  it("shows the unpaid payment note before canceling a pending reservation", async () => {
     const user = userEvent.setup()
     listMine.mockResolvedValue([makeReservation("PendingDeposit", FUTURE_ISO)])
     renderAgenda()
@@ -763,7 +781,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(cancelMine).not.toHaveBeenCalled()
   })
@@ -782,7 +800,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     const policy = within(dialog).getByTestId("cancellation-policy-text")
     expect(policy).toHaveTextContent(`${policyText} Line 2`)
@@ -808,7 +826,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(
       within(dialog).getByTestId("cancellation-policy-text"),
@@ -834,7 +852,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(
       within(dialog).getByTestId("cancellation-policy-text"),
@@ -2571,7 +2589,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
       await waitFor(() => {
         expect(toastError).toHaveBeenCalledWith(
-          "La fecha pedida está fuera del horizonte de reserva.",
+          "La fecha pedida supera el límite de reserva.",
         )
       })
       expect(toastError).not.toHaveBeenCalledWith(
@@ -3727,6 +3745,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
   it("refetches the cancelled reservation date and the viewed date", async () => {
     const user = userEvent.setup()
+    await i18n.changeLanguage("pt-BR")
     const otherIso = "2026-10-15T11:00:00.000Z"
     fetchDay.mockImplementation((_subdomain: string, dayDate: string) =>
       Promise.resolve({
@@ -3746,6 +3765,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     await expectQuadra1Selectable()
     released = true
     await confirmCancel(user)
+
+    expect(i18n.resolvedLanguage).toBe("pt-BR")
+    expect(window.localStorage.getItem("rolvix.uiLanguage")).toBe("pt-BR")
 
     await waitFor(() => {
       const dates = fetchDay.mock.calls.map((call) => call[1])

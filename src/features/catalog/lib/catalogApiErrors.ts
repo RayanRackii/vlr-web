@@ -1,5 +1,6 @@
 import i18n from "@/lib/i18n"
 import {
+  isModuleInactiveValue,
   isUnexpectedApiError,
   readApiErrorBody,
 } from "@/lib/apiErrorText"
@@ -35,6 +36,10 @@ export function localizeCatalogApiError(
   fallback: string,
 ): string {
   const { code, error } = readApiErrorBody(payload)
+
+  if (isModuleInactiveValue(code) || isModuleInactiveValue(error)) {
+    return i18n.t("apiErrors.moduleInactive")
+  }
 
   if (error != null && MESSAGE_KEYS[error] != null) {
     return i18n.t(MESSAGE_KEYS[error])

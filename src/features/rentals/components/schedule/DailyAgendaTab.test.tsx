@@ -4,11 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
 
 import { DailyAgendaTab } from "@/features/rentals/components/schedule/DailyAgendaTab"
+import i18n from "@/lib/i18n"
 import type {
   AdminDaySchedule,
   AdminRentalAsset,
 } from "@/features/rentals/services/scheduleService"
-import i18n from "@/lib/i18n"
 
 function renderEmptyAgenda() {
   const router = createMemoryRouter(
@@ -165,12 +165,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Aberto, Indisponível",
+        name: "Sala 1, 08:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
   })
@@ -182,7 +182,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -193,7 +193,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Indisponível",
+        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
 
@@ -203,7 +203,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -214,7 +214,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Indisponível",
+        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
   })
@@ -226,12 +226,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Aberto, Indisponível",
+        name: "Sala 1, 08:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
 
@@ -241,7 +241,7 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Indisponível",
+        name: "Sala 1, 13:00, Indisponível, Tipo: Aberto",
       }),
     ).toBeDisabled()
   })
@@ -263,12 +263,12 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Aberto, Reservado",
+        name: "Sala 1, 08:00, Reservado, Tipo: Aberto",
       }),
     ).toBeEnabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
   })
@@ -280,13 +280,59 @@ describe("DailyAgendaTab past starts", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 08:00, Aberto, Disponível",
+        name: "Sala 1, 08:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
     expect(
       screen.getByRole("button", {
-        name: "Sala 1, 13:00, Aberto, Disponível",
+        name: "Sala 1, 13:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()
+  })
+})
+
+describe("DailyAgendaTab occupancy labels", () => {
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it.each([
+    ["pt-BR", "Aberto", "Tipo: Aberto"],
+    ["en", "Open", "Type: Open"],
+    ["es", "Abierto", "Tipo: Abierto"],
+  ])("localizes the stock open kind in %s and labels it as a type", async (language, expectedName, expectedType) => {
+    await i18n.changeLanguage(language)
+    const day = agendaDay("2026-10-17")
+    const morning = day.slots[0]
+    if (!morning) throw new Error("missing morning slot")
+    day.slots[0] = { ...morning, occupancyKindKey: "open", occupancyKindLabel: "Open", status: "Cancelled" }
+
+    renderDay("2026-10-17", day)
+
+    const typeNodes = await screen.findAllByText(expectedType)
+    expect(typeNodes.some((node) => node.textContent?.includes(expectedName))).toBe(true)
+    expect(screen.getByText(i18n.t("rentals.schedule.occurrence.status.unavailable"))).toHaveClass("font-semibold")
+  })
+
+  it("keeps a customized occupancy kind name", async () => {
+    const day = agendaDay("2026-10-17")
+    const morning = day.slots[0]
+    if (!morning) throw new Error("missing morning slot")
+    day.slots[0] = { ...morning, occupancyKindLabel: "Aula aberta" }
+
+    renderDay("2026-10-17", day)
+
+    expect(await screen.findByText("Tipo: Aula aberta")).toBeInTheDocument()
+  })
+
+  it("does not translate a custom kind that happens to be named Open", async () => {
+    const day = agendaDay("2026-10-17")
+    const morning = day.slots[0]
+    if (!morning) throw new Error("missing morning slot")
+    day.slots[0] = { ...morning, occupancyKindKey: "custom-open", occupancyKindLabel: "Open" }
+
+    renderDay("2026-10-17", day)
+
+    expect(await screen.findByText("Tipo: Open")).toBeInTheDocument()
   })
 })

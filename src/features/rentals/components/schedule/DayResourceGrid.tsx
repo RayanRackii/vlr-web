@@ -253,6 +253,19 @@ function RowCells({
                     axisStep,
                 ),
               )
+              // Only the seeded "open" kind with its untouched default label is
+              // localized; a tenant-renamed kind keeps its configured name.
+              const isSeedOpenKind =
+                item.occupancyKindKey === "open" &&
+                item.occupancyKindLabel === "Open"
+              const kindLabel =
+                isSeedOpenKind
+                  ? t("rentals.schedule.occupancyKinds.open")
+                  : item.occupancyKindLabel
+              const itemLabel = item.label?.trim()
+              const statusLabel = t(
+                `rentals.schedule.occurrence.status.${item.status}`,
+              )
               return (
                 <button
                   key={item.id}
@@ -263,7 +276,7 @@ function RowCells({
                     (isStartClosed?.(item.startTime) === true &&
                       item.status !== "booked")
                   }
-                  aria-label={`${asset.name}, ${formatMinutesAsTime(timeToMinutes(item.startTime))}, ${item.occupancyKindLabel}, ${t(`rentals.schedule.occurrence.status.${item.status}`)}`}
+                  aria-label={`${asset.name}, ${formatMinutesAsTime(timeToMinutes(item.startTime))}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}`}
                   className={cn(
                     "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                     overlapIndex > 0 && "translate-x-2",
@@ -288,11 +301,12 @@ function RowCells({
                     })
                   }
                 >
-                  <span className="block truncate text-xs font-semibold">
-                    {item.label || item.occupancyKindLabel}
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {itemLabel ? `${itemLabel} · ` : ""}
+                    {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
                   </span>
-                  <span className="mt-1 inline-flex rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
-                    {t(`rentals.schedule.occurrence.status.${item.status}`)}
+                  <span className="mt-1 inline-flex rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold">
+                    {statusLabel}
                   </span>
                   {item.badge === "dailyOverride" ? (
                     <span className="ml-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">

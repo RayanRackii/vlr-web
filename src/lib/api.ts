@@ -17,6 +17,8 @@ import {
   noteTransportSuccess,
 } from "@/lib/connectivity"
 import { supabase } from "@/lib/supabase"
+import i18n from "@/lib/i18n"
+import { isModuleInactiveValue } from "@/lib/apiErrorText"
 import { safeStaffNextPath, staffLoginPath } from "@/lib/safeStaffNextPath"
 
 declare module "axios" {
@@ -123,7 +125,13 @@ export const api = createApiClient()
 /** B2C tenant portal: Customer JWT only (localStorage). */
 export const customerApi = createApiClient()
 
+export { isModuleInactiveValue }
+
 export function parseApiError(payload: unknown, fallbackMessage: string): string {
+  if (isModuleInactivePayload(payload)) {
+    return i18n.t("apiErrors.moduleInactive")
+  }
+
   const parsed = apiErrorSchema.safeParse(payload)
 
   if (parsed.success) {
@@ -131,6 +139,12 @@ export function parseApiError(payload: unknown, fallbackMessage: string): string
   }
 
   return fallbackMessage
+}
+
+function isModuleInactivePayload(payload: unknown): boolean {
+  if (typeof payload !== "object" || payload === null) return false
+  const record = payload as Record<string, unknown>
+  return [record.error, record.code, record.errorCode].some(isModuleInactiveValue)
 }
 
 export function getAxiosErrorPayload(error: unknown): unknown {

@@ -120,6 +120,23 @@ describe("LoginPage validity gate", () => {
     await user.click(screen.getByRole("button", { name: "Entrar" }))
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
   })
+
+  it("shows the localized rate-limit message for staff login 429s", async () => {
+    const user = userEvent.setup()
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { message: "Too many login attempts", status: 429 },
+    } as never)
+    renderLogin("/login")
+    await user.type(screen.getByLabelText("E-mail"), "admin@rolvix.test")
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("auth.login.rateLimited"),
+    )
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled()
+  })
 })
 
 describe("LoginPage locale", () => {
