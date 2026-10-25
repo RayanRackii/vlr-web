@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react"
+import { slotDurationMinutes } from "@/features/tenantPortal/lib/agendaDurationSelection"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -50,7 +51,7 @@ function templateScheduleValues(
     return Number(hour) * 60 + Number(minute)
   }
   const durations = [...new Set(assetTemplates.map((template) =>
-    toMinutes(template.endTime) - toMinutes(template.startTime),
+    slotDurationMinutes(template),
   ).filter((value) => value > 0))].sort((left, right) => left - right)
 
   return {
