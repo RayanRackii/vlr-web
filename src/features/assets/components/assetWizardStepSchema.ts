@@ -74,7 +74,7 @@ function generalStepSchema(
   return z.object({
     ...shared,
     name: requiredText,
-    tag: requiredText,
+    tag: z.string(),
   })
 }
 
