@@ -376,22 +376,32 @@ function RowCells({
                 right: 4 + overlapIndex * 8,
                 height: rows * ROW_HEIGHT - 8,
                 zIndex: 5 + overlapIndex,
-                borderColor: item.occupancyKindColorHex ?? "var(--border)",
-                backgroundColor: item.occupancyKindColorHex
-                  ? `${item.occupancyKindColorHex}20`
-                  : "var(--muted)",
+                borderColor:
+                  item.status === "booked"
+                    ? "var(--info)"
+                    : (item.occupancyKindColorHex ?? "var(--border)"),
+                backgroundColor:
+                  item.status === "booked"
+                    ? "color-mix(in oklab, var(--info) 12%, transparent)"
+                    : item.occupancyKindColorHex
+                      ? `${item.occupancyKindColorHex}20`
+                      : "var(--muted)",
               }
               const cardContent = (
                 <>
+                  {/* Booked cards: the occupancy kind of a derived row is the open-hours kind
+                      ("Aberto"), which reads like a free slot; show the time range instead so the
+                      status pill fits in a one-row (46px) card. */}
                   <span className="block truncate text-xs text-muted-foreground">
                     {itemLabel ? `${itemLabel} · ` : ""}
-                    {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                    {item.status === "booked" ? (
+                      <span className="tabular-nums">{timeRangeLabel}</span>
+                    ) : (
+                      <>
+                        {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                      </>
+                    )}
                   </span>
-                  {item.status === "booked" ? (
-                    <span className="block truncate text-xs tabular-nums text-muted-foreground">
-                      {timeRangeLabel}
-                    </span>
-                  ) : null}
                   <span
                     className={cn(
                       "mt-1 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold",
