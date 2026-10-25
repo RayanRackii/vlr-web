@@ -199,6 +199,9 @@ function SchedulePolicyPanelForm({
     })
   }
 
+  const slotGridDurationsInvalid =
+    slotGridDurations.trim() !== "" && !normalizeDurations(slotGridDurations)
+
   function saveSlotGrid(onSuccess?: () => void) {
     const allowedDurationMinutes = slotGridDurations.trim()
       ? normalizeDurations(slotGridDurations)
@@ -368,8 +371,8 @@ function SchedulePolicyPanelForm({
               value={slotGridDurations}
               disabled={busy || readOnly}
               aria-label={t("rentals.schedule.policy.durationMinutes")}
-              aria-invalid={durationError ? true : undefined}
-              aria-describedby={durationError ? "duration-minutes-error" : undefined}
+              aria-invalid={durationError || slotGridDurationsInvalid ? true : undefined}
+              aria-describedby={durationError || slotGridDurationsInvalid ? "duration-minutes-error" : undefined}
               onChange={(event) => {
                 setSlotGridDurations(event.target.value)
                 setDurationError(null)
@@ -378,9 +381,9 @@ function SchedulePolicyPanelForm({
             <span className="text-xs text-muted-foreground">
               {t("rentals.schedule.policy.slotGridDurationsHint")}
             </span>
-            {durationError ? (
+            {durationError || slotGridDurationsInvalid ? (
               <span id="duration-minutes-error" role="alert" className="text-xs text-destructive">
-                {durationError}
+                {durationError ?? t("rentals.schedule.policy.durationMinutesInvalid")}
               </span>
             ) : null}
           </label>
@@ -388,7 +391,7 @@ function SchedulePolicyPanelForm({
             <LoadingButton
               type="button"
               className="w-full"
-              disabled={busy || readOnly}
+              disabled={busy || readOnly || slotGridDurationsInvalid}
               loading={busyAction === "seed" || busyAction === "policy"}
               onClick={() => {
                 saveSlotGrid(onSeedSlotGrid)
@@ -401,7 +404,7 @@ function SchedulePolicyPanelForm({
             type="button"
             variant="outline"
             className="w-full"
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || slotGridDurationsInvalid}
             loading={busyAction === "policy"}
             onClick={() => {
               saveSlotGrid()

@@ -268,9 +268,9 @@ describe("SchedulePolicyPanel", () => {
     )
 
     await user.type(input, "30,nope")
-    await user.click(screen.getByRole("button", {
+    expect(screen.getByRole("button", {
       name: i18n.t("rentals.schedule.policy.saveSlotGrid"),
-    }))
+    })).toBeDisabled()
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       i18n.t("rentals.schedule.policy.durationMinutesInvalid"),
