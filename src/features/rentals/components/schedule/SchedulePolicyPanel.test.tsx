@@ -64,7 +64,7 @@ describe("SchedulePolicyPanel", () => {
           id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
           rentalAssetId: asset.id,
           assetName: asset.name,
-          dayOfWeek: "Monday",
+          dayOfWeek: "Sunday",
           startTime: "18:30:00",
           endTime: "19:00:00",
           occupancyKindId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
@@ -90,6 +90,30 @@ describe("SchedulePolicyPanel", () => {
     expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.openTime"))).toHaveValue("09:00")
     expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.closeTime"))).toHaveValue("19:00")
     expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))).toHaveValue("30")
+  })
+
+  it("hides reseeding while the all-week schedule is loading", () => {
+    render(
+      <SchedulePolicyPanel
+        assets={[{
+          ...asset,
+          schedulePolicy: "SlotGrid",
+          openTime: null,
+          closeTime: null,
+          allowedDurationMinutes: null,
+        }]}
+        loadingTemplates
+        busy={false}
+        busyAction={null}
+        readOnly={false}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+        onSeedSlotGrid={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole("button", {
+      name: i18n.t("rentals.schedule.seedTemplates"),
+    })).not.toBeInTheDocument()
   })
 
   it("saves a comma-separated duration list", async () => {

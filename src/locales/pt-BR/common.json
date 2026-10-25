@@ -3016,7 +3016,7 @@
         "minimumLeadTime": "Fora do prazo mínimo de antecedência"
       },
       "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
-      "weeklyBanner": "Esta grade vale toda semana, às {{day}}. A Agenda do dia só altera uma data.",
+      "weeklyBanner": "Esta grade se repete toda semana neste dia ({{day}}). A Agenda do dia só altera uma data.",
       "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
       "weekly": {
         "configureHours": "Configurar horários"

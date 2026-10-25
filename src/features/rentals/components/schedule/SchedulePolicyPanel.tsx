@@ -19,6 +19,7 @@ import { HH_MM } from "@/lib/time24"
 type SchedulePolicyPanelProps = {
   assets: readonly AdminRentalAsset[]
   templates?: readonly ScheduleTemplate[]
+  loadingTemplates?: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
   readOnly: boolean
@@ -96,6 +97,7 @@ function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
 export function SchedulePolicyPanel({
   assets,
   templates = [],
+  loadingTemplates = false,
   busy,
   busyAction,
   readOnly,
@@ -110,7 +112,10 @@ export function SchedulePolicyPanel({
         `${asset.id}:${asset.schedulePolicy ?? "SlotGrid"}:${asset.openTime ?? ""}:${asset.closeTime ?? ""}:${asset.allowedDurationMinutes ?? ""}`,
     )
     .sort()
-    .join("|") + templates.map((template) => `${template.id}:${template.isActive}`).sort().join("|")
+    .join("|") +
+    `${loadingTemplates}|${templates.map((template) => (
+      `${template.id}:${template.isActive}:${template.startTime}:${template.endTime}`
+    )).sort().join("|")}`
 
   if (assets.length === 0) {
     return null
@@ -121,6 +126,7 @@ export function SchedulePolicyPanel({
       key={selectionKey}
       assets={assets}
       templates={templates}
+      loadingTemplates={loadingTemplates}
       mixed={mixed}
       busy={busy}
       busyAction={busyAction}
@@ -135,6 +141,7 @@ export function SchedulePolicyPanel({
 function SchedulePolicyPanelForm({
   assets,
   templates = [],
+  loadingTemplates = false,
   mixed,
   busy,
   busyAction,
@@ -160,7 +167,8 @@ function SchedulePolicyPanelForm({
   )
   const [durationError, setDurationError] = useState<string | null>(null)
   const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
-  const hasExistingSchedule = templates.some((template) => template.isActive) ||
+  const hasExistingSchedule = loadingTemplates ||
+    templates.some((template) => template.isActive) ||
     assets.some((asset) =>
       (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
       Boolean(asset.openTime && asset.closeTime),

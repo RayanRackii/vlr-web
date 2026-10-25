@@ -65,6 +65,8 @@ type WeeklyTemplatesTabProps = {
   selectedRentalAssetIds: readonly string[]
   weekday: DayOfWeekName
   templates: readonly ScheduleTemplate[]
+  scheduleTemplates: readonly ScheduleTemplate[]
+  loadingScheduleTemplates: boolean
   kinds: readonly OccupancyKind[]
   defaultKindId: string
   loading: boolean
@@ -86,6 +88,8 @@ export function WeeklyTemplatesTab({
   selectedRentalAssetIds,
   weekday,
   templates,
+  scheduleTemplates,
+  loadingScheduleTemplates,
   kinds,
   defaultKindId,
   loading,
@@ -150,7 +154,8 @@ export function WeeklyTemplatesTab({
 
   const showInlineRefresh = loading && surface === "grid"
   const hasSelection = selectedAssets.length > 0
-  const hasExistingSchedule = templates.some((template) => template.isActive) ||
+  const hasExistingSchedule = loadingScheduleTemplates ||
+    scheduleTemplates.some((template) => template.isActive) ||
     selectedAssets.some((asset) =>
       (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
       Boolean(asset.openTime && asset.closeTime),
@@ -336,7 +341,8 @@ export function WeeklyTemplatesTab({
             {selectedAssets.length > 0 ? (
               <SchedulePolicyPanel
                 assets={selectedAssets}
-                templates={templates}
+                templates={scheduleTemplates}
+                loadingTemplates={loadingScheduleTemplates}
                 busy={busy}
                 busyAction={busyAction}
                 readOnly={readOnly}

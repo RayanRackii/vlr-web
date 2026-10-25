@@ -3016,7 +3016,7 @@
         "minimumLeadTime": "Fuera del plazo mínimo de antelación"
       },
       "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. Para cambiar la regla semanal, use Configuración semanal.",
-      "weeklyBanner": "Esta grilla se repite cada semana, los {{day}}. La Agenda del día solo cambia una fecha.",
+      "weeklyBanner": "Esta grilla se repite semanalmente el {{day}}. La Agenda del día solo cambia una fecha.",
       "weeklyCellHint": "El cambio vale para este día semanal, en todas las fechas futuras.",
       "weekly": {
         "configureHours": "Configurar horarios"
