@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   DailyAgendaTab,
@@ -53,13 +52,10 @@ import {
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { cn } from "@/lib/utils"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
-
-function isScheduleTab(value: unknown): value is ScheduleTab {
-  return value === "daily" || value === "templates" || value === "kinds"
-}
 
 function dayCacheKey(rentalAssetIds: readonly string[], date: string): string {
   return `${[...rentalAssetIds].sort().join(",")}|${date}`
@@ -682,27 +678,33 @@ function AdminSchedulePage() {
         </div>
 
         <div className="overflow-x-auto">
-          <Tabs
-            value={tab}
-            onValueChange={(value) => {
-              if (isScheduleTab(value)) {
-                setTab(value)
-              }
-            }}
+          <nav
+            aria-label={t("nav.menu")}
+            className="mx-auto flex w-max min-w-full items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:min-w-0"
           >
-            <TabsList className="mx-auto h-auto w-max min-w-full sm:min-w-0">
-              {tabItems.map((item) => (
-                <TabsTrigger
+            {tabItems.map((item) => {
+              const isActive = tab === item.id
+              return (
+                <button
                   key={item.id}
-                  value={item.id}
-                  className="!h-auto gap-1.5 px-3 py-1.5"
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setTab(item.id)
+                  }}
+                  className={cn(
+                    "inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    isActive
+                      ? "bg-background text-foreground shadow-sm"
+                      : "hover:text-foreground",
+                  )}
                 >
                   <item.icon aria-hidden className="size-3.5" />
                   {t(item.labelKey)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                </button>
+              )
+            })}
+          </nav>
         </div>
       </div>
 
