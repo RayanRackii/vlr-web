@@ -72,6 +72,20 @@ type RentalResourceSheetProps = {
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
 }
 
+/** Form fields rendered outside the "basic" sheet tab, used to reveal the tab holding a validation error. */
+const SHEET_BASIC_FIELDS_EXCLUDED = {
+  pricing: new Set([
+    "cancelCutoffHours",
+    "cancelCutoffMode",
+    "horizonDays",
+    "horizonMode",
+    "queueEnabled",
+    "queueOpeningTime",
+    "requiresDeposit",
+  ]),
+  visual: new Set(["capacityPeople", "confirmVisualSuggestions", "visualTemplateRevisionId"]),
+}
+
 export function RentalResourceSheet({
   open,
   onOpenChange,
@@ -296,6 +310,20 @@ export function RentalResourceSheet({
                 if (ok) {
                   onOpenChange(false)
                 }
+              }, (errors) => {
+                const fields = Object.keys(errors)
+                const inBasic = fields.some(
+                  (name) =>
+                    !SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name) &&
+                    !SHEET_BASIC_FIELDS_EXCLUDED.visual.has(name),
+                )
+                setSheetTab(
+                  inBasic
+                    ? "basic"
+                    : fields.some((name) => SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name))
+                      ? "pricing"
+                      : "visual",
+                )
               })(event)
             }}
           >
@@ -793,7 +821,7 @@ export function RentalResourceSheet({
                   ) : null}
                 </div>
                 <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                  <FormItem><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel className="sr-only">{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
                 <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />

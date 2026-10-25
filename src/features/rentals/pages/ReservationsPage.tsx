@@ -21,7 +21,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -214,20 +213,26 @@ export function ReservationsPage() {
 
       <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
-          <Tabs
-            value={view}
-            onValueChange={(value) => {
-              if (value === "day" || value === "week" || value === "month") {
-                setView(value)
-              }
-            }}
+          <div
+            role="group"
+            aria-label={t("rentals.reservations.date")}
+            className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground"
           >
-            <TabsList>
-              <TabsTrigger value="day">{t("rentals.reservations.viewDay")}</TabsTrigger>
-              <TabsTrigger value="week">{t("rentals.reservations.viewWeek")}</TabsTrigger>
-              <TabsTrigger value="month">{t("rentals.reservations.viewMonth")}</TabsTrigger>
-            </TabsList>
-          </Tabs>
+            {(["day", "week", "month"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={view === value}
+                onClick={() => setView(value)}
+                className={cn(
+                  "min-h-9 rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  view === value ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
+                )}
+              >
+                {t(`rentals.reservations.view${value[0].toUpperCase()}${value.slice(1)}`)}
+              </button>
+            ))}
+          </div>
           <label className="flex min-w-0 items-center gap-2 text-sm">
             <span className="sr-only">{t("rentals.reservations.date")}</span>
             <LocaleDateInput
