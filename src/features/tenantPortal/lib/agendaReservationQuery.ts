@@ -68,7 +68,7 @@ export type AgendaReservationHold = {
   id: string
   status: string
   startDateTime: string
-  items: readonly { rentalAssetId: string }[]
+  items: readonly { rentalAssetId: string; quantity?: number }[]
 }
 
 export type AgendaSlotHold = {
@@ -173,6 +173,35 @@ export function reservedSlotKeysForDate(
   }
 
   return keys
+}
+
+/** Units this customer holds for an active reservation at this slot. */
+export function customerHeldSlotQuantity(
+  date: string,
+  rentalAssetId: string,
+  startTime: string,
+  reservations: readonly AgendaReservationHold[],
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
+): number {
+  const key = agendaReservedSlotKey(date, rentalAssetId, startTime)
+  let quantity = 0
+
+  for (const reservation of reservations) {
+    if (!isBlockingReservationStatus(reservation.status)) {
+      continue
+    }
+    const civil = reservationCivilStart(reservation.startDateTime, timeZoneId)
+    if (civil === null || civil.date !== date) {
+      continue
+    }
+    for (const item of reservation.items) {
+      if (agendaReservedSlotKey(date, item.rentalAssetId, civil.time) === key) {
+        quantity += item.quantity ?? 1
+      }
+    }
+  }
+
+  return quantity
 }
 
 /** Drop optimistic marks once the server lists that slot as bookable on `date`. */

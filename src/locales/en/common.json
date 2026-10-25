@@ -506,7 +506,7 @@
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
-      "yourReservationUnitsFree": "Your reservation · {{left}} of {{total}} free",
+      "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
       "cancelCutoffReason": "Cancellation window closed"
     },
     "menu": {

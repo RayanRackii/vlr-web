@@ -4,9 +4,9 @@ import { toast } from "sonner"
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
+  customerHeldSlotQuantity,
   isBlockingReservationStatus,
   reservationCivilStart,
-  reservedSlotKeysForDate,
   retryOnce,
   type AgendaReservationHold,
 } from "@/features/tenantPortal/lib/agendaReservationQuery"
@@ -320,8 +320,13 @@ export function customerAlreadyHoldsSlot(
     return true
   }
 
-  const key = agendaReservedSlotKey(date, rentalAssetId, startTime)
-  return reservedSlotKeysForDate(date, reservations, [], timeZoneId).has(key)
+  return customerHeldSlotQuantity(
+    date,
+    rentalAssetId,
+    startTime,
+    reservations,
+    timeZoneId,
+  ) > 0
 }
 
 /**

@@ -90,6 +90,7 @@ import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingId
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
+  customerHeldSlotQuantity,
   findVisibleAgendaReservation,
   isBlockingReservationStatus,
   reservationCivilStart,
@@ -1590,6 +1591,13 @@ export function TenantPortalAgendaPage() {
       mine,
       timeZoneId,
     )
+    const ownReservationUnits = customerHeldSlotQuantity(
+      date,
+      rentalAssetId,
+      startTime,
+      mine,
+      timeZoneId,
+    )
     const reserved =
       reservedKey.length > 0 &&
       (optimisticReservedKeys.has(reservedKey) ||
@@ -1606,9 +1614,9 @@ export function TenantPortalAgendaPage() {
     const detail =
       startTime.length === 0 || available
         ? null
-        : ownReservation && asset && asset.totalQuantity > 1
-          ? t("tenantPortal.agenda.yourReservationUnitsFree", {
-              left: Math.max(asset.totalQuantity - 1, 0),
+        : ownReservation && asset && asset.totalQuantity > 1 && ownReservationUnits > 0
+          ? t("tenantPortal.agenda.yourReservationUnits", {
+              count: ownReservationUnits,
               total: asset.totalQuantity,
             })
           : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")

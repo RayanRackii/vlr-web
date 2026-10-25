@@ -506,7 +506,7 @@
       "cancelCutoffPassed": "O prazo de cancelamento de {{hours}} horas antes do início já passou.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duração",
-      "yourReservationUnitsFree": "Sua reserva · {{left}} de {{total}} livres",
+      "yourReservationUnits": "Sua reserva · {{count}} de {{total}} unidades",
       "cancelCutoffReason": "Prazo de cancelamento encerrado"
     },
     "menu": {

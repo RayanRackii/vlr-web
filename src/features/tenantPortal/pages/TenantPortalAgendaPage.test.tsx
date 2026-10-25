@@ -1716,7 +1716,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toHaveAttribute("aria-disabled", "true")
   })
 
-  it("shows remaining free units on the Sua reserva tile for a multi-unit resource", async () => {
+  it("shows the customer's reserved units on the Sua reserva tile for a multi-unit resource", async () => {
     fetchAssets.mockResolvedValue([
       { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), totalQuantity: 3 },
       makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
@@ -1729,7 +1729,7 @@ describe("TenantPortalAgendaPage time selector", () => {
             assetId: ASSET_A_ASSET_ID,
             rentalAssetId: ASSET_A_ID,
             assetName: "Quadra 1",
-            quantity: 1,
+            quantity: 2,
             unitPrice: 80,
             subTotal: 80,
           },
@@ -1740,7 +1740,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnitsFree", { left: 2, total: 3 })}`,
+        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnits", { count: 2, total: 3 })}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
   })
