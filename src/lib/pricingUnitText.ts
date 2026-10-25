@@ -27,6 +27,10 @@ export type PriceableWindow = {
   endTime: string
   totalAmount: number | null
   pricingUnit?: PricingUnit | null
+  /** Units booked; the total is divided by it. Default 1. */
+  quantity?: number
+  /** Billed days for Day-unit bookings (multi-day selector). Defaults to ceil(hours/24). */
+  days?: number
 }
 
 /**
@@ -46,6 +50,7 @@ export function unitPriceForWindow(
     return null
   }
   const unit = window.pricingUnit ?? "Hour"
-  const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, Math.ceil(hours / 24)) : 1
-  return { amount: window.totalAmount / divisor, unit }
+  const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, window.days ?? Math.ceil(hours / 24)) : 1
+  const quantity = Math.max(1, window.quantity ?? 1)
+  return { amount: window.totalAmount / divisor / quantity, unit }
 }

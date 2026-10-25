@@ -1350,6 +1350,8 @@ export function TenantPortalAgendaPage() {
         endTime: slot.endTime,
         totalAmount: reservation.totalAmount,
         pricingUnit: quotePricingUnit,
+        quantity,
+        days,
       })
       const unitPriceText = unitPrice
         ? formatUnitPriceText(unitPrice.amount, unitPrice.unit, "BRL", moneyLocale, t, "bookingMap.prices")
@@ -1909,6 +1911,8 @@ export function TenantPortalAgendaPage() {
             endTime: selectedSlot.endTime,
             totalAmount: quote.amount,
             pricingUnit: quote.pricingUnit,
+            quantity,
+            days,
           })
           return unitPrice
             ? formatUnitPriceText(unitPrice.amount, unitPrice.unit, "BRL", moneyLocale, t, "bookingMap.prices")
