@@ -47,6 +47,10 @@ export type ScheduleGridOccupancy = {
   reservationId?: string | null
   status: "available" | "booked" | "unavailable"
   badge?: "dailyOverride" | "inactive" | null
+  /** Set when this occupancy stands in for several concurrent bookings of a multi-unit resource. */
+  unitsBooked?: number | null
+  unitsTotal?: number | null
+  unitsFree?: number | null
 }
 
 export function timeToMinutes(value: string): number {
@@ -288,6 +292,50 @@ export function dedupeOpenHoursOccupancies(
   })
 
   return [...baseAvailable, ...unavailable, ...keptBooked]
+}
+
+/**
+ * A multi-unit resource (totalQuantity > 1) can have several concurrent
+ * bookings covering the exact same window, each a distinct derived occupancy.
+ * Collapse those into one occupancy carrying a units counter so the grid
+ * renders a single cell instead of overlapping "Reservado" cards.
+ */
+export function aggregateMultiUnitOccupancies(
+  occupancies: readonly ScheduleGridOccupancy[],
+  totalQuantity: number,
+): ScheduleGridOccupancy[] {
+  if (totalQuantity <= 1) {
+    return [...occupancies]
+  }
+
+  const byWindow = new Map<string, ScheduleGridOccupancy[]>()
+  for (const item of occupancies) {
+    const key = `${item.startTime}|${item.endTime}`
+    const list = byWindow.get(key) ?? []
+    list.push(item)
+    byWindow.set(key, list)
+  }
+
+  const result: ScheduleGridOccupancy[] = []
+  for (const items of byWindow.values()) {
+    const booked = items.filter((item) => item.status === "booked")
+    if (booked.length <= 1) {
+      result.push(...items)
+      continue
+    }
+    const representative = booked[0]
+    if (!representative) continue
+    result.push({
+      ...representative,
+      id: `units:${representative.rentalAssetId}:${representative.startTime}-${representative.endTime}`,
+      label: null,
+      reservationId: null,
+      unitsBooked: booked.length,
+      unitsTotal: totalQuantity,
+      unitsFree: Math.max(0, totalQuantity - booked.length),
+    })
+  }
+  return result
 }
 
 function collapseBookedReservations(

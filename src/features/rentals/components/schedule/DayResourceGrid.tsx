@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
+  aggregateMultiUnitOccupancies,
   dedupeOpenHoursOccupancies,
   durationValues,
   formatMinutesAsTime,
@@ -120,6 +121,13 @@ export function DayResourceGrid({
       const baseStep = durationValues(asset)[0]
       if (!Number.isFinite(baseStep) || baseStep <= 0) continue
       grouped.set(asset.id, dedupeOpenHoursOccupancies(list, baseStep))
+    }
+    for (const asset of assets) {
+      const totalQuantity = asset.totalQuantity ?? 1
+      if (totalQuantity <= 1) continue
+      const list = grouped.get(asset.id)
+      if (!list) continue
+      grouped.set(asset.id, aggregateMultiUnitOccupancies(list, totalQuantity))
     }
     return grouped
   }, [assets, occupancies])
@@ -329,9 +337,14 @@ function RowCells({
                 t,
               )
               const itemLabel = item.label?.trim()
-              const statusLabel = t(
-                `rentals.schedule.occurrence.status.${item.status}`,
-              )
+              const isMultiUnit = (item.unitsTotal ?? 0) > 1
+              const statusLabel = isMultiUnit
+                ? t("rentals.schedule.occurrence.unitsBooked", {
+                    booked: item.unitsBooked,
+                    total: item.unitsTotal,
+                  })
+                : t(`rentals.schedule.occurrence.status.${item.status}`)
+              const timeRangeLabel = `${formatMinutesAsTime(timeToMinutes(item.startTime))}–${formatMinutesAsTime(timeToMinutes(item.endTime))}`
               const StatusIcon = STATUS_ICON[item.status]
               return (
                 <button
@@ -339,6 +352,7 @@ function RowCells({
                   type="button"
                   disabled={
                     readOnly ||
+                    isMultiUnit ||
                     busyTargetKey === item.id ||
                     (isStartClosed?.(item.startTime) === true &&
                       item.status !== "booked")
@@ -372,6 +386,11 @@ function RowCells({
                     {itemLabel ? `${itemLabel} · ` : ""}
                     {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
                   </span>
+                  {item.status === "booked" ? (
+                    <span className="block truncate text-xs tabular-nums text-muted-foreground">
+                      {timeRangeLabel}
+                    </span>
+                  ) : null}
                   <span
                     className={cn(
                       "mt-1 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold",
@@ -381,6 +400,11 @@ function RowCells({
                     <StatusIcon className="size-2.5" aria-hidden />
                     {statusLabel}
                   </span>
+                  {item.unitsFree ? (
+                    <span className="ml-1 mt-1 inline-flex items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+                      {t("rentals.schedule.occurrence.unitsFree", { count: item.unitsFree })}
+                    </span>
+                  ) : null}
                   {item.badge === "dailyOverride" ? (
                     <span className="ml-1 inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
                       {t("rentals.schedule.occurrence.source.dailyOverride")}

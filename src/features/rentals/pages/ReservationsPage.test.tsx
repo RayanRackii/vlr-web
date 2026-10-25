@@ -178,3 +178,94 @@ describe("ReservationsPage Complete", () => {
     expect(completeButton()).not.toBeInTheDocument()
   })
 })
+
+describe("ReservationsPage Cancel confirmation", () => {
+  beforeEach(() => {
+    listMock.mockReset()
+    confirmMock.mockReset()
+    cancelMock.mockReset()
+    completeMock.mockReset()
+    toastSuccess.mockReset()
+    listMock.mockResolvedValue([])
+  })
+
+  it("asks for confirmation before cancelling and shows the customer, resource and time range", async () => {
+    const user = userEvent.setup()
+    listMock.mockResolvedValue([makeReservation("Confirmed")])
+    renderPage([COMPLETE_PERM])
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+    )
+
+    expect(cancelMock).not.toHaveBeenCalled()
+    const dialog = await screen.findByRole("alertdialog")
+    expect(
+      screen.getByText(i18n.t("rentals.reservations.cancelConfirmTitle")),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText("Ana Souza").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Quadra 1").length).toBeGreaterThan(0)
+    expect(dialog).toBeInTheDocument()
+  })
+
+  it("cancels the reservation only after the destructive action is confirmed", async () => {
+    const user = userEvent.setup()
+    const confirmed = makeReservation("Confirmed")
+    const canceled = makeReservation("Canceled")
+    let rows: AdminReservation[] = [confirmed]
+
+    listMock.mockImplementation(async () => rows)
+    cancelMock.mockImplementation(async () => {
+      rows = [canceled]
+      return canceled
+    })
+
+    renderPage([COMPLETE_PERM])
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+    )
+    await screen.findByRole("alertdialog")
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.reservations.cancelConfirmAction"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(cancelMock).toHaveBeenCalledWith(RESERVATION_ID)
+    })
+    expect(toastSuccess).toHaveBeenCalledWith(
+      i18n.t("rentals.reservations.cancelSuccess"),
+    )
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+  })
+
+  it("dismisses the dialog without cancelling when Manter reserva is clicked", async () => {
+    const user = userEvent.setup()
+    listMock.mockResolvedValue([makeReservation("Confirmed")])
+    renderPage([COMPLETE_PERM])
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+    )
+    await screen.findByRole("alertdialog")
+
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.reservations.cancelConfirmDismiss"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+    expect(cancelMock).not.toHaveBeenCalled()
+  })
+})

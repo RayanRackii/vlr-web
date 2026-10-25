@@ -483,3 +483,74 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
     ).toBeInTheDocument()
   })
 })
+
+describe("DailyAgendaTab multi-unit resource", () => {
+  function multiUnitAsset(): AdminRentalAsset {
+    return {
+      ...agendaAsset(),
+      name: "Projetor",
+      schedulePolicy: "OpenHours",
+      openTime: "08:00:00",
+      closeTime: "16:00:00",
+      allowedDurationMinutes: "240",
+      totalQuantity: 3,
+    }
+  }
+
+  function twoConcurrentBookingsDay(date: string): AdminDaySchedule {
+    const slot = (reservationId: string) => ({
+      id: "00000000-0000-0000-0000-000000000000",
+      rentalAssetId: ASSET_ID,
+      assetName: "Projetor",
+      date,
+      startTime: "12:00:00",
+      endTime: "16:00:00",
+      occupancyKindId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      occupancyKindKey: "open",
+      occupancyKindLabel: "Aberto",
+      isBookableByCustomer: false,
+      label: null,
+      status: "Booked" as const,
+      reservationId,
+      isDerived: true,
+      source: "WeeklyDefault" as const,
+      schedulePolicy: "OpenHours" as const,
+      supportsEntireRecurrence: false,
+    })
+
+    return {
+      date,
+      slots: [slot("r1"), slot("r2")],
+    }
+  }
+
+  it("collapses two concurrent bookings of a 3-unit resource into one cell with a units counter", () => {
+    const date = "2026-10-17"
+    render(
+      <MemoryRouter>
+        <DailyAgendaTab
+          assets={[multiUnitAsset()]}
+          selectedRentalAssetIds={[ASSET_ID]}
+          date={date}
+          day={twoConcurrentBookingsDay(date)}
+          loading={false}
+          showSkeleton={false}
+          busy={false}
+          busyAction={null}
+          busyTargetKey={null}
+          readOnly={false}
+          onSelectedRentalAssetIdsChange={() => undefined}
+          onDateChange={() => undefined}
+          onPublish={() => undefined}
+          onSlotOrCellClick={() => undefined}
+        />
+      </MemoryRouter>,
+    )
+
+    const grid = screen.getByRole("grid")
+    expect(within(grid).getAllByText(/Reservado/).length).toBe(1)
+    expect(within(grid).getByText("Reservado · 2 de 3")).toBeInTheDocument()
+    expect(within(grid).getByText("1 livre")).toBeInTheDocument()
+    expect(within(grid).getByText("12:00–16:00")).toBeInTheDocument()
+  })
+})

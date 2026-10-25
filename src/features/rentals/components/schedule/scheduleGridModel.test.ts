@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  aggregateMultiUnitOccupancies,
   dedupeOpenHoursOccupancies,
   occupancyFromDaySlot,
   occupancyIdFromSlot,
@@ -208,6 +209,59 @@ describe("dedupeOpenHoursOccupancies", () => {
         status: "booked",
       }),
     ])
+  })
+})
+
+describe("aggregateMultiUnitOccupancies", () => {
+  it("leaves single-unit resources untouched", () => {
+    const occupancies = [
+      occupancy({ startTime: "12:00", endTime: "16:00", status: "booked", reservationId: "r1" }),
+      occupancy({ startTime: "12:00", endTime: "16:00", status: "booked", reservationId: "r2" }),
+    ]
+
+    expect(aggregateMultiUnitOccupancies(occupancies, 1)).toEqual(occupancies)
+  })
+
+  it("merges concurrent bookings of the same window into one occupancy with a units counter", () => {
+    const occupancies = [
+      occupancy({
+        id: "derived:projetor:12:00-16:00:r:r1",
+        startTime: "12:00",
+        endTime: "16:00",
+        status: "booked",
+        reservationId: "r1",
+      }),
+      occupancy({
+        id: "derived:projetor:12:00-16:00:r:r2",
+        startTime: "12:00",
+        endTime: "16:00",
+        status: "booked",
+        reservationId: "r2",
+      }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      startTime: "12:00",
+      endTime: "16:00",
+      status: "booked",
+      unitsBooked: 2,
+      unitsTotal: 3,
+      unitsFree: 1,
+    })
+  })
+
+  it("keeps a lone booking separate from an unrelated window on the same resource", () => {
+    const occupancies = [
+      occupancy({ startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
+      occupancy({ startTime: "09:00", endTime: "10:00", status: "available" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toEqual(occupancies)
   })
 })
 

@@ -3078,6 +3078,8 @@
           "booked": "Booked",
           "unavailable": "Unavailable"
         },
+        "unitsBooked": "Booked · {{booked}} of {{total}}",
+        "unitsFree": "{{count}} free",
         "source": {
           "weeklyDefault": "Weekly default",
           "dailyOverride": "This day’s adjustment"
@@ -3351,6 +3353,10 @@
       "confirmError": "Could not confirm the reservation.",
       "cancelSuccess": "Reservation canceled.",
       "cancelError": "Could not cancel the reservation.",
+      "cancelConfirmTitle": "Cancel reservation?",
+      "cancelConfirmDescription": "This action cannot be undone.",
+      "cancelConfirmDismiss": "Keep reservation",
+      "cancelConfirmAction": "Cancel reservation",
       "completeSuccess": "Reservation completed.",
       "completeError": "Could not complete the reservation.",
       "statuses": {
