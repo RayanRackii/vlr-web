@@ -80,6 +80,9 @@ export function buildRentalResourceFormValues(
     queueEnabled: rentalType === "Location" ? (editing?.queueEnabled ?? false) : false,
     queueOpeningTime: toHtmlTimeInput(editing?.queueOpeningTime),
     location: "",
+    cancelCutoffMode: typeof editing?.cancelCutoffHours === "number" ? "hours" : "inherit",
+    cancelCutoffHours: typeof editing?.cancelCutoffHours === "number" ? String(editing.cancelCutoffHours) : "",
+    cancelCutoffStored: editing?.cancelCutoffHours,
     horizonMode:
       typeof editing?.maxAdvanceBookingDays === "number" ? "days" : "inherit",
     horizonDays:

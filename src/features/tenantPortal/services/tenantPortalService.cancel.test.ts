@@ -117,3 +117,15 @@ describe("cancelMyPortalReservation", () => {
     )
   })
 })
+
+
+it("retains the deadline returned by the cancellation endpoint", async () => {
+  customerPost.mockResolvedValue({ data: { ...reservationPayload, cancelDeadlineUtc: "2026-09-08T01:00:00Z" } })
+  await expect(cancelMyPortalReservation(RESERVATION_ID)).resolves.toHaveProperty("cancelDeadlineUtc", "2026-09-08T01:00:00Z")
+})
+it("translates the coded cancellation cutoff conflict", async () => {
+  const error = apiError(409, "raw API message")
+  error.response!.data = { code: "cancel_cutoff_passed", cancelCutoffHours: 12 }
+  customerPost.mockRejectedValue(error)
+  await expect(cancelMyPortalReservation(RESERVATION_ID)).rejects.toMatchObject({ code: "cancel_cutoff_passed", cancelCutoffHours: 12, message: i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: 12 }) })
+})

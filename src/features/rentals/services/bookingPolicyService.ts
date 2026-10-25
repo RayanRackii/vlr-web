@@ -32,11 +32,13 @@ function throwBookingPolicyError(error: unknown, fallbackKey: string): never {
 function replaceBody(policy: BookingPolicy): {
   cancellationPolicyText: string | null
   maxActiveReservationsPerCustomerPerDay: number | null
+  cancelCutoffHours?: number | null
   maxAdvanceBookingDays?: number | null
 } {
   const body: {
     cancellationPolicyText: string | null
     maxActiveReservationsPerCustomerPerDay: number | null
+    cancelCutoffHours?: number | null
     maxAdvanceBookingDays?: number | null
   } = {
     cancellationPolicyText: policy.cancellationPolicyText,
@@ -45,6 +47,9 @@ function replaceBody(policy: BookingPolicy): {
   }
   if (policy.maxAdvanceBookingDays !== undefined) {
     body.maxAdvanceBookingDays = policy.maxAdvanceBookingDays
+  }
+  if (policy.cancelCutoffHours !== undefined) {
+    body.cancelCutoffHours = policy.cancelCutoffHours
   }
   return body
 }
