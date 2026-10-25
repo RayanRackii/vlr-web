@@ -1,6 +1,6 @@
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -11,6 +11,9 @@ import {
   RouterProvider,
   Routes,
 } from "react-router-dom"
+
+// This file renders the full agenda; under CI load (maxWorkers=2) 1s waits flake.
+configure({ asyncUtilTimeout: 5000 })
 
 import { formatMoney } from "@/features/rentals/services/reservationsService"
 import {
