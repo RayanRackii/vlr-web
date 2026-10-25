@@ -20,6 +20,17 @@ import {
 } from "@/features/rentals/schemas/resourceVisualSchemas"
 
 describe("resource visual API schemas", () => {
+  it.each(["Hour", "Slot", "Day", "Fixed", null, undefined])("preserves a daily window's pricing unit %s", (pricingUnit) => {
+    const parsed = dailyAvailabilitySchema.parse({
+      ...dailyAvailability,
+      resources: dailyAvailability.resources.map((resource) => ({
+        ...resource,
+        windows: resource.windows.map((window) => ({ ...window, pricingUnit })),
+      })),
+    })
+    expect(parsed.resources[0]?.windows[0]?.pricingUnit).toBe(pricingUnit)
+  })
+
   it("parses admin templates and non-RFC catalog GUIDs", () => {
     expect(visualPageSchema.parse(adminTemplates).items[0]?.publishedRevision?.status).toBe("Published")
     expect(visualTemplateSchema.parse(adminTemplates.items[0]).tags).toHaveLength(3)

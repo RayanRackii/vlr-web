@@ -1,3 +1,4 @@
+import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -66,6 +67,7 @@ type RentalResourceSheetProps = {
   busy: boolean
   readOnly: boolean
   pricePerHour?: number | null
+  pricingUnit?: PricingUnit
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
 }
 
@@ -79,6 +81,7 @@ export function RentalResourceSheet({
   busy,
   readOnly,
   pricePerHour,
+  pricingUnit,
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
@@ -262,7 +265,7 @@ export function RentalResourceSheet({
           <SheetDescription>
             {t("rentals.resources.formDescription")}
           </SheetDescription>
-          {editing ? <RentalResourceDetails asset={editing} pricePerHour={pricePerHour} /> : null}
+          {editing ? <RentalResourceDetails asset={editing} pricePerHour={pricePerHour} pricingUnit={pricingUnit} /> : null}
         </SheetHeader>
 
         <Form {...form}>

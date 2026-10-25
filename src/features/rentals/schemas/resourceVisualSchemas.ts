@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
 // Catalog IDs are deterministic GUIDs generated from hashes; they do not
@@ -35,7 +36,7 @@ export const publicMapSchema = z.object({
   decorations: z.array(mapDecorationSchema),
   visualRevisions: z.array(publicVisualRevisionSchema),
 })
-export const dailyAvailabilitySchema = z.object({ date: z.string(), timeZone: z.string(), serverNow: z.string(), quoteExpiresAt: z.string(), currency: z.string(), resources: z.array(z.object({ rentalAssetId: uuid, assetId: uuid, unitId: uuid, name: z.string(), type: z.string(), totalQuantity: z.number(), requiresDeposit: z.boolean(), queueEnabled: z.boolean(), effectiveMaxAdvanceBookingDays: z.number().nullable(), windows: z.array(z.object({ slotId: uuid.nullable(), startTime: z.string(), endTime: z.string(), isDerived: z.boolean(), state: z.enum(["Available", "Taken", "Blocked", "Past", "OutsideHorizon", "Unpriced"]), reasonCode: z.string().nullable(), availableQuantity: z.number(), totalAmount: z.number().nullable() })) })) })
+export const dailyAvailabilitySchema = z.object({ date: z.string(), timeZone: z.string(), serverNow: z.string(), quoteExpiresAt: z.string(), currency: z.string(), resources: z.array(z.object({ rentalAssetId: uuid, assetId: uuid, unitId: uuid, name: z.string(), type: z.string(), totalQuantity: z.number(), requiresDeposit: z.boolean(), queueEnabled: z.boolean(), effectiveMaxAdvanceBookingDays: z.number().nullable(), windows: z.array(z.object({ slotId: uuid.nullable(), startTime: z.string(), endTime: z.string(), isDerived: z.boolean(), state: z.enum(["Available", "Taken", "Blocked", "Past", "OutsideHorizon", "Unpriced"]), reasonCode: z.string().nullable(), availableQuantity: z.number(), totalAmount: z.number().nullable(), pricingUnit: pricingUnitSchema.nullish() })) })) })
 
 export type VisualTag = z.infer<typeof visualTagSchema>
 export type VisualTemplate = z.infer<typeof visualTemplateSchema>

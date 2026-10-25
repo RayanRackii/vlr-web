@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import {
   DAYS,
@@ -31,6 +33,18 @@ export function AssetWizardPricingStep({
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1">
+        <Label htmlFor="pricing-unit">{t("assets.wizard.pricing.unitLabel")}</Label>
+        <Select value={pricing.pricingUnit} onValueChange={(value) => {
+          const parsed = pricingUnitSchema.safeParse(value)
+          if (parsed.success) onChange({ pricingUnit: parsed.data })
+        }}>
+          <SelectTrigger id="pricing-unit"><SelectValue>{t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
+          <SelectContent>
+            {pricingUnitSchema.options.map((unit) => <SelectItem key={unit} value={unit}>{t(`assets.wizard.pricing.units.${unit}`)}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-2">
         <p className="text-sm font-medium">
           {t("assets.wizard.pricing.patternLabel")}
@@ -93,11 +107,13 @@ export function AssetWizardPricingStep({
       {pricing.pattern === "sameEveryDay" ? (
         <div className="space-y-1">
           <FieldLabel
-            label={t("assets.wizard.pricing.everydayPrice")}
+            htmlFor="pricing-everyday"
+            label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
             help={t("assets.wizard.pricing.everydayPriceHelp")}
             required
           />
           <Input
+            id="pricing-everyday"
             type="number"
             min={0}
             step="0.01"
@@ -119,11 +135,13 @@ export function AssetWizardPricingStep({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <FieldLabel
-              label={t("assets.wizard.pricing.weekdayPrice")}
+              htmlFor="pricing-weekday"
+              label={`${t("assets.wizard.pricing.weekdayPrice")} · ${t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}`}
               help={t("assets.wizard.pricing.weekdayPriceHelp")}
               required
             />
             <Input
+              id="pricing-weekday"
               type="number"
               min={0}
               step="0.01"
@@ -136,11 +154,13 @@ export function AssetWizardPricingStep({
           </div>
           <div className="space-y-1">
             <FieldLabel
-              label={t("assets.wizard.pricing.weekendPrice")}
+              htmlFor="pricing-weekend"
+              label={`${t("assets.wizard.pricing.weekendPrice")} · ${t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}`}
               help={t("assets.wizard.pricing.weekendPriceHelp")}
               required
             />
             <Input
+              id="pricing-weekend"
               type="number"
               min={0}
               step="0.01"
@@ -157,7 +177,7 @@ export function AssetWizardPricingStep({
       {pricing.pattern === "perDay" ? (
         <div className="space-y-2">
           <FieldLabel
-            label={t("assets.wizard.pricing.perDayPrices")}
+            label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
             help={t("assets.wizard.pricing.perDayPricesHelp")}
           />
           <ul className="space-y-2">

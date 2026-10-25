@@ -13,7 +13,7 @@ import { ScheduleEmptyState } from "@/features/rentals/components/schedule/Sched
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
-import { getAssetPricings } from "@/features/assets/services/rentalPricingService"
+import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
 import {
   toCreateRentableRequest,
   type RegistryCategoryListItem,
@@ -34,13 +34,15 @@ import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 
+type ResourcePrice = Pick<RentalPricing, "pricePerHour" | "pricingUnit">
+
 export function RentalResourcesPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
-  const [pricePerHourByAssetId, setPricePerHourByAssetId] = useState<Record<string, number>>({})
+  const [priceByAssetId, setPriceByAssetId] = useState<Record<string, ResourcePrice>>({})
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [families, setFamilies] = useState<AssetFamily[]>([])
   const [units, setUnits] = useState<Unit[]>([])
@@ -68,18 +70,18 @@ export function RentalResourcesPage() {
         const prices = await Promise.all(assetList.map(async (asset) => {
           try {
             const pricings = await getAssetPricings(asset.assetId)
-            const pricePerHour = pricings.reduce<number | null>(
-              (lowest, pricing) => lowest === null ? pricing.pricePerHour : Math.min(lowest, pricing.pricePerHour),
+            const lowestPrice = pricings.reduce<RentalPricing | null>(
+              (lowest, pricing) => lowest === null || pricing.pricePerHour < lowest.pricePerHour ? pricing : lowest,
               null,
             )
-            return pricePerHour === null ? null : [asset.assetId, pricePerHour] as const
+            return lowestPrice === null ? null : [asset.assetId, { pricePerHour: lowestPrice.pricePerHour, pricingUnit: lowestPrice.pricingUnit }] as const
           } catch {
             return null
           }
         }))
-        setPricePerHourByAssetId(Object.fromEntries(prices.filter((price): price is readonly [string, number] => price !== null)))
+        setPriceByAssetId(Object.fromEntries(prices.filter((price): price is readonly [string, ResourcePrice] => price !== null)))
       } else {
-        setPricePerHourByAssetId({})
+        setPriceByAssetId({})
       }
       setCategories(categoryList)
       setFamilies(familyList)
@@ -202,7 +204,7 @@ export function RentalResourcesPage() {
                       ? ` · ${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
                       : null}
                   </p>
-                  <RentalResourceDetails asset={asset} pricePerHour={pricePerHourByAssetId[asset.assetId]} />
+                  <RentalResourceDetails asset={asset} pricePerHour={priceByAssetId[asset.assetId]?.pricePerHour} pricingUnit={priceByAssetId[asset.assetId]?.pricingUnit} />
                 </div>
                 <ChevronRight
                   className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -228,7 +230,8 @@ export function RentalResourcesPage() {
         families={families}
         busy={busy}
         readOnly={!canWrite}
-        pricePerHour={pricePerHourByAssetId[editing?.assetId ?? ""]}
+        pricePerHour={priceByAssetId[editing?.assetId ?? ""]?.pricePerHour}
+        pricingUnit={priceByAssetId[editing?.assetId ?? ""]?.pricingUnit}
         onSubmit={handleSubmit}
       />
     </div>

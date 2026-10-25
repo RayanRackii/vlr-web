@@ -94,7 +94,12 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
     const details: string[] = []
     if (window?.totalAmount !== null && window?.totalAmount !== undefined) {
       const hours = (Date.parse(`1970-01-01T${window.endTime}`) - Date.parse(`1970-01-01T${window.startTime}`)) / 3_600_000
-      if (hours > 0) details.push(t("bookingMap.pricePerHour", { amount: formatLocaleCurrency(window.totalAmount / hours, availability?.currency ?? "BRL", locale) }))
+      if (hours > 0) {
+        const unit = window.pricingUnit ?? "Hour"
+        const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, Math.ceil(hours / 24)) : 1
+        const key = unit === "Hour" ? "bookingMap.pricePerHour" : `bookingMap.prices.${unit}`
+        details.push(t(key, { amount: formatLocaleCurrency(window.totalAmount / divisor, availability?.currency ?? "BRL", locale) }))
+      }
     }
     if (resource.totalQuantity > 1 && window) details.push(t("bookingMap.unitsLeft", { left: window.availableQuantity, total: resource.totalQuantity }))
     return details.join(" · ")

@@ -22,6 +22,16 @@ const asset: AdminRentalAsset = {
 }
 
 describe("RentalResourceDetails", () => {
+  it.each([
+    ["Hour", "por hora"],
+    ["Slot", "por horário"],
+    ["Day", "por dia"],
+    ["Fixed", "fixo"],
+  ] as const)("shows the %s pricing unit", (pricingUnit, suffix) => {
+    render(<RentalResourceDetails asset={asset} pricePerHour={45} pricingUnit={pricingUnit} />)
+    expect(screen.getByText(new RegExp(`R\\$ 45,00 ${suffix}`))).toBeInTheDocument()
+  })
+
   it.each([null, 0, undefined])("shows the neutral capacity label when capacity is %s", (capacityPeople) => {
     render(<RentalResourceDetails asset={{ ...asset, capacityPeople }} pricePerHour={null} />)
 

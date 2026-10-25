@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import type { PricingUnit } from "@/api/generated/rentalPricing"
 
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
@@ -6,6 +7,7 @@ import { formatLocaleCurrency } from "@/lib/localeFormat"
 type RentalResourceDetailsProps = {
   asset: AdminRentalAsset
   pricePerHour: number | null | undefined
+  pricingUnit?: PricingUnit
 }
 
 function formatAllowedDurations(
@@ -26,12 +28,12 @@ function formatAllowedDurations(
     .join(", ")
 }
 
-export function RentalResourceDetails({ asset, pricePerHour }: RentalResourceDetailsProps) {
+export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour" }: RentalResourceDetailsProps) {
   const { i18n, t } = useTranslation()
   const durations = formatAllowedDurations(asset.allowedDurationMinutes, t)
   const details = [
     pricePerHour != null
-      ? t("rentals.resources.details.pricePerHour", { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })
+      ? t(`rentals.resources.details.prices.${pricingUnit}`, { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })
       : null,
     durations !== null ? t("rentals.resources.details.allowedDurations", { durations }) : null,
     typeof asset.capacityPeople === "number" && asset.capacityPeople > 0

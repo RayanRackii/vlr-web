@@ -1751,6 +1751,9 @@
         "review": "Revisión"
       },
       "pricing": {
+        "unitLabel": "Unidad de precio",
+        "units": {"Hour": "Por hora", "Slot": "Por horario", "Day": "Por día", "Fixed": "Fijo"},
+        "priceLabels": {"Hour": "Precio por hora", "Slot": "Precio por horario", "Day": "Precio por día", "Fixed": "Precio fijo"},
         "patternLabel": "Cómo se repite el precio en la semana",
         "everydayPrice": "Precio por hora",
         "everydayPriceHelp": "El mismo valor vale todos los días, en el intervalo de abajo.",
@@ -1857,6 +1860,7 @@
         "invalidResponse": "Respuesta inválida de la API.",
         "pricingLoadFailed": "No se pudieron cargar los precios.",
         "pricingCreateFailed": "No se pudo crear la franja de precio.",
+        "pricingUpdateFailed": "No se pudo actualizar el precio.",
         "pricingDeleteFailed": "No se pudo eliminar la franja de precio.",
         "pricingBulkFailed": "No se pudieron aplicar los precios en lote."
       }
@@ -3207,6 +3211,7 @@
       "typeGood": "Ítem alquilable",
       "details": {
         "pricePerHour": "Desde: {{amount}}/h",
+        "prices": {"Hour": "Desde: {{amount}} por hora", "Slot": "Desde: {{amount}} por horario", "Day": "Desde: {{amount}} por día", "Fixed": "Desde: {{amount}} fijo"},
         "allowedDurations": "Duraciones: {{durations}}",
         "capacity_one": "Capacidad: {{count}} persona",
         "capacity_other": "Capacidad: {{count}} personas",
@@ -3493,6 +3498,7 @@
       "Available": "Disponible"
     },
     "pricePerHour": "{{amount}}/h",
+    "prices": {"Slot": "{{amount}} por horario", "Day": "{{amount}} por día", "Fixed": "{{amount}} (precio fijo)"},
     "unitsLeft": "{{left}} de {{total}} disponibles"
   }
 }

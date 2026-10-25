@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
@@ -158,6 +159,7 @@ export const bulkPricingRowSchema = z.object({
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   pricePerHour: z.number().nonnegative(),
+  pricingUnit: pricingUnitSchema.optional(),
   requiresDeposit: z.boolean(),
   depositPercentage: z.number().min(0).max(100),
 })
