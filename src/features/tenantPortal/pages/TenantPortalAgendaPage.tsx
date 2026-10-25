@@ -1,5 +1,5 @@
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
-import { Loader2 } from "lucide-react"
+import { CalendarIcon, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -12,6 +12,7 @@ import {
 } from "react-router-dom"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
@@ -27,6 +28,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Select,
@@ -148,6 +151,22 @@ import { cn } from "@/lib/utils"
 function isCancelledReservationStatus(status: string): boolean {
   const normalized = status.trim().toLowerCase()
   return normalized === "cancelled" || normalized === "canceled"
+}
+
+function reservationStatusBadgeVariant(
+  status: string,
+): "success" | "destructive" | "secondary" | "warning" {
+  if (isCancelledReservationStatus(status)) {
+    return "destructive"
+  }
+  const normalized = status.trim().toLowerCase()
+  if (normalized === "confirmed") {
+    return "success"
+  }
+  if (normalized === "pendingdeposit") {
+    return "warning"
+  }
+  return "secondary"
 }
 
 function dropScheduleSlot(
@@ -1488,18 +1507,16 @@ export function TenantPortalAgendaPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.agenda.subtitlePicker")}
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-4xl">
+      <PageHeader
+        title={title}
+        description={t("tenantPortal.agenda.subtitlePicker")}
+      />
 
       {loading ? (
         <FormSkeleton fields={4} />
       ) : (
-        <>
+        <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1 text-sm">
               <label htmlFor={dateInputId}>{t("tenantPortal.agenda.date")}</label>
@@ -1865,15 +1882,17 @@ export function TenantPortalAgendaPage() {
 
           <div
             id="minhas-reservas"
-            className="scroll-mt-16 space-y-2 border-t border-border pt-4"
+            className="scroll-mt-16 space-y-3 border-t border-border pt-5"
           >
-            <h3 className="text-sm font-medium">
+            <h3 className="text-sm font-semibold text-foreground">
               {t("tenantPortal.agenda.myReservations")}
             </h3>
             {mine.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("tenantPortal.agenda.empty")}
-              </p>
+              <EmptyState
+                size="sm"
+                icon={CalendarIcon}
+                title={t("tenantPortal.agenda.empty")}
+              />
             ) : (
               <ul className="space-y-2">
                 {mine.map((reservation) => {
@@ -1885,34 +1904,37 @@ export function TenantPortalAgendaPage() {
                       aria-current={focused ? "true" : undefined}
                       data-reservation-focused={focused ? "true" : undefined}
                       className={cn(
-                        "scroll-mt-16 rounded-md border px-3 py-2 text-sm",
+                        "scroll-mt-16 rounded-xl border bg-card px-4 py-3 text-sm shadow-sm",
                         focused
                           ? "border-primary bg-primary/10 ring-2 ring-primary"
                           : "border-border",
                       )}
                     >
-                      <p className="font-medium">
-                        {reservation.items
-                          .map((item) => item.assetName)
-                          .join(", ")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="font-semibold text-foreground">
+                          {reservation.items
+                            .map((item) => item.assetName)
+                            .join(", ")}
+                        </p>
+                        <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
+                          {t(`rentals.reservations.statuses.${reservation.status}`, {
+                            defaultValue: reservation.status,
+                          })}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {formatReservationRange(
                           reservation.startDateTime,
                           reservation.endDateTime,
                           timeZoneId,
-                        )}{" "}
-                        ·{" "}
-                        {t(`rentals.reservations.statuses.${reservation.status}`, {
-                          defaultValue: reservation.status,
-                        })}
+                        )}
                         {" · "}
                         {t("tenantPortal.agenda.total", {
                           amount: formatBookingMoney(reservation.totalAmount),
                         })}
                       </p>
                       {isPastReservation(reservation.endDateTime) ? (
-                        <p className="text-xs font-medium">
+                        <p className="mt-1 text-xs font-medium text-muted-foreground">
                           {t("tenantPortal.agenda.pastReservation")}
                         </p>
                       ) : null}
@@ -1925,7 +1947,7 @@ export function TenantPortalAgendaPage() {
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="mt-2"
+                          className="mt-3"
                           loading={cancelingId === reservation.id}
                           loadingLabel={t("tenantPortal.agenda.cancelling")}
                           onClick={() => {
@@ -1996,7 +2018,7 @@ export function TenantPortalAgendaPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </>
+        </div>
       )}
     </div>
   )

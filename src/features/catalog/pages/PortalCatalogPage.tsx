@@ -4,8 +4,10 @@ import { ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
@@ -225,13 +227,12 @@ export function PortalCatalogPage() {
   }, [search])
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-4">
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("tenantPortal.catalog.title")}
-          </h1>
-          <div className="flex flex-wrap gap-2">
+    <div className="mx-auto w-full max-w-[1440px]">
+      <PageHeader
+        title={t("tenantPortal.catalog.title")}
+        description={t("tenantPortal.catalog.subtitle")}
+        actions={
+          <>
             <Button
               type="button"
               variant="outline"
@@ -258,11 +259,10 @@ export function PortalCatalogPage() {
               <ShoppingBag data-icon="inline-start" />
               {t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}
             </Button>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.subtitle")}
-        </p>
+          </>
+        }
+      />
+      <div className="space-y-4">
         <Input
           value={searchDraft}
           placeholder={t("tenantPortal.catalog.searchPlaceholder")}
@@ -279,56 +279,68 @@ export function PortalCatalogPage() {
           disabled={loading}
           onChange={({ categoryId, tagIds }) => updateQuery({ categoryId, tagIds })}
         />
-      </header>
+      </div>
 
       {loadError ? (
-        <div className="flex items-center gap-2 text-sm text-destructive"><p>{loadError}</p><Button type="button" variant="outline" size="sm" onClick={() => void load()}>{t("catalog.retry")}</Button></div>
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <p>{loadError}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
+            {t("catalog.retry")}
+          </Button>
+        </div>
       ) : null}
 
-      {loading ? (
-        <PageContentSkeleton rows={4} />
-      ) : products.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {search.trim()
-            ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
-            : t("tenantPortal.catalog.empty")}
-        </p>
-      ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => {
-            const qty = quantities[product.id] ?? 1
-            return (
-              <li key={product.id} className="min-h-0">
-                <PortalCatalogProductCard
-                  product={product}
-                  subdomain={subdomain}
-                  quantity={qty}
-                  onQuantityChange={(next) => {
-                    setQuantities((current) => ({
-                      ...current,
-                      [product.id]: next,
-                    }))
-                  }}
-                  onAdd={() => {
-                    cart.add(product.id, qty)
-                    toast.success(t("tenantPortal.catalog.addedToCart"))
-                  }}
-                  primary={primary}
-                />
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      <div className="mt-6">
+        {loading ? (
+          <PageContentSkeleton rows={4} />
+        ) : products.length === 0 ? (
+          <EmptyState
+            icon={ShoppingBag}
+            title={
+              search.trim()
+                ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
+                : t("tenantPortal.catalog.empty")
+            }
+          />
+        ) : (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {products.map((product) => {
+              const qty = quantities[product.id] ?? 1
+              return (
+                <li key={product.id} className="min-h-0">
+                  <PortalCatalogProductCard
+                    product={product}
+                    subdomain={subdomain}
+                    quantity={qty}
+                    onQuantityChange={(next) => {
+                      setQuantities((current) => ({
+                        ...current,
+                        [product.id]: next,
+                      }))
+                    }}
+                    onAdd={() => {
+                      cart.add(product.id, qty)
+                      toast.success(t("tenantPortal.catalog.addedToCart"))
+                    }}
+                    primary={primary}
+                  />
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
 
       {cart.items.length > 0 ? (
-        <PortalCartPanel
-          subdomain={subdomain}
-          products={mergeProducts(cartProducts, products)}
-          resolutions={cartProductResolutions}
-          onRetryProduct={retryCartProduct}
-          cart={cart}
-        />
+        <div className="mt-6">
+          <PortalCartPanel
+            subdomain={subdomain}
+            products={mergeProducts(cartProducts, products)}
+            resolutions={cartProductResolutions}
+            onRetryProduct={retryCartProduct}
+            cart={cart}
+          />
+        </div>
       ) : null}
     </div>
   )
@@ -378,7 +390,7 @@ function PortalCartPanel({
   )
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+    <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
       <h2 className="text-sm font-medium">{t("tenantPortal.catalog.cartTitle")}</h2>
       <ul className="space-y-2 text-sm">
         {cart.items.map((item) => {

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { catalogOrderStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   formatCatalogDate,
@@ -100,7 +101,9 @@ export function PortalOrderDetailPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{totalLabel}</p>
         </div>
-        <Badge variant="outline">{t(`catalog.status.${order.status}`)}</Badge>
+        <Badge variant={catalogOrderStatusBadgeVariant(order.status)}>
+          {t(`catalog.status.${order.status}`)}
+        </Badge>
       </div>
 
       <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
@@ -137,7 +140,7 @@ export function PortalOrderDetailPage() {
           {order.history.map((entry) => (
             <li
               key={entry.id}
-              className="rounded-lg border border-border px-4 py-2 text-sm"
+              className="rounded-xl border border-border px-4 py-2 text-sm"
             >
               <p className="font-medium">{t(`catalog.status.${entry.status}`)}</p>
               <p className="text-muted-foreground">

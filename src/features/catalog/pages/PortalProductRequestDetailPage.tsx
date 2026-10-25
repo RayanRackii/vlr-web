@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { productRequestStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import { productRequestStatusLabel } from "@/features/catalog/lib/productRequestStatusLabel"
 import {
   formatCatalogDate,
@@ -138,7 +139,7 @@ export function PortalProductRequestDetailPage() {
                 {formatCatalogDate(request.createdAt, i18n.language)}
               </p>
             </div>
-            <Badge variant="outline">
+            <Badge variant={productRequestStatusBadgeVariant(request.status)}>
               {productRequestStatusLabel(request.status, (key, options) =>
                 t(key, options),
               )}
