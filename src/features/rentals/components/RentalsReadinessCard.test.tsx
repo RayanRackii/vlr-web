@@ -154,6 +154,49 @@ describe("RentalsReadinessCard", () => {
     expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
   })
 
+  it("ignores inactive SlotGrid resources when every active resource uses OpenHours", async () => {
+    getReadiness.mockResolvedValue({
+      ready: false,
+      items: [{ key: "hasScheduleTemplateOrRule", done: false, count: 0 }],
+    })
+    listAssets.mockResolvedValue([
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Inactive SlotGrid resource",
+        isActive: false,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+      {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        assetId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Active OpenHours resource",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "OpenHours",
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+      },
+    ])
+
+    renderCard()
+
+    const scheduleItem = (
+      await screen.findByRole("link", {
+        name: i18n.t("dashboard.rentalsReadiness.items.hasScheduleTemplateOrRule"),
+      })
+    ).closest("li")
+
+    expect(within(scheduleItem!).queryByText("(0)")).not.toBeInTheDocument()
+  })
+
   it("does not load or render without the rentals module or read permission", () => {
     renderCard({ activeModules: [] })
     expect(getReadiness).not.toHaveBeenCalled()

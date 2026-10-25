@@ -40,10 +40,10 @@ export function RentalsReadinessCard() {
       .then(([data, assets]) => {
         if (!cancelled) {
           setReadiness(data)
+          const activeAssets = assets?.filter((asset) => asset.isActive) ?? []
           setHasOnlyOpenHoursResources(
-            assets !== null &&
-              assets.length > 0 &&
-              assets.every((asset) => asset.schedulePolicy === "OpenHours"),
+            activeAssets.length > 0 &&
+              activeAssets.every((asset) => asset.schedulePolicy === "OpenHours"),
           )
         }
       })

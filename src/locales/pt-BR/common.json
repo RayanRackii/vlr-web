@@ -3198,9 +3198,10 @@
       "typeLocation": "Espaço",
       "typeGood": "Item alugável",
       "details": {
-        "pricePerHour": "A partir de: {{amount}}/h · ",
-        "allowedDurations": "Durações: {{durations}} · ",
-        "capacity": "Capacidade: {{count}} pessoas",
+        "pricePerHour": "A partir de: {{amount}}/h",
+        "allowedDurations": "Durações: {{durations}}",
+        "capacity_one": "Capacidade: {{count}} pessoa",
+        "capacity_other": "Capacidade: {{count}} pessoas",
         "durationHours": "{{count}} h",
         "durationMinutes": "{{count}} min"
       },

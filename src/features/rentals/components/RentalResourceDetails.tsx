@@ -29,14 +29,17 @@ function formatAllowedDurations(
 export function RentalResourceDetails({ asset, pricePerHour }: RentalResourceDetailsProps) {
   const { i18n, t } = useTranslation()
   const durations = formatAllowedDurations(asset.allowedDurationMinutes, t)
+  const details = [
+    pricePerHour != null
+      ? t("rentals.resources.details.pricePerHour", { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })
+      : null,
+    durations !== null ? t("rentals.resources.details.allowedDurations", { durations }) : null,
+    asset.capacityPeople != null ? t("rentals.resources.details.capacity", { count: asset.capacityPeople }) : null,
+  ].filter((detail): detail is string => detail !== null)
 
-  if (pricePerHour == null && durations === null && asset.capacityPeople == null) return null
+  if (details.length === 0) return null
 
   return (
-    <p className="text-xs text-muted-foreground">
-      {pricePerHour != null ? <span>{t("rentals.resources.details.pricePerHour", { amount: formatLocaleCurrency(pricePerHour, "BRL", i18n.language) })}</span> : null}
-      {durations !== null ? <span>{t("rentals.resources.details.allowedDurations", { durations })}</span> : null}
-      {asset.capacityPeople != null ? <span>{t("rentals.resources.details.capacity", { count: asset.capacityPeople })}</span> : null}
-    </p>
+    <p className="text-xs text-muted-foreground">{details.join(" · ")}</p>
   )
 }

@@ -3198,9 +3198,10 @@
       "typeLocation": "Espacio",
       "typeGood": "Ítem alquilable",
       "details": {
-        "pricePerHour": "Desde: {{amount}}/h · ",
-        "allowedDurations": "Duraciones: {{durations}} · ",
-        "capacity": "Capacidad: {{count}} personas",
+        "pricePerHour": "Desde: {{amount}}/h",
+        "allowedDurations": "Duraciones: {{durations}}",
+        "capacity_one": "Capacidad: {{count}} persona",
+        "capacity_other": "Capacidad: {{count}} personas",
         "durationHours": "{{count}} h",
         "durationMinutes": "{{count}} min"
       },
