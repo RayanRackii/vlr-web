@@ -1782,6 +1782,106 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toHaveAttribute("aria-disabled", "true")
   })
 
+  it("shows the quantity stepper only for multi-unit goods", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.queryByRole("group", { name: i18n.t("bookingMap.quantity") })).not.toBeInTheDocument()
+    unmount()
+
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    expect(await screen.findByRole("group", { name: i18n.t("bookingMap.quantity") })).toBeInTheDocument()
+  })
+
+  it("hides the quantity stepper for a single-unit good", async () => {
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    expect(screen.queryByRole("group", { name: i18n.t("bookingMap.quantity") })).not.toBeInTheDocument()
+  })
+
+  it("re-quotes and books a multi-unit good using the selected quantity", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: true,
+        requestedQuantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: requestedQuantity * 80,
+        reason: null,
+      }
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }))
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ quantity: 2 }),
+      )
+    })
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }))
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalledWith(expect.objectContaining({
+        quantity: 2,
+        expectedTotalAmount: 160,
+      }))
+    })
+  })
+
+  it("clamps a multi-unit good to the availability from the last quote", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: requestedQuantity <= 2,
+        requestedQuantity,
+        availableQuantity: 2,
+        estimatedTotalAmount: requestedQuantity <= 2 ? requestedQuantity * 80 : null,
+        reason: null,
+      }
+    })
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    const increase = await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` })
+    await user.click(increase)
+    await waitFor(() => expect(increase).toBeDisabled())
+  })
+
   it("clears Reservando and toasts when booking fails", async () => {
     const user = userEvent.setup()
     bookSlot.mockRejectedValue(new Error("slot taken"))
