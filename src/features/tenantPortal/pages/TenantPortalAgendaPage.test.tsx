@@ -1841,7 +1841,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastError).not.toHaveBeenCalled()
   })
 
-  it("treats a reservation made in another tab as the customer's successful booking", async () => {
+  it("reports a reservation made in another tab as already existing", async () => {
     const user = userEvent.setup()
     const held = makeReservation("Confirmed", SLOT_08_ISO, {
       items: [
@@ -1873,13 +1873,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(held.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
+    expect(toastSuccess).not.toHaveBeenCalled()
     expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -2718,7 +2716,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
   })
 
-  it("treats an interval conflict as success when Minhas reservas confirms this customer owns it", async () => {
+  it("reports an existing reservation when another tab already created it", async () => {
     const user = userEvent.setup()
     const created = makeReservation("Confirmed", SLOT_08_ISO)
     listMine.mockResolvedValueOnce([]).mockResolvedValue([created])
@@ -2734,14 +2732,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(created.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
-    expect(toastMessage).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
     expect(toastError).not.toHaveBeenCalledWith(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -2786,7 +2781,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toBe(false)
   })
 
-  it("uses the active reservation when a cancelled reservation has the same slot", async () => {
+  it("reports an existing active reservation when cancelled history has the same slot", async () => {
     const user = userEvent.setup()
     const active = makeReservation("Confirmed", SLOT_08_ISO)
     const cancelled = makeReservation("Canceled", SLOT_08_ISO, {
@@ -2805,13 +2800,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(active.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it("translates the daily booking limit without refreshing the agenda", async () => {

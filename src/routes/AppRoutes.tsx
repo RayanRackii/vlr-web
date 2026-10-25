@@ -17,6 +17,8 @@ import { onboardingManifest } from "@/features/onboarding/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { rentalsManifest } from "@/features/rentals/manifest"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalModuleGuard } from "@/features/tenantPortal/components/PortalModuleGuard"
+import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
@@ -64,9 +66,14 @@ export function AppRoutes() {
           )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          <Route element={<PortalModuleGuard moduleName="catalog" />}>
+            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route element={<TenantPortalLayout />}>
+          <Route path="*" element={<PortalNotFoundRoute />} />
+        </Route>
       </Routes>
     )
   }
@@ -96,7 +103,13 @@ export function AppRoutes() {
           )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          <Route element={<PortalModuleGuard moduleName="catalog" />}>
+            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          </Route>
+        </Route>
+        <Route element={<TenantPortalLayout />}>
+          <Route path="*" element={<PortalNotFoundRoute />} />
         </Route>
       </Route>
 
