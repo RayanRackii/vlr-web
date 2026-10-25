@@ -3428,7 +3428,8 @@
       "cancelCutoffNone": "Sem prazo",
       "cancelCutoffHoursMode": "N horas antes do início",
       "cancelCutoffHours": "Horas antes do início",
-      "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início."
+      "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início.",
+      "categories": {"title": "Por categoria", "description": "Vale para os recursos da categoria. Deixe em branco para usar o valor geral acima. Um valor definido no próprio recurso tem prioridade.", "horizonDays": "Antecedência máxima (dias)", "cancelCutoffHours": "Cancelamento até (horas antes)", "inherit": "Geral", "save": "Salvar", "saved": "Política da categoria salva.", "invalid": "Use um número inteiro ou deixe em branco.", "empty": "Nenhuma categoria com recursos reserváveis."}
     }
   },
   "resourceVisual": {

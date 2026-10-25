@@ -45,6 +45,7 @@ import {
   getBookingPolicy,
   replaceBookingPolicy,
 } from "@/features/rentals/services/bookingPolicyService"
+import { CategoryBookingPolicySection } from "@/features/rentals/components/CategoryBookingPolicySection"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -459,6 +460,8 @@ export function BookingPolicyPage() {
           </form>
         </Form>
       ) : null}
+
+      {!loading && !loadError ? <CategoryBookingPolicySection canEdit={canEdit} /> : null}
     </div>
   )
 }

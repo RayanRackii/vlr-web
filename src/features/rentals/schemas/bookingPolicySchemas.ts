@@ -233,3 +233,22 @@ export function toBookingPolicyReplaceBody(
   }
   return body
 }
+
+/** Category layer: resource override > category > tenant default. Null inherits the tenant value. */
+export const categoryBookingPolicySchema = z.object({
+  categoryId: z.string(),
+  categoryName: z.string(),
+  maxAdvanceBookingDays: z.number().int().min(BOOKING_HORIZON_DAY_MIN).max(BOOKING_HORIZON_DAY_MAX).nullable(),
+  cancelCutoffHours: z.number().int().min(0).max(CANCEL_CUTOFF_HOURS_MAX).nullable(),
+})
+
+export type CategoryBookingPolicy = z.infer<typeof categoryBookingPolicySchema>
+
+/** Blank means inherit (null); otherwise a whole number within [0, max]. Undefined = invalid. */
+export function parseOptionalWholeNumber(value: string, max: number): number | null | undefined {
+  const trimmed = value.trim()
+  if (trimmed === "") return null
+  if (!/^\d+$/.test(trimmed)) return undefined
+  const parsed = Number(trimmed)
+  return parsed <= max ? parsed : undefined
+}
