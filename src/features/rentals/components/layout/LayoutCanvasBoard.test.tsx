@@ -134,7 +134,7 @@ describe("LayoutCanvasBoard pick labels", () => {
 
     const tile = screen.getByRole("button", { name: "Quadra 3" })
     expect(tile).toHaveTextContent("Quadra 3 · Tênis")
-    expect(tile.querySelector(".absolute.inset-x-0.bottom-0")).not.toBeNull()
+    expect(tile.querySelector(".sm\\:absolute.sm\\:bottom-0")).not.toBeNull()
   })
 
   it("puts focus and screen-reader order in visual reading order", () => {

@@ -8,7 +8,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye } from "lucide-react"
+import { Eye, ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Table,
   TableBody,
@@ -166,6 +167,23 @@ export function PortalOrdersPage() {
         <p className="mb-4 text-sm text-destructive">{loadError}</p>
       ) : null}
 
+      {!loading && orders.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title={t("tenantPortal.catalog.ordersEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void navigate(tenantPortalPath(subdomain, "catalogo"))
+              }}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+          }
+        />
+      ) : (
       <div className="overflow-hidden rounded-xl border border-border">
         <Table>
           <TableHeader>
@@ -210,6 +228,7 @@ export function PortalOrdersPage() {
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   )
 }
