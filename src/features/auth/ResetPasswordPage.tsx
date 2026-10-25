@@ -1,11 +1,13 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
+import { Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 
+import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
@@ -16,7 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
+import { iconProps } from "@/lib/icon"
 import {
   createResetPasswordSchema,
   type ResetPasswordFormValues,
@@ -117,43 +120,38 @@ export function ResetPasswordPage() {
 
   if (gate === "loading") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-4 p-6">
+      <AuthLayout title={t("auth.resetPassword.title")}>
         <p className="text-sm text-muted-foreground">
           {t("auth.resetPassword.loading")}
         </p>
-      </main>
+      </AuthLayout>
     )
   }
 
   if (gate === "invalid") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-6 p-6">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("auth.resetPassword.title")}
-          </h1>
+      <AuthLayout title={t("auth.resetPassword.title")}>
+        <div className="space-y-6">
           <p className="text-sm text-destructive" role="alert">
             {t("auth.resetPassword.invalidLink")}
           </p>
-        </header>
-        <Button type="button" render={<Link to="/login" />}>
-          {t("auth.resetPassword.backToLogin")}
-        </Button>
-      </main>
+          <Button
+            type="button"
+            className="w-full"
+            render={<Link to="/login" />}
+          >
+            {t("auth.resetPassword.backToLogin")}
+          </Button>
+        </div>
+      </AuthLayout>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 p-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("auth.resetPassword.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.resetPassword.subtitle")}
-        </p>
-      </header>
-
+    <AuthLayout
+      title={t("auth.resetPassword.title")}
+      subtitle={t("auth.resetPassword.subtitle")}
+    >
       <Form {...form}>
         <form
           className="space-y-6"
@@ -167,9 +165,11 @@ export function ResetPasswordPage() {
               <FormItem>
                 <FormLabel>{t("auth.resetPassword.passwordLabel")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>
@@ -187,9 +187,11 @@ export function ResetPasswordPage() {
                   {t("auth.resetPassword.confirmPasswordLabel")}
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>
@@ -218,6 +220,6 @@ export function ResetPasswordPage() {
           </FormPrimaryButton>
         </form>
       </Form>
-    </main>
+    </AuthLayout>
   )
 }

@@ -185,6 +185,13 @@
   },
   "auth": {
     "sessionExpired": "Sessão expirada. Entre novamente.",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
+    "brandPanel": {
+      "title": "Uma plataforma para qualquer recurso reservável",
+      "body": "Agende, gerencie e cresça sua operação em um único workspace modular — feito para o seu negócio, não um modelo fechado.",
+      "footnote": "Usado por equipes que gerenciam reservas, ativos e operações de serviço."
+    },
     "invite": {
       "title": "Ativar conta",
       "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",

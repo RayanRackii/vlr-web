@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
+import { Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -48,7 +49,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { iconProps } from "@/lib/icon"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 
@@ -441,10 +444,12 @@ function NewPasswordForm({
             <FormItem>
               <FormLabel>{t("auth.invite.passwordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
                   placeholder={t("auth.invite.passwordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
@@ -460,10 +465,12 @@ function NewPasswordForm({
             <FormItem>
               <FormLabel>{t("auth.invite.confirmPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
                   placeholder={t("auth.invite.confirmPasswordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
@@ -546,10 +553,12 @@ function ExistingAccountSignInForm({
             <FormItem>
               <FormLabel>{t("auth.invite.existingPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="current-password"
                   placeholder={t("auth.invite.existingPasswordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
