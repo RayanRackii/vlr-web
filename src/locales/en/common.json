@@ -515,7 +515,9 @@
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
       "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
-      "cancelCutoffReason": "Cancellation window closed"
+      "cancelCutoffReason": "Cancellation window closed",
+      "days": "Days",
+      "daysSummary": "{{count}} days · until {{until}}"
     },
     "menu": {
       "empty": "No modules available.",
@@ -3406,7 +3408,8 @@
         "Confirmed": "Confirmed",
         "Canceled": "Canceled",
         "Completed": "Completed"
-      }
+      },
+      "multiDayRange": "{{start}} – {{end}} ({{days}} days)"
     },
     "bookingPolicy": {
       "title": "Booking policy",

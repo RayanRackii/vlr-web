@@ -1010,6 +1010,7 @@ export async function checkPortalAvailability(
   query: {
     assetId: string
     date: string
+    endDate?: string
     startTime: string
     endTime: string
     quantity?: number
@@ -1039,6 +1040,7 @@ export async function checkPortalAvailability(
 export async function createPortalReservation(body: {
   unitId: string
   date: string
+  endDate?: string
   startTime: string
   endTime: string
   items: { assetId: string; quantity: number }[]
