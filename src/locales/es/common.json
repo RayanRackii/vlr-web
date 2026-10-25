@@ -186,6 +186,13 @@
   },
   "auth": {
     "sessionExpired": "La sesión expiró. Inicia sesión de nuevo.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "brandPanel": {
+      "title": "Una plataforma para cualquier recurso reservable",
+      "body": "Programa, gestiona y haz crecer tu operación desde un único espacio modular, hecho para tu negocio, no una plantilla cerrada.",
+      "footnote": "Usado por equipos que gestionan reservas, activos y operaciones de servicio."
+    },
     "invite": {
       "title": "Activar cuenta",
       "welcome": "Bienvenido a Rolvix. Para activar su cuenta en {{tenant}}, defina una contraseña segura a continuación.",

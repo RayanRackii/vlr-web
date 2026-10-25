@@ -186,6 +186,13 @@
   },
   "auth": {
     "sessionExpired": "Session expired. Sign in again.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "brandPanel": {
+      "title": "One platform for every bookable resource",
+      "body": "Schedule, manage, and grow your operation from a single modular workspace — built for your business, not a template.",
+      "footnote": "Trusted by teams managing bookings, assets, and service operations."
+    },
     "invite": {
       "title": "Activate account",
       "welcome": "Welcome to Rolvix. To activate your account at {{tenant}}, set a secure password below.",

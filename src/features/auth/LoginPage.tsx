@@ -1,10 +1,12 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Building2, Lock, Mail } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
+import { AuthLayout } from "@/components/layout/AuthLayout"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -16,7 +18,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
+import { iconProps } from "@/lib/icon"
 import {
   loginSchema,
   type LoginFormValues,
@@ -171,16 +175,16 @@ export function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 p-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("auth.login.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.login.subtitle")}
-        </p>
-      </header>
-
+    <AuthLayout
+      title={
+        resetEmail ? t("auth.login.resetCompanyTitle") : t("auth.login.title")
+      }
+      subtitle={
+        resetEmail
+          ? t("auth.login.resetCompanySubtitle")
+          : t("auth.login.subtitle")
+      }
+    >
       {resetEmail ? (
         <Form {...companyForm}>
           <form
@@ -188,15 +192,6 @@ export function LoginPage() {
             onSubmit={companyForm.handleSubmit(onCompanySubmit)}
             noValidate
           >
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold">
-                {t("auth.login.resetCompanyTitle")}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {t("auth.login.resetCompanySubtitle")}
-              </p>
-            </div>
-
             <FormField
               control={companyForm.control}
               name="subdomain"
@@ -204,7 +199,8 @@ export function LoginPage() {
                 <FormItem>
                   <FormLabel>{t("auth.login.resetCompanyLabel")}</FormLabel>
                   <FormControl>
-                    <Input
+                    <InputWithIcon
+                      icon={<Building2 {...iconProps("sm")} />}
                       autoComplete="organization"
                       placeholder={t("auth.login.resetCompanyPlaceholder")}
                       {...field}
@@ -267,7 +263,8 @@ export function LoginPage() {
               <FormItem>
                 <FormLabel>{t("auth.login.emailLabel")}</FormLabel>
                 <FormControl>
-                  <Input
+                  <InputWithIcon
+                    icon={<Mail {...iconProps("sm")} />}
                     type="email"
                     placeholder={t("auth.login.emailPlaceholder")}
                     autoComplete="email"
@@ -286,10 +283,12 @@ export function LoginPage() {
               <FormItem>
                 <FormLabel>{t("auth.login.passwordLabel")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     placeholder={t("auth.login.passwordPlaceholder")}
                     autoComplete="current-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>
@@ -343,6 +342,6 @@ export function LoginPage() {
         </form>
       </Form>
       )}
-    </main>
+    </AuthLayout>
   )
 }
