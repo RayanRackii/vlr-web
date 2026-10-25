@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { LocaleDateInput } from "@/components/LocaleDateInput"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
 import { CalendarRange } from "lucide-react"
@@ -10,7 +12,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -48,7 +49,7 @@ const STATUS_BADGE_VARIANT: Record<
 }
 
 export function ReservationsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { can } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
@@ -58,23 +59,31 @@ export function ReservationsPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const requestSeq = useRef(0)
+
+  const load = useCallback(async (options?: { keepRows?: boolean }) => {
+    const seq = ++requestSeq.current
     setLoading(true)
+    if (!options?.keepRows) {
+      setRows([])
+    }
     try {
       const items = await listAdminReservations({
         from: date || undefined,
         to: date || undefined,
         status,
       })
+      if (seq !== requestSeq.current) return
       setRows(items)
     } catch (error) {
+      if (seq !== requestSeq.current) return
       toast.error(
         error instanceof Error
           ? error.message
           : t("rentals.reservations.loadError"),
       )
     } finally {
-      setLoading(false)
+      if (seq === requestSeq.current) setLoading(false)
     }
   }, [date, status, t])
 
@@ -87,7 +96,7 @@ export function ReservationsPage() {
     try {
       await confirmAdminReservation(id)
       toast.success(t("rentals.reservations.confirmSuccess"))
-      await load()
+      await load({ keepRows: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -104,7 +113,7 @@ export function ReservationsPage() {
     try {
       await cancelAdminReservation(id)
       toast.success(t("rentals.reservations.cancelSuccess"))
-      await load()
+      await load({ keepRows: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -121,7 +130,7 @@ export function ReservationsPage() {
     try {
       await completeAdminReservation(id)
       toast.success(t("rentals.reservations.completeSuccess"))
-      await load()
+      await load({ keepRows: true })
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -139,6 +148,9 @@ export function ReservationsPage() {
         title={t("rentals.reservations.title")}
         description={t("rentals.reservations.description")}
       />
+      <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
+        {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date || undefined)}
+      </p>
 
       {isTrialReadOnly ? (
         <Alert variant="warning" role="status">
@@ -149,11 +161,12 @@ export function ReservationsPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1 text-sm">
           <span>{t("rentals.reservations.date")}</span>
-          <Input
-            type="date"
+          <LocaleDateInput
             value={date}
-            onChange={(event) => {
-              setDate(event.target.value)
+            locale={i18n.language}
+            today={tenantTodayIsoDate(timeZoneId)}
+            onChange={(value) => {
+              setDate(value)
             }}
           />
         </label>

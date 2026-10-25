@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -181,7 +182,7 @@ function DaySlotSheetForm({
                   <SelectContent>
                     {activeKinds.map((kind) => (
                       <SelectItem key={kind.id} value={kind.id}>
-                        {kind.label}
+                        {occupancyKindDisplayLabel(t, kind)}
                       </SelectItem>
                     ))}
                   </SelectContent>
