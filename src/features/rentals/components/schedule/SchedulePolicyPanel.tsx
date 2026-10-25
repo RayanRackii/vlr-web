@@ -31,7 +31,21 @@ function toTimeInput(value: string | null | undefined, fallback: string): string
 }
 
 function durationInput(asset: AdminRentalAsset): string {
-  return asset.allowedDurationMinutes?.split(",")[0]?.trim() || "60"
+  return asset.allowedDurationMinutes || "60"
+}
+
+function normalizeDurations(value: string): string | null {
+  const values = value.split(",").map((item) => item.trim())
+  if (
+    values.length === 0 ||
+    values.some((item) => !/^\d+$/.test(item) || Number(item) < 1)
+  ) {
+    return null
+  }
+
+  return [...new Set(values.map(Number))]
+    .sort((left, right) => left - right)
+    .join(",")
 }
 
 function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
@@ -105,6 +119,23 @@ function SchedulePolicyPanelForm({
   const [durationMinutes, setDurationMinutes] = useState(
     first ? durationInput(first) : "60",
   )
+  const [durationError, setDurationError] = useState<string | null>(null)
+
+  function saveOpenHours() {
+    const allowedDurationMinutes = normalizeDurations(durationMinutes)
+    if (!allowedDurationMinutes) {
+      setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
+      return
+    }
+
+    setDurationError(null)
+    void onSave({
+      schedulePolicy: "OpenHours",
+      openTime,
+      closeTime,
+      allowedDurationMinutes,
+    })
+  }
 
   return (
     <div className={embedded ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm"}>
@@ -207,32 +238,36 @@ function SchedulePolicyPanelForm({
           </label>
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">
-              {t("rentals.schedule.policy.slotMinutes")}
+              {t("rentals.schedule.policy.durationMinutes")}
             </span>
             <Input
-              type="number"
-              min={15}
-              step={15}
+              type="text"
+              inputMode="numeric"
               value={durationMinutes}
               disabled={busy || readOnly}
+              aria-label={t("rentals.schedule.policy.durationMinutes")}
+              aria-invalid={durationError ? true : undefined}
+              aria-describedby={durationError ? "duration-minutes-error" : undefined}
               onChange={(event) => {
                 setDurationMinutes(event.target.value)
+                setDurationError(null)
               }}
             />
+            <span className="text-xs text-muted-foreground">
+              {t("rentals.schedule.policy.durationMinutesHint")}
+            </span>
+            {durationError ? (
+              <span id="duration-minutes-error" role="alert" className="text-xs text-destructive">
+                {durationError}
+              </span>
+            ) : null}
           </label>
           <LoadingButton
             type="button"
             className="w-full self-end"
             disabled={busy || readOnly}
             loading={busyAction === "policy"}
-            onClick={() => {
-              void onSave({
-                schedulePolicy: "OpenHours",
-                openTime,
-                closeTime,
-                allowedDurationMinutes: durationMinutes || "60",
-              })
-            }}
+            onClick={saveOpenHours}
           >
             {t("rentals.schedule.policy.saveOpenHours")}
           </LoadingButton>
