@@ -166,13 +166,13 @@ export function LocaleDateInput({
     <div ref={rootRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "relative h-8 rounded-lg focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+          "relative h-10 rounded-lg focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         )}
       >
         <span
           aria-hidden="true"
           className={cn(
-            "flex h-8 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
+            "flex h-10 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
             invalid && "border-destructive",
           )}
         >
@@ -204,7 +204,7 @@ export function LocaleDateInput({
             // max and the field snaps back with an empty value.
             onChange(event.target.value, "input")
           }}
-          className="absolute inset-0 h-8 cursor-pointer opacity-0"
+          className="absolute inset-0 h-10 cursor-pointer opacity-0"
         />
       </div>
       {open ? (
@@ -213,7 +213,7 @@ export function LocaleDateInput({
           role="dialog"
           lang={locale}
           aria-label={label}
-          className="absolute z-50 mt-1 w-72 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-md"
+          className="absolute z-50 mt-1 w-full min-w-72 rounded-lg border border-border bg-popover p-2.5 text-popover-foreground shadow-md"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <button
@@ -262,10 +262,10 @@ export function LocaleDateInput({
                   aria-disabled={outside || undefined}
                   aria-pressed={selected}
                   className={cn(
-                    "inline-flex h-8 items-center justify-center rounded-lg text-sm",
+                    "inline-flex h-9 items-center justify-center rounded-lg text-sm",
                     selected && "bg-primary text-primary-foreground",
                     !selected && !outside && "hover:bg-muted",
-                    outside && "text-muted-foreground",
+                    outside && "cursor-not-allowed text-muted-foreground/50",
                   )}
                   onClick={() => {
                     choose(iso)

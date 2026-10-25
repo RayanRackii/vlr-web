@@ -454,7 +454,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     })
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
   })
 
   it("reports an already cancelled reservation without a success toast", async () => {
@@ -669,7 +669,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelMine).not.toHaveBeenCalled()
     expect(screen.getByText("Sala nova")).toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
   })
 
   it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
@@ -970,7 +970,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
         name: i18n.t("tenantPortal.agenda.cancelling"),
       }),
     ).not.toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
     expect(cancelButton()).not.toBeInTheDocument()
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })

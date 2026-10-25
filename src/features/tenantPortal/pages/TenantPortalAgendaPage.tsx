@@ -1,6 +1,6 @@
 import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
-import { CalendarIcon, Loader2 } from "lucide-react"
+import { CalendarIcon, Check, CheckCheck, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -63,6 +63,7 @@ import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTim
 import {
   portalPickAvailableClass,
   portalPickAvailableSelectedClass,
+  portalPickOwnReservationClass,
   portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
@@ -1602,6 +1603,7 @@ export function TenantPortalAgendaPage() {
         selected: false,
         pending: true,
         detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
+        ownReservation: false,
       }
     }
     const slot = startTime && effectiveDuration !== null
@@ -1658,6 +1660,7 @@ export function TenantPortalAgendaPage() {
       selected: (available || queueSelectable) && selectedRentalAssetId === rentalAssetId,
       pending: false,
       detail,
+      ownReservation,
     }
   }
 
@@ -1682,6 +1685,136 @@ export function TenantPortalAgendaPage() {
 
   if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
     return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
+  }
+
+  // Same rows as `mine`, grouped for scanning — no re-fetch, no status change.
+  const upcomingReservations = mine.filter(
+    (reservation) =>
+      !isCancelledReservationStatus(reservation.status) &&
+      !isPastReservation(reservation.endDateTime),
+  )
+  const pastReservations = mine.filter(
+    (reservation) =>
+      !isCancelledReservationStatus(reservation.status) &&
+      isPastReservation(reservation.endDateTime),
+  )
+  const cancelledReservations = mine.filter((reservation) =>
+    isCancelledReservationStatus(reservation.status),
+  )
+
+  function renderReservationItem(reservation: PortalReservation) {
+    const focused = reservation.id === focusedReservationId
+    const cancelled = isCancelledReservationStatus(reservation.status)
+    const dateParts = reservationDateParts(
+      reservation.startDateTime,
+      timeZoneId,
+      moneyLocale,
+    )
+    return (
+      <li
+        key={reservation.id}
+        ref={focused ? focusedRowRef : undefined}
+        aria-current={focused ? "true" : undefined}
+        data-reservation-focused={focused ? "true" : undefined}
+        className={cn(
+          "scroll-mt-16 flex gap-3 rounded-xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
+          focused
+            ? "border-primary bg-primary/10 ring-2 ring-primary"
+            : "border-border",
+          cancelled && "opacity-60",
+        )}
+      >
+        <div
+          aria-hidden
+          className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {dateParts.month}
+          </span>
+          <span className="text-lg leading-none font-semibold text-foreground">
+            {dateParts.day}
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-semibold text-foreground">
+            {reservation.items
+              .map((item) => item.assetName)
+              .join(", ")}
+          </p>
+          <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
+            {t(`rentals.reservations.statuses.${reservation.status}`, {
+              defaultValue: reservation.status,
+            })}
+          </Badge>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {formatReservationRange(
+            reservation.startDateTime,
+            reservation.endDateTime,
+            timeZoneId,
+          )}
+          {" · "}
+          {formatTenantTimeZoneLabel(
+            branding.timeZoneId,
+            moneyLocale,
+            reservation.startDateTime,
+          )}
+          {cancelled ? null : (
+            <>
+              {" · "}
+              {t("tenantPortal.agenda.total", {
+                amount: formatBookingMoney(
+                  reservation.totalAmount,
+                ),
+              })}
+            </>
+          )}
+        </p>
+        {!cancelled && reservation.cancelDeadlineUtc && !isCancelDeadlinePassed(reservation) ? (
+          <p className="text-xs text-muted-foreground">
+            {t("tenantPortal.agenda.cancelDeadline", {
+              when: `${formatTenantDate(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)} ${formatTenantTime(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)}`,
+            })}
+          </p>
+        ) : !cancelled && !reservation.cancelDeadlineUtc && !isPastReservation(reservation.endDateTime) ? (
+          <p className="text-xs text-muted-foreground">
+            {t("tenantPortal.agenda.noCancelDeadline")}
+          </p>
+        ) : null}
+        {isPastReservation(reservation.endDateTime) ? (
+          <p className="mt-1 text-xs font-medium text-muted-foreground">
+            {t("tenantPortal.agenda.pastReservation")}
+          </p>
+        ) : null}
+        {!isPastReservation(reservation.endDateTime) &&
+        canCustomerSelfCancel(
+          reservation.status,
+          reservation.startDateTime,
+        ) ? (
+          isCancelDeadlinePassed(reservation) ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("tenantPortal.agenda.cancelCutoffReason")}
+            </p>
+          ) : (
+            <LoadingButton
+              type="button"
+              size="sm"
+              variant="outline"
+              className="mt-3"
+              loading={cancelingId === reservation.id}
+              loadingLabel={t("tenantPortal.agenda.cancelling")}
+              onClick={() => {
+                requestCancel(reservation.id)
+              }}
+            >
+              {t("tenantPortal.agenda.cancel")}
+            </LoadingButton>
+          )
+        ) : null}
+        </div>
+      </li>
+    )
   }
 
   return (
@@ -1815,14 +1948,22 @@ export function TenantPortalAgendaPage() {
             </span>
           ) : null}
 
-          <div className="flex flex-wrap gap-3 text-sm">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
               <span className="size-3 rounded-sm border-2 border-emerald-700 bg-emerald-500 dark:border-emerald-300" />
               {t("tenantPortal.agenda.legendAvailable")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <span className="size-3 rounded-sm border-2 border-foreground/80 bg-foreground/40" />
+              <span className="size-3 rounded-sm border-2 border-foreground/40 bg-[repeating-linear-gradient(135deg,transparent,transparent_2px,var(--border)_2px,var(--border)_3px)]" />
               {t("tenantPortal.agenda.legendUnavailable")}
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <Check className="size-3 shrink-0 rounded-sm border-2 border-emerald-700 bg-emerald-100 p-px text-emerald-700 dark:border-emerald-300 dark:text-emerald-200" />
+              {t("tenantPortal.agenda.legendSelected")}
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <CheckCheck className="size-3 shrink-0 rounded-sm border-2 border-primary/70 bg-primary/10 p-px text-primary" />
+              {t("tenantPortal.agenda.yourReservation")}
             </span>
           </div>
 
@@ -1862,6 +2003,7 @@ export function TenantPortalAgendaPage() {
                   pending: inVisibleSet && state.pending,
                   selected: inVisibleSet && state.selected,
                   detail: inVisibleSet ? state.detail : null,
+                  ownReservation: inVisibleSet && state.ownReservation,
                 }
               })}
               onSelect={selectRentalAsset}
@@ -1889,7 +2031,7 @@ export function TenantPortalAgendaPage() {
                           : asset.name
                       }
                       className={cn(
-                        "rounded-lg border px-3 py-4 text-sm font-medium",
+                        "relative min-h-11 rounded-lg border px-3 py-4 text-left text-sm font-medium",
                         state.pending && portalPickPendingClass,
                         !state.pending &&
                           state.available &&
@@ -1901,12 +2043,29 @@ export function TenantPortalAgendaPage() {
                           portalPickAvailableClass,
                         !state.pending &&
                           !state.available &&
+                          !state.ownReservation &&
                           portalPickUnavailableClass,
+                        !state.pending &&
+                          !state.available &&
+                          state.ownReservation &&
+                          portalPickOwnReservationClass,
                       )}
                       onClick={() => {
                         selectRentalAsset(asset.id)
                       }}
                     >
+                      {!state.pending && state.available && state.selected ? (
+                        <Check
+                          aria-hidden
+                          className="absolute top-1.5 right-1.5 size-3.5 text-emerald-700 dark:text-emerald-200"
+                        />
+                      ) : null}
+                      {!state.pending && !state.available && state.ownReservation ? (
+                        <CheckCheck
+                          aria-hidden
+                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
+                        />
+                      ) : null}
                       <span className="block">
                         {asset.totalQuantity > 1
                           ? `${asset.name} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
@@ -2096,9 +2255,9 @@ export function TenantPortalAgendaPage() {
 
           <div
             id="minhas-reservas"
-            className="scroll-mt-16 space-y-3 border-t border-border pt-5"
+            className="scroll-mt-16 space-y-4 border-t border-border pt-5"
           >
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
               {t("tenantPortal.agenda.myReservations")}
             </h3>
             {mine.length === 0 ? (
@@ -2108,124 +2267,38 @@ export function TenantPortalAgendaPage() {
                 title={t("tenantPortal.agenda.empty")}
               />
             ) : (
-              <ul className="space-y-2">
-                {mine.map((reservation) => {
-                  const focused = reservation.id === focusedReservationId
-                  const cancelled = isCancelledReservationStatus(
-                    reservation.status,
-                  )
-                  const dateParts = reservationDateParts(
-                    reservation.startDateTime,
-                    timeZoneId,
-                    moneyLocale,
-                  )
-                  return (
-                    <li
-                      key={reservation.id}
-                      ref={focused ? focusedRowRef : undefined}
-                      aria-current={focused ? "true" : undefined}
-                      data-reservation-focused={focused ? "true" : undefined}
-                      className={cn(
-                        "scroll-mt-16 flex gap-3 rounded-xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
-                        focused
-                          ? "border-primary bg-primary/10 ring-2 ring-primary"
-                          : "border-border",
-                        cancelled && "opacity-60",
-                      )}
-                    >
-                      <div
-                        aria-hidden
-                        className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
-                      >
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          {dateParts.month}
-                        </span>
-                        <span className="text-lg leading-none font-semibold text-foreground">
-                          {dateParts.day}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="font-semibold text-foreground">
-                          {reservation.items
-                            .map((item) => item.assetName)
-                            .join(", ")}
-                        </p>
-                        <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
-                          {t(`rentals.reservations.statuses.${reservation.status}`, {
-                            defaultValue: reservation.status,
-                          })}
-                        </Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatReservationRange(
-                          reservation.startDateTime,
-                          reservation.endDateTime,
-                          timeZoneId,
-                        )}
-                        {" · "}
-                        {formatTenantTimeZoneLabel(
-                          branding.timeZoneId,
-                          moneyLocale,
-                          reservation.startDateTime,
-                        )}
-                        {cancelled ? null : (
-                          <>
-                            {" · "}
-                            {t("tenantPortal.agenda.total", {
-                              amount: formatBookingMoney(
-                                reservation.totalAmount,
-                              ),
-                            })}
-                          </>
-                        )}
-                      </p>
-                      {!cancelled && reservation.cancelDeadlineUtc && !isCancelDeadlinePassed(reservation) ? (
-                        <p className="text-xs text-muted-foreground">
-                          {t("tenantPortal.agenda.cancelDeadline", {
-                            when: `${formatTenantDate(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)} ${formatTenantTime(new Date(reservation.cancelDeadlineUtc), timeZoneId, moneyLocale)}`,
-                          })}
-                        </p>
-                      ) : !cancelled && !reservation.cancelDeadlineUtc && !isPastReservation(reservation.endDateTime) ? (
-                        <p className="text-xs text-muted-foreground">
-                          {t("tenantPortal.agenda.noCancelDeadline")}
-                        </p>
-                      ) : null}
-                      {isPastReservation(reservation.endDateTime) ? (
-                        <p className="mt-1 text-xs font-medium text-muted-foreground">
-                          {t("tenantPortal.agenda.pastReservation")}
-                        </p>
-                      ) : null}
-                      {!isPastReservation(reservation.endDateTime) &&
-                      canCustomerSelfCancel(
-                        reservation.status,
-                        reservation.startDateTime,
-                      ) ? (
-                        isCancelDeadlinePassed(reservation) ? (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {t("tenantPortal.agenda.cancelCutoffReason")}
-                          </p>
-                        ) : (
-                          <LoadingButton
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="mt-3"
-                            loading={cancelingId === reservation.id}
-                            loadingLabel={t("tenantPortal.agenda.cancelling")}
-                            onClick={() => {
-                              requestCancel(reservation.id)
-                            }}
-                          >
-                            {t("tenantPortal.agenda.cancel")}
-                          </LoadingButton>
-                        )
-                      ) : null}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+              <>
+                {upcomingReservations.length > 0 ? (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      {t("tenantPortal.agenda.groupUpcoming")}
+                    </h4>
+                    <ul className="space-y-2">
+                      {upcomingReservations.map(renderReservationItem)}
+                    </ul>
+                  </div>
+                ) : null}
+                {pastReservations.length > 0 ? (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      {t("tenantPortal.agenda.groupPast")}
+                    </h4>
+                    <ul className="space-y-2">
+                      {pastReservations.map(renderReservationItem)}
+                    </ul>
+                  </div>
+                ) : null}
+                {cancelledReservations.length > 0 ? (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      {t("tenantPortal.agenda.groupCancelled")}
+                    </h4>
+                    <ul className="space-y-2">
+                      {cancelledReservations.map(renderReservationItem)}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
 
@@ -2282,12 +2355,14 @@ export function TenantPortalAgendaPage() {
                 </div>
               ) : null}
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={cancelingId !== null}>
+                <AlertDialogCancel size="lg" disabled={cancelingId !== null}>
                   {t("tenantPortal.agenda.cancelConfirmDismiss")}
                 </AlertDialogCancel>
                 <LoadingButton
                   type="button"
                   variant="destructive"
+                  size="lg"
+                  className="bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90 active:bg-destructive/95"
                   disabled={isCancelDeadlinePassed(pendingCancelReservation)}
                   loading={cancelingId !== null}
                   loadingLabel={t("tenantPortal.agenda.cancelling")}
