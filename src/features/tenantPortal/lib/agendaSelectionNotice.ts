@@ -8,7 +8,11 @@ const NOTICE_EVENT = "rolvix:portal-agenda-selection-notice"
 type StoredAgendaSelectionNotice = {
   customerIdentity: string
   notice: AgendaSelectionNotice
+  createdAt?: number
 }
+
+/** A notice older than this belongs to an earlier visit, not to what the customer sees now. */
+export const AGENDA_SELECTION_NOTICE_TTL_MS = 5 * 60 * 1000
 
 function storageKey(subdomain: string): string {
   return `${STORAGE_PREFIX}.${subdomain.trim().toLowerCase()}`
@@ -41,6 +45,8 @@ export function readAgendaSelectionNotice(
     (record.notice !== "expired" && record.notice !== "unavailable")
     || typeof record.customerIdentity !== "string"
     || record.customerIdentity !== identity
+    || typeof record.createdAt !== "number"
+    || Date.now() - record.createdAt > AGENDA_SELECTION_NOTICE_TTL_MS
   ) {
     return null
   }
@@ -64,7 +70,7 @@ export function showAgendaSelectionNotice(
     return
   }
 
-  const value: StoredAgendaSelectionNotice = { customerIdentity, notice }
+  const value: StoredAgendaSelectionNotice = { customerIdentity, notice, createdAt: Date.now() }
   window.sessionStorage.setItem(storageKey(subdomain), JSON.stringify(value))
   notifyNoticeChange()
 }

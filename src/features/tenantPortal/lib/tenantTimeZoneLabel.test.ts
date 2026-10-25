@@ -9,14 +9,20 @@ describe("formatTenantTimeZoneLabel", () => {
     expect(label).toMatch(/GMT-4/)
   })
 
-  it("replaces underscores in multi-word city names", () => {
-    const label = formatTenantTimeZoneLabel("America/Sao_Paulo", "pt-BR")
-    expect(label).toContain("Sao Paulo")
+  it("uses accented and localized city names", () => {
+    expect(formatTenantTimeZoneLabel("America/Sao_Paulo", "pt-BR")).toContain("São Paulo")
+    expect(formatTenantTimeZoneLabel("America/New_York", "pt-BR")).toContain("Nova York")
+    expect(formatTenantTimeZoneLabel("America/New_York", "es")).toContain("Nueva York")
+    expect(formatTenantTimeZoneLabel("America/New_York", "en")).toContain("New York")
+  })
+
+  it("replaces underscores in unmapped multi-word city names", () => {
+    expect(formatTenantTimeZoneLabel("America/Porto_Velho", "pt-BR")).toContain("Porto Velho")
   })
 
   it("falls back to the default tenant zone for an invalid id", () => {
     const label = formatTenantTimeZoneLabel("Not/AZone", "pt-BR")
-    expect(label).toContain("Sao Paulo")
+    expect(label).toContain("São Paulo")
   })
 
   it("renders in the requested locale regardless of the active app language", () => {
