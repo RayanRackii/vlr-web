@@ -13,7 +13,9 @@ import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge, type badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -27,8 +29,23 @@ import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary
 import {
   formatCatalogDate,
   type CatalogOrder,
+  type CatalogOrderStatus,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listCatalogOrders } from "@/features/catalog/services/catalogService"
+import type { VariantProps } from "class-variance-authority"
+
+const ORDER_STATUS_BADGE_VARIANT: Record<
+  CatalogOrderStatus,
+  NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+> = {
+  Requested: "secondary",
+  Approved: "info",
+  Preparing: "info",
+  Ready: "warning",
+  Completed: "success",
+  Rejected: "destructive",
+  Cancelled: "destructive",
+}
 
 export function CatalogOrdersPage() {
   const { t, i18n } = useTranslation()
@@ -96,7 +113,7 @@ export function CatalogOrdersPage() {
           />
         ),
         cell: ({ row }) => (
-          <Badge variant="outline">
+          <Badge variant={ORDER_STATUS_BADGE_VARIANT[row.original.status]}>
             {t(`catalog.status.${row.original.status}`)}
           </Badge>
         ),
@@ -162,21 +179,19 @@ export function CatalogOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("catalog.orders.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("catalog.orders.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("catalog.orders.title")}
+        description={t("catalog.orders.subtitle")}
+      />
 
       {loadError ? (
-        <p className="text-sm text-destructive">{loadError}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <div className="rounded-xl border border-border">
-        <Table>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <Table stickyHeader containerClassName="max-h-[32rem]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -204,7 +219,7 @@ export function CatalogOrdersPage() {
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="odd:bg-card even:bg-muted/20">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
