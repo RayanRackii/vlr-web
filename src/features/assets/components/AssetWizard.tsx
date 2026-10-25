@@ -321,6 +321,7 @@ export function AssetWizard({
               startTime: row.startTime.slice(0, 5),
               endTime: row.endTime.slice(0, 5),
               pricePerHour: row.pricePerHour,
+              pricingUnit: row.pricingUnit,
             })),
           ),
         )
@@ -570,6 +571,7 @@ export function AssetWizard({
             startTime: draft.startTime,
             endTime: draft.endTime,
             pricePerHour: draft.pricePerHour,
+            pricingUnit: draft.pricingUnit,
             requiresDeposit: false,
             depositPercentage: 0,
           }))

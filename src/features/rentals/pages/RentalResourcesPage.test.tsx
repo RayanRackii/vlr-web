@@ -231,26 +231,27 @@ describe("RentalResourcesPage", () => {
         tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
         assetId: ASSET_ID,
         rentalAssetId: RENTAL_ID,
-        dayOfWeek: "Monday",
+        dayOfWeek: "Monday" as const,
         startTime: "08:00:00",
         endTime: "18:00:00",
         pricePerHour: 45,
+        pricingUnit: "Slot" as const,
         requiresDeposit: false,
         depositPercentage: 0,
         createdAt: "2026-10-01T12:00:00Z",
         updatedAt: null,
       },
-    ])
+    ].flatMap((row) => [{ ...row, pricePerHour: 90, pricingUnit: "Day" as const }, row]))
 
     const user = userEvent.setup()
     renderPage()
 
-    const details = await screen.findByText(/A partir de: R\$ 45,00\/h/)
+    const details = await screen.findByText(/A partir de: R\$ 45,00 por horário/)
     expect(details.parentElement).toHaveTextContent("Durações: 1 h, 90 min")
     expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
 
     await user.click(screen.getByRole("button", { name: /Quadra 1/ }))
-    expect(await screen.findAllByText(/A partir de: R\$ 45,00\/h/)).toHaveLength(2)
+    expect(await screen.findAllByText(/A partir de: R\$ 45,00 por horário/)).toHaveLength(2)
   })
 
   it("shows empty rentables CTA when categories exist", async () => {

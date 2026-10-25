@@ -8,6 +8,7 @@ import {
   CUSTOMER_TOKEN_STORAGE_KEY,
 } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import {
   api,
@@ -958,6 +959,7 @@ const availabilitySchema = z.object({
   requestedQuantity: z.number(),
   availableQuantity: z.number(),
   estimatedTotalAmount: z.number().nullable(),
+  pricingUnit: pricingUnitSchema.nullish(),
   reason: z.string().nullable(),
 })
 

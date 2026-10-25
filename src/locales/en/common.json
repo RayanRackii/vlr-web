@@ -1752,6 +1752,9 @@
         "review": "Review"
       },
       "pricing": {
+        "unitLabel": "Pricing unit",
+        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
+        "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
         "patternLabel": "How the price repeats through the week",
         "everydayPrice": "Price per hour",
         "everydayPriceHelp": "The same amount applies every day in the window below.",
@@ -1858,6 +1861,7 @@
         "invalidResponse": "Invalid API response.",
         "pricingLoadFailed": "Could not load pricing.",
         "pricingCreateFailed": "Could not create pricing.",
+        "pricingUpdateFailed": "Could not update the price.",
         "pricingDeleteFailed": "Could not delete pricing.",
         "pricingBulkFailed": "Could not apply bulk pricing."
       }
@@ -3208,6 +3212,7 @@
       "typeGood": "Rentable item",
       "details": {
         "pricePerHour": "From: {{amount}}/h",
+        "prices": {"Hour": "From: {{amount}} per hour", "Slot": "From: {{amount}} per slot", "Day": "From: {{amount}} per day", "Fixed": "From: {{amount}} fixed"},
         "allowedDurations": "Durations: {{durations}}",
         "capacity_one": "Capacity: {{count}} person",
         "capacity_other": "Capacity: {{count}} people",
@@ -3494,6 +3499,7 @@
       "Available": "Available"
     },
     "pricePerHour": "{{amount}}/h",
+    "prices": {"Slot": "{{amount}} per slot", "Day": "{{amount}} per day", "Fixed": "{{amount}} (fixed price)"},
     "unitsLeft": "{{left}} of {{total}} available"
   }
 }

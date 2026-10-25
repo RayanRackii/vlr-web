@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
+import { fetchDailyAvailability } from "@/features/rentals/services/resourceVisualService"
 
 const RENTAL_ID = "11111111-1111-4111-8111-111111111111"
 const ASSET_ID = "22222222-2222-4222-8222-222222222222"
@@ -32,6 +33,25 @@ vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReserva
 vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBookingIdleTimeout: () => undefined }))
 
 describe("BookingMapExperience", () => {
+  it.each([
+    ["Hour", "R$ 60,00/h"],
+    ["Slot", "R$ 120,00 por horário"],
+    ["Day", "R$ 120,00 por dia"],
+    ["Fixed", "R$ 120,00 (preço fixo)"],
+    [null, "R$ 60,00/h"],
+    [undefined, "R$ 60,00/h"],
+  ] as const)("shows the quoted %s unit for a two-hour window", async (pricingUnit, expected) => {
+    const current = await fetchDailyAvailability("ficc", "2026-10-25", [RENTAL_ID])
+    vi.mocked(fetchDailyAvailability).mockResolvedValueOnce({
+      ...current,
+      resources: current.resources.map((resource) => ({ ...resource, windows: resource.windows.map((window) => ({ ...window, endTime: "10:00:00", totalAmount: 120, pricingUnit })) })),
+    })
+    const user = userEvent.setup()
+    render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
+    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    expect(await screen.findByRole("button", { name: "Raquete" })).toHaveTextContent(expected)
+  })
+
   it("shows the quoted hourly price and remaining units on a multi-unit tile", async () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import {
   bulkApplyPricingsRequestSchema,
@@ -41,6 +42,7 @@ export const rentalPricingSchema = z.object({
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   pricePerHour: z.number(),
+  pricingUnit: pricingUnitSchema.default("Hour"),
   requiresDeposit: z.boolean(),
   depositPercentage: z.number(),
   createdAt: z.string(),
@@ -54,6 +56,33 @@ export const rentalPricingListSchema = z.array(rentalPricingSchema)
 export const createRentalPricingSchema = bulkPricingRowSchema
 
 export type CreateRentalPricingRequest = z.infer<typeof createRentalPricingSchema>
+
+export const updateRentalPricingSchema = bulkPricingRowSchema.extend({
+  pricingUnit: pricingUnitSchema.nullish(),
+})
+
+export type UpdateRentalPricingRequest = z.infer<typeof updateRentalPricingSchema>
+
+export async function updateAssetPricing(
+  assetId: string,
+  current: RentalPricing,
+  data: UpdateRentalPricingRequest,
+): Promise<RentalPricing> {
+  const payload = updateRentalPricingSchema.parse(data)
+  if (payload.pricingUnit == null || payload.pricingUnit === current.pricingUnit) {
+    delete payload.pricingUnit
+  }
+
+  try {
+    const response = await api.put<unknown>(`/api/assets/${assetId}/pricing/${current.id}`, payload)
+    const parsed = rentalPricingSchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("assets.detail.errors.invalidResponse"))
+    return parsed.data
+  } catch (error: unknown) {
+    if (error instanceof Error && !isAxiosError(error)) throw error
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("assets.detail.errors.pricingUpdateFailed")), { cause: error })
+  }
+}
 
 export async function getAssetPricings(assetId: string): Promise<RentalPricing[]> {
   try {

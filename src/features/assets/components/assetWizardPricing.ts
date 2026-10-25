@@ -1,3 +1,5 @@
+import type { PricingUnit } from "@/api/generated/rentalPricing"
+
 export type DayOfWeek =
   | "Sunday"
   | "Monday"
@@ -28,6 +30,9 @@ export const WEEKDAYS: readonly DayOfWeek[] = [
 export type PricingPattern = "sameEveryDay" | "weekendSpecial" | "perDay"
 
 export type PricingEditorState = {
+  pricingUnit: PricingUnit
+  /** Per-day units loaded from rows that disagree; kept on save until the user picks a unit. */
+  perDayUnits?: Partial<Record<DayOfWeek, PricingUnit>> | null
   pattern: PricingPattern
   startTime: string
   endTime: string
@@ -38,6 +43,7 @@ export type PricingEditorState = {
 }
 
 export type ExpandedPricingRow = {
+  pricingUnit?: PricingUnit
   dayOfWeek: DayOfWeek
   startTime: string
   endTime: string
@@ -58,6 +64,7 @@ function emptyPerDayPrices(): Record<DayOfWeek, number> {
 
 export function emptyPricingEditor(): PricingEditorState {
   return {
+    pricingUnit: "Hour",
     pattern: "sameEveryDay",
     startTime: "08:00",
     endTime: "22:00",
@@ -148,8 +155,16 @@ export function pricingEditorFromRows(
   const weekendPrice =
     pricesMatch(rows, ["Saturday", "Sunday"]) ?? everydayPrice
 
+  const firstUnit = rows[0]?.pricingUnit ?? "Hour"
+  const mixedUnits = rows.some((row) => (row.pricingUnit ?? "Hour") !== firstUnit)
+  const perDayUnits: Partial<Record<DayOfWeek, PricingUnit>> | null = mixedUnits
+    ? Object.fromEntries(rows.map((row) => [row.dayOfWeek, row.pricingUnit ?? "Hour"]))
+    : null
+
   return {
     pattern,
+    pricingUnit: firstUnit,
+    perDayUnits,
     startTime,
     endTime,
     everydayPrice,
@@ -165,6 +180,7 @@ export function expandPricingEditor(
   if (state.pattern === "sameEveryDay") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: state.everydayPrice,
@@ -174,6 +190,7 @@ export function expandPricingEditor(
   if (state.pattern === "weekendSpecial") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: isWeekendDay(dayOfWeek)
@@ -184,6 +201,7 @@ export function expandPricingEditor(
 
   return DAYS.map((dayOfWeek) => ({
     dayOfWeek,
+    pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
     startTime: state.startTime,
     endTime: state.endTime,
     pricePerHour: state.perDayPrices[dayOfWeek],
