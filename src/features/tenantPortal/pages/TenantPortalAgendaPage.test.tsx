@@ -130,8 +130,9 @@ beforeEach(() => {
   persistCustomerSession("test-customer-token", "ficc", "Ana", "test-customer")
 })
 
-afterEach(() => {
+afterEach(async () => {
   clearCustomerSession()
+  await i18n.changeLanguage("pt-BR")
 })
 
 const outletContext: CustomerAppOutletContext = {
@@ -290,6 +291,80 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     fetchLayouts.mockResolvedValue([])
     fetchDay.mockResolvedValue({ date: "2026-09-08", slots: [] })
     listMine.mockResolvedValue([])
+  })
+
+  it.each([
+    ["Hour", "/hora"],
+    ["Slot", "/horário"],
+    ["Day", "/dia"],
+    ["Fixed", " fixo"],
+  ] as const)("shows %s pricing and multipliers in my reservations", async (pricingUnit, suffix) => {
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 480 })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit, quantity: 2, days: 3 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+
+    const row = (await screen.findByText("Quadra 1 ×2")).closest("li")!
+    expect(row).toHaveTextContent(`Total ${formatMoney(480)}`)
+    expect(row).toHaveTextContent(`${formatMoney(80)}${suffix}`)
+    expect(row).toHaveTextContent("x 2 unidades · 3 dias")
+  })
+
+  it("shows the cancelled reservation's quantity, days, total and deadline", async () => {
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, {
+      totalAmount: 480,
+      cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+    })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day", quantity: 2, days: 3 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    await screen.findByText("Quadra 1 ×2")
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(`Total ${formatMoney(480)} · ${formatMoney(80)}/dia · x 2 unidades · 3 dias`)
+    expect(dialog).toHaveTextContent("Prazo de cancelamento:")
+  })
+
+  it.each([
+    ["pt-BR", "/dia", "x 1 unidade · 1 dia"],
+    ["en", "/day", "x 1 unit · 1 day"],
+    ["es", "/día", "x 1 unidad · 1 día"],
+  ])("shows singular quantities only in the cancellation dialog in %s", async (language, suffix, quantities) => {
+    await i18n.changeLanguage(language)
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO)
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day", days: 1 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    const row = (await screen.findByText("Quadra 1")).closest("li")!
+    expect(row).toHaveTextContent(suffix)
+    expect(row).not.toHaveTextContent(quantities)
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(quantities)
+  })
+
+  it("keeps legacy reservation rows readable without optional item metadata", async () => {
+    const reservation = makeReservation("Confirmed", FUTURE_ISO)
+    delete reservation.items[0].quantity
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    await waitForMineList()
+    const row = screen.getByText("Quadra 1").closest("li")!
+    expect(row).not.toHaveTextContent(/\/hora|\/horário|\/dia|fixo|unidades|dias|undefined/)
+  })
+
+  it("derives Day pricing duration from tenant civil dates when days is absent", async () => {
+    const reservation = makeReservation("Confirmed", "2099-01-15T03:00:00Z", {
+      endDateTime: "2099-01-18T03:00:00Z",
+    })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day" }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    const row = (await screen.findByText("Quadra 1")).closest("li")!
+    expect(row).toHaveTextContent("3 dias")
+    expect(row).not.toHaveTextContent("x 1 unidade")
   })
 
   it("shows the cancellation deadline in the tenant timezone", async () => {
@@ -1839,9 +1914,10 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     expect(
       await screen.findByRole("button", {
-        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnits", { count: 2, total: 3 })}`,
+        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnits", { count: 2, total: 3 })} ${i18n.t("tenantPortal.agenda.yourReservationUnitsReason")}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByText(i18n.t("tenantPortal.agenda.yourReservationUnitsReason"), { exact: false })).toBeVisible()
   })
 
   it("uses the selected resource's own horizon instead of the widest visible one", async () => {

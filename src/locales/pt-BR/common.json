@@ -515,9 +515,14 @@
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duração",
       "yourReservationUnits": "Sua reserva · {{count}} de {{total}} unidades",
+      "yourReservationUnitsReason": "Para mais unidades, cancele e reserve de novo com a quantidade desejada.",
       "cancelCutoffReason": "Prazo de cancelamento encerrado",
       "days": "Dias",
-      "daysSummary": "{{count}} dias · até {{until}}"
+      "daysSummary": "{{count}} dias · até {{until}}",
+      "reservationQuantitySuffix_one": "x {{count}} unidade",
+      "reservationQuantitySuffix_other": "x {{count}} unidades",
+      "reservationDaysSuffix_one": "{{count}} dia",
+      "reservationDaysSuffix_other": "{{count}} dias"
     },
     "menu": {
       "empty": "Nenhum módulo disponível.",
