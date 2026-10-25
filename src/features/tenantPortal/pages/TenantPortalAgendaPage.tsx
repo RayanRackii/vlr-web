@@ -1159,9 +1159,10 @@ export function TenantPortalAgendaPage() {
           ? reservationForSlot(reservations)
           : null
         if (existingReservation) {
-          // The request may have timed out after the API created the booking.
-          // `/mine` is scoped to this customer, so this conflict is success.
-          applyReservationSuccess(existingReservation)
+          // A 409 is the API's only duplicate signal today. The matching row
+          // belongs to this customer, but was created by another request/tab.
+          setMine(reservations)
+          toast.message(t("tenantPortal.agenda.alreadyReserved"))
           return
         }
         if (heldByCustomer) {
@@ -1463,10 +1464,27 @@ export function TenantPortalAgendaPage() {
     }
   }
 
+  // The map flow books outside this page's handlers; refresh Minhas reservas
+  // so the new booking shows without a reload (R8 M1).
+  function refreshMineAfterMapBooking() {
+    void listMyPortalReservations()
+      .then((reservations) =>
+        setMine(
+          mergeServerReservations(
+            recentPortalReservations(subdomain),
+            reservations,
+          ),
+        ),
+      )
+      .catch(() => {
+        // Keep the list already on screen when Minhas reservas cannot refresh.
+      })
+  }
+
   const isReservationRoute = searchParams.has("reservation") || location.hash === CUSTOMER_MY_RESERVATIONS_HASH
 
   if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
-    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} />
+    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
   }
 
   return (

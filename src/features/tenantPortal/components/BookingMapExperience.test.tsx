@@ -13,6 +13,7 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   visualArtUrl: vi.fn(),
 }))
 vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({ createPortalReservation: vi.fn(async () => ({})), bookPortalSlot: vi.fn(async () => ({ })), checkPortalAvailability: vi.fn(), listMyPortalReservations: vi.fn(async () => []), isLocationQueueEnabled: () => false }))
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), message: vi.fn(), error: vi.fn() } }))
 vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReservationQueue: () => ({ canReserve: true, applyBookingError: () => false, view: { kind: "hidden" }, explanation: null, joining: false }) }))
 
 describe("BookingMapExperience", () => {
@@ -35,6 +36,40 @@ describe("BookingMapExperience", () => {
     await user.click(screen.getByRole("button", { name: /Continuar/i }))
     const { createPortalReservation } = await import("@/features/tenantPortal/services/tenantPortalService")
     await waitFor(() => expect(createPortalReservation).toHaveBeenCalledWith(expect.objectContaining({ expectedTotalAmount: 50, items: [{ assetId: ASSET, quantity: 1 }] })))
+  })
+
+  it("notifies the page after a booking so Minhas reservas refreshes", async () => {
+    const user = userEvent.setup()
+    const onBooked = vi.fn()
+    render(<BookingMapExperience subdomain="demo" locale="pt-BR" onUnavailable={vi.fn()} onBooked={onBooked} />)
+    const resource = await screen.findByRole("button", { name: /Sala A/i })
+    await waitFor(() => expect(resource).toBeEnabled())
+    await user.click(resource)
+    await user.click(await screen.findByRole("button", { name: /08:00/i }))
+    await user.click(screen.getByRole("button", { name: /Continuar/i }))
+    const { toast } = await import("sonner")
+    await waitFor(() => expect(onBooked).toHaveBeenCalledTimes(1))
+    expect(toast.success).toHaveBeenCalled()
+  })
+
+  it("says the customer already has the booking when a duplicate submit is reconciled", async () => {
+    const user = userEvent.setup()
+    const onBooked = vi.fn()
+    const service = await import("@/features/tenantPortal/services/tenantPortalService")
+    vi.mocked(service.createPortalReservation).mockRejectedValueOnce(new Error("conflict"))
+    vi.mocked(service.listMyPortalReservations).mockResolvedValueOnce([
+      { startDateTime: "2026-10-21T11:00:00Z", items: [{ assetId: ASSET, quantity: 1 }] },
+    ] as never)
+    render(<BookingMapExperience subdomain="demo" locale="pt-BR" initialDate="2026-10-21" onUnavailable={vi.fn()} onBooked={onBooked} />)
+    const resource = await screen.findByRole("button", { name: /Sala A/i })
+    await waitFor(() => expect(resource).toBeEnabled())
+    await user.click(resource)
+    await user.click(await screen.findByRole("button", { name: /08:00/i }))
+    await user.click(screen.getByRole("button", { name: /Continuar/i }))
+    const { toast } = await import("sonner")
+    await waitFor(() => expect(toast.message).toHaveBeenCalledWith("Você já tem esta reserva."))
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(onBooked).toHaveBeenCalledTimes(1)
   })
 
   it("does not submit a stale Good quote while quantity is being requoted", async () => {
