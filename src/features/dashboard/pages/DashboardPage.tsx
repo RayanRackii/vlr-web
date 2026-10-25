@@ -32,6 +32,7 @@ import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianD
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
+import { hasSlotsToday, reservationsTodayTotal } from "@/features/dashboard/pages/dashboardMetrics"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
 import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
@@ -522,12 +523,7 @@ export function TenantAdminDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               title={t("dashboard.kpi.reservationsToday.title")}
-              value={
-                metrics.rentals.reservationsTodayPendingDeposit +
-                metrics.rentals.reservationsTodayConfirmed +
-                metrics.rentals.reservationsTodayCanceled +
-                metrics.rentals.reservationsTodayCompleted
-              }
+              value={reservationsTodayTotal(metrics.rentals)}
               subtitle={t("dashboard.kpi.reservationsToday.subtitle", {
                 pending: metrics.rentals.reservationsTodayPendingDeposit,
                 confirmed: metrics.rentals.reservationsTodayConfirmed,
@@ -538,14 +534,16 @@ export function TenantAdminDashboard() {
               value={`${metrics.rentals.confirmationRateLast7Days}%`}
               subtitle={t("dashboard.kpi.confirmationRate.subtitle")}
             />
-            <KpiCard
-              title={t("dashboard.kpi.slotsToday.title")}
-              value={`${metrics.rentals.slotsBookedToday}/${metrics.rentals.slotsAvailableToday + metrics.rentals.slotsBookedToday}`}
-              subtitle={t("dashboard.kpi.slotsToday.subtitle", {
-                available: metrics.rentals.slotsAvailableToday,
-                booked: metrics.rentals.slotsBookedToday,
-              })}
-            />
+            {hasSlotsToday(metrics.rentals) ? (
+              <KpiCard
+                title={t("dashboard.kpi.slotsToday.title")}
+                value={`${metrics.rentals.slotsBookedToday}/${metrics.rentals.slotsAvailableToday + metrics.rentals.slotsBookedToday}`}
+                subtitle={t("dashboard.kpi.slotsToday.subtitle", {
+                  available: metrics.rentals.slotsAvailableToday,
+                  booked: metrics.rentals.slotsBookedToday,
+                })}
+              />
+            ) : null}
             <KpiCard
               title={t("dashboard.kpi.reservedRevenue.title")}
               value={formatMoney(metrics.rentals.reservedRevenueThisMonth)}

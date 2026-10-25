@@ -3027,7 +3027,9 @@
       "dayTitle": "Day agenda",
       "occupancyKindLabel": "Type",
       "occupancyKinds": {
-        "open": "Open"
+        "open": "Open",
+        "closed": "Closed",
+        "lesson": "Lesson"
       },
       "dayEmpty": "No time slots on this day. Create the grid in Weekly setup.",
       "dayEmptyTitle": "No time slots on this day",

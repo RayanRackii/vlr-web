@@ -44,6 +44,7 @@ export type ScheduleGridOccupancy = {
   occupancyKindKey?: string | null
   occupancyKindColorHex?: string | null
   label?: string | null
+  reservationId?: string | null
   status: "available" | "booked" | "unavailable"
   badge?: "dailyOverride" | "inactive" | null
 }
@@ -110,6 +111,7 @@ export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy 
     occupancyKindKey: slot.occupancyKindKey,
     occupancyKindColorHex: slot.occupancyKindColorHex,
     label: slot.label,
+    reservationId: slot.reservationId,
     status: slotStatus(slot),
     badge: slot.source === "DailyOverride" ? "dailyOverride" : null,
   }
@@ -208,4 +210,147 @@ function slotStatus(slot: AdminDaySlot): ScheduleGridOccupancy["status"] {
 
 export function isOpenHoursOccupancyId(id: string): boolean {
   return id.startsWith("openhours:")
+}
+
+/** Stock occupancy kinds seeded in English; a tenant-renamed kind keeps its configured name. */
+const SEED_OCCUPANCY_KIND_LABELS: Record<string, string> = {
+  open: "Open",
+  closed: "Closed",
+  lesson: "Lesson",
+}
+
+export function localizedOccupancyKindLabel(
+  occupancyKindKey: string | null | undefined,
+  occupancyKindLabel: string,
+  t: (key: string) => string,
+): string {
+  const key = occupancyKindKey ?? ""
+  if (SEED_OCCUPANCY_KIND_LABELS[key] === occupancyKindLabel) {
+    return t(`rentals.schedule.occupancyKinds.${key}`)
+  }
+  return occupancyKindLabel
+}
+
+/**
+ * OpenHours availability is computed on the fly per allowed duration (1h/2h/4h),
+ * so the same asset/day can return several windows that overlap in time. Collapse
+ * availability to the configured base duration while retaining booked and closed
+ * windows as spans.
+ */
+export function dedupeOpenHoursOccupancies(
+  occupancies: readonly ScheduleGridOccupancy[],
+  baseStepMinutes: number,
+): ScheduleGridOccupancy[] {
+  const booked = occupancies.filter((item) => item.status === "booked")
+  const notBooked = occupancies.filter((item) => item.status !== "booked")
+  const unavailable = collapseUnavailableOccupancies(
+    notBooked.filter((item) => item.status === "unavailable"),
+  )
+
+  const bookedWithReservation = booked.filter((item) => item.reservationId)
+  const bookedWithoutReservation = booked.filter((item) => !item.reservationId)
+  const keptBooked = collapseBookedReservations(bookedWithReservation)
+  const bookedByDurationDesc = [...bookedWithoutReservation].sort((a, b) => {
+    const durationA = timeToMinutes(a.endTime) - timeToMinutes(a.startTime)
+    const durationB = timeToMinutes(b.endTime) - timeToMinutes(b.startTime)
+    if (durationA !== durationB) return durationB - durationA
+    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+  })
+  for (const item of bookedByDurationDesc) {
+    const start = timeToMinutes(item.startTime)
+    const end = timeToMinutes(item.endTime)
+    const alreadyCovered = keptBooked.some((kept) => {
+      if (kept.reservationId) return false
+      const keptStart = timeToMinutes(kept.startTime)
+      const keptEnd = timeToMinutes(kept.endTime)
+      return keptStart <= start && keptEnd >= end
+    })
+    if (!alreadyCovered) keptBooked.push(item)
+  }
+
+  const blockers = [...keptBooked, ...unavailable]
+  const baseAvailable = notBooked.filter((item) => {
+    if (item.status !== "available") return false
+    const duration = timeToMinutes(item.endTime) - timeToMinutes(item.startTime)
+    if (duration !== baseStepMinutes) return false
+    const start = timeToMinutes(item.startTime)
+    const end = timeToMinutes(item.endTime)
+    return !blockers.some(
+      (blocker) =>
+        timeToMinutes(blocker.startTime) < end && timeToMinutes(blocker.endTime) > start,
+    )
+  })
+
+  return [...baseAvailable, ...unavailable, ...keptBooked]
+}
+
+function collapseBookedReservations(
+  booked: readonly ScheduleGridOccupancy[],
+): ScheduleGridOccupancy[] {
+  const byReservation = new Map<string, ScheduleGridOccupancy[]>()
+  for (const item of booked) {
+    const reservationId = item.reservationId
+    if (!reservationId) continue
+    const items = byReservation.get(reservationId) ?? []
+    items.push(item)
+    byReservation.set(reservationId, items)
+  }
+
+  return [...byReservation.values()].map((items) => {
+    const representative = [...items].sort((a, b) => {
+      const durationA = timeToMinutes(a.endTime) - timeToMinutes(a.startTime)
+      const durationB = timeToMinutes(b.endTime) - timeToMinutes(b.startTime)
+      return durationB - durationA
+    })[0]
+    if (!representative) throw new Error("Booked reservation has no occupancy")
+    return {
+      ...representative,
+      startTime: formatMinutesAsTime(
+        Math.min(...items.map((item) => timeToMinutes(item.startTime))),
+      ),
+      endTime: formatMinutesAsTime(
+        Math.max(...items.map((item) => timeToMinutes(item.endTime))),
+      ),
+    }
+  })
+}
+
+function collapseUnavailableOccupancies(
+  unavailable: readonly ScheduleGridOccupancy[],
+): ScheduleGridOccupancy[] {
+  const byResourceAndPresentation = new Map<string, ScheduleGridOccupancy[]>()
+  for (const item of unavailable) {
+    const key = JSON.stringify([
+      item.rentalAssetId,
+      item.occupancyKindKey,
+      item.occupancyKindLabel,
+      item.label,
+      item.badge,
+    ])
+    const items = byResourceAndPresentation.get(key) ?? []
+    items.push(item)
+    byResourceAndPresentation.set(key, items)
+  }
+
+  return [...byResourceAndPresentation.values()].flatMap((items) => {
+    const sorted = [...items].sort(
+      (a, b) =>
+        timeToMinutes(a.startTime) - timeToMinutes(b.startTime) ||
+        timeToMinutes(b.endTime) - timeToMinutes(a.endTime),
+    )
+    const merged: ScheduleGridOccupancy[] = []
+
+    for (const item of sorted) {
+      const previous = merged.at(-1)
+      if (!previous || timeToMinutes(item.startTime) >= timeToMinutes(previous.endTime)) {
+        merged.push({ ...item })
+        continue
+      }
+      if (timeToMinutes(item.endTime) > timeToMinutes(previous.endTime)) {
+        previous.endTime = item.endTime
+      }
+    }
+
+    return merged
+  })
 }

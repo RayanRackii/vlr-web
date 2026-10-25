@@ -3,9 +3,11 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
+  dedupeOpenHoursOccupancies,
   durationValues,
   formatMinutesAsTime,
   gcd,
+  localizedOccupancyKindLabel,
   timeToMinutes,
   type ScheduleGridOccupancy,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
@@ -111,8 +113,16 @@ export function DayResourceGrid({
       list.push(item)
       grouped.set(item.rentalAssetId, list)
     }
+    for (const asset of assets) {
+      if ((asset.schedulePolicy ?? "SlotGrid") !== "OpenHours") continue
+      const list = grouped.get(asset.id)
+      if (!list) continue
+      const baseStep = durationValues(asset)[0]
+      if (!Number.isFinite(baseStep) || baseStep <= 0) continue
+      grouped.set(asset.id, dedupeOpenHoursOccupancies(list, baseStep))
+    }
     return grouped
-  }, [occupancies])
+  }, [assets, occupancies])
 
   if (assets.length === 0) {
     return (
@@ -313,15 +323,11 @@ function RowCells({
                     axisStep,
                 ),
               )
-              // Only the seeded "open" kind with its untouched default label is
-              // localized; a tenant-renamed kind keeps its configured name.
-              const isSeedOpenKind =
-                item.occupancyKindKey === "open" &&
-                item.occupancyKindLabel === "Open"
-              const kindLabel =
-                isSeedOpenKind
-                  ? t("rentals.schedule.occupancyKinds.open")
-                  : item.occupancyKindLabel
+              const kindLabel = localizedOccupancyKindLabel(
+                item.occupancyKindKey,
+                item.occupancyKindLabel,
+                t,
+              )
               const itemLabel = item.label?.trim()
               const statusLabel = t(
                 `rentals.schedule.occurrence.status.${item.status}`,

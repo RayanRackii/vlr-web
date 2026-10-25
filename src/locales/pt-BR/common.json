@@ -1322,15 +1322,15 @@
       },
       "reservedRevenue": {
         "title": "Receita reservada",
-        "subtitle": "Pending + confirmed no mês"
+        "subtitle": "Pendentes + confirmadas no mês"
       },
       "rentableSpaces": {
         "title": "Espaços alugáveis",
-        "subtitle": "Família spaces + rentável"
+        "subtitle": "Família de espaços + alugável"
       },
       "rentableGoods": {
         "title": "Bens alugáveis",
-        "subtitle": "Família goods + rentável"
+        "subtitle": "Família de bens + alugável"
       },
       "activePlans": {
         "title": "Planos ativos",
@@ -3027,7 +3027,9 @@
       "dayTitle": "Agenda do dia",
       "occupancyKindLabel": "Tipo",
       "occupancyKinds": {
-        "open": "Aberto"
+        "open": "Aberto",
+        "closed": "Fechado",
+        "lesson": "Aula"
       },
       "dayEmpty": "Nenhum horário neste dia. Crie a grade em Configuração semanal.",
       "dayEmptyTitle": "Nenhum horário neste dia",
