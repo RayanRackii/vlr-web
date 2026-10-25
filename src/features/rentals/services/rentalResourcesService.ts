@@ -29,10 +29,26 @@ function throwResourcesError(error: unknown, fallback: string): never {
     throw error
   }
 
-  throw new Error(
-    mapRbacErrorMessage(parseApiError(getAxiosErrorPayload(error), fallback), fallback),
-    { cause: error },
-  )
+  throw new Error(axiosErrorMessage(error, fallback), { cause: error })
+}
+
+/** Maps a failed request to a message that says why it failed. */
+function axiosErrorMessage(error: unknown, fallback: string): string {
+  if (!isAxiosError(error) || !error.response) {
+    return i18n.t("rentals.resources.errorKinds.network")
+  }
+  const status = error.response.status
+  const detail = mapRbacErrorMessage(parseApiError(getAxiosErrorPayload(error), ""), "")
+  if (status === 401 || status === 403) {
+    return detail || i18n.t("rentals.resources.errorKinds.permission")
+  }
+  if (status === 400 || status === 422) {
+    return detail || i18n.t("rentals.resources.errorKinds.validation")
+  }
+  if (status >= 500) {
+    return i18n.t("rentals.resources.errorKinds.server")
+  }
+  return detail || fallback
 }
 
 export async function listRentalAssetCategories(): Promise<
