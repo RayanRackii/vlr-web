@@ -376,6 +376,27 @@ describe("DayResourceGrid compact slots", () => {
   })
 })
 
+describe("DayResourceGrid mobile containment", () => {
+  it("keeps fixed-width resource columns inside its horizontal scroller", () => {
+    render(
+      <DayResourceGrid
+        assets={[agendaAsset(), { ...agendaAsset(), id: "11111111-1111-4111-8111-111111111112", name: "Sala 2" }]}
+        occupancies={[]}
+        busyTargetKey={null}
+        readOnly={false}
+        onCellClick={() => undefined}
+      />,
+    )
+
+    const grid = screen.getByRole("grid")
+    expect(grid.parentElement).toHaveClass("w-max", "min-w-full")
+    expect(grid.parentElement?.parentElement).toHaveClass(
+      "min-w-0",
+      "overflow-x-auto",
+    )
+  })
+})
+
 describe("DailyAgendaTab OpenHours overlapping windows", () => {
   function openHoursAsset(): AdminRentalAsset {
     return {

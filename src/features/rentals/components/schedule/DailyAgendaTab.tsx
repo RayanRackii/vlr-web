@@ -199,9 +199,9 @@ export function DailyAgendaTab({
   const showInlineRefresh = loading && surface === "grid" && day !== null
 
   return (
-    <div className="w-full space-y-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-        <div className="flex items-center">
+    <div className="min-w-0 w-full space-y-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
+        <div className="flex shrink-0 items-center">
           <Button
             type="button"
             size="icon-sm"
@@ -233,7 +233,7 @@ export function DailyAgendaTab({
           value={date}
           locale={i18n.language}
           today={tenantTodayIsoDate(timeZoneId, now)}
-          className="w-auto"
+          className="min-w-0 max-w-full"
           onChange={(value) => {
             if (value) onDateChange(value)
           }}
