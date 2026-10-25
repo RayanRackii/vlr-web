@@ -451,9 +451,6 @@ export function AssetWizard({
       if (!form.name.trim()) {
         errors.push("name")
       }
-      if (!form.tag.trim()) {
-        errors.push("tag")
-      }
     }
 
     const attributeValidation = buildAttributesZodSchema(
@@ -1071,22 +1068,14 @@ export function AssetWizard({
                       <FieldLabel
                         label={t("assets.detail.fields.tag")}
                         help={t("assets.wizard.help.tag")}
-                        required
                       />
                       <Input
                         value={form.tag}
                         placeholder={t("assets.wizard.placeholders.tag")}
-                        aria-invalid={fieldErrors.tag || undefined}
-                        className={fieldInvalidClass(Boolean(fieldErrors.tag))}
                         onChange={(event) => {
                           patchForm({ tag: event.target.value })
                         }}
                       />
-                      {fieldErrors.tag ? (
-                        <p className="text-xs text-destructive">
-                          {t("assets.inventory.validation.tagRequired")}
-                        </p>
-                      ) : null}
                     </div>
                     <div className="space-y-2">
                       <FieldLabel
