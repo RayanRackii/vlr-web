@@ -12,7 +12,13 @@ export function slotDurationMinutes(slot: DurationSlot): number {
   const [endHour, endMinute] = normalizeClock(slot.endTime)
     .split(":")
     .map(Number)
-  return endHour * 60 + endMinute - (startHour * 60 + startMinute)
+  const startMinutes = startHour * 60 + startMinute
+  let endMinutes = endHour * 60 + endMinute
+  // A slot closing the civil day is stored as 23:59(:59) or 00:00; it ends at 24:00.
+  if (endMinutes === 23 * 60 + 59 || (endMinutes === 0 && startMinutes > 0)) {
+    endMinutes = 24 * 60
+  }
+  return endMinutes - startMinutes
 }
 
 /** Distinct booking durations (minutes) across every slot of the day, ascending. */
@@ -41,7 +47,7 @@ export function listStartTimesForDuration(
     }
     const startTime = normalizeClock(slot.startTime)
     const endTime = normalizeClock(slot.endTime)
-    byStart.set(startTime, endTime)
+    byStart.set(startTime, endTime === "23:59" ? "00:00" : endTime)
   }
   return [...byStart.entries()]
     .sort(([left], [right]) => left.localeCompare(right))

@@ -504,6 +504,7 @@
       "yourReservation": "Your reservation",
       "selectionExpired": "Your selection expired",
       "cancelDeadline": "Cancellable until {{when}}",
+      "noCancelDeadline": "No cancellation deadline",
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
