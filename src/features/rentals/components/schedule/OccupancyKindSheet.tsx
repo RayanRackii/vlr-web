@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Lock,
   Sparkles,
+  Tag,
   Users,
   Wrench,
   type LucideIcon,
@@ -107,206 +108,227 @@ export function OccupancyKindSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>
-            {editing
-              ? t("rentals.schedule.kinds.saveEdit")
-              : t("rentals.schedule.kinds.saveCreate")}
-          </SheetTitle>
-          <SheetDescription>
-            {t("rentals.schedule.kinds.description")}
-          </SheetDescription>
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Tag className="size-4" aria-hidden />
+            </span>
+            <div className="space-y-0.5">
+              <SheetTitle>
+                {editing
+                  ? t("rentals.schedule.kinds.saveEdit")
+                  : t("rentals.schedule.kinds.saveCreate")}
+              </SheetTitle>
+              <SheetDescription>
+                {t("rentals.schedule.kinds.description")}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.key")}
-              help={t("rentals.schedule.kinds.help.key")}
-              required
-            />
-            <Input
-              value={form.key}
-              disabled={Boolean(editing) || readOnly || busy}
-              placeholder={t("rentals.schedule.kinds.placeholders.key")}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  key: event.target.value,
-                }))
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.descriptionField")}
-              help={t("rentals.schedule.kinds.help.description")}
-            />
-            <textarea
-              className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-              value={form.description ?? ""}
-              disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.iconKey")}
-              help={t("rentals.schedule.kinds.help.iconKey")}
-            />
-            <Select
-              modal={false}
-              value={form.iconKey ?? "circle-check"}
-              disabled={readOnly || busy}
-              onValueChange={(value) => {
-                if (typeof value === "string") {
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4">
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.key")}
+                help={t("rentals.schedule.kinds.help.key")}
+                required
+              />
+              <Input
+                value={form.key}
+                disabled={Boolean(editing) || readOnly || busy}
+                placeholder={t("rentals.schedule.kinds.placeholders.key")}
+                onChange={(event) => {
                   setForm((current) => ({
                     ...current,
-                    iconKey: value,
+                    key: event.target.value,
                   }))
-                }
-              }}
-              items={ICON_KEYS.map((iconKey) => ({
-                value: iconKey,
-                label: iconKey,
-              }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ICON_KEYS.map((iconKey) => (
-                  <SelectItem key={iconKey} value={iconKey}>
-                    {iconKey}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.label")}
-              help={t("rentals.schedule.kinds.help.label")}
-              required
-            />
-            <Input
-              value={form.label}
-              disabled={readOnly || busy}
-              placeholder={t("rentals.schedule.kinds.placeholders.label")}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  label: event.target.value,
-                }))
-              }}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.color")}
-              help={t("rentals.schedule.kinds.help.color")}
-            />
-            <div className="flex items-center gap-3">
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.label")}
+                help={t("rentals.schedule.kinds.help.label")}
+                required
+              />
               <Input
-                type="color"
-                className="h-10 w-20 cursor-pointer p-1"
-                value={form.colorHex || "#22c55e"}
+                value={form.label}
+                disabled={readOnly || busy}
+                placeholder={t("rentals.schedule.kinds.placeholders.label")}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    label: event.target.value,
+                  }))
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.descriptionField")}
+                help={t("rentals.schedule.kinds.help.description")}
+              />
+              <textarea
+                className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                value={form.description ?? ""}
                 disabled={readOnly || busy}
                 onChange={(event) => {
                   setForm((current) => ({
                     ...current,
-                    colorHex: event.target.value,
+                    description: event.target.value,
                   }))
                 }}
               />
-              <div
-                className="flex h-10 min-w-0 flex-1 items-center rounded-md border px-3 text-sm"
-                style={{
-                  borderColor: form.colorHex || "#22c55e",
-                  backgroundColor: `${form.colorHex || "#22c55e"}20`,
+            </div>
+          </div>
+
+          <div className="space-y-4 border-t border-border pt-4">
+            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {t("rentals.schedule.kinds.appearanceSection")}
+            </h3>
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.iconKey")}
+                help={t("rentals.schedule.kinds.help.iconKey")}
+              />
+              <Select
+                modal={false}
+                value={form.iconKey ?? "circle-check"}
+                disabled={readOnly || busy}
+                onValueChange={(value) => {
+                  if (typeof value === "string") {
+                    setForm((current) => ({
+                      ...current,
+                      iconKey: value,
+                    }))
+                  }
                 }}
+                items={ICON_KEYS.map((iconKey) => ({
+                  value: iconKey,
+                  label: iconKey,
+                }))}
               >
-                <PreviewIcon className="mr-2 size-4 shrink-0" aria-hidden />
-                <span className="truncate">
-                  {form.label || t("rentals.schedule.kinds.label")}
-                </span>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ICON_KEYS.map((iconKey) => (
+                    <SelectItem key={iconKey} value={iconKey}>
+                      {iconKey}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.color")}
+                help={t("rentals.schedule.kinds.help.color")}
+              />
+              <div className="flex items-center gap-3">
+                <Input
+                  type="color"
+                  className="h-10 w-20 cursor-pointer p-1"
+                  value={form.colorHex || "#22c55e"}
+                  disabled={readOnly || busy}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      colorHex: event.target.value,
+                    }))
+                  }}
+                />
+                <div
+                  className="flex h-10 min-w-0 flex-1 items-center rounded-md border px-3 text-sm"
+                  style={{
+                    borderColor: form.colorHex || "#22c55e",
+                    backgroundColor: `${form.colorHex || "#22c55e"}20`,
+                  }}
+                >
+                  <PreviewIcon className="mr-2 size-4 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {form.label || t("rentals.schedule.kinds.label")}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <FieldLabel
-              label={t("rentals.schedule.kinds.sortOrder")}
-              help={t("rentals.schedule.kinds.help.sortOrder")}
-            />
-            <Input
-              type="number"
-              value={form.sortOrder}
-              disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  sortOrder: Number(event.target.value) || 0,
-                }))
-              }}
-            />
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={form.isBookableByCustomer}
-              disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  isBookableByCustomer: event.target.checked,
-                }))
-              }}
-            />
-            <FieldLabel
-              label={t("rentals.schedule.kinds.bookable")}
-              help={t("rentals.schedule.kinds.help.bookable")}
-            />
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={form.blocksCapacity}
-              disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  blocksCapacity: event.target.checked,
-                }))
-              }}
-            />
-            <FieldLabel
-              label={t("rentals.schedule.kinds.blocksCapacity")}
-              help={t("rentals.schedule.kinds.help.blocksCapacity")}
-            />
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={form.isActive}
-              disabled={readOnly || busy}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  isActive: event.target.checked,
-                }))
-              }}
-            />
-            <FieldLabel
-              label={t("rentals.schedule.active")}
-              help={t("rentals.schedule.kinds.help.active")}
-            />
+
+          <div className="space-y-4 border-t border-border pt-4">
+            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {t("rentals.schedule.kinds.behaviorSection")}
+            </h3>
+            <div className="space-y-1.5">
+              <FieldLabel
+                label={t("rentals.schedule.kinds.sortOrder")}
+                help={t("rentals.schedule.kinds.help.sortOrder")}
+              />
+              <Input
+                type="number"
+                value={form.sortOrder}
+                disabled={readOnly || busy}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    sortOrder: Number(event.target.value) || 0,
+                  }))
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={form.isBookableByCustomer}
+                disabled={readOnly || busy}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    isBookableByCustomer: event.target.checked,
+                  }))
+                }}
+              />
+              <FieldLabel
+                label={t("rentals.schedule.kinds.bookable")}
+                help={t("rentals.schedule.kinds.help.bookable")}
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={form.blocksCapacity}
+                disabled={readOnly || busy}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    blocksCapacity: event.target.checked,
+                  }))
+                }}
+              />
+              <FieldLabel
+                label={t("rentals.schedule.kinds.blocksCapacity")}
+                help={t("rentals.schedule.kinds.help.blocksCapacity")}
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={form.isActive}
+                disabled={readOnly || busy}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    isActive: event.target.checked,
+                  }))
+                }}
+              />
+              <FieldLabel
+                label={t("rentals.schedule.active")}
+                help={t("rentals.schedule.kinds.help.active")}
+              />
+            </div>
           </div>
         </div>
 

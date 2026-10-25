@@ -3150,10 +3150,12 @@
         "descriptionField": "Description",
         "iconKey": "Icon",
         "color": "Color",
+        "appearanceSection": "Appearance",
         "sortOrder": "Sort order",
         "bookable": "Bookable by customer",
         "notBookable": "Not bookable",
         "blocksCapacity": "Blocks capacity",
+        "behaviorSection": "Behavior",
         "placeholders": {
           "key": "e.g. open, lesson",
           "label": "e.g. Open, Lesson"

@@ -201,11 +201,12 @@ export function DailyAgendaTab({
   return (
     <div className="min-w-0 w-full space-y-4">
       <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center divide-x divide-border rounded-lg border border-border">
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
+            className="rounded-r-none"
             aria-label={t("rentals.schedule.toolbar.prev")}
             onClick={() => onDateChange(addDays(date, -1))}
           >
@@ -215,6 +216,7 @@ export function DailyAgendaTab({
             type="button"
             size="sm"
             variant="ghost"
+            className="rounded-none"
             onClick={() => onDateChange(todayIsoDate(timeZoneId))}
           >
             {t("rentals.schedule.toolbar.today")}
@@ -223,6 +225,7 @@ export function DailyAgendaTab({
             type="button"
             size="icon-sm"
             variant="ghost"
+            className="rounded-l-none"
             aria-label={t("rentals.schedule.toolbar.next")}
             onClick={() => onDateChange(addDays(date, 1))}
           >
