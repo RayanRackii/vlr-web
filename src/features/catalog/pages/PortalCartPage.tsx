@@ -6,8 +6,12 @@ import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { ShoppingCartIcon } from "lucide-react"
+
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Form,
   FormControl,
@@ -154,19 +158,16 @@ export function PortalCartPage() {
       >
         {t("common.back")}
       </Button>
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.catalog.cartTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.checkoutHint")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("tenantPortal.catalog.cartTitle")}
+        description={t("tenantPortal.catalog.checkoutHint")}
+      />
 
       {cart.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.cartEmpty")}
-        </p>
+        <EmptyState
+          icon={ShoppingCartIcon}
+          title={t("tenantPortal.catalog.cartEmpty")}
+        />
       ) : (
         <ul className="divide-y rounded-xl border border-border">
           {cart.items.map((item) => {

@@ -1,6 +1,8 @@
+import { LayoutGridIcon } from "lucide-react"
 import { Navigate, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { EmptyState } from "@/components/ui/empty-state"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { buildCustomerNavItems } from "@/features/catalog/customerNav"
 
@@ -16,13 +18,12 @@ export function TenantPortalHomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-2 py-10 text-center">
-      <h2 className="text-lg font-semibold">
-        {t("tenantPortal.menu.emptyTitle")}
-      </h2>
-      <p className="text-sm text-muted-foreground">
-        {t("tenantPortal.menu.emptyDescription")}
-      </p>
+    <div className="mx-auto max-w-lg py-10">
+      <EmptyState
+        icon={LayoutGridIcon}
+        title={t("tenantPortal.menu.emptyTitle")}
+        description={t("tenantPortal.menu.emptyDescription")}
+      />
     </div>
   )
 }

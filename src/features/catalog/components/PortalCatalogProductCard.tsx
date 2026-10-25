@@ -54,11 +54,11 @@ export function PortalCatalogProductCard({
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
+    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow duration-150 ease-out hover:shadow-md">
       {images.length === 0 ? (
         <Link
           to={detailTo}
-          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-lg bg-muted text-muted-foreground"
+          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-xl bg-muted text-muted-foreground"
           aria-label={t("tenantPortal.catalog.noImage")}
         >
           <ImageOff aria-hidden className="size-8" />
@@ -67,7 +67,7 @@ export function PortalCatalogProductCard({
         <CatalogProductImageGallery
           images={images}
           alt={product.name}
-          frameClassName="aspect-[4/3] w-full rounded-t-lg"
+          frameClassName="aspect-[4/3] w-full rounded-t-xl"
           controlsVisibility="hover"
           imageLinkTo={detailTo}
         />
