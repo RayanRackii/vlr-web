@@ -371,8 +371,8 @@ describe("DayResourceGrid compact slots", () => {
     )
 
     expect(screen.getByRole("button", {
-      name: "Sala 1, 23:30–23:59, Disponível, Tipo: Aberto",
-    })).toHaveTextContent("23:30–23:59")
+      name: "Sala 1, 23:30–00:00, Disponível, Tipo: Aberto",
+    })).toHaveTextContent("23:30–00:00")
   })
 })
 

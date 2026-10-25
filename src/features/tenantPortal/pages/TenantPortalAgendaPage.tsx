@@ -1,3 +1,4 @@
+import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
@@ -209,12 +210,6 @@ function partitionAgendaSlots(
     bookable,
     pastHidden: bookable.length < bookableIncludingPast.length,
   }
-}
-
-/** HH:mm, keeping seconds when the slot has them (a day-closing 23:59:59 must match exactly). */
-function bookingEndClock(endTime: string): string {
-  const seconds = endTime.slice(5, 8)
-  return seconds.length === 3 && seconds !== ":00" ? endTime.slice(0, 8) : endTime.slice(0, 5)
 }
 
 function isCancelDeadlinePassed(reservation: PortalReservation | undefined): boolean {
