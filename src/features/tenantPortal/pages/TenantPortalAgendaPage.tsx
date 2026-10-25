@@ -1958,7 +1958,7 @@ export function TenantPortalAgendaPage() {
               {t("tenantPortal.agenda.legendUnavailable")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <Check className="size-3 shrink-0 rounded-sm border-2 border-emerald-700 bg-emerald-100 p-px text-emerald-700 dark:border-emerald-300 dark:text-emerald-200" />
+              <Check className="size-3 shrink-0 rounded-sm border-2 border-primary bg-primary/10 p-px text-primary" />
               {t("tenantPortal.agenda.legendSelected")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
@@ -2057,7 +2057,7 @@ export function TenantPortalAgendaPage() {
                       {!state.pending && state.available && state.selected ? (
                         <Check
                           aria-hidden
-                          className="absolute top-1.5 right-1.5 size-3.5 text-emerald-700 dark:text-emerald-200"
+                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
                         />
                       ) : null}
                       {!state.pending && !state.available && state.ownReservation ? (

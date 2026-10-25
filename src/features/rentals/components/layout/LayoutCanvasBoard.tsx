@@ -324,7 +324,7 @@ export function LayoutCanvasBoard({
                 {selected ? (
                   <Check
                     aria-hidden
-                    className="absolute top-1 right-1 size-3.5 shrink-0 text-emerald-700 dark:text-emerald-200 sm:size-3"
+                    className="absolute top-1 right-1 size-3.5 shrink-0 text-primary sm:size-3"
                   />
                 ) : null}
                 {ownReservation ? (
