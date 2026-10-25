@@ -355,6 +355,8 @@ export function TenantPortalAgendaPage() {
       clearAgendaSelectionNotice(subdomain)
     }
   }, [subdomain])
+  const [quantity, setQuantity] = useState(1)
+  const [lastAvailableQuantity, setLastAvailableQuantity] = useState<number | null>(null)
   const selectRentalAsset = useCallback((rentalAssetId: string) => {
     clearAgendaSelectionNotice(subdomain)
     setQuantity(1)
@@ -409,8 +411,6 @@ export function TenantPortalAgendaPage() {
       }
     | { status: "error" }
   >({ status: "idle" })
-  const [quantity, setQuantity] = useState(1)
-  const [lastAvailableQuantity, setLastAvailableQuantity] = useState<number | null>(null)
   const [layoutItems, setLayoutItems] = useState<
     {
       rentalAssetId: string
