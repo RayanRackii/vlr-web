@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -86,6 +88,7 @@ export function CardGridSkeleton({
   count = 8,
   className,
 }: CardGridSkeletonProps) {
+  const { t } = useTranslation()
   return (
     <div
       role="status"
@@ -95,6 +98,7 @@ export function CardGridSkeleton({
         className,
       )}
     >
+      <span className="sr-only">{t("common.loading")}</span>
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
