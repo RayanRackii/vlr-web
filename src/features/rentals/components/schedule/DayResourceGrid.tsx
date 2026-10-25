@@ -368,7 +368,7 @@ function RowCells({
                 (isStartClosed?.(item.startTime) === true && item.status !== "booked")
               const ariaLabel = `${asset.name}, ${timeRangeLabel}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}${freeUnitsLabel ? `, ${freeUnitsLabel}` : ""}`
               const cardClassName = cn(
-                "absolute top-1 overflow-hidden rounded-md border px-2 py-1.5 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                "absolute top-1 overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                 overlapIndex > 0 && "translate-x-2",
               )
               const cardStyle = {
@@ -404,7 +404,7 @@ function RowCells({
                   </span>
                   <span
                     className={cn(
-                      "mt-1 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold",
+                      "mt-0.5 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold leading-none",
                       STATUS_TEXT_CLASS[item.status],
                     )}
                   >
