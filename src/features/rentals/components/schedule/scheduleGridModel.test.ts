@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   dedupeOpenHoursOccupancies,
+  occupancyFromDaySlot,
+  occupancyIdFromSlot,
   type ScheduleGridOccupancy,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
 
@@ -206,5 +208,25 @@ describe("dedupeOpenHoursOccupancies", () => {
         status: "booked",
       }),
     ])
+  })
+})
+
+describe("occupancyIdFromSlot", () => {
+  it("keeps derived booked rows of one good distinct (R10: 3 bookings 12-16)", () => {
+    const base = { id: "00000000-0000-0000-0000-000000000000", isDerived: true, rentalAssetId: "projetor", startTime: "12:00:00", endTime: "16:00:00" }
+    const ids = ["r1", "r2", "r3"].map((reservationId) => occupancyIdFromSlot({ ...base, reservationId }))
+    expect(new Set(ids).size).toBe(3)
+    expect(occupancyIdFromSlot({ ...base, endTime: "13:00:00" })).not.toBe(occupancyIdFromSlot(base))
+  })
+
+  it("maps a derived booked day slot to a booked occupancy", () => {
+    const result = occupancyFromDaySlot({
+      id: "00000000-0000-0000-0000-000000000000", rentalAssetId: "sala", assetName: "Sala", date: "2026-10-27",
+      startTime: "08:00:00", endTime: "10:00:00", occupancyKindId: "k", occupancyKindKey: "open", occupancyKindLabel: "Open",
+      occupancyKindColorHex: "#22C55E", isBookableByCustomer: false, label: null, status: "Booked", reservationId: "res-1",
+      isDerived: true, source: "WeeklyDefault", sourceTemplateId: null, schedulePolicy: "OpenHours", supportsEntireRecurrence: false,
+    } as Parameters<typeof occupancyFromDaySlot>[0])
+    expect(result.status).toBe("booked")
+    expect(result.reservationId).toBe("res-1")
   })
 })

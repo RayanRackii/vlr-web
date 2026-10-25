@@ -94,9 +94,15 @@ export function occupancyIdFromSlot(slot: {
   isDerived: boolean
   rentalAssetId: string
   startTime: string
+  endTime?: string
+  reservationId?: string | null
 }): string {
   if (slot.isDerived || slot.id === EMPTY_SLOT_ID) {
-    return `derived:${slot.rentalAssetId}:${formatScheduleTime(slot.startTime)}`
+    // Derived rows share an empty id; end time and reservation keep concurrent
+    // windows (several durations, several bookings of one good) distinct.
+    const end = slot.endTime ? `-${formatScheduleTime(slot.endTime)}` : ""
+    const reservation = slot.reservationId ? `:r:${slot.reservationId}` : ""
+    return `derived:${slot.rentalAssetId}:${formatScheduleTime(slot.startTime)}${end}${reservation}`
   }
   return slot.id
 }
