@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
 import {
   EXISTING_ACCOUNT_SIGN_IN_REQUIRED,
   INVITE_ACCOUNT_MISMATCH,
+  INVITE_ALREADY_ACCEPTED,
   INVITE_IDENTITY_CONFLICT,
   InviteAcceptError,
   acceptExistingAccountInvite,
@@ -121,12 +122,25 @@ function tenantList(
   }
 }
 
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location">{location.pathname + location.search}</div>
+}
+
 function renderInvite(token: string | null) {
   const path = token === null ? "/invite" : `/invite?token=${token}`
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/invite" element={<SetPasswordPage />} />
+        <Route
+          path="/invite"
+          element={
+            <>
+              <SetPasswordPage />
+              <LocationProbe />
+            </>
+          }
+        />
         <Route path="/dashboard" element={<div>dashboard</div>} />
         <Route path="/login" element={<div>login</div>} />
       </Routes>
@@ -587,5 +601,67 @@ describe("SetPasswordPage", () => {
     expect(
       screen.queryByLabelText(i18n.t("auth.invite.existingPasswordLabel")),
     ).not.toBeInTheDocument()
+  })
+
+  describe("already-accepted invite", () => {
+    const getSession = vi.mocked(supabase.auth.getSession)
+
+    it("resumes the tenant picker when signed in", async () => {
+      preview.mockRejectedValue(new InviteAcceptError(INVITE_ALREADY_ACCEPTED, 409))
+      getSession.mockResolvedValueOnce({
+        data: { session: { access_token: "t" } },
+        error: null,
+      } as never)
+      listTenants.mockResolvedValue(
+        tenantList(
+          [
+            membership(tenantId, "Clube Norte Ltda", "Clube Norte"),
+            membership(otherTenantId, "Clube Sul Ltda", "Clube Sul"),
+          ],
+          tenantId,
+        ),
+      )
+      renderInvite("used-token")
+
+      expect((await screen.findAllByText(i18n.t("auth.invite.pickerTitle"))).length).toBeGreaterThan(0)
+      expect(screen.queryByText(i18n.t("auth.invite.invalidLink"))).not.toBeInTheDocument()
+      expect(screen.getByRole("radio", { name: /Clube Sul/ })).toBeInTheDocument()
+    })
+
+    it("asks to log in when signed out", async () => {
+      preview.mockRejectedValue(new InviteAcceptError(INVITE_ALREADY_ACCEPTED, 409))
+      renderInvite("used-token")
+
+      expect(await screen.findByText(i18n.t("auth.invite.alreadyAccepted"))).toBeInTheDocument()
+      expect(screen.queryByText(i18n.t("auth.invite.invalidLink"))).not.toBeInTheDocument()
+      expect(screen.getByRole("link", { name: i18n.t("auth.invite.goToLogin") })).toHaveAttribute("href", "/login")
+      expect(listTenants).not.toHaveBeenCalled()
+    })
+
+    it("still shows invalid link for other preview errors", async () => {
+      preview.mockRejectedValue(new InviteAcceptError("Invite was revoked.", 409))
+      renderInvite("revoked-token")
+
+      expect(await screen.findByText(i18n.t("auth.invite.invalidLink"))).toBeInTheDocument()
+    })
+  })
+
+  it("drops the token from the URL after a successful accept without re-previewing", async () => {
+    listTenants.mockResolvedValue(
+      tenantList(
+        [
+          membership(tenantId, "Clube Norte Ltda", "Clube Norte"),
+          membership(otherTenantId, "Clube Sul Ltda", "Clube Sul"),
+        ],
+        otherTenantId,
+      ),
+    )
+    renderInvite("invite-token")
+    const user = await fillNewPassword()
+    await user.click(submitButton())
+
+    expect((await screen.findAllByText(i18n.t("auth.invite.pickerTitle"))).length).toBeGreaterThan(0)
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/invite$/)
+    expect(preview).toHaveBeenCalledTimes(1)
   })
 })

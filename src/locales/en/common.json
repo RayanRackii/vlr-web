@@ -199,6 +199,7 @@
       "welcomeExisting": "You already have a Rolvix account. Sign in with the password for {{email}} to join {{tenant}}. Your password will not change.",
       "checking": "Checking the invite...",
       "invalidLink": "Invite link is invalid or expired.",
+      "alreadyAccepted": "This invite was already accepted. Sign in to continue.",
       "passwordLabel": "New password",
       "confirmPasswordLabel": "Confirm new password",
       "passwordPlaceholder": "At least 8 characters",

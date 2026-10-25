@@ -12,6 +12,7 @@ import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSess
 import {
   EXISTING_ACCOUNT_SIGN_IN_REQUIRED,
   INVITE_ACCOUNT_MISMATCH,
+  INVITE_ALREADY_ACCEPTED,
   INVITE_IDENTITY_CONFLICT,
   InviteAcceptError,
   acceptExistingAccountInvite,
@@ -58,15 +59,15 @@ import { supabase } from "@/lib/supabase"
 type Phase =
   | { status: "loading" }
   | { status: "invalid" }
+  | { status: "already-accepted" }
   | { status: "password"; preview: InvitePreview }
   | { status: "sign-in"; preview: InvitePreview }
   | {
       status: "picker"
-      preview: InvitePreview
       memberships: StaffTenantMembership[]
       initialTenantId: string
     }
-  | { status: "membership-error"; preview: InvitePreview }
+  | { status: "membership-error"; invitedTenantId: string | null }
 
 function messageForInvite(error: unknown, t: TFunction): string {
   if (!(error instanceof InviteAcceptError)) {
@@ -118,7 +119,9 @@ export function SetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const token = searchParams.get("token")?.trim() ?? ""
+  // Captured once: the token is dropped from the URL after accept, and a later
+  // URL change must not re-preview (or "invalidate") the consumed invite.
+  const [token] = useState(() => searchParams.get("token")?.trim() ?? "")
   const hasToken = token.length > 0
   const [phase, setPhase] = useState<Phase>(
     hasToken ? { status: "loading" } : { status: "invalid" },
@@ -137,13 +140,13 @@ export function SetPasswordPage() {
   }, [redirectTimeoutId])
 
   useEffect(() => {
+    // Initial phase already covers "no token" (invalid) and "loading"; the token
+    // never changes after mount.
     if (token.length === 0) {
-      setPhase({ status: "invalid" })
       return
     }
 
     let cancelled = false
-    setPhase({ status: "loading" })
     void previewInvite(token).then(
       (preview) => {
         if (cancelled) {
@@ -156,8 +159,33 @@ export function SetPasswordPage() {
             : { status: "password", preview },
         )
       },
-      () => {
+      (error: unknown) => {
         if (cancelled) {
+          return
+        }
+
+        if (
+          error instanceof InviteAcceptError &&
+          error.code === INVITE_ALREADY_ACCEPTED
+        ) {
+          // Reload/back after a successful accept: the membership exists.
+          void supabase.auth.getSession().then(
+            ({ data }) => {
+              if (cancelled) {
+                return
+              }
+              if (data.session) {
+                void openMembershipStep(null)
+              } else {
+                setPhase({ status: "already-accepted" })
+              }
+            },
+            () => {
+              if (!cancelled) {
+                setPhase({ status: "already-accepted" })
+              }
+            },
+          )
           return
         }
 
@@ -168,20 +196,27 @@ export function SetPasswordPage() {
     return () => {
       cancelled = true
     }
+    // openMembershipStep only reads stable setters/navigate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  async function openMembershipStep(preview: InvitePreview) {
+  function dropTokenFromUrl() {
+    void navigate({ search: "" }, { replace: true })
+  }
+
+  async function openMembershipStep(invitedTenantId: string | null) {
     try {
       const list = await listMyStaffTenants()
       if (list.memberships.length > 1) {
-        const invited = list.memberships.some(
-          (membership) => membership.tenantId === preview.tenantId,
-        )
-          ? preview.tenantId
-          : ""
+        const invited =
+          invitedTenantId !== null &&
+          list.memberships.some(
+            (membership) => membership.tenantId === invitedTenantId,
+          )
+            ? invitedTenantId
+            : ""
         setPhase({
           status: "picker",
-          preview,
           memberships: list.memberships,
           initialTenantId: invited,
         })
@@ -204,7 +239,7 @@ export function SetPasswordPage() {
         return
       }
 
-      setPhase({ status: "membership-error", preview })
+      setPhase({ status: "membership-error", invitedTenantId })
     }
   }
 
@@ -216,6 +251,7 @@ export function SetPasswordPage() {
     const preview = phase.preview
     try {
       const accepted = await acceptNewAccountInvite({ token, password })
+      dropTokenFromUrl()
       noteStaffSignIn()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: accepted.email,
@@ -230,7 +266,7 @@ export function SetPasswordPage() {
         return
       }
 
-      await openMembershipStep(preview)
+      await openMembershipStep(preview.tenantId)
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
       if (
@@ -264,10 +300,11 @@ export function SetPasswordPage() {
 
     try {
       await acceptExistingAccountInvite({ token })
+      dropTokenFromUrl()
       toast.success(
         t("auth.invite.toastJoined", { tenant: preview.tenantName }),
       )
-      await openMembershipStep(preview)
+      await openMembershipStep(preview.tenantId)
       return null
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
@@ -292,7 +329,7 @@ export function SetPasswordPage() {
 
     setRetryingMemberships(true)
     try {
-      await openMembershipStep(phase.preview)
+      await openMembershipStep(phase.invitedTenantId)
     } finally {
       setRetryingMemberships(false)
     }
@@ -308,7 +345,9 @@ export function SetPasswordPage() {
   const description =
     phase.status === "invalid" || !hasToken
       ? t("auth.invite.invalidLink")
-      : phase.status === "loading"
+      : phase.status === "already-accepted"
+        ? t("auth.invite.alreadyAccepted")
+        : phase.status === "loading"
         ? t("auth.invite.checking")
         : phase.status === "password"
           ? t("auth.invite.welcome", { tenant: phase.preview.tenantName })
@@ -351,7 +390,8 @@ export function SetPasswordPage() {
           </CardHeader>
 
           <CardContent>
-            {phase.status === "invalid" ? (
+            {phase.status === "invalid" ||
+            phase.status === "already-accepted" ? (
               <Button type="button" className="w-full" render={<Link to="/login" />}>
                 {t("auth.invite.goToLogin")}
               </Button>
