@@ -1,11 +1,12 @@
 import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { LocaleDateInput } from "@/components/LocaleDateInput"
+import { formatLocaleCivilDate } from "@/lib/localeFormat"
 import { useNavigate } from "react-router-dom"
 
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Popover,
@@ -127,7 +128,7 @@ export function DailyAgendaTab({
   onSlotOrCellClick,
   onGoWeeklySetup,
 }: DailyAgendaTabProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const timeZoneId = useTenantTimeZone()
   const clock = useTenantClock()
@@ -228,11 +229,14 @@ export function DailyAgendaTab({
             <ChevronRight aria-hidden />
           </Button>
         </div>
-        <Input
-          type="date"
+        <LocaleDateInput
           value={date}
+          locale={i18n.language}
+          today={tenantTodayIsoDate(timeZoneId, now)}
           className="w-auto"
-          onChange={(event) => onDateChange(event.target.value)}
+          onChange={(value) => {
+            if (value) onDateChange(value)
+          }}
         />
         <Popover>
           <PopoverTrigger
@@ -267,7 +271,7 @@ export function DailyAgendaTab({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-        <span>{t("rentals.schedule.dayOnlyBanner", { date })}</span>
+        <span>{t("rentals.schedule.dayOnlyBanner", { date: formatLocaleCivilDate(date, i18n.language) })}</span>
         {onGoWeeklySetup ? (
           <Button type="button" variant="link" size="xs" onClick={onGoWeeklySetup}>
             {t("rentals.schedule.tabs.templates")}

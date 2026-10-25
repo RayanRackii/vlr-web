@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
@@ -12,6 +13,7 @@ import {
   type UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
 import { cn } from "@/lib/utils"
+import { HH_MM } from "@/lib/time24"
 
 type SchedulePolicyPanelProps = {
   assets: readonly AdminRentalAsset[]
@@ -120,8 +122,12 @@ function SchedulePolicyPanelForm({
     first ? durationInput(first) : "60",
   )
   const [durationError, setDurationError] = useState<string | null>(null)
+  const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
   function saveOpenHours() {
+    if (!hasValidOpenHours) {
+      return
+    }
     const allowedDurationMinutes = normalizeDurations(durationMinutes)
     if (!allowedDurationMinutes) {
       setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
@@ -216,23 +222,21 @@ function SchedulePolicyPanelForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.openTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={openTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setOpenTime(event.target.value)
+              onValueChange={(next) => {
+                setOpenTime(next)
               }}
             />
           </label>
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.closeTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={closeTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setCloseTime(event.target.value)
+              onValueChange={(next) => {
+                setCloseTime(next)
               }}
             />
           </label>
@@ -265,7 +269,7 @@ function SchedulePolicyPanelForm({
           <LoadingButton
             type="button"
             className="w-full self-end"
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || !hasValidOpenHours}
             loading={busyAction === "policy"}
             onClick={saveOpenHours}
           >
