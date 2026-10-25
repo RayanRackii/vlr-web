@@ -79,7 +79,7 @@ export function buildRentalResourceFormValues(
     requiresDeposit: editing?.requiresDeposit ?? true,
     queueEnabled: rentalType === "Location" ? (editing?.queueEnabled ?? false) : false,
     queueOpeningTime: toHtmlTimeInput(editing?.queueOpeningTime),
-    location: "",
+    location: editing?.location ?? "",
     cancelCutoffMode: typeof editing?.cancelCutoffHours === "number" ? "hours" : "inherit",
     cancelCutoffHours: typeof editing?.cancelCutoffHours === "number" ? String(editing.cancelCutoffHours) : "",
     cancelCutoffStored: editing?.cancelCutoffHours,
