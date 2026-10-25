@@ -384,10 +384,14 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
   it("hides Cancelar for Canceled", async () => {
     listMine.mockResolvedValue([makeReservation("Canceled", FUTURE_ISO)])
     renderAgenda()
-    await waitForMineList()
+    const row = (await screen.findByText("Quadra 1")).closest("li")
 
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
+    expect(row).not.toHaveTextContent(formatMoney(80))
+    expect(row).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.total", { amount: formatMoney(80) }),
+    )
   })
 
   it("cancels, toasts success, and refetches mine plus the schedule day", async () => {
@@ -1474,11 +1478,69 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(bookSlot).toHaveBeenCalled()
     })
     expect(toastSuccess).toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-        amount: formatMoney(80),
-        status: i18n.t("rentals.reservations.statuses.Confirmed"),
+      expect.stringContaining(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(80),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      ),
+    )
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+  })
+
+  it("keeps a selected duration visible when booking its last slot", async () => {
+    const user = userEvent.setup()
+    fetchDay.mockResolvedValueOnce({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    }).mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "2h" }))
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
       }),
     )
+
+    await waitFor(() => expect(bookSlot).toHaveBeenCalled())
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "2h" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      )
+      expect(
+        screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") }),
+      ).toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    })
   })
 
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
@@ -1601,10 +1663,12 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(80),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+        expect.stringContaining(
+          i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+            amount: formatMoney(80),
+            status: i18n.t("rentals.reservations.statuses.Confirmed"),
+          }),
+        ),
       )
     })
     expect(

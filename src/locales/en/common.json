@@ -467,7 +467,7 @@
       "dailyLimitReached": "You reached the limit of {{count}} active reservations for this day.",
       "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
       "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
-      "slotTaken": "This time is already booked.",
+      "slotTaken": "Unavailable",
       "alreadyReserved": "You already have this reservation.",
       "alreadyCancelled": "This reservation was already canceled.",
       "slotHeldByYou": "You already booked this time. See",
@@ -503,7 +503,9 @@
       "yourReservation": "Your reservation",
       "selectionExpired": "Your selection expired",
       "cancelDeadline": "Cancellable until {{when}}",
-      "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed."
+      "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
+      "unitsBadge": "x{{count}}",
+      "durationLabel": "Duration"
     },
     "menu": {
       "empty": "No modules available.",
@@ -609,7 +611,8 @@
       "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
       "requestCancelled": "Request canceled.",
       "cancelRequestError": "Could not cancel the request."
-    }
+    },
+    "timeZoneLabel": "{{city}} time ({{offset}})"
   },
   "catalog": {
     "retry": "Try again",
@@ -3467,6 +3470,8 @@
       "OutsideHorizon": "Outside booking window",
       "Unpriced": "No price",
       "Available": "Available"
-    }
+    },
+    "pricePerHour": "{{amount}} per hour",
+    "unitsLeft": "{{left}} of {{total}} available"
   }
 }

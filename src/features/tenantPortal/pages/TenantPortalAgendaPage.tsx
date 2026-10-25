@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -45,13 +46,19 @@ import {
   compareResourceNames,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
-  findSlotAtStart,
   isCustomerBookableSlot,
-  listDistinctStartTimes,
   normalizeClock,
   orderByResourceName,
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
+import {
+  findSlotAtStartAndDuration,
+  formatDurationLabel,
+  listDistinctDurations,
+  listStartTimesForDuration,
+  resolveEffectiveDuration,
+} from "@/features/tenantPortal/lib/agendaDurationSelection"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import {
   portalPickAvailableClass,
   portalPickAvailableSelectedClass,
@@ -273,6 +280,14 @@ export function TenantPortalAgendaPage() {
     () => readAgendaTimeParam(searchParams.get("time")) ?? "",
   )
   const preferredTimeRef = useRef(startTime)
+  const [selectedDuration, setSelectedDuration] = useState<number | null>(
+    null,
+  )
+  const preferredDurationRef = useRef<number | null>(null)
+  const preserveUnavailableDurationRef = useRef(false)
+  const [preserveUnavailableDuration, setPreserveUnavailableDuration] =
+    useState(false)
+  const skipTimeResetRef = useRef(false)
   const [selectedRentalAssetId, setSelectedRentalAssetId] = useState<
     string | null
   >(null)
@@ -578,7 +593,24 @@ export function TenantPortalAgendaPage() {
         setOptimisticReservedKeys((current) =>
           withoutBookableReservedKeys(current, date, selected.bookable),
         )
-        const times = listDistinctStartTimes(selected.bookable)
+        const durations = listDistinctDurations(selected.bookable)
+        const durationOptions =
+          !preserveUnavailableDurationRef.current ||
+          preferredDurationRef.current === null
+            ? durations
+            : [...new Set([...durations, preferredDurationRef.current])].sort(
+                (left, right) => left - right,
+              )
+        const effectiveDuration = resolveEffectiveDuration(
+          durationOptions,
+          preferredDurationRef.current,
+        )
+        preferredDurationRef.current = effectiveDuration
+        setSelectedDuration(effectiveDuration)
+        const times =
+          effectiveDuration === null
+            ? []
+            : listStartTimesForDuration(selected.bookable, effectiveDuration)
         const preferred = normalizeClock(preferredTimeRef.current)
         const kept = times.find((window) => window.startTime === preferred)
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
@@ -766,9 +798,35 @@ export function TenantPortalAgendaPage() {
     () => reservedSlotKeysForDate(date, mine, observedForView, timeZoneId),
     [date, mine, observedForView, timeZoneId],
   )
-  const timeWindows = useMemo(
-    () => listDistinctStartTimes(slotsForView),
+  const availableDurations = useMemo(
+    () => listDistinctDurations(slotsForView),
     [slotsForView],
+  )
+  const durationOptions = useMemo(
+    () =>
+      !preserveUnavailableDuration ||
+      selectedDuration === null ||
+      availableDurations.includes(selectedDuration)
+        ? availableDurations
+        : [...availableDurations, selectedDuration].sort(
+            (left, right) => left - right,
+          ),
+    [availableDurations, preserveUnavailableDuration, selectedDuration],
+  )
+  const selectedDurationUnavailable =
+    preserveUnavailableDuration &&
+    selectedDuration !== null &&
+    !availableDurations.includes(selectedDuration)
+  const effectiveDuration = useMemo(
+    () => resolveEffectiveDuration(durationOptions, selectedDuration),
+    [durationOptions, selectedDuration],
+  )
+  const timeWindows = useMemo(
+    () =>
+      effectiveDuration === null
+        ? []
+        : listStartTimesForDuration(slotsForView, effectiveDuration),
+    [slotsForView, effectiveDuration],
   )
   const timeItems = useMemo(
     () =>
@@ -780,10 +838,24 @@ export function TenantPortalAgendaPage() {
   )
 
   useEffect(() => {
-    if (schedulePending || slotsError || timeWindows.length === 0) {
+    if (schedulePending || slotsError) {
+      return
+    }
+    if (timeWindows.length === 0) {
+      if (selectedDurationUnavailable && startTime.length > 0) {
+        skipTimeResetRef.current = false
+        preferredTimeRef.current = ""
+        setStartTime("")
+      }
       return
     }
     if (timeWindows.some((window) => window.startTime === startTime)) {
+      return
+    }
+    if (skipTimeResetRef.current) {
+      // The booking just removed the chosen slot from this list. Keep the
+      // customer's time selection instead of jumping to the day's first slot.
+      skipTimeResetRef.current = false
       return
     }
     const next = timeWindows[0]?.startTime ?? ""
@@ -800,7 +872,15 @@ export function TenantPortalAgendaPage() {
     }
     preferredTimeRef.current = next
     setStartTime(next)
-  }, [clearUnavailableSelection, schedulePending, slotsError, startTime, subdomain, timeWindows])
+  }, [
+    clearUnavailableSelection,
+    schedulePending,
+    selectedDurationUnavailable,
+    slotsError,
+    startTime,
+    subdomain,
+    timeWindows,
+  ])
 
   useEffect(() => {
     if (seenHash === location.hash) {
@@ -823,8 +903,13 @@ export function TenantPortalAgendaPage() {
     (asset) => asset.name,
   )
 
-  const selectedSlot = selectedRentalAssetId
-    ? findSlotAtStart(slotsForView, selectedRentalAssetId, startTime)
+  const selectedSlot = selectedRentalAssetId && effectiveDuration !== null
+    ? findSlotAtStartAndDuration(
+        slotsForView,
+        selectedRentalAssetId,
+        startTime,
+        effectiveDuration,
+      )
     : undefined
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
@@ -1070,18 +1155,19 @@ export function TenantPortalAgendaPage() {
     const applyReservationSuccess = (reservation: PortalReservation) => {
       rememberOwnBooking(reservation, timeZoneId)
       toast.success(
-        t("tenantPortal.agenda.reserveSuccessWithTotal", {
+        `${t("tenantPortal.agenda.reserveSuccessWithTotal", {
           amount: formatBookingMoney(reservation.totalAmount),
           status: t(`rentals.reservations.statuses.${reservation.status}`, {
             defaultValue: reservation.status,
           }),
-        }),
+        })} · ${formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, reservation.startDateTime)}`,
       )
       setMine((current) => [
         reservation,
         ...current.filter((currentReservation) => currentReservation.id !== reservation.id),
       ])
       if (viewedDateRef.current === dayDate) {
+        skipTimeResetRef.current = true
         setSlots((current) => dropScheduleSlot(current, slot))
         setSelectedRentalAssetId(null)
       }
@@ -1435,6 +1521,20 @@ export function TenantPortalAgendaPage() {
     setDate(nextDate)
   }
 
+  function onDurationChange(minutes: number) {
+    if (minutes === effectiveDuration) {
+      return
+    }
+    preserveUnavailableDurationRef.current = true
+    setPreserveUnavailableDuration(true)
+    preferredDurationRef.current = minutes
+    setSelectedDuration(minutes)
+    preferredTimeRef.current = ""
+    setStartTime("")
+    selectionRef.current = null
+    setSelectedRentalAssetId(null)
+  }
+
   function onDateChange(value: string, source: LocaleDateChangeSource = "input") {
     const today = tenantTodayIsoDate(timeZoneId)
     const attempt =
@@ -1468,8 +1568,13 @@ export function TenantPortalAgendaPage() {
         detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
       }
     }
-    const slot = startTime
-      ? findSlotAtStart(slotsForView, rentalAssetId, startTime)
+    const slot = startTime && effectiveDuration !== null
+      ? findSlotAtStartAndDuration(
+          slotsForView,
+          rentalAssetId,
+          startTime,
+          effectiveDuration,
+        )
       : undefined
     const reservedKey =
       startTime.length > 0
@@ -1618,7 +1723,35 @@ export function TenantPortalAgendaPage() {
                 </SelectContent>
               </Select>
             </label>
+            <span className="-mt-1 block text-xs text-muted-foreground sm:col-start-2">
+              {formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, date)}
+            </span>
           </div>
+
+          {durationOptions.length > 1 ? (
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label={t("tenantPortal.agenda.durationLabel")}
+            >
+              <span className="text-sm text-muted-foreground">
+                {t("tenantPortal.agenda.durationLabel")}
+              </span>
+              {durationOptions.map((minutes) => (
+                <Button
+                  key={minutes}
+                  type="button"
+                  size="sm"
+                  variant={effectiveDuration === minutes ? "default" : "outline"}
+                  aria-pressed={effectiveDuration === minutes}
+                  disabled={schedulePending || slotsError}
+                  onClick={() => onDurationChange(minutes)}
+                >
+                  {formatDurationLabel(minutes)}
+                </Button>
+              ))}
+            </div>
+          ) : null}
 
           {pastSlotsHidden ? (
             <p className="text-sm text-muted-foreground">
@@ -1662,10 +1795,14 @@ export function TenantPortalAgendaPage() {
                 )
                 const state = spaceState(item.rentalAssetId)
                 const disabled = !inVisibleSet || state.disabled
+                const baseLabel = asset?.name ?? item.rentalAssetId
                 return {
                   key: item.rentalAssetId,
                   rentalAssetId: item.rentalAssetId,
-                  label: asset?.name ?? item.rentalAssetId,
+                  label:
+                    asset && asset.totalQuantity > 1
+                      ? `${baseLabel} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
+                      : baseLabel,
                   xPercent: item.xPercent,
                   yPercent: item.yPercent,
                   widthPercent: item.widthPercent,
@@ -1721,7 +1858,11 @@ export function TenantPortalAgendaPage() {
                         selectRentalAsset(asset.id)
                       }}
                     >
-                      <span className="block">{asset.name}</span>
+                      <span className="block">
+                        {asset.totalQuantity > 1
+                          ? `${asset.name} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
+                          : asset.name}
+                      </span>
                       {state.detail ? (
                         <span className="mt-1 block text-xs font-semibold">
                           {state.detail}
@@ -1921,6 +2062,9 @@ export function TenantPortalAgendaPage() {
               <ul className="space-y-2">
                 {mine.map((reservation) => {
                   const focused = reservation.id === focusedReservationId
+                  const cancelled = isCancelledReservationStatus(
+                    reservation.status,
+                  )
                   return (
                     <li
                       key={reservation.id}
@@ -1932,6 +2076,7 @@ export function TenantPortalAgendaPage() {
                         focused
                           ? "border-primary bg-primary/10 ring-2 ring-primary"
                           : "border-border",
+                        cancelled && "opacity-60",
                       )}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -1953,9 +2098,21 @@ export function TenantPortalAgendaPage() {
                           timeZoneId,
                         )}
                         {" · "}
-                        {t("tenantPortal.agenda.total", {
-                          amount: formatBookingMoney(reservation.totalAmount),
-                        })}
+                        {formatTenantTimeZoneLabel(
+                          branding.timeZoneId,
+                          moneyLocale,
+                          reservation.startDateTime,
+                        )}
+                        {cancelled ? null : (
+                          <>
+                            {" · "}
+                            {t("tenantPortal.agenda.total", {
+                              amount: formatBookingMoney(
+                                reservation.totalAmount,
+                              ),
+                            })}
+                          </>
+                        )}
                       </p>
                       {reservation.cancelDeadlineUtc ? (
                         <p className="text-xs text-muted-foreground">
