@@ -253,9 +253,11 @@ function RowCells({
                     axisStep,
                 ),
               )
-              const isSeedOpenKind = ["Open", "Aberto", "Abierto"].includes(
-                item.occupancyKindLabel,
-              )
+              // Only the seeded "open" kind with its untouched default label is
+              // localized; a tenant-renamed kind keeps its configured name.
+              const isSeedOpenKind =
+                item.occupancyKindKey === "open" &&
+                item.occupancyKindLabel === "Open"
               const kindLabel =
                 isSeedOpenKind
                   ? t("rentals.schedule.occupancyKinds.open")

@@ -1204,7 +1204,11 @@ export function TenantPortalAgendaPage() {
         describeBookingError(
           error,
           t("tenantPortal.agenda.reserveError"),
-          horizonDays,
+          // Use the booked resource's own horizon, not the widest visible one.
+          resolveAgendaHorizonDays(
+            assets.filter((asset) => asset.id === slot.rentalAssetId),
+            policyHorizonDays,
+          ),
         ),
       )
     } finally {

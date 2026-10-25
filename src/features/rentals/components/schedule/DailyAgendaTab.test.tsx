@@ -305,7 +305,7 @@ describe("DailyAgendaTab occupancy labels", () => {
     const day = agendaDay("2026-10-17")
     const morning = day.slots[0]
     if (!morning) throw new Error("missing morning slot")
-    day.slots[0] = { ...morning, occupancyKindLabel: "Aberto", status: "Cancelled" }
+    day.slots[0] = { ...morning, occupancyKindKey: "open", occupancyKindLabel: "Open", status: "Cancelled" }
 
     renderDay("2026-10-17", day)
 
@@ -323,5 +323,16 @@ describe("DailyAgendaTab occupancy labels", () => {
     renderDay("2026-10-17", day)
 
     expect(await screen.findByText("Tipo: Aula aberta")).toBeInTheDocument()
+  })
+
+  it("does not translate a custom kind that happens to be named Open", async () => {
+    const day = agendaDay("2026-10-17")
+    const morning = day.slots[0]
+    if (!morning) throw new Error("missing morning slot")
+    day.slots[0] = { ...morning, occupancyKindKey: "custom-open", occupancyKindLabel: "Open" }
+
+    renderDay("2026-10-17", day)
+
+    expect(await screen.findByText("Tipo: Open")).toBeInTheDocument()
   })
 })
