@@ -73,7 +73,7 @@ export function buildRentalResourceFormValues(
     tag: "",
     unitId: editing?.unitId ?? pickSingleId(units),
     categoryId: editing?.categoryId ?? pickSingleId(categories),
-    familyId: pickSingleId(families),
+    familyId: editing?.familyId ?? pickSingleId(families),
     rentalType,
     totalQuantity: editing?.totalQuantity ?? 1,
     requiresDeposit: editing?.requiresDeposit ?? true,
