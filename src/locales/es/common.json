@@ -1325,15 +1325,15 @@
       },
       "reservedRevenue": {
         "title": "Ingresos reservados",
-        "subtitle": "Pending + confirmed del mes"
+        "subtitle": "Pendientes + confirmadas del mes"
       },
       "rentableSpaces": {
         "title": "Espacios alquilables",
-        "subtitle": "Familia spaces + alquilable"
+        "subtitle": "Familia de espacios + alquilable"
       },
       "rentableGoods": {
         "title": "Bienes alquilables",
-        "subtitle": "Familia goods + alquilable"
+        "subtitle": "Familia de bienes + alquilable"
       },
       "activePlans": {
         "title": "Planes activos",
@@ -3030,7 +3030,9 @@
       "dayTitle": "Agenda del día",
       "occupancyKindLabel": "Tipo",
       "occupancyKinds": {
-        "open": "Abierto"
+        "open": "Abierto",
+        "closed": "Cerrado",
+        "lesson": "Clase"
       },
       "dayEmpty": "Sin horarios en este día. Cree la grilla en Configuración semanal.",
       "dayEmptyTitle": "Ningún horario en este día",

@@ -79,7 +79,8 @@ export function RentalsReadinessCard() {
                 <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
                   {label}
                 </Link>
-                {item.count !== undefined ? (
+                {/* OpenHours resources have no template rows, so this count is always 0 and misleading even when the schedule is actually set up. */}
+                {item.count !== undefined && item.key !== "hasScheduleTemplateOrRule" ? (
                   <span className="text-muted-foreground">({item.count})</span>
                 ) : null}
               </li>

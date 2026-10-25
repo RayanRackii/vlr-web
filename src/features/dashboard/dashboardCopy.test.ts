@@ -17,4 +17,14 @@ describe("dashboard customer portal copy", () => {
       expect(description.length).toBeGreaterThan(0)
     }
   })
+
+  it("does not leave raw English words inside pt-BR/es rentals KPI subtitles", () => {
+    const leakedWords = /\bPending\b|\bconfirmed\b|\bspaces\b|\bgoods\b/
+
+    for (const locale of [pt, es]) {
+      expect(locale.dashboard.kpi.reservedRevenue.subtitle).not.toMatch(leakedWords)
+      expect(locale.dashboard.kpi.rentableSpaces.subtitle).not.toMatch(leakedWords)
+      expect(locale.dashboard.kpi.rentableGoods.subtitle).not.toMatch(leakedWords)
+    }
+  })
 })
