@@ -54,7 +54,7 @@ export function PortalCatalogProductCard({
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow duration-150 ease-out hover:shadow-md">
+    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-[box-shadow,transform] duration-150 ease-out motion-safe:hover:-translate-y-0.5 hover:shadow-md">
       {images.length === 0 ? (
         <Link
           to={detailTo}

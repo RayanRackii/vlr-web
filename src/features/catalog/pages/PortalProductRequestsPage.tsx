@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import {
   flexRender,
   getCoreRowModel,
@@ -208,6 +208,17 @@ export function PortalProductRequestsPage() {
         <EmptyState
           icon={ClipboardListIcon}
           title={t("tenantPortal.catalog.requestsEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              render={
+                <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
+              }
+            >
+              {t("tenantPortal.catalog.requestCta")}
+            </Button>
+          }
         />
       ) : (
         <div className="space-y-4">
