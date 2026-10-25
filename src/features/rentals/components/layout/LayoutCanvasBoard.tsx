@@ -287,7 +287,7 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                {(item.artUrl || item.icon) ? <CanvasTileArt artUrl={item.artUrl} Icon={item.icon} /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}

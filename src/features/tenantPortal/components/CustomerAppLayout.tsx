@@ -7,6 +7,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
+import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
@@ -62,6 +63,7 @@ export function CustomerAppLayout() {
   const [branding, setBranding] = useState<TenantBranding | null>(null)
   const [menu, setMenu] = useState<ModuleMenuItem[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -84,10 +86,14 @@ export function CustomerAppLayout() {
         setBranding(brandingData)
         setMenu(menuData)
         setError(null)
+        setNotFound(false)
       })
-      .catch(() => {
+      .catch((requestError: unknown) => {
         if (!cancelled && generation === getAgendaSessionGeneration()) {
           setError(appI18n.t("tenantPortal.errors.tenantNotFound"))
+          setNotFound(
+            isAxiosError(requestError) && requestError.response?.status === 404,
+          )
           setBranding(null)
           setMenu([])
         }
@@ -145,7 +151,7 @@ export function CustomerAppLayout() {
   }
 
   if (error || !branding) {
-    if (location.pathname.includes("/catalogo")) {
+    if (notFound && location.pathname.split("/").includes("catalogo")) {
       return (
         <div className="min-h-screen bg-background text-foreground">
           <TenantPortalChromeHeader subdomain={subdomain} portalBasePath={params.subdomain ? `/t/${params.subdomain}` : ""} />

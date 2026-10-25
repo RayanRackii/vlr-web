@@ -9,6 +9,7 @@ import {
   Routes,
 } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
+import { AxiosError } from "axios"
 
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
@@ -144,7 +145,7 @@ describe("CustomerAppLayout session tenant", () => {
     expect(fetchBranding).not.toHaveBeenCalled()
   })
 
-  it("renders the branded portal 404 when the catalog menu cannot load", async () => {
+  it("renders the branded portal 404 when the catalog menu returns HTTP 404", async () => {
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
       subdomain: "ficc",
@@ -154,7 +155,15 @@ describe("CustomerAppLayout session tenant", () => {
       accentColor: null,
       welcomeTagline: null,
     })
-    fetchMenu.mockRejectedValue(new Error("catalog inactive"))
+    fetchMenu.mockRejectedValue(
+      new AxiosError("catalog inactive", undefined, undefined, undefined, {
+        data: null,
+        status: 404,
+        statusText: "Not Found",
+        headers: {},
+        config: { headers: {} },
+      }),
+    )
     render(
       <ThemeProvider attribute="class" defaultTheme="light">
         <MemoryRouter initialEntries={["/t/ficc/catalogo"]}>
@@ -167,6 +176,56 @@ describe("CustomerAppLayout session tenant", () => {
 
     expect(await screen.findByRole("heading", { name: i18n.t("notFound.title") })).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("tenantPortal.errors.tenantNotFound"))).not.toBeInTheDocument()
+  })
+
+  it("keeps a catalog loading error generic when it is not an HTTP 404", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockRejectedValue(new Error("network unavailable"))
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <MemoryRouter initialEntries={["/t/ficc/catalogo"]}>
+          <Routes>
+            <Route path="/t/:subdomain/catalogo" element={<CustomerAppLayout />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(await screen.findByText(i18n.t("tenantPortal.errors.tenantNotFound"))).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: i18n.t("notFound.title") })).not.toBeInTheDocument()
+  })
+
+  it("does not treat a route containing catalogo as the catalog route", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockRejectedValue(
+      new AxiosError("tenant missing", undefined, undefined, undefined, {
+        data: null,
+        status: 404,
+        statusText: "Not Found",
+        headers: {},
+        config: { headers: {} },
+      }),
+    )
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <MemoryRouter initialEntries={["/t/ficc/catalogo-archive"]}>
+          <Routes>
+            <Route path="/t/:subdomain/*" element={<CustomerAppLayout />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(await screen.findByText(i18n.t("tenantPortal.errors.tenantNotFound"))).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: i18n.t("notFound.title") })).not.toBeInTheDocument()
   })
 
   it("does not open this tenant with a session saved for another tenant", async () => {

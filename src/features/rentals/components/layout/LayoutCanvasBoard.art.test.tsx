@@ -15,4 +15,13 @@ describe("LayoutCanvasBoard visual art", () => {
     expect(screen.queryByAltText("")).not.toBeInTheDocument()
     expect(document.querySelector("svg")).toBeInTheDocument()
   })
+
+  it("retries visual art when its URL changes after a failure", () => {
+    const { rerender } = render(<LayoutCanvasBoard mode="pick" items={[{ key: "one", rentalAssetId: "11111111-1111-4111-8111-111111111111", label: "Room", xPercent: 0, yPercent: 0, widthPercent: 50, heightPercent: 50, zIndex: 1, artUrl: "https://api.test/missing.svg" }]} />)
+    fireEvent.error(screen.getByAltText(""))
+
+    rerender(<LayoutCanvasBoard mode="pick" items={[{ key: "one", rentalAssetId: "11111111-1111-4111-8111-111111111111", label: "Room", xPercent: 0, yPercent: 0, widthPercent: 50, heightPercent: 50, zIndex: 1, artUrl: "https://api.test/replaced.svg" }]} />)
+
+    expect(screen.getByAltText("")).toHaveAttribute("src", "https://api.test/replaced.svg")
+  })
 })
