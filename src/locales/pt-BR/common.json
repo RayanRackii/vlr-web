@@ -2991,7 +2991,8 @@
       },
       "grid": {
         "empty": "Horário vazio",
-        "noSelection": "Selecione um ou mais espaços / bens para ver a grade."
+        "noSelection": "Selecione um ou mais espaços / bens para ver a grade.",
+        "legendLabel": "Legenda"
       },
       "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
       "weeklyBanner": "Esta grade é a regra de todas as {{day}}. A Agenda do dia só altera uma data.",

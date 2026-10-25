@@ -1,3 +1,4 @@
+import { Ban, CalendarCheck2, CircleCheck } from "lucide-react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -18,6 +19,18 @@ const MIN_RESOURCE_COLUMN_WIDTH = 160
 const HEADER_HEIGHT = 48
 const ROW_HEIGHT = 54
 
+const STATUS_ICON: Record<ScheduleGridOccupancy["status"], typeof CircleCheck> = {
+  available: CircleCheck,
+  booked: CalendarCheck2,
+  unavailable: Ban,
+}
+
+const STATUS_TEXT_CLASS: Record<ScheduleGridOccupancy["status"], string> = {
+  available: "text-success",
+  booked: "text-info",
+  unavailable: "text-muted-foreground",
+}
+
 export type ScheduleGridCellPayload = {
   rentalAssetId: string
   assetName: string
@@ -36,6 +49,8 @@ type DayResourceGridProps = {
   occupancies: readonly ScheduleGridOccupancy[]
   busyTargetKey: string | null
   readOnly: boolean
+  /** Minutes since midnight on the tenant clock, only when the grid shows today. */
+  nowMinutes?: number | null
   isStartClosed?: (startTime: string) => boolean
   onCellClick: (payload: ScheduleGridCellPayload) => void
 }
@@ -45,6 +60,7 @@ export function DayResourceGrid({
   occupancies,
   busyTargetKey,
   readOnly,
+  nowMinutes = null,
   isStartClosed,
   onCellClick,
 }: DayResourceGridProps) {
@@ -107,55 +123,99 @@ export function DayResourceGrid({
   }
 
   const columns = `${TIME_COLUMN_WIDTH}px repeat(${assets.length}, minmax(${MIN_RESOURCE_COLUMN_WIDTH}px, 1fr))`
+  const showNowLine =
+    typeof nowMinutes === "number" &&
+    nowMinutes >= axis.start &&
+    nowMinutes <= axis.end
+  const nowLineTop =
+    HEADER_HEIGHT +
+    (((nowMinutes ?? 0) - axis.start) / axis.step) * ROW_HEIGHT
 
   return (
-    <div className="w-full overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-background shadow-sm">
-      <div
-        role="grid"
-        aria-rowcount={axis.rows.length + 1}
-        aria-colcount={assets.length + 1}
-        className="grid min-w-full"
-        style={{ gridTemplateColumns: columns }}
-      >
-        <div
-          role="columnheader"
-          className="sticky left-0 z-20 flex items-center border-b border-r border-border bg-background px-3 text-xs font-medium text-muted-foreground"
-          style={{ height: HEADER_HEIGHT }}
-        >
-          {t("rentals.schedule.templates.start")}
-        </div>
-        {assets.map((asset) => (
+    <div className="space-y-2">
+      <ScheduleGridLegend />
+      <div className="max-h-[70vh] w-full overflow-auto rounded-xl border border-border bg-background shadow-sm">
+        <div className="relative min-w-full">
           <div
-            key={asset.id}
-            role="columnheader"
-            className="flex items-center border-b border-r border-border bg-background px-3 text-sm font-medium"
-            style={{ height: HEADER_HEIGHT }}
+            role="grid"
+            aria-rowcount={axis.rows.length + 1}
+            aria-colcount={assets.length + 1}
+            className="grid min-w-full"
+            style={{ gridTemplateColumns: columns }}
           >
-            <span className="truncate">{asset.name}</span>
-          </div>
-        ))}
+            <div
+              role="columnheader"
+              className="sticky top-0 left-0 z-30 flex items-center border-b border-r border-border bg-background px-3 text-xs font-medium text-muted-foreground"
+              style={{ height: HEADER_HEIGHT }}
+            >
+              {t("rentals.schedule.templates.start")}
+            </div>
+            {assets.map((asset) => (
+              <div
+                key={asset.id}
+                role="columnheader"
+                className="sticky top-0 z-20 flex items-center border-b border-r border-border bg-background px-3 text-sm font-medium"
+                style={{ height: HEADER_HEIGHT }}
+              >
+                <span className="truncate">{asset.name}</span>
+              </div>
+            ))}
 
-        {axis.rows.map((rowStart, rowIndex) => {
-          const rowEnd = rowStart + axis.step
-          return (
-            <RowCells
-              key={rowStart}
-              assets={assets}
-              occupanciesByAsset={occupanciesByAsset}
-              rowStart={rowStart}
-              rowEnd={rowEnd}
-              rowIndex={rowIndex}
-              axisStart={axis.start}
-              axisStep={axis.step}
-              busyTargetKey={busyTargetKey}
-              readOnly={readOnly}
-              isStartClosed={isStartClosed}
-              onCellClick={onCellClick}
-            />
-          )
-        })}
+            {axis.rows.map((rowStart, rowIndex) => {
+              const rowEnd = rowStart + axis.step
+              return (
+                <RowCells
+                  key={rowStart}
+                  assets={assets}
+                  occupanciesByAsset={occupanciesByAsset}
+                  rowStart={rowStart}
+                  rowEnd={rowEnd}
+                  rowIndex={rowIndex}
+                  axisStart={axis.start}
+                  axisStep={axis.step}
+                  busyTargetKey={busyTargetKey}
+                  readOnly={readOnly}
+                  isStartClosed={isStartClosed}
+                  onCellClick={onCellClick}
+                />
+              )
+            })}
+          </div>
+          {showNowLine ? (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute right-0 z-10 flex items-center"
+              style={{ top: nowLineTop, left: TIME_COLUMN_WIDTH }}
+            >
+              <span className="size-1.5 shrink-0 -translate-x-1/2 rounded-full bg-primary" />
+              <span className="h-px w-full bg-primary/70" />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
+  )
+}
+
+const LEGEND_STATUSES = ["available", "booked", "unavailable"] as const
+
+function ScheduleGridLegend() {
+  const { t } = useTranslation()
+  return (
+    <ul
+      aria-label={t("rentals.schedule.grid.legendLabel")}
+      className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground"
+    >
+      {LEGEND_STATUSES.map((status) => {
+        const Icon = STATUS_ICON[status]
+        return (
+          <li key={status} className="flex items-center gap-1.5">
+            <Icon className={cn("size-3.5", STATUS_TEXT_CLASS[status])} aria-hidden />
+            <span>{t(`rentals.schedule.occurrence.status.${status}`)}</span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -266,6 +326,7 @@ function RowCells({
               const statusLabel = t(
                 `rentals.schedule.occurrence.status.${item.status}`,
               )
+              const StatusIcon = STATUS_ICON[item.status]
               return (
                 <button
                   key={item.id}
@@ -305,7 +366,13 @@ function RowCells({
                     {itemLabel ? `${itemLabel} · ` : ""}
                     {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
                   </span>
-                  <span className="mt-1 inline-flex rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold">
+                  <span
+                    className={cn(
+                      "mt-1 inline-flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold",
+                      STATUS_TEXT_CLASS[item.status],
+                    )}
+                  >
+                    <StatusIcon className="size-2.5" aria-hidden />
                     {statusLabel}
                   </span>
                   {item.badge === "dailyOverride" ? (

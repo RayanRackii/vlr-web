@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react"
+import { act, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
@@ -311,7 +311,10 @@ describe("DailyAgendaTab occupancy labels", () => {
 
     const typeNodes = await screen.findAllByText(expectedType)
     expect(typeNodes.some((node) => node.textContent?.includes(expectedName))).toBe(true)
-    expect(screen.getByText(i18n.t("rentals.schedule.occurrence.status.unavailable"))).toHaveClass("font-semibold")
+    const grid = screen.getByRole("grid")
+    expect(
+      within(grid).getByText(i18n.t("rentals.schedule.occurrence.status.unavailable")),
+    ).toHaveClass("font-semibold")
   })
 
   it("keeps a customized occupancy kind name", async () => {
