@@ -166,6 +166,11 @@ function SchedulePolicyPanelForm({
   const [durationMinutes, setDurationMinutes] = useState(
     first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60",
   )
+  const [slotGridDurations, setSlotGridDurations] = useState(
+    (first?.schedulePolicy ?? "SlotGrid") === "SlotGrid"
+      ? (first?.allowedDurationMinutes ?? "")
+      : "",
+  )
   const [durationError, setDurationError] = useState<string | null>(null)
   const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
   const hasExistingSchedule = loadingTemplates ||
@@ -192,6 +197,31 @@ function SchedulePolicyPanelForm({
       closeTime,
       allowedDurationMinutes,
     })
+  }
+
+  const slotGridDurationsInvalid =
+    slotGridDurations.trim() !== "" && !normalizeDurations(slotGridDurations)
+
+  function saveSlotGrid(onSuccess?: () => void) {
+    const allowedDurationMinutes = slotGridDurations.trim()
+      ? normalizeDurations(slotGridDurations)
+      : null
+    if (slotGridDurations.trim() && !allowedDurationMinutes) {
+      setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
+      return
+    }
+
+    setDurationError(null)
+    void onSave({
+      schedulePolicy: "SlotGrid",
+      openTime: null,
+      closeTime: null,
+      allowedDurationMinutes,
+    })
+      .then(onSuccess)
+      .catch(() => {
+        /* toast already shown by parent */
+      })
   }
 
   return (
@@ -331,25 +361,40 @@ function SchedulePolicyPanelForm({
 
       {policy === "SlotGrid" ? (
         <div className="space-y-2">
+          <label className="block min-w-0 space-y-1.5 text-sm">
+            <span className="font-medium">
+              {t("rentals.schedule.policy.durationMinutes")}
+            </span>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={slotGridDurations}
+              disabled={busy || readOnly}
+              aria-label={t("rentals.schedule.policy.durationMinutes")}
+              aria-invalid={durationError || slotGridDurationsInvalid ? true : undefined}
+              aria-describedby={durationError || slotGridDurationsInvalid ? "duration-minutes-error" : undefined}
+              onChange={(event) => {
+                setSlotGridDurations(event.target.value)
+                setDurationError(null)
+              }}
+            />
+            <span className="text-xs text-muted-foreground">
+              {t("rentals.schedule.policy.slotGridDurationsHint")}
+            </span>
+            {durationError || slotGridDurationsInvalid ? (
+              <span id="duration-minutes-error" role="alert" className="text-xs text-destructive">
+                {durationError ?? t("rentals.schedule.policy.durationMinutesInvalid")}
+              </span>
+            ) : null}
+          </label>
           {!hasExistingSchedule ? (
             <LoadingButton
               type="button"
               className="w-full"
-              disabled={busy || readOnly}
+              disabled={busy || readOnly || slotGridDurationsInvalid}
               loading={busyAction === "seed" || busyAction === "policy"}
               onClick={() => {
-                void onSave({
-                  schedulePolicy: "SlotGrid",
-                  openTime: null,
-                  closeTime: null,
-                  allowedDurationMinutes: null,
-                })
-                  .then(() => {
-                    onSeedSlotGrid()
-                  })
-                  .catch(() => {
-                    /* toast already shown by parent */
-                  })
+                saveSlotGrid(onSeedSlotGrid)
               }}
             >
               {t("rentals.schedule.seedTemplates")}
@@ -359,15 +404,10 @@ function SchedulePolicyPanelForm({
             type="button"
             variant="outline"
             className="w-full"
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || slotGridDurationsInvalid}
             loading={busyAction === "policy"}
             onClick={() => {
-              void onSave({
-                schedulePolicy: "SlotGrid",
-                openTime: null,
-                closeTime: null,
-                allowedDurationMinutes: null,
-              })
+              saveSlotGrid()
             }}
           >
             {t("rentals.schedule.policy.saveSlotGrid")}

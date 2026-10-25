@@ -1151,6 +1151,43 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(popup).toHaveClass("text-popover-foreground")
   })
 
+  it("creates a reservation with the selected synthetic multi-slot range", async () => {
+    const user = userEvent.setup()
+    const asset = {
+      ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Resource A"),
+      allowedDurationMinutes: "30,60,90",
+    }
+    fetchAssets.mockResolvedValue([asset])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "08:00:00", endTime: "08:30:00", date: "2026-10-14" }),
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "08:30:00", endTime: "09:00:00", date: "2026-10-14" }),
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "09:00:00", endTime: "09:30:00", date: "2026-10-14" }),
+      ],
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "1h30" }))
+    await user.click(await screen.findByRole("button", { name: "Resource A" }))
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    }))
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith({
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        date: "2026-10-14",
+        startTime: "08:00",
+        endTime: "09:30",
+        items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
+        expectedTotalAmount: 80,
+      })
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
+  })
+
   it("refetches reservations and the viewed day on focus, then disables a taken slot", async () => {
     const user = userEvent.setup()
     renderAgenda()

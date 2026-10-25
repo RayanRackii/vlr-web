@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  buildMultiSlotWindows,
   findSlotAtStartAndDuration,
   formatDurationLabel,
   listDistinctDurations,
@@ -106,5 +107,82 @@ describe("day-closing slots", () => {
     expect(slotDurationMinutes({ startTime: "23:00", endTime: "00:00" })).toBe(60)
     expect(listStartTimesForDuration([{ startTime: "23:30:00", endTime: "23:59:59" }], 30))
       .toEqual([{ startTime: "23:30", endTime: "00:00" }])
+  })
+})
+
+describe("buildMultiSlotWindows", () => {
+  const asset = {
+    id: ASSET_ID,
+    schedulePolicy: "SlotGrid",
+    allowedDurationMinutes: "30, 60, 90, 90",
+  }
+  const bookableSlot = (startTime: string, endTime: string, overrides = {}) => ({
+    id: `${startTime}-${endTime}`,
+    rentalAssetId: ASSET_ID,
+    assetName: "Resource A",
+    date: "2026-10-14",
+    occupancyKindId: "open",
+    occupancyKindKey: "open",
+    occupancyKindLabel: "Open",
+    isBookableByCustomer: true,
+    status: "Available",
+    reservationId: null,
+    isDerived: false,
+    startTime,
+    endTime,
+    ...overrides,
+  })
+
+  it("adds only allowed contiguous multi-window durations", () => {
+    const windows = buildMultiSlotWindows(
+      [
+        bookableSlot("08:00", "08:30"),
+        bookableSlot("08:30", "09:00"),
+        bookableSlot("09:00", "09:30"),
+        bookableSlot("09:30", "10:00"),
+      ],
+      [asset],
+    )
+
+    expect(windows.map(({ startTime, endTime }) => [startTime, endTime])).toEqual([
+      ["08:00", "09:00"], ["08:00", "09:30"], ["08:30", "09:30"],
+      ["08:30", "10:00"], ["09:00", "10:00"],
+    ])
+    expect(windows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "00000000-0000-0000-0000-000000000000", isDerived: true, status: "Available" }),
+    ]))
+  })
+
+  it("stops at unavailable and missing slots, ignores ineligible assets, and keeps assets isolated", () => {
+    const otherAsset = { ...asset, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }
+    const windows = buildMultiSlotWindows(
+      [
+        bookableSlot("08:00", "08:30"),
+        bookableSlot("08:30", "09:00", { isBookableByCustomer: false, status: "Booked" }),
+        bookableSlot("09:00", "09:30"),
+        bookableSlot("10:00", "10:30", { rentalAssetId: otherAsset.id }),
+        bookableSlot("10:30", "11:00", { rentalAssetId: otherAsset.id }),
+      ],
+      [asset, otherAsset],
+    )
+
+    expect(windows).toHaveLength(1)
+    expect(windows[0]).toMatchObject({ rentalAssetId: otherAsset.id, startTime: "10:00", endTime: "11:00" })
+    expect(buildMultiSlotWindows([bookableSlot("08:00", "08:30"), bookableSlot("08:30", "09:00")], [{ ...asset, schedulePolicy: "OpenHours" }])).toEqual([])
+    expect(buildMultiSlotWindows([bookableSlot("08:00", "08:30"), bookableSlot("08:30", "09:00")], [{ ...asset, allowedDurationMinutes: null }])).toEqual([])
+    expect(buildMultiSlotWindows([bookableSlot("08:00", "08:30"), bookableSlot("08:30", "09:00")], [{ ...asset, allowedDurationMinutes: "" }])).toEqual([])
+  })
+
+  it("does not duplicate a real range and handles a day-closing slot", () => {
+    const windows = buildMultiSlotWindows(
+      [
+        bookableSlot("23:00", "23:30"),
+        bookableSlot("23:30", "23:59"),
+        bookableSlot("23:00", "23:59", { id: "real-60" }),
+      ],
+      [{ ...asset, allowedDurationMinutes: "60" }],
+    )
+
+    expect(windows).toEqual([])
   })
 })

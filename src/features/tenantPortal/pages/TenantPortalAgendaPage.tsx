@@ -53,6 +53,7 @@ import {
   pickCustomerLayout,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
+  buildMultiSlotWindows,
   findSlotAtStartAndDuration,
   formatDurationLabel,
   listDistinctDurations,
@@ -211,8 +212,10 @@ function dropScheduleSlot(
     (candidate) =>
       !(
         candidate.rentalAssetId === slot.rentalAssetId &&
-        candidate.startTime === slot.startTime &&
-        candidate.endTime === slot.endTime
+        // Overlap, not exact match: a multi-slot window (e.g. 08:00–09:30)
+        // must also drop the 30-min cells it covers.
+        candidate.startTime < slot.endTime &&
+        candidate.endTime > slot.startTime
       ),
   )
 }
@@ -265,6 +268,7 @@ export function TenantPortalAgendaPage() {
   const lockedRentalAssetId = menuItem?.rentalAssetId ?? null
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
+  const assetsRef = useRef<PortalRentalAsset[]>([])
   const [mine, setMine] = useState<PortalReservation[]>(() =>
     recentPortalReservations(subdomain),
   )
@@ -456,6 +460,7 @@ export function TenantPortalAgendaPage() {
         if (cancelled) {
           return
         }
+        assetsRef.current = assetList
         setAssets(assetList)
         if (getAgendaQueryRevision() === seenRevision) {
           setMine(
@@ -627,7 +632,11 @@ export function TenantPortalAgendaPage() {
         setOptimisticReservedKeys((current) =>
           withoutBookableReservedKeys(current, date, selected.bookable),
         )
-        const durations = listDistinctDurations(selected.bookable)
+        const bookableWithMultiSlotWindows = [
+          ...selected.bookable,
+          ...buildMultiSlotWindows(selected.bookable, assetsRef.current),
+        ]
+        const durations = listDistinctDurations(bookableWithMultiSlotWindows)
         const durationOptions =
           !preserveUnavailableDurationRef.current ||
           preferredDurationRef.current === null
@@ -644,7 +653,10 @@ export function TenantPortalAgendaPage() {
         const times =
           effectiveDuration === null
             ? []
-            : listStartTimesForDuration(selected.bookable, effectiveDuration)
+            : listStartTimesForDuration(
+                bookableWithMultiSlotWindows,
+                effectiveDuration,
+              )
         const preferred = normalizeClock(preferredTimeRef.current)
         const kept = times.find((window) => window.startTime === preferred)
         const nextTime = kept?.startTime ?? times[0]?.startTime ?? ""
@@ -821,8 +833,11 @@ export function TenantPortalAgendaPage() {
 
   const schedulePending = slotsLoading || slotsBelongToDate !== date
   const slotsForView = useMemo(
-    () => (slotsBelongToDate === date ? slots : []),
-    [date, slots, slotsBelongToDate],
+    () => {
+      const bookableSlots = slotsBelongToDate === date ? slots : []
+      return [...bookableSlots, ...buildMultiSlotWindows(bookableSlots, assets)]
+    },
+    [assets, date, slots, slotsBelongToDate],
   )
   const observedForView = useMemo(
     () => (slotsBelongToDate === date ? observedSlots : []),
