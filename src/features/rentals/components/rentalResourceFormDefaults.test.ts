@@ -38,3 +38,42 @@ describe("rentalAssetSchema familyId", () => {
     expect(parsed.data?.familyId).toBe("11111111-1111-1111-1111-111111111103")
   })
 })
+
+describe("drawer round trip of stored fields", () => {
+  // R11: Localização saved but the drawer reopened empty, so the next save sent
+  // location: null and wiped it. Every stored drawer field must survive
+  // response -> form -> request unchanged.
+  it("keeps location, capacity, visual model, horizon and cancel cutoff on an untouched edit", async () => {
+    const { toCreateRentableRequest } = await import("@/features/rentals/schemas/rentalResourceSchemas")
+    const editing = rentalAssetSchema.parse({
+      id: "9097323e-834c-4a32-8de3-3a156933195c",
+      assetId: "55bb2650-8ecf-4961-be5d-291206b4e788",
+      unitId: "66596a2c-82cc-4c0a-bf36-c3c7046a03b5",
+      categoryId: "3ef7d7a1-1610-4770-8980-49f4e88f79b2",
+      familyId: "11111111-1111-1111-1111-111111111101",
+      name: "Sala Cancelamento",
+      isActive: true,
+      type: "Location",
+      location: "Bloco A",
+      capacityPeople: 8,
+      visualTemplateRevisionId: "22222222-2222-4222-8222-222222222222",
+      maxAdvanceBookingDays: 30,
+      cancelCutoffHours: 12,
+    })
+    const values = buildRentalResourceFormValues(editing, [], [], [])
+    const body = toCreateRentableRequest(values, {
+      creating: false,
+      stored: editing.maxAdvanceBookingDays,
+      storedVisualTemplateRevisionId: editing.visualTemplateRevisionId,
+      storedCapacityPeople: editing.capacityPeople,
+    })
+    expect(body).toMatchObject({
+      location: "Bloco A",
+      capacityPeople: 8,
+      visualTemplateRevisionId: "22222222-2222-4222-8222-222222222222",
+    })
+    // Unchanged overrides are omitted: UpdateRentable treats omission as "keep stored".
+    expect(body).not.toHaveProperty("maxAdvanceBookingDays")
+    expect(body).not.toHaveProperty("cancelCutoffHours")
+  })
+})

@@ -3208,6 +3208,12 @@
       "updateSuccess": "Recurso atualizado.",
       "createError": "Não foi possível criar o recurso.",
       "updateError": "Não foi possível atualizar o recurso.",
+      "errorKinds": {
+        "network": "Sem conexão com o servidor. Verifique sua internet e tente novamente.",
+        "permission": "Você não tem permissão para esta ação ou sua sessão expirou.",
+        "validation": "Dados inválidos. Revise os campos e tente novamente.",
+        "server": "Erro no servidor. Tente novamente em instantes."
+      },
       "typeLocation": "Espaço",
       "typeGood": "Item alugável",
       "details": {
@@ -3409,7 +3415,8 @@
       "cancelCutoffNone": "Sem prazo",
       "cancelCutoffHoursMode": "N horas antes do início",
       "cancelCutoffHours": "Horas antes do início",
-      "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início."
+      "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início.",
+      "categories": {"title": "Por categoria", "description": "Vale para os recursos da categoria. Deixe em branco para usar o valor geral acima. Um valor definido no próprio recurso tem prioridade.", "horizonDays": "Antecedência máxima (dias)", "cancelCutoffHours": "Cancelamento até (horas antes)", "inherit": "Geral", "save": "Salvar", "saved": "Política da categoria salva.", "invalid": "Use um número inteiro ou deixe em branco.", "empty": "Nenhuma categoria com recursos reserváveis."}
     }
   },
   "resourceVisual": {

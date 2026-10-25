@@ -1,3 +1,4 @@
+import { displayEndClock } from "@/lib/tenantTimeZone"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -256,11 +257,11 @@ export function TeacherLessonsPage() {
                   }
                   field.onChange(value)
                 }}
-                items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}` }))}
+                items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${displayEndClock(slot.endTime)}` }))}
                 disabled={busy || resourcesPending || !timeSelectable}
               >
                 <FormControl><SelectTrigger aria-describedby={timeReason === "ready" && !pastSlotsHidden ? undefined : "available-time-state"} aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={timePlaceholder} /></SelectTrigger></FormControl>
-                <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</SelectItem>)}</SelectContent>
+                <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{displayEndClock(slot.endTime)}</SelectItem>)}</SelectContent>
               </Select>
               <FormMessage />
               {resourcesPending ? null : (
@@ -297,7 +298,7 @@ export function TeacherLessonsPage() {
           dayStatus === "error" ? null : <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.none")}</p>
         ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
-            <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{lesson.endTime.slice(0, 5)}</p></div>
+            <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{displayEndClock(lesson.endTime)}</p></div>
             <Button type="button" onClick={() => setPendingRemoval({ id: lesson.id, startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
           </article>
         ))}
