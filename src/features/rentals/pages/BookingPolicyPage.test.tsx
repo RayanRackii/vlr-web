@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
 import {
   getBookingPolicy,
+  getCategoryBookingPolicies,
   replaceBookingPolicy,
+  replaceCategoryBookingPolicy,
 } from "@/features/rentals/services/bookingPolicyService"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
@@ -34,7 +36,12 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/rentals/services/bookingPolicyService", () => ({
   getBookingPolicy: vi.fn(),
   replaceBookingPolicy: vi.fn(),
+  getCategoryBookingPolicies: vi.fn(),
+  replaceCategoryBookingPolicy: vi.fn(),
 }))
+
+const getCategories = vi.mocked(getCategoryBookingPolicies)
+const replaceCategory = vi.mocked(replaceCategoryBookingPolicy)
 
 const getPolicy = vi.mocked(getBookingPolicy)
 const replacePolicy = vi.mocked(replaceBookingPolicy)
@@ -63,6 +70,38 @@ describe("BookingPolicyPage", () => {
       maxActiveReservationsPerCustomerPerDay: 3,
     })
     replacePolicy.mockImplementation(async (policy) => policy)
+    getCategories.mockReset()
+    replaceCategory.mockReset()
+    getCategories.mockResolvedValue([])
+  })
+
+  it("saves a category override and leaves blank fields inheriting the tenant value", async () => {
+    const user = userEvent.setup()
+    getCategories.mockResolvedValue([
+      { categoryId: "c1", categoryName: "Goods", maxAdvanceBookingDays: null, cancelCutoffHours: 24 },
+    ])
+    replaceCategory.mockImplementation(async (categoryId, values) => ({
+      categoryId,
+      categoryName: "Goods",
+      ...values,
+    }))
+    renderPage()
+
+    const row = await screen.findByTestId("category-policy-c1")
+    expect(row).toHaveTextContent("Goods")
+    const [days, hours] = Array.from(row.querySelectorAll("input"))
+    expect(hours).toHaveValue("24")
+    await user.type(days, "30")
+    await user.clear(hours)
+    await user.click(row.querySelector("button")!)
+
+    await waitFor(() =>
+      expect(replaceCategory).toHaveBeenCalledWith("c1", {
+        maxAdvanceBookingDays: 30,
+        cancelCutoffHours: null,
+      }),
+    )
+    expect(toastSuccess).toHaveBeenCalled()
   })
 
   it("shows the tenant timezone alongside the policy", async () => {
