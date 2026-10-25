@@ -145,6 +145,8 @@ export const rentalAssetSchema = z.object({
   queueOpeningTime: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   categoryName: z.string().nullable().optional(),
+  /** Set when the underlying asset is scheduled for deletion (soft delete). */
+  scheduledDeletionAt: z.string().nullable().optional(),
   familyId: guidLikeIdSchema.nullable().optional(),
   cancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   effectiveCancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),

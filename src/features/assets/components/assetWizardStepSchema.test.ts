@@ -189,7 +189,10 @@ describe("isAssetWizardStepValid", () => {
   })
 
   it("gates pricing windows and keeps review on the steps that apply", () => {
-    const pricing = emptyPricingEditor()
+    expect(
+      isAssetWizardStepValid("pricing", validCreate({ pricing: emptyPricingEditor() })),
+    ).toBe(false)
+    const pricing = { ...emptyPricingEditor(), everydayPrice: 12.5 }
     expect(
       isAssetWizardStepValid("pricing", validCreate({ pricing })),
     ).toBe(true)

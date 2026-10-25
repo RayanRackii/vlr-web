@@ -68,7 +68,8 @@ export const updateAssetRequestSchema = z.object({
   familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
+  /** Optional: blank lets the API generate (create) or keep (update) the tag. */
+  tag: z.string().trim(),
   location: z.string().nullish(),
   serialNumber: z.string().nullish(),
   installationDate: z.string().nullish(),
@@ -90,7 +91,8 @@ export const createAssetRequestSchema = z.object({
   familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
+  /** Optional: blank lets the API generate (create) or keep (update) the tag. */
+  tag: z.string().trim(),
   location: z.string().nullish(),
   serialNumber: z.string().nullish(),
   installationDate: z.string().nullish(),
