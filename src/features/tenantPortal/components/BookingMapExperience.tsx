@@ -18,6 +18,7 @@ import { bookPortalSlot, checkPortalAvailability, createPortalReservation, isLoc
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
+import { formatUnitPriceText } from "@/lib/pricingUnitText"
 
 type Props = { subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; onBooked?: () => void }
 type Period = "all" | "morning" | "afternoon" | "night"
@@ -98,8 +99,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
       if (hours > 0) {
         const unit = window.pricingUnit ?? "Hour"
         const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, Math.ceil(hours / 24)) : 1
-        const key = unit === "Hour" ? "bookingMap.pricePerHour" : `bookingMap.prices.${unit}`
-        details.push(t(key, { amount: formatLocaleCurrency(window.totalAmount / divisor, availability?.currency ?? "BRL", locale) }))
+        details.push(formatUnitPriceText(window.totalAmount / divisor, unit, availability?.currency ?? "BRL", locale, t, "bookingMap.prices"))
       }
     }
     if (resource.totalQuantity > 1 && window) details.push(t("bookingMap.unitsLeft", { left: window.availableQuantity, total: resource.totalQuantity }))
@@ -115,13 +115,13 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
       </header>
 
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" aria-label={t("bookingMap.dateStrip")}>
-        <Button disabled={availabilityLoading} size="sm" variant={date === tenantTodayIsoDate(timeZoneId) ? "default" : "outline"} onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
+        <Button className="min-h-11" disabled={availabilityLoading} size="sm" variant={date === tenantTodayIsoDate(timeZoneId) ? "default" : "outline"} onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
           {t("bookingMap.today")}
         </Button>
         {Array.from({ length: 7 }, (_, offset) => {
           const value = plusDays(tenantTodayIsoDate(timeZoneId), offset)
           return (
-            <Button key={value} disabled={availabilityLoading} size="sm" variant={value === date ? "default" : "outline"} onClick={() => setDate(value)}>
+            <Button key={value} className="min-h-11" disabled={availabilityLoading} size="sm" variant={value === date ? "default" : "outline"} onClick={() => setDate(value)}>
               {new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric" }).format(new Date(`${value}T12:00:00`))}
             </Button>
           )
