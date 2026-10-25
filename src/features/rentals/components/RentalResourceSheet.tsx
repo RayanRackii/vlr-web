@@ -167,6 +167,10 @@ export function RentalResourceSheet({
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
     { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
   ]
+  const horizonEffectiveSourceKey =
+    editing?.maxAdvanceBookingDays != null
+      ? "rentals.resources.form.horizonEffectiveSourceResource"
+      : "rentals.resources.form.horizonEffectiveSourcePolicy"
 
   const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
   const canCreateUnit = can("core.units.write") && !readOnly
@@ -612,10 +616,8 @@ export function RentalResourceSheet({
                   editing.effectiveMaxAdvanceBookingDays !== undefined ? (
                     <p className="text-sm text-muted-foreground">
                       {editing.effectiveMaxAdvanceBookingDays === null
-                        ? t(
-                            "rentals.resources.form.horizonEffectiveUnlimited",
-                          )
-                        : t("rentals.resources.form.horizonEffectiveDays", {
+                        ? t(horizonEffectiveSourceKey, { context: "unlimited" })
+                        : t(horizonEffectiveSourceKey, {
                             count: editing.effectiveMaxAdvanceBookingDays,
                           })}
                     </p>

@@ -504,7 +504,7 @@ describe("RentalResourcesPage", () => {
     })
   })
 
-  it("clears a stored override with the tenant default and keeps an unchanged number omitted", async () => {
+  it("identifies the resource override as the effective horizon source", async () => {
     const user = userEvent.setup()
     listAssetsMock.mockResolvedValue([
       {
@@ -530,7 +530,9 @@ describe("RentalResourcesPage", () => {
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
     expect(
       screen.getByText(
-        i18n.t("rentals.resources.form.horizonEffectiveDays", { count: 8 }),
+        i18n.t("rentals.resources.form.horizonEffectiveSourceResource", {
+          count: 8,
+        }),
       ),
     ).toBeInTheDocument()
     await user.type(
@@ -567,6 +569,40 @@ describe("RentalResourcesPage", () => {
     })
   })
 
+  it("identifies the booking policy as the inherited effective horizon source", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        maxAdvanceBookingDays: null,
+        effectiveMaxAdvanceBookingDays: 8,
+      },
+    ])
+
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveSourcePolicy", {
+          count: 8,
+        }),
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("disables the horizon when the user can only read the resource", async () => {
     const user = userEvent.setup()
     listAssetsMock.mockResolvedValue([
@@ -597,7 +633,11 @@ describe("RentalResourcesPage", () => {
       }),
     ).toBeDisabled()
     expect(
-      screen.getByText(i18n.t("rentals.resources.form.horizonEffectiveUnlimited")),
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveSourcePolicy", {
+          context: "unlimited",
+        }),
+      ),
     ).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
