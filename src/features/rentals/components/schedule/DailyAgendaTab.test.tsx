@@ -261,11 +261,14 @@ describe("DailyAgendaTab past starts", () => {
     }
     renderDay("2026-10-16", day)
 
-    expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 08:00–09:00, Reservado, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+    const bookedCard = screen.getByRole("button", {
+      name: "Sala 1, 08:00–09:00, Reservado, Tipo: Aberto",
+    })
+    expect(bookedCard).toBeEnabled()
+    // R11: booked cards show time + status, not the open-hours kind that reads like a free slot.
+    expect(bookedCard).toHaveTextContent("08:00–09:00")
+    expect(bookedCard).toHaveTextContent("Reservado")
+    expect(bookedCard).not.toHaveTextContent("Tipo: Aberto")
     expect(
       screen.getByRole("button", {
         name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
