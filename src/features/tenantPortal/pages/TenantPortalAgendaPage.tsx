@@ -1117,8 +1117,12 @@ export function TenantPortalAgendaPage() {
           return
         }
         setLastAvailableQuantity(result.availableQuantity)
-        setLastPricingUnit(result.pricingUnit)
-        if (result.availableQuantity < quantity) {
+        // An unavailable multi-day quote comes back without a pricing unit; keeping the
+        // last known unit stops the Dias selector from unmounting and re-quoting in a loop.
+        if (result.pricingUnit != null || !endDate) {
+          setLastPricingUnit(result.pricingUnit)
+        }
+        if (result.availableQuantity > 0 && result.availableQuantity < quantity) {
           setQuantity(Math.max(1, result.availableQuantity))
         }
         setQuote({

@@ -2125,6 +2125,29 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toBeInTheDocument()
   })
 
+  it("keeps the Dias selector stable when a multi-day quote is unavailable (no re-quote loop)", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) =>
+      request.endDate
+        ? { isAvailable: false, requestedQuantity: 1, availableQuantity: 0, estimatedTotalAmount: null, pricingUnit: null, reason: "x" }
+        : { isAvailable: true, requestedQuantity: 1, availableQuantity: 1, estimatedTotalAmount: 80, pricingUnit: "Day", reason: null },
+    )
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("tenantPortal.agenda.days")} +` }))
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith("ficc", expect.objectContaining({ endDate: "2026-10-15" }))
+    })
+    const callsAfter = checkAvailability.mock.calls.length
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(checkAvailability.mock.calls.length).toBe(callsAfter)
+    expect(screen.getByRole("group", { name: i18n.t("tenantPortal.agenda.days") })).toBeInTheDocument()
+  })
+
   it("requests and books 3 days with the computed end date and multiplied total", async () => {
     checkAvailability.mockImplementation(async (_subdomain, request) => {
       const days = request.endDate ? 3 : 1
