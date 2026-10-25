@@ -46,5 +46,5 @@ export function isValidPrice(value: number): boolean {
 /** Formats a stored price for editing in pt-BR style ("12,50"); blank when unset/invalid. */
 export function formatPriceForInput(value: number): string {
   if (!isValidPrice(value)) return ""
-  return value.toFixed(2).replace(".", ",")
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
 }

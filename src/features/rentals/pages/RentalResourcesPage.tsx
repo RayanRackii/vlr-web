@@ -71,7 +71,7 @@ export function RentalResourcesPage() {
         const prices = await Promise.all(assetList.map(async (asset) => {
           try {
             const pricings = await getAssetPricings(asset.assetId)
-            const lowestPrice = pricings.reduce<RentalPricing | null>(
+            const lowestPrice = pricings.filter((pricing) => pricing.pricePerHour > 0).reduce<RentalPricing | null>(
               (lowest, pricing) => lowest === null || pricing.pricePerHour < lowest.pricePerHour ? pricing : lowest,
               null,
             )

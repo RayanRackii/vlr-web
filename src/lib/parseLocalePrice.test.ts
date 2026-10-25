@@ -42,6 +42,7 @@ describe("parseLocalePrice", () => {
 
   it("formats stored values for editing", () => {
     expect(formatPriceForInput(12.5)).toBe("12,50")
+    expect(formatPriceForInput(1234.56)).toBe("1.234,56")
     expect(formatPriceForInput(0)).toBe("")
     expect(formatPriceForInput(Number.NaN)).toBe("")
   })
