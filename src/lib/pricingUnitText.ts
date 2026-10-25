@@ -21,3 +21,36 @@ export function formatUnitPriceText(
     amount: formatLocaleCurrency(amount, currency, locale),
   })
 }
+
+export type PriceableWindow = {
+  startTime: string
+  endTime: string
+  totalAmount: number | null
+  pricingUnit?: PricingUnit | null
+  /** Units booked; the total is divided by it. Default 1. */
+  quantity?: number
+  /** Billed days for Day-unit bookings (multi-day selector). Defaults to ceil(hours/24). */
+  days?: number
+}
+
+/**
+ * The per-unit rate for a window's total price ("R$ 120 for 2h" -> "R$ 60/hora").
+ * `null` when the window has no price or a non-positive duration.
+ */
+export function unitPriceForWindow(
+  window: PriceableWindow,
+): { amount: number; unit: PricingUnit } | null {
+  if (window.totalAmount === null || window.totalAmount === undefined) {
+    return null
+  }
+  const hours =
+    (Date.parse(`1970-01-01T${window.endTime}`) - Date.parse(`1970-01-01T${window.startTime}`)) /
+    3_600_000
+  if (!(hours > 0)) {
+    return null
+  }
+  const unit = window.pricingUnit ?? "Hour"
+  const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, window.days ?? Math.ceil(hours / 24)) : 1
+  const quantity = Math.max(1, window.quantity ?? 1)
+  return { amount: window.totalAmount / divisor / quantity, unit }
+}

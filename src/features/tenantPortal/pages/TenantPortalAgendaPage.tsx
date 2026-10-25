@@ -77,6 +77,7 @@ import {
 import { fetchPublicBookingPolicy } from "@/features/rentals/services/bookingPolicyService"
 import { fetchPublicRentalLayouts } from "@/features/rentals/services/rentalLayoutService"
 import { formatReservationRange } from "@/features/rentals/services/reservationsService"
+import { fetchDailyAvailability, type DailyAvailability } from "@/features/rentals/services/resourceVisualService"
 import {
   CUSTOMER_MY_RESERVATIONS_HASH,
   localizedCustomerMenuLabel,
@@ -166,6 +167,7 @@ import {
 import type { PricingUnit } from "@/api/generated/rentalPricing"
 import appI18n from "@/lib/i18n"
 import { formatLocaleCivilDayMonth, formatLocaleCurrency } from "@/lib/localeFormat"
+import { formatUnitPriceText, unitPriceForWindow } from "@/lib/pricingUnitText"
 import { cn } from "@/lib/utils"
 
 function isCancelledReservationStatus(status: string): boolean {
@@ -416,9 +418,9 @@ export function TenantPortalAgendaPage() {
     | {
         status: "ready"
         amount: number | null
+        pricingUnit: PricingUnit | null
         availableQuantity: number
         quantity: number
-        pricingUnit: PricingUnit | null | undefined
         selectionKey: string
       }
     | { status: "error" }
@@ -451,6 +453,49 @@ export function TenantPortalAgendaPage() {
     })
   }, [assets, lockedAssetId, lockedRentalAssetId])
 
+  // Tile price footer ("R$ X/hora") for the legacy grid — the rental-asset list
+  // itself carries no pricing, so this mirrors BookingMapExperience's own fetch.
+  const [tileAvailability, setTileAvailability] = useState<DailyAvailability | null>(null)
+  const tileRentalAssetIds = useMemo(
+    () => visibleAssets.map((asset) => asset.id),
+    [visibleAssets],
+  )
+  useEffect(() => {
+    if (branding.newBookingUiEnabled || tileRentalAssetIds.length === 0) {
+      // Clears stale pricing when the legacy grid isn't in play; no cascading update.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTileAvailability(null)
+      return
+    }
+    let cancelled = false
+    void fetchDailyAvailability(subdomain, date, tileRentalAssetIds)
+      .then((result) => {
+        if (!cancelled) setTileAvailability(result)
+      })
+      .catch(() => {
+        if (!cancelled) setTileAvailability(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [branding.newBookingUiEnabled, date, subdomain, tileRentalAssetIds])
+  const tilePriceTextById = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const resource of tileAvailability?.resources ?? []) {
+      const window =
+        resource.windows.find((candidate) => candidate.state === "Available" && candidate.totalAmount !== null) ??
+        resource.windows.find((candidate) => candidate.state !== "Past")
+      const unitPrice = window ? unitPriceForWindow(window) : null
+      if (unitPrice) {
+        byId.set(
+          resource.rentalAssetId,
+          formatUnitPriceText(unitPrice.amount, unitPrice.unit, tileAvailability?.currency ?? "BRL", moneyLocale, t, "bookingMap.prices"),
+        )
+      }
+    }
+    return byId
+  }, [moneyLocale, t, tileAvailability])
+
   const queueAssetIdsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     queueAssetIdsRef.current = new Set(
@@ -458,7 +503,16 @@ export function TenantPortalAgendaPage() {
     )
   }, [visibleAssets])
 
-  const horizonDays = resolveAgendaHorizonDays(visibleAssets, policyHorizonDays)
+  // The hint/redirect use the selected resource's own horizon so they never
+  // contradict a per-resource availability check; with nothing selected yet,
+  // fall back to the widest horizon among the visible resources.
+  const selectedHorizonAsset = selectedRentalAssetId
+    ? visibleAssets.find((asset) => asset.id === selectedRentalAssetId)
+    : undefined
+  const horizonDays = resolveAgendaHorizonDays(
+    selectedHorizonAsset ? [selectedHorizonAsset] : visibleAssets,
+    policyHorizonDays,
+  )
   const horizonMaxDate = horizonEndDate(
     tenantTodayIsoDate(timeZoneId),
     horizonDays,
@@ -1063,16 +1117,20 @@ export function TenantPortalAgendaPage() {
           return
         }
         setLastAvailableQuantity(result.availableQuantity)
-        setLastPricingUnit(result.pricingUnit)
-        if (result.availableQuantity < quantity) {
+        // An unavailable multi-day quote comes back without a pricing unit; keeping the
+        // last known unit stops the Dias selector from unmounting and re-quoting in a loop.
+        if (result.pricingUnit != null || !endDate) {
+          setLastPricingUnit(result.pricingUnit)
+        }
+        if (result.availableQuantity > 0 && result.availableQuantity < quantity) {
           setQuantity(Math.max(1, result.availableQuantity))
         }
         setQuote({
           status: "ready",
           amount: result.isAvailable ? result.estimatedTotalAmount : null,
+          pricingUnit: result.pricingUnit ?? null,
           availableQuantity: result.availableQuantity,
           quantity,
-          pricingUnit: result.pricingUnit,
           selectionKey,
         })
       })
@@ -1287,16 +1345,28 @@ export function TenantPortalAgendaPage() {
     const slot = selectedSlot
     const dayDate = date
     const generation = getAgendaSessionGeneration()
+    const quotePricingUnit = quoteCurrent ? quote.pricingUnit : null
 
     const applyReservationSuccess = (reservation: PortalReservation) => {
       rememberOwnBooking(reservation, timeZoneId)
+      const unitPrice = unitPriceForWindow({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        totalAmount: reservation.totalAmount,
+        pricingUnit: quotePricingUnit,
+        quantity,
+        days,
+      })
+      const unitPriceText = unitPrice
+        ? formatUnitPriceText(unitPrice.amount, unitPrice.unit, "BRL", moneyLocale, t, "bookingMap.prices")
+        : null
       toast.success(
         `${t("tenantPortal.agenda.reserveSuccessWithTotal", {
           amount: formatBookingMoney(reservation.totalAmount),
           status: t(`rentals.reservations.statuses.${reservation.status}`, {
             defaultValue: reservation.status,
           }),
-        })} · ${formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, reservation.startDateTime)}`,
+        })}${unitPriceText ? ` (${unitPriceText})` : ""} · ${formatTenantTimeZoneLabel(branding.timeZoneId, moneyLocale, reservation.startDateTime)}`,
       )
       setMine((current) => [
         reservation,
@@ -1671,14 +1741,33 @@ export function TenantPortalAgendaPage() {
     setPreserveUnavailableDuration(true)
     preferredDurationRef.current = minutes
     setSelectedDuration(minutes)
-    preferredTimeRef.current = ""
-    setStartTime("")
-    setQuantity(1)
-    setLastAvailableQuantity(null)
-    setDays(1)
-    setLastPricingUnit(undefined)
-    selectionRef.current = null
-    setSelectedRentalAssetId(null)
+
+    const timeStillOffered = listStartTimesForDuration(slotsForView, minutes).some(
+      (window) => window.startTime === startTime,
+    )
+    if (!timeStillOffered) {
+      preferredTimeRef.current = ""
+      setStartTime("")
+      setQuantity(1)
+      setLastAvailableQuantity(null)
+      setDays(1)
+      setLastPricingUnit(undefined)
+      selectionRef.current = null
+      setSelectedRentalAssetId(null)
+      return
+    }
+
+    const tileStillValid =
+      selectedRentalAssetId === null ||
+      findSlotAtStartAndDuration(slotsForView, selectedRentalAssetId, startTime, minutes) !== undefined
+    if (!tileStillValid) {
+      setQuantity(1)
+      setLastAvailableQuantity(null)
+      setDays(1)
+      setLastPricingUnit(undefined)
+      selectionRef.current = null
+      setSelectedRentalAssetId(null)
+    }
   }
 
   function onDateChange(value: string, source: LocaleDateChangeSource = "input") {
@@ -1754,15 +1843,22 @@ export function TenantPortalAgendaPage() {
       visibleAssets.find((asset) => asset.id === rentalAssetId),
     )
     const asset = visibleAssets.find((candidate) => candidate.id === rentalAssetId)
+    const assetHorizonMaxDate = horizonEndDate(
+      tenantTodayIsoDate(timeZoneId),
+      asset ? resolveAgendaHorizonDays([asset], policyHorizonDays) : undefined,
+    )
+    const exceedsAssetHorizon = assetHorizonMaxDate !== null && date > assetHorizonMaxDate
     const detail =
       startTime.length === 0 || available
         ? null
-        : ownReservation && asset && asset.totalQuantity > 1 && ownReservationUnits > 0
-          ? t("tenantPortal.agenda.yourReservationUnits", {
-              count: ownReservationUnits,
-              total: asset.totalQuantity,
-            })
-          : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
+        : exceedsAssetHorizon
+          ? t("tenantPortal.agenda.horizonExceeded")
+          : ownReservation && asset && asset.totalQuantity > 1 && ownReservationUnits > 0
+            ? t("tenantPortal.agenda.yourReservationUnits", {
+                count: ownReservationUnits,
+                total: asset.totalQuantity,
+              })
+            : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
     return {
       available,
       disabled: !available && !queueSelectable,
@@ -1810,6 +1906,23 @@ export function TenantPortalAgendaPage() {
   const cancelledReservations = mine.filter((reservation) =>
     isCancelledReservationStatus(reservation.status),
   )
+
+  const quoteUnitPriceText =
+    quoteCurrent && quote.amount !== null && selectedSlot
+      ? (() => {
+          const unitPrice = unitPriceForWindow({
+            startTime: selectedSlot.startTime,
+            endTime: selectedSlot.endTime,
+            totalAmount: quote.amount,
+            pricingUnit: quote.pricingUnit,
+            quantity,
+            days,
+          })
+          return unitPrice
+            ? formatUnitPriceText(unitPrice.amount, unitPrice.unit, "BRL", moneyLocale, t, "bookingMap.prices")
+            : null
+        })()
+      : null
 
   function renderReservationItem(reservation: PortalReservation) {
     const focused = reservation.id === focusedReservationId
@@ -2101,13 +2214,16 @@ export function TenantPortalAgendaPage() {
                 const state = spaceState(item.rentalAssetId)
                 const disabled = !inVisibleSet || state.disabled
                 const baseLabel = asset?.name ?? item.rentalAssetId
+                const tileLabel =
+                  asset && asset.totalQuantity > 1
+                    ? `${baseLabel} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
+                    : baseLabel
+                const priceText = tilePriceTextById.get(item.rentalAssetId)
                 return {
                   key: item.rentalAssetId,
                   rentalAssetId: item.rentalAssetId,
-                  label:
-                    asset && asset.totalQuantity > 1
-                      ? `${baseLabel} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
-                      : baseLabel,
+                  label: tileLabel,
+                  footer: priceText ? `${tileLabel} · ${priceText}` : null,
                   xPercent: item.xPercent,
                   yPercent: item.yPercent,
                   widthPercent: item.widthPercent,
@@ -2186,6 +2302,11 @@ export function TenantPortalAgendaPage() {
                           ? `${asset.name} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
                           : asset.name}
                       </span>
+                      {tilePriceTextById.get(asset.id) ? (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {tilePriceTextById.get(asset.id)}
+                        </span>
+                      ) : null}
                       {state.detail ? (
                         <span className="mt-1 block text-xs font-semibold">
                           {state.detail}
@@ -2390,31 +2511,39 @@ export function TenantPortalAgendaPage() {
             </div>
           ) : null}
 
-          {quote.status === "loading" ? (
-            <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.quoteLoading")}
-            </p>
-          ) : null}
+          {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
+          <div className="flex min-h-11 items-center">
+            {quote.status === "loading" ? (
+              <p className="text-sm text-muted-foreground">
+                {t("tenantPortal.agenda.quoteLoading")}
+              </p>
+            ) : null}
 
-          {quoteCurrent && quote.amount !== null ? (
-            <p className="text-sm font-medium">
-              {t("tenantPortal.agenda.available", {
-                amount: formatBookingMoney(quote.amount),
-              })}
-            </p>
-          ) : null}
+            {quoteCurrent && quote.amount !== null ? (
+              <div>
+                <p className="text-sm font-medium">
+                  {t("tenantPortal.agenda.available", {
+                    amount: formatBookingMoney(quote.amount),
+                  })}
+                </p>
+                {quoteUnitPriceText ? (
+                  <p className="text-xs text-muted-foreground">{quoteUnitPriceText}</p>
+                ) : null}
+              </div>
+            ) : null}
 
-          {!schedulePending && quoteUnavailable ? (
-            <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.slotTaken")}
-            </p>
-          ) : null}
+            {!schedulePending && quoteUnavailable ? (
+              <p className="text-sm text-muted-foreground">
+                {t("tenantPortal.agenda.slotTaken")}
+              </p>
+            ) : null}
 
-          {quote.status === "error" ? (
-            <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.availabilityError")}
-            </p>
-          ) : null}
+            {quote.status === "error" ? (
+              <p className="text-sm text-muted-foreground">
+                {t("tenantPortal.agenda.availabilityError")}
+              </p>
+            ) : null}
+          </div>
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
