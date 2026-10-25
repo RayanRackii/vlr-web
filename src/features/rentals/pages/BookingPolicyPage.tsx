@@ -43,9 +43,12 @@ import {
 } from "@/features/rentals/services/bookingPolicyService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 
 export function BookingPolicyPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
   const canEdit = can("rentals.booking_policy.write") && !isTrialReadOnly
@@ -188,6 +191,9 @@ export function BookingPolicyPage() {
         </h1>
         <p className="text-sm text-muted-foreground">
           {t("rentals.bookingPolicy.description")}
+        </p>
+        <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
+          {formatTenantTimeZoneLabel(timeZoneId, i18n.language)}
         </p>
       </div>
 

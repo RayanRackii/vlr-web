@@ -599,9 +599,9 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="border-b border-border">
+        <div className="overflow-x-auto border-b border-border">
           <nav
-            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
+            className="-mb-px flex w-max min-w-full justify-start gap-6 sm:gap-8"
             aria-label={t("nav.menu")}
           >
             {tabItems.map((item) => {

@@ -38,6 +38,60 @@ function renderPanel(allowedDurationMinutes = "60") {
 }
 
 describe("SchedulePolicyPanel", () => {
+  it("derives standard hours from the saved weekly grid and does not offer reseeding", async () => {
+    const user = userEvent.setup()
+    render(
+      <SchedulePolicyPanel
+        assets={[{
+          ...asset,
+          schedulePolicy: "SlotGrid",
+          openTime: null,
+          closeTime: null,
+          allowedDurationMinutes: null,
+        }]}
+        templates={[{
+          id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          rentalAssetId: asset.id,
+          assetName: asset.name,
+          dayOfWeek: "Monday",
+          startTime: "09:00:00",
+          endTime: "09:30:00",
+          occupancyKindId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          occupancyKindLabel: "Open",
+          label: null,
+          isActive: true,
+        }, {
+          id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          rentalAssetId: asset.id,
+          assetName: asset.name,
+          dayOfWeek: "Monday",
+          startTime: "18:30:00",
+          endTime: "19:00:00",
+          occupancyKindId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          occupancyKindLabel: "Open",
+          label: null,
+          isActive: true,
+        }]}
+        busy={false}
+        busyAction={null}
+        readOnly={false}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+        onSeedSlotGrid={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole("button", {
+      name: i18n.t("rentals.schedule.seedTemplates"),
+    })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", {
+      name: new RegExp(i18n.t("rentals.schedule.policy.openHours")),
+    }))
+
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.openTime"))).toHaveValue("09:00")
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.closeTime"))).toHaveValue("19:00")
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))).toHaveValue("30")
+  })
+
   it("saves a comma-separated duration list", async () => {
     const user = userEvent.setup()
     const onSave = renderPanel()

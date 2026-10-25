@@ -231,6 +231,12 @@ describe("DailyAgendaTab past starts", () => {
     ).toBeDisabled()
     expect(
       screen.getByRole("button", {
+        name: "Sala 1, 08:00–09:00, Indisponível, Tipo: Aberto",
+      }),
+    ).toHaveAttribute("title", i18n.t("rentals.schedule.grid.minimumLeadTime"))
+    expect(screen.getByText(i18n.t("rentals.schedule.grid.minimumLeadTime"))).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
         name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
       }),
     ).toBeEnabled()

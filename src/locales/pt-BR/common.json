@@ -3012,10 +3012,11 @@
       "grid": {
         "empty": "Horário vazio",
         "noSelection": "Selecione um ou mais espaços / bens para ver a grade.",
-        "legendLabel": "Legenda"
+        "legendLabel": "Legenda",
+        "minimumLeadTime": "Fora do prazo mínimo de antecedência"
       },
       "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
-      "weeklyBanner": "Esta grade é a regra de todas as {{day}}. A Agenda do dia só altera uma data.",
+      "weeklyBanner": "Esta grade vale toda semana, às {{day}}. A Agenda do dia só altera uma data.",
       "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
       "weekly": {
         "configureHours": "Configurar horários"
