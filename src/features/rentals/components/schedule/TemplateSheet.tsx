@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Clock3 } from "lucide-react"
 
 import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { Button } from "@/components/ui/button"
@@ -105,17 +106,24 @@ export function TemplateSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-[420px]">
         <SheetHeader>
-          <SheetTitle>
-            {editing
-              ? t("rentals.schedule.templates.saveEdit")
-              : t("rentals.schedule.templates.saveCreate")}
-          </SheetTitle>
-          <SheetDescription>
-            {assetName ? (
-              <span className="block font-medium text-foreground">{assetName}</span>
-            ) : null}
-            {t("rentals.schedule.weeklyCellHint")}
-          </SheetDescription>
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Clock3 className="size-4" aria-hidden />
+            </span>
+            <div className="space-y-0.5">
+              <SheetTitle>
+                {editing
+                  ? t("rentals.schedule.templates.saveEdit")
+                  : t("rentals.schedule.templates.saveCreate")}
+              </SheetTitle>
+              <SheetDescription>
+                {assetName ? (
+                  <span className="block font-medium text-foreground">{assetName}</span>
+                ) : null}
+                {t("rentals.schedule.weeklyCellHint")}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
@@ -263,17 +271,19 @@ export function TemplateSheet({
           </label>
 
           {editing && onDelete ? (
-            <LoadingButton
-              type="button"
-              variant="destructive"
-              loading={busyAction === "templateDelete"}
-              disabled={busy || readOnly}
-              onClick={() => {
-                onDelete()
-              }}
-            >
-              {t("common.delete")}
-            </LoadingButton>
+            <div className="border-t border-border pt-4">
+              <LoadingButton
+                type="button"
+                variant="destructive"
+                loading={busyAction === "templateDelete"}
+                disabled={busy || readOnly}
+                onClick={() => {
+                  onDelete()
+                }}
+              >
+                {t("common.delete")}
+              </LoadingButton>
+            </div>
           ) : null}
         </div>
 

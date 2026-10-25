@@ -1,3 +1,4 @@
+import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
@@ -644,10 +645,14 @@ function AdminSchedulePage() {
     }
   }
 
-  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
+  const tabItems: {
+    id: ScheduleTab
+    labelKey: string
+    icon: typeof CalendarDays
+  }[] = [
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily", icon: CalendarDays },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates", icon: CalendarRange },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", icon: Tag },
   ]
 
   const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
@@ -672,10 +677,10 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto border-b border-border">
+        <div className="overflow-x-auto">
           <nav
-            className="-mb-px flex w-max min-w-full justify-start gap-6 sm:justify-center sm:gap-8"
             aria-label={t("nav.menu")}
+            className="mx-auto flex w-max min-w-full items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:min-w-0"
           >
             {tabItems.map((item) => {
               const isActive = tab === item.id
@@ -683,16 +688,18 @@ function AdminSchedulePage() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={isActive}
                   onClick={() => {
                     setTab(item.id)
                   }}
                   className={cn(
-                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
+                    "inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                      ? "bg-background text-foreground shadow-sm"
+                      : "hover:text-foreground",
                   )}
                 >
+                  <item.icon aria-hidden className="size-3.5" />
                   {t(item.labelKey)}
                 </button>
               )
