@@ -1752,7 +1752,7 @@
       },
       "pricing": {
         "unitLabel": "Pricing unit",
-        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed"},
+        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
         "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
         "patternLabel": "How the price repeats through the week",
         "everydayPrice": "Price per hour",

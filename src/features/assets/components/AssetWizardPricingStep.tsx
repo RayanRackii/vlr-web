@@ -35,11 +35,11 @@ export function AssetWizardPricingStep({
     <div className="space-y-4">
       <div className="space-y-1">
         <Label htmlFor="pricing-unit">{t("assets.wizard.pricing.unitLabel")}</Label>
-        <Select value={pricing.pricingUnit} onValueChange={(value) => {
+        <Select value={pricing.perDayUnits ? "" : pricing.pricingUnit} onValueChange={(value) => {
           const parsed = pricingUnitSchema.safeParse(value)
           if (parsed.success) onChange({ pricingUnit: parsed.data, perDayUnits: null })
         }}>
-          <SelectTrigger id="pricing-unit"><SelectValue>{t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
+          <SelectTrigger id="pricing-unit"><SelectValue>{pricing.perDayUnits ? t("assets.wizard.pricing.units.mixed") : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
           <SelectContent>
             {pricingUnitSchema.options.map((unit) => <SelectItem key={unit} value={unit}>{t(`assets.wizard.pricing.units.${unit}`)}</SelectItem>)}
           </SelectContent>

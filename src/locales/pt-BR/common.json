@@ -1752,7 +1752,7 @@
       },
       "pricing": {
         "unitLabel": "Unidade de preço",
-        "units": {"Hour": "Por hora", "Slot": "Por horário", "Day": "Por dia", "Fixed": "Fixo"},
+        "units": {"Hour": "Por hora", "Slot": "Por horário", "Day": "Por dia", "Fixed": "Fixo", "mixed": "Unidades diferentes por dia (escolha uma para unificar)"},
         "priceLabels": {"Hour": "Preço por hora", "Slot": "Preço por horário", "Day": "Preço por dia", "Fixed": "Preço fixo"},
         "patternLabel": "Como o preço se repete na semana",
         "everydayPrice": "Preço por hora",
