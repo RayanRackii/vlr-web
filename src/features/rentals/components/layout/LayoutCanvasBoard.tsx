@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from "react"
+import { ImageOff, type LucideIcon } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -35,6 +36,17 @@ export type CanvasBoardItem = {
   /** A solid label fixed to the bottom of a pick tile, clear of its visual art. */
   footer?: string | null
   artUrl?: string | null
+  /** Optional semantic icon for tiles without visual art. */
+  icon?: LucideIcon | null
+}
+
+function CanvasTileArt({ artUrl, Icon }: { artUrl?: string | null; Icon?: LucideIcon | null }) {
+  const [failed, setFailed] = useState(false)
+  if (artUrl && !failed) {
+    return <img src={artUrl} alt="" onError={() => setFailed(true)} className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" />
+  }
+  const Placeholder = Icon ?? ImageOff
+  return <Placeholder className="pointer-events-none size-5 text-muted-foreground/70" aria-hidden />
 }
 
 type TileDrag = {
@@ -275,7 +287,7 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                {item.artUrl ? <img src={item.artUrl} alt="" className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt artUrl={item.artUrl} Icon={item.icon} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}

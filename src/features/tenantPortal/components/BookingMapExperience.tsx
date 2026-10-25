@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { XIcon } from "lucide-react"
+import { CircleDotIcon, LayoutTemplateIcon, XIcon, type LucideIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -26,6 +26,10 @@ const periodMatches = (start: string, period: Period) => { const hour = Number(s
 const quoteIsCurrent = (expiresAt: string | undefined) => Boolean(expiresAt && Date.parse(expiresAt) > Date.now())
 const EMPTY_ASSETS: readonly PortalRentalAsset[] = []
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < 768
+const VISUAL_ICON_MAP: Record<string, LucideIcon> = {
+  "circle-dot": CircleDotIcon,
+  "layout-template": LayoutTemplateIcon,
+}
 
 export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, onBooked }: Props) {
   const { t } = useTranslation()
@@ -85,7 +89,17 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   }
   if (!map || !list) return null
   const periodFreeCounts = (['all', 'morning', 'afternoon', 'night'] as const).reduce<Record<Period, number>>((counts, value) => { counts[value] = resources.reduce((total, resource) => total + summary(resource.rentalAssetId, value).free.length, 0); return counts }, { all: 0, morning: 0, afternoon: 0, night: 0 })
-  const boardItems = mapItems.map((item) => { const result = summary(item.rentalAssetId); const revision = item.visualTemplateRevisionId ? visualById.get(item.visualTemplateRevisionId) : undefined; const footer = [item.assetName, revision?.defaultIcon].filter(Boolean).join(" · "); return { key: item.id, rentalAssetId: item.rentalAssetId, label: item.assetName, footer, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex, selected: selectedId === item.rentalAssetId, available: result.free.length > 0, disabled: availabilityLoading, artUrl: revision ? visualArtUrl(revision.id, revision.artSha256) : null } })
+  const tileDetails = (resource: DailyAvailability["resources"][number], result: ReturnType<typeof summary>) => {
+    const window = result.free[0] ?? result.windows.find((candidate) => candidate.state !== "Past")
+    const details: string[] = []
+    if (window?.totalAmount !== null && window?.totalAmount !== undefined) {
+      const hours = (Date.parse(`1970-01-01T${window.endTime}`) - Date.parse(`1970-01-01T${window.startTime}`)) / 3_600_000
+      if (hours > 0) details.push(t("bookingMap.pricePerHour", { amount: formatLocaleCurrency(window.totalAmount / hours, availability?.currency ?? "BRL", locale) }))
+    }
+    if (resource.totalQuantity > 1 && window) details.push(t("bookingMap.unitsLeft", { left: window.availableQuantity, total: resource.totalQuantity }))
+    return details.join(" · ")
+  }
+  const boardItems = mapItems.map((item) => { const result = summary(item.rentalAssetId); const revision = item.visualTemplateRevisionId ? visualById.get(item.visualTemplateRevisionId) : undefined; const resource = resourceById.get(item.rentalAssetId); return { key: item.id, rentalAssetId: item.rentalAssetId, label: item.assetName, footer: resource ? tileDetails(resource, result) || null : null, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex, selected: selectedId === item.rentalAssetId, available: result.free.length > 0, disabled: availabilityLoading, artUrl: revision ? visualArtUrl(revision.id, revision.artSha256) : null, icon: revision ? VISUAL_ICON_MAP[revision.defaultIcon] ?? null : null } })
   const canContinue = selectedWindow !== null && selectedWindow.amount >= 0 && !submitting && !availabilityLoading && !requoteLoading && Boolean(availability?.quoteExpiresAt && Date.parse(availability.quoteExpiresAt) > now) && queue.canReserve
   return (
     <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
@@ -162,6 +176,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
                   onClick={() => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }}
                 >
                   <strong className="text-sm font-semibold text-foreground">{item?.assetName ?? resource.name}</strong>
+                  {tileDetails(resource, result) ? <span className="mt-1 block text-xs text-muted-foreground">{tileDetails(resource, result)}</span> : null}
                   <span className="mt-2 flex flex-wrap gap-1.5">
                     {result.free.slice(0, 3).map((window) => (
                       <Badge key={`${window.startTime}-${window.endTime}`} variant="secondary">

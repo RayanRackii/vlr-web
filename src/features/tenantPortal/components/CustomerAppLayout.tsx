@@ -9,6 +9,8 @@ import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/components/layout/navigation"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
+import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
 import {
   clearAgendaSelectionNotice,
@@ -143,6 +145,14 @@ export function CustomerAppLayout() {
   }
 
   if (error || !branding) {
+    if (location.pathname.includes("/catalogo")) {
+      return (
+        <div className="min-h-screen bg-background text-foreground">
+          <TenantPortalChromeHeader subdomain={subdomain} portalBasePath={params.subdomain ? `/t/${params.subdomain}` : ""} />
+          <main className="flex min-h-screen items-center justify-center p-6 pt-24"><PortalNotFoundRoute /></main>
+        </div>
+      )
+    }
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
         <p className="text-sm text-muted-foreground">{error}</p>

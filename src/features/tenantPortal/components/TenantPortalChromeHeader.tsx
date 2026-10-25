@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
+import { isCustomerSignedInForTenant, tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
 type TenantPortalChromeHeaderProps = {
   subdomain: string
@@ -28,6 +29,8 @@ export function TenantPortalChromeHeader({
   const registerHref = portalBasePath
     ? `${portalBasePath}/register`
     : "/register"
+
+  const signedIn = isCustomerSignedInForTenant(subdomain)
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
@@ -58,17 +61,22 @@ export function TenantPortalChromeHeader({
           />
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button type="button" variant="ghost" size="sm" render={<Link to={loginHref} />}>
-              {t("landing.header.login")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              render={<Link to={registerHref} />}
-            >
-              {t("tenantPortal.header.ctaRegister")}
-              <ArrowRight data-icon="inline-end" />
-            </Button>
+            {signedIn ? (
+              <Button type="button" size="sm" render={<Link to={tenantPortalPath(subdomain, "app")} />}>
+                {t("tenantPortal.agenda.title")}
+                <ArrowRight data-icon="inline-end" />
+              </Button>
+            ) : (
+              <>
+                <Button type="button" variant="ghost" size="sm" render={<Link to={loginHref} />}>
+                  {t("landing.header.login")}
+                </Button>
+                <Button type="button" size="sm" render={<Link to={registerHref} />}>
+                  {t("tenantPortal.header.ctaRegister")}
+                  <ArrowRight data-icon="inline-end" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

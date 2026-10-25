@@ -3468,6 +3468,8 @@
       "OutsideHorizon": "Fuera del plazo",
       "Unpriced": "Sin precio",
       "Available": "Disponible"
-    }
+    },
+    "pricePerHour": "{{amount}} por hora",
+    "unitsLeft": "{{left}} de {{total}} disponibles"
   }
 }

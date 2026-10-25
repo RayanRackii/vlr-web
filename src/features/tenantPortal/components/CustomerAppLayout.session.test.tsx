@@ -144,6 +144,31 @@ describe("CustomerAppLayout session tenant", () => {
     expect(fetchBranding).not.toHaveBeenCalled()
   })
 
+  it("renders the branded portal 404 when the catalog menu cannot load", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockRejectedValue(new Error("catalog inactive"))
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <MemoryRouter initialEntries={["/t/ficc/catalogo"]}>
+          <Routes>
+            <Route path="/t/:subdomain/catalogo" element={<CustomerAppLayout />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    expect(await screen.findByRole("heading", { name: i18n.t("notFound.title") })).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.errors.tenantNotFound"))).not.toBeInTheDocument()
+  })
+
   it("does not open this tenant with a session saved for another tenant", async () => {
     persistCustomerSession("customer-token", "other-club", "Ana")
     renderPortal("/t/ficc/agenda")

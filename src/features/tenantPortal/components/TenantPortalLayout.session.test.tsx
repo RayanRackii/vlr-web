@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import i18n from "@/lib/i18n"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
+import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalForgotPasswordPage } from "@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
@@ -42,6 +43,7 @@ function portalRouter(initialEntries: string[], initialIndex = 0) {
             path: "forgot-password",
             element: <TenantPortalForgotPasswordPage />,
           },
+          { path: "*", element: <PortalNotFoundRoute /> },
         ],
       },
       {
@@ -155,5 +157,23 @@ describe("signed-in public portal shell", () => {
     ).toBeInTheDocument()
     expect(router.state.location.pathname).toBe("/t/ficc/forgot-password")
     expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
+  })
+
+  it("uses the signed-in header for a portal 404", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "FICC",
+      logoSvg: null,
+      primaryColor: "#D4FF00",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    renderPortal(["/t/ficc/missing"])
+
+    expect(await screen.findByRole("heading", { name: i18n.t("notFound.title") })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: i18n.t("tenantPortal.agenda.title") })).toHaveAttribute("href", "/t/ficc/app")
+    expect(screen.queryByRole("link", { name: i18n.t("landing.header.login") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: i18n.t("tenantPortal.header.ctaRegister") })).not.toBeInTheDocument()
   })
 })

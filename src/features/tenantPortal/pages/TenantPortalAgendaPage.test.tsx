@@ -1485,6 +1485,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         }),
       ),
     )
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
   })
 
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
