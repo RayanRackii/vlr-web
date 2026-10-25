@@ -36,4 +36,15 @@ describe("formatReservationRange multi-day spans", () => {
       ),
     ).toBe("08/09 – 10/09 (3 dias)")
   })
+
+  it("treats an exclusive tenant-midnight end as the previous civil day", async () => {
+    await i18n.changeLanguage("pt-BR")
+    expect(
+      formatReservationRange(
+        "2026-09-08T11:00:00.000Z",
+        "2026-09-11T03:00:00.000Z",
+        "America/Sao_Paulo",
+      ),
+    ).toBe("08/09 – 10/09 (3 dias)")
+  })
 })

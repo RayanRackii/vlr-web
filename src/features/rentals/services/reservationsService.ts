@@ -9,6 +9,7 @@ import i18n from "@/lib/i18n"
 import {
   DEFAULT_TENANT_TIME_ZONE,
   formatTenantDayMonth,
+  resolveTenantTimeZone,
   tenantCivilDaySpan,
 } from "@/lib/tenantTimeZone"
 
@@ -153,6 +154,15 @@ export function formatReservationAssets(reservation: AdminReservation): string {
     .join(", ")
 }
 
+/** An exclusive tenant-midnight end belongs to the previous civil day. */
+function lastCoveredInstant(end: Date, timeZoneId: string): Date {
+  const clock = end.toLocaleTimeString("en-GB", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    timeZone: resolveTenantTimeZone(timeZoneId),
+  })
+  return clock === "00:00:00" || clock === "24:00:00" ? new Date(end.getTime() - 1) : end
+}
+
 export function formatReservationRange(
   startDateTime: string,
   endDateTime: string,
@@ -162,7 +172,7 @@ export function formatReservationRange(
   if (days > 1) {
     return i18n.t("rentals.reservations.multiDayRange", {
       start: formatTenantDayMonth(new Date(startDateTime), timeZoneId, i18n.language),
-      end: formatTenantDayMonth(new Date(endDateTime), timeZoneId, i18n.language),
+      end: formatTenantDayMonth(lastCoveredInstant(new Date(endDateTime), timeZoneId), timeZoneId, i18n.language),
       days,
     })
   }
