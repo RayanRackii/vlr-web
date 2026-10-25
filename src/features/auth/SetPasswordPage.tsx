@@ -115,17 +115,40 @@ function membershipSecondary(membership: StaffTenantMembership): string | null {
   return membership.legalName
 }
 
+// Per-tab copy of the invite token. The URL is cleaned right after the first
+// read; F5 then re-previews from here, so a consumed invite shows "already
+// accepted" (or the picker) instead of "invalid link".
+const INVITE_TOKEN_STORAGE_KEY = "rolvix.invite.token"
+
+function readStoredInviteToken(): string {
+  try {
+    return window.sessionStorage.getItem(INVITE_TOKEN_STORAGE_KEY)?.trim() ?? ""
+  } catch {
+    return ""
+  }
+}
+
+function storeInviteToken(token: string | null) {
+  try {
+    if (token === null) {
+      window.sessionStorage.removeItem(INVITE_TOKEN_STORAGE_KEY)
+    } else {
+      window.sessionStorage.setItem(INVITE_TOKEN_STORAGE_KEY, token)
+    }
+  } catch {
+    // Storage unavailable: the in-memory token still drives this visit.
+  }
+}
+
 export function SetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  // Captured once: the token is dropped from the URL after accept, and a later
-  // URL change must not re-preview (or "invalidate") the consumed invite.
-  const [token] = useState(() => searchParams.get("token")?.trim() ?? "")
-  const hasToken = token.length > 0
-  const [phase, setPhase] = useState<Phase>(
-    hasToken ? { status: "loading" } : { status: "invalid" },
-  )
+  // Captured once; the URL copy is stripped on mount and later URL changes must
+  // not re-preview (or "invalidate") the invite.
+  const [urlToken] = useState(() => searchParams.get("token")?.trim() ?? "")
+  const [token] = useState(() => urlToken || readStoredInviteToken())
+  const [phase, setPhase] = useState<Phase>({ status: "loading" })
   const [redirectTimeoutId, setRedirectTimeoutId] = useState<
     number | undefined
   >(undefined)
@@ -140,13 +163,40 @@ export function SetPasswordPage() {
   }, [redirectTimeoutId])
 
   useEffect(() => {
-    // Initial phase already covers "no token" (invalid) and "loading"; the token
-    // never changes after mount.
+    if (urlToken.length > 0) {
+      storeInviteToken(urlToken)
+      void navigate({ search: "" }, { replace: true })
+    }
+    // Mount only: urlToken never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
     if (token.length === 0) {
-      return
+      // No token anywhere: a signed-in staff member resumes tenant selection.
+      void supabase.auth.getSession().then(
+        ({ data }) => {
+          if (cancelled) {
+            return
+          }
+          if (data.session) {
+            void openMembershipStep(null)
+          } else {
+            setPhase({ status: "invalid" })
+          }
+        },
+        () => {
+          if (!cancelled) {
+            setPhase({ status: "invalid" })
+          }
+        },
+      )
+      return () => {
+        cancelled = true
+      }
     }
 
-    let cancelled = false
     void previewInvite(token).then(
       (preview) => {
         if (cancelled) {
@@ -189,6 +239,7 @@ export function SetPasswordPage() {
           return
         }
 
+        storeInviteToken(null)
         setPhase({ status: "invalid" })
       },
     )
@@ -199,10 +250,6 @@ export function SetPasswordPage() {
     // openMembershipStep only reads stable setters/navigate.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
-
-  function dropTokenFromUrl() {
-    void navigate({ search: "" }, { replace: true })
-  }
 
   async function openMembershipStep(invitedTenantId: string | null) {
     try {
@@ -251,7 +298,6 @@ export function SetPasswordPage() {
     const preview = phase.preview
     try {
       const accepted = await acceptNewAccountInvite({ token, password })
-      dropTokenFromUrl()
       noteStaffSignIn()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: accepted.email,
@@ -300,7 +346,6 @@ export function SetPasswordPage() {
 
     try {
       await acceptExistingAccountInvite({ token })
-      dropTokenFromUrl()
       toast.success(
         t("auth.invite.toastJoined", { tenant: preview.tenantName }),
       )
@@ -343,7 +388,7 @@ export function SetPasswordPage() {
         : t("auth.invite.title")
 
   const description =
-    phase.status === "invalid" || !hasToken
+    phase.status === "invalid"
       ? t("auth.invite.invalidLink")
       : phase.status === "already-accepted"
         ? t("auth.invite.alreadyAccepted")
