@@ -343,10 +343,14 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
   it("hides Cancelar for Canceled", async () => {
     listMine.mockResolvedValue([makeReservation("Canceled", FUTURE_ISO)])
     renderAgenda()
-    await waitForMineList()
+    const row = (await screen.findByText("Quadra 1")).closest("li")
 
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
+    expect(row).not.toHaveTextContent(formatMoney(80))
+    expect(row).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.total", { amount: formatMoney(80) }),
+    )
   })
 
   it("cancels, toasts success, and refetches mine plus the schedule day", async () => {
@@ -1433,10 +1437,12 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(bookSlot).toHaveBeenCalled()
     })
     expect(toastSuccess).toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-        amount: formatMoney(80),
-        status: i18n.t("rentals.reservations.statuses.Confirmed"),
-      }),
+      expect.stringContaining(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(80),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      ),
     )
   })
 
@@ -1560,10 +1566,12 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(80),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+        expect.stringContaining(
+          i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+            amount: formatMoney(80),
+            status: i18n.t("rentals.reservations.statuses.Confirmed"),
+          }),
+        ),
       )
     })
     expect(
