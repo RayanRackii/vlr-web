@@ -3752,6 +3752,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
   it("refetches the cancelled reservation date and the viewed date", async () => {
     const user = userEvent.setup()
+    await i18n.changeLanguage("pt-BR")
     const otherIso = "2026-10-15T11:00:00.000Z"
     fetchDay.mockImplementation((_subdomain: string, dayDate: string) =>
       Promise.resolve({
@@ -3771,6 +3772,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     await expectQuadra1Selectable()
     released = true
     await confirmCancel(user)
+
+    expect(i18n.resolvedLanguage).toBe("pt-BR")
+    expect(window.localStorage.getItem("rolvix.uiLanguage")).toBe("pt-BR")
 
     await waitFor(() => {
       const dates = fetchDay.mock.calls.map((call) => call[1])

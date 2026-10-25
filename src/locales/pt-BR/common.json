@@ -292,7 +292,7 @@
     },
     "errors": {
       "title": "Portal indisponível",
-      "missingSubdomain": "Informe o endereço da empresa (ex.: /t/quadratenis).",
+      "missingSubdomain": "Informe o endereço da empresa (ex.: /t/empresa).",
       "tenantNotFound": "Empresa não encontrada ou inativa."
     },
     "fields": {
@@ -1444,8 +1444,8 @@
         "generic": "Tipos"
       },
       "description": {
-        "rentals": "Tipos para agrupar recursos (ex.: Quadra, Caçamba, Sala).",
-        "spaces": "Tipos de espaço (ex.: Quadra, Sala, Court).",
+        "rentals": "Tipos para agrupar recursos (ex.: Espaço, Equipamento, Sala).",
+        "spaces": "Tipos de espaço (ex.: Espaço, Sala, Área externa).",
         "goods": "Tipos de bem (ex.: Caçamba, Equipamento móvel).",
         "electrical": "Tipos elétricos (ex.: Quadro, Split, Transformador).",
         "maintenance": "Tipos de equipamento (ex.: Split, Caldeira).",
@@ -1453,8 +1453,8 @@
       },
       "loading": "Carregando tipos...",
       "empty": {
-        "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Caçamba).",
-        "spaces": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Sala).",
+        "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Espaço ou Equipamento).",
+        "spaces": "Nenhum tipo ainda — crie o primeiro (ex.: Espaço ou Sala).",
         "goods": "Nenhum tipo ainda — crie o primeiro (ex.: Caçamba).",
         "electrical": "Nenhum tipo ainda — crie o primeiro (ex.: Quadro elétrico).",
         "maintenance": "Nenhum tipo ainda — crie o primeiro (ex.: Split).",
@@ -1494,8 +1494,8 @@
           "generic": "Novo tipo"
         },
         "description": {
-          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Quadra de tênis).",
-          "spaces": "Defina um tipo de espaço (ex.: Quadra de tênis, Sala).",
+          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Área externa).",
+          "spaces": "Defina um tipo de espaço (ex.: Sala, Área externa).",
           "goods": "Defina um tipo de bem (ex.: Caçamba).",
           "electrical": "Cadastre o modelo base dos equipamentos elétricos.",
           "maintenance": "Cadastre o modelo base usado pelos equipamentos.",
@@ -1507,8 +1507,8 @@
       "form": {
         "name": "Nome",
         "namePlaceholder": {
-          "rentals": "Ex.: Quadra, Caçamba, Sala",
-          "spaces": "Ex.: Quadra, Sala",
+          "rentals": "Ex.: Espaço, Equipamento, Sala",
+          "spaces": "Ex.: Espaço, Sala",
           "goods": "Ex.: Caçamba",
           "electrical": "Ex.: Quadro elétrico, Split",
           "maintenance": "Ex.: Ar-condicionado Split 12k BTUs",
@@ -1548,7 +1548,7 @@
       },
       "description": {
         "rentals": "Recursos que você oferece (espaços, bens…). Cadastre cada um e marque o que pode ser reservado.",
-        "spaces": "Espaços alugáveis (quadras, salas…). Cadastre cada um e marque o que pode ser reservado.",
+        "spaces": "Espaços alugáveis, como salas e áreas externas. Cadastre cada um e marque o que pode ser reservado.",
         "goods": "Bens e itens (caçambas…). Cadastre cada um e organize por tipo.",
         "electrical": "Equipamentos elétricos do site. Use tipos e atributos (voltagem, fabricante).",
         "maintenance": "Equipamentos e instalações do site. Use tipos para organizar e vincular manutenção.",
@@ -1564,8 +1564,8 @@
         "generic": "Nenhum recurso cadastrado ainda."
       },
       "emptyNoTypes": {
-        "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Quadra, Caçamba).",
-        "spaces": "Antes de cadastrar espaços, defina os tipos (ex.: Quadra, Sala).",
+        "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Espaço, Equipamento).",
+        "spaces": "Antes de cadastrar espaços, defina os tipos (ex.: Espaço, Sala).",
         "goods": "Antes de cadastrar bens, defina os tipos (ex.: Caçamba).",
         "electrical": "Antes de cadastrar equipamentos, defina os tipos elétricos.",
         "maintenance": "Antes de cadastrar recursos, defina os tipos de equipamento.",
@@ -1614,8 +1614,8 @@
           "generic": "Adicionar recursos em lote"
         },
         "description": {
-          "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Quadra-01, Quadra-02).",
-          "spaces": "Gere uma sequência de espaços com o mesmo tipo e tags numeradas (ex.: Quadra-01).",
+          "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Espaco-01, Espaco-02).",
+          "spaces": "Gere uma sequência de espaços com o mesmo tipo e tags numeradas (ex.: Espaco-01).",
           "goods": "Gere uma sequência de bens com o mesmo tipo e tags numeradas.",
           "electrical": "Gere uma sequência de equipamentos elétricos com tags numeradas.",
           "maintenance": "Gere uma sequência de equipamentos com o mesmo tipo e tags numeradas.",
@@ -1692,13 +1692,13 @@
         "capacity": "Capacidade"
       },
       "placeholders": {
-        "name": "Ex.: Quadra 1 — coberta",
+        "name": "Ex.: Espaço 1 — coberto",
         "tag": "Ex.: Q-01",
         "location": "Ex.: Bloco A, piso térreo"
       },
       "help": {
         "unit": "Local físico deste recurso (sede, filial). Criada automaticamente no cadastro do cliente; gestão de unidades virá depois.",
-        "category": "Tipo/classificação do recurso (ex.: Quadra de tênis). Defina tipos em Ativos → Tipos.",
+        "category": "Tipo/classificação do recurso (ex.: Área externa). Defina tipos em Ativos → Tipos.",
         "family": "Família de atributos (espaços, bens, elétricos…). Controla campos extras do formulário.",
         "name": "Nome amigável exibido na agenda e nas listas.",
         "tag": "Código curto único para identificar o recurso (ex.: Q-01).",
@@ -1714,7 +1714,7 @@
         "queueEnabled": "Se ligado, os clientes entram numa fila FIFO para reservar este espaço no horário de abertura. Desligado por padrão.",
         "queueOpeningTime": "Horário em que as reservas abrem (fuso de Brasília). A sala de espera abre 30 minutos antes.",
         "requiresMaintenanceHint": "Este recurso poderá ser vinculado a planos PMOC e ordens de serviço.",
-        "rentalType": "Espaço (quadra/sala) ou bem (equipamento emprestado).",
+        "rentalType": "Espaço (sala ou área externa) ou bem (equipamento emprestado).",
         "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica.",
         "stockQuantity": "Quantidade deste bem. O lote cria um único recurso com este estoque, sem gerar itens numerados."
       },
@@ -1801,7 +1801,7 @@
         "totalQuantity": "Quantidade total"
       },
       "rentalTypes": {
-        "Location": "Espaço (quadra, sala, pista)",
+        "Location": "Espaço (sala, área externa ou pista)",
         "Good": "Bem (colete, bola, caçamba)"
       },
       "actions": {
@@ -2537,7 +2537,7 @@
       "add": "+ Adicionar item",
       "addFirst": "Adicionar primeiro item",
       "label": "Nome exibido",
-      "labelPlaceholder": "Ex.: Alugar quadra de tênis",
+      "labelPlaceholder": "Ex.: Reservar um espaço",
       "functionality": "Funcionalidade",
       "destination": "Destino",
       "destinationGeneralAgenda": "Agenda geral",
@@ -2845,7 +2845,7 @@
       "families": {
         "hint": "Escolha ao menos uma família de recursos. Isso define os formulários de cadastro de ativos.",
         "descriptions": {
-          "spaces": "Quadras, salas e espaços reserváveis.",
+          "spaces": "Salas, áreas externas e espaços reserváveis.",
           "electrical": "Equipamentos e instalações elétricas.",
           "goods": "Bens, caçambas e itens físicos.",
           "generic": "Recursos sem categoria específica."
@@ -2863,7 +2863,7 @@
         "primaryColor": "Cor primária",
         "accentColor": "Cor de destaque",
         "welcomeTagline": "Frase de boas-vindas (opcional)",
-        "welcomeTaglinePlaceholder": "Ex.: Reserve sua quadra em poucos toques",
+        "welcomeTaglinePlaceholder": "Ex.: Reserve um espaço em poucos toques",
         "adminFullName": "Nome do admin",
         "adminFullNamePlaceholder": "Ex.: Maria Silva",
         "adminEmail": "E-mail do admin"
@@ -2935,7 +2935,7 @@
     "teacherLessons": {
       "title": "Aulas",
       "description": "Crie ou remova aulas somente na data selecionada. A grade semanal não será alterada.",
-      "court": "Quadra",
+      "court": "Espaço",
       "date": "Data",
       "availableTime": "Horário disponível",
       "chooseTime": "Selecione um horário",
@@ -3009,6 +3009,10 @@
       "templatesFineEditRentable": "Editar grade de",
       "weeklyConfigHint": "Horário padrão e Grade personalizada se repetem por dia da semana. A Agenda do dia só altera uma data.",
       "dayTitle": "Agenda do dia",
+      "occupancyKindLabel": "Tipo",
+      "occupancyKinds": {
+        "open": "Aberto"
+      },
       "dayEmpty": "Nenhum horário neste dia. Crie a grade em Configuração semanal.",
       "dayEmptyTitle": "Nenhum horário neste dia",
       "dayEmptyDescription": "Em Configuração semanal, crie a grade. Os horários deste dia aparecem automaticamente.",
@@ -3155,7 +3159,7 @@
       "description": "Cadastre espaços e itens alugáveis da operação.",
       "add": "Adicionar recurso",
       "edit": "Editar recurso",
-      "formDescription": "Espaço (quadra, sala) ou item alugável. Não use esta tela para cadastro geral de inventário.",
+      "formDescription": "Espaço (sala ou área externa) ou item alugável. Não use esta tela para cadastro geral de inventário.",
       "saveCreate": "Criar recurso",
       "saveEdit": "Salvar recurso",
       "emptyTitle": "Nenhum recurso disponível para aluguel",
@@ -3171,7 +3175,7 @@
       "typeGood": "Item alugável",
       "form": {
         "name": "Nome",
-        "namePlaceholder": "Ex.: Quadra 1",
+        "namePlaceholder": "Ex.: Espaço 1",
         "tag": "Identificador",
         "tagPlaceholder": "Ex.: Q-01",
         "unit": "Unidade",
@@ -3248,7 +3252,7 @@
       "blockSize": "Tamanho do bloco",
       "width": "Largura",
       "height": "Altura",
-      "courtPreset": "Quadra 2:1",
+      "courtPreset": "Retângulo 2:1",
       "widePreset": "Retangular",
       "squarePreset": "Quadrado",
       "stripPreset": "Faixa",

@@ -1444,8 +1444,8 @@
         "generic": "Tipos"
       },
       "description": {
-        "rentals": "Tipos para agrupar recursos (ej.: Cancha, Contenedor, Sala).",
-        "spaces": "Tipos de espacio (ej.: Cancha, Sala).",
+        "rentals": "Tipos para agrupar recursos (ej.: Espacio, Equipo, Sala).",
+        "spaces": "Tipos de espacio (ej.: Sala, Área exterior).",
         "goods": "Tipos de bien (ej.: Contenedor, Equipo móvil).",
         "electrical": "Tipos eléctricos (ej.: Tablero, Split, Transformador).",
         "maintenance": "Tipos de equipo (ej.: Split, Caldera).",
@@ -1453,8 +1453,8 @@
       },
       "loading": "Cargando tipos...",
       "empty": {
-        "rentals": "Aún no hay tipos — cree el primero (ej.: Cancha o Contenedor).",
-        "spaces": "Aún no hay tipos — cree el primero (ej.: Cancha o Sala).",
+        "rentals": "Aún no hay tipos — cree el primero (ej.: Espacio o Equipo).",
+        "spaces": "Aún no hay tipos — cree el primero (ej.: Espacio o Sala).",
         "goods": "Aún no hay tipos — cree el primero (ej.: Contenedor).",
         "electrical": "Aún no hay tipos — cree el primero (ej.: Tablero eléctrico).",
         "maintenance": "Aún no hay tipos — cree el primero (ej.: Split).",
@@ -1494,8 +1494,8 @@
           "generic": "Nuevo tipo"
         },
         "description": {
-          "rentals": "Defina un tipo para agrupar recursos reservables (ej.: Cancha de tenis).",
-          "spaces": "Defina un tipo de espacio (ej.: Cancha de tenis, Sala).",
+          "rentals": "Defina un tipo para agrupar recursos reservables (ej.: Área exterior).",
+          "spaces": "Defina un tipo de espacio (ej.: Sala, Área exterior).",
           "goods": "Defina un tipo de bien (ej.: Contenedor).",
           "electrical": "Registre el modelo base de los equipos eléctricos.",
           "maintenance": "Registre el modelo base que usarán los equipos.",
@@ -1507,8 +1507,8 @@
       "form": {
         "name": "Nombre",
         "namePlaceholder": {
-          "rentals": "Ej.: Cancha, Contenedor, Sala",
-          "spaces": "Ej.: Cancha, Sala",
+          "rentals": "Ej.: Espacio, Equipo, Sala",
+          "spaces": "Ej.: Espacio, Sala",
           "goods": "Ej.: Contenedor",
           "electrical": "Ej.: Tablero eléctrico, Split",
           "maintenance": "Ej.: Aire acondicionado Split 12k BTU",
@@ -1548,7 +1548,7 @@
       },
       "description": {
         "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
-        "spaces": "Espacios alquilables (canchas, salas…). Registre cada uno y marque lo que puede reservarse.",
+        "spaces": "Espacios alquilables, como salas y áreas exteriores. Registre cada uno y marque lo que puede reservarse.",
         "goods": "Bienes y artículos (contenedores…). Registre cada uno y organícelos por tipo.",
         "electrical": "Equipos eléctricos del sitio. Use tipos y atributos (voltaje, fabricante).",
         "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
@@ -1564,8 +1564,8 @@
         "generic": "Aún no hay recursos registrados."
       },
       "emptyNoTypes": {
-        "rentals": "Antes de registrar recursos, defina los tipos (ej.: Cancha, Contenedor).",
-        "spaces": "Antes de registrar espacios, defina los tipos (ej.: Cancha, Sala).",
+        "rentals": "Antes de registrar recursos, defina los tipos (ej.: Espacio, Equipo).",
+        "spaces": "Antes de registrar espacios, defina los tipos (ej.: Espacio, Sala).",
         "goods": "Antes de registrar bienes, defina los tipos (ej.: Contenedor).",
         "electrical": "Antes de registrar equipos, defina los tipos eléctricos.",
         "maintenance": "Antes de registrar recursos, defina los tipos de equipo.",
@@ -1614,8 +1614,8 @@
           "generic": "Agregar recursos en lote"
         },
         "description": {
-          "rentals": "Genere una secuencia con el mismo tipo y tags numerados (ej.: Cancha-01, Cancha-02).",
-          "spaces": "Genere una secuencia de espacios con el mismo tipo y tags numerados (ej.: Cancha-01).",
+          "rentals": "Genere una secuencia con el mismo tipo y tags numerados (ej.: Espacio-01, Espacio-02).",
+          "spaces": "Genere una secuencia de espacios con el mismo tipo y tags numerados (ej.: Espacio-01).",
           "goods": "Genere una secuencia de bienes con el mismo tipo y tags numerados.",
           "electrical": "Genere una secuencia de equipos eléctricos con tags numerados.",
           "maintenance": "Genere una secuencia de equipos con el mismo tipo y tags numerados.",
@@ -1692,13 +1692,13 @@
         "capacity": "Capacidad"
       },
       "placeholders": {
-        "name": "Ej.: Cancha 1 — cubierta",
+        "name": "Ej.: Espacio 1 — cubierto",
         "tag": "Ej.: C-01",
         "location": "Ej.: Bloque A, planta baja"
       },
       "help": {
         "unit": "Sitio físico de este recurso (sede, sucursal). Se crea automáticamente al registrar el cliente; la gestión de unidades vendrá después.",
-        "category": "Tipo del recurso (ej.: Cancha de tenis). Defina tipos en Activos → Tipos.",
+        "category": "Tipo del recurso (ej.: Área exterior). Defina tipos en Activos → Tipos.",
         "family": "Familia de atributos (espacios, bienes, eléctricos…). Controla campos extra del formulario.",
         "name": "Nombre amigable mostrado en la agenda y listas.",
         "tag": "Código corto único (ej.: C-01).",
@@ -1714,7 +1714,7 @@
         "queueEnabled": "Si está activo, los clientes entran en una fila FIFO para reservar este espacio a la hora de apertura. Desactivado por defecto.",
         "queueOpeningTime": "Hora del día en que abren las reservas (zona de Brasilia). La sala de espera abre 30 minutos antes.",
         "requiresMaintenanceHint": "Este recurso podrá vincularse a planes PMOC y órdenes de servicio.",
-        "rentalType": "Espacio (cancha/sala) o bien (equipo prestado).",
+        "rentalType": "Espacio (sala o área exterior) o bien (equipo prestado).",
         "totalQuantity": "Cantidad disponible para reserva simultánea (bienes) o capacidad lógica.",
         "stockQuantity": "Cantidad de este bien. El lote crea un único recurso con este stock, no ítems numerados."
       },
@@ -1801,7 +1801,7 @@
         "totalQuantity": "Cantidad total"
       },
       "rentalTypes": {
-        "Location": "Espacio (cancha, sala, pista)",
+        "Location": "Espacio (sala, área exterior o pista)",
         "Good": "Bien (chaleco, pelota, contenedor)"
       },
       "actions": {
@@ -2537,7 +2537,7 @@
       "add": "+ Añadir ítem",
       "addFirst": "Añadir el primer ítem",
       "label": "Nombre visible",
-      "labelPlaceholder": "Ej.: Alquilar cancha de tenis",
+      "labelPlaceholder": "Ej.: Reservar un espacio",
       "functionality": "Funcionalidad",
       "destination": "Destino",
       "destinationGeneralAgenda": "Agenda general",
@@ -2845,7 +2845,7 @@
       "families": {
         "hint": "Elija al menos una familia de recursos. Define los formularios de activos.",
         "descriptions": {
-          "spaces": "Canchas, salas y espacios reservables.",
+          "spaces": "Salas, áreas exteriores y otros espacios reservables.",
           "electrical": "Equipos e instalaciones eléctricas.",
           "goods": "Bienes, contenedores e ítems físicos.",
           "generic": "Recursos sin categoría específica."
@@ -2863,7 +2863,7 @@
         "primaryColor": "Color primario",
         "accentColor": "Color de acento",
         "welcomeTagline": "Frase de bienvenida (opcional)",
-        "welcomeTaglinePlaceholder": "Ej.: Reserva tu cancha en pocos toques",
+        "welcomeTaglinePlaceholder": "Ej.: Reserva un espacio en pocos toques",
         "adminFullName": "Nombre del admin",
         "adminFullNamePlaceholder": "Ej.: María Silva",
         "adminEmail": "Correo del admin"
@@ -2935,7 +2935,7 @@
     "teacherLessons": {
       "title": "Clases",
       "description": "Cree o elimine clases solo para la fecha seleccionada. El horario semanal no cambiará.",
-      "court": "Cancha",
+      "court": "Espacio",
       "date": "Fecha",
       "availableTime": "Horario disponible",
       "chooseTime": "Seleccione un horario",
@@ -3009,6 +3009,10 @@
       "templatesFineEditRentable": "Editar grilla de",
       "weeklyConfigHint": "Horario estándar y Grilla personalizada se repiten por día semanal. La Agenda del día solo cambia una fecha.",
       "dayTitle": "Agenda del día",
+      "occupancyKindLabel": "Tipo",
+      "occupancyKinds": {
+        "open": "Abierto"
+      },
       "dayEmpty": "Sin horarios en este día. Cree la grilla en Configuración semanal.",
       "dayEmptyTitle": "Ningún horario en este día",
       "dayEmptyDescription": "En Configuración semanal, cree la grilla. Los horarios de este día aparecen automáticamente.",
@@ -3155,7 +3159,7 @@
       "description": "Registre espacios e ítems alquilables de la operación.",
       "add": "Añadir recurso",
       "edit": "Editar recurso",
-      "formDescription": "Un espacio (cancha, sala) o ítem alquilable. No use esta pantalla para inventario general.",
+      "formDescription": "Un espacio (sala o área exterior) o ítem alquilable. No use esta pantalla para inventario general.",
       "saveCreate": "Crear recurso",
       "saveEdit": "Guardar recurso",
       "emptyTitle": "Ningún recurso disponible para alquiler",
@@ -3171,7 +3175,7 @@
       "typeGood": "Ítem alquilable",
       "form": {
         "name": "Nombre",
-        "namePlaceholder": "Ej.: Cancha 1",
+        "namePlaceholder": "Ej.: Espacio 1",
         "tag": "Identificador",
         "tagPlaceholder": "Ej.: C-01",
         "unit": "Unidad",
@@ -3248,7 +3252,7 @@
       "blockSize": "Tamaño del bloque",
       "width": "Ancho",
       "height": "Alto",
-      "courtPreset": "Cancha 2:1",
+      "courtPreset": "Rectángulo 2:1",
       "widePreset": "Rectangular",
       "squarePreset": "Cuadrado",
       "stripPreset": "Franja",
