@@ -2374,7 +2374,7 @@ export function TenantPortalAgendaPage() {
               {effectiveCancelCutoffHours(pendingCancelReservation) !== null ? (
                 <p className="text-sm text-muted-foreground">
                   {t("tenantPortal.agenda.cancelEffectiveCutoff", {
-                    hours: effectiveCancelCutoffHours(pendingCancelReservation),
+                    count: effectiveCancelCutoffHours(pendingCancelReservation),
                   })}
                 </p>
               ) : null}
