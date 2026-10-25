@@ -9,7 +9,7 @@ import {
   Routes,
 } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
-import { AxiosError } from "axios"
+import { AxiosError, AxiosHeaders } from "axios"
 
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
@@ -161,7 +161,7 @@ describe("CustomerAppLayout session tenant", () => {
         status: 404,
         statusText: "Not Found",
         headers: {},
-        config: { headers: {} },
+        config: { headers: new AxiosHeaders() },
       }),
     )
     render(
@@ -211,7 +211,7 @@ describe("CustomerAppLayout session tenant", () => {
         status: 404,
         statusText: "Not Found",
         headers: {},
-        config: { headers: {} },
+        config: { headers: new AxiosHeaders() },
       }),
     )
     render(
