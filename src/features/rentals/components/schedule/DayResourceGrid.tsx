@@ -402,11 +402,13 @@ function RowCells({
                       status pill fits in a one-row (46px) card. */}
                   <span className="block truncate text-xs text-muted-foreground">
                     {itemLabel ? `${itemLabel} · ` : ""}
-                    {item.status === "booked" ? (
-                      <span className="tabular-nums">{timeRangeLabel}</span>
-                    ) : (
+                    <span className="tabular-nums">{timeRangeLabel}</span>
+                    {item.status === "booked" ? null : (
                       <>
-                        {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                        {" · "}
+                        <span>
+                          {t("rentals.schedule.occupancyKindLabel")}: {kindLabel}
+                        </span>
                       </>
                     )}
                   </span>

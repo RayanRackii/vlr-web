@@ -139,6 +139,17 @@ describe("SchedulePolicyPanel", () => {
     })
   })
 
+  it.each(["00:00", "24:00"])("keeps every typed digit in the close time %s", async (closeTime) => {
+    const user = userEvent.setup()
+    renderPanel()
+    const input = screen.getByLabelText(i18n.t("rentals.schedule.policy.closeTime"))
+
+    await user.clear(input)
+    await user.type(input, closeTime)
+
+    expect(input).toHaveValue(closeTime)
+  })
+
   it("keeps the full stored duration list in the field", () => {
     renderPanel("60,120,240")
 

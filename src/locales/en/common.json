@@ -3210,6 +3210,7 @@
         "allowedDurations": "Durations: {{durations}}",
         "capacity_one": "Capacity: {{count}} person",
         "capacity_other": "Capacity: {{count}} people",
+        "capacityUnknown": "Capacity not provided",
         "durationHours": "{{count}} h",
         "durationMinutes": "{{count}} min"
       },
