@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { buildRentalResourceFormValues } from "./rentalResourceFormDefaults"
+import { rentalAssetSchema } from "@/features/rentals/services/scheduleService"
 
 const SPACES = "11111111-1111-4111-8111-111111111111"
 const GOODS = "22222222-2222-4222-8222-222222222222"
@@ -20,5 +21,20 @@ describe("buildRentalResourceFormValues family", () => {
   it("falls back to the single family when the API omits familyId", () => {
     const editing = { id: "r1", name: "Sala", unitId: "u" } as unknown as AdminRentalAsset
     expect(buildRentalResourceFormValues(editing, [], [], [families[0]!]).familyId).toBe(SPACES)
+  })
+})
+
+describe("rentalAssetSchema familyId", () => {
+  it("accepts seeded non-RFC family ids", () => {
+    const parsed = rentalAssetSchema.safeParse({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      name: "Projetor",
+      isActive: true,
+      familyId: "11111111-1111-1111-1111-111111111103",
+    })
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.familyId).toBe("11111111-1111-1111-1111-111111111103")
   })
 })
