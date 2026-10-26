@@ -148,7 +148,7 @@ describe("PortalCartPage validity gate", () => {
     expect(back).toBeEnabled()
   })
 
-  it("wraps line items in cards and keeps the submit bar sticky on mobile", async () => {
+  it("wraps line items in cards and pins the submit bar on mobile", async () => {
     seedCart()
     renderCart()
 
@@ -159,9 +159,9 @@ describe("PortalCartPage validity gate", () => {
     const submit = screen.getByRole("button", {
       name: i18n.t("tenantPortal.catalog.submitOrder"),
     })
-    const stickyBar = submit.closest("div.sticky")
+    const stickyBar = submit.closest("div.fixed")
     expect(stickyBar).not.toBeNull()
-    expect(stickyBar).toHaveClass("bottom-0", "md:static")
+    expect(stickyBar).toHaveClass("fixed", "bottom-0", "md:static")
   })
 
   it("hides checkout controls when the cart is empty", async () => {

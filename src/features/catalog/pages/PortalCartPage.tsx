@@ -149,7 +149,7 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 pb-24 md:pb-0">
+    <div className="mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
       <Button
         type="button"
         variant="ghost"
@@ -252,7 +252,7 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <div className="sticky bottom-0 -mx-4 space-y-3 border-t border-border bg-background px-4 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+            <div className="fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
               <p className="text-base font-semibold text-foreground">
                 {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
               </p>

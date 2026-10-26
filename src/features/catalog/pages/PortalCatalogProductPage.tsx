@@ -107,7 +107,7 @@ export function PortalCatalogProductPage() {
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 pb-20 md:pb-0">
+    <div className="mx-auto w-full max-w-4xl space-y-6 pb-24 md:pb-0">
       <Button
         type="button"
         variant="ghost"
@@ -140,7 +140,7 @@ export function PortalCatalogProductPage() {
             ) : null}
           </div>
 
-          <div className="sticky bottom-0 -mx-4 flex items-center gap-2 border-t border-border bg-background px-4 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+          <div className="fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
             <CatalogQuantityField
               className="h-11 w-24"
               quantity={quantity}

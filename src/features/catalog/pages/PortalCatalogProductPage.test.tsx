@@ -61,7 +61,7 @@ describe("PortalCatalogProductPage layout", () => {
     getMock.mockResolvedValue(product)
   })
 
-  it("lays the gallery and details side by side from md and keeps the add-to-cart row sticky on mobile", async () => {
+  it("lays the gallery and details side by side from md and pins the add-to-cart row on mobile", async () => {
     renderPage()
 
     const name = await screen.findByRole("heading", { name: "Raquete" })
@@ -72,9 +72,9 @@ describe("PortalCatalogProductPage layout", () => {
     const addToCart = screen.getByRole("button", {
       name: i18n.t("tenantPortal.catalog.addToCart"),
     })
-    const stickyRow = addToCart.closest("div.sticky")
+    const stickyRow = addToCart.closest("div.fixed")
     expect(stickyRow).not.toBeNull()
-    expect(stickyRow).toHaveClass("bottom-0", "md:static")
+    expect(stickyRow).toHaveClass("fixed", "bottom-0", "md:static")
   })
 
   it("gives the quantity stepper buttons a 44px tap target", async () => {
