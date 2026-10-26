@@ -78,13 +78,19 @@ describe("UnknownPathRoute", () => {
     })
   })
 
-  it("sends a signed-out unknown URL to the public home", () => {
+  it("shows a standalone 404 page for a signed-out unknown URL, not the app chrome", () => {
     renderAt("/nao-existe")
     expect(
-      screen.getByRole("heading", { name: "public-home" }),
+      screen.getByRole("heading", { name: i18n.t("notFound.title") }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("heading", { name: i18n.t("notFound.title") }),
+      screen.queryByRole("heading", { name: "public-home" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: i18n.t("notFound.home") }),
+    ).toHaveAttribute("href", "/")
+    expect(
+      screen.queryByRole("button", { name: i18n.t("account.openMenu") }),
     ).not.toBeInTheDocument()
   })
 

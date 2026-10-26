@@ -96,6 +96,16 @@ describe("TenantPortalLayout load failure handling", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("sends the home link to the public landing instead of looping back to the dead tenant slug", async () => {
+    fetchBranding.mockRejectedValue(notFoundAxiosError())
+    renderPortal(["/t/naoexiste"])
+
+    const homeLink = await screen.findByRole("link", {
+      name: i18n.t("notFound.home"),
+    })
+    expect(homeLink).toHaveAttribute("href", "/")
+  })
+
   it("shows a retry button for a non-404 failure and refetches on click", async () => {
     fetchBranding.mockRejectedValueOnce(new Error("network down"))
     renderPortal(["/t/ficc"])

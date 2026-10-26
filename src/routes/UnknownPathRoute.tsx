@@ -1,12 +1,12 @@
-import { Navigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { AuthenticatedNotFoundPage } from "@/components/layout/AuthenticatedNotFoundPage"
 import { MainLayout } from "@/components/layout/MainLayout"
+import { PublicNotFoundPage } from "@/components/layout/PublicNotFoundPage"
 import { useAuth } from "@/contexts/AuthContext"
 
 /**
- * Public unknown URLs stay on the marketing home.
+ * Signed-out visitors see a standalone 404 (no admin chrome).
  * Signed-in staff stay in the app shell and see a not-found page.
  */
 export function UnknownPathRoute() {
@@ -22,7 +22,7 @@ export function UnknownPathRoute() {
   }
 
   if (user === null) {
-    return <Navigate to="/" replace />
+    return <PublicNotFoundPage />
   }
 
   return (

@@ -6,11 +6,18 @@ import { Button } from "@/components/ui/button"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
+type PortalNotFoundRouteProps = {
+  /** Set when the tenant slug itself does not exist, so "home" leaves the dead subdomain instead of looping back to it. */
+  tenantExists?: boolean
+}
+
 /** Portal-only fallback; it never redirects into the staff application. */
-export function PortalNotFoundRoute() {
+export function PortalNotFoundRoute({
+  tenantExists = true,
+}: PortalNotFoundRouteProps) {
   const { t } = useTranslation()
   const { subdomain } = useParams<{ subdomain: string }>()
-  const home = subdomain ? tenantPortalPath(subdomain) : "/"
+  const home = subdomain && tenantExists ? tenantPortalPath(subdomain) : "/"
 
   return (
     <section className="mx-auto flex min-h-64 w-full max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
