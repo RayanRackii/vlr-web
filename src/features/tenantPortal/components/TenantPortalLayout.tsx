@@ -223,7 +223,7 @@ export function TenantPortalLayout() {
       : undefined
 
     return (
-      <div className="min-h-screen text-foreground" style={themeStyle}>
+      <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
         <AuthSplitShell
           brandPanelStyle={brandPanelStyle}
           brandPanel={
@@ -281,7 +281,7 @@ export function TenantPortalLayout() {
   }
 
   return (
-    <div className="min-h-screen text-foreground" style={themeStyle}>
+    <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
       <TenantPortalChromeHeader
         subdomain={subdomain}
         portalBasePath={portalBasePath}

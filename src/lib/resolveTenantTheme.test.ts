@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  contrastRatio,
   parseCssHex,
   relativeLuminance,
 } from "@/lib/colorUtils"
@@ -9,6 +10,7 @@ import { resolveTenantTheme } from "@/lib/resolveTenantTheme"
 const DARK_BRAND = "#0B1F3A"
 const LIGHT_BRAND = "#E8F4FF"
 const CYAN = "#22D3EE"
+const PALE_LIME = "#D4F56A"
 
 function lastGradientHex(background: string): string {
   const matches = background.match(/#[0-9a-fA-F]{6}/g)
@@ -214,6 +216,19 @@ describe("resolveTenantTheme", () => {
     expect(luminanceOfBackground(light.pageBackground)).toBeGreaterThan(
       luminanceOfBackground(dark.pageBackground),
     )
+  })
+
+  it("darkens a pale brand color in light theme so buttons don't blend into the white surface", () => {
+    const tokens = resolveTenantTheme({
+      primaryColor: PALE_LIME,
+      secondaryColor: PALE_LIME,
+      resolvedTheme: "light",
+    })
+
+    const fill = parseCssHex(tokens.primary)!
+    const foreground = parseCssHex(tokens.primaryForeground)!
+    expect(contrastRatio(fill, { r: 255, g: 255, b: 255 })).toBeGreaterThanOrEqual(3)
+    expect(contrastRatio(fill, foreground)).toBeGreaterThanOrEqual(4.5)
   })
 
   it("ignores an unparseable logo background and keeps the tenant-color dark canvas", () => {

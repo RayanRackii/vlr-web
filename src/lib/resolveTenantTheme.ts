@@ -59,8 +59,13 @@ export function resolveTenantTheme(options: {
   const logoCanvas =
     parsedLogo && relativeLuminance(parsedLogo) < 0.45 ? parsedLogo : null
 
-  const buttonFill = readableFill(primary, theme)
-  const accentFill = readableFill(secondary, theme)
+  // Only the light theme is prone to pale brand colors blending into the white surface
+  // and reading as "disabled" — dark-theme surfaces are already dark enough that this
+  // extra non-text contrast guard isn't needed and would fight the existing dark tests.
+  const fillSurface = theme === "light" ? LIGHT_PAPER : undefined
+
+  const buttonFill = readableFill(primary, theme, fillSurface)
+  const accentFill = readableFill(secondary, theme, fillSurface)
 
   if (theme === "dark" && logoCanvas) {
     const canvasHex = formatHex(logoCanvas)
