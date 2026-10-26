@@ -129,6 +129,7 @@ export function PortalCatalogProductCard({
         </div>
         <LoadingButton
           type="button"
+          size="lg"
           className="w-full text-primary-foreground hover:opacity-90"
           style={{ backgroundColor: primary }}
           onClick={onAdd}

@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
+import { CATALOG_CART_MAX_QUANTITY } from "@/features/catalog/cart"
 import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
 import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -61,13 +63,13 @@ describe("PortalCatalogProductPage layout", () => {
     getMock.mockResolvedValue(product)
   })
 
-  it("lays the gallery and details side by side from md and pins the add-to-cart row on mobile", async () => {
+  it("lays the gallery and details side by side from lg and pins the add-to-cart row on mobile", async () => {
     renderPage()
 
     const name = await screen.findByRole("heading", { name: "Raquete" })
     const columns = name.closest("div.space-y-4")?.parentElement
     expect(columns).not.toBeNull()
-    expect(columns).toHaveClass("md:grid-cols-2")
+    expect(columns).toHaveClass("lg:grid-cols-2")
 
     const addToCart = screen.getByRole("button", {
       name: i18n.t("tenantPortal.catalog.addToCart"),
@@ -86,5 +88,52 @@ describe("PortalCatalogProductPage layout", () => {
         name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
       }),
     ).toHaveClass("h-11")
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.quantityIncrease") }),
+    ).toHaveClass("size-11")
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.quantityDecrease") }),
+    ).toHaveClass("size-11")
+  })
+
+  it("steps the quantity with the -/+ buttons and clamps at the bounds", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Raquete" })
+
+    const quantity = screen.getByRole("spinbutton", {
+      name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
+    })
+    const decrease = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.quantityDecrease"),
+    })
+    const increase = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.quantityIncrease"),
+    })
+
+    expect(decrease).toBeDisabled()
+    expect(quantity).toHaveValue(1)
+
+    await user.click(increase)
+    expect(quantity).toHaveValue(2)
+    expect(decrease).toBeEnabled()
+
+    await user.click(decrease)
+    expect(quantity).toHaveValue(1)
+    expect(decrease).toBeDisabled()
+
+    for (let i = 1; i < CATALOG_CART_MAX_QUANTITY; i += 1) {
+      await user.click(increase)
+    }
+    expect(quantity).toHaveValue(CATALOG_CART_MAX_QUANTITY)
+    expect(increase).toBeDisabled()
+  })
+
+  it("shows a generic placeholder when the product has no images", async () => {
+    renderPage()
+    await screen.findByRole("heading", { name: "Raquete" })
+
+    expect(screen.getByLabelText(i18n.t("tenantPortal.catalog.noImage"))).toBeInTheDocument()
+    expect(document.querySelector("img")).toBeNull()
   })
 })
