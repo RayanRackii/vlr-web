@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss"
 import animate from "tailwindcss-animate"
+import plugin from "tailwindcss/plugin"
 
 export default {
   darkMode: ["class"],
@@ -93,5 +94,12 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    // Touch pointers (phones/tablets) need larger hit targets than mouse pointers;
+    // `coarse:` lets editor controls grow only where there's no mouse precision.
+    plugin(({ addVariant }) => {
+      addVariant("coarse", "@media (pointer: coarse)")
+    }),
+  ],
 } satisfies Config

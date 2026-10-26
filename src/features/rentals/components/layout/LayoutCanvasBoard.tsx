@@ -9,6 +9,8 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
   orderCanvasItemsForReading,
+  snapMovePosition,
+  snapResizeSize,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
   portalPickAvailableClass,
@@ -143,18 +145,31 @@ export function LayoutCanvasBoard({
       const tileDrag = tileDragRef.current
       if (tileDrag) {
         const point = clientToPercent(event.clientX, event.clientY)
+        const siblings = itemsRef.current.filter(
+          (item) => item.rentalAssetId !== tileDrag.rentalAssetId,
+        )
         if (tileDrag.kind === "move") {
+          const snapped = snapMovePosition(
+            point.x - tileDrag.offsetX,
+            point.y - tileDrag.offsetY,
+            tileDrag.startW,
+            tileDrag.startH,
+            siblings,
+          )
           onMoveRef.current?.(
             tileDrag.rentalAssetId,
-            clampPercent(point.x - tileDrag.offsetX, tileDrag.startW),
-            clampPercent(point.y - tileDrag.offsetY, tileDrag.startH),
+            clampPercent(snapped.xPercent, tileDrag.startW),
+            clampPercent(snapped.yPercent, tileDrag.startH),
           )
           return
         }
+        const rawWidth = Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX))
+        const rawHeight = Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY))
+        const snappedSize = snapResizeSize(tileDrag.startX, tileDrag.startY, rawWidth, rawHeight, siblings)
         onResizeRef.current?.(
           tileDrag.rentalAssetId,
-          Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX)),
-          Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY)),
+          Math.min(100 - tileDrag.startX, snappedSize.widthPercent),
+          Math.min(100 - tileDrag.startY, snappedSize.heightPercent),
         )
         return
       }
@@ -360,7 +375,7 @@ export function LayoutCanvasBoard({
                   <button
                     type="button"
                     aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive"
+                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:size-11"
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}
@@ -376,7 +391,7 @@ export function LayoutCanvasBoard({
                 {mode === "edit" ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70"
+                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70 coarse:size-11"
                     onPointerDown={(event) => {
                       startTileDrag(event, item, "resize")
                     }}
@@ -390,7 +405,7 @@ export function LayoutCanvasBoard({
           <button
             type="button"
             aria-label="resize-canvas"
-            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
+            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm coarse:size-11"
             onPointerDown={startFrameDrag}
           />
         ) : null}
