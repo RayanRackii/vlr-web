@@ -41,15 +41,23 @@ export type CanvasBoardItem = {
   artUrl?: string | null
   /** Optional semantic icon for tiles without visual art. */
   icon?: LucideIcon | null
+  /** The template's configured color, shown on the placeholder icon so unpublished shapes still read apart from each other. */
+  accentColor?: string | null
 }
 
-function CanvasTileArt({ artUrl, Icon }: { artUrl?: string | null; Icon?: LucideIcon | null }) {
+function CanvasTileArt({ artUrl, Icon, accentColor }: { artUrl?: string | null; Icon?: LucideIcon | null; accentColor?: string | null }) {
   const [failed, setFailed] = useState(false)
   if (artUrl && !failed) {
     return <img src={artUrl} alt="" onError={() => setFailed(true)} className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" />
   }
   const Placeholder = Icon ?? ImageOff
-  return <Placeholder className="pointer-events-none size-5 text-muted-foreground/70" aria-hidden />
+  return (
+    <Placeholder
+      className="pointer-events-none size-5 text-muted-foreground/70"
+      style={Icon && accentColor ? { color: accentColor } : undefined}
+      aria-hidden
+    />
+  )
 }
 
 type TileDrag = {
@@ -313,7 +321,7 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} accentColor={item.accentColor} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}

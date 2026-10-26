@@ -1,6 +1,6 @@
 import { bookingEndClock, displayEndClock } from "@/lib/tenantTimeZone"
 /* eslint-disable react-hooks/set-state-in-effect */
-import { CircleDotIcon, LayoutTemplateIcon, XIcon, type LucideIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
+import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVisualIconMap"
 import { fetchDailyAvailability, fetchPublicBookingMap, fetchPublicBookingMaps, visualArtUrl, type DailyAvailability, type PublicMap } from "@/features/rentals/services/resourceVisualService"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
@@ -28,10 +29,6 @@ const periodMatches = (start: string, period: Period) => { const hour = Number(s
 const quoteIsCurrent = (expiresAt: string | undefined) => Boolean(expiresAt && Date.parse(expiresAt) > Date.now())
 const EMPTY_ASSETS: readonly PortalRentalAsset[] = []
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < 768
-const VISUAL_ICON_MAP: Record<string, LucideIcon> = {
-  "circle-dot": CircleDotIcon,
-  "layout-template": LayoutTemplateIcon,
-}
 
 export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, onBooked }: Props) {
   const { t } = useTranslation()
@@ -101,7 +98,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
     if (resource.totalQuantity > 1 && window) details.push(t("bookingMap.unitsLeft", { left: window.availableQuantity, total: resource.totalQuantity }))
     return details.join(" · ")
   }
-  const boardItems = mapItems.map((item) => { const result = summary(item.rentalAssetId); const revision = item.visualTemplateRevisionId ? visualById.get(item.visualTemplateRevisionId) : undefined; const resource = resourceById.get(item.rentalAssetId); const details = resource ? tileDetails(resource, result) : ""; return { key: item.id, rentalAssetId: item.rentalAssetId, label: item.assetName, footer: details ? `${item.assetName} · ${details}` : null, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex, selected: selectedId === item.rentalAssetId, available: result.free.length > 0, disabled: availabilityLoading, artUrl: revision ? visualArtUrl(revision.id, revision.artSha256) : null, icon: revision ? VISUAL_ICON_MAP[revision.defaultIcon] ?? null : null } })
+  const boardItems = mapItems.map((item) => { const result = summary(item.rentalAssetId); const revision = item.visualTemplateRevisionId ? visualById.get(item.visualTemplateRevisionId) : undefined; const resource = resourceById.get(item.rentalAssetId); const details = resource ? tileDetails(resource, result) : ""; return { key: item.id, rentalAssetId: item.rentalAssetId, label: item.assetName, footer: details ? `${item.assetName} · ${details}` : null, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex, selected: selectedId === item.rentalAssetId, available: result.free.length > 0, disabled: availabilityLoading, artUrl: revision ? visualArtUrl(revision.id, revision.artSha256) : null, icon: revision ? VISUAL_ICON_MAP[revision.defaultIcon] ?? null : null, accentColor: revision?.defaultColor ?? null } })
   const canContinue = selectedWindow !== null && selectedWindow.amount >= 0 && !submitting && !availabilityLoading && !requoteLoading && Boolean(availability?.quoteExpiresAt && Date.parse(availability.quoteExpiresAt) > now) && queue.canReserve
   return (
     <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
