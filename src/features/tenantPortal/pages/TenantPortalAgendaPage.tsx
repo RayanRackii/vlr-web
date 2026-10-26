@@ -2163,7 +2163,7 @@ export function TenantPortalAgendaPage() {
         <FormSkeleton fields={4} />
       ) : (
         <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-[1fr_320px] md:items-start">
+        <div className="space-y-6 md:grid md:grid-cols-[1fr_320px] md:items-start md:gap-6 md:space-y-0">
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1 text-sm">
@@ -2636,9 +2636,10 @@ export function TenantPortalAgendaPage() {
           ) : null}
         </div>
 
+        {/* <md: `contents` + block parent so the sticky CTA's constraint box is the whole booking section, not a grid row. */}
         <div className="space-y-3 max-md:contents md:sticky md:top-16 md:self-start">
           {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
-          <div className="flex min-h-11 items-center">
+          <div className="flex min-h-11 items-center max-md:mt-6">
             {quote.status === "loading" ? (
               <p className="text-sm text-muted-foreground">
                 {t("tenantPortal.agenda.quoteLoading")}
