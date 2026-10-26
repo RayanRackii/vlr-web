@@ -58,6 +58,7 @@ export function LoginPage() {
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
+  const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
   const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
   const companySchema = useMemo(
     () =>
@@ -159,6 +160,8 @@ export function LoginPage() {
     const email = form.getValues("email").trim()
     const emailValid = await form.trigger("email")
     if (!emailValid || email.length === 0) {
+      setShowForgotEmailHint(true)
+      form.setFocus("email")
       return
     }
 
@@ -281,6 +284,11 @@ export function LoginPage() {
                     {...field}
                   />
                 </FormControl>
+                {showForgotEmailHint && !forgotPasswordEmailValid ? (
+                  <FormDescription role="status">
+                    {t("auth.login.forgotEmailHint")}
+                  </FormDescription>
+                ) : null}
                 <FormMessage />
               </FormItem>
             )}
@@ -336,29 +344,19 @@ export function LoginPage() {
             {t("auth.login.submit")}
           </FormPrimaryButton>
 
-          <div
+          <LoadingButton
+            type="button"
+            variant="ghost"
+            className="h-11 w-full"
+            disabled={isSubmitting}
+            loading={isSendingReset}
+            loadingLabel={t("auth.login.forgotSubmitting")}
             onClick={() => {
-              if (forgotPasswordEmailValid || isSubmitting || isSendingReset) {
-                return
-              }
-              void form.trigger("email")
+              void onForgotPassword()
             }}
           >
-            <FormPrimaryButton
-              type="button"
-              variant="ghost"
-              className="h-11 w-full"
-              isValid={forgotPasswordEmailValid}
-              loading={isSendingReset}
-              loadingLabel={t("auth.login.forgotSubmitting")}
-              disabled={isSubmitting}
-              onClick={() => {
-                void onForgotPassword()
-              }}
-            >
-              {t("auth.login.forgotPassword")}
-            </FormPrimaryButton>
-          </div>
+            {t("auth.login.forgotPassword")}
+          </LoadingButton>
         </form>
       </Form>
       )}

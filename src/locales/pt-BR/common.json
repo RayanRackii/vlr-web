@@ -248,6 +248,7 @@
       "submitting": "Entrando...",
       "forgotPassword": "Esqueci a senha",
       "forgotSubmitting": "Enviando...",
+      "forgotEmailHint": "Informe seu e-mail acima para receber o link de redefinição.",
       "validation": {
         "emailRequired": "E-mail é obrigatório.",
         "emailInvalid": "Informe um e-mail válido.",

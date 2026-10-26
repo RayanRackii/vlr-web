@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react"
 
+import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { cn } from "@/lib/utils"
@@ -56,8 +57,11 @@ export function AuthSplitShell({
           <div className="ml-auto flex shrink-0 items-center gap-1">
             {headerActions ?? (
               <>
-                <LanguageSwitcher showShortLabel />
-                <ThemeToggle />
+                <LanguageSwitcher
+                  className={headerTouchTargetClassName}
+                  showShortLabel
+                />
+                <ThemeToggle className={headerTouchTargetClassName} />
               </>
             )}
           </div>
