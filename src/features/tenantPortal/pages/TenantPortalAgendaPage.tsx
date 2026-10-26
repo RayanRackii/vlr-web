@@ -491,7 +491,7 @@ export function TenantPortalAgendaPage() {
         const priceText = formatUnitPriceText(unitPrice.amount, unitPrice.unit, tileAvailability?.currency ?? "BRL", moneyLocale, t, "bookingMap.prices")
         // NBSP between the currency symbol and the amount so the tile footer
         // never line-wraps mid-price (e.g. "R$" alone on one line).
-        byId.set(resource.rentalAssetId, priceText.replace(" ", " "))
+        byId.set(resource.rentalAssetId, priceText.replace(/(\p{Sc}) /u, "$1\u00a0").replace(/ (\p{Sc})/u, "\u00a0$1"))
       }
     }
     return byId
@@ -2630,7 +2630,7 @@ export function TenantPortalAgendaPage() {
 
             {!schedulePending && quoteUnavailable ? (
               <p className="text-sm text-muted-foreground">
-                {endDate
+                {endDate && quote.status === "ready" && quote.availableQuantity === 0
                   ? t("tenantPortal.agenda.periodIncludesBookedDay")
                   : t("tenantPortal.agenda.slotTaken")}
               </p>

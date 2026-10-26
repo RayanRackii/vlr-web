@@ -341,7 +341,7 @@ export function LayoutCanvasBoard({
                 ) : null}
                 {item.footer ? (
                   <span className="pointer-events-none min-w-0 self-stretch rounded-b-md sm:absolute sm:inset-x-0 sm:bottom-0 bg-background/95 px-1.5 py-1 text-center text-xs font-semibold leading-tight text-foreground shadow-[0_-1px_0_rgb(0_0_0_/_0.12)]">
-                    <span className="line-clamp-2 break-normal hyphens-none">{item.footer}</span>
+                    <span className="line-clamp-2 break-normal hyphens-none sm:line-clamp-1" title={item.footer}>{item.footer}</span>
                   </span>
                 ) : null}
                 {mode === "edit" && onRemove ? (
