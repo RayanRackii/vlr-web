@@ -297,7 +297,9 @@
     "errors": {
       "title": "Portal no disponible",
       "missingSubdomain": "Abra la dirección de la empresa (ej.: /t/rolvix-sp).",
-      "tenantNotFound": "Empresa no encontrada o inactiva."
+      "tenantNotFound": "Empresa no encontrada o inactiva.",
+      "loadFailed": "No pudimos cargar el portal ahora.",
+      "retry": "Intentar de nuevo"
     },
     "fields": {
       "name": "Nombre completo",

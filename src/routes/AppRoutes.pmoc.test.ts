@@ -37,12 +37,20 @@ describe("AppRoutes PMOC static paths", () => {
       "pmoc",
       "os",
       "pessoas-e-acesso",
-      "perfil",
       "catalogo/configuracoes",
     ]) {
       expect(appRoutesSource).toContain(
         `path="${prefix}/*" element={<RedirectTenantStaffRoute />}`,
       )
     }
+  })
+
+  it("routes perfil/* through the customer-vs-staff decision instead of a blind staff redirect", () => {
+    expect(appRoutesSource).toContain(
+      `path="perfil/*" element={<RedirectPerfilRoute />}`,
+    )
+    expect(appRoutesSource).not.toContain(
+      `path="perfil/*" element={<RedirectTenantStaffRoute />}`,
+    )
   })
 })

@@ -1268,6 +1268,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     const popup = option.closest("[data-slot='select-content']")
     expect(popup).toHaveClass("bg-popover")
     expect(popup).toHaveClass("text-popover-foreground")
+    // Popup matches the trigger width (v3-safe arbitrary value) with a 12rem floor.
+    expect(popup).toHaveClass("w-[var(--anchor-width)]")
+    expect(popup).toHaveClass("min-w-[max(12rem,var(--anchor-width))]")
   })
 
   it("creates a reservation with the selected synthetic multi-slot range", async () => {

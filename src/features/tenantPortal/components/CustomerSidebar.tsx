@@ -68,11 +68,28 @@ export function CustomerSidebar({
               location.pathname,
               location.hash,
             )
+            const href = customerNavHref(item.to, location.pathname, location.search)
+            const hashIndex = href.indexOf("#")
+            const hrefHash = hashIndex < 0 ? "" : href.slice(hashIndex)
+            const hrefBase = hashIndex < 0 ? href : href.slice(0, hashIndex)
             return (
               <Link
                 key={item.id}
-                to={customerNavHref(item.to, location.pathname, location.search)}
-                onClick={onNavigate}
+                to={href}
+                onClick={() => {
+                  // Link navigation is a no-op when the hash is already set, so the
+                  // target section's own scroll effect never re-fires — scroll it here.
+                  if (
+                    hrefHash.length > 0 &&
+                    hrefHash === location.hash &&
+                    hrefBase === `${location.pathname}${location.search}`
+                  ) {
+                    document
+                      .getElementById(hrefHash.slice(1))
+                      ?.scrollIntoView({ block: "start" })
+                  }
+                  onNavigate?.()
+                }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",

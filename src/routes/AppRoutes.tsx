@@ -22,7 +22,12 @@ import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNo
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
-import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  getHostTenantSubdomain,
+  isCustomerSignedInForTenant,
+  tenantPortalPath,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
@@ -47,6 +52,21 @@ function RedirectTenantStaffRoute() {
     ? location.pathname.slice(prefix.length) || "/dashboard"
     : "/dashboard"
   return <Navigate to={`${rootPath}${location.search}`} replace />
+}
+
+/** `perfil/*` favors the signed-in customer's profile; staff only wins when no customer session exists. */
+export function RedirectPerfilRoute() {
+  const { subdomain } = useParams<{ subdomain: string }>()
+
+  if (subdomain && isCustomerSignedInForTenant(subdomain)) {
+    return <Navigate to={tenantPortalPath(subdomain, "app/perfil")} replace />
+  }
+
+  if (hasActiveStaffSession()) {
+    return <RedirectTenantStaffRoute />
+  }
+
+  return <Navigate to={tenantPortalPath(subdomain ?? "")} replace />
 }
 
 export function AppRoutes() {
@@ -91,7 +111,7 @@ export function AppRoutes() {
         <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
         <Route path="os/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="perfil/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="perfil/*" element={<RedirectPerfilRoute />} />
         <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
         <Route element={<TenantPortalLayout />}>
           {tenantPortalManifest.routes.public.map((route) =>
