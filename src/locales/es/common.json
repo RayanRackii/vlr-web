@@ -2673,6 +2673,9 @@
       "noModules": "Sin módulos activos",
       "emptyTitle": "Aún no hay clientes",
       "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
+      "searchPlaceholder": "Buscar por nombre o subdominio...",
+      "searchEmptyTitle": "No se encontraron clientes",
+      "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
       "metrics": {
         "totalTenants": "Total de tenants",
         "activeTenants": "Tenants activos",
@@ -3510,6 +3513,8 @@
     "validation": "Ingrese el nombre y el identificador.",
     "deleteTagTitle": "¿Eliminar etiqueta?",
     "deleteTagDescription": "Esta acción no se puede deshacer.",
+    "deleteTemplateTitle": "¿Eliminar modelo?",
+    "deleteTemplateDescription": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
     "segmentsTitle": "Segmentos del tenant",
     "segmentsHelp": "Defina los segmentos que aparecen primero al elegir un modelo.",
     "enabledTemplates": "Modelos habilitados",

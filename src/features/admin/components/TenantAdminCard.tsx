@@ -86,7 +86,10 @@ export function TenantAdminCard({
           <CardTitle className="text-base">{tenant.legalName}</CardTitle>
 
           <div className="flex shrink-0 items-center gap-2">
-            <Badge variant={tenant.isActive ? "success" : "secondary"}>
+            <Badge
+              variant={tenant.isActive ? "success" : "secondary"}
+              className="min-h-11 px-3 md:min-h-5 md:px-2"
+            >
               {tenant.isActive
                 ? t("admin.dashboard.statusActive")
                 : t("admin.dashboard.statusInactive")}
@@ -96,20 +99,20 @@ export function TenantAdminCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" disabled={!tenant.isActive || isEntering} onClick={() => { void handleOpenEnvironment() }}>
+          <Button type="button" variant="outline" className="min-h-11 md:min-h-10" disabled={!tenant.isActive || isEntering} onClick={() => { void handleOpenEnvironment() }}>
             <ExternalLink className="size-4" />
             {t("admin.dashboard.actions.openEnvironment")}
           </Button>
-          <Button type="button" variant="outline" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/edit`) }}>
+          <Button type="button" variant="outline" className="min-h-11 md:min-h-10" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/edit`) }}>
             <Pencil className="size-4" />
             {t("admin.dashboard.actions.edit")}
           </Button>
-          <Button type="button" variant="outline" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/recursos-visuais`) }}>
+          <Button type="button" variant="outline" className="min-h-11 md:min-h-10" onClick={() => { void navigate(`/admin/tenants/${tenant.id}/recursos-visuais`) }}>
             {t("admin.dashboard.actions.visualResources")}
           </Button>
           <div className="ml-auto border-l pl-2">
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={onDeleteDialogOpenChange}>
-              <AlertDialogTrigger render={<Button type="button" variant="destructive" />}>
+              <AlertDialogTrigger render={<Button type="button" variant="destructive" className="min-h-11 md:min-h-10" />}>
                 <Trash2 className={cn("size-4")} />
                 {t("admin.dashboard.actions.delete")}
               </AlertDialogTrigger>

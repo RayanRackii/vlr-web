@@ -2673,6 +2673,9 @@
       "noModules": "No active modules",
       "emptyTitle": "No clients yet",
       "emptyDescription": "Provision the first tenant using the onboarding wizard.",
+      "searchPlaceholder": "Search by name or subdomain...",
+      "searchEmptyTitle": "No clients found",
+      "searchEmptyDescription": "Adjust the search by name or subdomain.",
       "metrics": {
         "totalTenants": "Total tenants",
         "activeTenants": "Active tenants",
@@ -3510,6 +3513,8 @@
     "validation": "Enter a name and slug.",
     "deleteTagTitle": "Delete tag?",
     "deleteTagDescription": "This action cannot be undone.",
+    "deleteTemplateTitle": "Delete template?",
+    "deleteTemplateDescription": "Delete \"{{name}}\"? This action cannot be undone.",
     "segmentsTitle": "Tenant segments",
     "segmentsHelp": "Set the segments shown first when selecting a template.",
     "enabledTemplates": "Enabled templates",
