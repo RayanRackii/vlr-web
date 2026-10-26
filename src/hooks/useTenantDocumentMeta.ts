@@ -6,6 +6,8 @@ export const DEFAULT_DOCUMENT_TITLE = "Rolvix"
 export const DEFAULT_FAVICON_HREF = "/favicon.svg"
 
 export type TenantDocumentMeta = {
+  /** Tenant subdomain; shown uppercased in the tab title when present. */
+  slug?: string | null
   name?: string | null
   logoSvg?: string | null
   primaryColor?: string | null
@@ -50,14 +52,15 @@ export function resolveTenantDocumentMeta(meta: TenantDocumentMeta | null | unde
   title: string
   iconHref: string
 } {
-  const name = meta?.name?.trim() ?? ""
+  const slug = meta?.slug?.trim().toUpperCase() ?? ""
+  const name = meta?.name?.trim() || slug
   if (name.length === 0) {
     return { title: DEFAULT_DOCUMENT_TITLE, iconHref: DEFAULT_FAVICON_HREF }
   }
   const sanitized = sanitizeTenantLogoSvg(meta?.logoSvg)
   const logo = sanitized ? toFaviconSvg(sanitized) : null
   return {
-    title: `${name} · ${DEFAULT_DOCUMENT_TITLE}`,
+    title: `${slug || name} · ${DEFAULT_DOCUMENT_TITLE}`,
     iconHref: logo ? svgDataUri(logo) : tenantLetterIcon(name, meta?.primaryColor),
   }
 }
@@ -79,14 +82,15 @@ export function applyDocumentMeta(title: string, iconHref: string): void {
   link.href = iconHref
 }
 
-/** Shows the tenant name and logo in the browser tab; restores Rolvix on unmount. */
+/** Shows the tenant subdomain (or name) and logo in the browser tab; restores Rolvix on unmount. */
 export function useTenantDocumentMeta(meta: TenantDocumentMeta | null | undefined): void {
+  const slug = meta?.slug ?? null
   const name = meta?.name ?? null
   const logoSvg = meta?.logoSvg ?? null
   const primaryColor = meta?.primaryColor ?? null
   useEffect(() => {
-    const { title, iconHref } = resolveTenantDocumentMeta({ name, logoSvg, primaryColor })
+    const { title, iconHref } = resolveTenantDocumentMeta({ slug, name, logoSvg, primaryColor })
     applyDocumentMeta(title, iconHref)
     return () => applyDocumentMeta(DEFAULT_DOCUMENT_TITLE, DEFAULT_FAVICON_HREF)
-  }, [name, logoSvg, primaryColor])
+  }, [slug, name, logoSvg, primaryColor])
 }

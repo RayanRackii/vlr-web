@@ -46,8 +46,9 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
   const [isExiting, setIsExiting] = useState(false)
   const [hostBranding, setHostBranding] = useState<TenantBranding | null>(null)
+  // The staff /me payload has no tenant slug; the tenant host's subdomain is the only source.
+  const [hostSubdomain] = useState(() => getHostTenantSubdomain())
   useEffect(() => {
-    const hostSubdomain = getHostTenantSubdomain()
     if (!hostSubdomain) {
       return
     }
@@ -62,11 +63,12 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hostSubdomain])
   const staffTenantName = staffHeaderContextLabel(currentUser, "")
   useTenantDocumentMeta(
-    staffTenantName
+    staffTenantName || hostSubdomain
       ? {
+          slug: hostBranding?.subdomain || hostSubdomain,
           name: staffTenantName,
           logoSvg: hostBranding?.logoSvg,
           primaryColor: hostBranding?.primaryColor,

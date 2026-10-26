@@ -63,6 +63,17 @@ describe("resolveTenantDocumentMeta", () => {
     expect(svg).toContain("#123456")
   })
 
+  it("titles the tab with the uppercased subdomain instead of the display name", () => {
+    const r = resolveTenantDocumentMeta({ slug: "ficc", name: "Foz do Iguaçu Country Club" })
+    expect(r.title).toBe("FICC · Rolvix")
+    expect(decodeURIComponent(r.iconHref)).toContain(">F</text>")
+    expect(resolveTenantDocumentMeta({ slug: " zzr14locacao " }).title).toBe("ZZR14LOCACAO · Rolvix")
+  })
+
+  it("falls back to the display name without a subdomain", () => {
+    expect(resolveTenantDocumentMeta({ slug: "", name: "Foz Club" }).title).toBe("Foz Club · Rolvix")
+  })
+
   it("ignores a non-hex color", () => {
     const svg = decodeURIComponent(
       resolveTenantDocumentMeta({ name: "x", primaryColor: 'red" onload="1' }).iconHref,
@@ -73,7 +84,7 @@ describe("resolveTenantDocumentMeta", () => {
 
 describe("useTenantDocumentMeta", () => {
   it("sets the tab and restores Rolvix on unmount", () => {
-    const { unmount } = renderHook(() => useTenantDocumentMeta({ name: "FICC" }))
+    const { unmount } = renderHook(() => useTenantDocumentMeta({ slug: "ficc", name: "Foz do Iguaçu Country Club" }))
     expect(document.title).toBe("FICC · Rolvix")
     expect(iconHref()).toMatch(/^data:image\/svg\+xml,/)
     unmount()

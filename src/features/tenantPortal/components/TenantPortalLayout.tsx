@@ -58,6 +58,7 @@ export function TenantPortalLayout() {
   const [retryNonce, setRetryNonce] = useState(0)
   useTenantDocumentMeta(
     branding && {
+      slug: branding.subdomain || subdomain,
       name: branding.displayName,
       logoSvg: branding.logoSvg,
       primaryColor: branding.primaryColor,
