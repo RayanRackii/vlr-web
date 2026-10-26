@@ -7,6 +7,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { AuthLayout } from "@/components/layout/AuthLayout"
+import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -44,6 +45,7 @@ import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantP
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
+import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
 function getLoginErrorMessage(
   error: AuthError,
@@ -208,6 +210,12 @@ export function LoginPage() {
     }
   }
 
+  async function onSignOutFromMembershipError() {
+    await signOutStaffPortal()
+    setMembershipError(false)
+    form.reset({ email: "", password: "" })
+  }
+
   function goAfterLogin() {
     void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
   }
@@ -260,17 +268,32 @@ export function LoginPage() {
         title={t("auth.invite.pickerTitle")}
         subtitle={t("auth.invite.membershipError")}
       >
-        <LoadingButton
-          type="button"
-          className="h-11 w-full"
-          loading={retryingMemberships}
-          loadingLabel={t("auth.invite.pickerSubmitting")}
-          onClick={() => {
-            void onRetryMemberships()
-          }}
-        >
-          {t("auth.invite.membershipRetry")}
-        </LoadingButton>
+        <p className="text-sm text-muted-foreground">
+          {t("auth.invite.membershipErrorHint")}
+        </p>
+        <div className="flex flex-col gap-2">
+          <LoadingButton
+            type="button"
+            className="h-11 w-full"
+            loading={retryingMemberships}
+            loadingLabel={t("auth.invite.pickerSubmitting")}
+            onClick={() => {
+              void onRetryMemberships()
+            }}
+          >
+            {t("auth.invite.membershipRetry")}
+          </LoadingButton>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full"
+            onClick={() => {
+              void onSignOutFromMembershipError()
+            }}
+          >
+            {t("auth.invite.membershipSignOut")}
+          </Button>
+        </div>
       </AuthLayout>
     )
   }
