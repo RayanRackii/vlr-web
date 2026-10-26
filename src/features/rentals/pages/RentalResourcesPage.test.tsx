@@ -797,7 +797,8 @@ describe("RentalResourcesPage", () => {
       expect(createMock).toHaveBeenCalled()
     })
     expect(createMock.mock.calls[0]?.[0]).toMatchObject({
-      cancelCutoffHours: null,
+      // "Sem prazo" is an explicit 0 so it overrides the tenant cutoff.
+      cancelCutoffHours: 0,
     })
   })
 
