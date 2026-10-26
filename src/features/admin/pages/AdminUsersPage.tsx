@@ -209,7 +209,7 @@ export function AdminUsersPage() {
         </p>
       ) : null}
 
-      <div className="rounded-lg border border-border">
+      <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -319,6 +319,82 @@ export function AdminUsersPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="space-y-2 md:hidden">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={`skeleton-card-${index}`}
+              className="space-y-2 rounded-xl border border-border p-3"
+            >
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-border p-6 text-center text-muted-foreground">
+            <Users className="size-8 opacity-50" aria-hidden="true" />
+            <p className="text-sm font-medium">
+              {t("admin.platformUsers.emptyTitle")}
+            </p>
+            <p className="text-xs">
+              {t("admin.platformUsers.emptyDescription")}
+            </p>
+          </div>
+        ) : (
+          users.map((user) => (
+            <div
+              key={user.id}
+              className="space-y-2 rounded-xl border border-border p-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium">{user.fullName}</p>
+                  <p className="break-words text-sm text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="min-h-11 min-w-11 shrink-0"
+                  aria-label={t("admin.platformUsers.actions.delete")}
+                  onClick={() => {
+                    setDeleteError(null)
+                    setUserPendingDelete(user)
+                  }}
+                >
+                  <Trash2 className="size-4 text-muted-foreground transition-colors hover:text-destructive" />
+                </Button>
+              </div>
+
+              <div className="text-sm">
+                <p>{user.tenantLegalName}</p>
+                {user.tenantSubdomain ? (
+                  <p className="text-xs text-muted-foreground">
+                    {user.tenantSubdomain}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1">
+                {user.roles.map((role) => (
+                  <Badge key={role} variant="secondary">
+                    {role}
+                  </Badge>
+                ))}
+                <Badge variant={user.isActive ? "success" : "secondary"}>
+                  {user.isActive
+                    ? t("admin.platformUsers.statusActive")
+                    : t("admin.platformUsers.statusInactive")}
+                </Badge>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <AlertDialog

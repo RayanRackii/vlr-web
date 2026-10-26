@@ -462,7 +462,7 @@ export function AdminAssetFamiliesPage() {
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-border">
+      <div className="hidden overflow-x-auto rounded-xl border border-border md:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -511,6 +511,98 @@ export function AdminAssetFamiliesPage() {
               : null}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="space-y-2 md:hidden">
+        {isLoading ? (
+          <div className="rounded-xl border border-border p-4 text-center text-sm text-muted-foreground">
+            {t("common.loading")}
+          </div>
+        ) : null}
+
+        {!isLoading && table.getRowModel().rows.length === 0 ? (
+          <div className="space-y-1 rounded-xl border border-border p-4 text-center text-muted-foreground">
+            <p className="text-sm font-medium text-foreground">
+              {t("admin.assetFamilies.emptyTitle")}
+            </p>
+            <p className="text-xs">{t("admin.assetFamilies.emptyDescription")}</p>
+          </div>
+        ) : null}
+
+        {!isLoading
+          ? table.getRowModel().rows.map((row) => {
+              const family = row.original
+              const seed = isSeedAssetFamilyKey(family.key)
+
+              return (
+                <div
+                  key={row.id}
+                  className="space-y-2 rounded-xl border border-border p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-medium">{family.key}</p>
+                        {seed ? (
+                          <Badge variant="secondary">
+                            {t("admin.assetFamilies.seedBadge")}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="break-words text-sm text-muted-foreground">
+                        {family.label}
+                      </p>
+                    </div>
+                    <Badge variant={family.isActive ? "success" : "secondary"}>
+                      {family.isActive
+                        ? t("admin.assetFamilies.statusActive")
+                        : t("admin.assetFamilies.statusInactive")}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      {t("admin.assetFamilies.columns.sortOrder")}: {family.sortOrder}
+                    </span>
+                    <span>
+                      {t("admin.assetFamilies.columns.fields")}: {family.fields.length}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="min-h-11"
+                      onClick={() => {
+                        void openEdit(family)
+                      }}
+                    >
+                      {t("admin.assetFamilies.actions.edit")}
+                    </Button>
+                    {seed ? null : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-11"
+                        aria-label={t("admin.assetFamilies.actions.deleteNamed", {
+                          label: family.label,
+                        })}
+                        onClick={() => {
+                          setDeleteError(null)
+                          setFamilyPendingDelete(family)
+                        }}
+                      >
+                        {t("admin.assetFamilies.actions.delete")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          : null}
       </div>
 
       <Dialog
