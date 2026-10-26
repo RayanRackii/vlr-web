@@ -633,7 +633,8 @@
       "cancelRequestTitle": "¿Cancelar esta solicitud?",
       "cancelRequestBody": "Confirma la cancelación de la solicitud. Esta acción no se puede deshacer.",
       "requestCancelled": "Solicitud cancelada.",
-      "cancelRequestError": "No se pudo cancelar la solicitud."
+      "cancelRequestError": "No se pudo cancelar la solicitud.",
+      "unitPrice": "{{price}} / un"
     },
     "timeZoneLabel": "hora de {{city}} ({{offset}})"
   },

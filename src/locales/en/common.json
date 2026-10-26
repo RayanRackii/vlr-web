@@ -633,7 +633,8 @@
       "cancelRequestTitle": "Cancel this request?",
       "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
       "requestCancelled": "Request canceled.",
-      "cancelRequestError": "Could not cancel the request."
+      "cancelRequestError": "Could not cancel the request.",
+      "unitPrice": "{{price}} / un"
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
