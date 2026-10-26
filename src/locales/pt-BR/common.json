@@ -297,7 +297,9 @@
     "errors": {
       "title": "Portal indisponível",
       "missingSubdomain": "Informe o endereço da empresa (ex.: /t/empresa).",
-      "tenantNotFound": "Empresa não encontrada ou inativa."
+      "tenantNotFound": "Empresa não encontrada ou inativa.",
+      "loadFailed": "Não foi possível carregar o portal agora.",
+      "retry": "Tentar novamente"
     },
     "fields": {
       "name": "Nome completo",

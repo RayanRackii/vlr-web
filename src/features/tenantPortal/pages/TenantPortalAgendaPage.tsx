@@ -2153,7 +2153,7 @@ export function TenantPortalAgendaPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-5xl">
       <PageHeader
         title={title}
         description={t("tenantPortal.agenda.subtitlePicker")}
@@ -2162,6 +2162,8 @@ export function TenantPortalAgendaPage() {
       {loading ? (
         <FormSkeleton fields={4} />
       ) : (
+        <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-[1fr_320px] md:items-start">
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1 text-sm">
@@ -2231,7 +2233,7 @@ export function TenantPortalAgendaPage() {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="min-w-[12rem]">
                   {timeWindows.map((window) => {
                     const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
                       window.startTime,
@@ -2272,6 +2274,7 @@ export function TenantPortalAgendaPage() {
                   key={minutes}
                   type="button"
                   size="sm"
+                  className="min-h-11"
                   variant={effectiveDuration === minutes ? "default" : "outline"}
                   aria-pressed={effectiveDuration === minutes}
                   disabled={schedulePending || slotsError}
@@ -2381,6 +2384,7 @@ export function TenantPortalAgendaPage() {
                           ? `${asset.name}. ${state.detail}`
                           : asset.name
                       }
+                      title={asset.name}
                       className={cn(
                         "relative min-h-11 rounded-lg border px-3 py-4 text-left text-sm font-medium",
                         state.pending && portalPickPendingClass,
@@ -2417,7 +2421,7 @@ export function TenantPortalAgendaPage() {
                           className="absolute top-1.5 right-1.5 size-3.5 text-primary"
                         />
                       ) : null}
-                      <span className="block">
+                      <span className="block truncate">
                         {asset.totalQuantity > 1
                           ? `${asset.name} ${t("tenantPortal.agenda.unitsBadge", { count: asset.totalQuantity })}`
                           : asset.name}
@@ -2630,7 +2634,9 @@ export function TenantPortalAgendaPage() {
               ) : null}
             </div>
           ) : null}
+        </div>
 
+        <div className="space-y-3 md:sticky md:top-16 md:self-start">
           {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
           <div className="flex min-h-11 items-center">
             {quote.status === "loading" ? (
@@ -2669,10 +2675,10 @@ export function TenantPortalAgendaPage() {
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
-          <div className="sticky bottom-0 z-10 border-t border-border bg-background py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:border-0 sm:bg-transparent sm:py-0 sm:pb-0">
+          <div className="sticky bottom-0 z-10 border-t border-border bg-background py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:py-0 md:pb-0">
             <LoadingButton
               type="button"
-              className="w-full sm:w-auto"
+              className="min-h-11 w-full md:w-auto"
               style={{ backgroundColor: primary }}
               loading={submitting}
               loadingLabel={t("tenantPortal.agenda.reserving")}
@@ -2693,6 +2699,8 @@ export function TenantPortalAgendaPage() {
             </LoadingButton>
           </div>
           )}
+        </div>
+        </div>
 
           <div
             id="minhas-reservas"
