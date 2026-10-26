@@ -347,8 +347,7 @@ export function LoginPage() {
           <LoadingButton
             type="button"
             variant="ghost"
-            className="h-11 w-full aria-disabled:text-muted-foreground"
-            aria-disabled={forgotPasswordEmailValid ? undefined : true}
+            className="h-11 w-full"
             disabled={isSubmitting}
             loading={isSendingReset}
             loadingLabel={t("auth.login.forgotSubmitting")}

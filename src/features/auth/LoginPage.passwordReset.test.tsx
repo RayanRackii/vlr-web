@@ -65,17 +65,17 @@ describe("LoginPage forgot password", () => {
     })
   })
 
-  it("keeps Esqueci a senha focusable but aria-disabled until the email is valid", async () => {
+  it("keeps Esqueci a senha focusable and actionable (no aria-disabled) even before the email is valid", async () => {
     const user = userEvent.setup()
     renderLogin("/login")
 
     const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
     expect(forgot).toBeEnabled()
-    expect(forgot).toHaveAttribute("aria-disabled", "true")
+    expect(forgot).not.toHaveAttribute("aria-disabled")
     expect(screen.getByRole("button", { name: "Entrar" })).toBeDisabled()
 
     await user.type(screen.getByLabelText("E-mail"), "not-an-email")
-    expect(forgot).toHaveAttribute("aria-disabled", "true")
+    expect(forgot).not.toHaveAttribute("aria-disabled")
     expect(post).not.toHaveBeenCalled()
 
     await user.clear(screen.getByLabelText("E-mail"))

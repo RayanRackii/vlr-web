@@ -71,12 +71,12 @@ describe("LoginPage validity gate", () => {
     const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
     expect(entrar).toBeDisabled()
     expect(forgot).toBeEnabled()
-    expect(forgot).toHaveAttribute("aria-disabled", "true")
+    expect(forgot).not.toHaveAttribute("aria-disabled")
 
     await user.type(screen.getByLabelText("E-mail"), "not-an-email")
     await user.type(screen.getByLabelText("Senha"), "password1")
     expect(entrar).toBeDisabled()
-    expect(forgot).toHaveAttribute("aria-disabled", "true")
+    expect(forgot).not.toHaveAttribute("aria-disabled")
     expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
 
     await user.clear(screen.getByLabelText("E-mail"))
