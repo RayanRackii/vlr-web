@@ -3484,6 +3484,20 @@
     "revision": "New revision",
     "floor": "Floor SVG art",
     "lines": "Line SVG art",
+    "net": "Divider SVG art (optional)",
+    "preview": "Preview",
+    "previewAlt": "Preview combining floor, lines and divider",
+    "shapePresetsLabel": "Start from a shape",
+    "shapePresetsHelp": "Fills floor, lines, color and icon — keep editing freely afterward.",
+    "shapePresets": {
+      "rectangleArea": "Rectangular area",
+      "courtWithLines": "Court with lines",
+      "roundTable": "Round table",
+      "squareTable": "Square table",
+      "chair": "Chair",
+      "seat": "Seat/bench",
+      "equipmentBox": "Equipment"
+    },
     "publish": "Publish",
     "draft": "Draft",
     "publishedStatus": "Published",
@@ -3523,6 +3537,8 @@
     "fromTime": "From time",
     "availableColor": "Available color",
     "takenColor": "Taken color",
+    "unavailableColor": "Unavailable color",
+    "selectedColor": "Selected color",
     "setDefaultMap": "Set default map"
   },
   "bookingMap": {

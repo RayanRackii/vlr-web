@@ -9,6 +9,8 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
   orderCanvasItemsForReading,
+  snapMovePosition,
+  snapResizeSize,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
   portalPickAvailableClass,
@@ -41,15 +43,23 @@ export type CanvasBoardItem = {
   artUrl?: string | null
   /** Optional semantic icon for tiles without visual art. */
   icon?: LucideIcon | null
+  /** The template's configured color, shown on the placeholder icon so unpublished shapes still read apart from each other. */
+  accentColor?: string | null
 }
 
-function CanvasTileArt({ artUrl, Icon }: { artUrl?: string | null; Icon?: LucideIcon | null }) {
+function CanvasTileArt({ artUrl, Icon, accentColor }: { artUrl?: string | null; Icon?: LucideIcon | null; accentColor?: string | null }) {
   const [failed, setFailed] = useState(false)
   if (artUrl && !failed) {
     return <img src={artUrl} alt="" onError={() => setFailed(true)} className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" />
   }
   const Placeholder = Icon ?? ImageOff
-  return <Placeholder className="pointer-events-none size-5 text-muted-foreground/70" aria-hidden />
+  return (
+    <Placeholder
+      className="pointer-events-none size-5 text-muted-foreground/70"
+      style={Icon && accentColor ? { color: accentColor } : undefined}
+      aria-hidden
+    />
+  )
 }
 
 type TileDrag = {
@@ -135,18 +145,31 @@ export function LayoutCanvasBoard({
       const tileDrag = tileDragRef.current
       if (tileDrag) {
         const point = clientToPercent(event.clientX, event.clientY)
+        const siblings = itemsRef.current.filter(
+          (item) => item.rentalAssetId !== tileDrag.rentalAssetId,
+        )
         if (tileDrag.kind === "move") {
+          const snapped = snapMovePosition(
+            point.x - tileDrag.offsetX,
+            point.y - tileDrag.offsetY,
+            tileDrag.startW,
+            tileDrag.startH,
+            siblings,
+          )
           onMoveRef.current?.(
             tileDrag.rentalAssetId,
-            clampPercent(point.x - tileDrag.offsetX, tileDrag.startW),
-            clampPercent(point.y - tileDrag.offsetY, tileDrag.startH),
+            clampPercent(snapped.xPercent, tileDrag.startW),
+            clampPercent(snapped.yPercent, tileDrag.startH),
           )
           return
         }
+        const rawWidth = Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX))
+        const rawHeight = Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY))
+        const snappedSize = snapResizeSize(tileDrag.startX, tileDrag.startY, rawWidth, rawHeight, siblings)
         onResizeRef.current?.(
           tileDrag.rentalAssetId,
-          Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX)),
-          Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY)),
+          Math.min(100 - tileDrag.startX, snappedSize.widthPercent),
+          Math.min(100 - tileDrag.startY, snappedSize.heightPercent),
         )
         return
       }
@@ -249,6 +272,10 @@ export function LayoutCanvasBoard({
             const picked = mode === "pick"
             const pending = picked && item.pending === true
             const unavailable = picked && item.disabled === true && !pending
+            // No free window today, distinct from `disabled` (which also covers being busy
+            // loading/locked): the tile still opens like the List view's equivalent row, but
+            // reads as taken instead of green so the map doesn't look fully available.
+            const bookedOut = picked && !unavailable && !pending && item.available === false
             const ownReservation = unavailable && item.ownReservation === true
             const selected = picked && item.selected === true && !unavailable && !pending
             const clickable = picked && !unavailable && !pending
@@ -270,7 +297,7 @@ export function LayoutCanvasBoard({
                   height: `${item.heightPercent}%`,
                   zIndex: item.zIndex + 1,
                 }
-            return (
+            const tileBody = (
               <div
                 key={item.key}
                 role={picked ? "button" : undefined}
@@ -289,15 +316,15 @@ export function LayoutCanvasBoard({
                   // that space so the detail/reason line never renders underneath it.
                   picked && item.footer && "sm:pb-6",
                   mode === "edit" &&
-                    "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                    "absolute inset-0 cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
-                  clickable && !selected && !ownReservation && portalPickAvailableClass,
+                  clickable && !selected && !ownReservation && !bookedOut && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
                   pending && portalPickPendingClass,
-                  unavailable && !ownReservation && portalPickUnavailableClass,
+                  (unavailable || bookedOut) && !ownReservation && portalPickUnavailableClass,
                   ownReservation && portalPickOwnReservationClass,
                 )}
-                style={tileStyle}
+                style={mode === "edit" ? undefined : tileStyle}
                 onPointerDown={(event) => {
                   startTileDrag(event, item, "move")
                 }}
@@ -313,7 +340,7 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} accentColor={item.accentColor} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}
@@ -348,7 +375,7 @@ export function LayoutCanvasBoard({
                   <button
                     type="button"
                     aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive"
+                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:hidden"
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}
@@ -364,12 +391,49 @@ export function LayoutCanvasBoard({
                 {mode === "edit" ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70"
+                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:hidden"
                     onPointerDown={(event) => {
                       startTileDrag(event, item, "resize")
                     }}
                   />
                 ) : null}
+              </div>
+            )
+
+            if (mode !== "edit") {
+              return tileBody
+            }
+
+            // overflow-hidden on the tile clips anything inside it, so the coarse
+            // 44px remove/resize targets live outside the tile box entirely —
+            // one above, one below — instead of competing for its corners.
+            return (
+              <div key={item.key} className="absolute" style={tileStyle}>
+                {tileBody}
+                {onRemove ? (
+                  <button
+                    type="button"
+                    aria-label="remove"
+                    className="absolute left-0 bottom-full z-10 mb-1 hidden size-11 items-center justify-center rounded-sm bg-background/80 text-sm leading-none text-muted-foreground hover:text-destructive coarse:flex"
+                    onPointerDown={(event) => {
+                      event.stopPropagation()
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onRemove(item.rentalAssetId)
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                <span
+                  aria-hidden
+                  className="absolute right-0 top-full z-10 mt-1 hidden size-11 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:flex"
+                  onPointerDown={(event) => {
+                    startTileDrag(event, item, "resize")
+                  }}
+                />
               </div>
             )
           })}
@@ -378,7 +442,7 @@ export function LayoutCanvasBoard({
           <button
             type="button"
             aria-label="resize-canvas"
-            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
+            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm coarse:size-11"
             onPointerDown={startFrameDrag}
           />
         ) : null}

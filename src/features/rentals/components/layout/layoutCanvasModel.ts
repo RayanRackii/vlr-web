@@ -52,6 +52,98 @@ export function clampCanvasWidthPercent(value: number): number {
   )
 }
 
+export const SNAP_GRID_PERCENT = 4
+export const SNAP_THRESHOLD_PERCENT = 1.5
+
+type SiblingRect = {
+  xPercent: number
+  yPercent: number
+  widthPercent: number
+  heightPercent: number
+}
+
+function snapToNearest(
+  value: number,
+  candidates: readonly number[],
+  threshold: number,
+): number {
+  let snapped = value
+  let bestDelta = threshold
+  for (const candidate of candidates) {
+    const delta = Math.abs(candidate - value)
+    if (delta < bestDelta) {
+      bestDelta = delta
+      snapped = candidate
+    }
+  }
+  return snapped
+}
+
+function gridLines(step: number): number[] {
+  const lines: number[] = []
+  for (let value = 0; value <= 100; value += step) {
+    lines.push(value)
+  }
+  return lines
+}
+
+/**
+ * While dragging a tile, pulls its top-left corner onto the nearest grid line
+ * or sibling edge (left/right edges for x, top/bottom edges for y) within
+ * `threshold` percent, so admins get alignment without hand-nudging pixels.
+ */
+export function snapMovePosition(
+  xPercent: number,
+  yPercent: number,
+  widthPercent: number,
+  heightPercent: number,
+  siblings: readonly SiblingRect[],
+  options?: { gridStep?: number; threshold?: number },
+): { xPercent: number; yPercent: number } {
+  const gridStep = options?.gridStep ?? SNAP_GRID_PERCENT
+  const threshold = options?.threshold ?? SNAP_THRESHOLD_PERCENT
+  const xCandidates = [...gridLines(gridStep), 100 - widthPercent]
+  const yCandidates = [...gridLines(gridStep), 100 - heightPercent]
+  for (const sibling of siblings) {
+    const siblingRight = sibling.xPercent + sibling.widthPercent
+    const siblingBottom = sibling.yPercent + sibling.heightPercent
+    xCandidates.push(sibling.xPercent, siblingRight, siblingRight - widthPercent, sibling.xPercent - widthPercent)
+    yCandidates.push(sibling.yPercent, siblingBottom, siblingBottom - heightPercent, sibling.yPercent - heightPercent)
+  }
+  return {
+    xPercent: snapToNearest(xPercent, xCandidates, threshold),
+    yPercent: snapToNearest(yPercent, yCandidates, threshold),
+  }
+}
+
+/**
+ * While resizing a tile from its bottom-right handle, pulls the right/bottom
+ * edge onto the nearest grid line or sibling edge, same threshold as moving.
+ */
+export function snapResizeSize(
+  xPercent: number,
+  yPercent: number,
+  widthPercent: number,
+  heightPercent: number,
+  siblings: readonly SiblingRect[],
+  options?: { gridStep?: number; threshold?: number },
+): { widthPercent: number; heightPercent: number } {
+  const gridStep = options?.gridStep ?? SNAP_GRID_PERCENT
+  const threshold = options?.threshold ?? SNAP_THRESHOLD_PERCENT
+  const rightCandidates = gridLines(gridStep)
+  const bottomCandidates = gridLines(gridStep)
+  for (const sibling of siblings) {
+    rightCandidates.push(sibling.xPercent, sibling.xPercent + sibling.widthPercent)
+    bottomCandidates.push(sibling.yPercent, sibling.yPercent + sibling.heightPercent)
+  }
+  const snappedRight = snapToNearest(xPercent + widthPercent, rightCandidates, threshold)
+  const snappedBottom = snapToNearest(yPercent + heightPercent, bottomCandidates, threshold)
+  return {
+    widthPercent: Math.max(8, snappedRight - xPercent),
+    heightPercent: Math.max(8, snappedBottom - yPercent),
+  }
+}
+
 export function fitPlacement(item: LayoutPlacement): LayoutPlacement {
   const widthPercent = Number.isFinite(item.widthPercent)
     ? Math.min(100, Math.max(8, item.widthPercent))

@@ -3484,6 +3484,20 @@
     "revision": "Nueva revisión",
     "floor": "Arte SVG del piso",
     "lines": "Arte SVG de líneas",
+    "net": "Arte SVG del divisor (opcional)",
+    "preview": "Vista previa",
+    "previewAlt": "Vista previa combinando piso, líneas y divisor",
+    "shapePresetsLabel": "Empezar desde una forma",
+    "shapePresetsHelp": "Rellena piso, líneas, color e ícono — sigue editando libremente después.",
+    "shapePresets": {
+      "rectangleArea": "Área rectangular",
+      "courtWithLines": "Cancha con líneas",
+      "roundTable": "Mesa redonda",
+      "squareTable": "Mesa cuadrada",
+      "chair": "Silla",
+      "seat": "Asiento/banco",
+      "equipmentBox": "Equipo"
+    },
     "publish": "Publicar",
     "draft": "Borrador",
     "publishedStatus": "Publicado",
@@ -3523,6 +3537,8 @@
     "fromTime": "Desde el horario",
     "availableColor": "Color disponible",
     "takenColor": "Color ocupado",
+    "unavailableColor": "Color no disponible",
+    "selectedColor": "Color seleccionado",
     "setDefaultMap": "Definir mapa predeterminado"
   },
   "bookingMap": {
