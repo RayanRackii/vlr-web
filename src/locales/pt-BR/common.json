@@ -3287,7 +3287,8 @@
         "cancelCutoffNone": "Sem prazo (voltar à política)",
         "cancelCutoffHours": "Horas antes do início",
         "cancelCutoffEffectiveNone": "Efetivo: sem prazo",
-        "cancelCutoffEffectiveHours": "Efetivo: {{hours}} horas antes do início",
+        "cancelCutoffEffectiveHours_one": "Efetivo: {{count}} hora antes do início",
+        "cancelCutoffEffectiveHours_other": "Efetivo: {{count}} horas antes do início",
         "horizonEffectiveSourceResource_one": "Em vigor: {{count}} dia (definido neste recurso)",
         "horizonEffectiveSourceResource_other": "Em vigor: {{count}} dias (definido neste recurso)",
         "horizonEffectiveSourceResource_unlimited": "Em vigor: ilimitado (definido neste recurso)",
@@ -3406,6 +3407,7 @@
       "cancelConfirmDescription": "Esta ação não pode ser desfeita.",
       "cancelConfirmDismiss": "Manter reserva",
       "cancelConfirmAction": "Cancelar reserva",
+      "cancelConfirmTotal": "Total: {{amount}}",
       "completeSuccess": "Reserva concluída.",
       "completeError": "Não foi possível concluir a reserva.",
       "statuses": {

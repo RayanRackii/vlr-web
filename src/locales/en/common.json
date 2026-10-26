@@ -3287,7 +3287,8 @@
         "cancelCutoffNone": "No cutoff (use policy)",
         "cancelCutoffHours": "Hours before the start",
         "cancelCutoffEffectiveNone": "Effective: no cutoff",
-        "cancelCutoffEffectiveHours": "Effective: {{hours}} hours before the start",
+        "cancelCutoffEffectiveHours_one": "Effective: {{count}} hour before the start",
+        "cancelCutoffEffectiveHours_other": "Effective: {{count}} hours before the start",
         "horizonEffectiveSourceResource_one": "In effect: {{count}} day (set on this resource)",
         "horizonEffectiveSourceResource_other": "In effect: {{count}} days (set on this resource)",
         "horizonEffectiveSourceResource_unlimited": "In effect: unlimited (set on this resource)",
@@ -3406,6 +3407,7 @@
       "cancelConfirmDescription": "This action cannot be undone.",
       "cancelConfirmDismiss": "Keep reservation",
       "cancelConfirmAction": "Cancel reservation",
+      "cancelConfirmTotal": "Total: {{amount}}",
       "completeSuccess": "Reservation completed.",
       "completeError": "Could not complete the reservation.",
       "statuses": {
