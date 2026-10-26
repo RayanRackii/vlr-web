@@ -372,8 +372,8 @@
       "resendToast": "If an account exists for this email, we sent a new code.",
       "backToLogin": "Back to sign in",
       "rateLimited": "Too many attempts. Try again shortly.",
-      "invalidLink": "Invalid or expired link. Request a new one.",
-      "requestNewLink": "Request a new link"
+      "invalidLink": "Invalid or expired link. Request a new code.",
+      "requestNewLink": "Request a new code"
     },
     "register": {
       "title": "Create account",
