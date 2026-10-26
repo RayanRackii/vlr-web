@@ -3236,6 +3236,7 @@
       "loadError": "Could not load resources.",
       "createSuccess": "Resource created.",
       "updateSuccess": "Resource updated.",
+      "cutoffNotSaved": "The resource was saved, but the cancellation cutoff was not applied. Please try again.",
       "createError": "Could not create the resource.",
       "updateError": "Could not update the resource.",
       "errorKinds": {

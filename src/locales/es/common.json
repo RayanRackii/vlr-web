@@ -3236,6 +3236,7 @@
       "loadError": "No se pudieron cargar los recursos.",
       "createSuccess": "Recurso creado.",
       "updateSuccess": "Recurso actualizado.",
+      "cutoffNotSaved": "El recurso se guardó, pero el plazo de cancelación no se aplicó. Inténtalo de nuevo.",
       "createError": "No se pudo crear el recurso.",
       "updateError": "No se pudo actualizar el recurso.",
       "errorKinds": {
