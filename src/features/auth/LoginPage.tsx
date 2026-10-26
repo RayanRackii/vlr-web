@@ -30,6 +30,16 @@ import {
   type PasswordResetCompanyFormValues,
 } from "@/features/auth/passwordResetCompanySchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
+import { TenantPicker } from "@/features/auth/TenantPicker"
+import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
+import {
+  PLATFORM_ADMIN_USES_ENTER,
+  StaffTenantError,
+  listMyStaffTenants,
+  selectMyStaffTenant,
+} from "@/features/users/services/staffTenantsService"
+import { toast } from "sonner"
 import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
@@ -59,6 +69,12 @@ export function LoginPage() {
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
   const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
+  const [picker, setPicker] = useState<{
+    memberships: StaffTenantMembership[]
+    initialTenantId: string
+  } | null>(null)
+  const [membershipError, setMembershipError] = useState(false)
+  const [retryingMemberships, setRetryingMemberships] = useState(false)
   const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
   const companySchema = useMemo(
     () =>
@@ -150,7 +166,60 @@ export function LoginPage() {
       return
     }
 
+    await openTenantStep()
+  }
+
+  // Accounts in more than one tenant choose where to land instead of
+  // opening whichever tenant the token happens to carry.
+  async function openTenantStep() {
+    try {
+      const list = await listMyStaffTenants()
+      if (list.memberships.length > 1) {
+        const current = list.memberships.some(
+          (membership) => membership.tenantId === list.accessTokenTenantId,
+        )
+          ? (list.accessTokenTenantId ?? "")
+          : ""
+        setMembershipError(false)
+        setPicker({ memberships: list.memberships, initialTenantId: current })
+        return
+      }
+    } catch (error: unknown) {
+      if (
+        !(
+          error instanceof StaffTenantError &&
+          error.code === PLATFORM_ADMIN_USES_ENTER
+        )
+      ) {
+        setMembershipError(true)
+        return
+      }
+    }
+
+    goAfterLogin()
+  }
+
+  async function onRetryMemberships() {
+    setRetryingMemberships(true)
+    try {
+      await openTenantStep()
+    } finally {
+      setRetryingMemberships(false)
+    }
+  }
+
+  function goAfterLogin() {
     void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
+  }
+
+  async function onPickTenant(tenantId: string) {
+    try {
+      await selectMyStaffTenant(tenantId)
+      await refreshAuthSession()
+      goAfterLogin()
+    } catch {
+      toast.error(t("auth.invite.pickerError"))
+    }
   }
 
   async function onForgotPassword() {
@@ -183,6 +252,42 @@ export function LoginPage() {
     form.clearErrors("root")
     companyForm.clearErrors("root")
     await sendReset(resetEmail, values.subdomain)
+  }
+
+  if (membershipError) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.membershipError")}
+      >
+        <LoadingButton
+          type="button"
+          className="h-11 w-full"
+          loading={retryingMemberships}
+          loadingLabel={t("auth.invite.pickerSubmitting")}
+          onClick={() => {
+            void onRetryMemberships()
+          }}
+        >
+          {t("auth.invite.membershipRetry")}
+        </LoadingButton>
+      </AuthLayout>
+    )
+  }
+
+  if (picker) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.pickerBody")}
+      >
+        <TenantPicker
+          memberships={picker.memberships}
+          initialTenantId={picker.initialTenantId}
+          onConfirm={onPickTenant}
+        />
+      </AuthLayout>
+    )
   }
 
   return (

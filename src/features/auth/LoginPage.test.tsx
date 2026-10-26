@@ -11,6 +11,15 @@ import {
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
+// Single-tenant accounts keep the direct login flow.
+vi.mock("@/features/users/services/staffTenantsService", async (orig) => ({
+  ...(await orig<object>()),
+  listMyStaffTenants: vi.fn().mockResolvedValue({
+    memberships: [],
+    accessTokenTenantId: null,
+  }),
+}))
+
 function renderLogin(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>

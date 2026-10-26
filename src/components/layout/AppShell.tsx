@@ -235,6 +235,7 @@ export function AppShell({
                 {profileTo ? (
                   <>
                     <DropdownMenuItem
+                      className="min-h-11 md:min-h-9"
                       nativeButton={false}
                       render={<Link to={profileTo} />}
                     >
@@ -246,6 +247,7 @@ export function AppShell({
                 ) : null}
 
                 <DropdownMenuItem
+                  className="min-h-11 md:min-h-9"
                   variant="destructive"
                   disabled={isSigningOut}
                   onClick={() => {

@@ -3300,7 +3300,7 @@
         "horizonEffectiveDays": "Em vigor: {{count}} dias à frente.",
         "cancelCutoffLabel": "Prazo de cancelamento",
         "cancelCutoffInherit": "Herdar da política",
-        "cancelCutoffNone": "Sem prazo (voltar à política)",
+        "cancelCutoffNone": "Sem prazo (ignora a política)",
         "cancelCutoffHours": "Horas antes do início",
         "cancelCutoffEffectiveNone": "Efetivo: sem prazo",
         "cancelCutoffEffectiveHours_one": "Efetivo: {{count}} hora antes do início",

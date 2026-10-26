@@ -77,6 +77,7 @@ export function LanguageSwitcher({
         {languageOptions.map((option) => (
           <DropdownMenuItem
             key={option.code}
+            className="min-h-11 md:min-h-9"
             onClick={() => {
               void i18n.changeLanguage(option.code)
             }}
