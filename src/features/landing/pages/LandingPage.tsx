@@ -11,7 +11,7 @@ export function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <LandingHeader />
 
-      <main className="pt-16">
+      <main className="pt-28 sm:pt-16">
         <HeroSection />
         <IntelligenceHubBridge />
         <MasterScrollStage />
