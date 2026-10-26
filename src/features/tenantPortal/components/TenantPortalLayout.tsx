@@ -16,6 +16,7 @@ import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/Ten
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { isTenantAuthPagePath } from "@/features/tenantPortal/lib/tenantAuthPagePath"
+import { readReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
 import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenantLogoSvg"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import { isAxiosError } from "@/lib/api"
@@ -139,7 +140,8 @@ export function TenantPortalLayout() {
   )
 
   if (redirectSignedIn && subdomain) {
-    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
+    const returnTo = readReturnToParam(new URLSearchParams(location.search))
+    return <Navigate to={returnTo ?? tenantPortalPath(subdomain, "app")} replace />
   }
 
   if (loading) {
