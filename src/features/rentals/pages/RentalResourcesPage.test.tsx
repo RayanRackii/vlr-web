@@ -315,6 +315,41 @@ describe("RentalResourcesPage", () => {
     expectNoForbiddenCopy(container)
   })
 
+  it.each([
+    { label: "server stores it", storedAfter: 1, expectSuccess: true },
+    { label: "server drops it (QA R18)", storedAfter: null, expectSuccess: false },
+  ])("sends cancelCutoffHours=1 from the drawer and toasts honestly when the $label", async ({ storedAfter, expectSuccess }) => {
+    const existing = {
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Projetor Horario", isActive: true, requiresDeposit: true,
+      schedulePolicy: "SlotGrid" as const, unitId: UNIT_ID, type: "Location" as const, totalQuantity: 1,
+      queueEnabled: false, queueOpeningTime: null, categoryId: CATEGORY_ID, categoryName: "Quadra",
+      familyId: FAMILY_ID, cancelCutoffHours: null, effectiveCancelCutoffHours: 2,
+    }
+    vi.mocked(toast.success).mockClear()
+    vi.mocked(toast.error).mockClear()
+    listAssetsMock.mockResolvedValue([existing])
+    updateMock.mockResolvedValue({ ...existing, cancelCutoffHours: storedAfter })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole("button", { name: /Projetor Horario/ }))
+    await openPricingTab(user)
+    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.cancelCutoffLabel") }))
+    await user.click(await screen.findByRole("option", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }))
+    await user.type(screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours")), "1")
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }))
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalled())
+    expect(updateMock.mock.calls[0]?.[1]).toHaveProperty("cancelCutoffHours", 1)
+    if (expectSuccess) {
+      expect(toast.success).toHaveBeenCalledWith(i18n.t("rentals.resources.updateSuccess"))
+      expect(toast.error).not.toHaveBeenCalled()
+    } else {
+      expect(toast.error).toHaveBeenCalledWith(i18n.t("rentals.resources.cutoffNotSaved"))
+      expect(toast.success).not.toHaveBeenCalled()
+    }
+  })
+
   it("creates a rentable without requiring or sending an identifier", async () => {
     const user = userEvent.setup()
     renderPage()

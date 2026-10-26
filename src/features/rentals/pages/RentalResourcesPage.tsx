@@ -130,8 +130,13 @@ export function RentalResourcesPage() {
         storedCapacityPeople: editing?.capacityPeople,
       })
       if (editing) {
-        await updateRentalAsset(editing.id, body)
-        toast.success(t("rentals.resources.updateSuccess"))
+        const saved = await updateRentalAsset(editing.id, body)
+        // QA R18: an API that drops cancelCutoffHours answered 200; never report a silent non-save.
+        if (body.cancelCutoffHours !== undefined && (saved.cancelCutoffHours ?? null) !== body.cancelCutoffHours) {
+          toast.error(t("rentals.resources.cutoffNotSaved"))
+        } else {
+          toast.success(t("rentals.resources.updateSuccess"))
+        }
       } else {
         await createRentalAsset(body)
         toast.success(t("rentals.resources.createSuccess"))

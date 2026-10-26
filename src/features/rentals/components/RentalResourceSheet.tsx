@@ -830,7 +830,7 @@ export function RentalResourceSheet({
             </TabsContent>
             </Tabs>
 
-            <SheetFooter className="border-t border-border bg-popover px-4">
+            <SheetFooter className="sticky -bottom-4 z-10 -mb-4 border-t border-border bg-popover px-4">
               <Button
                 type="button"
                 variant="outline"
