@@ -377,3 +377,33 @@ describe("occupancyIdFromSlot", () => {
     expect(result.reservationId).toBe("res-1")
   })
 })
+
+describe("staff booking quantity (R13 agenda)", () => {
+  const daySlot = {
+    id: "00000000-0000-0000-0000-000000000000", rentalAssetId: "kit", assetName: "Kit", date: "2026-11-01",
+    startTime: "10:00:00", endTime: "11:00:00", occupancyKindId: "k", occupancyKindKey: "open", occupancyKindLabel: "Open",
+    occupancyKindColorHex: null, isBookableByCustomer: false, label: null, status: "Booked", reservationId: "res-1",
+    isDerived: true, source: "WeeklyDefault", sourceTemplateId: null, schedulePolicy: "SlotGrid", supportsEntireRecurrence: true,
+    quantity: 2, customerName: "Ana",
+  } as Parameters<typeof occupancyFromDaySlot>[0]
+
+  it("counts units, not bookings: one ×2 booking on a 2-unit resource leaves 0 free", () => {
+    const mapped = occupancyFromDaySlot(daySlot)
+    expect(mapped).toMatchObject({ quantity: 2, customerName: "Ana", label: "Ana ×2" })
+    const [cell] = aggregateMultiUnitOccupancies([mapped], 2)
+    expect(cell).toMatchObject({ unitsBooked: 2, unitsTotal: 2, unitsFree: 0, label: "Ana ×2" })
+  })
+
+  it("sums quantities and lists customers across concurrent bookings", () => {
+    const a = occupancyFromDaySlot(daySlot)
+    const b = occupancyFromDaySlot({ ...daySlot, reservationId: "res-2", quantity: 1, customerName: "Bia" })
+    const [cell] = aggregateMultiUnitOccupancies([a, b], 4)
+    expect(cell).toMatchObject({ unitsBooked: 3, unitsFree: 1, label: "Ana ×2 · Bia" })
+  })
+
+  it("falls back to 1 unit and no label when the API omits quantity/customer", () => {
+    const mapped = occupancyFromDaySlot({ ...daySlot, quantity: undefined, customerName: undefined })
+    expect(mapped.label).toBeNull()
+    expect(aggregateMultiUnitOccupancies([mapped], 2)[0]).toMatchObject({ unitsBooked: 1, unitsFree: 1 })
+  })
+})
