@@ -30,6 +30,14 @@ import {
   type PasswordResetCompanyFormValues,
 } from "@/features/auth/passwordResetCompanySchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
+import { TenantPicker } from "@/features/auth/TenantPicker"
+import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
+import {
+  listMyStaffTenants,
+  selectMyStaffTenant,
+} from "@/features/users/services/staffTenantsService"
+import { toast } from "sonner"
 import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
@@ -59,6 +67,9 @@ export function LoginPage() {
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
   const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
+  const [pickerMemberships, setPickerMemberships] = useState<
+    StaffTenantMembership[] | null
+  >(null)
   const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
   const companySchema = useMemo(
     () =>
@@ -150,7 +161,33 @@ export function LoginPage() {
       return
     }
 
+    // Accounts in more than one tenant choose where to land instead of
+    // opening whichever tenant the token happens to carry.
+    try {
+      const list = await listMyStaffTenants()
+      if (list.memberships.length > 1) {
+        setPickerMemberships(list.memberships)
+        return
+      }
+    } catch {
+      // Platform admins (and lookup failures) keep the previous flow.
+    }
+
+    goAfterLogin()
+  }
+
+  function goAfterLogin() {
     void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
+  }
+
+  async function onPickTenant(tenantId: string) {
+    try {
+      await selectMyStaffTenant(tenantId)
+      await refreshAuthSession()
+      goAfterLogin()
+    } catch {
+      toast.error(t("auth.invite.pickerError"))
+    }
   }
 
   async function onForgotPassword() {
@@ -183,6 +220,21 @@ export function LoginPage() {
     form.clearErrors("root")
     companyForm.clearErrors("root")
     await sendReset(resetEmail, values.subdomain)
+  }
+
+  if (pickerMemberships) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.pickerBody")}
+      >
+        <TenantPicker
+          memberships={pickerMemberships}
+          initialTenantId=""
+          onConfirm={onPickTenant}
+        />
+      </AuthLayout>
+    )
   }
 
   return (
