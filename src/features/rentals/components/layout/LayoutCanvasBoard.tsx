@@ -257,6 +257,10 @@ export function LayoutCanvasBoard({
             const picked = mode === "pick"
             const pending = picked && item.pending === true
             const unavailable = picked && item.disabled === true && !pending
+            // No free window today, distinct from `disabled` (which also covers being busy
+            // loading/locked): the tile still opens like the List view's equivalent row, but
+            // reads as taken instead of green so the map doesn't look fully available.
+            const bookedOut = picked && !unavailable && !pending && item.available === false
             const ownReservation = unavailable && item.ownReservation === true
             const selected = picked && item.selected === true && !unavailable && !pending
             const clickable = picked && !unavailable && !pending
@@ -299,10 +303,10 @@ export function LayoutCanvasBoard({
                   mode === "edit" &&
                     "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
-                  clickable && !selected && !ownReservation && portalPickAvailableClass,
+                  clickable && !selected && !ownReservation && !bookedOut && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
                   pending && portalPickPendingClass,
-                  unavailable && !ownReservation && portalPickUnavailableClass,
+                  (unavailable || bookedOut) && !ownReservation && portalPickUnavailableClass,
                   ownReservation && portalPickOwnReservationClass,
                 )}
                 style={tileStyle}

@@ -111,6 +111,33 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(tile.className).toContain("text-foreground")
   })
 
+  it("reads as taken when a resource has no free window today, but stays clickable", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q7",
+            rentalAssetId: "77777777-7777-4777-8777-777777777777",
+            label: "Quadra 7",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: false,
+          },
+        ]}
+      />,
+    )
+
+    const tile = screen.getByRole("button", { name: "Quadra 7" })
+    expect(tile.className).not.toContain("bg-emerald-100")
+    expect(tile.className).toContain("bg-muted")
+    expect(tile).not.toHaveAttribute("aria-disabled")
+    expect(tile).toHaveAttribute("tabIndex", "0")
+  })
+
   it("keeps a footer label clear of the visual art", () => {
     render(
       <LayoutCanvasBoard
