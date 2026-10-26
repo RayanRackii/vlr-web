@@ -267,7 +267,7 @@ export function TenantPortalRegisterPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">
           {t("tenantPortal.register.title")}
@@ -361,7 +361,7 @@ export function TenantPortalRegisterPage() {
                         type="button"
                         variant={current === "Individual" ? "default" : "outline"}
                         className={cn(
-                          "h-11",
+                          "h-auto min-h-11 min-w-0 whitespace-normal text-center",
                           current === "Individual"
                             ? undefined
                             : TENANT_PORTAL_OUTLINE_BUTTON_CLASS,
@@ -377,7 +377,7 @@ export function TenantPortalRegisterPage() {
                         type="button"
                         variant={current === "Company" ? "default" : "outline"}
                         className={cn(
-                          "h-11",
+                          "h-auto min-h-11 min-w-0 whitespace-normal text-center",
                           current === "Company"
                             ? undefined
                             : TENANT_PORTAL_OUTLINE_BUTTON_CLASS,
@@ -458,7 +458,7 @@ export function TenantPortalRegisterPage() {
                   </FormLabel>
                   <FormControl>
                     {extra.fieldType === "boolean" ? (
-                      <label className="flex items-center gap-2 text-sm">
+                      <label className="flex min-h-11 items-center gap-2 py-2 text-sm">
                         <input
                           type="checkbox"
                           checked={Boolean(field.value)}
@@ -472,6 +472,7 @@ export function TenantPortalRegisterPage() {
                       <Input
                         type="file"
                         accept="image/*"
+                        className="h-11"
                         onChange={(event) => {
                           void onPhotoChange(
                             extra.fieldKey,

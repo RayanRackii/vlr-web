@@ -138,12 +138,28 @@ export function contrastForeground(background: Rgb): string {
     : formatHex(INK)
 }
 
-/** Keep the brand fill when possible; shift luminance only when neither white nor ink text is readable. */
-export function readableFill(color: Rgb, theme: "light" | "dark"): Rgb {
-  if (
-    contrastRatio(color, WHITE) >= 4.5 ||
-    contrastRatio(color, INK) >= 4.5
-  ) {
+/** A fill is usable only if some text color reads on it AND — when `surface` is given —
+ * the fill itself stands out from the surface it sits on (WCAG 1.4.11 non-text contrast,
+ * >= 3:1). Without that second check a pale brand color can pass text contrast while
+ * visually blending into the page, looking disabled. */
+function isUsableFill(candidate: Rgb, surface: Rgb | undefined): boolean {
+  const readableText =
+    contrastRatio(candidate, WHITE) >= 4.5 || contrastRatio(candidate, INK) >= 4.5
+  if (!readableText) {
+    return false
+  }
+  return surface == null || contrastRatio(candidate, surface) >= 3
+}
+
+/** Keep the brand fill when possible; shift luminance only when it isn't usable as-is.
+ * Pass `surface` (the background the fill sits on) to also guard against low-contrast
+ * fills that blend into the page even though their text would be readable. */
+export function readableFill(
+  color: Rgb,
+  theme: "light" | "dark",
+  surface?: Rgb,
+): Rgb {
+  if (isUsableFill(color, surface)) {
     return color
   }
 
@@ -151,10 +167,7 @@ export function readableFill(color: Rgb, theme: "light" | "dark"): Rgb {
   const toward = theme === "dark" ? WHITE : INK
   for (let step = 0; step < 8; step += 1) {
     candidate = mixRgb(candidate, toward, 0.18)
-    if (
-      contrastRatio(candidate, WHITE) >= 4.5 ||
-      contrastRatio(candidate, INK) >= 4.5
-    ) {
+    if (isUsableFill(candidate, surface)) {
       return candidate
     }
   }
