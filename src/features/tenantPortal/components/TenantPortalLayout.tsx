@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { AuthSplitShell } from "@/components/layout/AuthSplitShell"
 import { Button } from "@/components/ui/button"
+import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
@@ -55,6 +56,13 @@ export function TenantPortalLayout() {
   const [error, setError] = useState<PortalLoadError | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryNonce, setRetryNonce] = useState(0)
+  useTenantDocumentMeta(
+    branding && {
+      name: branding.displayName,
+      logoSvg: branding.logoSvg,
+      primaryColor: branding.primaryColor,
+    },
+  )
 
   const redirectSignedIn =
     Boolean(subdomain) &&

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -18,6 +18,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
+import {
+  fetchTenantBranding,
+  getHostTenantSubdomain,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
@@ -39,6 +45,34 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     usePlatformTenantSession()
   const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
   const [isExiting, setIsExiting] = useState(false)
+  const [hostBranding, setHostBranding] = useState<TenantBranding | null>(null)
+  useEffect(() => {
+    const hostSubdomain = getHostTenantSubdomain()
+    if (!hostSubdomain) {
+      return
+    }
+    let cancelled = false
+    fetchTenantBranding(hostSubdomain)
+      .then((branding) => {
+        if (!cancelled) setHostBranding(branding)
+      })
+      .catch(() => {
+        // Tab meta is cosmetic; keep the name/letter fallback.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  const staffTenantName = staffHeaderContextLabel(currentUser, "")
+  useTenantDocumentMeta(
+    staffTenantName
+      ? {
+          name: staffTenantName,
+          logoSvg: hostBranding?.logoSvg,
+          primaryColor: hostBranding?.primaryColor,
+        }
+      : null,
+  )
   const resourcesAccess =
     location.pathname === "/configuracoes/recursos"
       ? resolvePermissionRouteAccess({
