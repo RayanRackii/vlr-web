@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Building2, CircleCheck, CircleDollarSign, Plus, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isAxiosError } from "@/lib/api"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
@@ -78,6 +79,7 @@ export function AdminDashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -85,6 +87,19 @@ export function AdminDashboardPage() {
     useState<TenantAdmin | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const normalizedSearch = searchQuery.trim().toLowerCase()
+  const filteredTenants = useMemo(() => {
+    if (!normalizedSearch) {
+      return tenants
+    }
+
+    return tenants.filter((tenant) =>
+      [tenant.legalName, tenant.subdomain ?? ""].some((value) =>
+        value.toLowerCase().includes(normalizedSearch),
+      ),
+    )
+  }, [normalizedSearch, tenants])
 
   const activeTenantCount = tenants.filter((tenant) => tenant.isActive).length
   const estimatedMonthlyRevenue = tenants.reduce(
@@ -274,8 +289,29 @@ export function AdminDashboardPage() {
       ) : null}
 
       {!isLoading && tenants.length > 0 ? (
+        <Input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder={t("admin.dashboard.searchPlaceholder")}
+          aria-label={t("admin.dashboard.searchPlaceholder")}
+          className="min-h-11 sm:max-w-sm"
+        />
+      ) : null}
+
+      {!isLoading && tenants.length > 0 && filteredTenants.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("admin.dashboard.searchEmptyTitle")}</CardTitle>
+            <CardDescription>
+              {t("admin.dashboard.searchEmptyDescription")}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+      {!isLoading && filteredTenants.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {tenants.map((tenant) => (
+          {filteredTenants.map((tenant) => (
             <TenantAdminCard
               key={tenant.id}
               tenant={tenant}
