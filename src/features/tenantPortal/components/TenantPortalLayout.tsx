@@ -177,29 +177,28 @@ export function TenantPortalLayout() {
         <AuthSplitShell
           brandPanelStyle={brandPanelStyle}
           brandPanel={
-            <>
-              <div className="max-w-md space-y-4">
-                <TenantLogoMark
-                  logoSvg={branding.logoSvg}
-                  displayName={branding.displayName}
-                  primaryColor={branding.primaryColor}
-                  size="lg"
-                  className="mx-0"
-                />
-                <div className="space-y-1">
-                  <h2 className="break-words text-3xl font-semibold tracking-tight text-foreground">
-                    {branding.displayName}
-                  </h2>
-                  <p className="text-base leading-relaxed text-foreground/85">
-                    {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
-                  </p>
-                </div>
+            <div className="max-w-md space-y-6">
+              <TenantLogoMark
+                logoSvg={branding.logoSvg}
+                displayName={branding.displayName}
+                primaryColor={branding.primaryColor}
+                size="lg"
+                className="mx-0"
+              />
+              <div className="space-y-2">
+                <h2 className="break-words text-4xl font-semibold tracking-tight text-foreground">
+                  {branding.displayName}
+                </h2>
+                <p className="text-base leading-relaxed text-foreground/85">
+                  {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
+                </p>
               </div>
-
-              <p className="text-xs text-foreground/80">
-                {t("tenantPortal.authPanel.poweredBy")}
-              </p>
-            </>
+            </div>
+          }
+          brandFootnote={
+            <p className="text-xs text-foreground/80">
+              {t("tenantPortal.authPanel.poweredBy")}
+            </p>
           }
           mobileBrand={
             <div className="flex min-w-0 items-center gap-2">

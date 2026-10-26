@@ -331,6 +331,18 @@ describe("TenantPortalRegisterPage browser autofill", () => {
     )
   })
 
+  it("shows the lock icon on the password and confirm password fields", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    ).toHaveClass("pl-9")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    ).toHaveClass("pl-9")
+  })
+
   it("enables submit after autofill-equivalent input events populate valid fields", async () => {
     renderRegister()
     await waitForRegisterForm()
