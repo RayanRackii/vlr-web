@@ -63,6 +63,9 @@ const scheduleSlotSchema = z.object({
   sourceTemplateId: z.string().uuid().nullable().optional(),
   schedulePolicy: z.enum(["SlotGrid", "OpenHours"]).default("SlotGrid"),
   supportsEntireRecurrence: z.boolean().default(false),
+  /** Staff day view only: reservation item quantity on this resource. */
+  quantity: z.number().int().nullable().optional(),
+  customerName: z.string().nullable().optional(),
 })
 
 const dayScheduleSchema = z.object({

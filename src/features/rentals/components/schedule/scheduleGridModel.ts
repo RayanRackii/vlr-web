@@ -49,6 +49,8 @@ export type ScheduleGridOccupancy = {
   badge?: "dailyOverride" | "inactive" | null
   /** Units a single booking occupies on a multi-unit resource; defaults to 1 when absent. */
   quantity?: number | null
+  /** Staff-only: customer of the booking, shown on booked cards. */
+  customerName?: string | null
   /** Set when this occupancy stands in for one or more concurrent bookings of a multi-unit resource. */
   unitsBooked?: number | null
   unitsTotal?: number | null
@@ -115,6 +117,16 @@ export function occupancyIdFromSlot(slot: {
   return slot.id
 }
 
+/** "Ana ×2" for a booked slot; null when the API sent no customer. */
+export function bookingSummary(item: {
+  customerName?: string | null
+  quantity?: number | null
+}): string | null {
+  const name = item.customerName?.trim()
+  if (!name) return null
+  return (item.quantity ?? 1) > 1 ? `${name} ×${item.quantity}` : name
+}
+
 export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy {
   return {
     id: occupancyIdFromSlot(slot),
@@ -124,8 +136,10 @@ export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy 
     occupancyKindLabel: slot.occupancyKindLabel,
     occupancyKindKey: slot.occupancyKindKey,
     occupancyKindColorHex: slot.occupancyKindColorHex,
-    label: slot.label,
+    label: slot.label ?? bookingSummary(slot),
     reservationId: slot.reservationId,
+    quantity: slot.quantity ?? null,
+    customerName: slot.customerName ?? null,
     status: slotStatus(slot),
     badge: slot.source === "DailyOverride" ? "dailyOverride" : null,
   }
@@ -366,7 +380,11 @@ export function aggregateMultiUnitOccupancies(
       id: `units:${representative.rentalAssetId}:${formatMinutesAsTime(span.start)}-${formatMinutesAsTime(span.end)}`,
       startTime: formatMinutesAsTime(span.start),
       endTime: formatMinutesAsTime(span.end),
-      label: null,
+      label:
+        span.members
+          .map((member) => bookingSummary(member))
+          .filter((summary): summary is string => Boolean(summary))
+          .join(" · ") || null,
       reservationId: null,
       unitsBooked,
       unitsTotal: totalQuantity,
