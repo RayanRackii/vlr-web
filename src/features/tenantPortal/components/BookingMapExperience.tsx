@@ -123,15 +123,15 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
 
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("bookingMap.periods")}>
         {(["all", "morning", "afternoon", "night"] as const).map((value) => (
-          <Button key={value} size="sm" variant={period === value ? "default" : "outline"} aria-pressed={period === value} onClick={() => setPeriod(value)}>
+          <Button key={value} className="min-h-11" size="sm" variant={period === value ? "default" : "outline"} aria-pressed={period === value} onClick={() => setPeriod(value)}>
             {t(`bookingMap.${value}`, { count: periodFreeCounts[value] })}
           </Button>
         ))}
         <span className="flex-1" />
-        <Button size="sm" variant={view === "Map" ? "default" : "outline"} onClick={() => setView("Map")}>
+        <Button className="min-h-11" size="sm" variant={view === "Map" ? "default" : "outline"} onClick={() => setView("Map")}>
           {t("bookingMap.map")}
         </Button>
-        <Button size="sm" variant={view === "List" ? "default" : "outline"} onClick={() => setView("List")}>
+        <Button className="min-h-11" size="sm" variant={view === "List" ? "default" : "outline"} onClick={() => setView("List")}>
           {t("bookingMap.list")}
         </Button>
       </div>
@@ -145,7 +145,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
           aria-label={t("bookingMap.area")}
           value={map.id}
           onChange={(event) => void fetchPublicBookingMap(subdomain, event.target.value).then(setMap)}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/45 focus-visible:outline-none"
+          className="h-11 rounded-lg border border-input bg-background px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/45 focus-visible:outline-none"
         >
           {list.maps.map((entry) => (
             <option key={entry.id} value={entry.id}>
@@ -238,7 +238,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
           </div>
 
           {pastSlots.length > 0 ? (
-            <Button variant="ghost" size="sm" className="self-start" onClick={() => setShowPast((current) => !current)}>
+            <Button variant="ghost" size="sm" className="min-h-11 self-start" onClick={() => setShowPast((current) => !current)}>
               {showPast ? t("bookingMap.hidePast") : t("bookingMap.showPast", { count: pastSlots.length })}
             </Button>
           ) : null}
@@ -252,7 +252,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
                 min={1}
                 max={Math.max(1, slots.find((slot) => slot.startTime === selectedWindow.startTime)?.availableQuantity ?? 1)}
                 value={quantity}
-                className="mt-1"
+                className="mt-1 h-11"
                 onChange={(event) => { const nextQuantity = Math.max(1, Number(event.target.value) || 1); setSelectedWindow((current) => current ? { ...current, quantity: nextQuantity, amount: -1 } : null); setQuantity(nextQuantity) }}
               />
             </label>
