@@ -22,11 +22,13 @@ describe("feature manifests", () => {
   it("keeps tenant portal and catalog routes in their manifests", () => {
     expect(tenantPortalManifest.routes.public.map((route) => route.path)).toEqual([
       undefined,
+      "login",
       "register",
       "verify-email",
       "verify-phone",
       "forgot-password",
       "forgot-password/confirm",
+      "reset-password",
     ])
     expect(tenantPortalManifest.routes.customer.map((route) => route.path)).toEqual([
       "app",
@@ -136,6 +138,7 @@ describe("feature manifests", () => {
     expect(onboardingManifest.routes.public.map((route) => route.path)).toEqual(["/onboarding"])
     expect(authManifest.routes.public.map((route) => route.path)).toEqual([
       "/login",
+      "/forgot-password",
       "/reset-password",
       "/invite",
     ])

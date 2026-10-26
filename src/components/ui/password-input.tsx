@@ -41,7 +41,7 @@ function PasswordInput({
           setVisible((current) => !current)
         }}
         aria-label={visible ? hideLabel : showLabel}
-        className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
       >
         {visible ? <EyeOff {...iconProps("sm")} /> : <Eye {...iconProps("sm")} />}
       </button>

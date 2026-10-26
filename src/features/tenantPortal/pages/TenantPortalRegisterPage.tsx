@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { InputWithIcon } from "@/components/ui/input-icon"
 import { PasswordInput } from "@/components/ui/password-input"
 import { iconProps } from "@/lib/icon"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -266,7 +267,7 @@ export function TenantPortalRegisterPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">
           {t("tenantPortal.register.title")}
@@ -279,67 +280,71 @@ export function TenantPortalRegisterPage() {
       <Form {...form}>
         <form
           ref={formRef}
-          className="space-y-4"
+          className="space-y-3"
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          {(
-            [
-              ["name", "text", "name", <User {...iconProps("sm")} />],
-              ["email", "email", "email", <Mail {...iconProps("sm")} />],
-              ["password", "password", "new-password", <Lock {...iconProps("sm")} />],
-              ["confirmPassword", "password", "new-password", <Lock {...iconProps("sm")} />],
-              ["phone", "tel", "tel", <Phone {...iconProps("sm")} />],
-            ] as const
-          ).map(([name, type, autoComplete, icon]) => (
-            <FormField
-              key={name}
-              control={form.control}
-              name={name}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t(`tenantPortal.fields.${name}`)}</FormLabel>
-                  <FormControl>
-                    {type === "password" ? (
-                      <PasswordInput
-                        icon={icon}
-                        autoComplete={autoComplete}
-                        showLabel={t("auth.showPassword")}
-                        hideLabel={t("auth.hidePassword")}
-                        {...field}
-                        value={String(field.value ?? "")}
-                        onChange={(event) => {
-                          field.onChange(event.target.value)
-                        }}
-                      />
-                    ) : (
-                      <InputWithIcon
-                        icon={icon}
-                        type={type}
-                        autoComplete={autoComplete}
-                        placeholder={
-                          name === "phone"
-                            ? t("tenantPortal.fields.phonePlaceholder")
-                            : undefined
-                        }
-                        inputMode={name === "phone" ? "tel" : undefined}
-                        {...field}
-                        value={String(field.value ?? "")}
-                        onChange={(event) => {
-                          field.onChange(
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+            {(
+              [
+                ["name", "text", "name", <User {...iconProps("sm")} />, false],
+                ["phone", "tel", "tel", <Phone {...iconProps("sm")} />, false],
+                ["email", "email", "email", <Mail {...iconProps("sm")} />, true],
+                ["password", "password", "new-password", <Lock {...iconProps("sm")} />, false],
+                ["confirmPassword", "password", "new-password", <Lock {...iconProps("sm")} />, false],
+              ] as const
+            ).map(([name, type, autoComplete, icon, fullWidth]) => (
+              <FormField
+                key={name}
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                  <FormItem className={fullWidth ? "md:col-span-2" : undefined}>
+                    <FormLabel>{t(`tenantPortal.fields.${name}`)}</FormLabel>
+                    <FormControl>
+                      {type === "password" ? (
+                        <PasswordInput
+                          icon={icon}
+                          autoComplete={autoComplete}
+                          showLabel={t("auth.showPassword")}
+                          hideLabel={t("auth.hidePassword")}
+                          className="h-11"
+                          {...field}
+                          value={String(field.value ?? "")}
+                          onChange={(event) => {
+                            field.onChange(event.target.value)
+                          }}
+                        />
+                      ) : (
+                        <InputWithIcon
+                          icon={icon}
+                          type={type}
+                          autoComplete={autoComplete}
+                          placeholder={
                             name === "phone"
-                              ? maskPhoneInput(event.target.value)
-                              : event.target.value,
-                          )
-                        }}
-                      />
-                    )}
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
+                              ? t("tenantPortal.fields.phonePlaceholder")
+                              : undefined
+                          }
+                          inputMode={name === "phone" ? "tel" : undefined}
+                          className="h-11"
+                          {...field}
+                          value={String(field.value ?? "")}
+                          onChange={(event) => {
+                            field.onChange(
+                              name === "phone"
+                                ? maskPhoneInput(event.target.value)
+                                : event.target.value,
+                            )
+                          }}
+                        />
+                      )}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
 
           <FormField
             control={form.control}
@@ -355,11 +360,12 @@ export function TenantPortalRegisterPage() {
                       <Button
                         type="button"
                         variant={current === "Individual" ? "default" : "outline"}
-                        className={
+                        className={cn(
+                          "h-11",
                           current === "Individual"
                             ? undefined
-                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS
-                        }
+                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS,
+                        )}
                         onClick={() => {
                           field.onChange("Individual")
                           form.setValue("document", "")
@@ -370,11 +376,12 @@ export function TenantPortalRegisterPage() {
                       <Button
                         type="button"
                         variant={current === "Company" ? "default" : "outline"}
-                        className={
+                        className={cn(
+                          "h-11",
                           current === "Company"
                             ? undefined
-                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS
-                        }
+                            : TENANT_PORTAL_OUTLINE_BUTTON_CLASS,
+                        )}
                         onClick={() => {
                           field.onChange("Company")
                           form.setValue("document", "")
@@ -411,6 +418,7 @@ export function TenantPortalRegisterPage() {
                       ref={field.ref}
                       inputMode="numeric"
                       autoComplete="off"
+                      className="h-11"
                       value={String(field.value ?? "")}
                       onBlur={field.onBlur}
                       onChange={(event) => {
@@ -485,7 +493,7 @@ export function TenantPortalRegisterPage() {
                           label: option,
                         }))}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="h-11 w-full">
                           <SelectValue
                             placeholder={t(
                               "tenantPortal.register.selectPlaceholder",
@@ -519,6 +527,7 @@ export function TenantPortalRegisterPage() {
                             ? t("tenantPortal.fields.phonePlaceholder")
                             : undefined
                         }
+                        className="h-11"
                         {...field}
                         value={String(field.value ?? "")}
                         onChange={(event) => {
@@ -553,7 +562,7 @@ export function TenantPortalRegisterPage() {
           >
             <FormPrimaryButton
               type="submit"
-              className="w-full"
+              className="h-11 w-full"
               isValid={isRegisterValid}
               loading={submitting}
               loadingLabel={t("tenantPortal.register.submitting")}
@@ -584,7 +593,7 @@ export function TenantPortalRegisterPage() {
         {t("tenantPortal.register.hasAccount")}{" "}
         <Link
           to={tenantPortalPath(subdomain)}
-          className="font-medium text-primary underline"
+          className="inline-flex min-h-11 items-center font-medium text-primary underline"
         >
           {t("tenantPortal.register.loginLink")}
         </Link>

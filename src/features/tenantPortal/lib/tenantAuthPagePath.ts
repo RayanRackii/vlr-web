@@ -4,7 +4,7 @@
  * Everything else (e.g. the portal 404) keeps the centered card layout.
  */
 export function isTenantAuthPagePath(pathname: string): boolean {
-  return /^\/(?:t\/[a-z0-9-]+)?\/?(?:register|verify-email|forgot-password(?:\/confirm)?)?\/?$/i.test(
+  return /^\/(?:t\/[a-z0-9-]+)?\/?(?:login|register|verify-email|forgot-password(?:\/confirm)?|reset-password)?\/?$/i.test(
     pathname,
   )
 }

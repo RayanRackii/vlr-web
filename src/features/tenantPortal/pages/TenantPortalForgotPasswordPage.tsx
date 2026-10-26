@@ -139,6 +139,7 @@ export function TenantPortalForgotPasswordPage() {
                     icon={<Mail {...iconProps("sm")} />}
                     type="email"
                     autoComplete="email"
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -148,7 +149,7 @@ export function TenantPortalForgotPasswordPage() {
           />
           <FormPrimaryButton
             type="submit"
-            className="w-full"
+            className="h-11 w-full"
             isValid={isRequestValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.passwordReset.requestSubmitting")}
@@ -159,7 +160,10 @@ export function TenantPortalForgotPasswordPage() {
       </Form>
 
       <p className="text-center text-sm text-muted-foreground">
-        <Link to={tenantPortalPath(subdomain)} className="text-primary underline">
+        <Link
+          to={tenantPortalPath(subdomain)}
+          className="inline-flex min-h-11 items-center text-primary underline"
+        >
           {t("tenantPortal.passwordReset.backToLogin")}
         </Link>
       </p>

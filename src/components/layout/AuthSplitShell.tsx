@@ -36,10 +36,10 @@ export function AuthSplitShell({
   widthClassName = "max-w-md",
 }: AuthSplitShellProps) {
   return (
-    <main className="grid min-h-screen w-full lg:grid-cols-2">
+    <main className="grid min-h-screen w-full lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
       <div
         className={cn(
-          "relative hidden flex-col overflow-hidden p-10 lg:flex",
+          "relative hidden flex-col overflow-y-auto p-10 lg:flex",
           brandPanelClassName ?? "[background:var(--brand-gradient)]",
         )}
         style={brandPanelStyle}
@@ -50,7 +50,7 @@ export function AuthSplitShell({
         {brandFootnote}
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col lg:h-screen lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-2 p-4 sm:p-6">
           <div className="min-w-0 lg:hidden">{mobileBrand}</div>
           <div className="ml-auto flex shrink-0 items-center gap-1">
