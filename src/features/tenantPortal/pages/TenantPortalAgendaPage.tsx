@@ -71,6 +71,7 @@ import {
 import {
   addCivilDays,
   civilDaysBetween,
+  effectiveHorizonMaxDate,
   horizonEndDate,
   resolveAgendaHorizonDays,
 } from "@/features/rentals/lib/bookingHorizon"
@@ -487,10 +488,10 @@ export function TenantPortalAgendaPage() {
         resource.windows.find((candidate) => candidate.state !== "Past")
       const unitPrice = window ? unitPriceForWindow(window) : null
       if (unitPrice) {
-        byId.set(
-          resource.rentalAssetId,
-          formatUnitPriceText(unitPrice.amount, unitPrice.unit, tileAvailability?.currency ?? "BRL", moneyLocale, t, "bookingMap.prices"),
-        )
+        const priceText = formatUnitPriceText(unitPrice.amount, unitPrice.unit, tileAvailability?.currency ?? "BRL", moneyLocale, t, "bookingMap.prices")
+        // NBSP between the currency symbol and the amount so the tile footer
+        // never line-wraps mid-price (e.g. "R$" alone on one line).
+        byId.set(resource.rentalAssetId, priceText.replace(" ", " "))
       }
     }
     return byId
@@ -513,7 +514,11 @@ export function TenantPortalAgendaPage() {
     selectedHorizonAsset ? [selectedHorizonAsset] : visibleAssets,
     policyHorizonDays,
   )
-  const horizonMaxDate = horizonEndDate(
+  // Computing this from `policyHorizonDays` alone before resources finish loading
+  // can be narrower than the resources' real horizon, clamping deep links by load
+  // order instead of deterministically — so it stays `null` until resources load.
+  const horizonMaxDate = effectiveHorizonMaxDate(
+    !loading,
     tenantTodayIsoDate(timeZoneId),
     horizonDays,
   )
@@ -1861,7 +1866,11 @@ export function TenantPortalAgendaPage() {
                 count: ownReservationUnits,
                 total: asset.totalQuantity,
               })} ${t("tenantPortal.agenda.yourReservationUnitsReason")}`
-            : t(ownReservation ? "tenantPortal.agenda.yourReservation" : "tenantPortal.agenda.slotTaken")
+            : ownReservation
+              ? t("tenantPortal.agenda.yourReservation")
+              : asset && asset.totalQuantity > 1
+                ? t("tenantPortal.agenda.allUnitsReserved")
+                : t("tenantPortal.agenda.slotTaken")
     return {
       available,
       disabled: !available && !queueSelectable,
@@ -1870,6 +1879,36 @@ export function TenantPortalAgendaPage() {
       detail,
       ownReservation,
     }
+  }
+
+  // Whether `startCandidate` is still bookable for the selected resource — used to
+  // keep the Horário list from offering a start time that resource has no room for.
+  // With no resource selected yet, every time the schedule offers stays selectable.
+  function timeAvailableForSelectedAsset(startCandidate: string): boolean {
+    if (!selectedRentalAssetId || effectiveDuration === null) {
+      return true
+    }
+    const slot = findSlotAtStartAndDuration(
+      slotsForView,
+      selectedRentalAssetId,
+      startCandidate,
+      effectiveDuration,
+    )
+    const reservedKey = agendaReservedSlotKey(date, selectedRentalAssetId, startCandidate)
+    const ownReservation = customerAlreadyHoldsSlot(
+      date,
+      selectedRentalAssetId,
+      startCandidate,
+      mine,
+      timeZoneId,
+    )
+    const reserved =
+      reservedKey.length > 0 &&
+      (optimisticReservedKeys.has(reservedKey) ||
+        derivedReservedKeys.has(reservedKey) ||
+        ownReservation ||
+        isPortalBookingInFlight(date, selectedRentalAssetId, startCandidate))
+    return Boolean(slot) && !reserved
   }
 
   // The map flow books outside this page's handlers; refresh Minhas reservas
@@ -1921,7 +1960,9 @@ export function TenantPortalAgendaPage() {
             quantity,
             days,
           })
-          return unitPrice
+          // Fixed pricing is flat for the whole booking; the main line already shows
+          // the total, so no redundant per-unit split is shown underneath it.
+          return unitPrice && unitPrice.unit !== "Fixed"
             ? formatUnitPriceText(unitPrice.amount, unitPrice.unit, "BRL", moneyLocale, t, "bookingMap.prices")
             : null
         })()
@@ -2070,9 +2111,8 @@ export function TenantPortalAgendaPage() {
           ) : (
             <LoadingButton
               type="button"
-              size="sm"
               variant="outline"
-              className="mt-3"
+              className="mt-3 h-11"
               loading={cancelingId === reservation.id}
               loadingLabel={t("tenantPortal.agenda.cancelling")}
               onClick={() => {
@@ -2168,15 +2208,24 @@ export function TenantPortalAgendaPage() {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeWindows.map((window) => (
-                    <SelectItem
-                      key={window.startTime}
-                      value={window.startTime}
-                    >
-                      {formatScheduleTime(window.startTime)} –{" "}
-                      {formatScheduleTime(window.endTime)}
-                    </SelectItem>
-                  ))}
+                  {timeWindows.map((window) => {
+                    const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
+                      window.startTime,
+                    )
+                    return (
+                      <SelectItem
+                        key={window.startTime}
+                        value={window.startTime}
+                        disabled={reservedForSelectedAsset}
+                      >
+                        {formatScheduleTime(window.startTime)} –{" "}
+                        {formatScheduleTime(window.endTime)}
+                        {reservedForSelectedAsset
+                          ? ` · ${t("tenantPortal.agenda.timeReserved")}`
+                          : ""}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </label>
@@ -2491,7 +2540,7 @@ export function TenantPortalAgendaPage() {
               <span className="text-sm font-medium">{t("bookingMap.quantity")}</span>
               <Button
                 type="button"
-                size="icon"
+                size="icon-lg"
                 variant="outline"
                 aria-label={`${t("bookingMap.quantity")} −`}
                 disabled={quantity <= 1}
@@ -2504,7 +2553,7 @@ export function TenantPortalAgendaPage() {
               </output>
               <Button
                 type="button"
-                size="icon"
+                size="icon-lg"
                 variant="outline"
                 aria-label={`${t("bookingMap.quantity")} +`}
                 disabled={quantity >= quantityMax}
@@ -2526,7 +2575,7 @@ export function TenantPortalAgendaPage() {
               <span className="text-sm font-medium">{t("tenantPortal.agenda.days")}</span>
               <Button
                 type="button"
-                size="icon"
+                size="icon-lg"
                 variant="outline"
                 aria-label={`${t("tenantPortal.agenda.days")} −`}
                 disabled={days <= 1}
@@ -2539,7 +2588,7 @@ export function TenantPortalAgendaPage() {
               </output>
               <Button
                 type="button"
-                size="icon"
+                size="icon-lg"
                 variant="outline"
                 aria-label={`${t("tenantPortal.agenda.days")} +`}
                 disabled={days >= daysMax}
@@ -2581,7 +2630,9 @@ export function TenantPortalAgendaPage() {
 
             {!schedulePending && quoteUnavailable ? (
               <p className="text-sm text-muted-foreground">
-                {t("tenantPortal.agenda.slotTaken")}
+                {endDate
+                  ? t("tenantPortal.agenda.periodIncludesBookedDay")
+                  : t("tenantPortal.agenda.slotTaken")}
               </p>
             ) : null}
 
@@ -2594,27 +2645,29 @@ export function TenantPortalAgendaPage() {
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
-          <LoadingButton
-            type="button"
-            className="w-full sm:w-auto"
-            style={{ backgroundColor: primary }}
-            loading={submitting}
-            loadingLabel={t("tenantPortal.agenda.reserving")}
-            disabled={
-              schedulePending || slotsError ||
-              !selectedSlot ||
-              (selectedRentalAssetId !== null &&
-                !spaceState(selectedRentalAssetId).available) ||
-              !queue.canReserve ||
-              !quoteCurrent ||
-              quoteUnavailable
-            }
-            onClick={() => {
-              void onReserve()
-            }}
-          >
-            {t("tenantPortal.agenda.reserveSlot")}
-          </LoadingButton>
+          <div className="sticky bottom-0 z-10 border-t border-border bg-background py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:border-0 sm:bg-transparent sm:py-0 sm:pb-0">
+            <LoadingButton
+              type="button"
+              className="w-full sm:w-auto"
+              style={{ backgroundColor: primary }}
+              loading={submitting}
+              loadingLabel={t("tenantPortal.agenda.reserving")}
+              disabled={
+                schedulePending || slotsError ||
+                !selectedSlot ||
+                (selectedRentalAssetId !== null &&
+                  !spaceState(selectedRentalAssetId).available) ||
+                !queue.canReserve ||
+                !quoteCurrent ||
+                quoteUnavailable
+              }
+              onClick={() => {
+                void onReserve()
+              }}
+            >
+              {t("tenantPortal.agenda.reserveSlot")}
+            </LoadingButton>
+          </div>
           )}
 
           <div

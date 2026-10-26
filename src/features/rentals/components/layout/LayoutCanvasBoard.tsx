@@ -285,6 +285,9 @@ export function LayoutCanvasBoard({
                   picked && "flex-col gap-0.5",
                   picked &&
                     "relative min-h-11 py-2 sm:absolute sm:min-h-0 sm:py-0 sm:left-[var(--tile-left)] sm:top-[var(--tile-top)] sm:w-[var(--tile-width)] sm:h-[var(--tile-height)]",
+                  // The footer is pinned to the tile's bottom edge on sm:+ layouts; reserve
+                  // that space so the detail/reason line never renders underneath it.
+                  picked && item.footer && "sm:pb-6",
                   mode === "edit" &&
                     "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
@@ -317,7 +320,10 @@ export function LayoutCanvasBoard({
                   </span>
                 )}
                 {item.detail ? (
-                  <span className="line-clamp-2 max-w-full px-0.5 text-xs font-semibold leading-tight">
+                  <span
+                    title={item.detail}
+                    className="block w-full max-w-full truncate px-0.5 text-xs font-semibold leading-tight"
+                  >
                     {item.detail}
                   </span>
                 ) : null}

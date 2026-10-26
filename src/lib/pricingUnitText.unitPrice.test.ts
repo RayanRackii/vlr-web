@@ -11,4 +11,9 @@ describe("unitPriceForWindow", () => {
   it("returns null without a price", () => {
     expect(unitPriceForWindow({ startTime: "08:00:00", endTime: "09:00:00", totalAmount: null })).toBeNull()
   })
+  it("does not split a Fixed price across quantity — it is flat for the whole booking", () => {
+    expect(
+      unitPriceForWindow({ startTime: "08:00:00", endTime: "09:00:00", totalAmount: 30, pricingUnit: "Fixed", quantity: 2 }),
+    ).toEqual({ amount: 30, unit: "Fixed" })
+  })
 })

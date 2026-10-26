@@ -52,7 +52,8 @@ export function unitPriceForWindow(
   }
   const unit = window.pricingUnit ?? "Hour"
   const divisor = unit === "Hour" ? hours : unit === "Day" ? Math.max(1, window.days ?? Math.ceil(hours / 24)) : 1
-  const quantity = Math.max(1, window.quantity ?? 1)
+  // Fixed pricing is flat for the whole booking; it does not split across quantity.
+  const quantity = unit === "Fixed" ? 1 : Math.max(1, window.quantity ?? 1)
   return { amount: window.totalAmount / divisor / quantity, unit }
 }
 
