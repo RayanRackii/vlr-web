@@ -307,6 +307,7 @@ export function AssetsPage() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
+            className="min-h-11 py-2.5"
             disabled={isTrialReadOnly}
             onClick={() => {
               if (isTrialReadOnly) {
@@ -318,6 +319,7 @@ export function AssetsPage() {
             {t("assets.actions.edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
+            className="min-h-11 py-2.5"
             variant="destructive"
             disabled={isTrialReadOnly}
             onClick={() => {
