@@ -2309,7 +2309,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(await screen.findByRole("button", { name: /^Bola/ }))
     const increase = await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` })
     await user.click(increase)
-    await waitFor(() => expect(increase).toBeDisabled())
+    await waitFor(() => expect(increase).toHaveAttribute("aria-disabled", "true"))
+    // At the max the stepper explains why instead of going silent.
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.quantityMaxReached", { count: 2 })),
+    ).toBeVisible()
   })
 
   it("shows the days stepper only for Day-priced resources", async () => {

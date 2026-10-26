@@ -525,8 +525,10 @@
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
-      "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
-      "yourReservationUnitsReason": "To book more units, cancel and book again with the quantity you want.",
+      "yourReservationUnits": "Your booking · you hold {{count}} of the {{total}} units",
+      "yourReservationUnitsReason": "To change the quantity, cancel and book again; availability depends on other bookings.",
+      "chooseTimeFirst": "Choose a time first.",
+      "quantityMaxReached": "Maximum available at this time: {{count}}.",
       "cancelCutoffReason": "Cancellation window closed",
       "days": "Days",
       "daysSummary": "{{count}} days · until {{until}}",
@@ -536,7 +538,7 @@
       "reservationDaysSuffix_other": "{{count}} days",
       "quoteFixedLine_one": "{{price}} (fixed total)",
       "quoteFixedLine_other": "{{price}} · {{count}} units (fixed total)",
-      "quoteUnitMultiplier": "× {{count}}"
+      "quoteUnitMultiplier": "× {{formatted}}"
     },
     "menu": {
       "empty": "No modules available.",

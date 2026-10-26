@@ -400,6 +400,7 @@ export function TenantPortalAgendaPage() {
   const [slotReloadNonce, setSlotReloadNonce] = useState(0)
   const horizonHintId = useId()
   const dateFeedbackId = useId()
+  const quantityMaxHintId = useId()
   const submittingRef = useRef(false)
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
@@ -1805,6 +1806,16 @@ export function TenantPortalAgendaPage() {
     commitAgendaDate(attempt.date)
   }
 
+  function explainUnavailableAsset(rentalAssetId: string) {
+    const state = spaceState(rentalAssetId)
+    toast.message(
+      state.detail ??
+        (startTime.length === 0
+          ? t("tenantPortal.agenda.chooseTimeFirst")
+          : t("tenantPortal.agenda.slotTaken")),
+    )
+  }
+
   function spaceState(rentalAssetId: string) {
     if (schedulePending || slotsError) {
       return {
@@ -1973,7 +1984,7 @@ export function TenantPortalAgendaPage() {
             }
             const units = quote.pricedUnits ?? quantity
             return units > 1
-              ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units })}`
+              ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units, formatted: new Intl.NumberFormat(moneyLocale, { maximumFractionDigits: 2 }).format(units) })}`
               : priceText
           }
           const unitPrice = unitPriceForWindow({
@@ -2361,6 +2372,7 @@ export function TenantPortalAgendaPage() {
                 }
               })}
               onSelect={selectRentalAsset}
+              onUnavailableSelect={explainUnavailableAsset}
             />
           )}
 
@@ -2376,7 +2388,8 @@ export function TenantPortalAgendaPage() {
                     <button
                       key={asset.id}
                       type="button"
-                      disabled={state.disabled || submitting}
+                      disabled={submitting}
+                      aria-disabled={state.disabled || undefined}
                       aria-pressed={state.selected}
                       aria-busy={state.pending || undefined}
                       aria-label={
@@ -2406,6 +2419,10 @@ export function TenantPortalAgendaPage() {
                           portalPickOwnReservationClass,
                       )}
                       onClick={() => {
+                        if (state.disabled) {
+                          explainUnavailableAsset(asset.id)
+                          return
+                        }
                         selectRentalAsset(asset.id)
                       }}
                     >
@@ -2584,12 +2601,24 @@ export function TenantPortalAgendaPage() {
                 size="icon-lg"
                 variant="outline"
                 aria-label={`${t("bookingMap.quantity")} +`}
-                disabled={quantity >= quantityMax}
-                onClick={() => setQuantity((current) => Math.min(quantityMax, current + 1))}
+                aria-disabled={quantity >= quantityMax || undefined}
+                aria-describedby={quantity >= quantityMax ? quantityMaxHintId : undefined}
+                onClick={() => {
+                  if (quantity >= quantityMax) {
+                    toast.message(t("tenantPortal.agenda.quantityMaxReached", { count: quantityMax }))
+                    return
+                  }
+                  setQuantity((current) => Math.min(quantityMax, current + 1))
+                }}
               >
                 <Plus className="size-4" aria-hidden />
               </Button>
               <span className="text-xs text-muted-foreground">
+                {quantity >= quantityMax ? (
+                  <span id={quantityMaxHintId} className="block font-medium text-foreground">
+                    {t("tenantPortal.agenda.quantityMaxReached", { count: quantityMax })}
+                  </span>
+                ) : null}
                 {t("bookingMap.unitsLeft", {
                   left: Math.max(0, Math.min(selectedAssetQuantity, lastAvailableQuantity ?? selectedAssetQuantity)),
                   total: selectedAssetQuantity,
