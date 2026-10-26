@@ -149,7 +149,7 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6 pb-24 md:pb-0">
       <Button
         type="button"
         variant="ghost"
@@ -178,13 +178,13 @@ export function PortalCartPage() {
           }
         />
       ) : (
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="space-y-2">
           {cart.items.map((item) => {
             const product = productMap.get(item.productId)
             return (
               <li
                 key={item.productId}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 text-sm shadow-sm"
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">
@@ -203,7 +203,7 @@ export function PortalCartPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <CatalogQuantityField
-                    className="w-20"
+                    className="h-11 w-20"
                     quantity={item.quantity}
                     productName={product?.name ?? item.productId}
                     onCommit={(next) => {
@@ -230,12 +230,6 @@ export function PortalCartPage() {
       )}
 
       {cart.items.length > 0 ? (
-        <p className="text-sm font-medium">
-          {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
-        </p>
-      ) : null}
-
-      {cart.items.length > 0 ? (
         <Form {...form}>
           <form
             className="space-y-4"
@@ -258,17 +252,22 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <FormPrimaryButton
-              type="submit"
-              className="w-full"
-              isValid={isCheckoutValid}
-              loading={submitting}
-              disabled={cart.items.length === 0}
-              loadingLabel={t("tenantPortal.catalog.submitting")}
-              style={{ backgroundColor: primary }}
-            >
-              {t("tenantPortal.catalog.submitOrder")}
-            </FormPrimaryButton>
+            <div className="sticky bottom-0 -mx-4 space-y-3 border-t border-border bg-background px-4 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+              <p className="text-base font-semibold text-foreground">
+                {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
+              </p>
+              <FormPrimaryButton
+                type="submit"
+                className="h-11 w-full"
+                isValid={isCheckoutValid}
+                loading={submitting}
+                disabled={cart.items.length === 0}
+                loadingLabel={t("tenantPortal.catalog.submitting")}
+                style={{ backgroundColor: primary }}
+              >
+                {t("tenantPortal.catalog.submitOrder")}
+              </FormPrimaryButton>
+            </div>
           </form>
         </Form>
       ) : null}
