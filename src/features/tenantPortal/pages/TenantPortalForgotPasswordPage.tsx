@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Mail } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -14,7 +15,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { iconProps } from "@/lib/icon"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
@@ -133,7 +135,12 @@ export function TenantPortalForgotPasswordPage() {
               <FormItem>
                 <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
                 <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
+                  <InputWithIcon
+                    icon={<Mail {...iconProps("sm")} />}
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

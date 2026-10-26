@@ -288,6 +288,9 @@
   "tenantPortal": {
     "sessionExpired": "Session expired",
     "defaultTagline": "Sign in to book and get updates.",
+    "authPanel": {
+      "poweredBy": "Powered by Rolvix"
+    },
     "header": {
       "ctaRegister": "Register"
     },

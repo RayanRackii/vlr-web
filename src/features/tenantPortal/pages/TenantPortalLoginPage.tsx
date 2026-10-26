@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Lock, Mail } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -14,7 +15,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
+import { iconProps } from "@/lib/icon"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import {
   buildCustomerLoginSchema,
@@ -102,7 +105,12 @@ export function TenantPortalLoginPage() {
               <FormItem>
                 <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
                 <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
+                  <InputWithIcon
+                    icon={<Mail {...iconProps("sm")} />}
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,9 +123,11 @@ export function TenantPortalLoginPage() {
               <FormItem>
                 <FormLabel>{t("tenantPortal.fields.password")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="current-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>
