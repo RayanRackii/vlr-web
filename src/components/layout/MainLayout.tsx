@@ -11,8 +11,8 @@ import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNo
 import { TrialBanner } from "@/components/layout/TrialBanner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
-  getEmailInitials,
   getPageTitleKey,
+  getUserInitials,
   RENTAL_RESOURCES_PERMISSIONS,
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
@@ -100,7 +100,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
 
   const userEmail = user?.email ?? t("account.userFallback")
   const pageTitle = t(getPageTitleKey(location.pathname))
-  const initials = getEmailInitials(user?.email)
+  const initials = getUserInitials(currentUser?.fullName, user?.email)
 
   async function handleExitEnvironment() {
     if (isExiting) {
