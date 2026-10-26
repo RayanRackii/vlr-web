@@ -19,9 +19,12 @@ describe("ui primitives use Tailwind 3 arbitrary CSS-var syntax", () => {
   it("select/dropdown popups are at least as wide as their trigger and capped to the viewport", () => {
     const select = sources["./select.tsx"]
     const menu = sources["./dropdown-menu.tsx"]
-    expect(select).toContain("min-w-[var(--anchor-width)]")
-    expect(select).toContain("max-h-[var(--available-height)]")
-    expect(menu).toContain("min-w-[max(8rem,var(--anchor-width))]")
-    expect(menu).toContain("max-h-[var(--available-height)]")
+    // min-width is clamped to the available width so it can never defeat the max-width cap
+    expect(select).toContain("min-w-[min(var(--anchor-width),var(--available-width))]")
+    expect(menu).toContain("min-w-[min(max(8rem,var(--anchor-width)),var(--available-width))]")
+    for (const source of [select, menu]) {
+      expect(source).toContain("max-w-[var(--available-width)]")
+      expect(source).toContain("max-h-[var(--available-height)]")
+    }
   })
 })
