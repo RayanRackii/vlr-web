@@ -10,7 +10,7 @@ function AuthWordmark() {
   return (
     <Link
       to="/"
-      className="inline-flex items-center gap-0.5 text-2xl font-extrabold tracking-tighter text-foreground"
+      className="inline-flex items-center gap-0.5 text-3xl font-extrabold tracking-tighter text-foreground"
       aria-label={t("landing.header.brandAria")}
     >
       Rolvix
@@ -40,22 +40,23 @@ export function AuthLayout({
   return (
     <AuthSplitShell
       brandPanel={
-        <>
+        <div className="max-w-md animate-in fade-in slide-in-from-left-4 duration-700 space-y-6">
           <AuthWordmark />
 
-          <div className="max-w-md animate-in fade-in slide-in-from-left-4 duration-700 space-y-4">
-            <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+          <div className="space-y-4">
+            <h2 className="text-4xl font-semibold tracking-tight text-foreground">
               {t("auth.brandPanel.title")}
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground">
               {t("auth.brandPanel.body")}
             </p>
           </div>
-
-          <p className="text-xs text-muted-foreground">
-            {t("auth.brandPanel.footnote")}
-          </p>
-        </>
+        </div>
+      }
+      brandFootnote={
+        <p className="text-xs text-muted-foreground">
+          {t("auth.brandPanel.footnote")}
+        </p>
       }
       mobileBrand={<AuthWordmark />}
       title={title}

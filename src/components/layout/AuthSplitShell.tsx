@@ -5,8 +5,10 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { cn } from "@/lib/utils"
 
 type AuthSplitShellProps = {
-  /** Contents of the left lg+ brand panel. */
+  /** Vertically-centered contents of the left lg+ brand panel (logo, name, tagline). */
   brandPanel: ReactNode
+  /** Anchored to the bottom of the brand panel, e.g. the "Tecnologia Rolvix" note. */
+  brandFootnote?: ReactNode
   brandPanelStyle?: CSSProperties
   /** Defaults to the Rolvix brand gradient. */
   brandPanelClassName?: string
@@ -23,6 +25,7 @@ type AuthSplitShellProps = {
 
 export function AuthSplitShell({
   brandPanel,
+  brandFootnote,
   brandPanelStyle,
   brandPanelClassName,
   mobileBrand,
@@ -36,12 +39,15 @@ export function AuthSplitShell({
     <main className="grid min-h-screen w-full lg:grid-cols-2">
       <div
         className={cn(
-          "relative hidden flex-col justify-between overflow-hidden p-10 lg:flex",
+          "relative hidden flex-col overflow-hidden p-10 lg:flex",
           brandPanelClassName ?? "[background:var(--brand-gradient)]",
         )}
         style={brandPanelStyle}
       >
-        {brandPanel}
+        <div className="flex flex-1 flex-col items-start justify-center">
+          {brandPanel}
+        </div>
+        {brandFootnote}
       </div>
 
       <div className="flex flex-col">

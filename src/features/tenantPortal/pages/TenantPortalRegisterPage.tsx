@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Mail, Phone, User } from "lucide-react"
+import { Lock, Mail, Phone, User } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -287,8 +287,8 @@ export function TenantPortalRegisterPage() {
             [
               ["name", "text", "name", <User {...iconProps("sm")} />],
               ["email", "email", "email", <Mail {...iconProps("sm")} />],
-              ["password", "password", "new-password", null],
-              ["confirmPassword", "password", "new-password", null],
+              ["password", "password", "new-password", <Lock {...iconProps("sm")} />],
+              ["confirmPassword", "password", "new-password", <Lock {...iconProps("sm")} />],
               ["phone", "tel", "tel", <Phone {...iconProps("sm")} />],
             ] as const
           ).map(([name, type, autoComplete, icon]) => (
@@ -302,6 +302,7 @@ export function TenantPortalRegisterPage() {
                   <FormControl>
                     {type === "password" ? (
                       <PasswordInput
+                        icon={icon}
                         autoComplete={autoComplete}
                         showLabel={t("auth.showPassword")}
                         hideLabel={t("auth.hidePassword")}
