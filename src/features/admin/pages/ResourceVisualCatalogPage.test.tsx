@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
 import { getAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { getTenantSegments, listAdminVisualTemplates, listVisualRevisions, listVisualTags, replaceTenantSegments, saveVisualTag, saveVisualTemplate } from "@/features/rentals/services/resourceVisualService"
+import { getTenantSegments, listAdminVisualTemplates, listVisualRevisions, listVisualTags, replaceTenantSegments, saveVisualRevision, saveVisualTag, saveVisualTemplate } from "@/features/rentals/services/resourceVisualService"
 import apiTemplates from "@/features/rentals/schemas/__fixtures__/admin-visual-templates.json"
 import { visualPageSchema } from "@/features/rentals/schemas/resourceVisualSchemas"
 
@@ -34,6 +34,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     vi.mocked(getAdminTenant).mockReset().mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111", legalName: "FICC", taxId: "1", subdomain: "ficc", isActive: true, createdAt: "2026-01-01", activeModules: [], assetFamilyKeys: [] })
     vi.mocked(saveVisualTag).mockReset()
     vi.mocked(saveVisualTemplate).mockReset()
+    vi.mocked(saveVisualRevision).mockReset()
     vi.mocked(replaceTenantSegments).mockReset()
     vi.mocked(toast.success).mockReset()
     vi.mocked(toast.error).mockReset()
@@ -115,6 +116,46 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     expect(screen.getByLabelText("Color")).toHaveValue("#4D6A92")
     await user.click(screen.getByRole("button", { name: "Cancelar edição" }))
     expect(screen.getByRole("heading", { name: "Novo modelo" })).toBeInTheDocument()
+  })
+
+  it("fills floor/lines/viewBox/aspect/color/icon from a shape preset and renders a safe data-URL preview", async () => {
+    const user = userEvent.setup()
+    const apiTemplate = visualPageSchema.parse(apiTemplates).items[0]
+    vi.mocked(listAdminVisualTemplates).mockResolvedValue({ ...visualPageSchema.parse(apiTemplates), items: [{ ...apiTemplate!, publishedRevision: null }] })
+    vi.mocked(listVisualTags).mockResolvedValue(apiTemplate?.tags ?? [])
+    vi.mocked(saveVisualRevision).mockResolvedValue({
+      metadata: { id: "new-revision", templateId: apiTemplate!.id, revisionNo: 1, status: "Draft", viewBox: "0 0 100 100", aspectRatio: 1, defaultColor: "#8A5A3B", defaultIcon: "table", suggestedSlotMinutes: null, suggestedCapacityPeople: null, artSha256: "sha", artUrl: null, version: 1 },
+      floorSvg: '<circle cx="50" cy="50" r="46" fill="#D1D5DB"/>',
+      linesSvg: '<circle cx="50" cy="50" r="46" fill="none" stroke="#9CA3AF" stroke-width="2"/>',
+      netSvg: null,
+      publishedAt: null,
+    })
+    render(<ResourceVisualCatalogPage />)
+
+    await user.click(await screen.findByRole("button", { name: /Quadra de padel/ }))
+    await user.click(screen.getByText("Nova revisão"))
+
+    const preview = screen.getByRole("img", { name: "Prévia do desenho combinando piso, linhas e divisor" })
+    expect(preview).toHaveAttribute("src", expect.stringContaining("data:image/svg+xml,"))
+    expect(preview.getAttribute("src")).not.toContain("<")
+
+    await user.click(screen.getByRole("button", { name: /Mesa redonda/ }))
+
+    expect(screen.getByLabelText("Aspect ratio")).toHaveValue("1")
+    expect(screen.getByLabelText("Color")).toHaveValue("#8A5A3B")
+    expect(screen.getByLabelText("Arte do piso SVG")).toHaveValue(
+      '<circle cx="50" cy="50" r="46" fill="#D1D5DB"/>',
+    )
+    const nextSrc = preview.getAttribute("src") ?? ""
+    expect(nextSrc).toContain(encodeURIComponent('viewBox="0 0 100 100"'))
+    expect(nextSrc).toContain(encodeURIComponent('<circle cx="50" cy="50" r="46" fill="#D1D5DB"/>'))
+
+    await user.click(screen.getAllByRole("button", { name: "Salvar" }).at(-1)!)
+    await waitFor(() => expect(saveVisualRevision).toHaveBeenCalledWith(
+      apiTemplate!.id,
+      expect.objectContaining({ viewBox: "0 0 100 100", aspectRatio: 1, defaultColor: "#8A5A3B", defaultIcon: "table" }),
+      undefined,
+    ))
   })
 
   it("opens the edit form and reports revision-list failures", async () => {
