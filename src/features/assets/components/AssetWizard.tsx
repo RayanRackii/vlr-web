@@ -699,16 +699,29 @@ export function AssetWizard({
           <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
         </DialogHeader>
 
-        <WizardPanelsStepper
-          className="shrink-0"
-          steps={steps}
-          currentIndex={stepIndex}
-          onStepClick={(index) => {
-            if (index < stepIndex) {
-              setStepIndex(index)
-            }
-          }}
-        />
+        <div className="hidden shrink-0 sm:block">
+          <WizardPanelsStepper
+            steps={steps}
+            currentIndex={stepIndex}
+            onStepClick={(index) => {
+              if (index < stepIndex) {
+                setStepIndex(index)
+              }
+            }}
+          />
+        </div>
+        <div className="shrink-0 sm:hidden">
+          <WizardPanelsStepper
+            steps={steps}
+            currentIndex={stepIndex}
+            onStepClick={(index) => {
+              if (index < stepIndex) {
+                setStepIndex(index)
+              }
+            }}
+            variant="compact"
+          />
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
@@ -716,7 +729,7 @@ export function AssetWizard({
             {t("common.loading")}
           </div>
         ) : (
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
             {currentStepId === "general" ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1679,36 +1692,37 @@ export function AssetWizard({
           <Button
             type="button"
             variant="outline"
+            className="w-full sm:w-auto"
             disabled={stepIndex === 0 || isLoading || isSubmitting}
             onClick={handleBack}
           >
             {t("assets.wizard.back")}
           </Button>
-          <div className="flex gap-2">
-            {isLastStep ? (
-              <FormPrimaryButton
-                type="button"
-                isValid={isCurrentStepValid}
-                loading={isSubmitting}
-                disabled={isLoading || readOnly}
-                onClick={() => {
-                  void handleSubmit()
-                }}
-              >
-                {t("assets.wizard.finish")}
-              </FormPrimaryButton>
-            ) : (
-              <FormPrimaryButton
-                type="button"
-                isValid={isCurrentStepValid}
-                loading={isSubmitting}
-                disabled={isLoading}
-                onClick={handleNext}
-              >
-                {t("assets.wizard.next")}
-              </FormPrimaryButton>
-            )}
-          </div>
+          {isLastStep ? (
+            <FormPrimaryButton
+              type="button"
+              className="w-full sm:w-auto"
+              isValid={isCurrentStepValid}
+              loading={isSubmitting}
+              disabled={isLoading || readOnly}
+              onClick={() => {
+                void handleSubmit()
+              }}
+            >
+              {t("assets.wizard.finish")}
+            </FormPrimaryButton>
+          ) : (
+            <FormPrimaryButton
+              type="button"
+              className="w-full sm:w-auto"
+              isValid={isCurrentStepValid}
+              loading={isSubmitting}
+              disabled={isLoading}
+              onClick={handleNext}
+            >
+              {t("assets.wizard.next")}
+            </FormPrimaryButton>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
