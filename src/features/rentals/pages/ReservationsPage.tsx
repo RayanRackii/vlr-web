@@ -393,6 +393,11 @@ export function ReservationsPage() {
                   timeZoneId,
                 )}
               </p>
+              <p className="font-semibold text-foreground">
+                {t("rentals.reservations.cancelConfirmTotal", {
+                  amount: formatMoney(cancelTarget.totalAmount),
+                })}
+              </p>
             </div>
           ) : null}
           <AlertDialogFooter>

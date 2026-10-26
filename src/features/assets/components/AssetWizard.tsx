@@ -694,12 +694,13 @@ export function AssetWizard({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="gap-5 border-border/80 bg-card sm:max-w-3xl">
-        <DialogHeader className="space-y-1">
+      <DialogContent className="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden border-border/80 bg-card sm:max-w-3xl">
+        <DialogHeader className="shrink-0 space-y-1">
           <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
         </DialogHeader>
 
         <WizardPanelsStepper
+          className="shrink-0"
           steps={steps}
           currentIndex={stepIndex}
           onStepClick={(index) => {
@@ -715,7 +716,7 @@ export function AssetWizard({
             {t("common.loading")}
           </div>
         ) : (
-          <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
             {currentStepId === "general" ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1674,7 +1675,7 @@ export function AssetWizard({
           </div>
         )}
 
-        <DialogFooter className="-mx-0 -mb-0 border-t-0 bg-transparent p-0 sm:justify-between">
+        <DialogFooter className="-mx-0 -mb-0 shrink-0 border-t-0 bg-transparent p-0 sm:justify-between">
           <Button
             type="button"
             variant="outline"
