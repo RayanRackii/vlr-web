@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
 import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 import {
   StaffTenantError,
   listMyStaffTenants,
@@ -15,6 +16,10 @@ vi.mock("@/features/users/services/staffTenantsService", async (orig) => ({
   ...(await orig<object>()),
   listMyStaffTenants: vi.fn(),
   selectMyStaffTenant: vi.fn(),
+}))
+vi.mock("sonner", async (orig) => ({
+  ...(await orig<object>()),
+  toast: { error: vi.fn(), success: vi.fn() },
 }))
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", async (orig) => ({
   ...(await orig<object>()),
@@ -32,12 +37,13 @@ function membership(tenantId: string, tradeName: string) {
   } as never
 }
 
-function renderLogin() {
+function renderLogin(path = "/login") {
   return render(
-    <MemoryRouter initialEntries={["/login"]}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<div>dashboard</div>} />
+        <Route path="/os" element={<div>orders</div>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -97,5 +103,55 @@ describe("LoginPage tenant selector", () => {
     renderLogin()
     await submit()
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+
+  const two = {
+    memberships: [membership(tenantA, "Alpha"), membership(tenantB, "Beta")],
+    accessTokenTenantId: tenantB,
+  }
+
+  it("preselects the token tenant and keeps next after picking", async () => {
+    vi.mocked(listMyStaffTenants).mockResolvedValue(two as never)
+    vi.mocked(selectMyStaffTenant).mockResolvedValue({} as never)
+    renderLogin("/login?next=/os")
+    const user = await submit()
+    const radios = await screen.findAllByRole("radio")
+    expect(radios[1]).toBeChecked()
+    expect(radios[0]).not.toBeChecked()
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    expect(await screen.findByText("orders")).toBeInTheDocument()
+    expect(selectMyStaffTenant).toHaveBeenCalledWith(tenantB)
+  })
+
+  it("shows an error toast and stays on the picker when selection fails", async () => {
+    vi.mocked(listMyStaffTenants).mockResolvedValue(two as never)
+    vi.mocked(selectMyStaffTenant).mockRejectedValue(
+      new StaffTenantError("SERVER_ERROR", 500),
+    )
+    renderLogin()
+    const user = await submit()
+    await screen.findAllByRole("radio")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalled()
+    })
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
+    expect(screen.getAllByRole("radio")).toHaveLength(2)
+  })
+
+  it("does not open any tenant when the lookup fails, and retries", async () => {
+    vi.mocked(listMyStaffTenants)
+      .mockRejectedValueOnce(new StaffTenantError("SERVER_ERROR", 500))
+      .mockResolvedValueOnce(two as never)
+    renderLogin()
+    const user = await submit()
+    expect(
+      await screen.findByText(
+        "Não foi possível carregar seus ambientes. Tente novamente.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }))
+    expect(await screen.findAllByRole("radio")).toHaveLength(2)
   })
 })

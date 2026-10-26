@@ -34,6 +34,8 @@ import { TenantPicker } from "@/features/auth/TenantPicker"
 import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
 import {
+  PLATFORM_ADMIN_USES_ENTER,
+  StaffTenantError,
   listMyStaffTenants,
   selectMyStaffTenant,
 } from "@/features/users/services/staffTenantsService"
@@ -67,9 +69,12 @@ export function LoginPage() {
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
   const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
-  const [pickerMemberships, setPickerMemberships] = useState<
-    StaffTenantMembership[] | null
-  >(null)
+  const [picker, setPicker] = useState<{
+    memberships: StaffTenantMembership[]
+    initialTenantId: string
+  } | null>(null)
+  const [membershipError, setMembershipError] = useState(false)
+  const [retryingMemberships, setRetryingMemberships] = useState(false)
   const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
   const companySchema = useMemo(
     () =>
@@ -161,19 +166,46 @@ export function LoginPage() {
       return
     }
 
-    // Accounts in more than one tenant choose where to land instead of
-    // opening whichever tenant the token happens to carry.
+    await openTenantStep()
+  }
+
+  // Accounts in more than one tenant choose where to land instead of
+  // opening whichever tenant the token happens to carry.
+  async function openTenantStep() {
     try {
       const list = await listMyStaffTenants()
       if (list.memberships.length > 1) {
-        setPickerMemberships(list.memberships)
+        const current = list.memberships.some(
+          (membership) => membership.tenantId === list.accessTokenTenantId,
+        )
+          ? (list.accessTokenTenantId ?? "")
+          : ""
+        setMembershipError(false)
+        setPicker({ memberships: list.memberships, initialTenantId: current })
         return
       }
-    } catch {
-      // Platform admins (and lookup failures) keep the previous flow.
+    } catch (error: unknown) {
+      if (
+        !(
+          error instanceof StaffTenantError &&
+          error.code === PLATFORM_ADMIN_USES_ENTER
+        )
+      ) {
+        setMembershipError(true)
+        return
+      }
     }
 
     goAfterLogin()
+  }
+
+  async function onRetryMemberships() {
+    setRetryingMemberships(true)
+    try {
+      await openTenantStep()
+    } finally {
+      setRetryingMemberships(false)
+    }
   }
 
   function goAfterLogin() {
@@ -222,15 +254,36 @@ export function LoginPage() {
     await sendReset(resetEmail, values.subdomain)
   }
 
-  if (pickerMemberships) {
+  if (membershipError) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.membershipError")}
+      >
+        <LoadingButton
+          type="button"
+          className="h-11 w-full"
+          loading={retryingMemberships}
+          loadingLabel={t("auth.invite.pickerSubmitting")}
+          onClick={() => {
+            void onRetryMemberships()
+          }}
+        >
+          {t("auth.invite.membershipRetry")}
+        </LoadingButton>
+      </AuthLayout>
+    )
+  }
+
+  if (picker) {
     return (
       <AuthLayout
         title={t("auth.invite.pickerTitle")}
         subtitle={t("auth.invite.pickerBody")}
       >
         <TenantPicker
-          memberships={pickerMemberships}
-          initialTenantId=""
+          memberships={picker.memberships}
+          initialTenantId={picker.initialTenantId}
           onConfirm={onPickTenant}
         />
       </AuthLayout>

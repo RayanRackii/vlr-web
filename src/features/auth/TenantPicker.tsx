@@ -66,7 +66,7 @@ export function TenantPicker({
             >
               <input
                 type="radio"
-                name="invite-tenant"
+                name="tenant-picker"
                 className="mt-0.5 size-4 accent-primary"
                 value={membership.tenantId}
                 checked={selectedTenantId === membership.tenantId}
