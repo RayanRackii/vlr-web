@@ -1846,10 +1846,10 @@ describe("TenantPortalAgendaPage time selector", () => {
         isAvailable: true,
         requestedQuantity,
         availableQuantity: 3,
-        estimatedTotalAmount: requestedQuantity * 15,
+        estimatedTotalAmount: 30,
         pricingUnit: "Fixed" as const,
-        unitPrice: 15,
-        pricedUnits: requestedQuantity,
+        unitPrice: 30,
+        pricedUnits: 1,
         reason: null,
       }
     })
@@ -1862,7 +1862,8 @@ describe("TenantPortalAgendaPage time selector", () => {
     await screen.findByText(
       i18n.t("tenantPortal.agenda.available", { amount: formatMoney(30) }),
     )
-    expect(screen.getByText("R$ 15,00 fixo · 2 unidades (total fixo)")).toBeInTheDocument()
+    // Fixed is flat per reservation line (ruling a): total stays R$ 30 for qty 2.
+    expect(screen.getByText("R$ 30,00 fixo · 2 unidades (total fixo)")).toBeInTheDocument()
   })
 
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {

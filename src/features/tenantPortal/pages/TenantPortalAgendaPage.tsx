@@ -1967,10 +1967,11 @@ export function TenantPortalAgendaPage() {
               t,
               "bookingMap.prices",
             )
-            const units = quote.pricedUnits ?? quantity
             if (quote.pricingUnit === "Fixed") {
-              return t("tenantPortal.agenda.quoteFixedLine", { price: priceText, count: units })
+              // API pricedUnits is 1 for Fixed (flat per line); show the requested quantity.
+              return t("tenantPortal.agenda.quoteFixedLine", { price: priceText, count: quote.quantity })
             }
+            const units = quote.pricedUnits ?? quantity
             return units > 1
               ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units })}`
               : priceText
