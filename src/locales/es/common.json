@@ -528,7 +528,10 @@
       "reservationQuantitySuffix_one": "x {{count}} unidad",
       "reservationQuantitySuffix_other": "x {{count}} unidades",
       "reservationDaysSuffix_one": "{{count}} día",
-      "reservationDaysSuffix_other": "{{count}} días"
+      "reservationDaysSuffix_other": "{{count}} días",
+      "quoteFixedLine_one": "{{price}} (total fijo)",
+      "quoteFixedLine_other": "{{price}} · {{count}} unidades (total fijo)",
+      "quoteUnitMultiplier": "× {{count}}"
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -3142,7 +3145,7 @@
         "durationMinutes": "Duraciones (min; separe con comas)",
         "durationMinutesHint": "Separe los valores con comas. Ejemplo: 60, 120, 240.",
         "durationMinutesInvalid": "Ingrese duraciones positivas en minutos enteros, separadas por comas.",
-        "slotGridDurationsHint": "Opcional. Duraciones (en minutos) que el cliente puede reservar uniendo horarios consecutivos, p. ej. 30,60,90. Vacío = un horario por reserva."
+        "slotGridDurationsHint": "Opcional. Duraciones (en minutos) que el cliente puede reservar uniendo horarios consecutivos, p. ej. 30,60,90. Vacío = franjas múltiples desactivadas."
       },
       "weeklyRule": {
         "title": "Crear regla semanal",
