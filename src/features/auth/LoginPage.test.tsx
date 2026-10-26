@@ -70,12 +70,13 @@ describe("LoginPage validity gate", () => {
     const entrar = screen.getByRole("button", { name: "Entrar" })
     const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
     expect(entrar).toBeDisabled()
-    expect(forgot).toBeDisabled()
+    expect(forgot).toBeEnabled()
+    expect(forgot).toHaveAttribute("aria-disabled", "true")
 
     await user.type(screen.getByLabelText("E-mail"), "not-an-email")
     await user.type(screen.getByLabelText("Senha"), "password1")
     expect(entrar).toBeDisabled()
-    expect(forgot).toBeDisabled()
+    expect(forgot).toHaveAttribute("aria-disabled", "true")
     expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
 
     await user.clear(screen.getByLabelText("E-mail"))
@@ -83,6 +84,7 @@ describe("LoginPage validity gate", () => {
     await user.clear(screen.getByLabelText("Senha"))
     expect(entrar).toBeDisabled()
     expect(forgot).toBeEnabled()
+    expect(forgot).not.toHaveAttribute("aria-disabled")
 
     await user.type(screen.getByLabelText("Senha"), "password1")
     expect(entrar).toBeEnabled()
@@ -164,7 +166,7 @@ describe("LoginPage locale", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled()
     expect(
       screen.getByRole("button", { name: "Forgot password" }),
-    ).toBeDisabled()
+    ).toBeEnabled()
     expect(screen.queryByRole("button", { name: "Entrar" })).not.toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: "Esqueci a senha" }),

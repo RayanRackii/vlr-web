@@ -248,6 +248,7 @@
       "submitting": "Signing in...",
       "forgotPassword": "Forgot password",
       "forgotSubmitting": "Sending...",
+      "forgotEmailHint": "Enter your email above to receive the reset link.",
       "validation": {
         "emailRequired": "Email is required.",
         "emailInvalid": "Enter a valid email.",

@@ -65,23 +65,57 @@ describe("LoginPage forgot password", () => {
     })
   })
 
-  it("keeps Esqueci a senha disabled until the email is valid", async () => {
+  it("keeps Esqueci a senha focusable but aria-disabled until the email is valid", async () => {
     const user = userEvent.setup()
     renderLogin("/login")
 
     const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
-    expect(forgot).toBeDisabled()
+    expect(forgot).toBeEnabled()
+    expect(forgot).toHaveAttribute("aria-disabled", "true")
     expect(screen.getByRole("button", { name: "Entrar" })).toBeDisabled()
 
     await user.type(screen.getByLabelText("E-mail"), "not-an-email")
-    expect(forgot).toBeDisabled()
+    expect(forgot).toHaveAttribute("aria-disabled", "true")
     expect(post).not.toHaveBeenCalled()
 
     await user.clear(screen.getByLabelText("E-mail"))
     await user.type(screen.getByLabelText("E-mail"), "ana@club.test")
     expect(forgot).toBeEnabled()
+    expect(forgot).not.toHaveAttribute("aria-disabled")
     expect(screen.getByRole("button", { name: "Entrar" })).toBeDisabled()
     expect(screen.getByLabelText("Senha")).toHaveValue("")
+  })
+
+  it("focuses the email input and shows a hint when Esqueci a senha is activated with an empty email", async () => {
+    const user = userEvent.setup()
+    renderLogin("/login")
+
+    const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
+    await user.click(forgot)
+
+    expect(screen.getByLabelText("E-mail")).toHaveFocus()
+    expect(
+      await screen.findByText(i18n.t("auth.login.forgotEmailHint")),
+    ).toBeInTheDocument()
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  it("focuses the email input and shows a hint when Esqueci a senha is activated via keyboard with an invalid email", async () => {
+    const user = userEvent.setup()
+    renderLogin("/login")
+
+    await user.type(screen.getByLabelText("E-mail"), "not-an-email")
+
+    const forgot = screen.getByRole("button", { name: "Esqueci a senha" })
+    forgot.focus()
+    expect(forgot).toHaveFocus()
+    await user.keyboard("{Enter}")
+
+    expect(screen.getByLabelText("E-mail")).toHaveFocus()
+    expect(
+      await screen.findByText(i18n.t("auth.login.forgotEmailHint")),
+    ).toBeInTheDocument()
+    expect(post).not.toHaveBeenCalled()
   })
 
   it("sends X-Tenant-Subdomain from a tenant host on the B2B login", async () => {

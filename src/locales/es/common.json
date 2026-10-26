@@ -248,6 +248,7 @@
       "submitting": "Iniciando sesión...",
       "forgotPassword": "Olvidé la contraseña",
       "forgotSubmitting": "Enviando...",
+      "forgotEmailHint": "Ingrese su correo electrónico arriba para recibir el enlace de restablecimiento.",
       "validation": {
         "emailRequired": "El correo electrónico es obligatorio.",
         "emailInvalid": "Ingrese un correo electrónico válido.",
