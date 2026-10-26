@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import { Button } from "@/components/ui/button"
+
 /** Standalone 404 for signed-out visitors; no admin/app chrome. */
 export function PublicNotFoundPage() {
   const { t } = useTranslation()
@@ -13,12 +15,9 @@ export function PublicNotFoundPage() {
       <p className="text-sm text-muted-foreground">
         {t("notFound.description")}
       </p>
-      <Link
-        to="/"
-        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-      >
+      <Button size="sm" className="min-h-11" render={<Link to="/" />}>
         {t("notFound.home")}
-      </Link>
+      </Button>
     </main>
   )
 }

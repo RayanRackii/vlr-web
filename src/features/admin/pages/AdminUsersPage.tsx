@@ -209,7 +209,7 @@ export function AdminUsersPage() {
         </p>
       ) : null}
 
-      <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+      <div className="hidden overflow-x-auto rounded-lg border border-border lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -321,7 +321,7 @@ export function AdminUsersPage() {
         </Table>
       </div>
 
-      <div className="space-y-2 md:hidden">
+      <div className="space-y-2 lg:hidden">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <div

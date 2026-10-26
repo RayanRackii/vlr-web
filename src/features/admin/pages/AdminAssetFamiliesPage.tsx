@@ -462,7 +462,7 @@ export function AdminAssetFamiliesPage() {
         </div>
       ) : null}
 
-      <div className="hidden overflow-x-auto rounded-xl border border-border md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -513,7 +513,7 @@ export function AdminAssetFamiliesPage() {
         </Table>
       </div>
 
-      <div className="space-y-2 md:hidden">
+      <div className="space-y-2 lg:hidden">
         {isLoading ? (
           <div className="rounded-xl border border-border p-4 text-center text-sm text-muted-foreground">
             {t("common.loading")}

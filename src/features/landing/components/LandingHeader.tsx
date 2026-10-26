@@ -85,8 +85,8 @@ export function LandingHeader() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1">
-            <LanguageSwitcher />
-            <ThemeToggle />
+            <LanguageSwitcher className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9" />
+            <ThemeToggle className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9" />
           </div>
 
           <div
@@ -99,6 +99,7 @@ export function LandingHeader() {
               type="button"
               variant="ghost"
               size="sm"
+              className="min-h-11 sm:min-h-9"
               onClick={() => {
                 void navigate("/login")
               }}
