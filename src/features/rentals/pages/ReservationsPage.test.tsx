@@ -41,6 +41,7 @@ import {
   cancelAdminReservation,
   completeAdminReservation,
   confirmAdminReservation,
+  formatMoney,
   listAdminReservations,
   type AdminReservation,
   type ReservationStatus,
@@ -269,5 +270,41 @@ describe("ReservationsPage Cancel confirmation", () => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
     })
     expect(cancelMock).not.toHaveBeenCalled()
+  })
+
+  it("shows the item quantity and total amount in the cancel confirmation", async () => {
+    const user = userEvent.setup()
+    listMock.mockResolvedValue([
+      makeReservation("Confirmed", {
+        totalAmount: 240,
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            assetId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+            rentalAssetId: "11111111-1111-4111-8111-111111111111",
+            assetName: "Quadra 1",
+            quantity: 3,
+            unitPrice: 80,
+            subTotal: 240,
+          },
+        ],
+      }),
+    ])
+    renderPage([COMPLETE_PERM])
+
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+    )
+
+    const dialog = await screen.findByRole("alertdialog")
+    expect(within(dialog).getByText(/Quadra 1 ×3/)).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        i18n.t("rentals.reservations.cancelConfirmTotal", {
+          amount: formatMoney(240),
+        }),
+      ),
+    ).toBeInTheDocument()
   })
 })

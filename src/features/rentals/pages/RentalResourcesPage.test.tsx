@@ -837,7 +837,7 @@ describe("RentalResourcesPage", () => {
     await openPricingTab(user)
     expect(
       screen.getByText(
-        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { hours: 8 }),
+        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { count: 8 }),
       ),
     ).toBeInTheDocument()
     await user.click(
@@ -907,5 +907,37 @@ describe("RentalResourcesPage", () => {
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     ).toBeDisabled()
     expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it("uses the singular form for a 1-hour effective cancellation cutoff", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: 1,
+        effectiveCancelCutoffHours: 1,
+      },
+    ])
+    renderPage()
+
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { count: 1 }),
+      ),
+    ).toBeInTheDocument()
   })
 })

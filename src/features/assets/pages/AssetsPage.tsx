@@ -267,6 +267,74 @@ export function AssetsPage() {
     setWizardOpen(true)
   }, [])
 
+  const renderStatusBadges = useCallback(
+    (asset: AssetTableRow) => (
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <Badge variant={getStatusBadgeVariant(asset.status)}>
+          {getStatusLabel(asset.status, t)}
+        </Badge>
+        {asset.isRentable ? (
+          <Badge variant="outline">{t("assets.inventory.flags.rentable")}</Badge>
+        ) : null}
+        {asset.requiresMaintenance ? (
+          <Badge variant="outline">{t("assets.inventory.flags.maintenance")}</Badge>
+        ) : null}
+        {asset.scheduledDeletionAt ? (
+          <Badge variant="destructive">{t("assets.deletion.pendingBadge")}</Badge>
+        ) : null}
+      </div>
+    ),
+    [t],
+  )
+
+  const renderRowActions = useCallback(
+    (asset: AssetTableRow) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-11"
+              aria-label={t("assets.inventory.actions.rowMenu", {
+                tag: asset.tag,
+              })}
+            />
+          }
+        >
+          <MoreHorizontal aria-hidden="true" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            disabled={isTrialReadOnly}
+            onClick={() => {
+              if (isTrialReadOnly) {
+                return
+              }
+              openWizard("edit", asset.id)
+            }}
+          >
+            {t("assets.actions.edit")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isTrialReadOnly}
+            onClick={() => {
+              if (isTrialReadOnly) {
+                return
+              }
+              openDeleteDialog(asset)
+            }}
+          >
+            {t("assets.actions.remove")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+    [isTrialReadOnly, openDeleteDialog, openWizard, t],
+  )
+
   const columns = useMemo<ColumnDef<AssetTableRow>[]>(
     () => [
       {
@@ -340,84 +408,16 @@ export function AssetsPage() {
       {
         accessorKey: "status",
         header: t("assets.inventory.columns.status"),
-        cell: ({ row }) => {
-          const status = row.original.status
-
-          return (
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              <Badge variant={getStatusBadgeVariant(status)}>
-                {getStatusLabel(status, t)}
-              </Badge>
-              {row.original.isRentable ? (
-                <Badge variant="outline">
-                  {t("assets.inventory.flags.rentable")}
-                </Badge>
-              ) : null}
-              {row.original.requiresMaintenance ? (
-                <Badge variant="outline">
-                  {t("assets.inventory.flags.maintenance")}
-                </Badge>
-              ) : null}
-              {row.original.scheduledDeletionAt ? (
-                <Badge variant="destructive">
-                  {t("assets.deletion.pendingBadge")}
-                </Badge>
-              ) : null}
-            </div>
-          )
-        },
+        cell: ({ row }) => renderStatusBadges(row.original),
       },
       {
         id: "actions",
         enableColumnFilter: false,
         header: () => null,
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t("assets.inventory.actions.rowMenu", {
-                    tag: row.original.tag,
-                  })}
-                />
-              }
-            >
-              <MoreHorizontal aria-hidden="true" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                disabled={isTrialReadOnly}
-                onClick={() => {
-                  if (isTrialReadOnly) {
-                    return
-                  }
-                  openWizard("edit", row.original.id)
-                }}
-              >
-                {t("assets.actions.edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={isTrialReadOnly}
-                onClick={() => {
-                  if (isTrialReadOnly) {
-                    return
-                  }
-                  openDeleteDialog(row.original)
-                }}
-              >
-                {t("assets.actions.remove")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
+        cell: ({ row }) => renderRowActions(row.original),
       },
     ],
-    [isTrialReadOnly, openDeleteDialog, openWizard, t],
+    [isTrialReadOnly, renderRowActions, renderStatusBadges, t],
   )
 
   const tableColumns = useMemo(
@@ -724,7 +724,7 @@ export function AssetsPage() {
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-border">
+      <div className="hidden overflow-x-auto rounded-xl border border-border sm:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -807,6 +807,89 @@ export function AssetsPage() {
               : null}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="space-y-2 sm:hidden">
+        {isLoading ? (
+          <div className="rounded-xl border border-border p-4 text-center text-sm text-muted-foreground">
+            {t("common.loading")}
+          </div>
+        ) : null}
+
+        {!isLoading && filteredRows.length === 0 ? (
+          <div className="rounded-xl border border-border p-4">
+            <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-2 text-center">
+              <p className="text-sm text-muted-foreground">
+                {categories.length === 0 && !categoriesDenied
+                  ? tTone("assets.inventory.emptyNoTypes")
+                  : tTone("assets.inventory.empty")}
+              </p>
+              {categories.length === 0 && !categoriesDenied && canWriteCategories ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    void navigate("/ativos/categorias")
+                  }}
+                >
+                  {t("assets.inventory.emptyNoTypesCta")}
+                </Button>
+              ) : null}
+              {categories.length > 0 && canWriteAssets ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    openWizard("create")
+                  }}
+                >
+                  {t("assets.inventory.emptyWithTypesCta")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {!isLoading
+          ? filteredRows.map((row) => {
+              const asset = row.original
+              return (
+                <div
+                  key={row.id}
+                  data-state={row.getIsSelected() ? "selected" : undefined}
+                  className="rounded-xl border border-border p-3 data-[state=selected]:border-primary"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-start gap-2">
+                      {canWriteAssets ? (
+                        <label className="-m-3 flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                          <input
+                            type="checkbox"
+                            className="size-5 accent-primary"
+                            aria-label={t("assets.inventory.actions.selectRow", {
+                              tag: asset.tag,
+                            })}
+                            checked={row.getIsSelected()}
+                            onChange={row.getToggleSelectedHandler()}
+                            disabled={isTrialReadOnly}
+                          />
+                        </label>
+                      ) : null}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{asset.tag}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {asset.categoryName}
+                          {asset.location ? ` · ${asset.location}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    {canWriteAssets ? renderRowActions(asset) : null}
+                  </div>
+                  <div className="mt-2">{renderStatusBadges(asset)}</div>
+                </div>
+              )
+            })
+          : null}
       </div>
 
       <Dialog

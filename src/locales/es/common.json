@@ -3290,7 +3290,8 @@
         "cancelCutoffNone": "Sin plazo (usar política)",
         "cancelCutoffHours": "Horas antes del inicio",
         "cancelCutoffEffectiveNone": "Efectivo: sin plazo",
-        "cancelCutoffEffectiveHours": "Efectivo: {{hours}} horas antes del inicio",
+        "cancelCutoffEffectiveHours_one": "Efectivo: {{count}} hora antes del inicio",
+        "cancelCutoffEffectiveHours_other": "Efectivo: {{count}} horas antes del inicio",
         "horizonEffectiveSourceResource_one": "Vigente: {{count}} día (definido en este recurso)",
         "horizonEffectiveSourceResource_other": "Vigente: {{count}} días (definido en este recurso)",
         "horizonEffectiveSourceResource_unlimited": "Vigente: ilimitado (definido en este recurso)",
@@ -3409,6 +3410,7 @@
       "cancelConfirmDescription": "Esta acción no se puede deshacer.",
       "cancelConfirmDismiss": "Mantener reserva",
       "cancelConfirmAction": "Cancelar reserva",
+      "cancelConfirmTotal": "Total: {{amount}}",
       "completeSuccess": "Reserva completada.",
       "completeError": "No se pudo completar la reserva.",
       "statuses": {

@@ -298,7 +298,7 @@ export function RentalResourceSheet({
 
         <Form {...form}>
           <form
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto px-4 py-4"
             onSubmit={(event) => {
               event.preventDefault()
               if (readOnly) {
@@ -335,10 +335,10 @@ export function RentalResourceSheet({
                 }
               }}
             >
-              <TabsList className="h-auto w-full">
-                <TabsTrigger value="basic" className="px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
-                <TabsTrigger value="pricing" className="px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
-                <TabsTrigger value="visual" className="px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
+              <TabsList className="h-auto w-full min-w-0">
+                <TabsTrigger value="basic" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
+                <TabsTrigger value="pricing" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
+                <TabsTrigger value="visual" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
               </TabsList>
 
             <TabsContent value="basic" className="space-y-4">
@@ -580,7 +580,7 @@ export function RentalResourceSheet({
             />
             </TabsContent>
 
-            <TabsContent value="pricing" className="space-y-4">
+            <TabsContent value="pricing" className="min-w-0 space-y-4">
             <FormField
               control={form.control}
               name="requiresDeposit"
@@ -763,7 +763,7 @@ export function RentalResourceSheet({
                             "rentals.resources.form.cancelCutoffEffectiveNone",
                           )
                         : t("rentals.resources.form.cancelCutoffEffectiveHours", {
-                            hours: editing.effectiveCancelCutoffHours,
+                            count: editing.effectiveCancelCutoffHours,
                           })}
                     </p>
                   ) : null}
