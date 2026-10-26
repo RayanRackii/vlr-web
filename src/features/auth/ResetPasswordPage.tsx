@@ -132,12 +132,15 @@ export function ResetPasswordPage() {
     return (
       <AuthLayout title={t("auth.resetPassword.title")}>
         <div className="space-y-6">
-          <p className="text-sm text-destructive" role="alert">
+          <p
+            className="text-sm text-destructive dark:text-destructive-foreground"
+            role="alert"
+          >
             {t("auth.resetPassword.invalidLink")}
           </p>
           <Button
             type="button"
-            className="w-full"
+            className="h-11 w-full"
             render={<Link to="/login" />}
           >
             {t("auth.resetPassword.backToLogin")}
@@ -170,6 +173,7 @@ export function ResetPasswordPage() {
                     autoComplete="new-password"
                     showLabel={t("auth.showPassword")}
                     hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -192,6 +196,7 @@ export function ResetPasswordPage() {
                     autoComplete="new-password"
                     showLabel={t("auth.showPassword")}
                     hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -203,7 +208,7 @@ export function ResetPasswordPage() {
           {form.formState.errors.root?.message ? (
             <p
               role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/50 dark:bg-destructive/15 dark:text-destructive-foreground"
             >
               {form.formState.errors.root.message}
             </p>
@@ -211,7 +216,7 @@ export function ResetPasswordPage() {
 
           <FormPrimaryButton
             type="submit"
-            className="w-full"
+            className="h-11 w-full"
             isValid={isResetValid}
             loading={isSubmitting}
             loadingLabel={t("auth.resetPassword.submitting")}

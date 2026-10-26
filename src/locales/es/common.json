@@ -371,7 +371,9 @@
       "resendSubmitting": "Reenviando...",
       "resendToast": "Si existe una cuenta con este correo, enviamos un nuevo código.",
       "backToLogin": "Volver al inicio de sesión",
-      "rateLimited": "Demasiados intentos. Inténtelo de nuevo en un momento."
+      "rateLimited": "Demasiados intentos. Inténtelo de nuevo en un momento.",
+      "invalidLink": "Enlace inválido o vencido. Solicita uno nuevo.",
+      "requestNewLink": "Solicitar nuevo enlace"
     },
     "register": {
       "title": "Crear cuenta",

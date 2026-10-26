@@ -35,6 +35,7 @@ export function TenantPortalLoginPage() {
   const navigate = useNavigate()
   const { subdomain } = useOutletContext<TenantPortalOutletContext>()
   const [submitting, setSubmitting] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
   const schema = useMemo(
     () =>
       buildCustomerLoginSchema({
@@ -57,27 +58,30 @@ export function TenantPortalLoginPage() {
 
   async function onSubmit(values: CustomerLoginFormValues) {
     setSubmitting(true)
+    setLoginError(null)
     try {
       await loginCustomer(subdomain, values)
       toast.success(t("tenantPortal.login.toastSuccess"))
       void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
       if (error instanceof CustomerLoginRateLimitedError) {
-        toast.error(
+        const message =
           error.retryAfterSeconds === null
             ? t("tenantPortal.login.rateLimited")
             : t("tenantPortal.login.rateLimitedWithMinutes", {
                 count: Math.ceil(error.retryAfterSeconds / 60),
-              }),
-        )
+              })
+        toast.error(message)
+        setLoginError(message)
         return
       }
 
-      toast.error(
+      const message =
         error instanceof Error
           ? error.message
-          : t("tenantPortal.login.toastError"),
-      )
+          : t("tenantPortal.login.toastError")
+      toast.error(message)
+      setLoginError(message)
     } finally {
       setSubmitting(false)
     }
@@ -109,6 +113,7 @@ export function TenantPortalLoginPage() {
                     icon={<Mail {...iconProps("sm")} />}
                     type="email"
                     autoComplete="email"
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -128,6 +133,7 @@ export function TenantPortalLoginPage() {
                     autoComplete="current-password"
                     showLabel={t("auth.showPassword")}
                     hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -138,14 +144,24 @@ export function TenantPortalLoginPage() {
           <p className="text-right text-sm">
             <Link
               to={tenantPortalPath(subdomain, "forgot-password")}
-              className="font-medium text-primary underline"
+              className="inline-flex min-h-11 items-center font-medium text-primary underline"
             >
               {t("tenantPortal.login.forgotPassword")}
             </Link>
           </p>
+
+          {loginError ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/50 dark:bg-destructive/15 dark:text-destructive-foreground"
+            >
+              {loginError}
+            </p>
+          ) : null}
+
           <FormPrimaryButton
             type="submit"
-            className="w-full"
+            className="h-11 w-full"
             isValid={isLoginValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.login.submitting")}
@@ -159,7 +175,7 @@ export function TenantPortalLoginPage() {
         {t("tenantPortal.login.noAccount")}{" "}
         <Link
           to={tenantPortalPath(subdomain, "register")}
-          className="font-medium text-primary underline"
+          className="inline-flex min-h-11 items-center font-medium text-primary underline"
         >
           {t("tenantPortal.login.registerLink")}
         </Link>
