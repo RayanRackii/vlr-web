@@ -95,12 +95,14 @@ import {
   showAgendaSelectionNotice,
 } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingIdleSettings"
+import { isWithinCancelCutoff } from "@/features/tenantPortal/lib/cancelCutoffWarning"
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
   customerHeldSlotQuantity,
   findVisibleAgendaReservation,
   isBlockingReservationStatus,
+  reservationCivilDate,
   reservationCivilStart,
   parseAgendaReservationQuery,
   reservedSlotKeysForDate,
@@ -414,6 +416,7 @@ export function TenantPortalAgendaPage() {
   const replaceSelectionSearch = useRef(true)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
+  const jumpedReservationIdRef = useRef<string | null>(null)
   const [quote, setQuote] = useState<
     | { status: "idle" }
     | { status: "loading" }
@@ -1063,6 +1066,10 @@ export function TenantPortalAgendaPage() {
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
   )
+  const selectedSlotCutoffHours = selectedAsset?.effectiveCancelCutoffHours ?? null
+  const showCutoffWarning =
+    selectedSlot !== undefined &&
+    isWithinCancelCutoff(selectedSlotCutoffHours, date, selectedSlot.startTime, timeZoneId)
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
@@ -1257,18 +1264,30 @@ export function TenantPortalAgendaPage() {
     )
   }, signedIn)
 
-  const focusedReservationId =
-    findVisibleAgendaReservation(
-      mine,
-      parseAgendaReservationQuery(searchParams.get("reservation")),
-    )?.id ?? null
+  const focusedReservation = findVisibleAgendaReservation(
+    mine,
+    parseAgendaReservationQuery(searchParams.get("reservation")),
+  )
+  const focusedReservationId = focusedReservation?.id ?? null
 
   useEffect(() => {
-    if (loading || focusedReservationId === null) {
+    if (loading || focusedReservation === null) {
       return
     }
 
-    if (scrolledReservationIdRef.current === focusedReservationId) {
+    if (jumpedReservationIdRef.current !== focusedReservation.id) {
+      jumpedReservationIdRef.current = focusedReservation.id
+      const reservationDate = reservationCivilDate(
+        focusedReservation.startDateTime,
+        timeZoneId,
+      )
+      if (reservationDate !== null && reservationDate !== viewedDateRef.current) {
+        viewedDateRef.current = reservationDate
+        setDate(reservationDate)
+      }
+    }
+
+    if (scrolledReservationIdRef.current === focusedReservation.id) {
       return
     }
 
@@ -1278,8 +1297,8 @@ export function TenantPortalAgendaPage() {
     }
 
     row.scrollIntoView({ block: "center" })
-    scrolledReservationIdRef.current = focusedReservationId
-  }, [focusedReservationId, loading])
+    scrolledReservationIdRef.current = focusedReservation.id
+  }, [focusedReservation, loading, timeZoneId])
 
   useEffect(() => {
     if (loading || location.hash !== CUSTOMER_MY_RESERVATIONS_HASH) {
@@ -1816,40 +1835,33 @@ export function TenantPortalAgendaPage() {
     )
   }
 
-  function spaceState(rentalAssetId: string) {
-    if (schedulePending || slotsError) {
-      return {
-        available: false,
-        disabled: true,
-        selected: false,
-        pending: true,
-        detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
-        ownReservation: false,
-      }
-    }
-    const slot = startTime && effectiveDuration !== null
+  // Availability plus the reason text at one candidate start time — shared by
+  // the asset tiles (current `startTime`) and the Horário list (each option's
+  // own start time), so both surfaces explain a busy slot the same way.
+  function slotAvailabilityAt(rentalAssetId: string, startCandidate: string) {
+    const slot = startCandidate && effectiveDuration !== null
       ? findSlotAtStartAndDuration(
           slotsForView,
           rentalAssetId,
-          startTime,
+          startCandidate,
           effectiveDuration,
         )
       : undefined
     const reservedKey =
-      startTime.length > 0
-        ? agendaReservedSlotKey(date, rentalAssetId, startTime)
+      startCandidate.length > 0
+        ? agendaReservedSlotKey(date, rentalAssetId, startCandidate)
         : ""
     const ownReservation = customerAlreadyHoldsSlot(
       date,
       rentalAssetId,
-      startTime,
+      startCandidate,
       mine,
       timeZoneId,
     )
     const ownReservationUnits = customerHeldSlotQuantity(
       date,
       rentalAssetId,
-      startTime,
+      startCandidate,
       mine,
       timeZoneId,
     )
@@ -1858,13 +1870,8 @@ export function TenantPortalAgendaPage() {
       (optimisticReservedKeys.has(reservedKey) ||
         derivedReservedKeys.has(reservedKey) ||
         ownReservation ||
-        isPortalBookingInFlight(date, rentalAssetId, startTime))
+        isPortalBookingInFlight(date, rentalAssetId, startCandidate))
     const available = Boolean(slot) && !reserved
-    // Selecting a queued Location opens its waiting room even without a slot.
-    // Availability still controls booking; queue access only controls selection.
-    const queueSelectable = isLocationQueueEnabled(
-      visibleAssets.find((asset) => asset.id === rentalAssetId),
-    )
     const asset = visibleAssets.find((candidate) => candidate.id === rentalAssetId)
     const assetHorizonMaxDate = horizonEndDate(
       tenantTodayIsoDate(timeZoneId),
@@ -1872,7 +1879,7 @@ export function TenantPortalAgendaPage() {
     )
     const exceedsAssetHorizon = assetHorizonMaxDate !== null && date > assetHorizonMaxDate
     const detail =
-      startTime.length === 0 || available
+      startCandidate.length === 0 || available
         ? null
         : exceedsAssetHorizon
           ? t("tenantPortal.agenda.horizonExceeded")
@@ -1886,6 +1893,29 @@ export function TenantPortalAgendaPage() {
               : asset && asset.totalQuantity > 1
                 ? t("tenantPortal.agenda.allUnitsReserved")
                 : t("tenantPortal.agenda.slotTaken")
+    return { available, detail, ownReservation }
+  }
+
+  function spaceState(rentalAssetId: string) {
+    if (schedulePending || slotsError) {
+      return {
+        available: false,
+        disabled: true,
+        selected: false,
+        pending: true,
+        detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
+        ownReservation: false,
+      }
+    }
+    const { available, detail, ownReservation } = slotAvailabilityAt(
+      rentalAssetId,
+      startTime,
+    )
+    // Selecting a queued Location opens its waiting room even without a slot.
+    // Availability still controls booking; queue access only controls selection.
+    const queueSelectable = isLocationQueueEnabled(
+      visibleAssets.find((asset) => asset.id === rentalAssetId),
+    )
     return {
       available,
       disabled: !available && !queueSelectable,
@@ -1903,27 +1933,16 @@ export function TenantPortalAgendaPage() {
     if (!selectedRentalAssetId || effectiveDuration === null) {
       return true
     }
-    const slot = findSlotAtStartAndDuration(
-      slotsForView,
-      selectedRentalAssetId,
-      startCandidate,
-      effectiveDuration,
-    )
-    const reservedKey = agendaReservedSlotKey(date, selectedRentalAssetId, startCandidate)
-    const ownReservation = customerAlreadyHoldsSlot(
-      date,
-      selectedRentalAssetId,
-      startCandidate,
-      mine,
-      timeZoneId,
-    )
-    const reserved =
-      reservedKey.length > 0 &&
-      (optimisticReservedKeys.has(reservedKey) ||
-        derivedReservedKeys.has(reservedKey) ||
-        ownReservation ||
-        isPortalBookingInFlight(date, selectedRentalAssetId, startCandidate))
-    return Boolean(slot) && !reserved
+    return slotAvailabilityAt(selectedRentalAssetId, startCandidate).available
+  }
+
+  // Same reason text the asset tiles show for the currently selected start
+  // time, but for one Horário option's own start time.
+  function timeDetailForSelectedAsset(startCandidate: string): string | null {
+    if (!selectedRentalAssetId || effectiveDuration === null) {
+      return null
+    }
+    return slotAvailabilityAt(selectedRentalAssetId, startCandidate).detail
   }
 
   // The map flow books outside this page's handlers; refresh Minhas reservas
@@ -2249,6 +2268,10 @@ export function TenantPortalAgendaPage() {
                     const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
                       window.startTime,
                     )
+                    const reason = reservedForSelectedAsset
+                      ? timeDetailForSelectedAsset(window.startTime) ??
+                        t("tenantPortal.agenda.timeReserved")
+                      : null
                     return (
                       <SelectItem
                         key={window.startTime}
@@ -2257,9 +2280,7 @@ export function TenantPortalAgendaPage() {
                       >
                         {formatScheduleTime(window.startTime)} –{" "}
                         {formatScheduleTime(window.endTime)}
-                        {reservedForSelectedAsset
-                          ? ` · ${t("tenantPortal.agenda.timeReserved")}`
-                          : ""}
+                        {reason ? ` · ${reason}` : ""}
                       </SelectItem>
                     )
                   })}
@@ -2669,6 +2690,14 @@ export function TenantPortalAgendaPage() {
         <div className="space-y-3 max-md:contents md:sticky md:top-16 md:self-start">
           {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
           <div className="flex min-h-11 items-center max-md:mt-6">
+            {!selectedSlot && quote.status === "idle" ? (
+              <p className="text-sm text-muted-foreground">
+                {startTime.length === 0
+                  ? t("tenantPortal.agenda.chooseTimeFirst")
+                  : t("tenantPortal.agenda.chooseSpaceFirst")}
+              </p>
+            ) : null}
+
             {quote.status === "loading" ? (
               <p className="text-sm text-muted-foreground">
                 {t("tenantPortal.agenda.quoteLoading")}
@@ -2702,6 +2731,17 @@ export function TenantPortalAgendaPage() {
               </p>
             ) : null}
           </div>
+
+          {showCutoffWarning ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-amber-500 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+            >
+              {t("tenantPortal.agenda.cancelCutoffBookingWarning", {
+                count: selectedSlotCutoffHours ?? 0,
+              })}
+            </p>
+          ) : null}
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (

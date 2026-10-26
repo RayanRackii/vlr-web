@@ -9,7 +9,9 @@ import {
   formatTenantDayMonth,
   formatTenantTime,
   isTenantSlotStartInPast,
+  tenantCivilDateTime,
   tenantCivilDaySpan,
+  tenantCivilInstant,
   tenantTodayIsoDate,
 } from "@/lib/tenantTimeZone"
 
@@ -142,5 +144,19 @@ describe("multi-day civil spans", () => {
         "pt-BR",
       ),
     ).toBe("08/09")
+  })
+
+  it("converts a civil date and clock back to the matching UTC instant", () => {
+    const instant = tenantCivilInstant("2026-09-08", "08:00", "America/Sao_Paulo")
+    expect(instant.toISOString()).toBe("2026-09-08T11:00:00.000Z")
+    expect(tenantTodayIsoDate("America/Sao_Paulo", instant)).toBe("2026-09-08")
+  })
+
+  it("round-trips a civil instant across a timezone ahead of UTC", () => {
+    const instant = tenantCivilInstant("2026-09-11", "01:00", "Asia/Tokyo")
+    expect(tenantCivilDateTime(instant, "Asia/Tokyo")).toEqual({
+      date: "2026-09-11",
+      time: "01:00:00",
+    })
   })
 })

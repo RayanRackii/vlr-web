@@ -934,6 +934,9 @@ const rentalAssetSchema = z.object({
   categoryName: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string().nullable().optional(),
+  cancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
+  /** Override, otherwise the tenant policy. Null means no cutoff. */
+  effectiveCancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
   maxAdvanceBookingDays: z
     .number()
