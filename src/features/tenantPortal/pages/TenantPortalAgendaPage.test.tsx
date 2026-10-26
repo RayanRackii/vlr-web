@@ -1,5 +1,6 @@
+import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -11,8 +12,14 @@ import {
   Routes,
 } from "react-router-dom"
 
+// This file renders the full agenda; under CI load (maxWorkers=2) 1s waits flake.
+configure({ asyncUtilTimeout: 5000 })
+
 import { formatMoney } from "@/features/rentals/services/reservationsService"
-import { brazilTodayIsoDate } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  tenantTodayIsoDate,
+} from "@/lib/tenantTimeZone"
 import enCommon from "@/locales/en/common.json"
 import esCommon from "@/locales/es/common.json"
 import ptBRCommon from "@/locales/pt-BR/common.json"
@@ -123,8 +130,9 @@ beforeEach(() => {
   persistCustomerSession("test-customer-token", "ficc", "Ana", "test-customer")
 })
 
-afterEach(() => {
+afterEach(async () => {
   clearCustomerSession()
+  await i18n.changeLanguage("pt-BR")
 })
 
 const outletContext: CustomerAppOutletContext = {
@@ -174,15 +182,17 @@ function makeReservation(
   }
 }
 
-function renderAgenda(initialEntry = "/agenda") {
+function renderAgenda(initialEntry = "/agenda", timeZone = DEFAULT_TENANT_TIME_ZONE) {
   return render(
+    <TenantTimeZoneContext.Provider value={timeZone}>
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route element={<Outlet context={outletContext} />}>
           <Route path="/agenda" element={<TenantPortalAgendaPage />} />
         </Route>
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </TenantTimeZoneContext.Provider>,
   )
 }
 
@@ -283,6 +293,169 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     listMine.mockResolvedValue([])
   })
 
+  it.each([
+    ["Hour", "/hora"],
+    ["Slot", "/horário"],
+    ["Day", "/dia"],
+    ["Fixed", " fixo"],
+  ] as const)("shows %s pricing and multipliers in my reservations", async (pricingUnit, suffix) => {
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 480 })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit, quantity: 2, days: 3 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+
+    const row = (await screen.findByText("Quadra 1 ×2")).closest("li")!
+    expect(row).toHaveTextContent(`Total ${formatMoney(480)}`)
+    expect(row).toHaveTextContent(`${formatMoney(80)}${suffix}`)
+    expect(row).toHaveTextContent("x 2 unidades · 3 dias")
+  })
+
+  it("shows only the total for a reservation with two differently priced items", async () => {
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 120 })
+    reservation.items = [
+      { ...reservation.items[0], pricingUnit: "Hour", quantity: 1, unitPrice: 80, subTotal: 80 },
+      {
+        ...reservation.items[0],
+        id: "abababab-abab-4bab-8bab-abababababab",
+        assetId: "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd",
+        rentalAssetId: "dededede-dede-4ede-8ede-dededededede",
+        assetName: "Sala 2",
+        pricingUnit: "Day",
+        quantity: 1,
+        unitPrice: 40,
+        subTotal: 40,
+      },
+    ]
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+
+    const row = (await screen.findByText("Quadra 1, Sala 2")).closest("li")!
+    expect(row).toHaveTextContent(`Total ${formatMoney(120)}`)
+    expect(row).not.toHaveTextContent(`${formatMoney(80)}/hora`)
+    expect(row).not.toHaveTextContent(`${formatMoney(40)}/dia`)
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(`Total ${formatMoney(120)}`)
+    expect(dialog).not.toHaveTextContent(`${formatMoney(80)}/hora`)
+    expect(dialog).not.toHaveTextContent(`${formatMoney(40)}/dia`)
+  })
+
+  it("shows the cancelled reservation's quantity, days, total and deadline", async () => {
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO, {
+      totalAmount: 480,
+      cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+    })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day", quantity: 2, days: 3 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    await screen.findByText("Quadra 1 ×2")
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(`Total ${formatMoney(480)} · ${formatMoney(80)}/dia · x 2 unidades · 3 dias`)
+    expect(dialog).toHaveTextContent("Prazo de cancelamento:")
+  })
+
+  it.each([
+    ["pt-BR", "/dia", "x 1 unidade · 1 dia"],
+    ["en", "/day", "x 1 unit · 1 day"],
+    ["es", "/día", "x 1 unidad · 1 día"],
+  ])("shows singular quantities only in the cancellation dialog in %s", async (language, suffix, quantities) => {
+    await i18n.changeLanguage(language)
+    const user = userEvent.setup()
+    const reservation = makeReservation("Confirmed", FUTURE_ISO)
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day", days: 1 }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    const row = (await screen.findByText("Quadra 1")).closest("li")!
+    expect(row).toHaveTextContent(suffix)
+    expect(row).not.toHaveTextContent(quantities)
+
+    const dialog = await openCancelDialog(user)
+    expect(dialog).toHaveTextContent(quantities)
+  })
+
+  it("keeps legacy reservation rows readable without optional item metadata", async () => {
+    const reservation = makeReservation("Confirmed", FUTURE_ISO)
+    delete reservation.items[0].quantity
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    await waitForMineList()
+    const row = screen.getByText("Quadra 1").closest("li")!
+    expect(row).not.toHaveTextContent(/\/hora|\/horário|\/dia|fixo|unidades|dias|undefined/)
+  })
+
+  it("derives Day pricing duration from tenant civil dates when days is absent", async () => {
+    const reservation = makeReservation("Confirmed", "2099-01-15T03:00:00Z", {
+      endDateTime: "2099-01-18T03:00:00Z",
+    })
+    reservation.items[0] = { ...reservation.items[0], pricingUnit: "Day" }
+    listMine.mockResolvedValue([reservation])
+    renderAgenda()
+    const row = (await screen.findByText("Quadra 1")).closest("li")!
+    expect(row).toHaveTextContent("3 dias")
+    expect(row).not.toHaveTextContent("x 1 unidade")
+  })
+
+  it("shows the cancellation deadline in the tenant timezone", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: "2099-01-15T12:00:00Z" })])
+    renderAgenda("/agenda", "Asia/Tokyo")
+    await waitForMineList()
+    expect(screen.getByText(i18n.t("tenantPortal.agenda.cancelDeadline", { when: "15/01/2099 21:00" }))).toBeInTheDocument()
+    expect(cancelButton()).toBeInTheDocument()
+  })
+
+  it("shows the cancellation deadline in the confirm dialog", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, {
+        cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+      }),
+    ])
+    renderAgenda("/agenda", "Asia/Tokyo")
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(dialog).toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancelDeadline", { when: "15/01/2099 21:00" }),
+    )
+  })
+
+  it("hides cancellation after the deadline even before the reservation starts", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: PAST_ISO })])
+    renderAgenda()
+    await waitForMineList()
+    expect(cancelButton()).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.cancelCutoffReason")),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps cancellation available when the deadline is null", async () => {
+    listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: null })])
+    renderAgenda()
+    await waitForMineList()
+    expect(cancelButton()).toBeInTheDocument()
+    expect(screen.queryByText(/Cancelável até/)).not.toBeInTheDocument()
+  })
+
+  it("expires cancellation while the list is open", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] })
+    vi.setSystemTime(new Date("2026-10-14T12:00:00Z"))
+    try {
+      listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO, { cancelDeadlineUtc: "2026-10-14T12:00:01Z" })])
+      renderAgenda()
+      await act(async () => { await vi.advanceTimersByTimeAsync(0) })
+      expect(cancelButton()).toBeInTheDocument()
+      await act(async () => { await vi.advanceTimersByTimeAsync(1001) })
+      expect(cancelButton()).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("shows Cancelar for a future PendingDeposit reservation", async () => {
     listMine.mockResolvedValue([makeReservation("PendingDeposit", FUTURE_ISO)])
     renderAgenda()
@@ -338,12 +511,24 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
   })
 
   it("hides Cancelar for Canceled", async () => {
-    listMine.mockResolvedValue([makeReservation("Canceled", FUTURE_ISO)])
+    listMine.mockResolvedValue([
+      makeReservation("Canceled", FUTURE_ISO, {
+        cancelDeadlineUtc: "2099-01-15T12:00:00Z",
+      }),
+    ])
     renderAgenda()
-    await waitForMineList()
+    const row = (await screen.findByText("Quadra 1")).closest("li")
 
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
+    expect(row).not.toHaveTextContent(formatMoney(80))
+    expect(row).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.total", { amount: formatMoney(80) }),
+    )
+    expect(row).not.toHaveTextContent(/Cancelável até/)
+    expect(row).not.toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancelCutoffReason"),
+    )
   })
 
   it("cancels, toasts success, and refetches mine plus the schedule day", async () => {
@@ -378,7 +563,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     })
     expect(cancelButton()).not.toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
   })
 
   it("reports an already cancelled reservation without a success toast", async () => {
@@ -593,7 +778,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(cancelMine).not.toHaveBeenCalled()
     expect(screen.getByText("Sala nova")).toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
   })
 
   it("clears the held-slot key when confirm sees the booking already cancelled", async () => {
@@ -726,7 +911,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(completeButton()).not.toBeInTheDocument()
   })
 
-  it("explains the deposit and refund consequence before calling cancel", async () => {
+  it("explains that an unpaid reservation has no payment to refund", async () => {
     const user = userEvent.setup()
     listMine.mockResolvedValue([makeReservation("Confirmed", FUTURE_ISO)])
     renderAgenda()
@@ -736,7 +921,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
 
     expect(cancelMine).not.toHaveBeenCalled()
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
 
     await user.click(
@@ -751,7 +936,25 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     expect(cancelMine).not.toHaveBeenCalled()
   })
 
-  it("shows the same payment note before canceling a pending deposit", async () => {
+  it("explains that the business handles refunds for paid reservations", async () => {
+    const user = userEvent.setup()
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", FUTURE_ISO, { depositPaid: 40 }),
+    ])
+    renderAgenda()
+    await waitForMineList()
+
+    const dialog = await openCancelDialog(user)
+
+    expect(
+      within(dialog).getByText(
+        i18n.t("tenantPortal.agenda.cancelConfirmBodyPaid"),
+      ),
+    ).toBeInTheDocument()
+    expect(cancelMine).not.toHaveBeenCalled()
+  })
+
+  it("shows the unpaid payment note before canceling a pending reservation", async () => {
     const user = userEvent.setup()
     listMine.mockResolvedValue([makeReservation("PendingDeposit", FUTURE_ISO)])
     renderAgenda()
@@ -760,7 +963,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(cancelMine).not.toHaveBeenCalled()
   })
@@ -779,7 +982,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     const policy = within(dialog).getByTestId("cancellation-policy-text")
     expect(policy).toHaveTextContent(`${policyText} Line 2`)
@@ -805,7 +1008,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(
       within(dialog).getByTestId("cancellation-policy-text"),
@@ -831,7 +1034,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
     const dialog = await openCancelDialog(user)
 
     expect(
-      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBody")),
+      within(dialog).getByText(i18n.t("tenantPortal.agenda.cancelConfirmBodyUnpaid")),
     ).toBeInTheDocument()
     expect(
       within(dialog).getByTestId("cancellation-policy-text"),
@@ -876,7 +1079,7 @@ describe("TenantPortalAgendaPage B2C self-cancel", () => {
         name: i18n.t("tenantPortal.agenda.cancelling"),
       }),
     ).not.toBeInTheDocument()
-    expect(screen.getByText(/Cancelada/)).toBeInTheDocument()
+    expect(screen.getByText("Cancelada")).toBeInTheDocument()
     expect(cancelButton()).not.toBeInTheDocument()
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
@@ -952,6 +1155,16 @@ function makeAsset(id: string, assetId: string, name: string): PortalRentalAsset
     queueOpeningTime: null,
     schedulePolicy: "SlotGrid",
     createdAt: "2026-09-06T12:00:00.000Z",
+  }
+}
+
+function makeOpenHoursAsset(id: string, assetId: string, name: string): PortalRentalAsset {
+  return {
+    ...makeAsset(id, assetId, name),
+    schedulePolicy: "OpenHours",
+    openTime: "08:00:00",
+    closeTime: "22:00:00",
+    allowedDurationMinutes: "60",
   }
 }
 
@@ -1055,6 +1268,46 @@ describe("TenantPortalAgendaPage time selector", () => {
     const popup = option.closest("[data-slot='select-content']")
     expect(popup).toHaveClass("bg-popover")
     expect(popup).toHaveClass("text-popover-foreground")
+    // Popup matches the trigger width (v3-safe arbitrary value) with a 12rem floor.
+    expect(popup).toHaveClass("w-[var(--anchor-width)]")
+    expect(popup).toHaveClass("min-w-[max(12rem,var(--anchor-width))]")
+  })
+
+  it("creates a reservation with the selected synthetic multi-slot range", async () => {
+    const user = userEvent.setup()
+    const asset = {
+      ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Resource A"),
+      allowedDurationMinutes: "30,60,90",
+    }
+    fetchAssets.mockResolvedValue([asset])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-14",
+      slots: [
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "08:00:00", endTime: "08:30:00", date: "2026-10-14" }),
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "08:30:00", endTime: "09:00:00", date: "2026-10-14" }),
+        makeSlot({ id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3", rentalAssetId: ASSET_A_ID, assetName: "Resource A", startTime: "09:00:00", endTime: "09:30:00", date: "2026-10-14" }),
+      ],
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "1h30" }))
+    await user.click(await screen.findByRole("button", { name: "Resource A" }))
+    await user.click(screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+    }))
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith({
+        unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        date: "2026-10-14",
+        startTime: "08:00",
+        endTime: "09:30",
+        items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
+        expectedTotalAmount: 80,
+      })
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
   })
 
   it("refetches reservations and the viewed day on focus, then disables a taken slot", async () => {
@@ -1151,6 +1404,28 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(courtTwo).not.toHaveAttribute("aria-disabled")
     })
     expect(courtOne).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("disables a Horário option that the selected resource has no room for", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+
+    // Quadra 1 only has a bookable slot at 08:00 in this day's schedule; 09:00
+    // belongs to Quadra 2 only, so it is not bookable for the selected resource.
+    const reservedOption = await screen.findByRole("option", {
+      name: `09:00 – 10:00 · ${i18n.t("tenantPortal.agenda.timeReserved")}`,
+    })
+    expect(reservedOption).toHaveAttribute("aria-disabled", "true")
+    expect(
+      screen.getByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toHaveAttribute("aria-disabled")
   })
 
   it("disables Reservar horário while the price is still calculating", async () => {
@@ -1412,11 +1687,186 @@ describe("TenantPortalAgendaPage time selector", () => {
       expect(bookSlot).toHaveBeenCalled()
     })
     expect(toastSuccess).toHaveBeenCalledWith(
-      i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-        amount: formatMoney(80),
-        status: i18n.t("rentals.reservations.statuses.Confirmed"),
+      expect.stringContaining(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(80),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      ),
+    )
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+  })
+
+  it("keeps a selected duration visible when booking its last slot", async () => {
+    const user = userEvent.setup()
+    fetchDay.mockResolvedValueOnce({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    }).mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "2h" }))
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await user.click(
+      await screen.findByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
       }),
     )
+
+    await waitFor(() => expect(bookSlot).toHaveBeenCalled())
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "2h" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      )
+      expect(
+        screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") }),
+      ).toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
+    })
+  })
+
+  it("shows the per-hour rate next to the total estimate and in the success toast", async () => {
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+      ],
+    })
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 160,
+      pricingUnit: "Hour",
+      reason: null,
+    })
+    const user = userEvent.setup()
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", FUTURE_ISO, { totalAmount: 160 }))
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(160) }),
+    )
+    expect(screen.getByText("R$ 80,00/hora")).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalled()
+    })
+    expect(toastSuccess).toHaveBeenCalledWith(
+      expect.stringContaining(
+        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+          amount: formatMoney(160),
+          status: i18n.t("rentals.reservations.statuses.Confirmed"),
+        }),
+      ),
+    )
+    expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("R$ 80,00/hora"))
+  })
+
+  it("prefers the API unitPrice/pricedUnits over a client-side split for an hourly quote", async () => {
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+      ],
+    })
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 160,
+      pricingUnit: "Hour",
+      unitPrice: 90,
+      pricedUnits: 2,
+      reason: null,
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(160) }),
+    )
+    // The API's unitPrice (90) wins over dividing the total (160/2h = 80) client-side.
+    expect(screen.getByText(`R$ 90,00/hora × 2`)).toBeInTheDocument()
+  })
+
+  it("shows the fixed unit price and unit count from the API for a multi-unit fixed quote", async () => {
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: true,
+        requestedQuantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: 30,
+        pricingUnit: "Fixed" as const,
+        unitPrice: 30,
+        pricedUnits: 1,
+        reason: null,
+      }
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }))
+
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(30) }),
+    )
+    // Fixed is flat per reservation line (ruling a): total stays R$ 30 for qty 2.
+    expect(screen.getByText("R$ 30,00 fixo · 2 unidades (total fixo)")).toBeInTheDocument()
   })
 
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
@@ -1539,10 +1989,12 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(80),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+        expect.stringContaining(
+          i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
+            amount: formatMoney(80),
+            status: i18n.t("rentals.reservations.statuses.Confirmed"),
+          }),
+        ),
       )
     })
     expect(
@@ -1560,6 +2012,564 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: `Quadra 1. ${i18n.t("tenantPortal.agenda.yourReservation")}`,
       }),
     ).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("shows the customer's reserved units on the Sua reserva tile for a multi-unit resource", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), totalQuantity: 3 },
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    listMine.mockResolvedValue([
+      makeReservation("Confirmed", SLOT_08_ISO, {
+        items: [
+          {
+            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            assetId: ASSET_A_ASSET_ID,
+            rentalAssetId: ASSET_A_ID,
+            assetName: "Quadra 1",
+            quantity: 2,
+            unitPrice: 80,
+            subTotal: 80,
+          },
+        ],
+      }),
+    ])
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.yourReservationUnits", { count: 2, total: 3 })} ${i18n.t("tenantPortal.agenda.yourReservationUnitsReason")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByText(i18n.t("tenantPortal.agenda.yourReservationUnitsReason"), { exact: false })).toBeVisible()
+  })
+
+  it("names a fully booked multi-unit resource as all units reserved, not the generic unavailable text", async () => {
+    fetchAssets.mockResolvedValue([
+      makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), totalQuantity: 3 },
+    ])
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 2 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.allUnitsReserved")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+  })
+
+  it("uses the selected resource's own horizon instead of the widest visible one", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveMaxAdvanceBookingDays: 7 },
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), effectiveMaxAdvanceBookingDays: 30 },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    // Nothing selected yet: falls back to the widest horizon among visible resources.
+    await waitFor(() => {
+      expect(
+        screen.getByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "13/11", count: 30 })),
+      ).toBeInTheDocument()
+    })
+
+    // Quadra 1 only allows booking 7 days out — the hint must track its own horizon, not the 30-day one.
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await waitFor(() => {
+      expect(
+        screen.getByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "21/10", count: 7 })),
+      ).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.horizonHint", { date: "13/11", count: 30 })),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the horizon reason on a tile whose own horizon excludes the viewed date", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveMaxAdvanceBookingDays: 7 },
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), effectiveMaxAdvanceBookingDays: 30 },
+    ])
+    fetchDay.mockResolvedValue({
+      date: "2026-10-25",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          date: "2026-10-25",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+      ],
+    })
+
+    // 2026-10-25 is 11 days out: past Quadra 1's 7-day horizon but within Quadra 2's 30-day one.
+    renderAgenda("/agenda?date=2026-10-25")
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 1. ${i18n.t("tenantPortal.agenda.horizonExceeded")}`,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Quadra 2" })).toBeInTheDocument()
+  })
+
+  it("keeps the selected time and tile when changing duration if still valid, and resets only when not", async () => {
+    fetchAssets.mockResolvedValue([
+      makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    fetchDay.mockResolvedValue({
+      date: VIEWED_DATE,
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "09:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3",
+          rentalAssetId: ASSET_B_ID,
+          assetName: "Quadra 2",
+          startTime: "08:00:00",
+          endTime: "11:00:00",
+        }),
+      ],
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+
+    // 2h: Quadra 1 still has a slot at 08:00 for this duration — time and tile stay.
+    await user.click(await screen.findByRole("button", { name: "2h" }))
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+    expect(screen.getByRole("button", { name: "Quadra 1" })).toHaveAttribute("aria-pressed", "true")
+
+    // 3h: only Quadra 2 offers this duration at 08:00 — time stays, but Quadra 1 is no longer valid and is deselected.
+    await user.click(await screen.findByRole("button", { name: "3h" }))
+    expect(screen.getByRole("combobox", { name: i18n.t("tenantPortal.agenda.time") })).toHaveTextContent("08:00")
+    expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("shows a unit-aware price on the agenda tile from the portal's daily availability", async () => {
+    fetchAssets.mockResolvedValue([makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1")])
+    const publicGet = vi.spyOn(publicApi, "get").mockResolvedValue({
+      data: {
+        date: VIEWED_DATE,
+        timeZone: "America/Sao_Paulo",
+        serverNow: "2026-10-14T11:00:00.000Z",
+        quoteExpiresAt: "2099-01-01T00:00:00.000Z",
+        currency: "BRL",
+        resources: [
+          {
+            rentalAssetId: ASSET_A_ID,
+            assetId: ASSET_A_ASSET_ID,
+            unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            name: "Quadra 1",
+            type: "Location",
+            totalQuantity: 1,
+            requiresDeposit: true,
+            queueEnabled: false,
+            effectiveMaxAdvanceBookingDays: null,
+            windows: [
+              {
+                slotId: null,
+                startTime: "08:00:00",
+                endTime: "09:00:00",
+                isDerived: false,
+                state: "Available",
+                reasonCode: null,
+                availableQuantity: 1,
+                totalAmount: 40,
+                pricingUnit: "Hour",
+              },
+            ],
+          },
+        ],
+      },
+    })
+    try {
+      renderAgenda()
+      await screen.findByRole("button", { name: /Quadra 1/ })
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /Quadra 1/ })).toHaveTextContent("R$ 40,00/hora")
+      })
+    } finally {
+      publicGet.mockRestore()
+    }
+  })
+
+  it("shows the quantity stepper only for multi-unit goods", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(screen.queryByRole("group", { name: i18n.t("bookingMap.quantity") })).not.toBeInTheDocument()
+    unmount()
+
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    expect(await screen.findByRole("group", { name: i18n.t("bookingMap.quantity") })).toBeInTheDocument()
+  })
+
+  it("hides the quantity stepper for a single-unit good", async () => {
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    expect(screen.queryByRole("group", { name: i18n.t("bookingMap.quantity") })).not.toBeInTheDocument()
+  })
+
+  it("re-quotes and books a multi-unit good using the selected quantity", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: true,
+        requestedQuantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: requestedQuantity * 80,
+        reason: null,
+      }
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }))
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ quantity: 2 }),
+      )
+    })
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }))
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalledWith(expect.objectContaining({
+        quantity: 2,
+        expectedTotalAmount: 160,
+      }))
+    })
+  })
+
+  it("clamps a multi-unit good to the availability from the last quote", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: requestedQuantity <= 2,
+        requestedQuantity,
+        availableQuantity: 2,
+        estimatedTotalAmount: requestedQuantity <= 2 ? requestedQuantity * 80 : null,
+        reason: null,
+      }
+    })
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    const increase = await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` })
+    await user.click(increase)
+    await waitFor(() => expect(increase).toBeDisabled())
+  })
+
+  it("shows the days stepper only for Day-priced resources", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+    expect(
+      screen.queryByRole("group", { name: i18n.t("tenantPortal.agenda.days") }),
+    ).not.toBeInTheDocument()
+    unmount()
+
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      pricingUnit: "Day",
+      reason: null,
+    })
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    expect(
+      await screen.findByRole("group", { name: i18n.t("tenantPortal.agenda.days") }),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps the Dias selector stable when a multi-day quote is unavailable (no re-quote loop)", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) =>
+      request.endDate
+        ? { isAvailable: false, requestedQuantity: 1, availableQuantity: 0, estimatedTotalAmount: null, pricingUnit: null, reason: "x" }
+        : { isAvailable: true, requestedQuantity: 1, availableQuantity: 1, estimatedTotalAmount: 80, pricingUnit: "Day", reason: null },
+    )
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("tenantPortal.agenda.days")} +` }))
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith("ficc", expect.objectContaining({ endDate: "2026-10-15" }))
+    })
+    const callsAfter = checkAvailability.mock.calls.length
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(checkAvailability.mock.calls.length).toBe(callsAfter)
+    expect(screen.getByRole("group", { name: i18n.t("tenantPortal.agenda.days") })).toBeInTheDocument()
+  })
+
+  it("names the multi-day reason as a booked day in the range, not the generic unavailable text", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) =>
+      request.endDate
+        ? { isAvailable: false, requestedQuantity: 1, availableQuantity: 0, estimatedTotalAmount: null, pricingUnit: null, reason: "x" }
+        : { isAvailable: true, requestedQuantity: 1, availableQuantity: 1, estimatedTotalAmount: 80, pricingUnit: "Day", reason: null },
+    )
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("tenantPortal.agenda.days")} +` }))
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.periodIncludesBookedDay")),
+    ).toBeInTheDocument()
+  })
+
+  it("requests and books 3 days with the computed end date and multiplied total", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const days = request.endDate ? 3 : 1
+      return {
+        isAvailable: true,
+        requestedQuantity: request.quantity ?? 1,
+        availableQuantity: 1,
+        estimatedTotalAmount: days * 80,
+        pricingUnit: "Day",
+        reason: null,
+      }
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+
+    const increase = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increase)
+    await user.click(increase)
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-16", quantity: 1 }),
+      )
+    })
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(240) }),
+    )
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.agenda.daysSummary", { count: 3, until: "16/10" }),
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          date: "2026-10-14",
+          endDate: "2026-10-16",
+          items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
+          expectedTotalAmount: 240,
+        }),
+      )
+    })
+    expect(bookSlot).not.toHaveBeenCalled()
+  })
+
+  it("clamps selected days and replaces the quote when the policy horizon arrives", async () => {
+    let resolvePolicy!: (value: Awaited<ReturnType<typeof fetchPublicBookingPolicy>>) => void
+    fetchPolicy.mockReturnValue(new Promise((resolve) => {
+      resolvePolicy = resolve
+    }))
+    checkAvailability.mockImplementation(async (_subdomain, request) => ({
+      isAvailable: true,
+      requestedQuantity: request.quantity ?? 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: request.endDate ? 160 : 80,
+      pricingUnit: "Day",
+      reason: null,
+    }))
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    const increase = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increase)
+    await user.click(increase)
+    expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("3")
+
+    resolvePolicy({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      maxAdvanceBookingDays: 1,
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole("status", { name: i18n.t("tenantPortal.agenda.days") })).toHaveTextContent("2")
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-15" }),
+      )
+    })
+  })
+
+  it("keeps a single day booking on bookPortalSlot without an endDate", async () => {
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      pricingUnit: "Day",
+      reason: null,
+    })
+    bookSlot.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await bookQuadra1(user)
+
+    await waitFor(() => {
+      expect(bookSlot).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 1, expectedTotalAmount: 80 }),
+      )
+    })
+    expect(createReservation).not.toHaveBeenCalled()
+    expect(checkAvailability).toHaveBeenCalledWith(
+      "ficc",
+      expect.not.objectContaining({ endDate: expect.anything() }),
+    )
+  })
+
+  it("combines quantity and days for a multi-unit good priced by day", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const quantity = request.quantity ?? 1
+      const days = request.endDate ? 3 : 1
+      return {
+        isAvailable: true,
+        requestedQuantity: quantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: quantity * days * 80,
+        pricingUnit: "Day",
+        reason: null,
+      }
+    })
+    createReservation.mockResolvedValue(makeReservation("Confirmed", SLOT_08_ISO))
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(
+      await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }),
+    )
+    const increaseDays = await screen.findByRole("button", {
+      name: `${i18n.t("tenantPortal.agenda.days")} +`,
+    })
+    await user.click(increaseDays)
+    await user.click(increaseDays)
+
+    await waitFor(() => {
+      expect(checkAvailability).toHaveBeenCalledWith(
+        "ficc",
+        expect.objectContaining({ endDate: "2026-10-16", quantity: 2 }),
+      )
+    })
+
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    )
+
+    await waitFor(() => {
+      expect(createReservation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          endDate: "2026-10-16",
+          items: [{ assetId: ASSET_A_ASSET_ID, quantity: 2 }],
+          expectedTotalAmount: 480,
+        }),
+      )
+    })
   })
 
   it("clears Reservando and toasts when booking fails", async () => {
@@ -1838,7 +2848,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastError).not.toHaveBeenCalled()
   })
 
-  it("treats a reservation made in another tab as the customer's successful booking", async () => {
+  it("reports a reservation made in another tab as already existing", async () => {
     const user = userEvent.setup()
     const held = makeReservation("Confirmed", SLOT_08_ISO, {
       items: [
@@ -1870,13 +2880,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(held.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
+    expect(toastSuccess).not.toHaveBeenCalled()
     expect(toastError.mock.calls.map((call) => call[0])).not.toContain(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -1929,7 +2937,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const dateInput = await screen.findByLabelText(
       i18n.t("tenantPortal.agenda.date"),
     )
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
     await waitFor(() => {
       expect(
         screen.getByRole("combobox", {
@@ -1949,9 +2957,12 @@ describe("TenantPortalAgendaPage time selector", () => {
     const dateInput = await screen.findByLabelText(
       i18n.t("tenantPortal.agenda.date"),
     )
-    expect(dateInput).toHaveAttribute("min", brazilTodayIsoDate())
+    expect(dateInput).toHaveAttribute(
+      "min",
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+    )
     expect(dateInput).not.toHaveAttribute("max")
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
   })
 
   it("caps the date at the horizon the API exposes", async () => {
@@ -2567,7 +3578,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
       await waitFor(() => {
         expect(toastError).toHaveBeenCalledWith(
-          "La fecha pedida está fuera del horizonte de reserva.",
+          "La fecha pedida supera el límite de reserva.",
         )
       })
       expect(toastError).not.toHaveBeenCalledWith(
@@ -2671,7 +3682,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     )
     fireEvent.change(dateInput, { target: { value: "2020-01-01" } })
 
-    expect(dateInput).toHaveValue(brazilTodayIsoDate())
+    expect(dateInput).toHaveValue(tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE))
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
     ).toBeInTheDocument()
@@ -2712,7 +3723,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
   })
 
-  it("treats an interval conflict as success when Minhas reservas confirms this customer owns it", async () => {
+  it("reports an existing reservation when another tab already created it", async () => {
     const user = userEvent.setup()
     const created = makeReservation("Confirmed", SLOT_08_ISO)
     listMine.mockResolvedValueOnce([]).mockResolvedValue([created])
@@ -2728,14 +3739,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(created.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
-    expect(toastMessage).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
     expect(toastError).not.toHaveBeenCalledWith(
       i18n.t("tenantPortal.agenda.slotTaken"),
     )
@@ -2780,7 +3788,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     ).toBe(false)
   })
 
-  it("uses the active reservation when a cancelled reservation has the same slot", async () => {
+  it("reports an existing active reservation when cancelled history has the same slot", async () => {
     const user = userEvent.setup()
     const active = makeReservation("Confirmed", SLOT_08_ISO)
     const cancelled = makeReservation("Canceled", SLOT_08_ISO, {
@@ -2799,13 +3807,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await bookQuadra1(user)
 
     await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("tenantPortal.agenda.reserveSuccessWithTotal", {
-          amount: formatMoney(active.totalAmount),
-          status: i18n.t("rentals.reservations.statuses.Confirmed"),
-        }),
+      expect(toastMessage).toHaveBeenCalledWith(
+        i18n.t("tenantPortal.agenda.alreadyReserved"),
       )
     })
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it("translates the daily booking limit without refreshing the agenda", async () => {
@@ -3728,6 +4734,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
   it("refetches the cancelled reservation date and the viewed date", async () => {
     const user = userEvent.setup()
+    await i18n.changeLanguage("pt-BR")
     const otherIso = "2026-10-15T11:00:00.000Z"
     fetchDay.mockImplementation((_subdomain: string, dayDate: string) =>
       Promise.resolve({
@@ -3747,6 +4754,9 @@ describe("TenantPortalAgendaPage time selector", () => {
     await expectQuadra1Selectable()
     released = true
     await confirmCancel(user)
+
+    expect(i18n.resolvedLanguage).toBe("pt-BR")
+    expect(window.localStorage.getItem("rolvix.uiLanguage")).toBe("pt-BR")
 
     await waitFor(() => {
       const dates = fetchDay.mock.calls.map((call) => call[1])
@@ -3998,7 +5008,10 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     })
     fetchAssets.mockResolvedValue([])
     fetchLayouts.mockResolvedValue([])
-    fetchDay.mockResolvedValue({ date: brazilTodayIsoDate(), slots: [] })
+    fetchDay.mockResolvedValue({
+      date: tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+      slots: [],
+    })
     listMine.mockResolvedValue([])
     scrollIntoView = vi.fn()
     HTMLElement.prototype.scrollIntoView =
@@ -4041,9 +5054,12 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     })
     expect(scrollIntoView.mock.instances).toContain(focused)
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
-      brazilTodayIsoDate(),
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
     )
-    expect(fetchDay).toHaveBeenCalledWith("ficc", brazilTodayIsoDate())
+    expect(fetchDay).toHaveBeenCalledWith(
+      "ficc",
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+    )
     expect(
       fetchDay.mock.calls.some((call) => String(call[1]).startsWith("2099")),
     ).toBe(false)
@@ -4108,7 +5124,7 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     expect(document.body).not.toHaveTextContent(RESERVATION_ID)
     expect(toastError).not.toHaveBeenCalled()
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
-      brazilTodayIsoDate(),
+      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
     )
   })
 })

@@ -7,6 +7,7 @@ import { useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
 import {
   nameInitials,
   ReadOnlyValue,
@@ -15,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Form,
   FormControl,
@@ -246,26 +248,26 @@ export function TenantPortalProfilePage() {
 
   if (loadError || !profile) {
     const genericLoadError = t("tenantPortal.profile.loadError")
+    const description =
+      loadError && loadError !== genericLoadError ? loadError : undefined
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 py-16 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
-          <CircleAlert className="size-6 text-destructive" aria-hidden />
-        </span>
-        <div className="space-y-1">
-          <p className="text-sm font-medium">{genericLoadError}</p>
-          {loadError && loadError !== genericLoadError ? (
-            <p className="text-sm text-muted-foreground">{loadError}</p>
-          ) : null}
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void loadProfile()
-          }}
-        >
-          {t("tenantPortal.profile.retry")}
-        </Button>
+      <div className="mx-auto w-full max-w-sm py-16">
+        <EmptyState
+          icon={CircleAlert}
+          title={genericLoadError}
+          description={description}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void loadProfile()
+              }}
+            >
+              {t("tenantPortal.profile.retry")}
+            </Button>
+          }
+        />
       </div>
     )
   }
@@ -298,15 +300,11 @@ export function TenantPortalProfilePage() {
     address !== null
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.profile.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.profile.subtitle")}
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-xl">
+      <PageHeader
+        title={t("tenantPortal.profile.title")}
+        description={t("tenantPortal.profile.subtitle")}
+      />
 
       <Form {...form}>
         <form

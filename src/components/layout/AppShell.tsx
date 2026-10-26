@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { CircleUser, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
@@ -23,10 +23,23 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
+/** Options handed to the sidebar render prop so it can adapt to the shell. */
+export type SidebarRenderOptions = {
+  /** Called after a navigation action — closes the mobile drawer. */
+  onNavigate?: () => void
+  /** Desktop rail is collapsed to an icon-only strip. */
+  collapsed?: boolean
+  /** Toggles the desktop collapsed state; absent when not collapsible. */
+  onToggleCollapsed?: () => void
+  /** Render larger (≥44px) hit areas — set in the mobile drawer. */
+  touchTargets?: boolean
+}
+
 export type AppShellProps = {
-  sidebar: (opts: { onNavigate?: () => void }) => ReactNode
+  sidebar: (opts: SidebarRenderOptions) => ReactNode
   pageTitle: string
   userLabel: string
   initials: string
@@ -39,8 +52,25 @@ export type AppShellProps = {
   showLanguageCode?: boolean
   /** Subtitle under the page title. Staff shell passes the tenant name. */
   contextLabel?: string
+  /** Enable the desktop collapse rail (persisted). B2B opts in; B2C stays fixed. */
+  collapsible?: boolean
+  /** Center and cap the content width for a steady reading measure. */
+  constrainContent?: boolean
   banner?: ReactNode
   children: ReactNode
+}
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "rolvix.shell.sidebarCollapsed"
+
+function readStoredCollapsed(): boolean {
+  if (typeof window === "undefined") {
+    return false
+  }
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "1"
+  } catch {
+    return false
+  }
 }
 
 export function AppShell({
@@ -53,12 +83,35 @@ export function AppShell({
   enlargeHeaderTargets = false,
   showLanguageCode = false,
   contextLabel,
+  collapsible = false,
+  constrainContent = false,
   banner = null,
   children,
 }: AppShellProps) {
   const { t } = useTranslation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => collapsible && readStoredCollapsed(),
+  )
+
+  useEffect(() => {
+    if (!collapsible || typeof window === "undefined") {
+      return
+    }
+    try {
+      window.localStorage.setItem(
+        SIDEBAR_COLLAPSED_STORAGE_KEY,
+        isCollapsed ? "1" : "0",
+      )
+    } catch {
+      // Persisting the preference is best-effort; ignore storage failures.
+    }
+  }, [collapsible, isCollapsed])
+
+  const toggleCollapsed = useCallback(() => {
+    setIsCollapsed((previous) => !previous)
+  }, [])
 
   async function handleSignOut() {
     if (isSigningOut) {
@@ -77,18 +130,30 @@ export function AppShell({
     ? headerTouchTargetClassName
     : undefined
 
+  const collapsed = collapsible && isCollapsed
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-card lg:block">
-        {sidebar({})}
+      <aside
+        className={cn(
+          "hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block",
+          "transition-[width] duration-200 ease-out motion-reduce:transition-none",
+          collapsed ? "w-[4.25rem]" : "w-64",
+        )}
+      >
+        {sidebar({
+          collapsed,
+          onToggleCollapsed: collapsible ? toggleCollapsed : undefined,
+        })}
       </aside>
 
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0 sm:max-w-64">
+        <SheetContent side="left" className="w-72 p-0 sm:max-w-72">
           <SheetHeader className="sr-only">
             <SheetTitle>{t("nav.menu")}</SheetTitle>
           </SheetHeader>
           {sidebar({
+            touchTargets: true,
             onNavigate: () => {
               setIsMobileMenuOpen(false)
             },
@@ -97,7 +162,7 @@ export function AppShell({
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               type="button"
@@ -108,19 +173,25 @@ export function AppShell({
                 setIsMobileMenuOpen(true)
               }}
               aria-label={t("nav.openMenu")}
+              title={t("nav.openMenu")}
             >
-              <Menu />
+              <Menu strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{pageTitle}</p>
-              <p className="hidden text-xs text-muted-foreground sm:block">
+              {/* The page body already renders its own H1; keep the top-bar title for
+                  mobile (sidebar/nav hidden there) and demote it on larger screens so it
+                  doesn't read as a duplicate heading. */}
+              <p className="truncate text-sm font-semibold tracking-tight lg:hidden">
+                {pageTitle}
+              </p>
+              <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">
                 {contextLabel ?? t("app.authenticatedArea")}
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-0.5">
             <LanguageSwitcher
               className={headerIconClassName}
               showShortLabel={showLanguageCode}
@@ -136,6 +207,7 @@ export function AppShell({
                     size="icon"
                     className={cn("rounded-full", headerIconClassName)}
                     aria-label={t("account.openMenu")}
+                    title={userLabel}
                   />
                 }
               >
@@ -163,6 +235,7 @@ export function AppShell({
                 {profileTo ? (
                   <>
                     <DropdownMenuItem
+                      className="min-h-11 md:min-h-9"
                       nativeButton={false}
                       render={<Link to={profileTo} />}
                     >
@@ -174,6 +247,7 @@ export function AppShell({
                 ) : null}
 
                 <DropdownMenuItem
+                  className="min-h-11 md:min-h-9"
                   variant="destructive"
                   disabled={isSigningOut}
                   onClick={() => {
@@ -194,7 +268,13 @@ export function AppShell({
 
         {banner}
 
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+          {constrainContent ? (
+            <div className="mx-auto min-w-0 w-full max-w-7xl">{children}</div>
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   )

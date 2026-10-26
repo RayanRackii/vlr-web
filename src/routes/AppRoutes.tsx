@@ -17,10 +17,17 @@ import { onboardingManifest } from "@/features/onboarding/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { rentalsManifest } from "@/features/rentals/manifest"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalModuleGuard } from "@/features/tenantPortal/components/PortalModuleGuard"
+import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
-import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  getHostTenantSubdomain,
+  isCustomerSignedInForTenant,
+  tenantPortalPath,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
@@ -47,6 +54,21 @@ function RedirectTenantStaffRoute() {
   return <Navigate to={`${rootPath}${location.search}`} replace />
 }
 
+/** `perfil/*` favors the signed-in customer's profile; staff only wins when no customer session exists. */
+export function RedirectPerfilRoute() {
+  const { subdomain } = useParams<{ subdomain: string }>()
+
+  if (subdomain && isCustomerSignedInForTenant(subdomain)) {
+    return <Navigate to={tenantPortalPath(subdomain, "app/perfil")} replace />
+  }
+
+  if (hasActiveStaffSession()) {
+    return <RedirectTenantStaffRoute />
+  }
+
+  return <Navigate to={tenantPortalPath(subdomain ?? "")} replace />
+}
+
 export function AppRoutes() {
   const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
 
@@ -64,9 +86,14 @@ export function AppRoutes() {
           )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          <Route element={<PortalModuleGuard moduleName="catalog" />}>
+            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route element={<TenantPortalLayout />}>
+          <Route path="*" element={<PortalNotFoundRoute />} />
+        </Route>
       </Routes>
     )
   }
@@ -84,7 +111,7 @@ export function AppRoutes() {
         <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
         <Route path="os/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="perfil/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="perfil/*" element={<RedirectPerfilRoute />} />
         <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
         <Route element={<TenantPortalLayout />}>
           {tenantPortalManifest.routes.public.map((route) =>
@@ -96,7 +123,13 @@ export function AppRoutes() {
           )}
         </Route>
         <Route element={<CustomerAppLayout />}>
-          {[...tenantPortalManifest.routes.customer, ...catalogManifest.routes.customer].map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          <Route element={<PortalModuleGuard moduleName="catalog" />}>
+            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+          </Route>
+        </Route>
+        <Route element={<TenantPortalLayout />}>
+          <Route path="*" element={<PortalNotFoundRoute />} />
         </Route>
       </Route>
 

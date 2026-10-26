@@ -8,13 +8,15 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye } from "lucide-react"
+import { Eye, ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Table,
   TableBody,
@@ -30,6 +32,7 @@ import {
   type CatalogOrder,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listPortalCatalogOrders } from "@/features/catalog/services/catalogPortalService"
+import { catalogOrderStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function PortalOrdersPage() {
@@ -90,7 +93,7 @@ export function PortalOrdersPage() {
           />
         ),
         cell: ({ row }) => (
-          <Badge variant="outline">
+          <Badge variant={catalogOrderStatusBadgeVariant(row.original.status)}>
             {t(`catalog.status.${row.original.status}`)}
           </Badge>
         ),
@@ -154,21 +157,34 @@ export function PortalOrdersPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.catalog.ordersTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.ordersSubtitle")}
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title={t("tenantPortal.catalog.ordersTitle")}
+        description={t("tenantPortal.catalog.ordersSubtitle")}
+      />
 
       {loadError ? (
-        <p className="text-sm text-destructive">{loadError}</p>
+        <p className="mb-4 text-sm text-destructive">{loadError}</p>
       ) : null}
 
-      <div className="rounded-xl border border-border">
+      {!loading && orders.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          title={t("tenantPortal.catalog.ordersEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void navigate(tenantPortalPath(subdomain, "catalogo"))
+              }}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+          }
+        />
+      ) : (
+      <div className="overflow-hidden rounded-xl border border-border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -212,6 +228,7 @@ export function PortalOrdersPage() {
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   )
 }

@@ -1,7 +1,9 @@
 import { CheckCircle2 } from "lucide-react"
+import { slotDurationMinutes } from "@/features/tenantPortal/lib/agendaDurationSelection"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
@@ -9,12 +11,16 @@ import {
   formatScheduleTime,
   type AdminRentalAsset,
   type SchedulePolicy,
+  type ScheduleTemplate,
   type UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
 import { cn } from "@/lib/utils"
+import { HH_MM } from "@/lib/time24"
 
 type SchedulePolicyPanelProps = {
   assets: readonly AdminRentalAsset[]
+  templates?: readonly ScheduleTemplate[]
+  loadingTemplates?: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
   readOnly: boolean
@@ -30,8 +36,54 @@ function toTimeInput(value: string | null | undefined, fallback: string): string
   return formatScheduleTime(value)
 }
 
-function durationInput(asset: AdminRentalAsset): string {
-  return asset.allowedDurationMinutes?.split(",")[0]?.trim() || "60"
+function templateScheduleValues(
+  asset: AdminRentalAsset | undefined,
+  templates: readonly ScheduleTemplate[],
+): { openTime: string; closeTime: string; durationMinutes: string } | null {
+  if (!asset) return null
+  const assetTemplates = templates.filter(
+    (template) => template.rentalAssetId === asset.id && template.isActive,
+  )
+  if (assetTemplates.length === 0) return null
+
+  const toMinutes = (value: string) => {
+    const [hour = "0", minute = "0"] = value.split(":")
+    return Number(hour) * 60 + Number(minute)
+  }
+  const durations = [...new Set(assetTemplates.map((template) =>
+    slotDurationMinutes(template),
+  ).filter((value) => value > 0))].sort((left, right) => left - right)
+
+  return {
+    openTime: formatScheduleTime(assetTemplates.reduce(
+      (earliest, template) => toMinutes(template.startTime) < toMinutes(earliest)
+        ? template.startTime
+        : earliest,
+      assetTemplates[0].startTime,
+    )),
+    closeTime: formatScheduleTime(assetTemplates.reduce(
+      (latest, template) => toMinutes(template.endTime) > toMinutes(latest)
+        ? template.endTime
+        : latest,
+      assetTemplates[0].endTime,
+    )),
+    durationMinutes: durations.join(",") || "60",
+  }
+}
+
+function parseDurations(value: string): string | null {
+  const values = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item !== "")
+  if (
+    values.length === 0 ||
+    values.some((item) => !/^\d+$/.test(item) || Number(item) < 1)
+  ) {
+    return null
+  }
+
+  return values.join(",")
 }
 
 function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
@@ -46,6 +98,8 @@ function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
 
 export function SchedulePolicyPanel({
   assets,
+  templates = [],
+  loadingTemplates = false,
   busy,
   busyAction,
   readOnly,
@@ -60,7 +114,10 @@ export function SchedulePolicyPanel({
         `${asset.id}:${asset.schedulePolicy ?? "SlotGrid"}:${asset.openTime ?? ""}:${asset.closeTime ?? ""}:${asset.allowedDurationMinutes ?? ""}`,
     )
     .sort()
-    .join("|")
+    .join("|") +
+    `${loadingTemplates}|${templates.map((template) => (
+      `${template.id}:${template.isActive}:${template.startTime}:${template.endTime}`
+    )).sort().join("|")}`
 
   if (assets.length === 0) {
     return null
@@ -70,6 +127,8 @@ export function SchedulePolicyPanel({
     <SchedulePolicyPanelForm
       key={selectionKey}
       assets={assets}
+      templates={templates}
+      loadingTemplates={loadingTemplates}
       mixed={mixed}
       busy={busy}
       busyAction={busyAction}
@@ -83,6 +142,8 @@ export function SchedulePolicyPanel({
 
 function SchedulePolicyPanelForm({
   assets,
+  templates = [],
+  loadingTemplates = false,
   mixed,
   busy,
   busyAction,
@@ -93,18 +154,88 @@ function SchedulePolicyPanelForm({
 }: SchedulePolicyPanelProps & { mixed: boolean }) {
   const { t } = useTranslation()
   const first = assets[0]
+  const templateValues = templateScheduleValues(first, templates)
   const [policy, setPolicy] = useState<SchedulePolicy | null>(
     mixed ? null : (first?.schedulePolicy ?? "SlotGrid"),
   )
   const [openTime, setOpenTime] = useState(
-    toTimeInput(first?.openTime, "08:00"),
+    toTimeInput(first?.openTime, templateValues?.openTime ?? "08:00"),
   )
   const [closeTime, setCloseTime] = useState(
-    toTimeInput(first?.closeTime, "22:00"),
+    toTimeInput(first?.closeTime, templateValues?.closeTime ?? "22:00"),
   )
   const [durationMinutes, setDurationMinutes] = useState(
-    first ? durationInput(first) : "60",
+    first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60",
   )
+  const [slotGridDurations, setSlotGridDurations] = useState(
+    (first?.schedulePolicy ?? "SlotGrid") === "SlotGrid"
+      ? (first?.allowedDurationMinutes ?? "")
+      : "",
+  )
+  const [durationError, setDurationError] = useState<string | null>(null)
+  const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
+  const hasExistingSchedule = loadingTemplates ||
+    templates.some((template) => template.isActive) ||
+    assets.some((asset) =>
+      (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
+      Boolean(asset.openTime && asset.closeTime),
+    )
+
+  function saveOpenHours() {
+    if (!hasValidOpenHours) {
+      return
+    }
+    const allowedDurationMinutes = parseDurations(durationMinutes)
+    if (!allowedDurationMinutes) {
+      setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
+      return
+    }
+
+    setDurationError(null)
+    void onSave({
+      schedulePolicy: "OpenHours",
+      openTime,
+      closeTime,
+      allowedDurationMinutes,
+    }).catch((error: unknown) => {
+      // The parent already toasts; this surfaces the same API message inline on the field.
+      setDurationError(
+        error instanceof Error
+          ? error.message
+          : t("rentals.schedule.policy.durationMinutesInvalid"),
+      )
+    })
+  }
+
+  const slotGridDurationsInvalid =
+    slotGridDurations.trim() !== "" && !parseDurations(slotGridDurations)
+
+  function saveSlotGrid(onSuccess?: () => void) {
+    const allowedDurationMinutes = slotGridDurations.trim()
+      ? parseDurations(slotGridDurations)
+      : null
+    if (slotGridDurations.trim() && !allowedDurationMinutes) {
+      setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
+      return
+    }
+
+    setDurationError(null)
+    void onSave({
+      schedulePolicy: "SlotGrid",
+      openTime: null,
+      closeTime: null,
+      allowedDurationMinutes,
+    })
+      .then(onSuccess)
+      .catch((error: unknown) => {
+        // The parent already toasts; this surfaces the same API message inline on the field.
+        setDurationError(
+          error instanceof Error
+            ? error.message
+            : t("rentals.schedule.policy.durationMinutesInvalid"),
+        )
+      })
+  }
 
   return (
     <div className={embedded ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm"}>
@@ -185,54 +316,56 @@ function SchedulePolicyPanelForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.openTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={openTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setOpenTime(event.target.value)
+              onValueChange={(next) => {
+                setOpenTime(next)
               }}
             />
           </label>
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">{t("rentals.schedule.policy.closeTime")}</span>
-            <Input
-              type="time"
+            <Time24Input
               value={closeTime}
               disabled={busy || readOnly}
-              onChange={(event) => {
-                setCloseTime(event.target.value)
+              onValueChange={(next) => {
+                setCloseTime(next)
               }}
             />
           </label>
           <label className="min-w-0 space-y-1.5 text-sm">
             <span className="font-medium">
-              {t("rentals.schedule.policy.slotMinutes")}
+              {t("rentals.schedule.policy.durationMinutes")}
             </span>
             <Input
-              type="number"
-              min={15}
-              step={15}
+              type="text"
+              inputMode="numeric"
               value={durationMinutes}
               disabled={busy || readOnly}
+              aria-label={t("rentals.schedule.policy.durationMinutes")}
+              aria-invalid={durationError ? true : undefined}
+              aria-describedby={durationError ? "duration-minutes-error" : undefined}
               onChange={(event) => {
                 setDurationMinutes(event.target.value)
+                setDurationError(null)
               }}
             />
+            <span className="text-xs text-muted-foreground">
+              {t("rentals.schedule.policy.durationMinutesHint")}
+            </span>
+            {durationError ? (
+              <span id="duration-minutes-error" role="alert" className="text-xs text-destructive">
+                {durationError}
+              </span>
+            ) : null}
           </label>
           <LoadingButton
             type="button"
             className="w-full self-end"
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || !hasValidOpenHours}
             loading={busyAction === "policy"}
-            onClick={() => {
-              void onSave({
-                schedulePolicy: "OpenHours",
-                openTime,
-                closeTime,
-                allowedDurationMinutes: durationMinutes || "60",
-              })
-            }}
+            onClick={saveOpenHours}
           >
             {t("rentals.schedule.policy.saveOpenHours")}
           </LoadingButton>
@@ -241,48 +374,62 @@ function SchedulePolicyPanelForm({
 
       {policy === "SlotGrid" ? (
         <div className="space-y-2">
-          <LoadingButton
-            type="button"
-            className="w-full"
-            disabled={busy || readOnly}
-            loading={busyAction === "seed" || busyAction === "policy"}
-            onClick={() => {
-              void onSave({
-                schedulePolicy: "SlotGrid",
-                openTime: null,
-                closeTime: null,
-                allowedDurationMinutes: null,
-              })
-                .then(() => {
-                  onSeedSlotGrid()
-                })
-                .catch(() => {
-                  /* toast already shown by parent */
-                })
-            }}
-          >
-            {t("rentals.schedule.seedTemplates")}
-          </LoadingButton>
+          <label className="block min-w-0 space-y-1.5 text-sm">
+            <span className="font-medium">
+              {t("rentals.schedule.policy.durationMinutes")}
+            </span>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={slotGridDurations}
+              disabled={busy || readOnly}
+              aria-label={t("rentals.schedule.policy.durationMinutes")}
+              aria-invalid={durationError || slotGridDurationsInvalid ? true : undefined}
+              aria-describedby={durationError || slotGridDurationsInvalid ? "duration-minutes-error" : undefined}
+              onChange={(event) => {
+                setSlotGridDurations(event.target.value)
+                setDurationError(null)
+              }}
+            />
+            <span className="text-xs text-muted-foreground">
+              {t("rentals.schedule.policy.slotGridDurationsHint")}
+            </span>
+            {durationError || slotGridDurationsInvalid ? (
+              <span id="duration-minutes-error" role="alert" className="text-xs text-destructive">
+                {durationError ?? t("rentals.schedule.policy.durationMinutesInvalid")}
+              </span>
+            ) : null}
+          </label>
+          {!hasExistingSchedule ? (
+            <LoadingButton
+              type="button"
+              className="w-full"
+              disabled={busy || readOnly || slotGridDurationsInvalid}
+              loading={busyAction === "seed" || busyAction === "policy"}
+              onClick={() => {
+                saveSlotGrid(onSeedSlotGrid)
+              }}
+            >
+              {t("rentals.schedule.seedTemplates")}
+            </LoadingButton>
+          ) : null}
           <LoadingButton
             type="button"
             variant="outline"
             className="w-full"
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || slotGridDurationsInvalid}
             loading={busyAction === "policy"}
             onClick={() => {
-              void onSave({
-                schedulePolicy: "SlotGrid",
-                openTime: null,
-                closeTime: null,
-                allowedDurationMinutes: null,
-              })
+              saveSlotGrid()
             }}
           >
             {t("rentals.schedule.policy.saveSlotGrid")}
           </LoadingButton>
-          <p className="text-xs text-muted-foreground">
-            {t("rentals.schedule.policy.slotGridSeedHint")}
-          </p>
+          {!hasExistingSchedule ? (
+            <p className="text-xs text-muted-foreground">
+              {t("rentals.schedule.policy.slotGridSeedHint")}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

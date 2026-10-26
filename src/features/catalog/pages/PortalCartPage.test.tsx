@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, Outlet, Route, RouterProvider, Routes } from "react-router-dom"
 
-import { catalogCartStorageKey } from "@/features/catalog/cart"
+import { CATALOG_CART_MAX_QUANTITY, catalogCartStorageKey } from "@/features/catalog/cart"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import type { CatalogOrder, PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -148,6 +148,22 @@ describe("PortalCartPage validity gate", () => {
     expect(back).toBeEnabled()
   })
 
+  it("wraps line items in cards and pins the submit bar on mobile", async () => {
+    seedCart()
+    renderCart()
+
+    const line = (await screen.findByText("Raquete")).closest("li")
+    expect(line).not.toBeNull()
+    expect(line).toHaveClass("rounded-xl", "border", "bg-card")
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.submitOrder"),
+    })
+    const stickyBar = submit.closest("div.fixed")
+    expect(stickyBar).not.toBeNull()
+    expect(stickyBar).toHaveClass("fixed", "bottom-0", "md:static")
+  })
+
   it("hides checkout controls when the cart is empty", async () => {
     renderCart()
     expect(await screen.findByText(i18n.t("tenantPortal.catalog.cartEmpty"))).toBeInTheDocument()
@@ -270,6 +286,40 @@ describe("PortalCartPage validity gate", () => {
       expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()
     }, { timeout: 5000 })
     expect(screen.queryByText(/A partir de/)).not.toBeInTheDocument()
+  })
+
+  it("steps the quantity with the 44px -/+ buttons and shows the unit price", async () => {
+    seedCart()
+    const user = userEvent.setup()
+    renderCart()
+
+    const quantity = await screen.findByRole("spinbutton", {
+      name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
+    })
+    const decrease = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.quantityDecrease"),
+    })
+    const increase = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.quantityIncrease"),
+    })
+    expect(decrease).toHaveClass("size-11")
+    expect(increase).toHaveClass("size-11")
+    expect(
+      screen.getByText(i18n.t("tenantPortal.catalog.unitPrice", { price: "R$ 10,00" })),
+    ).toBeInTheDocument()
+
+    await user.click(increase)
+    expect(quantity).toHaveValue(3)
+    expect(decrease).toBeEnabled()
+
+    await user.click(decrease)
+    await user.click(decrease)
+    expect(quantity).toHaveValue(1)
+    expect(decrease).toBeDisabled()
+
+    replaceValue(quantity, String(CATALOG_CART_MAX_QUANTITY))
+    fireEvent.blur(quantity)
+    await waitFor(() => expect(increase).toBeDisabled())
   })
 
   it.each(["resolved", "rejected"] as const)("ignores a %s checkout after logout and a new login", async (outcome) => {

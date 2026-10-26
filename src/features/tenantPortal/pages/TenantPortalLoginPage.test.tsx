@@ -148,6 +148,9 @@ describe("TenantPortalLoginPage", () => {
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith("E-mail ou senha inválidos.")
     })
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "E-mail ou senha inválidos.",
+    )
     expect(
       screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
     ).toHaveValue("ana@club.test")

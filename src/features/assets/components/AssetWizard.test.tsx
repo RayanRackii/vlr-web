@@ -4,10 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
 import { AssetWizard } from "@/features/assets/components/AssetWizard"
+import { DAYS } from "@/features/assets/components/assetWizardPricing"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
-import { createAsset } from "@/features/assets/services/assetsService"
+import { createAsset, getAssetById, updateAsset } from "@/features/assets/services/assetsService"
+import { assetSchema } from "@/features/assets/schemas/assetSchemas"
+import { bulkApplyAssetPricings, getAssetPricings, rentalPricingSchema } from "@/features/assets/services/rentalPricingService"
 import i18n from "@/lib/i18n"
 
 vi.mock("sonner", () => ({
@@ -24,7 +27,8 @@ vi.mock("@/features/assets/services/assetsService", () => ({
   getAssetById: vi.fn(),
 }))
 
-vi.mock("@/features/assets/services/rentalPricingService", () => ({
+vi.mock("@/features/assets/services/rentalPricingService", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/features/assets/services/rentalPricingService")>(),
   bulkApplyAssetPricings: vi.fn(),
   getAssetPricings: vi.fn(),
 }))
@@ -73,12 +77,13 @@ const families: AssetFamily[] = [
   },
 ]
 
-function renderWizard() {
+function renderWizard(mode: "create" | "edit" = "create") {
   const onOpenChange = vi.fn()
   const onCompleted = vi.fn()
   render(
     <AssetWizard
-      mode="create"
+      mode={mode}
+      assetId={mode === "edit" ? CREATED_ID : undefined}
       open
       onOpenChange={onOpenChange}
       units={units}
@@ -217,6 +222,8 @@ describe("AssetWizard validity gate", () => {
     expect(nextButton()).toBeEnabled()
 
     await user.click(nextButton())
+    expect(nextButton()).toBeDisabled()
+    fireEvent.change(screen.getByRole("textbox", { name: /^Preço por hora/ }), { target: { value: "12,5" } })
     expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
 
@@ -291,4 +298,93 @@ describe("AssetWizard validity gate", () => {
     expect(toastSuccess).toHaveBeenCalledWith(i18n.t("assets.wizard.success.create"))
     expect(createAssetMock).toHaveBeenCalledTimes(2)
   })
+})
+
+// The wizard uses replacement bulk rows in both create and edit modes.
+describe("AssetWizard pricing units", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(bulkApplyAssetPricings).mockResolvedValue({ appliedAssetCount: 1, pricingsCreated: 7 })
+    const asset = assetSchema.parse({ id: CREATED_ID, tenantId: UNIT_ID, unitId: UNIT_ID, categoryId: CATEGORY_ID, familyId: FAMILY_ID, name: "Sala 1", tag: "S-01", status: "Active", isRentable: true, requiresMaintenance: false, createdAt: "2026-10-25T00:00:00Z" })
+    createAssetMock.mockResolvedValue(asset)
+    vi.mocked(getAssetById).mockResolvedValue(asset)
+    vi.mocked(updateAsset).mockResolvedValue(asset)
+  })
+
+  it.each([
+    ["Hour", "Por hora", "Preço por hora"],
+    ["Slot", "Por horário", "Preço por horário"],
+    ["Day", "Por dia", "Preço por dia"],
+    ["Fixed", "Fixo", "Preço fixo"],
+  ] as const)("keeps %s and its label when navigating back, and sends it on create", async (unit, option, priceLabel) => {
+    const user = userEvent.setup()
+    renderWizard()
+    await fillGeneralStep(user)
+    await user.click(nextButton())
+    await user.click(screen.getByRole("button", { name: /Disponível para reserva \/ aluguel/ }))
+    await user.click(nextButton())
+
+    await user.click(screen.getByRole("combobox", { name: "Unidade de preço" }))
+    await user.click(await screen.findByRole("option", { name: option }))
+    expect(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) }), { target: { value: "45" } })
+    await user.click(nextButton())
+    await user.click(backButton())
+    expect(screen.getByRole("combobox", { name: "Unidade de preço" })).toHaveTextContent(option)
+    expect(screen.getByRole("textbox", { name: new RegExp(`^${priceLabel}`) })).toHaveValue("45,00")
+    await user.click(nextButton())
+    await user.click(finishButton())
+
+    await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: expect.arrayContaining([expect.objectContaining({ pricingUnit: unit, pricePerHour: 45 })]) }))
+  })
+
+  it("keeps each row's unit when rows disagree and the user does not pick a unit", async () => {
+    vi.mocked(getAssetPricings).mockResolvedValue(DAYS.map((dayOfWeek, index) => rentalPricingSchema.parse({
+      id: CREATED_ID, tenantId: UNIT_ID, assetId: CREATED_ID, rentalAssetId: CREATED_ID,
+      dayOfWeek, startTime: "08:00:00", endTime: "22:00:00", pricePerHour: 45,
+      pricingUnit: index === 0 ? "Slot" : "Day", requiresDeposit: false, depositPercentage: 0,
+      createdAt: "2026-10-25T00:00:00Z",
+    })))
+    const user = userEvent.setup()
+    renderWizard("edit")
+    await waitFor(() => expect(nextButton()).toBeEnabled())
+    await user.click(nextButton())
+    await user.click(nextButton())
+    expect(screen.getByRole("combobox", { name: "Unidade de preço" })).toHaveTextContent("Unidades diferentes por dia")
+    await user.click(nextButton())
+    await user.click(finishButton())
+    await waitFor(() => expect(bulkApplyAssetPricings).toHaveBeenCalledWith({ assetIds: [CREATED_ID], replace: true, pricings: DAYS.map((_, index) => expect.objectContaining({ pricingUnit: index === 0 ? "Slot" : "Day", pricePerHour: 45 })) }))
+  })
+
+  it("explains why Proximo is blocked when every per-day price is empty, and shows a dash for empty days on Revisao", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await fillGeneralStep(user)
+    await user.click(nextButton())
+    await user.click(
+      screen.getByRole("button", { name: /Disponível para reserva \/ aluguel/ }),
+    )
+    await user.click(nextButton())
+
+    await user.click(
+      screen.getByRole("button", { name: /Definir pre.o espec.fico por dia/ }),
+    )
+    expect(
+      screen.getByText(i18n.t("assets.inventory.validation.pricingRequired")),
+    ).toBeInTheDocument()
+    expect(nextButton()).toBeDisabled()
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Segunda" }), {
+      target: { value: "25,00" },
+    })
+    expect(
+      screen.queryByText(i18n.t("assets.inventory.validation.pricingRequired")),
+    ).not.toBeInTheDocument()
+    expect(nextButton()).toBeEnabled()
+
+    await user.click(nextButton())
+    expect(screen.getByText("Segunda: R$ 25,00/hora")).toBeInTheDocument()
+    expect(screen.getByText("Terça: —")).toBeInTheDocument()
+  })
+
 })

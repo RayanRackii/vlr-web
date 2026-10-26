@@ -1,4 +1,7 @@
-import { clampBrazilDateToToday } from "@/lib/brazilTimeZone"
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  clampTenantDateToToday,
+} from "@/lib/tenantTimeZone"
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -24,12 +27,13 @@ export function isRealCivilDate(value: string): boolean {
 export function readAgendaDateParam(
   value: string | null | undefined,
   today: string,
+  timeZoneId: string = DEFAULT_TENANT_TIME_ZONE,
 ): string {
   if (typeof value !== "string" || !isRealCivilDate(value)) {
     return today
   }
 
-  return clampBrazilDateToToday(value)
+  return clampTenantDateToToday(value, timeZoneId)
 }
 
 export type AgendaDateAttempt =

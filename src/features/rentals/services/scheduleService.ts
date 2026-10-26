@@ -5,6 +5,26 @@ import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import i18n from "@/lib/i18n"
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
+/** Prefers the ASP.NET ProblemDetails `detail`/`errors` fields over the generic `{ error }` shape. */
+function parseProblemDetailsError(error: unknown, fallback: string): string {
+  const payload = getAxiosErrorPayload(error)
+  if (typeof payload === "object" && payload !== null) {
+    const record = payload as Record<string, unknown>
+    if (typeof record.detail === "string" && record.detail.trim() !== "") {
+      return record.detail
+    }
+    if (typeof record.errors === "object" && record.errors !== null) {
+      const messages = Object.values(record.errors as Record<string, unknown>)
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .filter((value): value is string => typeof value === "string" && value.trim() !== "")
+      if (messages.length > 0) {
+        return messages.join(" ")
+      }
+    }
+  }
+  return parseApiError(payload, fallback)
+}
+
 function lessonChangeError(error: unknown): Error {
   const fallback = i18n.t("rentals.teacherLessons.changeError")
   return new Error(
@@ -63,6 +83,9 @@ const scheduleSlotSchema = z.object({
   sourceTemplateId: z.string().uuid().nullable().optional(),
   schedulePolicy: z.enum(["SlotGrid", "OpenHours"]).default("SlotGrid"),
   supportsEntireRecurrence: z.boolean().default(false),
+  /** Staff day view only: reservation item quantity on this resource. */
+  quantity: z.number().int().nullable().optional(),
+  customerName: z.string().nullable().optional(),
 })
 
 const dayScheduleSchema = z.object({
@@ -145,6 +168,11 @@ export const rentalAssetSchema = z.object({
   queueOpeningTime: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   categoryName: z.string().nullable().optional(),
+  /** Set when the underlying asset is scheduled for deletion (soft delete). */
+  scheduledDeletionAt: z.string().nullable().optional(),
+  familyId: guidLikeIdSchema.nullable().optional(),
+  cancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
+  effectiveCancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
   maxAdvanceBookingDays: z
     .number()
@@ -163,9 +191,19 @@ export const rentalAssetSchema = z.object({
     .optional(),
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().nullable().optional(),
-})
+  /** Asset location. The drawer hydrates it so an edit does not clear it. */
+  location: z.string().nullable().optional(),
+  // Older API responses named this field `capacity`. Normalize it at the
+  // boundary so edit defaults do not silently lose an existing capacity.
+  capacity: z.number().int().nullable().optional(),
+}).transform(({ capacity, capacityPeople, ...asset }) => ({
+  ...asset,
+  capacityPeople: capacityPeople ?? capacity,
+}))
 
-export type AdminRentalAsset = z.infer<typeof rentalAssetSchema>
+export type AdminRentalAsset = Omit<z.infer<typeof rentalAssetSchema>, "capacityPeople"> & {
+  capacityPeople?: number | null
+}
 
 export type SchedulePolicy = "SlotGrid" | "OpenHours"
 
@@ -550,10 +588,7 @@ export async function updateRentalSchedulePolicyBulk(
     return parsed.data.items
   } catch (error) {
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("apiErrors.updateSchedulePolicy"),
-      ),
+      parseProblemDetailsError(error, i18n.t("apiErrors.updateSchedulePolicy")),
     )
   }
 }

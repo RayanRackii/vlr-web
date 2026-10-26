@@ -1,7 +1,10 @@
+import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   DailyAgendaTab,
   type ScheduleBusyAction,
@@ -48,8 +51,8 @@ import {
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
-import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
@@ -85,8 +88,9 @@ export function SchedulePage() {
 }
 
 function AdminSchedulePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isTrialReadOnly } = useTrialStatus()
+  const timeZoneId = useTenantTimeZone()
 
   const [tab, setTab] = useState<ScheduleTab>("daily")
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
@@ -94,9 +98,13 @@ function AdminSchedulePage() {
     [],
   )
   const [weekday, setWeekday] = useState<DayOfWeekName>(todayWeekdayName)
-  const [date, setDate] = useState(todayIsoDate())
+  const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
+  const [scheduleTemplatesState, setScheduleTemplatesState] = useState<{
+    key: string
+    list: ScheduleTemplate[]
+  } | null>(null)
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
@@ -235,6 +243,19 @@ function AdminSchedulePage() {
     templatesCacheRef.current.set(key, list)
   }, [selectedRentalAssetIds, weekday])
 
+  const refreshScheduleTemplates = useCallback(async () => {
+    if (selectedRentalAssetIds.length === 0) return
+    const list = await listScheduleTemplates(
+      undefined,
+      selectedRentalAssetIds,
+      undefined,
+    )
+    setScheduleTemplatesState({
+      key: selectedRentalAssetIds.join(","),
+      list: list.filter((template) => template.isActive),
+    })
+  }, [selectedRentalAssetIds])
+
   useEffect(() => {
     if (selectedRentalAssetIds.length === 0 || !date) {
       setDay(null)
@@ -286,6 +307,34 @@ function AdminSchedulePage() {
       cancelled = true
     }
   }, [selectedRentalAssetIds, date, t])
+
+  useEffect(() => {
+    if (selectedRentalAssetIds.length === 0) return
+    let cancelled = false
+    const key = selectedRentalAssetIds.join(",")
+    void listScheduleTemplates(undefined, selectedRentalAssetIds, undefined)
+      .then((list) => {
+        if (!cancelled) {
+          setScheduleTemplatesState({
+            key,
+            list: list.filter((template) => template.isActive),
+          })
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : t("rentals.schedule.loadError"),
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedRentalAssetIds, t])
 
   useEffect(() => {
     if (tab !== "templates" || selectedRentalAssetIds.length === 0) {
@@ -396,7 +445,11 @@ function AdminSchedulePage() {
         await createScheduleTemplate(body)
         toast.success(t("rentals.schedule.templates.createSuccess"))
       }
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
       return true
     } catch (error) {
       toast.error(
@@ -420,7 +473,11 @@ function AdminSchedulePage() {
         setEditingTemplate(null)
         setWeeklyTarget(null)
       }
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -440,7 +497,11 @@ function AdminSchedulePage() {
     try {
       const created = await seedDefaultHourlyTemplates(selectedRentalAssetIds)
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -468,7 +529,11 @@ function AdminSchedulePage() {
           ? t("rentals.schedule.policy.saveOpenHoursSuccess")
           : t("rentals.schedule.policy.saveSlotGridSuccess"),
       )
-      await Promise.all([refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -513,7 +578,12 @@ function AdminSchedulePage() {
           count: result.created + result.updated,
         }),
       )
-      await Promise.all([refreshAssets(), refreshWeeklyTemplates(), refreshDay()])
+      await Promise.all([
+        refreshAssets(),
+        refreshWeeklyTemplates(),
+        refreshScheduleTemplates(),
+        refreshDay(),
+      ])
       return true
     } catch (error) {
       toast.error(
@@ -575,11 +645,23 @@ function AdminSchedulePage() {
     }
   }
 
-  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
+  const tabItems: {
+    id: ScheduleTab
+    labelKey: string
+    shortLabelKey: string
+    icon: typeof CalendarDays
+  }[] = [
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily", shortLabelKey: "rentals.schedule.tabs.dailyShort", icon: CalendarDays },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates", shortLabelKey: "rentals.schedule.tabs.templatesShort", icon: CalendarRange },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", shortLabelKey: "rentals.schedule.tabs.kindsShort", icon: Tag },
   ]
+
+  const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
+  const loadingScheduleTemplates = selectedRentalAssetIds.length > 0 &&
+    scheduleTemplatesState?.key !== scheduleTemplatesKey
+  const scheduleTemplates = loadingScheduleTemplates || !scheduleTemplatesState
+    ? []
+    : scheduleTemplatesState.list
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6">
@@ -591,34 +673,37 @@ function AdminSchedulePage() {
           <p className="text-sm text-muted-foreground">
             {t("rentals.schedule.descriptionOperational")}
           </p>
+          <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
+            {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
+          </p>
         </div>
 
-        <div className="border-b border-border">
-          <nav
-            className="-mb-px flex justify-center gap-6 overflow-x-auto sm:gap-8"
-            aria-label={t("nav.menu")}
-          >
-            {tabItems.map((item) => {
-              const isActive = tab === item.id
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setTab(item.id)
-                  }}
-                  className={cn(
-                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
-                    isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                  )}
-                >
-                  {t(item.labelKey)}
-                </button>
-              )
-            })}
-          </nav>
+        <div
+          role="group"
+          aria-label={t("nav.menu")}
+          className="mx-auto grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
+        >
+          {tabItems.map((item) => {
+            const isActive = tab === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => {
+                  setTab(item.id)
+                }}
+                className={cn(
+                  "inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
+                  isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
+                )}
+              >
+                <item.icon aria-hidden className="size-3.5 shrink-0" />
+                <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
+                <span className="hidden sm:inline">{t(item.labelKey)}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -657,6 +742,8 @@ function AdminSchedulePage() {
             selectedRentalAssetIds={selectedRentalAssetIds}
             weekday={weekday}
             templates={templates}
+            scheduleTemplates={scheduleTemplates}
+            loadingScheduleTemplates={loadingScheduleTemplates}
             kinds={kinds}
             defaultKindId={defaultKindId}
             loading={loadingAssets || loadingTemplates}

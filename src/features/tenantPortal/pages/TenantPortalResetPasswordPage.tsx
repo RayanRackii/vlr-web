@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Lock, Mail } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -12,6 +13,7 @@ import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { iconProps } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 import {
   Form,
@@ -22,6 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import { TENANT_PORTAL_OUTLINE_BUTTON_CLASS } from "@/features/tenantPortal/lib/tenantPortalControlStyles"
@@ -171,7 +175,13 @@ export function TenantPortalResetPasswordPage() {
                 <FormItem>
                   <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
+                    <InputWithIcon
+                      icon={<Mail {...iconProps("sm")} />}
+                      type="email"
+                      autoComplete="email"
+                      className="h-11"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -189,6 +199,7 @@ export function TenantPortalResetPasswordPage() {
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     maxLength={6}
+                    className="h-11"
                     {...field}
                     onChange={(event) => {
                       field.onChange(
@@ -208,9 +219,12 @@ export function TenantPortalResetPasswordPage() {
               <FormItem>
                 <FormLabel>{t("tenantPortal.passwordReset.newPassword")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -227,9 +241,12 @@ export function TenantPortalResetPasswordPage() {
                   {t("tenantPortal.passwordReset.confirmPassword")}
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -239,7 +256,7 @@ export function TenantPortalResetPasswordPage() {
           />
           <FormPrimaryButton
             type="submit"
-            className="w-full"
+            className="h-11 w-full"
             isValid={isConfirmValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.passwordReset.submitting")}
@@ -250,7 +267,7 @@ export function TenantPortalResetPasswordPage() {
           <LoadingButton
             type="button"
             variant="outline"
-            className={cn("w-full", TENANT_PORTAL_OUTLINE_BUTTON_CLASS)}
+            className={cn("h-11 w-full", TENANT_PORTAL_OUTLINE_BUTTON_CLASS)}
             loading={resending}
             loadingLabel={t("tenantPortal.passwordReset.resendSubmitting")}
             disabled={resendDisabled}
@@ -268,7 +285,10 @@ export function TenantPortalResetPasswordPage() {
       </Form>
 
       <p className="text-center text-sm text-muted-foreground">
-        <Link to={tenantPortalPath(subdomain)} className="text-primary underline">
+        <Link
+          to={tenantPortalPath(subdomain)}
+          className="inline-flex min-h-11 items-center text-primary underline"
+        >
           {t("tenantPortal.passwordReset.backToLogin")}
         </Link>
       </p>

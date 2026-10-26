@@ -6,8 +6,12 @@ import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { Minus, Plus, ShoppingCartIcon } from "lucide-react"
+
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Form,
   FormControl,
@@ -20,11 +24,19 @@ import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Textarea } from "@/components/ui/textarea"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import {
+  CATALOG_CART_MAX_QUANTITY,
+  CATALOG_CART_MIN_QUANTITY,
+  clampCatalogQuantity,
+} from "@/features/catalog/cart"
+import {
   formatCartTotalText,
   formatLineSubtotal,
 } from "@/features/catalog/lib/catalogPriceSummary"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
-import { type PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
+import {
+  formatCatalogMoney,
+  type PortalProduct,
+} from "@/features/catalog/schemas/catalogSchemas"
 import {
   createPortalCatalogOrder,
   listPortalCatalogProducts,
@@ -145,42 +157,118 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
       <Button
         type="button"
-        variant="ghost"
-        size="sm"
+        variant="outline"
+        size="lg"
         render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
       >
         {t("common.back")}
       </Button>
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.catalog.cartTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.checkoutHint")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("tenantPortal.catalog.cartTitle")}
+        description={t("tenantPortal.catalog.checkoutHint")}
+      />
 
       {cart.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.cartEmpty")}
-        </p>
+        <EmptyState
+          icon={ShoppingCartIcon}
+          title={t("tenantPortal.catalog.cartEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+          }
+        />
       ) : (
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="space-y-2">
           {cart.items.map((item) => {
             const product = productMap.get(item.productId)
             return (
               <li
                 key={item.productId}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-sm shadow-sm"
               >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">
+                <div className="flex items-start justify-between gap-3">
+                  <p
+                    className="line-clamp-2 min-w-0 font-medium"
+                    title={product?.name ?? item.productId}
+                  >
                     {product?.name ?? item.productId}
                   </p>
-                  <p className="text-muted-foreground">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-11 shrink-0"
+                    onClick={() => {
+                      cart.remove(item.productId)
+                    }}
+                  >
+                    {t("tenantPortal.catalog.removeItem", {
+                      name: product?.name ?? item.productId,
+                    })}
+                  </Button>
+                </div>
+                {product?.price != null ? (
+                  <p className="whitespace-nowrap text-xs text-muted-foreground">
+                    {t("tenantPortal.catalog.unitPrice", {
+                      price:
+                        formatCatalogMoney(
+                          product.price,
+                          product.currency,
+                          i18n.language,
+                        ) ?? "",
+                    })}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-lg"
+                      aria-label={t("tenantPortal.catalog.quantityDecrease")}
+                      disabled={item.quantity <= CATALOG_CART_MIN_QUANTITY}
+                      onClick={() => {
+                        cart.update(
+                          item.productId,
+                          clampCatalogQuantity(item.quantity - 1),
+                        )
+                      }}
+                    >
+                      <Minus aria-hidden />
+                    </Button>
+                    <CatalogQuantityField
+                      className="h-11 w-16 px-1 text-center"
+                      quantity={item.quantity}
+                      productName={product?.name ?? item.productId}
+                      onCommit={(next) => {
+                        cart.update(item.productId, next)
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-lg"
+                      aria-label={t("tenantPortal.catalog.quantityIncrease")}
+                      disabled={item.quantity >= CATALOG_CART_MAX_QUANTITY}
+                      onClick={() => {
+                        cart.update(
+                          item.productId,
+                          clampCatalogQuantity(item.quantity + 1),
+                        )
+                      }}
+                    >
+                      <Plus aria-hidden />
+                    </Button>
+                  </div>
+                  <p className="whitespace-nowrap text-muted-foreground">
                     {t("tenantPortal.catalog.lineSubtotal")}:{" "}
                     {formatLineSubtotal(
                       product?.price ?? null,
@@ -191,39 +279,11 @@ export function PortalCartPage() {
                     )}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <CatalogQuantityField
-                    className="w-20"
-                    quantity={item.quantity}
-                    productName={product?.name ?? item.productId}
-                    onCommit={(next) => {
-                      cart.update(item.productId, next)
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      cart.remove(item.productId)
-                    }}
-                  >
-                    {t("tenantPortal.catalog.removeItem", {
-                      name: product?.name ?? item.productId,
-                    })}
-                  </Button>
-                </div>
               </li>
             )
           })}
         </ul>
       )}
-
-      {cart.items.length > 0 ? (
-        <p className="text-sm font-medium">
-          {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
-        </p>
-      ) : null}
 
       {cart.items.length > 0 ? (
         <Form {...form}>
@@ -248,17 +308,22 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <FormPrimaryButton
-              type="submit"
-              className="w-full"
-              isValid={isCheckoutValid}
-              loading={submitting}
-              disabled={cart.items.length === 0}
-              loadingLabel={t("tenantPortal.catalog.submitting")}
-              style={{ backgroundColor: primary }}
-            >
-              {t("tenantPortal.catalog.submitOrder")}
-            </FormPrimaryButton>
+            <div className="fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+              <p className="text-base font-semibold text-foreground">
+                {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
+              </p>
+              <FormPrimaryButton
+                type="submit"
+                className="h-11 w-full"
+                isValid={isCheckoutValid}
+                loading={submitting}
+                disabled={cart.items.length === 0}
+                loadingLabel={t("tenantPortal.catalog.submitting")}
+                style={{ backgroundColor: primary }}
+              >
+                {t("tenantPortal.catalog.submitOrder")}
+              </FormPrimaryButton>
+            </div>
           </form>
         </Form>
       ) : null}

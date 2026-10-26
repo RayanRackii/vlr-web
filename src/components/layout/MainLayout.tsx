@@ -17,6 +17,7 @@ import {
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
+import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
@@ -100,11 +101,14 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
 
   return (
     <AppShell
-      sidebar={({ onNavigate }) => <Sidebar onNavigate={onNavigate} />}
+      sidebar={(opts) => <Sidebar {...opts} />}
       pageTitle={pageTitle}
       userLabel={userEmail}
       initials={initials}
       profileTo="/perfil"
+      collapsible
+      constrainContent
+      enlargeHeaderTargets
       contextLabel={staffHeaderContextLabel(
         currentUser,
         t("app.authenticatedArea"),
@@ -156,10 +160,22 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   )
 }
 
+function StaffTenantTimeZoneProvider({ children }: { children: ReactNode }) {
+  const { currentUser } = usePermissions()
+
+  return (
+    <TenantTimeZoneProvider timeZoneId={currentUser?.timeZoneId}>
+      {children}
+    </TenantTimeZoneProvider>
+  )
+}
+
 export function MainLayout({ children }: { children?: ReactNode }) {
   return (
     <PermissionProvider>
-      <MainLayoutShell>{children}</MainLayoutShell>
+      <StaffTenantTimeZoneProvider>
+        <MainLayoutShell>{children}</MainLayoutShell>
+      </StaffTenantTimeZoneProvider>
     </PermissionProvider>
   )
 }

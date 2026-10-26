@@ -73,13 +73,16 @@ export function buildRentalResourceFormValues(
     tag: "",
     unitId: editing?.unitId ?? pickSingleId(units),
     categoryId: editing?.categoryId ?? pickSingleId(categories),
-    familyId: pickSingleId(families),
+    familyId: editing?.familyId ?? pickSingleId(families),
     rentalType,
     totalQuantity: editing?.totalQuantity ?? 1,
     requiresDeposit: editing?.requiresDeposit ?? true,
     queueEnabled: rentalType === "Location" ? (editing?.queueEnabled ?? false) : false,
     queueOpeningTime: toHtmlTimeInput(editing?.queueOpeningTime),
-    location: "",
+    location: editing?.location ?? "",
+    cancelCutoffMode: typeof editing?.cancelCutoffHours === "number" ? "hours" : "inherit",
+    cancelCutoffHours: typeof editing?.cancelCutoffHours === "number" ? String(editing.cancelCutoffHours) : "",
+    cancelCutoffStored: editing?.cancelCutoffHours,
     horizonMode:
       typeof editing?.maxAdvanceBookingDays === "number" ? "days" : "inherit",
     horizonDays:
@@ -87,7 +90,7 @@ export function buildRentalResourceFormValues(
         ? String(editing.maxAdvanceBookingDays)
         : "",
     visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
-    capacityPeople: editing?.capacityPeople?.toString() ?? "",
+    capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
   }
 }

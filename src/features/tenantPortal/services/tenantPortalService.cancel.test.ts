@@ -16,7 +16,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
-import { cancelMyPortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
+import { cancelMyPortalReservation, listMyPortalReservations } from "@/features/tenantPortal/services/tenantPortalService"
 
 const RESERVATION_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
@@ -61,6 +61,26 @@ function apiError(status: number, message: string): AxiosError {
 describe("cancelMyPortalReservation", () => {
   beforeEach(() => {
     customerPost.mockReset()
+    vi.mocked(customerApi.get).mockReset()
+  })
+
+  it("reads reservations without optional pricing metadata or quantity", async () => {
+    const item: Partial<typeof reservationPayload.items[number]> = { ...reservationPayload.items[0] }
+    delete item.quantity
+    vi.mocked(customerApi.get).mockResolvedValue({ data: [{ ...reservationPayload, items: [item] }] })
+
+    const [reservation] = await listMyPortalReservations()
+    expect(reservation.items[0].quantity).toBeUndefined()
+    expect(reservation.items[0].pricingUnit).toBeUndefined()
+    expect(reservation.items[0].days).toBeUndefined()
+  })
+
+  it("preserves additive item pricing metadata from the API", async () => {
+    const item = { ...reservationPayload.items[0], pricingUnit: "Day", quantity: 2, days: 3 }
+    vi.mocked(customerApi.get).mockResolvedValue({ data: [{ ...reservationPayload, items: [item] }] })
+
+    const [reservation] = await listMyPortalReservations()
+    expect(reservation.items[0]).toMatchObject({ pricingUnit: "Day", quantity: 2, days: 3 })
   })
 
   it("posts to the Customer mine cancel route and returns the parsed reservation", async () => {
@@ -116,4 +136,16 @@ describe("cancelMyPortalReservation", () => {
       i18n.t("apiErrors.cancelReservation"),
     )
   })
+})
+
+
+it("retains the deadline returned by the cancellation endpoint", async () => {
+  customerPost.mockResolvedValue({ data: { ...reservationPayload, cancelDeadlineUtc: "2026-09-08T01:00:00Z" } })
+  await expect(cancelMyPortalReservation(RESERVATION_ID)).resolves.toHaveProperty("cancelDeadlineUtc", "2026-09-08T01:00:00Z")
+})
+it("translates the coded cancellation cutoff conflict", async () => {
+  const error = apiError(409, "raw API message")
+  error.response!.data = { code: "cancel_cutoff_passed", cancelCutoffHours: 12 }
+  customerPost.mockRejectedValue(error)
+  await expect(cancelMyPortalReservation(RESERVATION_ID)).rejects.toMatchObject({ code: "cancel_cutoff_passed", cancelCutoffHours: 12, message: i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: 12 }) })
 })

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
+import { Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -11,6 +12,7 @@ import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSess
 import {
   EXISTING_ACCOUNT_SIGN_IN_REQUIRED,
   INVITE_ACCOUNT_MISMATCH,
+  INVITE_ALREADY_ACCEPTED,
   INVITE_IDENTITY_CONFLICT,
   InviteAcceptError,
   acceptExistingAccountInvite,
@@ -48,22 +50,24 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { iconProps } from "@/lib/icon"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 
 type Phase =
   | { status: "loading" }
   | { status: "invalid" }
+  | { status: "already-accepted" }
   | { status: "password"; preview: InvitePreview }
   | { status: "sign-in"; preview: InvitePreview }
   | {
       status: "picker"
-      preview: InvitePreview
       memberships: StaffTenantMembership[]
       initialTenantId: string
     }
-  | { status: "membership-error"; preview: InvitePreview }
+  | { status: "membership-error"; invitedTenantId: string | null }
 
 function messageForInvite(error: unknown, t: TFunction): string {
   if (!(error instanceof InviteAcceptError)) {
@@ -111,15 +115,40 @@ function membershipSecondary(membership: StaffTenantMembership): string | null {
   return membership.legalName
 }
 
+// Per-tab copy of the invite token. The URL is cleaned right after the first
+// read; F5 then re-previews from here, so a consumed invite shows "already
+// accepted" (or the picker) instead of "invalid link".
+const INVITE_TOKEN_STORAGE_KEY = "rolvix.invite.token"
+
+function readStoredInviteToken(): string {
+  try {
+    return window.sessionStorage.getItem(INVITE_TOKEN_STORAGE_KEY)?.trim() ?? ""
+  } catch {
+    return ""
+  }
+}
+
+function storeInviteToken(token: string | null) {
+  try {
+    if (token === null) {
+      window.sessionStorage.removeItem(INVITE_TOKEN_STORAGE_KEY)
+    } else {
+      window.sessionStorage.setItem(INVITE_TOKEN_STORAGE_KEY, token)
+    }
+  } catch {
+    // Storage unavailable: the in-memory token still drives this visit.
+  }
+}
+
 export function SetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const token = searchParams.get("token")?.trim() ?? ""
-  const hasToken = token.length > 0
-  const [phase, setPhase] = useState<Phase>(
-    hasToken ? { status: "loading" } : { status: "invalid" },
-  )
+  // Captured once; the URL copy is stripped on mount and later URL changes must
+  // not re-preview (or "invalidate") the invite.
+  const [urlToken] = useState(() => searchParams.get("token")?.trim() ?? "")
+  const [token] = useState(() => urlToken || readStoredInviteToken())
+  const [phase, setPhase] = useState<Phase>({ status: "loading" })
   const [redirectTimeoutId, setRedirectTimeoutId] = useState<
     number | undefined
   >(undefined)
@@ -134,13 +163,40 @@ export function SetPasswordPage() {
   }, [redirectTimeoutId])
 
   useEffect(() => {
+    if (urlToken.length > 0) {
+      storeInviteToken(urlToken)
+      void navigate({ search: "" }, { replace: true })
+    }
+    // Mount only: urlToken never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
     if (token.length === 0) {
-      setPhase({ status: "invalid" })
-      return
+      // No token anywhere: a signed-in staff member resumes tenant selection.
+      void supabase.auth.getSession().then(
+        ({ data }) => {
+          if (cancelled) {
+            return
+          }
+          if (data.session) {
+            void openMembershipStep(null)
+          } else {
+            setPhase({ status: "invalid" })
+          }
+        },
+        () => {
+          if (!cancelled) {
+            setPhase({ status: "invalid" })
+          }
+        },
+      )
+      return () => {
+        cancelled = true
+      }
     }
 
-    let cancelled = false
-    setPhase({ status: "loading" })
     void previewInvite(token).then(
       (preview) => {
         if (cancelled) {
@@ -153,11 +209,37 @@ export function SetPasswordPage() {
             : { status: "password", preview },
         )
       },
-      () => {
+      (error: unknown) => {
         if (cancelled) {
           return
         }
 
+        if (
+          error instanceof InviteAcceptError &&
+          error.code === INVITE_ALREADY_ACCEPTED
+        ) {
+          // Reload/back after a successful accept: the membership exists.
+          void supabase.auth.getSession().then(
+            ({ data }) => {
+              if (cancelled) {
+                return
+              }
+              if (data.session) {
+                void openMembershipStep(null)
+              } else {
+                setPhase({ status: "already-accepted" })
+              }
+            },
+            () => {
+              if (!cancelled) {
+                setPhase({ status: "already-accepted" })
+              }
+            },
+          )
+          return
+        }
+
+        storeInviteToken(null)
         setPhase({ status: "invalid" })
       },
     )
@@ -165,20 +247,23 @@ export function SetPasswordPage() {
     return () => {
       cancelled = true
     }
+    // openMembershipStep only reads stable setters/navigate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  async function openMembershipStep(preview: InvitePreview) {
+  async function openMembershipStep(invitedTenantId: string | null) {
     try {
       const list = await listMyStaffTenants()
       if (list.memberships.length > 1) {
-        const invited = list.memberships.some(
-          (membership) => membership.tenantId === preview.tenantId,
-        )
-          ? preview.tenantId
-          : ""
+        const invited =
+          invitedTenantId !== null &&
+          list.memberships.some(
+            (membership) => membership.tenantId === invitedTenantId,
+          )
+            ? invitedTenantId
+            : ""
         setPhase({
           status: "picker",
-          preview,
           memberships: list.memberships,
           initialTenantId: invited,
         })
@@ -201,7 +286,7 @@ export function SetPasswordPage() {
         return
       }
 
-      setPhase({ status: "membership-error", preview })
+      setPhase({ status: "membership-error", invitedTenantId })
     }
   }
 
@@ -227,7 +312,7 @@ export function SetPasswordPage() {
         return
       }
 
-      await openMembershipStep(preview)
+      await openMembershipStep(preview.tenantId)
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
       if (
@@ -264,7 +349,7 @@ export function SetPasswordPage() {
       toast.success(
         t("auth.invite.toastJoined", { tenant: preview.tenantName }),
       )
-      await openMembershipStep(preview)
+      await openMembershipStep(preview.tenantId)
       return null
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
@@ -289,7 +374,7 @@ export function SetPasswordPage() {
 
     setRetryingMemberships(true)
     try {
-      await openMembershipStep(phase.preview)
+      await openMembershipStep(phase.invitedTenantId)
     } finally {
       setRetryingMemberships(false)
     }
@@ -303,9 +388,11 @@ export function SetPasswordPage() {
         : t("auth.invite.title")
 
   const description =
-    phase.status === "invalid" || !hasToken
+    phase.status === "invalid"
       ? t("auth.invite.invalidLink")
-      : phase.status === "loading"
+      : phase.status === "already-accepted"
+        ? t("auth.invite.alreadyAccepted")
+        : phase.status === "loading"
         ? t("auth.invite.checking")
         : phase.status === "password"
           ? t("auth.invite.welcome", { tenant: phase.preview.tenantName })
@@ -348,7 +435,8 @@ export function SetPasswordPage() {
           </CardHeader>
 
           <CardContent>
-            {phase.status === "invalid" ? (
+            {phase.status === "invalid" ||
+            phase.status === "already-accepted" ? (
               <Button type="button" className="w-full" render={<Link to="/login" />}>
                 {t("auth.invite.goToLogin")}
               </Button>
@@ -441,10 +529,12 @@ function NewPasswordForm({
             <FormItem>
               <FormLabel>{t("auth.invite.passwordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
                   placeholder={t("auth.invite.passwordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
@@ -460,10 +550,12 @@ function NewPasswordForm({
             <FormItem>
               <FormLabel>{t("auth.invite.confirmPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
                   placeholder={t("auth.invite.confirmPasswordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
@@ -546,10 +638,12 @@ function ExistingAccountSignInForm({
             <FormItem>
               <FormLabel>{t("auth.invite.existingPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
+                <PasswordInput
+                  icon={<Lock {...iconProps("sm")} />}
                   autoComplete="current-password"
                   placeholder={t("auth.invite.existingPasswordPlaceholder")}
+                  showLabel={t("auth.showPassword")}
+                  hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>

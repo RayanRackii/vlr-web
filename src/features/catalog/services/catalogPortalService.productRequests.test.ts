@@ -101,7 +101,7 @@ describe("listPortalProductRequests", () => {
       apiError(403, { error: "Module is not active for this tenant." }),
     )
     await expect(listPortalProductRequests()).rejects.toThrow(
-      "Module is not active for this tenant.",
+      "Este módulo não está ativo neste ambiente.",
     )
 
     customerGet.mockRejectedValueOnce(apiError(500, null))

@@ -4,7 +4,9 @@ import type { AppNavigationItem } from "@/components/layout/navigation"
 import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
 import { TenantPortalForgotPasswordPage } from "@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
+import { TenantPortalInvalidResetLinkPage } from "@/features/tenantPortal/pages/TenantPortalInvalidResetLinkPage"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
+import { TenantPortalLoginRedirectRoute } from "@/features/tenantPortal/pages/TenantPortalLoginRedirectRoute"
 import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import { TenantPortalResetPasswordPage } from "@/features/tenantPortal/pages/TenantPortalResetPasswordPage"
@@ -29,6 +31,7 @@ export const tenantPortalManifest = {
   routes: {
     public: [
       { element: <TenantPortalLoginPage /> },
+      { path: "login", element: <TenantPortalLoginRedirectRoute /> },
       { path: "register", element: <TenantPortalRegisterPage /> },
       { path: "verify-email", element: <TenantPortalVerifyEmailPage /> },
       { path: "verify-phone", redirectToEmail: true },
@@ -36,6 +39,10 @@ export const tenantPortalManifest = {
       {
         path: "forgot-password/confirm",
         element: <TenantPortalResetPasswordPage />,
+      },
+      {
+        path: "reset-password",
+        element: <TenantPortalInvalidResetLinkPage />,
       },
     ] satisfies readonly FeatureRoute[],
     customer: [

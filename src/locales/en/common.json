@@ -101,6 +101,7 @@
     "loadCustomerProfile": "Could not load the profile.",
     "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API.",
+    "moduleInactive": "This module is not active in this workspace.",
     "loadCatalogProducts": "Could not load products.",
     "loadCatalogProduct": "Could not load the product.",
     "saveCatalogProduct": "Could not save the product.",
@@ -185,12 +186,20 @@
   },
   "auth": {
     "sessionExpired": "Session expired. Sign in again.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "brandPanel": {
+      "title": "One platform for every bookable resource",
+      "body": "Schedule, manage, and grow your operation from a single modular workspace — built for your business, not a template.",
+      "footnote": "Trusted by teams managing bookings, assets, and service operations."
+    },
     "invite": {
       "title": "Activate account",
       "welcome": "Welcome to Rolvix. To activate your account at {{tenant}}, set a secure password below.",
       "welcomeExisting": "You already have a Rolvix account. Sign in with the password for {{email}} to join {{tenant}}. Your password will not change.",
       "checking": "Checking the invite...",
       "invalidLink": "Invite link is invalid or expired.",
+      "alreadyAccepted": "This invite was already accepted. Sign in to continue.",
       "passwordLabel": "New password",
       "confirmPasswordLabel": "Confirm new password",
       "passwordPlaceholder": "At least 8 characters",
@@ -228,6 +237,7 @@
     "login": {
       "invalidCredentials": "Invalid email or password.",
       "failed": "Could not sign in. Please try again.",
+      "rateLimited": "Too many login attempts. Wait a little and try again.",
       "title": "Sign in",
       "subtitle": "Sign in with your credentials to access the platform.",
       "emailLabel": "Email",
@@ -238,6 +248,7 @@
       "submitting": "Signing in...",
       "forgotPassword": "Forgot password",
       "forgotSubmitting": "Sending...",
+      "forgotEmailHint": "Enter your email above to receive the reset link.",
       "validation": {
         "emailRequired": "Email is required.",
         "emailInvalid": "Enter a valid email.",
@@ -255,7 +266,7 @@
       "resetCompanyBack": "Back",
       "resetCompanyMin": "The identifier must be at least 2 characters.",
       "resetCompanyMax": "The identifier must be at most 63 characters.",
-      "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club)."
+      "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp)."
     },
     "resetPassword": {
       "title": "New password",
@@ -278,13 +289,18 @@
   "tenantPortal": {
     "sessionExpired": "Session expired",
     "defaultTagline": "Sign in to book and get updates.",
+    "authPanel": {
+      "poweredBy": "Powered by Rolvix"
+    },
     "header": {
       "ctaRegister": "Register"
     },
     "errors": {
       "title": "Portal unavailable",
-      "missingSubdomain": "Open the company address (e.g. /t/tennis-club).",
-      "tenantNotFound": "Company not found or inactive."
+      "missingSubdomain": "Open the company address (e.g. /t/rolvix-sp).",
+      "tenantNotFound": "Company not found or inactive.",
+      "loadFailed": "We could not load the portal right now.",
+      "retry": "Try again"
     },
     "fields": {
       "name": "Full name",
@@ -356,7 +372,9 @@
       "resendSubmitting": "Resending...",
       "resendToast": "If an account exists for this email, we sent a new code.",
       "backToLogin": "Back to sign in",
-      "rateLimited": "Too many attempts. Try again shortly."
+      "rateLimited": "Too many attempts. Try again shortly.",
+      "invalidLink": "Invalid or expired link. Request a new code.",
+      "requestNewLink": "Request a new code"
     },
     "register": {
       "title": "Create account",
@@ -379,7 +397,8 @@
     "verify": {
       "title": "Confirm email",
       "subtitle": "Enter the 6-digit code sent to {{maskedEmail}}.",
-      "expiresHint": "The code expires in 10 minutes. If it does not arrive, resend after the wait.",
+      "expiresHint_one": "The code expires in {{count}} minute. If it does not arrive, resend after the wait.",
+      "expiresHint_other": "The code expires in {{count}} minutes. If it does not arrive, resend after the wait.",
       "submit": "Confirm",
       "submitting": "Verifying...",
       "resend": "Resend code",
@@ -419,20 +438,23 @@
       "reserving": "Booking...",
       "available": "Available. Estimate: {{amount}}",
       "quoteLoading": "Calculating the price...",
-      "depositRequired": "This space requires a deposit. The reservation stays pending until the club confirms it. This screen does not collect payment.",
+      "depositRequired": "This space requires a deposit. The reservation stays pending until the responsible team confirms it. This screen does not collect payment.",
       "total": "Total {{amount}}",
       "unavailable": "Slot unavailable.",
       "slotReserved": "This time is already booked.",
       "legendAvailable": "Available",
       "legendUnavailable": "Unavailable",
+      "legendSelected": "Selected",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
       "slotsError": "Could not load times for this day.",
-      "noSlots": "No slots available on this date. The club may not have published the schedule yet.",
+      "noSlots": "No slots are available on this date. The responsible team may not have published the schedule yet.",
       "noTimes": "No times on this date",
       "pastSlotsHidden": "Times that have already started today are hidden.",
-      "horizonExceeded": "That date is beyond the booking horizon.",
-      "horizonAdjusted": "That date is beyond the booking horizon. Showing the latest date you can book.",
+      "horizonExceeded": "That date is beyond the booking limit.",
+      "horizonExceededDays_one": "You can book up to {{count}} day ahead.",
+      "horizonExceededDays_other": "You can book up to {{count}} days ahead.",
+      "horizonAdjusted": "That date is beyond the booking limit. Showing the latest date you can book.",
       "horizonHint": "Bookings available through {{date}} ({{count}} days ahead)",
       "dateBeforeToday": "That date is before today.",
       "loadingTimes": "Loading times...",
@@ -441,12 +463,16 @@
       "reserveError": "Could not create the reservation.",
       "loadError": "Could not load the schedule.",
       "myReservations": "My reservations",
+      "groupUpcoming": "Upcoming",
+      "groupPast": "Past",
+      "groupCancelled": "Cancelled",
       "pastReservation": "Past booking",
       "empty": "No reservations yet.",
       "cancel": "Cancel",
       "cancelling": "Canceling...",
       "cancelConfirmTitle": "Cancel this reservation?",
-      "cancelConfirmBody": "The time slot becomes available again. This screen does not collect payment or issue a refund, including when the reservation is already confirmed. When a deposit is required, only the club confirms it; canceling does not move any payment here.",
+      "cancelConfirmBodyPaid": "The time slot becomes available again. The business will handle any refund for paid amounts according to its policy; this screen does not issue refunds.",
+      "cancelConfirmBodyUnpaid": "The time slot becomes available again. This screen does not process payments or refunds.",
       "cancelConfirmAction": "Confirm cancellation",
       "cancelConfirmDismiss": "Keep reservation",
       "cancelSuccess": "Reservation canceled.",
@@ -454,7 +480,11 @@
       "dailyLimitReached": "You reached the limit of {{count}} active reservations for this day.",
       "dailyLimitReachedUnknown": "You reached the daily limit of active reservations.",
       "slotJustTaken": "This time was just taken. The schedule was refreshed — choose another.",
-      "slotTaken": "This time is already booked.",
+      "slotTaken": "Unavailable",
+      "allUnitsReserved": "All units reserved",
+      "periodIncludesBookedDay": "The period includes a day already reserved",
+      "timeReserved": "Reserved",
+      "alreadyReserved": "You already have this reservation.",
       "alreadyCancelled": "This reservation was already canceled.",
       "slotHeldByYou": "You already booked this time. See",
       "cancellationPolicyDefault": "Canceling makes this time available to other people again. Check this organization's rules.",
@@ -487,12 +517,31 @@
       },
       "selectionUnavailable": "This time is no longer available",
       "yourReservation": "Your reservation",
-      "selectionExpired": "Your selection expired"
+      "selectionExpired": "Your selection expired",
+      "cancelDeadline": "Cancellable until {{when}}",
+      "noCancelDeadline": "No cancellation deadline",
+      "cancelEffectiveCutoff_one": "Cancellation cutoff: {{count}} hour before the start.",
+      "cancelEffectiveCutoff_other": "Cancellation cutoff: {{count}} hours before the start.",
+      "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
+      "unitsBadge": "x{{count}}",
+      "durationLabel": "Duration",
+      "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
+      "yourReservationUnitsReason": "To book more units, cancel and book again with the quantity you want.",
+      "cancelCutoffReason": "Cancellation window closed",
+      "days": "Days",
+      "daysSummary": "{{count}} days · until {{until}}",
+      "reservationQuantitySuffix_one": "x {{count}} unit",
+      "reservationQuantitySuffix_other": "x {{count}} units",
+      "reservationDaysSuffix_one": "{{count}} day",
+      "reservationDaysSuffix_other": "{{count}} days",
+      "quoteFixedLine_one": "{{price}} (fixed total)",
+      "quoteFixedLine_other": "{{price}} · {{count}} units (fixed total)",
+      "quoteUnitMultiplier": "× {{count}}"
     },
     "menu": {
       "empty": "No modules available.",
       "emptyTitle": "Nothing here yet",
-      "emptyDescription": "The club admin has not configured portal menu items yet."
+      "emptyDescription": "The administrator has not configured portal menu items yet."
     },
     "profile": {
       "title": "My Profile",
@@ -592,8 +641,10 @@
       "cancelRequestTitle": "Cancel this request?",
       "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
       "requestCancelled": "Request canceled.",
-      "cancelRequestError": "Could not cancel the request."
-    }
+      "cancelRequestError": "Could not cancel the request.",
+      "unitPrice": "{{price}} / un"
+    },
+    "timeZoneLabel": "{{city}} time ({{offset}})"
   },
   "catalog": {
     "retry": "Try again",
@@ -1118,7 +1169,7 @@
     "catalog": "Catalog & Orders",
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
-    "catalogNotifications": "Notifications",
+    "catalogNotifications": "Catalog notifications",
     "taxonomy": "Categories and tags",
     "notifications": "Notifications",
     "peopleAccess": "People and access",
@@ -1129,6 +1180,8 @@
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu",
     "loading": "Loading navigation menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu",
     "sections": {
       "overview": "Overview",
       "peoplePortal": "People & portal",
@@ -1141,11 +1194,23 @@
   "taxonomy": {
     "title": "Categories and tags",
     "sharedHint": "These definitions are shared by every consumer in this tenant.",
-    "categories": "Categories", "tags": "Tags", "newCategory": "New category", "newTag": "New tag",
-    "name": "Name", "slug": "Slug", "parent": "Parent category", "icon": "Icon", "order": "Order",
-    "assignment": "Categories and tags", "saved": "Categories and tags saved.", "deleted": "Definition deleted.",
+    "categories": "Categories",
+    "tags": "Tags",
+    "newCategory": "New category",
+    "newTag": "New tag",
+    "name": "Name",
+    "slug": "Slug",
+    "parent": "Parent category",
+    "icon": "Icon",
+    "order": "Order",
+    "assignment": "Categories and tags",
+    "saved": "Categories and tags saved.",
+    "deleted": "Definition deleted.",
     "deleteConfirm": "Delete {{name}}? This is allowed only when the definition is unused.",
-    "errors": { "duplicate": "A definition with this slug or name already exists.", "inUse": "This definition is in use and cannot be deleted." }
+    "errors": {
+      "duplicate": "A definition with this slug or name already exists.",
+      "inUse": "This definition is in use and cannot be deleted."
+    }
   },
   "account": {
     "title": "Account",
@@ -1429,8 +1494,8 @@
         "generic": "Types"
       },
       "description": {
-        "rentals": "Types used to group resources (e.g. Court, Dumpster, Room).",
-        "spaces": "Space types (e.g. Court, Room).",
+        "rentals": "Types used to group resources (e.g. Space, Equipment, Room).",
+        "spaces": "Space types (e.g. Room, Outdoor area).",
         "goods": "Goods types (e.g. Dumpster, Mobile equipment).",
         "electrical": "Electrical equipment types (e.g. Panel, Split AC, Transformer).",
         "maintenance": "Equipment types (e.g. Split AC, Boiler).",
@@ -1438,8 +1503,8 @@
       },
       "loading": "Loading types...",
       "empty": {
-        "rentals": "No types yet — create the first one (e.g. Court or Dumpster).",
-        "spaces": "No types yet — create the first one (e.g. Court or Room).",
+        "rentals": "No types yet — create the first one (e.g. Space or Equipment).",
+        "spaces": "No types yet — create the first one (e.g. Space or Room).",
         "goods": "No types yet — create the first one (e.g. Dumpster).",
         "electrical": "No types yet — create the first one (e.g. Electrical panel).",
         "maintenance": "No types yet — create the first one (e.g. Split AC).",
@@ -1479,8 +1544,8 @@
           "generic": "New type"
         },
         "description": {
-          "rentals": "Define a type to group bookable resources (e.g. Tennis court).",
-          "spaces": "Define a space type (e.g. Tennis court, Room).",
+          "rentals": "Define a type to group bookable resources (e.g. Space, Equipment, Room).",
+          "spaces": "Define a space type (e.g. Room, Outdoor area).",
           "goods": "Define a goods type (e.g. Dumpster).",
           "electrical": "Register the base model used by electrical equipment.",
           "maintenance": "Register the base model used by equipment.",
@@ -1492,8 +1557,8 @@
       "form": {
         "name": "Name",
         "namePlaceholder": {
-          "rentals": "e.g. Court, Dumpster, Room",
-          "spaces": "e.g. Court, Room",
+          "rentals": "e.g. Space, Equipment, Room",
+          "spaces": "e.g. Space, Room",
           "goods": "e.g. Dumpster",
           "electrical": "e.g. Electrical panel, Split AC",
           "maintenance": "e.g. Split Air Conditioner 12k BTU",
@@ -1533,7 +1598,7 @@
       },
       "description": {
         "rentals": "Resources you offer (spaces, goods…). Register each one and mark what can be booked.",
-        "spaces": "Rentable spaces (courts, rooms…). Register each one and mark what can be booked.",
+        "spaces": "Rentable spaces such as rooms and outdoor areas. Register each one and mark what can be booked.",
         "goods": "Goods and items (dumpsters…). Register each one and organize them by type.",
         "electrical": "Site electrical equipment. Use types and attributes (voltage, manufacturer).",
         "maintenance": "Site equipment and installations. Use types to organize and link maintenance.",
@@ -1549,8 +1614,8 @@
         "generic": "No resources registered yet."
       },
       "emptyNoTypes": {
-        "rentals": "Before adding resources, define types (e.g. Court, Dumpster).",
-        "spaces": "Before adding spaces, define types (e.g. Court, Room).",
+        "rentals": "Before adding resources, define types (e.g. Space, Equipment).",
+        "spaces": "Before adding spaces, define types (e.g. Space, Room).",
         "goods": "Before adding goods, define types (e.g. Dumpster).",
         "electrical": "Before adding equipment, define electrical equipment types.",
         "maintenance": "Before adding resources, define equipment types.",
@@ -1599,8 +1664,8 @@
           "generic": "Bulk add resources"
         },
         "description": {
-          "rentals": "Generate a sequence with the same type and numbered tags (e.g. Court-01, Court-02).",
-          "spaces": "Generate a sequence of spaces with the same type and numbered tags (e.g. Court-01).",
+          "rentals": "Generate a sequence with the same type and numbered tags (e.g. Space-01, Space-02).",
+          "spaces": "Generate a sequence of spaces with the same type and numbered tags (e.g. Space-01).",
           "goods": "Generate a sequence of goods with the same type and numbered tags.",
           "electrical": "Generate a sequence of electrical equipment with numbered tags.",
           "maintenance": "Generate a sequence of equipment with the same type and numbered tags.",
@@ -1677,13 +1742,13 @@
         "capacity": "Capacity"
       },
       "placeholders": {
-        "name": "e.g. Court 1 — indoor",
+        "name": "e.g. Space 1 — indoor",
         "tag": "e.g. C-01",
         "location": "e.g. Block A, ground floor"
       },
       "help": {
         "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
-        "category": "Resource type (e.g. Tennis court). Define types under Assets → Types.",
+        "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
         "name": "Friendly name shown in the schedule and lists.",
         "tag": "Short unique code for the resource (e.g. C-01).",
@@ -1699,7 +1764,7 @@
         "queueEnabled": "When on, customers join a FIFO queue to book this space at opening time. Off by default.",
         "queueOpeningTime": "Time of day when reservations open (Brasília timezone). The waiting room opens 30 minutes earlier.",
         "requiresMaintenanceHint": "This resource can be linked to PMOC plans and work orders.",
-        "rentalType": "Space (court/room) or good (loaned equipment).",
+        "rentalType": "Space (room or outdoor area) or good (loaned equipment).",
         "totalQuantity": "Quantity available for concurrent booking (goods) or logical capacity.",
         "stockQuantity": "How many units of this good. The batch creates one resource with this stock, not numbered items."
       },
@@ -1715,6 +1780,10 @@
         "review": "Review"
       },
       "pricing": {
+        "priceErrors": {"required": "Enter a price.", "invalid": "Invalid price. Use the format 12.50.", "notPositive": "The price must be greater than zero.", "tooLarge": "The maximum price is R$ {{max}}."},
+        "unitLabel": "Pricing unit",
+        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
+        "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
         "patternLabel": "How the price repeats through the week",
         "everydayPrice": "Price per hour",
         "everydayPriceHelp": "The same amount applies every day in the window below.",
@@ -1743,7 +1812,11 @@
       "back": "Back",
       "finish": "Finish",
       "review": {
-        "stockQuantity": "Stock quantity"
+        "stockQuantity": "Stock quantity",
+        "pricingUnitLabel": "Pricing unit",
+        "priceLabel": "Price",
+        "perDayPricesLabel": "Per-day prices",
+        "unitPrice": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"}
       },
       "success": {
         "create": "Resource created successfully.",
@@ -1786,7 +1859,7 @@
         "totalQuantity": "Total quantity"
       },
       "rentalTypes": {
-        "Location": "Space (court, room, track)",
+        "Location": "Space (room, outdoor area, or track)",
         "Good": "Good (vest, ball, dumpster)"
       },
       "actions": {
@@ -1821,6 +1894,7 @@
         "invalidResponse": "Invalid API response.",
         "pricingLoadFailed": "Could not load pricing.",
         "pricingCreateFailed": "Could not create pricing.",
+        "pricingUpdateFailed": "Could not update the price.",
         "pricingDeleteFailed": "Could not delete pricing.",
         "pricingBulkFailed": "Could not apply bulk pricing."
       }
@@ -2282,7 +2356,7 @@
     "role": "Function",
     "permissions": "Permissions",
     "accessProfile": "Access profile",
-    "moduleInactive": "Module is not active for this tenant",
+    "moduleInactive": "This module is not active in this workspace.",
     "status": {
       "active": "Active",
       "inactive": "Inactive"
@@ -2522,7 +2596,7 @@
       "add": "+ Add item",
       "addFirst": "Add first item",
       "label": "Display name",
-      "labelPlaceholder": "e.g. Rent tennis court",
+      "labelPlaceholder": "e.g. Book a space",
       "functionality": "Feature",
       "destination": "Destination",
       "destinationGeneralAgenda": "General schedule",
@@ -2830,7 +2904,7 @@
       "families": {
         "hint": "Pick at least one asset family. This drives asset registration forms.",
         "descriptions": {
-          "spaces": "Courts, rooms, and bookable spaces.",
+          "spaces": "Rooms, outdoor areas, and other bookable spaces.",
           "electrical": "Electrical equipment and installations.",
           "goods": "Goods, dumpsters, and physical items.",
           "generic": "Resources without a specific category."
@@ -2848,7 +2922,7 @@
         "primaryColor": "Primary color",
         "accentColor": "Accent color",
         "welcomeTagline": "Welcome tagline (optional)",
-        "welcomeTaglinePlaceholder": "e.g. Book your court in a few taps",
+        "welcomeTaglinePlaceholder": "e.g. Book a space in a few taps",
         "adminFullName": "Admin name",
         "adminFullNamePlaceholder": "e.g. Jane Smith",
         "adminEmail": "Admin email"
@@ -2883,7 +2957,7 @@
         "taxIdMax": "Tax ID must be at most 20 characters.",
         "subdomainMin": "Subdomain must be at least 2 characters.",
         "subdomainMax": "Subdomain must be at most 63 characters.",
-        "subdomainFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or acme-club).",
+        "subdomainFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp).",
         "logoSvgInvalid": "The logo must be SVG markup (include <svg).",
         "hexColorInvalid": "Enter a valid hex color (e.g. #1E293B).",
         "welcomeTaglineMax": "Welcome tagline must be at most 120 characters.",
@@ -2920,7 +2994,7 @@
     "teacherLessons": {
       "title": "Lessons",
       "description": "Create or remove lessons for the selected date only. The weekly schedule will not change.",
-      "court": "Court",
+      "court": "Space",
       "date": "Date",
       "availableTime": "Available time",
       "chooseTime": "Choose a time",
@@ -2975,10 +3049,12 @@
       },
       "grid": {
         "empty": "Empty time slot",
-        "noSelection": "Select one or more spaces / goods to view the grid."
+        "noSelection": "Select one or more spaces / goods to view the grid.",
+        "legendLabel": "Legend",
+        "minimumLeadTime": "Outside the minimum advance notice"
       },
-      "dayOnlyBanner": "Changes in this grid apply only to {{date}}. Weekly rules live under Weekly setup.",
-      "weeklyBanner": "This grid is the rule for every {{day}}. Day agenda only changes one date.",
+      "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
+      "weeklyBanner": "This grid repeats weekly on {{day}}. Day agenda only changes one date.",
       "weeklyCellHint": "The change applies to this weekday on all future dates.",
       "weekly": {
         "configureHours": "Configure hours"
@@ -2994,6 +3070,12 @@
       "templatesFineEditRentable": "Edit grid for",
       "weeklyConfigHint": "Standard hours and Custom grid repeat by weekday. Day agenda only changes one date.",
       "dayTitle": "Day agenda",
+      "occupancyKindLabel": "Type",
+      "occupancyKinds": {
+        "open": "Open",
+        "closed": "Closed",
+        "lesson": "Lesson"
+      },
       "dayEmpty": "No time slots on this day. Create the grid in Weekly setup.",
       "dayEmptyTitle": "No time slots on this day",
       "dayEmptyDescription": "In Weekly setup, create the grid. This day’s hours appear automatically.",
@@ -3036,6 +3118,10 @@
           "booked": "Booked",
           "unavailable": "Unavailable"
         },
+        "unitsBooked": "Booked · {{booked}} of {{total}}",
+        "unitsFree_one": "{{count}} free",
+        "unitsFree_other": "{{count}} free",
+        "unitsChooserTitle": "Choose a booking",
         "source": {
           "weeklyDefault": "Weekly default",
           "dailyOverride": "This day’s adjustment"
@@ -3060,7 +3146,11 @@
         "saveOpenHoursSuccess": "Standard hours saved. The day’s intervals appear automatically.",
         "saveSlotGridSuccess": "Custom grid is active.",
         "saveError": "Could not save the schedule setup.",
-        "derivedSlotsHint": "Intervals generated automatically from standard hours (no need to publish the day)."
+        "derivedSlotsHint": "Intervals generated automatically from standard hours (no need to publish the day).",
+        "durationMinutes": "Durations (min; separate with commas)",
+        "durationMinutesHint": "Separate values with commas. Example: 60, 120, 240.",
+        "durationMinutesInvalid": "Enter positive whole-minute durations separated by commas.",
+        "slotGridDurationsHint": "Optional. Durations (in minutes) customers can reserve by combining consecutive time slots, e.g. 30,60,90. Empty = multi-slot off."
       },
       "weeklyRule": {
         "title": "Create weekly rule",
@@ -3072,7 +3162,10 @@
       "tabs": {
         "daily": "Day agenda",
         "templates": "Weekly setup",
-        "kinds": "Occupancy kinds"
+        "kinds": "Occupancy kinds",
+        "dailyShort": "Day",
+        "templatesShort": "Week",
+        "kindsShort": "Kinds"
       },
       "days": {
         "Sunday": "Sunday",
@@ -3093,10 +3186,12 @@
         "descriptionField": "Description",
         "iconKey": "Icon",
         "color": "Color",
+        "appearanceSection": "Appearance",
         "sortOrder": "Sort order",
         "bookable": "Bookable by customer",
         "notBookable": "Not bookable",
         "blocksCapacity": "Blocks capacity",
+        "behaviorSection": "Behavior",
         "placeholders": {
           "key": "e.g. open, lesson",
           "label": "e.g. Open, Lesson"
@@ -3140,7 +3235,7 @@
       "description": "Register spaces and rentable items for operations.",
       "add": "Add resource",
       "edit": "Edit resource",
-      "formDescription": "A space (court, room) or rentable item. Do not use this screen for general inventory.",
+      "formDescription": "A space (room or outdoor area) or rentable item. Do not use this screen for general inventory.",
       "saveCreate": "Create resource",
       "saveEdit": "Save resource",
       "emptyTitle": "No resources available for rental",
@@ -3150,13 +3245,35 @@
       "loadError": "Could not load resources.",
       "createSuccess": "Resource created.",
       "updateSuccess": "Resource updated.",
+      "cutoffNotSaved": "The resource was saved, but the cancellation cutoff was not applied. Please try again.",
       "createError": "Could not create the resource.",
       "updateError": "Could not update the resource.",
+      "errorKinds": {
+        "network": "No connection to the server. Check your internet and try again.",
+        "permission": "You don't have permission for this action or your session expired.",
+        "validation": "Invalid data. Review the fields and try again.",
+        "server": "Server error. Please try again shortly."
+      },
       "typeLocation": "Space",
       "typeGood": "Rentable item",
+      "sheetTabs": {
+        "basic": "Basic",
+        "pricingRules": "Pricing & rules",
+        "visual": "Visual"
+      },
+      "details": {
+        "pricePerHour": "From: {{amount}}/h",
+        "prices": {"Hour": "From: {{amount}} per hour", "Slot": "From: {{amount}} per slot", "Day": "From: {{amount}} per day", "Fixed": "From: {{amount}} fixed"},
+        "allowedDurations": "Durations: {{durations}}",
+        "capacity_one": "Capacity: {{count}} person",
+        "capacity_other": "Capacity: {{count}} people",
+        "capacityUnknown": "Capacity not provided",
+        "durationHours": "{{count}} h",
+        "durationMinutes": "{{count}} min"
+      },
       "form": {
         "name": "Name",
-        "namePlaceholder": "E.g. Court 1",
+        "namePlaceholder": "E.g. Space 1",
         "tag": "Tag",
         "tagPlaceholder": "E.g. C-01",
         "unit": "Unit",
@@ -3180,7 +3297,20 @@
         "horizonHint": "Set how far ahead customers can book this resource.",
         "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
-        "horizonEffectiveDays": "In effect: {{count}} days ahead."
+        "horizonEffectiveDays": "In effect: {{count}} days ahead.",
+        "cancelCutoffLabel": "Cancellation cutoff",
+        "cancelCutoffInherit": "Inherit policy",
+        "cancelCutoffNone": "No cutoff (use policy)",
+        "cancelCutoffHours": "Hours before the start",
+        "cancelCutoffEffectiveNone": "Effective: no cutoff",
+        "cancelCutoffEffectiveHours_one": "Effective: {{count}} hour before the start",
+        "cancelCutoffEffectiveHours_other": "Effective: {{count}} hours before the start",
+        "horizonEffectiveSourceResource_one": "In effect: {{count}} day (set on this resource)",
+        "horizonEffectiveSourceResource_other": "In effect: {{count}} days (set on this resource)",
+        "horizonEffectiveSourceResource_unlimited": "In effect: unlimited (set on this resource)",
+        "horizonEffectiveSourcePolicy_one": "In effect: {{count}} day (from the Booking policy)",
+        "horizonEffectiveSourcePolicy_other": "In effect: {{count}} days (from the Booking policy)",
+        "horizonEffectiveSourcePolicy_unlimited": "In effect: unlimited (from the Booking policy)"
       },
       "inlineCreate": {
         "categoryAction": "+ create type",
@@ -3209,7 +3339,8 @@
         "familyRequired": "Select a family.",
         "quantityMin": "Quantity must be at least 1.",
         "queueOpeningTimeRequired": "Enter the queue opening time.",
-        "horizonRange": "Enter an integer from 0 to 3650."
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
       }
     },
     "layout": {
@@ -3233,7 +3364,7 @@
       "blockSize": "Block size",
       "width": "Width",
       "height": "Height",
-      "courtPreset": "Court 2:1",
+      "courtPreset": "Rectangle 2:1",
       "widePreset": "Wide",
       "squarePreset": "Square",
       "stripPreset": "Strip",
@@ -3276,6 +3407,9 @@
       "date": "Date",
       "status": "Status",
       "statusAll": "All",
+      "viewDay": "Day",
+      "viewWeek": "Week",
+      "viewMonth": "Month",
       "empty": "No reservations for this filter.",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -3285,6 +3419,11 @@
       "confirmError": "Could not confirm the reservation.",
       "cancelSuccess": "Reservation canceled.",
       "cancelError": "Could not cancel the reservation.",
+      "cancelConfirmTitle": "Cancel reservation?",
+      "cancelConfirmDescription": "This action cannot be undone.",
+      "cancelConfirmDismiss": "Keep reservation",
+      "cancelConfirmAction": "Cancel reservation",
+      "cancelConfirmTotal": "Total: {{amount}}",
       "completeSuccess": "Reservation completed.",
       "completeError": "Could not complete the reservation.",
       "statuses": {
@@ -3292,11 +3431,12 @@
         "Confirmed": "Confirmed",
         "Canceled": "Canceled",
         "Completed": "Completed"
-      }
+      },
+      "multiDayRange": "{{start}} – {{end}} ({{days}} days)"
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace, except where a resource sets its own value.",
       "cancellationLabel": "Cancellation text",
       "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows a neutral note: the time becomes available again and the customer should check the organization's rules.",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
@@ -3309,7 +3449,7 @@
       "horizonDaysMode": "A number of days",
       "horizonDays": "Days ahead",
       "horizonHintUnlimited": "Unlimited means no limit on how far ahead a customer can book a resource.",
-      "horizonHintDays": "A start this many days ahead is allowed. The next day is rejected (booking_horizon_exceeded).",
+      "horizonHintDays": "A start this many days ahead is allowed. The next day is outside the booking limit.",
       "save": "Save",
       "saved": "Booking policy saved.",
       "loadError": "Could not load the booking policy.",
@@ -3319,17 +3459,106 @@
       "validation": {
         "textMax": "The text can be at most 2000 characters.",
         "limitRange": "Enter an integer from 1 to 100.",
-        "horizonRange": "Enter an integer from 0 to 3650."
-      }
+        "horizonRange": "Enter an integer from 0 to 3650.",
+        "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
+      },
+      "cancelCutoffLabel": "Cancellation cutoff",
+      "cancelCutoffNone": "No cutoff",
+      "cancelCutoffHoursMode": "N hours before the start",
+      "cancelCutoffHours": "Hours before the start",
+      "cancelCutoffHint": "Customers can cancel until this many hours before the start.",
+      "categories": {"title": "By category", "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.", "horizonDays": "Max advance (days)", "cancelCutoffHours": "Cancel up to (hours before)", "inherit": "General", "save": "Save", "saved": "Category policy saved.", "invalid": "Use a whole number or leave blank.", "empty": "No categories with bookable resources."}
     }
   },
   "resourceVisual": {
     "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
-    "title": "Resource visual catalog", "help": "Manage global templates, published art, and classifications.", "newTemplate": "New template", "editTemplate": "Edit template", "cancelEdit": "Cancel editing", "name": "Name", "slug": "Slug", "description": "Description", "tags": "Tags", "revision": "New revision", "floor": "Floor SVG art", "lines": "Line SVG art", "publish": "Publish", "draft": "Draft", "publishedStatus": "Published", "noRevision": "No published revision", "saved": "Changes saved.", "published": "Revision published.", "error": "Could not complete the change.", "validation": "Enter a name and slug.", "deleteTagTitle": "Delete tag?", "deleteTagDescription": "This action cannot be undone.", "segmentsTitle": "Tenant segments", "segmentsHelp": "Set the segments shown first when selecting a template.", "enabledTemplates": "Enabled templates", "noEnabledTemplates": "No template matches the selected segments.", "pickerTitle": "Visual template", "seeAll": "See all", "useSegments": "Use segments", "searchTemplates": "Search templates", "filterByTag": "Filter by tag", "noTemplate": "No template", "capacityPeople": "People capacity (optional)", "applySuggestions": "Apply template suggestions", "applySuggestionsHelp": "Fills the capacity and time suggestions from the template.", "tagKindSegment": "Segment", "tagKindAttribute": "Attribute", "thumbnailAlt": "Preview of {{name}}", "thumbnailPlaceholder": "Preview unavailable", "mapSettings": "Map settings", "mapSettingsHelp": "Default is the map customers open first. Visible on the portal is a map listed to customers.", "defaultMap": "Default", "alreadyDefault": "Already the default", "showPrice": "Show price on block", "defaultView": "Default view", "timeFilter": "Time filter", "fromTime": "From time", "availableColor": "Available color", "takenColor": "Taken color", "setDefaultMap": "Set default map"
+    "title": "Resource visual catalog",
+    "help": "Manage global templates, published art, and classifications.",
+    "newTemplate": "New template",
+    "editTemplate": "Edit template",
+    "cancelEdit": "Cancel editing",
+    "name": "Name",
+    "slug": "Slug",
+    "description": "Description",
+    "tags": "Tags",
+    "revision": "New revision",
+    "floor": "Floor SVG art",
+    "lines": "Line SVG art",
+    "publish": "Publish",
+    "draft": "Draft",
+    "publishedStatus": "Published",
+    "noRevision": "No published revision",
+    "saved": "Changes saved.",
+    "published": "Revision published.",
+    "error": "Could not complete the change.",
+    "validation": "Enter a name and slug.",
+    "deleteTagTitle": "Delete tag?",
+    "deleteTagDescription": "This action cannot be undone.",
+    "segmentsTitle": "Tenant segments",
+    "segmentsHelp": "Set the segments shown first when selecting a template.",
+    "enabledTemplates": "Enabled templates",
+    "noEnabledTemplates": "No template matches the selected segments.",
+    "pickerTitle": "Visual template",
+    "seeAll": "See all",
+    "useSegments": "Use segments",
+    "searchTemplates": "Search templates",
+    "filterByTag": "Filter by tag",
+    "showMoreTags": "+{{count}} more",
+    "showFewerTags": "Show fewer",
+    "noTemplate": "No template",
+    "capacityPeople": "People capacity (optional)",
+    "applySuggestions": "Apply template suggestions",
+    "applySuggestionsHelp": "Fills the capacity and time suggestions from the template.",
+    "tagKindSegment": "Segment",
+    "tagKindAttribute": "Attribute",
+    "thumbnailAlt": "Preview of {{name}}",
+    "thumbnailPlaceholder": "Preview unavailable",
+    "mapSettings": "Map settings",
+    "mapSettingsHelp": "Default is the map customers open first. Visible on the portal is a map listed to customers.",
+    "defaultMap": "Default",
+    "alreadyDefault": "Already the default",
+    "showPrice": "Show price on block",
+    "defaultView": "Default view",
+    "timeFilter": "Time filter",
+    "fromTime": "From time",
+    "availableColor": "Available color",
+    "takenColor": "Taken color",
+    "setDefaultMap": "Set default map"
   },
   "bookingMap": {
     "area": "Area",
     "quantity": "Quantity",
-    "title": "Book", "help": "Choose a date, a resource, and a time.", "loading": "Loading map…", "dateStrip": "Dates", "today": "Today", "periods": "Periods", "all": "All ({{count}})", "morning": "Morning ({{count}})", "afternoon": "Afternoon ({{count}})", "night": "Night ({{count}})", "map": "Map", "list": "List", "freeFrom": "{{count}} free · from {{amount}}", "noAvailability": "No open times", "emptyPeriod": "There are no open times in this period. Choose another period or date.", "showPast": "Show ended ({{count}})", "hidePast": "Hide ended", "close": "Close", "continue": "Continue", "chooseSlot": "Choose a time", "success": "Reservation created.", "error": "Could not create the reservation.", "state": { "Taken": "Taken", "Blocked": "Unavailable", "Past": "Past", "OutsideHorizon": "Outside booking window", "Unpriced": "No price", "Available": "Available" }
+    "title": "Book",
+    "help": "Choose a date, a resource, and a time.",
+    "loading": "Loading map…",
+    "dateStrip": "Dates",
+    "today": "Today",
+    "periods": "Periods",
+    "all": "All ({{count}})",
+    "morning": "Morning ({{count}})",
+    "afternoon": "Afternoon ({{count}})",
+    "night": "Night ({{count}})",
+    "map": "Map",
+    "list": "List",
+    "freeFrom": "{{count}} free · from {{amount}}",
+    "noAvailability": "No open times",
+    "emptyPeriod": "There are no open times in this period. Choose another period or date.",
+    "showPast": "Show ended ({{count}})",
+    "hidePast": "Hide ended",
+    "close": "Close",
+    "continue": "Continue",
+    "chooseSlot": "Choose a time",
+    "success": "Reservation created.",
+    "error": "Could not create the reservation.",
+    "state": {
+      "Taken": "Taken",
+      "Blocked": "Unavailable",
+      "Past": "Past",
+      "OutsideHorizon": "Outside booking window",
+      "Unpriced": "No price",
+      "Available": "Available"
+    },
+    "prices": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"},
+    "unitsLeft": "{{left}} of {{total}} available"
   }
 }

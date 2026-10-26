@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -13,12 +15,17 @@ export function PageContentSkeleton({
   rows = 4,
   className,
 }: PageContentSkeletonProps) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn("space-y-4", className)}
       role="status"
       aria-busy="true"
     >
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
+        {t("common.loading")}
+      </p>
       <div className="space-y-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72 max-w-full" />
@@ -72,6 +79,46 @@ export function TableRowsSkeleton({
         </TableRow>
       ))}
     </>
+  )
+}
+
+type CardGridSkeletonProps = {
+  /** Number of placeholder cards. */
+  count?: number
+  className?: string
+}
+
+/** Placeholder grid matching a product-card layout (image + text + action rows). */
+export function CardGridSkeleton({
+  count = 8,
+  className,
+}: CardGridSkeletonProps) {
+  const { t } = useTranslation()
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className={cn(
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+        className,
+      )}
+    >
+      <span className="sr-only">{t("common.loading")}</span>
+      {Array.from({ length: count }, (_, index) => (
+        <div
+          key={index}
+          className="overflow-hidden rounded-xl border border-border bg-card"
+        >
+          <Skeleton className="aspect-[4/3] w-full rounded-none" />
+          <div className="space-y-2 p-3">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="mt-2 h-8 w-full" />
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 

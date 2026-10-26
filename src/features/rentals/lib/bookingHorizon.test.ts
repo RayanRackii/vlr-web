@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   addCivilDays,
   clampDateToHorizon,
+  effectiveHorizonMaxDate,
   horizonEndDate,
   resolveAgendaHorizonDays,
 } from "@/features/rentals/lib/bookingHorizon"
@@ -34,5 +35,14 @@ describe("booking horizon", () => {
     expect(horizonEndDate("2026-10-16", null)).toBeNull()
     expect(clampDateToHorizon("2099-12-31", "2026-10-30")).toBe("2026-10-30")
     expect(clampDateToHorizon("2026-10-20", "2026-10-30")).toBe("2026-10-20")
+  })
+
+  it("withholds the horizon until resources finish loading, instead of clamping to a narrower, load-order-dependent date", () => {
+    // Before resources load, a global policy-only horizon (e.g. 7 days) must not
+    // clamp a deep link that a wider resource-specific horizon (e.g. 30 days) would
+    // have allowed — the clamp is deterministic only once resources are in.
+    expect(effectiveHorizonMaxDate(false, "2026-10-25", 7)).toBeNull()
+    expect(effectiveHorizonMaxDate(true, "2026-10-25", 30)).toBe("2026-11-24")
+    expect(effectiveHorizonMaxDate(true, "2026-10-25", null)).toBeNull()
   })
 })

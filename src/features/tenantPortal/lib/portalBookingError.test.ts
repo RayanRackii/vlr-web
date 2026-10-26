@@ -5,6 +5,7 @@ import {
   describeBookingError,
   isBookingHorizonError,
   isDailyBookingLimitError,
+  isCancelCutoffError,
   isSlotTakenConflict,
   isSlotUnavailableConflict,
   portalBookingErrorFromUnknown,
@@ -110,13 +111,25 @@ describe("portal booking failures", () => {
 
     expect(isBookingHorizonError(error)).toBe(true)
     await i18n.changeLanguage("en")
-    expect(describeBookingError(error, "fallback")).toBe(
-      "That date is beyond the booking horizon.",
+    expect(describeBookingError(error, "fallback", 7)).toBe(
+      "You can book up to 7 days ahead.",
     )
     await i18n.changeLanguage("es")
     expect(describeBookingError(error, "fallback")).toBe(
-      "La fecha pedida está fuera del horizonte de reserva.",
+      "La fecha pedida supera el límite de reserva.",
     )
     await i18n.changeLanguage("pt-BR")
   })
+})
+
+
+it.each([0, 24, 8760])("translates cancel cutoff 409 with %i hours", (hours) => {
+  const error = portalBookingErrorFromUnknown(axiosError(409, { code: "cancel_cutoff_passed", cancelCutoffHours: hours }), "fallback")
+  expect(isCancelCutoffError(error)).toBe(true)
+  expect(error.cancelCutoffHours).toBe(hours)
+  expect(describeBookingError(error, "fallback")).toBe(i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours }))
+})
+it("does not classify another status or code as a cancel cutoff", () => {
+  expect(isCancelCutoffError(portalBookingErrorFromUnknown(axiosError(500, { code: "cancel_cutoff_passed" }), "fallback"))).toBe(false)
+  expect(isCancelCutoffError(portalBookingErrorFromUnknown(axiosError(409, { code: "other" }), "fallback"))).toBe(false)
 })

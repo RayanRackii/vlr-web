@@ -7,6 +7,7 @@ import {
   toCreateRentableRequest,
   type RentalResourceFormValues,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
+import { rentalAssetSchema } from "@/features/rentals/services/scheduleService"
 
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 const CATEGORY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
@@ -46,6 +47,19 @@ function formValues(
 }
 
 describe("resource booking horizon", () => {
+  it("normalizes a legacy capacity response so the resource form can retain it", () => {
+    const asset = rentalAssetSchema.parse({
+      id: UNIT_ID,
+      assetId: UNIT_ID,
+      name: "Space 1",
+      isActive: true,
+      unitId: UNIT_ID,
+      capacity: 8,
+    })
+
+    expect(asset.capacityPeople).toBe(8)
+  })
+
   it("accepts a blank identifier and omits it from the rentable payload", () => {
     const values = {
       ...formValues({ horizonMode: "inherit", horizonDays: "" }),
@@ -216,5 +230,23 @@ describe("resource booking horizon", () => {
       storedVisualTemplateRevisionId: FAMILY_ID,
       storedCapacityPeople: 8,
     })).toMatchObject({ visualTemplateRevisionId: null, capacityPeople: null })
+  })
+})
+
+
+describe("resource cancellation cutoff", () => {
+  const base = () => ({ ...formValues({ horizonMode: "inherit", horizonDays: "" }), cancelCutoffMode: "inherit" as const, cancelCutoffHours: "" })
+  it("omits unchanged overrides, clears inheritance and replaces hours", () => {
+    expect(toCreateRentableRequest(base())).not.toHaveProperty("cancelCutoffHours")
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffStored: 24 })).toHaveProperty("cancelCutoffHours", null)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none" })).toHaveProperty("cancelCutoffHours", null)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "24", cancelCutoffStored: 24 })).not.toHaveProperty("cancelCutoffHours")
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "0" })).toHaveProperty("cancelCutoffHours", 0)
+  })
+  it.each(["", "-1", "2.5", "8761"])("rejects invalid cutoff %s", (hours) => {
+    expect(schema.safeParse({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: hours }).success).toBe(false)
+  })
+  it.each([0, 8760])("preserves boundary %i in requests", (hours) => {
+    expect(createRentableRequestSchema.parse({ ...toCreateRentableRequest(base()), cancelCutoffHours: hours }).cancelCutoffHours).toBe(hours)
   })
 })

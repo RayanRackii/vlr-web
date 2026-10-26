@@ -55,6 +55,10 @@ vi.mock("@/features/assets/services/unitsService", () => ({
   createUnit: vi.fn(),
 }))
 
+vi.mock("@/features/assets/services/rentalPricingService", () => ({
+  getAssetPricings: vi.fn(),
+}))
+
 vi.mock("@/features/rentals/services/scheduleService", () => ({
   listAdminRentalAssets: vi.fn(),
 }))
@@ -67,6 +71,7 @@ vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
 }))
 
 import { getUnits } from "@/features/assets/services/unitsService"
+import { getAssetPricings } from "@/features/assets/services/rentalPricingService"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import {
   createRentalAsset,
@@ -88,8 +93,9 @@ const listCategoriesMock = vi.mocked(listRentalAssetCategories)
 const listFamiliesMock = vi.mocked(listRentalAssetFamilies)
 const createMock = vi.mocked(createRentalAsset)
 const updateMock = vi.mocked(updateRentalAsset)
+const getAssetPricingsMock = vi.mocked(getAssetPricings)
 
-const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write"] as const
+const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write", "rentals.pricing.read"] as const
 
 function renderPage(permissions: readonly string[] = WRITE_PERMS) {
   return render(
@@ -98,6 +104,12 @@ function renderPage(permissions: readonly string[] = WRITE_PERMS) {
         <RentalResourcesPage />
       </TestPermissionProvider>
     </MemoryRouter>,
+  )
+}
+
+async function openPricingTab(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(
+    screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }),
   )
 }
 
@@ -117,6 +129,7 @@ describe("RentalResourcesPage", () => {
     listFamiliesMock.mockReset()
     createMock.mockReset()
     updateMock.mockReset()
+    getAssetPricingsMock.mockReset()
 
     getUnitsMock.mockResolvedValue([
       {
@@ -139,6 +152,7 @@ describe("RentalResourcesPage", () => {
       },
     ])
     listAssetsMock.mockResolvedValue([])
+    getAssetPricingsMock.mockResolvedValue([])
     createMock.mockResolvedValue({
       id: RENTAL_ID,
       assetId: ASSET_ID,
@@ -197,6 +211,60 @@ describe("RentalResourcesPage", () => {
     expectNoForbiddenCopy(container)
   })
 
+  it("shows an existing resource's price, allowed durations, and capacity in the list and drawer", async () => {
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "OpenHours",
+        allowedDurationMinutes: "60,90",
+        capacityPeople: 8,
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+      },
+    ])
+    getAssetPricingsMock.mockResolvedValue([
+      {
+        id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        assetId: ASSET_ID,
+        rentalAssetId: RENTAL_ID,
+        dayOfWeek: "Monday" as const,
+        startTime: "08:00:00",
+        endTime: "18:00:00",
+        pricePerHour: 45,
+        pricingUnit: "Slot" as const,
+        requiresDeposit: false,
+        depositPercentage: 0,
+        createdAt: "2026-10-01T12:00:00Z",
+        updatedAt: null,
+      },
+    ].flatMap((row) => [
+      // Legacy blank per-day row (R$ 0) must not become "A partir de: R$ 0,00".
+      { ...row, dayOfWeek: "Tuesday" as const, pricePerHour: 0, pricingUnit: "Hour" as const },
+      { ...row, pricePerHour: 90, pricingUnit: "Day" as const },
+      row,
+    ]))
+
+    const user = userEvent.setup()
+    renderPage()
+
+    const details = await screen.findByText(/A partir de: R\$ 45,00 por horário/)
+    expect(details.parentElement).toHaveTextContent("Durações: 1 h, 90 min")
+    expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
+
+    await user.click(screen.getByRole("button", { name: /Quadra 1/ }))
+    expect(await screen.findAllByText(/A partir de: R\$ 45,00 por horário/)).toHaveLength(2)
+  })
+
   it("shows empty rentables CTA when categories exist", async () => {
     const { container } = renderPage()
 
@@ -245,6 +313,41 @@ describe("RentalResourcesPage", () => {
       screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") }).length,
     ).toBeGreaterThan(0)
     expectNoForbiddenCopy(container)
+  })
+
+  it.each([
+    { label: "server stores it", storedAfter: 1, expectSuccess: true },
+    { label: "server drops it (QA R18)", storedAfter: null, expectSuccess: false },
+  ])("sends cancelCutoffHours=1 from the drawer and toasts honestly when the $label", async ({ storedAfter, expectSuccess }) => {
+    const existing = {
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Projetor Horario", isActive: true, requiresDeposit: true,
+      schedulePolicy: "SlotGrid" as const, unitId: UNIT_ID, type: "Location" as const, totalQuantity: 1,
+      queueEnabled: false, queueOpeningTime: null, categoryId: CATEGORY_ID, categoryName: "Quadra",
+      familyId: FAMILY_ID, cancelCutoffHours: null, effectiveCancelCutoffHours: 2,
+    }
+    vi.mocked(toast.success).mockClear()
+    vi.mocked(toast.error).mockClear()
+    listAssetsMock.mockResolvedValue([existing])
+    updateMock.mockResolvedValue({ ...existing, cancelCutoffHours: storedAfter })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole("button", { name: /Projetor Horario/ }))
+    await openPricingTab(user)
+    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.cancelCutoffLabel") }))
+    await user.click(await screen.findByRole("option", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }))
+    await user.type(screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours")), "1")
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }))
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalled())
+    expect(updateMock.mock.calls[0]?.[1]).toHaveProperty("cancelCutoffHours", 1)
+    if (expectSuccess) {
+      expect(toast.success).toHaveBeenCalledWith(i18n.t("rentals.resources.updateSuccess"))
+      expect(toast.error).not.toHaveBeenCalled()
+    } else {
+      expect(toast.error).toHaveBeenCalledWith(i18n.t("rentals.resources.cutoffNotSaved"))
+      expect(toast.success).not.toHaveBeenCalled()
+    }
   })
 
   it("creates a rentable without requiring or sending an identifier", async () => {
@@ -424,6 +527,7 @@ describe("RentalResourcesPage", () => {
       | "rentals.resources.form.horizonUnlimited"
       | "rentals.resources.form.horizonDaysMode",
   ) {
+    await openPricingTab(user)
     await user.click(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.horizonLabel"),
@@ -504,7 +608,7 @@ describe("RentalResourcesPage", () => {
     })
   })
 
-  it("clears a stored override with the tenant default and keeps an unchanged number omitted", async () => {
+  it("identifies the resource override as the effective horizon source", async () => {
     const user = userEvent.setup()
     listAssetsMock.mockResolvedValue([
       {
@@ -528,15 +632,18 @@ describe("RentalResourcesPage", () => {
 
     const { unmount } = renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
-    expect(
-      screen.getByText(
-        i18n.t("rentals.resources.form.horizonEffectiveDays", { count: 8 }),
-      ),
-    ).toBeInTheDocument()
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
     )
+    await openPricingTab(user)
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveSourceResource", {
+          count: 8,
+        }),
+      ),
+    ).toBeInTheDocument()
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -551,11 +658,11 @@ describe("RentalResourcesPage", () => {
     updateMock.mockClear()
     renderPage()
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
-    await chooseHorizon(user, "rentals.resources.form.horizonInherit")
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
     )
+    await chooseHorizon(user, "rentals.resources.form.horizonInherit")
     await user.click(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     )
@@ -565,6 +672,41 @@ describe("RentalResourcesPage", () => {
     expect(updateMock.mock.calls[0]?.[1]).toMatchObject({
       maxAdvanceBookingDays: null,
     })
+  })
+
+  it("identifies the booking policy as the inherited effective horizon source", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        maxAdvanceBookingDays: null,
+        effectiveMaxAdvanceBookingDays: 8,
+      },
+    ])
+
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
+
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveSourcePolicy", {
+          count: 8,
+        }),
+      ),
+    ).toBeInTheDocument()
   })
 
   it("disables the horizon when the user can only read the resource", async () => {
@@ -591,17 +733,246 @@ describe("RentalResourcesPage", () => {
     renderPage(["rentals.assets.read"])
 
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
     expect(
       screen.getByRole("combobox", {
         name: i18n.t("rentals.resources.form.horizonLabel"),
       }),
     ).toBeDisabled()
     expect(
-      screen.getByText(i18n.t("rentals.resources.form.horizonEffectiveUnlimited")),
+      screen.getByText(
+        i18n.t("rentals.resources.form.horizonEffectiveSourcePolicy", {
+          context: "unlimited",
+        }),
+      ),
     ).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
     ).toBeDisabled()
     expect(updateMock).not.toHaveBeenCalled()
+  })
+
+
+  async function chooseCancelCutoff(
+    user: ReturnType<typeof userEvent.setup>,
+    optionKey:
+      | "rentals.resources.form.cancelCutoffInherit"
+      | "rentals.resources.form.cancelCutoffNone"
+      | "rentals.resources.form.cancelCutoffHours",
+  ) {
+    await openPricingTab(user)
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", { name: i18n.t(optionKey) }),
+    )
+  }
+
+  it("creates a resource with unlimited or a number of days", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Quadra 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffNone")
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+    )
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      cancelCutoffHours: null,
+    })
+  })
+
+  it("rejects a resource cancelCutoff outside 0..8760 and sends a valid number", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText(i18n.t("rentals.resources.emptyTitle"))
+    await user.click(
+      screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })[0]!,
+    )
+    await screen.findByLabelText(i18n.t("rentals.resources.form.name"))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.name")),
+      "Space 1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "S-01",
+    )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffHours")
+
+    const days = screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours"))
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.resources.saveCreate"),
+    })
+    expect(save).toBeDisabled()
+    await user.type(days, "8761")
+    expect(save).toBeDisabled()
+
+    await user.clear(days)
+    await user.type(days, "21")
+    expect(save).toBeEnabled()
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalled()
+    })
+    expect(createMock.mock.calls[0]?.[0]).toMatchObject({
+      cancelCutoffHours: 21,
+    })
+  })
+
+  it("clears a stored override with the tenant default and keeps an unchanged number omitted", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: 8,
+        effectiveCancelCutoffHours: 8,
+      },
+    ])
+
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await openPricingTab(user)
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { count: 8 }),
+      ),
+    ).toBeInTheDocument()
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "cancelCutoffHours",
+    )
+
+    unmount()
+    updateMock.mockClear()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.type(
+      screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
+      "Q-01",
+    )
+    await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffInherit")
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    )
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled()
+    })
+    expect(updateMock.mock.calls[0]?.[1]).toMatchObject({
+      cancelCutoffHours: null,
+    })
+  })
+
+  it("disables the cancelCutoff when the user can only read the resource", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: null,
+        effectiveCancelCutoffHours: null,
+      },
+    ])
+    renderPage(["rentals.assets.read"])
+
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
+    expect(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(i18n.t("rentals.resources.form.cancelCutoffEffectiveNone")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }),
+    ).toBeDisabled()
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it("uses the singular form for a 1-hour effective cancellation cutoff", async () => {
+    const user = userEvent.setup()
+    listAssetsMock.mockResolvedValue([
+      {
+        id: RENTAL_ID,
+        assetId: ASSET_ID,
+        name: "Quadra 1",
+        isActive: true,
+        requiresDeposit: true,
+        schedulePolicy: "SlotGrid",
+        unitId: UNIT_ID,
+        type: "Location",
+        totalQuantity: 1,
+        queueEnabled: false,
+        queueOpeningTime: null,
+        categoryId: CATEGORY_ID,
+        categoryName: "Quadra",
+        cancelCutoffHours: 1,
+        effectiveCancelCutoffHours: 1,
+      },
+    ])
+    renderPage()
+
+    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await openPricingTab(user)
+    expect(
+      screen.getByText(
+        i18n.t("rentals.resources.form.cancelCutoffEffectiveHours", { count: 1 }),
+      ),
+    ).toBeInTheDocument()
   })
 })

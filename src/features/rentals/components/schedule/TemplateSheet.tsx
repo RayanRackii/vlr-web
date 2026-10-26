@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Clock3 } from "lucide-react"
 
+import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { Button } from "@/components/ui/button"
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { HH_MM } from "@/lib/time24"
 import {
   Select,
   SelectContent,
@@ -66,6 +70,8 @@ export function TemplateSheet({
   const [draft, setDraft] = useState<TemplateDraft>(
     emptyTemplateDraft(defaultKindId),
   )
+  const hasValidTimes =
+    HH_MM.test(formatScheduleTime(draft.startTime)) && HH_MM.test(formatScheduleTime(draft.endTime))
 
   useEffect(() => {
     if (!open) {
@@ -100,17 +106,24 @@ export function TemplateSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-[420px]">
         <SheetHeader>
-          <SheetTitle>
-            {editing
-              ? t("rentals.schedule.templates.saveEdit")
-              : t("rentals.schedule.templates.saveCreate")}
-          </SheetTitle>
-          <SheetDescription>
-            {assetName ? (
-              <span className="block font-medium text-foreground">{assetName}</span>
-            ) : null}
-            {t("rentals.schedule.weeklyCellHint")}
-          </SheetDescription>
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Clock3 className="size-4" aria-hidden />
+            </span>
+            <div className="space-y-0.5">
+              <SheetTitle>
+                {editing
+                  ? t("rentals.schedule.templates.saveEdit")
+                  : t("rentals.schedule.templates.saveCreate")}
+              </SheetTitle>
+              <SheetDescription>
+                {assetName ? (
+                  <span className="block font-medium text-foreground">{assetName}</span>
+                ) : null}
+                {t("rentals.schedule.weeklyCellHint")}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
@@ -185,7 +198,7 @@ export function TemplateSheet({
                   )
                   .map((kind) => (
                     <SelectItem key={kind.id} value={kind.id}>
-                      {kind.label}
+                      {occupancyKindDisplayLabel(t, kind)}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -197,14 +210,13 @@ export function TemplateSheet({
               <span className="font-medium">
                 {t("rentals.schedule.templates.start")}
               </span>
-              <Input
-                type="time"
+              <Time24Input
                 value={draft.startTime}
                 disabled={readOnly || busy}
-                onChange={(event) => {
+                onValueChange={(next) => {
                   setDraft((current) => ({
                     ...current,
-                    startTime: event.target.value,
+                    startTime: next,
                   }))
                 }}
               />
@@ -213,14 +225,13 @@ export function TemplateSheet({
               <span className="font-medium">
                 {t("rentals.schedule.templates.end")}
               </span>
-              <Input
-                type="time"
+              <Time24Input
                 value={draft.endTime}
                 disabled={readOnly || busy}
-                onChange={(event) => {
+                onValueChange={(next) => {
                   setDraft((current) => ({
                     ...current,
-                    endTime: event.target.value,
+                    endTime: next,
                   }))
                 }}
               />
@@ -260,17 +271,19 @@ export function TemplateSheet({
           </label>
 
           {editing && onDelete ? (
-            <LoadingButton
-              type="button"
-              variant="destructive"
-              loading={busyAction === "templateDelete"}
-              disabled={busy || readOnly}
-              onClick={() => {
-                onDelete()
-              }}
-            >
-              {t("common.delete")}
-            </LoadingButton>
+            <div className="border-t border-border pt-4">
+              <LoadingButton
+                type="button"
+                variant="destructive"
+                loading={busyAction === "templateDelete"}
+                disabled={busy || readOnly}
+                onClick={() => {
+                  onDelete()
+                }}
+              >
+                {t("common.delete")}
+              </LoadingButton>
+            </div>
           ) : null}
         </div>
 
@@ -288,7 +301,7 @@ export function TemplateSheet({
           <LoadingButton
             type="button"
             loading={busyAction === "template"}
-            disabled={busy || readOnly}
+            disabled={busy || readOnly || !hasValidTimes}
             onClick={() => {
               void onSubmit(draft).then((ok) => {
                 if (ok) {

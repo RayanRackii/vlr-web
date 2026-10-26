@@ -572,7 +572,7 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
 
     await waitFor(() => {
-      expect(screen.getByRole("combobox", { name: "Quadra" })).toHaveTextContent("Quadra 1")
+      expect(screen.getByRole("combobox", { name: "Espaço" })).toHaveTextContent("Quadra 1")
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
     })
     expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
@@ -610,14 +610,14 @@ describe("TeacherLessonsPage", () => {
       "Carregando os espaços...",
     )
     expect(screen.queryByText("Carregando as aulas desta data.")).not.toBeInTheDocument()
-    expect(screen.getByRole("combobox", { name: "Quadra" })).toBeDisabled()
+    expect(screen.getByRole("combobox", { name: "Espaço" })).toBeDisabled()
 
     await act(async () => {
       resolveAssets([court])
     })
 
     await waitFor(() => {
-      const resource = screen.getByRole("combobox", { name: "Quadra" })
+      const resource = screen.getByRole("combobox", { name: "Espaço" })
       expect(resource).toHaveTextContent("Quadra 1")
       expect(resource).toBeEnabled()
     })
@@ -634,7 +634,7 @@ describe("TeacherLessonsPage", () => {
     expect(screen.getByTestId("available-time-state")).toHaveTextContent(
       "Não há horário aberto nesta data.",
     )
-    expect(screen.getByRole("combobox", { name: "Quadra" })).toHaveTextContent("Quadra 1")
+    expect(screen.getByRole("combobox", { name: "Espaço" })).toHaveTextContent("Quadra 1")
   })
 
   it("lists the freed time in start order after a lesson is removed", async () => {
@@ -735,7 +735,7 @@ describe("TeacherLessonsPage", () => {
     expect(screen.getByRole("combobox", { name: "Horário disponível" })).toBeDisabled()
     expect(screen.queryByRole("option", { name: "10:00–11:00" })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole("combobox", { name: "Quadra" }))
+    await user.click(screen.getByRole("combobox", { name: "Espaço" }))
     await user.click(await screen.findByRole("option", { name: "Quadra 2" }))
 
     await waitFor(() => {

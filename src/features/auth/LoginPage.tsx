@@ -1,10 +1,12 @@
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMemo, useState } from "react"
+import { Building2, Lock, Mail } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
+import { AuthLayout } from "@/components/layout/AuthLayout"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -16,7 +18,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
+import { iconProps } from "@/lib/icon"
 import {
   loginSchema,
   type LoginFormValues,
@@ -35,6 +39,10 @@ function getLoginErrorMessage(
   error: AuthError,
   t: (key: string) => string,
 ): string {
+  if (error.status === 429 || /too many login attempts/i.test(error.message)) {
+    return t("auth.login.rateLimited")
+  }
+
   if (error.message === "Invalid login credentials") {
     return t("auth.login.invalidCredentials")
   }
@@ -50,6 +58,7 @@ export function LoginPage() {
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
+  const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
   const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
   const companySchema = useMemo(
     () =>
@@ -100,6 +109,14 @@ export function LoginPage() {
 
   const isSubmitting = form.formState.isSubmitting
 
+  useEffect(() => {
+    if (searchParams.get("forgot") === "1") {
+      form.setFocus("email")
+    }
+    // Only react to the initial query string on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function sendReset(email: string, subdomain: string) {
     setIsSendingReset(true)
     try {
@@ -143,6 +160,8 @@ export function LoginPage() {
     const email = form.getValues("email").trim()
     const emailValid = await form.trigger("email")
     if (!emailValid || email.length === 0) {
+      setShowForgotEmailHint(true)
+      form.setFocus("email")
       return
     }
 
@@ -167,16 +186,16 @@ export function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-8 p-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {t("auth.login.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.login.subtitle")}
-        </p>
-      </header>
-
+    <AuthLayout
+      title={
+        resetEmail ? t("auth.login.resetCompanyTitle") : t("auth.login.title")
+      }
+      subtitle={
+        resetEmail
+          ? t("auth.login.resetCompanySubtitle")
+          : t("auth.login.subtitle")
+      }
+    >
       {resetEmail ? (
         <Form {...companyForm}>
           <form
@@ -184,15 +203,6 @@ export function LoginPage() {
             onSubmit={companyForm.handleSubmit(onCompanySubmit)}
             noValidate
           >
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold">
-                {t("auth.login.resetCompanyTitle")}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {t("auth.login.resetCompanySubtitle")}
-              </p>
-            </div>
-
             <FormField
               control={companyForm.control}
               name="subdomain"
@@ -200,9 +210,11 @@ export function LoginPage() {
                 <FormItem>
                   <FormLabel>{t("auth.login.resetCompanyLabel")}</FormLabel>
                   <FormControl>
-                    <Input
+                    <InputWithIcon
+                      icon={<Building2 {...iconProps("sm")} />}
                       autoComplete="organization"
                       placeholder={t("auth.login.resetCompanyPlaceholder")}
+                      className="h-11"
                       {...field}
                     />
                   </FormControl>
@@ -217,7 +229,7 @@ export function LoginPage() {
             {companyForm.formState.errors.root?.message ? (
               <p
                 role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/50 dark:bg-destructive/15 dark:text-destructive-foreground"
               >
                 {companyForm.formState.errors.root.message}
               </p>
@@ -225,7 +237,7 @@ export function LoginPage() {
 
             <FormPrimaryButton
               type="submit"
-              className="w-full"
+              className="h-11 w-full"
               isValid={companyValid}
               loading={isSendingReset}
               loadingLabel={t("auth.login.resetCompanySubmitting")}
@@ -236,7 +248,7 @@ export function LoginPage() {
             <LoadingButton
               type="button"
               variant="ghost"
-              className="w-full"
+              className="h-11 w-full"
               disabled={isSendingReset}
               onClick={() => {
                 setResetEmail(null)
@@ -263,13 +275,20 @@ export function LoginPage() {
               <FormItem>
                 <FormLabel>{t("auth.login.emailLabel")}</FormLabel>
                 <FormControl>
-                  <Input
+                  <InputWithIcon
+                    icon={<Mail {...iconProps("sm")} />}
                     type="email"
                     placeholder={t("auth.login.emailPlaceholder")}
                     autoComplete="email"
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
+                {showForgotEmailHint && !forgotPasswordEmailValid ? (
+                  <FormDescription role="status">
+                    {t("auth.login.forgotEmailHint")}
+                  </FormDescription>
+                ) : null}
                 <FormMessage />
               </FormItem>
             )}
@@ -282,10 +301,13 @@ export function LoginPage() {
               <FormItem>
                 <FormLabel>{t("auth.login.passwordLabel")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     placeholder={t("auth.login.passwordPlaceholder")}
                     autoComplete="current-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -297,7 +319,7 @@ export function LoginPage() {
           {form.formState.errors.root?.message ? (
             <p
               role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:border-destructive/50 dark:bg-destructive/15 dark:text-destructive-foreground"
             >
               {form.formState.errors.root.message}
             </p>
@@ -314,7 +336,7 @@ export function LoginPage() {
 
           <FormPrimaryButton
             type="submit"
-            className="w-full"
+            className="h-11 w-full"
             isValid={loginValid}
             loading={isSubmitting}
             loadingLabel={t("auth.login.submitting")}
@@ -322,23 +344,22 @@ export function LoginPage() {
             {t("auth.login.submit")}
           </FormPrimaryButton>
 
-          <FormPrimaryButton
+          <LoadingButton
             type="button"
             variant="ghost"
-            className="w-full"
-            isValid={forgotPasswordEmailValid}
+            className="h-11 w-full"
+            disabled={isSubmitting}
             loading={isSendingReset}
             loadingLabel={t("auth.login.forgotSubmitting")}
-            disabled={isSubmitting}
             onClick={() => {
               void onForgotPassword()
             }}
           >
             {t("auth.login.forgotPassword")}
-          </FormPrimaryButton>
+          </LoadingButton>
         </form>
       </Form>
       )}
-    </main>
+    </AuthLayout>
   )
 }

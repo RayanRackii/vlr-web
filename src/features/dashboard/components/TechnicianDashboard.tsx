@@ -3,6 +3,9 @@ import { ClipboardCheck, Clock3, Play, Wrench } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -11,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
@@ -61,22 +65,15 @@ export function TechnicianDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("dashboard.technician.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.technician.description")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("dashboard.technician.title")}
+        description={t("dashboard.technician.description")}
+      />
 
       {loadError ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {loadError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -114,9 +111,7 @@ export function TechnicianDashboard() {
               <Skeleton className="h-14 w-full" />
             </div>
           ) : activeOrders.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("dashboard.technician.nextOrders.empty")}
-            </p>
+            <EmptyState size="sm" icon={ClipboardCheck} title={t("dashboard.technician.nextOrders.empty")} />
           ) : (
             <div className="space-y-2">
               {activeOrders.slice(0, 5).map((workOrder) => (
@@ -124,10 +119,19 @@ export function TechnicianDashboard() {
                   key={workOrder.id}
                   className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <p className="font-medium">
-                      {workOrder.asset.tag} — {workOrder.asset.name}
-                    </p>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-medium">
+                        {workOrder.asset.tag} — {workOrder.asset.name}
+                      </p>
+                      <Badge
+                        variant={
+                          workOrder.status === "InProgress" ? "info" : "warning"
+                        }
+                      >
+                        {t(`workOrders.status.${workOrder.status}`)}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {new Intl.DateTimeFormat(i18n.language).format(
                         new Date(`${workOrder.scheduledDate}T00:00:00`),

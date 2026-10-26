@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { catalogOrderStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   formatCatalogDate,
@@ -18,6 +19,7 @@ import {
   getPortalCatalogOrder,
 } from "@/features/catalog/services/catalogPortalService"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
+import { cn } from "@/lib/utils"
 
 export function PortalOrderDetailPage() {
   const { t, i18n } = useTranslation()
@@ -100,7 +102,9 @@ export function PortalOrderDetailPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{totalLabel}</p>
         </div>
-        <Badge variant="outline">{t(`catalog.status.${order.status}`)}</Badge>
+        <Badge variant={catalogOrderStatusBadgeVariant(order.status)}>
+          {t(`catalog.status.${order.status}`)}
+        </Badge>
       </div>
 
       <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
@@ -118,12 +122,12 @@ export function PortalOrderDetailPage() {
         {order.items.map((item) => (
           <li
             key={item.id}
-            className="flex items-center justify-between gap-2 px-4 py-3 text-sm"
+            className="flex items-center justify-between gap-2 px-4 py-3 text-sm transition-colors duration-150 ease-out hover:bg-muted/40"
           >
-            <span>
+            <span className="min-w-0 break-words">
               {item.productName} × {item.quantity}
             </span>
-            <span>
+            <span className="shrink-0 font-medium tabular-nums">
               {formatCatalogMoney(item.subTotal, item.currency, i18n.language) ??
                 t("catalog.priceOnRequest")}
             </span>
@@ -131,25 +135,41 @@ export function PortalOrderDetailPage() {
         ))}
       </ul>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
-        <ol className="space-y-2">
-          {order.history.map((entry) => (
-            <li
-              key={entry.id}
-              className="rounded-lg border border-border px-4 py-2 text-sm"
-            >
-              <p className="font-medium">{t(`catalog.status.${entry.status}`)}</p>
-              <p className="text-muted-foreground">
-                {formatCatalogDate(entry.createdAt, i18n.language)}
-              </p>
-              {entry.reason ? (
-                <p className="mt-1 text-muted-foreground">{entry.reason}</p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </section>
+      {order.history.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
+          <ol className="space-y-4">
+            {order.history.map((entry, index) => (
+              <li key={entry.id} className="relative flex gap-3 pl-1">
+                <div className="flex flex-col items-center">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "size-2.5 shrink-0 rounded-full",
+                      index === 0 ? "bg-primary" : "bg-muted-foreground/40",
+                    )}
+                  />
+                  {index < order.history.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="mt-1 w-px flex-1 bg-border"
+                    />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1 pb-1 text-sm">
+                  <p className="font-medium">{t(`catalog.status.${entry.status}`)}</p>
+                  <p className="text-muted-foreground">
+                    {formatCatalogDate(entry.createdAt, i18n.language)}
+                  </p>
+                  {entry.reason ? (
+                    <p className="mt-1 text-muted-foreground">{entry.reason}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
     </div>
   )
 }

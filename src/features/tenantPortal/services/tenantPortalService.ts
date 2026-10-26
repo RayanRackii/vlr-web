@@ -8,6 +8,7 @@ import {
   CUSTOMER_TOKEN_STORAGE_KEY,
 } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import {
   api,
@@ -958,6 +959,9 @@ const availabilitySchema = z.object({
   requestedQuantity: z.number(),
   availableQuantity: z.number(),
   estimatedTotalAmount: z.number().nullable(),
+  pricingUnit: pricingUnitSchema.nullish(),
+  unitPrice: z.number().nullable().optional(),
+  pricedUnits: z.number().nullable().optional(),
   reason: z.string().nullable(),
 })
 
@@ -971,6 +975,7 @@ const reservationSchema = z.object({
   startDateTime: z.string(),
   endDateTime: z.string(),
   status: z.string(),
+  cancelDeadlineUtc: z.string().datetime({ offset: true }).nullable().optional(),
   totalAmount: z.number(),
   depositPaid: z.number(),
   createdAt: z.string(),
@@ -980,9 +985,11 @@ const reservationSchema = z.object({
       assetId: z.string().uuid(),
       rentalAssetId: z.string().uuid(),
       assetName: z.string(),
-      quantity: z.number(),
+      quantity: z.number().optional(),
       unitPrice: z.number(),
       subTotal: z.number(),
+      pricingUnit: pricingUnitSchema.nullish(),
+      days: z.number().nullish(),
     }),
   ),
 })
@@ -1007,6 +1014,7 @@ export async function checkPortalAvailability(
   query: {
     assetId: string
     date: string
+    endDate?: string
     startTime: string
     endTime: string
     quantity?: number
@@ -1036,6 +1044,7 @@ export async function checkPortalAvailability(
 export async function createPortalReservation(body: {
   unitId: string
   date: string
+  endDate?: string
   startTime: string
   endTime: string
   items: { assetId: string; quantity: number }[]
@@ -1095,12 +1104,7 @@ export async function cancelMyPortalReservation(
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }
-    throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("apiErrors.cancelReservation"),
-      ),
-    )
+    throw portalBookingErrorFromUnknown(error, i18n.t("apiErrors.cancelReservation"))
   }
 }
 

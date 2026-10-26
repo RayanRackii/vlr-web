@@ -7,8 +7,33 @@ export const BOOKING_POLICY_DAILY_LIMIT_MAX = 100
 export const BOOKING_HORIZON_DAY_MIN = 0
 export const BOOKING_HORIZON_DAY_MAX = 3650
 
+export const CANCEL_CUTOFF_HOURS_MAX = 8760
+export const cancelCutoffHoursSchema = z.number().int().min(0).max(CANCEL_CUTOFF_HOURS_MAX).nullable().optional()
+
+export function parseCancelCutoffHoursInput(value: string): number | null {
+  const trimmed = value.trim()
+  const parsed = Number(trimmed)
+  return /^\d+$/.test(trimmed) && Number.isInteger(parsed) && parsed <= CANCEL_CUTOFF_HOURS_MAX ? parsed : null
+}
+
+export function resolveCancelCutoffWrite(
+  mode: "inherit" | "none" | "hours" | undefined,
+  input: string | undefined,
+  stored: number | null | undefined,
+): number | null | undefined {
+  if (mode === undefined) return undefined
+  if (mode === "hours") {
+    const hours = parseCancelCutoffHoursInput(input ?? "")
+    if (hours === null) throw new Error("Cancellation cutoff is invalid.")
+    return hours === stored ? undefined : hours
+  }
+  if (mode === "none") return null
+  return stored == null ? undefined : null
+}
+
 export const bookingPolicySchema = z.object({
   cancellationPolicyText: z.string().nullable(),
+  cancelCutoffHours: cancelCutoffHoursSchema,
   maxActiveReservationsPerCustomerPerDay: z
     .number()
     .int()
@@ -42,6 +67,8 @@ export type BookingPolicyFormValues = {
   dailyLimit: string
   horizonMode: TenantHorizonMode
   horizonDays: string
+  cancelCutoffMode?: "none" | "hours"
+  cancelCutoffHours?: string
 }
 
 export function parseDailyLimitInput(value: string): number | null {
@@ -92,6 +119,8 @@ export function bookingPolicyToFormValues(
       policy.maxActiveReservationsPerCustomerPerDay === null
         ? ""
         : String(policy.maxActiveReservationsPerCustomerPerDay),
+    cancelCutoffMode: typeof policy.cancelCutoffHours === "number" ? "hours" : "none",
+    cancelCutoffHours: typeof policy.cancelCutoffHours === "number" ? String(policy.cancelCutoffHours) : "",
     horizonMode: typeof horizon === "number" ? "days" : "unlimited",
     horizonDays: typeof horizon === "number" ? String(horizon) : "",
   }
@@ -126,6 +155,7 @@ export function createBookingPolicyFormSchema(messages: {
   textMax: string
   limitRange: string
   horizonRange: string
+  cancelCutoffRange?: string
 }) {
   return z
     .object({
@@ -136,8 +166,13 @@ export function createBookingPolicyFormSchema(messages: {
       dailyLimit: z.string(),
       horizonMode: z.enum(tenantHorizonModes),
       horizonDays: z.string(),
+      cancelCutoffMode: z.enum(["none", "hours"]).optional(),
+      cancelCutoffHours: z.string().optional(),
     })
     .superRefine((value, context) => {
+      if (value.cancelCutoffMode === "hours" && parseCancelCutoffHoursInput(value.cancelCutoffHours ?? "") === null) {
+        context.addIssue({ code: "custom", path: ["cancelCutoffHours"], message: messages.cancelCutoffRange })
+      }
       if (
         value.dailyLimitEnabled &&
         parseDailyLimitInput(value.dailyLimit) === null
@@ -169,6 +204,7 @@ export function createBookingPolicyFormSchema(messages: {
 export function toBookingPolicyReplaceBody(
   values: BookingPolicyFormValues,
   loadedHorizon?: number | null,
+  loadedCancelCutoff?: number | null,
 ): BookingPolicy {
   const text = values.cancellationPolicyText.trim()
   const limit = values.dailyLimitEnabled
@@ -191,5 +227,28 @@ export function toBookingPolicyReplaceBody(
   if (horizon !== undefined) {
     body.maxAdvanceBookingDays = horizon
   }
+  const cutoff = resolveCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, loadedCancelCutoff)
+  if (cutoff !== undefined && !(values.cancelCutoffMode === "none" && loadedCancelCutoff == null)) {
+    body.cancelCutoffHours = cutoff
+  }
   return body
+}
+
+/** Category layer: resource override > category > tenant default. Null inherits the tenant value. */
+export const categoryBookingPolicySchema = z.object({
+  categoryId: z.string(),
+  categoryName: z.string(),
+  maxAdvanceBookingDays: z.number().int().min(BOOKING_HORIZON_DAY_MIN).max(BOOKING_HORIZON_DAY_MAX).nullable(),
+  cancelCutoffHours: z.number().int().min(0).max(CANCEL_CUTOFF_HOURS_MAX).nullable(),
+})
+
+export type CategoryBookingPolicy = z.infer<typeof categoryBookingPolicySchema>
+
+/** Blank means inherit (null); otherwise a whole number within [0, max]. Undefined = invalid. */
+export function parseOptionalWholeNumber(value: string, max: number): number | null | undefined {
+  const trimmed = value.trim()
+  if (trimmed === "") return null
+  if (!/^\d+$/.test(trimmed)) return undefined
+  const parsed = Number(trimmed)
+  return parsed <= max ? parsed : undefined
 }

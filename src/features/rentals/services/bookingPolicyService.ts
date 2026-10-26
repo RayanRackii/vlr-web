@@ -2,7 +2,9 @@ import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError, publicApi } from "@/lib/api"
 import {
   bookingPolicySchema,
+  categoryBookingPolicySchema,
   type BookingPolicy,
+  type CategoryBookingPolicy,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
 
 const BOOKING_POLICY_PATH = "/api/rentals/booking-policy"
@@ -32,11 +34,13 @@ function throwBookingPolicyError(error: unknown, fallbackKey: string): never {
 function replaceBody(policy: BookingPolicy): {
   cancellationPolicyText: string | null
   maxActiveReservationsPerCustomerPerDay: number | null
+  cancelCutoffHours?: number | null
   maxAdvanceBookingDays?: number | null
 } {
   const body: {
     cancellationPolicyText: string | null
     maxActiveReservationsPerCustomerPerDay: number | null
+    cancelCutoffHours?: number | null
     maxAdvanceBookingDays?: number | null
   } = {
     cancellationPolicyText: policy.cancellationPolicyText,
@@ -45,6 +49,9 @@ function replaceBody(policy: BookingPolicy): {
   }
   if (policy.maxAdvanceBookingDays !== undefined) {
     body.maxAdvanceBookingDays = policy.maxAdvanceBookingDays
+  }
+  if (policy.cancelCutoffHours !== undefined) {
+    body.cancelCutoffHours = policy.cancelCutoffHours
   }
   return body
 }
@@ -84,5 +91,40 @@ export async function fetchPublicBookingPolicy(
     return parseBookingPolicy(response.data)
   } catch (error) {
     throwBookingPolicyError(error, "apiErrors.loadBookingPolicy")
+  }
+}
+
+function parseCategoryPolicy(data: unknown): CategoryBookingPolicy {
+  const parsed = categoryBookingPolicySchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
+  }
+  return parsed.data
+}
+
+export async function getCategoryBookingPolicies(): Promise<CategoryBookingPolicy[]> {
+  try {
+    const response = await api.get(`${BOOKING_POLICY_PATH}/categories`)
+    if (!Array.isArray(response.data)) {
+      throw new Error(i18n.t("apiErrors.invalidPayload"))
+    }
+    return response.data.map(parseCategoryPolicy)
+  } catch (error) {
+    throwBookingPolicyError(error, "apiErrors.loadBookingPolicy")
+  }
+}
+
+export async function replaceCategoryBookingPolicy(
+  categoryId: string,
+  values: { maxAdvanceBookingDays: number | null; cancelCutoffHours: number | null },
+): Promise<CategoryBookingPolicy> {
+  try {
+    const response = await api.put(
+      `${BOOKING_POLICY_PATH}/categories/${encodeURIComponent(categoryId)}`,
+      values,
+    )
+    return parseCategoryPolicy(response.data)
+  } catch (error) {
+    throwBookingPolicyError(error, "apiErrors.saveBookingPolicy")
   }
 }

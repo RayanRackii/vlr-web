@@ -71,6 +71,7 @@ describe("LocaleDateInput", () => {
     await user.click(screen.getByLabelText("Data"))
     const dialog = await screen.findByRole("dialog", { name: /outubro de 2026/i })
     expect(dialog).toHaveAttribute("lang", "pt-BR")
+    expect(screen.getByText("Outubro de 2026")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: i18n.t("common.datePicker.today") })).toHaveTextContent(
       "Hoje",
     )

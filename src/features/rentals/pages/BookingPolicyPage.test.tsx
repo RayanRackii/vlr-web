@@ -5,10 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
 import {
   getBookingPolicy,
+  getCategoryBookingPolicies,
   replaceBookingPolicy,
+  replaceCategoryBookingPolicy,
 } from "@/features/rentals/services/bookingPolicyService"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
+import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
 const trial = vi.hoisted(() => ({ readOnly: false }))
@@ -33,7 +36,12 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/rentals/services/bookingPolicyService", () => ({
   getBookingPolicy: vi.fn(),
   replaceBookingPolicy: vi.fn(),
+  getCategoryBookingPolicies: vi.fn(),
+  replaceCategoryBookingPolicy: vi.fn(),
 }))
+
+const getCategories = vi.mocked(getCategoryBookingPolicies)
+const replaceCategory = vi.mocked(replaceCategoryBookingPolicy)
 
 const getPolicy = vi.mocked(getBookingPolicy)
 const replacePolicy = vi.mocked(replaceBookingPolicy)
@@ -62,6 +70,46 @@ describe("BookingPolicyPage", () => {
       maxActiveReservationsPerCustomerPerDay: 3,
     })
     replacePolicy.mockImplementation(async (policy) => policy)
+    getCategories.mockReset()
+    replaceCategory.mockReset()
+    getCategories.mockResolvedValue([])
+  })
+
+  it("saves a category override and leaves blank fields inheriting the tenant value", async () => {
+    const user = userEvent.setup()
+    getCategories.mockResolvedValue([
+      { categoryId: "c1", categoryName: "Goods", maxAdvanceBookingDays: null, cancelCutoffHours: 24 },
+    ])
+    replaceCategory.mockImplementation(async (categoryId, values) => ({
+      categoryId,
+      categoryName: "Goods",
+      ...values,
+    }))
+    renderPage()
+
+    const row = await screen.findByTestId("category-policy-c1")
+    expect(row).toHaveTextContent("Goods")
+    const [days, hours] = Array.from(row.querySelectorAll("input"))
+    expect(hours).toHaveValue("24")
+    await user.type(days, "30")
+    await user.clear(hours)
+    await user.click(row.querySelector("button")!)
+
+    await waitFor(() =>
+      expect(replaceCategory).toHaveBeenCalledWith("c1", {
+        maxAdvanceBookingDays: 30,
+        cancelCutoffHours: null,
+      }),
+    )
+    expect(toastSuccess).toHaveBeenCalled()
+  })
+
+  it("shows the tenant timezone alongside the policy", async () => {
+    renderPage()
+
+    expect(await screen.findByTestId("tenant-tz-label")).toHaveTextContent(
+      formatTenantTimeZoneLabel("America/Sao_Paulo", i18n.language),
+    )
   })
 
   it("loads both fields and saves a full replacement", async () => {
@@ -397,6 +445,96 @@ describe("BookingPolicyPage", () => {
         cancellationPolicyText: null,
         maxActiveReservationsPerCustomerPerDay: null,
         maxAdvanceBookingDays: 14,
+      })
+    })
+  })
+  it("sends null when the cancelCutoff changes to unlimited", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      cancelCutoffHours: 30,
+    })
+    renderPage()
+
+    await screen.findByLabelText(i18n.t("rentals.bookingPolicy.cancelCutoffHours"))
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffNone"),
+      }),
+    )
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.bookingPolicy.save"),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        cancelCutoffHours: null,
+      })
+    })
+  })
+
+  it("sends a number when a cancelCutoff is set and blocks values outside 0..8760", async () => {
+    const user = userEvent.setup()
+    getPolicy.mockResolvedValue({
+      cancellationPolicyText: null,
+      maxActiveReservationsPerCustomerPerDay: null,
+      cancelCutoffHours: null,
+    })
+    renderPage()
+
+    await screen.findByLabelText(
+      i18n.t("rentals.bookingPolicy.cancellationLabel"),
+    )
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
+      }),
+    )
+    await user.click(
+      await screen.findByRole("option", {
+        name: i18n.t("rentals.bookingPolicy.cancelCutoffHoursMode"),
+      }),
+    )
+
+    const days = screen.getByLabelText(
+      i18n.t("rentals.bookingPolicy.cancelCutoffHours"),
+    )
+    const save = screen.getByRole("button", {
+      name: i18n.t("rentals.bookingPolicy.save"),
+    })
+    expect(save).toBeDisabled()
+
+    await user.type(days, "8761")
+    expect(save).toBeDisabled()
+    expect(replacePolicy).not.toHaveBeenCalled()
+
+    await user.clear(days)
+    await user.type(days, "0")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "8760")
+    expect(save).toBeEnabled()
+
+    await user.clear(days)
+    await user.type(days, "14")
+    await user.click(save)
+
+    await waitFor(() => {
+      expect(replacePolicy).toHaveBeenCalledWith({
+        cancellationPolicyText: null,
+        maxActiveReservationsPerCustomerPerDay: null,
+        cancelCutoffHours: 14,
       })
     })
   })

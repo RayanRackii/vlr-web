@@ -16,6 +16,8 @@ export const EXISTING_ACCOUNT_SIGN_IN_REQUIRED =
   "EXISTING_ACCOUNT_SIGN_IN_REQUIRED"
 export const INVITE_ACCOUNT_MISMATCH = "INVITE_ACCOUNT_MISMATCH"
 export const INVITE_IDENTITY_CONFLICT = "INVITE_IDENTITY_CONFLICT"
+/** Preview only: the invite was consumed; resume tenant selection or log in. */
+export const INVITE_ALREADY_ACCEPTED = "INVITE_ALREADY_ACCEPTED"
 
 export class InviteAcceptError extends Error {
   readonly code: string

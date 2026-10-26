@@ -1,3 +1,4 @@
+import { displayEndClock } from "@/lib/tenantTimeZone"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -5,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -71,6 +73,7 @@ type PendingRemoval = {
 
 export function TeacherLessonsPage() {
   const { t } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { assets, day, dayStatus, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
   const removalInFlight = useRef(false)
@@ -98,7 +101,9 @@ export function TeacherLessonsPage() {
     })
   }, [openSlots, t])
   type FormValues = z.infer<typeof schema>
-  const [dateRequest] = useState(() => readLessonDateFromLocation(todayIsoDate()))
+  const [dateRequest] = useState(() =>
+    readLessonDateFromLocation(todayIsoDate(timeZoneId)),
+  )
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -117,8 +122,8 @@ export function TeacherLessonsPage() {
     if (!date || !ISO_DATE.test(date)) {
       return openSlots
     }
-    return withoutPastTenantSlots(date, openSlots)
-  }, [date, openSlots])
+    return withoutPastTenantSlots(date, openSlots, timeZoneId)
+  }, [date, openSlots, timeZoneId])
   const pastSlotsHidden = available.length < openSlots.length
   const values = { assetId: selectedAssetId, date, slotKey, label }
   const isValid = schema.safeParse(values).success
@@ -142,12 +147,12 @@ export function TeacherLessonsPage() {
   useEffect(() => {
     if (!date || !ISO_DATE.test(date)) return
     const url = new URL(window.location.href)
-    if (date === todayIsoDate()) url.searchParams.delete("date")
+    if (date === todayIsoDate(timeZoneId)) url.searchParams.delete("date")
     else url.searchParams.set("date", date)
     const next = `${url.pathname}${url.search}${url.hash}`
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
     if (current !== next) window.history.replaceState(window.history.state, "", next)
-  }, [date])
+  }, [date, timeZoneId])
 
   useEffect(() => {
     if (!selectedAssetId || !date) return
@@ -157,7 +162,7 @@ export function TeacherLessonsPage() {
       const selected = getValues("slotKey") || selectedBeforeRefresh
       const selectedStart = selected?.split("|")[0] ?? ""
       const stillOffered = Boolean(selected)
-        && !isPastTenantSlotStart(date, selectedStart)
+        && !isPastTenantSlotStart(date, selectedStart, timeZoneId)
         && result.slots.some((slot) => slotKeyFor(slot) === selected && slot.occupancyKindKey === "open" && isUnreservedAvailable(slot))
       if (!selected || stillOffered) return
       const message = i18n.t("rentals.teacherLessons.slotUnavailable")
@@ -165,7 +170,7 @@ export function TeacherLessonsPage() {
       setError("slotKey", { type: "validate", message })
       toast.error(message)
     })
-  }, [date, getValues, loadDay, selectedAssetId, setError, setValue])
+  }, [date, getValues, loadDay, selectedAssetId, setError, setValue, timeZoneId])
 
   async function onSubmit(valuesToSubmit: FormValues) {
     const slot = available.find((item) => slotKeyFor(item) === valuesToSubmit.slotKey)
@@ -217,7 +222,7 @@ export function TeacherLessonsPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("rentals.teacherLessons.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.description")}</p>
-        {dateRequest.adjustedFromPast && date === todayIsoDate() ? (
+        {dateRequest.adjustedFromPast && date === todayIsoDate(timeZoneId) ? (
           <p role="status" className="text-sm text-foreground">
             {t("rentals.teacherLessons.pastDateAdjusted")}
           </p>
@@ -237,7 +242,7 @@ export function TeacherLessonsPage() {
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("rentals.teacherLessons.date")}</FormLabel>
-              <FormControl><Input {...field} aria-label={t("rentals.teacherLessons.date")} type="date" min={todayIsoDate()} disabled={busy} /></FormControl>
+              <FormControl><Input {...field} aria-label={t("rentals.teacherLessons.date")} type="date" min={todayIsoDate(timeZoneId)} disabled={busy} /></FormControl>
             </FormItem>
           )} />
           <FormField control={form.control} name="slotKey" render={({ field }) => (
@@ -252,11 +257,11 @@ export function TeacherLessonsPage() {
                   }
                   field.onChange(value)
                 }}
-                items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}` }))}
+                items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${displayEndClock(slot.endTime)}` }))}
                 disabled={busy || resourcesPending || !timeSelectable}
               >
                 <FormControl><SelectTrigger aria-describedby={timeReason === "ready" && !pastSlotsHidden ? undefined : "available-time-state"} aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={timePlaceholder} /></SelectTrigger></FormControl>
-                <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</SelectItem>)}</SelectContent>
+                <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{displayEndClock(slot.endTime)}</SelectItem>)}</SelectContent>
               </Select>
               <FormMessage />
               {resourcesPending ? null : (
@@ -293,7 +298,7 @@ export function TeacherLessonsPage() {
           dayStatus === "error" ? null : <p className="text-sm text-muted-foreground">{t("rentals.teacherLessons.none")}</p>
         ) : lessons.map((lesson) => (
           <article key={`${lesson.id}-${lesson.startTime}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
-            <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{lesson.endTime.slice(0, 5)}</p></div>
+            <div><p className="font-medium">{lesson.label || lesson.occupancyKindLabel}</p><p className="text-sm text-muted-foreground">{lesson.startTime.slice(0, 5)}–{displayEndClock(lesson.endTime)}</p></div>
             <Button type="button" onClick={() => setPendingRemoval({ id: lesson.id, startTime: lesson.startTime, endTime: lesson.endTime })} disabled={busy} aria-label={`${t("rentals.teacherLessons.remove")} ${lesson.startTime.slice(0, 5)}`}>{t("rentals.teacherLessons.remove")}</Button>
           </article>
         ))}

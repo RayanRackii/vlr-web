@@ -25,7 +25,9 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { cn } from "@/lib/utils"
+import { formatUnitPriceText } from "@/lib/pricingUnitText"
 import {
+  DAYS,
   emptyPricingEditor,
   expandPricingEditor,
   isPricingEditorValid,
@@ -191,7 +193,7 @@ export function AssetWizard({
   onCompleted,
   readOnly = false,
 }: AssetWizardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<WizardFormState>(() => emptyForm())
   const [pricing, setPricing] = useState<PricingEditorState>(emptyPricingEditor)
@@ -321,6 +323,7 @@ export function AssetWizard({
               startTime: row.startTime.slice(0, 5),
               endTime: row.endTime.slice(0, 5),
               pricePerHour: row.pricePerHour,
+              pricingUnit: row.pricingUnit,
             })),
           ),
         )
@@ -450,9 +453,6 @@ export function AssetWizard({
       if (!form.name.trim()) {
         errors.push("name")
       }
-      if (!form.tag.trim()) {
-        errors.push("tag")
-      }
     }
 
     const attributeValidation = buildAttributesZodSchema(
@@ -570,6 +570,7 @@ export function AssetWizard({
             startTime: draft.startTime,
             endTime: draft.endTime,
             pricePerHour: draft.pricePerHour,
+            pricingUnit: draft.pricingUnit,
             requiresDeposit: false,
             depositPercentage: 0,
           }))
@@ -693,20 +694,34 @@ export function AssetWizard({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="gap-5 border-border/80 bg-card sm:max-w-3xl">
-        <DialogHeader className="space-y-1">
+      <DialogContent className="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden border-border/80 bg-card sm:max-w-3xl">
+        <DialogHeader className="shrink-0 space-y-1">
           <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
         </DialogHeader>
 
-        <WizardPanelsStepper
-          steps={steps}
-          currentIndex={stepIndex}
-          onStepClick={(index) => {
-            if (index < stepIndex) {
-              setStepIndex(index)
-            }
-          }}
-        />
+        <div className="hidden shrink-0 sm:block">
+          <WizardPanelsStepper
+            steps={steps}
+            currentIndex={stepIndex}
+            onStepClick={(index) => {
+              if (index < stepIndex) {
+                setStepIndex(index)
+              }
+            }}
+          />
+        </div>
+        <div className="shrink-0 sm:hidden">
+          <WizardPanelsStepper
+            steps={steps}
+            currentIndex={stepIndex}
+            onStepClick={(index) => {
+              if (index < stepIndex) {
+                setStepIndex(index)
+              }
+            }}
+            variant="compact"
+          />
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
@@ -714,7 +729,7 @@ export function AssetWizard({
             {t("common.loading")}
           </div>
         ) : (
-          <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
             {currentStepId === "general" ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1069,22 +1084,14 @@ export function AssetWizard({
                       <FieldLabel
                         label={t("assets.detail.fields.tag")}
                         help={t("assets.wizard.help.tag")}
-                        required
                       />
                       <Input
                         value={form.tag}
                         placeholder={t("assets.wizard.placeholders.tag")}
-                        aria-invalid={fieldErrors.tag || undefined}
-                        className={fieldInvalidClass(Boolean(fieldErrors.tag))}
                         onChange={(event) => {
                           patchForm({ tag: event.target.value })
                         }}
                       />
-                      {fieldErrors.tag ? (
-                        <p className="text-xs text-destructive">
-                          {t("assets.inventory.validation.tagRequired")}
-                        </p>
-                      ) : null}
                     </div>
                     <div className="space-y-2">
                       <FieldLabel
@@ -1625,6 +1632,55 @@ export function AssetWizard({
                       {" · "}
                       {pricing.startTime}–{pricing.endTime}
                     </p>
+                    <p>
+                      <span className="text-muted-foreground">
+                        {t("assets.wizard.review.pricingUnitLabel")}:{" "}
+                      </span>
+                      {pricing.perDayUnits
+                        ? t("assets.wizard.pricing.units.mixed")
+                        : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}
+                    </p>
+                    {pricing.pattern === "perDay" ? (
+                      <div>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.perDayPricesLabel")}:{" "}
+                        </span>
+                        <ul className="mt-1 ml-4 list-disc">
+                          {DAYS.map((day) => (
+                            <li key={day}>
+                              {t(`assets.detail.days.${day}`)}:{" "}
+                              {pricing.perDayPrices[day] > 0
+                                ? formatUnitPriceText(
+                                    pricing.perDayPrices[day],
+                                    pricing.perDayUnits?.[day] ?? pricing.pricingUnit,
+                                    "BRL",
+                                    i18n.language,
+                                    t,
+                                    "assets.wizard.review.unitPrice",
+                                  )
+                                : "—"}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p>
+                        <span className="text-muted-foreground">
+                          {t("assets.wizard.review.priceLabel")}:{" "}
+                        </span>
+                        {pricing.pattern === "weekendSpecial" ? (
+                          <>
+                            {t("assets.wizard.pricing.weekdayPrice")}:{" "}
+                            {formatUnitPriceText(pricing.weekdayPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")}
+                            {" · "}
+                            {t("assets.wizard.pricing.weekendPrice")}:{" "}
+                            {formatUnitPriceText(pricing.weekendPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")}
+                          </>
+                        ) : (
+                          formatUnitPriceText(pricing.everydayPrice, pricing.pricingUnit, "BRL", i18n.language, t, "assets.wizard.review.unitPrice")
+                        )}
+                      </p>
+                    )}
                   </>
                 ) : null}
               </div>
@@ -1632,40 +1688,41 @@ export function AssetWizard({
           </div>
         )}
 
-        <DialogFooter className="-mx-0 -mb-0 border-t-0 bg-transparent p-0 sm:justify-between">
+        <DialogFooter className="-mx-0 -mb-0 shrink-0 border-t-0 bg-transparent p-0 sm:justify-between">
           <Button
             type="button"
             variant="outline"
+            className="w-full sm:w-auto"
             disabled={stepIndex === 0 || isLoading || isSubmitting}
             onClick={handleBack}
           >
             {t("assets.wizard.back")}
           </Button>
-          <div className="flex gap-2">
-            {isLastStep ? (
-              <FormPrimaryButton
-                type="button"
-                isValid={isCurrentStepValid}
-                loading={isSubmitting}
-                disabled={isLoading || readOnly}
-                onClick={() => {
-                  void handleSubmit()
-                }}
-              >
-                {t("assets.wizard.finish")}
-              </FormPrimaryButton>
-            ) : (
-              <FormPrimaryButton
-                type="button"
-                isValid={isCurrentStepValid}
-                loading={isSubmitting}
-                disabled={isLoading}
-                onClick={handleNext}
-              >
-                {t("assets.wizard.next")}
-              </FormPrimaryButton>
-            )}
-          </div>
+          {isLastStep ? (
+            <FormPrimaryButton
+              type="button"
+              className="w-full sm:w-auto"
+              isValid={isCurrentStepValid}
+              loading={isSubmitting}
+              disabled={isLoading || readOnly}
+              onClick={() => {
+                void handleSubmit()
+              }}
+            >
+              {t("assets.wizard.finish")}
+            </FormPrimaryButton>
+          ) : (
+            <FormPrimaryButton
+              type="button"
+              className="w-full sm:w-auto"
+              isValid={isCurrentStepValid}
+              loading={isSubmitting}
+              disabled={isLoading}
+              onClick={handleNext}
+            >
+              {t("assets.wizard.next")}
+            </FormPrimaryButton>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

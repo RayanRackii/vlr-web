@@ -65,6 +65,8 @@ type WeeklyTemplatesTabProps = {
   selectedRentalAssetIds: readonly string[]
   weekday: DayOfWeekName
   templates: readonly ScheduleTemplate[]
+  scheduleTemplates: readonly ScheduleTemplate[]
+  loadingScheduleTemplates: boolean
   kinds: readonly OccupancyKind[]
   defaultKindId: string
   loading: boolean
@@ -86,6 +88,8 @@ export function WeeklyTemplatesTab({
   selectedRentalAssetIds,
   weekday,
   templates,
+  scheduleTemplates,
+  loadingScheduleTemplates,
   kinds,
   defaultKindId,
   loading,
@@ -150,15 +154,22 @@ export function WeeklyTemplatesTab({
 
   const showInlineRefresh = loading && surface === "grid"
   const hasSelection = selectedAssets.length > 0
+  const hasExistingSchedule = loadingScheduleTemplates ||
+    scheduleTemplates.some((template) => template.isActive) ||
+    selectedAssets.some((asset) =>
+      (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
+      Boolean(asset.openTime && asset.closeTime),
+    )
 
   return (
     <div className="w-full space-y-4">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-        <div className="flex items-center">
+        <div className="flex items-center divide-x divide-border rounded-lg border border-border">
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
+            className="rounded-r-none"
             aria-label={t("rentals.schedule.toolbar.prevWeekday")}
             onClick={() => onWeekdayChange(shiftWeekday(weekday, -1))}
           >
@@ -168,6 +179,7 @@ export function WeeklyTemplatesTab({
             type="button"
             size="sm"
             variant="ghost"
+            className="rounded-none"
             onClick={() => onWeekdayChange(todayWeekdayName())}
           >
             {t("rentals.schedule.toolbar.today")}
@@ -176,6 +188,7 @@ export function WeeklyTemplatesTab({
             type="button"
             size="icon-sm"
             variant="ghost"
+            className="rounded-l-none"
             aria-label={t("rentals.schedule.toolbar.nextWeekday")}
             onClick={() => onWeekdayChange(shiftWeekday(weekday, 1))}
           >
@@ -237,7 +250,7 @@ export function WeeklyTemplatesTab({
             <Settings2 aria-hidden />
             {t("rentals.schedule.weekly.configureHours")}
           </Button>
-          {selectedAssets.some(
+          {!hasExistingSchedule && selectedAssets.some(
             (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
           ) ? (
             <LoadingButton
@@ -322,15 +335,24 @@ export function WeeklyTemplatesTab({
       <Sheet open={policyOpen} onOpenChange={setPolicyOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>{t("rentals.schedule.policy.title")}</SheetTitle>
-            <SheetDescription>
-              {t("rentals.schedule.policy.description")}
-            </SheetDescription>
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Settings2 className="size-4" aria-hidden />
+              </span>
+              <div className="space-y-0.5">
+                <SheetTitle>{t("rentals.schedule.policy.title")}</SheetTitle>
+                <SheetDescription>
+                  {t("rentals.schedule.policy.description")}
+                </SheetDescription>
+              </div>
+            </div>
           </SheetHeader>
           <div className="overflow-y-auto px-4 pb-4">
             {selectedAssets.length > 0 ? (
               <SchedulePolicyPanel
                 assets={selectedAssets}
+                templates={scheduleTemplates}
+                loadingTemplates={loadingScheduleTemplates}
                 busy={busy}
                 busyAction={busyAction}
                 readOnly={readOnly}

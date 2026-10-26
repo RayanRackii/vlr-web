@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
@@ -67,7 +68,8 @@ export const updateAssetRequestSchema = z.object({
   familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
+  /** Optional: blank lets the API generate (create) or keep (update) the tag. */
+  tag: z.string().trim(),
   location: z.string().nullish(),
   serialNumber: z.string().nullish(),
   installationDate: z.string().nullish(),
@@ -89,7 +91,8 @@ export const createAssetRequestSchema = z.object({
   familyId: guidLikeIdSchema,
   attributes: z.record(z.string(), z.string().nullable()).default({}),
   name: z.string().trim().min(1),
-  tag: z.string().trim().min(1),
+  /** Optional: blank lets the API generate (create) or keep (update) the tag. */
+  tag: z.string().trim(),
   location: z.string().nullish(),
   serialNumber: z.string().nullish(),
   installationDate: z.string().nullish(),
@@ -158,6 +161,7 @@ export const bulkPricingRowSchema = z.object({
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   pricePerHour: z.number().nonnegative(),
+  pricingUnit: pricingUnitSchema.optional(),
   requiresDeposit: z.boolean(),
   depositPercentage: z.number().min(0).max(100),
 })

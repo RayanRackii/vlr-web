@@ -35,6 +35,7 @@ export const currentUserSchema = z.object({
   permissions: z.array(z.string()).default([]),
   tenantTradeName: z.string().nullish(),
   tenantLegalName: z.string().nullish(),
+  timeZoneId: z.string().optional(),
 })
 
 export type CurrentUser = z.infer<typeof currentUserSchema>

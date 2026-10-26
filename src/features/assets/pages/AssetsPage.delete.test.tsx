@@ -111,11 +111,12 @@ describe("AssetsPage permanent delete", () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText("Q-01")).toBeInTheDocument()
+    expect((await screen.findAllByText("Q-01")).length).toBeGreaterThan(0)
     const getsAfterLoad = assetListGets()
 
+    const table = screen.getByRole("table")
     await user.click(
-      screen.getByRole("button", {
+      within(table).getByRole("button", {
         name: i18n.t("assets.inventory.actions.rowMenu", { tag: "Q-01" }),
       }),
     )
@@ -135,7 +136,7 @@ describe("AssetsPage permanent delete", () => {
     const blocked = i18n.t("assets.inventory.errors.deleteBlockedByWorkOrders")
     expect(await screen.findAllByText(blocked)).not.toHaveLength(0)
     expect(apiDelete).toHaveBeenCalledWith(`/api/assets/${ASSET_ID}`)
-    expect(screen.getByText("Q-01")).toBeInTheDocument()
+    expect(screen.getAllByText("Q-01").length).toBeGreaterThan(0)
     expect(
       screen.queryByText(i18n.t("assets.deletion.permanentSuccess")),
     ).not.toBeInTheDocument()
@@ -145,7 +146,7 @@ describe("AssetsPage permanent delete", () => {
     )
 
     expect(screen.getAllByText(blocked)).toHaveLength(1)
-    expect(screen.getByText("Q-01")).toBeInTheDocument()
+    expect(screen.getAllByText("Q-01").length).toBeGreaterThan(0)
     expect(assetListGets()).toBe(getsAfterLoad)
   })
 })

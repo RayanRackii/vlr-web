@@ -5,12 +5,16 @@ import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { ErrorState } from "@/components/ErrorState"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
+import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
+import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
 import {
   toCreateRentableRequest,
   type RegistryCategoryListItem,
@@ -31,12 +35,15 @@ import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 
+type ResourcePrice = Pick<RentalPricing, "pricePerHour" | "pricingUnit">
+
 export function RentalResourcesPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const [priceByAssetId, setPriceByAssetId] = useState<Record<string, ResourcePrice>>({})
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [families, setFamilies] = useState<AssetFamily[]>([])
   const [units, setUnits] = useState<Unit[]>([])
@@ -47,6 +54,7 @@ export function RentalResourcesPage() {
   const [editing, setEditing] = useState<AdminRentalAsset | null>(null)
 
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
+  const canReadPricing = can("rentals.pricing.read")
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -59,6 +67,23 @@ export function RentalResourcesPage() {
         getUnits(),
       ])
       setAssets(assetList)
+      if (canReadPricing) {
+        const prices = await Promise.all(assetList.map(async (asset) => {
+          try {
+            const pricings = await getAssetPricings(asset.assetId)
+            const lowestPrice = pricings.filter((pricing) => pricing.pricePerHour > 0).reduce<RentalPricing | null>(
+              (lowest, pricing) => lowest === null || pricing.pricePerHour < lowest.pricePerHour ? pricing : lowest,
+              null,
+            )
+            return lowestPrice === null ? null : [asset.assetId, { pricePerHour: lowestPrice.pricePerHour, pricingUnit: lowestPrice.pricingUnit }] as const
+          } catch {
+            return null
+          }
+        }))
+        setPriceByAssetId(Object.fromEntries(prices.filter((price): price is readonly [string, ResourcePrice] => price !== null)))
+      } else {
+        setPriceByAssetId({})
+      }
       setCategories(categoryList)
       setFamilies(familyList)
       setUnits(unitList)
@@ -74,7 +99,7 @@ export function RentalResourcesPage() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [canReadPricing, t])
 
   useEffect(() => {
     void load()
@@ -105,8 +130,13 @@ export function RentalResourcesPage() {
         storedCapacityPeople: editing?.capacityPeople,
       })
       if (editing) {
-        await updateRentalAsset(editing.id, body)
-        toast.success(t("rentals.resources.updateSuccess"))
+        const saved = await updateRentalAsset(editing.id, body)
+        // QA R18: an API that drops cancelCutoffHours answered 200; never report a silent non-save.
+        if (body.cancelCutoffHours !== undefined && (saved.cancelCutoffHours ?? null) !== body.cancelCutoffHours) {
+          toast.error(t("rentals.resources.cutoffNotSaved"))
+        } else {
+          toast.success(t("rentals.resources.updateSuccess"))
+        }
       } else {
         await createRentalAsset(body)
         toast.success(t("rentals.resources.createSuccess"))
@@ -129,30 +159,23 @@ export function RentalResourcesPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("rentals.resources.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("rentals.resources.description")}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex sm:justify-end">
-        <Can permission="rentals.assets.write">
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            disabled={!canWrite || loading || loadError !== null}
-            onClick={openCreate}
-          >
-            <Plus data-icon="inline-start" />
-            {t("rentals.resources.add")}
-          </Button>
-        </Can>
-      </div>
+      <PageHeader
+        icon={Boxes}
+        title={t("rentals.resources.title")}
+        description={t("rentals.resources.description")}
+        actions={
+          <Can permission="rentals.assets.write">
+            <Button
+              type="button"
+              disabled={!canWrite || loading || loadError !== null}
+              onClick={openCreate}
+            >
+              <Plus data-icon="inline-start" />
+              {t("rentals.resources.add")}
+            </Button>
+          </Can>
+        }
+      />
 
       {loading ? (
         <PageContentSkeleton rows={4} />
@@ -172,22 +195,40 @@ export function RentalResourcesPage() {
             <li key={asset.id}>
               <button
                 type="button"
-                className="group flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 text-left shadow-sm motion-safe:transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
                   openEdit(asset)
                 }}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{asset.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {asset.type === "Good"
-                      ? t("rentals.resources.typeGood")
-                      : t("rentals.resources.typeLocation")}
-                    {asset.categoryName ? ` · ${asset.categoryName}` : null}
-                    {asset.type === "Good"
-                      ? ` · ${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
-                      : null}
-                  </p>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium">{asset.name}</p>
+                    {asset.scheduledDeletionAt ? (
+                      <Badge variant="destructive" className="shrink-0">
+                        {t("assets.deletion.pendingBadge")}
+                      </Badge>
+                    ) : null}
+                    <Badge variant="outline">
+                      {asset.type === "Good"
+                        ? t("rentals.resources.typeGood")
+                        : t("rentals.resources.typeLocation")}
+                    </Badge>
+                  </div>
+                  {asset.categoryName || asset.type === "Good" ? (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {asset.categoryName}
+                      {asset.categoryName && asset.type === "Good" ? " · " : null}
+                      {asset.type === "Good"
+                        ? `${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
+                        : null}
+                    </p>
+                  ) : null}
+                  <RentalResourceDetails
+                    asset={asset}
+                    pricePerHour={priceByAssetId[asset.assetId]?.pricePerHour}
+                    pricingUnit={priceByAssetId[asset.assetId]?.pricingUnit}
+                    compact
+                  />
                 </div>
                 <ChevronRight
                   className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -213,6 +254,8 @@ export function RentalResourcesPage() {
         families={families}
         busy={busy}
         readOnly={!canWrite}
+        pricePerHour={priceByAssetId[editing?.assetId ?? ""]?.pricePerHour}
+        pricingUnit={priceByAssetId[editing?.assetId ?? ""]?.pricingUnit}
         onSubmit={handleSubmit}
       />
     </div>

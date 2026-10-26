@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from "react"
+import { Check, CheckCheck, ImageOff, type LucideIcon } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -12,6 +13,7 @@ import {
 import {
   portalPickAvailableClass,
   portalPickAvailableSelectedClass,
+  portalPickOwnReservationClass,
   portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
@@ -28,6 +30,8 @@ export type CanvasBoardItem = {
   available?: boolean
   selected?: boolean
   disabled?: boolean
+  /** The signed-in customer already holds this slot — distinct from "unavailable". */
+  ownReservation?: boolean
   /** Day is still loading. Neutral, not the unavailable treatment. */
   pending?: boolean
   /** Visible status for a space that cannot be booked. Not a hover-only tooltip. */
@@ -35,6 +39,17 @@ export type CanvasBoardItem = {
   /** A solid label fixed to the bottom of a pick tile, clear of its visual art. */
   footer?: string | null
   artUrl?: string | null
+  /** Optional semantic icon for tiles without visual art. */
+  icon?: LucideIcon | null
+}
+
+function CanvasTileArt({ artUrl, Icon }: { artUrl?: string | null; Icon?: LucideIcon | null }) {
+  const [failed, setFailed] = useState(false)
+  if (artUrl && !failed) {
+    return <img src={artUrl} alt="" onError={() => setFailed(true)} className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" />
+  }
+  const Placeholder = Icon ?? ImageOff
+  return <Placeholder className="pointer-events-none size-5 text-muted-foreground/70" aria-hidden />
 }
 
 type TileDrag = {
@@ -218,20 +233,43 @@ export function LayoutCanvasBoard({
         <div
           ref={boardRef}
           className={cn(
-            "relative w-full overflow-hidden rounded-xl border border-border bg-muted/30",
+            "w-full overflow-hidden rounded-xl border border-border bg-muted/30",
+            mode === "pick"
+              ? "grid grid-cols-2 gap-2 p-2 sm:relative sm:block sm:gap-0 sm:p-0 sm:aspect-[var(--canvas-ar)]"
+              : "relative",
             className,
           )}
-          style={{ aspectRatio: String(aspectRatio) }}
+          style={
+            mode === "pick"
+              ? ({ "--canvas-ar": String(aspectRatio) } as CSSProperties)
+              : { aspectRatio: String(aspectRatio) }
+          }
         >
           {renderedItems.map((item) => {
             const picked = mode === "pick"
             const pending = picked && item.pending === true
             const unavailable = picked && item.disabled === true && !pending
+            const ownReservation = unavailable && item.ownReservation === true
             const selected = picked && item.selected === true && !unavailable && !pending
             const clickable = picked && !unavailable && !pending
             const accessibleName = item.detail
               ? `${item.label}. ${item.detail}`
               : item.label
+            const tileStyle: CSSProperties = picked
+              ? ({
+                  "--tile-left": `${item.xPercent}%`,
+                  "--tile-top": `${item.yPercent}%`,
+                  "--tile-width": `${item.widthPercent}%`,
+                  "--tile-height": `${item.heightPercent}%`,
+                  zIndex: item.zIndex + 1,
+                } as CSSProperties)
+              : {
+                  left: `${item.xPercent}%`,
+                  top: `${item.yPercent}%`,
+                  width: `${item.widthPercent}%`,
+                  height: `${item.heightPercent}%`,
+                  zIndex: item.zIndex + 1,
+                }
             return (
               <div
                 key={item.key}
@@ -243,23 +281,23 @@ export function LayoutCanvasBoard({
                 aria-busy={pending || undefined}
                 aria-disabled={unavailable || pending || undefined}
                 className={cn(
-                  "absolute flex min-w-0 items-center justify-center overflow-hidden rounded-lg border px-0.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:px-1.5 sm:text-sm",
+                  "flex min-w-0 items-center justify-center overflow-hidden rounded-lg border px-0.5 text-center text-xs font-medium leading-tight shadow-sm transition-colors select-none sm:px-1.5 sm:text-sm",
                   picked && "flex-col gap-0.5",
+                  picked &&
+                    "relative min-h-11 py-2 sm:absolute sm:min-h-0 sm:py-0 sm:left-[var(--tile-left)] sm:top-[var(--tile-top)] sm:w-[var(--tile-width)] sm:h-[var(--tile-height)]",
+                  // The footer is pinned to the tile's bottom edge on sm:+ layouts; reserve
+                  // that space so the detail/reason line never renders underneath it.
+                  picked && item.footer && "sm:pb-6",
                   mode === "edit" &&
-                    "cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                    "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
-                  clickable && !selected && portalPickAvailableClass,
+                  clickable && !selected && !ownReservation && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
                   pending && portalPickPendingClass,
-                  unavailable && portalPickUnavailableClass,
+                  unavailable && !ownReservation && portalPickUnavailableClass,
+                  ownReservation && portalPickOwnReservationClass,
                 )}
-                style={{
-                  left: `${item.xPercent}%`,
-                  top: `${item.yPercent}%`,
-                  width: `${item.widthPercent}%`,
-                  height: `${item.heightPercent}%`,
-                  zIndex: item.zIndex + 1,
-                }}
+                style={tileStyle}
                 onPointerDown={(event) => {
                   startTileDrag(event, item, "move")
                 }}
@@ -275,20 +313,35 @@ export function LayoutCanvasBoard({
                   }
                 }}
               >
-                {item.artUrl ? <img src={item.artUrl} alt="" className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}
                   </span>
                 )}
                 {item.detail ? (
-                  <span className="line-clamp-2 max-w-full px-0.5 text-xs font-semibold leading-tight">
+                  <span
+                    title={item.detail}
+                    className="block w-full max-w-full truncate px-0.5 text-xs font-semibold leading-tight"
+                  >
                     {item.detail}
                   </span>
                 ) : null}
+                {selected ? (
+                  <Check
+                    aria-hidden
+                    className="absolute top-1 right-1 size-3.5 shrink-0 text-primary sm:size-3"
+                  />
+                ) : null}
+                {ownReservation ? (
+                  <CheckCheck
+                    aria-hidden
+                    className="absolute top-1 right-1 size-3.5 shrink-0 text-primary sm:size-3"
+                  />
+                ) : null}
                 {item.footer ? (
-                  <span className="pointer-events-none absolute inset-x-0 bottom-0 min-w-0 bg-background/95 px-1.5 py-1 text-center text-xs font-semibold leading-tight text-foreground shadow-[0_-1px_0_rgb(0_0_0_/_0.12)]">
-                    <span className="line-clamp-2 break-normal hyphens-none">{item.footer}</span>
+                  <span className="pointer-events-none min-w-0 self-stretch rounded-b-md sm:absolute sm:inset-x-0 sm:bottom-0 bg-background/95 px-1.5 py-1 text-center text-xs font-semibold leading-tight text-foreground shadow-[0_-1px_0_rgb(0_0_0_/_0.12)]">
+                    <span className="line-clamp-2 break-normal hyphens-none sm:line-clamp-1" title={item.footer}>{item.footer}</span>
                   </span>
                 ) : null}
                 {mode === "edit" && onRemove ? (

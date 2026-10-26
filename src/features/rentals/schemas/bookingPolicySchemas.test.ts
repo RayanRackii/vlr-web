@@ -154,6 +154,8 @@ describe("booking policy form", () => {
         maxActiveReservationsPerCustomerPerDay: 3,
       }),
     ).toEqual({
+      cancelCutoffMode: "none",
+      cancelCutoffHours: "",
       cancellationPolicyText: "Hello",
       dailyLimitEnabled: true,
       dailyLimit: "3",
@@ -167,6 +169,8 @@ describe("booking policy form", () => {
         maxAdvanceBookingDays: 14,
       }),
     ).toEqual({
+      cancelCutoffMode: "none",
+      cancelCutoffHours: "",
       cancellationPolicyText: "",
       dailyLimitEnabled: false,
       dailyLimit: "",
@@ -180,6 +184,8 @@ describe("booking policy form", () => {
         maxAdvanceBookingDays: null,
       }),
     ).toEqual({
+      cancelCutoffMode: "none",
+      cancelCutoffHours: "",
       cancellationPolicyText: "",
       dailyLimitEnabled: false,
       dailyLimit: "",
@@ -286,5 +292,24 @@ describe("booking policy form", () => {
     expect(parseDailyLimitInput("08")).toBe(8)
     expect(parseDailyLimitInput("0")).toBeNull()
     expect(parseDailyLimitInput("101")).toBeNull()
+  })
+})
+
+
+describe("cancellation cutoff policy", () => {
+  const policy = { cancellationPolicyText: null, maxActiveReservationsPerCustomerPerDay: null, cancelCutoffHours: 24 }
+  it("reads hours and preserves omitted, clear and replacement writes", () => {
+    expect(bookingPolicySchema.parse(policy)).toHaveProperty("cancelCutoffHours", 24)
+    const values = bookingPolicyToFormValues(policy)
+    expect(values).toMatchObject({ cancelCutoffMode: "hours", cancelCutoffHours: "24" })
+    expect(toBookingPolicyReplaceBody(values, undefined, 24)).not.toHaveProperty("cancelCutoffHours")
+    expect(toBookingPolicyReplaceBody({ ...values, cancelCutoffMode: "none" }, undefined, 24)).toHaveProperty("cancelCutoffHours", null)
+    expect(toBookingPolicyReplaceBody({ ...values, cancelCutoffHours: "0" }, undefined, 24)).toHaveProperty("cancelCutoffHours", 0)
+  })
+  it.each(["", "-1", "1.5", "8761"])("rejects invalid cutoff %s", (hours) => {
+    expect(schema.safeParse({ ...bookingPolicyToFormValues(policy), cancelCutoffHours: hours }).success).toBe(false)
+  })
+  it.each([0, 8760])("accepts boundary %i", (hours) => {
+    expect(bookingPolicySchema.parse({ ...policy, cancelCutoffHours: hours }).cancelCutoffHours).toBe(hours)
   })
 })

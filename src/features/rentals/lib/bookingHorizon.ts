@@ -20,6 +20,27 @@ export function addCivilDays(isoDate: string, days: number): string {
   return `${nextYear}-${nextMonth}-${nextDay}`
 }
 
+/** Civil days between two ISO dates, without a timezone shift. */
+export function civilDaysBetween(startIso: string, endIso: string): number {
+  const startMatch = ISO_DATE.exec(startIso)
+  const endMatch = ISO_DATE.exec(endIso)
+  if (!startMatch || !endMatch) {
+    return 0
+  }
+
+  const start = Date.UTC(
+    Number(startMatch[1]),
+    Number(startMatch[2]) - 1,
+    Number(startMatch[3]),
+  )
+  const end = Date.UTC(
+    Number(endMatch[1]),
+    Number(endMatch[2]) - 1,
+    Number(endMatch[3]),
+  )
+  return Math.round((end - start) / 86400000)
+}
+
 export function isHorizonDayCount(value: number): boolean {
   return (
     Number.isInteger(value) &&
@@ -92,4 +113,21 @@ export function clampDateToHorizon(value: string, maxDate: string | null): strin
   }
 
   return value > maxDate ? maxDate : value
+}
+
+/**
+ * The horizon end date to clamp the agenda against, or `null` while resources
+ * are still loading. Computing it from `policyHorizonDays` alone before the
+ * resource list arrives can yield a narrower date than the resources' real
+ * (wider) horizon, clamping deep links by load order instead of deterministically.
+ */
+export function effectiveHorizonMaxDate(
+  resourcesLoaded: boolean,
+  todayIso: string,
+  days: number | null | undefined,
+): string | null {
+  if (!resourcesLoaded) {
+    return null
+  }
+  return horizonEndDate(todayIso, days)
 }

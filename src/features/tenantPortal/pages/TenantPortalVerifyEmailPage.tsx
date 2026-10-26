@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Mail } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -12,6 +13,7 @@ import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { iconProps } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 import {
   Form,
@@ -22,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import { TENANT_PORTAL_OUTLINE_BUTTON_CLASS } from "@/features/tenantPortal/lib/tenantPortalControlStyles"
@@ -188,7 +191,7 @@ export function TenantPortalVerifyEmailPage() {
           </p>
         ) : null}
         <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.verify.expiresHint")}
+          {t("tenantPortal.verify.expiresHint", { count: 10 })}
         </p>
         {sendFailed ? (
           <p
@@ -215,7 +218,12 @@ export function TenantPortalVerifyEmailPage() {
                 <FormItem>
                   <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
+                    <InputWithIcon
+                      icon={<Mail {...iconProps("sm")} />}
+                      type="email"
+                      autoComplete="email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

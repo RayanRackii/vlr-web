@@ -1,9 +1,12 @@
 import { useTranslation } from "react-i18next"
+import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
 import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { PriceInput } from "@/features/assets/components/PriceInput"
 import {
   DAYS,
   type PricingEditorState,
@@ -31,6 +34,18 @@ export function AssetWizardPricingStep({
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1">
+        <Label htmlFor="pricing-unit">{t("assets.wizard.pricing.unitLabel")}</Label>
+        <Select value={pricing.perDayUnits ? "" : pricing.pricingUnit} onValueChange={(value) => {
+          const parsed = pricingUnitSchema.safeParse(value)
+          if (parsed.success) onChange({ pricingUnit: parsed.data, perDayUnits: null })
+        }}>
+          <SelectTrigger id="pricing-unit"><SelectValue>{pricing.perDayUnits ? t("assets.wizard.pricing.units.mixed") : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
+          <SelectContent>
+            {pricingUnitSchema.options.map((unit) => <SelectItem key={unit} value={unit}>{t(`assets.wizard.pricing.units.${unit}`)}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-2">
         <p className="text-sm font-medium">
           {t("assets.wizard.pricing.patternLabel")}
@@ -93,18 +108,16 @@ export function AssetWizardPricingStep({
       {pricing.pattern === "sameEveryDay" ? (
         <div className="space-y-1">
           <FieldLabel
-            label={t("assets.wizard.pricing.everydayPrice")}
+            htmlFor="pricing-everyday"
+            label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
             help={t("assets.wizard.pricing.everydayPriceHelp")}
             required
           />
-          <Input
-            type="number"
-            min={0}
-            step="0.01"
+          <PriceInput
+            id="pricing-everyday"
             value={pricing.everydayPrice}
-            aria-invalid={invalid || undefined}
-            onChange={(event) => {
-              const next = event.target.valueAsNumber
+            invalid={invalid}
+            onChange={(next) => {
               onChange({
                 everydayPrice: next,
                 weekdayPrice: next,
@@ -119,35 +132,33 @@ export function AssetWizardPricingStep({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <FieldLabel
-              label={t("assets.wizard.pricing.weekdayPrice")}
+              htmlFor="pricing-weekday"
+              label={`${t("assets.wizard.pricing.weekdayPrice")} · ${t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}`}
               help={t("assets.wizard.pricing.weekdayPriceHelp")}
               required
             />
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
+            <PriceInput
+              id="pricing-weekday"
               value={pricing.weekdayPrice}
-              aria-invalid={invalid || undefined}
-              onChange={(event) => {
-                onChange({ weekdayPrice: event.target.valueAsNumber })
+              invalid={invalid}
+              onChange={(next) => {
+                onChange({ weekdayPrice: next })
               }}
             />
           </div>
           <div className="space-y-1">
             <FieldLabel
-              label={t("assets.wizard.pricing.weekendPrice")}
+              htmlFor="pricing-weekend"
+              label={`${t("assets.wizard.pricing.weekendPrice")} · ${t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}`}
               help={t("assets.wizard.pricing.weekendPriceHelp")}
               required
             />
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
+            <PriceInput
+              id="pricing-weekend"
               value={pricing.weekendPrice}
-              aria-invalid={invalid || undefined}
-              onChange={(event) => {
-                onChange({ weekendPrice: event.target.valueAsNumber })
+              invalid={invalid}
+              onChange={(next) => {
+                onChange({ weekendPrice: next })
               }}
             />
           </div>
@@ -157,30 +168,28 @@ export function AssetWizardPricingStep({
       {pricing.pattern === "perDay" ? (
         <div className="space-y-2">
           <FieldLabel
-            label={t("assets.wizard.pricing.perDayPrices")}
+            label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
             help={t("assets.wizard.pricing.perDayPricesHelp")}
           />
           <ul className="space-y-2">
             {DAYS.map((day) => (
               <li
                 key={day}
-                className="grid grid-cols-[1fr_8rem] items-center gap-3"
+                className="grid grid-cols-[1fr_8rem] items-start gap-3"
               >
                 <Label htmlFor={`pricing-day-${day}`}>
                   {t(`assets.detail.days.${day}`)}
                 </Label>
-                <Input
+                <PriceInput
                   id={`pricing-day-${day}`}
-                  type="number"
-                  min={0}
-                  step="0.01"
                   value={pricing.perDayPrices[day]}
-                  aria-invalid={invalid || undefined}
-                  onChange={(event) => {
+                  invalid={invalid}
+                  allowEmpty
+                  onChange={(next) => {
                     onChange({
                       perDayPrices: {
                         ...pricing.perDayPrices,
-                        [day]: event.target.valueAsNumber,
+                        [day]: next,
                       },
                     })
                   }}
@@ -188,6 +197,11 @@ export function AssetWizardPricingStep({
               </li>
             ))}
           </ul>
+          {DAYS.every((day) => pricing.perDayPrices[day] === 0) ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              {t("assets.inventory.validation.pricingRequired")}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

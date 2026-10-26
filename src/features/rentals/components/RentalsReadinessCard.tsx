@@ -8,6 +8,7 @@ import {
   getRentalsReadiness,
   type RentalsReadiness,
 } from "@/features/rentals/services/rentalsReadinessService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const READINESS_LINKS = {
@@ -22,6 +23,7 @@ export function RentalsReadinessCard() {
   const { t } = useTranslation()
   const { activeModules, can } = usePermissions()
   const [readiness, setReadiness] = useState<RentalsReadiness | null>(null)
+  const [hasOnlyOpenHoursResources, setHasOnlyOpenHoursResources] = useState(false)
   const canView = activeModules.includes("rentals") && can("rentals.assets.read")
 
   useEffect(() => {
@@ -31,15 +33,24 @@ export function RentalsReadinessCard() {
 
     let cancelled = false
 
-    void getRentalsReadiness()
-      .then((data) => {
+    void Promise.all([
+      getRentalsReadiness(),
+      listAdminRentalAssets().catch(() => null),
+    ])
+      .then(([data, assets]) => {
         if (!cancelled) {
           setReadiness(data)
+          const activeAssets = assets?.filter((asset) => asset.isActive) ?? []
+          setHasOnlyOpenHoursResources(
+            activeAssets.length > 0 &&
+              activeAssets.every((asset) => asset.schedulePolicy === "OpenHours"),
+          )
         }
       })
       .catch(() => {
         if (!cancelled) {
           setReadiness(null)
+          setHasOnlyOpenHoursResources(false)
         }
       })
 
@@ -55,7 +66,7 @@ export function RentalsReadinessCard() {
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-base font-medium text-muted-foreground">{t("dashboard.rentalsReadiness.title")}</h2>
+        <h2 className="text-base font-medium text-foreground">{t("dashboard.rentalsReadiness.title")}</h2>
         <CardDescription>{t("dashboard.rentalsReadiness.description")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,13 +80,18 @@ export function RentalsReadinessCard() {
               <li key={item.key} className="flex items-center gap-2 text-sm">
                 <Icon
                   aria-hidden="true"
-                  className={item.done ? "size-4 text-emerald-600" : "size-4 text-muted-foreground"}
+                  className={
+                    item.done
+                      ? "size-4 text-[color-mix(in_oklch,var(--success)_70%,var(--foreground))]"
+                      : "size-4 text-muted-foreground"
+                  }
                 />
                 <span className="sr-only">{status}</span>
                 <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
                   {label}
                 </Link>
-                {item.count !== undefined ? (
+                {item.count !== undefined &&
+                !(item.key === "hasScheduleTemplateOrRule" && hasOnlyOpenHoursResources) ? (
                   <span className="text-muted-foreground">({item.count})</span>
                 ) : null}
               </li>

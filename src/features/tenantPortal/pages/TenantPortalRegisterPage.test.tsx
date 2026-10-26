@@ -107,6 +107,21 @@ describe("TenantPortalRegisterPage email verification", () => {
     toastError.mockReset()
   })
 
+  it("renders the submit button and pairs name/phone in a two-column layout on md+", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    expect(submit).toBeInTheDocument()
+    expect(submit.className).toContain("h-11")
+
+    const nameField = screen.getByLabelText(i18n.t("tenantPortal.fields.name"))
+    const fieldGrid = nameField.closest(".grid")
+    expect(fieldGrid?.className).toContain("md:grid-cols-2")
+  })
+
   it("does not mention SMS in the register copy", async () => {
     const { container } = renderRegister()
     await waitForRegisterForm()
@@ -329,6 +344,18 @@ describe("TenantPortalRegisterPage browser autofill", () => {
       "autocomplete",
       "off",
     )
+  })
+
+  it("shows the lock icon on the password and confirm password fields", async () => {
+    renderRegister()
+    await waitForRegisterForm()
+
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    ).toHaveClass("pl-9")
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    ).toHaveClass("pl-9")
   })
 
   it("enables submit after autofill-equivalent input events populate valid fields", async () => {

@@ -1,3 +1,6 @@
+import type { PricingUnit } from "@/api/generated/rentalPricing"
+import { isValidPrice } from "@/lib/parseLocalePrice"
+
 export type DayOfWeek =
   | "Sunday"
   | "Monday"
@@ -28,6 +31,9 @@ export const WEEKDAYS: readonly DayOfWeek[] = [
 export type PricingPattern = "sameEveryDay" | "weekendSpecial" | "perDay"
 
 export type PricingEditorState = {
+  pricingUnit: PricingUnit
+  /** Per-day units loaded from rows that disagree; kept on save until the user picks a unit. */
+  perDayUnits?: Partial<Record<DayOfWeek, PricingUnit>> | null
   pattern: PricingPattern
   startTime: string
   endTime: string
@@ -38,6 +44,7 @@ export type PricingEditorState = {
 }
 
 export type ExpandedPricingRow = {
+  pricingUnit?: PricingUnit
   dayOfWeek: DayOfWeek
   startTime: string
   endTime: string
@@ -58,6 +65,7 @@ function emptyPerDayPrices(): Record<DayOfWeek, number> {
 
 export function emptyPricingEditor(): PricingEditorState {
   return {
+    pricingUnit: "Hour",
     pattern: "sameEveryDay",
     startTime: "08:00",
     endTime: "22:00",
@@ -128,9 +136,11 @@ export function inferPricingPattern(
 }
 
 export function pricingEditorFromRows(
-  rows: readonly ExpandedPricingRow[],
+  allRows: readonly ExpandedPricingRow[],
 ): PricingEditorState {
   const base = emptyPricingEditor()
+  // R$ 0 rows are legacy blank per-day days; treat them as unset so the per-day mode round-trips.
+  const rows = allRows.filter((row) => row.pricePerHour > 0)
   if (rows.length === 0) {
     return base
   }
@@ -148,8 +158,16 @@ export function pricingEditorFromRows(
   const weekendPrice =
     pricesMatch(rows, ["Saturday", "Sunday"]) ?? everydayPrice
 
+  const firstUnit = rows[0]?.pricingUnit ?? "Hour"
+  const mixedUnits = rows.some((row) => (row.pricingUnit ?? "Hour") !== firstUnit)
+  const perDayUnits: Partial<Record<DayOfWeek, PricingUnit>> | null = mixedUnits
+    ? Object.fromEntries(rows.map((row) => [row.dayOfWeek, row.pricingUnit ?? "Hour"]))
+    : null
+
   return {
     pattern,
+    pricingUnit: firstUnit,
+    perDayUnits,
     startTime,
     endTime,
     everydayPrice,
@@ -165,6 +183,7 @@ export function expandPricingEditor(
   if (state.pattern === "sameEveryDay") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: state.everydayPrice,
@@ -174,6 +193,7 @@ export function expandPricingEditor(
   if (state.pattern === "weekendSpecial") {
     return DAYS.map((dayOfWeek) => ({
       dayOfWeek,
+      pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
       startTime: state.startTime,
       endTime: state.endTime,
       pricePerHour: isWeekendDay(dayOfWeek)
@@ -182,8 +202,10 @@ export function expandPricingEditor(
     }))
   }
 
-  return DAYS.map((dayOfWeek) => ({
+  // Per day: a blank day (0) is "no price that day" and is not saved as an R$ 0 row.
+  return DAYS.filter((dayOfWeek) => state.perDayPrices[dayOfWeek] > 0).map((dayOfWeek) => ({
     dayOfWeek,
+    pricingUnit: state.perDayUnits?.[dayOfWeek] ?? state.pricingUnit,
     startTime: state.startTime,
     endTime: state.endTime,
     pricePerHour: state.perDayPrices[dayOfWeek],
@@ -196,21 +218,16 @@ export function isPricingEditorValid(state: PricingEditorState): boolean {
   }
 
   if (state.pattern === "sameEveryDay") {
-    return Number.isFinite(state.everydayPrice) && state.everydayPrice >= 0
+    return isValidPrice(state.everydayPrice)
   }
 
   if (state.pattern === "weekendSpecial") {
-    return (
-      Number.isFinite(state.weekdayPrice) &&
-      state.weekdayPrice >= 0 &&
-      Number.isFinite(state.weekendPrice) &&
-      state.weekendPrice >= 0
-    )
+    return isValidPrice(state.weekdayPrice) && isValidPrice(state.weekendPrice)
   }
 
-  return DAYS.some(
-    (day) =>
-      Number.isFinite(state.perDayPrices[day]) &&
-      state.perDayPrices[day] >= 0,
+  // Per day: a blank day (0) keeps the previous "no price that day" behavior; typed values must be valid.
+  return (
+    DAYS.some((day) => isValidPrice(state.perDayPrices[day])) &&
+    DAYS.every((day) => state.perDayPrices[day] === 0 || isValidPrice(state.perDayPrices[day]))
   )
 }

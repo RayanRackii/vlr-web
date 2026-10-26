@@ -163,6 +163,10 @@ function staffSessionIsActive(): boolean {
   return token !== signedOutStaffAccessToken
 }
 
+export function hasActiveStaffSession(): boolean {
+  return staffSessionIsActive()
+}
+
 function customerSlug(
   pathname: string,
   hostSubdomain: string | null,

@@ -1,4 +1,5 @@
 import type { ReactElement } from "react"
+import { Navigate } from "react-router-dom"
 
 import { LoginPage } from "@/features/auth/LoginPage"
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
@@ -11,6 +12,10 @@ export const authManifest = {
   navigationItems: [],
   routes: { public: [
     { path: "/login", element: <LoginPage /> },
+    {
+      path: "/forgot-password",
+      element: <Navigate to="/login?forgot=1" replace />,
+    },
     { path: "/reset-password", element: <ResetPasswordPage /> },
     { path: "/invite", element: <SetPasswordPage /> },
   ] satisfies readonly FeatureRoute[] },

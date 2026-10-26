@@ -1,3 +1,4 @@
+import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
@@ -33,6 +34,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -54,6 +56,7 @@ import {
   type TemplateOption,
 } from "@/features/rentals/components/rentalResourceFormDefaults"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -64,7 +67,23 @@ type RentalResourceSheetProps = {
   families: readonly AssetFamily[]
   busy: boolean
   readOnly: boolean
+  pricePerHour?: number | null
+  pricingUnit?: PricingUnit
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
+}
+
+/** Form fields rendered outside the "basic" sheet tab, used to reveal the tab holding a validation error. */
+const SHEET_BASIC_FIELDS_EXCLUDED = {
+  pricing: new Set([
+    "cancelCutoffHours",
+    "cancelCutoffMode",
+    "horizonDays",
+    "horizonMode",
+    "queueEnabled",
+    "queueOpeningTime",
+    "requiresDeposit",
+  ]),
+  visual: new Set(["capacityPeople", "confirmVisualSuggestions", "visualTemplateRevisionId"]),
 }
 
 export function RentalResourceSheet({
@@ -76,6 +95,8 @@ export function RentalResourceSheet({
   families,
   busy,
   readOnly,
+  pricePerHour,
+  pricingUnit,
   onSubmit,
 }: RentalResourceSheetProps) {
   const { t } = useTranslation()
@@ -91,7 +112,10 @@ export function RentalResourceSheet({
   const [templateSearch, setTemplateSearch] = useState("")
   const [allSegments, setAllSegments] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [tagsExpanded, setTagsExpanded] = useState(false)
+  const [sheetTab, setSheetTab] = useState<"basic" | "pricing" | "visual">("basic")
   const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
+  const TAG_COLLAPSE_COUNT = 6
 
   useEffect(() => {
     if (!open) return
@@ -120,6 +144,7 @@ export function RentalResourceSheet({
         queueOpeningTimeRequired: t(
           "rentals.resources.validation.queueOpeningTimeRequired",
         ),
+        cancelCutoffRange: t("rentals.resources.validation.cancelCutoffRange"),
         horizonRange: t("rentals.resources.validation.horizonRange"),
       }),
     [t],
@@ -146,9 +171,25 @@ export function RentalResourceSheet({
     editedTemplateFieldsRef.current = new Set()
   }, [categories, editing, families, form, open, units])
 
+  const sheetOpenKey = open ? (editing?.id ?? "__new__") : null
+  const [trackedSheetOpenKey, setTrackedSheetOpenKey] = useState<string | null>(null)
+  if (sheetOpenKey !== trackedSheetOpenKey) {
+    setTrackedSheetOpenKey(sheetOpenKey)
+    if (sheetOpenKey !== null) {
+      setSheetTab("basic")
+      setTagsExpanded(false)
+    }
+  }
+
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
   const queueEnabled = watched.queueEnabled ?? false
+  const cancelCutoffMode = watched.cancelCutoffMode ?? "inherit"
+  const cancelCutoffItems = [
+    { value: "inherit", label: t("rentals.resources.form.cancelCutoffInherit") },
+    { value: "none", label: t("rentals.resources.form.cancelCutoffNone") },
+    { value: "hours", label: t("rentals.resources.form.cancelCutoffHours") },
+  ]
   const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
   const validation = formSchema.safeParse(watched)
   const isValid = validation.success
@@ -160,6 +201,10 @@ export function RentalResourceSheet({
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
     { value: "days", label: t("rentals.resources.form.horizonDaysMode") },
   ]
+  const horizonEffectiveSourceKey =
+    editing?.maxAdvanceBookingDays != null
+      ? "rentals.resources.form.horizonEffectiveSourceResource"
+      : "rentals.resources.form.horizonEffectiveSourcePolicy"
 
   const unitItems = unitOptions.map((unit) => ({ value: unit.id, label: unit.name }))
   const canCreateUnit = can("core.units.write") && !readOnly
@@ -248,11 +293,12 @@ export function RentalResourceSheet({
           <SheetDescription>
             {t("rentals.resources.formDescription")}
           </SheetDescription>
+          {editing ? <RentalResourceDetails asset={editing} pricePerHour={pricePerHour} pricingUnit={pricingUnit} /> : null}
         </SheetHeader>
 
         <Form {...form}>
           <form
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4"
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto px-4 py-4"
             onSubmit={(event) => {
               event.preventDefault()
               if (readOnly) {
@@ -264,9 +310,39 @@ export function RentalResourceSheet({
                 if (ok) {
                   onOpenChange(false)
                 }
+              }, (errors) => {
+                const fields = Object.keys(errors)
+                const inBasic = fields.some(
+                  (name) =>
+                    !SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name) &&
+                    !SHEET_BASIC_FIELDS_EXCLUDED.visual.has(name),
+                )
+                setSheetTab(
+                  inBasic
+                    ? "basic"
+                    : fields.some((name) => SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name))
+                      ? "pricing"
+                      : "visual",
+                )
               })(event)
             }}
           >
+            <Tabs
+              value={sheetTab}
+              onValueChange={(value) => {
+                if (value === "basic" || value === "pricing" || value === "visual") {
+                  setSheetTab(value)
+                }
+              }}
+              className="min-w-0 flex-col"
+            >
+              <TabsList className="h-auto w-full min-w-0 justify-start overflow-x-auto">
+                <TabsTrigger value="basic" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
+                <TabsTrigger value="pricing" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
+                <TabsTrigger value="visual" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
+              </TabsList>
+
+            <TabsContent value="basic" className="min-w-0 flex-1 space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -416,26 +492,6 @@ export function RentalResourceSheet({
               )}
             />
 
-            <section className="space-y-2 rounded-lg border border-border p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setAllSegments((current) => !current)}>
-                  {allSegments ? t("resourceVisual.useSegments") : t("resourceVisual.seeAll")}
-                </Button>
-              </div>
-              <label className="block text-sm font-medium" htmlFor="visual-template-search">{t("resourceVisual.searchTemplates")}</label>
-              <Input id="visual-template-search" value={templateSearch} onChange={(event) => setTemplateSearch(event.target.value)} placeholder={t("resourceVisual.searchTemplates")} />
-              <div className="flex flex-wrap gap-1" aria-label={t("resourceVisual.filterByTag")}>
-                <span className="basis-full text-sm font-medium">{t("resourceVisual.filterByTag")}</span>
-                {tags.map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
-              </div>
-              <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
-                <FormItem><FormLabel>{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
-              <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
-            </section>
-
             <FormField
               control={form.control}
               name="rentalType"
@@ -503,6 +559,29 @@ export function RentalResourceSheet({
               />
             ) : null}
 
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("rentals.resources.form.location")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      autoComplete="off"
+                      disabled={readOnly}
+                      placeholder={t(
+                        "rentals.resources.form.locationPlaceholder",
+                      )}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            </TabsContent>
+
+            <TabsContent value="pricing" className="min-w-0 flex-1 space-y-4">
             <FormField
               control={form.control}
               name="requiresDeposit"
@@ -605,10 +684,8 @@ export function RentalResourceSheet({
                   editing.effectiveMaxAdvanceBookingDays !== undefined ? (
                     <p className="text-sm text-muted-foreground">
                       {editing.effectiveMaxAdvanceBookingDays === null
-                        ? t(
-                            "rentals.resources.form.horizonEffectiveUnlimited",
-                          )
-                        : t("rentals.resources.form.horizonEffectiveDays", {
+                        ? t(horizonEffectiveSourceKey, { context: "unlimited" })
+                        : t(horizonEffectiveSourceKey, {
                             count: editing.effectiveMaxAdvanceBookingDays,
                           })}
                     </p>
@@ -647,26 +724,113 @@ export function RentalResourceSheet({
 
             <FormField
               control={form.control}
-              name="location"
+              name="cancelCutoffMode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("rentals.resources.form.location")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      autoComplete="off"
-                      disabled={readOnly}
-                      placeholder={t(
-                        "rentals.resources.form.locationPlaceholder",
-                      )}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
+                  <FormLabel>{t("rentals.resources.form.cancelCutoffLabel")}</FormLabel>
+                  <Select
+                    modal={false}
+                    onValueChange={(value) => {
+                      if (
+                        value === "inherit" ||
+                        value === "none" ||
+                        value === "hours"
+                      ) {
+                        field.onChange(value)
+                      }
+                    }}
+                    value={field.value}
+                    items={cancelCutoffItems}
+                    disabled={readOnly}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cancelCutoffItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editing &&
+                  editing.effectiveCancelCutoffHours !== undefined ? (
+                    <p className="text-sm text-muted-foreground">
+                      {editing.effectiveCancelCutoffHours === null
+                        ? t(
+                            "rentals.resources.form.cancelCutoffEffectiveNone",
+                          )
+                        : t("rentals.resources.form.cancelCutoffEffectiveHours", {
+                            count: editing.effectiveCancelCutoffHours,
+                          })}
+                    </p>
+                  ) : null}
                 </FormItem>
               )}
             />
 
-            <SheetFooter className="sticky bottom-0 -mx-4 -mb-4 border-t border-border bg-popover px-4">
+            {cancelCutoffMode === "hours" ? (
+              <FormField
+                control={form.control}
+                name="cancelCutoffHours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("rentals.resources.form.cancelCutoffHours")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        inputMode="numeric"
+                        disabled={readOnly}
+                        min={0}
+                        max={8760}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("rentals.resources.validation.cancelCutoffRange")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
+            </TabsContent>
+
+            <TabsContent value="visual" className="min-w-0 flex-1 space-y-2">
+              <section className="space-y-2 rounded-xl border border-border bg-muted/20 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setAllSegments((current) => !current)}>
+                    {allSegments ? t("resourceVisual.useSegments") : t("resourceVisual.seeAll")}
+                  </Button>
+                </div>
+                <label className="block text-sm font-medium" htmlFor="visual-template-search">{t("resourceVisual.searchTemplates")}</label>
+                <Input id="visual-template-search" value={templateSearch} onChange={(event) => setTemplateSearch(event.target.value)} placeholder={t("resourceVisual.searchTemplates")} />
+                <div className="flex flex-wrap items-center gap-1" aria-label={t("resourceVisual.filterByTag")}>
+                  <span className="basis-full text-sm font-medium">{t("resourceVisual.filterByTag")}</span>
+                  {(tagsExpanded ? tags : tags.slice(0, TAG_COLLAPSE_COUNT)).map((tag) => <Button key={tag.id} type="button" size="sm" variant={selectedTagIds.includes(tag.id) ? "default" : "outline"} aria-pressed={selectedTagIds.includes(tag.id)} onClick={() => setSelectedTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])}>{tag.nameI18n["pt-BR"] ?? tag.slug}</Button>)}
+                  {tags.length > TAG_COLLAPSE_COUNT ? (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setTagsExpanded((current) => !current)}>
+                      {tagsExpanded
+                        ? t("resourceVisual.showFewerTags")
+                        : t("resourceVisual.showMoreTags", { count: tags.length - TAG_COLLAPSE_COUNT })}
+                    </Button>
+                  ) : null}
+                </div>
+                <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
+                  <FormItem><FormLabel className="sr-only">{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
+              </section>
+            </TabsContent>
+            </Tabs>
+
+            <SheetFooter className="sticky -bottom-4 z-10 -mb-4 border-t border-border bg-popover px-4">
               <Button
                 type="button"
                 variant="outline"

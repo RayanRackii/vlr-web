@@ -16,7 +16,7 @@ export function PortalAgendaSlotsSkeleton({
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className="space-y-2 rounded-md border border-border px-3 py-2"
+          className="space-y-2 rounded-xl border border-border px-3 py-2.5"
         >
           <Skeleton variant="shimmer" className="h-4 w-24" />
           <Skeleton variant="shimmer" className="h-3 w-16" />

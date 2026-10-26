@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react"
 import { Link, useOutletContext, useParams } from "react-router-dom"
+import { Paperclip } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { productRequestStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import { productRequestStatusLabel } from "@/features/catalog/lib/productRequestStatusLabel"
 import {
   formatCatalogDate,
@@ -138,7 +140,7 @@ export function PortalProductRequestDetailPage() {
                 {formatCatalogDate(request.createdAt, i18n.language)}
               </p>
             </div>
-            <Badge variant="outline">
+            <Badge variant={productRequestStatusBadgeVariant(request.status)}>
               {productRequestStatusLabel(request.status, (key, options) =>
                 t(key, options),
               )}
@@ -175,17 +177,25 @@ export function PortalProductRequestDetailPage() {
                 {request.files.map((file) => {
                   const href = httpFileUrl(file.url)
                   return (
-                    <li key={file.id} className="px-4 py-3 text-sm">
+                    <li
+                      key={file.id}
+                      className="flex items-center gap-2 px-4 py-3 text-sm transition-colors duration-150 ease-out hover:bg-muted/40"
+                    >
+                      <Paperclip
+                        aria-hidden
+                        className="size-4 shrink-0 text-muted-foreground"
+                      />
                       {href ? (
                         <a
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="min-w-0 truncate underline-offset-2 hover:underline"
                         >
                           {file.fileName}
                         </a>
                       ) : (
-                        <span>{file.fileName}</span>
+                        <span className="min-w-0 truncate">{file.fileName}</span>
                       )}
                     </li>
                   )

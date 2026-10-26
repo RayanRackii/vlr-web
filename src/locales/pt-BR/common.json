@@ -101,6 +101,7 @@
     "loadCustomerProfile": "Não foi possível carregar o perfil.",
     "updateCustomerProfile": "Não foi possível atualizar o perfil.",
     "invalidPayload": "Dados inválidos recebidos da API.",
+    "moduleInactive": "Este módulo não está ativo neste ambiente.",
     "loadCatalogProducts": "Não foi possível carregar os produtos.",
     "loadCatalogProduct": "Não foi possível carregar o produto.",
     "saveCatalogProduct": "Não foi possível salvar o produto.",
@@ -185,12 +186,20 @@
   },
   "auth": {
     "sessionExpired": "Sessão expirada. Entre novamente.",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
+    "brandPanel": {
+      "title": "Uma plataforma para qualquer recurso reservável",
+      "body": "Agende, gerencie e cresça sua operação em um único workspace modular — feito para o seu negócio, não um modelo fechado.",
+      "footnote": "Usado por equipes que gerenciam reservas, ativos e operações de serviço."
+    },
     "invite": {
       "title": "Ativar conta",
       "welcome": "Bem-vindo ao Rolvix. Para ativar sua conta em {{tenant}}, defina uma senha segura abaixo.",
       "welcomeExisting": "Você já tem uma conta Rolvix. Entre com a senha de {{email}} para participar de {{tenant}}. Sua senha não será alterada.",
       "checking": "Verificando o convite...",
       "invalidLink": "Link de convite inválido ou expirado.",
+      "alreadyAccepted": "Este convite já foi aceito. Faça login para continuar.",
       "passwordLabel": "Nova senha",
       "confirmPasswordLabel": "Confirmar nova senha",
       "passwordPlaceholder": "Mínimo de 8 caracteres",
@@ -228,6 +237,7 @@
     "login": {
       "invalidCredentials": "E-mail ou senha inválidos.",
       "failed": "Não foi possível entrar. Tente novamente.",
+      "rateLimited": "Muitas tentativas de login. Aguarde um pouco e tente novamente.",
       "title": "Login",
       "subtitle": "Entre com suas credenciais para acessar a plataforma.",
       "emailLabel": "E-mail",
@@ -238,6 +248,7 @@
       "submitting": "Entrando...",
       "forgotPassword": "Esqueci a senha",
       "forgotSubmitting": "Enviando...",
+      "forgotEmailHint": "Informe seu e-mail acima para receber o link de redefinição.",
       "validation": {
         "emailRequired": "E-mail é obrigatório.",
         "emailInvalid": "Informe um e-mail válido.",
@@ -255,7 +266,7 @@
       "resetCompanyBack": "Voltar",
       "resetCompanyMin": "O identificador deve ter pelo menos 2 caracteres.",
       "resetCompanyMax": "O identificador deve ter no máximo 63 caracteres.",
-      "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou acme-clube)."
+      "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou rolvix-sp)."
     },
     "resetPassword": {
       "title": "Nova senha",
@@ -278,13 +289,18 @@
   "tenantPortal": {
     "sessionExpired": "Sessão expirada",
     "defaultTagline": "Entre para reservar e receber avisos.",
+    "authPanel": {
+      "poweredBy": "Tecnologia Rolvix"
+    },
     "header": {
       "ctaRegister": "Cadastrar"
     },
     "errors": {
       "title": "Portal indisponível",
-      "missingSubdomain": "Informe o endereço da empresa (ex.: /t/quadratenis).",
-      "tenantNotFound": "Empresa não encontrada ou inativa."
+      "missingSubdomain": "Informe o endereço da empresa (ex.: /t/empresa).",
+      "tenantNotFound": "Empresa não encontrada ou inativa.",
+      "loadFailed": "Não foi possível carregar o portal agora.",
+      "retry": "Tentar novamente"
     },
     "fields": {
       "name": "Nome completo",
@@ -356,7 +372,9 @@
       "resendSubmitting": "Reenviando...",
       "resendToast": "Se existir uma conta com este e-mail, enviamos um novo código.",
       "backToLogin": "Voltar ao login",
-      "rateLimited": "Muitas tentativas. Tente de novo em instantes."
+      "rateLimited": "Muitas tentativas. Tente de novo em instantes.",
+      "invalidLink": "Link inválido ou expirado. Solicite um novo código.",
+      "requestNewLink": "Solicitar novo código"
     },
     "register": {
       "title": "Criar conta",
@@ -379,7 +397,8 @@
     "verify": {
       "title": "Confirmar e-mail",
       "subtitle": "Digite o código de 6 dígitos enviado para {{maskedEmail}}.",
-      "expiresHint": "O código expira em 10 minutos. Se não chegar, reenvie após a espera.",
+      "expiresHint_one": "O código expira em {{count}} minuto. Se não chegar, reenvie após a espera.",
+      "expiresHint_other": "O código expira em {{count}} minutos. Se não chegar, reenvie após a espera.",
       "submit": "Confirmar",
       "submitting": "Verificando...",
       "resend": "Reenviar código",
@@ -419,19 +438,22 @@
       "reserving": "Reservando...",
       "available": "Disponível. Estimativa: {{amount}}",
       "quoteLoading": "Calculando o valor...",
-      "depositRequired": "Este espaço exige depósito. A reserva fica aguardando a confirmação do clube; esta tela não cobra.",
+      "depositRequired": "Este espaço exige depósito. A reserva fica aguardando a confirmação da equipe responsável; esta tela não cobra.",
       "total": "Total {{amount}}",
       "unavailable": "Horário indisponível.",
       "slotReserved": "Horário já reservado.",
       "legendAvailable": "Disponível",
       "legendUnavailable": "Indisponível",
+      "legendSelected": "Selecionado",
       "unplaced": "Outros espaços",
       "availabilityError": "Não foi possível verificar disponibilidade.",
       "slotsError": "Não foi possível carregar os horários do dia.",
-      "noSlots": "Nenhum horário disponível nesta data. O clube ainda pode não ter publicado a escala.",
+      "noSlots": "Nenhum horário disponível nesta data. A equipe responsável ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",
       "pastSlotsHidden": "Horários que já começaram hoje ficam ocultos.",
-      "horizonExceeded": "A data solicitada está além do horizonte de reserva.",
+      "horizonExceeded": "A data solicitada está além do limite de reserva.",
+      "horizonExceededDays_one": "Você pode reservar com até {{count}} dia de antecedência.",
+      "horizonExceededDays_other": "Você pode reservar com até {{count}} dias de antecedência.",
       "horizonAdjusted": "Essa data passa do horizonte de reserva. Mostrando a última data que ainda pode ser reservada.",
       "horizonHint": "Reservas disponíveis até {{date}} ({{count}} dias à frente)",
       "dateBeforeToday": "Essa data é anterior a hoje.",
@@ -441,12 +463,16 @@
       "reserveError": "Não foi possível criar a reserva.",
       "loadError": "Não foi possível carregar a agenda.",
       "myReservations": "Minhas reservas",
+      "groupUpcoming": "Próximas",
+      "groupPast": "Passadas",
+      "groupCancelled": "Canceladas",
       "pastReservation": "Reserva passada",
       "empty": "Nenhuma reserva ainda.",
       "cancel": "Cancelar",
       "cancelling": "Cancelando...",
       "cancelConfirmTitle": "Cancelar esta reserva?",
-      "cancelConfirmBody": "O horário volta a ficar disponível. Esta tela não cobra e não emite reembolso, inclusive se a reserva já estiver confirmada. O depósito, quando exigido, só é confirmado pelo clube; o cancelamento não movimenta pagamento aqui.",
+      "cancelConfirmBodyPaid": "O horário volta a ficar disponível. Qualquer reembolso de valores pagos será tratado pela empresa conforme a política dela; esta tela não processa reembolsos.",
+      "cancelConfirmBodyUnpaid": "O horário volta a ficar disponível. Esta tela não processa pagamentos nem reembolsos.",
       "cancelConfirmAction": "Confirmar cancelamento",
       "cancelConfirmDismiss": "Manter reserva",
       "cancelSuccess": "Reserva cancelada.",
@@ -454,7 +480,11 @@
       "dailyLimitReached": "Você atingiu o limite de {{count}} reservas ativas neste dia.",
       "dailyLimitReachedUnknown": "Você atingiu o limite de reservas ativas neste dia.",
       "slotJustTaken": "Este horário acabou de ser reservado. A agenda foi atualizada — escolha outro.",
-      "slotTaken": "Este horário já está reservado.",
+      "slotTaken": "Indisponível",
+      "allUnitsReserved": "Todas as unidades reservadas",
+      "periodIncludesBookedDay": "Período inclui dia já reservado",
+      "timeReserved": "Reservado",
+      "alreadyReserved": "Você já tem esta reserva.",
       "alreadyCancelled": "Esta reserva já estava cancelada.",
       "slotHeldByYou": "Você já reservou este horário. Veja em",
       "cancellationPolicyDefault": "Ao cancelar, o horário volta a ficar disponível para outras pessoas. Consulte as regras do estabelecimento.",
@@ -487,12 +517,31 @@
       },
       "selectionUnavailable": "Este horário não está mais disponível",
       "yourReservation": "Sua reserva",
-      "selectionExpired": "Sua seleção expirou"
+      "selectionExpired": "Sua seleção expirou",
+      "cancelDeadline": "Cancelável até {{when}}",
+      "noCancelDeadline": "Sem prazo de cancelamento",
+      "cancelEffectiveCutoff_one": "Prazo de cancelamento: {{count}} hora antes do início.",
+      "cancelEffectiveCutoff_other": "Prazo de cancelamento: {{count}} horas antes do início.",
+      "cancelCutoffPassed": "O prazo de cancelamento de {{hours}} horas antes do início já passou.",
+      "unitsBadge": "x{{count}}",
+      "durationLabel": "Duração",
+      "yourReservationUnits": "Sua reserva · {{count}} de {{total}} unidades",
+      "yourReservationUnitsReason": "Para mais unidades, cancele e reserve de novo com a quantidade desejada.",
+      "cancelCutoffReason": "Prazo de cancelamento encerrado",
+      "days": "Dias",
+      "daysSummary": "{{count}} dias · até {{until}}",
+      "reservationQuantitySuffix_one": "x {{count}} unidade",
+      "reservationQuantitySuffix_other": "x {{count}} unidades",
+      "reservationDaysSuffix_one": "{{count}} dia",
+      "reservationDaysSuffix_other": "{{count}} dias",
+      "quoteFixedLine_one": "{{price}} (total fixo)",
+      "quoteFixedLine_other": "{{price}} · {{count}} unidades (total fixo)",
+      "quoteUnitMultiplier": "× {{count}}"
     },
     "menu": {
       "empty": "Nenhum módulo disponível.",
       "emptyTitle": "Nada por aqui ainda",
-      "emptyDescription": "O administrador do clube ainda não configurou itens de menu para o portal."
+      "emptyDescription": "O administrador ainda não configurou itens de menu para o portal."
     },
     "profile": {
       "title": "Meu Perfil",
@@ -592,8 +641,10 @@
       "cancelRequestTitle": "Cancelar esta solicitação?",
       "cancelRequestBody": "Confirme o cancelamento da solicitação. Esta ação não pode ser desfeita.",
       "requestCancelled": "Solicitação cancelada.",
-      "cancelRequestError": "Não foi possível cancelar a solicitação."
-    }
+      "cancelRequestError": "Não foi possível cancelar a solicitação.",
+      "unitPrice": "{{price}} / un"
+    },
+    "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
   "catalog": {
     "retry": "Tentar novamente",
@@ -1118,7 +1169,7 @@
     "catalog": "Catálogo & Pedidos",
     "catalogProducts": "Produtos",
     "catalogOrders": "Pedidos",
-    "catalogNotifications": "Notificações",
+    "catalogNotifications": "Notificações do catálogo",
     "taxonomy": "Categorias e tags",
     "notifications": "Notificações",
     "peopleAccess": "Pessoas e acesso",
@@ -1129,6 +1180,8 @@
     "menu": "Menu de navegação",
     "openMenu": "Abrir menu de navegação",
     "loading": "Carregando menu de navegação",
+    "collapseMenu": "Recolher menu",
+    "expandMenu": "Expandir menu",
     "sections": {
       "overview": "Visão geral",
       "peoplePortal": "Pessoas & portal",
@@ -1141,11 +1194,23 @@
   "taxonomy": {
     "title": "Categorias e tags",
     "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",
-    "categories": "Categorias", "tags": "Tags", "newCategory": "Nova categoria", "newTag": "Nova tag",
-    "name": "Nome", "slug": "Slug", "parent": "Categoria pai", "icon": "Ícone", "order": "Ordem",
-    "assignment": "Categorias e tags", "saved": "Categorias e tags salvas.", "deleted": "Definição excluída.",
+    "categories": "Categorias",
+    "tags": "Tags",
+    "newCategory": "Nova categoria",
+    "newTag": "Nova tag",
+    "name": "Nome",
+    "slug": "Slug",
+    "parent": "Categoria pai",
+    "icon": "Ícone",
+    "order": "Ordem",
+    "assignment": "Categorias e tags",
+    "saved": "Categorias e tags salvas.",
+    "deleted": "Definição excluída.",
     "deleteConfirm": "Excluir {{name}}? Esta ação só é permitida quando a definição não estiver em uso.",
-    "errors": { "duplicate": "Já existe uma definição com esse slug ou nome.", "inUse": "Esta definição está em uso e não pode ser excluída." }
+    "errors": {
+      "duplicate": "Já existe uma definição com esse slug ou nome.",
+      "inUse": "Esta definição está em uso e não pode ser excluída."
+    }
   },
   "account": {
     "title": "Conta",
@@ -1292,15 +1357,15 @@
       },
       "reservedRevenue": {
         "title": "Receita reservada",
-        "subtitle": "Pending + confirmed no mês"
+        "subtitle": "Pendentes + confirmadas no mês"
       },
       "rentableSpaces": {
         "title": "Espaços alugáveis",
-        "subtitle": "Família spaces + rentável"
+        "subtitle": "Família de espaços + alugável"
       },
       "rentableGoods": {
         "title": "Bens alugáveis",
-        "subtitle": "Família goods + rentável"
+        "subtitle": "Família de bens + alugável"
       },
       "activePlans": {
         "title": "Planos ativos",
@@ -1429,8 +1494,8 @@
         "generic": "Tipos"
       },
       "description": {
-        "rentals": "Tipos para agrupar recursos (ex.: Quadra, Caçamba, Sala).",
-        "spaces": "Tipos de espaço (ex.: Quadra, Sala, Court).",
+        "rentals": "Tipos para agrupar recursos (ex.: Espaço, Equipamento, Sala).",
+        "spaces": "Tipos de espaço (ex.: Espaço, Sala, Área externa).",
         "goods": "Tipos de bem (ex.: Caçamba, Equipamento móvel).",
         "electrical": "Tipos elétricos (ex.: Quadro, Split, Transformador).",
         "maintenance": "Tipos de equipamento (ex.: Split, Caldeira).",
@@ -1438,8 +1503,8 @@
       },
       "loading": "Carregando tipos...",
       "empty": {
-        "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Caçamba).",
-        "spaces": "Nenhum tipo ainda — crie o primeiro (ex.: Quadra ou Sala).",
+        "rentals": "Nenhum tipo ainda — crie o primeiro (ex.: Espaço ou Equipamento).",
+        "spaces": "Nenhum tipo ainda — crie o primeiro (ex.: Espaço ou Sala).",
         "goods": "Nenhum tipo ainda — crie o primeiro (ex.: Caçamba).",
         "electrical": "Nenhum tipo ainda — crie o primeiro (ex.: Quadro elétrico).",
         "maintenance": "Nenhum tipo ainda — crie o primeiro (ex.: Split).",
@@ -1479,8 +1544,8 @@
           "generic": "Novo tipo"
         },
         "description": {
-          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Quadra de tênis).",
-          "spaces": "Defina um tipo de espaço (ex.: Quadra de tênis, Sala).",
+          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Área externa).",
+          "spaces": "Defina um tipo de espaço (ex.: Sala, Área externa).",
           "goods": "Defina um tipo de bem (ex.: Caçamba).",
           "electrical": "Cadastre o modelo base dos equipamentos elétricos.",
           "maintenance": "Cadastre o modelo base usado pelos equipamentos.",
@@ -1492,8 +1557,8 @@
       "form": {
         "name": "Nome",
         "namePlaceholder": {
-          "rentals": "Ex.: Quadra, Caçamba, Sala",
-          "spaces": "Ex.: Quadra, Sala",
+          "rentals": "Ex.: Espaço, Equipamento, Sala",
+          "spaces": "Ex.: Espaço, Sala",
           "goods": "Ex.: Caçamba",
           "electrical": "Ex.: Quadro elétrico, Split",
           "maintenance": "Ex.: Ar-condicionado Split 12k BTUs",
@@ -1533,7 +1598,7 @@
       },
       "description": {
         "rentals": "Recursos que você oferece (espaços, bens…). Cadastre cada um e marque o que pode ser reservado.",
-        "spaces": "Espaços alugáveis (quadras, salas…). Cadastre cada um e marque o que pode ser reservado.",
+        "spaces": "Espaços alugáveis, como salas e áreas externas. Cadastre cada um e marque o que pode ser reservado.",
         "goods": "Bens e itens (caçambas…). Cadastre cada um e organize por tipo.",
         "electrical": "Equipamentos elétricos do site. Use tipos e atributos (voltagem, fabricante).",
         "maintenance": "Equipamentos e instalações do site. Use tipos para organizar e vincular manutenção.",
@@ -1549,8 +1614,8 @@
         "generic": "Nenhum recurso cadastrado ainda."
       },
       "emptyNoTypes": {
-        "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Quadra, Caçamba).",
-        "spaces": "Antes de cadastrar espaços, defina os tipos (ex.: Quadra, Sala).",
+        "rentals": "Antes de cadastrar recursos, defina os tipos (ex.: Espaço, Equipamento).",
+        "spaces": "Antes de cadastrar espaços, defina os tipos (ex.: Espaço, Sala).",
         "goods": "Antes de cadastrar bens, defina os tipos (ex.: Caçamba).",
         "electrical": "Antes de cadastrar equipamentos, defina os tipos elétricos.",
         "maintenance": "Antes de cadastrar recursos, defina os tipos de equipamento.",
@@ -1599,8 +1664,8 @@
           "generic": "Adicionar recursos em lote"
         },
         "description": {
-          "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Quadra-01, Quadra-02).",
-          "spaces": "Gere uma sequência de espaços com o mesmo tipo e tags numeradas (ex.: Quadra-01).",
+          "rentals": "Gere uma sequência com o mesmo tipo e tags numeradas (ex.: Espaco-01, Espaco-02).",
+          "spaces": "Gere uma sequência de espaços com o mesmo tipo e tags numeradas (ex.: Espaco-01).",
           "goods": "Gere uma sequência de bens com o mesmo tipo e tags numeradas.",
           "electrical": "Gere uma sequência de equipamentos elétricos com tags numeradas.",
           "maintenance": "Gere uma sequência de equipamentos com o mesmo tipo e tags numeradas.",
@@ -1677,13 +1742,13 @@
         "capacity": "Capacidade"
       },
       "placeholders": {
-        "name": "Ex.: Quadra 1 — coberta",
+        "name": "Ex.: Espaço 1 — coberto",
         "tag": "Ex.: Q-01",
         "location": "Ex.: Bloco A, piso térreo"
       },
       "help": {
         "unit": "Local físico deste recurso (sede, filial). Criada automaticamente no cadastro do cliente; gestão de unidades virá depois.",
-        "category": "Tipo/classificação do recurso (ex.: Quadra de tênis). Defina tipos em Ativos → Tipos.",
+        "category": "Tipo/classificação do recurso (ex.: Área externa). Defina tipos em Ativos → Tipos.",
         "family": "Família de atributos (espaços, bens, elétricos…). Controla campos extras do formulário.",
         "name": "Nome amigável exibido na agenda e nas listas.",
         "tag": "Código curto único para identificar o recurso (ex.: Q-01).",
@@ -1699,7 +1764,7 @@
         "queueEnabled": "Se ligado, os clientes entram numa fila FIFO para reservar este espaço no horário de abertura. Desligado por padrão.",
         "queueOpeningTime": "Horário em que as reservas abrem (fuso de Brasília). A sala de espera abre 30 minutos antes.",
         "requiresMaintenanceHint": "Este recurso poderá ser vinculado a planos PMOC e ordens de serviço.",
-        "rentalType": "Espaço (quadra/sala) ou bem (equipamento emprestado).",
+        "rentalType": "Espaço (sala ou área externa) ou bem (equipamento emprestado).",
         "totalQuantity": "Quantidade disponível para reserva simultânea (bens) ou capacidade lógica.",
         "stockQuantity": "Quantidade deste bem. O lote cria um único recurso com este estoque, sem gerar itens numerados."
       },
@@ -1715,6 +1780,10 @@
         "review": "Revisão"
       },
       "pricing": {
+        "priceErrors": {"required": "Informe o valor.", "invalid": "Valor inválido. Use o formato 12,50.", "notPositive": "O valor deve ser maior que zero.", "tooLarge": "O valor máximo é R$ {{max}}."},
+        "unitLabel": "Unidade de preço",
+        "units": {"Hour": "Por hora", "Slot": "Por horário", "Day": "Por dia", "Fixed": "Fixo", "mixed": "Unidades diferentes por dia (escolha uma para unificar)"},
+        "priceLabels": {"Hour": "Preço por hora", "Slot": "Preço por horário", "Day": "Preço por dia", "Fixed": "Preço fixo"},
         "patternLabel": "Como o preço se repete na semana",
         "everydayPrice": "Preço por hora",
         "everydayPriceHelp": "O mesmo valor vale para todos os dias, no intervalo abaixo.",
@@ -1743,7 +1812,11 @@
       "back": "Voltar",
       "finish": "Concluir",
       "review": {
-        "stockQuantity": "Quantidade em estoque"
+        "stockQuantity": "Quantidade em estoque",
+        "pricingUnitLabel": "Unidade de preço",
+        "priceLabel": "Preço",
+        "perDayPricesLabel": "Preços por dia",
+        "unitPrice": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"}
       },
       "success": {
         "create": "Recurso criado com sucesso.",
@@ -1786,7 +1859,7 @@
         "totalQuantity": "Quantidade total"
       },
       "rentalTypes": {
-        "Location": "Espaço (quadra, sala, pista)",
+        "Location": "Espaço (sala, área externa ou pista)",
         "Good": "Bem (colete, bola, caçamba)"
       },
       "actions": {
@@ -1821,6 +1894,7 @@
         "invalidResponse": "Resposta inválida da API.",
         "pricingLoadFailed": "Não foi possível carregar os preços.",
         "pricingCreateFailed": "Não foi possível criar a faixa de preço.",
+        "pricingUpdateFailed": "Não foi possível atualizar o preço.",
         "pricingDeleteFailed": "Não foi possível remover a faixa de preço.",
         "pricingBulkFailed": "Não foi possível aplicar os preços em lote."
       }
@@ -2282,7 +2356,7 @@
     "role": "Função",
     "permissions": "Permissões",
     "accessProfile": "Perfil de acesso",
-    "moduleInactive": "Módulo não ativo para este tenant",
+    "moduleInactive": "Este módulo não está ativo neste ambiente.",
     "status": {
       "active": "Ativo",
       "inactive": "Inativo"
@@ -2522,7 +2596,7 @@
       "add": "+ Adicionar item",
       "addFirst": "Adicionar primeiro item",
       "label": "Nome exibido",
-      "labelPlaceholder": "Ex.: Alugar quadra de tênis",
+      "labelPlaceholder": "Ex.: Reservar um espaço",
       "functionality": "Funcionalidade",
       "destination": "Destino",
       "destinationGeneralAgenda": "Agenda geral",
@@ -2830,7 +2904,7 @@
       "families": {
         "hint": "Escolha ao menos uma família de recursos. Isso define os formulários de cadastro de ativos.",
         "descriptions": {
-          "spaces": "Quadras, salas e espaços reserváveis.",
+          "spaces": "Salas, áreas externas e espaços reserváveis.",
           "electrical": "Equipamentos e instalações elétricas.",
           "goods": "Bens, caçambas e itens físicos.",
           "generic": "Recursos sem categoria específica."
@@ -2848,7 +2922,7 @@
         "primaryColor": "Cor primária",
         "accentColor": "Cor de destaque",
         "welcomeTagline": "Frase de boas-vindas (opcional)",
-        "welcomeTaglinePlaceholder": "Ex.: Reserve sua quadra em poucos toques",
+        "welcomeTaglinePlaceholder": "Ex.: Reserve um espaço em poucos toques",
         "adminFullName": "Nome do admin",
         "adminFullNamePlaceholder": "Ex.: Maria Silva",
         "adminEmail": "E-mail do admin"
@@ -2883,7 +2957,7 @@
         "taxIdMax": "O documento deve ter no máximo 20 caracteres.",
         "subdomainMin": "O subdomínio deve ter pelo menos 2 caracteres.",
         "subdomainMax": "O subdomínio deve ter no máximo 63 caracteres.",
-        "subdomainFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou acme-clube).",
+        "subdomainFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou rolvix-sp).",
         "logoSvgInvalid": "O logo deve ser um markup SVG (incluir <svg).",
         "hexColorInvalid": "Informe uma cor hexadecimal válida (ex.: #1E293B).",
         "welcomeTaglineMax": "A frase de boas-vindas deve ter no máximo 120 caracteres.",
@@ -2920,7 +2994,7 @@
     "teacherLessons": {
       "title": "Aulas",
       "description": "Crie ou remova aulas somente na data selecionada. A grade semanal não será alterada.",
-      "court": "Quadra",
+      "court": "Espaço",
       "date": "Data",
       "availableTime": "Horário disponível",
       "chooseTime": "Selecione um horário",
@@ -2975,10 +3049,12 @@
       },
       "grid": {
         "empty": "Horário vazio",
-        "noSelection": "Selecione um ou mais espaços / bens para ver a grade."
+        "noSelection": "Selecione um ou mais espaços / bens para ver a grade.",
+        "legendLabel": "Legenda",
+        "minimumLeadTime": "Fora do prazo mínimo de antecedência"
       },
-      "dayOnlyBanner": "Alterações nesta grade valem somente para {{date}}. A regra semanal fica em Configuração semanal.",
-      "weeklyBanner": "Esta grade é a regra de todas as {{day}}. A Agenda do dia só altera uma data.",
+      "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
+      "weeklyBanner": "Esta grade se repete toda semana neste dia ({{day}}). A Agenda do dia só altera uma data.",
       "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
       "weekly": {
         "configureHours": "Configurar horários"
@@ -2994,6 +3070,12 @@
       "templatesFineEditRentable": "Editar grade de",
       "weeklyConfigHint": "Horário padrão e Grade personalizada se repetem por dia da semana. A Agenda do dia só altera uma data.",
       "dayTitle": "Agenda do dia",
+      "occupancyKindLabel": "Tipo",
+      "occupancyKinds": {
+        "open": "Aberto",
+        "closed": "Fechado",
+        "lesson": "Aula"
+      },
       "dayEmpty": "Nenhum horário neste dia. Crie a grade em Configuração semanal.",
       "dayEmptyTitle": "Nenhum horário neste dia",
       "dayEmptyDescription": "Em Configuração semanal, crie a grade. Os horários deste dia aparecem automaticamente.",
@@ -3036,6 +3118,10 @@
           "booked": "Reservado",
           "unavailable": "Indisponível"
         },
+        "unitsBooked": "Reservado · {{booked}} de {{total}}",
+        "unitsFree_one": "{{count}} livre",
+        "unitsFree_other": "{{count}} livres",
+        "unitsChooserTitle": "Escolha uma reserva",
         "source": {
           "weeklyDefault": "Padrão semanal",
           "dailyOverride": "Ajuste deste dia"
@@ -3060,7 +3146,11 @@
         "saveOpenHoursSuccess": "Horário padrão salvo. Os intervalos do dia aparecem automaticamente.",
         "saveSlotGridSuccess": "Grade personalizada ativa.",
         "saveError": "Não foi possível salvar a configuração dos horários.",
-        "derivedSlotsHint": "Intervalos gerados automaticamente a partir do horário padrão (não é preciso publicar o dia)."
+        "derivedSlotsHint": "Intervalos gerados automaticamente a partir do horário padrão (não é preciso publicar o dia).",
+        "durationMinutes": "Durações (min; separe por vírgula)",
+        "durationMinutesHint": "Separe os valores por vírgula. Exemplo: 60, 120, 240.",
+        "durationMinutesInvalid": "Informe durações em minutos inteiros positivos, separadas por vírgula.",
+        "slotGridDurationsHint": "Opcional. Durações (em minutos) que o cliente pode reservar juntando horários seguidos, ex.: 30,60,90. Vazio = várias faixas desligado."
       },
       "weeklyRule": {
         "title": "Criar regra semanal",
@@ -3072,7 +3162,10 @@
       "tabs": {
         "daily": "Agenda do dia",
         "templates": "Configuração semanal",
-        "kinds": "Tipos de ocupação"
+        "kinds": "Tipos de ocupação",
+        "dailyShort": "Dia",
+        "templatesShort": "Semana",
+        "kindsShort": "Tipos"
       },
       "days": {
         "Sunday": "Domingo",
@@ -3093,10 +3186,12 @@
         "descriptionField": "Descrição",
         "iconKey": "Ícone",
         "color": "Cor",
+        "appearanceSection": "Aparência",
         "sortOrder": "Ordem",
         "bookable": "Reservável pelo cliente",
         "notBookable": "Não reservável",
         "blocksCapacity": "Bloqueia capacidade",
+        "behaviorSection": "Comportamento",
         "placeholders": {
           "key": "ex.: open, lesson",
           "label": "ex.: Aberto, Aula"
@@ -3140,7 +3235,7 @@
       "description": "Cadastre espaços e itens alugáveis da operação.",
       "add": "Adicionar recurso",
       "edit": "Editar recurso",
-      "formDescription": "Espaço (quadra, sala) ou item alugável. Não use esta tela para cadastro geral de inventário.",
+      "formDescription": "Espaço (sala ou área externa) ou item alugável. Não use esta tela para cadastro geral de inventário.",
       "saveCreate": "Criar recurso",
       "saveEdit": "Salvar recurso",
       "emptyTitle": "Nenhum recurso disponível para aluguel",
@@ -3150,13 +3245,35 @@
       "loadError": "Não foi possível carregar os recursos.",
       "createSuccess": "Recurso criado.",
       "updateSuccess": "Recurso atualizado.",
+      "cutoffNotSaved": "O recurso foi salvo, mas o prazo de cancelamento não foi aplicado. Tente novamente.",
       "createError": "Não foi possível criar o recurso.",
       "updateError": "Não foi possível atualizar o recurso.",
+      "errorKinds": {
+        "network": "Sem conexão com o servidor. Verifique sua internet e tente novamente.",
+        "permission": "Você não tem permissão para esta ação ou sua sessão expirou.",
+        "validation": "Dados inválidos. Revise os campos e tente novamente.",
+        "server": "Erro no servidor. Tente novamente em instantes."
+      },
       "typeLocation": "Espaço",
       "typeGood": "Item alugável",
+      "sheetTabs": {
+        "basic": "Básico",
+        "pricingRules": "Preço e regras",
+        "visual": "Visual"
+      },
+      "details": {
+        "pricePerHour": "A partir de: {{amount}}/h",
+        "prices": {"Hour": "A partir de: {{amount}} por hora", "Slot": "A partir de: {{amount}} por horário", "Day": "A partir de: {{amount}} por dia", "Fixed": "A partir de: {{amount}} fixo"},
+        "allowedDurations": "Durações: {{durations}}",
+        "capacity_one": "Capacidade: {{count}} pessoa",
+        "capacity_other": "Capacidade: {{count}} pessoas",
+        "capacityUnknown": "Capacidade não informada",
+        "durationHours": "{{count}} h",
+        "durationMinutes": "{{count}} min"
+      },
       "form": {
         "name": "Nome",
-        "namePlaceholder": "Ex.: Quadra 1",
+        "namePlaceholder": "Ex.: Espaço 1",
         "tag": "Identificador",
         "tagPlaceholder": "Ex.: Q-01",
         "unit": "Unidade",
@@ -3180,7 +3297,20 @@
         "horizonHint": "Defina até quando clientes podem reservar este recurso.",
         "horizonTechnicalHelp": "Usar o padrão do ambiente segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "Em vigor: ilimitado (sem limite).",
-        "horizonEffectiveDays": "Em vigor: {{count}} dias à frente."
+        "horizonEffectiveDays": "Em vigor: {{count}} dias à frente.",
+        "cancelCutoffLabel": "Prazo de cancelamento",
+        "cancelCutoffInherit": "Herdar da política",
+        "cancelCutoffNone": "Sem prazo (voltar à política)",
+        "cancelCutoffHours": "Horas antes do início",
+        "cancelCutoffEffectiveNone": "Efetivo: sem prazo",
+        "cancelCutoffEffectiveHours_one": "Efetivo: {{count}} hora antes do início",
+        "cancelCutoffEffectiveHours_other": "Efetivo: {{count}} horas antes do início",
+        "horizonEffectiveSourceResource_one": "Em vigor: {{count}} dia (definido neste recurso)",
+        "horizonEffectiveSourceResource_other": "Em vigor: {{count}} dias (definido neste recurso)",
+        "horizonEffectiveSourceResource_unlimited": "Em vigor: ilimitado (definido neste recurso)",
+        "horizonEffectiveSourcePolicy_one": "Em vigor: {{count}} dia (da Política de reservas)",
+        "horizonEffectiveSourcePolicy_other": "Em vigor: {{count}} dias (da Política de reservas)",
+        "horizonEffectiveSourcePolicy_unlimited": "Em vigor: ilimitado (da Política de reservas)"
       },
       "inlineCreate": {
         "categoryAction": "+ criar tipo",
@@ -3209,7 +3339,8 @@
         "familyRequired": "Selecione a família.",
         "quantityMin": "A quantidade deve ser pelo menos 1.",
         "queueOpeningTimeRequired": "Informe o horário de abertura da fila.",
-        "horizonRange": "Informe um inteiro de 0 a 3650."
+        "horizonRange": "Informe um inteiro de 0 a 3650.",
+        "cancelCutoffRange": "Informe um número inteiro de 0 a 8760 horas."
       }
     },
     "layout": {
@@ -3233,7 +3364,7 @@
       "blockSize": "Tamanho do bloco",
       "width": "Largura",
       "height": "Altura",
-      "courtPreset": "Quadra 2:1",
+      "courtPreset": "Retângulo 2:1",
       "widePreset": "Retangular",
       "squarePreset": "Quadrado",
       "stripPreset": "Faixa",
@@ -3276,6 +3407,9 @@
       "date": "Data",
       "status": "Status",
       "statusAll": "Todos",
+      "viewDay": "Dia",
+      "viewWeek": "Semana",
+      "viewMonth": "Mês",
       "empty": "Nenhuma reserva neste filtro.",
       "confirm": "Confirmar",
       "cancel": "Cancelar",
@@ -3285,6 +3419,11 @@
       "confirmError": "Não foi possível confirmar a reserva.",
       "cancelSuccess": "Reserva cancelada.",
       "cancelError": "Não foi possível cancelar a reserva.",
+      "cancelConfirmTitle": "Cancelar reserva?",
+      "cancelConfirmDescription": "Esta ação não pode ser desfeita.",
+      "cancelConfirmDismiss": "Manter reserva",
+      "cancelConfirmAction": "Cancelar reserva",
+      "cancelConfirmTotal": "Total: {{amount}}",
       "completeSuccess": "Reserva concluída.",
       "completeError": "Não foi possível concluir a reserva.",
       "statuses": {
@@ -3292,11 +3431,12 @@
         "Confirmed": "Confirmada",
         "Canceled": "Cancelada",
         "Completed": "Concluída"
-      }
+      },
+      "multiDayRange": "{{start}} – {{end}} ({{days}} dias)"
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina o texto de cancelamento, até quantos dias à frente o cliente pode reservar um recurso e o limite diário de reservas ativas por cliente. Vale para todos os recursos deste ambiente.",
+      "description": "Defina o texto de cancelamento, até quantos dias à frente o cliente pode reservar um recurso e o limite diário de reservas ativas por cliente. Vale para todos os recursos deste ambiente, exceto onde um recurso define o próprio valor.",
       "cancellationLabel": "Texto de cancelamento",
       "cancellationHint": "Texto simples, sem formatação. Até 2000 caracteres. Em branco, o portal mostra uma nota neutra: o horário volta a ficar disponível e a pessoa deve consultar as regras.",
       "cancellationPlaceholder": "Texto simples exibido ao cancelar uma reserva.",
@@ -3309,7 +3449,7 @@
       "horizonDaysMode": "Número de dias",
       "horizonDays": "Dias à frente",
       "horizonHintUnlimited": "Ilimitado significa sem limite para reservar um recurso.",
-      "horizonHintDays": "Uma data até esse número de dias à frente é aceita. O dia seguinte é recusado (booking_horizon_exceeded).",
+      "horizonHintDays": "Uma data até esse número de dias à frente é aceita. O dia seguinte fica fora do limite de reserva.",
       "save": "Salvar",
       "saved": "Política de reservas salva.",
       "loadError": "Não foi possível carregar a política de reservas.",
@@ -3319,17 +3459,106 @@
       "validation": {
         "textMax": "O texto pode ter no máximo 2000 caracteres.",
         "limitRange": "Informe um inteiro de 1 a 100.",
-        "horizonRange": "Informe um inteiro de 0 a 3650."
-      }
+        "horizonRange": "Informe um inteiro de 0 a 3650.",
+        "cancelCutoffRange": "Informe um número inteiro de 0 a 8760 horas."
+      },
+      "cancelCutoffLabel": "Prazo de cancelamento",
+      "cancelCutoffNone": "Sem prazo",
+      "cancelCutoffHoursMode": "N horas antes do início",
+      "cancelCutoffHours": "Horas antes do início",
+      "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início.",
+      "categories": {"title": "Por categoria", "description": "Vale para os recursos da categoria. Deixe em branco para usar o valor geral acima. Um valor definido no próprio recurso tem prioridade.", "horizonDays": "Antecedência máxima (dias)", "cancelCutoffHours": "Cancelamento até (horas antes)", "inherit": "Geral", "save": "Salvar", "saved": "Política da categoria salva.", "invalid": "Use um número inteiro ou deixe em branco.", "empty": "Nenhuma categoria com recursos reserváveis."}
     }
   },
   "resourceVisual": {
     "tenantSegmentsTitle": "Segmentos do tenant: {{tenantName}}",
-    "title": "Catálogo visual de recursos", "help": "Gerencie modelos, arte publicada e classificações globais.", "newTemplate": "Novo modelo", "editTemplate": "Editar modelo", "cancelEdit": "Cancelar edição", "name": "Nome", "slug": "Identificador", "description": "Descrição", "tags": "Tags", "revision": "Nova revisão", "floor": "Arte do piso SVG", "lines": "Arte das linhas SVG", "publish": "Publicar", "draft": "Rascunho", "publishedStatus": "Publicado", "noRevision": "Sem revisão publicada", "saved": "Alterações salvas.", "published": "Revisão publicada.", "error": "Não foi possível concluir a alteração.", "validation": "Informe o nome e o identificador.", "deleteTagTitle": "Excluir tag?", "deleteTagDescription": "Esta ação não pode ser desfeita.", "segmentsTitle": "Segmentos do tenant", "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.", "enabledTemplates": "Modelos habilitados", "noEnabledTemplates": "Nenhum modelo corresponde aos segmentos selecionados.", "pickerTitle": "Modelo visual", "seeAll": "Ver todos", "useSegments": "Usar segmentos", "searchTemplates": "Buscar modelos", "filterByTag": "Filtrar por tag", "noTemplate": "Sem modelo", "capacityPeople": "Capacidade de pessoas (opcional)", "applySuggestions": "Aplicar sugestões do modelo", "applySuggestionsHelp": "Preenche a capacidade e os horários sugeridos pelo modelo.", "tagKindSegment": "Segmento", "tagKindAttribute": "Atributo", "thumbnailAlt": "Prévia de {{name}}", "thumbnailPlaceholder": "Prévia indisponível", "mapSettings": "Configurações do mapa", "mapSettingsHelp": "Padrão é o mapa aberto primeiro pelos clientes. Visível no portal é um mapa listado para eles.", "defaultMap": "Padrão", "alreadyDefault": "Já é o padrão", "showPrice": "Exibir preço no bloco", "defaultView": "Visualização padrão", "timeFilter": "Filtro de horário", "fromTime": "A partir do horário", "availableColor": "Cor disponível", "takenColor": "Cor ocupado", "setDefaultMap": "Definir mapa padrão"
+    "title": "Catálogo visual de recursos",
+    "help": "Gerencie modelos, arte publicada e classificações globais.",
+    "newTemplate": "Novo modelo",
+    "editTemplate": "Editar modelo",
+    "cancelEdit": "Cancelar edição",
+    "name": "Nome",
+    "slug": "Identificador",
+    "description": "Descrição",
+    "tags": "Tags",
+    "revision": "Nova revisão",
+    "floor": "Arte do piso SVG",
+    "lines": "Arte das linhas SVG",
+    "publish": "Publicar",
+    "draft": "Rascunho",
+    "publishedStatus": "Publicado",
+    "noRevision": "Sem revisão publicada",
+    "saved": "Alterações salvas.",
+    "published": "Revisão publicada.",
+    "error": "Não foi possível concluir a alteração.",
+    "validation": "Informe o nome e o identificador.",
+    "deleteTagTitle": "Excluir tag?",
+    "deleteTagDescription": "Esta ação não pode ser desfeita.",
+    "segmentsTitle": "Segmentos do tenant",
+    "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.",
+    "enabledTemplates": "Modelos habilitados",
+    "noEnabledTemplates": "Nenhum modelo corresponde aos segmentos selecionados.",
+    "pickerTitle": "Modelo visual",
+    "seeAll": "Ver todos",
+    "useSegments": "Usar segmentos",
+    "searchTemplates": "Buscar modelos",
+    "filterByTag": "Filtrar por tag",
+    "showMoreTags": "+{{count}} mais",
+    "showFewerTags": "Mostrar menos",
+    "noTemplate": "Sem modelo",
+    "capacityPeople": "Capacidade de pessoas (opcional)",
+    "applySuggestions": "Aplicar sugestões do modelo",
+    "applySuggestionsHelp": "Preenche a capacidade e os horários sugeridos pelo modelo.",
+    "tagKindSegment": "Segmento",
+    "tagKindAttribute": "Atributo",
+    "thumbnailAlt": "Prévia de {{name}}",
+    "thumbnailPlaceholder": "Prévia indisponível",
+    "mapSettings": "Configurações do mapa",
+    "mapSettingsHelp": "Padrão é o mapa aberto primeiro pelos clientes. Visível no portal é um mapa listado para eles.",
+    "defaultMap": "Padrão",
+    "alreadyDefault": "Já é o padrão",
+    "showPrice": "Exibir preço no bloco",
+    "defaultView": "Visualização padrão",
+    "timeFilter": "Filtro de horário",
+    "fromTime": "A partir do horário",
+    "availableColor": "Cor disponível",
+    "takenColor": "Cor ocupado",
+    "setDefaultMap": "Definir mapa padrão"
   },
   "bookingMap": {
     "area": "Área",
     "quantity": "Quantidade",
-    "title": "Reservar", "help": "Escolha uma data, um recurso e um horário.", "loading": "Carregando mapa…", "dateStrip": "Datas", "today": "Hoje", "periods": "Períodos", "all": "Todos ({{count}})", "morning": "Manhã ({{count}})", "afternoon": "Tarde ({{count}})", "night": "Noite ({{count}})", "map": "Mapa", "list": "Lista", "freeFrom": "{{count}} livres · a partir de {{amount}}", "noAvailability": "Sem horários livres", "emptyPeriod": "Não há horários livres neste período. Escolha outro período ou outra data.", "showPast": "Mostrar encerrados ({{count}})", "hidePast": "Ocultar encerrados", "close": "Fechar", "continue": "Continuar", "chooseSlot": "Escolha um horário", "success": "Reserva criada.", "error": "Não foi possível criar a reserva.", "state": { "Taken": "Ocupado", "Blocked": "Indisponível", "Past": "Encerrado", "OutsideHorizon": "Fora do prazo", "Unpriced": "Sem preço", "Available": "Disponível" }
+    "title": "Reservar",
+    "help": "Escolha uma data, um recurso e um horário.",
+    "loading": "Carregando mapa…",
+    "dateStrip": "Datas",
+    "today": "Hoje",
+    "periods": "Períodos",
+    "all": "Todos ({{count}})",
+    "morning": "Manhã ({{count}})",
+    "afternoon": "Tarde ({{count}})",
+    "night": "Noite ({{count}})",
+    "map": "Mapa",
+    "list": "Lista",
+    "freeFrom": "{{count}} livres · a partir de {{amount}}",
+    "noAvailability": "Sem horários livres",
+    "emptyPeriod": "Não há horários livres neste período. Escolha outro período ou outra data.",
+    "showPast": "Mostrar encerrados ({{count}})",
+    "hidePast": "Ocultar encerrados",
+    "close": "Fechar",
+    "continue": "Continuar",
+    "chooseSlot": "Escolha um horário",
+    "success": "Reserva criada.",
+    "error": "Não foi possível criar a reserva.",
+    "state": {
+      "Taken": "Ocupado",
+      "Blocked": "Indisponível",
+      "Past": "Encerrado",
+      "OutsideHorizon": "Fora do prazo",
+      "Unpriced": "Sem preço",
+      "Available": "Disponível"
+    },
+    "prices": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"},
+    "unitsLeft": "{{left}} de {{total}} disponíveis"
   }
 }

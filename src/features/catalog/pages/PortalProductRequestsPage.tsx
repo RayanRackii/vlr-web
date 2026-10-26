@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table"
-import { Eye } from "lucide-react"
+import { ClipboardListIcon, Eye } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Table,
   TableBody,
@@ -32,6 +34,7 @@ import {
   listPortalProductRequests,
   type PortalProductRequestListResult,
 } from "@/features/catalog/services/catalogPortalService"
+import { productRequestStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
@@ -95,7 +98,7 @@ export function PortalProductRequestsPage() {
         accessorKey: "status",
         header: t("catalog.orders.columns.status"),
         cell: ({ row }) => (
-          <Badge variant="outline">
+          <Badge variant={productRequestStatusBadgeVariant(row.original.status)}>
             {productRequestStatusLabel(row.original.status, (key, options) =>
               t(key, options),
             )}
@@ -152,15 +155,11 @@ export function PortalProductRequestsPage() {
         )
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("tenantPortal.catalog.requestsTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.requestsSubtitle")}
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title={t("tenantPortal.catalog.requestsTitle")}
+        description={t("tenantPortal.catalog.requestsSubtitle")}
+      />
 
       {loading ? (
         <div
@@ -206,11 +205,23 @@ export function PortalProductRequestsPage() {
           </Button>
         </div>
       ) : pageData != null && pageData.total === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {t("tenantPortal.catalog.requestsEmpty")}
-        </p>
+        <EmptyState
+          icon={ClipboardListIcon}
+          title={t("tenantPortal.catalog.requestsEmpty")}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              render={
+                <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
+              }
+            >
+              {t("tenantPortal.catalog.requestCta")}
+            </Button>
+          }
+        />
       ) : (
-        <>
+        <div className="space-y-4">
           <div className="rounded-xl border border-border">
             <Table>
               <TableHeader>
@@ -290,7 +301,7 @@ export function PortalProductRequestsPage() {
               </div>
             </div>
           ) : null}
-        </>
+        </div>
       )}
     </div>
   )

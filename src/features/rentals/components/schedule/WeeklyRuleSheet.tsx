@@ -1,9 +1,13 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Repeat } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { HH_MM } from "@/lib/time24"
+import { cn } from "@/lib/utils"
 import {
   Select,
   SelectContent,
@@ -67,6 +71,7 @@ export function WeeklyRuleSheet({
   const [slotMinutes, setSlotMinutes] = useState(60)
   const [occupancyKindId, setOccupancyKindId] = useState(defaultKindId)
   const ruleKindId = occupancyKindId || defaultKindId
+  const hasValidTimes = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
   return (
     <Sheet
@@ -81,10 +86,17 @@ export function WeeklyRuleSheet({
     >
       <SheetContent side="right" className="w-full sm:max-w-[420px]">
         <SheetHeader>
-          <SheetTitle>{t("rentals.schedule.weeklyRule.title")}</SheetTitle>
-          <SheetDescription>
-            {t("rentals.schedule.weeklyRule.sheetHint")}
-          </SheetDescription>
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Repeat className="size-4" aria-hidden />
+            </span>
+            <div className="space-y-0.5">
+              <SheetTitle>{t("rentals.schedule.weeklyRule.title")}</SheetTitle>
+              <SheetDescription>
+                {t("rentals.schedule.weeklyRule.sheetHint")}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
@@ -92,26 +104,31 @@ export function WeeklyRuleSheet({
             <legend className="mb-2 text-sm font-medium">
               {t("rentals.schedule.weeklyRule.days")}
             </legend>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {DAY_NAMES.map((dayName) => {
                 const checked = days.includes(dayName)
                 return (
-                  <label key={dayName} className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={checked}
-                      disabled={busy || readOnly}
-                      onChange={() =>
-                        setDays((current) =>
-                          checked
-                            ? current.filter((day) => day !== dayName)
-                            : [...current, dayName],
-                        )
-                      }
-                    />
+                  <button
+                    key={dayName}
+                    type="button"
+                    aria-pressed={checked}
+                    disabled={busy || readOnly}
+                    onClick={() =>
+                      setDays((current) =>
+                        checked
+                          ? current.filter((day) => day !== dayName)
+                          : [...current, dayName],
+                      )
+                    }
+                    className={cn(
+                      "min-h-10 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                      checked
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    )}
+                  >
                     {t(`rentals.schedule.days.${dayName}`)}
-                  </label>
+                  </button>
                 )
               })}
             </div>
@@ -119,20 +136,18 @@ export function WeeklyRuleSheet({
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1 text-xs">
               <span>{t("rentals.schedule.policy.openTime")}</span>
-              <Input
-                type="time"
+              <Time24Input
                 value={openTime}
                 disabled={busy || readOnly}
-                onChange={(event) => setOpenTime(event.target.value)}
+                onValueChange={(next) => setOpenTime(next)}
               />
             </label>
             <label className="space-y-1 text-xs">
               <span>{t("rentals.schedule.policy.closeTime")}</span>
-              <Input
-                type="time"
+              <Time24Input
                 value={closeTime}
                 disabled={busy || readOnly}
-                onChange={(event) => setCloseTime(event.target.value)}
+                onValueChange={(next) => setCloseTime(next)}
               />
             </label>
           </div>
@@ -199,8 +214,7 @@ export function WeeklyRuleSheet({
               selectedRentalAssetIds.length === 0 ||
               days.length === 0 ||
               !ruleKindId ||
-              !openTime ||
-              !closeTime ||
+              !hasValidTimes ||
               slotMinutes < 1
             }
             onClick={() => {

@@ -13,6 +13,7 @@ export const tenantBrandingSchema = z.object({
   accentColor: z.string().nullable(),
   welcomeTagline: z.string().nullable(),
   newBookingUiEnabled: z.boolean().optional(),
+  timeZoneId: z.string().optional(),
 })
 
 export type TenantBranding = z.infer<typeof tenantBrandingSchema>

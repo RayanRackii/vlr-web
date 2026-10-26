@@ -59,6 +59,7 @@ export function LanguageSwitcher({
             size="sm"
             className={className}
             aria-label={t("language.label")}
+            title={t("language.label")}
           />
         }
       >
@@ -76,6 +77,7 @@ export function LanguageSwitcher({
         {languageOptions.map((option) => (
           <DropdownMenuItem
             key={option.code}
+            className="min-h-11 md:min-h-9"
             onClick={() => {
               void i18n.changeLanguage(option.code)
             }}

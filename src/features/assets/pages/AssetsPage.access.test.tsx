@@ -103,7 +103,7 @@ describe("AssetsPage permission-aware load", () => {
   it("keeps the asset list and hides create actions when lookups are forbidden", async () => {
     renderPage(["inventory.assets.read"])
 
-    expect(await screen.findByText("B-01")).toBeInTheDocument()
+    expect((await screen.findAllByText("B-01")).length).toBeGreaterThan(0)
     expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     expect(
@@ -151,9 +151,11 @@ describe("AssetsPage permission-aware load", () => {
     renderPage(["inventory.assets.read", "inventory.categories.write"])
 
     expect(
-      await screen.findByRole("button", {
-        name: i18n.t("assets.inventory.emptyNoTypesCta"),
-      }),
-    ).toBeInTheDocument()
+      (
+        await screen.findAllByRole("button", {
+          name: i18n.t("assets.inventory.emptyNoTypesCta"),
+        })
+      ).length,
+    ).toBeGreaterThan(0)
   })
 })

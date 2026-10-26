@@ -1,0 +1,409 @@
+import { describe, expect, it } from "vitest"
+
+import {
+  aggregateMultiUnitOccupancies,
+  dedupeOpenHoursOccupancies,
+  occupancyFromDaySlot,
+  occupancyIdFromSlot,
+  type ScheduleGridOccupancy,
+} from "@/features/rentals/components/schedule/scheduleGridModel"
+
+function occupancy(
+  overrides: Partial<ScheduleGridOccupancy> &
+    Pick<ScheduleGridOccupancy, "startTime" | "endTime"> & {
+      reservationId?: string | null
+    },
+): ScheduleGridOccupancy {
+  return {
+    id: `${overrides.startTime}-${overrides.endTime}-${overrides.status ?? "available"}`,
+    rentalAssetId: "asset-1",
+    occupancyKindLabel: "Aberto",
+    status: "available",
+    ...overrides,
+  } as ScheduleGridOccupancy
+}
+
+describe("dedupeOpenHoursOccupancies", () => {
+  it("collapses overlapping 1h/2h/4h windows to the base duration", () => {
+    const occupancies = [
+      occupancy({ startTime: "08:00", endTime: "09:00" }),
+      occupancy({ startTime: "09:00", endTime: "10:00" }),
+      occupancy({ startTime: "08:00", endTime: "10:00" }),
+      occupancy({ startTime: "08:00", endTime: "12:00" }),
+    ]
+
+    const result = dedupeOpenHoursOccupancies(occupancies, 60)
+
+    expect(result).toHaveLength(2)
+    expect(result.every((item) => item.status === "available")).toBe(true)
+    expect(result.map((item) => item.startTime).sort()).toEqual(["08:00", "09:00"])
+  })
+
+  it("keeps a booked window as a single span and drops overlapping shorter windows", () => {
+    const occupancies = [
+      occupancy({ startTime: "10:00", endTime: "11:00", status: "booked" }),
+      occupancy({ startTime: "11:00", endTime: "12:00", status: "booked" }),
+      occupancy({ startTime: "10:00", endTime: "12:00", status: "booked" }),
+      occupancy({ startTime: "12:00", endTime: "13:00" }),
+    ]
+
+    const result = dedupeOpenHoursOccupancies(occupancies, 60)
+
+    expect(result).toHaveLength(2)
+    const booked = result.filter((item) => item.status === "booked")
+    expect(booked).toHaveLength(1)
+    expect(booked[0]).toMatchObject({ startTime: "10:00", endTime: "12:00" })
+  })
+
+  it("drops base-duration windows fully covered by a booked longer window", () => {
+    const occupancies = [
+      occupancy({ startTime: "14:00", endTime: "15:00" }),
+      occupancy({ startTime: "15:00", endTime: "16:00" }),
+      occupancy({ startTime: "14:00", endTime: "16:00", status: "booked" }),
+    ]
+
+    const result = dedupeOpenHoursOccupancies(occupancies, 60)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ startTime: "14:00", endTime: "16:00", status: "booked" })
+  })
+
+  it("keeps a longer unavailable window as a span instead of an empty base cell", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({ startTime: "08:00", endTime: "09:00" }),
+        occupancy({ startTime: "09:00", endTime: "10:00" }),
+        occupancy({ startTime: "08:00", endTime: "10:00", status: "unavailable", label: "Fechado" }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        startTime: "08:00",
+        endTime: "10:00",
+        status: "unavailable",
+        label: "Fechado",
+      }),
+    ])
+  })
+
+  it("merges overlapping unavailable durations into one span per resource", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({ startTime: "08:00", endTime: "09:00", status: "unavailable" }),
+        occupancy({ startTime: "08:00", endTime: "10:00", status: "unavailable" }),
+        occupancy({ startTime: "09:00", endTime: "11:00", status: "unavailable" }),
+        occupancy({
+          rentalAssetId: "asset-2",
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          rentalAssetId: "asset-1",
+          startTime: "08:00",
+          endTime: "11:00",
+          status: "unavailable",
+        }),
+        expect.objectContaining({
+          rentalAssetId: "asset-2",
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+        }),
+      ]),
+    )
+  })
+
+  it("keeps overlapping unavailable occupancies with distinct labels separate", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          startTime: "08:00",
+          endTime: "10:00",
+          status: "unavailable",
+          occupancyKindKey: "closed",
+          label: "Closed",
+        }),
+        occupancy({
+          startTime: "09:00",
+          endTime: "11:00",
+          status: "unavailable",
+          occupancyKindKey: "closed",
+          label: "Lesson",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ startTime: "08:00", endTime: "10:00", label: "Closed" }),
+        expect.objectContaining({ startTime: "09:00", endTime: "11:00", label: "Lesson" }),
+      ]),
+    )
+  })
+
+  it("keeps overlapping booked windows from separate reservations distinct", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          id: "reservation-a-short",
+          startTime: "10:00",
+          endTime: "11:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+        occupancy({
+          id: "reservation-b",
+          startTime: "11:00",
+          endTime: "12:00",
+          status: "booked",
+          reservationId: "reservation-b",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result.map((item) => item.reservationId).sort()).toEqual([
+      "reservation-a",
+      "reservation-b",
+    ])
+  })
+
+  it("collapses partially overlapping windows for the same reservation", () => {
+    const result = dedupeOpenHoursOccupancies(
+      [
+        occupancy({
+          id: "reservation-a-first",
+          startTime: "09:00",
+          endTime: "11:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+        occupancy({
+          id: "reservation-a-second",
+          startTime: "10:00",
+          endTime: "12:00",
+          status: "booked",
+          reservationId: "reservation-a",
+        }),
+      ],
+      60,
+    )
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        reservationId: "reservation-a",
+        startTime: "09:00",
+        endTime: "12:00",
+        status: "booked",
+      }),
+    ])
+  })
+})
+
+describe("aggregateMultiUnitOccupancies", () => {
+  it("leaves single-unit resources untouched", () => {
+    const occupancies = [
+      occupancy({ startTime: "12:00", endTime: "16:00", status: "booked", reservationId: "r1" }),
+      occupancy({ startTime: "12:00", endTime: "16:00", status: "booked", reservationId: "r2" }),
+    ]
+
+    expect(aggregateMultiUnitOccupancies(occupancies, 1)).toEqual(occupancies)
+  })
+
+  it("wraps a lone booking with a units counter (1 of N), not just overlapping ones", () => {
+    const occupancies = [
+      occupancy({ id: "r1", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      startTime: "08:00",
+      endTime: "09:00",
+      status: "booked",
+      unitsBooked: 1,
+      unitsTotal: 3,
+      unitsFree: 2,
+    })
+    expect(result[0]?.members).toHaveLength(1)
+    expect(result[0]?.members?.[0]?.id).toBe("r1")
+  })
+
+  it("merges concurrent bookings of the exact same window into one occupancy with a units counter", () => {
+    const occupancies = [
+      occupancy({
+        id: "derived:projetor:12:00-16:00:r:r1",
+        startTime: "12:00",
+        endTime: "16:00",
+        status: "booked",
+        reservationId: "r1",
+      }),
+      occupancy({
+        id: "derived:projetor:12:00-16:00:r:r2",
+        startTime: "12:00",
+        endTime: "16:00",
+        status: "booked",
+        reservationId: "r2",
+      }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      startTime: "12:00",
+      endTime: "16:00",
+      status: "booked",
+      unitsBooked: 2,
+      unitsTotal: 3,
+      unitsFree: 1,
+    })
+    expect(result[0]?.members).toHaveLength(2)
+  })
+
+  it("splits partially overlapping bookings into segments with their own counts", () => {
+    const occupancies = [
+      occupancy({ id: "a", startTime: "10:00", endTime: "12:00", status: "booked", reservationId: "a" }),
+      occupancy({ id: "b", startTime: "11:00", endTime: "13:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(3)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "10:00", endTime: "11:00", unitsBooked: 1, unitsFree: 2 })
+    expect(sorted[0]?.members?.map((m) => m.id)).toEqual(["a"])
+    expect(sorted[1]).toMatchObject({ startTime: "11:00", endTime: "12:00", unitsBooked: 2, unitsFree: 1 })
+    expect(sorted[1]?.members?.map((m) => m.id).sort()).toEqual(["a", "b"])
+    expect(sorted[2]).toMatchObject({ startTime: "12:00", endTime: "13:00", unitsBooked: 1, unitsFree: 2 })
+    expect(sorted[2]?.members?.map((m) => m.id)).toEqual(["b"])
+  })
+
+  it("splits a booking nested inside a longer one into three segments", () => {
+    const occupancies = [
+      occupancy({ id: "outer", startTime: "10:00", endTime: "14:00", status: "booked", reservationId: "outer" }),
+      occupancy({ id: "inner", startTime: "11:00", endTime: "12:00", status: "booked", reservationId: "inner" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(3)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "10:00", endTime: "11:00", unitsBooked: 1 })
+    expect(sorted[1]).toMatchObject({ startTime: "11:00", endTime: "12:00", unitsBooked: 2 })
+    expect(sorted[2]).toMatchObject({ startTime: "12:00", endTime: "14:00", unitsBooked: 1 })
+    // The two outer segments are not merged into one span: they are not
+    // adjacent to each other once the inner segment splits them apart.
+    expect(sorted[0]?.id).not.toBe(sorted[2]?.id)
+  })
+
+  it("does not merge adjacent, non-overlapping bookings of distinct reservations", () => {
+    const occupancies = [
+      occupancy({ id: "a", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "a" }),
+      occupancy({ id: "b", startTime: "09:00", endTime: "10:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(2)
+    const sorted = [...result].sort((x, y) => x.startTime.localeCompare(y.startTime))
+    expect(sorted[0]).toMatchObject({ startTime: "08:00", endTime: "09:00", unitsBooked: 1 })
+    expect(sorted[1]).toMatchObject({ startTime: "09:00", endTime: "10:00", unitsBooked: 1 })
+  })
+
+  it("sums per-booking quantity instead of counting bookings when quantity is set", () => {
+    const occupancies = [
+      occupancy({ id: "a", startTime: "10:00", endTime: "11:00", status: "booked", reservationId: "a", quantity: 2 }),
+      occupancy({ id: "b", startTime: "10:00", endTime: "11:00", status: "booked", reservationId: "b" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ unitsBooked: 3, unitsTotal: 3, unitsFree: 0 })
+  })
+
+  it("keeps a lone booking separate from an unrelated available window on the same resource", () => {
+    const occupancies = [
+      occupancy({ id: "r1", startTime: "08:00", endTime: "09:00", status: "booked", reservationId: "r1" }),
+      occupancy({ startTime: "09:00", endTime: "10:00", status: "available" }),
+    ]
+
+    const result = aggregateMultiUnitOccupancies(occupancies, 3)
+
+    expect(result).toHaveLength(2)
+    expect(result.find((item) => item.status === "available")).toMatchObject({
+      startTime: "09:00",
+      endTime: "10:00",
+    })
+    expect(result.find((item) => item.status === "booked")).toMatchObject({
+      startTime: "08:00",
+      endTime: "09:00",
+      unitsBooked: 1,
+      unitsTotal: 3,
+    })
+  })
+})
+
+describe("occupancyIdFromSlot", () => {
+  it("keeps derived booked rows of one good distinct (R10: 3 bookings 12-16)", () => {
+    const base = { id: "00000000-0000-0000-0000-000000000000", isDerived: true, rentalAssetId: "projetor", startTime: "12:00:00", endTime: "16:00:00" }
+    const ids = ["r1", "r2", "r3"].map((reservationId) => occupancyIdFromSlot({ ...base, reservationId }))
+    expect(new Set(ids).size).toBe(3)
+    expect(occupancyIdFromSlot({ ...base, endTime: "13:00:00" })).not.toBe(occupancyIdFromSlot(base))
+  })
+
+  it("maps a derived booked day slot to a booked occupancy", () => {
+    const result = occupancyFromDaySlot({
+      id: "00000000-0000-0000-0000-000000000000", rentalAssetId: "sala", assetName: "Sala", date: "2026-10-27",
+      startTime: "08:00:00", endTime: "10:00:00", occupancyKindId: "k", occupancyKindKey: "open", occupancyKindLabel: "Open",
+      occupancyKindColorHex: "#22C55E", isBookableByCustomer: false, label: null, status: "Booked", reservationId: "res-1",
+      isDerived: true, source: "WeeklyDefault", sourceTemplateId: null, schedulePolicy: "OpenHours", supportsEntireRecurrence: false,
+    } as Parameters<typeof occupancyFromDaySlot>[0])
+    expect(result.status).toBe("booked")
+    expect(result.reservationId).toBe("res-1")
+  })
+})
+
+describe("staff booking quantity (R13 agenda)", () => {
+  const daySlot = {
+    id: "00000000-0000-0000-0000-000000000000", rentalAssetId: "kit", assetName: "Kit", date: "2026-11-01",
+    startTime: "10:00:00", endTime: "11:00:00", occupancyKindId: "k", occupancyKindKey: "open", occupancyKindLabel: "Open",
+    occupancyKindColorHex: null, isBookableByCustomer: false, label: null, status: "Booked", reservationId: "res-1",
+    isDerived: true, source: "WeeklyDefault", sourceTemplateId: null, schedulePolicy: "SlotGrid", supportsEntireRecurrence: true,
+    quantity: 2, customerName: "Ana",
+  } as Parameters<typeof occupancyFromDaySlot>[0]
+
+  it("counts units, not bookings: one ×2 booking on a 2-unit resource leaves 0 free", () => {
+    const mapped = occupancyFromDaySlot(daySlot)
+    expect(mapped).toMatchObject({ quantity: 2, customerName: "Ana", label: "Ana ×2" })
+    const [cell] = aggregateMultiUnitOccupancies([mapped], 2)
+    expect(cell).toMatchObject({ unitsBooked: 2, unitsTotal: 2, unitsFree: 0, label: "Ana ×2" })
+  })
+
+  it("sums quantities and lists customers across concurrent bookings", () => {
+    const a = occupancyFromDaySlot(daySlot)
+    const b = occupancyFromDaySlot({ ...daySlot, reservationId: "res-2", quantity: 1, customerName: "Bia" })
+    const [cell] = aggregateMultiUnitOccupancies([a, b], 4)
+    expect(cell).toMatchObject({ unitsBooked: 3, unitsFree: 1, label: "Ana ×2 · Bia" })
+  })
+
+  it("falls back to 1 unit and no label when the API omits quantity/customer", () => {
+    const mapped = occupancyFromDaySlot({ ...daySlot, quantity: undefined, customerName: undefined })
+    expect(mapped.label).toBeNull()
+    expect(aggregateMultiUnitOccupancies([mapped], 2)[0]).toMatchObject({ unitsBooked: 1, unitsFree: 1 })
+  })
+})
