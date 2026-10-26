@@ -2233,7 +2233,7 @@ export function TenantPortalAgendaPage() {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="min-w-[12rem]">
+                <SelectContent className="w-[var(--anchor-width)] min-w-[max(12rem,var(--anchor-width))]">
                   {timeWindows.map((window) => {
                     const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
                       window.startTime,
@@ -2636,7 +2636,7 @@ export function TenantPortalAgendaPage() {
           ) : null}
         </div>
 
-        <div className="space-y-3 md:sticky md:top-16 md:self-start">
+        <div className="space-y-3 max-md:contents md:sticky md:top-16 md:self-start">
           {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
           <div className="flex min-h-11 items-center">
             {quote.status === "loading" ? (
