@@ -862,16 +862,18 @@ export function AssetsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 items-start gap-2">
                       {canWriteAssets ? (
-                        <input
-                          type="checkbox"
-                          className="mt-1 size-5 shrink-0 accent-primary"
-                          aria-label={t("assets.inventory.actions.selectRow", {
-                            tag: asset.tag,
-                          })}
-                          checked={row.getIsSelected()}
-                          onChange={row.getToggleSelectedHandler()}
-                          disabled={isTrialReadOnly}
-                        />
+                        <label className="-m-3 flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                          <input
+                            type="checkbox"
+                            className="size-5 accent-primary"
+                            aria-label={t("assets.inventory.actions.selectRow", {
+                              tag: asset.tag,
+                            })}
+                            checked={row.getIsSelected()}
+                            onChange={row.getToggleSelectedHandler()}
+                            disabled={isTrialReadOnly}
+                          />
+                        </label>
                       ) : null}
                       <div className="min-w-0">
                         <p className="truncate font-medium">{asset.tag}</p>
