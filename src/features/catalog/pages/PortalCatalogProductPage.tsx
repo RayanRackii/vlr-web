@@ -107,7 +107,7 @@ export function PortalCatalogProductPage() {
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6 pb-20 md:pb-0">
       <Button
         type="button"
         variant="ghost"
@@ -117,45 +117,49 @@ export function PortalCatalogProductPage() {
         {t("common.back")}
       </Button>
 
-      <CatalogProductImageGallery
-        images={images}
-        alt={product.name}
-        frameClassName="h-56 w-full rounded-xl"
-      />
-
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold tracking-tight">{product.name}</h1>
-        {product.code ? (
-          <p className="text-sm text-muted-foreground">{product.code}</p>
-        ) : null}
-        {product.price == null ? (
-          <Badge variant="warning">{t("tenantPortal.catalog.priceOnRequest")}</Badge>
-        ) : (
-          <p className="text-base font-medium">{priceLabel}</p>
-        )}
-        {product.description ? (
-          <p className="text-sm text-muted-foreground">{product.description}</p>
-        ) : null}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <CatalogQuantityField
-          className="w-24"
-          quantity={quantity}
-          productName={product.name}
-          onCommit={commitQuantity}
+      <div className="grid gap-6 md:grid-cols-2 md:items-start">
+        <CatalogProductImageGallery
+          images={images}
+          alt={product.name}
+          frameClassName="aspect-[4/3] w-full rounded-xl"
         />
-        <LoadingButton
-          type="button"
-          className="flex-1"
-          style={{ backgroundColor: primary }}
-          onClick={() => {
-            cart.add(product.id, quantityRef.current)
-            toast.success(t("tenantPortal.catalog.addedToCart"))
-          }}
-        >
-          {t("tenantPortal.catalog.addToCart")}
-        </LoadingButton>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold tracking-tight">{product.name}</h1>
+            {product.code ? (
+              <p className="text-sm text-muted-foreground">{product.code}</p>
+            ) : null}
+            {product.price == null ? (
+              <Badge variant="warning">{t("tenantPortal.catalog.priceOnRequest")}</Badge>
+            ) : (
+              <p className="text-xl font-semibold tracking-tight text-foreground">{priceLabel}</p>
+            )}
+            {product.description ? (
+              <p className="text-sm text-muted-foreground">{product.description}</p>
+            ) : null}
+          </div>
+
+          <div className="sticky bottom-0 -mx-4 flex items-center gap-2 border-t border-border bg-background px-4 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+            <CatalogQuantityField
+              className="h-11 w-24"
+              quantity={quantity}
+              productName={product.name}
+              onCommit={commitQuantity}
+            />
+            <LoadingButton
+              type="button"
+              className="h-11 flex-1"
+              style={{ backgroundColor: primary }}
+              onClick={() => {
+                cart.add(product.id, quantityRef.current)
+                toast.success(t("tenantPortal.catalog.addedToCart"))
+              }}
+            >
+              {t("tenantPortal.catalog.addToCart")}
+            </LoadingButton>
+          </div>
+        </div>
       </div>
     </div>
   )
