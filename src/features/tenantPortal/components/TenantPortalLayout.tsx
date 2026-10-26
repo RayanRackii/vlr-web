@@ -2,12 +2,17 @@ import { useEffect, useMemo, useState } from "react"
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { AuthSplitShell } from "@/components/layout/AuthSplitShell"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
+import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { useTenantThemeStyle } from "@/lib/useTenantTheme"
 import { inspectTenantLogoSvg } from "@/features/tenantPortal/lib/inspectTenantLogoSvg"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
+import { isTenantAuthPagePath } from "@/features/tenantPortal/lib/tenantAuthPagePath"
 import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenantLogoSvg"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import {
@@ -155,6 +160,74 @@ export function TenantPortalLayout() {
             </a>
           </div>
         </main>
+      </div>
+    )
+  }
+
+  if (isTenantAuthPagePath(location.pathname)) {
+    const hasCustomBrand = Boolean(branding.primaryColor)
+    const brandPanelStyle = hasCustomBrand
+      ? {
+          background: `linear-gradient(135deg, color-mix(in srgb, ${tokens.primary} 14%, var(--background)) 0%, color-mix(in srgb, ${tokens.accent} 10%, var(--background)) 100%)`,
+        }
+      : undefined
+
+    return (
+      <div className="min-h-screen text-foreground" style={themeStyle}>
+        <AuthSplitShell
+          brandPanelStyle={brandPanelStyle}
+          brandPanel={
+            <>
+              <div className="max-w-md space-y-4">
+                <TenantLogoMark
+                  logoSvg={branding.logoSvg}
+                  displayName={branding.displayName}
+                  primaryColor={branding.primaryColor}
+                  size="lg"
+                  className="mx-0"
+                />
+                <div className="space-y-1">
+                  <h2 className="break-words text-3xl font-semibold tracking-tight text-foreground">
+                    {branding.displayName}
+                  </h2>
+                  <p className="text-base leading-relaxed text-foreground/85">
+                    {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs text-foreground/80">
+                {t("tenantPortal.authPanel.poweredBy")}
+              </p>
+            </>
+          }
+          mobileBrand={
+            <div className="flex min-w-0 items-center gap-2">
+              <TenantLogoMark
+                logoSvg={branding.logoSvg}
+                displayName={branding.displayName}
+                primaryColor={branding.primaryColor}
+                size="sm"
+              />
+              <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                {branding.displayName}
+              </span>
+            </div>
+          }
+          headerActions={
+            <>
+              <LanguageSwitcher
+                className={headerTouchTargetClassName}
+                showShortLabel
+              />
+              <ThemeToggle className={headerTouchTargetClassName} />
+            </>
+          }
+        >
+          <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
+            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+          </TenantTimeZoneProvider>
+        </AuthSplitShell>
       </div>
     )
   }

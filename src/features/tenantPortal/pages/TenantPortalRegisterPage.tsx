@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Mail, Phone, User } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -17,6 +18,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
+import { iconProps } from "@/lib/icon"
 import {
   Select,
   SelectContent,
@@ -281,13 +285,13 @@ export function TenantPortalRegisterPage() {
         >
           {(
             [
-              ["name", "text", "name"],
-              ["email", "email", "email"],
-              ["password", "password", "new-password"],
-              ["confirmPassword", "password", "new-password"],
-              ["phone", "tel", "tel"],
+              ["name", "text", "name", <User {...iconProps("sm")} />],
+              ["email", "email", "email", <Mail {...iconProps("sm")} />],
+              ["password", "password", "new-password", null],
+              ["confirmPassword", "password", "new-password", null],
+              ["phone", "tel", "tel", <Phone {...iconProps("sm")} />],
             ] as const
-          ).map(([name, type, autoComplete]) => (
+          ).map(([name, type, autoComplete, icon]) => (
             <FormField
               key={name}
               control={form.control}
@@ -296,25 +300,39 @@ export function TenantPortalRegisterPage() {
                 <FormItem>
                   <FormLabel>{t(`tenantPortal.fields.${name}`)}</FormLabel>
                   <FormControl>
-                    <Input
-                      type={type}
-                      autoComplete={autoComplete}
-                      placeholder={
-                        name === "phone"
-                          ? t("tenantPortal.fields.phonePlaceholder")
-                          : undefined
-                      }
-                      inputMode={name === "phone" ? "tel" : undefined}
-                      {...field}
-                      value={String(field.value ?? "")}
-                      onChange={(event) => {
-                        field.onChange(
+                    {type === "password" ? (
+                      <PasswordInput
+                        autoComplete={autoComplete}
+                        showLabel={t("auth.showPassword")}
+                        hideLabel={t("auth.hidePassword")}
+                        {...field}
+                        value={String(field.value ?? "")}
+                        onChange={(event) => {
+                          field.onChange(event.target.value)
+                        }}
+                      />
+                    ) : (
+                      <InputWithIcon
+                        icon={icon}
+                        type={type}
+                        autoComplete={autoComplete}
+                        placeholder={
                           name === "phone"
-                            ? maskPhoneInput(event.target.value)
-                            : event.target.value,
-                        )
-                      }}
-                    />
+                            ? t("tenantPortal.fields.phonePlaceholder")
+                            : undefined
+                        }
+                        inputMode={name === "phone" ? "tel" : undefined}
+                        {...field}
+                        value={String(field.value ?? "")}
+                        onChange={(event) => {
+                          field.onChange(
+                            name === "phone"
+                              ? maskPhoneInput(event.target.value)
+                              : event.target.value,
+                          )
+                        }}
+                      />
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

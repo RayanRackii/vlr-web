@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Lock, Mail } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -12,6 +13,7 @@ import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { iconProps } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 import {
   Form,
@@ -22,6 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
+import { PasswordInput } from "@/components/ui/password-input"
 import type { TenantPortalOutletContext } from "@/features/tenantPortal/components/TenantPortalLayout"
 import { maskEmail } from "@/features/tenantPortal/lib/maskEmail"
 import { TENANT_PORTAL_OUTLINE_BUTTON_CLASS } from "@/features/tenantPortal/lib/tenantPortalControlStyles"
@@ -171,7 +175,12 @@ export function TenantPortalResetPasswordPage() {
                 <FormItem>
                   <FormLabel>{t("tenantPortal.fields.email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
+                    <InputWithIcon
+                      icon={<Mail {...iconProps("sm")} />}
+                      type="email"
+                      autoComplete="email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,9 +217,11 @@ export function TenantPortalResetPasswordPage() {
               <FormItem>
                 <FormLabel>{t("tenantPortal.passwordReset.newPassword")}</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>
@@ -227,9 +238,11 @@ export function TenantPortalResetPasswordPage() {
                   {t("tenantPortal.passwordReset.confirmPassword")}
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
+                    icon={<Lock {...iconProps("sm")} />}
                     autoComplete="new-password"
+                    showLabel={t("auth.showPassword")}
+                    hideLabel={t("auth.hidePassword")}
                     {...field}
                   />
                 </FormControl>

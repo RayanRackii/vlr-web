@@ -288,6 +288,9 @@
   "tenantPortal": {
     "sessionExpired": "Sesión expirada",
     "defaultTagline": "Inicie sesión para reservar y recibir avisos.",
+    "authPanel": {
+      "poweredBy": "Con tecnología de Rolvix"
+    },
     "header": {
       "ctaRegister": "Registrarse"
     },
