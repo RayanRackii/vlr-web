@@ -297,7 +297,7 @@ export function LayoutCanvasBoard({
                   height: `${item.heightPercent}%`,
                   zIndex: item.zIndex + 1,
                 }
-            return (
+            const tileBody = (
               <div
                 key={item.key}
                 role={picked ? "button" : undefined}
@@ -316,7 +316,7 @@ export function LayoutCanvasBoard({
                   // that space so the detail/reason line never renders underneath it.
                   picked && item.footer && "sm:pb-6",
                   mode === "edit" &&
-                    "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                    "absolute inset-0 cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
                   clickable && !selected && !ownReservation && !bookedOut && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
@@ -324,7 +324,7 @@ export function LayoutCanvasBoard({
                   (unavailable || bookedOut) && !ownReservation && portalPickUnavailableClass,
                   ownReservation && portalPickOwnReservationClass,
                 )}
-                style={tileStyle}
+                style={mode === "edit" ? undefined : tileStyle}
                 onPointerDown={(event) => {
                   startTileDrag(event, item, "move")
                 }}
@@ -375,7 +375,7 @@ export function LayoutCanvasBoard({
                   <button
                     type="button"
                     aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:left-0.5 coarse:right-auto coarse:size-11"
+                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:hidden"
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}
@@ -391,12 +391,49 @@ export function LayoutCanvasBoard({
                 {mode === "edit" ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70 coarse:size-11"
+                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70 coarse:hidden"
                     onPointerDown={(event) => {
                       startTileDrag(event, item, "resize")
                     }}
                   />
                 ) : null}
+              </div>
+            )
+
+            if (mode !== "edit") {
+              return tileBody
+            }
+
+            // overflow-hidden on the tile clips anything inside it, so the coarse
+            // 44px remove/resize targets live outside the tile box entirely —
+            // one above, one below — instead of competing for its corners.
+            return (
+              <div key={item.key} className="absolute" style={tileStyle}>
+                {tileBody}
+                {onRemove ? (
+                  <button
+                    type="button"
+                    aria-label="remove"
+                    className="absolute left-0 bottom-full z-10 mb-1 hidden size-11 items-center justify-center rounded-sm bg-background/80 text-sm leading-none text-muted-foreground hover:text-destructive coarse:flex"
+                    onPointerDown={(event) => {
+                      event.stopPropagation()
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onRemove(item.rentalAssetId)
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                <span
+                  aria-hidden
+                  className="absolute right-0 top-full z-10 mt-1 hidden size-11 cursor-se-resize rounded-sm bg-primary/70 coarse:flex"
+                  onPointerDown={(event) => {
+                    startTileDrag(event, item, "resize")
+                  }}
+                />
               </div>
             )
           })}

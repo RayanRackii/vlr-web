@@ -258,7 +258,7 @@ describe("LayoutCanvasBoard pick labels", () => {
 })
 
 describe("LayoutCanvasBoard edit-mode touch targets", () => {
-  it("keeps the remove button and resize handle on opposite corners so coarse 44px targets never overlap", () => {
+  it("keeps the fine-pointer remove button and resize handle on opposite corners, hidden on coarse pointers", () => {
     render(
       <LayoutCanvasBoard
         mode="edit"
@@ -278,15 +278,61 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
       />,
     )
 
-    const removeButton = screen.getByRole("button", { name: "remove" })
-    expect(removeButton.className).toContain("right-0.5")
-    expect(removeButton.className).toContain("coarse:left-0.5")
-    expect(removeButton.className).toContain("coarse:right-auto")
+    const removeButtons = screen.getAllByRole("button", { name: "remove" })
+    const fineRemove = removeButtons.find((button) => button.className.includes("top-0.5"))
+    expect(fineRemove).toBeDefined()
+    expect(fineRemove?.className).toContain("right-0.5")
+    expect(fineRemove?.className).toContain("coarse:hidden")
 
-    const resizeHandle = document.querySelector('[class*="cursor-se-resize"]')
-    expect(resizeHandle).not.toBeNull()
-    expect(resizeHandle?.className).toContain("right-0.5")
-    expect(resizeHandle?.className).toContain("bottom-0.5")
-    expect(resizeHandle?.className).not.toContain("coarse:left-0.5")
+    const resizeHandles = document.querySelectorAll('[class*="cursor-se-resize"]')
+    const fineResize = Array.from(resizeHandles).find((handle) => handle.className.includes("bottom-0.5"))
+    expect(fineResize).toBeDefined()
+    expect(fineResize?.className).toContain("right-0.5")
+    expect(fineResize?.className).toContain("coarse:hidden")
+  })
+
+  it("places the coarse 44px remove and resize targets outside the clipped tile, on opposite sides", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="edit"
+        items={[
+          {
+            key: "q1",
+            rentalAssetId: "11111111-1111-4111-8111-111111111111",
+            label: "Quadra 1",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 10,
+            heightPercent: 6,
+            zIndex: 1,
+          },
+        ]}
+        onRemove={() => {}}
+      />,
+    )
+
+    const removeButtons = screen.getAllByRole("button", { name: "remove" })
+    const coarseRemove = removeButtons.find((button) => button.className.includes("bottom-full"))
+    expect(coarseRemove).toBeDefined()
+    expect(coarseRemove?.className).toContain("size-11")
+    expect(coarseRemove?.className).toContain("left-0")
+    expect(coarseRemove?.className).toContain("coarse:flex")
+    // Sibling of the clipped tile, not a child inside it — overflow-hidden on
+    // the tile can't clip a control it never contains.
+    expect(coarseRemove?.parentElement?.contains).toBeDefined()
+    const tile = coarseRemove?.parentElement?.querySelector(".overflow-hidden")
+    expect(tile?.contains(coarseRemove as Node)).toBe(false)
+
+    const resizeHandles = document.querySelectorAll('[class*="cursor-se-resize"]')
+    const coarseResize = Array.from(resizeHandles).find((handle) => handle.className.includes("top-full"))
+    expect(coarseResize).toBeDefined()
+    expect(coarseResize?.className).toContain("size-11")
+    expect(coarseResize?.className).toContain("right-0")
+    expect(coarseResize?.className).toContain("coarse:flex")
+    expect(tile?.contains(coarseResize as Node)).toBe(false)
+
+    // Opposite sides of the tile box: one is pinned above it, the other below.
+    expect(coarseRemove?.className).toContain("bottom-full")
+    expect(coarseResize?.className).toContain("top-full")
   })
 })
