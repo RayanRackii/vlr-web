@@ -334,14 +334,15 @@ export function RentalResourceSheet({
                   setSheetTab(value)
                 }
               }}
+              className="min-w-0 flex-col"
             >
-              <TabsList className="h-auto w-full min-w-0">
-                <TabsTrigger value="basic" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
-                <TabsTrigger value="pricing" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
-                <TabsTrigger value="visual" className="min-w-0 whitespace-normal px-1.5 py-1.5 text-center text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
+              <TabsList className="h-auto w-full min-w-0 justify-start overflow-x-auto">
+                <TabsTrigger value="basic" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
+                <TabsTrigger value="pricing" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
+                <TabsTrigger value="visual" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
               </TabsList>
 
-            <TabsContent value="basic" className="space-y-4">
+            <TabsContent value="basic" className="min-w-0 flex-1 space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -580,7 +581,7 @@ export function RentalResourceSheet({
             />
             </TabsContent>
 
-            <TabsContent value="pricing" className="min-w-0 space-y-4">
+            <TabsContent value="pricing" className="min-w-0 flex-1 space-y-4">
             <FormField
               control={form.control}
               name="requiresDeposit"
@@ -799,7 +800,7 @@ export function RentalResourceSheet({
             ) : null}
             </TabsContent>
 
-            <TabsContent value="visual" className="space-y-2">
+            <TabsContent value="visual" className="min-w-0 flex-1 space-y-2">
               <section className="space-y-2 rounded-xl border border-border bg-muted/20 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
