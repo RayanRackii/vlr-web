@@ -84,6 +84,8 @@ type LayoutCanvasBoardProps = {
     heightPercent: number,
   ) => void
   onSelect?: (rentalAssetId: string) => void
+  /** Pick mode: called when an unavailable tile is clicked, so the page can explain why. */
+  onUnavailableSelect?: (rentalAssetId: string) => void
   onRemove?: (rentalAssetId: string) => void
   onFrameResize?: (aspectRatio: number, widthPercent: number) => void
 }
@@ -97,6 +99,7 @@ export function LayoutCanvasBoard({
   onMove,
   onResize,
   onSelect,
+  onUnavailableSelect,
   onRemove,
   onFrameResize,
 }: LayoutCanvasBoardProps) {
@@ -274,7 +277,7 @@ export function LayoutCanvasBoard({
               <div
                 key={item.key}
                 role={picked ? "button" : undefined}
-                tabIndex={clickable ? 0 : undefined}
+                tabIndex={clickable || (unavailable && onUnavailableSelect) ? 0 : undefined}
                 aria-label={accessibleName}
                 title={accessibleName}
                 aria-pressed={picked ? item.selected : undefined}
@@ -304,12 +307,17 @@ export function LayoutCanvasBoard({
                 onClick={() => {
                   if (clickable || mode === "edit") {
                     onSelect?.(item.rentalAssetId)
+                  } else if (unavailable) {
+                    onUnavailableSelect?.(item.rentalAssetId)
                   }
                 }}
                 onKeyDown={(event) => {
                   if (clickable && (event.key === "Enter" || event.key === " ")) {
                     event.preventDefault()
                     onSelect?.(item.rentalAssetId)
+                  } else if (unavailable && onUnavailableSelect && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault()
+                    onUnavailableSelect(item.rentalAssetId)
                   }
                 }}
               >

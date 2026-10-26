@@ -525,8 +525,10 @@
       "cancelCutoffPassed": "O prazo de cancelamento de {{hours}} horas antes do início já passou.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duração",
-      "yourReservationUnits": "Sua reserva · {{count}} de {{total}} unidades",
-      "yourReservationUnitsReason": "Para mais unidades, cancele e reserve de novo com a quantidade desejada.",
+      "yourReservationUnits": "Sua reserva · você tem {{count}} das {{total}} unidades",
+      "yourReservationUnitsReason": "Para alterar a quantidade, cancele e reserve de novo; a disponibilidade depende das outras reservas.",
+      "chooseTimeFirst": "Escolha um horário primeiro.",
+      "quantityMaxReached": "Máximo disponível neste horário: {{count}}.",
       "cancelCutoffReason": "Prazo de cancelamento encerrado",
       "days": "Dias",
       "daysSummary": "{{count}} dias · até {{until}}",
@@ -536,7 +538,7 @@
       "reservationDaysSuffix_other": "{{count}} dias",
       "quoteFixedLine_one": "{{price}} (total fixo)",
       "quoteFixedLine_other": "{{price}} · {{count}} unidades (total fixo)",
-      "quoteUnitMultiplier": "× {{count}}"
+      "quoteUnitMultiplier": "× {{formatted}}"
     },
     "menu": {
       "empty": "Nenhum módulo disponível.",

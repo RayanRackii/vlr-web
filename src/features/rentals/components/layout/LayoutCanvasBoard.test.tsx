@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
 
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 
@@ -227,5 +227,38 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(
       screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
     ).toEqual(["Q-1", "Q-10", "Q-5", "Q-6"])
+  })
+
+  it("explains an unavailable tile on click instead of staying silent", () => {
+    const onSelect = vi.fn()
+    const onUnavailableSelect = vi.fn()
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        onSelect={onSelect}
+        onUnavailableSelect={onUnavailableSelect}
+        items={[
+          {
+            key: "r1",
+            rentalAssetId: "33333333-3333-4333-8333-333333333333",
+            label: "Sala 1",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: false,
+            disabled: true,
+            detail: "Ocupado",
+          },
+        ]}
+      />,
+    )
+    const tile = screen.getByRole("button", { name: "Sala 1. Ocupado" })
+    fireEvent.click(tile)
+    fireEvent.keyDown(tile, { key: "Enter" })
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(onUnavailableSelect).toHaveBeenCalledTimes(2)
+    expect(tile).toHaveAttribute("tabindex", "0")
   })
 })
