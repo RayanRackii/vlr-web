@@ -77,3 +77,23 @@ describe("drawer round trip of stored fields", () => {
     expect(body).not.toHaveProperty("cancelCutoffHours")
   })
 })
+
+describe("buildRentalResourceFormValues cancel cutoff", () => {
+  const build = (cancelCutoffHours: number | null | undefined) =>
+    buildRentalResourceFormValues(
+      { id: "r1", name: "Sala", unitId: "u", cancelCutoffHours } as unknown as AdminRentalAsset,
+      [], [], [families[0]!],
+    )
+
+  it.each([
+    [null, "inherit", ""],
+    [undefined, "inherit", ""],
+    [0, "none", ""],
+    [24, "hours", "24"],
+  ] as const)("stored %s -> mode %s", (stored, mode, hours) => {
+    const values = build(stored)
+    expect(values.cancelCutoffMode).toBe(mode)
+    expect(values.cancelCutoffHours).toBe(hours)
+    expect(values.cancelCutoffStored).toBe(stored)
+  })
+})

@@ -3300,7 +3300,7 @@
         "horizonEffectiveDays": "In effect: {{count}} days ahead.",
         "cancelCutoffLabel": "Cancellation cutoff",
         "cancelCutoffInherit": "Inherit policy",
-        "cancelCutoffNone": "No cutoff (use policy)",
+        "cancelCutoffNone": "No cutoff (overrides policy)",
         "cancelCutoffHours": "Hours before the start",
         "cancelCutoffEffectiveNone": "Effective: no cutoff",
         "cancelCutoffEffectiveHours_one": "Effective: {{count}} hour before the start",

@@ -208,7 +208,7 @@ export function toCreateRentableRequest(
         : null,
     location: values.location.trim() ? values.location.trim() : null,
   }
-  const cutoff = resolveCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
+  const cutoff = resolveResourceCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
   if (cutoff !== undefined) payload.cancelCutoffHours = cutoff
   const horizonWrite = resolveResourceHorizonWrite(
     values.horizonMode,
@@ -234,4 +234,17 @@ export function toCreateRentableRequest(
     payload.confirmVisualSuggestions = true
   }
   return createRentableRequestSchema.parse(payload)
+}
+
+/**
+ * Resource layer: null inherits (category, then tenant); an explicit 0 overrides any inherited
+ * cutoff with "no cutoff" (PolicyResolver: resource ?? category ?? tenant; 0 => no deadline).
+ */
+export function resolveResourceCancelCutoffWrite(
+  mode: "inherit" | "none" | "hours" | undefined,
+  input: string | undefined,
+  stored: number | null | undefined,
+): number | null | undefined {
+  if (mode === "none") return stored === 0 ? undefined : 0
+  return resolveCancelCutoffWrite(mode, input, stored)
 }

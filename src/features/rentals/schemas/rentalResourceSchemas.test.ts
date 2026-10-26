@@ -239,7 +239,10 @@ describe("resource cancellation cutoff", () => {
   it("omits unchanged overrides, clears inheritance and replaces hours", () => {
     expect(toCreateRentableRequest(base())).not.toHaveProperty("cancelCutoffHours")
     expect(toCreateRentableRequest({ ...base(), cancelCutoffStored: 24 })).toHaveProperty("cancelCutoffHours", null)
-    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none" })).toHaveProperty("cancelCutoffHours", null)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none" })).toHaveProperty("cancelCutoffHours", 0)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none", cancelCutoffStored: 24 })).toHaveProperty("cancelCutoffHours", 0)
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "none", cancelCutoffStored: 0 })).not.toHaveProperty("cancelCutoffHours")
+    expect(toCreateRentableRequest({ ...base(), cancelCutoffStored: 0 })).toHaveProperty("cancelCutoffHours", null)
     expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "24", cancelCutoffStored: 24 })).not.toHaveProperty("cancelCutoffHours")
     expect(toCreateRentableRequest({ ...base(), cancelCutoffMode: "hours", cancelCutoffHours: "0" })).toHaveProperty("cancelCutoffHours", 0)
   })
