@@ -1798,6 +1798,73 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("R$ 80,00/hora"))
   })
 
+  it("prefers the API unitPrice/pricedUnits over a client-side split for an hourly quote", async () => {
+    fetchDay.mockResolvedValue({
+      date: "2026-09-12",
+      slots: [
+        makeSlot({
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          rentalAssetId: ASSET_A_ID,
+          assetName: "Quadra 1",
+          startTime: "08:00:00",
+          endTime: "10:00:00",
+        }),
+      ],
+    })
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 160,
+      pricingUnit: "Hour",
+      unitPrice: 90,
+      pricedUnits: 2,
+      reason: null,
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(160) }),
+    )
+    // The API's unitPrice (90) wins over dividing the total (160/2h = 80) client-side.
+    expect(screen.getByText(`R$ 90,00/hora × 2`)).toBeInTheDocument()
+  })
+
+  it("shows the fixed unit price and unit count from the API for a multi-unit fixed quote", async () => {
+    fetchAssets.mockResolvedValue([
+      {
+        ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Bola"),
+        type: "Good",
+        totalQuantity: 3,
+      },
+    ])
+    checkAvailability.mockImplementation(async (_subdomain, request) => {
+      const requestedQuantity = request.quantity ?? 1
+      return {
+        isAvailable: true,
+        requestedQuantity,
+        availableQuantity: 3,
+        estimatedTotalAmount: requestedQuantity * 15,
+        pricingUnit: "Fixed" as const,
+        unitPrice: 15,
+        pricedUnits: requestedQuantity,
+        reason: null,
+      }
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: /^Bola/ }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` }))
+
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(30) }),
+    )
+    expect(screen.getByText("R$ 15,00 fixo · 2 unidades (total fixo)")).toBeInTheDocument()
+  })
+
   async function bookQuadra1(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
     await screen.findByText(

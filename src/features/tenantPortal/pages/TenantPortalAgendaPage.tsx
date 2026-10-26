@@ -420,6 +420,8 @@ export function TenantPortalAgendaPage() {
         status: "ready"
         amount: number | null
         pricingUnit: PricingUnit | null
+        unitPrice: number | null
+        pricedUnits: number | null
         availableQuantity: number
         quantity: number
         selectionKey: string
@@ -1134,6 +1136,8 @@ export function TenantPortalAgendaPage() {
           status: "ready",
           amount: result.isAvailable ? result.estimatedTotalAmount : null,
           pricingUnit: result.pricingUnit ?? null,
+          unitPrice: result.unitPrice ?? null,
+          pricedUnits: result.pricedUnits ?? null,
           availableQuantity: result.availableQuantity,
           quantity,
           selectionKey,
@@ -1952,6 +1956,25 @@ export function TenantPortalAgendaPage() {
   const quoteUnitPriceText =
     quoteCurrent && quote.amount !== null && selectedSlot
       ? (() => {
+          // The API now returns unitPrice/pricedUnits alongside the quote; prefer
+          // those over re-deriving a per-unit split from the total client-side.
+          if (quote.unitPrice != null && quote.pricingUnit != null) {
+            const priceText = formatUnitPriceText(
+              quote.unitPrice,
+              quote.pricingUnit,
+              "BRL",
+              moneyLocale,
+              t,
+              "bookingMap.prices",
+            )
+            const units = quote.pricedUnits ?? quantity
+            if (quote.pricingUnit === "Fixed") {
+              return t("tenantPortal.agenda.quoteFixedLine", { price: priceText, count: units })
+            }
+            return units > 1
+              ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units })}`
+              : priceText
+          }
           const unitPrice = unitPriceForWindow({
             startTime: selectedSlot.startTime,
             endTime: selectedSlot.endTime,

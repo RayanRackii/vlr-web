@@ -5,6 +5,26 @@ import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import i18n from "@/lib/i18n"
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
 
+/** Prefers the ASP.NET ProblemDetails `detail`/`errors` fields over the generic `{ error }` shape. */
+function parseProblemDetailsError(error: unknown, fallback: string): string {
+  const payload = getAxiosErrorPayload(error)
+  if (typeof payload === "object" && payload !== null) {
+    const record = payload as Record<string, unknown>
+    if (typeof record.detail === "string" && record.detail.trim() !== "") {
+      return record.detail
+    }
+    if (typeof record.errors === "object" && record.errors !== null) {
+      const messages = Object.values(record.errors as Record<string, unknown>)
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .filter((value): value is string => typeof value === "string" && value.trim() !== "")
+      if (messages.length > 0) {
+        return messages.join(" ")
+      }
+    }
+  }
+  return parseApiError(payload, fallback)
+}
+
 function lessonChangeError(error: unknown): Error {
   const fallback = i18n.t("rentals.teacherLessons.changeError")
   return new Error(
@@ -568,10 +588,7 @@ export async function updateRentalSchedulePolicyBulk(
     return parsed.data.items
   } catch (error) {
     throw new Error(
-      parseApiError(
-        getAxiosErrorPayload(error),
-        i18n.t("apiErrors.updateSchedulePolicy"),
-      ),
+      parseProblemDetailsError(error, i18n.t("apiErrors.updateSchedulePolicy")),
     )
   }
 }

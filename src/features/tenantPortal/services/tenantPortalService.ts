@@ -960,6 +960,8 @@ const availabilitySchema = z.object({
   availableQuantity: z.number(),
   estimatedTotalAmount: z.number().nullable(),
   pricingUnit: pricingUnitSchema.nullish(),
+  unitPrice: z.number().nullable().optional(),
+  pricedUnits: z.number().nullable().optional(),
   reason: z.string().nullable(),
 })
 

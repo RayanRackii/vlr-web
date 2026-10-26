@@ -179,7 +179,7 @@ describe("SchedulePolicyPanel", () => {
     ).toHaveValue("60,120,240")
   })
 
-  it("normalizes duration values before saving", async () => {
+  it("saves duration values as typed, without deduping or reordering", async () => {
     const user = userEvent.setup()
     const onSave = renderPanel()
     const input = screen.getByLabelText(
@@ -195,7 +195,39 @@ describe("SchedulePolicyPanel", () => {
     )
 
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ allowedDurationMinutes: "60,240" }),
+      expect.objectContaining({ allowedDurationMinutes: "240,60,60" }),
+    )
+  })
+
+  it("shows the API's 400 message inline under the field when the save is rejected", async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn().mockRejectedValue(
+      new Error("AllowedDurationMinutes must not exceed the open/close window."),
+    )
+    render(
+      <SchedulePolicyPanel
+        assets={[asset]}
+        busy={false}
+        busyAction={null}
+        readOnly={false}
+        onSave={onSave}
+        onSeedSlotGrid={vi.fn()}
+      />,
+    )
+    const input = screen.getByLabelText(
+      i18n.t("rentals.schedule.policy.durationMinutes"),
+    )
+
+    await user.clear(input)
+    await user.type(input, "600")
+    await user.click(
+      screen.getByRole("button", {
+        name: i18n.t("rentals.schedule.policy.saveOpenHours"),
+      }),
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "AllowedDurationMinutes must not exceed the open/close window.",
     )
   })
 

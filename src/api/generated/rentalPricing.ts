@@ -11,7 +11,7 @@ export const availabilityWindowDtoSchema = z.object({
   availableQuantity: z.number().int().optional(),
   endTime: z.string().optional(),
   isDerived: z.boolean().optional(),
-  pricingUnit: pricingUnitSchema.nullable().optional(),
+  pricingUnit: pricingUnitSchema.optional(),
   reasonCode: z.string().nullable().optional(),
   slotId: z.string().nullable().optional(),
   startTime: z.string().optional(),
@@ -37,9 +37,11 @@ export const checkAvailabilityResponseDtoSchema = z.object({
   availableQuantity: z.number().int().optional(),
   estimatedTotalAmount: z.number().nullable().optional(),
   isAvailable: z.boolean().optional(),
-  pricingUnit: pricingUnitSchema.nullable().optional(),
+  pricingUnit: pricingUnitSchema.optional(),
+  pricedUnits: z.number().nullable().optional(),
   reason: z.string().nullable().optional(),
   requestedQuantity: z.number().int().optional(),
+  unitPrice: z.number().nullable().optional(),
 })
 
 export type CheckAvailabilityResponseDto = z.infer<typeof checkAvailabilityResponseDtoSchema>
@@ -79,7 +81,7 @@ export const updateRentalPricingDtoSchema = z.object({
   depositPercentage: z.number(),
   endTime: z.string(),
   pricePerHour: z.number(),
-  pricingUnit: pricingUnitSchema.nullable().optional(),
+  pricingUnit: pricingUnitSchema.optional(),
   requiresDeposit: z.boolean(),
   startTime: z.string(),
 })

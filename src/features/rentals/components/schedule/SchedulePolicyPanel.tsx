@@ -71,8 +71,11 @@ function templateScheduleValues(
   }
 }
 
-function normalizeDurations(value: string): string | null {
-  const values = value.split(",").map((item) => item.trim())
+function parseDurations(value: string): string | null {
+  const values = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item !== "")
   if (
     values.length === 0 ||
     values.some((item) => !/^\d+$/.test(item) || Number(item) < 1)
@@ -80,9 +83,7 @@ function normalizeDurations(value: string): string | null {
     return null
   }
 
-  return [...new Set(values.map(Number))]
-    .sort((left, right) => left - right)
-    .join(",")
+  return values.join(",")
 }
 
 function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
@@ -184,7 +185,7 @@ function SchedulePolicyPanelForm({
     if (!hasValidOpenHours) {
       return
     }
-    const allowedDurationMinutes = normalizeDurations(durationMinutes)
+    const allowedDurationMinutes = parseDurations(durationMinutes)
     if (!allowedDurationMinutes) {
       setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
       return
@@ -196,15 +197,22 @@ function SchedulePolicyPanelForm({
       openTime,
       closeTime,
       allowedDurationMinutes,
+    }).catch((error: unknown) => {
+      // The parent already toasts; this surfaces the same API message inline on the field.
+      setDurationError(
+        error instanceof Error
+          ? error.message
+          : t("rentals.schedule.policy.durationMinutesInvalid"),
+      )
     })
   }
 
   const slotGridDurationsInvalid =
-    slotGridDurations.trim() !== "" && !normalizeDurations(slotGridDurations)
+    slotGridDurations.trim() !== "" && !parseDurations(slotGridDurations)
 
   function saveSlotGrid(onSuccess?: () => void) {
     const allowedDurationMinutes = slotGridDurations.trim()
-      ? normalizeDurations(slotGridDurations)
+      ? parseDurations(slotGridDurations)
       : null
     if (slotGridDurations.trim() && !allowedDurationMinutes) {
       setDurationError(t("rentals.schedule.policy.durationMinutesInvalid"))
@@ -219,8 +227,13 @@ function SchedulePolicyPanelForm({
       allowedDurationMinutes,
     })
       .then(onSuccess)
-      .catch(() => {
-        /* toast already shown by parent */
+      .catch((error: unknown) => {
+        // The parent already toasts; this surfaces the same API message inline on the field.
+        setDurationError(
+          error instanceof Error
+            ? error.message
+            : t("rentals.schedule.policy.durationMinutesInvalid"),
+        )
       })
   }
 
