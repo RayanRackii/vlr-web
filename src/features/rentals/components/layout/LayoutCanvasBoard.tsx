@@ -391,7 +391,7 @@ export function LayoutCanvasBoard({
                 {mode === "edit" ? (
                   <span
                     aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70 coarse:hidden"
+                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:hidden"
                     onPointerDown={(event) => {
                       startTileDrag(event, item, "resize")
                     }}
@@ -429,7 +429,7 @@ export function LayoutCanvasBoard({
                 ) : null}
                 <span
                   aria-hidden
-                  className="absolute right-0 top-full z-10 mt-1 hidden size-11 cursor-se-resize rounded-sm bg-primary/70 coarse:flex"
+                  className="absolute right-0 top-full z-10 mt-1 hidden size-11 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:flex"
                   onPointerDown={(event) => {
                     startTileDrag(event, item, "resize")
                   }}

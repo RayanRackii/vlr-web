@@ -336,3 +336,19 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
     expect(coarseResize?.className).toContain("top-full")
   })
 })
+
+describe("LayoutCanvasBoard resize handles", () => {
+  it("paints handles with a solid token (var() colors drop /opacity) and keeps a 44px coarse target", () => {
+    const { container } = render(
+      <LayoutCanvasBoard
+        mode="edit"
+        onResize={() => {}}
+        items={[{ key: "r1", rentalAssetId: "r1", label: "Recurso", xPercent: 10, yPercent: 10, widthPercent: 20, heightPercent: 20, zIndex: 1, available: true }]}
+      />,
+    )
+    const handles = Array.from(container.querySelectorAll<HTMLElement>('[class*="cursor-se-resize"]'))
+    expect(handles.length).toBeGreaterThan(0)
+    for (const h of handles) expect(h.className).not.toMatch(/bg-primary\//)
+    expect(handles.some((h) => h.className.includes("size-11"))).toBe(true)
+  })
+})
