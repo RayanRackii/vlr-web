@@ -264,7 +264,7 @@ export function ReservationsPage() {
                 aria-pressed={isActive}
                 onClick={() => setStatus(option.value)}
                 className={cn(
-                  "min-h-10 rounded-full border px-3 text-xs font-medium transition-colors motion-safe:transition-colors",
+                  "min-h-11 rounded-full border px-3 text-xs font-medium transition-colors motion-safe:transition-colors md:min-h-10",
                   isActive
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
