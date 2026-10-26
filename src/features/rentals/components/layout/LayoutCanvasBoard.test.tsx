@@ -137,6 +137,40 @@ describe("LayoutCanvasBoard pick labels", () => {
     expect(tile.querySelector(".sm\\:absolute.sm\\:bottom-0")).not.toBeNull()
   })
 
+  it("keeps the reason single-line with the full text in a title, clear of a footer below it", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="pick"
+        items={[
+          {
+            key: "q4",
+            rentalAssetId: "44444444-4444-4444-8444-444444444444",
+            label: "Quadra 4",
+            footer: "Quadra 4 · R$ 30,00/dia",
+            detail: "Sua reserva · 2 de 3 unidades. Para mais unidades, cancele e reserve de novo.",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 40,
+            zIndex: 1,
+            available: false,
+            disabled: true,
+            ownReservation: true,
+          },
+        ]}
+      />,
+    )
+
+    const reason = screen.getByTitle(
+      "Sua reserva · 2 de 3 unidades. Para mais unidades, cancele e reserve de novo.",
+    )
+    expect(reason.className).toContain("truncate")
+    expect(reason.className).not.toContain("line-clamp-2")
+
+    const tile = reason.closest('[role="button"]')
+    expect(tile?.className).toContain("sm:pb-6")
+  })
+
   it("puts focus and screen-reader order in visual reading order", () => {
     render(
       <LayoutCanvasBoard

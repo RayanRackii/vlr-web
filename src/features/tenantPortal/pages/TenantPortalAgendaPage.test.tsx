@@ -1403,6 +1403,28 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(courtOne).toHaveAttribute("aria-disabled", "true")
   })
 
+  it("disables a Horário option that the selected resource has no room for", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await user.click(
+      screen.getByRole("combobox", {
+        name: i18n.t("tenantPortal.agenda.time"),
+      }),
+    )
+
+    // Quadra 1 only has a bookable slot at 08:00 in this day's schedule; 09:00
+    // belongs to Quadra 2 only, so it is not bookable for the selected resource.
+    const reservedOption = await screen.findByRole("option", {
+      name: `09:00 – 10:00 · ${i18n.t("tenantPortal.agenda.timeReserved")}`,
+    })
+    expect(reservedOption).toHaveAttribute("aria-disabled", "true")
+    expect(
+      screen.getByRole("option", { name: "08:00 – 09:00" }),
+    ).not.toHaveAttribute("aria-disabled")
+  })
+
   it("disables Reservar horário while the price is still calculating", async () => {
     let resolveQuote: (value: {
       isAvailable: boolean
@@ -1951,6 +1973,20 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(screen.getByText(i18n.t("tenantPortal.agenda.yourReservationUnitsReason"), { exact: false })).toBeVisible()
   })
 
+  it("names a fully booked multi-unit resource as all units reserved, not the generic unavailable text", async () => {
+    fetchAssets.mockResolvedValue([
+      makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"), totalQuantity: 3 },
+    ])
+    renderAgenda()
+
+    expect(
+      await screen.findByRole("button", {
+        name: `Quadra 2 ${i18n.t("tenantPortal.agenda.unitsBadge", { count: 3 })}. ${i18n.t("tenantPortal.agenda.allUnitsReserved")}`,
+      }),
+    ).toHaveAttribute("aria-disabled", "true")
+  })
+
   it("uses the selected resource's own horizon instead of the widest visible one", async () => {
     fetchAssets.mockResolvedValue([
       { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveMaxAdvanceBookingDays: 7 },
@@ -2256,6 +2292,26 @@ describe("TenantPortalAgendaPage time selector", () => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     expect(checkAvailability.mock.calls.length).toBe(callsAfter)
     expect(screen.getByRole("group", { name: i18n.t("tenantPortal.agenda.days") })).toBeInTheDocument()
+  })
+
+  it("names the multi-day reason as a booked day in the range, not the generic unavailable text", async () => {
+    checkAvailability.mockImplementation(async (_subdomain, request) =>
+      request.endDate
+        ? { isAvailable: false, requestedQuantity: 1, availableQuantity: 0, estimatedTotalAmount: null, pricingUnit: null, reason: "x" }
+        : { isAvailable: true, requestedQuantity: 1, availableQuantity: 1, estimatedTotalAmount: 80, pricingUnit: "Day", reason: null },
+    )
+    fetchAssets.mockResolvedValue([
+      makeOpenHoursAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"),
+    ])
+    const user = userEvent.setup()
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+    await screen.findByText(i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }))
+    await user.click(await screen.findByRole("button", { name: `${i18n.t("tenantPortal.agenda.days")} +` }))
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.periodIncludesBookedDay")),
+    ).toBeInTheDocument()
   })
 
   it("requests and books 3 days with the computed end date and multiplied total", async () => {

@@ -114,3 +114,20 @@ export function clampDateToHorizon(value: string, maxDate: string | null): strin
 
   return value > maxDate ? maxDate : value
 }
+
+/**
+ * The horizon end date to clamp the agenda against, or `null` while resources
+ * are still loading. Computing it from `policyHorizonDays` alone before the
+ * resource list arrives can yield a narrower date than the resources' real
+ * (wider) horizon, clamping deep links by load order instead of deterministically.
+ */
+export function effectiveHorizonMaxDate(
+  resourcesLoaded: boolean,
+  todayIso: string,
+  days: number | null | undefined,
+): string | null {
+  if (!resourcesLoaded) {
+    return null
+  }
+  return horizonEndDate(todayIso, days)
+}
