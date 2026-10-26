@@ -133,5 +133,8 @@ describe("RentalLayoutsPage", () => {
     await user.click(await screen.findByText("Avançado"))
     expect(screen.getByRole("checkbox", { name: "Exibir preço no bloco" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Definir mapa padrão" })).toBeDisabled()
+    for (const input of document.querySelectorAll('input[type="color"]')) {
+      expect(input).toBeDisabled()
+    }
   })
 })

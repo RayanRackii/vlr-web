@@ -375,7 +375,7 @@ export function LayoutCanvasBoard({
                   <button
                     type="button"
                     aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:size-11"
+                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:left-0.5 coarse:right-auto coarse:size-11"
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}

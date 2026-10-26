@@ -256,3 +256,37 @@ describe("LayoutCanvasBoard pick labels", () => {
     ).toEqual(["Q-1", "Q-10", "Q-5", "Q-6"])
   })
 })
+
+describe("LayoutCanvasBoard edit-mode touch targets", () => {
+  it("keeps the remove button and resize handle on opposite corners so coarse 44px targets never overlap", () => {
+    render(
+      <LayoutCanvasBoard
+        mode="edit"
+        items={[
+          {
+            key: "q1",
+            rentalAssetId: "11111111-1111-4111-8111-111111111111",
+            label: "Quadra 1",
+            xPercent: 4,
+            yPercent: 4,
+            widthPercent: 40,
+            heightPercent: 10,
+            zIndex: 1,
+          },
+        ]}
+        onRemove={() => {}}
+      />,
+    )
+
+    const removeButton = screen.getByRole("button", { name: "remove" })
+    expect(removeButton.className).toContain("right-0.5")
+    expect(removeButton.className).toContain("coarse:left-0.5")
+    expect(removeButton.className).toContain("coarse:right-auto")
+
+    const resizeHandle = document.querySelector('[class*="cursor-se-resize"]')
+    expect(resizeHandle).not.toBeNull()
+    expect(resizeHandle?.className).toContain("right-0.5")
+    expect(resizeHandle?.className).toContain("bottom-0.5")
+    expect(resizeHandle?.className).not.toContain("coarse:left-0.5")
+  })
+})
