@@ -45,7 +45,7 @@ export function AuthSplitShell({
         )}
         style={brandPanelStyle}
       >
-        <div className="flex flex-1 flex-col items-start justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center text-center">
           {brandPanel}
         </div>
         {brandFootnote}

@@ -157,7 +157,7 @@ export function TenantPortalLayout() {
           portalBasePath={portalBasePath}
         />
         <main className="flex min-h-screen items-center justify-center p-6 pt-24">
-          <PortalNotFoundRoute />
+          <PortalNotFoundRoute tenantExists={false} />
         </main>
       </div>
     )
@@ -233,7 +233,6 @@ export function TenantPortalLayout() {
                 displayName={branding.displayName}
                 primaryColor={branding.primaryColor}
                 size="lg"
-                className="mx-0"
               />
               <div className="space-y-2">
                 <h2 className="break-words text-4xl font-semibold tracking-tight text-foreground">
