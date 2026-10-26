@@ -119,6 +119,13 @@ describe("PortalCatalogProductCard", () => {
     expect(onAdd).toHaveBeenCalledTimes(1)
   })
 
+  it("gives the quantity stepper buttons a 44px tap target", () => {
+    renderCard()
+
+    expect(screen.getByRole("button", { name: "Aumentar quantidade" })).toHaveClass("size-11")
+    expect(screen.getByRole("button", { name: "Diminuir quantidade" })).toHaveClass("size-11")
+  })
+
   it("increases quantity with plus and disables minus at 1", async () => {
     const user = userEvent.setup()
     const { onQuantityChange } = renderCard({ quantity: 1 })

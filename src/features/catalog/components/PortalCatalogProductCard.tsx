@@ -99,7 +99,7 @@ export function PortalCatalogProductCard({
           <Button
             type="button"
             variant="outline"
-            size="icon"
+            size="icon-lg"
             aria-label={t("tenantPortal.catalog.quantityDecrease")}
             disabled={quantity <= CATALOG_CART_MIN_QUANTITY}
             onClick={() => {
@@ -109,7 +109,7 @@ export function PortalCatalogProductCard({
             <Minus aria-hidden />
           </Button>
           <CatalogQuantityField
-            className="h-8 min-w-0 flex-1 px-1 text-center"
+            className="h-11 min-w-0 flex-1 px-1 text-center"
             quantity={quantity}
             productName={product.name}
             onCommit={commitQuantity}
@@ -117,7 +117,7 @@ export function PortalCatalogProductCard({
           <Button
             type="button"
             variant="outline"
-            size="icon"
+            size="icon-lg"
             aria-label={t("tenantPortal.catalog.quantityIncrease")}
             disabled={quantity >= CATALOG_CART_MAX_QUANTITY}
             onClick={() => {

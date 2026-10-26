@@ -148,6 +148,22 @@ describe("PortalCartPage validity gate", () => {
     expect(back).toBeEnabled()
   })
 
+  it("wraps line items in cards and pins the submit bar on mobile", async () => {
+    seedCart()
+    renderCart()
+
+    const line = (await screen.findByText("Raquete")).closest("li")
+    expect(line).not.toBeNull()
+    expect(line).toHaveClass("rounded-xl", "border", "bg-card")
+
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.submitOrder"),
+    })
+    const stickyBar = submit.closest("div.fixed")
+    expect(stickyBar).not.toBeNull()
+    expect(stickyBar).toHaveClass("fixed", "bottom-0", "md:static")
+  })
+
   it("hides checkout controls when the cart is empty", async () => {
     renderCart()
     expect(await screen.findByText(i18n.t("tenantPortal.catalog.cartEmpty"))).toBeInTheDocument()
