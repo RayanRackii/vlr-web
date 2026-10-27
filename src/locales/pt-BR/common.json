@@ -1220,7 +1220,6 @@
   },
   "moduleIntro": {
     "title": "Apresentação",
-    "howItWorks": "Como funciona",
     "shortcuts": "Atalhos",
     "relatedModules": "Módulos relacionados",
     "open": "Sobre {{module}}",
@@ -1268,6 +1267,83 @@
         "how1": "Consulte os clientes e abra o ambiente que precisa administrar.",
         "how2": "Gerencie os usuários da plataforma e as famílias de equipamentos nas telas disponíveis.",
         "how3": "Dentro de um ambiente, o menu mostra as áreas disponíveis para aquele cliente."
+      }
+    }
+  },
+  "moduleGuide": {
+    "roadmapTitle": "Roteiro do guia",
+    "badgesTitle": "Conquistas",
+    "pointsLabel": "{{points}} pontos",
+    "progressLabel": "{{completed}} de {{total}} etapas",
+    "markDone": "Marcar como feito",
+    "goToScreen": "Ir para {{label}}",
+    "exploreModule": "Explorar {{label}}",
+    "reset": "Reiniciar guia",
+    "soundToggle": "Som de recompensas",
+    "nextAction": {
+      "eyebrow": "Próxima ação recomendada",
+      "allDone": "Guia concluído!",
+      "allDoneDescription": "Você completou todas as etapas deste guia. Reinicie quando quiser revisar."
+    },
+    "reward": {
+      "stepAnnouncement": "Você ganhou {{points}} pontos por concluir \"{{step}}\".",
+      "badgeAnnouncement": "Conquista desbloqueada: {{badge}}."
+    },
+    "badges": {
+      "firstStep": "Primeiro recurso",
+      "halfway": "Na metade do caminho",
+      "complete": "Guia completo"
+    },
+    "steps": {
+      "learn1": { "title": "Primeiro passo" },
+      "learn2": { "title": "Segundo passo" },
+      "learn3": { "title": "Terceiro passo" },
+      "overview": {
+        "learn1": { "title": "Consulte os indicadores" },
+        "learn2": { "title": "Explore as telas pelo menu" },
+        "learn3": { "title": "Conheça as áreas do negócio" }
+      },
+      "bookings": {
+        "learn1": { "title": "Cadastre seus recursos" },
+        "learn2": { "title": "Defina os horários" },
+        "learn3": { "title": "Conecte-se a outros módulos" }
+      },
+      "maintenance": {
+        "learn1": { "title": "Cadastre seus equipamentos" },
+        "learn2": { "title": "Organize planos e ordens" },
+        "learn3": { "title": "Alinhe manutenção e reservas" }
+      },
+      "sales": {
+        "learn1": { "title": "Cadastre seus produtos" },
+        "learn2": { "title": "Ajuste as configurações" },
+        "learn3": { "title": "Conecte-se a outros módulos" }
+      },
+      "peoplePortal": {
+        "learn1": { "title": "Acompanhe equipe e clientes" },
+        "learn2": { "title": "Organize o menu do cliente" },
+        "learn3": { "title": "Conecte reservas e vendas" }
+      },
+      "pmoc": {
+        "learn1": { "title": "Consulte seus planos" },
+        "learn2": { "title": "Crie um novo plano" },
+        "learn3": { "title": "Conecte planos e ordens" }
+      },
+      "platform": {
+        "learn1": { "title": "Consulte os clientes" },
+        "learn2": { "title": "Gerencie usuários e famílias" },
+        "learn3": { "title": "Explore o menu do ambiente" }
+      },
+      "visit": {
+        "title": "Visite uma tela do módulo",
+        "description": "Abra uma tela real para ver o que você aprendeu em ação."
+      },
+      "related": {
+        "title": "Explore um módulo relacionado",
+        "description": "Veja como este módulo se conecta a outra área do seu negócio."
+      },
+      "wrapUp": {
+        "title": "Pronto para usar",
+        "description": "Você conhece o essencial deste módulo. Volte ao guia quando quiser revisar."
       }
     }
   },
