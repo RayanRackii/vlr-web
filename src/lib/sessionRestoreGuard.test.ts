@@ -413,4 +413,12 @@ describe("portal sign out", () => {
 
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
+
+  it("does not throw when staff sign-out fails/rejects", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error("network"))
+
+    await expect(signOutStaffBeforeCustomerAuth()).resolves.toBeUndefined()
+    expect(hasActiveStaffSession()).toBe(false)
+  })
 })

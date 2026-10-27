@@ -133,6 +133,29 @@ describe("TenantPortalLoginPage", () => {
     expect(hasActiveStaffSession()).toBe(false)
   })
 
+  it("navigates without error toast even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
   it("keeps the staff session when customer login fails", async () => {
     const user = userEvent.setup()
     storeStaffSession()

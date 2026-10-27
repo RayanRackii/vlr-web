@@ -356,6 +356,33 @@ describe("TenantPortalRegisterPage email verification", () => {
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
     expect(hasActiveStaffSession()).toBe(true)
   })
+
+  it("completes registration flow (persist pending verification + navigate) even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled()
+    })
+    expect(await screen.findByText("verify-email-page")).toBeInTheDocument()
+    expect(readPendingEmailVerification("ficc")).toEqual({
+      email: "ana@club.test",
+      verificationSendFailed: false,
+    })
+    expect(toastError).not.toHaveBeenCalled()
+  })
 })
 
 describe("TenantPortalRegisterPage duplicate field errors", () => {
