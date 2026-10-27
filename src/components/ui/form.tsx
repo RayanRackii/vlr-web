@@ -134,7 +134,7 @@ function FormControl({
   children,
   ...props
 }: React.ComponentProps<typeof Slot>) {
-  const { error, formItemId, visibleDescriptionId, visibleMessageId } =
+  const { error, formItemId, visibleDescriptionId, visibleMessageId, hasInlineMessage } =
     useFormField()
 
   return (
@@ -142,7 +142,7 @@ function FormControl({
       data-slot="form-control"
       id={formItemId}
       aria-describedby={[visibleDescriptionId, visibleMessageId].filter(Boolean).join(" ") || undefined}
-      aria-invalid={!!error || !!visibleMessageId}
+      aria-invalid={!!error || hasInlineMessage}
       {...props}
     >
       {children}
