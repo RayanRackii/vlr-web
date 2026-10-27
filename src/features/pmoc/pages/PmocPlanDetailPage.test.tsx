@@ -184,6 +184,23 @@ describe("PmocPlanDetailPage", () => {
     expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired"))).toHaveLength(1)
   })
 
+  it("waits for blur before explaining a partial due date and clears the error when valid", async () => {
+    const user = userEvent.setup()
+    renderDetail()
+    const date = await screen.findByLabelText(i18n.t("pmoc.scheduling.firstDue"))
+    const message = i18n.t("common.datePicker.invalid")
+    await user.clear(date)
+    await user.type(date, "1")
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+    await user.type(date, "4/")
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+    await user.tab()
+    expect(screen.getAllByText(message)).toHaveLength(1)
+    await user.clear(date)
+    await user.type(date, "14/10/2026")
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+  })
+
   it("shows origin, auto toggle, and checklist, and hides related OS / Gerar OS", async () => {
     const { container } = renderDetail()
 
@@ -535,6 +552,7 @@ describe("PmocPlanDetailPage", () => {
 
     const title = await screen.findByDisplayValue("Verificar filtros")
     await user.clear(title)
+    await user.tab()
     expect(
       screen.getByRole("button", {
         name: i18n.t("pmoc.plans.actions.saveChecklist"),
@@ -549,6 +567,7 @@ describe("PmocPlanDetailPage", () => {
     })
     await user.clear(interval)
     await user.type(interval, "0")
+    await user.tab()
     expect(
       screen.getByRole("button", {
         name: i18n.t("pmoc.plans.actions.saveDetails"),
@@ -569,6 +588,7 @@ describe("PmocPlanDetailPage", () => {
     )
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.min")), "8")
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.max")), "2")
+    await user.tab()
     expect(
       screen.getAllByText(i18n.t("pmoc.create.validation.numberRangeInvalid")).length,
     ).toBeGreaterThan(0)

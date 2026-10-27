@@ -1,3 +1,5 @@
+import { FormInlineMessage } from "@/components/ui/form"
+
 export function FormValidationSummary({ messages }: { messages: string[] }) {
   if (messages.length === 0) {
     return null
@@ -21,5 +23,5 @@ export function LiveFieldMessage({ message }: { message?: string }) {
     return null
   }
 
-  return <p className="text-sm text-destructive">{message}</p>
+  return <FormInlineMessage className="text-sm text-destructive">{message}</FormInlineMessage>
 }

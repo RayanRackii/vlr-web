@@ -70,6 +70,12 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue,
 )
 
+/** Inline messages can also be rendered outside a FormItem. */
+function FormInlineMessage(props: React.ComponentProps<"p">) {
+  const { id } = React.useContext(FormItemContext)
+  return <p id={id ? `${id}-form-item-message` : undefined} {...props} />
+}
+
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   const id = React.useId()
 
@@ -163,6 +169,7 @@ export {
   FormControl,
   FormDescription,
   FormField,
+  FormInlineMessage,
   FormItem,
   FormLabel,
   FormMessage,

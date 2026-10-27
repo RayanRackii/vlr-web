@@ -320,7 +320,10 @@ export function CreatePlanPage() {
                       <FormLabel>{t("pmoc.create.form.unit")}</FormLabel>
                       <Select
                         modal={false}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          field.onBlur()
+                        }}
                         value={field.value}
                         items={unitItems}
                       >
@@ -356,7 +359,10 @@ export function CreatePlanPage() {
                       <FormLabel>{t("pmoc.create.form.category")}</FormLabel>
                       <Select
                         modal={false}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          field.onBlur()
+                        }}
                         value={field.value}
                         items={categoryItems}
                       >
@@ -400,6 +406,7 @@ export function CreatePlanPage() {
                         modal={false}
                         onValueChange={(value) => {
                           field.onChange(value === "true")
+                          field.onBlur()
                         }}
                         value={field.value ? "true" : "false"}
                         items={statusItems}
