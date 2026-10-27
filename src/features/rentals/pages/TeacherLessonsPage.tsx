@@ -1,4 +1,5 @@
 import { civilDateFormSchema, isCivilDate } from "@/lib/civilDate"
+import { formatLocaleCivilDate } from "@/lib/localeFormat"
 import { CivilDateInput } from "@/components/CivilDateInput"
 import { displayEndClock } from "@/lib/tenantTimeZone"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -75,6 +76,8 @@ type PendingRemoval = {
 export function TeacherLessonsPage() {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
+  const today = todayIsoDate(timeZoneId)
+  const locale = i18n.resolvedLanguage ?? i18n.language
   const { assets, day, dayStatus, loading, busy, loadDay, create, remove } = useTeacherLessons(t)
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
   const removalInFlight = useRef(false)
@@ -92,7 +95,9 @@ export function TeacherLessonsPage() {
     const slotRequired = t("rentals.teacherLessons.slotRequired")
     return z.object({
       assetId: z.string().min(1),
-      date: civilDateFormSchema(t("common.datePicker.invalid")),
+      date: civilDateFormSchema(t("common.datePicker.required"), t("common.datePicker.invalid"), {
+        min: { value: today, message: t("common.datePicker.min", { date: formatLocaleCivilDate(today, locale) }) },
+      }),
       slotKey: z.string({ error: slotRequired })
         .min(1, { error: slotRequired })
         .refine((value) => !value || openSlots.some((slot) => slotKeyFor(slot) === value), {
@@ -100,14 +105,14 @@ export function TeacherLessonsPage() {
         }),
       label: z.string().max(120),
     })
-  }, [openSlots, t])
+  }, [openSlots, t, today, locale])
   type FormValues = z.infer<typeof schema>
   const [dateRequest] = useState(() =>
     readLessonDateFromLocation(todayIsoDate(timeZoneId)),
   )
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    mode: "onChange",
+    mode: "onTouched",
     defaultValues: { assetId: "", date: dateRequest.date, slotKey: "", label: "" },
   })
   const { clearErrors, getValues, setError, setValue } = form
@@ -244,7 +249,7 @@ export function TeacherLessonsPage() {
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("rentals.teacherLessons.date")}</FormLabel>
-              <FormControl><CivilDateInput locale={i18n.resolvedLanguage ?? i18n.language} {...field} aria-label={t("rentals.teacherLessons.date")} min={todayIsoDate(timeZoneId)} disabled={busy} /></FormControl>
+              <FormControl><CivilDateInput locale={locale} {...field} aria-label={t("rentals.teacherLessons.date")} min={today} disabled={busy} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />

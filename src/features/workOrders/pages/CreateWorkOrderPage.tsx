@@ -63,6 +63,7 @@ export function CreateWorkOrderPage() {
       createWorkOrderFormSchema({
         assetRequired: t("workOrders.create.validation.assetRequired"),
         dateRequired: t("workOrders.create.validation.dateRequired"),
+        dateInvalid: t("common.datePicker.invalid"),
         taskRequired: t("workOrders.create.validation.taskRequired"),
       }),
     [t],

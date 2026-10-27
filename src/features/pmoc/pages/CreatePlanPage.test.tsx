@@ -183,18 +183,21 @@ describe("CreatePlanPage validity gate", () => {
 
     await user.click(name)
     await user.tab()
-    expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired")).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired"))).toHaveLength(1)
     expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
 
     fireEvent.submit(name.closest("form")!)
-    expect((await screen.findAllByText(i18n.t("pmoc.scheduling.firstDueRequired"))).length).toBeGreaterThan(0)
+    expect(await screen.findAllByText(i18n.t("pmoc.scheduling.firstDueRequired"))).toHaveLength(1)
+    for (const key of ["nameRequired", "unitRequired", "categoryRequired"]) {
+      expect(screen.getAllByText(i18n.t(`pmoc.create.validation.${key}`))).toHaveLength(1)
+    }
     expect(createPlanMock).not.toHaveBeenCalled()
   })
 
   it.each([
-    ["pt-BR", "dd/mm/aaaa", "Informe o primeiro vencimento.", "Use no máximo 200 caracteres."],
-    ["en", "mm/dd/yyyy", "Enter the first due date.", "Use at most 200 characters."],
-    ["es", "dd/mm/aaaa", "Indique el primer vencimiento.", "Use como máximo 200 caracteres."],
+    ["pt-BR", "dd/mm/aaaa", "Informe uma data válida.", "Use no máximo 200 caracteres."],
+    ["en", "mm/dd/yyyy", "Enter a valid date.", "Use at most 200 characters."],
+    ["es", "dd/mm/aaaa", "Indique una fecha válida.", "Use como máximo 200 caracteres."],
   ])("localizes validation and the date format in %s", async (locale, placeholder, message, maxLengthMessage) => {
     await i18n.changeLanguage(locale)
     try {
@@ -204,10 +207,10 @@ describe("CreatePlanPage validity gate", () => {
       expect(date).toHaveAttribute("placeholder", placeholder)
       await user.type(date, "12/")
       await user.tab()
-      expect(screen.getAllByText(message).length).toBeGreaterThan(0)
+      expect(screen.getAllByText(message)).toHaveLength(1)
       expect(container.textContent).not.toContain("Expected a civil")
       fireEvent.change(screen.getByLabelText(i18n.t("pmoc.create.form.name")), { target: { value: "x".repeat(201) } })
-      expect(screen.getAllByText(maxLengthMessage).length).toBeGreaterThan(0)
+      expect(screen.getAllByText(maxLengthMessage)).toHaveLength(1)
       expect(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") })).toBeDisabled()
     } finally {
       await i18n.changeLanguage("pt-BR")

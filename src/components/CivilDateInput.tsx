@@ -19,8 +19,7 @@ export function CivilDateInput({ value, locale, onChange, min, max, disabled, cl
 
   function change(text: string) {
     const parsed = parseLocaleCivilDate(text, locale) ?? (isCivilDate(text) ? text : null)
-    const outsideRange = parsed && ((min && parsed < min) || (max && parsed > max))
-    onChange(parsed ? (outsideRange ? formatLocaleCivilDate(parsed, locale) : parsed) : text)
+    onChange(parsed ?? text)
   }
 
   return (

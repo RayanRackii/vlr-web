@@ -20,6 +20,9 @@
       "maxLength": "Use no máximo {{count}} caracteres."
     },
     "datePicker": {
+      "required": "Informe a data.",
+      "min": "Informe uma data em ou após {{date}}.",
+      "max": "Informe uma data em ou antes de {{date}}.",
       "invalid": "Informe uma data válida.",
       "format": "dd/mm/aaaa",
       "open": "Abrir calendário",

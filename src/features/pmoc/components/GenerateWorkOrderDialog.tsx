@@ -106,6 +106,7 @@ export function GenerateWorkOrderDialog({
       generateWorkOrderFromPlanFormSchema({
         assetRequired: t("workOrders.create.validation.assetRequired"),
         dateRequired: t("workOrders.create.validation.dateRequired"),
+        dateInvalid: t("common.datePicker.invalid"),
       }),
     [t],
   )

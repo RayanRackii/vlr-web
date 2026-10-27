@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
 import { resetRemovedTeacherLessonsForTests } from "@/features/rentals/hooks/useTeacherLessons"
+import i18n from "@/lib/i18n"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import {
@@ -104,6 +105,44 @@ async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("TeacherLessonsPage", () => {
+  it.each([
+    ["pt-BR", "07/10/2026", "Informe uma data em ou após 08/10/2026."],
+    ["en", "10/07/2026", "Enter a date on or after 10/08/2026."],
+    ["es", "07/10/2026", "Indique una fecha igual o posterior al 08/10/2026."],
+  ])("explains an out-of-range date in %s and blocks lesson creation", async (locale, text, message) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      render(<TeacherLessonsPage />)
+      const date = await screen.findByLabelText(i18n.t("rentals.teacherLessons.date"))
+      await user.clear(date)
+      await user.type(date, text)
+      await user.tab()
+      expect(await screen.findByText(message)).toBeInTheDocument()
+      expect(screen.queryByText(i18n.t("common.datePicker.invalid"))).not.toBeInTheDocument()
+      expect(screen.getByRole("button", { name: i18n.t("rentals.teacherLessons.create" ) })).toBeDisabled()
+      expect(createTeacherLesson).not.toHaveBeenCalled()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("shows a partial date error only after blur and clears it when the date is complete", async () => {
+    const user = userEvent.setup()
+    render(<TeacherLessonsPage />)
+    const date = await screen.findByLabelText("Data")
+    await user.clear(date)
+    await user.type(date, "1")
+    expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument()
+    await user.type(date, "4/")
+    expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument()
+    await user.tab()
+    expect(await screen.findByText("Informe uma data válida.")).toBeInTheDocument()
+    await user.type(date, "10/2026")
+    await waitFor(() => expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument())
+    expect(date).toHaveValue("14/10/2026")
+  })
+
   it("does not query the API with an incomplete localized date", async () => {
     const user = userEvent.setup()
     render(<TeacherLessonsPage />)

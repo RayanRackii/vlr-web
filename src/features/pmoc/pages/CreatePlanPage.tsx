@@ -65,6 +65,7 @@ export function CreatePlanPage() {
         nameRequired: t("pmoc.create.validation.nameRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -109,7 +110,8 @@ export function CreatePlanPage() {
   const parsedPlan = formSchema.safeParse(watchedValues)
   const planError = useVisibleFormIssues(parsedPlan.success ? undefined : parsedPlan.error, form)
   const isPlanValid = parsedPlan.success
-  const planMessages = uniqueIssueMessages(planError)
+  // Field errors are shown inline; the summary only covers the checklist itself.
+  const planMessages = uniqueIssueMessages(planError, (path) => path.length === 1 && path[0] === "tasks")
   const watchedTasks = watchedValues.tasks
 
   const loadLookups = useCallback(async () => {
@@ -286,7 +288,6 @@ export function CreatePlanPage() {
                           {...field}
                         />
                         </FormControl>
-                      <FormMessage />
                       <LiveFieldMessage message={issueMessageAt(planError, ["name"])} />
                     </FormItem>
                   )}
@@ -340,7 +341,6 @@ export function CreatePlanPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["unitId"])}
                       />
@@ -377,7 +377,6 @@ export function CreatePlanPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["assetCategoryId"])}
                       />

@@ -205,6 +205,7 @@ export function createPlanFormSchema(messages: {
   nameTooLong: string
   intervalInvalid: string
   firstDueRequired: string
+  firstDueInvalid: string
   categoryRequired: string
   taskTitleRequired: string
   tasksRequired: string
@@ -264,7 +265,7 @@ export function createPlanFormSchema(messages: {
     name: z.string().trim().min(1, messages.nameRequired).max(200, messages.nameTooLong),
     description: z.string().trim().optional(),
     intervalDays: intervalDaysSchema(messages.intervalInvalid),
-    firstDueDate: civilDateFormSchema(messages.firstDueRequired),
+    firstDueDate: civilDateFormSchema(messages.firstDueRequired, messages.firstDueInvalid),
     assetCategoryId: z
       .string()
       .min(1, messages.categoryRequired)
@@ -341,6 +342,7 @@ export function createFromTemplateFormSchema(messages: {
   nameTooLong: string
   intervalInvalid: string
   firstDueRequired: string
+  firstDueInvalid: string
 }) {
   return z.object({
     unitId: z
@@ -353,7 +355,7 @@ export function createFromTemplateFormSchema(messages: {
       .uuid(messages.categoryRequired),
     name: z.string().trim().max(200, messages.nameTooLong).optional(),
     intervalDays: intervalDaysSchema(messages.intervalInvalid),
-    firstDueDate: civilDateFormSchema(messages.firstDueRequired),
+    firstDueDate: civilDateFormSchema(messages.firstDueRequired, messages.firstDueInvalid),
   })
 }
 

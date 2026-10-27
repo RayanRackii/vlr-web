@@ -175,6 +175,15 @@ describe("PmocPlanDetailPage", () => {
     generateMock.mockResolvedValue(makeWorkOrder())
   })
 
+  it("presents the invalid plan name only once", async () => {
+    const user = userEvent.setup()
+    renderDetail()
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    await user.clear(name)
+    await user.tab()
+    expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired"))).toHaveLength(1)
+  })
+
   it("shows origin, auto toggle, and checklist, and hides related OS / Gerar OS", async () => {
     const { container } = renderDetail()
 

@@ -20,6 +20,7 @@ const formMessages = {
   nameTooLong: "nameTooLong",
   intervalInvalid: "interval",
   firstDueRequired: "firstDue",
+  firstDueInvalid: "invalidDate",
   categoryRequired: "category",
   taskTitleRequired: "task",
   tasksRequired: "tasks",
@@ -31,12 +32,17 @@ const formMessages = {
 
 describe("localized form dates", () => {
   it.each([
-    ["pt-BR", "Informe o primeiro vencimento."],
-    ["en", "Enter the first due date."],
-    ["es", "Indique el primer vencimiento."],
+    ["pt-BR", "Informe uma data válida."],
+    ["en", "Enter a valid date."],
+    ["es", "Indique una fecha válida."],
   ])("keeps malformed date diagnostics localized in create/edit and template forms in %s", (locale, expected) => {
-    const messages = { ...formMessages, firstDueRequired: i18n.t("pmoc.scheduling.firstDueRequired", { lng: locale }) }
+    const messages = { ...formMessages, firstDueRequired: i18n.t("pmoc.scheduling.firstDueRequired", { lng: locale }), firstDueInvalid: i18n.t("common.datePicker.invalid", { lng: locale }) }
     for (const schema of [createPlanFormSchema(messages), createFromTemplateFormSchema(messages)]) {
+      const empty = schema.safeParse({ ...basePlanJson, firstDueDate: "" })
+      expect(empty.success).toBe(false)
+      if (!empty.success) {
+        expect(empty.error.issues.filter((issue) => issue.path[0] === "firstDueDate").map((issue) => issue.message)).toEqual([messages.firstDueRequired])
+      }
       for (const firstDueDate of ["2026-1", "2026-02-31", "2025-02-29"]) {
         const result = schema.safeParse({ ...basePlanJson, firstDueDate })
         expect(result.success).toBe(false)

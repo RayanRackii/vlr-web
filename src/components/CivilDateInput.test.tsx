@@ -82,13 +82,13 @@ describe("CivilDateInput", () => {
   })
 
   it.each([
-    ["13/10/2026", "2026-10-14", undefined],
-    ["15/10/2026", undefined, "2026-10-14"],
-  ])("rejects typed date %s outside the allowed range", async (text, min, max) => {
+    ["13/10/2026", "2026-10-13", "2026-10-14", undefined],
+    ["15/10/2026", "2026-10-15", undefined, "2026-10-14"],
+  ])("preserves ISO for typed date %s outside the allowed range", async (text, iso, min, max) => {
     const user = userEvent.setup()
     render(<DateField locale="pt-BR" min={min} max={max} />)
     await user.type(screen.getByRole("textbox"), text)
-    expect(screen.getByLabelText("Form value")).toHaveTextContent(text)
+    expect(screen.getByLabelText("Form value")).toHaveTextContent(iso)
     expect(screen.getByRole("textbox")).toHaveValue(text)
   })
 })

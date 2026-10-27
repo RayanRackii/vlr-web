@@ -130,6 +130,7 @@ export function PmocPlanDetailPage() {
         nameRequired: t("pmoc.create.validation.nameRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -531,7 +532,6 @@ export function PmocPlanDetailPage() {
                 intervalMessage={issueMessageAt(formError, ["intervalDays"])}
                 firstDueMessage={issueMessageAt(formError, ["firstDueDate"])}
               />
-              <FormValidationSummary messages={uniqueIssueMessages(formError, (path) => path[0] !== "tasks")} />
               <Button
                 type="submit"
                 disabled={
@@ -614,7 +614,7 @@ export function PmocPlanDetailPage() {
                 issueMessage={(path) => issueMessageAt(formError, path)}
               />
 
-              <FormValidationSummary messages={uniqueIssueMessages(formError, (path) => path[0] === "tasks")} />
+              <FormValidationSummary messages={uniqueIssueMessages(formError, (path) => path.length === 1 && path[0] === "tasks")} />
 
               <div className="flex justify-end">
                 <FormPrimaryButton
