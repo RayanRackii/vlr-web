@@ -145,6 +145,31 @@ describe("CustomerAppLayout session tenant", () => {
     expect(fetchBranding).not.toHaveBeenCalled()
   })
 
+  it("sends a signed-out visit to a deep link to the login form with a safe returnTo", async () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/t/:subdomain", element: <div>login-form</div> },
+        {
+          path: "/t/:subdomain/agenda",
+          element: <CustomerAppLayout />,
+          children: [{ index: true, element: <div>agenda-body</div> }],
+        },
+      ],
+      { initialEntries: ["/t/ficc/agenda?reservation=abc"] },
+    )
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <RouterProvider router={router} />
+      </ThemeProvider>,
+    )
+
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/t/ficc")
+    expect(router.state.location.search).toBe(
+      `?returnTo=${encodeURIComponent("/t/ficc/agenda?reservation=abc")}`,
+    )
+  })
+
   it("renders the branded portal 404 when the catalog menu returns HTTP 404", async () => {
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({

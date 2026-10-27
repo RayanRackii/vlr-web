@@ -36,6 +36,21 @@ import {
 const login = vi.mocked(loginCustomer)
 const toastError = vi.mocked(toast.error)
 
+const AUTH_RESPONSE = {
+  token: "customer-token",
+  customer: {
+    id: "11111111-1111-4111-8111-111111111111",
+    tenantId: "22222222-2222-4222-8222-222222222222",
+    name: "Ana Souza",
+    phone: null,
+    email: "ana@club.test",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    phoneVerified: false,
+    emailVerified: true,
+    photoUrl: null,
+  },
+}
+
 const outletContext: TenantPortalOutletContext = {
   subdomain: "ficc",
   branding: {
@@ -49,13 +64,14 @@ const outletContext: TenantPortalOutletContext = {
   primary: "#D4FF00",
 }
 
-function renderLogin() {
+function renderLogin(initialPath = "/t/ficc") {
   return render(
-    <MemoryRouter initialEntries={["/t/ficc"]}>
+    <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route element={<Outlet context={outletContext} />}>
           <Route path="/t/:subdomain" element={<TenantPortalLoginPage />} />
           <Route path="/t/:subdomain/app" element={<div>customer-app</div>} />
+          <Route path="/t/:subdomain/agenda" element={<div>agenda-deep-link</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -227,6 +243,54 @@ describe("TenantPortalLoginPage", () => {
     expect(
       screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
     ).toBeInTheDocument()
+    expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
+  })
+
+  it("returns to the deep link after a successful login when returnTo is safe", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin("/t/ficc?returnTo=%2Ft%2Fficc%2Fagenda%3Freservation%3Dabc")
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("agenda-deep-link")).toBeInTheDocument()
+  })
+
+  it("ignores an unsafe returnTo and falls back to the app after login", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin("/t/ficc?returnTo=%2F%2Fevil.com")
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+  })
+
+  it("opens the deep link directly when already signed in with a safe returnTo", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana Souza")
+    renderLogin("/t/ficc?returnTo=%2Ft%2Fficc%2Fagenda%3Freservation%3Dabc")
+
+    expect(await screen.findByText("agenda-deep-link")).toBeInTheDocument()
     expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
   })
 })

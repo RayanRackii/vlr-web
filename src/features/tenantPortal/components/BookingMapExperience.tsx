@@ -15,6 +15,7 @@ import { fetchDailyAvailability, fetchPublicBookingMap, fetchPublicBookingMaps, 
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
 import { useBookingIdleTimeout } from "@/features/tenantPortal/hooks/useBookingIdleTimeout"
 import { reservationCivilStart } from "@/features/tenantPortal/lib/agendaReservationQuery"
+import { isWithinCancelCutoff } from "@/features/tenantPortal/lib/cancelCutoffWarning"
 import { bookPortalSlot, checkPortalAvailability, createPortalReservation, isLocationQueueEnabled, listMyPortalReservations, type PortalRentalAsset } from "@/features/tenantPortal/services/tenantPortalService"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
@@ -100,6 +101,8 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   }
   const boardItems = mapItems.map((item) => { const result = summary(item.rentalAssetId); const revision = item.visualTemplateRevisionId ? visualById.get(item.visualTemplateRevisionId) : undefined; const resource = resourceById.get(item.rentalAssetId); const details = resource ? tileDetails(resource, result) : ""; return { key: item.id, rentalAssetId: item.rentalAssetId, label: item.assetName, footer: details ? `${item.assetName} · ${details}` : null, xPercent: item.xPercent, yPercent: item.yPercent, widthPercent: item.widthPercent, heightPercent: item.heightPercent, zIndex: item.zIndex, selected: selectedId === item.rentalAssetId, available: result.free.length > 0, disabled: availabilityLoading, artUrl: revision ? visualArtUrl(revision.id, revision.artSha256) : null, icon: revision ? VISUAL_ICON_MAP[revision.defaultIcon] ?? null : null, accentColor: revision?.defaultColor ?? null } })
   const canContinue = selectedWindow !== null && selectedWindow.amount >= 0 && !submitting && !availabilityLoading && !requoteLoading && Boolean(availability?.quoteExpiresAt && Date.parse(availability.quoteExpiresAt) > now) && queue.canReserve
+  const cutoffHours = selectedAsset?.effectiveCancelCutoffHours ?? null
+  const showCutoffWarning = selectedWindow !== null && isWithinCancelCutoff(cutoffHours, date, selectedWindow.startTime, timeZoneId)
   return (
     <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
       <header className="space-y-1">
@@ -256,6 +259,12 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
                 onChange={(event) => { const nextQuantity = Math.max(1, Number(event.target.value) || 1); setSelectedWindow((current) => current ? { ...current, quantity: nextQuantity, amount: -1 } : null); setQuantity(nextQuantity) }}
               />
             </label>
+          ) : null}
+
+          {showCutoffWarning ? (
+            <p role="alert" className="rounded-lg border border-amber-500 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              {t("tenantPortal.agenda.cancelCutoffBookingWarning", { count: cutoffHours ?? 0 })}
+            </p>
           ) : null}
 
           <div className="sticky bottom-0 border-t border-border bg-background py-3">

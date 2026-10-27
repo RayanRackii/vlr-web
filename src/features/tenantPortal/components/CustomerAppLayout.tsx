@@ -19,6 +19,7 @@ import {
   subscribeAgendaSelectionNotice,
 } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
+import { appendReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
 import type {
   ModuleMenuItem,
   TenantBranding,
@@ -124,9 +125,11 @@ export function CustomerAppLayout() {
   }
 
   if (!signedIn) {
+    const loginPath = subdomain ? tenantPortalPath(subdomain) : "/"
+    const returnTo = `${location.pathname}${location.search}`
     return (
       <Navigate
-        to={subdomain ? tenantPortalPath(subdomain) : "/"}
+        to={subdomain ? appendReturnToParam(loginPath, returnTo) : loginPath}
         replace
       />
     )

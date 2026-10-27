@@ -3,7 +3,13 @@ import { Lock, Mail } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { Link, Navigate, useNavigate, useOutletContext } from "react-router-dom"
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useOutletContext,
+  useSearchParams,
+} from "react-router-dom"
 import { toast } from "sonner"
 
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -29,11 +35,14 @@ import {
   loginCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { readReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
 
 export function TenantPortalLoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { subdomain } = useOutletContext<TenantPortalOutletContext>()
+  const [searchParams] = useSearchParams()
+  const returnTo = readReturnToParam(searchParams)
   const [submitting, setSubmitting] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
   const schema = useMemo(
@@ -62,7 +71,7 @@ export function TenantPortalLoginPage() {
     try {
       await loginCustomer(subdomain, values)
       toast.success(t("tenantPortal.login.toastSuccess"))
-      void navigate(tenantPortalPath(subdomain, "app"), { replace: true })
+      void navigate(returnTo ?? tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {
       if (error instanceof CustomerLoginRateLimitedError) {
         const message =
@@ -88,7 +97,7 @@ export function TenantPortalLoginPage() {
   }
 
   if (isCustomerSignedInForTenant(subdomain)) {
-    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
+    return <Navigate to={returnTo ?? tenantPortalPath(subdomain, "app")} replace />
   }
 
   return (
