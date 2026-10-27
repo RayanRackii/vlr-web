@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { NavLink, useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
@@ -17,6 +17,7 @@ import {
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
+import { matchNavigationPath, type NavigationMatch } from "./navigationMatching"
 
 type SidebarProps = {
   onNavigate?: () => void
@@ -57,27 +58,23 @@ function NavigationLink({
   onNavigate,
   collapsed,
   touchTargets,
+  match,
 }: {
   item: AppNavigationItem
   onNavigate?: () => void
   collapsed?: boolean
   touchTargets?: boolean
+  match?: NavigationMatch
 }) {
   const { t } = useTranslation()
-  const location = useLocation()
   const [flyoutOpen, setFlyoutOpen] = useState(false)
   const Icon = item.icon
   const children = item.children
   const hasChildren = children !== undefined && children.length > 0
   const label = t(item.labelKey)
   const tooltip = item.labelKey === "nav.pmoc" ? t("nav.pmocTooltip") || label : label
-  const isSectionActive =
-    hasChildren &&
-    children.some(
-      (child) =>
-        location.pathname === child.to ||
-        location.pathname.startsWith(`${child.to}/`),
-    )
+  const isActive = match?.item === item
+  const isSectionActive = hasChildren && isActive
 
   // Collapsed rail: groups become an on-demand flyout; leaves are icon buttons.
   if (collapsed) {
@@ -111,25 +108,25 @@ function NavigationLink({
               {label}
             </p>
             {children.map((child) => (
-              <NavLink
+              <Link
                 key={child.to}
                 to={child.to}
-                end={child.to === item.to}
+                aria-current={match?.child === child ? "page" : undefined}
                 onClick={() => {
                   setFlyoutOpen(false)
                   onNavigate?.()
                 }}
-                className={({ isActive }) =>
+                className={
                   cn(
                     "flex min-h-9 items-center rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-150 ease-out motion-reduce:transition-none",
-                    isActive
+                    match?.child === child
                       ? "bg-primary/10 text-primary dark:bg-primary/15"
                       : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   )
                 }
               >
                 {t(child.labelKey)}
-              </NavLink>
+              </Link>
             ))}
           </PopoverContent>
         </Popover>
@@ -137,12 +134,13 @@ function NavigationLink({
     }
 
     return (
-      <NavLink
+      <Link
         to={item.to}
+        aria-current={isActive ? "page" : undefined}
         onClick={onNavigate}
         title={tooltip}
         aria-label={label}
-        className={({ isActive }) =>
+        className={
           cn(
             "flex size-10 items-center justify-center rounded-lg outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
             isActive
@@ -152,7 +150,7 @@ function NavigationLink({
         }
       >
         <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
-      </NavLink>
+      </Link>
     )
   }
 
@@ -173,28 +171,24 @@ function NavigationLink({
 
         <div className="ml-[1.3125rem] space-y-0.5 border-l border-sidebar-border pl-3">
           {children.map((child) => (
-            <NavLink
+            <Link
               key={child.to}
               to={child.to}
-              end={child.to === item.to}
+              aria-current={match?.child === child ? "page" : undefined}
               onClick={onNavigate}
-              className={({ isActive }) =>
+              className={
                 cn(
                   "relative flex items-center rounded-lg px-3 text-sm font-medium outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                   touchTargets ? "min-h-11 py-2" : "min-h-8 py-1.5",
-                  isActive
+                  match?.child === child
                     ? "bg-primary/10 text-primary dark:bg-primary/15"
                     : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )
               }
             >
-              {({ isActive }) => (
-                <>
-                  <ActiveIndicator show={isActive} />
-                  <span className="truncate">{t(child.labelKey)}</span>
-                </>
-              )}
-            </NavLink>
+              <ActiveIndicator show={match?.child === child} />
+              <span className="truncate">{t(child.labelKey)}</span>
+            </Link>
           ))}
         </div>
       </div>
@@ -203,19 +197,16 @@ function NavigationLink({
 
   // Expanded leaf.
   return (
-    <NavLink
+    <Link
       to={item.to}
+      aria-current={isActive ? "page" : undefined}
       onClick={onNavigate}
-      className={({ isActive }) => rowClassName(isActive, touchTargets)}
+      className={rowClassName(isActive, touchTargets)}
     >
-      {({ isActive }) => (
-        <>
-          <ActiveIndicator show={isActive} />
-          <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
-          <span className="truncate">{label}</span>
-        </>
-      )}
-    </NavLink>
+      <ActiveIndicator show={isActive} />
+      <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
+      <span className="truncate">{label}</span>
+    </Link>
   )
 }
 
@@ -271,6 +262,8 @@ export function Sidebar({
 }: SidebarProps) {
   const { t } = useTranslation()
   const { sections: navigationSections, isLoading } = useAppNavigationSections()
+  const { pathname } = useLocation()
+  const match = matchNavigationPath(navigationSections.flatMap((section) => section.items), pathname)
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -308,6 +301,7 @@ export function Sidebar({
       <Separator />
 
       <nav
+        aria-label={t("nav.menu")}
         className={cn(
           "flex flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden py-3",
           collapsed ? "items-center px-2" : "px-3",
@@ -333,6 +327,7 @@ export function Sidebar({
               <NavigationLink
                 key={`${section.titleKey}-${item.to}`}
                 item={item}
+                match={match}
                 onNavigate={onNavigate}
                 collapsed={collapsed}
                 touchTargets={touchTargets}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, Plus } from "lucide-react"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -111,6 +112,7 @@ export function PmocPlanDetailPage() {
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  useBreadcrumbTitle(!isLoading && !loadError ? plan?.name : undefined)
   const [planInUse, setPlanInUse] = useState(false)
   const [isHeaderBusy, setIsHeaderBusy] = useState(false)
   const [isChecklistBusy, setIsChecklistBusy] = useState(false)

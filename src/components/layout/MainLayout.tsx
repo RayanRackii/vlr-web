@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { AppShell } from "@/components/layout/AppShell"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { Breadcrumb } from "@/components/layout/Breadcrumb"
+import { BreadcrumbTitleProvider } from "@/components/layout/BreadcrumbTitleProvider"
 import { staffHeaderContextLabel } from "@/components/layout/staffHeaderContextLabel"
 import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
 import { TrialBanner } from "@/components/layout/TrialBanner"
@@ -196,6 +198,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }}
     >
       <WorkOrderSyncHost />
+      <Breadcrumb />
       {children ?? <Outlet />}
     </AppShell>
   )
@@ -215,7 +218,9 @@ export function MainLayout({ children }: { children?: ReactNode }) {
   return (
     <PermissionProvider>
       <StaffTenantTimeZoneProvider>
-        <MainLayoutShell>{children}</MainLayoutShell>
+        <BreadcrumbTitleProvider>
+          <MainLayoutShell>{children}</MainLayoutShell>
+        </BreadcrumbTitleProvider>
       </StaffTenantTimeZoneProvider>
     </PermissionProvider>
   )

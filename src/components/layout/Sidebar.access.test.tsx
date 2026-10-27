@@ -24,9 +24,9 @@ const professorPermissions = [
   "rentals.schedule.lessons.write",
 ]
 
-function renderSidebar(permissions: readonly string[], modules = ["rentals"]) {
+function renderSidebar(permissions: readonly string[], modules = ["rentals"], path = "/") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <TestPermissionProvider permissions={permissions} activeModules={modules}>
         <Sidebar />
       </TestPermissionProvider>
@@ -73,6 +73,35 @@ describe("Sidebar access by role permissions", () => {
     expect(screen.queryByRole("link", { name: "Recursos" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
+})
+
+it.each([
+  ["/pmoc/plan-1", "Meus planos"],
+  ["/pmoc/plan-1/tasks", "Meus planos"],
+  ["/pmoc/novo", "Novo plano"],
+  ["/pmoc/biblioteca/template-1", "Novo plano"],
+  ["/ativos/categorias", "Equipamentos"],
+  ["/configuracoes/politica-reservas", "Reservas"],
+  ["/configuracoes/cadastro", "Pessoas e acesso"],
+])("keeps only the owning sidebar entry active at %s", (path, label) => {
+  renderSidebar([
+    "pmoc.plans.read", "pmoc.plans.write", "pmoc.templates.read",
+    "inventory.assets.read", "inventory.categories.read", "rentals.reservations.read",
+    "rentals.booking_policy.read", "core.users.read", "core.registration_fields.read",
+  ], ["pmoc", "inventory", "rentals"], path)
+  const active = screen.getByRole("link", { name: label, current: "page" })
+  expect(active).toHaveClass("text-primary")
+  expect(screen.getAllByRole("link", { current: "page" })).toEqual([active])
+  if (path.startsWith("/pmoc/")) {
+    expect(screen.getByRole("link", { name: "Meus planos" })).toBeVisible()
+    expect(screen.getByRole("link", { name: "Novo plano" })).toBeVisible()
+    expect(screen.getByText("Planos de manutenção").parentElement).toHaveClass("text-foreground")
+  }
+})
+
+it("does not activate a sidebar entry for a partial segment", () => {
+  renderSidebar(["inventory.assets.read"], ["inventory"], "/ativosX")
+  expect(screen.queryByRole("link", { current: "page" })).not.toBeInTheDocument()
 })
 
 
