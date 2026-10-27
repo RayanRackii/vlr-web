@@ -41,7 +41,10 @@ import {
   selectMyStaffTenant,
 } from "@/features/users/services/staffTenantsService"
 import { toast } from "sonner"
-import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  clearCustomerSession,
+  resolveTenantSubdomain,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
@@ -77,7 +80,9 @@ export function LoginPage() {
   } | null>(null)
   const [membershipError, setMembershipError] = useState(false)
   const [retryingMemberships, setRetryingMemberships] = useState(false)
-  const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
+  const companyParam = searchParams.get("company")?.trim().toLowerCase() || null
+  const resolvedSubdomain =
+    resolveTenantSubdomain(location.pathname) ?? companyParam
   const companySchema = useMemo(
     () =>
       buildPasswordResetCompanySchema({
@@ -168,6 +173,7 @@ export function LoginPage() {
       return
     }
 
+    clearCustomerSession()
     await openTenantStep()
   }
 

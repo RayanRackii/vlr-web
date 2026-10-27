@@ -33,9 +33,11 @@ import {
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import {
+  hasActiveStaffSession,
   installSessionRestoreGuard,
   resetSessionRestoreGuardForTests,
 } from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 import { UI_LANGUAGE_STORAGE_KEY } from "@/lib/uiLanguage"
 
 vi.mock("@/lib/browserLocation", () => ({
@@ -109,6 +111,17 @@ function renderPortal(path: string) {
   )
 }
 
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
+  )
+}
+
 describe("CustomerAppLayout session tenant", () => {
   beforeEach(() => {
     Object.defineProperty(window, "matchMedia", {
@@ -124,6 +137,8 @@ describe("CustomerAppLayout session tenant", () => {
         dispatchEvent: () => false,
       }),
     })
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   afterEach(async () => {
@@ -131,6 +146,7 @@ describe("CustomerAppLayout session tenant", () => {
     clearAgendaSelectionNotice("ficc")
     resetAgendaQueryClientForTests()
     resetSessionRestoreGuardForTests()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
     window.history.pushState({}, "", "/")
     fetchBranding.mockReset()
     fetchMenu.mockReset()
@@ -489,6 +505,60 @@ describe("CustomerAppLayout session tenant", () => {
     expect(recentPortalReservations("ficc")).toEqual([])
     expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
     expect(fetchBranding).toHaveBeenCalledTimes(1)
+  })
+
+  it("signs out a leftover staff session too when Sair is used", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    expect(hasActiveStaffSession()).toBe(true)
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+    )
+
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+    expect(getCustomerAccessToken()).toBeNull()
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
+  })
+
+  it("does not call staff sign-out from Sair when there is no leftover staff session", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+    )
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
   })
 
   it("does not render the agenda or call the API when history restore has no session", async () => {

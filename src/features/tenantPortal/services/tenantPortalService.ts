@@ -19,7 +19,10 @@ import {
   parseApiError,
 } from "@/lib/api"
 import i18n from "@/lib/i18n"
-import { parseCustomerAuthError } from "@/features/tenantPortal/lib/mapCustomerAuthError"
+import {
+  parseCustomerAuthError,
+  parseCustomerAuthErrorField,
+} from "@/features/tenantPortal/lib/mapCustomerAuthError"
 import {
   isReservationQueueErrorCode,
   portalBookingErrorFromUnknown,
@@ -62,6 +65,16 @@ export class CustomerLoginRateLimitedError extends Error {
     super("Customer login is rate limited")
     this.name = "CustomerLoginRateLimitedError"
     this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+export class CustomerDuplicateFieldError extends Error {
+  readonly field: "email" | "document" | "phone"
+
+  constructor(field: "email" | "document" | "phone", message: string) {
+    super(message)
+    this.name = "CustomerDuplicateFieldError"
+    this.field = field
   }
 }
 
@@ -354,12 +367,13 @@ export async function registerCustomer(
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }
-    throw new Error(
-      parseCustomerAuthError(
-        getAxiosErrorPayload(error),
-        i18n.t("apiErrors.register"),
-      ),
-    )
+    const payload = getAxiosErrorPayload(error)
+    const message = parseCustomerAuthError(payload, i18n.t("apiErrors.register"))
+    const field = parseCustomerAuthErrorField(payload)
+    if (field !== null) {
+      throw new CustomerDuplicateFieldError(field, message)
+    }
+    throw new Error(message)
   }
 }
 

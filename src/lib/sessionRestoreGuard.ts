@@ -342,3 +342,24 @@ export function signOutCustomerPortal(subdomain: string): string {
   keepChosenLanguage()
   return tenantPortalPath(subdomain)
 }
+
+/**
+ * Keeps staff and customer sessions exclusive: the customer surface never carries a leftover staff session.
+ * Best-effort: callers run this after a customer login/sign-up already succeeded, so a staff sign-out
+ * failure must never throw and abort that success path.
+ */
+export async function signOutStaffBeforeCustomerAuth(): Promise<void> {
+  if (!hasActiveStaffSession()) {
+    return
+  }
+  try {
+    const signedOut = await signOutStaffPortal()
+    if (!signedOut) {
+      writeActiveTenantLabel(null)
+      clearAuthenticatedQueryCaches()
+    }
+  } catch {
+    writeActiveTenantLabel(null)
+    clearAuthenticatedQueryCaches()
+  }
+}

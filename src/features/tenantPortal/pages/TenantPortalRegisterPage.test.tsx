@@ -30,14 +30,58 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 import { toast } from "sonner"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import {
+  CustomerDuplicateFieldError,
   fetchRegistrationSchema,
   readPendingEmailVerification,
   registerCustomer,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 
 const fetchSchema = vi.mocked(fetchRegistrationSchema)
 const register = vi.mocked(registerCustomer)
 const toastError = vi.mocked(toast.error)
+
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
+  )
+}
+
+async function fillValidRegisterCore(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+    "Ana Silva",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    "ana@club.test",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    "password1",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    "password1",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+    "11988880001",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+    "52998224725",
+  )
+}
 
 const outletContext: TenantPortalOutletContext = {
   subdomain: "ficc",
@@ -84,7 +128,9 @@ async function waitForRegisterForm() {
 
 describe("TenantPortalRegisterPage email verification", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     window.sessionStorage.clear()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
     fetchSchema.mockReset()
     register.mockReset()
     fetchSchema.mockResolvedValue({
@@ -105,6 +151,8 @@ describe("TenantPortalRegisterPage email verification", () => {
       verificationStarted: true,
     })
     toastError.mockReset()
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   it("renders the submit button and pairs name/phone in a two-column layout on md+", async () => {
@@ -260,6 +308,184 @@ describe("TenantPortalRegisterPage email verification", () => {
     expect(submit).toBeEnabled()
     expect(screen.queryByText("verify-email-page")).not.toBeInTheDocument()
     expect(loginLink).toHaveAttribute("href", "/t/ficc")
+  })
+
+  it("signs out a leftover staff session before registering the customer", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled()
+    })
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("keeps the staff session when registration is rejected", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    register.mockRejectedValue(new Error("Já existe uma conta com estes dados."))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
+  })
+
+  it("completes registration flow (persist pending verification + navigate) even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled()
+    })
+    expect(await screen.findByText("verify-email-page")).toBeInTheDocument()
+    expect(readPendingEmailVerification("ficc")).toEqual({
+      email: "ana@club.test",
+      verificationSendFailed: false,
+    })
+    expect(toastError).not.toHaveBeenCalled()
+  })
+})
+
+describe("TenantPortalRegisterPage duplicate field errors", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear()
+    fetchSchema.mockReset()
+    register.mockReset()
+    fetchSchema.mockResolvedValue({
+      coreFields: [
+        "name",
+        "email",
+        "password",
+        "confirmPassword",
+        "phone",
+        "customerType",
+        "document",
+      ],
+      fields: [],
+    })
+    toastError.mockReset()
+  })
+
+  it("flags the email field when the email is the duplicate", async () => {
+    const user = userEvent.setup()
+    register.mockRejectedValue(
+      new CustomerDuplicateFieldError(
+        "email",
+        "Já existe uma conta com este e-mail.",
+      ),
+    )
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    expect(
+      await screen.findByText("Já existe uma conta com este e-mail."),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).toHaveAccessibleDescription("Já existe uma conta com este e-mail.")
+  })
+
+  it("flags the document field when the CPF is the duplicate", async () => {
+    const user = userEvent.setup()
+    register.mockRejectedValue(
+      new CustomerDuplicateFieldError(
+        "document",
+        "Já existe uma conta com este CPF/CNPJ.",
+      ),
+    )
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    expect(
+      await screen.findByText("Já existe uma conta com este CPF/CNPJ."),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+    ).toHaveAccessibleDescription("Já existe uma conta com este CPF/CNPJ.")
+  })
+
+  it("keeps a generic toast when the backend cannot name a single duplicate field", async () => {
+    const user = userEvent.setup()
+    register.mockRejectedValue(
+      new Error("Já existe uma conta com estes dados."),
+    )
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).not.toHaveAccessibleDescription("Já existe uma conta com estes dados.")
   })
 })
 

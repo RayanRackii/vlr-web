@@ -36,6 +36,7 @@ import {
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { readReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
+import { signOutStaffBeforeCustomerAuth } from "@/lib/sessionRestoreGuard"
 
 export function TenantPortalLoginPage() {
   const { t } = useTranslation()
@@ -70,6 +71,7 @@ export function TenantPortalLoginPage() {
     setLoginError(null)
     try {
       await loginCustomer(subdomain, values)
+      await signOutStaffBeforeCustomerAuth()
       toast.success(t("tenantPortal.login.toastSuccess"))
       void navigate(returnTo ?? tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {

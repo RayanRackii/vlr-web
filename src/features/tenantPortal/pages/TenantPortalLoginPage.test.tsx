@@ -32,6 +32,11 @@ import {
   loginCustomer,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 
 const login = vi.mocked(loginCustomer)
 const toastError = vi.mocked(toast.error)
@@ -78,15 +83,123 @@ function renderLogin(initialPath = "/t/ficc") {
   )
 }
 
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
+  )
+}
+
 describe("TenantPortalLoginPage", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     login.mockReset()
     toastError.mockReset()
     clearCustomerSession()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   afterEach(() => {
     clearCustomerSession()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
+  })
+
+  it("signs out a leftover staff session before logging the customer in", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("navigates without error toast even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("keeps the staff session when customer login fails", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    login.mockRejectedValue(new Error("E-mail ou senha inválidos."))
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "wrong-password",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("E-mail ou senha inválidos.")
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
+  })
+
+  it("does not call staff sign-out when there is no leftover staff session", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
 
   it("keeps Entrar disabled until email and password pass the schema", async () => {

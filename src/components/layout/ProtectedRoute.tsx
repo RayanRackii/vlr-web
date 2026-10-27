@@ -3,6 +3,11 @@ import type { ReactNode } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import {
+  getCustomerSubdomain,
+  isCustomerSignedInForTenant,
+  tenantPortalPath,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import {
   isSafeStaffNextPath,
   staffLoginPath,
 } from "@/lib/safeStaffNextPath"
@@ -29,8 +34,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (user === null) {
+    const customerSubdomain = getCustomerSubdomain()
+    if (customerSubdomain && isCustomerSignedInForTenant(customerSubdomain)) {
+      return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
+    }
+
+    const company = new URLSearchParams(location.search).get("company")
     const next = `${location.pathname}${location.search}`
-    const to = isSafeStaffNextPath(next) ? staffLoginPath(next) : "/login"
+    const to = isSafeStaffNextPath(next)
+      ? staffLoginPath(next, { company })
+      : company
+        ? `/login?company=${encodeURIComponent(company)}`
+        : "/login"
     return <Navigate to={to} replace />
   }
 

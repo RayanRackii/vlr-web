@@ -44,6 +44,7 @@ import {
 import { maskPhoneInput } from "@/features/tenantPortal/lib/masks"
 import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
+  CustomerDuplicateFieldError,
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
   isCustomerSignedInForTenant,
@@ -51,6 +52,7 @@ import {
   registerCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { signOutStaffBeforeCustomerAuth } from "@/lib/sessionRestoreGuard"
 
 function extraFieldAutoComplete(fieldType: string): string | undefined {
   if (fieldType === "email") {
@@ -225,6 +227,7 @@ export function TenantPortalRegisterPage() {
         document: onlyDigits(String(values.document ?? "")),
         attributes,
       })
+      await signOutStaffBeforeCustomerAuth()
       const verificationSendFailed = !data.verificationStarted
       if (verificationSendFailed) {
         toast.warning(t("tenantPortal.register.pendingContinue"))
@@ -240,6 +243,11 @@ export function TenantPortalRegisterPage() {
         state: { email, verificationSendFailed },
       })
     } catch (error) {
+      if (error instanceof CustomerDuplicateFieldError) {
+        form.setError(error.field, { message: error.message })
+        toast.error(error.message)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message

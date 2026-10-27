@@ -412,6 +412,24 @@ export function getUserInitials(
   return "?"
 }
 
+export function getUserDisplayLabel(
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+  fallback: string,
+): string {
+  const trimmedName = fullName?.trim() ?? ""
+  if (trimmedName.length > 0) {
+    return trimmedName
+  }
+
+  const trimmedEmail = email?.trim() ?? ""
+  if (trimmedEmail.length > 0) {
+    return trimmedEmail
+  }
+
+  return fallback
+}
+
 export function getEmailInitials(email: string | null | undefined): string {
   if (!email) {
     return "?"
