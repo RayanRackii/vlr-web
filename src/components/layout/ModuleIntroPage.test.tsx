@@ -7,6 +7,7 @@ import { Breadcrumb } from "./Breadcrumb"
 import { ModuleIntroPage } from "./ModuleIntroPage"
 import { Sidebar } from "./Sidebar"
 import { moduleIntroContent } from "./navigationIntros"
+import { moduleGuideConfigs } from "@/features/module-guide/configs"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
@@ -50,7 +51,10 @@ function renderIntro(path: string, {
   )
 }
 
-afterEach(async () => { await i18n.changeLanguage("pt-BR") })
+afterEach(async () => {
+  await i18n.changeLanguage("pt-BR")
+  localStorage.clear()
+})
 
 describe("module introductions", () => {
   it.each([
@@ -107,6 +111,24 @@ describe("module introductions", () => {
     renderIntro("/modulos/bookings", { loading: true })
     expect(screen.getByRole("status", { busy: true })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: i18n.t("notFound.title") })).not.toBeInTheDocument()
+  })
+
+  // "platform" is platform-admin only; this harness mocks `isPlatformAdmin: false`, so it's covered separately in configs.test.ts instead.
+  it.each(Object.keys(moduleGuideConfigs).filter((key) => key !== "platform"))("renders an interactive guide roadmap for %s", (key) => {
+    renderIntro(`/modulos/${key}`)
+    expect(screen.queryByRole("heading", { name: i18n.t("notFound.title") })).not.toBeInTheDocument()
+    const roadmap = screen.getByRole("list", { name: i18n.t("moduleGuide.roadmapTitle") })
+    const steps = within(roadmap).getAllByRole("listitem")
+    expect(steps.length).toBe(moduleGuideConfigs[key as keyof typeof moduleGuideConfigs].steps.length)
+    expect(steps[0]).toHaveAttribute("aria-current", "step")
+  })
+
+  it("earns the first badge and shows the next recommended action after completing a step", async () => {
+    const user = userEvent.setup()
+    renderIntro("/modulos/bookings")
+    await user.click(screen.getAllByRole("button", { name: i18n.t("moduleGuide.markDone") })[0])
+    const badges = screen.getByRole("region", { name: "Conquistas" })
+    expect(within(badges).getByText(i18n.t("moduleGuide.badges.firstStep")).closest("span")).toHaveAttribute("data-earned", "true")
   })
 
   it("links to visible related intros", () => {

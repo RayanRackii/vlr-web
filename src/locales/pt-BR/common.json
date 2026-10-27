@@ -1271,6 +1271,48 @@
       }
     }
   },
+  "moduleGuide": {
+    "roadmapTitle": "Roteiro do guia",
+    "badgesTitle": "Conquistas",
+    "pointsLabel": "{{points}} pontos",
+    "progressLabel": "{{completed}} de {{total}} etapas",
+    "markDone": "Marcar como feito",
+    "goToScreen": "Ir para {{label}}",
+    "exploreModule": "Explorar {{label}}",
+    "reset": "Reiniciar guia",
+    "soundToggle": "Som de recompensas",
+    "nextAction": {
+      "eyebrow": "Próxima ação recomendada",
+      "allDone": "Guia concluído!",
+      "allDoneDescription": "Você completou todas as etapas deste guia. Reinicie quando quiser revisar."
+    },
+    "reward": {
+      "stepAnnouncement": "Você ganhou {{points}} pontos por concluir \"{{step}}\".",
+      "badgeAnnouncement": "Conquista desbloqueada: {{badge}}."
+    },
+    "badges": {
+      "firstStep": "Primeiro recurso",
+      "halfway": "Na metade do caminho",
+      "complete": "Guia completo"
+    },
+    "steps": {
+      "learn1": { "title": "Primeiro passo" },
+      "learn2": { "title": "Segundo passo" },
+      "learn3": { "title": "Terceiro passo" },
+      "visit": {
+        "title": "Visite uma tela do módulo",
+        "description": "Abra uma tela real para ver o que você aprendeu em ação."
+      },
+      "related": {
+        "title": "Explore um módulo relacionado",
+        "description": "Veja como este módulo se conecta a outra área do seu negócio."
+      },
+      "wrapUp": {
+        "title": "Pronto para usar",
+        "description": "Você conhece o essencial deste módulo. Volte ao guia quando quiser revisar."
+      }
+    }
+  },
   "taxonomy": {
     "title": "Categorias e tags",
     "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",

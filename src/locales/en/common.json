@@ -1271,6 +1271,48 @@
       }
     }
   },
+  "moduleGuide": {
+    "roadmapTitle": "Guide roadmap",
+    "badgesTitle": "Achievements",
+    "pointsLabel": "{{points}} points",
+    "progressLabel": "{{completed}} of {{total}} steps",
+    "markDone": "Mark as done",
+    "goToScreen": "Go to {{label}}",
+    "exploreModule": "Explore {{label}}",
+    "reset": "Restart guide",
+    "soundToggle": "Reward sound",
+    "nextAction": {
+      "eyebrow": "Recommended next action",
+      "allDone": "Guide complete!",
+      "allDoneDescription": "You finished every step in this guide. Restart it any time to review."
+    },
+    "reward": {
+      "stepAnnouncement": "You earned {{points}} points for completing \"{{step}}\".",
+      "badgeAnnouncement": "Achievement unlocked: {{badge}}."
+    },
+    "badges": {
+      "firstStep": "First resource",
+      "halfway": "Halfway there",
+      "complete": "Guide complete"
+    },
+    "steps": {
+      "learn1": { "title": "First step" },
+      "learn2": { "title": "Second step" },
+      "learn3": { "title": "Third step" },
+      "visit": {
+        "title": "Visit a module screen",
+        "description": "Open a real screen to see what you learned in action."
+      },
+      "related": {
+        "title": "Explore a related module",
+        "description": "See how this module connects to another area of your business."
+      },
+      "wrapUp": {
+        "title": "Ready to use",
+        "description": "You know the essentials of this module. Come back to the guide any time to review."
+      }
+    }
+  },
   "taxonomy": {
     "title": "Categories and tags",
     "sharedHint": "These definitions are shared by every consumer in this tenant.",
