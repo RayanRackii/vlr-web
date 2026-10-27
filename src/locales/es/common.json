@@ -1158,6 +1158,9 @@
     }
   },
   "nav": {
+    "breadcrumbLabel": "Ruta de navegación",
+    "details": "Detalles",
+    "backTo": "Volver a {{page}}",
     "dashboard": "Inicio",
     "assets": "Equipos",
     "assetsInventory": "Equipos",
