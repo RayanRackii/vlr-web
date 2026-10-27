@@ -358,9 +358,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | "timeout">
 
 /**
  * Ends the staff session. Order matters (QA R24 reload race):
- * 1. synchronously drop the stored session and record a tombstone, so a reload at any
+ * 1. synchronously drop the stored session and block auth writes, so a reload at any
  *    moment after Sair finds nothing to restore;
- * 2. stop token auto-refresh so nothing re-writes it;
+ * 2. stop scheduling token auto-refresh; the storage barrier rejects in-flight saves;
  * 3. revoke server-side with the snapshot token (bounded), and clear the client's memory
  *    with a local sign-out (emits SIGNED_OUT).
  * The local session always ends; a failed or slow revoke does not keep the user signed in.
@@ -374,12 +374,13 @@ export async function signOutStaffPortal(): Promise<boolean> {
   try {
     void supabase.auth.stopAutoRefresh()
   } catch {
-    // Older client or test double: the tombstone still undoes a late refresh write.
+    // Older client or test double: the storage barrier still rejects late refresh writes.
   }
 
   const revoke = accessToken
     ? withTimeout(
         Promise.resolve()
+          // Normal /logout endpoint with the user's JWT; no service role is used.
           .then(() => supabase.auth.admin.signOut(accessToken, "global"))
           .catch(() => null),
         SERVER_SIGN_OUT_TIMEOUT_MS,
@@ -400,9 +401,13 @@ export async function signOutStaffPortal(): Promise<boolean> {
   return true
 }
 
-export function signOutCustomerPortal(subdomain: string): string {
+export function clearCustomerSessionAsSignedOut(): void {
   removeSessionKeysAsSignedOut([CUSTOMER_TOKEN_STORAGE_KEY])
   clearCustomerSession()
+}
+
+export function signOutCustomerPortal(subdomain: string): string {
+  clearCustomerSessionAsSignedOut()
   clearAuthenticatedQueryCaches()
   keepChosenLanguage()
   return tenantPortalPath(subdomain)

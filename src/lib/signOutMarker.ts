@@ -1,107 +1,105 @@
-/**
- * Sign-out tombstone. Must stay free of imports: main.tsx evaluates it before the
- * Supabase client so a reload during "Sair" cannot restore the session that was just ended.
- *
- * Sair removes the session keys from localStorage synchronously and records the removed
- * key/value pairs here (in memory and in sessionStorage). Any late write of the SAME value
- * (an in-flight refresh or a lock-held save in the auth client) is undone, both while the
- * page lives and on the next boot. A new login writes a different value and is never touched.
- */
-
+/** Persistent sign-out barrier for the staff auth storage. Never stores credentials. */
 const MARKER_KEY = "rolvix:signed-out-sessions"
-
-type RemovedEntry = { key: string; value: string }
+const AUTH_STORAGE_KEY = /^sb-.+-auth-token$/
 
 let signingOut = false
-let removed: RemovedEntry[] = []
 
-function readMarker(): RemovedEntry[] {
+function readMarker(): boolean {
   try {
     const raw = window.sessionStorage.getItem(MARKER_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (entry): entry is RemovedEntry =>
-        typeof entry === "object" &&
-        entry !== null &&
-        typeof (entry as RemovedEntry).key === "string" &&
-        typeof (entry as RemovedEntry).value === "string",
-    )
+    if (!raw) return false
+    const parsed: unknown = JSON.parse(raw)
+    // Migrate the old value tombstones without retaining their session JSON.
+    if (Array.isArray(parsed)) return parsed.length > 0
+    return typeof parsed === "object" && parsed !== null &&
+      "signingOut" in parsed && parsed.signingOut === true
   } catch {
-    return []
+    return false
   }
 }
 
-function writeMarker(entries: RemovedEntry[]): void {
+function writeMarker(): void {
   try {
-    if (entries.length === 0) {
-      window.sessionStorage.removeItem(MARKER_KEY)
+    if (signingOut) {
+      window.sessionStorage.setItem(MARKER_KEY, JSON.stringify({ signingOut: true, at: Date.now() }))
     } else {
-      window.sessionStorage.setItem(MARKER_KEY, JSON.stringify(entries))
+      window.sessionStorage.removeItem(MARKER_KEY)
     }
   } catch {
-    // sessionStorage unavailable: the in-memory list still guards this page.
+    // sessionStorage unavailable: the in-memory flag still guards this page.
   }
 }
 
-/** Removes the given localStorage keys now and remembers their values as signed out. */
+/** Removes the given keys now and blocks staff auth writes until an explicit login. */
 export function removeSessionKeysAsSignedOut(keys: string[]): void {
   signingOut = true
-  const known = new Map(readMarker().concat(removed).map((entry) => [entry.key + "\u0000" + entry.value, entry]))
+  writeMarker()
   for (const key of keys) {
     try {
-      const value = window.localStorage.getItem(key)
-      if (value !== null) {
-        known.set(key + "\u0000" + value, { key, value })
-      }
       window.localStorage.removeItem(key)
     } catch {
       // Storage unavailable: nothing to remove.
     }
   }
-  removed = [...known.values()]
-  writeMarker(removed)
 }
 
-/** Undoes any re-write of a signed-out session value. Returns true if something was removed. */
+/** Removes any stored staff session while the sign-out barrier is active. */
 export function purgeSignedOutSessions(): boolean {
-  const entries = removed.length > 0 ? removed : readMarker()
+  if (!isSigningOut()) return false
   let purged = false
-  for (const { key, value } of entries) {
-    try {
-      if (window.localStorage.getItem(key) === value) {
-        window.localStorage.removeItem(key)
+  try {
+    const storage = window.localStorage
+    for (let index = storage.length - 1; index >= 0; index -= 1) {
+      const key = storage.key(index)
+      if (key && AUTH_STORAGE_KEY.test(key)) {
+        storage.removeItem(key)
         purged = true
       }
-    } catch {
-      // ignore
     }
+  } catch {
+    // Storage unavailable.
   }
   return purged
 }
 
-/** True between the start of Sair and the next login on this page. */
+/** True from Sair until an explicit staff login, including across reloads. */
 export function isSigningOut(): boolean {
-  return signingOut
+  return signingOut || readMarker()
 }
 
-/** Called when a new login starts on this page. Old tombstones stay (they only match old values). */
+/** Supabase uses this adapter so even an already-running refresh cannot save new tokens. */
+export const staffAuthStorage = {
+  getItem(key: string): string | null {
+    if (AUTH_STORAGE_KEY.test(key) && isSigningOut()) {
+      window.localStorage.removeItem(key)
+      return null
+    }
+    return window.localStorage.getItem(key)
+  },
+  setItem(key: string, value: string): void {
+    if (AUTH_STORAGE_KEY.test(key) && isSigningOut()) {
+      window.localStorage.removeItem(key)
+      return
+    }
+    window.localStorage.setItem(key, value)
+  },
+  removeItem(key: string): void {
+    window.localStorage.removeItem(key)
+  },
+}
+
+/** Called before an explicit login can write its session. */
 export function noteSignInStarted(): void {
   signingOut = false
+  writeMarker()
 }
 
 export function resetSignOutMarkerForTests(): void {
-  signingOut = false
-  removed = []
-  try {
-    window.sessionStorage.removeItem(MARKER_KEY)
-  } catch {
-    // ignore
-  }
+  noteSignInStarted()
 }
 
-// Boot: a reload during or after Sair must not restore the ended session.
 if (typeof window !== "undefined") {
+  signingOut = readMarker()
+  writeMarker()
   purgeSignedOutSessions()
 }

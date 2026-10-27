@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
 import { persistCustomerSession, getCustomerAccessToken } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
+import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+import { resetSignOutMarkerForTests, staffAuthStorage } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 function renderReset() {
@@ -25,6 +27,11 @@ function saveButton() {
 }
 
 describe("ResetPasswordPage validity gate", () => {
+  afterEach(() => {
+    resetSignOutMarkerForTests()
+    window.history.replaceState({}, "", "/")
+  })
+
   beforeEach(() => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: "1" } } },
@@ -60,6 +67,16 @@ describe("ResetPasswordPage validity gate", () => {
     await user.clear(screen.getByLabelText("Confirmar senha"))
     await user.type(screen.getByLabelText("Confirmar senha"), "password1")
     expect(saveButton()).toBeEnabled()
+  })
+
+  it("re-enables staff sign-in for the legacy hash recovery branch after Sair", async () => {
+    await signOutStaffPortal()
+    window.history.replaceState({}, "", "/reset-password#access_token=recovery&refresh_token=recovery-refresh&type=recovery")
+    renderReset()
+
+    await screen.findByRole("button", { name: "Salvar senha" })
+    staffAuthStorage.setItem("sb-rolvix-auth-token", "recovery-session")
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBe("recovery-session")
   })
 
   it("clears a stale customer session when the staff password reset succeeds", async () => {

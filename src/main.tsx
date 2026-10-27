@@ -1,4 +1,4 @@
-// Must be first: undoes a session that Sair ended, before the auth client reads storage.
+// Initialize the persisted sign-out barrier before the app loads the auth client.
 import '@/lib/signOutMarker'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

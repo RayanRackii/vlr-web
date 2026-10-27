@@ -15,7 +15,7 @@ import {
   signOutCustomerPortal,
   signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
-import { purgeSignedOutSessions } from "@/lib/signOutMarker"
+import { purgeSignedOutSessions, staffAuthStorage } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 vi.mock("@/lib/browserLocation", () => ({
@@ -126,20 +126,60 @@ describe("Sair reload race", () => {
     await waitFor(() => expect(screen.getByText("user:none")).toBeInTheDocument())
 
     // A refresh that was already in flight lands after Sair: ignored and purged.
-    window.localStorage.setItem(KEY, storedValue("staff-a"))
-    act(() => listener?.("TOKEN_REFRESHED", session("staff-a")))
+    staffAuthStorage.setItem(KEY, storedValue("refreshed-after-logout"))
+    act(() => listener?.("TOKEN_REFRESHED", session("refreshed-after-logout")))
     expect(screen.getByText("user:none")).toBeInTheDocument()
     expect(window.localStorage.getItem(KEY)).toBeNull()
 
     server.reject(new Error("offline"))
   })
 
-  it("(b) a new login after Sair is not touched by the tombstone", async () => {
+  it("(b) a new login after Sair can save its session and survive reload", async () => {
     await signOutStaffPortal()
     noteStaffSignIn()
-    window.localStorage.setItem(KEY, storedValue("staff-b"))
+    staffAuthStorage.setItem(KEY, storedValue("staff-b"))
     expect(purgeSignedOutSessions()).toBe(false)
     expect(hasActiveStaffSession()).toBe(true)
+
+    vi.resetModules()
+    const reloaded = await import("@/lib/signOutMarker")
+    expect(reloaded.isSigningOut()).toBe(false)
+    expect(reloaded.staffAuthStorage.getItem(KEY)).toBe(storedValue("staff-b"))
+  })
+
+  it("rejects a late refresh with a new token before and after reload", async () => {
+    await signOutStaffPortal()
+    staffAuthStorage.setItem(KEY, storedValue("refreshed-after-logout"))
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+    staffAuthStorage.setItem("unrelated-preference", "kept")
+    expect(window.localStorage.getItem("unrelated-preference")).toBe("kept")
+
+    vi.resetModules()
+    const reloaded = await import("@/lib/signOutMarker")
+    reloaded.staffAuthStorage.setItem(KEY, storedValue("another-refresh"))
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+    expect(reloaded.staffAuthStorage.getItem(KEY)).toBeNull()
+  })
+
+  it("stores only a bounded sign-out flag and timestamp, without session credentials", async () => {
+    await signOutStaffPortal()
+    const marker = JSON.parse(window.sessionStorage.getItem("rolvix:signed-out-sessions") ?? "null")
+    expect(marker).toEqual({ signingOut: true, at: expect.any(Number) })
+    await signOutStaffPortal()
+    expect(JSON.parse(window.sessionStorage.getItem("rolvix:signed-out-sessions") ?? "null"))
+      .toEqual({ signingOut: true, at: expect.any(Number) })
+  })
+
+  it("keeps a different token from a late refresh signed out after final cleanup and reload", async () => {
+    await signOutStaffPortal()
+
+    // The refresh completes after both sign-out operations and their final cleanup.
+    window.localStorage.setItem(KEY, storedValue("refreshed-after-logout"))
+
+    vi.resetModules()
+    const reloaded = await import("@/lib/signOutMarker")
+    expect(window.localStorage.getItem(KEY)).toBeNull()
+    expect(reloaded.isSigningOut()).toBe(true)
   })
 
   it("(c) a failed or hanging server sign-out still ends the local session within the bound", async () => {

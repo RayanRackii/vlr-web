@@ -94,6 +94,7 @@ export function ResetPasswordPage() {
       }
 
       if (data.session) {
+        noteStaffSignIn()
         setGate("ready")
         return
       }

@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import {
-  clearCustomerSession,
   fetchTenantBranding,
   getHostTenantSubdomain,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -38,7 +37,7 @@ import {
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
-import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+import { clearCustomerSessionAsSignedOut, signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
@@ -192,7 +191,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }
       onSignOut={async () => {
         // Sair ends whichever session is active, so a leftover customer session goes too.
-        clearCustomerSession()
+        clearCustomerSessionAsSignedOut()
         // Always ends the local session (storage first, bounded server revoke).
         await signOutStaffPortal()
         void navigate("/login", { replace: true })
