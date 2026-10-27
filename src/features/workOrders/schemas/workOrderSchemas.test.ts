@@ -4,9 +4,22 @@ import { PLAN_ID } from "@/features/pmoc/test/pmocFixtures"
 import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
 import {
   generateWorkOrderFromPlanRequestSchema,
+  generateWorkOrderFromPlanFormSchema,
+  createWorkOrderFormSchema,
   parseSingleChoiceConfiguration,
   workOrderSchema,
 } from "@/features/workOrders/schemas/workOrderSchemas"
+
+describe("work order form dates", () => {
+  it.each(["14/", "14/10/2026", "2026-02-31"])("blocks invalid date draft %s with the supplied localized message", (scheduledDate) => {
+    const messages = { assetRequired: "Selecione o ativo.", dateRequired: "Informe a data agendada.", taskRequired: "Informe a tarefa." }
+    for (const schema of [createWorkOrderFormSchema(messages), generateWorkOrderFromPlanFormSchema(messages)]) {
+      const result = schema.safeParse({ assetId: "12121212-1212-4121-8121-121212121212", scheduledDate, notes: "", taskTitle: "Limpar" })
+      expect(result.success).toBe(false)
+      if (!result.success) expect(result.error.issues).toEqual([expect.objectContaining({ path: ["scheduledDate"], message: "Informe a data agendada." })])
+    }
+  })
+})
 
 describe("workOrderSchema sourcePlanName", () => {
   it("keeps historical sourcePlanName from the API snapshot", () => {

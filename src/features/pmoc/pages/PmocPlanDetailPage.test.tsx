@@ -428,13 +428,13 @@ describe("PmocPlanDetailPage", () => {
     })
     const firstDue = screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue"))
     expect(interval).toHaveValue(30)
-    expect(firstDue).toHaveValue("2026-10-01")
+    expect(firstDue).toHaveValue("01/10/2026")
     expect(screen.queryByText(/Frequência/)).not.toBeInTheDocument()
 
     await user.clear(interval)
     await user.type(interval, "45")
     await user.clear(firstDue)
-    await user.type(firstDue, "2026-01-15")
+    await user.type(firstDue, "15/01/2026")
     await user.click(
       screen.getByRole("button", { name: i18n.t("pmoc.plans.actions.saveDetails") }),
     )

@@ -16,7 +16,13 @@
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando...",
     "refreshing": "Actualizando...",
+    "validation": {
+      "maxLength": "Use como máximo {{count}} caracteres."
+    },
     "datePicker": {
+      "invalid": "Indique una fecha válida.",
+      "format": "dd/mm/aaaa",
+      "open": "Abrir calendario",
       "today": "Hoy",
       "clear": "Borrar",
       "previousMonth": "Mes anterior",

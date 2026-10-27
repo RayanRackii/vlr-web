@@ -1,3 +1,4 @@
+import { CivilDateInput } from "@/components/CivilDateInput"
 import type { Control, FieldValues, Path } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -22,7 +23,7 @@ export function PlanSchedulingFields<T extends FieldValues>({
   intervalMessage?: string
   firstDueMessage?: string
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   return (
     <fieldset className="space-y-4">
@@ -81,7 +82,7 @@ export function PlanSchedulingFields<T extends FieldValues>({
             <FormItem>
               <FormLabel>{t("pmoc.scheduling.firstDue")}</FormLabel>
               <FormControl>
-                <Input type="date" autoComplete="off" {...field} />
+                <CivilDateInput locale={i18n.resolvedLanguage ?? i18n.language} autoComplete="off" {...field} value={String(field.value ?? "")} />
               </FormControl>
               {firstDueMessage ? (
                 <LiveFieldMessage message={firstDueMessage} />

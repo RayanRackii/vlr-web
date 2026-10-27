@@ -146,7 +146,7 @@ describe("PmocTemplatePreviewPage", () => {
     )
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
-      "2026-01-15",
+      "15/01/2026",
     )
 
     expect(confirm).toBeEnabled()

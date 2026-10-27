@@ -57,6 +57,7 @@ import {
 } from "@/features/rentals/components/rentalResourceFormDefaults"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
+import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -193,9 +194,8 @@ export function RentalResourceSheet({
   const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
   const validation = formSchema.safeParse(watched)
   const isValid = validation.success
-  const firstValidationError = validation.success
-    ? null
-    : validation.error.issues[0]?.message ?? null
+  const visibleErrors = useVisibleFormIssues(validation.success ? undefined : validation.error, form)
+  const firstValidationError = visibleErrors?.issues[0]?.message ?? null
   const horizonItems = [
     { value: "inherit", label: t("rentals.resources.form.horizonInherit") },
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },

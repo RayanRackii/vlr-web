@@ -44,6 +44,7 @@ import {
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { createPlan } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
+import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
 export function CreatePlanPage() {
   const { t } = useTranslation()
@@ -60,6 +61,7 @@ export function CreatePlanPage() {
     () =>
       createPlanFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
+        nameTooLong: t("common.validation.maxLength", { count: 200 }),
         nameRequired: t("pmoc.create.validation.nameRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
@@ -105,7 +107,7 @@ export function CreatePlanPage() {
 
   const watchedValues = useWatch({ control: form.control })
   const parsedPlan = formSchema.safeParse(watchedValues)
-  const planError = parsedPlan.success ? undefined : parsedPlan.error
+  const planError = useVisibleFormIssues(parsedPlan.success ? undefined : parsedPlan.error, form)
   const isPlanValid = parsedPlan.success
   const planMessages = uniqueIssueMessages(planError)
   const watchedTasks = watchedValues.tasks

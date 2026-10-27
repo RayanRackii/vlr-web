@@ -1,3 +1,4 @@
+import { CivilDateInput } from "@/components/CivilDateInput"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -23,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -90,7 +90,7 @@ export function GenerateWorkOrderDialog({
   assetCategoryId: string
   onGenerated: (workOrder: WorkOrder) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [assets, setAssets] = useState<WorkOrderRegistryAsset[]>([])
   const [technicians, setTechnicians] = useState<TechnicianUser[]>([])
@@ -324,7 +324,7 @@ export function GenerateWorkOrderDialog({
                       {t("workOrders.create.form.scheduledDate")}
                     </FormLabel>
                     <FormControl>
-                      <Input type="date" disabled={isPending} {...field} />
+                      <CivilDateInput locale={i18n.resolvedLanguage ?? i18n.language} disabled={isPending} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

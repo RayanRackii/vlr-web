@@ -104,6 +104,18 @@ async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("TeacherLessonsPage", () => {
+  it("does not query the API with an incomplete localized date", async () => {
+    const user = userEvent.setup()
+    render(<TeacherLessonsPage />)
+    const date = await screen.findByLabelText("Data")
+    await waitFor(() => expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-08", [court.id]))
+    vi.mocked(fetchAdminScheduleDay).mockClear()
+    await user.clear(date)
+    await user.type(date, "14/")
+    expect(fetchAdminScheduleDay).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "Criar aula nesta data" })).toBeDisabled()
+  })
+
   beforeEach(() => {
     resetRemovedTeacherLessonsForTests()
     vi.useFakeTimers({
@@ -134,11 +146,11 @@ describe("TeacherLessonsPage", () => {
     expect(screen.queryByText(/Configuração semanal|Política da agenda|Tipos de ocupação/)).not.toBeInTheDocument()
   })
 
-  it("sets today as the earliest date and hides booked or cancelled lessons from removal", async () => {
+  it("displays today's localized date and hides booked or cancelled lessons from removal", async () => {
     render(<TeacherLessonsPage />)
 
     const date = await screen.findByLabelText("Data")
-    expect(date).toHaveAttribute("min", todayIsoDate())
+    expect(date).toHaveValue("08/10/2026")
     expect(await screen.findAllByRole("button", { name: /Remover aula/ })).toHaveLength(1)
   })
 
@@ -166,7 +178,7 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
 
     await waitFor(() => expect(pending).toHaveLength(1))
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-10-09" } })
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "09/10/2026" } })
     await waitFor(() => expect(pending).toHaveLength(2))
 
     await act(async () => pending[1]({ date: "2026-10-09", slots: [secondOpenSlot] }))
@@ -188,7 +200,7 @@ describe("TeacherLessonsPage", () => {
     await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
     await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
     expect(screen.getByRole("combobox", { name: "Horário disponível" })).toHaveTextContent("11:00–12:00")
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-10-09" } })
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "09/10/2026" } })
     await waitFor(() => expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-09", [court.id]))
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Este horário não está mais disponível. Atualize a grade e escolha outro."))
@@ -481,7 +493,7 @@ describe("TeacherLessonsPage", () => {
 
     await user.keyboard("{Escape}")
     fireEvent.change(screen.getByLabelText("Data"), {
-      target: { value: "2026-10-16" },
+      target: { value: "16/10/2026" },
     })
     await waitFor(() => {
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-16", [court.id])
@@ -504,7 +516,7 @@ describe("TeacherLessonsPage", () => {
         "A data do link já passou. Os horários abaixo são de hoje.",
       ),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(todayIsoDate())
+    expect(screen.getByLabelText("Data")).toHaveValue("08/10/2026")
     await waitFor(() => {
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith(todayIsoDate(), [court.id])
     })
@@ -537,7 +549,7 @@ describe("TeacherLessonsPage", () => {
 
     const first = render(<TeacherLessonsPage />)
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+    expect(screen.getByLabelText("Data")).toHaveValue("09/10/2026")
     expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
     expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
 
@@ -545,7 +557,7 @@ describe("TeacherLessonsPage", () => {
     window.history.replaceState(null, "", `/configuracoes/agenda?date=${lessonDate}`)
     render(<TeacherLessonsPage />)
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+    expect(screen.getByLabelText("Data")).toHaveValue("09/10/2026")
   })
 
   it("does not show an empty lesson list while the initial day read is still in flight", async () => {

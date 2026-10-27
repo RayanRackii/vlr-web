@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -165,13 +165,54 @@ describe("CreatePlanPage validity gate", () => {
     )
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
-      "2026-10-14",
+      "14/10/2026",
     )
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.create.tasks.title")),
       "Limpar filtro",
     )
   }
+
+  it("keeps pristine errors hidden and reveals only the blurred field, then all errors on submit", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    expect(screen.queryByTestId("form-validation-summary")).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.create.validation.nameRequired"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
+
+    await user.click(name)
+    await user.tab()
+    expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired")).length).toBeGreaterThan(0)
+    expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
+
+    fireEvent.submit(name.closest("form")!)
+    expect((await screen.findAllByText(i18n.t("pmoc.scheduling.firstDueRequired"))).length).toBeGreaterThan(0)
+    expect(createPlanMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["pt-BR", "dd/mm/aaaa", "Informe o primeiro vencimento.", "Use no máximo 200 caracteres."],
+    ["en", "mm/dd/yyyy", "Enter the first due date.", "Use at most 200 characters."],
+    ["es", "dd/mm/aaaa", "Indique el primer vencimiento.", "Use como máximo 200 caracteres."],
+  ])("localizes validation and the date format in %s", async (locale, placeholder, message, maxLengthMessage) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      const { container } = renderPage()
+      const date = await screen.findByLabelText(i18n.t("pmoc.scheduling.firstDue"))
+      expect(date).toHaveAttribute("placeholder", placeholder)
+      await user.type(date, "12/")
+      await user.tab()
+      expect(screen.getAllByText(message).length).toBeGreaterThan(0)
+      expect(container.textContent).not.toContain("Expected a civil")
+      fireEvent.change(screen.getByLabelText(i18n.t("pmoc.create.form.name")), { target: { value: "x".repeat(201) } })
+      expect(screen.getAllByText(maxLengthMessage).length).toBeGreaterThan(0)
+      expect(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") })).toBeDisabled()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
 
   it("keeps Salvar plano disabled until the plan schema is valid and leaves Voltar and Cancelar free", async () => {
     const user = userEvent.setup()
@@ -273,7 +314,7 @@ describe("CreatePlanPage validity gate", () => {
     ).toHaveValue(30)
     expect(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
-    ).toHaveValue("2026-10-14")
+    ).toHaveValue("14/10/2026")
     expect(
       screen.getByRole("button", { name: i18n.t("pmoc.create.actions.back") }),
     ).toBeEnabled()
@@ -284,6 +325,7 @@ describe("CreatePlanPage validity gate", () => {
       screen.queryByText(i18n.t("pmoc.create.success.created")),
     ).not.toBeInTheDocument()
     expect(createPlanMock).toHaveBeenCalledTimes(1)
+    expect(createPlanMock).toHaveBeenCalledWith(expect.objectContaining({ firstDueDate: "2026-10-14" }))
 
     const createdId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
     createPlanMock.mockResolvedValueOnce({ id: createdId } as Awaited<
