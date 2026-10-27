@@ -2303,6 +2303,7 @@
       "redirecting": "Work order created"
     },
     "execution": {
+      "breadcrumb": "WO {{id}} · {{asset}}",
       "title": "Work Order Execution",
       "subtitle": "Asset {{tag}} — {{name}}",
       "loading": "Loading work order...",

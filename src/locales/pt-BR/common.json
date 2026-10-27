@@ -2303,6 +2303,7 @@
       "redirecting": "OS criada"
     },
     "execution": {
+      "breadcrumb": "OS {{id}} · {{asset}}",
       "title": "Execução da OS",
       "subtitle": "Ativo {{tag}} — {{name}}",
       "loading": "Carregando OS...",
