@@ -58,12 +58,19 @@ const useFormField = () => {
     formItemId: `${id}-form-item`,
     formDescriptionId: `${id}-form-item-description`,
     formMessageId: `${id}-form-item-message`,
+    visibleDescriptionId: itemContext.elements?.description,
+    visibleMessageId: itemContext.elements?.inline ?? itemContext.elements?.message,
+    hasInlineMessage: !!itemContext.elements?.inline,
     ...fieldState,
   }
 }
 
+type FormItemElement = "description" | "inline" | "message"
+
 type FormItemContextValue = {
   id: string
+  elements?: Partial<Record<FormItemElement, string>>
+  registerElement?: (kind: FormItemElement, id: string | undefined) => void
 }
 
 const FormItemContext = React.createContext<FormItemContextValue>(
@@ -73,14 +80,30 @@ const FormItemContext = React.createContext<FormItemContextValue>(
 /** Inline messages can also be rendered outside a FormItem. */
 function FormInlineMessage(props: React.ComponentProps<"p">) {
   const { id } = React.useContext(FormItemContext)
-  return <p id={id ? `${id}-form-item-message` : undefined} {...props} />
+  const messageId = props.id ?? (id ? `${id}-form-item-message` : undefined)
+  useFormItemElement("inline", messageId)
+  return <p {...props} id={messageId} />
+}
+
+/** Register only rendered elements so controls never describe absent messages. */
+function useFormItemElement(kind: FormItemElement, id: string | undefined) {
+  const { registerElement } = React.useContext(FormItemContext)
+  React.useLayoutEffect(() => {
+    if (!id || !registerElement) return
+    registerElement(kind, id)
+    return () => registerElement(kind, undefined)
+  }, [id, kind, registerElement])
 }
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   const id = React.useId()
+  const [elements, setElements] = React.useState<Partial<Record<FormItemElement, string>>>({})
+  const registerElement = React.useCallback((kind: FormItemElement, elementId: string | undefined) => {
+    setElements((current) => current[kind] === elementId ? current : { ...current, [kind]: elementId })
+  }, [])
 
   return (
-    <FormItemContext.Provider value={{ id }}>
+    <FormItemContext.Provider value={{ id, elements, registerElement }}>
       <div
         data-slot="form-item"
         className={cn("space-y-2", className)}
@@ -111,19 +134,15 @@ function FormControl({
   children,
   ...props
 }: React.ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId } =
+  const { error, formItemId, visibleDescriptionId, visibleMessageId } =
     useFormField()
 
   return (
     <Slot
       data-slot="form-control"
       id={formItemId}
-      aria-describedby={
-        error
-          ? `${formDescriptionId} ${formMessageId}`
-          : `${formDescriptionId}`
-      }
-      aria-invalid={!!error}
+      aria-describedby={[visibleDescriptionId, visibleMessageId].filter(Boolean).join(" ") || undefined}
+      aria-invalid={!!error || !!visibleMessageId}
       {...props}
     >
       {children}
@@ -133,31 +152,35 @@ function FormControl({
 
 function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   const { formDescriptionId } = useFormField()
+  const descriptionId = props.id ?? formDescriptionId
+  useFormItemElement("description", descriptionId)
 
   return (
     <p
       data-slot="form-description"
-      id={formDescriptionId}
       className={cn("text-sm text-muted-foreground", className)}
       {...props}
+      id={descriptionId}
     />
   )
 }
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
-  const { error, formMessageId } = useFormField()
+  const { error, formMessageId, hasInlineMessage } = useFormField()
   const body = error ? String(error.message ?? "") : props.children
+  const messageId = props.id ?? formMessageId
+  useFormItemElement("message", body && !hasInlineMessage ? messageId : undefined)
 
-  if (!body) {
+  if (!body || hasInlineMessage) {
     return null
   }
 
   return (
     <p
       data-slot="form-message"
-      id={formMessageId}
       className={cn("text-sm text-destructive", className)}
       {...props}
+      id={messageId}
     >
       {body}
     </p>

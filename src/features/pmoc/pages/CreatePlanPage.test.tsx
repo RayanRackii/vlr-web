@@ -184,6 +184,8 @@ describe("CreatePlanPage validity gate", () => {
     await user.click(name)
     await user.tab()
     expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired"))).toHaveLength(1)
+    expect(name).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.nameRequired"))
+    expect(name).toHaveAttribute("aria-invalid", "true")
     expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
 
     fireEvent.submit(name.closest("form")!)
@@ -380,9 +382,14 @@ describe("CreatePlanPage validity gate", () => {
       name: i18n.t("pmoc.create.actions.save"),
     })
     expect(save).toBeDisabled()
-    expect(
-      screen.getAllByText(i18n.t("pmoc.create.validation.optionsRequired")).length,
-    ).toBeGreaterThan(0)
+    const optionsError = i18n.t("pmoc.create.validation.optionsRequired")
+    expect(screen.getAllByText(optionsError)).toHaveLength(1)
+    const optionInputs = [1, 2].map((number) => screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number })))
+    for (const input of optionInputs) {
+      expect(input).toHaveAccessibleDescription(optionsError)
+      expect(input).toHaveAttribute("aria-invalid", "true")
+      expect(document.getElementById(input.getAttribute("aria-describedby")!)).toHaveTextContent(optionsError)
+    }
 
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 1 })),
@@ -394,5 +401,10 @@ describe("CreatePlanPage validity gate", () => {
       "Revisar",
     )
     expect(save).toBeEnabled()
+    expect(screen.queryByText(optionsError)).not.toBeInTheDocument()
+    for (const input of optionInputs) {
+      expect(input).not.toHaveAttribute("aria-describedby")
+      expect(input).toHaveAttribute("aria-invalid", "false")
+    }
   })
 })

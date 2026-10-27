@@ -90,6 +90,8 @@ export function PlanTaskEditor({
           const options = (watchedTasks?.[index]?.options ?? []).map(
             (option) => option ?? "",
           )
+          const optionsError = issueMessage(["tasks", index, "options"])
+          const optionsMessageId = `${field.id}-options-message`
 
           return (
             <div
@@ -314,6 +316,8 @@ export function PlanTaskEditor({
                         >
                           <Input
                             autoComplete="off"
+                            aria-describedby={optionsError ? optionsMessageId : undefined}
+                            aria-invalid={!!optionsError}
                             aria-label={t("pmoc.create.tasks.optionLabel", {
                               number: optionIndex + 1,
                             })}
@@ -350,7 +354,8 @@ export function PlanTaskEditor({
                       ))}
                     </div>
                     <LiveFieldMessage
-                      message={issueMessage(["tasks", index, "options"])}
+                      id={optionsMessageId}
+                      message={optionsError}
                     />
                   </div>
                 ) : null}
