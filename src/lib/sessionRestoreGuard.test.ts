@@ -421,4 +421,26 @@ describe("portal sign out", () => {
     await expect(signOutStaffBeforeCustomerAuth()).resolves.toBeUndefined()
     expect(hasActiveStaffSession()).toBe(false)
   })
+
+  it("scenario A: drops the staff session locally when the global sign-out returns an error", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockResolvedValueOnce({
+      error: new Error("network") as never,
+    })
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).toHaveBeenLastCalledWith({ scope: "local" })
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("scenario A: removes the stored staff session when the global sign-out rejects", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error("network"))
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
+  })
 })

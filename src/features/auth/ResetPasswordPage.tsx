@@ -24,6 +24,7 @@ import {
   createResetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/features/auth/resetPasswordSchema"
+import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
 import { supabase } from "@/lib/supabase"
 
 function getResetErrorMessage(error: AuthError, t: TFunction): string {
@@ -115,6 +116,8 @@ export function ResetPasswordPage() {
       return
     }
 
+    // Staff and customer sessions are exclusive: a staff sign-in ends any leftover customer one.
+    clearCustomerSession()
     void navigate("/dashboard", { replace: true })
   }
 

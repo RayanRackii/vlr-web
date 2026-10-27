@@ -135,6 +135,18 @@ describe("UnknownPathRoute", () => {
     clearCustomerSession()
   })
 
+  it("scenario A: a customer who logged in after staff gets the portal, not the admin-shell 404", async () => {
+    authState.user = { id: "user-1", email: "ana@example.com" }
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderAt("/nao-existe")
+
+    expect(await screen.findByText("customer-portal")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: i18n.t("notFound.title") }),
+    ).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
   it("keeps a signed-out visit with no session on the standalone 404", () => {
     renderAt("/nao-existe")
 

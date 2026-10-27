@@ -5,16 +5,13 @@ import { AuthenticatedNotFoundPage } from "@/components/layout/AuthenticatedNotF
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PublicNotFoundPage } from "@/components/layout/PublicNotFoundPage"
 import { useAuth } from "@/contexts/AuthContext"
-import {
-  getCustomerSubdomain,
-  isCustomerSignedInForTenant,
-  tenantPortalPath,
-} from "@/features/tenantPortal/services/tenantPortalService"
+import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
+import { signedInCustomerSubdomain } from "@/lib/sessionRestoreGuard"
 
 /**
  * Signed-out visitors see a standalone 404 (no admin chrome).
  * Signed-in staff stay in the app shell and see a not-found page.
- * A signed-in customer (no staff session) is sent back to their portal instead.
+ * A signed-in customer is sent back to their portal, even if a staff session lingers.
  */
 export function UnknownPathRoute() {
   const { t } = useTranslation()
@@ -28,17 +25,17 @@ export function UnknownPathRoute() {
     )
   }
 
+  const customerSubdomain = signedInCustomerSubdomain()
+  if (customerSubdomain) {
+    return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
+  }
+
   if (user !== null) {
     return (
       <MainLayout>
         <AuthenticatedNotFoundPage />
       </MainLayout>
     )
-  }
-
-  const customerSubdomain = getCustomerSubdomain()
-  if (customerSubdomain && isCustomerSignedInForTenant(customerSubdomain)) {
-    return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
   }
 
   return <PublicNotFoundPage />

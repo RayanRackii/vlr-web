@@ -55,6 +55,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { iconProps } from "@/lib/icon"
 import { noteStaffSignIn } from "@/lib/api"
+import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
 import { supabase } from "@/lib/supabase"
 
 type Phase =
@@ -295,6 +296,8 @@ export function SetPasswordPage() {
         return
       }
 
+      // Staff and customer sessions are exclusive: a staff sign-in ends any leftover customer one.
+      clearCustomerSession()
       await openMembershipStep(preview.tenantId)
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
@@ -326,6 +329,7 @@ export function SetPasswordPage() {
     if (signInError !== null) {
       return { message: signInError.message }
     }
+    clearCustomerSession()
 
     try {
       await acceptExistingAccountInvite({ token })
