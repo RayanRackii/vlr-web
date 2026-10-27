@@ -10,6 +10,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 
 import { syncCurrentUserCacheToAuthUser } from "@/features/users/services/currentUserCache"
 import { logAuthSessionEvent } from "@/lib/authSessionLog"
+import { isSigningOut, purgeSignedOutSessions } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 type AuthContextValue = {
@@ -54,7 +55,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      const session = error === null ? (data?.session ?? null) : null
+      // Sair already ended this session: render signed out, never a restoring skeleton.
+      const session =
+        error === null && !isSigningOut() ? (data?.session ?? null) : null
       logStaffEvent("GET_SESSION", session, error ?? undefined)
 
       if (session === null) {
@@ -94,6 +97,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setSession(null)
         setUser(null)
         setIsLoading(false)
+        return
+      }
+
+      // After Sair, a refresh that was already in flight must not bring the user back.
+      if (isSigningOut()) {
+        purgeSignedOutSessions()
         return
       }
 

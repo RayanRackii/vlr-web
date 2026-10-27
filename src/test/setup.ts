@@ -22,6 +22,9 @@ vi.mock("@/lib/supabase", () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
       signOut: vi.fn(async () => ({ error: null })),
+      stopAutoRefresh: vi.fn(async () => undefined),
+      startAutoRefresh: vi.fn(async () => undefined),
+      admin: { signOut: vi.fn(async () => ({ data: null, error: null })) },
       refreshSession: vi.fn(async () => ({ error: null })),
       signInWithPassword: vi.fn(async () => ({
         data: { user: null, session: null },

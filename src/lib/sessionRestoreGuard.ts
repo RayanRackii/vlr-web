@@ -15,10 +15,12 @@ import {
   tenantPortalPath,
   tenantPortalPathMode,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { CUSTOMER_TOKEN_STORAGE_KEY } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
 import appI18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
+import { removeSessionKeysAsSignedOut, resetSignOutMarkerForTests } from "@/lib/signOutMarker"
 import { persistLanguage } from "@/lib/uiLanguage"
 
 const CUSTOMER_ROOTS = ["app", "agenda", "catalogo", "pedidos"] as const
@@ -308,37 +310,104 @@ export function resetSessionRestoreGuardForTests(): void {
   restoreBlocked = false
   signedOutStaffAccessToken = null
   hiddenSession = null
+  resetSignOutMarkerForTests()
 }
 
 function rememberStaffSignOut(): void {
   signedOutStaffAccessToken = readStaffAccessToken()
 }
 
-function cancelStaffSignOut(): void {
-  signedOutStaffAccessToken = null
-}
-
 function keepChosenLanguage(): void {
   persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
 }
 
+/** Bound for the server-side revoke. Sair never waits longer than this. */
+export const SERVER_SIGN_OUT_TIMEOUT_MS = 3000
+
+function staffStorageKeys(): string[] {
+  const keys: string[] = []
+  try {
+    const storage = window.localStorage
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index)
+      if (key && (STAFF_STORAGE_KEY.test(key) || /^sb-.+-auth-token-code-verifier$/.test(key))) {
+        keys.push(key)
+      }
+    }
+  } catch {
+    // Storage unavailable.
+  }
+  return keys
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | "timeout"> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve("timeout"), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
+}
+
+/**
+ * Ends the staff session. Order matters (QA R24 reload race):
+ * 1. synchronously drop the stored session and block auth writes, so a reload at any
+ *    moment after Sair finds nothing to restore;
+ * 2. stop scheduling token auto-refresh; the storage barrier rejects in-flight saves;
+ * 3. revoke server-side with the snapshot token (bounded), and clear the client's memory
+ *    with a local sign-out (emits SIGNED_OUT).
+ * The local session always ends; a failed or slow revoke does not keep the user signed in.
+ */
 export async function signOutStaffPortal(): Promise<boolean> {
   rememberStaffSignOut()
+  const accessToken = readStaffAccessToken()
   writeActiveTenantLabel(null)
   clearAuthenticatedQueryCaches()
-  const { error } = await supabase.auth.signOut()
-  keepChosenLanguage()
-  if (error !== null) {
-    cancelStaffSignOut()
-    return false
+  removeSessionKeysAsSignedOut(staffStorageKeys())
+  try {
+    void supabase.auth.stopAutoRefresh()
+  } catch {
+    // Older client or test double: the storage barrier still rejects late refresh writes.
   }
 
+  const revoke = accessToken
+    ? withTimeout(
+        Promise.resolve()
+          // Normal /logout endpoint with the user's JWT; no service role is used.
+          .then(() => supabase.auth.admin.signOut(accessToken, "global"))
+          .catch(() => null),
+        SERVER_SIGN_OUT_TIMEOUT_MS,
+      ).catch(() => null)
+    : Promise.resolve(null)
+  const local = withTimeout(
+    Promise.resolve()
+      .then(() => supabase.auth.signOut({ scope: "local" }))
+      .catch(() => null),
+    SERVER_SIGN_OUT_TIMEOUT_MS,
+  ).catch(() => null)
+  await Promise.all([revoke, local])
+
+  // A lock-held save inside the auth client can land after step 1; drop it again.
+  removeStoredStaffSessions()
+  keepChosenLanguage()
   clearPlatformTenantExited()
   return true
 }
 
-export function signOutCustomerPortal(subdomain: string): string {
+export function clearCustomerSessionAsSignedOut(): void {
+  removeSessionKeysAsSignedOut([CUSTOMER_TOKEN_STORAGE_KEY])
   clearCustomerSession()
+}
+
+export function signOutCustomerPortal(subdomain: string): string {
+  clearCustomerSessionAsSignedOut()
   clearAuthenticatedQueryCaches()
   keepChosenLanguage()
   return tenantPortalPath(subdomain)

@@ -1,3 +1,5 @@
+// Initialize the persisted sign-out barrier before the app loads the auth client.
+import '@/lib/signOutMarker'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

@@ -25,6 +25,7 @@ import {
   type ResetPasswordFormValues,
 } from "@/features/auth/resetPasswordSchema"
 import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
+import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 
 function getResetErrorMessage(error: AuthError, t: TFunction): string {
@@ -65,6 +66,7 @@ export function ResetPasswordPage() {
       const type = params.get("type")
 
       if (tokenHash && type === "recovery") {
+        noteStaffSignIn()
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
@@ -92,6 +94,7 @@ export function ResetPasswordPage() {
       }
 
       if (data.session) {
+        noteStaffSignIn()
         setGate("ready")
         return
       }
