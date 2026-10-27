@@ -168,7 +168,7 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] #194: a tela de notificações diz que o e-mail para clientes começa ligado em organizações novas e pode ser desligado ali. O interruptor usa `isActive` da API, sem default otimista.
 - [x] #186: no mapa de recursos, a ordem de foco e do leitor de tela segue a posição visual (cima para baixo, esquerda para direita); o empate usa ordem natural do nome. A grade automática também nasce nessa ordem de nome.
 
-## 4.10. Sidebar staff — reorganização (DEV, PR 1/3)
+## 4.10. Sidebar staff — reorganização (DEV, PRs 1–2/3)
 
 - [x] Nomes pt-BR/en/es e cinco grupos: Início, Reservas, Manutenção, Vendas, Pessoas e portal; sem grupo Configurações. Recursos continua exclusivo de reservas; Equipamentos identifica o inventário de manutenção.
 - [x] Regras de reserva em Reservas; Tipos de equipamento em Equipamentos; Biblioteca Rolvix em Novo plano (ao lado de começar plano personalizado); Formulário de cadastro em Pessoas e acesso, junto às abas existentes.
@@ -177,7 +177,9 @@ Spec: `vlr-api/docs/plans/active/2026-08-22-reservation-waiting-queue.md`. Branc
 - [x] Validação final em Node 22.23.4: `npm test -- --reporter=dot --silent=true --maxWorkers=2` (245 arquivos, 1992 testes); `npx tsc -b`; `npm run lint:ratchet` (199 violações preexistentes). Build Vite local também aprovado. Dois workers evitam os timeouts de processos vistos na execução com paralelismo padrão, sem alterar limites ou testes.
 - [x] Revisões locais por snapshot (sem git): Standards sem achados; Spec com um Medium de label inglês corrigido; revisão canônica `SAFE_WITH_FOLLOWUP`, com o Low de URLs com barra final corrigido e verificado pelo reviewer normal (sete regressões adicionais). Nenhum achado pendente; revisão/CI/base Git e abertura do PR ficam com o PM.
 - [x] PM: commit rebaseado em `develop`, PR aberto para `develop` com revisão única (Claude read-only).
-- [ ] PR 2/3: breadcrumb e estado ativo por prefixo; PR 3/3: páginas de ajuda dos módulos (fora desta entrega).
+- [x] PR 2/3 (código local): estado ativo pelo prefixo mais específico, limitado por segmento e com aliases das abas; grupos mantêm os filhos visíveis em detalhes. Breadcrumb único no layout staff, derivado da navegação, com títulos por `useBreadcrumbTitle`, fallback traduzido, `aria-current` e versão mobile com voltar ao pai + página atual. PMOC, prévia de template e execução de OS informam o nome disponível. Labels e acessibilidade em pt-BR/en/es; regressões de matching, renderização, troca de rota e viewport.
+- [x] PR 2/3: Node 22.23.4 — `npm test -- --reporter=dot --silent` (2094 testes/251 arquivos, 39 regressões novas); `npx tsc -b`; `npm run lint:ratchet` (199 violações preexistentes). Revisão local sem achados pendentes. Sem Git nesta sessão; commit/push/PR pelo PM.
+- [ ] PR 3/3: páginas de ajuda dos módulos (fora desta entrega).
 
 Como testar em DEV: com os módulos habilitados, conferir os cinco grupos e alternar pt-BR/en/es. Abrir `/ativos/categorias`, `/configuracoes/politica-reservas`, `/pmoc/biblioteca` e `/configuracoes/cadastro`: o conteúdo aparece integrado às respectivas abas. Testar também usuários com apenas a permissão da aba secundária e com o módulo desativado; alternar abas e usar Voltar. Próximo API: configurar os hosts de convite no Fly DEV (Rayan), conforme R8 do roadmap irmão; este PR não altera contratos.
 
