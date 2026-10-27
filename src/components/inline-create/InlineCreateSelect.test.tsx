@@ -34,7 +34,7 @@ describe("InlineCreateSelect", () => {
     )
 
     await user.click(screen.getByRole("combobox"))
-    await user.click(screen.getByRole("option", { name: "+ create type" }))
+    await user.click(await screen.findByRole("option", { name: "+ create type" }))
     expect(await screen.findByRole("heading", { name: "Create type" })).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Save type" }))
@@ -69,7 +69,7 @@ describe("InlineCreateSelect", () => {
     )
 
     await user.click(screen.getByRole("combobox"))
-    await user.click(screen.getByRole("option", { name: "+ create type" }))
+    await user.click(await screen.findByRole("option", { name: "+ create type" }))
     await user.click(await screen.findByRole("button", { name: "Save type" }))
 
     expect(drawerSubmit).toHaveBeenCalledOnce()

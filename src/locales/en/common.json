@@ -1209,6 +1209,59 @@
     "pmocCustom": "Start custom plan",
     "pmocTooltip": "Maintenance plans"
   },
+  "moduleIntro": {
+    "title": "Introduction",
+    "howItWorks": "How it works",
+    "shortcuts": "Shortcuts",
+    "relatedModules": "Related modules",
+    "open": "About {{module}}",
+    "expand": "Expand {{module}}",
+    "collapse": "Collapse {{module}}",
+    "modules": {
+      "overview": {
+        "summary": "See a summary of your business and find what needs your attention.",
+        "how1": "Check the indicators available to your access level.",
+        "how2": "Open screens from the menu to see details and take action.",
+        "how3": "Bookings, maintenance, sales and people organize the other areas of your business."
+      },
+      "bookings": {
+        "summary": "Organize what customers can book, available hours and their bookings.",
+        "how1": "Add bookable resources and arrange how they appear on the space map.",
+        "how2": "Set available hours. Track requests in Bookings and adjust limits in Booking rules.",
+        "how3": "People & portal brings customers together. Maintenance covers equipment; Sales handles products and orders separately."
+      },
+      "maintenance": {
+        "summary": "Organize equipment that needs care, maintenance plans and work orders.",
+        "how1": "Add items to maintain in Equipment. Equipment types groups those items; Resources under Bookings defines what customers can book.",
+        "how2": "Use Maintenance plans to organize preventive care and Work orders to track the work.",
+        "how3": "Consider maintenance needs when organizing resource availability in Bookings."
+      },
+      "sales": {
+        "summary": "Organize products and track orders placed by customers.",
+        "how1": "Add products and track orders in the Sales screens.",
+        "how2": "Adjust sales settings and order alerts in their respective screens.",
+        "how3": "People & portal organizes customers and portal access. Products and orders are separate from resources and bookings."
+      },
+      "peoplePortal": {
+        "summary": "Manage people, staff access and the customer portal experience.",
+        "how1": "Track staff and customers in People & access. The sign-up form defines the details requested during registration.",
+        "how2": "Organize the customer menu, categories and tags, and general alerts in the available screens.",
+        "how3": "The portal gives access to resources from Bookings and products from Sales, according to the enabled modules."
+      },
+      "pmoc": {
+        "summary": "Plan preventive care for equipment and keep track of your plans.",
+        "how1": "View existing maintenance plans in My plans.",
+        "how2": "In New plan, start a custom plan or use a template from the Rolvix library.",
+        "how3": "Plans relate to equipment and work orders in Maintenance."
+      },
+      "platform": {
+        "summary": "Manage customer environments and shared platform records.",
+        "how1": "Browse customers and open the environment you need to manage.",
+        "how2": "Manage platform users and equipment families in the available screens.",
+        "how3": "Inside an environment, the menu shows the areas available to that customer."
+      }
+    }
+  },
   "taxonomy": {
     "title": "Categories and tags",
     "sharedHint": "These definitions are shared by every consumer in this tenant.",
