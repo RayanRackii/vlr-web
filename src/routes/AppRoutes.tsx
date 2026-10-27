@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router-do
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
 import { MainLayout } from "@/components/layout/MainLayout"
+import { ModuleIntroPage } from "@/components/layout/ModuleIntroPage"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
@@ -125,6 +126,7 @@ export function AppRoutes() {
         <Route path="ativos/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
         <Route path="os/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="modulos/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
         <Route path="perfil/*" element={<RedirectPerfilRoute />} />
         <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
@@ -154,6 +156,7 @@ export function AppRoutes() {
         </Route>
 
         <Route element={<MainLayout />}>
+          <Route path="/modulos/:moduleKey" element={<ModuleIntroPage />} />
           <Route element={<DashboardHomeRoute />}>
             {dashboardManifest.routes.staff.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />

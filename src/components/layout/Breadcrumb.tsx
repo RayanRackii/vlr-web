@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 
 import { getPageTitleKey, useAppNavigationSections } from "./navigation"
 import { matchNavigationPath } from "./navigationMatching"
+import { matchModuleIntro, moduleIntroPath } from "./navigationIntros"
 import { BreadcrumbTitleContext } from "./useBreadcrumbTitle"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 
@@ -26,8 +27,12 @@ export function Breadcrumb() {
   const narrow = useSyncExternalStore(subscribeToViewport, isNarrowViewport, () => false)
   const match = matchNavigationPath(sections.flatMap((section) => section.items), pathname)
   const crumbs: { label: string; to?: string }[] = []
+  const intro = matchModuleIntro(sections, pathname)
 
-  if (match) {
+  if (intro) {
+    crumbs.push({ label: t(intro.titleKey), to: moduleIntroPath(intro.key) })
+    crumbs.push({ label: t("moduleIntro.title") })
+  } else if (match) {
     const { item, child, tab, isDetail } = match
     crumbs.push({ label: t(item.labelKey), to: child ? undefined : item.to })
     if (child) crumbs.push({ label: t(child.labelKey), to: child.to })

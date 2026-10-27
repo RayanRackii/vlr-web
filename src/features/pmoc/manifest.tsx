@@ -20,6 +20,7 @@ export const pmocManifest = {
   navigationItems: [
     {
       labelKey: "nav.pmoc",
+      introKey: "pmoc",
       to: "/pmoc",
       icon: ClipboardList,
       modules: ["pmoc"],

@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
+import type { ModuleIntroKey } from "./navigationIntros"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
@@ -45,6 +46,7 @@ export type AppNavigationChildItem = {
 }
 
 export type AppNavigationItem = {
+  introKey?: ModuleIntroKey
   labelKey:
     | "nav.dashboard"
     | "nav.peopleAccess"
@@ -86,6 +88,7 @@ export type AppNavigationSectionTitleKey =
   | "nav.sections.platform"
 
 export type AppNavigationSection = {
+  introKey?: ModuleIntroKey
   titleKey: AppNavigationSectionTitleKey
   items: readonly AppNavigationItem[]
 }
@@ -226,11 +229,11 @@ export function buildProductSections(
   permissions: readonly string[],
 ): AppNavigationSection[] {
   const groups: readonly AppNavigationSection[] = [
-    { titleKey: "nav.sections.overview", items: [overviewItem] },
-    { titleKey: "nav.sections.bookings", items: bookingsItems },
-    { titleKey: "nav.sections.maintenance", items: maintenanceItems },
-    { titleKey: "nav.sections.sales", items: salesItems },
-    { titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
+    { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
+    { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
+    { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
+    { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
+    { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
   ]
   return groups.flatMap((section) => {
     const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
@@ -267,10 +270,12 @@ export function useAppNavigationSections(): AppNavigationState {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
+          introKey: "overview",
           titleKey: "nav.sections.overview",
           items: [overviewItem],
         },
         {
+          introKey: "platform",
           titleKey: "nav.sections.platform",
           items: adminManifest.navigationItems,
         },

@@ -1209,6 +1209,59 @@
     "pmocCustom": "Começar plano personalizado",
     "pmocTooltip": "PMOC"
   },
+  "moduleIntro": {
+    "title": "Apresentação",
+    "howItWorks": "Como funciona",
+    "shortcuts": "Atalhos",
+    "relatedModules": "Módulos relacionados",
+    "open": "Sobre {{module}}",
+    "expand": "Expandir {{module}}",
+    "collapse": "Recolher {{module}}",
+    "modules": {
+      "overview": {
+        "summary": "Veja um resumo do seu negócio e encontre o que precisa acompanhar.",
+        "how1": "Consulte os indicadores disponíveis para o seu acesso.",
+        "how2": "Abra as telas pelo menu para ver os detalhes e agir.",
+        "how3": "Reservas, manutenção, vendas e pessoas organizam as outras áreas do negócio."
+      },
+      "bookings": {
+        "summary": "Organize o que pode ser reservado, os horários e as reservas dos clientes.",
+        "how1": "Cadastre os recursos reserváveis e organize sua exibição no mapa do espaço.",
+        "how2": "Defina os horários disponíveis. Em Reservas, acompanhe as solicitações; em Regras de reserva, ajuste os limites.",
+        "how3": "Pessoas e portal reúne os clientes. Manutenção cuida dos equipamentos; Vendas trata produtos e pedidos separadamente."
+      },
+      "maintenance": {
+        "summary": "Organize os equipamentos que precisam de cuidados, os planos e as ordens de serviço.",
+        "how1": "Em Equipamentos, cadastre o que será mantido. Tipos de equipamento agrupa os cadastros; Recursos, em Reservas, define o que os clientes podem reservar.",
+        "how2": "Use Planos de manutenção para organizar cuidados preventivos e Ordens de serviço para acompanhar a execução.",
+        "how3": "Considere as necessidades de manutenção ao organizar a disponibilidade dos recursos em Reservas."
+      },
+      "sales": {
+        "summary": "Organize produtos e acompanhe pedidos feitos pelos clientes.",
+        "how1": "Cadastre os produtos e acompanhe os pedidos nas telas de Vendas.",
+        "how2": "Ajuste as configurações de vendas e os avisos de pedidos nas telas correspondentes.",
+        "how3": "Pessoas e portal organiza os clientes e o acesso ao portal. Produtos e pedidos são separados dos recursos e reservas."
+      },
+      "peoplePortal": {
+        "summary": "Gerencie pessoas, acesso da equipe e a experiência dos clientes no portal.",
+        "how1": "Em Pessoas e acesso, acompanhe a equipe e os clientes. O formulário define os dados pedidos no cadastro.",
+        "how2": "Organize o menu do cliente, as categorias e tags e os avisos gerais nas telas disponíveis.",
+        "how3": "O portal dá acesso aos recursos de Reservas e aos produtos de Vendas, conforme os módulos habilitados."
+      },
+      "pmoc": {
+        "summary": "Planeje os cuidados preventivos dos equipamentos e acompanhe seus planos.",
+        "how1": "Em Meus planos, consulte os planos de manutenção já cadastrados.",
+        "how2": "Em Novo plano, comece um plano personalizado ou use um modelo da Biblioteca Rolvix.",
+        "how3": "Os planos se relacionam aos equipamentos e às ordens de serviço de Manutenção."
+      },
+      "platform": {
+        "summary": "Administre os ambientes e os cadastros compartilhados da plataforma.",
+        "how1": "Consulte os clientes e abra o ambiente que precisa administrar.",
+        "how2": "Gerencie os usuários da plataforma e as famílias de equipamentos nas telas disponíveis.",
+        "how3": "Dentro de um ambiente, o menu mostra as áreas disponíveis para aquele cliente."
+      }
+    }
+  },
   "taxonomy": {
     "title": "Categorias e tags",
     "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",
