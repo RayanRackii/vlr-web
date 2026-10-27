@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { Sidebar } from "@/components/layout/Sidebar"
 import { RENTAL_RESOURCES_PERMISSIONS } from "@/components/layout/navigation"
+import i18n from "@/lib/i18n"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({
@@ -23,10 +24,10 @@ const professorPermissions = [
   "rentals.schedule.lessons.write",
 ]
 
-function renderSidebar(permissions: readonly string[]) {
+function renderSidebar(permissions: readonly string[], modules = ["rentals"]) {
   return render(
     <MemoryRouter>
-      <TestPermissionProvider permissions={permissions} activeModules={["rentals"]}>
+      <TestPermissionProvider permissions={permissions} activeModules={modules}>
         <Sidebar />
       </TestPermissionProvider>
     </MemoryRouter>,
@@ -38,7 +39,7 @@ describe("Sidebar access by role permissions", () => {
     renderSidebar(professorPermissions)
 
     expect(screen.queryByRole("link", { name: "Recursos" })).not.toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Escala / agenda" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Horários" })).toBeInTheDocument()
     expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
   })
 
@@ -49,7 +50,7 @@ describe("Sidebar access by role permissions", () => {
       "href",
       "/configuracoes/recursos",
     )
-    expect(screen.queryByRole("link", { name: "Escala / agenda" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
 
   it("shows Recursos and the agenda to a club admin", () => {
@@ -61,8 +62,8 @@ describe("Sidebar access by role permissions", () => {
     ])
 
     expect(screen.getByRole("link", { name: "Recursos" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Escala / agenda" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Horários" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Início" })).toBeInTheDocument()
   })
 
   it("shows only reservations to a receptionist", () => {
@@ -70,6 +71,33 @@ describe("Sidebar access by role permissions", () => {
 
     expect(screen.getByRole("link", { name: "Reservas" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Recursos" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "Escala / agenda" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
+})
+
+
+it.each([
+  ["pt-BR", "Início", "Reservas", "Manutenção", "Vendas", "Pessoas e portal", "Equipamentos", "Planos de manutenção"],
+  ["en", "Home", "Bookings", "Maintenance", "Sales", "People & portal", "Equipment", "Maintenance plans"],
+  ["es", "Inicio", "Reservas", "Mantenimiento", "Ventas", "Personas y portal", "Equipos", "Planes de mantenimiento"],
+])("renders the approved staff names in %s and keeps secondary screens out of the sidebar", async (locale, home, bookings, maintenance, sales, people, equipment, plans) => {
+  await i18n.changeLanguage(locale)
+  try {
+    renderSidebar([
+      "core.dashboard.read", "rentals.reservations.read", "rentals.booking_policy.read",
+      "inventory.assets.read", "inventory.categories.read", "pmoc.plans.read", "pmoc.plans.write",
+      "pmoc.templates.read", "catalog.products.read", "core.users.read", "core.registration_fields.read",
+    ], ["rentals", "inventory", "catalog", "pmoc"])
+    expect(screen.getByRole("link", { name: home })).toBeInTheDocument()
+    for (const group of [bookings, maintenance, sales, people]) expect(screen.getAllByText(group, { exact: true }).length).toBeGreaterThan(0)
+    expect(screen.getByRole("link", { name: equipment })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: bookings })).toBeInTheDocument()
+    expect(screen.getByText(plans, { exact: true }).parentElement).toHaveAttribute("title", locale === "pt-BR" ? "PMOC" : plans)
+    for (const key of ["nav.assetsCategories", "nav.bookingPolicy", "nav.pmocLibrary", "nav.registrationFields"]) {
+      expect(screen.queryByRole("link", { name: i18n.t(key) })).not.toBeInTheDocument()
+    }
+    expect(screen.queryByTitle("PMOC") !== null).toBe(locale === "pt-BR")
+  } finally {
+    await i18n.changeLanguage("pt-BR")
+  }
 })

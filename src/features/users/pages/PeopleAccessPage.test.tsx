@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { MemoryRouter } from "react-router-dom"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -160,7 +161,7 @@ const toastSuccess = vi.mocked(toast.success)
 function renderPage(permissions: readonly string[]) {
   return render(
     <TestPermissionProvider permissions={permissions}>
-      <PeopleAccessPage />
+      <MemoryRouter initialEntries={["/pessoas-e-acesso"]}><PeopleAccessPage /></MemoryRouter>
     </TestPermissionProvider>,
   )
 }

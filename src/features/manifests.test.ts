@@ -63,8 +63,10 @@ describe("feature manifests", () => {
   it("uses the catalog navigation item exported by its manifest", () => {
     expect(catalogManifest.modules).toEqual(["catalog"])
     expect(catalogManifest.navigationItems).toHaveLength(1)
-    expect(appNavigationItems).toContain(catalogManifest.navigationItems[0])
-    expect(navigationSource).toContain("...catalogManifest.navigationItems")
+    for (const child of catalogManifest.navigationItems[0].children) {
+      expect(appNavigationItems).toContainEqual(expect.objectContaining(child))
+    }
+    expect(navigationSource).toContain("catalogManifest.navigationItems.flatMap")
     expect(tenantPortalManifest.navigationItems).toEqual([])
   })
 
@@ -188,7 +190,7 @@ describe("feature manifests", () => {
     expect(appNavigationItems).toEqual(
       expect.arrayContaining(rentalsManifest.navigationItems),
     )
-    expect(navigationSource).toContain("...rentalsManifest.navigationItems")
+    expect(navigationSource).toContain("= rentalsManifest.navigationItems")
     expect(appRoutesSource).toContain("rentalsManifest.routes.staff")
     expect(appRoutesSource).not.toContain("features/rentals/pages")
   })

@@ -10,7 +10,7 @@ import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
 import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
 import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
 import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
-import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
+import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
 
 type FeatureRoute = { path: string; element: ReactElement; permission?: string }
 
@@ -34,7 +34,7 @@ export const adminManifest = {
       { path: "/admin/tenants/:id/edit", element: <EditTenantPage /> },
     ] satisfies readonly FeatureRoute[],
     staff: [
-      { path: "/configuracoes/cadastro", element: <TenantRegistrationFieldsPage />, permission: "core.registration_fields.read" },
+      { path: "/configuracoes/cadastro", element: <PeopleAccessPage />, permission: "core.registration_fields.read" },
       { path: "/configuracoes/menu", element: <TenantModuleMenuPage />, permission: "core.module_menu.read" },
     ] satisfies readonly Required<FeatureRoute>[],
     platformShell: [

@@ -2,9 +2,9 @@ import type { ReactElement } from "react"
 import { ClipboardList } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
+import { newPlanTabs } from "@/features/pmoc/navigationTabs"
+import { NewPlanPage } from "@/features/pmoc/pages/NewPlanPage"
 import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
-import { PmocLibraryPage } from "@/features/pmoc/pages/PmocLibraryPage"
 import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
 import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
 
@@ -30,14 +30,9 @@ export const pmocManifest = {
           permission: "pmoc.plans.read",
         },
         {
-          labelKey: "nav.pmocLibrary",
-          to: "/pmoc/biblioteca",
-          permission: "pmoc.templates.read",
-        },
-        {
           labelKey: "nav.pmocNew",
           to: "/pmoc/novo",
-          permission: "pmoc.plans.write",
+          tabs: newPlanTabs,
         },
       ],
     },
@@ -51,7 +46,7 @@ export const pmocManifest = {
       },
       {
         path: "/pmoc/biblioteca",
-        element: <PmocLibraryPage />,
+        element: <NewPlanPage />,
         permission: "pmoc.templates.read",
       },
       {
@@ -61,7 +56,7 @@ export const pmocManifest = {
       },
       {
         path: "/pmoc/novo",
-        element: <CreatePlanPage />,
+        element: <NewPlanPage />,
         permission: "pmoc.plans.write",
       },
       {
