@@ -10,6 +10,7 @@ import {
   clearCustomerSession,
   getCustomerAccessToken,
   getHostTenantSubdomain,
+  getCustomerSubdomain,
   isCustomerSignedInForTenant,
   tenantPortalPath,
   tenantPortalPathMode,
@@ -352,14 +353,51 @@ export async function signOutStaffBeforeCustomerAuth(): Promise<void> {
   if (!hasActiveStaffSession()) {
     return
   }
+  let signedOut: boolean
   try {
-    const signedOut = await signOutStaffPortal()
-    if (!signedOut) {
-      writeActiveTenantLabel(null)
-      clearAuthenticatedQueryCaches()
-    }
+    signedOut = await signOutStaffPortal()
   } catch {
-    writeActiveTenantLabel(null)
-    clearAuthenticatedQueryCaches()
+    signedOut = false
   }
+  if (signedOut && !hasActiveStaffSession()) {
+    return
+  }
+
+  // The global sign-out can fail (network, revoked token, refresh race) and leave the staff
+  // session in storage. A customer login must still end it, so drop it locally.
+  writeActiveTenantLabel(null)
+  clearAuthenticatedQueryCaches()
+  try {
+    await supabase.auth.signOut({ scope: "local" })
+  } catch {
+    // Fall through to the storage cleanup below.
+  }
+  // hasActiveStaffSession() may already read false here (the token is marked signed out),
+  // while the stored session is still there for the staff AuthContext. Remove it outright.
+  removeStoredStaffSessions()
+}
+
+function removeStoredStaffSessions(): void {
+  try {
+    const storage = window.localStorage
+    const keys: string[] = []
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index)
+      if (key && STAFF_STORAGE_KEY.test(key)) {
+        keys.push(key)
+      }
+    }
+    keys.forEach((key) => storage.removeItem(key))
+  } catch {
+    // Storage unavailable: nothing more to clear.
+  }
+}
+
+/**
+ * Tenant slug of the signed-in customer, if any. Staff login always clears the customer session,
+ * so a customer session that coexists with a staff one is the most recent login and wins.
+ */
+export function signedInCustomerSubdomain(): string | null {
+  const slug = getCustomerSubdomain()
+  return slug && isCustomerSignedInForTenant(slug) ? slug : null
 }

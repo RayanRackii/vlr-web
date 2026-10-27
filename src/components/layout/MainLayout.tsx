@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import {
+  clearCustomerSession,
   fetchTenantBranding,
   getHostTenantSubdomain,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -190,6 +191,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         </>
       }
       onSignOut={async () => {
+        // Sair ends whichever session is active, so a leftover customer session goes too.
+        clearCustomerSession()
         const signedOut = await signOutStaffPortal()
         if (!signedOut) {
           return

@@ -70,6 +70,21 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
     expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
   })
 
+  it("scenario A: a customer who logged in after staff never sees the admin shell", () => {
+    authState.user = { id: "staff-1", email: "staff@clube.com" }
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderRoutes("/dashboard")
+    expect(screen.getByText("customer-app")).toBeInTheDocument()
+    expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
+  it("keeps staff on the admin shell when no customer session exists", () => {
+    authState.user = { id: "staff-1", email: "staff@clube.com" }
+    renderRoutes("/dashboard")
+    expect(screen.getByText("staff-dashboard")).toBeInTheDocument()
+  })
+
   it("sends a signed-in customer (no staff session) back to their portal instead of staff login", () => {
     persistCustomerSession("customer-token", "ficc", "Ana")
     renderRoutes("/dashboard")

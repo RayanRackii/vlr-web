@@ -2,16 +2,15 @@ import { Navigate, Outlet, useLocation } from "react-router-dom"
 import type { ReactNode } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
-import {
-  getCustomerSubdomain,
-  isCustomerSignedInForTenant,
-  tenantPortalPath,
-} from "@/features/tenantPortal/services/tenantPortalService"
+import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 import {
   isSafeStaffNextPath,
   staffLoginPath,
 } from "@/lib/safeStaffNextPath"
-import { isAuthenticatedRestoreBlocked } from "@/lib/sessionRestoreGuard"
+import {
+  isAuthenticatedRestoreBlocked,
+  signedInCustomerSubdomain,
+} from "@/lib/sessionRestoreGuard"
 
 type ProtectedRouteProps = {
   children?: ReactNode
@@ -33,11 +32,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     )
   }
 
+  // A customer session is never shown the admin shell, even if a staff session lingers.
+  const customerSubdomain = signedInCustomerSubdomain()
+  if (customerSubdomain) {
+    return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
+  }
+
   if (user === null) {
-    const customerSubdomain = getCustomerSubdomain()
-    if (customerSubdomain && isCustomerSignedInForTenant(customerSubdomain)) {
-      return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
-    }
 
     const company = new URLSearchParams(location.search).get("company")
     const next = `${location.pathname}${location.search}`
