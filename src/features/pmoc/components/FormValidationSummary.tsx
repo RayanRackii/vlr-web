@@ -18,10 +18,10 @@ export function FormValidationSummary({ messages }: { messages: string[] }) {
   )
 }
 
-export function LiveFieldMessage({ message }: { message?: string }) {
+export function LiveFieldMessage({ message, id }: { message?: string; id?: string }) {
   if (!message) {
     return null
   }
 
-  return <FormInlineMessage className="text-sm text-destructive">{message}</FormInlineMessage>
+  return <FormInlineMessage id={id} className="text-sm text-destructive">{message}</FormInlineMessage>
 }
