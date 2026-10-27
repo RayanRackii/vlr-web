@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
+import { persistCustomerSession, getCustomerAccessToken } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
@@ -59,6 +60,20 @@ describe("ResetPasswordPage validity gate", () => {
     await user.clear(screen.getByLabelText("Confirmar senha"))
     await user.type(screen.getByLabelText("Confirmar senha"), "password1")
     expect(saveButton()).toBeEnabled()
+  })
+
+  it("clears a stale customer session when the staff password reset succeeds", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    renderReset()
+
+    await screen.findByRole("button", { name: "Salvar senha" })
+    await user.type(screen.getByLabelText("Nova senha"), "password1")
+    await user.type(screen.getByLabelText("Confirmar senha"), "password1")
+    await user.click(saveButton())
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
   })
 
   it("stays on the form after a server error and still allows a later save", async () => {

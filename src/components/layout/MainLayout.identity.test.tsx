@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { ModuleIntroPage } from "@/components/layout/ModuleIntroPage"
 import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
+import {
+  getCustomerAccessToken,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { api } from "@/lib/api"
+import { supabase } from "@/lib/supabase"
 import i18n from "@/lib/i18n"
 
 const authState = {
@@ -97,6 +102,28 @@ describe("MainLayout header identity", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument()
     expect(within(screen.getAllByRole("banner")[0]).getByText(title)).toHaveClass("lg:hidden")
+  })
+
+  it("Sair in the admin header ends a leftover customer session too, in one click", async () => {
+    apiGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("/api/users/me")) {
+        return { data: { ...basePayload, fullName: "Ana Professora" } }
+      }
+      return { data: [] }
+    })
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    const user = userEvent.setup()
+    renderShell()
+
+    await user.click(
+      await screen.findByRole("button", { name: i18n.t("account.openMenu") }),
+    )
+    await user.click(await screen.findByText(i18n.t("account.signOut")))
+
+    await waitFor(() => {
+      expect(getCustomerAccessToken()).toBeNull()
+    })
+    expect(supabase.auth.signOut).toHaveBeenCalled()
   })
 
   it("shows the staff member's name, truncated and accessible via title", async () => {

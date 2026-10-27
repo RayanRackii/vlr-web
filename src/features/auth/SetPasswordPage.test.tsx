@@ -24,6 +24,7 @@ import {
   resetStaffSessionRefreshForTests,
   staffAuthEpochForTests,
 } from "@/lib/api"
+import { persistCustomerSession, getCustomerAccessToken } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
@@ -288,6 +289,43 @@ describe("SetPasswordPage", () => {
     const acceptOrder = acceptNew.mock.invocationCallOrder.at(-1) ?? 0
     const signInOrder = signIn.mock.invocationCallOrder[0] ?? 0
     expect(acceptOrder).toBeLessThan(signInOrder)
+  })
+
+  it("clears a stale customer session when a new-account invite signs staff in", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    renderInvite("invite-token")
+
+    await user.type(
+      await screen.findByLabelText(i18n.t("auth.invite.passwordLabel")),
+      "password1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("auth.invite.confirmPasswordLabel")),
+      "password1",
+    )
+    await user.click(submitButton())
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
+  })
+
+  it("clears a stale customer session when an existing account signs in to accept", async () => {
+    preview.mockResolvedValue(existingPreview)
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    const user = userEvent.setup()
+    renderInvite("invite-token")
+
+    await user.type(
+      await screen.findByLabelText(i18n.t("auth.invite.existingPasswordLabel")),
+      "current-secret",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("auth.invite.signInSubmit") }),
+    )
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
   })
 
   it("asks an existing account to sign in and accepts with the session, never a new password", async () => {
