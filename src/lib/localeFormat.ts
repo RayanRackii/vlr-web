@@ -127,6 +127,9 @@ export function formatLocaleCivilDate(value: string, locale: string): string {
   const year = Number(match[1])
   const month = Number(match[2])
   const day = Number(match[3])
+  const date = new Date(0)
+  // Date.UTC treats years 0–99 as 1900–1999.
+  date.setUTCFullYear(year, month - 1, day)
 
   return normalizeIntlSpaces(
     new Intl.DateTimeFormat(locale, {
@@ -134,7 +137,9 @@ export function formatLocaleCivilDate(value: string, locale: string): string {
       month: "2-digit",
       year: "numeric",
       timeZone: "UTC",
-    }).format(Date.UTC(year, month - 1, day)),
+    }).formatToParts(date)
+      .map((part) => part.type === "year" ? part.value.padStart(4, "0") : part.value)
+      .join(""),
   )
 }
 

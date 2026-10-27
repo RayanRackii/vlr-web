@@ -16,7 +16,16 @@
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
     "refreshing": "Updating...",
+    "validation": {
+      "maxLength": "Use at most {{count}} characters."
+    },
     "datePicker": {
+      "required": "Enter the date.",
+      "min": "Enter a date on or after {{date}}.",
+      "max": "Enter a date on or before {{date}}.",
+      "invalid": "Enter a valid date.",
+      "format": "mm/dd/yyyy",
+      "open": "Open calendar",
       "today": "Today",
       "clear": "Clear",
       "previousMonth": "Previous month",

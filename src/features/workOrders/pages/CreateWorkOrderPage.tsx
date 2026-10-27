@@ -1,3 +1,4 @@
+import { CivilDateInput } from "@/components/CivilDateInput"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, ClipboardPen } from "lucide-react"
@@ -47,7 +48,7 @@ import {
 const UNASSIGNED_VALUE = "unassigned"
 
 export function CreateWorkOrderPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const redirectTimeoutRef = useRef<number | null>(null)
   const [assets, setAssets] = useState<WorkOrderRegistryAsset[]>([])
@@ -62,6 +63,7 @@ export function CreateWorkOrderPage() {
       createWorkOrderFormSchema({
         assetRequired: t("workOrders.create.validation.assetRequired"),
         dateRequired: t("workOrders.create.validation.dateRequired"),
+        dateInvalid: t("common.datePicker.invalid"),
         taskRequired: t("workOrders.create.validation.taskRequired"),
       }),
     [t],
@@ -324,8 +326,8 @@ export function CreateWorkOrderPage() {
                         {t("workOrders.create.form.scheduledDate")}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
+                        <CivilDateInput
+                          locale={i18n.resolvedLanguage ?? i18n.language}
                           disabled={isSubmitted}
                           {...field}
                         />

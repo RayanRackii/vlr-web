@@ -1,3 +1,4 @@
+import { civilDateFormSchema } from "@/lib/civilDate"
 import { z } from "zod"
 
 export const PMOC_MIN_INTERVAL_DAYS = 1
@@ -201,8 +202,10 @@ export type ReplacePlanTaskFormItem = {
 export function createPlanFormSchema(messages: {
   unitRequired: string
   nameRequired: string
+  nameTooLong: string
   intervalInvalid: string
   firstDueRequired: string
+  firstDueInvalid: string
   categoryRequired: string
   taskTitleRequired: string
   tasksRequired: string
@@ -259,14 +262,10 @@ export function createPlanFormSchema(messages: {
       .string()
       .min(1, messages.unitRequired)
       .uuid(messages.unitRequired),
-    name: z.string().trim().min(1, messages.nameRequired).max(200),
+    name: z.string().trim().min(1, messages.nameRequired).max(200, messages.nameTooLong),
     description: z.string().trim().optional(),
     intervalDays: intervalDaysSchema(messages.intervalInvalid),
-    firstDueDate: z
-      .string()
-      .trim()
-      .min(1, messages.firstDueRequired)
-      .pipe(civilDateSchema),
+    firstDueDate: civilDateFormSchema(messages.firstDueRequired, messages.firstDueInvalid),
     assetCategoryId: z
       .string()
       .min(1, messages.categoryRequired)
@@ -340,8 +339,10 @@ export function buildReplaceTasksRequest(
 export function createFromTemplateFormSchema(messages: {
   unitRequired: string
   categoryRequired: string
+  nameTooLong: string
   intervalInvalid: string
   firstDueRequired: string
+  firstDueInvalid: string
 }) {
   return z.object({
     unitId: z
@@ -352,13 +353,9 @@ export function createFromTemplateFormSchema(messages: {
       .string()
       .min(1, messages.categoryRequired)
       .uuid(messages.categoryRequired),
-    name: z.string().trim().max(200).optional(),
+    name: z.string().trim().max(200, messages.nameTooLong).optional(),
     intervalDays: intervalDaysSchema(messages.intervalInvalid),
-    firstDueDate: z
-      .string()
-      .trim()
-      .min(1, messages.firstDueRequired)
-      .pipe(civilDateSchema),
+    firstDueDate: civilDateFormSchema(messages.firstDueRequired, messages.firstDueInvalid),
   })
 }
 

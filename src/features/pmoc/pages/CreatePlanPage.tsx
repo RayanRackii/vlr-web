@@ -44,6 +44,7 @@ import {
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { createPlan } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
+import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
 export function CreatePlanPage() {
   const { t } = useTranslation()
@@ -60,9 +61,11 @@ export function CreatePlanPage() {
     () =>
       createPlanFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
+        nameTooLong: t("common.validation.maxLength", { count: 200 }),
         nameRequired: t("pmoc.create.validation.nameRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -105,9 +108,10 @@ export function CreatePlanPage() {
 
   const watchedValues = useWatch({ control: form.control })
   const parsedPlan = formSchema.safeParse(watchedValues)
-  const planError = parsedPlan.success ? undefined : parsedPlan.error
+  const planError = useVisibleFormIssues(parsedPlan.success ? undefined : parsedPlan.error, form)
   const isPlanValid = parsedPlan.success
-  const planMessages = uniqueIssueMessages(planError)
+  // Field errors are shown inline; the summary only covers the checklist itself.
+  const planMessages = uniqueIssueMessages(planError, (path) => path.length === 1 && path[0] === "tasks")
   const watchedTasks = watchedValues.tasks
 
   const loadLookups = useCallback(async () => {
@@ -284,7 +288,6 @@ export function CreatePlanPage() {
                           {...field}
                         />
                         </FormControl>
-                      <FormMessage />
                       <LiveFieldMessage message={issueMessageAt(planError, ["name"])} />
                     </FormItem>
                   )}
@@ -317,7 +320,10 @@ export function CreatePlanPage() {
                       <FormLabel>{t("pmoc.create.form.unit")}</FormLabel>
                       <Select
                         modal={false}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          field.onBlur()
+                        }}
                         value={field.value}
                         items={unitItems}
                       >
@@ -338,7 +344,6 @@ export function CreatePlanPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["unitId"])}
                       />
@@ -354,7 +359,10 @@ export function CreatePlanPage() {
                       <FormLabel>{t("pmoc.create.form.category")}</FormLabel>
                       <Select
                         modal={false}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          field.onBlur()
+                        }}
                         value={field.value}
                         items={categoryItems}
                       >
@@ -375,7 +383,6 @@ export function CreatePlanPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["assetCategoryId"])}
                       />
@@ -399,6 +406,7 @@ export function CreatePlanPage() {
                         modal={false}
                         onValueChange={(value) => {
                           field.onChange(value === "true")
+                          field.onBlur()
                         }}
                         value={field.value ? "true" : "false"}
                         items={statusItems}

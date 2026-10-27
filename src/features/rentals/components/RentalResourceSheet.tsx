@@ -57,6 +57,7 @@ import {
 } from "@/features/rentals/components/rentalResourceFormDefaults"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
+import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
 type RentalResourceSheetProps = {
   open: boolean
@@ -193,9 +194,8 @@ export function RentalResourceSheet({
   const horizonMode: ResourceHorizonMode = watched.horizonMode ?? "inherit"
   const validation = formSchema.safeParse(watched)
   const isValid = validation.success
-  const firstValidationError = validation.success
-    ? null
-    : validation.error.issues[0]?.message ?? null
+  const visibleErrors = useVisibleFormIssues(validation.success ? undefined : validation.error, form)
+  const firstValidationError = visibleErrors?.issues[0]?.message ?? null
   const horizonItems = [
     { value: "inherit", label: t("rentals.resources.form.horizonInherit") },
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
@@ -392,7 +392,10 @@ export function RentalResourceSheet({
                       <FormControl>
                         <InlineCreateSelect
                           value={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            field.onBlur()
+                          }}
                           options={unitItems}
                           onRefreshOptions={refreshUnits}
                           placeholder={t("rentals.resources.form.unitPlaceholder")}
@@ -408,7 +411,10 @@ export function RentalResourceSheet({
                     ) : (
                       <Select
                         modal={false}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          field.onBlur()
+                        }}
                         value={field.value}
                         items={unitItems}
                         disabled={readOnly}
@@ -438,7 +444,10 @@ export function RentalResourceSheet({
                   <FormControl>
                     <InlineCreateSelect
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        field.onBlur()
+                      }}
                       options={categoryItems}
                       onRefreshOptions={refreshCategories}
                       placeholder={t("rentals.resources.form.categoryPlaceholder")}
@@ -465,7 +474,10 @@ export function RentalResourceSheet({
                   <FormLabel>{t("rentals.resources.form.family")}</FormLabel>
                   <Select
                     modal={false}
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      field.onBlur()
+                    }}
                     value={field.value}
                     items={familyItems}
                     disabled={readOnly || families.length === 1}
@@ -502,6 +514,7 @@ export function RentalResourceSheet({
                     modal={false}
                     onValueChange={(value) => {
                       field.onChange(value)
+                      field.onBlur()
                       if (value === "Good") {
                         form.setValue("queueEnabled", false)
                         form.setValue("queueOpeningTime", "")
@@ -548,6 +561,7 @@ export function RentalResourceSheet({
                         inputMode="numeric"
                         disabled={readOnly}
                         value={field.value}
+                        onBlur={field.onBlur}
                         onChange={(event) => {
                           field.onChange(Number(event.target.value) || 0)
                         }}
@@ -658,6 +672,7 @@ export function RentalResourceSheet({
                       ) {
                         markTemplateFieldEdited("horizon")
                         field.onChange(value)
+                        field.onBlur()
                       }
                     }}
                     value={field.value}
@@ -737,6 +752,7 @@ export function RentalResourceSheet({
                         value === "hours"
                       ) {
                         field.onChange(value)
+                        field.onBlur()
                       }
                     }}
                     value={field.value}

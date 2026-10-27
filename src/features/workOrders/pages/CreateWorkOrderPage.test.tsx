@@ -168,7 +168,7 @@ describe("CreateWorkOrderPage validity gate", () => {
     expect(submit).toBeDisabled()
     expect(back).toBeEnabled()
 
-    await user.type(date, "2026-10-14")
+    await user.type(date, "14/10/2026")
     expect(submit).toBeEnabled()
     expect(createWorkOrderMock).not.toHaveBeenCalled()
   })

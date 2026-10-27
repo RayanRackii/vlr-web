@@ -77,9 +77,11 @@ export function PmocTemplatePreviewPage() {
     () =>
       createFromTemplateFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
+        nameTooLong: t("common.validation.maxLength", { count: 200 }),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
       }),
     [t],
   )

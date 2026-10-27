@@ -148,7 +148,9 @@ describe("GenerateWorkOrderDialog", () => {
 
     const dateInput = screen.getByLabelText(
       i18n.t("workOrders.create.form.scheduledDate"),
-    ) as HTMLInputElement
+    )
+    await user.clear(dateInput)
+    await user.type(dateInput, "14/10/2026")
 
     await user.click(
       screen.getByRole("button", {
@@ -161,7 +163,7 @@ describe("GenerateWorkOrderDialog", () => {
         planId: PLAN_ID,
         assetId: matchingRegistryAsset.id,
         assignedUserId: null,
-        scheduledDate: dateInput.value,
+        scheduledDate: "2026-10-14",
       })
     })
     expect(onGenerated).toHaveBeenCalled()

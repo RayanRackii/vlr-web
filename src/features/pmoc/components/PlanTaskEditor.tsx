@@ -147,11 +147,13 @@ export function PlanTaskEditor({
                         modal={false}
                         onValueChange={(value) => {
                           inputTypeField.onChange(value)
+                          inputTypeField.onBlur()
                           if (value === "SingleChoice") {
                             const current = watchedTasks?.[index]?.options
                             if (!current || current.length === 0) {
                               setValue(`tasks.${index}.options`, ["", ""], {
                                 shouldDirty: true,
+                                shouldTouch: true,
                               })
                             }
                           }
@@ -207,6 +209,7 @@ export function PlanTaskEditor({
                             <Input
                               type="number"
                               inputMode="decimal"
+                              onBlur={minField.onBlur}
                               value={
                                 minField.value == null
                                   ? ""
@@ -236,6 +239,7 @@ export function PlanTaskEditor({
                             <Input
                               type="number"
                               inputMode="decimal"
+                              onBlur={maxField.onBlur}
                               value={
                                 maxField.value == null
                                   ? ""
@@ -265,6 +269,7 @@ export function PlanTaskEditor({
                             <Input
                               autoComplete="off"
                               value={unitField.value ?? ""}
+                              onBlur={unitField.onBlur}
                               onChange={(event) => {
                                 const next = event.target.value
                                 unitField.onChange(
@@ -294,7 +299,7 @@ export function PlanTaskEditor({
                           setValue(
                             `tasks.${index}.options`,
                             [...options, ""],
-                            { shouldDirty: true },
+                            { shouldDirty: true, shouldTouch: true },
                           )
                         }}
                       >
@@ -313,6 +318,7 @@ export function PlanTaskEditor({
                               number: optionIndex + 1,
                             })}
                             value={option ?? ""}
+                            onBlur={() => setValue(`tasks.${index}.options`, options, { shouldTouch: true })}
                             onChange={(event) => {
                               const next = [...options]
                               next[optionIndex] = event.target.value
@@ -334,7 +340,7 @@ export function PlanTaskEditor({
                                 options.filter(
                                   (_, current) => current !== optionIndex,
                                 ),
-                                { shouldDirty: true },
+                                { shouldDirty: true, shouldTouch: true },
                               )
                             }}
                           >

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -165,13 +165,73 @@ describe("CreatePlanPage validity gate", () => {
     )
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
-      "2026-10-14",
+      "14/10/2026",
     )
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.create.tasks.title")),
       "Limpar filtro",
     )
   }
+
+  it("keeps pristine errors hidden and reveals only the blurred field, then all errors on submit", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    expect(screen.queryByTestId("form-validation-summary")).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.create.validation.nameRequired"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
+
+    await user.click(name)
+    await user.tab()
+    expect(screen.getAllByText(i18n.t("pmoc.create.validation.nameRequired"))).toHaveLength(1)
+    expect(screen.queryByText(i18n.t("pmoc.scheduling.firstDueRequired"))).not.toBeInTheDocument()
+
+    fireEvent.submit(name.closest("form")!)
+    expect(await screen.findAllByText(i18n.t("pmoc.scheduling.firstDueRequired"))).toHaveLength(1)
+    for (const [key, label] of [["nameRequired", "name"], ["unitRequired", "unit"], ["categoryRequired", "category"]]) {
+      const message = i18n.t(`pmoc.create.validation.${key}`)
+      const messages = screen.getAllByText(message)
+      expect(messages).toHaveLength(1)
+      const field = screen.getByLabelText(i18n.t(`pmoc.create.form.${label}`))
+      expect(messages[0].id).toBeTruthy()
+      expect(field.getAttribute("aria-describedby")?.split(" ")).toContain(messages[0].id)
+      expect(document.getElementById(messages[0].id)).toHaveTextContent(message)
+      expect(field).toHaveAccessibleDescription(message)
+    }
+    expect(createPlanMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["pt-BR", "dd/mm/aaaa", "Informe uma data válida.", "Use no máximo 200 caracteres."],
+    ["en", "mm/dd/yyyy", "Enter a valid date.", "Use at most 200 characters."],
+    ["es", "dd/mm/aaaa", "Indique una fecha válida.", "Use como máximo 200 caracteres."],
+  ])("localizes validation and the date format in %s", async (locale, placeholder, message, maxLengthMessage) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      const { container } = renderPage()
+      const date = await screen.findByLabelText(i18n.t("pmoc.scheduling.firstDue"))
+      expect(date).toHaveAttribute("placeholder", placeholder)
+      await user.type(date, "1")
+      expect(screen.queryByText(message)).not.toBeInTheDocument()
+      await user.type(date, "4/")
+      expect(screen.queryByText(message)).not.toBeInTheDocument()
+      await user.tab()
+      expect(screen.getAllByText(message)).toHaveLength(1)
+      expect(container.textContent).not.toContain("Expected a civil")
+      await user.clear(date)
+      await user.type(date, locale === "en" ? "10/14/2026" : "14/10/2026")
+      expect(screen.queryByText(message)).not.toBeInTheDocument()
+      const name = screen.getByLabelText(i18n.t("pmoc.create.form.name"))
+      fireEvent.change(name, { target: { value: "x".repeat(201) } })
+      expect(screen.queryByText(maxLengthMessage)).not.toBeInTheDocument()
+      fireEvent.blur(name)
+      expect(screen.getAllByText(maxLengthMessage)).toHaveLength(1)
+      expect(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") })).toBeDisabled()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
 
   it("keeps Salvar plano disabled until the plan schema is valid and leaves Voltar and Cancelar free", async () => {
     const user = userEvent.setup()
@@ -273,7 +333,7 @@ describe("CreatePlanPage validity gate", () => {
     ).toHaveValue(30)
     expect(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
-    ).toHaveValue("2026-10-14")
+    ).toHaveValue("14/10/2026")
     expect(
       screen.getByRole("button", { name: i18n.t("pmoc.create.actions.back") }),
     ).toBeEnabled()
@@ -284,6 +344,7 @@ describe("CreatePlanPage validity gate", () => {
       screen.queryByText(i18n.t("pmoc.create.success.created")),
     ).not.toBeInTheDocument()
     expect(createPlanMock).toHaveBeenCalledTimes(1)
+    expect(createPlanMock).toHaveBeenCalledWith(expect.objectContaining({ firstDueDate: "2026-10-14" }))
 
     const createdId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
     createPlanMock.mockResolvedValueOnce({ id: createdId } as Awaited<
