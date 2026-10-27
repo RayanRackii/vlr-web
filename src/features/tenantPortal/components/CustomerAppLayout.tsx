@@ -226,10 +226,11 @@ export function CustomerAppLayout() {
           ) : null
         }
         onSignOut={async () => {
+          // Customer storage goes first (sync), then any leftover staff session.
+          const path = signOutCustomerPortal(subdomain)
           if (hasActiveStaffSession()) {
             await signOutStaffPortal()
           }
-          const path = signOutCustomerPortal(subdomain)
           void navigate(path, { replace: true })
         }}
       >

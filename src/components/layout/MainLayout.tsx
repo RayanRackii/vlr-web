@@ -193,10 +193,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       onSignOut={async () => {
         // Sair ends whichever session is active, so a leftover customer session goes too.
         clearCustomerSession()
-        const signedOut = await signOutStaffPortal()
-        if (!signedOut) {
-          return
-        }
+        // Always ends the local session (storage first, bounded server revoke).
+        await signOutStaffPortal()
         void navigate("/login", { replace: true })
       }}
     >

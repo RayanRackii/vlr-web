@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase"
 import i18n from "@/lib/i18n"
 import { isModuleInactiveValue } from "@/lib/apiErrorText"
 import { safeStaffNextPath, staffLoginPath } from "@/lib/safeStaffNextPath"
+import { noteSignInStarted } from "@/lib/signOutMarker"
 
 declare module "axios" {
   interface AxiosRequestConfig {
@@ -172,7 +173,14 @@ export function resetStaffSessionRefreshForTests(): void {
  * A failed attempt bumps the epoch too and does not sign the current user out.
  */
 export function noteStaffSignIn(): void {
+  noteSignInStarted()
   staffAuthEpoch += 1
+  // Sair stops auto-refresh; a new login on the same page turns it back on.
+  try {
+    void supabase.auth.startAutoRefresh()?.catch?.(() => undefined)
+  } catch {
+    // Test double without startAutoRefresh.
+  }
 }
 
 /** Tests only. */

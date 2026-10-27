@@ -366,17 +366,20 @@ describe("portal sign out", () => {
     expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
   })
 
-  it("keeps the staff session usable when sign-out fails", async () => {
+  it("still ends the local staff session when the server sign-out fails", async () => {
     storeStaffSession("still-here")
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
       error: { name: "AuthError", message: "network" },
     } as never)
+    vi.mocked(supabase.auth.admin.signOut).mockRejectedValueOnce(new Error("network"))
     const signedOut = await signOutStaffPortal()
 
-    expect(signedOut).toBe(false)
+    expect(signedOut).toBe(true)
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
+    expect(hasActiveStaffSession()).toBe(false)
     window.history.pushState({}, "", "/dashboard")
     window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(replaceBrowserLocation).not.toHaveBeenCalled()
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
   })
 
   it("returns the customer login path and clears that session and caches", async () => {
