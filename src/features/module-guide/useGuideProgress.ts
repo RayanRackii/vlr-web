@@ -11,8 +11,8 @@ type GuideProgressState = {
 
 const emptyState: GuideProgressState = { completedStepIds: [], soundOn: false }
 
-function storageKey(userId: string, moduleKey: string): string {
-  return `rolvix.guide.${STORAGE_VERSION}.${userId}.${moduleKey}`
+function storageKey(tenantId: string | null | undefined, userId: string, moduleKey: string): string {
+  return `rolvix.guide.${STORAGE_VERSION}.${tenantId ?? "no-tenant"}.${userId}.${moduleKey}`
 }
 
 function readState(key: string): GuideProgressState {
@@ -38,8 +38,13 @@ function writeState(key: string, state: GuideProgressState): void {
   }
 }
 
-export function useGuideProgress(userId: string | null | undefined, moduleKey: string, steps: readonly GuideStep[]) {
-  const key = storageKey(userId ?? "anon", moduleKey)
+export function useGuideProgress(
+  tenantId: string | null | undefined,
+  userId: string | null | undefined,
+  moduleKey: string,
+  steps: readonly GuideStep[],
+) {
+  const key = storageKey(tenantId, userId ?? "anon", moduleKey)
   // `revision` only forces a re-render after a mutation; the state itself is read fresh from storage every render.
   const [, setRevision] = useState(0)
   const state = readState(key)

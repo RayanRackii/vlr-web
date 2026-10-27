@@ -20,7 +20,7 @@ const config: ModuleGuideConfig = {
   ],
 }
 
-function renderGuide(userId: string | null = "user-1") {
+function renderGuide(userId: string | null = "user-1", tenantId: string | null = "tenant-1") {
   return render(
     <MemoryRouter>
       <ModuleGuide
@@ -31,6 +31,7 @@ function renderGuide(userId: string | null = "user-1") {
         shortcuts={[]}
         related={[]}
         userId={userId}
+        tenantId={tenantId}
       />
     </MemoryRouter>,
   )
@@ -112,5 +113,39 @@ describe("ModuleGuide", () => {
 
     renderGuide("user-2")
     expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "false")
+  })
+
+  it("keeps progress isolated per tenant, even for the same user id", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderGuide("user-1", "tenant-1")
+    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+    unmount()
+
+    renderGuide("user-1", "tenant-2")
+    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "false")
+  })
+
+  it("falls back to a stable key when tenantId is missing, without crashing", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderGuide("user-1", null)
+    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
+    unmount()
+
+    renderGuide("user-1", null)
+    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
+  })
+
+  it("announces both the points and the badge when a step completion earns one", async () => {
+    const user = userEvent.setup()
+    renderGuide()
+    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+
+    const stepAnnouncement = i18n.t("moduleGuide.reward.stepAnnouncement", {
+      step: i18n.t("moduleGuide.steps.learn1.title"),
+      points: 10,
+    })
+    const badgeAnnouncement = i18n.t("moduleGuide.reward.badgeAnnouncement", { badge: firstBadgeLabel })
+    expect(screen.getByText(`${stepAnnouncement} ${badgeAnnouncement}`)).toBeInTheDocument()
   })
 })

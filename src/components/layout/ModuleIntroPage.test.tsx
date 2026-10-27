@@ -66,8 +66,6 @@ describe("module introductions", () => {
     expect(screen.getByRole("heading", { level: 1, name: title })).toBeInTheDocument()
     const content = moduleIntroContent[key as keyof typeof moduleIntroContent]
     expect(screen.getByText(i18n.t(content.summaryKey))).toBeInTheDocument()
-    const how = screen.getByRole("region", { name: "Como funciona" })
-    expect(within(how).getAllByRole("listitem")).toHaveLength(content.howItWorksKeys.length)
     expect(within(screen.getByRole("region", { name: "Atalhos" })).getByRole("link", { name: shortcut })).toHaveAttribute("href", href)
     const breadcrumb = screen.getByRole("navigation", { name: "Caminho de navegação" })
     expect(within(breadcrumb).getByText(title)).toBeInTheDocument()
@@ -176,7 +174,7 @@ describe("module introductions", () => {
   it.each(["pt-BR", "en", "es"])("has complete intro and control translations in %s", async (locale) => {
     await i18n.changeLanguage(locale)
     const keys = [
-      "moduleIntro.title", "moduleIntro.howItWorks", "moduleIntro.relatedModules", "moduleIntro.shortcuts",
+      "moduleIntro.title", "moduleIntro.relatedModules", "moduleIntro.shortcuts",
       "moduleIntro.open", "moduleIntro.expand", "moduleIntro.collapse",
       ...Object.values(moduleIntroContent).flatMap((content) => [content.summaryKey, ...content.howItWorksKeys]),
     ]

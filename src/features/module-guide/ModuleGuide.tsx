@@ -23,6 +23,7 @@ type ModuleGuideProps = {
   shortcuts: readonly GuideTarget[]
   related: readonly GuideTarget[]
   userId: string | null | undefined
+  tenantId: string | null | undefined
 }
 
 function stepTarget(step: GuideStep, shortcuts: readonly GuideTarget[], related: readonly GuideTarget[]) {
@@ -31,10 +32,10 @@ function stepTarget(step: GuideStep, shortcuts: readonly GuideTarget[], related:
   return undefined
 }
 
-export function ModuleGuide({ config, titleKey, summaryKey, icon: Icon, shortcuts, related, userId }: ModuleGuideProps) {
+export function ModuleGuide({ config, titleKey, summaryKey, icon: Icon, shortcuts, related, userId, tenantId }: ModuleGuideProps) {
   const { t } = useTranslation()
   const reducedMotion = usePrefersReducedMotion()
-  const progress = useGuideProgress(userId, config.key, config.steps)
+  const progress = useGuideProgress(tenantId, userId, config.key, config.steps)
   const [announcement, setAnnouncement] = useState("")
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null)
   const [justEarnedBadgeId, setJustEarnedBadgeId] = useState<string | null>(null)
@@ -51,11 +52,14 @@ export function ModuleGuide({ config, titleKey, summaryKey, icon: Icon, shortcut
     if (progress.soundOn) playGuideRewardSound()
     setJustCompletedId(step.id)
     setTimeout(() => setJustCompletedId(null), reducedMotion ? 0 : 600)
-    setAnnouncement(t("moduleGuide.reward.stepAnnouncement", { step: t(step.titleKey), points: step.points }))
+    const stepAnnouncement = t("moduleGuide.reward.stepAnnouncement", { step: t(step.titleKey), points: step.points })
     if (badgeNewlyEarned) {
       setJustEarnedBadgeId(badgeNewlyEarned.id)
       setTimeout(() => setJustEarnedBadgeId(null), reducedMotion ? 0 : 600)
-      setAnnouncement(t("moduleGuide.reward.badgeAnnouncement", { badge: t(badgeNewlyEarned.labelKey) }))
+      const badgeAnnouncement = t("moduleGuide.reward.badgeAnnouncement", { badge: t(badgeNewlyEarned.labelKey) })
+      setAnnouncement(`${stepAnnouncement} ${badgeAnnouncement}`)
+    } else {
+      setAnnouncement(stepAnnouncement)
     }
   }
 

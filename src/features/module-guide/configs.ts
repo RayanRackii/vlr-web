@@ -18,7 +18,7 @@ function buildSteps(key: ModuleIntroKey): readonly GuideStep[] {
   const hasRelated = content.relatedModuleKeys.length > 0
   const learnSteps: GuideStep[] = content.howItWorksKeys.map((descriptionKey, index) => ({
     id: `${key}-learn-${index + 1}`,
-    titleKey: `moduleGuide.steps.learn${index + 1}.title`,
+    titleKey: `moduleGuide.steps.${key}.learn${index + 1}.title`,
     descriptionKey,
     kind: "learn",
     points: 10,

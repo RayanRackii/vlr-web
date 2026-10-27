@@ -1220,7 +1220,6 @@
   },
   "moduleIntro": {
     "title": "Apresentação",
-    "howItWorks": "Como funciona",
     "shortcuts": "Atalhos",
     "relatedModules": "Módulos relacionados",
     "open": "Sobre {{module}}",
@@ -1299,6 +1298,41 @@
       "learn1": { "title": "Primeiro passo" },
       "learn2": { "title": "Segundo passo" },
       "learn3": { "title": "Terceiro passo" },
+      "overview": {
+        "learn1": { "title": "Consulte os indicadores" },
+        "learn2": { "title": "Explore as telas pelo menu" },
+        "learn3": { "title": "Conheça as áreas do negócio" }
+      },
+      "bookings": {
+        "learn1": { "title": "Cadastre seus recursos" },
+        "learn2": { "title": "Defina os horários" },
+        "learn3": { "title": "Conecte-se a outros módulos" }
+      },
+      "maintenance": {
+        "learn1": { "title": "Cadastre seus equipamentos" },
+        "learn2": { "title": "Organize planos e ordens" },
+        "learn3": { "title": "Alinhe manutenção e reservas" }
+      },
+      "sales": {
+        "learn1": { "title": "Cadastre seus produtos" },
+        "learn2": { "title": "Ajuste as configurações" },
+        "learn3": { "title": "Conecte-se a outros módulos" }
+      },
+      "peoplePortal": {
+        "learn1": { "title": "Acompanhe equipe e clientes" },
+        "learn2": { "title": "Organize o menu do cliente" },
+        "learn3": { "title": "Conecte reservas e vendas" }
+      },
+      "pmoc": {
+        "learn1": { "title": "Consulte seus planos" },
+        "learn2": { "title": "Crie um novo plano" },
+        "learn3": { "title": "Conecte planos e ordens" }
+      },
+      "platform": {
+        "learn1": { "title": "Consulte os clientes" },
+        "learn2": { "title": "Gerencie usuários e famílias" },
+        "learn3": { "title": "Explore o menu do ambiente" }
+      },
       "visit": {
         "title": "Visite uma tela do módulo",
         "description": "Abra uma tela real para ver o que você aprendeu em ação."

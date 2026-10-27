@@ -8,7 +8,6 @@ import { availableModuleIntros, moduleIntroPath, moduleIntroShortcuts } from "./
 import { moduleGuideConfigs } from "@/features/module-guide/configs"
 import { ModuleGuide } from "@/features/module-guide/ModuleGuide"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Card, CardContent } from "@/components/ui/card"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const linkClassName = "flex min-h-11 items-center rounded-lg border border-border px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -38,17 +37,8 @@ export function ModuleIntroPage() {
         shortcuts={shortcuts}
         related={related.map((entry) => ({ to: moduleIntroPath(entry.key), labelKey: entry.titleKey }))}
         userId={currentUser?.id ?? null}
+        tenantId={currentUser?.tenantId ?? null}
       />
-      <Card>
-        <CardContent>
-          <section aria-labelledby="module-how" className="space-y-3">
-            <h2 id="module-how" className="text-base font-semibold">{t("moduleIntro.howItWorks")}</h2>
-            <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
-              {intro.howItWorksKeys.map((key) => <li key={key}>{t(key)}</li>)}
-            </ol>
-          </section>
-        </CardContent>
-      </Card>
       <section aria-labelledby="module-shortcuts" className="space-y-3">
         <h2 id="module-shortcuts" className="text-base font-semibold">{t("moduleIntro.shortcuts")}</h2>
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
