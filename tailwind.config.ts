@@ -7,6 +7,15 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      // Base UI exposes state as data attributes (data-orientation, data-active).
+      // The shadcn/Base UI components use Tailwind v4 shorthand variants
+      // (`data-horizontal:`, `group-data-vertical/tabs:`, `data-active:`); on
+      // Tailwind v3 those only exist when mapped here (also enables group-/peer-).
+      data: {
+        horizontal: 'orientation="horizontal"',
+        vertical: 'orientation="vertical"',
+        active: "active",
+      },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
