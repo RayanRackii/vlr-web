@@ -31,6 +31,7 @@ import {
   type WorkOrderStatus,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
+import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { WorkOrderOrigin, formatWorkOrderOriginText } from "@/features/workOrders/components/WorkOrderOrigin"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { isAxiosError } from "@/lib/api"
@@ -52,10 +53,6 @@ type WorkOrderListFilter = (typeof LIST_FILTERS)[number]
 
 function isWorkOrderListFilter(value: string): value is WorkOrderListFilter {
   return (LIST_FILTERS as readonly string[]).includes(value)
-}
-
-function formatShortId(id: string): string {
-  return id.slice(0, 8).toUpperCase()
 }
 
 function formatScheduledDate(value: string, locale: string): string {
@@ -96,7 +93,7 @@ function WorkOrdersTable({
           />
         ),
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{formatShortId(row.original.id)}</span>
+          <span className="font-mono text-xs">{formatWorkOrderShortId(row.original.id)}</span>
         ),
         filterFn: (row, _columnId, filterValue) => {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {

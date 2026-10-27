@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, CircleCheck, Play } from "lucide-react"
@@ -530,7 +531,14 @@ export function WorkOrderExecutionPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  useBreadcrumbTitle(!isLoading ? workOrder?.asset.name : undefined)
+  useBreadcrumbTitle(
+    !isLoading && workOrder
+      ? t("workOrders.execution.breadcrumb", {
+          id: formatWorkOrderShortId(workOrder.id),
+          asset: workOrder.asset.name,
+        })
+      : undefined,
+  )
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(
     () => new Set(),

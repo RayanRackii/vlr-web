@@ -2303,6 +2303,7 @@
       "redirecting": "OT creada"
     },
     "execution": {
+      "breadcrumb": "OT {{id}} · {{asset}}",
       "title": "Ejecución de OT",
       "subtitle": "Activo {{tag}} — {{name}}",
       "loading": "Cargando OT...",
