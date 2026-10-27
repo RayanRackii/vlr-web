@@ -74,6 +74,7 @@ export function AuthSplitShell({
           <div
             className={cn(
               "auth-card w-full animate-in fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none",
+              variant === "tenant" && "tenant-auth-form",
               widthClassName,
             )}
           >

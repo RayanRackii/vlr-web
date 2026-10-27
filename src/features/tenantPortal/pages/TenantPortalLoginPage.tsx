@@ -103,9 +103,9 @@ export function TenantPortalLoginPage() {
   }
 
   return (
-    <div className="tenant-login space-y-5">
+    <div className="space-y-5">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold">{t("tenantPortal.login.title")}</h2>
+        <h2>{t("tenantPortal.login.title")}</h2>
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.login.subtitle")}
         </p>
@@ -125,7 +125,6 @@ export function TenantPortalLoginPage() {
                     type="email"
                     placeholder={t("tenantPortal.login.emailPlaceholder")}
                     autoComplete="email"
-                    className="h-12 rounded-xl"
                     {...field}
                   />
                 </FormControl>
@@ -145,7 +144,6 @@ export function TenantPortalLoginPage() {
                     autoComplete="current-password"
                     showLabel={t("auth.showPassword")}
                     hideLabel={t("auth.hidePassword")}
-                    className="h-12 rounded-xl"
                     {...field}
                   />
                 </FormControl>
@@ -173,7 +171,7 @@ export function TenantPortalLoginPage() {
 
           <FormPrimaryButton
             type="submit"
-            className="h-[50px] w-full rounded-xl text-base font-bold"
+            className="w-full"
             isValid={isLoginValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.login.submitting")}

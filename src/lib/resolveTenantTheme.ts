@@ -35,6 +35,7 @@ export type TenantThemeTokens = {
     footerBackground: string
     footerForeground: string
     link: string
+    ctaEdge: string
   }
 }
 
@@ -81,6 +82,7 @@ export function resolveTenantTheme(options: {
         footerBackground,
         footerForeground: tenantReadableInk(footerBackground),
         link: tenantReadableLink(primaryHex, surface),
+        ctaEdge: formatHex(readableFill(primary, theme, parseCssHex(surface)!)),
       },
     }
   }
@@ -184,6 +186,7 @@ export function tenantThemeStyle(tokens: TenantThemeTokens): CSSProperties {
       "--tenant-footer-ink": tokens.auth.footerForeground,
       "--tenant-footer-background": tokens.auth.footerBackground,
       "--tenant-link": tokens.auth.link,
+      "--tenant-cta-edge": tokens.auth.ctaEdge,
       "--tenant-field": tokens.surfaceMuted,
     } : {}),
   } as CSSProperties

@@ -41,8 +41,6 @@
   width: 100%;
 }
 
-.tenant-brand-content { width: 100%; }
-
 .tenant-auth .tenant-auth-logo {
   width: 104px;
   height: 104px;
@@ -116,8 +114,29 @@
   outline-offset: 3px;
 }
 
-.tenant-auth .tenant-login form > p.text-right { margin-top: 4px; }
-.tenant-auth .tenant-login > p:last-child { margin-top: 16px; }
+.tenant-auth-form h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+.tenant-auth-form :is(input:not([type="hidden"], [type="checkbox"], [type="radio"]), [role="combobox"]) {
+  height: 3rem;
+  border-radius: .75rem;
+}
+
+.tenant-auth-form button.bg-primary {
+  height: 50px;
+  border-radius: .75rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--tenant-cta-edge);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tenant-auth-form form > p.text-right { margin-top: 4px; }
+.tenant-auth-form > div > p:last-child { margin-top: 16px; }
 
 @media (min-width: 1024px) {
   .tenant-auth { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }

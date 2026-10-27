@@ -7,7 +7,7 @@ import {
   parseCssHex,
   relativeLuminance,
 } from "@/lib/colorUtils"
-import { resolveTenantTheme, tenantReadableInk, tenantReadableLink } from "@/lib/resolveTenantTheme"
+import { resolveTenantTheme, tenantReadableInk, tenantReadableLink, tenantThemeStyle } from "@/lib/resolveTenantTheme"
 
 const DARK_BRAND = "#0B1F3A"
 const LIGHT_BRAND = "#E8F4FF"
@@ -16,6 +16,17 @@ const PALE_LIME = "#D4F56A"
 
 describe("tenant auth contrast", () => {
   const colors = ["#E6EE5A", "#1E4FD8", "#000000", "#ffffff", "#777777", "#ff0000", "#5a8fa0"]
+  it.each(["light", "dark"])("gives CTA edges 3:1 contrast against the %s auth card", (resolvedTheme) => {
+    for (const primaryColor of colors) {
+      const theme = resolveTenantTheme({ primaryColor, resolvedTheme, auth: true })
+      const style = tenantThemeStyle(theme)
+      const edge = style["--tenant-cta-edge" as keyof typeof style]
+      expect(typeof edge).toBe("string")
+      expect(contrastRatio(parseCssHex(String(edge))!, parseCssHex(theme.surface)!)).toBeGreaterThanOrEqual(3)
+      expect(theme.primary).toBe(primaryColor.toLowerCase())
+    }
+  })
+
   it.each(colors)("keeps readable ink on %s without changing the brand fill", (primary) => {
     expect(contrastRatio(parseCssHex(primary)!, parseCssHex(tenantReadableInk(primary))!)).toBeGreaterThanOrEqual(4.5)
     for (const resolvedTheme of ["light", "dark"]) {
