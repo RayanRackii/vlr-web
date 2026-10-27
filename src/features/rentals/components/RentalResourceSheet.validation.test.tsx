@@ -56,8 +56,11 @@ describe("RentalResourceSheet visual validation", () => {
     const input = screen.getByRole("spinbutton", { name: i18n.t("resourceVisual.capacityPeople") })
     await user.type(input, "0")
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(input).not.toHaveAttribute("aria-invalid", "true")
     await user.tab()
     expect(screen.getByRole("alert")).toHaveTextContent("Capacity fixture error")
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(expect.stringContaining("Capacity fixture error"))
   })
 
   it("reveals template errors when the template control is blurred before submit", async () => {
@@ -67,5 +70,7 @@ describe("RentalResourceSheet visual validation", () => {
     await user.click(await screen.findByRole("option", { name: "Fixture template" }))
     fireEvent.blur(select)
     expect(screen.getByRole("alert")).toHaveTextContent("Template fixture error")
+    expect(select).toHaveAttribute("aria-invalid", "true")
+    expect(select).toHaveAccessibleDescription(expect.stringContaining("Template fixture error"))
   })
 })
