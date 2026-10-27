@@ -778,10 +778,10 @@ export function CatalogProductsPage() {
         }}
       >
         <DialogContent
-          className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
+          className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-lg"
           showCloseButton={!operationInFlight && !form.formState.isSubmitting}
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {editing
                 ? t("catalog.products.editTitle")
@@ -794,11 +794,12 @@ export function CatalogProductsPage() {
 
           <Form {...form}>
             <form
-              className="space-y-4"
+              className="flex min-h-0 flex-1 flex-col"
               onSubmit={form.handleSubmit(onSubmit)}
               noValidate
             >
-              <FormField
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-1 py-1">
+                <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
@@ -1087,8 +1088,9 @@ export function CatalogProductsPage() {
                   ))}
                 </ul>
               ) : null}
+              </div>
 
-              <DialogFooter className="-mx-0 -mb-0 border-t-0 bg-transparent p-0">
+              <DialogFooter className="sticky bottom-0 -mx-4 -mb-4 shrink-0">
                 <Button
                   type="button"
                   variant="outline"

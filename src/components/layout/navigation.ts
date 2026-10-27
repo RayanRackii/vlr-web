@@ -387,6 +387,31 @@ export function getPageTitleKey(
   return "app.name"
 }
 
+export function getUserInitials(
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+): string {
+  const trimmedName = fullName?.trim() ?? ""
+  if (trimmedName.length > 0) {
+    const parts = trimmedName.split(/\s+/).filter((part) => part.length > 0)
+    const first = parts[0]?.[0]
+    const second = parts[1]?.[0]
+    if (first && second) {
+      return `${first}${second}`.toUpperCase()
+    }
+    if (first) {
+      return first.toUpperCase()
+    }
+  }
+
+  const trimmedEmail = email?.trim() ?? ""
+  if (trimmedEmail.length > 0) {
+    return trimmedEmail[0]!.toUpperCase()
+  }
+
+  return "?"
+}
+
 export function getEmailInitials(email: string | null | undefined): string {
   if (!email) {
     return "?"

@@ -232,7 +232,9 @@
       "pickerSubmitting": "Abrindo...",
       "pickerError": "Não foi possível trocar de ambiente. Tente novamente.",
       "membershipError": "Não foi possível carregar seus ambientes. Tente novamente.",
-      "membershipRetry": "Tentar novamente"
+      "membershipErrorHint": "Isso pode ser uma falha temporária de conexão. Tente novamente ou saia e entre de novo.",
+      "membershipRetry": "Tentar novamente",
+      "membershipSignOut": "Sair"
     },
     "login": {
       "invalidCredentials": "E-mail ou senha inválidos.",

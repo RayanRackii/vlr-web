@@ -232,7 +232,9 @@
       "pickerSubmitting": "Opening...",
       "pickerError": "Could not switch environments. Please try again.",
       "membershipError": "Could not load your environments. Please try again.",
-      "membershipRetry": "Try again"
+      "membershipErrorHint": "This may be a temporary connection issue. Try again or sign out and sign back in.",
+      "membershipRetry": "Try again",
+      "membershipSignOut": "Sign out"
     },
     "login": {
       "invalidCredentials": "Invalid email or password.",
