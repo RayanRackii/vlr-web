@@ -90,7 +90,8 @@ test.describe("Catalog B2B UI", () => {
     await restoreTenant(adminClient(), readSnapshot())
   })
 
-  test("product list and create dialog render", async ({ page }) => {
+  test("product dialog fits 1920px and keeps file controls reachable without pristine errors", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
     const admin = adminClient()
     const snapshot = readSnapshot()
     await applyCommercialModules(admin, snapshot, ["catalog"], ["generic"])
@@ -103,6 +104,24 @@ test.describe("Catalog B2B UI", () => {
     await expect(page.getByRole("dialog")).toBeVisible()
     await expect(page.getByLabel("Nome")).toBeVisible()
     await expect(page.getByLabel("Código")).toBeVisible()
+    const dialog = page.getByRole("dialog")
+    const bounds = await dialog.boundingBox()
+    expect(bounds!.width).toBeGreaterThanOrEqual(700)
+    expect(bounds!.width).toBeLessThanOrEqual(960)
+    await expect(dialog.locator('[aria-invalid="true"]')).toHaveCount(0)
+    await expect(dialog.getByText("Informe o nome do produto.")).toHaveCount(0)
+    const fileInput = dialog.locator('input[type="file"]')
+    await fileInput.scrollIntoViewIfNeeded()
+    await expect(fileInput).toBeVisible()
+    const fileBounds = await fileInput.boundingBox()
+    expect(fileBounds!.width).toBeGreaterThan(200)
+    expect(fileBounds!.x).toBeGreaterThanOrEqual(bounds!.x)
+    expect(fileBounds!.x + fileBounds!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width)
+    expect(fileBounds!.y + fileBounds!.height).toBeLessThanOrEqual(bounds!.y + bounds!.height)
+    const horizontalOverflow = await dialog.evaluate((element) =>
+      Array.from(element.querySelectorAll("div")).some((child) => child.scrollWidth > child.clientWidth + 1),
+    )
+    expect(horizontalOverflow).toBe(false)
     guards.assertNoCrash()
   })
 })

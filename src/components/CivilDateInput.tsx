@@ -1,4 +1,4 @@
-import { useRef, type ComponentProps } from "react"
+import { useLayoutEffect, useRef, type ComponentProps } from "react"
 import { CalendarDays } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -12,10 +12,26 @@ type CivilDateInputProps = Omit<ComponentProps<"input">, "type" | "value" | "def
   onChange: (value: string) => void
 }
 
+/** Insert locale date separators while leaving partial groups editable. */
+function maskDateText(text: string): string {
+  return text.replace(/[^\d/]/g, "").replace(/\/+/g, "/")
+    .replace(/^(\d{2})(?=\d)/, "$1/")
+    .replace(/^(\d{1,2}\/\d{2})(?=\d)/, "$1/")
+    .split("/").slice(0, 3).map((part, index) => part.slice(0, index === 2 ? 4 : 2)).join("/")
+}
+
 /** Complete dates become ISO; incomplete text stays in the form for localized validation. */
 export function CivilDateInput({ value, locale, onChange, min, max, disabled, className, ...props }: CivilDateInputProps) {
   const { t } = useTranslation()
   const picker = useRef<HTMLInputElement>(null)
+  const caret = useRef<{ input: HTMLInputElement; position: number } | null>(null)
+  useLayoutEffect(() => {
+    if (caret.current) {
+      const { input, position } = caret.current
+      input.setSelectionRange(position, position)
+      caret.current = null
+    }
+  })
 
   function change(text: string) {
     const parsed = parseLocaleCivilDate(text, locale) ?? (isCivilDate(text) ? text : null)
@@ -27,12 +43,22 @@ export function CivilDateInput({ value, locale, onChange, min, max, disabled, cl
       <Input
         {...props}
         type="text"
+        inputMode="numeric"
         lang={locale}
         placeholder={t("common.datePicker.format", { lng: locale })}
         className={className ? `${className} pr-12` : "pr-12"}
         disabled={disabled}
         value={isCivilDate(value) ? formatLocaleCivilDate(value, locale) : value}
-        onChange={(event) => change(event.target.value)}
+        onChange={(event) => {
+          const input = event.currentTarget
+          const raw = input.value
+          const text = isCivilDate(raw) ? formatLocaleCivilDate(raw, locale) : maskDateText(raw)
+          caret.current = {
+            input,
+            position: isCivilDate(raw) ? text.length : maskDateText(raw.slice(0, input.selectionStart ?? raw.length)).length,
+          }
+          change(text)
+        }}
       />
       <button
         type="button"

@@ -97,6 +97,38 @@ describe("CatalogProductsPage validity gate", () => {
     fireEvent.change(element, { target: { value } })
   }
 
+  it.each(["pt-BR", "en", "es"])("shows no errors on open and explains a blurred name beside the field in %s", async (locale) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      renderPage()
+      const dialog = await openCreateDialog(user)
+      const message = i18n.t("catalog.products.validation.nameRequired")
+      const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
+      expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument()
+      expect(name).toHaveAttribute("aria-invalid", "false")
+      const files = within(dialog).getByText(i18n.t("catalog.products.files.title"))
+      expect(files).toBeVisible()
+      expect(within(dialog).getByLabelText(i18n.t("catalog.products.files.select"))).toBeEnabled()
+      await user.click(name)
+      await user.tab()
+      expect(within(dialog).getAllByText(message)).toHaveLength(1)
+      expect(name.closest('[data-slot="form-item"]')).toHaveTextContent(message)
+      expect(name).toHaveAttribute("aria-invalid", "true")
+      expect(name).toHaveAccessibleDescription(message)
+      await user.type(name, "Produto de teste")
+      expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
+      expect(name).toHaveAttribute("aria-invalid", "false")
+      await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
+      const reopened = await openCreateDialog(user)
+      expect(within(reopened).queryByText(message)).not.toBeInTheDocument()
+      expect(within(reopened).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("")
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
   it("keeps Salvar disabled until the product schema passes and leaves Cancelar and Fechar free", async () => {
     const user = userEvent.setup()
     renderPage()

@@ -11,6 +11,9 @@ import {
   parseHorizonDaysInput,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
 
+// Matches ResourceVisualCatalogService metadata validation in vlr-api; generic people capacity.
+export const RESOURCE_CAPACITY_PEOPLE_MAX = 100_000
+
 export const rentalTypeValues = ["Location", "Good"] as const
 
 export type RentalType = (typeof rentalTypeValues)[number]
@@ -75,6 +78,7 @@ export function createRentalResourceFormSchema(messages: {
   categoryRequired: string
   familyRequired: string
   quantityMin: string
+  capacityRange: string
   queueOpeningTimeRequired: string
   horizonRange: string
   cancelCutoffRange?: string
@@ -107,7 +111,11 @@ export function createRentalResourceFormSchema(messages: {
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
       visualTemplateRevisionId: z.string(),
-      capacityPeople: z.string(),
+      capacityPeople: z.string().refine((value) => {
+        if (value.trim() === "") return true
+        const capacity = Number(value)
+        return Number.isInteger(capacity) && capacity >= 1 && capacity <= RESOURCE_CAPACITY_PEOPLE_MAX
+      }, messages.capacityRange),
       confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
