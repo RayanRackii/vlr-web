@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
 import {
+  clearCustomerSession,
+  getCustomerAccessToken,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import {
   resetStaffSessionRefreshForTests,
   staffAuthEpochForTests,
 } from "@/lib/api"
@@ -60,6 +65,60 @@ describe("LoginPage next redirect", () => {
     renderLogin("/login?next=https://evil.example")
     await submitValidCredentials()
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+
+  it("keeps the tenant context from next when redirecting after login", async () => {
+    resetStaffSessionRefreshForTests()
+    renderLogin("/login?next=%2Fdashboard%3Fcompany%3Dficc&company=ficc")
+    await submitValidCredentials()
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+})
+
+describe("LoginPage exclusive sessions", () => {
+  beforeEach(() => {
+    vi.mocked(supabase.auth.signInWithPassword).mockReset()
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+      data: { user: { id: "1" }, session: {} },
+      error: null,
+    } as never)
+    clearCustomerSession()
+  })
+
+  afterEach(() => {
+    clearCustomerSession()
+  })
+
+  it("clears a leftover customer session once staff sign-in succeeds", async () => {
+    resetStaffSessionRefreshForTests()
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    expect(getCustomerAccessToken()).toBe("customer-token")
+
+    const user = userEvent.setup()
+    renderLogin("/login")
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
+  })
+
+  it("keeps the customer session untouched when staff sign-in fails", async () => {
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { message: "Invalid login credentials" },
+    } as never)
+    persistCustomerSession("customer-token", "ficc", "Ana")
+
+    const user = userEvent.setup()
+    renderLogin("/login")
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.type(screen.getByLabelText("Senha"), "wrong-password")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBe("customer-token")
   })
 })
 

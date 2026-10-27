@@ -12,6 +12,7 @@ import { TrialBanner } from "@/components/layout/TrialBanner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
   getPageTitleKey,
+  getUserDisplayLabel,
   getUserInitials,
   RENTAL_RESOURCES_PERMISSIONS,
 } from "@/components/layout/navigation"
@@ -98,7 +99,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     )
   }
 
-  const userEmail = user?.email ?? t("account.userFallback")
+  const userLabel = getUserDisplayLabel(
+    currentUser?.fullName,
+    user?.email,
+    t("account.userFallback"),
+  )
   const pageTitle = t(getPageTitleKey(location.pathname))
   const initials = getUserInitials(currentUser?.fullName, user?.email)
 
@@ -139,7 +144,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     <AppShell
       sidebar={(opts) => <Sidebar {...opts} />}
       pageTitle={pageTitle}
-      userLabel={userEmail}
+      userLabel={userLabel}
       initials={initials}
       profileTo="/perfil"
       collapsible

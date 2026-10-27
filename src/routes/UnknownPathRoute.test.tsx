@@ -4,6 +4,10 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import {
+  clearCustomerSession,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
 import { api } from "@/lib/api"
 import i18n from "@/lib/i18n"
@@ -40,6 +44,7 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/" element={<h1>public-home</h1>} />
+        <Route path="/t/:subdomain/app" element={<div>customer-portal</div>} />
         <Route path="*" element={<UnknownPathRoute />} />
       </Routes>
     </MemoryRouter>,
@@ -52,6 +57,7 @@ describe("UnknownPathRoute", () => {
     vi.stubEnv("VITE_PLATFORM_ADMIN_EMAILS", "")
     authState.user = null
     authState.isLoading = false
+    clearCustomerSession()
     apiGet.mockReset()
     apiGet.mockResolvedValue({
       data: {
@@ -116,5 +122,25 @@ describe("UnknownPathRoute", () => {
     expect(
       await screen.findByRole("menuitem", { name: i18n.t("account.profile") }),
     ).toHaveAttribute("href", "/perfil")
+  })
+
+  it("sends a signed-in customer (no staff session) back to their portal instead of the app chrome", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderAt("/nao-existe")
+
+    expect(await screen.findByText("customer-portal")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: i18n.t("notFound.title") }),
+    ).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
+  it("keeps a signed-out visit with no session on the standalone 404", () => {
+    renderAt("/nao-existe")
+
+    expect(
+      screen.getByRole("heading", { name: i18n.t("notFound.title") }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("customer-portal")).not.toBeInTheDocument()
   })
 })

@@ -394,7 +394,10 @@
       "requiredMark": "obrigatório",
       "blockedHint": "Preencha os campos obrigatórios para continuar.",
       "photoRequired": "Envie a foto de perfil para continuar.",
-      "duplicateCustomer": "Já existe uma conta com estes dados."
+      "duplicateCustomer": "Já existe uma conta com estes dados.",
+      "duplicateEmail": "Já existe uma conta com este e-mail.",
+      "duplicateDocument": "Já existe uma conta com este CPF/CNPJ.",
+      "duplicatePhone": "Já existe uma conta com este telefone."
     },
     "verify": {
       "title": "Confirmar e-mail",

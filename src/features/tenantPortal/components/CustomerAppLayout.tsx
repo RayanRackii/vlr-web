@@ -35,8 +35,10 @@ import {
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import appI18n from "@/lib/i18n"
 import {
+  hasActiveStaffSession,
   isAuthenticatedRestoreBlocked,
   signOutCustomerPortal,
+  signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
 
 export type CustomerAppOutletContext = {
@@ -223,7 +225,10 @@ export function CustomerAppLayout() {
             </div>
           ) : null
         }
-        onSignOut={() => {
+        onSignOut={async () => {
+          if (hasActiveStaffSession()) {
+            await signOutStaffPortal()
+          }
           const path = signOutCustomerPortal(subdomain)
           void navigate(path, { replace: true })
         }}

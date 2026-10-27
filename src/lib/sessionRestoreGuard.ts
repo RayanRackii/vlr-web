@@ -342,3 +342,11 @@ export function signOutCustomerPortal(subdomain: string): string {
   keepChosenLanguage()
   return tenantPortalPath(subdomain)
 }
+
+/** Keeps staff and customer sessions exclusive: the customer surface never carries a leftover staff session. */
+export async function signOutStaffBeforeCustomerAuth(): Promise<void> {
+  if (!hasActiveStaffSession()) {
+    return
+  }
+  await signOutStaffPortal()
+}

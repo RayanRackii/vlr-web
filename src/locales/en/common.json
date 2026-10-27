@@ -394,7 +394,10 @@
       "requiredMark": "required",
       "blockedHint": "Fill in the required fields to continue.",
       "photoRequired": "Upload the profile photo to continue.",
-      "duplicateCustomer": "An account with this information already exists."
+      "duplicateCustomer": "An account with this information already exists.",
+      "duplicateEmail": "An account with this email already exists.",
+      "duplicateDocument": "An account with this CPF/CNPJ already exists.",
+      "duplicatePhone": "An account with this phone number already exists."
     },
     "verify": {
       "title": "Confirm email",

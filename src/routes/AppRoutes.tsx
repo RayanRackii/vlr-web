@@ -44,6 +44,16 @@ function RedirectVerifyPhoneToEmail() {
   )
 }
 
+/** Carries the tenant slug forward as `?company=` so a later sign-out/sign-in redirect can still find it. */
+function withCompanyParam(search: string, subdomain: string | undefined): string {
+  const params = new URLSearchParams(search)
+  if (subdomain && !params.has("company")) {
+    params.set("company", subdomain)
+  }
+  const next = params.toString()
+  return next ? `?${next}` : ""
+}
+
 function RedirectTenantStaffRoute() {
   const location = useLocation()
   const { subdomain } = useParams<{ subdomain: string }>()
@@ -51,7 +61,12 @@ function RedirectTenantStaffRoute() {
   const rootPath = location.pathname.startsWith(prefix)
     ? location.pathname.slice(prefix.length) || "/dashboard"
     : "/dashboard"
-  return <Navigate to={`${rootPath}${location.search}`} replace />
+  return (
+    <Navigate
+      to={`${rootPath}${withCompanyParam(location.search, subdomain)}`}
+      replace
+    />
+  )
 }
 
 /** `perfil/*` favors the signed-in customer's profile; staff only wins when no customer session exists. */

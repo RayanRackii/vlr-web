@@ -44,6 +44,7 @@ import {
 import { maskPhoneInput } from "@/features/tenantPortal/lib/masks"
 import { attachAutofillSync } from "@/features/tenantPortal/lib/syncRegisterAutofill"
 import {
+  CustomerDuplicateFieldError,
   fetchRegistrationSchema,
   fileToCompressedDataUrl,
   isCustomerSignedInForTenant,
@@ -51,6 +52,7 @@ import {
   registerCustomer,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { signOutStaffBeforeCustomerAuth } from "@/lib/sessionRestoreGuard"
 
 function extraFieldAutoComplete(fieldType: string): string | undefined {
   if (fieldType === "email") {
@@ -202,6 +204,7 @@ export function TenantPortalRegisterPage() {
   async function onSubmit(values: Record<string, unknown>) {
     setSubmitting(true)
     try {
+      await signOutStaffBeforeCustomerAuth()
       const attributes: Record<string, string | number | boolean> = {}
       for (const field of fields) {
         if (isReservedRegisterFieldKey(field.fieldKey)) {
@@ -240,6 +243,11 @@ export function TenantPortalRegisterPage() {
         state: { email, verificationSendFailed },
       })
     } catch (error) {
+      if (error instanceof CustomerDuplicateFieldError) {
+        form.setError(error.field, { message: error.message })
+        toast.error(error.message)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message

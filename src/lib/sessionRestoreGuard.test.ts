@@ -29,8 +29,10 @@ import {
   installSessionRestoreGuard,
   isAuthenticatedRestoreBlocked,
   loginPathForAuthenticatedPath,
+  hasActiveStaffSession,
   resetSessionRestoreGuardForTests,
   signOutCustomerPortal,
+  signOutStaffBeforeCustomerAuth,
   signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
 
@@ -392,5 +394,23 @@ describe("portal sign out", () => {
     expect(window.localStorage.getItem("rolvix.customer.token")).toBeNull()
     expect(peekCurrentUserCacheForTests()).toBeNull()
     expect(isOwnBookedSlot(civil.date, ASSET_ID, civil.time)).toBe(false)
+  })
+
+  it("signs out a leftover staff session before a customer authenticates", async () => {
+    storeStaffSession("leftover-staff-token")
+    expect(hasActiveStaffSession()).toBe(true)
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("does nothing when there is no staff session to sign out", async () => {
+    expect(hasActiveStaffSession()).toBe(false)
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
 })

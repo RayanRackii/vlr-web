@@ -48,8 +48,16 @@ export function safeStaffNextPath(
   return isSafeStaffNextPath(value) ? value : null
 }
 
-export function staffLoginPath(nextPath: string): string {
+export function staffLoginPath(
+  nextPath: string,
+  extraParams?: Record<string, string | null | undefined>,
+): string {
   const params = new URLSearchParams()
   params.set("next", nextPath)
+  for (const [key, value] of Object.entries(extraParams ?? {})) {
+    if (value) {
+      params.set(key, value)
+    }
+  }
   return `/login?${params.toString()}`
 }

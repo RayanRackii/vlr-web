@@ -4,6 +4,10 @@ import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import {
+  clearCustomerSession,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
 import {
   installSessionRestoreGuard,
@@ -27,7 +31,11 @@ vi.mock("@/contexts/AuthContext", () => ({
 
 function LoginProbe() {
   const [params] = useSearchParams()
-  return <div>{`login next=${params.get("next") ?? ""}`}</div>
+  return (
+    <div>
+      {`login next=${params.get("next") ?? ""} company=${params.get("company") ?? ""}`}
+    </div>
+  )
 }
 
 function renderRoutes(initialPath: string) {
@@ -37,6 +45,7 @@ function renderRoutes(initialPath: string) {
         <Route path="/" element={<div>landing</div>} />
         <Route path="/login" element={<LoginProbe />} />
         <Route path="/t/:subdomain" element={<div>b2c-login</div>} />
+        <Route path="/t/:subdomain/app" element={<div>customer-app</div>} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<div>staff-dashboard</div>} />
           <Route path="/os" element={<div>staff-orders</div>} />
@@ -56,9 +65,25 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
 
   it("sends unauthenticated protected URLs to /login with a safe next path", () => {
     renderRoutes("/os")
-    expect(screen.getByText("login next=/os")).toBeInTheDocument()
+    expect(screen.getByText("login next=/os company=")).toBeInTheDocument()
     expect(screen.queryByText("landing")).not.toBeInTheDocument()
     expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
+  })
+
+  it("sends a signed-in customer (no staff session) back to their portal instead of staff login", () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderRoutes("/dashboard")
+    expect(screen.getByText("customer-app")).toBeInTheDocument()
+    expect(screen.queryByText(/^login/)).not.toBeInTheDocument()
+    expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
+  it("keeps the ?company= tenant context when redirecting to staff login", () => {
+    renderRoutes("/dashboard?company=ficc")
+    expect(
+      screen.getByText("login next=/dashboard?company=ficc company=ficc"),
+    ).toBeInTheDocument()
   })
 
   it("lets an authenticated user keep the protected URL", () => {
