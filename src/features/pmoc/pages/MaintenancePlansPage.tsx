@@ -217,7 +217,7 @@ export function MaintenancePlansPage() {
             }}
           >
             <Plus data-icon="inline-start" />
-            {t("pmoc.plans.actions.new")}
+            {t("nav.pmocNew")}
           </Button>
         </Can>
       </div>

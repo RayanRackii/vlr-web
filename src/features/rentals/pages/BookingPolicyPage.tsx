@@ -192,7 +192,7 @@ export function BookingPolicyPage() {
     >
       <PageHeader
         icon={ShieldCheck}
-        title={t("rentals.bookingPolicy.title")}
+        title={t("nav.bookingPolicy")}
         description={t("rentals.bookingPolicy.description")}
         className="mb-0"
       />

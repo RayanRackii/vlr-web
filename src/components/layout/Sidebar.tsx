@@ -70,6 +70,7 @@ function NavigationLink({
   const children = item.children
   const hasChildren = children !== undefined && children.length > 0
   const label = t(item.labelKey)
+  const tooltip = item.labelKey === "nav.pmoc" ? t("nav.pmocTooltip") || label : label
   const isSectionActive =
     hasChildren &&
     children.some(
@@ -88,7 +89,7 @@ function NavigationLink({
               <button
                 type="button"
                 aria-label={label}
-                title={label}
+                title={tooltip}
                 className={cn(
                   "flex size-10 items-center justify-center rounded-lg outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                   isSectionActive
@@ -139,7 +140,7 @@ function NavigationLink({
       <NavLink
         to={item.to}
         onClick={onNavigate}
-        title={label}
+        title={tooltip}
         aria-label={label}
         className={({ isActive }) =>
           cn(
@@ -160,6 +161,7 @@ function NavigationLink({
     return (
       <div className="space-y-0.5">
         <div
+          title={tooltip}
           className={cn(
             "flex min-h-9 items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium",
             isSectionActive ? "text-foreground" : "text-muted-foreground",

@@ -2,8 +2,8 @@ import type { ReactElement } from "react"
 import { Wrench } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
-import { AssetsPage } from "@/features/assets/pages/AssetsPage"
+import { equipmentTabs } from "@/features/assets/navigationTabs"
+import { EquipmentPage } from "@/features/assets/pages/EquipmentPage"
 
 type FeatureRoute = {
   path: string
@@ -20,30 +20,19 @@ export const assetsManifest = {
       to: "/ativos",
       icon: Wrench,
       modules: ["inventory"],
-      children: [
-        {
-          labelKey: "nav.assetsInventory",
-          to: "/ativos",
-          permission: "inventory.assets.read",
-        },
-        {
-          labelKey: "nav.assetsCategories",
-          to: "/ativos/categorias",
-          permission: "inventory.categories.read",
-        },
-      ],
+      tabs: equipmentTabs,
     },
   ] satisfies readonly AppNavigationItem[],
   routes: {
     staff: [
       {
         path: "/ativos",
-        element: <AssetsPage />,
+        element: <EquipmentPage />,
         permission: "inventory.assets.read",
       },
       {
         path: "/ativos/categorias",
-        element: <AssetCategoriesPage />,
+        element: <EquipmentPage />,
         permission: "inventory.categories.read",
       },
     ] satisfies readonly FeatureRoute[],

@@ -2,6 +2,7 @@ import type { ReactElement } from "react"
 import { Users } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
+import { peopleAccessTabs } from "@/features/users/navigationTabs"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
 import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
 
@@ -19,7 +20,7 @@ export const usersManifest = {
       labelKey: "nav.peopleAccess",
       to: "/pessoas-e-acesso",
       icon: Users,
-      permission: "core.users.read",
+      tabs: peopleAccessTabs,
     },
   ] satisfies readonly AppNavigationItem[],
   routes: {

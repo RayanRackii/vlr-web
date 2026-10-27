@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { filterNavigationTabs } from "@/components/layout/navigationTabs"
+import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
+import { peopleAccessTabs } from "@/features/users/navigationTabs"
+import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -19,22 +24,32 @@ import {
 } from "@/features/users/services/rolesService"
 import { cn } from "@/lib/utils"
 
-type PeopleAccessTab = "users" | "customers" | "roles"
+type PeopleAccessTab = "users" | "customers" | "roles" | "registration"
 
 export function PeopleAccessPage() {
   const { t } = useTranslation()
-  const { can } = usePermissions()
-  const canReadRoles = can("core.roles.read")
-  const canReadCustomers = can("core.customers.read")
+  const { can, activeModules, permissions } = usePermissions()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const onRegistration = pathname.replace(/\/+$/, "") === "/configuracoes/cadastro"
+  const canReadUsers = can("core.users.read")
+  const canReadRegistration = filterNavigationTabs(peopleAccessTabs, activeModules, permissions)
+    .some((entry) => entry.to === "/configuracoes/cadastro")
+  const canReadRoles = canReadUsers && can("core.roles.read")
+  const canReadCustomers = canReadUsers && can("core.customers.read")
 
   const [roles, setRoles] = useState<RoleResponse[]>([])
   const [catalog, setCatalog] = useState<PermissionCatalogItemDto[]>([])
   const [isLoading, setIsLoading] = useState(canReadRoles)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [tab, setTab] = useState<PeopleAccessTab>("users")
+  const requestedTab = searchParams.get("tab")
+  const tab: PeopleAccessTab = onRegistration ? "registration"
+    : requestedTab === "roles" && canReadRoles ? "roles"
+    : requestedTab === "customers" && canReadCustomers ? "customers" : "users"
 
   const loadRolesBundle = useCallback(async () => {
-    if (!canReadRoles) {
+    if (!canReadRoles || onRegistration) {
       setRoles([])
       setCatalog([])
       setIsLoading(false)
@@ -60,21 +75,26 @@ export function PeopleAccessPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [canReadRoles, t])
+  }, [canReadRoles, onRegistration, t])
 
   useEffect(() => {
     void loadRolesBundle()
   }, [loadRolesBundle])
 
   const tabItems: { id: PeopleAccessTab; labelKey: string }[] = [
-    { id: "users", labelKey: "peopleAccess.tabs.users" },
+    ...(canReadUsers ? [{ id: "users" as const, labelKey: "peopleAccess.tabs.users" }] : []),
     ...(canReadCustomers
       ? [{ id: "customers" as const, labelKey: "peopleAccess.tabs.customers" }]
       : []),
     ...(canReadRoles
       ? [{ id: "roles" as const, labelKey: "peopleAccess.tabs.roles" }]
       : []),
+    ...(canReadRegistration
+      ? [{ id: "registration" as const, labelKey: "nav.registrationFields" }]
+      : []),
   ]
+
+  if (onRegistration && !canReadRegistration) return <AccessDeniedPage />
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -98,7 +118,11 @@ export function PeopleAccessPage() {
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setTab(item.id)
+                    if (item.id === "registration") {
+                      void navigate("/configuracoes/cadastro")
+                    } else {
+                      void navigate(item.id === "users" ? "/pessoas-e-acesso" : `/pessoas-e-acesso?tab=${item.id}`)
+                    }
                   }}
                   className={cn(
                     "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
@@ -115,17 +139,19 @@ export function PeopleAccessPage() {
         </div>
       </div>
 
-      {loadError !== null ? (
+      {tab !== "registration" && loadError !== null ? (
         <Alert variant="destructive">
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : null}
 
-      {canReadRoles && isLoading ? (
+      {tab === "registration" ? (
+        canReadRegistration ? <TenantRegistrationFieldsPage /> : null
+      ) : canReadRoles && isLoading ? (
         <PageContentSkeleton rows={4} />
       ) : (
         <div>
-          {tab === "users" ? <PeopleUsersTab roles={roles} /> : null}
+          {tab === "users" && canReadUsers ? <PeopleUsersTab roles={roles} /> : null}
 
           {tab === "customers" && canReadCustomers ? (
             <PeopleCustomersTab />
