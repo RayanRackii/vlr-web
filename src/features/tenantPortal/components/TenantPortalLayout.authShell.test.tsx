@@ -8,6 +8,8 @@ import { TenantPortalLayout } from "@/features/tenantPortal/components/TenantPor
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
+import { fetchTenantBranding } from "@/features/tenantPortal/services/tenantPortalService"
+import { tenantBrandingSchema } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 
 vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOriginal) => {
   const actual =
@@ -79,12 +81,36 @@ describe("tenant portal auth split shell", () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getAllByText("Acme Club").length).toBeGreaterThan(0)
+    expect(screen.getByRole("heading", { level: 1, name: "Acme Club" })).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("tenantPortal.login.welcomeDefault"))).toBeInTheDocument()
+    expect(screen.getByText("AC")).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("tenantPortal.authPanel.poweredBy")),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("link", { name: i18n.t("landing.header.brandAria") }),
     ).not.toBeInTheDocument()
+  })
+
+  it("uses existing API branding fields and accepts optional aliases", async () => {
+    const original = await fetchTenantBranding("acme")
+    vi.mocked(fetchTenantBranding).mockResolvedValueOnce({
+      ...original,
+      welcomeTagline: "Reserve com a Acme.",
+    })
+    const view = renderPortal("/t/acme")
+    expect(await screen.findByText("Reserve com a Acme.")).toBeInTheDocument()
+    view.unmount()
+
+    const aliases = tenantBrandingSchema.parse({
+      ...original,
+      secondaryColor: "#FFB347",
+      welcomeText: "Boas-vindas à Acme.",
+    })
+    vi.mocked(fetchTenantBranding).mockResolvedValueOnce(aliases)
+    renderPortal("/t/acme")
+    expect(await screen.findByText("Boas-vindas à Acme.")).toBeInTheDocument()
+    expect(screen.getByRole("main").parentElement).toHaveStyle({ "--tenant-secondary": "#ffb347" })
   })
 
   it("shows tenant branding in the brand panel on the register route too", async () => {

@@ -27,6 +27,7 @@ import {
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import "./tenantPortalAuth.css"
 
 type PortalLoadError = "missingSubdomain" | "notFound" | "loadFailed"
 
@@ -131,8 +132,9 @@ export function TenantPortalLayout() {
   )
   const { tokens, style: themeStyle } = useTenantThemeStyle(
     branding?.primaryColor,
-    branding?.accentColor,
+    branding?.secondaryColor ?? branding?.accentColor,
     {
+      auth: isTenantAuthPagePath(location.pathname),
       logoBackgroundColor: logoInspection.backgroundColor,
       logoBackgroundIsDark:
         logoInspection.hasEmbeddedBackground && logoInspection.backgroundIsDark,
@@ -226,53 +228,36 @@ export function TenantPortalLayout() {
   }
 
   if (isTenantAuthPagePath(location.pathname)) {
-    const hasCustomBrand = Boolean(branding.primaryColor)
-    const brandPanelStyle = hasCustomBrand
-      ? {
-          background: `linear-gradient(135deg, color-mix(in srgb, ${tokens.primary} 14%, var(--background)) 0%, color-mix(in srgb, ${tokens.accent} 10%, var(--background)) 100%)`,
-        }
-      : undefined
-
     return (
       <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
         <AuthSplitShell
-          brandPanelStyle={brandPanelStyle}
+          variant="tenant"
+          brandPanelClassName="tenant-brand"
           brandPanel={
-            <div className="max-w-md space-y-6">
+            <div className="tenant-brand-content">
               <TenantLogoMark
                 logoSvg={branding.logoSvg}
                 displayName={branding.displayName}
                 primaryColor={branding.primaryColor}
                 size="lg"
+                className="tenant-auth-logo"
               />
-              <div className="space-y-2">
-                <h2 className="break-words text-4xl font-semibold tracking-tight text-foreground">
+              <div>
+                <h1>
                   {branding.displayName}
-                </h2>
-                <p className="text-base leading-relaxed text-foreground/85">
-                  {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
+                </h1>
+                <p className="tenant-welcome">
+                  {branding.welcomeText?.trim() || branding.welcomeTagline?.trim() || t("tenantPortal.login.welcomeDefault")}
                 </p>
               </div>
             </div>
           }
           brandFootnote={
-            <p className="text-xs text-foreground/80">
+            <p className="tenant-brand-footer">
               {t("tenantPortal.authPanel.poweredBy")}
             </p>
           }
-          mobileBrand={
-            <div className="flex min-w-0 items-center gap-2">
-              <TenantLogoMark
-                logoSvg={branding.logoSvg}
-                displayName={branding.displayName}
-                primaryColor={branding.primaryColor}
-                size="sm"
-              />
-              <span className="min-w-0 truncate text-sm font-semibold text-foreground">
-                {branding.displayName}
-              </span>
-            </div>
-          }
+          mobileBrand={null}
           headerActions={
             <>
               <LanguageSwitcher

@@ -11,6 +11,8 @@ import {
 export type TenantThemeLogoBackground = {
   logoBackgroundColor?: string | null
   logoBackgroundIsDark?: boolean
+  /** Auth surfaces preserve the exact primary fill and use separate readable links. */
+  auth?: boolean
 }
 
 export function useTenantTheme(
@@ -28,6 +30,7 @@ export function useTenantTheme(
         logoBackgroundColor: logo?.logoBackgroundColor,
         logoBackgroundIsDark: logo?.logoBackgroundIsDark,
         resolvedTheme,
+        auth: logo?.auth,
       }),
     [
       primaryColor,
@@ -35,6 +38,7 @@ export function useTenantTheme(
       logo?.logoBackgroundColor,
       logo?.logoBackgroundIsDark,
       resolvedTheme,
+      logo?.auth,
     ],
   )
 }

@@ -1,0 +1,165 @@
+/* Scoped presentation for tenant auth; the staff split shell keeps its own layout. */
+.tenant-auth { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+.tenant-auth .auth-brand {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  padding: 76px 24px 56px;
+  background: var(--primary);
+  color: var(--tenant-brand-ink);
+}
+
+.tenant-auth .auth-brand::before,
+.tenant-auth .auth-brand::after {
+  content: "";
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--tenant-secondary);
+  pointer-events: none;
+}
+
+.tenant-auth .auth-brand::before {
+  width: min(62%, 244px);
+  right: -70px;
+  top: -20%;
+  opacity: .9;
+}
+
+.tenant-auth .auth-brand::after {
+  width: 140px;
+  left: -12%;
+  bottom: -90px;
+  opacity: .55;
+}
+
+.tenant-auth .auth-brand-content {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 100%;
+}
+
+.tenant-brand-content { width: 100%; }
+
+.tenant-auth .tenant-auth-logo {
+  width: 104px;
+  height: 104px;
+  max-width: none;
+  margin: 0 auto 20px;
+  border-radius: 15%;
+  padding: 16px;
+  background: rgb(255 255 255 / 72%) !important;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  color: #0f172a;
+  font-size: 36px;
+}
+
+.tenant-auth h1 {
+  max-width: 14ch;
+  margin: 0 auto 12px;
+  font-size: 28px;
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.tenant-welcome {
+  max-width: 34ch;
+  margin: 0 auto;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.tenant-brand-footer { display: none; }
+
+.tenant-auth .auth-side {
+  position: relative;
+  min-width: 0;
+  padding: 0 16px 24px;
+  margin-top: -32px;
+}
+
+.tenant-auth .auth-tools {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 5;
+  padding: 0;
+}
+
+.tenant-auth .auth-tools button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.tenant-auth .auth-center { padding: 0; align-items: flex-start; }
+
+.tenant-auth .auth-card {
+  max-width: 420px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 12px 40px rgb(20 24 8 / 6%);
+  animation: none;
+}
+
+.tenant-auth input { background: var(--tenant-field); }
+.tenant-auth .text-primary { color: var(--tenant-link); }
+.tenant-auth :is(a, button, input):focus-visible {
+  outline: 2px solid var(--tenant-link);
+  outline-offset: 3px;
+}
+
+.tenant-auth .tenant-login form > p.text-right { margin-top: 4px; }
+.tenant-auth .tenant-login > p:last-child { margin-top: 16px; }
+
+@media (min-width: 1024px) {
+  .tenant-auth { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .tenant-auth .auth-brand { padding: clamp(32px, 5vw, 96px); }
+  .tenant-auth .auth-brand::before { width: 62%; right: -18%; }
+  .tenant-auth .auth-brand::after { width: 40%; bottom: -16%; }
+  .tenant-auth .tenant-auth-logo {
+    width: clamp(120px, 14vw, 220px);
+    height: clamp(120px, 14vw, 220px);
+    margin-bottom: 36px;
+    padding: clamp(19px, 2.24vw, 35px);
+    font-size: clamp(44px, 4vw, 72px);
+  }
+  .tenant-auth h1 { font-size: clamp(30px, 3.2vw, 52px); }
+  .tenant-welcome { font-size: clamp(16px, 1.25vw, 20px); }
+  .tenant-brand-footer {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    left: clamp(16px, 2vw, 32px);
+    bottom: 28px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--tenant-footer-ink);
+    /* Keep the sampled backdrop under every glyph on tall desktop windows too. */
+    background: var(--tenant-footer-background);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-left: -4px;
+  }
+  .tenant-auth .auth-side {
+    padding: 20px clamp(20px, 3vw, 48px);
+    margin-top: 0;
+  }
+  .tenant-auth .auth-tools { position: static; padding: 0; }
+  .tenant-auth .auth-center { padding: 24px 0; align-items: center; }
+  .tenant-auth .auth-card { margin: auto 0; padding: 32px; flex-shrink: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-auth *, .tenant-auth *::before, .tenant-auth *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
