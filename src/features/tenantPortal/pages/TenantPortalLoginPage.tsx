@@ -70,8 +70,8 @@ export function TenantPortalLoginPage() {
     setSubmitting(true)
     setLoginError(null)
     try {
-      await signOutStaffBeforeCustomerAuth()
       await loginCustomer(subdomain, values)
+      await signOutStaffBeforeCustomerAuth()
       toast.success(t("tenantPortal.login.toastSuccess"))
       void navigate(returnTo ?? tenantPortalPath(subdomain, "app"), { replace: true })
     } catch (error) {

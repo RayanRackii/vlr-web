@@ -32,7 +32,10 @@ import {
   loginCustomer,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
 import { supabase } from "@/lib/supabase"
 
 const login = vi.mocked(loginCustomer)
@@ -93,6 +96,7 @@ function storeStaffSession(): void {
 
 describe("TenantPortalLoginPage", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     login.mockReset()
     toastError.mockReset()
     clearCustomerSession()
@@ -127,6 +131,31 @@ describe("TenantPortalLoginPage", () => {
     expect(await screen.findByText("customer-app")).toBeInTheDocument()
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("keeps the staff session when customer login fails", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    login.mockRejectedValue(new Error("E-mail ou senha inválidos."))
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "wrong-password",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("E-mail ou senha inválidos.")
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
   })
 
   it("does not call staff sign-out when there is no leftover staff session", async () => {

@@ -204,7 +204,6 @@ export function TenantPortalRegisterPage() {
   async function onSubmit(values: Record<string, unknown>) {
     setSubmitting(true)
     try {
-      await signOutStaffBeforeCustomerAuth()
       const attributes: Record<string, string | number | boolean> = {}
       for (const field of fields) {
         if (isReservedRegisterFieldKey(field.fieldKey)) {
@@ -228,6 +227,7 @@ export function TenantPortalRegisterPage() {
         document: onlyDigits(String(values.document ?? "")),
         attributes,
       })
+      await signOutStaffBeforeCustomerAuth()
       const verificationSendFailed = !data.verificationStarted
       if (verificationSendFailed) {
         toast.warning(t("tenantPortal.register.pendingContinue"))

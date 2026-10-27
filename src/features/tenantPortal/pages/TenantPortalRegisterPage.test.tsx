@@ -35,7 +35,10 @@ import {
   readPendingEmailVerification,
   registerCustomer,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
 import { supabase } from "@/lib/supabase"
 
 const fetchSchema = vi.mocked(fetchRegistrationSchema)
@@ -125,6 +128,7 @@ async function waitForRegisterForm() {
 
 describe("TenantPortalRegisterPage email verification", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     window.sessionStorage.clear()
     window.localStorage.removeItem("sb-rolvix-auth-token")
     fetchSchema.mockReset()
@@ -326,6 +330,31 @@ describe("TenantPortalRegisterPage email verification", () => {
     })
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("keeps the staff session when registration is rejected", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    register.mockRejectedValue(new Error("Já existe uma conta com estes dados."))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
   })
 })
 
