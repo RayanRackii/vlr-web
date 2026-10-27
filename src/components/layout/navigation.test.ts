@@ -405,6 +405,22 @@ describe("firstPermittedProductPath", () => {
 })
 
 describe("getPageTitleKey", () => {
+  it.each([
+    ["overview", "nav.sections.overview"],
+    ["bookings", "nav.sections.bookings"],
+    ["maintenance", "nav.sections.maintenance"],
+    ["sales", "nav.sections.sales"],
+    ["peoplePortal", "nav.sections.peoplePortal"],
+    ["pmoc", "nav.pmoc"],
+    ["platform", "nav.sections.platform"],
+  ])("resolves the %s module intro title", (key, titleKey) => {
+    expect(getPageTitleKey(`/modulos/${key}`)).toBe(titleKey)
+  })
+
+  it.each(["unknown", "bookings/unknown"])("keeps the fallback for an unknown intro: %s", (key) => {
+    expect(getPageTitleKey(`/modulos/${key}`)).toBe("app.name")
+  })
+
   it("resolves the rentals resources page", () => {
     expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
   })

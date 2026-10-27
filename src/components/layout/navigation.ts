@@ -5,7 +5,7 @@ import {
 } from "lucide-react"
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
-import type { ModuleIntroKey } from "./navigationIntros"
+import { matchModuleIntro, type ModuleIntro, type ModuleIntroKey } from "./navigationIntros"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
@@ -133,6 +133,20 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...peoplePortalItems,
 ]
 
+const productNavigationSections: readonly AppNavigationSection[] = [
+  { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
+  { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
+  { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
+  { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
+  { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
+]
+
+const platformNavigationSection: AppNavigationSection = {
+  introKey: "platform",
+  titleKey: "nav.sections.platform",
+  items: adminManifest.navigationItems,
+}
+
 export function declaredPermissionKeys(entry: {
   permission?: string
   permissions?: readonly string[]
@@ -228,14 +242,7 @@ export function buildProductSections(
   activeModules: readonly string[],
   permissions: readonly string[],
 ): AppNavigationSection[] {
-  const groups: readonly AppNavigationSection[] = [
-    { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
-    { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
-    { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
-    { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
-    { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
-  ]
-  return groups.flatMap((section) => {
+  return productNavigationSections.flatMap((section) => {
     const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
     return items.length ? [{ ...section, items }] : []
   })
@@ -274,11 +281,7 @@ export function useAppNavigationSections(): AppNavigationState {
           titleKey: "nav.sections.overview",
           items: [overviewItem],
         },
-        {
-          introKey: "platform",
-          titleKey: "nav.sections.platform",
-          items: adminManifest.navigationItems,
-        },
+        platformNavigationSection,
       ]
     }
 
@@ -311,11 +314,15 @@ export function getPageTitleKey(
 ):
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
+  | ModuleIntro["titleKey"]
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
   | NavigationTab["labelKey"]
   | "account.profile"
   | "app.name" {
+  const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
+  if (intro) return intro.titleKey
+
   if (pathname === "/perfil") {
     return "account.profile"
   }
