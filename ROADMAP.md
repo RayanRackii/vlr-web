@@ -253,6 +253,8 @@ Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch
 
 ## 7. Refresh visual da UI (fundação)
 
+- [x] QA R24 C (2026-10-27, local): ações do catálogo fixas à direita e agenda em grupos de até dois recursos entre 768 e 1023px; mobile e desktop preservados. Regressões de componente, TypeScript e ESLint sem erros; 490 testes de Catalog/Rentals aprovados. Próximo WEB: conferir ambas as telas em DEV a 820px (Chromium bloqueado pelo sandbox local). Sem mudança no `vlr-api`.
+
 PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (PR 2/3).
 
 - [x] Refresh 1 — fundação (`ui/refresh-1-foundation`): tokens coesos em `src/index.css`/`tailwind.config.ts` (paleta neutra + um primário confiante, semânticos success/warning/danger/info, escala de raio/elevação/tipografia Geist com tabular-nums, focus rings acessíveis, paridade dark); primitivas em `src/components/ui` (button com variantes/tamanhos/icon/loading via `LoadingButton`, input/select/textarea 40px, card com `hoverable`, badge soft, table com header sticky e divisores sutis, skeleton, novo `EmptyState`); ícones padronizados em lucide (stroke 1.75) via `src/lib/icon.ts`; transições 150ms ease-out com `prefers-reduced-motion`. APIs públicas retrocompatíveis; i18n inalterado. PR 2/3 fazem o restyling de telas/shell.

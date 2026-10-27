@@ -1,6 +1,6 @@
 import { displayEndClock } from "@/lib/tenantTimeZone"
 import { Ban, CalendarCheck2, CircleCheck } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -68,7 +68,34 @@ type DayResourceGridProps = {
   onCellClick: (payload: ScheduleGridCellPayload) => void
 }
 
-export function DayResourceGrid({
+const TABLET_QUERY = "(min-width: 768px) and (max-width: 1023px)"
+
+function subscribeToTabletViewport(onChange: () => void) {
+  const media = window.matchMedia?.(TABLET_QUERY)
+  media?.addEventListener("change", onChange)
+  return () => media?.removeEventListener("change", onChange)
+}
+
+function isTabletViewport() {
+  return window.matchMedia?.(TABLET_QUERY).matches ?? false
+}
+
+export function DayResourceGrid(props: DayResourceGridProps) {
+  const isTablet = useSyncExternalStore(subscribeToTabletViewport, isTabletViewport, () => false)
+  if (!isTablet || props.assets.length <= 2) return <ResourceGrid {...props} />
+
+  // Keep readable resource widths by wrapping pairs into full-width grids on tablets.
+  return (
+    <div className="min-w-0 space-y-4">
+      {Array.from({ length: Math.ceil(props.assets.length / 2) }, (_, index) => {
+        const assets = props.assets.slice(index * 2, index * 2 + 2)
+        return <ResourceGrid key={assets[0].id} {...props} assets={assets} />
+      })}
+    </div>
+  )
+}
+
+function ResourceGrid({
   assets,
   occupancies,
   busyTargetKey,

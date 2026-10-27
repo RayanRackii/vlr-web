@@ -665,12 +665,12 @@ export function CatalogProductsPage() {
       ) : null}
 
       <div className="overflow-hidden rounded-xl border border-border">
-        <Table stickyHeader containerClassName="max-h-[32rem]">
+        <Table stickyHeader containerClassName="max-h-[32rem] md:max-lg:[&_thead_th:last-child]:z-20">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={header.column.id === "actions" ? "md:max-lg:right-0" : undefined}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -698,7 +698,12 @@ export function CatalogProductsPage() {
                   className="odd:bg-card even:bg-muted/20"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.id === "actions"
+                        ? "md:max-lg:sticky md:max-lg:right-0 md:max-lg:z-[1] md:max-lg:bg-card md:max-lg:shadow-[-1px_0_0_0_var(--border)]"
+                        : undefined}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
