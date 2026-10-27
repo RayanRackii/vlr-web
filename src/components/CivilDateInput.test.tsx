@@ -15,6 +15,28 @@ function DateField({ locale, min, max }: { locale: string; min?: string; max?: s
 }
 
 describe("CivilDateInput", () => {
+  it.each([
+    ["pt-BR", "14102026", "14/10/2026"],
+    ["en", "10142026", "10/14/2026"],
+    ["es", "14102026", "14/10/2026"],
+  ])("masks digits in %s while preserving ISO form values", async (locale, digits, formatted) => {
+    const user = userEvent.setup()
+    render(<DateField locale={locale} />)
+    const input = screen.getByRole("textbox")
+    await user.type(input, digits.slice(0, 3))
+    expect(input).toHaveValue(formatted.slice(0, 4))
+    await user.type(input, digits.slice(3))
+    expect(input).toHaveValue(formatted)
+    expect(screen.getByLabelText("Form value")).toHaveTextContent("2026-10-14")
+    await user.keyboard("{Backspace}")
+    expect(input).toHaveValue(formatted.slice(0, -1))
+    await user.keyboard("6")
+    expect(input).toHaveValue(formatted)
+    await user.clear(input)
+    await user.paste(digits)
+    expect(input).toHaveValue(formatted)
+  })
+
   it("clears an incomplete draft when its form is reset", async () => {
     const user = userEvent.setup()
     render(<DateField locale="pt-BR" />)

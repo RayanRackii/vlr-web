@@ -45,7 +45,8 @@ import {
   BOOKING_HORIZON_DAY_MAX,
   BOOKING_HORIZON_DAY_MIN,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
-import { createRentalResourceFormSchema, type RegistryCategoryListItem, type RentalResourceFormValues, type ResourceHorizonMode } from "@/features/rentals/schemas/rentalResourceSchemas"
+import {
+  RESOURCE_CAPACITY_PEOPLE_MAX, createRentalResourceFormSchema, type RegistryCategoryListItem, type RentalResourceFormValues, type ResourceHorizonMode } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
 import { listRentalAssetCategories } from "@/features/rentals/services/rentalResourcesService"
@@ -144,6 +145,7 @@ export function RentalResourceSheet({
         categoryRequired: t("rentals.resources.validation.categoryRequired"),
         familyRequired: t("rentals.resources.validation.familyRequired"),
         quantityMin: t("rentals.resources.validation.quantityMin"),
+        capacityRange: t("resourceVisual.capacityRange"),
         queueOpeningTimeRequired: t(
           "rentals.resources.validation.queueOpeningTimeRequired",
         ),
@@ -359,6 +361,7 @@ export function RentalResourceSheet({
                       {...field}
                     />
                   </FormControl>
+                  <LiveFieldMessage message={issueMessageAt(visibleErrors, ["name"])} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -842,7 +845,7 @@ export function RentalResourceSheet({
                 <FormField control={form.control} name="visualTemplateRevisionId" render={({ field }) => (
                   <FormItem><FormLabel className="sr-only">{t("resourceVisual.pickerTitle")}</FormLabel><FormControl><InlineCreateSelect value={field.value || "__no-template__"} onValueChange={(value) => { const revisionId = value === "__no-template__" ? "" : value; field.onChange(revisionId); field.onBlur(); applyTemplateDefaults(revisionId) }} options={templateOptions} onRefreshOptions={refreshTemplates} placeholder={t("resourceVisual.noTemplate")} createLabel={t("rentals.resources.inlineCreate.templateAction")} drawerTitle={t("rentals.resources.inlineCreate.templateTitle")} drawerDescription={t("rentals.resources.inlineCreate.templateDescription")} disabled={readOnly} canCreate={canCreateGlobalTemplate} renderCreateForm={({ complete, close }) => <InlineCreateVisualTemplateForm complete={async (option) => { setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option]); await complete(option) }} close={close} />} /></FormControl><LiveFieldMessage message={issueMessageAt(visibleErrors, ["visualTemplateRevisionId"])} /><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} value={field.value} onBlur={field.onBlur} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><LiveFieldMessage message={issueMessageAt(visibleErrors, ["capacityPeople"])} /><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} max={RESOURCE_CAPACITY_PEOPLE_MAX} step={1} {...field} onBlur={field.onBlur} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><LiveFieldMessage message={issueMessageAt(visibleErrors, ["capacityPeople"])} /><FormMessage /></FormItem>} />
                 <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
               </section>
             </TabsContent>

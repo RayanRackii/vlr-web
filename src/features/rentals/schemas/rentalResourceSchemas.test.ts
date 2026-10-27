@@ -20,6 +20,7 @@ const schema = createRentalResourceFormSchema({
   categoryRequired: "category",
   familyRequired: "family",
   quantityMin: "quantity",
+  capacityRange: "capacity",
   queueOpeningTimeRequired: "queue",
   horizonRange: "horizon",
 })

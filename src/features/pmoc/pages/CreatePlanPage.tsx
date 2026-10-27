@@ -260,6 +260,14 @@ export function CreatePlanPage() {
           <form
             className="space-y-8"
             noValidate
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing &&
+                event.target instanceof HTMLInputElement &&
+                !["button", "submit", "checkbox", "radio", "file"].includes(event.target.type)) {
+                event.preventDefault()
+                if (!form.formState.isSubmitting) event.currentTarget.requestSubmit()
+              }
+            }}
             onSubmit={(event) => {
               void form.handleSubmit(onSubmit)(event)
             }}
@@ -328,7 +336,7 @@ export function CreatePlanPage() {
                         items={unitItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
                             <SelectValue
                               placeholder={t(
                                 "pmoc.create.form.unitPlaceholder",
@@ -367,7 +375,7 @@ export function CreatePlanPage() {
                         items={categoryItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
                             <SelectValue
                               placeholder={t(
                                 "pmoc.create.form.categoryPlaceholder",
@@ -412,7 +420,7 @@ export function CreatePlanPage() {
                         items={statusItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>

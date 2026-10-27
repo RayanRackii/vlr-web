@@ -173,6 +173,38 @@ describe("CreatePlanPage validity gate", () => {
     )
   }
 
+  it("submits validation with Enter and focuses the first invalid field in visual order", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    const description = screen.getByLabelText(i18n.t("pmoc.create.form.description"))
+    await user.click(description)
+    // Enter inside a multiline field must keep editing, without submitting.
+    await user.keyboard("{Enter}")
+    expect(description).toHaveFocus()
+    expect(screen.queryByText(i18n.t("pmoc.create.validation.nameRequired"))).not.toBeInTheDocument()
+    await user.click(name)
+    await user.keyboard("{Enter}")
+    await waitFor(() => expect(name).toHaveAttribute("aria-invalid", "true"))
+    expect(name).toHaveFocus()
+    expect(name).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.nameRequired"))
+    expect(name).toHaveClass("aria-invalid:border-destructive")
+    expect(createPlanMock).not.toHaveBeenCalled()
+  })
+
+  it("focuses an invalid picker after Enter when the earlier name is valid", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    await user.type(name, "Plano de manutenção{Enter}")
+    const unit = screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") })
+    await waitFor(() => expect(unit).toHaveFocus())
+    expect(unit).toHaveAttribute("aria-invalid", "true")
+    expect(unit).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.unitRequired"))
+    expect(unit).toHaveClass("aria-invalid:border-destructive")
+    expect(createPlanMock).not.toHaveBeenCalled()
+  })
+
   it("keeps pristine errors hidden and reveals only the blurred field, then all errors on submit", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -222,7 +254,8 @@ describe("CreatePlanPage validity gate", () => {
       expect(screen.getAllByText(message)).toHaveLength(1)
       expect(container.textContent).not.toContain("Expected a civil")
       await user.clear(date)
-      await user.type(date, locale === "en" ? "10/14/2026" : "14/10/2026")
+      await user.type(date, locale === "en" ? "10142026" : "14102026")
+      expect(date).toHaveValue(locale === "en" ? "10/14/2026" : "14/10/2026")
       expect(screen.queryByText(message)).not.toBeInTheDocument()
       const name = screen.getByLabelText(i18n.t("pmoc.create.form.name"))
       fireEvent.change(name, { target: { value: "x".repeat(201) } })

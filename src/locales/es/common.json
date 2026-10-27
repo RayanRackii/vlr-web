@@ -3607,6 +3607,7 @@
     "showFewerTags": "Mostrar menos",
     "noTemplate": "Sin modelo",
     "capacityPeople": "Capacidad de personas (opcional)",
+    "capacityRange": "Indique un número entero entre 1 y 100000.",
     "applySuggestions": "Aplicar sugerencias del modelo",
     "applySuggestionsHelp": "Completa la capacidad y los horarios sugeridos por el modelo.",
     "tagKindSegment": "Segmento",
