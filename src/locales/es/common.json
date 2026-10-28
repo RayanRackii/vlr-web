@@ -2669,6 +2669,7 @@
       "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
     },
     "validation": {
+      "duplicateEmail": "Ya existe una persona con este correo electrónico.",
       "fullNameRequired": "Informe el nombre.",
       "emailInvalid": "Informe un e-mail válido.",
       "rolesRequired": "Seleccione al menos una función.",

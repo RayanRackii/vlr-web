@@ -18,6 +18,7 @@ import {
 import { CUSTOMER_TOKEN_STORAGE_KEY } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
+import { staffLoginPath } from "@/lib/safeStaffNextPath"
 import appI18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 import { removeSessionKeysAsSignedOut, resetSignOutMarkerForTests } from "@/lib/signOutMarker"
@@ -99,7 +100,7 @@ export function loginPathForAuthenticatedPath(
 ): string | null {
   const surface = authenticatedSurface(pathname, hostSubdomain)
   if (surface === "staff") {
-    return "/login"
+    return staffLoginPath(pathname)
   }
   if (surface !== "customer") {
     return null
@@ -210,7 +211,10 @@ function concealAuthenticatedShell(): void {
 }
 
 function blockAndLeave(pathname: string, hostSubdomain: string | null): void {
-  const target = loginPathForAuthenticatedPath(pathname, hostSubdomain)
+  const target = loginPathForAuthenticatedPath(
+    `${pathname}${window.location.search}${window.location.hash}`,
+    hostSubdomain,
+  )
   if (!target) {
     return
   }

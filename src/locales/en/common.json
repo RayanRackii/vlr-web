@@ -2669,6 +2669,7 @@
       "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
     },
     "validation": {
+      "duplicateEmail": "A person with this email already exists.",
       "fullNameRequired": "Enter a name.",
       "emailInvalid": "Enter a valid email.",
       "rolesRequired": "Select at least one function.",

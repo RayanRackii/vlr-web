@@ -459,7 +459,7 @@ function redirectExpiredStaffSession(): void {
   void import("@/lib/i18n").then(({ default: i18n }) => {
     toast.error(i18n.t("auth.sessionExpired"))
   })
-  const currentPath = `${window.location.pathname}${window.location.search}`
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
   const nextPath = safeStaffNextPath(currentPath)
   assignBrowserLocation(nextPath ? staffLoginPath(nextPath) : "/login")
 }
