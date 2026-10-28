@@ -1963,7 +1963,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(listMine).not.toHaveBeenCalled()
     expect(fetchDay).not.toHaveBeenCalled()
     expect(fetchQueue).not.toHaveBeenCalled()
-    expect(screen.queryByRole("listitem")).not.toBeInTheDocument()
+    expect(within(document.getElementById("minhas-reservas")!).queryByRole("listitem")).not.toBeInTheDocument()
     expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
   })
 
@@ -2043,7 +2043,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserving"),
       }),
     ).not.toBeInTheDocument()
-    const row = screen.getByRole("listitem")
+    const row = within(document.getElementById("minhas-reservas")!).getByRole("listitem")
     expect(row).toHaveTextContent("Quadra 1")
     expect(row).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
@@ -2748,7 +2748,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await waitFor(() => {
       expect(fetchDay.mock.calls.length).toBeGreaterThan(callsBeforeSettle)
     })
-    expect(await screen.findByRole("listitem")).toHaveTextContent(
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
     )
     expect(
@@ -2813,7 +2813,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       resolveBook(created)
     })
 
-    expect(await screen.findByRole("listitem")).toHaveTextContent(
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
     )
     expect(bookSlot).toHaveBeenCalledTimes(1)
@@ -3582,7 +3582,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const user = userEvent.setup()
     renderAgenda()
 
-    expect(await screen.findByRole("listitem")).toHaveTextContent("Total R$ 80,00")
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent("Total R$ 80,00")
     await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
     expect(
       await screen.findByText("Disponível. Estimativa: R$ 80,00"),
@@ -3590,15 +3590,15 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     try {
       await i18n.changeLanguage("en")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80.00")
-      expect(screen.getByRole("listitem")).not.toHaveTextContent("80,00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).toHaveTextContent("Total R$ 80.00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).not.toHaveTextContent("80,00")
       expect(
         screen.getByText("Available. Estimate: R$ 80.00"),
       ).toBeInTheDocument()
 
       await i18n.changeLanguage("es")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
-      expect(screen.getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
       expect(
         screen.getByText("Disponible. Estimación: R$ 80,00"),
       ).toBeInTheDocument()

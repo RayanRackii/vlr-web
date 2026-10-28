@@ -13,7 +13,10 @@ import {
 } from "react-router-dom"
 import { toast } from "sonner"
 
-import { PageHeader } from "@/components/layout/PageHeader"
+import { DateStrip } from "@/features/tenantPortal/components/portal/DateStrip"
+import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
+import { PortalBookingEmptyState, PortalRightRail } from "@/features/tenantPortal/components/portal/PortalRightRail"
+import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
@@ -283,6 +286,7 @@ export function TenantPortalAgendaPage() {
   const { subdomain, primary, menu, branding } =
     useOutletContext<CustomerAppOutletContext>()
   const timeZoneId = useTenantTimeZone()
+  const { style: portalThemeStyle } = useTenantThemeCssVars(branding.primaryColor, branding.accentColor)
   const signedIn = isCustomerSignedInForTenant(subdomain)
 
   const menuItem = useMemo(
@@ -1964,8 +1968,14 @@ export function TenantPortalAgendaPage() {
 
   const isReservationRoute = searchParams.has("reservation") || location.hash === CUSTOMER_MY_RESERVATIONS_HASH
 
+  const nextReservation = mine
+    .filter((reservation) => !isCancelledReservationStatus(reservation.status) && !isPastReservation(reservation.endDateTime))
+    .slice()
+    .sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime))[0]
+  const reservationsHref = `${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`
+
   if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
-    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
+    return <BookingMapExperience themeStyle={portalThemeStyle} tenantName={branding.displayName} nextReservation={nextReservation} reservationsHref={reservationsHref} subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
   }
 
   // Same rows as `mine`, grouped for scanning — no re-fetch, no status change.
@@ -2183,18 +2193,17 @@ export function TenantPortalAgendaPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <PageHeader
-        title={title}
-        description={t("tenantPortal.agenda.subtitlePicker")}
-      />
+    <div className="portal-booking-grid">
+      <section className="portal-booking-column">
+      <PortalBookingHeader title={title} tenantName={branding.displayName} />
 
       {loading ? (
         <FormSkeleton fields={4} />
       ) : (
         <div className="space-y-6">
-        <div className="space-y-6 md:grid md:grid-cols-[1fr_320px] md:items-start md:gap-6 md:space-y-0">
         <div className="space-y-6">
+        <div className="space-y-6">
+          <DateStrip value={date} today={tenantTodayIsoDate(timeZoneId)} locale={moneyLocale} max={horizonMaxDate} onChange={(nextDate) => onDateChange(nextDate, "calendar")} />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1 text-sm">
               <label htmlFor={dateInputId}>{t("tenantPortal.agenda.date")}</label>
@@ -2351,11 +2360,10 @@ export function TenantPortalAgendaPage() {
           </div>
 
           {visibleAssets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.noAssets")}
-            </p>
+            <PortalBookingEmptyState />
           ) : (
-            <LayoutCanvasBoard
+            <div className="portal-canvas"><LayoutCanvasBoard
+              className="portal-legacy-board"
               mode="pick"
               aspectRatio={aspectRatio}
               canvasWidthPercent={canvasWidthPercent}
@@ -2394,7 +2402,7 @@ export function TenantPortalAgendaPage() {
               })}
               onSelect={selectRentalAsset}
               onUnavailableSelect={explainUnavailableAsset}
-            />
+            /></div>
           )}
 
           {hasAuthoredLayout && unplacedAssets.length > 0 ? (
@@ -2686,10 +2694,11 @@ export function TenantPortalAgendaPage() {
           ) : null}
         </div>
 
-        {/* <md: `contents` + block parent so the sticky CTA's constraint box is the whole booking section, not a grid row. */}
-        <div className="space-y-3 max-md:contents md:sticky md:top-16 md:self-start">
-          {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
-          <div className="flex min-h-11 items-center max-md:mt-6">
+        <div className="portal-summary">
+          <div className="min-w-0 flex-1">
+            {selectedAsset ? <p className="truncate font-semibold" title={selectedAsset.name}>{`${selectedAsset.name} · ${formatLocaleCivilDayMonth(date, moneyLocale)}`}</p> : null}
+            {selectedSlot ? <p className="text-xs text-muted-foreground">{formatLocaleCivilDayMonth(date, moneyLocale)} · {formatScheduleTime(selectedSlot.startTime)}–{formatScheduleTime(selectedSlot.endTime)}</p> : null}
+          <div className="flex min-h-11 items-center">
             {!selectedSlot && quote.status === "idle" ? (
               <p className="text-sm text-muted-foreground">
                 {startTime.length === 0
@@ -2732,6 +2741,7 @@ export function TenantPortalAgendaPage() {
             ) : null}
           </div>
 
+          </div>
           {showCutoffWarning ? (
             <p
               role="alert"
@@ -2745,10 +2755,10 @@ export function TenantPortalAgendaPage() {
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
-          <div className="sticky bottom-0 z-10 border-t border-border bg-background py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:py-0 md:pb-0">
+          <div className="shrink-0">
             <LoadingButton
               type="button"
-              className="min-h-11 w-full md:w-auto"
+              className="min-h-11 w-full sm:w-auto"
               style={{ backgroundColor: primary }}
               loading={submitting}
               loadingLabel={t("tenantPortal.agenda.reserving")}
@@ -2774,6 +2784,8 @@ export function TenantPortalAgendaPage() {
 
           <div
             id="minhas-reservas"
+            role="region"
+            aria-label={t("tenantPortal.agenda.myReservations")}
             className="scroll-mt-16 space-y-4 border-t border-border pt-5"
           >
             <h3 className="text-lg font-semibold text-foreground">
@@ -2910,6 +2922,8 @@ export function TenantPortalAgendaPage() {
           </AlertDialog>
         </div>
       )}
+      </section>
+      <PortalRightRail nextReservation={nextReservation} reservationsHref={reservationsHref} />
     </div>
   )
 }

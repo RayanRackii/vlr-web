@@ -33,7 +33,7 @@ export function TenantPortalChromeHeader({
   const signedIn = isCustomerSignedInForTenant(subdomain)
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
+    <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-card/90 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <a
           href={platformOrigin}

@@ -1,3 +1,5 @@
+import "./portal/portal.css"
+
 import { X } from "lucide-react"
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
@@ -184,7 +186,7 @@ export function CustomerAppLayout() {
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={themeStyle}>
+    <div className="portal-shell min-h-screen bg-background text-foreground" style={themeStyle}>
       <AppShell
         sidebar={({ onNavigate }) => (
           <CustomerSidebar
@@ -192,6 +194,7 @@ export function CustomerAppLayout() {
             logoSvg={branding.logoSvg}
             primaryColor={branding.primaryColor}
             items={navItems}
+            userLabel={getCustomerLabel()}
             onNavigate={onNavigate}
           />
         )}

@@ -49,7 +49,7 @@ describe("BookingMapExperience", () => {
     })
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     expect(await screen.findByRole("button", { name: "Raquete" })).toHaveTextContent(expected)
   })
 
@@ -57,7 +57,7 @@ describe("BookingMapExperience", () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
 
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     const tile = await screen.findByRole("button", { name: "Raquete" })
     expect(tile).toHaveTextContent("Raquete · R$ 20,00/hora · 3 de 4 disponíveis")
   })
@@ -84,7 +84,7 @@ describe("BookingMapExperience", () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} scopedAssets={scopedAssets} /></TenantTimeZoneContext.Provider>)
 
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     await user.click(await screen.findByRole("button", { name: "Raquete" }))
     await user.click(await screen.findByRole("button", { name: "14:00–15:00 · R$ 50,00" }))
 
