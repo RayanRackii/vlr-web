@@ -1,30 +1,11 @@
-import { useEffect, useMemo, useState } from "react"
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { useEffect, useState } from "react"
+import { BarChart3, Layers } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { BarChart3, Boxes, Layers } from "lucide-react"
 
-import { PageHeader } from "@/components/layout/PageHeader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
@@ -32,6 +13,8 @@ import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTena
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
+import { DashboardHero, DashboardQuickAccess, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
+import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts"
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
@@ -41,90 +24,10 @@ import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
-import { cn } from "@/lib/utils"
-
-const ASSET_PIE_COLORS = [
-  "hsl(var(--chart-1, 142 76% 36%))",
-  "hsl(var(--chart-2, 38 92% 50%))",
-  "hsl(var(--chart-3, 215 16% 47%))",
-] as const
+import "./staffDashboard.css"
 
 function completionRate(total: number, completed: number): number {
-  if (total === 0) {
-    return 0
-  }
-  return Math.round((completed / total) * 100)
-}
-
-function formatMoney(amount: number): string {
-  return formatLocaleCurrency(amount, "BRL", i18n.language)
-}
-
-function KpiSkeleton() {
-  return (
-    <Card className="min-h-[7.5rem] min-w-0">
-      <CardHeader className="pb-2">
-        <Skeleton className="h-4 w-28" />
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-3 w-40 max-w-full" />
-      </CardContent>
-    </Card>
-  )
-}
-
-function KpiCard({
-  title,
-  value,
-  subtitle,
-  highlight,
-}: {
-  title: string
-  value: string | number
-  subtitle: string
-  highlight?: boolean
-}) {
-  const highlightText = highlight
-    ? "text-[color-mix(in_oklch,var(--warning)_55%,var(--foreground))]"
-    : undefined
-
-  return (
-    <Card
-      className={cn("min-w-0",
-        highlight
-          ? "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_6%,var(--card))]"
-          : undefined
-      )}
-    >
-      <CardHeader>
-        <CardTitle className={highlightText}>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={cn("text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl", highlightText)}>
-          {value}
-        </p>
-        <CardDescription className="mt-1">{subtitle}</CardDescription>
-      </CardContent>
-    </Card>
-  )
-}
-
-function SectionHeading({
-  title,
-  description,
-}: {
-  title: string
-  description?: string
-}) {
-  return (
-    <div className="space-y-1">
-      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-      {description ? (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      ) : null}
-    </div>
-  )
+  return total === 0 ? 0 : Math.round((completed / total) * 100)
 }
 
 export function DashboardPage() {
@@ -290,431 +193,75 @@ export function TenantAdminDashboard() {
     }
   }, [userId, t, loadAttempt])
 
-  const workOrderChartData = useMemo(() => {
-    if (!metrics?.workOrders) {
-      return []
-    }
-
-    return [
-      {
-        key: "pending",
-        label: t("dashboard.charts.workOrders.pending"),
-        value: metrics.workOrders.pending,
-      },
-      {
-        key: "inProgress",
-        label: t("dashboard.charts.workOrders.inProgress"),
-        value: metrics.workOrders.inProgress,
-      },
-      {
-        key: "completed",
-        label: t("dashboard.charts.workOrders.completed"),
-        value: metrics.workOrders.completed,
-      },
-    ]
-  }, [metrics, t])
-
-  const assetChartData = useMemo(() => {
-    if (!metrics?.assets) {
-      return []
-    }
-
-    return [
-      {
-        key: "active",
-        name: t("dashboard.charts.assets.active"),
-        value: metrics.assets.active,
-      },
-      {
-        key: "maintenance",
-        name: t("dashboard.charts.assets.maintenance"),
-        value: metrics.assets.inMaintenance,
-      },
-      {
-        key: "inactive",
-        name: t("dashboard.charts.assets.inactive"),
-        value: metrics.assets.inactive,
-      },
-    ].filter((slice) => slice.value > 0)
-  }, [metrics, t])
-
-  const hasModuleSections =
-    metrics !== null &&
-    (metrics.assets !== null ||
-      metrics.workOrders !== null ||
-      metrics.pmoc !== null ||
-      metrics.maintenance !== null ||
-      metrics.rentals !== null)
+  const hasModuleSections = metrics !== null &&
+    [metrics.assets, metrics.workOrders, metrics.pmoc, metrics.maintenance, metrics.rentals].some((section) => section !== null)
+  // Do not present retained values as current after a failed refresh.
+  const visibleMetrics = !isLoading && !loadError ? metrics : null
 
   return (
-    <div aria-busy={isLoading} className="mx-auto w-full min-w-0 max-w-7xl space-y-6 [overflow-wrap:anywhere] sm:space-y-8 [&_[data-slot=card]]:min-w-0">
-      <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
-
-      <RentalsReadinessCard />
+    <div aria-busy={isLoading} className="staff-dashboard">
+      <DashboardHero metrics={visibleMetrics} />
+      <div className="staff-dashboard-readiness"><RentalsReadinessCard /></div>
 
       {loadError !== null ? (
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
+        <Alert variant="destructive"><AlertDescription>{loadError}</AlertDescription></Alert>
       ) : null}
 
-      <section className="space-y-4">
-        <SectionHeading
-          title={t("dashboard.sections.customers.title")}
-          description={t("dashboard.sections.customers.description")}
-        />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {isLoading ? (
-            <>
-              <KpiSkeleton />
-              <KpiSkeleton />
-              <KpiSkeleton />
-              <KpiSkeleton />
-            </>
-          ) : metrics ? (
-            <>
-              <KpiCard
-                title={t("dashboard.kpi.loggedInToday.title")}
-                value={metrics.customerActivity.loggedInToday}
-                subtitle={t("dashboard.kpi.loggedInToday.subtitle")}
-              />
-              <KpiCard
-                title={t("dashboard.kpi.loggedInWeek.title")}
-                value={metrics.customerActivity.loggedInLast7Days}
-                subtitle={t("dashboard.kpi.loggedInWeek.subtitle")}
-              />
-              <KpiCard
-                title={t("dashboard.kpi.loggedInMonth.title")}
-                value={metrics.customerActivity.loggedInLast30Days}
-                subtitle={t("dashboard.kpi.loggedInMonth.subtitle")}
-              />
-              <KpiCard
-                title={t("dashboard.kpi.totalCustomers.title")}
-                value={metrics.customerActivity.totalCustomers}
-                subtitle={t("dashboard.kpi.totalCustomers.subtitle")}
-              />
-            </>
-          ) : (
-            <Card className="sm:col-span-2 xl:col-span-4">
-              <CardContent>
-                <EmptyState
-                  size="sm"
-                  icon={BarChart3}
-                  title={t("dashboard.unavailable")}
-                  action={<Button variant="outline" className="min-h-11" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t("common.retry")}</Button>}
-                />
-              </CardContent>
-            </Card>
+      {visibleMetrics && hasModuleSections ? <DashboardQuickAccess /> : null}
+
+      {!visibleMetrics || hasModuleSections ? <section className="staff-dashboard-section" aria-labelledby="dashboard-customers">
+        <SectionHeading id="dashboard-customers" title={t("dashboard.sections.customers.title")} description={t("dashboard.sections.customers.description")} />
+        <div className="staff-dashboard-kpis">
+          {isLoading ? <><KpiSkeleton /><KpiSkeleton /><KpiSkeleton /><KpiSkeleton /></> : visibleMetrics ? <>
+            <KpiCard title={t("dashboard.kpi.loggedInToday.title")} value={visibleMetrics.customerActivity.loggedInToday} subtitle={t("dashboard.kpi.loggedInToday.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.loggedInWeek.title")} value={visibleMetrics.customerActivity.loggedInLast7Days} subtitle={t("dashboard.kpi.loggedInWeek.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.loggedInMonth.title")} value={visibleMetrics.customerActivity.loggedInLast30Days} subtitle={t("dashboard.kpi.loggedInMonth.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.totalCustomers.title")} value={visibleMetrics.customerActivity.totalCustomers} subtitle={t("dashboard.kpi.totalCustomers.subtitle")} />
+          </> : (
+            <Card className="staff-dashboard-unavailable"><CardContent>
+              <EmptyState size="sm" icon={BarChart3} title={t("dashboard.unavailable")} action={<Button variant="outline" className="min-h-11" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t("common.retry")}</Button>} />
+            </CardContent></Card>
           )}
         </div>
-      </section>
+      </section> : null}
 
-      {!isLoading && metrics && !hasModuleSections ? (
-        <EmptyState size="sm" icon={Layers} title={t("dashboard.emptyModules")} description={t("dashboard.emptyDescription")} />
+      {visibleMetrics && !hasModuleSections ? (
+        <Card className="staff-dashboard-empty"><EmptyState icon={Layers} title={t("dashboard.emptyModules")} description={t("dashboard.emptyDescription")} /></Card>
       ) : null}
 
-      {!isLoading && metrics?.assets ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title={t("dashboard.sections.assets.title")}
-            description={t("dashboard.sections.assets.description")}
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              title={t("dashboard.kpi.totalAssets.title")}
-              value={metrics.assets.total}
-              subtitle={t("dashboard.kpi.totalAssets.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.activeAssets.title")}
-              value={metrics.assets.active}
-              subtitle={t("dashboard.kpi.activeAssets.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.maintenanceAssets.title")}
-              value={metrics.assets.inMaintenance}
-              subtitle={t("dashboard.kpi.maintenanceAssets.subtitle")}
-              highlight={metrics.assets.inMaintenance > 0}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.inactiveAssets.title")}
-              value={metrics.assets.inactive}
-              subtitle={t("dashboard.kpi.inactiveAssets.subtitle")}
-            />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base text-foreground">
-                  {t("dashboard.charts.assets.title")}
-                </CardTitle>
-                <CardDescription>
-                  {t("dashboard.charts.assets.description")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-64 min-w-0 sm:h-72">
-                {assetChartData.length === 0 ? (
-                  <EmptyState size="sm" className="h-full" icon={Boxes} title={t("dashboard.charts.assets.empty")} description={t("dashboard.emptyDescription")} />
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={assetChartData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={90}
-                        paddingAngle={2}
-                      >
-                        {assetChartData.map((entry, index) => (
-                          <Cell
-                            key={entry.key}
-                            fill={
-                              ASSET_PIE_COLORS[index % ASSET_PIE_COLORS.length]
-                            }
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => [
-                          typeof value === "number" ? value : Number(value),
-                          t("dashboard.charts.tooltip.count"),
-                        ]}
-                        contentStyle={{
-                          borderRadius: "0.5rem",
-                          borderColor: "hsl(var(--border))",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base text-foreground">
-                  {t("dashboard.charts.families.title")}
-                </CardTitle>
-                <CardDescription>
-                  {t("dashboard.charts.families.description")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {metrics.assets.byFamily.length === 0 ? (
-                  <EmptyState size="sm" icon={Layers} title={t("dashboard.charts.families.empty")} description={t("dashboard.emptyDescription")} />
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {metrics.assets.byFamily.map((family) => (
-                      <li
-                        key={family.key}
-                        className="flex items-center justify-between gap-3 py-2 text-sm"
-                      >
-                        <span className="min-w-0">{family.label}</span>
-                        <span className="shrink-0 font-medium tabular-nums">
-                          {family.count}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+      {visibleMetrics?.rentals ? (
+        <section className="staff-dashboard-section" aria-labelledby="dashboard-rentals">
+          <SectionHeading id="dashboard-rentals" title={t("dashboard.sections.rentals.title")} description={t("dashboard.sections.rentals.description")} />
+          <div className="staff-dashboard-kpis">
+            <KpiCard title={t("dashboard.kpi.reservationsToday.title")} value={reservationsTodayTotal(visibleMetrics.rentals)} subtitle={t("dashboard.kpi.reservationsToday.subtitle", { pending: visibleMetrics.rentals.reservationsTodayPendingDeposit, confirmed: visibleMetrics.rentals.reservationsTodayConfirmed })} />
+            <KpiCard title={t("dashboard.kpi.confirmationRate.title")} value={`${visibleMetrics.rentals.confirmationRateLast7Days}%`} subtitle={t("dashboard.kpi.confirmationRate.subtitle")} />
+            {hasSlotsToday(visibleMetrics.rentals) ? <KpiCard title={t("dashboard.kpi.slotsToday.title")} value={`${visibleMetrics.rentals.slotsBookedToday}/${visibleMetrics.rentals.slotsAvailableToday + visibleMetrics.rentals.slotsBookedToday}`} subtitle={t("dashboard.kpi.slotsToday.subtitle", { available: visibleMetrics.rentals.slotsAvailableToday, booked: visibleMetrics.rentals.slotsBookedToday })} /> : null}
+            <KpiCard title={t("dashboard.kpi.reservedRevenue.title")} value={formatLocaleCurrency(visibleMetrics.rentals.reservedRevenueThisMonth, "BRL", i18n.language)} subtitle={t("dashboard.kpi.reservedRevenue.subtitle")} />
           </div>
         </section>
       ) : null}
 
-      {!isLoading && metrics?.rentals ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title={t("dashboard.sections.rentals.title")}
-            description={t("dashboard.sections.rentals.description")}
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              title={t("dashboard.kpi.reservationsToday.title")}
-              value={reservationsTodayTotal(metrics.rentals)}
-              subtitle={t("dashboard.kpi.reservationsToday.subtitle", {
-                pending: metrics.rentals.reservationsTodayPendingDeposit,
-                confirmed: metrics.rentals.reservationsTodayConfirmed,
-              })}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.confirmationRate.title")}
-              value={`${metrics.rentals.confirmationRateLast7Days}%`}
-              subtitle={t("dashboard.kpi.confirmationRate.subtitle")}
-            />
-            {hasSlotsToday(metrics.rentals) ? (
-              <KpiCard
-                title={t("dashboard.kpi.slotsToday.title")}
-                value={`${metrics.rentals.slotsBookedToday}/${metrics.rentals.slotsAvailableToday + metrics.rentals.slotsBookedToday}`}
-                subtitle={t("dashboard.kpi.slotsToday.subtitle", {
-                  available: metrics.rentals.slotsAvailableToday,
-                  booked: metrics.rentals.slotsBookedToday,
-                })}
-              />
-            ) : null}
-            <KpiCard
-              title={t("dashboard.kpi.reservedRevenue.title")}
-              value={formatMoney(metrics.rentals.reservedRevenueThisMonth)}
-              subtitle={t("dashboard.kpi.reservedRevenue.subtitle")}
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <KpiCard
-              title={t("dashboard.kpi.rentableSpaces.title")}
-              value={metrics.rentals.rentableSpaces}
-              subtitle={t("dashboard.kpi.rentableSpaces.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.rentableGoods.title")}
-              value={metrics.rentals.rentableGoods}
-              subtitle={t("dashboard.kpi.rentableGoods.subtitle")}
-            />
+      {visibleMetrics?.workOrders ? (
+        <section className="staff-dashboard-section" aria-labelledby="dashboard-work-orders">
+          <SectionHeading id="dashboard-work-orders" title={t("dashboard.sections.workOrders.title")} description={t("dashboard.sections.workOrders.description")} />
+          <div className="staff-dashboard-kpis">
+            <KpiCard title={t("dashboard.kpi.workOrdersMonth.title")} value={visibleMetrics.workOrders.totalThisMonth} subtitle={t("dashboard.kpi.workOrdersMonth.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.completionRate.title")} value={`${completionRate(visibleMetrics.workOrders.totalThisMonth, visibleMetrics.workOrders.completed)}%`} subtitle={t("dashboard.kpi.completionRate.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.pendingWorkOrders.title")} value={visibleMetrics.workOrders.pending} subtitle={t("dashboard.kpi.pendingWorkOrders.subtitle")} highlight={visibleMetrics.workOrders.pending > 0} />
+            <KpiCard title={t("dashboard.kpi.inProgressWorkOrders.title")} value={visibleMetrics.workOrders.inProgress} subtitle={t("dashboard.kpi.inProgressWorkOrders.subtitle")} />
           </div>
         </section>
       ) : null}
 
-      {!isLoading && metrics?.workOrders ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title={t("dashboard.sections.workOrders.title")}
-            description={t("dashboard.sections.workOrders.description")}
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              title={t("dashboard.kpi.workOrdersMonth.title")}
-              value={metrics.workOrders.totalThisMonth}
-              subtitle={t("dashboard.kpi.workOrdersMonth.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.completionRate.title")}
-              value={`${completionRate(
-                metrics.workOrders.totalThisMonth,
-                metrics.workOrders.completed,
-              )}%`}
-              subtitle={t("dashboard.kpi.completionRate.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.pendingWorkOrders.title")}
-              value={metrics.workOrders.pending}
-              subtitle={t("dashboard.kpi.pendingWorkOrders.subtitle")}
-              highlight={metrics.workOrders.pending > 0}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.inProgressWorkOrders.title")}
-              value={metrics.workOrders.inProgress}
-              subtitle={t("dashboard.kpi.inProgressWorkOrders.subtitle")}
-            />
-          </div>
+      {visibleMetrics ? <DashboardCharts metrics={visibleMetrics} /> : null}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-foreground">
-                {t("dashboard.charts.workOrders.title")}
-              </CardTitle>
-              <CardDescription>
-                {t("dashboard.charts.workOrders.description")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-64 min-w-0 sm:h-72">
-              {workOrderChartData.every((entry) => entry.value === 0) ? (
-                <EmptyState size="sm" className="h-full" icon={BarChart3} title={t("dashboard.workOrdersEmpty")} description={t("dashboard.emptyDescription")} />
-              ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={workOrderChartData}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-border"
-                  />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    tick={{ fontSize: 12 }}
-                    className="fill-muted-foreground"
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      typeof value === "number" ? value : Number(value),
-                      t("dashboard.charts.tooltip.count"),
-                    ]}
-                    labelFormatter={(label) => String(label)}
-                    contentStyle={{
-                      borderRadius: "0.5rem",
-                      borderColor: "hsl(var(--border))",
-                    }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="var(--primary)"
-                    radius={[6, 6, 0, 0]}
-                    name={t("dashboard.charts.tooltip.count")}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-      ) : null}
-
-      {!isLoading && metrics?.pmoc ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title={t("dashboard.sections.pmoc.title")}
-            description={t("dashboard.sections.pmoc.description")}
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <KpiCard
-              title={t("dashboard.kpi.activePlans.title")}
-              value={metrics.pmoc.activePlans}
-              subtitle={t("dashboard.kpi.activePlans.subtitle")}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.pmocWorkOrders.title")}
-              value={metrics.pmoc.workOrdersFromPlansThisMonth}
-              subtitle={t("dashboard.kpi.pmocWorkOrders.subtitle")}
-            />
-            {metrics.pmoc.electricalTotal !== null ? (
-              <KpiCard
-                title={t("dashboard.kpi.electricalAssets.title")}
-                value={metrics.pmoc.electricalTotal}
-                subtitle={t("dashboard.kpi.electricalAssets.subtitle")}
-              />
-            ) : null}
-          </div>
-        </section>
-      ) : null}
-
-      {!isLoading && metrics?.maintenance ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title={t("dashboard.sections.maintenance.title")}
-            description={t("dashboard.sections.maintenance.description")}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <KpiCard
-              title={t("dashboard.kpi.assetsInMaintenance.title")}
-              value={metrics.maintenance.assetsInMaintenance}
-              subtitle={t("dashboard.kpi.assetsInMaintenance.subtitle")}
-              highlight={metrics.maintenance.assetsInMaintenance > 0}
-            />
-            <KpiCard
-              title={t("dashboard.kpi.openMaintenanceOrders.title")}
-              value={metrics.maintenance.openWorkOrders}
-              subtitle={t("dashboard.kpi.openMaintenanceOrders.subtitle")}
-              highlight={metrics.maintenance.openWorkOrders > 0}
-            />
+      {visibleMetrics?.pmoc ? (
+        <section className="staff-dashboard-section" aria-labelledby="dashboard-pmoc">
+          <SectionHeading id="dashboard-pmoc" title={t("dashboard.sections.pmoc.title")} description={t("dashboard.sections.pmoc.description")} />
+          <div className="staff-dashboard-kpis">
+            <KpiCard title={t("dashboard.kpi.activePlans.title")} value={visibleMetrics.pmoc.activePlans} subtitle={t("dashboard.kpi.activePlans.subtitle")} />
+            <KpiCard title={t("dashboard.kpi.pmocWorkOrders.title")} value={visibleMetrics.pmoc.workOrdersFromPlansThisMonth} subtitle={t("dashboard.kpi.pmocWorkOrders.subtitle")} />
+            {visibleMetrics.pmoc.electricalTotal !== null ? <KpiCard title={t("dashboard.kpi.electricalAssets.title")} value={visibleMetrics.pmoc.electricalTotal} subtitle={t("dashboard.kpi.electricalAssets.subtitle")} /> : null}
           </div>
         </section>
       ) : null}
