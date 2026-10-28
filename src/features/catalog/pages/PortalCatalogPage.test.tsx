@@ -79,7 +79,15 @@ describe("PortalCatalogPage search", () => {
     }
   })
 
-  it("shows the tenant and item count beside the catalog title", async () => {
+  it.each([
+    ["pt-BR", "/", "Catálogo 1 item", "Carrinho e ajuda"],
+    ["pt-BR", "/?search=Equipamento", "Catálogo 1 resultado", "Carrinho e ajuda"],
+    ["pt-BR", "/?category=11111111-1111-4111-8111-111111111111", "Catálogo 1 resultado", "Carrinho e ajuda"],
+    ["pt-BR", "/?tags=11111111-1111-4111-8111-111111111111", "Catálogo 1 resultado", "Carrinho e ajuda"],
+    ["en", "/?search=Equipamento", "Catalog 1 result", "Cart and help"],
+    ["es", "/?search=Equipamento", "Catálogo 1 resultado", "Carrito y ayuda"],
+  ])("labels the title count and sidebar in %s at %s", async (language, entry, title, sidebar) => {
+    await i18n.changeLanguage(language)
     listProductsMock.mockResolvedValue([{
       id: "11111111-1111-4111-8111-111111111111",
       name: "Equipamento",
@@ -89,11 +97,12 @@ describe("PortalCatalogPage search", () => {
       currency: "BRL",
       files: [],
     }])
-    renderPage()
+    renderPage(outletContext, entry)
 
     await screen.findByRole("heading", { name: "Equipamento" })
     expect(screen.getByText("Loja")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Catálogo 1 item")
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(title)
+    expect(screen.getByRole("complementary", { name: sidebar })).toBeInTheDocument()
   })
 
   it.each([

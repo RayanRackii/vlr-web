@@ -281,6 +281,7 @@
     },
     "resetPassword": {
       "success": "Password updated successfully.",
+      "redirecting": "Password updated, redirecting…",
       "title": "New password",
       "subtitle": "Set a new password to access the platform.",
       "loading": "Validating link…",
@@ -619,6 +620,9 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Cart and help",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results",
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items",
       "searchLabel": "Search products",

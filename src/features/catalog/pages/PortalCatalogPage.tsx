@@ -48,6 +48,7 @@ export function PortalCatalogPage() {
     [categoryParam, tagsParam],
   )
   const search = searchParams.get("search") ?? ""
+  const hasActiveFilters = Boolean(search || taxonomyQuery.category || taxonomyQuery.tags?.length)
   const portalIdentity = `${subdomain}:${customerId ?? ""}`
 
   const [products, setProducts] = useState<PortalProduct[]>([])
@@ -237,7 +238,7 @@ export function PortalCatalogPage() {
               {t("tenantPortal.catalog.title")}{" "}
               {!loading && !loadError && products.length > 0 ? (
                 <span className="portal-catalog-item-count">
-                  {t("tenantPortal.catalog.itemCount", { count: products.length })}
+                  {t(hasActiveFilters ? "tenantPortal.catalog.resultCount" : "tenantPortal.catalog.itemCount", { count: products.length })}
                 </span>
               ) : null}
             </h1>
@@ -362,17 +363,15 @@ export function PortalCatalogPage() {
         </div>
 
       </section>
-      <aside className="portal-catalog-rail" aria-label={t("tenantPortal.catalog.cartTitle")}>
+      <aside className="portal-catalog-rail" aria-label={t("tenantPortal.catalog.sidebarLabel")}>
         {cart.items.length > 0 ? (
-          <div>
-            <PortalCartPanel
-              subdomain={subdomain}
-              products={mergeProducts(cartProducts, products)}
-              resolutions={cartProductResolutions}
-              onRetryProduct={retryCartProduct}
-              cart={cart}
-            />
-          </div>
+          <PortalCartPanel
+            subdomain={subdomain}
+            products={mergeProducts(cartProducts, products)}
+            resolutions={cartProductResolutions}
+            onRetryProduct={retryCartProduct}
+            cart={cart}
+          />
         ) : (
           <section className="portal-rail-card">
             <h2 className="flex items-center gap-2"><ShoppingCart aria-hidden className="size-5" />{t("tenantPortal.catalog.cartTitle")}</h2>
