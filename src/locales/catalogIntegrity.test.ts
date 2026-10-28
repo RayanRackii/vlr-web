@@ -22,6 +22,21 @@ function leafKeys(value: unknown, prefix = ""): string[] {
 }
 
 describe("translation catalog integrity", () => {
+  it.each(["pt-BR", "en", "es"])("translates staff sales navigation and new states in %s", (lng) => {
+    const keys = [
+      "nav.catalogRequests", "catalog.staff.allStatuses", "catalog.staff.productsSearch", "catalog.staff.ordersSearch",
+      "catalog.staff.loading", "catalog.staff.noResults", "catalog.staff.adjustFilters",
+      "catalog.staff.orderSummary", "catalog.staff.noNote", "catalog.staff.empty.products",
+      "catalog.staff.empty.orders", "catalog.staff.empty.requests", "catalog.staff.kpis.Requested",
+      "catalog.staff.kpis.Approved", "catalog.staff.kpis.Preparing", "catalog.staff.kpis.Ready",
+    ]
+    for (const key of keys) {
+      expect(i18n.exists(key, { lng })).toBe(true)
+      expect(i18n.t(key, { lng })).not.toBe(key)
+      expect(i18n.t(key, { lng })).not.toMatch(/\b(?:quadras?|courts?|canchas?)\b/iu)
+    }
+  })
+
   it.each(["pt-BR", "en", "es"])(
     "uses asset and equipment wording throughout Assets in %s",
     (locale) => {

@@ -13,16 +13,15 @@ import {
   type ColumnFiltersState,
 } from "@tanstack/react-table"
 import { useSearchParams } from "react-router-dom"
-import { Check, CircleAlert, Loader2, Plus } from "lucide-react"
+import { Check, ChevronDown, CircleAlert, Loader2, Package, Pencil, Plus, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
-import { PageHeader } from "@/components/layout/PageHeader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -69,6 +68,7 @@ import {
   type CatalogProductFormValues,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
 import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
 import { CATALOG_PRODUCT_FIELD_ISSUE_KEYS } from "@/features/catalog/lib/catalogProductSaveBlockers"
@@ -95,7 +95,6 @@ import {
   uploadCatalogProductFile,
 } from "@/features/catalog/services/catalogService"
 import { TaxonomyAssignmentFields } from "@/features/taxonomy/components/TaxonomyAssignmentFields"
-import { TaxonomyFilters } from "@/features/taxonomy/components/TaxonomyFilters"
 import { taxonomyQueryFromSearch, setTaxonomySearchParams } from "@/features/taxonomy/lib/taxonomyQuery"
 import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
@@ -114,7 +113,7 @@ function emptyProductForm(): CatalogProductFormValues {
   }
 }
 
-export function CatalogProductsPage() {
+export function CatalogProductsPage({ view = "products" }: { view?: "products" | "requests" }) {
   const { t, i18n } = useTranslation()
   const { can } = usePermissions()
   const canManage = can("catalog.products.manage")
@@ -123,6 +122,7 @@ export function CatalogProductsPage() {
   const [requests, setRequests] = useState<ProductRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
   const [searchParams, setSearchParams] = useSearchParams()
@@ -500,21 +500,12 @@ export function CatalogProductsPage() {
     () => [
       {
         accessorKey: "name",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.products.columns.name")}
-          />
-        ),
+        header: t("catalog.products.columns.name"),
+        cell: CatalogProductNameCell,
       },
       {
         accessorKey: "code",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.products.columns.code")}
-          />
-        ),
+        header: t("catalog.products.columns.code"),
         cell: ({ row }) => row.original.code ?? "—",
       },
       {
@@ -522,31 +513,25 @@ export function CatalogProductsPage() {
         accessorFn: (row) =>
           formatCatalogMoney(row.price, row.currency, i18n.language) ??
           t("catalog.priceOnRequest"),
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.products.columns.price")}
-          />
-        ),
+        header: t("catalog.products.columns.price"),
+        cell: ({ row, getValue }) => <div className="staff-catalog-mobile-price">
+          <span>{String(getValue())}</span>
+          <div className="staff-catalog-mobile-product-tags staff-catalog-tags">
+            {row.original.taxonomy?.categories.map((item) => <span key={`category-${item.id}`}>{item.name}</span>)}
+            {row.original.taxonomy?.tags.map((item) => <span key={`tag-${item.id}`}>{item.name}</span>)}
+          </div>
+        </div>,
       },
       {
         accessorKey: "isActive",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.products.columns.status")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Badge variant={row.original.isActive ? "success" : "secondary"}>
-            {row.original.isActive
-              ? t("catalog.products.active")
-              : t("catalog.products.inactive")}
-          </Badge>
-        ),
+        header: t("catalog.products.columns.status"),
+        cell: CatalogProductStatusCell,
         filterFn: (row, _columnId, filterValue) => {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {
             return true
+          }
+          if (filterValue === "true" || filterValue === "false") {
+            return row.original.isActive === (filterValue === "true")
           }
           const label = row.original.isActive
             ? t("catalog.products.active")
@@ -557,14 +542,14 @@ export function CatalogProductsPage() {
       {
         id: "categories",
         accessorFn: (row) => row.taxonomy?.categories.map((item) => item.name).join(", ") ?? "",
-        header: () => <TaxonomyFilterHeader title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />,
-        cell: ({ row }) => row.original.taxonomy?.categories.map((item) => item.name).join(", ") || "—",
+        header: t("taxonomy.categories"),
+        cell: ({ row }) => <div className="staff-catalog-tags">{row.original.taxonomy?.categories.length ? row.original.taxonomy.categories.map((item) => <span key={item.id}>{item.name}</span>) : "—"}</div>,
       },
       {
         id: "tags",
         accessorFn: (row) => row.taxonomy?.tags.map((item) => item.name).join(", ") ?? "",
-        header: () => <TaxonomyFilterHeader title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />,
-        cell: ({ row }) => row.original.taxonomy?.tags.map((item) => item.name).join(", ") || "—",
+        header: t("taxonomy.tags"),
+        cell: ({ row }) => <div className="staff-catalog-tags">{row.original.taxonomy?.tags.length ? row.original.taxonomy.tags.map((item) => <span key={item.id}>{item.name}</span>) : "—"}</div>,
       },
       {
         id: "actions",
@@ -573,14 +558,17 @@ export function CatalogProductsPage() {
         cell: CatalogProductActionsCell,
       },
     ],
-    [i18n.language, t, taxonomyFilter, taxonomyOptions, updateTaxonomyFilter],
+    [i18n.language, t],
   )
 
   const table = useReactTable({
     data: products,
     columns,
-    state: { columnFilters },
+    state: { columnFilters, globalFilter: search },
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setSearch,
+    globalFilterFn: (row, _columnId, value: string) =>
+      `${row.original.name} ${row.original.code ?? ""}`.toLocaleLowerCase(i18n.language).includes(value.toLocaleLowerCase(i18n.language)),
     meta: {
       onEdit: openEdit,
       onToggleActive: requestToggleActive,
@@ -594,12 +582,7 @@ export function CatalogProductsPage() {
     () => [
       {
         accessorKey: "description",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.requests.columns.description")}
-          />
-        ),
+        header: t("catalog.requests.columns.description"),
       },
       {
         accessorKey: "quantity",
@@ -608,13 +591,8 @@ export function CatalogProductsPage() {
       },
       {
         accessorKey: "note",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.requests.columns.note")}
-          />
-        ),
-        cell: ({ row }) => row.original.note ?? "—",
+        header: t("catalog.requests.columns.note"),
+        cell: ({ row }) => row.original.note ?? <><span className="staff-catalog-desktop-note">—</span><span className="staff-catalog-mobile-note">{t("catalog.staff.noNote")}</span></>,
       },
       {
         accessorKey: "createdAt",
@@ -622,7 +600,7 @@ export function CatalogProductsPage() {
         enableColumnFilter: false,
         cell: ({ row }) =>
           new Intl.DateTimeFormat(i18n.language, {
-            dateStyle: "short",
+            day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
           }).format(new Date(row.original.createdAt)),
       },
     ],
@@ -643,9 +621,43 @@ export function CatalogProductsPage() {
     ? selectCatalogProductImages(editing.files)
     : []
 
+  if (view === "requests") {
+    return (
+      <div className="staff-catalog">
+        <CatalogHeading title={t("catalog.requests.title")} description={t("catalog.requests.subtitle")} />
+        <CatalogTabs active="requests" counts={loading || loadError ? {} : { products: products.length, requests: requests.length }} />
+        {loadError ? <Alert variant="destructive" className="staff-catalog-error"><AlertDescription>{loadError}</AlertDescription></Alert> : null}
+        <div className="staff-catalog-card" aria-busy={loading}>
+          {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
+          {!loading && !loadError && requests.length === 0 ? <CatalogEmptyState kind="requests" /> : (
+            <Table role="table" className="staff-catalog-table staff-catalog-requests-table" aria-label={t("catalog.requests.title")}>
+              <TableHeader role="rowgroup">{requestTable.getHeaderGroups().map((group) => (
+                <TableRow role="row" key={group.id}>{group.headers.map((header) => (
+                  <TableHead role="columnheader" key={header.id} data-column={header.column.id}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}</TableRow>
+              ))}</TableHeader>
+              <TableBody role="rowgroup">
+                {loading ? <TableRowsSkeleton columns={4} rows={3} /> : loadError ? null : requestTable.getRowModel().rows.map((row) => (
+                  <TableRow role="row" key={row.id}>{row.getVisibleCells().map((cell) => (
+                    <TableCell role="cell" key={cell.id} data-column={cell.column.id}>
+                      {cell.column.id === "quantity" ? <span className="staff-catalog-mobile-label">{t("catalog.requests.columns.quantity")} </span> : null}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}</TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-8">
-      <PageHeader
+    <div className="staff-catalog">
+      <CatalogHeading
         title={t("catalog.products.title")}
         description={t("catalog.products.subtitle")}
         actions={
@@ -657,120 +669,38 @@ export function CatalogProductsPage() {
           </Can>
         }
       />
-
-      {loadError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <div className="overflow-hidden rounded-xl border border-border">
-        <Table stickyHeader containerClassName="max-h-[32rem] md:max-lg:[&_thead_th:last-child]:z-20">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className={header.column.id === "actions" ? "md:max-lg:right-0" : undefined}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRowsSkeleton columns={7} rows={4} />
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  {t("catalog.products.empty")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="odd:bg-card even:bg-muted/20"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cell.column.id === "actions"
-                        ? "md:max-lg:sticky md:max-lg:right-0 md:max-lg:z-[1] md:max-lg:bg-card md:max-lg:shadow-[-1px_0_0_0_var(--border)]"
-                        : undefined}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">
-            {t("catalog.requests.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("catalog.requests.subtitle")}
-          </p>
+      <CatalogTabs active="products" counts={loading || loadError ? {} : { products: products.length, requests: requests.length }} />
+      {loadError ? <Alert variant="destructive" className="staff-catalog-error"><AlertDescription>{loadError}</AlertDescription></Alert> : null}
+      <div className="staff-catalog-card" aria-busy={loading}>
+        <div className="staff-catalog-toolbar">
+          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.productsSearch")} />
+          <CatalogColumnFilter column={table.getColumn("isActive")!} title={t("catalog.products.columns.status")}
+            options={[{ value: "true", label: t("catalog.products.active") }, { value: "false", label: t("catalog.products.inactive") }]} />
+          <TaxonomyFilterHeader kind="categories" title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
+          <TaxonomyFilterHeader kind="tags" title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
         </div>
-        <div className="overflow-hidden rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              {requestTable.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRowsSkeleton columns={4} rows={3} />
-              ) : requestTable.getRowModel().rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-20 text-center">
-                    {t("catalog.requests.empty")}
+        {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
+        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
+          <Table role="table" className="staff-catalog-table staff-catalog-products-table" aria-label={t("catalog.products.title")}>
+            <TableHeader role="rowgroup">{table.getHeaderGroups().map((group) => (
+              <TableRow role="row" key={group.id}>{group.headers.map((header) => (
+                <TableHead role="columnheader" key={header.id} data-column={header.column.id} className={header.column.id === "actions" ? "md:max-lg:right-0" : undefined}>
+                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}</TableRow>
+            ))}</TableHeader>
+            <TableBody role="rowgroup">
+              {loading ? <TableRowsSkeleton columns={7} rows={4} /> : loadError ? null : table.getRowModel().rows.map((row) => (
+                <TableRow role="row" key={row.id}>{row.getVisibleCells().map((cell) => (
+                  <TableCell role="cell" key={cell.id} data-column={cell.column.id} className={cell.column.id === "actions" ? "md:max-lg:sticky md:max-lg:right-0 md:max-lg:z-[1] md:max-lg:bg-card" : undefined}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
-                </TableRow>
-              ) : (
-                requestTable.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="odd:bg-card even:bg-muted/20">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
+                ))}</TableRow>
+              ))}
             </TableBody>
           </Table>
-        </div>
-      </section>
+        )}
+      </div>
 
       <Dialog
         open={dialogOpen}
@@ -790,7 +720,7 @@ export function CatalogProductsPage() {
         }}
       >
         <DialogContent
-          className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-3xl"
+          className="staff-catalog-editor flex flex-col overflow-hidden"
           showCloseButton={!operationInFlight && !form.formState.isSubmitting}
         >
           <DialogHeader className="shrink-0">
@@ -1182,13 +1112,45 @@ type CatalogProductsTableMeta = {
   statusBusyId: string | null
 }
 
+function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unknown>) {
+  const { can } = usePermissions()
+  const product = row.original
+  const { onEdit } = table.options.meta as CatalogProductsTableMeta
+  const name = <>
+    <span className="staff-catalog-product-icon"><Package size={20} aria-hidden="true" /></span>
+    <span><strong>{product.name}</strong>
+      {product.description ? <small className="staff-catalog-product-description">{product.description}</small> : null}
+      <small className="staff-catalog-mobile-code">{product.code ?? "—"}</small>
+    </span>
+  </>
+  return can("catalog.products.manage") ? (
+    <button type="button" className="staff-catalog-product-name staff-catalog-name-button" onClick={() => onEdit(product)}>{name}</button>
+  ) : <div className="staff-catalog-product-name">{name}</div>
+}
+
+function CatalogProductStatusCell({ row, table }: CellContext<CatalogProduct, unknown>) {
+  const { t } = useTranslation()
+  const { can } = usePermissions()
+  const product = row.original
+  const { onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
+  const status = <span className="staff-catalog-status" data-tone={product.isActive ? "success" : "muted"}>
+    {t(product.isActive ? "catalog.products.active" : "catalog.products.inactive")}
+  </span>
+  return can("catalog.products.manage") ? (
+    <button type="button" className="staff-catalog-status-button"
+      aria-label={`${t(product.isActive ? "catalog.products.deactivate" : "catalog.products.activate")}: ${product.name}`}
+      disabled={statusBusyId === product.id} aria-busy={statusBusyId === product.id}
+      onClick={() => onToggleActive(product)}>{status}</button>
+  ) : status
+}
+
 function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, unknown>) {
   const { t } = useTranslation()
   const { onEdit, onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
   const product = row.original
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="staff-catalog-actions">
       <Can permission="catalog.products.manage">
         <Button
           type="button"
@@ -1196,7 +1158,7 @@ function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, u
           size="sm"
           onClick={() => onEdit(product)}
         >
-          {t("common.edit")}
+          <Pencil size={16} aria-hidden="true" />{t("common.edit")}
         </Button>
         <LoadingButton
           type="button"
@@ -1205,6 +1167,7 @@ function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, u
           loading={statusBusyId === product.id}
           onClick={() => onToggleActive(product)}
         >
+          <Power size={16} aria-hidden="true" />
           {product.isActive
             ? t("catalog.products.deactivate")
             : t("catalog.products.activate")}
@@ -1214,27 +1177,41 @@ function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, u
   )
 }
 
-function TaxonomyFilterHeader({
-  title,
-  options,
-  filter,
-  onChange,
-}: {
+function TaxonomyFilterHeader({ kind, title, options, filter, onChange }: {
+  kind: "categories" | "tags"
   title: string
   options: TaxonomyOptions
   filter: { categoryId: string | null; tagIds: string[] }
   onChange: (value: { categoryId: string | null; tagIds: string[] }) => void
 }) {
+  const { t } = useTranslation()
+  const active = kind === "categories" ? !!filter.categoryId : filter.tagIds.length > 0
+  const categories = [...options.categories].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name))
   return (
     <Popover>
-      <PopoverTrigger render={<Button type="button" variant="ghost" size="sm" />}>{title}</PopoverTrigger>
-      <PopoverContent className="w-72" align="start">
-        <TaxonomyFilters
-          options={options}
-          categoryId={filter.categoryId}
-          tagIds={filter.tagIds}
-          onChange={onChange}
-        />
+      <PopoverTrigger render={<Button type="button" variant="outline" className="staff-catalog-filter" data-active={active} />}>
+        {title}<ChevronDown size={16} aria-hidden="true" />
+      </PopoverTrigger>
+      <PopoverContent className="w-72 space-y-3" align="start">
+        {kind === "categories" ? <label className="grid gap-2 text-sm font-medium">
+          {t("tenantPortal.catalog.categoryLabel")}
+          <select className="min-h-11 w-full rounded-lg border border-input bg-background px-3" value={filter.categoryId ?? ""}
+            onChange={(event) => onChange({ ...filter, categoryId: event.target.value || null })}>
+            <option value="">{t("tenantPortal.catalog.allCategories")}</option>
+            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
+        </label> : <fieldset>
+          <legend className="text-sm font-medium">{t("taxonomy.tags")}</legend>
+          <p className="mb-2 text-xs text-muted-foreground">{t("tenantPortal.catalog.tagsHint")}</p>
+          {options.tags.map((tag) => <label key={tag.id} className="flex min-h-11 items-center gap-2 text-sm">
+            <Checkbox checked={filter.tagIds.includes(tag.id)} onChange={() => onChange({ ...filter,
+              tagIds: filter.tagIds.includes(tag.id) ? filter.tagIds.filter((id) => id !== tag.id) : [...filter.tagIds, tag.id],
+            })} />{tag.name}
+          </label>)}
+        </fieldset>}
+        {active ? <Button type="button" variant="ghost" className="min-h-11" onClick={() => onChange({ categoryId: null, tagIds: [] })}>
+          {t("tenantPortal.catalog.clearFilters")}
+        </Button> : null}
       </PopoverContent>
     </Popover>
   )

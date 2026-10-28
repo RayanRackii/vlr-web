@@ -752,6 +752,27 @@
     "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
   "catalog": {
+    "staff": {
+      "allStatuses": "Todos os status",
+      "productsSearch": "Buscar por nome ou código",
+      "ordersSearch": "Buscar por número ou cliente",
+      "loading": "Carregando vendas…",
+      "noResults": "Nenhum resultado encontrado.",
+      "adjustFilters": "Ajuste a busca ou os filtros para ver outros resultados.",
+      "orderSummary": "Resumo dos pedidos",
+      "noNote": "Sem observação",
+      "empty": {
+        "products": "Crie o primeiro produto para clientes poderem fazer pedidos.",
+        "orders": "Os pedidos dos clientes aparecem aqui assim que forem feitos.",
+        "requests": "Quando um cliente pedir um item que não está no catálogo, ele aparece aqui."
+      },
+      "kpis": {
+        "Requested": "Solicitados",
+        "Approved": "Aprovados",
+        "Preparing": "Em preparação",
+        "Ready": "Prontos"
+      }
+    },
     "retry": "Tentar novamente",
     "priceOnRequest": "Sob consulta",
     "knownPlusOnRequest": "{{amount}} · Sob consulta",
@@ -1277,6 +1298,7 @@
     "catalog": "Vendas",
     "catalogProducts": "Produtos",
     "catalogOrders": "Pedidos",
+    "catalogRequests": "Solicitações",
     "catalogNotifications": "Avisos de vendas",
     "taxonomy": "Categorias e tags",
     "notifications": "Avisos gerais",

@@ -97,6 +97,67 @@ describe("CatalogProductsPage validity gate", () => {
     fireEvent.change(element, { target: { value } })
   }
 
+  it("keeps requests out of the products list", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    listRequestsMock.mockResolvedValue([{
+      id: "request-1", customerId: "customer-1", description: "Suporte para equipamento",
+      quantity: 2, note: "Para sábado", status: "Submitted", createdAt: "2026-10-27T14:10:00Z", files: [],
+    }])
+    renderPage()
+    await screen.findByText(PRODUCT.name)
+    expect(screen.queryByText("Suporte para equipamento")).not.toBeInTheDocument()
+    expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
+  })
+
+  it("shows read-only requests in their own view with the existing loader", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    listRequestsMock.mockResolvedValue([{
+      id: "request-1", customerId: "customer-1", description: "Suporte para equipamento",
+      quantity: 2, note: "Para sábado", status: "Submitted", createdAt: "2026-10-27T14:10:00Z", files: [],
+    }])
+    render(
+      <MemoryRouter initialEntries={["/catalogo/solicitacoes"]}>
+        <TestPermissionProvider permissions={["catalog.products.read"]}>
+          <CatalogProductsPage view="requests" />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByText("Suporte para equipamento")).toBeInTheDocument()
+    expect(screen.getByRole("table", { name: i18n.t("catalog.requests.title") })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: new RegExp(i18n.t("catalog.requests.title")) })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.products.create") })).not.toBeInTheDocument()
+    expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
+  })
+
+  it("searches loaded products by name or code without reloading data", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "second", name: "Garrafa", code: "BEB-001" }])
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("Garrafa")
+    const search = screen.getByRole("searchbox", { name: i18n.t("catalog.staff.productsSearch") })
+    await user.type(search, "beb-001")
+    expect(screen.getByText("Garrafa")).toBeInTheDocument()
+    expect(screen.queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+    await user.clear(search)
+    expect(screen.getByText(PRODUCT.name)).toBeInTheDocument()
+    await user.type(search, "does not exist")
+    expect(screen.getByText(i18n.t("catalog.staff.noResults"))).toBeInTheDocument()
+  })
+
+  it("filters active products separately from inactive products in the toolbar", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }])
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("Item inativo")
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.columns.status") }))
+    await user.selectOptions(screen.getByRole("combobox", { name: i18n.t("catalog.products.columns.status") }), "true")
+    expect(screen.getByText(PRODUCT.name)).toBeInTheDocument()
+    expect(screen.queryByText("Item inativo")).not.toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+  })
+
   it("pins product actions on tablets and keeps editing available", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])
     const user = userEvent.setup()

@@ -34,10 +34,12 @@ export type AppNavigationChildItem = {
     | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
     | "nav.catalogOrders"
+    | "nav.catalogRequests"
     | "nav.catalogNotifications"
     | "nav.catalogSettings"
     | "nav.taxonomy"
   to: string
+  icon?: LucideIcon
   /** Internal destinations, never sidebar children. */
   tabs?: readonly NavigationTab[]
   /** Every key is required. An entry with none is hidden. */
@@ -66,6 +68,7 @@ export type AppNavigationItem = {
     | "nav.taxonomy"
     | "nav.catalogProducts"
     | "nav.catalogOrders"
+    | "nav.catalogRequests"
     | "nav.catalogSettings"
     | "nav.catalogNotifications"
   to: string
@@ -121,7 +124,7 @@ const maintenanceItems: readonly AppNavigationItem[] = [
 
 const bookingsItems: readonly AppNavigationItem[] = rentalsManifest.navigationItems
 const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems.flatMap(
-  (item) => item.children.map((child) => ({ ...child, icon: item.icon, modules: item.modules })),
+  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: item.modules })),
 )
 
 /** Flat catalog used for title resolution and module filtering helpers. */
@@ -341,6 +344,10 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/catalogo/notificacoes")) {
     return "nav.catalogNotifications"
+  }
+
+  if (pathname.startsWith("/catalogo/solicitacoes")) {
+    return "nav.catalogRequests"
   }
 
   if (pathname.startsWith("/catalogo/pedidos")) {

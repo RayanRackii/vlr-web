@@ -1,5 +1,5 @@
 import type { ReactElement } from "react"
-import { Package } from "lucide-react"
+import { Bell, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
@@ -39,21 +39,31 @@ export const catalogManifest = {
       children: [
         {
           labelKey: "nav.catalogProducts",
+          icon: Tag,
           to: "/catalogo/produtos",
           permission: "catalog.products.read",
         },
         {
           labelKey: "nav.catalogOrders",
+          icon: ShoppingBag,
           to: "/catalogo/pedidos",
           permission: "catalog.orders.read",
         },
         {
+          labelKey: "nav.catalogRequests",
+          icon: FileText,
+          to: "/catalogo/solicitacoes",
+          permission: "catalog.products.read",
+        },
+        {
           labelKey: "nav.catalogSettings",
+          icon: Settings,
           to: "/catalogo/configuracoes",
           permission: "catalog.products.manage",
         },
         {
           labelKey: "nav.catalogNotifications",
+          icon: Bell,
           to: "/catalogo/notificacoes",
           permission: "catalog.notifications.read",
         },
@@ -83,6 +93,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/produtos",
         element: <CatalogProductsPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/solicitacoes",
+        element: <CatalogProductsPage view="requests" />,
         permission: "catalog.products.read",
       },
       {

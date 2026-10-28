@@ -11,11 +11,8 @@ import {
 import { Eye } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
-import { PageHeader } from "@/components/layout/PageHeader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge, type badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -32,19 +29,11 @@ import {
   type CatalogOrderStatus,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listCatalogOrders } from "@/features/catalog/services/catalogService"
-import type { VariantProps } from "class-variance-authority"
+import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 
-const ORDER_STATUS_BADGE_VARIANT: Record<
-  CatalogOrderStatus,
-  NonNullable<VariantProps<typeof badgeVariants>["variant"]>
-> = {
-  Requested: "secondary",
-  Approved: "info",
-  Preparing: "info",
-  Ready: "warning",
-  Completed: "success",
-  Rejected: "destructive",
-  Cancelled: "destructive",
+const ORDER_STATUS_TONE: Record<CatalogOrderStatus, string> = {
+  Requested: "warning", Approved: "info", Preparing: "info", Ready: "success",
+  Completed: "muted", Rejected: "danger", Cancelled: "muted",
 }
 
 export function CatalogOrdersPage() {
@@ -53,6 +42,7 @@ export function CatalogOrdersPage() {
   const [orders, setOrders] = useState<CatalogOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   useEffect(() => {
@@ -88,38 +78,27 @@ export function CatalogOrdersPage() {
     () => [
       {
         accessorKey: "displayNumber",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.number")}
-          />
-        ),
+        header: t("catalog.orders.columns.number"),
       },
       {
         accessorKey: "customerName",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.customer")}
-          />
-        ),
+        header: t("catalog.orders.columns.customer"),
+        cell: ({ row }) => <span><span className="staff-catalog-mobile-label">{row.original.displayNumber} · </span>{row.original.customerName}</span>,
       },
       {
         accessorKey: "status",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.status")}
-          />
-        ),
+        header: t("catalog.orders.columns.status"),
         cell: ({ row }) => (
-          <Badge variant={ORDER_STATUS_BADGE_VARIANT[row.original.status]}>
+          <span className="staff-catalog-status" data-tone={ORDER_STATUS_TONE[row.original.status]}>
             {t(`catalog.status.${row.original.status}`)}
-          </Badge>
+          </span>
         ),
         filterFn: (row, _columnId, filterValue) => {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {
             return true
+          }
+          if (filterValue in ORDER_STATUS_TONE) {
+            return row.original.status === filterValue
           }
           return t(`catalog.status.${row.original.status}`)
             .toLowerCase()
@@ -133,12 +112,7 @@ export function CatalogOrdersPage() {
             onRequest: t("catalog.priceOnRequest"),
             partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
           }),
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.total")}
-          />
-        ),
+        header: t("catalog.orders.columns.total"),
       },
       {
         accessorKey: "createdAt",
@@ -171,32 +145,55 @@ export function CatalogOrdersPage() {
   const table = useReactTable({
     data: orders,
     columns,
-    state: { columnFilters },
+    state: { columnFilters, globalFilter: search },
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setSearch,
+    globalFilterFn: (row, _columnId, value: string) =>
+      `${row.original.displayNumber} ${row.original.customerName}`.toLocaleLowerCase(i18n.language).includes(value.toLocaleLowerCase(i18n.language)),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="staff-catalog">
+      <CatalogHeading
         title={t("catalog.orders.title")}
         description={t("catalog.orders.subtitle")}
       />
 
+      <CatalogTabs active="orders" counts={loading || loadError ? {} : { orders: orders.length }} />
+      {!loading && !loadError && orders.length > 0 ? (
+        <dl className="staff-catalog-kpis" aria-label={t("catalog.staff.orderSummary")}>
+          {(["Requested", "Approved", "Preparing", "Ready"] as const).map((status) => (
+            <div key={status} className="staff-catalog-card">
+              <dt>{t(`catalog.staff.kpis.${status}`)}</dt>
+              <dd>{orders.filter((order) => order.status === status).length}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+
       {loadError ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="staff-catalog-error">
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-border">
-        <Table stickyHeader containerClassName="max-h-[32rem]">
-          <TableHeader>
+      <div className="staff-catalog-card" aria-busy={loading}>
+        <div className="staff-catalog-toolbar">
+          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.ordersSearch")} />
+          <CatalogColumnFilter column={table.getColumn("status")!} title={t("catalog.orders.columns.status")}
+            options={Object.keys(ORDER_STATUS_TONE).map((status) => ({ value: status, label: t(`catalog.status.${status}`) }))} />
+          <CatalogColumnFilter column={table.getColumn("total")!} title={t("catalog.orders.columns.total")} />
+        </div>
+        {loading ? <span className="sr-only" role="status">{t("catalog.staff.loading")}</span> : null}
+        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="orders" filtered={orders.length > 0} /> : (
+        <Table role="table" className="staff-catalog-table staff-catalog-orders-table" aria-label={t("catalog.orders.title")}>
+          <TableHeader role="rowgroup">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow role="row" key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead role="columnheader" key={header.id} data-column={header.column.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -208,20 +205,14 @@ export function CatalogOrdersPage() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody role="rowgroup">
             {loading ? (
               <TableRowsSkeleton columns={6} rows={5} />
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  {t("catalog.orders.empty")}
-                </TableCell>
-              </TableRow>
-            ) : (
+            ) : loadError ? null : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="odd:bg-card even:bg-muted/20">
+                <TableRow role="row" key={row.id} >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell role="cell" key={cell.id} data-column={cell.column.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -233,6 +224,7 @@ export function CatalogOrdersPage() {
             )}
           </TableBody>
         </Table>
+        )}
       </div>
     </div>
   )
