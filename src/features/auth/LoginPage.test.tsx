@@ -16,6 +16,8 @@ import {
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
+import { listMyStaffTenants, PLATFORM_ADMIN_USES_ENTER, StaffTenantError } from "@/features/users/services/staffTenantsService"
+
 // Single-tenant accounts keep the direct login flow.
 vi.mock("@/features/users/services/staffTenantsService", async (orig) => ({
   ...(await orig<object>()),
@@ -77,6 +79,15 @@ describe("LoginPage next redirect", () => {
     await submitValidCredentials()
     expect(await screen.findByText("orders")).toBeInTheDocument()
     expect(staffAuthEpochForTests()).toBe(1)
+  })
+
+  it("preserves a platform admin's safe next path with a tenant parameter", async () => {
+    vi.mocked(listMyStaffTenants).mockRejectedValueOnce(
+      new StaffTenantError(PLATFORM_ADMIN_USES_ENTER, 403),
+    )
+    renderLogin("/login?tenant=tenant-a&next=%2Fpmoc%2Fnovo%3Fcompany%3Dficc&company=ficc")
+    await submitValidCredentials()
+    expect(await screen.findByText("/pmoc/novo?company=ficc")).toBeInTheDocument()
   })
 
   it("ignores an open-redirect next URL", async () => {

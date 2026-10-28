@@ -180,7 +180,7 @@ export function LoginPage() {
   // Accounts in more than one tenant choose where to land instead of
   // opening whichever tenant the token happens to carry.
   async function openTenantStep() {
-    let tokenTenantId: string | null = null
+    let tokenTenantId: string | null
     try {
       const list = await listMyStaffTenants()
       tokenTenantId = list.accessTokenTenantId
@@ -196,14 +196,14 @@ export function LoginPage() {
       }
     } catch (error: unknown) {
       if (
-        !(
-          error instanceof StaffTenantError &&
-          error.code === PLATFORM_ADMIN_USES_ENTER
-        )
+        error instanceof StaffTenantError &&
+        error.code === PLATFORM_ADMIN_USES_ENTER
       ) {
-        setMembershipError(true)
+        void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
         return
       }
+      setMembershipError(true)
+      return
     }
 
     goAfterLogin(tokenTenantId)
