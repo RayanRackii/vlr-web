@@ -3421,6 +3421,8 @@
       "noModules": "Sin módulos activos",
       "emptyTitle": "Aún no hay clientes",
       "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
+      "searchLabel": "Buscar clientes",
+      "clearSearch": "Borrar búsqueda",
       "searchPlaceholder": "Buscar por nombre o subdominio...",
       "searchEmptyTitle": "No se encontraron clientes",
       "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
@@ -3524,7 +3526,8 @@
       "emptyTitle": "No se encontraron usuarios",
       "emptyDescription": "Ajuste los filtros o invite usuarios desde un cliente.",
       "actions": {
-        "delete": "Eliminar usuario"
+        "delete": "Eliminar usuario",
+        "deleteNamed": "Eliminar usuario {{email}}"
       },
       "delete": {
         "title": "Eliminar usuario",

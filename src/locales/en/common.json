@@ -3421,6 +3421,8 @@
       "noModules": "No active modules",
       "emptyTitle": "No clients yet",
       "emptyDescription": "Provision the first tenant using the onboarding wizard.",
+      "searchLabel": "Search clients",
+      "clearSearch": "Clear search",
       "searchPlaceholder": "Search by name or subdomain...",
       "searchEmptyTitle": "No clients found",
       "searchEmptyDescription": "Adjust the search by name or subdomain.",
@@ -3524,7 +3526,8 @@
       "emptyTitle": "No users found",
       "emptyDescription": "Adjust the filters or invite users from a client.",
       "actions": {
-        "delete": "Delete user"
+        "delete": "Delete user",
+        "deleteNamed": "Delete user {{email}}"
       },
       "delete": {
         "title": "Delete user",
