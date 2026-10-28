@@ -99,7 +99,8 @@
   }
   .people-card-action > span, .people-card-action > svg { opacity: 0; }
   .people-table .people-card-action:focus-visible, .people-role-row .people-card-action:focus-visible, .people-field-row .people-card-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; box-shadow: none; }
-  .people-delete-action { display: none; }
+  /* Delete stays reachable on tablet/mobile: sits above the full-row edit overlay. */
+  .people-delete-action { position: relative; z-index: 2; flex-shrink: 0; align-self: center; min-width: 44px; min-height: 44px; }
   .people-row-actions { display: contents; }
   .people-role-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .people-role-row { min-width: 0; align-items: start; }
