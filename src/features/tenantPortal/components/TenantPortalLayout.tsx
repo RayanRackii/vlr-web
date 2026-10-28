@@ -31,6 +31,15 @@ import "./tenantPortalAuth.css"
 
 type PortalLoadError = "missingSubdomain" | "notFound" | "loadFailed"
 
+/**
+ * Auth-shell routes whose own content (a `PortalRecoveryState`) renders the
+ * page `<h1>`. On these the brand name must stay a `<p>` so the page keeps a
+ * single `<h1>`; the form routes keep the brand name as their `<h1>`.
+ */
+function isTenantAuthRecoveryPath(pathname: string): boolean {
+  return /^\/(?:t\/[a-z0-9-]+)?\/?reset-password\/?$/i.test(pathname)
+}
+
 /** Login and register only. Verify-email and password reset stay reachable. */
 function isCustomerAuthEntryPath(pathname: string): boolean {
   if (pathname === "/" || pathname === "/register") {
@@ -243,9 +252,11 @@ export function TenantPortalLayout() {
                 className="tenant-auth-logo"
               />
               <div>
-                <h1>
-                  {branding.displayName}
-                </h1>
+                {isTenantAuthRecoveryPath(location.pathname) ? (
+                  <p className="tenant-brand-name">{branding.displayName}</p>
+                ) : (
+                  <h1 className="tenant-brand-name">{branding.displayName}</h1>
+                )}
                 <p className="tenant-welcome">
                   {branding.welcomeText?.trim() || branding.welcomeTagline?.trim() || t("tenantPortal.login.welcomeDefault")}
                 </p>
