@@ -39,6 +39,8 @@ export type SidebarRenderOptions = {
 }
 
 export type AppShellProps = {
+  /** Portal uses a persistent sidebar that becomes bottom navigation on mobile. */
+  variant?: "staff" | "portal"
   sidebar: (opts: SidebarRenderOptions) => ReactNode
   pageTitle: string
   userLabel: string
@@ -74,6 +76,7 @@ function readStoredCollapsed(): boolean {
 }
 
 export function AppShell({
+  variant = "staff",
   sidebar,
   pageTitle,
   userLabel,
@@ -133,8 +136,9 @@ export function AppShell({
   const collapsed = collapsible && isCollapsed
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div data-shell-part="root" data-shell-variant={variant} className="flex min-h-screen bg-background text-foreground">
       <aside
+        data-shell-part="sidebar"
         className={cn(
           "hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block",
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
@@ -161,10 +165,12 @@ export function AppShell({
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
+      <div data-shell-part="body" className="flex min-w-0 flex-1 flex-col">
+        <header data-shell-part="header" className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
           <div className="flex min-w-0 items-center gap-2">
             <Button
+              data-shell-part="menu-toggle"
+              hidden={variant === "portal"}
               type="button"
               variant="ghost"
               size="icon-sm"
@@ -268,7 +274,7 @@ export function AppShell({
 
         {banner}
 
-        <main className="min-w-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        <main data-shell-part="main" className="min-w-0 flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           {constrainContent ? (
             <div className="mx-auto min-w-0 w-full max-w-7xl">{children}</div>
           ) : (

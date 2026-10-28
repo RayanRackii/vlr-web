@@ -1,3 +1,5 @@
+import "./portal/portal.css"
+
 import { X } from "lucide-react"
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
@@ -6,7 +8,7 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { AppShell } from "@/components/layout/AppShell"
-import { getEmailInitials } from "@/components/layout/navigation"
+import { getEmailInitials } from "@/lib/emailInitials"
 import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
@@ -184,14 +186,16 @@ export function CustomerAppLayout() {
   const userLabel = getCustomerLabel() ?? t("account.userFallback")
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={themeStyle}>
+    <div className="portal-shell min-h-screen bg-background text-foreground" style={themeStyle}>
       <AppShell
+        variant="portal"
         sidebar={({ onNavigate }) => (
           <CustomerSidebar
             brandLabel={branding.displayName}
             logoSvg={branding.logoSvg}
             primaryColor={branding.primaryColor}
             items={navItems}
+            userLabel={getCustomerLabel()}
             onNavigate={onNavigate}
           />
         )}

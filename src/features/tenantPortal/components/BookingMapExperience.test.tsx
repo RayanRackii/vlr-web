@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
@@ -34,6 +34,29 @@ vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReserva
 vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBookingIdleTimeout: () => undefined }))
 
 describe("BookingMapExperience", () => {
+  afterEach(() => vi.useRealTimers())
+
+  it("keeps fully booked resources without also showing the empty-state banner", async () => {
+    const current = await fetchDailyAvailability("ficc", "2026-10-25", [RENTAL_ID])
+    vi.mocked(fetchDailyAvailability).mockResolvedValueOnce({
+      ...current,
+      resources: current.resources.map((resource) => ({ ...resource, windows: resource.windows.map((window) => ({ ...window, state: "Taken", availableQuantity: 0 })) })),
+    })
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} />)
+    expect(await screen.findByRole("button", { name: "Raquete" })).toBeInTheDocument()
+    expect(document.querySelector(".portal-empty")).not.toBeInTheDocument()
+  })
+
+  it("limits the date strip to the agenda booking horizon", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-25T12:00:00Z"))
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" horizonMaxDate="2026-10-26" onUnavailable={vi.fn()} />)
+    await screen.findByRole("button", { name: "Raquete" })
+    const dates = within(screen.getByRole("group", { name: "Datas" })).getAllByRole("button")
+    expect(dates).toHaveLength(2)
+    expect(dates[1]).toHaveAccessibleName(/26/)
+  })
+
   it.each([
     ["Hour", "R$ 60,00/hora"],
     ["Slot", "R$ 120,00/horário"],
@@ -49,7 +72,7 @@ describe("BookingMapExperience", () => {
     })
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     expect(await screen.findByRole("button", { name: "Raquete" })).toHaveTextContent(expected)
   })
 
@@ -57,7 +80,7 @@ describe("BookingMapExperience", () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
 
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     const tile = await screen.findByRole("button", { name: "Raquete" })
     expect(tile).toHaveTextContent("Raquete · R$ 20,00/hora · 3 de 4 disponíveis")
   })
@@ -84,7 +107,7 @@ describe("BookingMapExperience", () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} scopedAssets={scopedAssets} /></TenantTimeZoneContext.Provider>)
 
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     await user.click(await screen.findByRole("button", { name: "Raquete" }))
     await user.click(await screen.findByRole("button", { name: "14:00–15:00 · R$ 50,00" }))
 

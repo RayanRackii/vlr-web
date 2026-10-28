@@ -1,15 +1,14 @@
 import { bookingEndClock, displayEndClock } from "@/lib/tenantTimeZone"
 /* eslint-disable react-hooks/set-state-in-effect */
-import { XIcon } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { List, Map as MapIcon, XIcon } from "lucide-react"
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVisualIconMap"
 import { fetchDailyAvailability, fetchPublicBookingMap, fetchPublicBookingMaps, visualArtUrl, type DailyAvailability, type PublicMap } from "@/features/rentals/services/resourceVisualService"
 import { useReservationQueue } from "@/features/tenantPortal/hooks/useReservationQueue"
@@ -22,16 +21,22 @@ import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
 import { formatUnitPriceText, unitPriceForWindow } from "@/lib/pricingUnitText"
 
-type Props = { subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; onBooked?: () => void }
+import { DateStrip } from "./portal/DateStrip"
+import { SegmentedControl } from "./portal/SegmentedControl"
+import { PortalBookingHeader } from "./portal/PortalBookingHeader"
+import { PortalBookingEmptyState, PortalRightRail } from "./portal/PortalRightRail"
+import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
+import "./portal/portal.css"
+
+type Props = { themeStyle?: CSSProperties; tenantName?: string; nextReservation?: PortalReservation; reservationsHref?: string; subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; horizonMaxDate?: string | null; onBooked?: () => void }
 type Period = "all" | "morning" | "afternoon" | "night"
 type SelectedWindow = { rentalAssetId: string; assetId: string; unitId: string; startTime: string; endTime: string; slotId: string | null; quantity: number; amount: number }
-const plusDays = (date: string, offset: number) => { const result = new Date(`${date}T12:00:00`); result.setDate(result.getDate() + offset); return result.toISOString().slice(0, 10) }
 const periodMatches = (start: string, period: Period) => { const hour = Number(start.slice(0, 2)); return period === "all" || (period === "morning" && hour < 12) || (period === "afternoon" && hour >= 12 && hour < 18) || (period === "night" && hour >= 18) }
 const quoteIsCurrent = (expiresAt: string | undefined) => Boolean(expiresAt && Date.parse(expiresAt) > Date.now())
 const EMPTY_ASSETS: readonly PortalRentalAsset[] = []
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < 768
 
-export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, onBooked }: Props) {
+export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, horizonMaxDate, onBooked, themeStyle, tenantName, nextReservation, reservationsHref = "#minhas-reservas" }: Props) {
   const { t } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const [list, setList] = useState<Awaited<ReturnType<typeof fetchPublicBookingMaps>> | null>(null)
@@ -76,6 +81,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const visualById = useMemo(() => new Map((map?.visualRevisions ?? []).map((revision) => [revision.id, revision])), [map])
   const placedIds = useMemo(() => new Set(mapItems.map((item) => item.rentalAssetId)), [mapItems])
   const listResourceIds = useMemo(() => [...new Set([...placedIds, ...scopedIds])], [placedIds, scopedIds])
+  const displayedResourceIds = (view === "Map" ? mapItems.map((item) => item.rentalAssetId) : listResourceIds).filter((id) => resourceById.has(id))
   useEffect(() => { if (!selectedWindowAssetId || !selectedWindowStartTime || !selectedWindowEndTime || selectedResourceType !== "Good") { setRequoteLoading(false); return }; let cancelled = false; setRequoteLoading(true); void checkPortalAvailability(subdomain, { assetId: selectedWindowAssetId, date, startTime: selectedWindowStartTime.slice(0, 5), endTime: bookingEndClock(selectedWindowEndTime), quantity }).then((result) => { if (!cancelled) setSelectedWindow((current) => current ? { ...current, quantity, amount: result.isAvailable ? (result.estimatedTotalAmount ?? -1) : -1 } : null) }).catch(() => { if (!cancelled) setSelectedWindow(null) }).finally(() => { if (!cancelled) setRequoteLoading(false) }); return () => { cancelled = true } }, [date, quantity, selectedResourceType, selectedWindowAssetId, selectedWindowEndTime, selectedWindowStartTime, subdomain])
   useEffect(() => { const expiresAt = availability?.quoteExpiresAt; if (!expiresAt) return; const delay = Math.max(0, Date.parse(expiresAt) - Date.now()); const timer = window.setTimeout(() => setNow(Date.now()), delay); return () => window.clearTimeout(timer) }, [availability?.quoteExpiresAt])
   useBookingIdleTimeout({ selectionKey: selectedWindow ? `${date}:${selectedWindow.rentalAssetId}:${selectedWindow.startTime}` : null, paused: submitting, onExpire: () => { setSelectedWindow(null); setSelectedId(null) } })
@@ -104,44 +110,22 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const cutoffHours = selectedAsset?.effectiveCancelCutoffHours ?? null
   const showCutoffWarning = selectedWindow !== null && isWithinCancelCutoff(cutoffHours, date, selectedWindow.startTime, timeZoneId)
   return (
-    <main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{t("bookingMap.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("bookingMap.help")}</p>
-      </header>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none" aria-label={t("bookingMap.dateStrip")}>
-        <Button className="min-h-11" disabled={availabilityLoading} size="sm" variant={date === tenantTodayIsoDate(timeZoneId) ? "default" : "outline"} onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
-          {t("bookingMap.today")}
-        </Button>
-        {Array.from({ length: 7 }, (_, offset) => {
-          const value = plusDays(tenantTodayIsoDate(timeZoneId), offset)
-          return (
-            <Button key={value} className="min-h-11" disabled={availabilityLoading} size="sm" variant={value === date ? "default" : "outline"} onClick={() => setDate(value)}>
-              {new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric" }).format(new Date(`${value}T12:00:00`))}
-            </Button>
-          )
-        })}
+    <div className="portal-booking-grid">
+      <section className="portal-booking-column">
+      <PortalBookingHeader tenantName={tenantName} />
+      <DateStrip value={date} today={tenantTodayIsoDate(timeZoneId)} locale={locale} max={horizonMaxDate} disabled={availabilityLoading} onChange={setDate} />
+      <div className="portal-tools">
+        <SegmentedControl label={t("bookingMap.periods")} value={period} onChange={setPeriod}
+          options={(["all", "morning", "afternoon", "night"] as const).map((value) => ({ value, label: t(`bookingMap.${value}`), count: availabilityLoading ? undefined : periodFreeCounts[value] }))} />
+        <SegmentedControl label={t("tenantPortal.redesign.view")} value={view} onChange={setView}
+          options={[
+            { value: "Map", label: t("bookingMap.map"), icon: <MapIcon className="size-4" strokeWidth={1.75} aria-hidden="true" /> },
+            { value: "List", label: t("bookingMap.list"), icon: <List className="size-4" strokeWidth={1.75} aria-hidden="true" /> },
+          ]} />
       </div>
-
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("bookingMap.periods")}>
-        {(["all", "morning", "afternoon", "night"] as const).map((value) => (
-          <Button key={value} className="min-h-11" size="sm" variant={period === value ? "default" : "outline"} aria-pressed={period === value} onClick={() => setPeriod(value)}>
-            {t(`bookingMap.${value}`, { count: periodFreeCounts[value] })}
-          </Button>
-        ))}
-        <span className="flex-1" />
-        <Button className="min-h-11" size="sm" variant={view === "Map" ? "default" : "outline"} onClick={() => setView("Map")}>
-          {t("bookingMap.map")}
-        </Button>
-        <Button className="min-h-11" size="sm" variant={view === "List" ? "default" : "outline"} onClick={() => setView("List")}>
-          {t("bookingMap.list")}
-        </Button>
-      </div>
-
-      {period !== "all" && periodFreeCounts[period] === 0 ? (
-        <p className="rounded-xl border border-dashed border-border p-3 text-sm text-muted-foreground">{t("bookingMap.emptyPeriod")}</p>
-      ) : null}
+      {!availabilityLoading && availability && displayedResourceIds.length === 0 ? <PortalBookingEmptyState /> : null}
+      {availabilityLoading ? <p className="mb-3 text-sm text-muted-foreground" role="status">{t("bookingMap.loading")}</p> : null}
+      {!availabilityLoading && !availability ? <p className="mb-3 text-sm text-muted-foreground" role="status">{t("tenantPortal.agenda.slotsError")}</p> : null}
 
       {list.maps.length > 1 ? (
         <select
@@ -158,46 +142,57 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
         </select>
       ) : null}
 
-      {view === "Map" ? (
-        <LayoutCanvasBoard mode="pick" aspectRatio={map.aspectRatio} canvasWidthPercent={100} items={boardItems} onSelect={(id) => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }} />
-      ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {listResourceIds.map((id) => {
-            const resource = resourceById.get(id)
-            const item = mapItems.find((entry) => entry.rentalAssetId === id)
-            if (!resource) return null
-            const result = summary(id)
-            return (
-              <li key={id}>
-                <button
-                  ref={selectedId === id ? triggerRef : undefined}
-                  type="button"
-                  className="min-h-11 w-full rounded-xl border border-border bg-card p-3 text-left shadow-sm transition-colors duration-150 ease-out hover:bg-muted/40 aria-pressed:border-primary aria-pressed:bg-primary/5 disabled:opacity-50"
-                  aria-pressed={selectedId === id}
-                  disabled={availabilityLoading}
-                  onClick={() => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }}
-                >
-                  <strong className="text-sm font-semibold text-foreground">{item?.assetName ?? resource.name}</strong>
-                  {tileDetails(resource, result) ? <span className="mt-1 block text-xs text-muted-foreground">{tileDetails(resource, result)}</span> : null}
-                  <span className="mt-2 flex flex-wrap gap-1.5">
-                    {result.free.slice(0, 3).map((window) => (
-                      <Badge key={`${window.startTime}-${window.endTime}`} variant="secondary">
-                        {window.startTime.slice(0, 5)}
-                      </Badge>
-                    ))}
-                  </span>
-                  {result.free.length === 0 ? (
-                    <span className="mt-2 block text-sm text-muted-foreground">{t("bookingMap.noAvailability")}</span>
-                  ) : null}
+      {view === "Map" ? <div className="portal-canvas">
+        <LayoutCanvasBoard mode="pick" aspectRatio={map.aspectRatio} canvasWidthPercent={100} items={boardItems}
+          onSelect={(id) => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }} />
+      </div> : null}
+      <ul className={view === "Map" ? "portal-resource-grid" : "portal-list"} aria-busy={availabilityLoading}>
+        {displayedResourceIds.map((id) => {
+          const resource = resourceById.get(id)
+          const item = boardItems.find((entry) => entry.rentalAssetId === id)
+          if (!resource) return null
+          const result = summary(id)
+          const name = item?.label ?? resource.name
+          const status = result.free.length === 0 ? "full" : result.free.length <= 2 ? "few" : "free"
+          const Icon = item?.icon
+          return (
+            <li key={id} className="portal-resource" data-selected={selectedId === id}>
+              <div className="portal-resource-heading">
+                <button type="button" ref={selectedId === id ? triggerRef : undefined} className="min-w-0 flex-1 text-left"
+                  aria-label={view === "Map" ? t("tenantPortal.redesign.resourceTimes", { name }) : name} title={name} aria-pressed={selectedId === id} disabled={availabilityLoading}
+                  onClick={() => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }}>
+                  <strong className="portal-resource-title block">{name}</strong>
+                  {tileDetails(resource, result) ? <span className="block text-xs text-muted-foreground">{name} · {tileDetails(resource, result)}</span> : null}
                 </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                {!availabilityLoading ? <span className={`portal-status-chip portal-status-${status}`}>{t(`tenantPortal.redesign.status_${status}`)}</span> : null}
+              </div>
+              {view === "Map" ? <div className="portal-resource-art flex items-center justify-center overflow-hidden" aria-hidden="true">
+                {item?.artUrl ? <img src={item.artUrl} alt="" className="size-full object-contain" /> : Icon ? <Icon className="size-8 text-primary" strokeWidth={1.75} /> : null}
+              </div> : null}
+              <div className="portal-slots">
+                {result.windows.filter((window) => window.state !== "Past").map((window) => {
+                  const available = window.state === "Available" && window.totalAmount !== null
+                  return <button key={`${window.startTime}-${window.endTime}`} type="button" className="portal-slot"
+                    disabled={!available || availabilityLoading}
+                    aria-label={`${name} · ${window.startTime.slice(0, 5)}–${displayEndClock(window.endTime)} · ${t(`bookingMap.state.${window.state}`)}`}
+                    aria-pressed={selectedId === id && selectedWindow?.startTime === window.startTime}
+                    onClick={() => {
+                      setSelectedId(id)
+                      setQuantity(1)
+                      setSelectedWindow({ rentalAssetId: resource.rentalAssetId, assetId: resource.assetId, unitId: resource.unitId, startTime: window.startTime, endTime: window.endTime, slotId: window.slotId, quantity: 1, amount: resource.type === "Good" ? -1 : window.totalAmount ?? 0 })
+                    }}>{window.startTime.slice(0, 5)}</button>
+                })}
+              </div>
+              {result.windows.filter((window) => window.state !== "Past").length === 0 ? <p className="mt-3 text-sm text-muted-foreground">{t("bookingMap.noAvailability")}</p> : null}
+            </li>
+          )
+        })}
+      </ul>
+      </section>
+      <PortalRightRail nextReservation={nextReservation} reservationsHref={reservationsHref} />
 
       <Sheet open={selectedResource !== null} onOpenChange={(open) => { if (!open) { setSelectedId(null); setSelectedWindow(null); window.setTimeout(() => triggerRef.current?.focus(), 0) } }}>
-        <SheetContent side="bottom" showCloseButton={false} className="flex max-h-[85dvh] w-full flex-col rounded-t-2xl sm:inset-y-0 sm:right-0 sm:h-full sm:max-w-md sm:rounded-none sm:border-l sm:border-t-0">
+        <SheetContent style={themeStyle} side="bottom" showCloseButton={false} className="portal-sheet flex max-h-[85dvh] w-full flex-col rounded-t-2xl sm:inset-y-0 sm:right-0 sm:h-full sm:max-w-md sm:rounded-none sm:border-l sm:border-t-0">
           <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-muted-foreground/35 sm:hidden" aria-hidden="true" />
           <SheetClose aria-label={t("bookingMap.close")} className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground">
             <XIcon className="size-4" strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
@@ -222,7 +217,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto py-4">
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto py-4 pb-8">
             {visibleSlots.map((window) => {
               const available = window.state === "Available" && window.totalAmount !== null
               return (
@@ -230,7 +225,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
                   type="button"
                   disabled={!available || availabilityLoading}
                   key={`${window.startTime}-${window.endTime}`}
-                  className="min-h-11 w-full rounded-xl border border-border p-3 text-left text-sm transition-colors duration-150 ease-out hover:bg-muted/40 aria-pressed:border-primary aria-pressed:bg-primary/5 disabled:opacity-50"
+                  className="portal-slot w-full text-left disabled:line-through"
                   aria-pressed={selectedWindow?.startTime === window.startTime}
                   onClick={() => available && setSelectedWindow({ rentalAssetId: selectedResource?.rentalAssetId ?? "", assetId: selectedResource?.assetId ?? "", unitId: selectedResource?.unitId ?? "", startTime: window.startTime, endTime: window.endTime, slotId: window.slotId, quantity: 1, amount: selectedResource?.type === "Good" ? -1 : window.totalAmount ?? 0 })}
                 >
@@ -267,13 +262,14 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
             </p>
           ) : null}
 
-          <div className="sticky bottom-0 border-t border-border bg-background py-3">
+          <div className="portal-summary shrink-0">
+            {selectedWindow ? <div className="min-w-0 basis-full"><p className="truncate text-sm font-semibold" title={selectedResource?.name}>{selectedResource?.name}</p><p className="text-xs text-muted-foreground">{date} · {selectedWindow.startTime.slice(0, 5)}–{displayEndClock(selectedWindow.endTime)}</p></div> : null}
             <Button className="w-full" disabled={!canContinue} onClick={() => void continueBooking()}>
               {selectedWindow ? `${t("bookingMap.continue")} · ${formatLocaleCurrency(selectedWindow.amount, "BRL", locale)}` : t("bookingMap.chooseSlot")}
             </Button>
           </div>
         </SheetContent>
       </Sheet>
-    </main>
+    </div>
   )
 }
