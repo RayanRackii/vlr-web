@@ -71,6 +71,13 @@
 .portal-resource-heading { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
 .portal-resource-title { min-width: 0; text-align: left; font-size: 16px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 44px; }
 .portal-status-chip { flex-shrink: 0; border-radius: 99px; padding: 3px 9px; font-size: 11px; font-weight: 650; margin-top: 8px; }
+/* Shared status pill for Pedidos, Minhas solicitações and Minhas reservas. */
+.portal-chip { display: inline-flex; align-items: center; flex-shrink: 0; border-radius: 99px; padding: 3px 11px; font-size: 12px; font-weight: 650; white-space: nowrap; background: var(--muted); color: var(--muted-foreground); }
+.portal-chip-success { background: color-mix(in srgb, var(--portal-free) 14%, var(--card)); color: var(--portal-free); }
+.portal-chip-warning { background: color-mix(in srgb, var(--portal-few) 16%, var(--card)); color: var(--portal-few); }
+.portal-chip-danger { background: color-mix(in srgb, var(--destructive) 13%, var(--card)); color: var(--destructive); }
+.portal-chip-info { background: color-mix(in srgb, var(--primary) 12%, var(--card)); color: var(--primary); }
+.portal-chip-neutral { background: var(--muted); color: var(--muted-foreground); }
 .portal-resource-art { height: 80px; border-radius: 10px; margin: 12px 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--primary) 9%, var(--card)) 0 36px, color-mix(in srgb, var(--primary) 15%, var(--card)) 36px 72px); border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border)); }
 .portal-resource:nth-child(2) .portal-resource-art { height: 110px; }
 .portal-slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

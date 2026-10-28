@@ -1,12 +1,14 @@
+import "../components/portalOrders.css"
+
 import { useEffect, useState } from "react"
 import { Link, useOutletContext, useParams } from "react-router-dom"
-import { Paperclip } from "lucide-react"
+import { ArrowLeft, Paperclip } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { productRequestStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
+import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
+import { productRequestStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import { productRequestStatusLabel } from "@/features/catalog/lib/productRequestStatusLabel"
 import {
   formatCatalogDate,
@@ -86,17 +88,19 @@ export function PortalProductRequestDetailPage() {
       type="button"
       variant="ghost"
       size="sm"
+      className="portal-record-back"
       render={
         <Link to={tenantPortalPath(subdomain, "catalogo/solicitacoes")} />
       }
     >
+      <ArrowLeft aria-hidden data-icon="inline-start" />
       {t("common.back")}
     </Button>
   )
 
   if (!requestId) {
     return (
-      <div className="mx-auto max-w-xl space-y-6">
+      <div className="portal-record-detail space-y-4">
         {back}
         <div role="alert">
           <p className="text-sm text-destructive">
@@ -108,7 +112,7 @@ export function PortalProductRequestDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="portal-record-detail space-y-4">
       {back}
 
       {loading ? (
@@ -131,41 +135,56 @@ export function PortalProductRequestDetailPage() {
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between gap-3">
+          <section className="portal-record-panel space-y-5">
+            <div className="portal-record-panel-head">
+              <div className="space-y-1">
+                <p className="portal-eyebrow">
+                  {t("tenantPortal.catalog.navRequests")}
+                </p>
+                <h1>{t("tenantPortal.catalog.requestDetailTitle")}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {formatCatalogDate(request.createdAt, i18n.language)}
+                </p>
+              </div>
+              <PortalStatusChip tone={productRequestStatusTone(request.status)}>
+                {productRequestStatusLabel(request.status, (key, options) =>
+                  t(key, options),
+                )}
+              </PortalStatusChip>
+            </div>
+
+            <PortalCancelAction key={`${subdomain}:${request.id}`} kind="requests" status={request.status} cancel={async () => {
+              const next = await cancelPortalProductRequest(request.id)
+              // Cancel returns metadata without the signed file URLs from the read model.
+              setRequest((current) => current?.id === next.id ? { ...current, status: next.status } : current)
+            }} />
+
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight">
-                {t("tenantPortal.catalog.requestDetailTitle")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {formatCatalogDate(request.createdAt, i18n.language)}
+              <h2 className="portal-record-section-title">
+                {t("tenantPortal.catalog.requestDescription")}
+              </h2>
+              <p className="whitespace-pre-wrap break-words text-sm">
+                {request.description}
               </p>
             </div>
-            <Badge variant={productRequestStatusBadgeVariant(request.status)}>
-              {productRequestStatusLabel(request.status, (key, options) =>
-                t(key, options),
-              )}
-            </Badge>
-          </div>
+            <p className="text-sm">
+              {t("tenantPortal.catalog.quantity")}: {request.quantity}
+            </p>
 
-          <PortalCancelAction key={`${subdomain}:${request.id}`} kind="requests" status={request.status} cancel={async () => {
-            const next = await cancelPortalProductRequest(request.id)
-            // Cancel returns metadata without the signed file URLs from the read model.
-            setRequest((current) => current?.id === next.id ? { ...current, status: next.status } : current)
-          }} />
-          <p className="whitespace-pre-wrap text-sm">{request.description}</p>
-          <p className="text-sm">
-            {t("tenantPortal.catalog.quantity")}: {request.quantity}
-          </p>
+            {(request.note ?? request.observation)?.trim() ? (
+              <div className="space-y-1">
+                <h2 className="portal-record-section-title">
+                  {t("tenantPortal.catalog.requestNote")}
+                </h2>
+                <p className="whitespace-pre-wrap break-words text-sm">
+                  {request.note ?? request.observation}
+                </p>
+              </div>
+            ) : null}
+          </section>
 
-          {(request.note ?? request.observation)?.trim() ? (
-            <section className="space-y-2">
-              <h2 className="text-sm font-medium">{t("tenantPortal.catalog.requestNote")}</h2>
-              <p className="whitespace-pre-wrap text-sm">{request.note ?? request.observation}</p>
-            </section>
-          ) : null}
-
-          <section className="space-y-2">
-            <h2 className="text-sm font-medium">
+          <section className="portal-record-panel space-y-3">
+            <h2 className="portal-record-section-title">
               {t("tenantPortal.catalog.requestFilesTitle")}
             </h2>
             {request.files.length === 0 ? (
@@ -173,14 +192,11 @@ export function PortalProductRequestDetailPage() {
                 {t("tenantPortal.catalog.requestFilesEmpty")}
               </p>
             ) : (
-              <ul className="divide-y rounded-xl border border-border">
+              <ul className="portal-record-files">
                 {request.files.map((file) => {
                   const href = httpFileUrl(file.url)
                   return (
-                    <li
-                      key={file.id}
-                      className="flex items-center gap-2 px-4 py-3 text-sm transition-colors duration-150 ease-out hover:bg-muted/40"
-                    >
+                    <li key={file.id} className="portal-record-file">
                       <Paperclip
                         aria-hidden
                         className="size-4 shrink-0 text-muted-foreground"

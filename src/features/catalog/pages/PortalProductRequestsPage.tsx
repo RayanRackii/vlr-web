@@ -1,47 +1,28 @@
-import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate, useOutletContext } from "react-router-dom"
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table"
-import { ClipboardListIcon, Eye } from "lucide-react"
+import "../components/portalOrders.css"
+
+import { useEffect, useState } from "react"
+import { Link, useOutletContext } from "react-router-dom"
+import { ArrowRight, ClipboardList } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { PageHeader } from "@/components/layout/PageHeader"
-import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EmptyState } from "@/components/ui/empty-state"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import {
   portalProductRequestRange,
   productRequestStatusLabel,
 } from "@/features/catalog/lib/productRequestStatusLabel"
-import {
-  formatCatalogDate,
-  type PortalProductRequest,
-} from "@/features/catalog/schemas/catalogSchemas"
+import { formatCatalogDate } from "@/features/catalog/schemas/catalogSchemas"
 import {
   listPortalProductRequests,
   type PortalProductRequestListResult,
 } from "@/features/catalog/services/catalogPortalService"
-import { productRequestStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
+import { productRequestStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function PortalProductRequestsPage() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const { subdomain } = useOutletContext<CustomerAppOutletContext>()
+  const { subdomain, branding } = useOutletContext<CustomerAppOutletContext>()
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
   const [result, setResult] = useState<PortalProductRequestListResult | null>(
@@ -79,71 +60,8 @@ export function PortalProductRequestsPage() {
     }
   }, [i18n, page, reloadKey])
 
-  const columns = useMemo<ColumnDef<PortalProductRequest>[]>(
-    () => [
-      {
-        accessorKey: "description",
-        header: t("catalog.requests.columns.description"),
-        cell: ({ row }) => (
-          <span className="line-clamp-2 max-w-md whitespace-pre-wrap break-words">
-            {row.original.description}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "quantity",
-        header: t("catalog.requests.columns.quantity"),
-      },
-      {
-        accessorKey: "status",
-        header: t("catalog.orders.columns.status"),
-        cell: ({ row }) => (
-          <Badge variant={productRequestStatusBadgeVariant(row.original.status)}>
-            {productRequestStatusLabel(row.original.status, (key, options) =>
-              t(key, options),
-            )}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: t("catalog.requests.columns.createdAt"),
-        cell: ({ row }) =>
-          formatCatalogDate(row.original.createdAt, i18n.language),
-      },
-      {
-        id: "actions",
-        header: t("catalog.orders.columns.actions"),
-        cell: ({ row }) => (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void navigate(
-                tenantPortalPath(
-                  subdomain,
-                  `catalogo/solicitacoes/${row.original.id}`,
-                ),
-              )
-            }}
-          >
-            <Eye data-icon="inline-start" />
-            {t("catalog.orders.view")}
-          </Button>
-        ),
-      },
-    ],
-    [i18n.language, navigate, subdomain, t],
-  )
-
   const pageData = result?.kind === "ready" ? result.page : null
   const items = pageData?.items ?? []
-  const table = useReactTable({
-    data: items,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
 
   const range =
     pageData == null
@@ -155,25 +73,32 @@ export function PortalProductRequestsPage() {
         )
 
   return (
-    <div>
-      <PageHeader
-        title={t("tenantPortal.catalog.requestsTitle")}
-        description={t("tenantPortal.catalog.requestsSubtitle")}
-      />
+    <div className="portal-records">
+      <header className="portal-booking-header portal-records-header">
+        <p className="portal-eyebrow break-words">{branding.displayName}</p>
+        <h1>{t("tenantPortal.catalog.requestsTitle")}</h1>
+        <p className="text-muted-foreground">
+          {t("tenantPortal.catalog.requestsSubtitle")}
+        </p>
+      </header>
 
       {loading ? (
-        <div
+        <ul
+          className="portal-records-list"
           role="status"
           aria-busy="true"
           aria-label={t("tenantPortal.catalog.requestsLoading")}
-          className="rounded-xl border border-border"
         >
-          <Table>
-            <TableBody>
-              <TableRowsSkeleton columns={5} rows={4} />
-            </TableBody>
-          </Table>
-        </div>
+          {[0, 1, 2].map((index) => (
+            <li key={index} className="portal-record-card animate-pulse">
+              <span className="portal-record-icon" aria-hidden />
+              <span className="portal-record-body">
+                <span className="h-4 w-48 rounded bg-muted" />
+                <span className="h-3 w-32 rounded bg-muted" />
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : loadError ? (
         <div role="alert" className="space-y-4">
           <p className="text-sm text-destructive">{loadError}</p>
@@ -205,65 +130,75 @@ export function PortalProductRequestsPage() {
           </Button>
         </div>
       ) : pageData != null && pageData.total === 0 ? (
-        <EmptyState
-          icon={ClipboardListIcon}
-          title={t("tenantPortal.catalog.requestsEmpty")}
-          action={
-            <Button
-              type="button"
-              variant="outline"
-              render={
-                <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
-              }
-            >
-              {t("tenantPortal.catalog.requestCta")}
-            </Button>
-          }
-        />
+        <div className="portal-empty" role="status">
+          <div className="portal-empty-icon">
+            <ClipboardList strokeWidth={1.75} aria-hidden />
+          </div>
+          <h2>{t("tenantPortal.catalog.requestsEmpty")}</h2>
+          <p>{t("tenantPortal.catalog.requestsEmptyDescription")}</p>
+          <Button
+            type="button"
+            className="portal-catalog-button portal-catalog-primary mt-2"
+            render={
+              <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
+            }
+          >
+            {t("tenantPortal.catalog.requestCta")}
+          </Button>
+        </div>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-xl border border-border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      {t("tenantPortal.catalog.requestsPageEmpty")}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+          {items.length === 0 ? (
+            <p className="rounded-xl border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+              {t("tenantPortal.catalog.requestsPageEmpty")}
+            </p>
+          ) : (
+            <ul className="portal-records-list">
+              {items.map((request) => (
+                <li key={request.id}>
+                  <Link
+                    className="portal-record-card"
+                    to={tenantPortalPath(
+                      subdomain,
+                      `catalogo/solicitacoes/${request.id}`,
+                    )}
+                    aria-label={request.description}
+                  >
+                    <span className="portal-record-icon" aria-hidden>
+                      <ClipboardList strokeWidth={1.75} />
+                    </span>
+                    <span className="portal-record-body">
+                      <span className="portal-record-top">
+                        <span className="portal-record-title line-clamp-2">
+                          {request.description}
+                        </span>
+                        <PortalStatusChip
+                          tone={productRequestStatusTone(request.status)}
+                        >
+                          {productRequestStatusLabel(
+                            request.status,
+                            (key, options) => t(key, options),
                           )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                        </PortalStatusChip>
+                      </span>
+                      <span className="portal-record-meta">
+                        {formatCatalogDate(request.createdAt, i18n.language)}
+                        {" · "}
+                        {t("catalog.requests.columns.quantity")}{" "}
+                        {request.quantity}
+                      </span>
+                      <span className="portal-record-foot">
+                        <span className="portal-record-view">
+                          {t("catalog.orders.view")}
+                          <ArrowRight aria-hidden />
+                        </span>
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
           {range != null && range.pageCount > 1 ? (
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-muted-foreground">
