@@ -109,9 +109,31 @@
 
 .tenant-auth input { background: var(--tenant-field); }
 .tenant-auth .text-primary { color: var(--tenant-link); }
-.tenant-auth :is(a, button, input):focus-visible {
+.tenant-auth :is(a, button):focus-visible {
   outline: 2px solid var(--tenant-link);
   outline-offset: 3px;
+}
+
+/* Inputs already draw their own ring; a second outline made focus look doubled. */
+.tenant-auth input:focus-visible {
+  outline: none;
+  border-color: var(--tenant-link);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tenant-link) 22%, transparent);
+}
+
+/* Keep browser autofill from painting fields saturated blue. */
+.tenant-auth input:-webkit-autofill,
+.tenant-auth input:-webkit-autofill:hover,
+.tenant-auth input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px var(--tenant-field) inset;
+  box-shadow: 0 0 0 1000px var(--tenant-field) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+.tenant-auth input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px color-mix(in srgb, var(--tenant-link) 22%, transparent);
+  box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px color-mix(in srgb, var(--tenant-link) 22%, transparent);
 }
 
 .tenant-auth-form h2 {
