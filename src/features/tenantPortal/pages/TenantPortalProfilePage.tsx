@@ -1,3 +1,5 @@
+import "../components/portal/portalProfile.css"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Camera, CircleAlert, Lock, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -7,14 +9,12 @@ import { useOutletContext } from "react-router-dom"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { PageHeader } from "@/components/layout/PageHeader"
 import {
   nameInitials,
   ReadOnlyValue,
   SensitiveReadOnlyValue,
 } from "@/components/profile/profileFields"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
@@ -69,7 +69,7 @@ function formatProfileAddress(profile: CustomerProfile): string | null {
 
 export function TenantPortalProfilePage() {
   const { t } = useTranslation()
-  const { primary } = useOutletContext<CustomerAppOutletContext>()
+  const { primary, branding } = useOutletContext<CustomerAppOutletContext>()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loading, setLoading] = useState(true)
@@ -243,7 +243,9 @@ export function TenantPortalProfilePage() {
   }
 
   if (loading) {
-    return <PageContentSkeleton rows={4} className="mx-auto w-full max-w-xl" />
+    return (
+      <PageContentSkeleton rows={4} className="portal-profile-layout" />
+    )
   }
 
   if (loadError || !profile) {
@@ -300,70 +302,70 @@ export function TenantPortalProfilePage() {
     address !== null
 
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <PageHeader
-        title={t("tenantPortal.profile.title")}
-        description={t("tenantPortal.profile.subtitle")}
-      />
+    <div className="portal-profile-layout">
+      <header className="portal-booking-header">
+        <p className="portal-eyebrow">{t("tenantPortal.profile.eyebrow")}</p>
+        <h1>{t("tenantPortal.profile.title")}</h1>
+        <p className="text-muted-foreground">
+          {t("tenantPortal.profile.subtitle")}
+        </p>
+      </header>
 
       <Form {...form}>
         <form
-          className="space-y-6"
+          className="portal-profile-form"
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
           <section
             aria-label={t("tenantPortal.fields.photo")}
-            className="rounded-xl border border-border bg-card p-5 shadow-sm"
+            className="portal-profile-card portal-profile-identity"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-              <Avatar className="size-20">
-                {photoPreview ? (
-                  <AvatarImage src={photoPreview} alt="" />
-                ) : null}
-                <AvatarFallback className="text-xl">
-                  {nameInitials(displayName)}
-                </AvatarFallback>
-              </Avatar>
+            <Avatar className="portal-profile-avatar">
+              {photoPreview ? (
+                <AvatarImage src={photoPreview} alt="" />
+              ) : null}
+              <AvatarFallback>{nameInitials(displayName)}</AvatarFallback>
+            </Avatar>
 
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="truncate text-base font-semibold">
-                  {displayName}
+            <div className="portal-profile-who">
+              <p className="portal-profile-name">{displayName}</p>
+              {email.length > 0 ? (
+                <p className="portal-profile-email">{email}</p>
+              ) : null}
+              {photoPreview ? null : (
+                <p className="portal-profile-photohint">
+                  {t("tenantPortal.profile.photoNone")}
                 </p>
-                {photoPreview ? null : (
-                  <p className="text-xs text-muted-foreground">
-                    {t("tenantPortal.profile.photoNone")}
-                  </p>
-                )}
-              </div>
+              )}
+            </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="portal-profile-photo-actions">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving || photoProcessing}
+                onClick={() => {
+                  fileInputRef.current?.click()
+                }}
+              >
+                <Camera aria-hidden />
+                {t("tenantPortal.profile.photoChange")}
+              </Button>
+              {photoPreview ? (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   disabled={saving || photoProcessing}
-                  onClick={() => {
-                    fileInputRef.current?.click()
-                  }}
+                  className="text-muted-foreground"
+                  onClick={onRemovePhoto}
                 >
-                  <Camera aria-hidden />
-                  {t("tenantPortal.profile.photoChange")}
+                  <Trash2 aria-hidden />
+                  {t("tenantPortal.profile.photoRemove")}
                 </Button>
-                {photoPreview ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={saving || photoProcessing}
-                    className="text-muted-foreground"
-                    onClick={onRemovePhoto}
-                  >
-                    <Trash2 aria-hidden />
-                    {t("tenantPortal.profile.photoRemove")}
-                  </Button>
-                ) : null}
-              </div>
+              ) : null}
             </div>
 
             <input
@@ -379,39 +381,54 @@ export function TenantPortalProfilePage() {
             />
           </section>
 
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("tenantPortal.fields.name")}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    autoComplete="name"
-                    disabled={saving}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <section
+            className="portal-profile-card"
+            aria-labelledby="portal-profile-personal-heading"
+          >
+            <header className="portal-profile-section-head">
+              <h2 id="portal-profile-personal-heading">
+                {t("tenantPortal.profile.sections.personal")}
+              </h2>
+            </header>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("tenantPortal.fields.name")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      autoComplete="name"
+                      disabled={saving}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </section>
 
           {hasReadOnlyFields ? (
-            <section className="space-y-4 border-t border-border pt-6">
-              <div className="flex items-center gap-2">
-                <Lock
-                  className="size-3.5 text-muted-foreground"
-                  aria-hidden
-                />
-                <h2 className="text-sm font-medium">
+            <section
+              className="portal-profile-card"
+              aria-labelledby="portal-profile-account-heading"
+            >
+              <header className="portal-profile-section-head">
+                <span className="portal-profile-badge">
+                  <Lock aria-hidden />
+                  {t("tenantPortal.profile.readOnly")}
+                </span>
+                <h2 id="portal-profile-account-heading">
                   {t("tenantPortal.profile.sections.account")}
                 </h2>
-                <Badge variant="secondary" className="font-normal">
-                  {t("tenantPortal.profile.readOnly")}
-                </Badge>
-              </div>
+              </header>
+              <p className="portal-profile-hint">
+                {t("tenantPortal.profile.accountHint", {
+                  tenant: branding.displayName,
+                })}
+              </p>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {email.length > 0 ? (
@@ -471,7 +488,7 @@ export function TenantPortalProfilePage() {
             </section>
           ) : null}
 
-          <div className="flex justify-end">
+          <div className="portal-profile-savebar">
             <FormPrimaryButton
               type="submit"
               isValid={isProfileValid}
