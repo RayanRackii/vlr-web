@@ -91,6 +91,7 @@ describe("ModuleGuide", () => {
     expect(within(roadmap).getAllByRole("listitem")[1]).toHaveAttribute("aria-current", "step")
     // per-step success reward
     expect(screen.getByRole("status")).toHaveTextContent(i18n.t("moduleGuide.reward.title"))
+    expect(document.querySelectorAll('[aria-live], [role="status"]')).toHaveLength(1)
 
     unmount()
     renderGuide()
@@ -109,6 +110,38 @@ describe("ModuleGuide", () => {
     await user.click(secondButton)
 
     expect(screen.getByText(i18n.t("moduleGuide.lessons.bookings.learn2.headline"))).toBeInTheDocument()
+  })
+
+  it("keeps completion and connectors in sequence while previewing upcoming lessons", async () => {
+    const user = userEvent.setup()
+    renderGuide()
+    const roadmap = screen.getByRole("list", { name: roadmapLabel })
+    const items = within(roadmap).getAllByRole("listitem")
+    const connectors = (item: HTMLElement) => item.querySelectorAll(":scope > span[aria-hidden]")
+
+    await user.click(within(items[2]).getByRole("button"))
+
+    expect(screen.getByText(i18n.t(config.steps[2].lesson.headlineKey))).toBeInTheDocument()
+    expect(items[0]).toHaveAttribute("aria-current", "step")
+    expect(items[2]).toHaveAttribute("data-state", "todo")
+    for (const item of items.slice(0, -1)) {
+      for (const connector of connectors(item)) expect(connector).toHaveClass("bg-muted")
+    }
+
+    await user.click(screen.getByTestId("guide-mark-done"))
+
+    expect(items[0]).toHaveAttribute("data-state", "done")
+    expect(items[1]).toHaveAttribute("aria-current", "step")
+    expect(items[2]).toHaveAttribute("data-state", "todo")
+    for (const connector of connectors(items[0])) expect(connector).toHaveClass("bg-success")
+    for (const connector of connectors(items[1])) expect(connector).toHaveClass("bg-muted")
+
+    await user.click(within(items[2]).getByRole("button"))
+    await user.click(screen.getByTestId("guide-mark-done"))
+
+    expect(items[1]).toHaveAttribute("data-state", "done")
+    expect(items[2]).toHaveAttribute("aria-current", "step")
+    for (const connector of connectors(items[1])) expect(connector).toHaveClass("bg-success")
   })
 
   it("the weekly-hours demo recomputes the customer schedule when a day is toggled off", async () => {

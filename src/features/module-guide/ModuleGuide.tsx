@@ -108,7 +108,6 @@ export function ModuleGuide({
   const { t } = useTranslation()
   const reducedMotion = usePrefersReducedMotion()
   const progress = useGuideProgress(tenantId, userId, config.key, config.steps)
-  const [announcement, setAnnouncement] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [justCompletedId, setJustCompletedId] = useState<string | null>(null)
   const [reward, setReward] = useState<{ step: GuideStep; allDone: boolean } | null>(null)
@@ -126,14 +125,15 @@ export function ModuleGuide({
   const steps = config.steps
   const firstIncomplete = steps.find((step) => !progress.isStepDone(step.id))
   const selected = selectedId ? steps.find((step) => step.id === selectedId) : undefined
-  const activeStep = selected && !progress.isStepDone(selected.id) ? selected : firstIncomplete
+  const activeStep = firstIncomplete
+  const lessonStep = selected && !progress.isStepDone(selected.id) ? selected : activeStep
   const allDone = !firstIncomplete
   const activeIndex = activeStep ? steps.indexOf(activeStep) : steps.length
 
   const moduleTitle = t(titleKey)
 
   function markStepDone(step: GuideStep) {
-    if (progress.isStepDone(step.id)) return
+    if (step.id !== firstIncomplete?.id || progress.isStepDone(step.id)) return
     progress.completeStep(step.id)
     if (progress.soundOn) playGuideRewardSound()
     setSelectedId(null)
@@ -146,16 +146,13 @@ export function ModuleGuide({
     const nowAllDone = completedNow >= steps.length
     setReward({ step, allDone: nowAllDone })
     window.clearTimeout(rewardTimer.current)
-    rewardTimer.current = window.setTimeout(() => setReward(null), reducedMotion ? 2600 : 4200)
-
-    setAnnouncement(t("moduleGuide.reward.announcement", { step: t(step.titleKey) }))
+    rewardTimer.current = window.setTimeout(() => setReward(null), 4200)
   }
 
   function handleReset() {
     progress.reset()
     setSelectedId(null)
     setReward(null)
-    setAnnouncement("")
   }
 
   return (
@@ -170,10 +167,6 @@ export function ModuleGuide({
         </div>
       </header>
 
-      <div aria-live="polite" className="sr-only">
-        {announcement}
-      </div>
-
       <Card>
         <CardContent className="space-y-0 p-0">
           {/* Header: title + progress ring + sound toggle */}
@@ -183,14 +176,14 @@ export function ModuleGuide({
               {t("moduleGuide.roadmapTitle")}
             </h2>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground" aria-live="polite">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                 <ProgressRing completed={progress.completedCount} total={progress.totalSteps} />
                 <span>
                   <span className="text-foreground tabular-nums">{progress.completedCount}</span>{" "}
                   {t("moduleGuide.progressShort", { total: progress.totalSteps })}
                 </span>
               </div>
-              <label className="flex min-h-9 items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+              <label className="flex min-h-11 items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
                 {progress.soundOn ? (
                   <Volume2 {...iconProps()} className="size-4" />
                 ) : (
@@ -209,7 +202,7 @@ export function ModuleGuide({
           </div>
 
           {/* Connected roadmap */}
-          <nav aria-label={t("moduleGuide.roadmapTitle")} className="px-5 pt-6 pb-2 sm:px-7">
+          <nav className="px-5 pt-6 pb-2 sm:px-7">
             <ol aria-label={t("moduleGuide.roadmapTitle")} className="flex flex-col gap-4 md:flex-row md:items-start md:gap-1.5">
               {steps.map((step, index) => {
                 const done = progress.isStepDone(step.id)
@@ -251,7 +244,7 @@ export function ModuleGuide({
                         state: t(`moduleGuide.roadmap.state.${state}`),
                       })}
                       className={cn(
-                        "group flex w-full items-center gap-3 rounded-xl text-left outline-none",
+                        "group flex min-h-11 w-full items-center gap-3 rounded-xl text-left outline-none",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                         "md:flex-col md:items-center md:gap-2 md:py-1 md:text-center",
                       )}
@@ -355,10 +348,10 @@ export function ModuleGuide({
 
           {/* Mini-lesson */}
           <div className="p-3 sm:p-4">
-            {activeStep ? (
+            {lessonStep ? (
               <LessonPanel
-                lesson={activeStep.lesson}
-                target={stepTarget(activeStep, Math.min(activeIndex, 2), shortcuts, related)}
+                lesson={lessonStep.lesson}
+                target={stepTarget(lessonStep, Math.min(steps.indexOf(lessonStep), 2), shortcuts, related)}
               />
             ) : (
               <div className="rounded-xl border border-border bg-secondary p-4">
@@ -590,7 +583,7 @@ function WeeklyHoursDemo() {
                 aria-pressed={openDays[index]}
                 onClick={() => setOpenDays((prev) => prev.map((open, i) => (i === index ? !open : open)))}
                 className={cn(
-                  "flex size-9 items-center justify-center rounded-lg border text-xs font-semibold transition-colors",
+                  "flex size-11 items-center justify-center rounded-lg border text-xs font-semibold transition-colors",
                   openDays[index]
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-input bg-card text-muted-foreground",
