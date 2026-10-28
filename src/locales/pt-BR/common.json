@@ -468,6 +468,25 @@
       "goLogin": "Ir para o login",
       "goAgenda": "Abrir agenda"
     },
+    "home": {
+      "title": "Início",
+      "subtitle": "Tudo o que você pode fazer no {{tenant}}, em um só lugar.",
+      "emptySubtitle": "Bem-vindo ao portal do {{tenant}}.",
+      "emptyDescription": "O {{tenant}} ainda não configurou itens para o portal. Assim que houver novidades, elas aparecem aqui.",
+      "heroEyebrow": "Comece por aqui",
+      "heroTitle": "O que você quer fazer hoje?",
+      "heroSubtitle": "Reserve um horário ou explore o catálogo do {{tenant}} — tudo em um só lugar.",
+      "heroSubtitleCatalog": "Explore o catálogo do {{tenant}} e envie o seu pedido em poucos toques.",
+      "quickActions": "Acesso rápido",
+      "open": "Abrir",
+      "descReservar": "Escolha o dia, o recurso e o horário que combina com você.",
+      "descCatalog": "Veja os itens disponíveis e monte o seu pedido.",
+      "descOrders": "Acompanhe seus pedidos e o status de cada um.",
+      "descRequests": "Peça um item que ainda não está no catálogo.",
+      "descReservations": "Consulte e gerencie as suas reservas.",
+      "tipTitle": "Dica",
+      "tipText": "Use o menu lateral a qualquer momento para navegar entre reservas e compras."
+    },
     "agenda": {
       "title": "Agenda",
       "subtitle": "Consulte disponibilidade e reserve um horário.",
@@ -1977,6 +1996,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Informações disponíveis para seu perfil",
+    "readOnlyNotice": "Você pode consultar seus dados em modo somente leitura. O período de teste terminou. Para continuar usando a plataforma, escolha uma assinatura antes da remoção dos dados em {{days}} dia(s).",
+    "limitedNotice": "Seu acesso permite consultar apenas as informações disponíveis para seu perfil. Para ampliar o acesso, fale com a pessoa responsável pelo ambiente.",
+    "emptyDescription": "Os indicadores aparecerão aqui conforme houver atividade neste ambiente.",
+    "unavailable": "Os indicadores não estão disponíveis no momento.",
+    "workOrdersEmpty": "Nenhuma ordem de serviço para exibir neste período.",
+    "viewOrders": "Ver ordens de serviço",
+    "clientEmptyHint": "Novas atividades vinculadas ao seu cadastro aparecerão aqui.",
+    "ordersEmptyHint": "Você pode consultar a lista de ordens de serviço para acompanhar outras atividades.",
     "title": "Centro de Comando",
     "description": "Indicadores conforme os módulos e famílias ativos neste ambiente.",
     "emptyModules": "Nenhum módulo operacional ativo além do portal de clientes.",
