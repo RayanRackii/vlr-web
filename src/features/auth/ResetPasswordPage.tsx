@@ -26,6 +26,7 @@ import {
 } from "@/features/auth/resetPasswordSchema"
 import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
 import { noteStaffSignIn } from "@/lib/api"
+import { purgeSignedOutSessions, removeSessionKeysAsSignedOut } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 function getResetErrorMessage(error: AuthError, t: TFunction): string {
@@ -66,8 +67,7 @@ export function ResetPasswordPage() {
       const type = params.get("type")
 
       if (tokenHash && type === "recovery") {
-        noteStaffSignIn()
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
         })
@@ -76,10 +76,25 @@ export function ResetPasswordPage() {
           return
         }
 
-        if (error !== null) {
+        if (error !== null || !data.session) {
           setGate("invalid")
           return
         }
+
+        noteStaffSignIn()
+        // Verification ran behind the sign-out barrier. Save the verified session
+        // again so storage and AuthProvider receive it after the barrier is lifted.
+        try {
+          const { error: sessionError } = await supabase.auth.setSession(data.session)
+          if (sessionError !== null) throw sessionError
+        } catch {
+          removeSessionKeysAsSignedOut([])
+          purgeSignedOutSessions()
+          void supabase.auth.stopAutoRefresh()
+          if (!cancelled) setGate("invalid")
+          return
+        }
+        if (cancelled) return
 
         // Drop secrets from the address bar after establishing the session.
         window.history.replaceState({}, document.title, "/reset-password")

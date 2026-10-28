@@ -1222,7 +1222,6 @@
   },
   "moduleIntro": {
     "title": "Introduction",
-    "howItWorks": "How it works",
     "shortcuts": "Shortcuts",
     "relatedModules": "Related modules",
     "open": "About {{module}}",
@@ -1270,6 +1269,83 @@
         "how1": "Browse customers and open the environment you need to manage.",
         "how2": "Manage platform users and equipment families in the available screens.",
         "how3": "Inside an environment, the menu shows the areas available to that customer."
+      }
+    }
+  },
+  "moduleGuide": {
+    "roadmapTitle": "Guide roadmap",
+    "badgesTitle": "Achievements",
+    "pointsLabel": "{{points}} points",
+    "progressLabel": "{{completed}} of {{total}} steps",
+    "markDone": "Mark as done",
+    "goToScreen": "Go to {{label}}",
+    "exploreModule": "Explore {{label}}",
+    "reset": "Restart guide",
+    "soundToggle": "Reward sound",
+    "nextAction": {
+      "eyebrow": "Recommended next action",
+      "allDone": "Guide complete!",
+      "allDoneDescription": "You finished every step in this guide. Restart it any time to review."
+    },
+    "reward": {
+      "stepAnnouncement": "You earned {{points}} points for completing \"{{step}}\".",
+      "badgeAnnouncement": "Achievement unlocked: {{badge}}."
+    },
+    "badges": {
+      "firstStep": "First resource",
+      "halfway": "Halfway there",
+      "complete": "Guide complete"
+    },
+    "steps": {
+      "learn1": { "title": "First step" },
+      "learn2": { "title": "Second step" },
+      "learn3": { "title": "Third step" },
+      "overview": {
+        "learn1": { "title": "Check your indicators" },
+        "learn2": { "title": "Browse screens from the menu" },
+        "learn3": { "title": "Get to know the other areas" }
+      },
+      "bookings": {
+        "learn1": { "title": "Add your bookable resources" },
+        "learn2": { "title": "Set your available hours" },
+        "learn3": { "title": "Connect with other modules" }
+      },
+      "maintenance": {
+        "learn1": { "title": "Add your equipment" },
+        "learn2": { "title": "Set up plans and work orders" },
+        "learn3": { "title": "Align maintenance with bookings" }
+      },
+      "sales": {
+        "learn1": { "title": "Add your products" },
+        "learn2": { "title": "Adjust your sales settings" },
+        "learn3": { "title": "Connect with other modules" }
+      },
+      "peoplePortal": {
+        "learn1": { "title": "Track staff and customers" },
+        "learn2": { "title": "Organize the customer menu" },
+        "learn3": { "title": "Connect bookings and sales" }
+      },
+      "pmoc": {
+        "learn1": { "title": "Review your plans" },
+        "learn2": { "title": "Create a new plan" },
+        "learn3": { "title": "Link plans to work orders" }
+      },
+      "platform": {
+        "learn1": { "title": "Browse your customers" },
+        "learn2": { "title": "Manage users and families" },
+        "learn3": { "title": "Explore the environment menu" }
+      },
+      "visit": {
+        "title": "Visit a module screen",
+        "description": "Open a real screen to see what you learned in action."
+      },
+      "related": {
+        "title": "Explore a related module",
+        "description": "See how this module connects to another area of your business."
+      },
+      "wrapUp": {
+        "title": "Ready to use",
+        "description": "You know the essentials of this module. Come back to the guide any time to review."
       }
     }
   },

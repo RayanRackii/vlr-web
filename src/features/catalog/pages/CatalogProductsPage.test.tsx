@@ -97,6 +97,19 @@ describe("CatalogProductsPage validity gate", () => {
     fireEvent.change(element, { target: { value } })
   }
 
+  it("pins product actions on tablets and keeps editing available", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage()
+    const edit = await screen.findByRole("button", { name: i18n.t("common.edit") })
+    const actions = edit.closest("td")
+    const header = screen.getByRole("columnheader", { name: i18n.t("catalog.products.columns.actions") })
+    expect(actions).toHaveClass("md:max-lg:sticky", "md:max-lg:right-0", "md:max-lg:bg-card")
+    expect(header).toHaveClass("md:max-lg:right-0")
+    await user.click(edit)
+    expect(within(await screen.findByRole("dialog")).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue(PRODUCT.name)
+  })
+
   it.each(["pt-BR", "en", "es"])("shows no errors on open and explains a blurred name beside the field in %s", async (locale) => {
     await i18n.changeLanguage(locale)
     try {
