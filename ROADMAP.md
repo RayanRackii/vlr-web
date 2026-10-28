@@ -239,6 +239,8 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 4.5. UX de Ativos (fundação)
 
+- [x] QA R21 itens 5 e 3 (WEB, local): wizard de Ativos marca obrigatórios e mostra erros acessíveis após interação; Próximo valida e foca o primeiro inválido. Tag individual permanece opcional conforme schema; tag base do lote é obrigatória. Nome abre o wizard existente em desktop/mobile, com campos bloqueados para leitura. Copy de Ativos sem aluguel/locação em pt-BR/en/es. Vazio de OS abertas oferece acesso à aba Concluídas quando a contagem existente é positiva.
+
 - [x] Nav Recursos / Tipos; empty state guia criar tipos primeiro.
 - [x] Copy por tom de módulo (`rentals` | `maintenance` | `generic`) via `useAssetCopyTone`.
 - [x] Famílias no wizard/edit tenant + formulários dinâmicos por `fieldSchema`.
@@ -295,6 +297,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 - Hygiene sweep 2026-08-04: ver `docs/code-hygiene-findings.md` no **`vlr-api`** (canônico).
 
 ## Histórico
+
+| 2026-10-28 | **QA R21 itens 5/3 (WEB, local):** validação de campos de Ativos alinhada ao schema do passo, erros no blur/avanço e foco; nome na lista abre o wizard existente; termos de equipamento/recurso/reserva nos três idiomas. OS já tinha filtros por status e contagens: adicionado somente atalho para Concluídas no vazio de Abertas. Node 22: TypeScript aprovado; ESLint dos TS/TSX alterados sem erros (dois avisos legados TanStack); lint ratchet aprovado (189 violações existentes); Vitest de assets/workOrders/locales aprovado (207 testes / 29 arquivos), com configLoader runner e cache desligado para respeitar node_modules somente leitura. Revisão por snapshots sem achados Critical/High/Medium abertos; corrigido switch Base UI em leitura, com regressão de clique/teclado. Como testar: em `/ativos`, tentar avançar vazio, sair de Voltagem/Tag base vazias e abrir um nome; em `/os`, concluir a última aberta e usar “Ver OS concluídas”. Próximo WEB: smoke em DEV com os três idiomas e permissões de leitura/escrita. Próximo API: hosts de convite no Fly DEV (R8, ação humana); contrato inalterado. Sem Git, commit, deploy ou alteração de API. |
 
 | 2026-10-28 | **Fix R20 (WEB, local):** [x] usuários em cards abaixo de `lg`, e-mails completos e ações de 44px; [x] dashboard com cards compactos, busca local acessível e limpeza do resultado vazio; [x] retry nas duas páginas, largura máxima e copy pt-BR/en/es. Regressões Vitest de identidade, busca e recuperação. Próximo WEB: smoke em DEV nas quatro larguras e nos dois temas (Chromium bloqueado no sandbox). Próximo API: hosts de convite no Fly DEV (R8, ação humana); contrato inalterado. Sem Git. |
 

@@ -267,6 +267,20 @@ export function AssetsPage() {
     setWizardOpen(true)
   }, [])
 
+  const renderAssetName = useCallback(
+    (asset: AssetTableRow) => (
+      <Button
+        type="button"
+        variant="link"
+        className="h-auto min-h-11 max-w-full whitespace-normal p-0 text-left"
+        onClick={() => openWizard("edit", asset.id)}
+      >
+        {asset.name}
+      </Button>
+    ),
+    [openWizard],
+  )
+
   const renderStatusBadges = useCallback(
     (asset: AssetTableRow) => (
       <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -374,6 +388,17 @@ export function AssetsPage() {
         ),
       },
       {
+        accessorKey: "name",
+        header: ({ column }) => (
+          <DataTableColumnFilterHeader
+            column={column}
+            title={t("assets.detail.fields.name")}
+            className="flex items-center justify-center gap-2"
+          />
+        ),
+        cell: ({ row }) => renderAssetName(row.original),
+      },
+      {
         accessorKey: "tag",
         header: ({ column }) => (
           <DataTableColumnFilterHeader
@@ -419,7 +444,7 @@ export function AssetsPage() {
         cell: ({ row }) => renderRowActions(row.original),
       },
     ],
-    [isTrialReadOnly, renderRowActions, renderStatusBadges, t],
+    [isTrialReadOnly, renderAssetName, renderRowActions, renderStatusBadges, t],
   )
 
   const tableColumns = useMemo(
@@ -878,6 +903,7 @@ export function AssetsPage() {
                         </label>
                       ) : null}
                       <div className="min-w-0">
+                        {renderAssetName(asset)}
                         <p className="truncate font-medium">{asset.tag}</p>
                         <p className="truncate text-xs text-muted-foreground">
                           {asset.categoryName}
@@ -1040,7 +1066,7 @@ export function AssetsPage() {
           categories={categories}
           families={families}
           assetId={detailAssetId}
-          readOnly={isTrialReadOnly}
+          readOnly={isTrialReadOnly || !canWriteAssets}
           onCompleted={() => {
             void loadPageData()
           }}

@@ -59,7 +59,7 @@ function generalStepSchema(
         startNumber: finiteNumber,
         endNumber: finiteNumber,
       })
-      .refine((value) => value.startNumber <= value.endNumber)
+      .refine((value) => value.startNumber <= value.endNumber, { path: ["endNumber"] })
   }
 
   if (mode === "bulk") {
@@ -182,6 +182,17 @@ function reviewStepSchema(input: AssetWizardStepInput) {
     operation: assetWizardOperationStepSchema,
     pricing: input.isRentable ? assetWizardPricingStepSchema : z.unknown(),
   })
+}
+
+export function getAssetWizardStepInvalidFields(
+  stepId: "general" | "operation",
+  input: AssetWizardStepInput,
+): string[] {
+  const result = stepId === "general"
+    ? generalStepSchema(input.mode, input.rentalType, input.familyFields).safeParse(generalValues(input))
+    : assetWizardOperationStepSchema.safeParse(operationValues(input))
+
+  return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."))
 }
 
 export function isAssetWizardStepValid(

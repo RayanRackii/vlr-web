@@ -77,7 +77,7 @@ const families: AssetFamily[] = [
   },
 ]
 
-function renderWizard(mode: "create" | "edit" = "create") {
+function renderWizard(mode: "create" | "edit" | "bulk" = "create", wizardFamilies = families) {
   const onOpenChange = vi.fn()
   const onCompleted = vi.fn()
   render(
@@ -88,7 +88,7 @@ function renderWizard(mode: "create" | "edit" = "create") {
       onOpenChange={onOpenChange}
       units={units}
       categories={categories}
-      families={families}
+      families={wizardFamilies}
       onCompleted={onCompleted}
     />,
   )
@@ -149,42 +149,63 @@ describe("AssetWizard validity gate", () => {
     toastSuccess.mockReset()
   })
 
-  it("keeps Próximo disabled until the general step schema is valid", async () => {
+  it("keeps Next enabled and focuses the first invalid field with an accessible error", async () => {
     const user = userEvent.setup()
     renderWizard()
+    expect(nextButton()).toBeEnabled()
+    expect(screen.queryByText(i18n.t("assets.inventory.validation.nameRequired"))).not.toBeInTheDocument()
 
-    expect(nextButton()).toBeDisabled()
-    expect(backButton()).toBeDisabled()
-    expect(createAssetMock).not.toHaveBeenCalled()
-
-    await user.type(
-      screen.getByPlaceholderText(i18n.t("assets.wizard.placeholders.name")),
-      "   ",
-    )
-    await user.type(
-      screen.getByPlaceholderText(i18n.t("assets.wizard.placeholders.tag")),
-      "Q-01",
-    )
-    expect(nextButton()).toBeDisabled()
-
-    await user.clear(
-      screen.getByPlaceholderText(i18n.t("assets.wizard.placeholders.name")),
-    )
-    await user.type(
-      screen.getByPlaceholderText(i18n.t("assets.wizard.placeholders.name")),
-      "Quadra 1",
-    )
-    expect(nextButton()).toBeDisabled()
+    await user.click(nextButton())
+    const category = screen.getByRole("combobox", { name: /^Tipo/ })
+    expect(category).toHaveFocus()
+    expect(category).toHaveAttribute("aria-required", "true")
+    expect(category).toHaveAttribute("aria-invalid", "true")
+    expect(category).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.categoryRequired"))
 
     await selectCategory(user)
-    expect(nextButton()).toBeEnabled()
-
-    await user.clear(
-      screen.getByPlaceholderText(i18n.t("assets.wizard.placeholders.name")),
-    )
-    expect(nextButton()).toBeDisabled()
-    expect(backButton()).toBeDisabled()
+    await user.click(nextButton())
+    const name = screen.getByRole("textbox", { name: /^Nome/ })
+    expect(name).toHaveFocus()
+    expect(name).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.nameRequired"))
+    expect((name as HTMLInputElement).labels?.[0]).toHaveTextContent("*")
+    await user.type(name, "Ventilador 1")
+    expect(name).not.toHaveAttribute("aria-invalid", "true")
+    expect(screen.getByRole("textbox", { name: /^Tag/ })).not.toHaveAttribute("aria-required", "true")
+    await user.click(nextButton())
+    expect(backButton()).toBeEnabled()
     expect(createAssetMock).not.toHaveBeenCalled()
+  })
+
+  it("validates empty required family fields on blur and advance, leaving optional fields unmarked", async () => {
+    const user = userEvent.setup()
+    renderWizard("create", [{ ...families[0], fields: [
+      { key: "voltage", type: "number", required: true, label: "Voltagem" },
+      { key: "model", type: "text", required: false, label: "Modelo" },
+    ] }])
+    const voltage = screen.getByRole("spinbutton", { name: /^Voltagem/ })
+    expect(voltage).toHaveAttribute("aria-required", "true")
+    expect((voltage as HTMLInputElement).labels?.[0]).toHaveTextContent("*")
+    expect(voltage).not.toHaveAttribute("aria-invalid", "true")
+    expect(screen.getByRole("textbox", { name: /^Modelo/ })).not.toHaveAttribute("aria-required", "true")
+
+    await user.click(voltage)
+    await user.tab()
+    expect(voltage).toHaveAttribute("aria-invalid", "true")
+    expect(voltage).toHaveAccessibleDescription(i18n.t("common.required"))
+    const name = screen.getByRole("textbox", { name: /^Nome/ })
+    expect(name).not.toHaveAttribute("aria-invalid", "true")
+    await user.click(name)
+    await user.tab()
+    expect(name).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.nameRequired"))
+
+    await user.type(name, "Ventilador 1")
+    await selectCategory(user)
+    await user.click(nextButton())
+    expect(voltage).toHaveFocus()
+    await user.type(voltage, "220")
+    expect(voltage).not.toHaveAttribute("aria-invalid", "true")
+    await user.click(nextButton())
+    expect(backButton()).toBeEnabled()
   })
 
   it("gates only the current step and leaves Voltar free", async () => {
@@ -198,13 +219,17 @@ describe("AssetWizard validity gate", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /Disponível para reserva \/ aluguel/,
+        name: /Disponível para reserva/,
       }),
     )
     const quantity = screen.getByRole("spinbutton")
     await user.clear(quantity)
     await user.type(quantity, "0")
-    expect(nextButton()).toBeDisabled()
+    await user.click(nextButton())
+    expect(quantity).toHaveFocus()
+    expect(quantity).toHaveAttribute("aria-required", "true")
+    expect(quantity).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.quantityRequired"))
+    expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
     expect(createAssetMock).not.toHaveBeenCalled()
 
@@ -215,20 +240,23 @@ describe("AssetWizard validity gate", () => {
     await user.click(
       screen.getByRole("button", { name: /Fila de reservas/ }),
     )
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
 
+    await user.click(nextButton())
+    expect(timeInput(0)).toHaveFocus()
+    expect(timeInput(0)).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.queueOpeningTimeRequired"))
     fireEvent.change(timeInput(0), { target: { value: "08:00" } })
     expect(nextButton()).toBeEnabled()
 
     await user.click(nextButton())
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
     fireEvent.change(screen.getByRole("textbox", { name: /^Preço por hora/ }), { target: { value: "12,5" } })
     expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
 
     fireEvent.change(timeInput(1), { target: { value: "07:00" } })
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
 
     fireEvent.change(timeInput(1), { target: { value: "22:00" } })
@@ -238,6 +266,44 @@ describe("AssetWizard validity gate", () => {
     expect(finishButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
     expect(createAssetMock).not.toHaveBeenCalled()
+  })
+
+  it("marks bulk identity fields and explains an empty base tag on blur", async () => {
+    const user = userEvent.setup()
+    renderWizard("bulk")
+    const tag = screen.getByRole("textbox", { name: /^Tag base/ })
+    expect(tag).toHaveAttribute("aria-required", "true")
+    expect((tag as HTMLInputElement).labels?.[0]).toHaveTextContent("*")
+    expect(tag).not.toHaveAttribute("aria-invalid", "true")
+    await user.click(tag)
+    await user.tab()
+    expect(tag).toHaveAccessibleDescription(i18n.t("assets.inventory.validation.baseTagRequired"))
+    expect(screen.getByRole("spinbutton", { name: /^Número inicial/ })).toHaveAttribute("aria-required", "true")
+    expect(screen.getByRole("spinbutton", { name: /^Número final/ })).toHaveAttribute("aria-required", "true")
+  })
+
+  it("marks pricing requirements and describes an empty time after blur", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await fillGeneralStep(user)
+    await user.click(nextButton())
+    await user.click(screen.getByRole("button", { name: /Disponível para reserva/ }))
+    await user.click(nextButton())
+
+    const start = screen.getByLabelText(/^Início/)
+    const price = screen.getByRole("textbox", { name: /^Preço por hora/ })
+    expect(start).toHaveAttribute("aria-required", "true")
+    expect(price).toHaveAttribute("aria-required", "true")
+    expect(start).not.toHaveAttribute("aria-invalid", "true")
+    fireEvent.change(start, { target: { value: "" } })
+    fireEvent.blur(start)
+    expect(start).toHaveAttribute("aria-invalid", "true")
+    expect(start).toHaveAccessibleDescription(i18n.t("common.required"))
+    fireEvent.change(start, { target: { value: "08:00" } })
+    expect(start).not.toHaveAttribute("aria-invalid", "true")
+    await user.click(nextButton())
+    expect(price).toHaveFocus()
+    expect(price).toHaveAttribute("aria-invalid", "true")
   })
 
   it("re-enables Concluir after a server error and keeps the entered values", async () => {
@@ -321,7 +387,7 @@ describe("AssetWizard pricing units", () => {
     renderWizard()
     await fillGeneralStep(user)
     await user.click(nextButton())
-    await user.click(screen.getByRole("button", { name: /Disponível para reserva \/ aluguel/ }))
+    await user.click(screen.getByRole("button", { name: /Disponível para reserva/ }))
     await user.click(nextButton())
 
     await user.click(screen.getByRole("combobox", { name: "Unidade de preço" }))
@@ -362,7 +428,7 @@ describe("AssetWizard pricing units", () => {
     await fillGeneralStep(user)
     await user.click(nextButton())
     await user.click(
-      screen.getByRole("button", { name: /Disponível para reserva \/ aluguel/ }),
+      screen.getByRole("button", { name: /Disponível para reserva/ }),
     )
     await user.click(nextButton())
 
@@ -372,7 +438,7 @@ describe("AssetWizard pricing units", () => {
     expect(
       screen.getByText(i18n.t("assets.inventory.validation.pricingRequired")),
     ).toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
 
     fireEvent.change(screen.getByRole("textbox", { name: "Segunda" }), {
       target: { value: "25,00" },

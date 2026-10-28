@@ -2322,7 +2322,7 @@
           "generic": "Novo tipo"
         },
         "description": {
-          "rentals": "Defina um tipo para agrupar recursos alugáveis (ex.: Área externa).",
+          "rentals": "Defina um tipo para agrupar recursos (ex.: Equipamento).",
           "spaces": "Defina um tipo de espaço (ex.: Sala, Área externa).",
           "goods": "Defina um tipo de bem (ex.: Caçamba).",
           "electrical": "Cadastre o modelo base dos equipamentos elétricos.",
@@ -2376,7 +2376,7 @@
       },
       "description": {
         "rentals": "Recursos que você oferece (espaços, bens…). Cadastre cada um e marque o que pode ser reservado.",
-        "spaces": "Espaços alugáveis, como salas e áreas externas. Cadastre cada um e marque o que pode ser reservado.",
+        "spaces": "Espaços e instalações do negócio. Cadastre cada um e organize-os por tipo.",
         "goods": "Bens e itens (caçambas…). Cadastre cada um e organize por tipo.",
         "electrical": "Equipamentos elétricos do site. Use tipos e atributos (voltagem, fabricante).",
         "maintenance": "Equipamentos e instalações do site. Use tipos para organizar e vincular manutenção.",
@@ -2474,6 +2474,8 @@
         "stockQuantity": "Quantidade em estoque"
       },
       "validation": {
+        "pricingWindowInvalid": "O horário final deve ser posterior ao inicial.",
+        "attributeInvalid": "Informe um valor válido.",
         "unitRequired": "A unidade é obrigatória.",
         "categoryRequired": "O tipo é obrigatório.",
         "familyRequired": "A família é obrigatória.",
@@ -2506,7 +2508,7 @@
         "deleteBlockedByWorkOrders": "Não é possível excluir este recurso porque ele tem ordens de serviço."
       },
       "flags": {
-        "rentable": "Aluguel",
+        "rentable": "Reservável",
         "maintenance": "Manutenção"
       }
     },
@@ -2520,24 +2522,24 @@
         "capacity": "Capacidade"
       },
       "placeholders": {
-        "name": "Ex.: Espaço 1 — coberto",
-        "tag": "Ex.: Q-01",
+        "name": "Ex.: Equipamento 1",
+        "tag": "Ex.: EQ-01",
         "location": "Ex.: Bloco A, piso térreo"
       },
       "help": {
         "unit": "Local físico deste recurso (sede, filial). Criada automaticamente no cadastro do cliente; gestão de unidades virá depois.",
         "category": "Tipo/classificação do recurso (ex.: Área externa). Defina tipos em Ativos → Tipos.",
         "family": "Família de atributos (espaços, bens, elétricos…). Controla campos extras do formulário.",
-        "name": "Nome amigável exibido na agenda e nas listas.",
-        "tag": "Código curto único para identificar o recurso (ex.: Q-01).",
+        "name": "Nome do equipamento ou recurso exibido nas listas.",
+        "tag": "Código curto único para identificar o recurso (ex.: EQ-01).",
         "location": "Onde fica no site (bloco, ala, referência). Opcional.",
         "status": "Ativo = disponível; Inativo = oculto; Manutenção = fora de operação.",
         "baseLocation": "Localização aplicada igualmente a todos os itens do lote (sem numeração).",
-        "baseTag": "Prefixo da tag; o número da faixa é acrescentado (ex.: Q- + 01).",
+        "baseTag": "Prefixo da tag; o número da faixa é acrescentado (ex.: EQ- + 01).",
         "startNumber": "Primeiro número da sequência gerada no lote.",
         "endNumber": "Último número da sequência (inclusive).",
         "requiresMaintenance": "Se ligado, o recurso entra no fluxo de manutenção/PMOC/OS.",
-        "isRentable": "Se ligado, o recurso pode ser reservado no módulo de aluguel/agenda.",
+        "isRentable": "Se ligado, o recurso pode ser reservado na agenda.",
         "requiresDeposit": "Se ligado, a reserva espera a confirmação de pagamento no admin. Se desligado, a reserva já nasce confirmada e ocupa o horário.",
         "queueEnabled": "Se ligado, os clientes entram numa fila FIFO para reservar este espaço no horário de abertura. Desligado por padrão.",
         "queueOpeningTime": "Horário em que as reservas abrem (fuso de Brasília). A sala de espera abre 30 minutos antes.",
@@ -2639,7 +2641,7 @@
       },
       "tabs": {
         "general": "Geral",
-        "rental": "Aluguel",
+        "rental": "Reservas",
         "maintenance": "Manutenção"
       },
       "fields": {
@@ -2649,12 +2651,12 @@
         "category": "Tipo",
         "location": "Localização",
         "status": "Status",
-        "isRentable": "Disponível para reserva / aluguel",
+        "isRentable": "Disponível para reserva",
         "requiresDeposit": "É necessário pagamento prévio?",
         "queueEnabled": "Fila de reservas",
         "queueOpeningTime": "Horário de abertura da fila de reservas",
         "requiresMaintenance": "Requer manutenção",
-        "rentalType": "Tipo de aluguel",
+        "rentalType": "Tipo de recurso",
         "totalQuantity": "Quantidade total"
       },
       "rentalTypes": {
@@ -2987,6 +2989,7 @@
       "Canceled": "Cancelada"
     },
     "actions": {
+      "viewCompleted": "Ver OS concluídas",
       "execute": "Executar",
       "view": "Visualizar",
       "open": "Abrir"

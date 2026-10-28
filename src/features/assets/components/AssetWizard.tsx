@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog"
 import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -35,13 +34,11 @@ import {
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
-import { isAssetWizardStepValid } from "@/features/assets/components/assetWizardStepSchema"
+import { getAssetWizardStepInvalidFields, isAssetWizardStepValid } from "@/features/assets/components/assetWizardStepSchema"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
   attributesToPayload,
-  buildAttributesZodSchema,
   emptyAttributesFromFields,
-  guidLikeIdSchema,
   type AssetFamily,
   type AssetFamilyField,
 } from "@/features/assets/schemas/assetFamilySchemas"
@@ -109,7 +106,7 @@ type FieldErrorKey =
   | "endNumber"
   | "totalQuantity"
   | "queueOpeningTime"
-  | "attributes"
+  | `attributes.${string}`
   | "pricing"
 
 function displayUnitName(name: string, translate: (key: string) => string): string {
@@ -194,10 +191,14 @@ export function AssetWizard({
   readOnly = false,
 }: AssetWizardProps) {
   const { t, i18n } = useTranslation()
-  const [stepIndex, setStepIndex] = useState(0)
-  const [form, setForm] = useState<WizardFormState>(() => emptyForm())
+  const [requestedStepIndex, setStepIndex] = useState(0)
+  const [form, setForm] = useState<WizardFormState>(() => emptyForm({
+    unitId: units[0]?.id ?? "",
+    familyId: families[0]?.id ?? "",
+    attributes: emptyAttributesFromFields(families[0]?.fields ?? []),
+  }))
   const [pricing, setPricing] = useState<PricingEditorState>(emptyPricingEditor)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(mode === "edit" && open)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loadedAsset, setLoadedAsset] = useState<Asset | null>(null)
   const [fieldErrors, setFieldErrors] = useState<
@@ -221,32 +222,46 @@ export function AssetWizard({
     return base
   }, [form.isRentable, t])
 
+  const stepIndex = Math.min(requestedStepIndex, steps.length - 1)
   const currentStepId = steps[stepIndex]?.id ?? "general"
   const isLastStep = stepIndex >= steps.length - 1
-  const isCurrentStepValid = useMemo(
-    () =>
-      isAssetWizardStepValid(currentStepId, {
-        mode,
-        rentalType: form.rentalType,
-        unitId: form.unitId,
-        categoryId: form.categoryId,
-        familyId: form.familyId,
-        name: form.name,
-        tag: form.tag,
-        baseLocationName: form.baseLocationName,
-        baseTag: form.baseTag,
-        startNumber: form.startNumber,
-        endNumber: form.endNumber,
-        totalQuantity: form.totalQuantity,
-        attributes: form.attributes,
-        familyFields: selectedFamily?.fields ?? [],
-        isRentable: form.isRentable,
-        queueEnabled: form.queueEnabled,
-        queueOpeningTime: form.queueOpeningTime,
-        pricing,
-      }),
-    [currentStepId, form, mode, pricing, selectedFamily],
-  )
+  const stepInput = {
+    ...form,
+    mode,
+    familyFields: selectedFamily?.fields ?? [],
+    pricing,
+  }
+  const isCurrentStepValid = isAssetWizardStepValid(currentStepId, stepInput)
+  const fieldId = useId()
+  const stepFieldsRef = useRef<HTMLDivElement>(null)
+  const focusInvalidRef = useRef(false)
+
+  useEffect(() => {
+    if (focusInvalidRef.current) {
+      stepFieldsRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+      focusInvalidRef.current = false
+    }
+  }, [fieldErrors])
+
+  function idForField(key: FieldErrorKey) {
+    return `${fieldId}-${key}`
+  }
+
+  function fieldProps(key: FieldErrorKey, required = true) {
+    return {
+      id: idForField(key),
+      "aria-required": required || undefined,
+      "aria-invalid": fieldErrors[key] || undefined,
+      "aria-describedby": fieldErrors[key] ? `${idForField(key)}-error` : undefined,
+      onBlur: () => {
+        const invalid = getAssetWizardStepInvalidFields(
+          currentStepId === "operation" ? "operation" : "general", stepInput,
+        ).includes(key)
+        setFieldErrors((prev) => ({ ...prev, [key]: invalid }))
+      },
+    }
+  }
+
   const isBulkLocation = mode === "bulk" && form.rentalType === "Location"
   const isBulkGood = mode === "bulk" && form.rentalType === "Good"
 
@@ -353,23 +368,21 @@ export function AssetWizard({
     if (sessionOpenRef.current) {
       return
     }
-    sessionOpenRef.current = true
-    setStepIndex(0)
-    setFieldErrors({})
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      sessionOpenRef.current = true
+      setStepIndex(0)
+      setFieldErrors({})
 
-    if (mode === "edit") {
-      void loadEditAsset()
-      return
-    }
-
-    resetWizard()
+      if (mode === "edit") {
+        void loadEditAsset()
+      } else {
+        resetWizard()
+      }
+    })
+    return () => { cancelled = true }
   }, [open, mode, loadEditAsset, resetWizard])
-
-  useEffect(() => {
-    if (stepIndex > steps.length - 1) {
-      setStepIndex(Math.max(0, steps.length - 1))
-    }
-  }, [stepIndex, steps.length])
 
   function patchForm(patch: Partial<WizardFormState>) {
     setForm((prev) => ({ ...prev, ...patch }))
@@ -380,7 +393,16 @@ export function AssetWizard({
           delete next[key as FieldErrorKey]
         }
         if (key === "attributes") {
-          delete next.attributes
+          for (const attribute of Object.keys(patch.attributes ?? {})) {
+            if (patch.attributes?.[attribute] !== form.attributes[attribute]) {
+              delete next[`attributes.${attribute}`]
+            }
+          }
+        }
+        if (key === "familyId") {
+          for (const error of Object.keys(next)) {
+            if (error.startsWith("attributes.")) delete next[error as FieldErrorKey]
+          }
         }
       }
       return next
@@ -407,104 +429,26 @@ export function AssetWizard({
   }
 
   function validateGeneral(): boolean {
-    const errors: FieldErrorKey[] = []
-
-    if (!form.unitId || !guidLikeIdSchema.safeParse(form.unitId).success) {
-      errors.push("unitId")
-    }
-    if (
-      !form.categoryId ||
-      !guidLikeIdSchema.safeParse(form.categoryId).success
-    ) {
-      errors.push("categoryId")
-    }
-    if (!form.familyId || !guidLikeIdSchema.safeParse(form.familyId).success) {
-      errors.push("familyId")
-    }
-
-    if (mode === "bulk") {
-      if (!form.baseLocationName.trim()) {
-        errors.push("baseLocationName")
-      }
-      if (!form.baseTag.trim()) {
-        errors.push("baseTag")
-      }
-      if (form.rentalType === "Location") {
-        if (!Number.isFinite(form.startNumber)) {
-          errors.push("startNumber")
-        }
-        if (!Number.isFinite(form.endNumber)) {
-          errors.push("endNumber")
-        }
-        if (
-          Number.isFinite(form.startNumber) &&
-          Number.isFinite(form.endNumber) &&
-          form.startNumber > form.endNumber
-        ) {
-          errors.push("startNumber", "endNumber")
-        }
-      } else if (
-        form.totalQuantity < 1 ||
-        !Number.isFinite(form.totalQuantity)
-      ) {
-        errors.push("totalQuantity")
-      }
-    } else {
-      if (!form.name.trim()) {
-        errors.push("name")
-      }
-    }
-
-    const attributeValidation = buildAttributesZodSchema(
-      selectedFamily?.fields ?? [],
-      { required: t("common.required") },
-    ).safeParse(form.attributes)
-
-    if (!attributeValidation.success) {
-      errors.push("attributes")
-    }
-
+    const errors = getAssetWizardStepInvalidFields("general", stepInput) as FieldErrorKey[]
     if (errors.length > 0) {
       markErrors(errors)
-      toast.error(
-        errors.includes("totalQuantity") && mode === "bulk"
-          ? t("assets.inventory.validation.stockQuantityRequired")
-          : t("common.required"),
-      )
+      toast.error(t("common.required"))
       return false
     }
-
     setFieldErrors({})
     return true
   }
 
   function validateCapabilities(): boolean {
-    if (!form.isRentable) {
-      return true
-    }
-    if (
-      mode !== "bulk" &&
-      (form.totalQuantity < 1 || !Number.isFinite(form.totalQuantity))
-    ) {
-      markErrors(["totalQuantity"])
-      toast.error(t("assets.inventory.validation.quantityRequired"))
+    const errors = getAssetWizardStepInvalidFields("operation", stepInput) as FieldErrorKey[]
+    if (errors.length > 0) {
+      markErrors(errors)
+      toast.error(t(errors.includes("queueOpeningTime")
+        ? "assets.inventory.validation.queueOpeningTimeRequired"
+        : "assets.inventory.validation.quantityRequired"))
       return false
     }
-    if (
-      form.rentalType === "Location" &&
-      form.queueEnabled &&
-      !toApiTimeOnly(form.queueOpeningTime)
-    ) {
-      markErrors(["queueOpeningTime"])
-      toast.error(t("assets.inventory.validation.queueOpeningTimeRequired"))
-      return false
-    }
-    setFieldErrors((prev) => {
-      const next = { ...prev }
-      delete next.totalQuantity
-      delete next.queueOpeningTime
-      return next
-    })
+    setFieldErrors({})
     return true
   }
 
@@ -536,14 +480,16 @@ export function AssetWizard({
   }
 
   function handleNext() {
+    focusInvalidRef.current = true
     if (!validateCurrentStep()) {
       return
     }
+    focusInvalidRef.current = false
     setStepIndex((prev) => Math.min(prev + 1, steps.length - 1))
   }
 
   function handleBack() {
-    setStepIndex((prev) => Math.max(prev - 1, 0))
+    setStepIndex(Math.max(stepIndex - 1, 0))
   }
 
   async function handleSubmit() {
@@ -729,13 +675,15 @@ export function AssetWizard({
             {t("common.loading")}
           </div>
         ) : (
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
+          <div ref={stepFieldsRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
+            <fieldset disabled={readOnly} className="contents">
             {currentStepId === "general" ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
                     <FieldLabel
-                      label={t("assets.inventory.form.unit")}
+                      htmlFor={idForField("unitId")}
+                        label={t("assets.inventory.form.unit")}
                       help={t("assets.wizard.help.unit")}
                       required
                     />
@@ -757,7 +705,7 @@ export function AssetWizard({
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.unitId)),
                         )}
-                        aria-invalid={fieldErrors.unitId || undefined}
+                        {...fieldProps("unitId")}
                       >
                         <SelectValue
                           placeholder={t(
@@ -774,7 +722,7 @@ export function AssetWizard({
                       </SelectContent>
                     </Select>
                     {fieldErrors.unitId ? (
-                      <p className="text-xs text-destructive">
+                      <p id={`${idForField("unitId")}-error`} className="text-xs text-destructive">
                         {t("assets.inventory.validation.unitRequired")}
                       </p>
                     ) : null}
@@ -782,7 +730,8 @@ export function AssetWizard({
 
                   <div className="space-y-2">
                     <FieldLabel
-                      label={t("assets.inventory.form.category")}
+                      htmlFor={idForField("categoryId")}
+                        label={t("assets.inventory.form.category")}
                       help={t("assets.wizard.help.category")}
                       required
                     />
@@ -804,7 +753,7 @@ export function AssetWizard({
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.categoryId)),
                         )}
-                        aria-invalid={fieldErrors.categoryId || undefined}
+                        {...fieldProps("categoryId")}
                       >
                         <SelectValue
                           placeholder={t(
@@ -821,7 +770,7 @@ export function AssetWizard({
                       </SelectContent>
                     </Select>
                     {fieldErrors.categoryId ? (
-                      <p className="text-xs text-destructive">
+                      <p id={`${idForField("categoryId")}-error`} className="text-xs text-destructive">
                         {t("assets.inventory.validation.categoryRequired")}
                       </p>
                     ) : null}
@@ -829,7 +778,8 @@ export function AssetWizard({
 
                   <div className="space-y-2 sm:col-span-2">
                     <FieldLabel
-                      label={t("assets.inventory.form.family")}
+                      htmlFor={idForField("familyId")}
+                        label={t("assets.inventory.form.family")}
                       help={t("assets.wizard.help.family")}
                       required
                     />
@@ -847,7 +797,7 @@ export function AssetWizard({
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.familyId)),
                         )}
-                        aria-invalid={fieldErrors.familyId || undefined}
+                        {...fieldProps("familyId")}
                       >
                         <SelectValue
                           placeholder={t(
@@ -864,7 +814,7 @@ export function AssetWizard({
                       </SelectContent>
                     </Select>
                     {fieldErrors.familyId ? (
-                      <p className="text-xs text-destructive">
+                      <p id={`${idForField("familyId")}-error`} className="text-xs text-destructive">
                         {t("assets.inventory.validation.familyRequired")}
                       </p>
                     ) : null}
@@ -925,6 +875,7 @@ export function AssetWizard({
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <FieldLabel
+                        htmlFor={idForField("baseLocationName")}
                         label={t("assets.inventory.form.baseLocation")}
                         help={t("assets.wizard.help.baseLocation")}
                         required
@@ -934,7 +885,7 @@ export function AssetWizard({
                         placeholder={t(
                           "assets.inventory.form.baseLocationPlaceholder.generic",
                         )}
-                        aria-invalid={fieldErrors.baseLocationName || undefined}
+                        {...fieldProps("baseLocationName")}
                         className={fieldInvalidClass(
                           Boolean(fieldErrors.baseLocationName),
                         )}
@@ -942,9 +893,15 @@ export function AssetWizard({
                           patchForm({ baseLocationName: event.target.value })
                         }}
                       />
+                      {fieldErrors.baseLocationName ? (
+                        <p id={`${idForField("baseLocationName")}-error`} className="text-xs text-destructive">
+                          {t("assets.inventory.validation.baseLocationRequired")}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <FieldLabel
+                        htmlFor={idForField("baseTag")}
                         label={t("assets.inventory.form.baseTag")}
                         help={t("assets.wizard.help.baseTag")}
                         required
@@ -954,7 +911,7 @@ export function AssetWizard({
                         placeholder={t(
                           "assets.inventory.form.baseTagPlaceholder.generic",
                         )}
-                        aria-invalid={fieldErrors.baseTag || undefined}
+                        {...fieldProps("baseTag")}
                         className={fieldInvalidClass(
                           Boolean(fieldErrors.baseTag),
                         )}
@@ -962,10 +919,16 @@ export function AssetWizard({
                           patchForm({ baseTag: event.target.value })
                         }}
                       />
+                      {fieldErrors.baseTag ? (
+                        <p id={`${idForField("baseTag")}-error`} className="text-xs text-destructive">
+                          {t("assets.inventory.validation.baseTagRequired")}
+                        </p>
+                      ) : null}
                     </div>
                     {isBulkGood ? (
                       <div className="space-y-2 sm:col-span-2">
                         <FieldLabel
+                          htmlFor={idForField("totalQuantity")}
                           label={t("assets.inventory.form.stockQuantity")}
                           help={t("assets.wizard.help.stockQuantity")}
                           required
@@ -974,7 +937,7 @@ export function AssetWizard({
                           type="number"
                           min={1}
                           value={form.totalQuantity}
-                          aria-invalid={fieldErrors.totalQuantity || undefined}
+                          {...fieldProps("totalQuantity")}
                           className={fieldInvalidClass(
                             Boolean(fieldErrors.totalQuantity),
                           )}
@@ -985,7 +948,7 @@ export function AssetWizard({
                           }}
                         />
                         {fieldErrors.totalQuantity ? (
-                          <p className="text-xs text-destructive">
+                          <p id={`${idForField("totalQuantity")}-error`} className="text-xs text-destructive">
                             {t(
                               "assets.inventory.validation.stockQuantityRequired",
                             )}
@@ -996,16 +959,15 @@ export function AssetWizard({
                       <>
                         <div className="space-y-2">
                           <FieldLabel
-                            label={t("assets.inventory.form.startNumber")}
+                            htmlFor={idForField("startNumber")}
+                        label={t("assets.inventory.form.startNumber")}
                             help={t("assets.wizard.help.startNumber")}
                             required
                           />
                           <Input
                             type="number"
                             value={form.startNumber}
-                            aria-invalid={
-                              fieldErrors.startNumber || undefined
-                            }
+                            {...fieldProps("startNumber")}
                             className={fieldInvalidClass(
                               Boolean(fieldErrors.startNumber),
                             )}
@@ -1016,7 +978,7 @@ export function AssetWizard({
                             }}
                           />
                           {fieldErrors.startNumber ? (
-                            <p className="text-xs text-destructive">
+                            <p id={`${idForField("startNumber")}-error`} className="text-xs text-destructive">
                               {form.startNumber > form.endNumber
                                 ? t("assets.inventory.validation.rangeInvalid")
                                 : t(
@@ -1027,14 +989,15 @@ export function AssetWizard({
                         </div>
                         <div className="space-y-2">
                           <FieldLabel
-                            label={t("assets.inventory.form.endNumber")}
+                            htmlFor={idForField("endNumber")}
+                        label={t("assets.inventory.form.endNumber")}
                             help={t("assets.wizard.help.endNumber")}
                             required
                           />
                           <Input
                             type="number"
                             value={form.endNumber}
-                            aria-invalid={fieldErrors.endNumber || undefined}
+                            {...fieldProps("endNumber")}
                             className={fieldInvalidClass(
                               Boolean(fieldErrors.endNumber),
                             )}
@@ -1045,7 +1008,7 @@ export function AssetWizard({
                             }}
                           />
                           {fieldErrors.endNumber ? (
-                            <p className="text-xs text-destructive">
+                            <p id={`${idForField("endNumber")}-error`} className="text-xs text-destructive">
                               {form.startNumber > form.endNumber
                                 ? t("assets.inventory.validation.rangeInvalid")
                                 : t(
@@ -1061,6 +1024,7 @@ export function AssetWizard({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-2">
                       <FieldLabel
+                        htmlFor={idForField("name")}
                         label={t("assets.detail.fields.name")}
                         help={t("assets.wizard.help.name")}
                         required
@@ -1068,24 +1032,26 @@ export function AssetWizard({
                       <Input
                         value={form.name}
                         placeholder={t("assets.wizard.placeholders.name")}
-                        aria-invalid={fieldErrors.name || undefined}
+                        {...fieldProps("name")}
                         className={fieldInvalidClass(Boolean(fieldErrors.name))}
                         onChange={(event) => {
                           patchForm({ name: event.target.value })
                         }}
                       />
                       {fieldErrors.name ? (
-                        <p className="text-xs text-destructive">
+                        <p id={`${idForField("name")}-error`} className="text-xs text-destructive">
                           {t("assets.inventory.validation.nameRequired")}
                         </p>
                       ) : null}
                     </div>
                     <div className="space-y-2">
                       <FieldLabel
+                        htmlFor={`${fieldId}-tag`}
                         label={t("assets.detail.fields.tag")}
                         help={t("assets.wizard.help.tag")}
                       />
                       <Input
+                        id={`${fieldId}-tag`}
                         value={form.tag}
                         placeholder={t("assets.wizard.placeholders.tag")}
                         onChange={(event) => {
@@ -1095,10 +1061,12 @@ export function AssetWizard({
                     </div>
                     <div className="space-y-2">
                       <FieldLabel
+                        htmlFor={`${fieldId}-location`}
                         label={t("assets.detail.fields.location")}
                         help={t("assets.wizard.help.location")}
                       />
                       <Input
+                        id={`${fieldId}-location`}
                         value={form.location}
                         placeholder={t("assets.wizard.placeholders.location")}
                         onChange={(event) => {
@@ -1155,19 +1123,23 @@ export function AssetWizard({
 
                 {selectedFamily && selectedFamily.fields.length > 0 ? (
                   <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
-                    {selectedFamily.fields.map((familyField) => (
+                    {selectedFamily.fields.map((familyField) => {
+                      const key: FieldErrorKey = `attributes.${familyField.key}`
+                      return (
                       <div key={familyField.key} className="space-y-2">
-                        <Label>
+                        <label htmlFor={idForField(key)} className="text-sm font-medium">
                           {t(`assets.wizard.familyFields.${familyField.key}`, {
                             defaultValue:
                               familyField.label ?? familyField.key,
                           })}
-                          {!familyField.required
-                            ? ` (${t("common.optional")})`
-                            : null}
-                        </Label>
+                          {familyField.required
+                            ? <span className="ml-1 text-destructive" aria-hidden="true">*</span>
+                            : ` (${t("common.optional")})`}
+                        </label>
                         {familyField.type === "boolean" ? (
                           <Switch
+                            disabled={readOnly}
+                            {...fieldProps(key, familyField.required)}
                             checked={
                               form.attributes[familyField.key] === "true"
                             }
@@ -1184,6 +1156,8 @@ export function AssetWizard({
                           />
                         ) : (
                           <Input
+                            {...fieldProps(key, familyField.required)}
+                            className={fieldInvalidClass(Boolean(fieldErrors[key]))}
                             type={
                               familyField.type === "number" ? "number" : "text"
                             }
@@ -1198,8 +1172,15 @@ export function AssetWizard({
                             }}
                           />
                         )}
+                        {fieldErrors[key] ? (
+                          <p id={`${idForField(key)}-error`} className="text-xs text-destructive">
+                            {t(form.attributes[familyField.key]?.trim()
+                              ? "assets.inventory.validation.attributeInvalid"
+                              : "common.required")}
+                          </p>
+                        ) : null}
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : null}
               </div>
@@ -1236,6 +1217,7 @@ export function AssetWizard({
                       </p>
                     </div>
                     <Switch
+                      disabled={readOnly}
                       checked={form.requiresMaintenance}
                       tabIndex={-1}
                       className="pointer-events-none"
@@ -1268,6 +1250,7 @@ export function AssetWizard({
                       </p>
                     </div>
                     <Switch
+                      disabled={readOnly}
                       checked={form.isRentable}
                       tabIndex={-1}
                       className="pointer-events-none"
@@ -1309,6 +1292,7 @@ export function AssetWizard({
                         </p>
                       </div>
                       <Switch
+                        disabled={readOnly}
                         checked={form.requiresDeposit}
                         tabIndex={-1}
                         className="pointer-events-none"
@@ -1348,6 +1332,7 @@ export function AssetWizard({
                             </p>
                           </div>
                           <Switch
+                            disabled={readOnly}
                             checked={form.queueEnabled}
                             tabIndex={-1}
                             className="pointer-events-none"
@@ -1356,7 +1341,8 @@ export function AssetWizard({
                         {form.queueEnabled ? (
                           <div className="space-y-2">
                             <FieldLabel
-                              label={t(
+                              htmlFor={idForField("queueOpeningTime")}
+                        label={t(
                                 "assets.detail.fields.queueOpeningTime",
                               )}
                               help={t("assets.wizard.help.queueOpeningTime")}
@@ -1365,9 +1351,7 @@ export function AssetWizard({
                             <Input
                               type="time"
                               value={form.queueOpeningTime}
-                              aria-invalid={
-                                fieldErrors.queueOpeningTime || undefined
-                              }
+                              {...fieldProps("queueOpeningTime")}
                               className={fieldInvalidClass(
                                 Boolean(fieldErrors.queueOpeningTime),
                               )}
@@ -1377,6 +1361,11 @@ export function AssetWizard({
                                 })
                               }}
                             />
+                            {fieldErrors.queueOpeningTime ? (
+                              <p id={`${idForField("queueOpeningTime")}-error`} className="text-xs text-destructive">
+                                {t("assets.inventory.validation.queueOpeningTimeRequired")}
+                              </p>
+                            ) : null}
                           </div>
                         ) : null}
                       </div>
@@ -1430,6 +1419,7 @@ export function AssetWizard({
                     </div>
                     <div className="space-y-2">
                       <FieldLabel
+                        htmlFor={idForField("totalQuantity")}
                         label={t("assets.detail.fields.totalQuantity")}
                         help={t("assets.wizard.help.totalQuantity")}
                         required
@@ -1438,7 +1428,7 @@ export function AssetWizard({
                         type="number"
                         min={1}
                         value={form.totalQuantity}
-                        aria-invalid={fieldErrors.totalQuantity || undefined}
+                        {...fieldProps("totalQuantity")}
                         className={fieldInvalidClass(
                           Boolean(fieldErrors.totalQuantity),
                         )}
@@ -1448,6 +1438,11 @@ export function AssetWizard({
                           })
                         }}
                       />
+                      {fieldErrors.totalQuantity ? (
+                        <p id={`${idForField("totalQuantity")}-error`} className="text-xs text-destructive">
+                          {t("assets.inventory.validation.quantityRequired")}
+                        </p>
+                      ) : null}
                     </div>
                     </div>
                     ) : null}
@@ -1685,6 +1680,7 @@ export function AssetWizard({
                 ) : null}
               </div>
             ) : null}
+            </fieldset>
           </div>
         )}
 
@@ -1712,16 +1708,14 @@ export function AssetWizard({
               {t("assets.wizard.finish")}
             </FormPrimaryButton>
           ) : (
-            <FormPrimaryButton
+            <Button
               type="button"
               className="w-full sm:w-auto"
-              isValid={isCurrentStepValid}
-              loading={isSubmitting}
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               onClick={handleNext}
             >
               {t("assets.wizard.next")}
-            </FormPrimaryButton>
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>

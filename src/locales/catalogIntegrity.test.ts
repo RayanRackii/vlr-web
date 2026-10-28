@@ -22,6 +22,17 @@ function leafKeys(value: unknown, prefix = ""): string[] {
 }
 
 describe("translation catalog integrity", () => {
+  it.each(["pt-BR", "en", "es"])(
+    "uses asset and equipment wording throughout Assets in %s",
+    (locale) => {
+      const assets: unknown = i18n.getResource(locale, "common", "assets")
+      const text = (value: unknown): string => typeof value === "string"
+        ? value
+        : Object.values(value as Record<string, unknown>).map(text).join("\n")
+      expect(text(assets)).not.toMatch(/\b(?:rental\w*|rentable\w*|locaç\w*|alugu\w*|alugá\w*|alquil\w*|quadra\w*|courts?|canchas?)\b/iu)
+    },
+  )
+
   it("keeps the assigned work order empty state in UTF-8", () => {
     expect(i18n.t("workOrders.emptyAssigned.Open", { lng: "pt-BR" })).toBe("Nenhuma OS aberta atribuída a você.")
   })

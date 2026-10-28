@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -33,6 +34,8 @@ vi.mock("@/features/users/services/usersService", () => ({
 
 vi.mock("@/features/assets/services/assetsService", () => ({
   getAssets: vi.fn(),
+  getAssetById: vi.fn(),
+  updateAsset: vi.fn(),
   deleteAsset: vi.fn(),
 }))
 
@@ -50,7 +53,7 @@ vi.mock("@/features/assets/services/assetFamiliesService", () => ({
 
 import { getCategories } from "@/features/assets/services/assetCategoriesService"
 import { listActiveAssetFamilies } from "@/features/assets/services/assetFamiliesService"
-import { getAssets } from "@/features/assets/services/assetsService"
+import { getAssetById, getAssets, updateAsset } from "@/features/assets/services/assetsService"
 import { getUnits } from "@/features/assets/services/unitsService"
 
 const getAssetsMock = vi.mocked(getAssets)
@@ -98,6 +101,37 @@ describe("AssetsPage permission-aware load", () => {
     getCategoriesMock.mockRejectedValue(new Error("FORBIDDEN"))
     getUnitsMock.mockRejectedValue(new Error("FORBIDDEN"))
     listFamiliesMock.mockRejectedValue(new Error("FORBIDDEN"))
+  })
+
+  it.each([false, true])("shows the name and opens the existing view (write access: %s)", async (canWrite) => {
+    const user = userEvent.setup()
+    vi.mocked(getAssetById).mockResolvedValue(ASSET)
+    listFamiliesMock.mockResolvedValue([{
+      id: ASSET.familyId, key: "equipment", label: "Equipamentos", sortOrder: 0, isActive: true,
+      fields: [{ key: "covered", type: "boolean", required: true, label: "Protegido" }],
+    }])
+    renderPage(canWrite ? ["inventory.assets.read", "inventory.assets.write"] : ["inventory.assets.read"])
+
+    const table = await screen.findByRole("table")
+    expect(await within(table).findByRole("columnheader", { name: /^Nome/ })).toBeInTheDocument()
+    const names = await screen.findAllByRole("button", { name: ASSET.name })
+    expect(names).toHaveLength(2)
+    // Desktop and mobile both open the same existing wizard.
+    await user.click(names[canWrite ? 0 : 1])
+    const dialog = await screen.findByRole("dialog")
+    expect(await within(dialog).findByRole("textbox", { name: /^Nome/ })).toHaveValue(ASSET.name)
+    expect(getAssetById).toHaveBeenCalledWith(ASSET.id)
+    if (!canWrite) {
+      expect(within(dialog).getByRole("textbox", { name: /^Nome/ })).toBeDisabled()
+      const toggle = within(dialog).getByRole("switch", { name: /^Protegido/ })
+      expect(toggle).toHaveAttribute("aria-disabled", "true")
+      expect(toggle).toHaveAttribute("aria-checked", "false")
+      await user.click(toggle)
+      toggle.focus()
+      await user.keyboard(" ")
+      expect(toggle).toHaveAttribute("aria-checked", "false")
+      expect(updateAsset).not.toHaveBeenCalled()
+    }
   })
 
   it("keeps the asset list and hides create actions when lookups are forbidden", async () => {
