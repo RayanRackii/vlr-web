@@ -8,8 +8,9 @@ type RentalResourceDetailsProps = {
   asset: AdminRentalAsset
   pricePerHour: number | null | undefined
   pricingUnit?: PricingUnit
-  /** List rows: price as a bold chip, duration/capacity as quiet text, empty capacity hidden. */
+  /** List rows: metadata and a responsive price column. */
   compact?: boolean
+  showUnpriced?: boolean
 }
 
 function formatAllowedDurations(
@@ -30,7 +31,7 @@ function formatAllowedDurations(
     .join(", ")
 }
 
-export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour", compact = false }: RentalResourceDetailsProps) {
+export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour", compact = false, showUnpriced = false }: RentalResourceDetailsProps) {
   const { i18n, t } = useTranslation()
   const durations = formatAllowedDurations(asset.allowedDurationMinutes, t)
   const priceLabel =
@@ -42,9 +43,7 @@ export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour
     durations !== null ? t("rentals.resources.details.allowedDurations", { durations }) : null,
     hasCapacity
       ? t("rentals.resources.details.capacity", { count: asset.capacityPeople })
-      : compact
-        ? null
-        : t("rentals.resources.details.capacityUnknown"),
+      : t("rentals.resources.details.capacityUnknown"),
   ].filter((detail): detail is string => detail !== null)
 
   if (!compact) {
@@ -53,17 +52,21 @@ export function RentalResourceDetails({ asset, pricePerHour, pricingUnit = "Hour
     return <p className="text-xs text-muted-foreground">{details.join(" · ")}</p>
   }
 
-  if (priceLabel === null && meta.length === 0) return null
-
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="resource-row-details">
       {priceLabel ? (
-        <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+        <span className="resource-price-inline">
           {priceLabel}
         </span>
       ) : null}
-      {meta.length > 0 ? (
-        <span className="text-xs text-muted-foreground">{meta.join(" · ")}</span>
+      <div className="resource-metadata">{meta.map((detail) => <span key={detail}>{detail}</span>)}</div>
+      {pricePerHour != null ? (
+        <span className="resource-price-column">
+          <strong>{formatLocaleCurrency(pricePerHour, "BRL", i18n.language)}</strong>
+          <small>{t("rentals.resources.details.priceCaption", { unit: t(`rentals.resources.details.priceUnits.${pricingUnit}`) })}</small>
+        </span>
+      ) : showUnpriced ? (
+        <span className="resource-price-column"><small>{t("rentals.resources.details.noPrice")}</small></span>
       ) : null}
     </div>
   )

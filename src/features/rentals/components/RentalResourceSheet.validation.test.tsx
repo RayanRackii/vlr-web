@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -53,8 +53,8 @@ describe("RentalResourceSheet visual validation", () => {
   ])("shows %s errors on blur while keeping static guidance valid", async (modeLabel, optionLabel, fieldLabel, messageKey, invalidValue) => {
     const user = await renderVisualTab()
     await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
-    await user.click(screen.getByRole("combobox", { name: i18n.t(`rentals.resources.form.${modeLabel}`) }))
-    await user.click(await screen.findByRole("option", { name: i18n.t(`rentals.resources.form.${optionLabel}`) }))
+    const choices = screen.getByRole("radiogroup", { name: i18n.t(`rentals.resources.form.${modeLabel}`) })
+    await user.click(within(choices).getByRole("radio", { name: i18n.t(`rentals.resources.form.${optionLabel}`) }))
     const input = screen.getByRole("textbox", { name: i18n.t(`rentals.resources.form.${fieldLabel}`) })
     const message = i18n.t(`rentals.resources.validation.${messageKey}`)
     const helperId = input.getAttribute("aria-describedby")!
@@ -103,8 +103,7 @@ describe("RentalResourceSheet visual validation", () => {
   it("shows quantity errors after blur before submit and clears them when corrected", async () => {
     const user = await renderVisualTab()
     await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
-    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.rentalType") }))
-    await user.click(await screen.findByRole("option", { name: i18n.t("rentals.resources.typeGood") }))
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.resources.typeGood") }))
     const input = screen.getByRole("spinbutton", { name: i18n.t("rentals.resources.form.totalQuantity") })
     const message = i18n.t("rentals.resources.validation.quantityMin")
     await user.clear(input)

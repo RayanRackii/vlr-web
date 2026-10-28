@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
-import { Boxes, ChevronRight, Plus } from "lucide-react"
+import { Boxes, ChevronRight, DoorOpen, Package, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { ErrorState } from "@/components/ErrorState"
-import { PageHeader } from "@/components/layout/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
@@ -55,6 +55,7 @@ export function RentalResourcesPage() {
 
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
   const canReadPricing = can("rentals.pricing.read")
+  const spaceCount = assets.filter((asset) => asset.type === "Location").length
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -158,31 +159,44 @@ export function RentalResourcesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
-      <PageHeader
-        icon={Boxes}
-        title={t("rentals.resources.title")}
-        description={t("rentals.resources.description")}
-        actions={
+    <div className="rental-resources">
+      <header className="resources-header">
+        <div>
+          <p className="resources-eyebrow">{t("rentals.resources.eyebrow")}</p>
+          <h1>{t("rentals.resources.title")}</h1>
+          <p className="resources-description">{t("rentals.resources.description")}</p>
+        </div>
           <Can permission="rentals.assets.write">
             <Button
               type="button"
               disabled={!canWrite || loading || loadError !== null}
               onClick={openCreate}
             >
-              <Plus data-icon="inline-start" />
+              <Plus data-icon="inline-start" strokeWidth={ICON_STROKE_WIDTH} />
               {t("rentals.resources.add")}
             </Button>
           </Can>
-        }
-      />
+      </header>
 
       {loading ? (
-        <PageContentSkeleton rows={4} />
+        <div className="resources-card resources-skeleton" role="status" aria-busy="true" aria-label={t("common.loading")}>
+          <span className="sr-only">{t("common.loading")}</span>
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="resource-skeleton-row" aria-hidden="true">
+              <Skeleton className="size-[42px] shrink-0 rounded-xl" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-48 max-w-full" />
+                <Skeleton className="h-3 w-64 max-w-full" />
+              </div>
+              <Skeleton className="h-4 w-20 shrink-0" />
+            </div>
+          ))}
+        </div>
       ) : loadError !== null ? (
         <ErrorState message={loadError} onRetry={() => void load()} />
       ) : assets.length === 0 ? (
         <ScheduleEmptyState
+          className="resources-card resources-empty"
           icon={Boxes}
           title={t("rentals.resources.emptyTitle")}
           description={t("rentals.resources.emptyDescription")}
@@ -190,21 +204,37 @@ export function RentalResourcesPage() {
           onAction={canWrite ? openCreate : undefined}
         />
       ) : (
-        <ul className="space-y-2">
-          {assets.map((asset) => (
-            <li key={asset.id}>
+        <section className="resources-card" aria-label={t("rentals.resources.title")}>
+          <div className="resources-summary">
+            <p>
+              <strong>{t("rentals.resources.summaryResources", { count: assets.length })}</strong>
+              {t("rentals.resources.summaryBreakdown", {
+                spaces: t("rentals.resources.summarySpaces", { count: spaceCount }),
+                items: t("rentals.resources.summaryItems", { count: assets.length - spaceCount }),
+              })}
+            </p>
+            <span className="resources-edit-hint">{t("rentals.resources.editHint")}</span>
+          </div>
+        <ul className="resources-list">
+          {assets.map((asset) => {
+            const Icon = asset.type === "Good" ? Package : DoorOpen
+            return (
+            <li key={asset.id} className="resource-list-item">
               <button
                 type="button"
-                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 text-left shadow-sm motion-safe:transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                className="resource-row"
                 onClick={() => {
                   openEdit(asset)
                 }}
               >
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium">{asset.name}</p>
+                <span className="resource-icon" aria-hidden="true">
+                  <Icon className="size-5" strokeWidth={ICON_STROKE_WIDTH} />
+                </span>
+                <div className="resource-info">
+                  <div className="resource-title">
+                    <p>{asset.name}</p>
                     {asset.scheduledDeletionAt ? (
-                      <Badge variant="destructive" className="shrink-0">
+                      <Badge variant="destructive" className="resource-deletion-badge">
                         {t("assets.deletion.pendingBadge")}
                       </Badge>
                     ) : null}
@@ -214,13 +244,15 @@ export function RentalResourcesPage() {
                         : t("rentals.resources.typeLocation")}
                     </Badge>
                   </div>
-                  {asset.categoryName || asset.type === "Good" ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {asset.categoryName}
-                      {asset.categoryName && asset.type === "Good" ? " · " : null}
-                      {asset.type === "Good"
-                        ? `${t("rentals.resources.form.totalQuantity")}: ${asset.totalQuantity}`
-                        : null}
+                  {asset.categoryName || asset.type === "Good" || asset.location ? (
+                    <p className="resource-category">
+                      {[
+                        asset.categoryName,
+                        asset.type === "Good"
+                          ? t("rentals.resources.quantitySummary", { count: asset.totalQuantity })
+                          : null,
+                        asset.location,
+                      ].filter(Boolean).join(" · ")}
                     </p>
                   ) : null}
                   <RentalResourceDetails
@@ -228,16 +260,19 @@ export function RentalResourcesPage() {
                     pricePerHour={priceByAssetId[asset.assetId]?.pricePerHour}
                     pricingUnit={priceByAssetId[asset.assetId]?.pricingUnit}
                     compact
+                    showUnpriced={canReadPricing}
                   />
                 </div>
                 <ChevronRight
-                  className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  className="resource-chevron size-4 shrink-0"
+                  strokeWidth={ICON_STROKE_WIDTH}
                   aria-hidden
                 />
               </button>
             </li>
-          ))}
+          )})}
         </ul>
+        </section>
       )}
 
       <RentalResourceSheet
