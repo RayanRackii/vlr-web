@@ -17,7 +17,7 @@ type ProtectedRouteProps = {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, expiredSession } = useAuth()
   const location = useLocation()
 
   if (isAuthenticatedRestoreBlocked()) {
@@ -43,7 +43,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const company = new URLSearchParams(location.search).get("company")
     const next = `${location.pathname}${location.search}`
     const to = isSafeStaffNextPath(next)
-      ? staffLoginPath(next, { company })
+      ? staffLoginPath(next, {
+          company,
+          reason: expiredSession ? "session-expired" : null,
+          tenant: expiredSession?.tenantId,
+        })
       : company
         ? `/login?company=${encodeURIComponent(company)}`
         : "/login"
