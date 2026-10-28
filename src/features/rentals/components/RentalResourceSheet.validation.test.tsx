@@ -48,6 +48,79 @@ async function renderVisualTab() {
 
 describe("RentalResourceSheet visual validation", () => {
   it.each([
+    ["horizonLabel", "horizonDaysMode", "horizonDays", "horizonRange", "3651"],
+    ["cancelCutoffLabel", "cancelCutoffHours", "cancelCutoffHours", "cancelCutoffRange", "8761"],
+  ])("shows %s errors on blur while keeping static guidance valid", async (modeLabel, optionLabel, fieldLabel, messageKey, invalidValue) => {
+    const user = await renderVisualTab()
+    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
+    await user.click(screen.getByRole("combobox", { name: i18n.t(`rentals.resources.form.${modeLabel}`) }))
+    await user.click(await screen.findByRole("option", { name: i18n.t(`rentals.resources.form.${optionLabel}`) }))
+    const input = screen.getByRole("textbox", { name: i18n.t(`rentals.resources.form.${fieldLabel}`) })
+    const message = i18n.t(`rentals.resources.validation.${messageKey}`)
+    const helperId = input.getAttribute("aria-describedby")!
+    expect(input).toHaveAccessibleDescription(message)
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    await user.clear(input)
+    await user.type(input, invalidValue)
+    expect(input).toHaveAttribute("aria-describedby", helperId)
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    await user.tab()
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    const describedIds = input.getAttribute("aria-describedby")!.split(" ")
+    expect(describedIds).toHaveLength(2)
+    expect(describedIds).toContain(helperId)
+    for (const id of describedIds) {
+      expect(document.getElementById(id)).toBeVisible()
+      expect(document.getElementById(id)).toHaveTextContent(message)
+    }
+    await user.clear(input)
+    await user.type(input, "1")
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).toHaveAttribute("aria-describedby", helperId)
+    expect(input).toHaveAccessibleDescription(message)
+  })
+
+  it("links the empty queue opening time error after blur and removes it when corrected", async () => {
+    const user = await renderVisualTab()
+    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
+    await user.click(screen.getByRole("switch", { name: i18n.t("rentals.resources.form.queueEnabled") }))
+    const input = screen.getByLabelText(i18n.t("rentals.resources.form.queueOpeningTime"))
+    const message = i18n.t("rentals.resources.validation.queueOpeningTimeRequired")
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+    await user.click(input)
+    await user.tab()
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(message)
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)).toBeVisible()
+    fireEvent.change(input, { target: { value: "09:00" } })
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+  })
+
+  it("shows quantity errors after blur before submit and clears them when corrected", async () => {
+    const user = await renderVisualTab()
+    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
+    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.rentalType") }))
+    await user.click(await screen.findByRole("option", { name: i18n.t("rentals.resources.typeGood") }))
+    const input = screen.getByRole("spinbutton", { name: i18n.t("rentals.resources.form.totalQuantity") })
+    const message = i18n.t("rentals.resources.validation.quantityMin")
+    await user.clear(input)
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+    await user.tab()
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(message)
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)).toBeVisible()
+    await user.type(input, "2")
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+  })
+
+  it.each([
     ["pt-BR", "Informe um número inteiro entre 1 e 100000."],
     ["en", "Enter a whole number between 1 and 100000."],
     ["es", "Indique un número entero entre 1 y 100000."],
