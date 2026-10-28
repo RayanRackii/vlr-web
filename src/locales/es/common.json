@@ -4194,7 +4194,7 @@
     },
     "reservations": {
       "title": "Reservas",
-      "description": "Confirme depósitos y cancele reservas del portal B2C.",
+      "description": "Confirma depósitos, completa y cancela reservas hechas a través del portal.",
       "date": "Fecha",
       "status": "Estado",
       "statusAll": "Todos",
@@ -4223,7 +4223,28 @@
         "Canceled": "Cancelada",
         "Completed": "Completada"
       },
-      "multiDayRange": "{{start}} – {{end}} ({{days}} días)"
+      "multiDayRange": "{{start}} – {{end}} ({{days}} días)",
+      "operation": "Operación",
+      "filters": "Filtros de reservas",
+      "period": "Período",
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente",
+      "today": "Hoy",
+      "goToday": "Ir a hoy",
+      "emptyDescription": "Cambia el día, el período o el estado para ver otras reservas.",
+      "loading": "Cargando reservas…",
+      "count_one": "{{count}} reserva",
+      "count_other": "{{count}} reservas",
+      "orderedByTime": "Ordenadas por horario",
+      "time": "Horario",
+      "customer": "Cliente",
+      "resources": "Recursos",
+      "total": "Total",
+      "actions": "Acciones",
+      "noActions": "Sin acciones disponibles",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}min",
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
     },
     "bookingPolicy": {
       "title": "Política de reservas",

@@ -12,10 +12,11 @@ type FeatureRouteTabsProps = {
   labelKey: string
   tabs: readonly NavigationTab[]
   content: Readonly<Record<string, ReactNode>>
+  header?: ReactNode
 }
 
 /** Existing URLs select tabs; each route keeps its original permission guard. */
-export function FeatureRouteTabs({ labelKey, tabs, content }: FeatureRouteTabsProps) {
+export function FeatureRouteTabs({ labelKey, tabs, content, header }: FeatureRouteTabsProps) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const tabPath = pathname.replace(/\/+$/, "") || "/"
@@ -28,10 +29,17 @@ export function FeatureRouteTabs({ labelKey, tabs, content }: FeatureRouteTabsPr
 
   return (
     <Tabs value={tabPath} onValueChange={(value) => { void navigate(String(value)) }} className="space-y-4">
+      {header}
       <TabsList variant="line" aria-label={t(labelKey)} className="max-w-full overflow-x-auto">
-        {visible.map((tab) => (
-          <TabsTrigger key={tab.to} value={tab.to}>{t(tab.labelKey)}</TabsTrigger>
-        ))}
+        {visible.map((tab) => {
+          const Icon = tab.icon
+          return (
+            <TabsTrigger key={tab.to} value={tab.to}>
+              {Icon && <Icon size={18} aria-hidden="true" />}
+              {t(tab.labelKey)}
+            </TabsTrigger>
+          )
+        })}
       </TabsList>
       <TabsContent value={tabPath}>{content[tabPath]}</TabsContent>
     </Tabs>
