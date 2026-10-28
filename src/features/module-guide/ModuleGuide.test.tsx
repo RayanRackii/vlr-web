@@ -4,21 +4,17 @@ import { MemoryRouter } from "react-router-dom"
 import { LayoutGrid } from "lucide-react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { moduleGuideConfigs } from "./configs"
 import { ModuleGuide } from "./ModuleGuide"
-import type { ModuleGuideConfig } from "./types"
 import i18n from "@/lib/i18n"
 
-const config: ModuleGuideConfig = {
-  key: "overview",
-  steps: [
-    { id: "step-1", titleKey: "moduleGuide.steps.learn1.title", descriptionKey: "moduleIntro.modules.overview.how1", kind: "learn", points: 10, badgeId: "firstStep" },
-    { id: "step-2", titleKey: "moduleGuide.steps.learn2.title", descriptionKey: "moduleIntro.modules.overview.how2", kind: "learn", points: 10, badgeId: "complete" },
-  ],
-  badges: [
-    { id: "firstStep", labelKey: "moduleGuide.badges.firstStep", threshold: 1 },
-    { id: "complete", labelKey: "moduleGuide.badges.complete", threshold: 2 },
-  ],
-}
+const config = moduleGuideConfigs.bookings
+
+const shortcuts = [
+  { to: "/recursos", labelKey: "moduleGuide.steps.bookings.learn1.title" },
+  { to: "/horarios", labelKey: "moduleGuide.steps.bookings.learn2.title" },
+]
+const related = [{ to: "/modulos/maintenance", labelKey: "moduleGuide.steps.maintenance.learn1.title" }]
 
 function renderGuide(userId: string | null = "user-1", tenantId: string | null = "tenant-1") {
   return render(
@@ -28,8 +24,8 @@ function renderGuide(userId: string | null = "user-1", tenantId: string | null =
         titleKey="nav.sections.overview"
         summaryKey="moduleIntro.modules.overview.summary"
         icon={LayoutGrid}
-        shortcuts={[]}
-        related={[]}
+        shortcuts={shortcuts}
+        related={related}
         userId={userId}
         tenantId={tenantId}
       />
@@ -53,99 +49,132 @@ beforeEach(async () => {
 })
 afterEach(() => localStorage.clear())
 
-const firstBadgeLabel = i18n.t("moduleGuide.badges.firstStep")
-const markDoneLabel = i18n.t("moduleGuide.markDone")
-const resetLabel = i18n.t("moduleGuide.reset")
 const roadmapLabel = i18n.t("moduleGuide.roadmapTitle")
+const resetLabel = i18n.t("moduleGuide.reset")
 
 describe("ModuleGuide", () => {
-  it("marks the badge as locked until its threshold is reached", () => {
+  it("renders a connected roadmap with the first step current and the rest upcoming", () => {
     renderGuide()
-    const badge = screen.getByText(firstBadgeLabel)
-    expect(badge.closest("span")).toHaveAttribute("data-earned", "false")
+    const roadmap = screen.getByRole("list", { name: roadmapLabel })
+    const items = within(roadmap).getAllByRole("listitem")
+    expect(items).toHaveLength(config.steps.length)
+    expect(items[0]).toHaveAttribute("aria-current", "step")
+    expect(items[0]).toHaveAttribute("data-state", "active")
+    expect(items[1]).toHaveAttribute("data-state", "todo")
   })
 
-  it("completing a step updates the roadmap, earns the badge, and persists after remount", async () => {
+  it("shows no points, pontos, or achievements/badges", () => {
+    renderGuide()
+    expect(screen.queryByText(/pontos/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/conquistas/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("moduleGuide.progressShort", { total: 5 }), { exact: false })).toBeInTheDocument()
+  })
+
+  it("renders the current step's mini-lesson (headline, why-it-matters, diagram node)", () => {
+    renderGuide()
+    expect(screen.getByText(i18n.t("moduleGuide.lesson.chip"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("moduleGuide.lessons.bookings.learn1.headline"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("moduleGuide.lesson.whyTitle"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("moduleGuide.lessons.bookings.learn1.d1.t"))).toBeInTheDocument()
+  })
+
+  it("completing a step advances the roadmap, shows a reward, and persists after remount", async () => {
     const user = userEvent.setup()
     const { unmount } = renderGuide()
-
     const roadmap = screen.getByRole("list", { name: roadmapLabel })
     const firstItem = within(roadmap).getAllByRole("listitem")[0]
-    expect(firstItem).toHaveAttribute("aria-current", "step")
+    expect(firstItem).toHaveAttribute("data-state", "active")
 
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+    await user.click(screen.getByTestId("guide-mark-done"))
 
     expect(firstItem).toHaveAttribute("data-state", "done")
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
+    expect(within(roadmap).getAllByRole("listitem")[1]).toHaveAttribute("aria-current", "step")
+    // per-step success reward
+    expect(screen.getByRole("status")).toHaveTextContent(i18n.t("moduleGuide.reward.title"))
 
     unmount()
     renderGuide()
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
+    expect(within(screen.getByRole("list", { name: roadmapLabel })).getAllByRole("listitem")[0]).toHaveAttribute(
+      "data-state",
+      "done",
+    )
   })
 
-  it("reset clears progress", async () => {
-    const user = userEvent.setup()
-    renderGuide()
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
-
-    await user.click(screen.getByRole("button", { name: resetLabel }))
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "false")
-  })
-
-  it("renders the just-completed reward without an animation class when reduced motion is preferred", async () => {
-    setReducedMotion(true)
+  it("clicking an upcoming roadmap node previews that step's lesson", async () => {
     const user = userEvent.setup()
     renderGuide()
     const roadmap = screen.getByRole("list", { name: roadmapLabel })
-    const firstItem = within(roadmap).getAllByRole("listitem")[0]
+    const secondButton = within(within(roadmap).getAllByRole("listitem")[1]).getByRole("button")
 
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+    await user.click(secondButton)
 
-    expect(firstItem.className).not.toMatch(/scale-\[1\.02\]/)
+    expect(screen.getByText(i18n.t("moduleGuide.lessons.bookings.learn2.headline"))).toBeInTheDocument()
   })
 
-  it("keeps progress isolated per module+user storage key", async () => {
+  it("the weekly-hours demo recomputes the customer schedule when a day is toggled off", async () => {
     const user = userEvent.setup()
-    const { unmount } = renderGuide("user-1")
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
-    unmount()
+    renderGuide()
+    // Step 2 carries the interactive weekly-hours demo.
+    const roadmap = screen.getByRole("list", { name: roadmapLabel })
+    await user.click(within(within(roadmap).getAllByRole("listitem")[1]).getByRole("button"))
 
-    renderGuide("user-2")
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "false")
+    // 5 open weekdays × 8 daily slots = 40
+    expect(screen.getByText(i18n.t("moduleGuide.demo.weekly.total", { count: 40 }))).toBeInTheDocument()
+
+    const [monday] = i18n.t("moduleGuide.demo.weekly.days", { returnObjects: true }) as string[]
+    await user.click(screen.getByRole("button", { name: monday, pressed: true }))
+
+    expect(screen.getByText(i18n.t("moduleGuide.demo.weekly.total", { count: 32 }))).toBeInTheDocument()
   })
 
-  it("keeps progress isolated per tenant, even for the same user id", async () => {
+  it("defaults the reward sound ON and persists toggling it off across remounts", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderGuide()
+    const sound = screen.getByTestId("guide-sound-toggle")
+    expect(sound).toHaveAttribute("aria-checked", "true")
+
+    await user.click(sound)
+    expect(screen.getByTestId("guide-sound-toggle")).toHaveAttribute("aria-checked", "false")
+
+    unmount()
+    renderGuide()
+    expect(screen.getByTestId("guide-sound-toggle")).toHaveAttribute("aria-checked", "false")
+  })
+
+  it("does not scale the active node when reduced motion is preferred", () => {
+    setReducedMotion(true)
+    renderGuide()
+    const roadmap = screen.getByRole("list", { name: roadmapLabel })
+    const firstButton = within(within(roadmap).getAllByRole("listitem")[0]).getByRole("button")
+    expect(firstButton.querySelector("span")?.className ?? "").not.toMatch(/scale-110/)
+  })
+
+  it("reset clears progress and sound preference stays", async () => {
+    const user = userEvent.setup()
+    renderGuide()
+    await user.click(screen.getByTestId("guide-mark-done"))
+    expect(within(screen.getByRole("list", { name: roadmapLabel })).getAllByRole("listitem")[0]).toHaveAttribute(
+      "data-state",
+      "done",
+    )
+
+    await user.click(screen.getByRole("button", { name: resetLabel }))
+    expect(within(screen.getByRole("list", { name: roadmapLabel })).getAllByRole("listitem")[0]).toHaveAttribute(
+      "data-state",
+      "active",
+    )
+  })
+
+  it("keeps progress isolated per tenant", async () => {
     const user = userEvent.setup()
     const { unmount } = renderGuide("user-1", "tenant-1")
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
+    await user.click(screen.getByTestId("guide-mark-done"))
     unmount()
 
     renderGuide("user-1", "tenant-2")
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "false")
-  })
-
-  it("falls back to a stable key when tenantId is missing, without crashing", async () => {
-    const user = userEvent.setup()
-    const { unmount } = renderGuide("user-1", null)
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
-    unmount()
-
-    renderGuide("user-1", null)
-    expect(screen.getByText(firstBadgeLabel).closest("span")).toHaveAttribute("data-earned", "true")
-  })
-
-  it("announces both the points and the badge when a step completion earns one", async () => {
-    const user = userEvent.setup()
-    renderGuide()
-    await user.click(screen.getByRole("button", { name: markDoneLabel }))
-
-    const stepAnnouncement = i18n.t("moduleGuide.reward.stepAnnouncement", {
-      step: i18n.t("moduleGuide.steps.learn1.title"),
-      points: 10,
-    })
-    const badgeAnnouncement = i18n.t("moduleGuide.reward.badgeAnnouncement", { badge: firstBadgeLabel })
-    expect(screen.getByText(`${stepAnnouncement} ${badgeAnnouncement}`)).toBeInTheDocument()
+    expect(within(screen.getByRole("list", { name: roadmapLabel })).getAllByRole("listitem")[0]).toHaveAttribute(
+      "data-state",
+      "active",
+    )
   })
 })

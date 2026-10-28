@@ -121,12 +121,14 @@ describe("module introductions", () => {
     expect(steps[0]).toHaveAttribute("aria-current", "step")
   })
 
-  it("earns the first badge and shows the next recommended action after completing a step", async () => {
+  it("advances the roadmap and recommends the next step after completing one", async () => {
     const user = userEvent.setup()
     renderIntro("/modulos/bookings")
-    await user.click(screen.getAllByRole("button", { name: i18n.t("moduleGuide.markDone") })[0])
-    const badges = screen.getByRole("region", { name: "Conquistas" })
-    expect(within(badges).getByText(i18n.t("moduleGuide.badges.firstStep")).closest("span")).toHaveAttribute("data-earned", "true")
+    const roadmap = screen.getByRole("list", { name: i18n.t("moduleGuide.roadmapTitle") })
+    await user.click(screen.getByTestId("guide-mark-done"))
+    const steps = within(roadmap).getAllByRole("listitem")
+    expect(steps[0]).toHaveAttribute("data-state", "done")
+    expect(steps[1]).toHaveAttribute("aria-current", "step")
   })
 
   it("links to visible related intros", () => {

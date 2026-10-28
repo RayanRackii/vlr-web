@@ -1272,78 +1272,593 @@
   },
   "moduleGuide": {
     "roadmapTitle": "Roteiro do guia",
-    "badgesTitle": "Conquistas",
-    "pointsLabel": "{{points}} pontos",
-    "progressLabel": "{{completed}} de {{total}} etapas",
-    "markDone": "Marcar como feito",
-    "goToScreen": "Ir para {{label}}",
-    "exploreModule": "Explorar {{label}}",
-    "reset": "Reiniciar guia",
+    "progressShort": "de {{total}}",
+    "soundLabel": "Som",
     "soundToggle": "Som de recompensas",
+    "markDone": "Marcar como feito",
+    "reset": "Reiniciar guia",
+    "replay": "Refazer guia",
+    "timeEstimate": "~{{minutes}} min",
     "nextAction": {
       "eyebrow": "Próxima ação recomendada",
+      "goToScreen": "Ir para a tela",
       "allDone": "Guia concluído!",
-      "allDoneDescription": "Você completou todas as etapas deste guia. Reinicie quando quiser revisar."
+      "allDoneDescription": "Todas as etapas feitas — bom trabalho!"
     },
     "reward": {
-      "stepAnnouncement": "Você ganhou {{points}} pontos por concluir \"{{step}}\".",
-      "badgeAnnouncement": "Conquista desbloqueada: {{badge}}."
+      "title": "Boa!",
+      "stepProgress": "Etapa {{completed}} de {{total}} concluída.",
+      "allDone": "Você concluiu todas as etapas do guia.",
+      "announcement": "Etapa concluída: {{step}}."
     },
-    "badges": {
-      "firstStep": "Primeiro recurso",
-      "halfway": "Na metade do caminho",
-      "complete": "Guia completo"
+    "roadmap": {
+      "stepLabel": "Etapa {{index}} de {{total}}: {{title}} — {{state}}",
+      "state": {
+        "done": "concluída",
+        "active": "etapa atual",
+        "todo": "pendente"
+      }
     },
-    "steps": {
-      "learn1": { "title": "Primeiro passo" },
-      "learn2": { "title": "Segundo passo" },
-      "learn3": { "title": "Terceiro passo" },
-      "overview": {
-        "learn1": { "title": "Consulte os indicadores" },
-        "learn2": { "title": "Explore as telas pelo menu" },
-        "learn3": { "title": "Conheça as áreas do negócio" }
+    "lesson": {
+      "chip": "Mini-aula",
+      "whyTitle": "Por que isso importa",
+      "seeInPractice": "Veja na prática",
+      "opens": "Abre: {{target}}",
+      "allDoneChip": "Tudo pronto",
+      "allDoneHeadline": "Você percorreu todo o guia de {{module}}",
+      "allDoneBody": "Volte quando quiser por qualquer etapa do roteiro acima — ele fica salvo. Use os atalhos abaixo para ir direto ao trabalho."
+    },
+    "demo": {
+      "weekly": {
+        "title": "Exemplo interativo — ajuste e veja a agenda mudar",
+        "resourceHours": "Funcionamento do recurso",
+        "customerView": "O que o cliente vê na agenda",
+        "morning": {
+          "label": "Manhã",
+          "range": "08:00–12:00"
+        },
+        "afternoon": {
+          "label": "Tarde",
+          "range": "14:00–18:00"
+        },
+        "days": [
+          "Seg",
+          "Ter",
+          "Qua",
+          "Qui",
+          "Sex",
+          "Sáb",
+          "Dom"
+        ],
+        "total": "{{count}} horários reserváveis por semana",
+        "empty": "Nenhum horário aberto — o cliente não vê slots para reservar."
+      },
+      "freq": {
+        "title": "Exemplo interativo — escolha a frequência",
+        "planFrequency": "Frequência do plano",
+        "upcoming": "Próximas ordens geradas",
+        "description": "A frequência define de quanto em quanto tempo o Rolvix cria uma nova ordem de serviço para o equipamento.",
+        "options": {
+          "monthly": "Mensal",
+          "quarterly": "Trimestral",
+          "biannual": "Semestral"
+        },
+        "orderTitle": "Ordem de serviço",
+        "orderCaption": "troca de filtro e revisão",
+        "months": [
+          "jan",
+          "fev",
+          "mar",
+          "abr",
+          "mai",
+          "jun",
+          "jul",
+          "ago",
+          "set",
+          "out",
+          "nov",
+          "dez"
+        ]
+      },
+      "resource": {
+        "title": "Prévia do cadastro",
+        "youFill": "Você preenche",
+        "nameLabel": "Nome do recurso",
+        "typeLabel": "Tipo",
+        "customerSees": "Cliente vê no mapa",
+        "availableCaption": "Disponível para reserva"
+      },
+      "connections": {
+        "title": "Conexões deste módulo"
+      },
+      "screen": {
+        "title": "Prévia da tela"
+      }
+    },
+    "lessons": {
+      "generic": {
+        "learn": {
+          "headline": "Como esta etapa funciona",
+          "d1": {
+            "t": "Conceito",
+            "c": "O que você vai configurar"
+          },
+          "d2": {
+            "t": "Configuração",
+            "c": "Ajuste conforme o seu negócio"
+          },
+          "d3": {
+            "t": "Conexões",
+            "c": "Como se liga a outras áreas"
+          },
+          "d4": {
+            "t": "Pronto",
+            "c": "Visível para a sua operação"
+          },
+          "why1": "Cada etapa prepara a base para a próxima — siga na ordem.",
+          "why2": "Configurar com cuidado agora evita retrabalho depois.",
+          "why3": "Entender o porquê ajuda a tomar as melhores decisões."
+        },
+        "visit": {
+          "headline": "Veja o módulo com dados reais",
+          "explanation": "O guia ensina o conceito; a tela real é onde o trabalho acontece. Abra uma tela do módulo para reconhecer onde fica cada coisa e agir com dados reais.",
+          "d1": {
+            "t": "Guia",
+            "c": "Você está aqui"
+          },
+          "d2": {
+            "t": "Tela real",
+            "c": "Onde o trabalho acontece"
+          },
+          "d3": {
+            "t": "Dados reais",
+            "c": "Seus registros"
+          },
+          "d4": {
+            "t": "Ação",
+            "c": "Crie, edite, conclua"
+          },
+          "why1": "Ver com dados reais fixa o aprendizado melhor do que só ler.",
+          "why2": "Você reconhece onde realizar cada ação do dia a dia.",
+          "why3": "Filtros e buscas agilizam a rotina na tela."
+        },
+        "related": {
+          "headline": "Conecte este módulo ao resto do negócio",
+          "explanation": "Nenhum módulo trabalha sozinho. Explore uma área relacionada para ver como os dados fluem entre elas e ampliar o valor do que você já configurou.",
+          "d1": {
+            "t": "Este módulo",
+            "c": "Base pronta"
+          },
+          "d2": {
+            "t": "Pessoas e portal",
+            "c": "Quem usa o sistema"
+          },
+          "d3": {
+            "t": "Vendas",
+            "c": "Receita e pedidos"
+          },
+          "d4": {
+            "t": "Próximo passo",
+            "c": "Amplie o uso"
+          },
+          "why1": "Conectar módulos evita trabalho duplicado entre áreas.",
+          "why2": "Os dados fluem entre reservas, vendas, pessoas e manutenção.",
+          "why3": "Explorar o vizinho revela ganhos que você ainda não usa."
+        }
       },
       "bookings": {
-        "learn1": { "title": "Cadastre seus recursos" },
-        "learn2": { "title": "Defina os horários" },
-        "learn3": { "title": "Conecte-se a outros módulos" }
+        "learn1": {
+          "short": "O que pode ser reservado",
+          "headline": "Como um recurso vira algo reservável",
+          "explanation": "Um recurso é tudo aquilo que o cliente pode reservar. Ao cadastrá-lo com nome, tipo e capacidade, ele passa a existir no mapa do espaço e fica visível para reserva — nada aparece para o cliente antes desse passo.",
+          "d1": {
+            "t": "Recurso",
+            "c": "Quadra, sala, equipamento"
+          },
+          "d2": {
+            "t": "Detalhes",
+            "c": "Nome, tipo, capacidade"
+          },
+          "d3": {
+            "t": "Mapa do espaço",
+            "c": "Onde ele aparece"
+          },
+          "d4": {
+            "t": "Cliente vê",
+            "c": "Pronto para reservar"
+          },
+          "why1": "Sem um recurso cadastrado, não há o que reservar — é a base de todo o módulo.",
+          "why2": "O tipo e a capacidade definem como o recurso é exibido e filtrado.",
+          "why3": "Organizar no mapa ajuda o cliente a encontrar o espaço certo rapidamente.",
+          "demoName": "Quadra 1 — Society",
+          "demoType": "Quadra"
+        },
+        "learn2": {
+          "short": "Quando está disponível",
+          "headline": "Como funcionam os horários de funcionamento",
+          "explanation": "Você escolhe os dias e turnos em que o recurso funciona. O Rolvix divide automaticamente cada turno em janelas de reserva — e só essas janelas aparecem na agenda do cliente. Mude um dia ou turno aqui e a agenda muda junto.",
+          "d1": {
+            "t": "Recurso",
+            "c": "Quadra 1"
+          },
+          "d2": {
+            "t": "Funcionamento",
+            "c": "Dias e turnos abertos"
+          },
+          "d3": {
+            "t": "Janelas de reserva",
+            "c": "Divididas em horários"
+          },
+          "d4": {
+            "t": "Agenda do cliente",
+            "c": "Slots reserváveis"
+          },
+          "why1": "A agenda do cliente mostra exatamente os horários que você abrir — nada além.",
+          "why2": "Fechar um dia ou turno remove na hora os slots correspondentes.",
+          "why3": "Turnos bem definidos evitam reservas em horários que você não atende."
+        },
+        "learn3": {
+          "short": "Reservas no fluxo do negócio",
+          "headline": "Onde as reservas se conectam",
+          "explanation": "Uma reserva raramente vive sozinha. Ela pode gerar uma cobrança em Vendas, fica ligada ao cliente em Pessoas, e respeita bloqueios criados pela Manutenção. Entender essas pontes evita conflitos de agenda.",
+          "d1": {
+            "t": "Reserva",
+            "c": "Cliente confirma"
+          },
+          "d2": {
+            "t": "Vendas",
+            "c": "Cobrança opcional"
+          },
+          "d3": {
+            "t": "Pessoas",
+            "c": "Quem reservou"
+          },
+          "d4": {
+            "t": "Manutenção",
+            "c": "Bloqueia por conserto"
+          },
+          "why1": "Cobrar pela reserva mantém pagamento e agenda em um só lugar.",
+          "why2": "Ligar a reserva ao cliente dá histórico e contato para avisos.",
+          "why3": "Bloqueios de manutenção impedem reservar um recurso indisponível.",
+          "c1": {
+            "t": "Vendas",
+            "c": "Gerar cobrança ao confirmar a reserva"
+          },
+          "c2": {
+            "t": "Pessoas e portal",
+            "c": "Vincular a reserva ao cadastro do cliente"
+          },
+          "c3": {
+            "t": "Manutenção",
+            "c": "Respeitar bloqueios de recurso em conserto"
+          }
+        },
+        "visit": {
+          "short": "Veja com dados reais",
+          "headline": "O que você vê na tela de Reservas",
+          "explanation": "O guia ensina o conceito; a tela real é onde o trabalho acontece. Em Reservas você vê a lista do dia, filtra por recurso e confirma ou remarca cada pedido. Abra a tela para reconhecer onde fica cada coisa.",
+          "d1": {
+            "t": "Guia",
+            "c": "Você está aqui"
+          },
+          "d2": {
+            "t": "Tela real",
+            "c": "Lista de reservas"
+          },
+          "d3": {
+            "t": "Dados reais",
+            "c": "Suas reservas do dia"
+          },
+          "d4": {
+            "t": "Ação",
+            "c": "Confirmar, remarcar"
+          },
+          "why1": "Ver com dados reais fixa o aprendizado melhor do que só ler.",
+          "why2": "Você identifica onde confirmar, remarcar e cancelar reservas.",
+          "why3": "Filtros por recurso e data agilizam a rotina do dia a dia.",
+          "r1": {
+            "t": "Carlos Lima · Quadra 1",
+            "s": "Hoje · 18:00–19:00",
+            "tag": "Confirmada"
+          },
+          "r2": {
+            "t": "Marina Souza · Sala 2",
+            "s": "Hoje · 19:00–20:00",
+            "tag": "Pendente"
+          },
+          "r3": {
+            "t": "João Alves · Quadra 2",
+            "s": "Amanhã · 08:00–09:00",
+            "tag": "Confirmada"
+          }
+        },
+        "related": {
+          "short": "Amplie o uso",
+          "headline": "Para onde ir depois de Reservas",
+          "explanation": "Com Reservas no ar, os módulos vizinhos somam valor: o portal deixa o cliente reservar sozinho, a Manutenção mantém os recursos em dia e Vendas organiza a receita. Escolha o próximo passo conforme a sua prioridade.",
+          "d1": {
+            "t": "Reservas",
+            "c": "Base pronta"
+          },
+          "d2": {
+            "t": "Pessoas e portal",
+            "c": "Clientes reservam sozinhos"
+          },
+          "d3": {
+            "t": "Manutenção",
+            "c": "Cuida dos recursos"
+          },
+          "d4": {
+            "t": "Vendas",
+            "c": "Receita das reservas"
+          },
+          "why1": "O portal reduz ligações — o cliente reserva direto, 24h.",
+          "why2": "Manutenção preventiva evita cancelar reservas por quebra.",
+          "why3": "Vendas consolida o faturamento gerado pelas reservas.",
+          "c1": {
+            "t": "Pessoas e portal",
+            "c": "Publique o link de reservas para clientes"
+          },
+          "c2": {
+            "t": "Manutenção",
+            "c": "Crie planos para os recursos mais usados"
+          },
+          "c3": {
+            "t": "Vendas",
+            "c": "Acompanhe a receita das reservas pagas"
+          }
+        }
       },
       "maintenance": {
-        "learn1": { "title": "Cadastre seus equipamentos" },
-        "learn2": { "title": "Organize planos e ordens" },
-        "learn3": { "title": "Alinhe manutenção e reservas" }
+        "learn1": {
+          "short": "O que precisa de cuidado",
+          "headline": "Como um equipamento entra na manutenção",
+          "explanation": "Um equipamento é qualquer ativo que exige cuidado. Com ficha técnica e localização registradas, ele ganha um histórico e pode receber planos e ordens de serviço — nada pode ser planejado antes desse cadastro.",
+          "d1": {
+            "t": "Equipamento",
+            "c": "Ar-condicionado, bomba"
+          },
+          "d2": {
+            "t": "Ficha técnica",
+            "c": "Modelo, nº de série"
+          },
+          "d3": {
+            "t": "Localização",
+            "c": "Onde está instalado"
+          },
+          "d4": {
+            "t": "Histórico",
+            "c": "Pronto para planejar"
+          },
+          "why1": "Sem o equipamento cadastrado, não há a que associar manutenção.",
+          "why2": "Localização e nº de série agilizam quem vai executar o serviço.",
+          "why3": "O histórico centraliza tudo que já foi feito no ativo.",
+          "demoName": "Ar-condicionado — Sala 2",
+          "demoType": "Climatização"
+        },
+        "learn2": {
+          "short": "Prevenção automática",
+          "headline": "Como um plano gera ordens de serviço",
+          "explanation": "Um plano liga um equipamento a tarefas que se repetem. Você define a frequência e o Rolvix cria as ordens de serviço automaticamente nas datas certas — a prevenção deixa de depender da sua memória.",
+          "d1": {
+            "t": "Equipamento",
+            "c": "Ar-condicionado"
+          },
+          "d2": {
+            "t": "Plano de manutenção",
+            "c": "Tarefas recorrentes"
+          },
+          "d3": {
+            "t": "Frequência",
+            "c": "A cada X meses"
+          },
+          "d4": {
+            "t": "Ordem de serviço",
+            "c": "Gerada sozinha"
+          },
+          "why1": "A manutenção preventiva evita quebras e paradas inesperadas.",
+          "why2": "Ordens geradas sozinhas garantem que nada seja esquecido.",
+          "why3": "Ajustar a frequência reprograma todas as ordens futuras na hora."
+        },
+        "learn3": {
+          "short": "Manutenção no fluxo",
+          "headline": "Onde a manutenção se conecta",
+          "explanation": "Uma ordem de serviço cruza outros módulos: ela pode bloquear um recurso em Reservas enquanto o conserto acontece, registrar custos em Vendas e ser atribuída a um responsável em Pessoas.",
+          "d1": {
+            "t": "Ordem de serviço",
+            "c": "Serviço a fazer"
+          },
+          "d2": {
+            "t": "Reservas",
+            "c": "Bloqueia o recurso"
+          },
+          "d3": {
+            "t": "Vendas",
+            "c": "Custo de peças"
+          },
+          "d4": {
+            "t": "Pessoas",
+            "c": "Responsável técnico"
+          },
+          "why1": "Bloquear o recurso evita reservar algo que está em conserto.",
+          "why2": "Registrar custos mantém o gasto de manutenção visível.",
+          "why3": "Atribuir um responsável deixa claro quem executa cada ordem.",
+          "c1": {
+            "t": "Reservas",
+            "c": "Bloquear o recurso durante o serviço"
+          },
+          "c2": {
+            "t": "Vendas",
+            "c": "Lançar custo de peças e mão de obra"
+          },
+          "c3": {
+            "t": "Pessoas e portal",
+            "c": "Atribuir a ordem a um técnico"
+          }
+        },
+        "visit": {
+          "short": "Veja com dados reais",
+          "headline": "O que você vê em Ordens de serviço",
+          "explanation": "A tela de Ordens de serviço é a fila do time: ordens abertas, em andamento e concluídas, com prazo e responsável. Abra para reconhecer onde priorizar e dar baixa em cada serviço.",
+          "d1": {
+            "t": "Guia",
+            "c": "Você está aqui"
+          },
+          "d2": {
+            "t": "Tela real",
+            "c": "Fila de ordens"
+          },
+          "d3": {
+            "t": "Dados reais",
+            "c": "Ordens em aberto"
+          },
+          "d4": {
+            "t": "Ação",
+            "c": "Executar, concluir"
+          },
+          "why1": "Ver a fila real mostra o que está atrasado e o que é urgente.",
+          "why2": "Você aprende onde concluir e anexar o que foi feito.",
+          "why3": "Filtros por equipamento e status organizam o dia da equipe.",
+          "r1": {
+            "t": "Troca de filtro · Ar-condicionado S2",
+            "s": "Vence hoje",
+            "tag": "Em aberto"
+          },
+          "r2": {
+            "t": "Revisão bomba · Piscina",
+            "s": "Em 3 dias",
+            "tag": "Agendada"
+          },
+          "r3": {
+            "t": "Lubrificação · Portão",
+            "s": "Concluída ontem",
+            "tag": "Concluída"
+          }
+        },
+        "related": {
+          "short": "Amplie o uso",
+          "headline": "Para onde ir depois de Manutenção",
+          "explanation": "Com a manutenção estruturada, os vizinhos ganham: Reservas opera com recursos confiáveis, Vendas acompanha o custo dos ativos e Pessoas organiza a equipe técnica. Escolha o próximo passo pela sua prioridade.",
+          "d1": {
+            "t": "Manutenção",
+            "c": "Base pronta"
+          },
+          "d2": {
+            "t": "Reservas",
+            "c": "Recursos sempre prontos"
+          },
+          "d3": {
+            "t": "Vendas",
+            "c": "Custos sob controle"
+          },
+          "d4": {
+            "t": "Pessoas e portal",
+            "c": "Equipe organizada"
+          },
+          "why1": "Recursos bem mantidos reduzem cancelamentos de reserva.",
+          "why2": "Acompanhar custos ajuda a decidir reparar ou trocar um ativo.",
+          "why3": "Uma equipe bem atribuída cumpre os prazos das ordens.",
+          "c1": {
+            "t": "Reservas",
+            "c": "Mantenha os recursos mais reservados em dia"
+          },
+          "c2": {
+            "t": "Vendas",
+            "c": "Analise o custo total de manutenção"
+          },
+          "c3": {
+            "t": "Pessoas e portal",
+            "c": "Organize técnicos e responsáveis"
+          }
+        }
+      }
+    },
+    "steps": {
+      "overview": {
+        "learn1": {
+          "title": "Consulte os indicadores"
+        },
+        "learn2": {
+          "title": "Explore as telas pelo menu"
+        },
+        "learn3": {
+          "title": "Conheça as áreas do negócio"
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "title": "Cadastre seus recursos"
+        },
+        "learn2": {
+          "title": "Defina os horários"
+        },
+        "learn3": {
+          "title": "Conecte-se a outros módulos"
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "title": "Cadastre seus equipamentos"
+        },
+        "learn2": {
+          "title": "Organize planos e ordens"
+        },
+        "learn3": {
+          "title": "Alinhe manutenção e reservas"
+        }
       },
       "sales": {
-        "learn1": { "title": "Cadastre seus produtos" },
-        "learn2": { "title": "Ajuste as configurações" },
-        "learn3": { "title": "Conecte-se a outros módulos" }
+        "learn1": {
+          "title": "Cadastre seus produtos"
+        },
+        "learn2": {
+          "title": "Ajuste as configurações"
+        },
+        "learn3": {
+          "title": "Conecte-se a outros módulos"
+        }
       },
       "peoplePortal": {
-        "learn1": { "title": "Acompanhe equipe e clientes" },
-        "learn2": { "title": "Organize o menu do cliente" },
-        "learn3": { "title": "Conecte reservas e vendas" }
+        "learn1": {
+          "title": "Acompanhe equipe e clientes"
+        },
+        "learn2": {
+          "title": "Organize o menu do cliente"
+        },
+        "learn3": {
+          "title": "Conecte reservas e vendas"
+        }
       },
       "pmoc": {
-        "learn1": { "title": "Consulte seus planos" },
-        "learn2": { "title": "Crie um novo plano" },
-        "learn3": { "title": "Conecte planos e ordens" }
+        "learn1": {
+          "title": "Consulte seus planos"
+        },
+        "learn2": {
+          "title": "Crie um novo plano"
+        },
+        "learn3": {
+          "title": "Conecte planos e ordens"
+        }
       },
       "platform": {
-        "learn1": { "title": "Consulte os clientes" },
-        "learn2": { "title": "Gerencie usuários e famílias" },
-        "learn3": { "title": "Explore o menu do ambiente" }
+        "learn1": {
+          "title": "Consulte os clientes"
+        },
+        "learn2": {
+          "title": "Gerencie usuários e famílias"
+        },
+        "learn3": {
+          "title": "Explore o menu do ambiente"
+        }
       },
       "visit": {
-        "title": "Visite uma tela do módulo",
-        "description": "Abra uma tela real para ver o que você aprendeu em ação."
+        "title": "Visite uma tela do módulo"
       },
       "related": {
-        "title": "Explore um módulo relacionado",
-        "description": "Veja como este módulo se conecta a outra área do seu negócio."
+        "title": "Explore um módulo relacionado"
       },
       "wrapUp": {
-        "title": "Pronto para usar",
-        "description": "Você conhece o essencial deste módulo. Volte ao guia quando quiser revisar."
+        "title": "Pronto para usar"
       }
     }
   },
