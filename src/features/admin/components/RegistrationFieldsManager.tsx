@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarDays, ClipboardList, Hash, Image, List, ListPlus, LockKeyhole, Mail, MapPin, Phone, ToggleRight, Type, type LucideIcon } from "lucide-react"
+import { CalendarDays, ChevronRight, ClipboardList, Hash, Image, List, ListPlus, LockKeyhole, Mail, MapPin, Phone, ToggleRight, Type, type LucideIcon } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -55,6 +55,8 @@ import {
 } from "@/features/tenantPortal/services/tenantPortalService"
 import "@/features/users/people-access.css"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
+import { usePeopleMobileActions } from "@/features/users/hooks/usePeopleMobileActions"
 
 const FIELD_ICONS: Readonly<Record<string, LucideIcon>> = {
   date: CalendarDays, select: List, boolean: ToggleRight, photo: Image,
@@ -113,6 +115,7 @@ export function RegistrationFieldsManager({
   canWrite,
 }: RegistrationFieldsManagerProps) {
   const { t } = useTranslation()
+  const { isMobile, actionItem: actionField, setActionItem: setActionField, actionTriggerRef } = usePeopleMobileActions<RegistrationField>()
 
   const [fields, setFields] = useState<RegistrationField[]>([])
   const [loading, setLoading] = useState(true)
@@ -168,6 +171,7 @@ export function RegistrationFieldsManager({
   }, [tenantId])
 
   function openCreate() {
+    actionTriggerRef.current = null
     setDialog({ mode: "create" })
     form.reset({
       label: "",
@@ -261,6 +265,7 @@ export function RegistrationFieldsManager({
       await deleteRegistrationField(fieldPendingDelete.id, tenantId)
       toast.success(t("admin.registrationFields.deleteSuccess"))
       setFieldPendingDelete(null)
+      setActionField(null)
       await reload()
     } catch (error) {
       toast.error(
@@ -329,6 +334,8 @@ export function RegistrationFieldsManager({
             description={t("admin.registrationFields.emptyDescription")}
           />
         ) : (
+          <>
+          {canWrite ? <p className="people-actions-hint"><ChevronRight aria-hidden strokeWidth={1.75} />{t("peopleAccess.mobileActions.hint")}</p> : null}
           <ul className="people-custom-fields">
             {customFields.map((field) => {
               const Icon = FIELD_ICONS[field.fieldType] ?? Type
@@ -347,9 +354,17 @@ export function RegistrationFieldsManager({
                   </div>
                   {canWrite ? (
                     <div className="people-row-actions">
-                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={t("common.edit")} onClick={() => { openEdit(field) }}>
+                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={isMobile ? field.label : t("common.edit")} aria-haspopup={isMobile ? "dialog" : undefined} aria-expanded={isMobile ? actionField?.id === field.id : undefined} onClick={(event) => {
+                        if (isMobile) {
+                          actionTriggerRef.current = event.currentTarget
+                          setActionField(field)
+                        } else {
+                          openEdit(field)
+                        }
+                      }}>
                         <span>{t("common.edit")}</span>
                       </Button>
+                      <ChevronRight className="people-row-chevron" aria-hidden strokeWidth={1.75} />
                       <Button type="button" variant="ghost" size="sm" className="people-delete-action" onClick={() => { setFieldPendingDelete(field) }}>
                         {t("common.delete")}
                       </Button>
@@ -359,8 +374,29 @@ export function RegistrationFieldsManager({
               )
             })}
           </ul>
+          </>
         )}
       </section>
+
+      <PeopleMobileActionSheet
+        open={isMobile && actionField !== null}
+        name={actionField?.label ?? ""}
+        description={actionField?.fieldKey}
+        icon={FIELD_ICONS[actionField?.fieldType ?? ""] ?? Type}
+        monospace
+        editSubtitle={t("peopleAccess.mobileActions.editField")}
+        canDelete={canWrite}
+        confirming={fieldPendingDelete !== null}
+        confirmTitle={t("admin.registrationFields.deleteTitle")}
+        confirmDescription={t("admin.registrationFields.deleteDescription", { label: fieldPendingDelete?.label ?? "" })}
+        isDeleting={isDeleting}
+        returnFocus={actionTriggerRef}
+        restoreFocus={dialog === null}
+        onClose={() => { setActionField(null); setFieldPendingDelete(null) }}
+        onEdit={() => { if (actionField) { openEdit(actionField); setActionField(null) } }}
+        onRequestDelete={() => { setFieldPendingDelete(actionField) }}
+        onConfirmDelete={() => { void handleDelete() }}
+      />
 
       <Dialog
         open={dialog !== null}
@@ -370,7 +406,7 @@ export function RegistrationFieldsManager({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" finalFocus={isMobile ? () => actionTriggerRef.current ?? true : undefined}>
           <DialogHeader>
             <DialogTitle>
               {dialog?.mode === "edit"
@@ -494,7 +530,7 @@ export function RegistrationFieldsManager({
       </Dialog>
 
       <AlertDialog
-        open={fieldPendingDelete !== null}
+        open={fieldPendingDelete !== null && (!isMobile || actionField === null)}
         onOpenChange={(open) => {
           if (isDeleting) {
             return

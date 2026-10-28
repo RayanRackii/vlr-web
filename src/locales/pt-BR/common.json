@@ -3316,6 +3316,13 @@
       "previous": "Página anterior",
       "next": "Próxima página"
     },
+    "mobileActions": {
+      "hint": "Toque numa linha para ver as ações.",
+      "editRole": "Nome e permissões",
+      "editField": "Rótulo, tipo e obrigatoriedade",
+      "editSystemRole": "Função do sistema: nome fixo",
+      "deleteRole": "Só se não estiver atribuída a ninguém"
+    },
     "roles": {
       "description": "Funções de sistema e perfis personalizados deste ambiente.",
       "create": "Nova função",
