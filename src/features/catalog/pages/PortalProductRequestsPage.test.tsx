@@ -122,7 +122,9 @@ describe("PortalProductRequestsPage", () => {
     expect(await screen.findByText("Replacement gasket")).toBeInTheDocument()
     const chip = screen.getByText("Enviada")
     expect(chip).toHaveClass("portal-chip", "portal-chip-info")
-    const card = screen.getByRole("link", { name: "Replacement gasket" })
+    const card = screen.getByRole("link", {
+      name: /Replacement gasket\s*Enviada\s*18\/10\/2026/,
+    })
     expect(within(card).getByText(/\b2\b/)).toBeInTheDocument()
     expect(
       screen.queryByRole("status", {
@@ -226,7 +228,7 @@ describe("PortalProductRequestsPage", () => {
       expect(listMock).toHaveBeenCalledWith(2)
     })
 
-    await user.click(screen.getByRole("link", { name: "Second gasket" }))
+    await user.click(screen.getByRole("link", { name: /Second gasket\s*Enviada/ }))
     expect(screen.getByText("detail-screen")).toBeInTheDocument()
   })
 
