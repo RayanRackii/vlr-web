@@ -124,7 +124,7 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
   it.each(["catalog", "rentals"])("keeps registration-only access through People and access with %s", (module) => {
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read"], [module])
     expect(screen.getByText("registration content")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: i18n.t("nav.registrationFields") })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: i18n.t("nav.registrationFields") })).toBeInTheDocument()
     expect(screen.queryByText("team content")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.roles") })).not.toBeInTheDocument()

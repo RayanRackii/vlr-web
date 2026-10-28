@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { Users } from "lucide-react"
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { ClipboardList, ShieldCheck, UserRound, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { filterNavigationTabs } from "@/components/layout/navigationTabs"
@@ -22,6 +22,9 @@ import {
   listPermissions,
   listRoles,
 } from "@/features/users/services/rolesService"
+import { listVisibleRoles } from "@/features/users/permissions/rolePolicy"
+import { PeopleBottomNavigation } from "@/features/users/components/PeopleBottomNavigation"
+import "@/features/users/people-access.css"
 import { cn } from "@/lib/utils"
 
 type PeopleAccessTab = "users" | "customers" | "roles" | "registration"
@@ -97,47 +100,44 @@ export function PeopleAccessPage() {
   if (onRegistration && !canReadRegistration) return <AccessDeniedPage />
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="people-access mx-auto w-full space-y-5">
+      <p className="people-eyebrow">{t("peopleAccess.eyebrow")}</p>
       <PageHeader
-        icon={Users}
         title={t("peopleAccess.title")}
         description={t("peopleAccess.description")}
         className="mb-0 sm:mb-0"
       />
 
-      <div>
-        <div className="border-b border-border">
-          <nav
-            className="-mb-px flex gap-6 overflow-x-auto sm:gap-8"
-            aria-label={t("peopleAccess.title")}
-          >
-            {tabItems.map((item) => {
-              const isActive = tab === item.id
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    if (item.id === "registration") {
-                      void navigate("/configuracoes/cadastro")
-                    } else {
-                      void navigate(item.id === "users" ? "/pessoas-e-acesso" : `/pessoas-e-acesso?tab=${item.id}`)
-                    }
-                  }}
-                  className={cn(
-                    "border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors",
-                    isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                  )}
-                >
-                  {t(item.labelKey)}
-                </button>
-              )
-            })}
-          </nav>
-        </div>
-      </div>
+      <nav className="people-tabs" aria-label={t("peopleAccess.title")}>
+        {tabItems.map((item) => {
+          const isActive = tab === item.id
+          const Icon = { users: Users, customers: UserRound, roles: ShieldCheck, registration: ClipboardList }[item.id]
+          const content = (
+            <>
+              <Icon aria-hidden strokeWidth={1.75} />
+              <span>{t(item.labelKey)}</span>
+            </>
+          )
+          const className = cn("people-tab", isActive && "people-tab-active")
+          return item.id === "registration" ? (
+            <Link key={item.id} to="/configuracoes/cadastro" className={className} aria-current={isActive ? "page" : undefined}>
+              {content}
+            </Link>
+          ) : (
+            <button
+              key={item.id}
+              type="button"
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => {
+                void navigate(item.id === "users" ? "/pessoas-e-acesso" : `/pessoas-e-acesso?tab=${item.id}`)
+              }}
+              className={className}
+            >
+              {content}
+            </button>
+          )
+        })}
+      </nav>
 
       {tab !== "registration" && loadError !== null ? (
         <Alert variant="destructive">
@@ -146,26 +146,46 @@ export function PeopleAccessPage() {
       ) : null}
 
       {tab === "registration" ? (
-        canReadRegistration ? <TenantRegistrationFieldsPage /> : null
+        canReadRegistration ? <TenantRegistrationFieldsPage embedded /> : null
       ) : canReadRoles && isLoading ? (
         <PageContentSkeleton rows={4} />
       ) : (
-        <div>
-          {tab === "users" && canReadUsers ? <PeopleUsersTab roles={roles} /> : null}
-
-          {tab === "customers" && canReadCustomers ? (
-            <PeopleCustomersTab />
-          ) : null}
-
-          {tab === "roles" && canReadRoles ? (
-            <PeopleRolesTab
-              roles={roles}
-              catalog={catalog}
-              onRolesChanged={loadRolesBundle}
-            />
+        <div className={cn("people-content", canReadRoles && loadError === null && roles.length > 0 && tab !== "roles" && "people-content-with-summary")}>
+          <div className="min-w-0">
+            {tab === "users" && canReadUsers ? <PeopleUsersTab roles={roles} /> : null}
+  
+            {tab === "customers" && canReadCustomers ? (
+              <PeopleCustomersTab />
+            ) : null}
+  
+            {tab === "roles" && canReadRoles ? (
+              <PeopleRolesTab
+                roles={roles}
+                catalog={catalog}
+                onRolesChanged={loadRolesBundle}
+              />
+            ) : null}
+          </div>
+          {canReadRoles && loadError === null && roles.length > 0 && tab !== "roles" ? (
+            <aside className="people-role-summary" aria-label={t("peopleAccess.tabs.roles")}>
+              <h2>{t("peopleAccess.tabs.roles")}</h2>
+              <p className="people-summary-description">{t("peopleAccess.roleSummary.description")}</p>
+              <ul>
+                {listVisibleRoles(roles).map((role) => (
+                  <li key={role.id}>
+                    <div className="min-w-0">
+                      <p className="font-semibold break-words">{role.name}</p>
+                      <p className="text-xs text-muted-foreground">{t("peopleAccess.roleSummary.permissions", { count: role.permissionKeys.length })}</p>
+                    </div>
+                    <span className="people-role-kind">{t(role.isSystemRole ? "peopleAccess.badges.system" : "peopleAccess.badges.custom")}</span>
+                  </li>
+                ))}
+              </ul>
+            </aside>
           ) : null}
         </div>
       )}
+      <PeopleBottomNavigation />
     </div>
   )
 }

@@ -3128,6 +3128,18 @@
     }
   },
   "peopleAccess": {
+    "eyebrow": "Cadastro",
+    "mobileNavigation": "Navegação principal",
+    "columns": {
+      "roles": "Funções",
+      "status": "Status",
+      "actions": "Ações"
+    },
+    "roleSummary": {
+      "description": "Quem pode fazer o quê neste ambiente.",
+      "permissions_one": "{{count}} permissão",
+      "permissions_other": "{{count}} permissões"
+    },
     "title": "Pessoas e acesso",
     "description": "Gerencie usuários do ambiente e os perfis de acesso.",
     "tabs": {
@@ -3238,6 +3250,8 @@
       }
     },
     "users": {
+      "teamCount_one": "{{count}} pessoa na equipe",
+      "teamCount_other": "{{count}} pessoas na equipe",
       "description": "Convide pessoas e atribua uma ou mais funções.",
       "invite": "Convidar usuário",
       "inviteTitle": "Convidar usuário",
@@ -3258,6 +3272,8 @@
       "searchTooShort": "Digite pelo menos 2 caracteres."
     },
     "customers": {
+      "customerCount_one": "{{count}} cliente do portal",
+      "customerCount_other": "{{count}} clientes do portal",
       "description": "Clientes que entram pelo portal deste ambiente.",
       "empty": "Nenhum cliente neste ambiente.",
       "emptyDescription": "Quando alguém criar uma conta no portal, ela aparece aqui.",
