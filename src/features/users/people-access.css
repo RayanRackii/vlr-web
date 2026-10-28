@@ -156,7 +156,7 @@
 }
 @media (max-width: 700px) {
   .people-access { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
-  .people-tabs { gap: 6px; border: 0; margin-inline: -16px; padding-inline: 16px; }
+  .people-tabs { flex-wrap: wrap; gap: 6px; overflow-x: visible; border: 0; margin-inline: -16px; padding-inline: 16px; }
   .people-tab { border: 1px solid var(--border); border-radius: 99px; min-height: 40px; padding: 0 14px; background: var(--card); font-size: .8125rem; }
   .people-tab-active { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
   .people-tab-active:hover { color: var(--primary-foreground); }
