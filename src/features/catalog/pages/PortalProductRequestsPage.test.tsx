@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -120,8 +120,10 @@ describe("PortalProductRequestsPage", () => {
     resolvePage(ready(pageOf("Replacement gasket", FIRST_ID, 1, 1)))
 
     expect(await screen.findByText("Replacement gasket")).toBeInTheDocument()
-    expect(screen.getByText("Enviada")).toBeInTheDocument()
-    expect(screen.getByText("2")).toBeInTheDocument()
+    const chip = screen.getByText("Enviada")
+    expect(chip).toHaveClass("portal-chip", "portal-chip-info")
+    const card = screen.getByRole("link", { name: "Replacement gasket" })
+    expect(within(card).getByText(/\b2\b/)).toBeInTheDocument()
     expect(
       screen.queryByRole("status", {
         name: i18n.t("tenantPortal.catalog.requestsLoading"),
@@ -224,9 +226,7 @@ describe("PortalProductRequestsPage", () => {
       expect(listMock).toHaveBeenCalledWith(2)
     })
 
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("catalog.orders.view") }),
-    )
+    await user.click(screen.getByRole("link", { name: "Second gasket" }))
     expect(screen.getByText("detail-screen")).toBeInTheDocument()
   })
 

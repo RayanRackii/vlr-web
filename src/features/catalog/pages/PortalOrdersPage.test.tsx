@@ -5,6 +5,7 @@ import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
 import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import i18n from "@/lib/i18n"
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   listPortalCatalogOrders: vi.fn(),
@@ -74,8 +75,8 @@ describe("PortalOrdersPage", () => {
     listOrdersMock.mockResolvedValue([mixedOrder])
   })
 
-  it("shows the known sum and the on-request note in the list", async () => {
-    render(
+  function renderList() {
+    return render(
       <MemoryRouter>
         <Routes>
           <Route element={<Outlet context={outletContext} />}>
@@ -84,7 +85,48 @@ describe("PortalOrdersPage", () => {
         </Routes>
       </MemoryRouter>,
     )
+  }
+
+  it("shows the known sum and the on-request note in the list", async () => {
+    renderList()
 
     expect(await screen.findByText("R$ 15,00 · Sob consulta")).toBeInTheDocument()
+  })
+
+  it("shows a warning-toned status chip for a requested order", async () => {
+    renderList()
+
+    const chip = await screen.findByText("Solicitado")
+    expect(chip).toHaveClass("portal-chip")
+    expect(chip).toHaveClass("portal-chip-warning")
+  })
+
+  it("shows a success-toned chip for a completed order", async () => {
+    listOrdersMock.mockResolvedValue([{ ...mixedOrder, status: "Completed" }])
+    renderList()
+
+    const chip = await screen.findByText("Concluído")
+    expect(chip).toHaveClass("portal-chip-success")
+  })
+
+  it("shows the empty state with a catalog link when there are no orders", async () => {
+    listOrdersMock.mockResolvedValue([])
+    renderList()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.catalog.ordersEmpty")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("tenantPortal.catalog.ordersEmptyDescription", {
+          tenant: "Clube",
+        }),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", {
+        name: i18n.t("tenantPortal.catalog.requestSentCatalog"),
+      }),
+    ).toBeInTheDocument()
   })
 })

@@ -706,7 +706,11 @@
       "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
       "requestCancelled": "Request canceled.",
       "cancelRequestError": "Could not cancel the request.",
-      "unitPrice": "{{price}} / un"
+      "unitPrice": "{{price}} / un",
+      "ordersEmptyDescription": "When you place an order from the {{tenant}} catalog, it shows up here so you can track it.",
+      "ordersLoading": "Loading orders...",
+      "orderCardLabel": "Order {{number}}",
+      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here."
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
@@ -2496,10 +2500,26 @@
         "review": "Review"
       },
       "pricing": {
-        "priceErrors": {"required": "Enter a price.", "invalid": "Invalid price. Use the format 12.50.", "notPositive": "The price must be greater than zero.", "tooLarge": "The maximum price is R$ {{max}}."},
+        "priceErrors": {
+          "required": "Enter a price.",
+          "invalid": "Invalid price. Use the format 12.50.",
+          "notPositive": "The price must be greater than zero.",
+          "tooLarge": "The maximum price is R$ {{max}}."
+        },
         "unitLabel": "Pricing unit",
-        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
-        "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
+        "units": {
+          "Hour": "Per hour",
+          "Slot": "Per slot",
+          "Day": "Per day",
+          "Fixed": "Fixed",
+          "mixed": "Different units per day (pick one to unify)"
+        },
+        "priceLabels": {
+          "Hour": "Price per hour",
+          "Slot": "Price per slot",
+          "Day": "Price per day",
+          "Fixed": "Fixed price"
+        },
         "patternLabel": "How the price repeats through the week",
         "everydayPrice": "Price per hour",
         "everydayPriceHelp": "The same amount applies every day in the window below.",
@@ -2532,7 +2552,12 @@
         "pricingUnitLabel": "Pricing unit",
         "priceLabel": "Price",
         "perDayPricesLabel": "Per-day prices",
-        "unitPrice": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"}
+        "unitPrice": {
+          "Hour": "{{amount}}/hour",
+          "Slot": "{{amount}}/slot",
+          "Day": "{{amount}}/day",
+          "Fixed": "{{amount}} fixed"
+        }
       },
       "success": {
         "create": "Resource created successfully.",
@@ -3984,7 +4009,12 @@
       },
       "details": {
         "pricePerHour": "From: {{amount}}/h",
-        "prices": {"Hour": "From: {{amount}} per hour", "Slot": "From: {{amount}} per slot", "Day": "From: {{amount}} per day", "Fixed": "From: {{amount}} fixed"},
+        "prices": {
+          "Hour": "From: {{amount}} per hour",
+          "Slot": "From: {{amount}} per slot",
+          "Day": "From: {{amount}} per day",
+          "Fixed": "From: {{amount}} fixed"
+        },
         "allowedDurations": "Durations: {{durations}}",
         "capacity_one": "Capacity: {{count}} person",
         "capacity_other": "Capacity: {{count}} people",
@@ -4188,7 +4218,17 @@
       "cancelCutoffHoursMode": "N hours before the start",
       "cancelCutoffHours": "Hours before the start",
       "cancelCutoffHint": "Customers can cancel until this many hours before the start.",
-      "categories": {"title": "By category", "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.", "horizonDays": "Max advance (days)", "cancelCutoffHours": "Cancel up to (hours before)", "inherit": "General", "save": "Save", "saved": "Category policy saved.", "invalid": "Use a whole number or leave blank.", "empty": "No categories with bookable resources."}
+      "categories": {
+        "title": "By category",
+        "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.",
+        "horizonDays": "Max advance (days)",
+        "cancelCutoffHours": "Cancel up to (hours before)",
+        "inherit": "General",
+        "save": "Save",
+        "saved": "Category policy saved.",
+        "invalid": "Use a whole number or leave blank.",
+        "empty": "No categories with bookable resources."
+      }
     }
   },
   "resourceVisual": {
@@ -4298,7 +4338,12 @@
       "Unpriced": "No price",
       "Available": "Available"
     },
-    "prices": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"},
+    "prices": {
+      "Hour": "{{amount}}/hour",
+      "Slot": "{{amount}}/slot",
+      "Day": "{{amount}}/day",
+      "Fixed": "{{amount}} fixed"
+    },
     "unitsLeft": "{{left}} of {{total}} available"
   }
 }

@@ -1,7 +1,10 @@
+import "../components/portalOrders.css"
+
 import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useOutletContext } from "react-router-dom"
+import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -66,17 +69,20 @@ export function PortalProductRequestPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="portal-record-detail space-y-4">
       <Button
         type="button"
         variant="ghost"
         size="sm"
+        className="portal-record-back"
         render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
       >
+        <ArrowLeft aria-hidden data-icon="inline-start" />
         {t("common.back")}
       </Button>
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
+        <p className="portal-eyebrow">{t("tenantPortal.catalog.navCatalog")}</p>
+        <h1 className="text-2xl font-bold tracking-tight">
           {submitted
             ? t("tenantPortal.catalog.requestSentTitle")
             : t("tenantPortal.catalog.requestTitle")}
@@ -91,7 +97,7 @@ export function PortalProductRequestPage() {
       {submitted ? (
         <div
           role="status"
-          className="space-y-4 rounded-xl border border-border p-4"
+          className="portal-record-panel space-y-4"
         >
           <p className="text-sm font-medium">{submitted.description}</p>
           <p className="text-sm text-muted-foreground">
@@ -137,7 +143,7 @@ export function PortalProductRequestPage() {
       {submitted ? null : (
       <Form {...form}>
         <form
-          className="space-y-4"
+          className="portal-record-panel space-y-4"
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
