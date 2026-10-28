@@ -1,5 +1,5 @@
 /* Staff dashboard: portal surfaces, spring and entrance rhythm. */
-/* Release the shell's 1280px inner cap only for this page so QHD can reach 1560px. */
+/* Release the shell's 1280px inner cap only for this page so QHD can reach 1560px; .staff-dashboard re-centers itself. */
 [data-shell-part="main"] > div:has(> .staff-dashboard) { max-width: none; }
 .staff-dashboard {
   --dashboard-primary: var(--brand-primary);
@@ -8,7 +8,8 @@
   --dashboard-spring: cubic-bezier(.34, 1.56, .64, 1);
   --dashboard-shadow: 0 1px 2px rgb(16 24 40 / .05), 0 8px 24px -12px rgb(16 24 40 / .14);
   width: 100%;
-  max-width: 1240px;
+  max-width: 80rem; /* same cap as the shell max-w-7xl used by other staff pages */
+  margin-inline: auto;
   min-width: 0;
   color: var(--foreground);
   overflow-wrap: anywhere;
