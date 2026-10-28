@@ -49,6 +49,7 @@ describe("feature manifests", () => {
     expect(catalogManifest.routes.staff.map((route) => route.path)).toEqual([
       "/catalogo/configuracoes",
       "/catalogo/produtos",
+      "/catalogo/solicitacoes",
       "/catalogo/pedidos",
       "/catalogo/pedidos/:orderId",
       "/catalogo/notificacoes",
