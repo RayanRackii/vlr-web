@@ -1,6 +1,9 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AxiosError, type InternalAxiosRequestConfig } from "axios"
+
+import { publicApi } from "@/lib/api"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
@@ -30,7 +33,6 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (importOri
 import { toast } from "sonner"
 import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
 import {
-  CustomerDuplicateFieldError,
   fetchRegistrationSchema,
   readPendingEmailVerification,
   registerCustomer,
@@ -386,10 +388,14 @@ describe("TenantPortalRegisterPage email verification", () => {
 })
 
 describe("TenantPortalRegisterPage duplicate field errors", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.sessionStorage.clear()
     fetchSchema.mockReset()
     register.mockReset()
+    const actual = await vi.importActual<typeof import("@/features/tenantPortal/services/tenantPortalService")>(
+      "@/features/tenantPortal/services/tenantPortalService",
+    )
+    register.mockImplementation(actual.registerCustomer)
     fetchSchema.mockResolvedValue({
       coreFields: [
         "name",
@@ -405,67 +411,54 @@ describe("TenantPortalRegisterPage duplicate field errors", () => {
     toastError.mockReset()
   })
 
-  it("flags the email field when the email is the duplicate", async () => {
-    const user = userEvent.setup()
-    register.mockRejectedValue(
-      new CustomerDuplicateFieldError(
-        "email",
-        "Já existe uma conta com este e-mail.",
-      ),
-    )
-    renderRegister()
-    await waitForRegisterForm()
-
-    await fillValidRegisterCore(user)
-    const submit = screen.getByRole("button", {
-      name: i18n.t("tenantPortal.register.submit"),
-    })
-    await waitFor(() => {
-      expect(submit).toBeEnabled()
-    })
-    await user.click(submit)
-
-    expect(
-      await screen.findByText("Já existe uma conta com este e-mail."),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
-    ).toHaveAccessibleDescription("Já existe uma conta com este e-mail.")
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    await i18n.changeLanguage("pt-BR")
   })
 
-  it("flags the document field when the CPF is the duplicate", async () => {
-    const user = userEvent.setup()
-    register.mockRejectedValue(
-      new CustomerDuplicateFieldError(
-        "document",
-        "Já existe uma conta com este CPF/CNPJ.",
-      ),
+  function rejectRegistration(message: string) {
+    vi.spyOn(publicApi, "post").mockRejectedValue(
+      new AxiosError("Conflict", undefined, undefined, undefined, {
+        status: 409,
+        statusText: "Conflict",
+        data: { error: message },
+        headers: {},
+        config: { headers: {} } as InternalAxiosRequestConfig,
+      }),
     )
+  }
+
+  it.each([
+    ["pt-BR", "email", "A customer with this email already exists.", "Já existe uma conta com este e-mail."],
+    ["en", "email", "A customer with this email already exists.", "An account with this email already exists."],
+    ["es", "email", "A customer with this email already exists.", "Ya existe una cuenta con este correo electrónico."],
+    ["pt-BR", "cpf", "A customer with this document already exists.", "Já existe uma conta com este CPF/CNPJ."],
+    ["en", "cpf", "A customer with this CPF already exists.", "An account with this CPF/CNPJ already exists."],
+    ["es", "cpf", "A customer with this document already exists.", "Ya existe una cuenta con este CPF/CNPJ."],
+  ] as const)("announces the duplicate %s %s input from the API response", async (language, field, serverMessage, message) => {
+    await i18n.changeLanguage(language)
+    rejectRegistration(serverMessage)
+    const user = userEvent.setup()
     renderRegister()
     await waitForRegisterForm()
-
     await fillValidRegisterCore(user)
     const submit = screen.getByRole("button", {
       name: i18n.t("tenantPortal.register.submit"),
     })
-    await waitFor(() => {
-      expect(submit).toBeEnabled()
-    })
+    await waitFor(() => expect(submit).toBeEnabled())
     await user.click(submit)
 
-    expect(
-      await screen.findByText("Já existe uma conta com este CPF/CNPJ."),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
-    ).toHaveAccessibleDescription("Já existe uma conta com este CPF/CNPJ.")
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    const input = screen.getByLabelText(i18n.t(`tenantPortal.fields.${field}`))
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(message)
+    const other = field === "email" ? "cpf" : "email"
+    expect(screen.getByLabelText(i18n.t(`tenantPortal.fields.${other}`))).toHaveAttribute("aria-invalid", "false")
   })
 
   it("keeps a generic toast when the backend cannot name a single duplicate field", async () => {
     const user = userEvent.setup()
-    register.mockRejectedValue(
-      new Error("Já existe uma conta com estes dados."),
-    )
+    rejectRegistration("A customer with the same email, document, or phone already exists.")
     renderRegister()
     await waitForRegisterForm()
 
@@ -486,6 +479,9 @@ describe("TenantPortalRegisterPage duplicate field errors", () => {
     expect(
       screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
     ).not.toHaveAccessibleDescription("Já existe uma conta com estes dados.")
+    for (const field of ["email", "cpf"]) {
+      expect(screen.getByLabelText(i18n.t(`tenantPortal.fields.${field}`))).toHaveAttribute("aria-invalid", "false")
+    }
   })
 })
 

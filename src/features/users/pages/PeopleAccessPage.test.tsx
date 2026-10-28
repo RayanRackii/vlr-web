@@ -2,7 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AxiosError, type InternalAxiosRequestConfig } from "axios"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
@@ -26,6 +27,7 @@ import {
   listTenantMembers,
 } from "@/features/users/services/usersService"
 import i18n from "@/lib/i18n"
+import { api } from "@/lib/api"
 
 vi.mock("@/features/users/services/rolesService", () => ({
   listRoles: vi.fn(),
@@ -178,6 +180,11 @@ async function waitForUsersLoaded() {
 }
 
 describe("PeopleAccessPage", () => {
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    await i18n.changeLanguage("pt-BR")
+  })
+
   beforeEach(() => {
     listRolesMock.mockReset()
     listPermissionsMock.mockReset()
@@ -358,6 +365,42 @@ describe("PeopleAccessPage", () => {
         roleIds: [ROLE_ID],
       })
     })
+  })
+
+  it.each([
+    ["pt-BR", "Já existe uma pessoa com este e-mail."],
+    ["en", "A person with this email already exists."],
+    ["es", "Ya existe una persona con este correo electrónico."],
+  ])("announces an existing staff email on the input in %s", async (language, message) => {
+    await i18n.changeLanguage(language)
+    const actual = await vi.importActual<typeof import("@/features/users/services/usersService")>(
+      "@/features/users/services/usersService",
+    )
+    inviteTenantMemberMock.mockImplementation(actual.inviteTenantMember)
+    vi.spyOn(api, "post").mockRejectedValue(
+      new AxiosError("Conflict", undefined, undefined, undefined, {
+        status: 409,
+        statusText: "Conflict",
+        data: { error: "A user with this email already exists for the tenant." },
+        headers: {},
+        config: { headers: {} } as InternalAxiosRequestConfig,
+      }),
+    )
+    const user = userEvent.setup()
+    renderPage(INVITE_PERMS)
+    await waitForUsersLoaded()
+    await user.click(screen.getByRole("button", { name: i18n.t("peopleAccess.users.invite") }))
+    const dialog = await screen.findByRole("dialog")
+    await user.type(within(dialog).getByLabelText(i18n.t("peopleAccess.users.fullName")), "Bruno Lima")
+    const email = within(dialog).getByLabelText(i18n.t("peopleAccess.users.email"))
+    await user.type(email, "bruno@example.com")
+    await user.click(within(dialog).getByRole("checkbox", { name: "Admin" }))
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("peopleAccess.users.sendInvite") }))
+
+    expect(await within(dialog).findByText(message)).toBeInTheDocument()
+    expect(email).toHaveAttribute("aria-invalid", "true")
+    expect(email).toHaveAccessibleDescription(message)
+    expect(toastError).toHaveBeenCalledWith(message)
   })
 
   it("hides the portal customers tab without core.customers.read", async () => {

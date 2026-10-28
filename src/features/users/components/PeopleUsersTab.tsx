@@ -141,6 +141,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   }, [appliedQuery, page, t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Load the directory when its server query changes.
     void loadMembers()
   }, [loadMembers])
 
@@ -152,6 +153,15 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
       inviteForm.reset({ fullName: "", email: "", roleIds: [] })
       await loadMembers()
     } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "A user with this email already exists for the tenant."
+      ) {
+        const message = t("peopleAccess.validation.duplicateEmail")
+        inviteForm.setError("email", { type: "server", message })
+        toast.error(message)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message

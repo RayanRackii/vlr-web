@@ -457,7 +457,7 @@ function redirectExpiredStaffSession(tenantId: string | null): void {
   }
 
   staffSessionExpiryHandled = true
-  const currentPath = `${window.location.pathname}${window.location.search}`
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
   const nextPath = safeStaffNextPath(currentPath)
   const params = { reason: "session-expired", tenant: tenantId, company: new URLSearchParams(window.location.search).get("company") }
   assignBrowserLocation(staffLoginPath(nextPath ?? "/dashboard", params))

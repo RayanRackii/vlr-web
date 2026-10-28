@@ -139,12 +139,21 @@ describe("authenticated surface", () => {
     expect(loginPathForAuthenticatedPath("/app/perfil", "ficc")).toBe("/")
     expect(loginPathForAuthenticatedPath("/agenda/menu", "ficc")).toBe("/")
     expect(loginPathForAuthenticatedPath("/t/ficc/pedidos/1")).toBe("/t/ficc")
-    expect(loginPathForAuthenticatedPath("/configuracoes/reservas")).toBe("/login")
-    expect(loginPathForAuthenticatedPath("/catalogo/pedidos")).toBe("/login")
+    expect(loginPathForAuthenticatedPath("/configuracoes/reservas")).toBe("/login?next=%2Fconfiguracoes%2Freservas")
+    expect(loginPathForAuthenticatedPath("/catalogo/pedidos")).toBe("/login?next=%2Fcatalogo%2Fpedidos")
   })
 })
 
 describe("session restore guard", () => {
+  it.each(["pageshow", "popstate"])("keeps tenant and return path on a logged-out %s", (eventType) => {
+    window.history.pushState({}, "", "/os?company=ficc&status=open#details")
+    window.dispatchEvent(eventType === "pageshow" ? pageShow(true) : new PopStateEvent("popstate"))
+
+    expect(replaceBrowserLocation).toHaveBeenCalledWith(
+      "/login?next=%2Fos%3Fcompany%3Dficc%26status%3Dopen%23details&company=ficc",
+    )
+  })
+
   beforeEach(() => {
     resetSessionRestoreGuardForTests()
     resetAgendaQueryClientForTests()
@@ -169,8 +178,8 @@ describe("session restore guard", () => {
     ["/t/ficc/app/perfil", "/t/ficc"],
     ["/t/ficc/agenda/menu-id", "/t/ficc"],
     ["/t/ficc/pedidos/order-id", "/t/ficc"],
-    ["/configuracoes/reservas", "/login"],
-    ["/catalogo/pedidos", "/login"],
+    ["/configuracoes/reservas", "/login?next=%2Fconfiguracoes%2Freservas"],
+    ["/catalogo/pedidos", "/login?next=%2Fcatalogo%2Fpedidos"],
   ])(
     "pageshow persisted on %s replaces to %s without calling the network",
     (path, login) => {
@@ -274,7 +283,7 @@ describe("session restore guard", () => {
     window.dispatchEvent(new PopStateEvent("popstate"))
 
     expect(bubble).not.toHaveBeenCalled()
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fcatalogo%2Fpedidos")
     expect(document.getElementById("root")?.textContent).toBe("")
     window.removeEventListener("popstate", bubble)
   })
@@ -363,7 +372,7 @@ describe("portal sign out", () => {
 
     window.history.pushState({}, "", "/configuracoes/reservas")
     window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fconfiguracoes%2Freservas")
   })
 
   it("still ends the local staff session when the server sign-out fails", async () => {
@@ -379,7 +388,7 @@ describe("portal sign out", () => {
     expect(hasActiveStaffSession()).toBe(false)
     window.history.pushState({}, "", "/dashboard")
     window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fdashboard")
   })
 
   it("returns the customer login path and clears that session and caches", async () => {

@@ -177,7 +177,25 @@ describe("staff api 401 retry", () => {
 
   afterEach(() => {
     window.localStorage.removeItem(STAFF_MARKER)
+    window.history.replaceState({}, "", "/")
     resetStaffSessionRefreshForTests()
+  })
+
+  it("keeps the tenant and original staff URL when an expired session cannot refresh", async () => {
+    window.history.replaceState({}, "", "/os?company=ficc&status=open#details")
+    installAdapter(api, [{ kind: "status", status: 401 }])
+    vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Refresh token expired", 400, "refresh_token_not_found"),
+    } as never)
+
+    await expect(api.get("/api/users/me")).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+
+    expect(assignBrowserLocation).toHaveBeenCalledWith(
+      "/login?next=%2Fos%3Fcompany%3Dficc%26status%3Dopen%23details&company=ficc&reason=session-expired",
+    )
   })
 
   it("retries once after a successful refresh and does not sign out", async () => {

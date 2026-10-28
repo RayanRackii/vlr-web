@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import { AppRoutes } from "@/routes/AppRoutes"
 import {
   clearCustomerSession,
   persistCustomerSession,
@@ -18,6 +19,8 @@ vi.mock("@/lib/browserLocation", () => ({
   assignBrowserLocation: vi.fn(),
   replaceBrowserLocation: vi.fn(),
 }))
+
+vi.mock("@/features/auth/LoginPage", () => ({ LoginPage: LoginProbe }))
 
 const authState = {
   user: null as { id: string; email: string } | null,
@@ -101,6 +104,24 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
     ).toBeInTheDocument()
   })
 
+  it("keeps query and fragment in the original unauthenticated staff URL", () => {
+    renderRoutes("/os?company=ficc&status=open#details")
+    expect(
+      screen.getByText("login next=/os?company=ficc&status=open#details company=ficc"),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps the tenant from a /t/:subdomain staff route through the login redirect", async () => {
+    render(
+      <MemoryRouter initialEntries={["/t/ficc/os?status=open#details"]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    expect(
+      await screen.findByText("login next=/os?status=open&company=ficc#details company=ficc"),
+    ).toBeInTheDocument()
+  })
+
   it("lets an authenticated user keep the protected URL", () => {
     authState.user = { id: "user-1", email: "admin@clube.com" }
     renderRoutes("/dashboard")
@@ -148,7 +169,7 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
     expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
     expect(screen.queryByText("Carregando...")).not.toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fcatalogo%2Fpedidos")
     fetchSpy.mockRestore()
   })
 })

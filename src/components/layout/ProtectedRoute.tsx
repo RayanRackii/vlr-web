@@ -41,7 +41,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (user === null) {
 
     const company = new URLSearchParams(location.search).get("company")
-    const next = `${location.pathname}${location.search}`
+    const next = `${location.pathname}${location.search}${location.hash}`
     const to = isSafeStaffNextPath(next)
       ? staffLoginPath(next, {
           company,

@@ -3185,6 +3185,7 @@
       "deleteDescription": "Excluir a função {{name}}? Só é possível se ela não estiver atribuída a ninguém."
     },
     "validation": {
+      "duplicateEmail": "Já existe uma pessoa com este e-mail.",
       "fullNameRequired": "Informe o nome.",
       "emailInvalid": "Informe um e-mail válido.",
       "rolesRequired": "Selecione ao menos uma função.",
