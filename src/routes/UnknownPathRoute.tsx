@@ -1,16 +1,13 @@
 import { Navigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
-import { AuthenticatedNotFoundPage } from "@/components/layout/AuthenticatedNotFoundPage"
-import { MainLayout } from "@/components/layout/MainLayout"
-import { PublicNotFoundPage } from "@/components/layout/PublicNotFoundPage"
+import { StaffNotFoundPage } from "@/components/layout/StaffNotFoundPage"
 import { useAuth } from "@/contexts/AuthContext"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 import { signedInCustomerSubdomain } from "@/lib/sessionRestoreGuard"
 
 /**
- * Signed-out visitors see a standalone 404 (no admin chrome).
- * Signed-in staff stay in the app shell and see a not-found page.
+ * Staff and signed-out visitors see a branded 404 in the auth shell.
  * A signed-in customer is sent back to their portal, even if a staff session lingers.
  */
 export function UnknownPathRoute() {
@@ -30,13 +27,5 @@ export function UnknownPathRoute() {
     return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
   }
 
-  if (user !== null) {
-    return (
-      <MainLayout>
-        <AuthenticatedNotFoundPage />
-      </MainLayout>
-    )
-  }
-
-  return <PublicNotFoundPage />
+  return <StaffNotFoundPage signedIn={user !== null} />
 }

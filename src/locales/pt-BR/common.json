@@ -235,6 +235,12 @@
         "accountMismatch": "A sessão atual é de outra conta. Entre com o e-mail deste convite para aceitar.",
         "identityConflict": "Não foi possível confirmar a conta deste convite. Nada foi alterado. Tente novamente ou fale com o suporte."
       },
+      "pickerSearch": "Buscar ambiente por nome ou subdomínio",
+      "pickerEmpty": "Nenhum ambiente disponível.",
+      "pickerNoResults": "Nenhum ambiente encontrado. Tente outro nome ou subdomínio.",
+      "pickerLoading": "Carregando seus ambientes...",
+      "passwordHint": "Use pelo menos 8 caracteres.",
+      "confirmPasswordHint": "Repita a nova senha para confirmar.",
       "pickerTitle": "Escolha o ambiente",
       "pickerBody": "Sua conta participa de mais de um ambiente. Escolha qual abrir agora.",
       "pickerSubmit": "Continuar",
@@ -3117,6 +3123,9 @@
     "description": "Você não tem permissão para ver esta página."
   },
   "notFound": {
+    "staffDescription": "Não encontramos esta página. Use o link abaixo para continuar.",
+    "dashboard": "Voltar ao painel",
+    "login": "Ir para o login",
     "title": "Página não encontrada",
     "description": "Este endereço não existe neste ambiente.",
     "home": "Ir para o início"
