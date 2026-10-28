@@ -135,9 +135,6 @@ export function PortalOrdersPage() {
                 <Link
                   className="portal-record-card"
                   to={tenantPortalPath(subdomain, `pedidos/${order.id}`)}
-                  aria-label={t("tenantPortal.catalog.orderCardLabel", {
-                    number: order.displayNumber,
-                  })}
                 >
                   <span className="portal-record-icon" aria-hidden>
                     <ShoppingBag strokeWidth={1.75} />
