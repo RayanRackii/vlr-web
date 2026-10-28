@@ -87,7 +87,7 @@ export function PortalModuleDiscovery() {
   const operationsModules = modulesByCategory(presented, "operations")
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="space-y-1">
         <h2 className="text-base font-semibold tracking-tight">
           {t("admin.moduleMenu.exploreTitle")}

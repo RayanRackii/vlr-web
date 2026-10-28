@@ -4,6 +4,8 @@
   align-items: start;
   gap: 28px;
   width: 100%;
+  max-width: var(--portal-content-max-qhd, 1560px);
+  margin-inline: auto;
 }
 
 .portal-catalog-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }

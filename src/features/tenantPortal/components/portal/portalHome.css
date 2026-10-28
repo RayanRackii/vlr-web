@@ -1,5 +1,5 @@
 /* Customer portal home/landing, in the portal design language. */
-.portal-home { width: 100%; max-width: 1180px; }
+.portal-home { width: 100%; max-width: var(--portal-content-max, 80rem); margin-inline: auto; }
 .portal-home-header { margin-bottom: 24px; }
 
 .portal-home-hero {
@@ -91,7 +91,7 @@
 
 @keyframes portal-home-in { from { opacity: 0; transform: translateY(10px); } }
 
-@media (min-width: 2000px) { .portal-home { max-width: 1480px; } }
+@media (min-width: 2000px) { .portal-home { max-width: var(--portal-content-max-qhd, 1560px); } }
 @media (max-width: 640px) {
   .portal-home-hero { flex-direction: column; align-items: start; }
   .portal-home-hero-cta { width: 100%; }

@@ -167,7 +167,7 @@ export function NotificationsSettingsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {t("notifications.settings.title")}
