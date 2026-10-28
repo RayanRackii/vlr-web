@@ -1,4 +1,4 @@
-import { ImageOff, Minus, Plus } from "lucide-react"
+import { Package, Minus, Plus } from "lucide-react"
 import { useRef } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -54,48 +54,54 @@ export function PortalCatalogProductCard({
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-[box-shadow,transform] duration-150 ease-out motion-safe:hover:-translate-y-0.5 hover:shadow-md">
+    <article className="portal-catalog-card">
       {images.length === 0 ? (
         <Link
           to={detailTo}
-          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-xl bg-muted text-muted-foreground"
+          className="portal-catalog-image portal-catalog-placeholder"
           aria-label={t("tenantPortal.catalog.noImage")}
         >
-          <ImageOff aria-hidden className="size-8" />
+          <Package aria-hidden />
         </Link>
       ) : (
         <CatalogProductImageGallery
           images={images}
           alt={product.name}
-          frameClassName="aspect-[4/3] w-full rounded-t-xl"
+          frameClassName="portal-catalog-image"
           controlsVisibility="hover"
           imageLinkTo={detailTo}
         />
       )}
-      <Link
-        to={detailTo}
-        className="flex flex-1 flex-col gap-1 px-3 pt-3 text-inherit no-underline"
-      >
-        <p className="min-h-4 text-xs text-muted-foreground">
-          {product.code ?? "\u00a0"}
-        </p>
-        <h2 className="min-h-[2.75rem] font-medium leading-snug line-clamp-2">
-          {product.name}
-        </h2>
-        <div className="flex min-h-6 items-center">
+      <div className="portal-catalog-body">
+        {product.taxonomy?.categories.length || product.taxonomy?.tags.length ? (
+          <div className="portal-catalog-tags">
+            {product.taxonomy.categories.map((category) => <span key={category.id} className="portal-catalog-tag">{category.name}</span>)}
+            {product.taxonomy.tags.map((tag) => <span key={tag.id} className="portal-catalog-tag">{tag.name}</span>)}
+          </div>
+        ) : null}
+        <Link to={detailTo} className="text-inherit no-underline">
+          {product.code ? <p className="mb-1 break-words text-xs text-muted-foreground">{product.code}</p> : null}
+          <h2 className="portal-catalog-product-name">{product.name}</h2>
+        </Link>
+        <div className="portal-catalog-price-row">
           {product.price == null ? (
-            <Badge variant="warning">
+            <Badge variant="warning" className="whitespace-normal">
               {t("tenantPortal.catalog.priceOnRequest")}
             </Badge>
           ) : (
-            <p className="text-base font-semibold tracking-tight text-foreground">
-              {priceLabel}
-            </p>
+            <p className="portal-catalog-price">{priceLabel}</p>
           )}
+          <LoadingButton
+            type="button"
+            className="portal-catalog-add portal-catalog-primary text-primary-foreground hover:opacity-90"
+            style={{ backgroundColor: primary }}
+            aria-label={t("tenantPortal.catalog.addToCart")}
+            onClick={onAdd}
+          >
+            <Plus aria-hidden />
+          </LoadingButton>
         </div>
-      </Link>
-      <div className="mt-auto flex flex-col gap-2 p-3 pt-2">
-        <div className="flex items-center gap-2">
+        <div className="portal-catalog-stepper">
           <Button
             type="button"
             variant="outline"
@@ -109,7 +115,6 @@ export function PortalCatalogProductCard({
             <Minus aria-hidden />
           </Button>
           <CatalogQuantityField
-            className="h-11 min-w-0 flex-1 px-1 text-center"
             quantity={quantity}
             productName={product.name}
             onCommit={commitQuantity}
@@ -127,15 +132,6 @@ export function PortalCatalogProductCard({
             <Plus aria-hidden />
           </Button>
         </div>
-        <LoadingButton
-          type="button"
-          size="lg"
-          className="w-full text-primary-foreground hover:opacity-90"
-          style={{ backgroundColor: primary }}
-          onClick={onAdd}
-        >
-          {t("tenantPortal.catalog.addToCart")}
-        </LoadingButton>
       </div>
     </article>
   )
