@@ -596,6 +596,8 @@
     "profile": {
       "title": "Mi perfil",
       "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
+      "eyebrow": "Cuenta",
+      "accountHint": "Para cambiar estos datos, hable con el equipo de {{tenant}}.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -611,6 +613,7 @@
       "hideSensitive": "Ocultar {{label}}",
       "address": "Dirección",
       "sections": {
+        "personal": "Datos personales",
         "account": "Datos de la cuenta"
       },
       "validation": {

@@ -596,6 +596,8 @@
     "profile": {
       "title": "My Profile",
       "subtitle": "Update your name and photo. Email, phone, account type and document cannot be changed here.",
+      "eyebrow": "Account",
+      "accountHint": "To change these details, contact the {{tenant}} team.",
       "save": "Save",
       "saving": "Saving...",
       "saved": "Profile updated.",
@@ -611,6 +613,7 @@
       "hideSensitive": "Hide {{label}}",
       "address": "Address",
       "sections": {
+        "personal": "Personal details",
         "account": "Account details"
       },
       "validation": {
