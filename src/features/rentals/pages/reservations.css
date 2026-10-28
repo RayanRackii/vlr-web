@@ -1,7 +1,7 @@
 .reservations-layout {
   --reservations-primary: var(--brand-primary);
   width: 100%;
-  max-width: 1240px;
+  max-width: 80rem; /* staff content width, same as AppShell max-w-7xl */
   min-width: 0;
   margin-inline: auto;
   color: var(--foreground);

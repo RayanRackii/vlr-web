@@ -1,3 +1,5 @@
+/* Single content width for every customer-portal page (pages center inside main). */
+.portal-shell { --portal-content-max: 80rem; --portal-content-max-qhd: 1560px; }
 /* Customer portal only; shared staff shell and tenant color tokens stay intact. */
 .portal-shell {
   --portal-spring: cubic-bezier(.34, 1.56, .64, 1);
