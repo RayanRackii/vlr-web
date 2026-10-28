@@ -32,10 +32,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  PortalStatusChip,
+  type PortalStatusTone,
+} from "@/features/catalog/components/PortalStatusChip"
 import {
   Select,
   SelectContent,
@@ -181,11 +184,9 @@ function isCancelledReservationStatus(status: string): boolean {
   return normalized === "cancelled" || normalized === "canceled"
 }
 
-function reservationStatusBadgeVariant(
-  status: string,
-): "success" | "destructive" | "secondary" | "warning" {
+function reservationStatusTone(status: string): PortalStatusTone {
   if (isCancelledReservationStatus(status)) {
-    return "destructive"
+    return "danger"
   }
   const normalized = status.trim().toLowerCase()
   if (normalized === "confirmed") {
@@ -194,7 +195,7 @@ function reservationStatusBadgeVariant(
   if (normalized === "pendingdeposit") {
     return "warning"
   }
-  return "secondary"
+  return "neutral"
 }
 
 /** Day + short month in the tenant clock — the calendar chip on a reservation card. */
@@ -2090,7 +2091,7 @@ export function TenantPortalAgendaPage() {
         aria-current={focused ? "true" : undefined}
         data-reservation-focused={focused ? "true" : undefined}
         className={cn(
-          "scroll-mt-16 flex gap-3 rounded-xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
+          "scroll-mt-16 flex gap-3 rounded-2xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
           focused
             ? "border-primary bg-primary/10 ring-2 ring-primary"
             : "border-border",
@@ -2099,12 +2100,17 @@ export function TenantPortalAgendaPage() {
       >
         <div
           aria-hidden
-          className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
+          className={cn(
+            "flex size-14 shrink-0 flex-col items-center justify-center rounded-xl",
+            cancelled
+              ? "bg-muted text-muted-foreground"
+              : "bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))] text-primary",
+          )}
         >
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
             {dateParts.month}
           </span>
-          <span className="text-lg leading-none font-semibold text-foreground">
+          <span className="text-lg leading-none font-bold">
             {dateParts.day}
           </span>
         </div>
@@ -2117,11 +2123,11 @@ export function TenantPortalAgendaPage() {
               )
               .join(", ")}
           </p>
-          <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
+          <PortalStatusChip tone={reservationStatusTone(reservation.status)}>
             {t(`rentals.reservations.statuses.${reservation.status}`, {
               defaultValue: reservation.status,
             })}
-          </Badge>
+          </PortalStatusChip>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           {formatReservationRange(

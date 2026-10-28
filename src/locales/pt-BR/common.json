@@ -709,7 +709,11 @@
       "cancelRequestBody": "Confirme o cancelamento da solicitação. Esta ação não pode ser desfeita.",
       "requestCancelled": "Solicitação cancelada.",
       "cancelRequestError": "Não foi possível cancelar a solicitação.",
-      "unitPrice": "{{price}} / un"
+      "unitPrice": "{{price}} / un",
+      "ordersEmptyDescription": "Quando você fizer um pedido no catálogo do {{tenant}}, ele aparece aqui para acompanhamento.",
+      "ordersLoading": "Carregando pedidos...",
+      "orderCardLabel": "Pedido {{number}}",
+      "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui."
     },
     "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
@@ -2499,10 +2503,26 @@
         "review": "Revisão"
       },
       "pricing": {
-        "priceErrors": {"required": "Informe o valor.", "invalid": "Valor inválido. Use o formato 12,50.", "notPositive": "O valor deve ser maior que zero.", "tooLarge": "O valor máximo é R$ {{max}}."},
+        "priceErrors": {
+          "required": "Informe o valor.",
+          "invalid": "Valor inválido. Use o formato 12,50.",
+          "notPositive": "O valor deve ser maior que zero.",
+          "tooLarge": "O valor máximo é R$ {{max}}."
+        },
         "unitLabel": "Unidade de preço",
-        "units": {"Hour": "Por hora", "Slot": "Por horário", "Day": "Por dia", "Fixed": "Fixo", "mixed": "Unidades diferentes por dia (escolha uma para unificar)"},
-        "priceLabels": {"Hour": "Preço por hora", "Slot": "Preço por horário", "Day": "Preço por dia", "Fixed": "Preço fixo"},
+        "units": {
+          "Hour": "Por hora",
+          "Slot": "Por horário",
+          "Day": "Por dia",
+          "Fixed": "Fixo",
+          "mixed": "Unidades diferentes por dia (escolha uma para unificar)"
+        },
+        "priceLabels": {
+          "Hour": "Preço por hora",
+          "Slot": "Preço por horário",
+          "Day": "Preço por dia",
+          "Fixed": "Preço fixo"
+        },
         "patternLabel": "Como o preço se repete na semana",
         "everydayPrice": "Preço por hora",
         "everydayPriceHelp": "O mesmo valor vale para todos os dias, no intervalo abaixo.",
@@ -2535,7 +2555,12 @@
         "pricingUnitLabel": "Unidade de preço",
         "priceLabel": "Preço",
         "perDayPricesLabel": "Preços por dia",
-        "unitPrice": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"}
+        "unitPrice": {
+          "Hour": "{{amount}}/hora",
+          "Slot": "{{amount}}/horário",
+          "Day": "{{amount}}/dia",
+          "Fixed": "{{amount}} fixo"
+        }
       },
       "success": {
         "create": "Recurso criado com sucesso.",
@@ -3987,7 +4012,12 @@
       },
       "details": {
         "pricePerHour": "A partir de: {{amount}}/h",
-        "prices": {"Hour": "A partir de: {{amount}} por hora", "Slot": "A partir de: {{amount}} por horário", "Day": "A partir de: {{amount}} por dia", "Fixed": "A partir de: {{amount}} fixo"},
+        "prices": {
+          "Hour": "A partir de: {{amount}} por hora",
+          "Slot": "A partir de: {{amount}} por horário",
+          "Day": "A partir de: {{amount}} por dia",
+          "Fixed": "A partir de: {{amount}} fixo"
+        },
         "allowedDurations": "Durações: {{durations}}",
         "capacity_one": "Capacidade: {{count}} pessoa",
         "capacity_other": "Capacidade: {{count}} pessoas",
@@ -4191,7 +4221,17 @@
       "cancelCutoffHoursMode": "N horas antes do início",
       "cancelCutoffHours": "Horas antes do início",
       "cancelCutoffHint": "O cliente pode cancelar até este prazo antes do início.",
-      "categories": {"title": "Por categoria", "description": "Vale para os recursos da categoria. Deixe em branco para usar o valor geral acima. Um valor definido no próprio recurso tem prioridade.", "horizonDays": "Antecedência máxima (dias)", "cancelCutoffHours": "Cancelamento até (horas antes)", "inherit": "Geral", "save": "Salvar", "saved": "Política da categoria salva.", "invalid": "Use um número inteiro ou deixe em branco.", "empty": "Nenhuma categoria com recursos reserváveis."}
+      "categories": {
+        "title": "Por categoria",
+        "description": "Vale para os recursos da categoria. Deixe em branco para usar o valor geral acima. Um valor definido no próprio recurso tem prioridade.",
+        "horizonDays": "Antecedência máxima (dias)",
+        "cancelCutoffHours": "Cancelamento até (horas antes)",
+        "inherit": "Geral",
+        "save": "Salvar",
+        "saved": "Política da categoria salva.",
+        "invalid": "Use um número inteiro ou deixe em branco.",
+        "empty": "Nenhuma categoria com recursos reserváveis."
+      }
     }
   },
   "resourceVisual": {
@@ -4301,7 +4341,12 @@
       "Unpriced": "Sem preço",
       "Available": "Disponível"
     },
-    "prices": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/horário", "Day": "{{amount}}/dia", "Fixed": "{{amount}} fixo"},
+    "prices": {
+      "Hour": "{{amount}}/hora",
+      "Slot": "{{amount}}/horário",
+      "Day": "{{amount}}/dia",
+      "Fixed": "{{amount}} fixo"
+    },
     "unitsLeft": "{{left}} de {{total}} disponíveis"
   }
 }
