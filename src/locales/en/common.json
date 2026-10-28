@@ -1275,78 +1275,593 @@
   },
   "moduleGuide": {
     "roadmapTitle": "Guide roadmap",
-    "badgesTitle": "Achievements",
-    "pointsLabel": "{{points}} points",
-    "progressLabel": "{{completed}} of {{total}} steps",
+    "progressShort": "of {{total}}",
+    "soundLabel": "Sound",
+    "soundToggle": "Reward sounds",
     "markDone": "Mark as done",
-    "goToScreen": "Go to {{label}}",
-    "exploreModule": "Explore {{label}}",
-    "reset": "Restart guide",
-    "soundToggle": "Reward sound",
+    "reset": "Reset guide",
+    "replay": "Replay guide",
+    "timeEstimate": "~{{minutes}} min",
     "nextAction": {
       "eyebrow": "Recommended next action",
-      "allDone": "Guide complete!",
-      "allDoneDescription": "You finished every step in this guide. Restart it any time to review."
+      "goToScreen": "Go to the screen",
+      "allDone": "Guide completed!",
+      "allDoneDescription": "All steps done — great work!"
     },
     "reward": {
-      "stepAnnouncement": "You earned {{points}} points for completing \"{{step}}\".",
-      "badgeAnnouncement": "Achievement unlocked: {{badge}}."
+      "title": "Nice!",
+      "stepProgress": "Step {{completed}} of {{total}} completed.",
+      "allDone": "You completed every step of the guide.",
+      "announcement": "Step completed: {{step}}."
     },
-    "badges": {
-      "firstStep": "First resource",
-      "halfway": "Halfway there",
-      "complete": "Guide complete"
+    "roadmap": {
+      "stepLabel": "Step {{index}} of {{total}}: {{title}} — {{state}}",
+      "state": {
+        "done": "completed",
+        "active": "current step",
+        "todo": "pending"
+      }
     },
-    "steps": {
-      "learn1": { "title": "First step" },
-      "learn2": { "title": "Second step" },
-      "learn3": { "title": "Third step" },
-      "overview": {
-        "learn1": { "title": "Check your indicators" },
-        "learn2": { "title": "Browse screens from the menu" },
-        "learn3": { "title": "Get to know the other areas" }
+    "lesson": {
+      "chip": "Mini-lesson",
+      "whyTitle": "Why this matters",
+      "seeInPractice": "See it in practice",
+      "opens": "Opens: {{target}}",
+      "allDoneChip": "All set",
+      "allDoneHeadline": "You made it through the whole {{module}} guide",
+      "allDoneBody": "Come back to any step in the roadmap above whenever you like — it stays saved. Use the shortcuts below to get straight to work."
+    },
+    "demo": {
+      "weekly": {
+        "title": "Interactive example — adjust and watch the schedule change",
+        "resourceHours": "Resource hours",
+        "customerView": "What the customer sees in the schedule",
+        "morning": {
+          "label": "Morning",
+          "range": "08:00–12:00"
+        },
+        "afternoon": {
+          "label": "Afternoon",
+          "range": "14:00–18:00"
+        },
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat",
+          "Sun"
+        ],
+        "total": "{{count}} bookable slots per week",
+        "empty": "No open hours — the customer sees no slots to book."
+      },
+      "freq": {
+        "title": "Interactive example — choose the frequency",
+        "planFrequency": "Plan frequency",
+        "upcoming": "Upcoming generated orders",
+        "description": "The frequency sets how often Rolvix creates a new work order for the equipment.",
+        "options": {
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "biannual": "Biannual"
+        },
+        "orderTitle": "Work order",
+        "orderCaption": "filter change and inspection",
+        "months": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ]
+      },
+      "resource": {
+        "title": "Registration preview",
+        "youFill": "You fill in",
+        "nameLabel": "Resource name",
+        "typeLabel": "Type",
+        "customerSees": "Customer sees on the map",
+        "availableCaption": "Available to book"
+      },
+      "connections": {
+        "title": "This module's connections"
+      },
+      "screen": {
+        "title": "Screen preview"
+      }
+    },
+    "lessons": {
+      "generic": {
+        "learn": {
+          "headline": "How this step works",
+          "d1": {
+            "t": "Concept",
+            "c": "What you'll set up"
+          },
+          "d2": {
+            "t": "Setup",
+            "c": "Adjust it to your business"
+          },
+          "d3": {
+            "t": "Connections",
+            "c": "How it links to other areas"
+          },
+          "d4": {
+            "t": "Ready",
+            "c": "Visible to your operation"
+          },
+          "why1": "Each step lays the groundwork for the next — follow them in order.",
+          "why2": "Setting things up carefully now avoids rework later.",
+          "why3": "Understanding the why helps you make the best decisions."
+        },
+        "visit": {
+          "headline": "See the module with real data",
+          "explanation": "The guide teaches the concept; the real screen is where the work happens. Open a module screen to recognize where everything lives and act on real data.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Where the work happens"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Your records"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Create, edit, complete"
+          },
+          "why1": "Seeing it with real data cements learning better than just reading.",
+          "why2": "You recognize where to carry out each day-to-day action.",
+          "why3": "Filters and searches speed up your routine on screen."
+        },
+        "related": {
+          "headline": "Connect this module to the rest of the business",
+          "explanation": "No module works alone. Explore a related area to see how data flows between them and expand the value of what you've already set up.",
+          "d1": {
+            "t": "This module",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "People & portal",
+            "c": "Who uses the system"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Revenue and orders"
+          },
+          "d4": {
+            "t": "Next step",
+            "c": "Expand your usage"
+          },
+          "why1": "Connecting modules avoids duplicate work across areas.",
+          "why2": "Data flows between bookings, sales, people, and maintenance.",
+          "why3": "Exploring the neighbor reveals gains you aren't using yet."
+        }
       },
       "bookings": {
-        "learn1": { "title": "Add your bookable resources" },
-        "learn2": { "title": "Set your available hours" },
-        "learn3": { "title": "Connect with other modules" }
+        "learn1": {
+          "short": "What can be booked",
+          "headline": "How a resource becomes bookable",
+          "explanation": "A resource is anything a customer can book. Once you register it with a name, type, and capacity, it exists on the space map and is visible to book — nothing appears to the customer before this step.",
+          "d1": {
+            "t": "Resource",
+            "c": "Court, room, equipment"
+          },
+          "d2": {
+            "t": "Details",
+            "c": "Name, type, capacity"
+          },
+          "d3": {
+            "t": "Space map",
+            "c": "Where it appears"
+          },
+          "d4": {
+            "t": "Customer sees",
+            "c": "Ready to book"
+          },
+          "why1": "Without a registered resource, there's nothing to book — it's the foundation of the whole module.",
+          "why2": "Type and capacity define how the resource is shown and filtered.",
+          "why3": "Organizing it on the map helps the customer find the right space quickly.",
+          "demoName": "Court 1 — 5-a-side",
+          "demoType": "Court"
+        },
+        "learn2": {
+          "short": "When it's available",
+          "headline": "How operating hours work",
+          "explanation": "You choose the days and shifts when the resource operates. Rolvix automatically splits each shift into booking windows — and only those windows appear in the customer schedule. Change a day or shift here and the schedule changes with it.",
+          "d1": {
+            "t": "Resource",
+            "c": "Court 1"
+          },
+          "d2": {
+            "t": "Hours",
+            "c": "Open days and shifts"
+          },
+          "d3": {
+            "t": "Booking windows",
+            "c": "Split into time slots"
+          },
+          "d4": {
+            "t": "Customer schedule",
+            "c": "Bookable slots"
+          },
+          "why1": "The customer schedule shows exactly the hours you open — nothing more.",
+          "why2": "Closing a day or shift removes the matching slots right away.",
+          "why3": "Well-defined shifts prevent bookings at times you don't serve."
+        },
+        "learn3": {
+          "short": "Bookings in the business flow",
+          "headline": "Where bookings connect",
+          "explanation": "A booking rarely lives alone. It can generate a charge in Sales, stays linked to the customer in People, and respects blocks created by Maintenance. Understanding these bridges avoids schedule conflicts.",
+          "d1": {
+            "t": "Booking",
+            "c": "Customer confirms"
+          },
+          "d2": {
+            "t": "Sales",
+            "c": "Optional charge"
+          },
+          "d3": {
+            "t": "People",
+            "c": "Who booked"
+          },
+          "d4": {
+            "t": "Maintenance",
+            "c": "Blocks for repairs"
+          },
+          "why1": "Charging for the booking keeps payment and schedule in one place.",
+          "why2": "Linking the booking to the customer gives history and contact for notices.",
+          "why3": "Maintenance blocks prevent booking an unavailable resource.",
+          "c1": {
+            "t": "Sales",
+            "c": "Generate a charge when the booking is confirmed"
+          },
+          "c2": {
+            "t": "People & portal",
+            "c": "Link the booking to the customer record"
+          },
+          "c3": {
+            "t": "Maintenance",
+            "c": "Respect blocks on resources under repair"
+          }
+        },
+        "visit": {
+          "short": "See it with real data",
+          "headline": "What you see on the Bookings screen",
+          "explanation": "The guide teaches the concept; the real screen is where the work happens. In Bookings you see the day's list, filter by resource, and confirm or reschedule each request. Open the screen to recognize where everything lives.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Bookings list"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Your bookings for the day"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Confirm, reschedule"
+          },
+          "why1": "Seeing it with real data cements learning better than just reading.",
+          "why2": "You spot where to confirm, reschedule, and cancel bookings.",
+          "why3": "Filters by resource and date speed up your daily routine.",
+          "r1": {
+            "t": "Carlos Lima · Court 1",
+            "s": "Today · 18:00–19:00",
+            "tag": "Confirmed"
+          },
+          "r2": {
+            "t": "Marina Souza · Room 2",
+            "s": "Today · 19:00–20:00",
+            "tag": "Pending"
+          },
+          "r3": {
+            "t": "João Alves · Court 2",
+            "s": "Tomorrow · 08:00–09:00",
+            "tag": "Confirmed"
+          }
+        },
+        "related": {
+          "short": "Expand your usage",
+          "headline": "Where to go after Bookings",
+          "explanation": "With Bookings live, neighboring modules add value: the portal lets customers book on their own, Maintenance keeps resources in shape, and Sales organizes revenue. Choose the next step based on your priority.",
+          "d1": {
+            "t": "Bookings",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "People & portal",
+            "c": "Customers book on their own"
+          },
+          "d3": {
+            "t": "Maintenance",
+            "c": "Takes care of resources"
+          },
+          "d4": {
+            "t": "Sales",
+            "c": "Revenue from bookings"
+          },
+          "why1": "The portal cuts down calls — customers book directly, 24/7.",
+          "why2": "Preventive maintenance avoids canceling bookings over breakdowns.",
+          "why3": "Sales consolidates the revenue generated by bookings.",
+          "c1": {
+            "t": "People & portal",
+            "c": "Publish the booking link for customers"
+          },
+          "c2": {
+            "t": "Maintenance",
+            "c": "Create plans for your most-used resources"
+          },
+          "c3": {
+            "t": "Sales",
+            "c": "Track the revenue from paid bookings"
+          }
+        }
       },
       "maintenance": {
-        "learn1": { "title": "Add your equipment" },
-        "learn2": { "title": "Set up plans and work orders" },
-        "learn3": { "title": "Align maintenance with bookings" }
+        "learn1": {
+          "short": "What needs care",
+          "headline": "How equipment enters maintenance",
+          "explanation": "Equipment is any asset that needs care. With its specs and location recorded, it gains a history and can receive plans and work orders — nothing can be planned before this registration.",
+          "d1": {
+            "t": "Equipment",
+            "c": "Air conditioner, pump"
+          },
+          "d2": {
+            "t": "Specs",
+            "c": "Model, serial no."
+          },
+          "d3": {
+            "t": "Location",
+            "c": "Where it's installed"
+          },
+          "d4": {
+            "t": "History",
+            "c": "Ready to plan"
+          },
+          "why1": "Without registered equipment, there's nothing to tie maintenance to.",
+          "why2": "Location and serial number speed up whoever performs the service.",
+          "why3": "The history centralizes everything already done to the asset.",
+          "demoName": "Air conditioner — Room 2",
+          "demoType": "HVAC"
+        },
+        "learn2": {
+          "short": "Automatic prevention",
+          "headline": "How a plan generates work orders",
+          "explanation": "A plan links equipment to tasks that repeat. You set the frequency and Rolvix creates the work orders automatically on the right dates — prevention no longer depends on your memory.",
+          "d1": {
+            "t": "Equipment",
+            "c": "Air conditioner"
+          },
+          "d2": {
+            "t": "Maintenance plan",
+            "c": "Recurring tasks"
+          },
+          "d3": {
+            "t": "Frequency",
+            "c": "Every X months"
+          },
+          "d4": {
+            "t": "Work order",
+            "c": "Generated on its own"
+          },
+          "why1": "Preventive maintenance avoids breakdowns and unexpected downtime.",
+          "why2": "Orders generated on their own ensure nothing gets forgotten.",
+          "why3": "Adjusting the frequency reschedules all future orders instantly."
+        },
+        "learn3": {
+          "short": "Maintenance in the flow",
+          "headline": "Where maintenance connects",
+          "explanation": "A work order crosses other modules: it can block a resource in Bookings while the repair happens, record costs in Sales, and be assigned to an owner in People.",
+          "d1": {
+            "t": "Work order",
+            "c": "Service to do"
+          },
+          "d2": {
+            "t": "Bookings",
+            "c": "Blocks the resource"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Cost of parts"
+          },
+          "d4": {
+            "t": "People",
+            "c": "Responsible technician"
+          },
+          "why1": "Blocking the resource avoids booking something under repair.",
+          "why2": "Recording costs keeps maintenance spending visible.",
+          "why3": "Assigning an owner makes it clear who performs each order.",
+          "c1": {
+            "t": "Bookings",
+            "c": "Block the resource during the service"
+          },
+          "c2": {
+            "t": "Sales",
+            "c": "Log the cost of parts and labor"
+          },
+          "c3": {
+            "t": "People & portal",
+            "c": "Assign the order to a technician"
+          }
+        },
+        "visit": {
+          "short": "See it with real data",
+          "headline": "What you see in Work orders",
+          "explanation": "The Work orders screen is the team's queue: open, in-progress, and completed orders, with due date and owner. Open it to recognize where to prioritize and close out each service.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Order queue"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Open orders"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Perform, complete"
+          },
+          "why1": "Seeing the real queue shows what's overdue and what's urgent.",
+          "why2": "You learn where to complete orders and attach what was done.",
+          "why3": "Filters by equipment and status organize the team's day.",
+          "r1": {
+            "t": "Filter change · Air conditioner R2",
+            "s": "Due today",
+            "tag": "Open"
+          },
+          "r2": {
+            "t": "Pump inspection · Pool",
+            "s": "In 3 days",
+            "tag": "Scheduled"
+          },
+          "r3": {
+            "t": "Lubrication · Gate",
+            "s": "Completed yesterday",
+            "tag": "Completed"
+          }
+        },
+        "related": {
+          "short": "Expand your usage",
+          "headline": "Where to go after Maintenance",
+          "explanation": "With maintenance in place, the neighbors benefit: Bookings runs on reliable resources, Sales tracks asset costs, and People organizes the technical team. Choose the next step by your priority.",
+          "d1": {
+            "t": "Maintenance",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "Bookings",
+            "c": "Resources always ready"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Costs under control"
+          },
+          "d4": {
+            "t": "People & portal",
+            "c": "Organized team"
+          },
+          "why1": "Well-maintained resources reduce booking cancellations.",
+          "why2": "Tracking costs helps decide whether to repair or replace an asset.",
+          "why3": "A well-assigned team meets the orders' deadlines.",
+          "c1": {
+            "t": "Bookings",
+            "c": "Keep your most-booked resources in shape"
+          },
+          "c2": {
+            "t": "Sales",
+            "c": "Analyze total maintenance cost"
+          },
+          "c3": {
+            "t": "People & portal",
+            "c": "Organize technicians and owners"
+          }
+        }
+      }
+    },
+    "steps": {
+      "overview": {
+        "learn1": {
+          "title": "Check your indicators"
+        },
+        "learn2": {
+          "title": "Browse screens from the menu"
+        },
+        "learn3": {
+          "title": "Get to know the other areas"
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "title": "Add your bookable resources"
+        },
+        "learn2": {
+          "title": "Set your available hours"
+        },
+        "learn3": {
+          "title": "Connect with other modules"
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "title": "Add your equipment"
+        },
+        "learn2": {
+          "title": "Set up plans and work orders"
+        },
+        "learn3": {
+          "title": "Align maintenance with bookings"
+        }
       },
       "sales": {
-        "learn1": { "title": "Add your products" },
-        "learn2": { "title": "Adjust your sales settings" },
-        "learn3": { "title": "Connect with other modules" }
+        "learn1": {
+          "title": "Add your products"
+        },
+        "learn2": {
+          "title": "Adjust your sales settings"
+        },
+        "learn3": {
+          "title": "Connect with other modules"
+        }
       },
       "peoplePortal": {
-        "learn1": { "title": "Track staff and customers" },
-        "learn2": { "title": "Organize the customer menu" },
-        "learn3": { "title": "Connect bookings and sales" }
+        "learn1": {
+          "title": "Track staff and customers"
+        },
+        "learn2": {
+          "title": "Organize the customer menu"
+        },
+        "learn3": {
+          "title": "Connect bookings and sales"
+        }
       },
       "pmoc": {
-        "learn1": { "title": "Review your plans" },
-        "learn2": { "title": "Create a new plan" },
-        "learn3": { "title": "Link plans to work orders" }
+        "learn1": {
+          "title": "Review your plans"
+        },
+        "learn2": {
+          "title": "Create a new plan"
+        },
+        "learn3": {
+          "title": "Link plans to work orders"
+        }
       },
       "platform": {
-        "learn1": { "title": "Browse your customers" },
-        "learn2": { "title": "Manage users and families" },
-        "learn3": { "title": "Explore the environment menu" }
+        "learn1": {
+          "title": "Browse your customers"
+        },
+        "learn2": {
+          "title": "Manage users and families"
+        },
+        "learn3": {
+          "title": "Explore the environment menu"
+        }
       },
       "visit": {
-        "title": "Visit a module screen",
-        "description": "Open a real screen to see what you learned in action."
+        "title": "Visit a module screen"
       },
       "related": {
-        "title": "Explore a related module",
-        "description": "See how this module connects to another area of your business."
+        "title": "Explore a related module"
       },
       "wrapUp": {
-        "title": "Ready to use",
-        "description": "You know the essentials of this module. Come back to the guide any time to review."
+        "title": "Ready to use"
       }
     }
   },

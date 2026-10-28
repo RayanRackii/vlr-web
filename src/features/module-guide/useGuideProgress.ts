@@ -9,7 +9,8 @@ type GuideProgressState = {
   soundOn: boolean
 }
 
-const emptyState: GuideProgressState = { completedStepIds: [], soundOn: false }
+// Sound defaults ON; it only ever plays from a user action (completing a step or toggling it on).
+const emptyState: GuideProgressState = { completedStepIds: [], soundOn: true }
 
 function storageKey(tenantId: string | null | undefined, userId: string, moduleKey: string): string {
   return `rolvix.guide.${STORAGE_VERSION}.${tenantId ?? "no-tenant"}.${userId}.${moduleKey}`
@@ -23,7 +24,8 @@ function readState(key: string): GuideProgressState {
     if (!parsed || !Array.isArray(parsed.completedStepIds)) return emptyState
     return {
       completedStepIds: parsed.completedStepIds.filter((id): id is string => typeof id === "string"),
-      soundOn: Boolean(parsed.soundOn),
+      // Absent flag → default ON (fresh user); an explicit stored `false` is honored.
+      soundOn: parsed.soundOn === undefined ? true : Boolean(parsed.soundOn),
     }
   } catch {
     return emptyState
@@ -71,13 +73,10 @@ export function useGuideProgress(
     return state.completedStepIds.includes(stepId)
   }
 
-  const points = steps.filter((step) => state.completedStepIds.includes(step.id)).reduce((sum, step) => sum + step.points, 0)
-
   return {
     completedStepIds: state.completedStepIds,
-    completedCount: state.completedStepIds.length,
+    completedCount: steps.filter((step) => state.completedStepIds.includes(step.id)).length,
     totalSteps: steps.length,
-    points,
     isStepDone,
     completeStep,
     reset,
