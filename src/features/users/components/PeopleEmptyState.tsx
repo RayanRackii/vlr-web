@@ -18,15 +18,15 @@ export function PeopleEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center",
+        "people-empty flex flex-col items-center justify-center gap-3 px-6 py-14 text-center",
         className,
       )}
     >
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Icon className="size-6" aria-hidden />
+      <div className="people-empty-icon">
+        <Icon className="size-9" strokeWidth={1.75} aria-hidden />
       </div>
       <div className="max-w-sm space-y-1">
-        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="text-lg font-semibold text-foreground">{title}</p>
         {description ? (
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}

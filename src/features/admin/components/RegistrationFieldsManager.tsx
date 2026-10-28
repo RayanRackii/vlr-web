@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ListPlus } from "lucide-react"
+import { CalendarDays, ClipboardList, Hash, Image, List, ListPlus, LockKeyhole, Mail, MapPin, Phone, ToggleRight, Type, type LucideIcon } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -53,7 +53,14 @@ import {
   listTenantRegistrationFields,
   updateRegistrationField,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import "@/features/users/people-access.css"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+
+const FIELD_ICONS: Readonly<Record<string, LucideIcon>> = {
+  date: CalendarDays, select: List, boolean: ToggleRight, photo: Image,
+  cep: MapPin, email: Mail, phone: Phone, number: Hash, text: Type,
+  cpf: ClipboardList, cnpj: ClipboardList,
+}
 
 const BUILT_IN_FIELDS = [
   { id: "name", labelKey: "tenantPortal.fields.name" },
@@ -268,13 +275,14 @@ export function RegistrationFieldsManager({
 
   const addButton = (
     <Button type="button" size="sm" onClick={openCreate}>
-      {t("admin.registrationFields.add")}
+      <ListPlus aria-hidden strokeWidth={1.75} />
+      {t("admin.registrationFields.createTitle")}
     </Button>
   )
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-4">
+    <div className="people-fields-grid">
+      <section className="people-field-section people-built-in space-y-4">
         <div className="space-y-1">
           <h2 className="text-base font-semibold tracking-tight">
             {t("admin.registrationFields.builtIn.title")}
@@ -287,9 +295,10 @@ export function RegistrationFieldsManager({
           {BUILT_IN_FIELDS.map((field) => (
             <li
               key={field.id}
-              className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="people-built-in-row"
             >
-              <p className="text-sm font-medium">{t(field.labelKey)}</p>
+              <LockKeyhole aria-hidden strokeWidth={1.75} className="size-4 shrink-0 text-muted-foreground" />
+              <p className="min-w-0 flex-1 text-sm font-medium">{t(field.labelKey)}</p>
               <Badge variant="secondary">
                 {t("admin.registrationFields.required")}
               </Badge>
@@ -298,7 +307,7 @@ export function RegistrationFieldsManager({
         </ul>
       </section>
 
-      <section className="space-y-4">
+      <section className="people-field-section space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-base font-semibold tracking-tight">
@@ -320,51 +329,35 @@ export function RegistrationFieldsManager({
             description={t("admin.registrationFields.emptyDescription")}
           />
         ) : (
-          <ul className="space-y-2">
-            {customFields.map((field) => (
-              <li
-                key={field.id}
-                className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium">{field.label}</p>
+          <ul className="people-custom-fields">
+            {customFields.map((field) => {
+              const Icon = FIELD_ICONS[field.fieldType] ?? Type
+              return (
+                <li key={field.id} className="people-field-row">
+                  <span className="people-field-icon"><Icon aria-hidden strokeWidth={1.75} /></span>
+                  <div className="people-field-name">
+                    <p className="text-sm font-semibold break-words">{field.label}</p>
+                    <p className="text-xs font-mono text-muted-foreground break-all">{field.fieldKey}</p>
+                  </div>
+                  <div className="people-field-tags">
+                    <Badge variant="outline">{t(registrationFieldTypeLabelKey(field.fieldType))}</Badge>
                     <Badge variant={field.isRequired ? "secondary" : "outline"}>
-                      {field.isRequired
-                        ? t("admin.registrationFields.required")
-                        : t("admin.registrationFields.optional")}
+                      {t(field.isRequired ? "admin.registrationFields.required" : "admin.registrationFields.optional")}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t(registrationFieldTypeLabelKey(field.fieldType))}
-                  </p>
-                </div>
-                {canWrite ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        openEdit(field)
-                      }}
-                    >
-                      {t("common.edit")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setFieldPendingDelete(field)
-                      }}
-                    >
-                      {t("common.delete")}
-                    </Button>
-                  </div>
-                ) : null}
-              </li>
-            ))}
+                  {canWrite ? (
+                    <div className="people-row-actions">
+                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={t("common.edit")} onClick={() => { openEdit(field) }}>
+                        <span>{t("common.edit")}</span>
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" className="people-delete-action" onClick={() => { setFieldPendingDelete(field) }}>
+                        {t("common.delete")}
+                      </Button>
+                    </div>
+                  ) : null}
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -71,6 +71,19 @@ const searchEmptyDescription = i18n.t(
 describe("PeopleCustomersTab", () => {
   beforeEach(() => {
     listTenantCustomersMock.mockReset()
+  })
+
+  it("presents real customer data in the responsive directory without adding actions or filters", async () => {
+    listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
+    render(<PeopleCustomersTab />)
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(3)
+    expect(within(table).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(table).getByText(CUSTOMER.email!)).toBeInTheDocument()
+    expect(within(table).getByText(i18n.t("peopleAccess.customers.verified"))).toBeInTheDocument()
+    expect(within(table).queryByRole("button")).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
+    expect(listTenantCustomersMock).toHaveBeenCalledTimes(1)
   })
 
   it("shows the environment empty state when there are no customers and no search", async () => {

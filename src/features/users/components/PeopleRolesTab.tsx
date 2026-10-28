@@ -217,14 +217,14 @@ export function PeopleRolesTab({
           description={t("peopleAccess.roles.emptyDescription")}
         />
       ) : (
-        <ul className="space-y-2">
+        <ul className="people-role-list">
           {visibleRoles.map((role) => {
             const itemPolicy = getRoleEditorPolicy(role)
 
             return (
               <li
                 key={role.id}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm motion-safe:transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                className="people-role-row"
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -243,24 +243,27 @@ export function PeopleRolesTab({
                     </p>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="people-row-actions">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="people-card-action"
+                    aria-label={itemPolicy.isFullyReadonly ? t("peopleAccess.roles.view") : t("common.edit")}
                     onClick={() => {
                       openEdit(role)
                     }}
                   >
-                    {itemPolicy.isFullyReadonly
+                    <span>{itemPolicy.isFullyReadonly
                       ? t("peopleAccess.roles.view")
-                      : t("common.edit")}
+                      : t("common.edit")}</span>
                   </Button>
                   {itemPolicy.canDelete && canManage ? (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="people-delete-action"
                       onClick={() => {
                         setRolePendingDelete(role)
                       }}

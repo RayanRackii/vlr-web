@@ -3149,6 +3149,18 @@
     }
   },
   "peopleAccess": {
+    "eyebrow": "Directorio",
+    "mobileNavigation": "Navegación principal",
+    "columns": {
+      "roles": "Funciones",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "roleSummary": {
+      "description": "Quién puede hacer qué en este entorno.",
+      "permissions_one": "{{count}} permiso",
+      "permissions_other": "{{count}} permisos"
+    },
     "title": "Personas y acceso",
     "description": "Gestione usuarios del entorno y los perfiles de acceso.",
     "tabs": {
@@ -3259,6 +3271,8 @@
       }
     },
     "users": {
+      "teamCount_one": "{{count}} persona en el equipo",
+      "teamCount_other": "{{count}} personas en el equipo",
       "description": "Invite personas y asigne una o más funciones.",
       "invite": "Invitar usuario",
       "inviteTitle": "Invitar usuario",
@@ -3279,6 +3293,8 @@
       "searchTooShort": "Escriba al menos 2 caracteres."
     },
     "customers": {
+      "customerCount_one": "{{count}} cliente del portal",
+      "customerCount_other": "{{count}} clientes del portal",
       "description": "Clientes que entran por el portal de este entorno.",
       "empty": "Ningún cliente en este entorno.",
       "emptyDescription": "Cuando alguien cree una cuenta en el portal, aparece aquí.",

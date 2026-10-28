@@ -3149,6 +3149,18 @@
     }
   },
   "peopleAccess": {
+    "eyebrow": "Directory",
+    "mobileNavigation": "Main navigation",
+    "columns": {
+      "roles": "Roles",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "roleSummary": {
+      "description": "Who can do what in this environment.",
+      "permissions_one": "{{count}} permission",
+      "permissions_other": "{{count}} permissions"
+    },
     "title": "People and access",
     "description": "Manage users in this environment and their access profiles.",
     "tabs": {
@@ -3259,6 +3271,8 @@
       }
     },
     "users": {
+      "teamCount_one": "{{count}} person on the team",
+      "teamCount_other": "{{count}} people on the team",
       "description": "Invite people and assign one or more functions.",
       "invite": "Invite user",
       "inviteTitle": "Invite user",
@@ -3279,6 +3293,8 @@
       "searchTooShort": "Type at least 2 characters."
     },
     "customers": {
+      "customerCount_one": "{{count}} portal customer",
+      "customerCount_other": "{{count}} portal customers",
       "description": "Customers who sign in through this environment's portal.",
       "empty": "No portal customers in this environment.",
       "emptyDescription": "When someone creates a portal account, they show up here.",

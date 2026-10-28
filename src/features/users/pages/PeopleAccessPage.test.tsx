@@ -160,9 +160,9 @@ const deleteRoleMock = vi.mocked(deleteRole)
 const toastError = vi.mocked(toast.error)
 const toastSuccess = vi.mocked(toast.success)
 
-function renderPage(permissions: readonly string[]) {
+function renderPage(permissions: readonly string[], activeModules: readonly string[] = []) {
   return render(
-    <TestPermissionProvider permissions={permissions}>
+    <TestPermissionProvider permissions={permissions} activeModules={activeModules}>
       <MemoryRouter initialEntries={["/pessoas-e-acesso"]}><PeopleAccessPage /></MemoryRouter>
     </TestPermissionProvider>,
   )
@@ -207,6 +207,65 @@ describe("PeopleAccessPage", () => {
     createRoleMock.mockResolvedValue(CREATED_ROLE)
     patchRoleMock.mockResolvedValue(CUSTOM_ROLE)
     deleteRoleMock.mockResolvedValue(undefined)
+  })
+
+  it("keeps the four permitted tabs and links to the existing registration route", async () => {
+    renderPage([...READ_ROLES, "core.customers.read", "core.registration_fields.read"], ["rentals"])
+    await waitForUsersLoaded()
+    const tabs = screen.getByRole("navigation", { name: i18n.t("peopleAccess.title") })
+    expect(within(tabs).getAllByRole("button")).toHaveLength(3)
+    expect(within(tabs).getByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).toHaveAttribute("aria-current", "page")
+    expect(within(tabs).getByRole("link", { name: i18n.t("nav.registrationFields") })).toHaveAttribute("href", "/configuracoes/cadastro")
+  })
+
+  it.each(["pointer", "keyboard"] as const)("opens the existing assignment dialog from the card action via %s", async (input) => {
+    const user = userEvent.setup()
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    renderPage(ASSIGN_PERMS)
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.users") })
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(4)
+    expect(within(table).getByRole("columnheader", { name: i18n.t("peopleAccess.users.fullName") })).toBeInTheDocument()
+    const action = within(table).getByRole("button", { name: i18n.t("peopleAccess.users.assign") })
+    expect(action).toHaveClass("people-card-action")
+    if (input === "pointer") {
+      await user.click(action)
+    } else {
+      action.focus()
+      await user.keyboard("{Enter}")
+    }
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText(i18n.t("peopleAccess.users.assignDescription", { name: MEMBER.fullName }))).toBeInTheDocument()
+    expect(within(dialog).getByRole("checkbox", { name: "Admin" })).toBeChecked()
+    expect(assignUserRolesMock).not.toHaveBeenCalled()
+  })
+
+  it("uses only the already loaded roles in the QHD summary", async () => {
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    renderPage(READ_ROLES)
+    const summary = await screen.findByRole("complementary", { name: i18n.t("peopleAccess.tabs.roles") })
+    expect(within(summary).getByText(ADMIN_ROLE.name)).toBeInTheDocument()
+    expect(listRolesMock).toHaveBeenCalledTimes(1)
+    expect(listPermissionsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("omits the QHD summary if the existing roles request fails", async () => {
+    listRolesMock.mockRejectedValue(new Error("Roles unavailable"))
+    renderPage(READ_ROLES)
+    await screen.findByText("Roles unavailable")
+    await waitForUsersLoaded()
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
+    expect(listRolesMock).toHaveBeenCalledTimes(1)
+    expect(listPermissionsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("omits the QHD summary and card assignment action without their existing permissions", async () => {
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    renderPage(READ_USERS)
+    await screen.findByText(MEMBER.fullName)
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.users.assign") })).not.toBeInTheDocument()
+    expect(listRolesMock).not.toHaveBeenCalled()
+    expect(listPermissionsMock).not.toHaveBeenCalled()
   })
 
   it("renders the page title and description", async () => {
@@ -280,7 +339,7 @@ describe("PeopleAccessPage", () => {
 
     expect(await screen.findByText(MEMBER.fullName)).toBeInTheDocument()
     expect(screen.getByText(MEMBER.email)).toBeInTheDocument()
-    expect(screen.getByText("Admin")).toBeInTheDocument()
+    expect(within(screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users") })).getByText("Admin")).toBeInTheDocument()
     expect(
       screen.getByText(i18n.t("peopleAccess.status.active")),
     ).toBeInTheDocument()
