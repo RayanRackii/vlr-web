@@ -85,6 +85,19 @@ describe("LoginPage tenant selector", () => {
     expect(selectMyStaffTenant).toHaveBeenCalledWith(tenantB)
   })
 
+  it.each([true, false])("only resumes an expired edit in its original tenant (same=%s)", async (sameTenant) => {
+    vi.mocked(listMyStaffTenants).mockResolvedValue({
+      memberships: [membership(tenantA, "Alpha"), membership(tenantB, "Beta")],
+      accessTokenTenantId: tenantA,
+    } as never)
+    vi.mocked(selectMyStaffTenant).mockResolvedValue({} as never)
+    renderLogin(`/login?reason=session-expired&tenant=${tenantA}&next=/os`)
+    const user = await submit()
+    await user.click(await screen.findByText(sameTenant ? "Alpha" : "Beta"))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    expect(await screen.findByText(sameTenant ? "orders" : "dashboard")).toBeInTheDocument()
+  })
+
   it("keeps single-tenant accounts on the direct flow", async () => {
     vi.mocked(listMyStaffTenants).mockResolvedValue({
       memberships: [membership(tenantA, "Alpha")],
