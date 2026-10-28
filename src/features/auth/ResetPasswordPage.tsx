@@ -2,7 +2,7 @@ import { toast } from "sonner"
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { Lock } from "lucide-react"
+import { Check, Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -252,7 +252,12 @@ export function ResetPasswordPage() {
             loading={isSubmitting}
             loadingLabel={t("auth.resetPassword.submitting")}
           >
-            {t("auth.resetPassword.submit")}
+            {isSaved ? (
+              <>
+                <Check aria-hidden {...iconProps("sm")} />
+                {t("auth.resetPassword.redirecting")}
+              </>
+            ) : t("auth.resetPassword.submit")}
           </FormPrimaryButton>
         </form>
       </Form>

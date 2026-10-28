@@ -1,0 +1,30 @@
+.portal-profile-layout { width: 100%; max-width: 760px; margin: 0 auto; }
+.portal-profile-form { display: flex; flex-direction: column; gap: 18px; }
+.portal-profile-card { padding: 22px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--portal-shadow); }
+
+.portal-profile-identity { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.portal-profile-avatar { width: 76px; height: 76px; flex-shrink: 0; }
+.portal-profile-avatar [data-slot="avatar-fallback"] { background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, var(--accent))); color: var(--primary-foreground); font-size: 24px; font-weight: 750; }
+.portal-profile-who { flex: 1; min-width: 0; }
+.portal-profile-name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.portal-profile-email { margin-top: 2px; color: var(--muted-foreground); font-size: 14px; overflow-wrap: anywhere; }
+.portal-profile-photohint { margin-top: 2px; color: var(--muted-foreground); font-size: 13px; }
+.portal-profile-photo-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.portal-profile-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.portal-profile-section-head h2 { font-size: 15px; font-weight: 650; }
+.portal-profile-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; background: color-mix(in srgb, var(--primary) 11%, var(--card)); color: var(--primary); font-size: 11px; font-weight: 650; }
+.portal-profile-badge svg { width: 13px; height: 13px; }
+.portal-profile-hint { margin: -6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
+
+.portal-profile-savebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; position: sticky; bottom: 0; padding-top: 2px; }
+
+.portal-profile-layout :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+
+@media (max-width: 640px) {
+  .portal-profile-card { padding: 18px; }
+  .portal-profile-identity .portal-profile-photo-actions { width: 100%; }
+  .portal-profile-identity .portal-profile-photo-actions > * { flex: 1; }
+  .portal-profile-savebar { position: static; }
+  .portal-profile-savebar > * { width: 100%; }
+}

@@ -91,6 +91,11 @@ describe("PortalOrdersPage", () => {
     renderList()
 
     expect(await screen.findByText("R$ 15,00 · Sob consulta")).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", {
+        name: /PED-12\s*Solicitado\s*18\/10\/2026.*R\$ 15,00 · Sob consulta/,
+      }),
+    ).toBeInTheDocument()
   })
 
   it("shows a warning-toned status chip for a requested order", async () => {

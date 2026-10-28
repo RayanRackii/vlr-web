@@ -281,6 +281,7 @@
     },
     "resetPassword": {
       "success": "Contraseña actualizada correctamente.",
+      "redirecting": "Contraseña actualizada, redirigiendo…",
       "title": "Nueva contraseña",
       "subtitle": "Defina una nueva contraseña para acceder a la plataforma.",
       "loading": "Validando enlace…",
@@ -472,6 +473,25 @@
       "goLogin": "Ir al inicio de sesión",
       "goAgenda": "Abrir agenda"
     },
+    "home": {
+      "title": "Inicio",
+      "subtitle": "Todo lo que puede hacer en {{tenant}}, en un solo lugar.",
+      "emptySubtitle": "Bienvenido al portal de {{tenant}}.",
+      "emptyDescription": "{{tenant}} aún no configuró elementos para el portal. En cuanto haya novedades, aparecerán aquí.",
+      "heroEyebrow": "Empiece por aquí",
+      "heroTitle": "¿Qué quiere hacer hoy?",
+      "heroSubtitle": "Reserve un horario o explore el catálogo de {{tenant}}: todo en un solo lugar.",
+      "heroSubtitleCatalog": "Explore el catálogo de {{tenant}} y envíe su solicitud en pocos toques.",
+      "quickActions": "Acceso rápido",
+      "open": "Abrir",
+      "descReservar": "Elija el día, el recurso y el horario que mejor le convenga.",
+      "descCatalog": "Vea los artículos disponibles y arme su pedido.",
+      "descOrders": "Siga sus pedidos y el estado de cada uno.",
+      "descRequests": "Solicite un artículo que todavía no está en el catálogo.",
+      "descReservations": "Consulte y gestione sus reservas.",
+      "tipTitle": "Consejo",
+      "tipText": "Use el menú lateral en cualquier momento para navegar entre reservas y compras."
+    },
     "agenda": {
       "title": "Agenda",
       "subtitle": "Consulte disponibilidad y reserve un horario.",
@@ -601,6 +621,8 @@
     "profile": {
       "title": "Mi perfil",
       "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
+      "eyebrow": "Cuenta",
+      "accountHint": "Para cambiar estos datos, hable con el equipo de {{tenant}}.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -616,6 +638,7 @@
       "hideSensitive": "Ocultar {{label}}",
       "address": "Dirección",
       "sections": {
+        "personal": "Datos personales",
         "account": "Datos de la cuenta"
       },
       "validation": {
@@ -624,6 +647,9 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Carrito y ayuda",
+      "resultCount_one": "{{count}} resultado",
+      "resultCount_other": "{{count}} resultados",
       "itemCount_one": "{{count}} artículo",
       "itemCount_other": "{{count}} artículos",
       "searchLabel": "Buscar productos",
@@ -1975,6 +2001,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Información disponible para tu perfil",
+    "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
+    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",
+    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en este entorno.",
+    "unavailable": "Los indicadores no están disponibles en este momento.",
+    "workOrdersEmpty": "No hay órdenes de servicio para mostrar en este período.",
+    "viewOrders": "Ver órdenes de servicio",
+    "clientEmptyHint": "Las nuevas actividades vinculadas a tu perfil aparecerán aquí.",
+    "ordersEmptyHint": "Puedes consultar la lista de órdenes de servicio para seguir otras actividades.",
     "title": "Centro de Comando",
     "description": "Indicadores según los módulos y familias activos en este entorno.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",

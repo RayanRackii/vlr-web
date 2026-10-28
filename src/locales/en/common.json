@@ -281,6 +281,7 @@
     },
     "resetPassword": {
       "success": "Password updated successfully.",
+      "redirecting": "Password updated, redirecting…",
       "title": "New password",
       "subtitle": "Set a new password to access the platform.",
       "loading": "Validating link…",
@@ -472,6 +473,25 @@
       "goLogin": "Go to sign in",
       "goAgenda": "Open schedule"
     },
+    "home": {
+      "title": "Home",
+      "subtitle": "Everything you can do at {{tenant}}, in one place.",
+      "emptySubtitle": "Welcome to the {{tenant}} portal.",
+      "emptyDescription": "{{tenant}} hasn't set up any portal items yet. As soon as there's something new, it will show up here.",
+      "heroEyebrow": "Start here",
+      "heroTitle": "What would you like to do today?",
+      "heroSubtitle": "Book a time or browse the {{tenant}} catalog — all in one place.",
+      "heroSubtitleCatalog": "Browse the {{tenant}} catalog and send your request in a few taps.",
+      "quickActions": "Quick actions",
+      "open": "Open",
+      "descReservar": "Pick the day, the resource and the time that suits you.",
+      "descCatalog": "See what's available and build your order.",
+      "descOrders": "Track your orders and the status of each one.",
+      "descRequests": "Request an item that isn't in the catalog yet.",
+      "descReservations": "Review and manage your bookings.",
+      "tipTitle": "Tip",
+      "tipText": "Use the sidebar anytime to move between bookings and purchases."
+    },
     "agenda": {
       "title": "Schedule",
       "subtitle": "Check availability and book a time slot.",
@@ -601,6 +621,8 @@
     "profile": {
       "title": "My Profile",
       "subtitle": "Update your name and photo. Email, phone, account type and document cannot be changed here.",
+      "eyebrow": "Account",
+      "accountHint": "To change these details, contact the {{tenant}} team.",
       "save": "Save",
       "saving": "Saving...",
       "saved": "Profile updated.",
@@ -616,6 +638,7 @@
       "hideSensitive": "Hide {{label}}",
       "address": "Address",
       "sections": {
+        "personal": "Personal details",
         "account": "Account details"
       },
       "validation": {
@@ -624,6 +647,9 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Cart and help",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results",
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items",
       "searchLabel": "Search products",
@@ -1975,6 +2001,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Information available to your profile",
+    "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
+    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
+    "emptyDescription": "Indicators will appear here as activity is recorded in this workspace.",
+    "unavailable": "Indicators are currently unavailable.",
+    "workOrdersEmpty": "No work orders to display for this period.",
+    "viewOrders": "View work orders",
+    "clientEmptyHint": "New activity linked to your profile will appear here.",
+    "ordersEmptyHint": "You can view the work order list to follow other activity.",
     "title": "Command Center",
     "description": "KPIs based on the modules and asset families active in this environment.",
     "emptyModules": "No operational modules active beyond the customer portal.",

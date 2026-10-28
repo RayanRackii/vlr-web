@@ -11,7 +11,7 @@ import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 import { resetSignOutMarkerForTests, staffAuthStorage } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn() } }))
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } }))
 
 function renderReset() {
   return render(
@@ -92,6 +92,8 @@ describe("ResetPasswordPage validity gate", () => {
     await user.type(screen.getByLabelText("Confirmar senha"), "password1")
     await user.click(saveButton())
 
+    expect(await screen.findByRole("button", { name: "Senha atualizada, redirecionando…" })).toBeDisabled()
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
     expect(toast.success).toHaveBeenCalledWith("Senha atualizada com sucesso.")
     expect(await screen.findByText("dashboard", {}, { timeout: 4500 })).toBeInTheDocument()
     expect(getCustomerAccessToken()).toBeNull()

@@ -15,17 +15,17 @@ export function ClientDashboard() {
   const { t } = useTranslation()
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6 [overflow-wrap:anywhere]">
       <PageHeader
         title={t("dashboard.client.title")}
         description={t("dashboard.client.description")}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <Card className="min-w-0">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <TicketCheck className="size-5 text-primary" />
+              <TicketCheck className="size-5 shrink-0 text-primary" aria-hidden="true" />
               <CardTitle>{t("dashboard.client.tickets.title")}</CardTitle>
             </div>
             <CardDescription>
@@ -37,14 +37,15 @@ export function ClientDashboard() {
               size="sm"
               icon={TicketCheck}
               title={t("dashboard.client.tickets.empty")}
+              description={t("dashboard.clientEmptyHint")}
             />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CalendarRange className="size-5 text-primary" />
+              <CalendarRange className="size-5 shrink-0 text-primary" aria-hidden="true" />
               <CardTitle>{t("dashboard.client.rentals.title")}</CardTitle>
             </div>
             <CardDescription>
@@ -56,6 +57,7 @@ export function ClientDashboard() {
               size="sm"
               icon={CalendarRange}
               title={t("dashboard.client.rentals.empty")}
+              description={t("dashboard.clientEmptyHint")}
             />
           </CardContent>
         </Card>

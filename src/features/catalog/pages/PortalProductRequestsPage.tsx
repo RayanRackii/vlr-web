@@ -162,7 +162,6 @@ export function PortalProductRequestsPage() {
                       subdomain,
                       `catalogo/solicitacoes/${request.id}`,
                     )}
-                    aria-label={request.description}
                   >
                     <span className="portal-record-icon" aria-hidden>
                       <ClipboardList strokeWidth={1.75} />
