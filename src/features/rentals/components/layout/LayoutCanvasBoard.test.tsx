@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import userEvent from "@testing-library/user-event"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
+import i18n from "@/lib/i18n"
 
 describe("LayoutCanvasBoard pick labels", () => {
   it("keeps full names in aria-label and avoids character-wrapping classes", () => {
@@ -291,7 +293,91 @@ describe("LayoutCanvasBoard pick labels", () => {
 })
 
 describe("LayoutCanvasBoard edit-mode touch targets", () => {
-  it("keeps the fine-pointer remove button and resize handle on opposite corners, hidden on coarse pointers", () => {
+  const item = { key: "r1", rentalAssetId: "r1", label: "Sala A", xPercent: 10, yPercent: 10, widthPercent: 20, heightPercent: 20, zIndex: 1 }
+
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+    vi.restoreAllMocks()
+  })
+
+  it.each([
+    ["pt-BR", "Mover bloco Sala A", "Redimensionar bloco Sala A", "Remover bloco Sala A", "Redimensionar mapa"],
+    ["en", "Move block Sala A", "Resize block Sala A", "Remove block Sala A", "Resize map"],
+    ["es", "Mover bloque Sala A", "Cambiar tamaño del bloque Sala A", "Eliminar bloque Sala A", "Cambiar tamaño del mapa"],
+  ])("names and focuses the edit controls with 24px fine and 44px coarse targets (%s)", async (language, moveLabel, resizeLabel, removeLabel, canvasLabel) => {
+    await i18n.changeLanguage(language)
+    const user = userEvent.setup()
+    render(<LayoutCanvasBoard mode="edit" items={[item]} onRemove={vi.fn()} onFrameResize={vi.fn()} />)
+
+    const move = screen.getByRole("button", { name: moveLabel })
+    expect(move).toHaveClass("min-w-6", "min-h-6", "coarse:min-w-11", "coarse:min-h-11")
+    await user.tab()
+    expect(move).toHaveFocus()
+
+    for (const name of [resizeLabel, removeLabel]) {
+      const controls = screen.getAllByRole("button", { name })
+      expect(controls).toHaveLength(2)
+      expect(controls[0]).toHaveClass("size-6", "coarse:hidden")
+      expect(controls[1]).toHaveClass("size-11", "coarse:flex")
+    }
+    expect(screen.getByRole("button", { name: canvasLabel })).toHaveClass("size-6", "coarse:size-11")
+    for (const button of screen.getAllByRole("button")) {
+      expect(button).toHaveClass("focus-visible:ring-2", "focus-visible:ring-ring")
+    }
+  })
+
+  it("separates edit targets even when the block is shorter than a target", () => {
+    const { container } = render(<LayoutCanvasBoard mode="edit" items={[{ ...item, heightPercent: 8 }]} onRemove={vi.fn()} />)
+    const [fineRemove, coarseRemove] = screen.getAllByRole("button", { name: "Remover bloco Sala A" })
+    const [fineResize, coarseResize] = screen.getAllByRole("button", { name: "Redimensionar bloco Sala A" })
+    expect(fineRemove).toHaveClass("bottom-full")
+    expect(coarseRemove).toHaveClass("bottom-full")
+    expect(fineResize).toHaveClass("top-[max(100%,1.5rem)]")
+    expect(coarseResize).toHaveClass("top-[max(100%,2.75rem)]")
+    expect(container.querySelector(".w-full")).toHaveClass("overflow-visible")
+    const tile = container.querySelector(".overflow-hidden")
+    for (const control of screen.getAllByRole("button")) {
+      expect(tile?.contains(control)).toBe(false)
+    }
+  })
+
+  it("keeps move, resize and remove interactions separate", () => {
+    const onMove = vi.fn()
+    const onResize = vi.fn()
+    const onRemove = vi.fn()
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 1000, height: 500 } as DOMRect)
+    render(<LayoutCanvasBoard mode="edit" items={[item]} onMove={onMove} onResize={onResize} onRemove={onRemove} />)
+
+    const pointer = (target: Element | Window, type: string, clientX: number, clientY: number) => {
+      fireEvent(target, new MouseEvent(type, { bubbles: true, clientX, clientY }))
+    }
+    pointer(screen.getByRole("button", { name: "Mover bloco Sala A" }), "pointerdown", 150, 100)
+    pointer(window, "pointermove", 200, 125)
+    expect(onMove).toHaveBeenLastCalledWith("r1", 16, 16)
+    expect(onResize).not.toHaveBeenCalled()
+    pointer(window, "pointerup", 200, 125)
+
+    for (const resize of screen.getAllByRole("button", { name: "Redimensionar bloco Sala A" })) {
+      onMove.mockClear()
+      pointer(resize, "pointerdown", 300, 150)
+      pointer(window, "pointermove", 400, 200)
+      expect(onResize).toHaveBeenLastCalledWith("r1", 30, 30)
+      expect(onMove).not.toHaveBeenCalled()
+      pointer(window, "pointerup", 400, 200)
+    }
+    onResize.mockClear()
+    for (const remove of screen.getAllByRole("button", { name: "Remover bloco Sala A" })) {
+      pointer(remove, "pointerdown", 300, 50)
+      fireEvent.click(remove)
+      pointer(window, "pointermove", 400, 200)
+    }
+    expect(onRemove).toHaveBeenNthCalledWith(1, "r1")
+    expect(onRemove).toHaveBeenNthCalledWith(2, "r1")
+    expect(onMove).not.toHaveBeenCalled()
+    expect(onResize).not.toHaveBeenCalled()
+  })
+
+  it("keeps the fine-pointer remove button and resize handle on opposite sides, hidden on coarse pointers", () => {
     render(
       <LayoutCanvasBoard
         mode="edit"
@@ -311,16 +397,17 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
       />,
     )
 
-    const removeButtons = screen.getAllByRole("button", { name: "remove" })
-    const fineRemove = removeButtons.find((button) => button.className.includes("top-0.5"))
+    const removeButtons = screen.getAllByRole("button", { name: "Remover bloco Quadra 1" })
+    const fineRemove = removeButtons.find((button) => button.className.includes("coarse:hidden"))
     expect(fineRemove).toBeDefined()
-    expect(fineRemove?.className).toContain("right-0.5")
+    expect(fineRemove?.className).toContain("left-0")
+    expect(fineRemove?.className).toContain("bottom-full")
     expect(fineRemove?.className).toContain("coarse:hidden")
 
     const resizeHandles = document.querySelectorAll('[class*="cursor-se-resize"]')
-    const fineResize = Array.from(resizeHandles).find((handle) => handle.className.includes("bottom-0.5"))
+    const fineResize = Array.from(resizeHandles).find((handle) => handle.className.includes("coarse:hidden"))
     expect(fineResize).toBeDefined()
-    expect(fineResize?.className).toContain("right-0.5")
+    expect(fineResize?.className).toContain("right-0")
     expect(fineResize?.className).toContain("coarse:hidden")
   })
 
@@ -344,8 +431,8 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
       />,
     )
 
-    const removeButtons = screen.getAllByRole("button", { name: "remove" })
-    const coarseRemove = removeButtons.find((button) => button.className.includes("bottom-full"))
+    const removeButtons = screen.getAllByRole("button", { name: "Remover bloco Quadra 1" })
+    const coarseRemove = removeButtons.find((button) => button.className.includes("coarse:flex"))
     expect(coarseRemove).toBeDefined()
     expect(coarseRemove?.className).toContain("size-11")
     expect(coarseRemove?.className).toContain("left-0")
@@ -357,7 +444,7 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
     expect(tile?.contains(coarseRemove as Node)).toBe(false)
 
     const resizeHandles = document.querySelectorAll('[class*="cursor-se-resize"]')
-    const coarseResize = Array.from(resizeHandles).find((handle) => handle.className.includes("top-full"))
+    const coarseResize = Array.from(resizeHandles).find((handle) => handle.className.includes("coarse:flex"))
     expect(coarseResize).toBeDefined()
     expect(coarseResize?.className).toContain("size-11")
     expect(coarseResize?.className).toContain("right-0")
@@ -366,7 +453,7 @@ describe("LayoutCanvasBoard edit-mode touch targets", () => {
 
     // Opposite sides of the tile box: one is pinned above it, the other below.
     expect(coarseRemove?.className).toContain("bottom-full")
-    expect(coarseResize?.className).toContain("top-full")
+    expect(coarseResize?.className).toContain("top-[max(100%,2.75rem)]")
   })
 })
 

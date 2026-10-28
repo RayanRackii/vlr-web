@@ -1,5 +1,6 @@
 import { Check, CheckCheck, ImageOff, type LucideIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import {
@@ -19,6 +20,8 @@ import {
   portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
+
+const editorFocusClass = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 
 export type CanvasBoardItem = {
   key: string
@@ -113,6 +116,7 @@ export function LayoutCanvasBoard({
   onRemove,
   onFrameResize,
 }: LayoutCanvasBoardProps) {
+  const { t } = useTranslation()
   const hostRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const itemsRef = useRef(items)
@@ -259,10 +263,10 @@ export function LayoutCanvasBoard({
         <div
           ref={boardRef}
           className={cn(
-            "w-full overflow-hidden rounded-xl border border-border bg-muted/30",
+            "w-full rounded-xl border border-border bg-muted/30",
             mode === "pick"
-              ? "grid grid-cols-2 gap-2 p-2 sm:relative sm:block sm:gap-0 sm:p-0 sm:aspect-[var(--canvas-ar)]"
-              : "relative",
+              ? "overflow-hidden grid grid-cols-2 gap-2 p-2 sm:relative sm:block sm:gap-0 sm:p-0 sm:aspect-[var(--canvas-ar)]"
+              : "relative overflow-visible",
             className,
           )}
           style={
@@ -379,32 +383,6 @@ export function LayoutCanvasBoard({
                     <span className="line-clamp-2 break-normal hyphens-none sm:line-clamp-1" title={item.footer}>{item.footer}</span>
                   </span>
                 ) : null}
-                {mode === "edit" && onRemove ? (
-                  <button
-                    type="button"
-                    aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:hidden"
-                    onPointerDown={(event) => {
-                      event.stopPropagation()
-                    }}
-                    onClick={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      onRemove(item.rentalAssetId)
-                    }}
-                  >
-                    ×
-                  </button>
-                ) : null}
-                {mode === "edit" ? (
-                  <span
-                    aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:hidden"
-                    onPointerDown={(event) => {
-                      startTileDrag(event, item, "resize")
-                    }}
-                  />
-                ) : null}
               </div>
             )
 
@@ -412,17 +390,46 @@ export function LayoutCanvasBoard({
               return tileBody
             }
 
-            // overflow-hidden on the tile clips anything inside it, so the coarse
-            // 44px remove/resize targets live outside the tile box entirely —
-            // one above, one below — instead of competing for its corners.
+            // Keep remove/resize outside the clipped artwork and clear of the
+            // move target, including blocks shorter than the minimum hit area.
             return (
               <div key={item.key} className="absolute" style={tileStyle}>
                 {tileBody}
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.moveBlock", { name: item.label })}
+                  className={cn("absolute inset-0 min-h-6 min-w-6 touch-none cursor-grab rounded-lg bg-transparent active:cursor-grabbing coarse:min-h-11 coarse:min-w-11", editorFocusClass)}
+                  onPointerDown={(event) => startTileDrag(event, item, "move")}
+                  onClick={() => onSelect?.(item.rentalAssetId)}
+                />
                 {onRemove ? (
                   <button
                     type="button"
-                    aria-label="remove"
-                    className="absolute left-0 bottom-full z-10 mb-1 hidden size-11 items-center justify-center rounded-sm bg-background/80 text-sm leading-none text-muted-foreground hover:text-destructive coarse:flex"
+                    aria-label={t("rentals.layout.removeBlock", { name: item.label })}
+                    className={cn("absolute left-0 bottom-full z-10 mb-1 flex size-6 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:hidden", editorFocusClass)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onRemove(item.rentalAssetId)
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.resizeBlock", { name: item.label })}
+                  className={cn("absolute right-0 top-[max(100%,1.5rem)] z-10 mt-1 flex size-6 touch-none cursor-se-resize items-center justify-center rounded-sm coarse:hidden", editorFocusClass)}
+                  onPointerDown={(event) => startTileDrag(event, item, "resize")}
+                >
+                  <span aria-hidden className="pointer-events-none size-3 rounded-sm border-2 border-background bg-primary shadow-sm" />
+                </button>
+                {onRemove ? (
+                  <button
+                    type="button"
+                    aria-label={t("rentals.layout.removeBlock", { name: item.label })}
+                    className={cn("absolute left-0 bottom-full z-10 mb-1 hidden size-11 items-center justify-center rounded-sm bg-background/80 text-sm leading-none text-muted-foreground hover:text-destructive coarse:flex", editorFocusClass)}
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}
@@ -435,9 +442,10 @@ export function LayoutCanvasBoard({
                     ×
                   </button>
                 ) : null}
-                <span
-                  aria-hidden
-                  className="absolute right-0 top-full z-10 mt-1 hidden size-11 cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:flex"
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.resizeBlock", { name: item.label })}
+                  className={cn("absolute right-0 top-[max(100%,2.75rem)] z-10 mt-1 hidden size-11 touch-none cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:flex", editorFocusClass)}
                   onPointerDown={(event) => {
                     startTileDrag(event, item, "resize")
                   }}
@@ -449,8 +457,8 @@ export function LayoutCanvasBoard({
         {mode === "edit" && onFrameResize ? (
           <button
             type="button"
-            aria-label="resize-canvas"
-            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm coarse:size-11"
+            aria-label={t("rentals.layout.resizeCanvas")}
+            className={cn("absolute -right-1 -bottom-1 z-20 size-6 touch-none cursor-se-resize rounded-sm border border-primary bg-background shadow-sm coarse:size-11", editorFocusClass)}
             onPointerDown={startFrameDrag}
           />
         ) : null}
