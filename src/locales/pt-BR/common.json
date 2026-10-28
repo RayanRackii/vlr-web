@@ -468,6 +468,25 @@
       "goLogin": "Ir para o login",
       "goAgenda": "Abrir agenda"
     },
+    "home": {
+      "title": "Início",
+      "subtitle": "Tudo o que você pode fazer no {{tenant}}, em um só lugar.",
+      "emptySubtitle": "Bem-vindo ao portal do {{tenant}}.",
+      "emptyDescription": "O {{tenant}} ainda não configurou itens para o portal. Assim que houver novidades, elas aparecem aqui.",
+      "heroEyebrow": "Comece por aqui",
+      "heroTitle": "O que você quer fazer hoje?",
+      "heroSubtitle": "Reserve um horário ou explore o catálogo do {{tenant}} — tudo em um só lugar.",
+      "heroSubtitleCatalog": "Explore o catálogo do {{tenant}} e envie o seu pedido em poucos toques.",
+      "quickActions": "Acesso rápido",
+      "open": "Abrir",
+      "descReservar": "Escolha o dia, o recurso e o horário que combina com você.",
+      "descCatalog": "Veja os itens disponíveis e monte o seu pedido.",
+      "descOrders": "Acompanhe seus pedidos e o status de cada um.",
+      "descRequests": "Peça um item que ainda não está no catálogo.",
+      "descReservations": "Consulte e gerencie as suas reservas.",
+      "tipTitle": "Dica",
+      "tipText": "Use o menu lateral a qualquer momento para navegar entre reservas e compras."
+    },
     "agenda": {
       "title": "Agenda",
       "subtitle": "Consulte disponibilidade e reserve um horário.",
