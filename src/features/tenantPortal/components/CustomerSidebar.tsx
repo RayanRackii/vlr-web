@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { customerNavHref } from "@/features/catalog/customerNav"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
-import { getEmailInitials } from "@/lib/emailInitials"
+import { customerDisplayInitials, customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
 import { cn } from "@/lib/utils"
 
 export type CustomerNavItem = {
@@ -38,6 +38,7 @@ export function CustomerSidebar({
 }: CustomerSidebarProps) {
   const { t } = useTranslation()
   const location = useLocation()
+  const displayName = customerDisplayName(userLabel)
 
   return (
     <div className={cn("portal-sidebar flex h-full flex-col", className)}>
@@ -94,7 +95,7 @@ export function CustomerSidebar({
           })
         )}
       </nav>
-      {userLabel ? <div className="portal-user-chip"><span className="portal-avatar" aria-hidden="true">{getEmailInitials(userLabel)}</span><div className="min-w-0"><p className="truncate text-sm font-semibold" title={userLabel}>{userLabel}</p><p className="text-xs text-muted-foreground">{t("tenantPortal.redesign.customer")}</p></div></div> : null}
+      {userLabel ? <div className="portal-user-chip"><span className="portal-avatar" aria-hidden="true">{customerDisplayInitials(displayName)}</span><div className="min-w-0"><p className="truncate text-sm font-semibold" title={displayName}>{displayName}</p><p className="text-xs text-muted-foreground">{t("tenantPortal.redesign.customer")}</p></div></div> : null}
     </div>
   )
 }

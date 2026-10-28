@@ -1975,7 +1975,7 @@ export function TenantPortalAgendaPage() {
   const reservationsHref = `${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`
 
   if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
-    return <BookingMapExperience themeStyle={portalThemeStyle} tenantName={branding.displayName} nextReservation={nextReservation} reservationsHref={reservationsHref} subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
+    return <BookingMapExperience themeStyle={portalThemeStyle} tenantName={branding.displayName} nextReservation={nextReservation} reservationsHref={reservationsHref} subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} horizonMaxDate={horizonMaxDate} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
   }
 
   // Same rows as `mine`, grouped for scanning — no re-fetch, no status change.

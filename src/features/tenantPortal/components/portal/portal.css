@@ -8,11 +8,11 @@
   background: var(--muted);
 }
 .dark .portal-shell, .portal-shell.dark { color-scheme: dark; }
-.portal-shell > div { height: 100dvh; min-height: 0; }
-.portal-shell > div > aside { display: block; background: var(--card); }
-.portal-shell > div > div:last-child { min-height: 0; }
-.portal-shell > div > div > header { flex-shrink: 0; background: var(--card); }
-.portal-shell > div > div > main { padding: 28px clamp(20px, 2.5vw, 48px) 40px; background: color-mix(in srgb, var(--muted) 48%, var(--background)); overscroll-behavior-y: contain; }
+.portal-shell [data-shell-part="root"] { height: 100dvh; min-height: 0; }
+.portal-shell [data-shell-part="sidebar"] { display: block; background: var(--card); }
+.portal-shell [data-shell-part="body"] { min-height: 0; }
+.portal-shell [data-shell-part="header"] { flex-shrink: 0; background: var(--card); }
+.portal-shell [data-shell-part="main"] { padding: 28px clamp(20px, 2.5vw, 48px) 40px; background: color-mix(in srgb, var(--muted) 48%, var(--background)); overscroll-behavior-y: contain; }
 .portal-sidebar { padding: 20px 14px; gap: 22px; }
 .portal-brand { display: flex; align-items: center; gap: 12px; padding: 6px; min-width: 0; }
 .portal-brand small { display: block; color: var(--muted-foreground); font-size: 12px; margin-top: 2px; }
@@ -106,16 +106,16 @@
   .portal-date { min-height: 125px; }
 }
 @media (min-width: 768px) and (max-width: 1023px) {
-  .portal-shell > div > aside { width: 224px; }
-  .portal-shell > div > div > header > div:first-child > button { display: none; }
+  .portal-shell [data-shell-part="sidebar"] { width: 224px; }
+  .portal-shell [data-shell-part="menu-toggle"] { display: none; }
 }
 @media (max-width: 1279px) {
   .portal-resource { grid-column: span 3; }
 }
 @media (max-width: 767px) {
-  .portal-shell > div > aside { width: 0; border: 0; }
-  .portal-shell > div > div > main { padding: 20px 16px 24px; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
-  .portal-shell > div > div > header > div:first-child > button { display: none; }
+  .portal-shell [data-shell-part="sidebar"] { width: 0; border: 0; }
+  .portal-shell [data-shell-part="main"] { padding: 20px 16px 24px; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .portal-shell [data-shell-part="menu-toggle"] { display: none; }
   .portal-sidebar { padding: 0; }
   .portal-brand, .portal-nav-heading, .portal-user-chip { display: none; }
   .portal-nav { position: fixed; inset: auto 0 0; z-index: 30; display: flex; flex-direction: row; gap: 2px; overflow-x: auto; padding: 7px 8px max(7px, env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--border); }
