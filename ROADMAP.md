@@ -254,6 +254,9 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] T1180 — redesign visual staff de Produtos/Pedidos/Solicitações conforme mockup aprovado: abas, busca/filtros locais, KPIs dos pedidos carregados, editor Dialog lateral e listas responsivas; mesma permissão `catalog.products.read` em `/catalogo/solicitacoes`, sem alterar serviços/contratos ou mutações. pt-BR/en/es e acessibilidade.
+- [ ] T1180 — smoke visual em DEV nas larguras 1440/QHD/820/393 e tema escuro: sandbox local nega servidor/Chromium (`EPERM`). Contagens nas abas usam somente dados já disponíveis na tela, sem chamadas adicionais.
+
 Spec canônica: `vlr-api/docs/plans/active/2026-08-28-catalog-orders.md`. Branch `feat/catalog-orders`.
 
 - [x] Module key Catalog + permissions in admin MODULE_KEYS / MODULE_ORDER
@@ -298,6 +301,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-10-28 | **T1180 (WEB, local):** redesign visual das telas staff de Vendas; solicitações saem de Produtos para `/catalogo/solicitacoes` reutilizando o loader e a permissão existentes. KPIs e filtros usam dados carregados; editor mantém o Dialog e os handlers, com apresentação lateral. Node 22: TypeScript app/node aprovado; Vitest catálogo/locales/navegação 280 testes/35 arquivos aprovados; lint ratchet aprovado (189 violações preexistentes). Review local: contraste dos badges corrigido (mínimo 5,63:1); cabeçalhos e semântica das tabelas preservados para leitores de tela no mobile. Browser/servidor bloqueados por `EPERM`; smoke visual pendente. Sem comandos Git, alterações de API ou deploy. Próximo WEB: smoke visual/integração DEV. Próximo API: validar suíte completa/PostgreSQL em ambiente com sockets; migrations apenas em etapa DEV autorizada. |
 | 2026-10-28 | **QA R21 itens 5/3 (WEB, local):** validação de campos de Ativos alinhada ao schema do passo, erros no blur/avanço e foco; nome na lista abre o wizard existente; termos de equipamento/recurso/reserva nos três idiomas. OS já tinha filtros por status e contagens: adicionado somente atalho para Concluídas no vazio de Abertas. Node 22: TypeScript aprovado; ESLint dos TS/TSX alterados sem erros (dois avisos legados TanStack); lint ratchet aprovado (189 violações existentes); Vitest de assets/workOrders/locales aprovado (207 testes / 29 arquivos), com configLoader runner e cache desligado para respeitar node_modules somente leitura. Revisão por snapshots sem achados Critical/High/Medium abertos; corrigido switch Base UI em leitura, com regressão de clique/teclado. Como testar: em `/ativos`, tentar avançar vazio, sair de Voltagem/Tag base vazias e abrir um nome; em `/os`, concluir a última aberta e usar “Ver OS concluídas”. Próximo WEB: smoke em DEV com os três idiomas e permissões de leitura/escrita. Próximo API: hosts de convite no Fly DEV (R8, ação humana); contrato inalterado. Sem Git, commit, deploy ou alteração de API. |
 
 | 2026-10-28 | **Fix R20 (WEB, local):** [x] usuários em cards abaixo de `lg`, e-mails completos e ações de 44px; [x] dashboard com cards compactos, busca local acessível e limpeza do resultado vazio; [x] retry nas duas páginas, largura máxima e copy pt-BR/en/es. Regressões Vitest de identidade, busca e recuperação. Próximo WEB: smoke em DEV nas quatro larguras e nos dois temas (Chromium bloqueado no sandbox). Próximo API: hosts de convite no Fly DEV (R8, ação humana); contrato inalterado. Sem Git. |

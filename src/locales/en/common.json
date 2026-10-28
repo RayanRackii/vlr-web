@@ -752,6 +752,27 @@
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
   "catalog": {
+    "staff": {
+      "allStatuses": "All statuses",
+      "productsSearch": "Search by name or code",
+      "ordersSearch": "Search by number or customer",
+      "loading": "Loading sales…",
+      "noResults": "No results found.",
+      "adjustFilters": "Adjust the search or filters to see other results.",
+      "orderSummary": "Order summary",
+      "noNote": "No note",
+      "empty": {
+        "products": "Create the first product so customers can place orders.",
+        "orders": "Customer orders appear here as soon as they are placed.",
+        "requests": "When a customer requests an item outside the catalog, it appears here."
+      },
+      "kpis": {
+        "Requested": "Requested",
+        "Approved": "Approved",
+        "Preparing": "Preparing",
+        "Ready": "Ready"
+      }
+    },
     "retry": "Try again",
     "priceOnRequest": "On request",
     "knownPlusOnRequest": "{{amount}} · On request",
@@ -1277,6 +1298,7 @@
     "catalog": "Sales",
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
+    "catalogRequests": "Requests",
     "catalogNotifications": "Sales alerts",
     "taxonomy": "Categories & tags",
     "notifications": "General alerts",

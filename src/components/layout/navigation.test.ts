@@ -105,6 +105,7 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).toEqual([
       "/catalogo/produtos",
       "/catalogo/pedidos",
+      "/catalogo/solicitacoes",
     ])
   })
 
@@ -514,7 +515,7 @@ describe("staff sidebar groups", () => {
       "nav.assets", "nav.pmoc", "nav.workOrders",
     ])
     expect(sections[3]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.catalogProducts", "nav.catalogOrders", "nav.catalogSettings", "nav.catalogNotifications",
+      "nav.catalogProducts", "nav.catalogOrders", "nav.catalogRequests", "nav.catalogSettings", "nav.catalogNotifications",
     ])
     expect(sections[4]?.items.map((item) => item.labelKey)).toEqual([
       "nav.peopleAccess", "nav.moduleMenu", "nav.taxonomy", "nav.notifications",

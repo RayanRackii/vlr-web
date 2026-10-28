@@ -1,3 +1,4 @@
+import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -229,7 +230,7 @@ export function CatalogOrderDetailPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="staff-catalog staff-catalog-detail space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <Button
@@ -254,6 +255,8 @@ export function CatalogOrderDetailPage() {
           {t(`catalog.status.${order.status}`)}
         </Badge>
       </div>
+
+      <CatalogTabs active="orders" />
 
       {inactiveNamesForApproval.length > 0 ? (
         <Alert variant="warning">
