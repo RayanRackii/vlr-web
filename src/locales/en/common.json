@@ -988,8 +988,9 @@
       "inAppAlwaysOn": "In-app always on",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "toastSaved": "Channel updated.",
+      "moduleTabs": "Notification modules",
       "modules": {
-        "catalog": "Catalog & Orders",
+        "catalog": "Catalog and orders",
         "rentals": "Rentals"
       }
     }

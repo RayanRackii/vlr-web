@@ -41,6 +41,11 @@ describe("CatalogNotificationsPage", () => {
       screen.getByText(i18n.t("catalog.notifications.subtitle")),
     ).toBeInTheDocument()
     expect(
+      screen.getByRole("heading", {
+        name: i18n.t("catalog.notifications.title"),
+      }).parentElement?.parentElement,
+    ).toHaveClass("mx-auto", "w-full", "max-w-7xl")
+    expect(
       screen.queryByText(i18n.t("catalog.notifications.channelsTitle")),
     ).not.toBeInTheDocument()
     expect(

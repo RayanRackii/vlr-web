@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { MemoryRouter, useLocation } from "react-router-dom"
 
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 import enCommon from "@/locales/en/common.json"
@@ -76,11 +77,21 @@ function cloneGroups(
   }))
 }
 
-function renderPage(permissions: readonly string[] = WRITE_PERMS) {
+function CurrentSearch() {
+  return <output aria-label="Current search">{useLocation().search}</output>
+}
+
+function renderPage(
+  permissions: readonly string[] = WRITE_PERMS,
+  initialEntry = "/configuracoes/notificacoes",
+) {
   return render(
-    <TestPermissionProvider permissions={permissions}>
-      <NotificationsSettingsPage />
-    </TestPermissionProvider>,
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <TestPermissionProvider permissions={permissions}>
+        <NotificationsSettingsPage />
+        <CurrentSearch />
+      </TestPermissionProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -147,16 +158,14 @@ describe("NotificationsSettingsPage", () => {
   })
 
   it("renders Rentals WhatsApp only and never SMS", async () => {
+    const user = userEvent.setup()
     renderPage()
     await waitForLoaded()
 
-    const rentalsHeading = screen.getByRole("heading", {
+    await user.click(screen.getByRole("tab", {
       name: i18n.t("notifications.settings.modules.rentals"),
-    })
-    const section = rentalsHeading.closest("section")
-    if (!section) {
-      throw new Error("Rentals section was not rendered.")
-    }
+    }))
+    const section = screen.getByRole("tabpanel")
 
     expect(
       within(section).getByRole("switch", {
@@ -176,6 +185,45 @@ describe("NotificationsSettingsPage", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("switches module tabs, shows one table and preserves other query parameters", async () => {
+    const user = userEvent.setup()
+    renderPage(WRITE_PERMS, "/configuracoes/notificacoes?keep=1")
+    await waitForLoaded()
+
+    const catalogTab = screen.getByRole("tab", {
+      name: i18n.t("notifications.settings.modules.catalog"),
+    })
+    const rentalsTab = screen.getByRole("tab", {
+      name: i18n.t("notifications.settings.modules.rentals"),
+    })
+    expect(catalogTab).toHaveAttribute("aria-selected", "true")
+    expect(screen.getAllByRole("table")).toHaveLength(1)
+    expect(screen.queryByText(i18n.t("rentals.events.reservationConfirmed"))).not.toBeInTheDocument()
+
+    await user.click(rentalsTab)
+    expect(rentalsTab).toHaveAttribute("aria-selected", "true")
+    expect(screen.getAllByRole("table")).toHaveLength(1)
+    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Current search")).toHaveTextContent("?keep=1&tab=rentals")
+
+    await user.click(catalogTab)
+    expect(screen.getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
+    expect(screen.getByLabelText("Current search")).toHaveTextContent("?keep=1&tab=catalog")
+    expect(listMock).toHaveBeenCalledTimes(1)
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
+  it("opens the module selected in the URL", async () => {
+    renderPage(WRITE_PERMS, "/configuracoes/notificacoes?tab=rentals")
+    await waitForLoaded()
+
+    expect(screen.getByRole("tab", {
+      name: i18n.t("notifications.settings.modules.rentals"),
+    })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+  })
+
   it("sends PUT when a configurable channel is toggled", async () => {
     const user = userEvent.setup()
     updateMock.mockResolvedValue({
@@ -189,7 +237,11 @@ describe("NotificationsSettingsPage", () => {
     const emailSwitch = screen.getByRole("switch", {
       name: toggleName("catalog.events.orderCreated", "Email"),
     })
-    await user.click(emailSwitch)
+    const touchTarget = emailSwitch.closest("label")
+    if (!touchTarget) {
+      throw new Error("The switch touch target was not rendered.")
+    }
+    await user.click(touchTarget)
 
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith({
@@ -201,6 +253,7 @@ describe("NotificationsSettingsPage", () => {
     await waitFor(() => {
       expect(emailSwitch).toHaveAttribute("aria-checked", "true")
     })
+    expect(toast.success).toHaveBeenCalledWith("Canal atualizado.")
   })
 
   it("restores the previous isActive and toasts the API error when PUT fails", async () => {
@@ -230,26 +283,39 @@ describe("NotificationsSettingsPage", () => {
     ).toBeInTheDocument()
   })
 
-  it("omits an inactive module group when the API does not return it", async () => {
+  it("hides the tab bar when only Catalog is active", async () => {
     listMock.mockResolvedValue(
       cloneGroups(BOTH_GROUPS.filter((group) => group.module === "catalog")),
     )
     renderPage()
     await waitForLoaded()
 
-    expect(
-      screen.getByRole("heading", {
-        name: i18n.t("notifications.settings.modules.catalog"),
-      }),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole("heading", {
-        name: i18n.t("notifications.settings.modules.rentals"),
-      }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
     expect(
       screen.queryByText(i18n.t("rentals.events.reservationConfirmed")),
     ).not.toBeInTheDocument()
+  })
+
+  it("shows the only active family even when the URL selects an inactive one", async () => {
+    listMock.mockResolvedValue(cloneGroups([BOTH_GROUPS[1]]))
+    renderPage(WRITE_PERMS, "/configuracoes/notificacoes?tab=catalog")
+    await waitForLoaded()
+
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
+  })
+
+  it("keeps configurable channels disabled without write permission", async () => {
+    renderPage(["core.notifications.read"])
+    await waitForLoaded()
+
+    for (const channelSwitch of screen.getAllByRole("switch")) {
+      expect(channelSwitch).toHaveAttribute("aria-disabled", "true")
+    }
+    expect(updateMock).not.toHaveBeenCalled()
   })
 
   it("explains that customer email starts on and mirrors the API value", async () => {
