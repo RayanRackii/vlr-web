@@ -1970,6 +1970,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Information available to your profile",
+    "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
+    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
+    "emptyDescription": "Indicators will appear here as activity is recorded in this workspace.",
+    "unavailable": "Indicators are currently unavailable.",
+    "workOrdersEmpty": "No work orders to display for this period.",
+    "viewOrders": "View work orders",
+    "clientEmptyHint": "New activity linked to your profile will appear here.",
+    "ordersEmptyHint": "You can view the work order list to follow other activity.",
     "title": "Command Center",
     "description": "KPIs based on the modules and asset families active in this environment.",
     "emptyModules": "No operational modules active beyond the customer portal.",

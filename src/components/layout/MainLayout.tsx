@@ -159,7 +159,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       banner={
         <>
           <StaffHomeRedirectNotice />
-          <TrialBanner />
+          <TrialBanner informational={!isPlatformAdmin && location.pathname === "/dashboard"} />
           {isPlatformAdmin && location.pathname.startsWith("/admin") ? (
             <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-sm text-foreground">
               {t("admin.support.platformPanel")}

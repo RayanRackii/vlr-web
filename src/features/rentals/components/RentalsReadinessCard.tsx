@@ -64,7 +64,7 @@ export function RentalsReadinessCard() {
   }
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <h2 className="text-base font-medium text-foreground">{t("dashboard.rentalsReadiness.title")}</h2>
         <CardDescription>{t("dashboard.rentalsReadiness.description")}</CardDescription>
@@ -77,17 +77,17 @@ export function RentalsReadinessCard() {
             const status = t(`dashboard.rentalsReadiness.status.${item.done ? "done" : "pending"}`)
 
             return (
-              <li key={item.key} className="flex items-center gap-2 text-sm">
+              <li key={item.key} className="flex min-w-0 items-center gap-2 text-sm">
                 <Icon
                   aria-hidden="true"
                   className={
                     item.done
-                      ? "size-4 text-[color-mix(in_oklch,var(--success)_70%,var(--foreground))]"
-                      : "size-4 text-muted-foreground"
+                      ? "size-4 shrink-0 text-[color-mix(in_oklch,var(--success)_70%,var(--foreground))]"
+                      : "size-4 shrink-0 text-muted-foreground"
                   }
                 />
                 <span className="sr-only">{status}</span>
-                <Link className="underline underline-offset-4" to={READINESS_LINKS[item.key]}>
+                <Link className="inline-flex min-h-11 min-w-11 flex-1 items-center underline underline-offset-4 [overflow-wrap:anywhere]" to={READINESS_LINKS[item.key]}>
                   {label}
                 </Link>
                 {item.count !== undefined &&

@@ -1970,6 +1970,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Informações disponíveis para seu perfil",
+    "readOnlyNotice": "Você pode consultar seus dados em modo somente leitura. O período de teste terminou. Para continuar usando a plataforma, escolha uma assinatura antes da remoção dos dados em {{days}} dia(s).",
+    "limitedNotice": "Seu acesso permite consultar apenas as informações disponíveis para seu perfil. Para ampliar o acesso, fale com a pessoa responsável pelo ambiente.",
+    "emptyDescription": "Os indicadores aparecerão aqui conforme houver atividade neste ambiente.",
+    "unavailable": "Os indicadores não estão disponíveis no momento.",
+    "workOrdersEmpty": "Nenhuma ordem de serviço para exibir neste período.",
+    "viewOrders": "Ver ordens de serviço",
+    "clientEmptyHint": "Novas atividades vinculadas ao seu cadastro aparecerão aqui.",
+    "ordersEmptyHint": "Você pode consultar a lista de ordens de serviço para acompanhar outras atividades.",
     "title": "Centro de Comando",
     "description": "Indicadores conforme os módulos e famílias ativos neste ambiente.",
     "emptyModules": "Nenhum módulo operacional ativo além do portal de clientes.",
