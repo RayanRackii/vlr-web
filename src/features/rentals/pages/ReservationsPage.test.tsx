@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
@@ -6,11 +6,13 @@ import { MemoryRouter } from "react-router-dom"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
+const trialState = vi.hoisted(() => ({ readOnly: false }))
+
 vi.mock("@/features/users/hooks/useTrialStatus", () => ({
   useTrialStatus: () => ({
     isLoading: false,
     isTrial: false,
-    isTrialReadOnly: false,
+    isTrialReadOnly: trialState.readOnly,
     trialEndsAt: undefined,
     trialPurgeAt: undefined,
   }),
@@ -37,6 +39,7 @@ vi.mock("@/features/rentals/services/reservationsService", async (importOriginal
 
 import { toast } from "sonner"
 import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
+import { ReservationsScreen } from "@/features/rentals/pages/ReservationsScreen"
 import {
   cancelAdminReservation,
   completeAdminReservation,
@@ -55,6 +58,8 @@ const confirmMock = vi.mocked(confirmAdminReservation)
 const cancelMock = vi.mocked(cancelAdminReservation)
 const completeMock = vi.mocked(completeAdminReservation)
 const toastSuccess = vi.mocked(toast.success)
+
+beforeEach(() => { trialState.readOnly = false })
 
 function makeReservation(
   status: ReservationStatus,
@@ -104,7 +109,7 @@ function completeButton() {
   })
 }
 
-describe("ReservationsPage Complete", () => {
+describe("ReservationsPage", () => {
   beforeEach(() => {
     listMock.mockReset()
     confirmMock.mockReset()
@@ -112,6 +117,24 @@ describe("ReservationsPage Complete", () => {
     completeMock.mockReset()
     toastSuccess.mockReset()
     listMock.mockResolvedValue([])
+  })
+
+  it("lists only returned reservations in time order with a count, duration and resource quantities", async () => {
+    listMock.mockResolvedValue([
+      makeReservation("Canceled", { id: "late", customerName: "Bruno Lima", startDateTime: "2026-09-06T16:00:00Z", endDateTime: "2026-09-06T17:30:00Z" }),
+      makeReservation("Confirmed"),
+    ])
+    renderPage()
+
+    const table = await screen.findByRole("table", { name: "Reservas" })
+    const rows = within(table).getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(rows[1]).toHaveTextContent("Ana Souza")
+    expect(rows[2]).toHaveTextContent("Bruno Lima")
+    expect(rows[2]).toHaveTextContent("1h30min")
+    expect(within(rows[2]).queryByRole("button")).not.toBeInTheDocument()
+    expect(screen.getByText("2 reservas")).toBeInTheDocument()
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument()
   })
 
   it("shows Concluir when the reservation is Confirmed and the user can complete", async () => {
@@ -306,5 +329,119 @@ describe("ReservationsPage Cancel confirmation", () => {
         }),
       ),
     ).toBeInTheDocument()
+  })
+})
+
+describe("ReservationsPage filters and states", () => {
+  beforeEach(() => {
+    listMock.mockReset().mockResolvedValue([])
+    confirmMock.mockReset()
+    cancelMock.mockReset()
+    completeMock.mockReset()
+  })
+
+  it("moves between civil days, keeps the existing week/month/status queries and returns to today", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("Nenhuma reserva neste filtro.")
+    const date = screen.getByLabelText("Data")
+    const today = (date as HTMLInputElement).value
+    fireEvent.change(date, { target: { value: "2026-10-31" } })
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-31", to: "2026-10-31", status: "" }))
+    await user.click(screen.getByRole("button", { name: "Próximo dia" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-11-01", to: "2026-11-01", status: "" }))
+    await user.click(screen.getByRole("button", { name: "Dia anterior" }))
+    expect(date).toHaveValue("2026-10-31")
+    await user.click(screen.getByRole("button", { name: "Semana" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-26", to: "2026-11-01", status: "" }))
+    await user.click(screen.getByRole("button", { name: "Mês" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "" }))
+    await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Confirmada" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "Confirmed" }))
+    expect(screen.getByRole("button", { name: "Confirmada" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "Hoje" }))
+    expect(date).toHaveValue(today)
+    expect(screen.getByRole("button", { name: "Mês" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("confirms a pending deposit and refreshes the existing list", async () => {
+    const user = userEvent.setup()
+    listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockResolvedValue([makeReservation("Confirmed")])
+    confirmMock.mockResolvedValue(makeReservation("Confirmed"))
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: "Confirmar" }))
+    expect(confirmMock).toHaveBeenCalledWith(RESERVATION_ID)
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Confirmar" })).not.toBeInTheDocument())
+    expect(completeButton()).toBeInTheDocument()
+  })
+
+  it.each(["PendingDeposit", "Confirmed"] as const)("disables every mutation in trial read-only for %s while keeping filters available", async (status) => {
+    trialState.readOnly = true
+    listMock.mockResolvedValue([makeReservation(status)])
+    renderPage()
+    const table = await screen.findByRole("table")
+    expect(screen.getByText(i18n.t("trial.readOnlyHint"))).toBeInTheDocument()
+    for (const action of within(table).getAllByRole("button")) expect(action).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Semana" })).toBeEnabled()
+    expect(confirmMock).not.toHaveBeenCalled()
+    expect(cancelMock).not.toHaveBeenCalled()
+    expect(completeMock).not.toHaveBeenCalled()
+  })
+
+  it("announces loading, then shows an error instead of an empty result and recovers through the existing filters", async () => {
+    let rejectLoad!: (error: Error) => void
+    listMock.mockReturnValueOnce(new Promise((_, reject) => { rejectLoad = reject }))
+    renderPage()
+    expect(screen.getByRole("status", { name: "Carregando reservas…" })).toBeInTheDocument()
+    expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
+    rejectLoad(new Error("Network unavailable"))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar as reservas.")
+    expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    expect(await screen.findByText("Nenhuma reserva neste filtro.")).toBeInTheDocument()
+    expect(screen.getByText("Troque o dia, o período ou o status para ver outras reservas.")).toBeInTheDocument()
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("keeps dates visible for week/month and preserves multiday ranges", async () => {
+    listMock.mockResolvedValue([
+      makeReservation("Completed"),
+      makeReservation("Completed", { id: "multiday", customerName: "Bruno Lima", startDateTime: "2026-09-07T03:00:00Z", endDateTime: "2026-09-09T03:00:00Z" }),
+    ])
+    renderPage()
+    await screen.findByRole("table")
+    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    const table = await screen.findByRole("table")
+    expect(within(table).getByText("06/09/2026")).toBeInTheDocument()
+    expect(within(table).getByText(/07\/09.*08\/09.*2 dias/)).toBeInTheDocument()
+    expect(within(table).queryByRole("button")).not.toBeInTheDocument()
+  })
+
+  it("keeps the visible reservation after an action succeeds but reloading fails", async () => {
+    listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockRejectedValue(new Error("Offline"))
+    confirmMock.mockResolvedValue(makeReservation("Confirmed"))
+    renderPage()
+    await userEvent.click(await screen.findByRole("button", { name: "Confirmar" }))
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+    expect(screen.getByRole("table")).toHaveTextContent("Ana Souza")
+    expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
+  })
+
+  it("renders one page heading and permission-filtered route tabs in the screen", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/reservas"]}>
+        <TestPermissionProvider permissions={["rentals.reservations.read"]} activeModules={["rentals"]}>
+          <ReservationsScreen />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    await screen.findByText("Nenhuma reserva neste filtro.")
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Reservas")
+    expect(screen.getByRole("tablist", { name: "Reservas" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Reservas" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.queryByRole("tab", { name: "Regras de reserva" })).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toBeInTheDocument()
+    expect(screen.getAllByTestId("tenant-tz-label")).toHaveLength(1)
   })
 })

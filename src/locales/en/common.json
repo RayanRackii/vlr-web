@@ -4194,7 +4194,7 @@
     },
     "reservations": {
       "title": "Reservations",
-      "description": "Confirm deposits and cancel B2C portal reservations.",
+      "description": "Confirm deposits, complete and cancel reservations made through the portal.",
       "date": "Date",
       "status": "Status",
       "statusAll": "All",
@@ -4223,7 +4223,28 @@
         "Canceled": "Canceled",
         "Completed": "Completed"
       },
-      "multiDayRange": "{{start}} – {{end}} ({{days}} days)"
+      "multiDayRange": "{{start}} – {{end}} ({{days}} days)",
+      "operation": "Operations",
+      "filters": "Reservation filters",
+      "period": "Period",
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "today": "Today",
+      "goToday": "Go to today",
+      "emptyDescription": "Change the day, period or status to see other reservations.",
+      "loading": "Loading reservations…",
+      "count_one": "{{count}} reservation",
+      "count_other": "{{count}} reservations",
+      "orderedByTime": "Ordered by time",
+      "time": "Time",
+      "customer": "Customer",
+      "resources": "Resources",
+      "total": "Total",
+      "actions": "Actions",
+      "noActions": "No actions available",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}min",
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
     },
     "bookingPolicy": {
       "title": "Booking policy",

@@ -1,4 +1,5 @@
 import { hasPermission } from "@/features/users/permissions/hasPermission"
+import type { LucideIcon } from "lucide-react"
 
 export type NavigationTab = {
   labelKey:
@@ -12,6 +13,7 @@ export type NavigationTab = {
     | "nav.registrationFields"
   to: string
   permission: string
+  icon?: LucideIcon
   modules?: readonly string[]
 }
 
