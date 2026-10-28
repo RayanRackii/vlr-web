@@ -2001,6 +2001,18 @@
     }
   },
   "dashboard": {
+    "home": {
+      "quickAccess": "Acceso rápido",
+      "open": "Abrir",
+      "freeSlots_one": "{{count}} libre",
+      "freeSlots_other": "{{count}} libres",
+      "shortcuts": {
+        "reservations": "Gestiona las reservas, confirmaciones y ocupación del día.",
+        "workOrders": "Sigue y ejecuta las órdenes de servicio abiertas.",
+        "assets": "Consulta el inventario y el estado de los equipos.",
+        "pmoc": "Planes de mantenimiento y las órdenes que generan."
+      }
+    },
     "limitedTitle": "Información disponible para tu perfil",
     "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
     "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",

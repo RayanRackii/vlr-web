@@ -2001,6 +2001,18 @@
     }
   },
   "dashboard": {
+    "home": {
+      "quickAccess": "Quick access",
+      "open": "Open",
+      "freeSlots_one": "{{count}} available",
+      "freeSlots_other": "{{count}} available",
+      "shortcuts": {
+        "reservations": "Manage reservations, confirmations and occupancy for the day.",
+        "workOrders": "Track and carry out open work orders.",
+        "assets": "Check inventory and equipment status.",
+        "pmoc": "Maintenance plans and the work orders they generate."
+      }
+    },
     "limitedTitle": "Information available to your profile",
     "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
     "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
