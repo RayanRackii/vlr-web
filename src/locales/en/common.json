@@ -2370,7 +2370,7 @@
       },
       "description": {
         "rentals": "Resources you offer (spaces, goods…). Register each one and mark what can be booked.",
-        "spaces": "Rentable spaces such as rooms and outdoor areas. Register each one and mark what can be booked.",
+        "spaces": "Business spaces and installations. Register each one and organize them by type.",
         "goods": "Goods and items (dumpsters…). Register each one and organize them by type.",
         "electrical": "Site electrical equipment. Use types and attributes (voltage, manufacturer).",
         "maintenance": "Site equipment and installations. Use types to organize and link maintenance.",
@@ -2468,6 +2468,8 @@
         "stockQuantity": "Stock quantity"
       },
       "validation": {
+        "pricingWindowInvalid": "End time must be after start time.",
+        "attributeInvalid": "Enter a valid value.",
         "unitRequired": "Unit is required.",
         "categoryRequired": "Type is required.",
         "familyRequired": "Family is required.",
@@ -2500,7 +2502,7 @@
         "deleteBlockedByWorkOrders": "This resource cannot be deleted because it has work orders."
       },
       "flags": {
-        "rentable": "Rental",
+        "rentable": "Bookable",
         "maintenance": "Maintenance"
       }
     },
@@ -2514,24 +2516,24 @@
         "capacity": "Capacity"
       },
       "placeholders": {
-        "name": "e.g. Space 1 — indoor",
-        "tag": "e.g. C-01",
+        "name": "e.g. Equipment 1",
+        "tag": "e.g. EQ-01",
         "location": "e.g. Block A, ground floor"
       },
       "help": {
         "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
         "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
-        "name": "Friendly name shown in the schedule and lists.",
-        "tag": "Short unique code for the resource (e.g. C-01).",
+        "name": "Equipment or resource name shown in lists.",
+        "tag": "Short unique code for the resource (e.g. EQ-01).",
         "location": "Where it is on site (block, wing). Optional.",
         "status": "Active = available; Inactive = hidden; Maintenance = out of service.",
         "baseLocation": "Location applied equally to every item in the batch (no numbering).",
-        "baseTag": "Tag prefix; the range number is appended (e.g. C- + 01).",
+        "baseTag": "Tag prefix; the range number is appended (e.g. EQ- + 01).",
         "startNumber": "First number in the generated sequence.",
         "endNumber": "Last number in the sequence (inclusive).",
         "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
-        "isRentable": "When on, the resource can be booked in rentals/schedule.",
+        "isRentable": "When on, the resource can be booked in the schedule.",
         "requiresDeposit": "When on, the booking waits for admin payment confirmation. When off, it is confirmed immediately and holds the time slot.",
         "queueEnabled": "When on, customers join a FIFO queue to book this space at opening time. Off by default.",
         "queueOpeningTime": "Time of day when reservations open (Brasília timezone). The waiting room opens 30 minutes earlier.",
@@ -2633,7 +2635,7 @@
       },
       "tabs": {
         "general": "General",
-        "rental": "Rental",
+        "rental": "Bookings",
         "maintenance": "Maintenance"
       },
       "fields": {
@@ -2643,12 +2645,12 @@
         "category": "Type",
         "location": "Location",
         "status": "Status",
-        "isRentable": "Available for booking / rental",
+        "isRentable": "Available for booking",
         "requiresDeposit": "Is prior payment required?",
         "queueEnabled": "Reservation queue",
         "queueOpeningTime": "Reservation queue opening time",
         "requiresMaintenance": "Requires maintenance",
-        "rentalType": "Rental type",
+        "rentalType": "Resource type",
         "totalQuantity": "Total quantity"
       },
       "rentalTypes": {
@@ -2981,6 +2983,7 @@
       "Canceled": "Canceled"
     },
     "actions": {
+      "viewCompleted": "View completed work orders",
       "execute": "Execute",
       "view": "View",
       "open": "Open"

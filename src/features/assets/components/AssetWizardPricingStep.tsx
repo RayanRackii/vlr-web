@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 
@@ -31,6 +32,13 @@ export function AssetWizardPricingStep({
   onChange,
 }: AssetWizardPricingStepProps) {
   const { t } = useTranslation()
+  const [timeTouched, setTimeTouched] = useState({ start: false, end: false })
+  const startInvalid = (invalid || timeTouched.start) && pricing.startTime.length < 4
+  const endInvalid = (invalid || timeTouched.end) && (
+    pricing.endTime.length < 4 || (pricing.startTime.length >= 4 && pricing.endTime <= pricing.startTime)
+  )
+  const noDailyPrice = DAYS.every((day) => pricing.perDayPrices[day] === 0)
+
 
   return (
     <div className="space-y-4">
@@ -82,26 +90,44 @@ export function AssetWizardPricingStep({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label>{t("assets.detail.rental.startTime")}</Label>
+          <Label htmlFor="pricing-start">{t("assets.detail.rental.startTime")} <span className="text-destructive" aria-hidden="true">*</span></Label>
           <Input
             type="time"
+            id="pricing-start"
             value={pricing.startTime}
-            aria-invalid={invalid || undefined}
+            aria-required="true"
+            aria-invalid={startInvalid || undefined}
+            aria-describedby={startInvalid ? "pricing-start-error" : undefined}
+            onBlur={() => setTimeTouched((prev) => ({ ...prev, start: true }))}
             onChange={(event) => {
               onChange({ startTime: event.target.value })
             }}
           />
+          {startInvalid ? (
+            <p id="pricing-start-error" className="text-xs text-destructive">
+              {t(pricing.startTime ? "assets.inventory.validation.pricingWindowInvalid" : "common.required")}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-1">
-          <Label>{t("assets.detail.rental.endTime")}</Label>
+          <Label htmlFor="pricing-end">{t("assets.detail.rental.endTime")} <span className="text-destructive" aria-hidden="true">*</span></Label>
           <Input
             type="time"
+            id="pricing-end"
             value={pricing.endTime}
-            aria-invalid={invalid || undefined}
+            aria-required="true"
+            aria-invalid={endInvalid || undefined}
+            aria-describedby={endInvalid ? "pricing-end-error" : undefined}
+            onBlur={() => setTimeTouched((prev) => ({ ...prev, end: true }))}
             onChange={(event) => {
               onChange({ endTime: event.target.value })
             }}
           />
+          {endInvalid ? (
+            <p id="pricing-end-error" className="text-xs text-destructive">
+              {t(pricing.endTime ? "assets.inventory.validation.pricingWindowInvalid" : "common.required")}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -166,8 +192,16 @@ export function AssetWizardPricingStep({
       ) : null}
 
       {pricing.pattern === "perDay" ? (
-        <div className="space-y-2">
+        <div
+          className="space-y-2"
+          role="group"
+          aria-label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
+          aria-invalid={invalid && noDailyPrice || undefined}
+          aria-describedby={invalid && noDailyPrice ? "pricing-days-error" : undefined}
+          tabIndex={-1}
+        >
           <FieldLabel
+            required
             label={t(`assets.wizard.pricing.priceLabels.${pricing.pricingUnit}`)}
             help={t("assets.wizard.pricing.perDayPricesHelp")}
           />
@@ -197,8 +231,8 @@ export function AssetWizardPricingStep({
               </li>
             ))}
           </ul>
-          {DAYS.every((day) => pricing.perDayPrices[day] === 0) ? (
-            <p className="text-sm text-muted-foreground" role="status">
+          {noDailyPrice ? (
+            <p id="pricing-days-error" className="text-sm text-muted-foreground" role="status">
               {t("assets.inventory.validation.pricingRequired")}
             </p>
           ) : null}

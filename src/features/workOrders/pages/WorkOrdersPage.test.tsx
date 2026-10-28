@@ -58,6 +58,39 @@ describe("WorkOrdersPage origin", () => {
     getPlanMock.mockClear()
   })
 
+  it.each([
+    ["os.work_orders.read"],
+    ["os.work_orders.read", "os.work_orders.execute"],
+  ])("offers completed orders from the empty open list for %j", async (...permissions) => {
+    const user = userEvent.setup()
+    getWorkOrdersMock.mockResolvedValue([makeWorkOrder({ status: "Completed" })])
+    renderList(permissions, ["os"])
+
+    await user.click(await screen.findByRole("button", {
+      name: i18n.t("workOrders.actions.viewCompleted"),
+    }))
+
+    expect(screen.getByRole("tab", {
+      name: i18n.t("workOrders.tabs.withCount", {
+        label: i18n.t("workOrders.tabs.Completed"), count: 1,
+      }),
+    })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByRole("link", {
+      name: i18n.t("workOrders.actions.view"),
+    })).toHaveAttribute("href", `/os/${makeWorkOrder().id}`)
+    expect(getWorkOrdersMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not offer completed orders when none exist", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+    renderList(["os.work_orders.read"], ["os"])
+
+    await screen.findByText(i18n.t("workOrders.empty.Open"))
+    expect(screen.queryByRole("button", {
+      name: i18n.t("workOrders.actions.viewCompleted"),
+    })).not.toBeInTheDocument()
+  })
+
   it("H/K: generated work orders show historical PMOC origin metadata", async () => {
     getWorkOrdersMock.mockResolvedValue([
       makeWorkOrder({ sourcePlanName: "Nome histórico do plano" }),

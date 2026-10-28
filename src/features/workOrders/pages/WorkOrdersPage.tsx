@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   flexRender,
@@ -72,11 +72,13 @@ function WorkOrdersTable({
   rows,
   isLoading,
   emptyLabel,
+  emptyAction,
   hideEmpty = false,
 }: {
   rows: WorkOrderTableRow[]
   isLoading: boolean
   emptyLabel: string
+  emptyAction?: ReactNode
   hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -209,6 +211,7 @@ function WorkOrdersTable({
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
                 {emptyLabel}
+                {emptyAction}
               </TableCell>
             </TableRow>
           ) : null}
@@ -280,7 +283,11 @@ export function WorkOrdersPage() {
   }, [session, t])
 
   useEffect(() => {
-    void loadWorkOrders()
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void loadWorkOrders()
+    })
+    return () => { cancelled = true }
   }, [loadWorkOrders])
 
   const tableRowsByStatus = useMemo(() => {
@@ -391,6 +398,13 @@ export function WorkOrdersPage() {
                   ? `workOrders.emptyAssigned.${filter}`
                   : `workOrders.empty.${filter}`,
               )}
+              emptyAction={filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
+                <div className="mt-3">
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("Completed")}>
+                    {t("workOrders.actions.viewCompleted")}
+                  </Button>
+                </div>
+              ) : undefined}
             />
           </TabsContent>
         ))}

@@ -43,6 +43,7 @@ export function PriceInput({ id, value, invalid, allowEmpty = false, onChange }:
         autoComplete="off"
         placeholder="0,00"
         value={text}
+        aria-required={!allowEmpty || undefined}
         aria-invalid={showError || undefined}
         aria-describedby={showError ? errorId : undefined}
         onBlur={() => {

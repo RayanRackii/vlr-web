@@ -2370,7 +2370,7 @@
       },
       "description": {
         "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
-        "spaces": "Espacios alquilables, como salas y áreas exteriores. Registre cada uno y marque lo que puede reservarse.",
+        "spaces": "Espacios e instalaciones del negocio. Registre cada uno y organícelos por tipo.",
         "goods": "Bienes y artículos (contenedores…). Registre cada uno y organícelos por tipo.",
         "electrical": "Equipos eléctricos del sitio. Use tipos y atributos (voltaje, fabricante).",
         "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
@@ -2468,6 +2468,8 @@
         "stockQuantity": "Cantidad en stock"
       },
       "validation": {
+        "pricingWindowInvalid": "La hora final debe ser posterior a la inicial.",
+        "attributeInvalid": "Introduzca un valor válido.",
         "unitRequired": "La unidad es obligatoria.",
         "categoryRequired": "El tipo es obligatorio.",
         "familyRequired": "La familia es obligatoria.",
@@ -2500,7 +2502,7 @@
         "deleteBlockedByWorkOrders": "No se puede eliminar este recurso porque tiene órdenes de trabajo."
       },
       "flags": {
-        "rentable": "Alquiler",
+        "rentable": "Reservable",
         "maintenance": "Mantenimiento"
       }
     },
@@ -2514,24 +2516,24 @@
         "capacity": "Capacidad"
       },
       "placeholders": {
-        "name": "Ej.: Espacio 1 — cubierto",
-        "tag": "Ej.: C-01",
+        "name": "Ej.: Equipo 1",
+        "tag": "Ej.: EQ-01",
         "location": "Ej.: Bloque A, planta baja"
       },
       "help": {
         "unit": "Sitio físico de este recurso (sede, sucursal). Se crea automáticamente al registrar el cliente; la gestión de unidades vendrá después.",
         "category": "Tipo del recurso (ej.: Área exterior). Defina tipos en Activos → Tipos.",
         "family": "Familia de atributos (espacios, bienes, eléctricos…). Controla campos extra del formulario.",
-        "name": "Nombre amigable mostrado en la agenda y listas.",
-        "tag": "Código corto único (ej.: C-01).",
+        "name": "Nombre del equipo o recurso mostrado en las listas.",
+        "tag": "Código corto único para identificar el recurso (ej.: EQ-01).",
         "location": "Dónde está en el sitio (bloque, ala). Opcional.",
         "status": "Activo = disponible; Inactivo = oculto; Mantenimiento = fuera de servicio.",
         "baseLocation": "Ubicación aplicada por igual a todos los ítems del lote (sin numeración).",
-        "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: C- + 01).",
+        "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: EQ- + 01).",
         "startNumber": "Primer número de la secuencia generada.",
         "endNumber": "Último número de la secuencia (inclusive).",
         "requiresMaintenance": "Si está activo, el recurso entra en mantenimiento/PMOC/OS.",
-        "isRentable": "Si está activo, el recurso se puede reservar en alquiler/agenda.",
+        "isRentable": "Si está activo, el recurso se puede reservar en la agenda.",
         "requiresDeposit": "Si está activo, la reserva espera la confirmación de pago del administrador. Si está desactivado, nace confirmada y ocupa el horario.",
         "queueEnabled": "Si está activo, los clientes entran en una fila FIFO para reservar este espacio a la hora de apertura. Desactivado por defecto.",
         "queueOpeningTime": "Hora del día en que abren las reservas (zona de Brasilia). La sala de espera abre 30 minutos antes.",
@@ -2633,7 +2635,7 @@
       },
       "tabs": {
         "general": "General",
-        "rental": "Alquiler",
+        "rental": "Reservas",
         "maintenance": "Mantenimiento"
       },
       "fields": {
@@ -2643,12 +2645,12 @@
         "category": "Tipo",
         "location": "Ubicación",
         "status": "Estado",
-        "isRentable": "Disponible para reserva / alquiler",
+        "isRentable": "Disponible para reserva",
         "requiresDeposit": "¿Es necesario un pago previo?",
         "queueEnabled": "Cola de reservas",
         "queueOpeningTime": "Hora de apertura de la fila de reservas",
         "requiresMaintenance": "Requiere mantenimiento",
-        "rentalType": "Tipo de alquiler",
+        "rentalType": "Tipo de recurso",
         "totalQuantity": "Cantidad total"
       },
       "rentalTypes": {
@@ -2981,6 +2983,7 @@
       "Canceled": "Cancelada"
     },
     "actions": {
+      "viewCompleted": "Ver órdenes completadas",
       "execute": "Ejecutar",
       "view": "Ver",
       "open": "Abrir"
