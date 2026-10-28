@@ -105,7 +105,7 @@ export function TenantPortalLoginPage() {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">{t("tenantPortal.login.title")}</h2>
+        <h2>{t("tenantPortal.login.title")}</h2>
         <p className="text-sm text-muted-foreground">
           {t("tenantPortal.login.subtitle")}
         </p>
@@ -123,8 +123,8 @@ export function TenantPortalLoginPage() {
                   <InputWithIcon
                     icon={<Mail {...iconProps("sm")} />}
                     type="email"
+                    placeholder={t("tenantPortal.login.emailPlaceholder")}
                     autoComplete="email"
-                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -144,7 +144,6 @@ export function TenantPortalLoginPage() {
                     autoComplete="current-password"
                     showLabel={t("auth.showPassword")}
                     hideLabel={t("auth.hidePassword")}
-                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -155,7 +154,7 @@ export function TenantPortalLoginPage() {
           <p className="text-right text-sm">
             <Link
               to={tenantPortalPath(subdomain, "forgot-password")}
-              className="inline-flex min-h-11 items-center font-medium text-primary underline"
+              className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline"
             >
               {t("tenantPortal.login.forgotPassword")}
             </Link>
@@ -172,7 +171,7 @@ export function TenantPortalLoginPage() {
 
           <FormPrimaryButton
             type="submit"
-            className="h-11 w-full"
+            className="w-full"
             isValid={isLoginValid}
             loading={submitting}
             loadingLabel={t("tenantPortal.login.submitting")}
@@ -186,7 +185,7 @@ export function TenantPortalLoginPage() {
         {t("tenantPortal.login.noAccount")}{" "}
         <Link
           to={tenantPortalPath(subdomain, "register")}
-          className="inline-flex min-h-11 items-center font-medium text-primary underline"
+          className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline"
         >
           {t("tenantPortal.login.registerLink")}
         </Link>

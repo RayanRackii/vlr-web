@@ -347,6 +347,8 @@
     },
     "login": {
       "title": "Entrar",
+      "welcomeDefault": "Bem-vindo de volta! Entre para fazer reservas e acompanhar suas novidades.",
+      "emailPlaceholder": "voce@email.com",
       "subtitle": "Use o e-mail e a senha da sua conta nesta empresa.",
       "submit": "Entrar",
       "submitting": "Entrando...",

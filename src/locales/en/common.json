@@ -347,6 +347,8 @@
     },
     "login": {
       "title": "Sign in",
+      "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
+      "emailPlaceholder": "you@email.com",
       "subtitle": "Use your email and password for this company.",
       "submit": "Sign in",
       "submitting": "Signing in...",
