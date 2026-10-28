@@ -37,4 +37,24 @@ describe("RentalResourceDetails", () => {
 
     expect(screen.getByText(i18n.t("rentals.resources.details.capacityUnknown"))).toBeInTheDocument()
   })
+
+  it.each([
+    ["Hour", "a partir de · por hora"],
+    ["Slot", "a partir de · por horário"],
+    ["Day", "a partir de · por dia"],
+    ["Fixed", "a partir de · fixo"],
+  ] as const)("presents the %s price with its unit and real metadata in a resource row", (pricingUnit, caption) => {
+    render(<RentalResourceDetails asset={{ ...asset, allowedDurationMinutes: "60,90", capacityPeople: 8 }} pricePerHour={45} pricingUnit={pricingUnit} compact />)
+    expect(screen.getByText("R$ 45,00")).toBeInTheDocument()
+    expect(screen.getByText(caption)).toBeInTheDocument()
+    expect(screen.getByText("Durações: 1 h, 90 min")).toBeInTheDocument()
+    expect(screen.getByText("Capacidade: 8 pessoas")).toBeInTheDocument()
+  })
+
+  it("uses neutral labels for a resource without price or capacity", () => {
+    render(<RentalResourceDetails asset={asset} pricePerHour={null} compact showUnpriced />)
+    expect(screen.getByText("sem preço")).toBeInTheDocument()
+    expect(screen.getByText("Capacidade não informada")).toBeInTheDocument()
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument()
+  })
 })
