@@ -392,6 +392,10 @@
       "registerLink": "Regístrese",
       "forgotPassword": "Olvidé mi contraseña"
     },
+    "notFound": {
+      "description": "No encontramos la página que buscas.",
+      "book": "Reservar horario"
+    },
     "passwordReset": {
       "requestTitle": "Olvidé mi contraseña",
       "requestSubtitle": "Indique el correo de su cuenta. Si existe, enviaremos un código para restablecer la contraseña.",
@@ -415,8 +419,9 @@
       "resendToast": "Si existe una cuenta con este correo, enviamos un nuevo código.",
       "backToLogin": "Volver al inicio de sesión",
       "rateLimited": "Demasiados intentos. Inténtelo de nuevo en un momento.",
-      "invalidLink": "Enlace inválido o vencido. Solicita un nuevo código.",
-      "requestNewLink": "Solicitar nuevo código"
+      "invalidLinkTitle": "Enlace inválido o vencido",
+      "invalidLink": "Este enlace ya no se puede usar para restablecer tu contraseña.",
+      "requestNewLink": "Solicitar un nuevo enlace"
     },
     "register": {
       "title": "Crear cuenta",

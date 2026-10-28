@@ -93,6 +93,15 @@
 .portal-empty-icon svg { width: 40px; height: 40px; }
 .portal-empty h2 { font-size: 20px; font-weight: 650; }
 .portal-empty p { max-width: 420px; color: var(--muted-foreground); font-size: 14px; }
+.portal-recovery { width: 100%; min-width: 0; margin-inline: auto; padding: clamp(28px, 4vw, 48px) clamp(16px, 3vw, 24px); box-shadow: var(--portal-shadow); }
+.portal-recovery .portal-booking-header { margin: 6px 0 0; }
+.portal-recovery h1 { overflow-wrap: anywhere; }
+.portal-recovery-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; margin-top: 12px; }
+.portal-recovery-button { min-height: 48px; height: auto; max-width: 100%; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 650; white-space: normal; }
+.portal-recovery-button:first-child { box-shadow: 0 8px 20px -10px var(--primary); }
+@media (max-width: 639px) {
+  .portal-recovery-actions > .portal-recovery-button { width: 100%; }
+}
 .portal-summary { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px 20px; margin-top: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); }
 .portal-sheet { --portal-spring: cubic-bezier(.34, 1.56, .64, 1); --portal-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 8px 24px -14px rgb(0 0 0 / .18); }
 .portal-sheet .portal-summary { margin-top: 0; }

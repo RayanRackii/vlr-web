@@ -283,7 +283,7 @@ export function TenantPortalLayout() {
         portalBasePath={portalBasePath}
       />
       <main className="relative flex min-h-screen w-full items-center justify-center p-6 pt-24">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-3xl space-y-6">
           <div className="space-y-4 text-center">
             <TenantLogoMark
               logoSvg={branding.logoSvg}
@@ -292,29 +292,18 @@ export function TenantPortalLayout() {
               size="lg"
             />
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <p className="text-2xl font-semibold tracking-tight text-foreground">
                 {branding.displayName}
-              </h1>
+              </p>
               <p className="text-sm text-muted-foreground">
                 {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
               </p>
             </div>
           </div>
 
-          <div
-            className="rounded-xl border p-6 shadow-sm"
-            style={{
-              backgroundColor: tokens.surface,
-              borderColor: tokens.border,
-              borderTopColor: tokens.accent,
-              borderTopWidth: 3,
-              color: tokens.text,
-            }}
-          >
-            <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
-              <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
-            </TenantTimeZoneProvider>
-          </div>
+          <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
+            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+          </TenantTimeZoneProvider>
         </div>
       </main>
     </div>

@@ -392,6 +392,10 @@
       "registerLink": "Register",
       "forgotPassword": "Forgot password"
     },
+    "notFound": {
+      "description": "We couldn’t find the page you’re looking for.",
+      "book": "Book a time"
+    },
     "passwordReset": {
       "requestTitle": "Forgot password",
       "requestSubtitle": "Enter your account email. If it exists, we will send a code to reset the password.",
@@ -415,8 +419,9 @@
       "resendToast": "If an account exists for this email, we sent a new code.",
       "backToLogin": "Back to sign in",
       "rateLimited": "Too many attempts. Try again shortly.",
-      "invalidLink": "Invalid or expired link. Request a new code.",
-      "requestNewLink": "Request a new code"
+      "invalidLinkTitle": "Invalid or expired link",
+      "invalidLink": "This link can no longer be used to reset your password.",
+      "requestNewLink": "Request a new link"
     },
     "register": {
       "title": "Create account",
