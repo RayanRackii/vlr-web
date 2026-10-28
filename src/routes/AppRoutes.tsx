@@ -64,7 +64,7 @@ function RedirectTenantStaffRoute() {
     : "/dashboard"
   return (
     <Navigate
-      to={`${rootPath}${withCompanyParam(location.search, subdomain)}`}
+      to={`${rootPath}${withCompanyParam(location.search, subdomain)}${location.hash}`}
       replace
     />
   )

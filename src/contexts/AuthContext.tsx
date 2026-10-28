@@ -17,6 +17,7 @@ type AuthContextValue = {
   session: Session | null
   user: User | null
   isLoading: boolean
+  expiredSession: { tenantId: string | null } | null
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -30,9 +31,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const [expiredSession, setExpiredSession] = useState<AuthContextValue["expiredSession"]>(null)
+
   useEffect(() => {
     let isMounted = true
     let signedOut = false
+    let lastSession: Session | null = null
 
     function logStaffEvent(
       event: "SIGNED_IN" | "TOKEN_REFRESHED" | "SIGNED_OUT" | "GET_SESSION",
@@ -69,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       syncCurrentUserCacheToAuthUser(session.user ?? null)
+      lastSession = session
       setSession(session)
       setUser(session.user ?? null)
       setIsLoading(false)
@@ -92,6 +97,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (event === "SIGNED_OUT") {
+        if (lastSession && !isSigningOut()) {
+          const tenantId: unknown = lastSession.user.app_metadata?.tenant_id
+          setExpiredSession({ tenantId: typeof tenantId === "string" ? tenantId : null })
+        }
+        lastSession = null
         signedOut = true
         syncCurrentUserCacheToAuthUser(null)
         setSession(null)
@@ -113,6 +123,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       syncCurrentUserCacheToAuthUser(nextSession.user ?? null)
+      lastSession = nextSession
+      setExpiredSession(null)
       setSession(nextSession)
       setUser(nextSession.user ?? null)
       setIsLoading(false)
@@ -129,13 +141,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       session,
       user,
       isLoading,
+      expiredSession,
     }),
-    [isLoading, session, user],
+    [isLoading, session, user, expiredSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// Auth providers and their consumer hook intentionally share this module.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)
 

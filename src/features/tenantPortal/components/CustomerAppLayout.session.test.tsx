@@ -354,8 +354,7 @@ describe("CustomerAppLayout session tenant", () => {
     })
   })
 
-  it("lists book, my reservations, and profile in the mobile menu", async () => {
-    const user = userEvent.setup()
+  it("renders the portal sidebar and mobile bottom navigation without a hamburger", async () => {
     const menuItemId = "11111111-1111-4111-8111-111111111111"
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
@@ -380,8 +379,11 @@ describe("CustomerAppLayout session tenant", () => {
 
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
 
-    const openMenu = screen.getByRole("button", { name: i18n.t("nav.openMenu") })
-    expect(openMenu).toHaveClass(...headerTouchTargetClassName.split(" "))
+    expect(screen.queryByRole("button", { name: i18n.t("nav.openMenu") })).not.toBeInTheDocument()
+    const navigation = screen.getByRole("navigation", { name: i18n.t("nav.menu") })
+    expect(navigation).toHaveClass("portal-nav")
+    expect(navigation.closest('[data-shell-part="sidebar"]')).toBeInTheDocument()
+    expect(navigation.closest('[data-shell-variant="portal"]')).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("theme.toggle") }),
     ).toHaveClass(...headerTouchTargetClassName.split(" "))
@@ -394,9 +396,7 @@ describe("CustomerAppLayout session tenant", () => {
     expect(language).toHaveTextContent("PT")
     expect(language.querySelector("span")).not.toHaveClass("hidden")
 
-    await user.click(openMenu)
-
-    const dialog = await screen.findByRole("dialog")
+    const dialog = navigation
     const book = within(dialog).getByRole("link", {
       name: i18n.t("admin.moduleMenu.suggestedLabelRentals"),
     })

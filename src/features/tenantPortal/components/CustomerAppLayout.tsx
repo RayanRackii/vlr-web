@@ -188,6 +188,7 @@ export function CustomerAppLayout() {
   return (
     <div className="portal-shell min-h-screen bg-background text-foreground" style={themeStyle}>
       <AppShell
+        variant="portal"
         sidebar={({ onNavigate }) => (
           <CustomerSidebar
             brandLabel={branding.displayName}

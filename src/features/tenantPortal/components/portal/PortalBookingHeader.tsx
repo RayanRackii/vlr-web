@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next"
 import { getCustomerLabel } from "@/features/tenantPortal/services/tenantPortalService"
 
+import { customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
+
 type Props = { tenantName?: string; title?: string }
 
 export function PortalBookingHeader({ tenantName, title }: Props) {
   const { t } = useTranslation()
-  const name = getCustomerLabel()?.split(" ")[0]
+  const name = customerDisplayName(getCustomerLabel()).split(/\s+/)[0]
   return (
     <header className="portal-booking-header">
       <p className="portal-eyebrow">{name ? t("tenantPortal.redesign.greetingName", { name }) : t("tenantPortal.redesign.greeting")}</p>

@@ -28,7 +28,7 @@ import { PortalBookingEmptyState, PortalRightRail } from "./portal/PortalRightRa
 import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
 import "./portal/portal.css"
 
-type Props = { themeStyle?: CSSProperties; tenantName?: string; nextReservation?: PortalReservation; reservationsHref?: string; subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; onBooked?: () => void }
+type Props = { themeStyle?: CSSProperties; tenantName?: string; nextReservation?: PortalReservation; reservationsHref?: string; subdomain: string; locale: string; onUnavailable: () => void; scopedAssets?: readonly PortalRentalAsset[]; scoped?: boolean; initialDate?: string; horizonMaxDate?: string | null; onBooked?: () => void }
 type Period = "all" | "morning" | "afternoon" | "night"
 type SelectedWindow = { rentalAssetId: string; assetId: string; unitId: string; startTime: string; endTime: string; slotId: string | null; quantity: number; amount: number }
 const periodMatches = (start: string, period: Period) => { const hour = Number(start.slice(0, 2)); return period === "all" || (period === "morning" && hour < 12) || (period === "afternoon" && hour >= 12 && hour < 18) || (period === "night" && hour >= 18) }
@@ -36,7 +36,7 @@ const quoteIsCurrent = (expiresAt: string | undefined) => Boolean(expiresAt && D
 const EMPTY_ASSETS: readonly PortalRentalAsset[] = []
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < 768
 
-export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, onBooked, themeStyle, tenantName, nextReservation, reservationsHref = "#minhas-reservas" }: Props) {
+export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedAssets = EMPTY_ASSETS, scoped = false, initialDate, horizonMaxDate, onBooked, themeStyle, tenantName, nextReservation, reservationsHref = "#minhas-reservas" }: Props) {
   const { t } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const [list, setList] = useState<Awaited<ReturnType<typeof fetchPublicBookingMaps>> | null>(null)
@@ -81,6 +81,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const visualById = useMemo(() => new Map((map?.visualRevisions ?? []).map((revision) => [revision.id, revision])), [map])
   const placedIds = useMemo(() => new Set(mapItems.map((item) => item.rentalAssetId)), [mapItems])
   const listResourceIds = useMemo(() => [...new Set([...placedIds, ...scopedIds])], [placedIds, scopedIds])
+  const displayedResourceIds = (view === "Map" ? mapItems.map((item) => item.rentalAssetId) : listResourceIds).filter((id) => resourceById.has(id))
   useEffect(() => { if (!selectedWindowAssetId || !selectedWindowStartTime || !selectedWindowEndTime || selectedResourceType !== "Good") { setRequoteLoading(false); return }; let cancelled = false; setRequoteLoading(true); void checkPortalAvailability(subdomain, { assetId: selectedWindowAssetId, date, startTime: selectedWindowStartTime.slice(0, 5), endTime: bookingEndClock(selectedWindowEndTime), quantity }).then((result) => { if (!cancelled) setSelectedWindow((current) => current ? { ...current, quantity, amount: result.isAvailable ? (result.estimatedTotalAmount ?? -1) : -1 } : null) }).catch(() => { if (!cancelled) setSelectedWindow(null) }).finally(() => { if (!cancelled) setRequoteLoading(false) }); return () => { cancelled = true } }, [date, quantity, selectedResourceType, selectedWindowAssetId, selectedWindowEndTime, selectedWindowStartTime, subdomain])
   useEffect(() => { const expiresAt = availability?.quoteExpiresAt; if (!expiresAt) return; const delay = Math.max(0, Date.parse(expiresAt) - Date.now()); const timer = window.setTimeout(() => setNow(Date.now()), delay); return () => window.clearTimeout(timer) }, [availability?.quoteExpiresAt])
   useBookingIdleTimeout({ selectionKey: selectedWindow ? `${date}:${selectedWindow.rentalAssetId}:${selectedWindow.startTime}` : null, paused: submitting, onExpire: () => { setSelectedWindow(null); setSelectedId(null) } })
@@ -112,7 +113,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
     <div className="portal-booking-grid">
       <section className="portal-booking-column">
       <PortalBookingHeader tenantName={tenantName} />
-      <DateStrip value={date} today={tenantTodayIsoDate(timeZoneId)} locale={locale} disabled={availabilityLoading} onChange={setDate} />
+      <DateStrip value={date} today={tenantTodayIsoDate(timeZoneId)} locale={locale} max={horizonMaxDate} disabled={availabilityLoading} onChange={setDate} />
       <div className="portal-tools">
         <SegmentedControl label={t("bookingMap.periods")} value={period} onChange={setPeriod}
           options={(["all", "morning", "afternoon", "night"] as const).map((value) => ({ value, label: t(`bookingMap.${value}`), count: availabilityLoading ? undefined : periodFreeCounts[value] }))} />
@@ -122,7 +123,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
             { value: "List", label: t("bookingMap.list"), icon: <List className="size-4" strokeWidth={1.75} aria-hidden="true" /> },
           ]} />
       </div>
-      {!availabilityLoading && availability && periodFreeCounts[period] === 0 ? <PortalBookingEmptyState /> : null}
+      {!availabilityLoading && availability && displayedResourceIds.length === 0 ? <PortalBookingEmptyState /> : null}
       {availabilityLoading ? <p className="mb-3 text-sm text-muted-foreground" role="status">{t("bookingMap.loading")}</p> : null}
       {!availabilityLoading && !availability ? <p className="mb-3 text-sm text-muted-foreground" role="status">{t("tenantPortal.agenda.slotsError")}</p> : null}
 
@@ -146,7 +147,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
           onSelect={(id) => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }} />
       </div> : null}
       <ul className={view === "Map" ? "portal-resource-grid" : "portal-list"} aria-busy={availabilityLoading}>
-        {(view === "Map" ? mapItems.map((item) => item.rentalAssetId) : listResourceIds).map((id) => {
+        {displayedResourceIds.map((id) => {
           const resource = resourceById.get(id)
           const item = boardItems.find((entry) => entry.rentalAssetId === id)
           if (!resource) return null
