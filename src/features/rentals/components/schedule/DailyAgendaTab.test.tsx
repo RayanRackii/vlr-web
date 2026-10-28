@@ -376,6 +376,68 @@ describe("DayResourceGrid compact slots", () => {
   })
 })
 
+describe("DayResourceGrid tablet reflow", () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it.each([393, 767, 1024, 1440])("keeps a single grid outside tablet widths at %ipx", (width) => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({
+      matches: width >= 768 && width <= 1023,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })))
+    const assets = Array.from({ length: 4 }, (_, index) => ({
+      ...agendaAsset(), id: `resource-${index}`, name: `Sala ${index + 1}`,
+    }))
+    render(<DayResourceGrid assets={assets} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+    expect(screen.getAllByRole("grid")).toHaveLength(1)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(5)
+  })
+
+  it("restores the desktop grid when the viewport leaves the tablet range", () => {
+    const listeners = new Set<() => void>()
+    const media = {
+      matches: true,
+      addEventListener: (_event: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_event: string, listener: () => void) => listeners.delete(listener),
+    }
+    vi.stubGlobal("matchMedia", vi.fn(() => media))
+    const assets = Array.from({ length: 3 }, (_, index) => ({
+      ...agendaAsset(), id: `resource-${index}`, name: `Sala ${index + 1}`,
+    }))
+    const { unmount } = render(<DayResourceGrid assets={assets} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+    expect(screen.getAllByRole("grid")).toHaveLength(2)
+    act(() => {
+      media.matches = false
+      listeners.forEach((listener) => listener())
+    })
+    expect(screen.getAllByRole("grid")).toHaveLength(1)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(4)
+    unmount()
+    expect(listeners.size).toBe(0)
+  })
+
+  it.each([768, 820, 1023])("wraps four resources into pairs at %ipx and preserves cell actions", async (width) => {
+    const user = userEvent.setup()
+    const onCellClick = vi.fn()
+    vi.stubGlobal("matchMedia", vi.fn((query: string) => ({
+      matches: query === "(min-width: 768px) and (max-width: 1023px)" && width >= 768 && width <= 1023,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })))
+    const assets = Array.from({ length: 4 }, (_, index) => ({
+      ...agendaAsset(), id: `resource-${index}`, name: `Sala ${index + 1}`,
+    }))
+    render(<DayResourceGrid assets={assets} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={onCellClick} />)
+
+    const grids = screen.getAllByRole("grid")
+    expect(grids).toHaveLength(2)
+    expect(within(grids[0]).getAllByRole("columnheader")).toHaveLength(3)
+    expect(within(grids[1]).getAllByRole("columnheader")).toHaveLength(3)
+    await user.click(screen.getByRole("button", { name: "Sala 4, 08:00–09:00" }))
+    expect(onCellClick).toHaveBeenCalledWith(expect.objectContaining({ rentalAssetId: "resource-3", startTime: "08:00", endTime: "09:00" }))
+  })
+})
+
 describe("DayResourceGrid mobile containment", () => {
   it("keeps fixed-width resource columns inside its horizontal scroller", () => {
     render(
