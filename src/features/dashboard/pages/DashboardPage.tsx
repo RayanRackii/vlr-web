@@ -12,9 +12,12 @@ import {
   YAxis,
 } from "recharts"
 import { useTranslation } from "react-i18next"
+import { BarChart3, Boxes, Layers } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Card,
   CardContent,
@@ -59,7 +62,7 @@ function formatMoney(amount: number): string {
 
 function KpiSkeleton() {
   return (
-    <Card className="min-h-[7.5rem]">
+    <Card className="min-h-[7.5rem] min-w-0">
       <CardHeader className="pb-2">
         <Skeleton className="h-4 w-28" />
       </CardHeader>
@@ -88,17 +91,17 @@ function KpiCard({
 
   return (
     <Card
-      className={
+      className={cn("min-w-0",
         highlight
           ? "border-[color-mix(in_oklch,var(--warning)_35%,transparent)] bg-[color-mix(in_oklch,var(--warning)_6%,var(--card))]"
           : undefined
-      }
+      )}
     >
       <CardHeader>
         <CardTitle className={highlightText}>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className={cn("text-3xl font-semibold tracking-tight", highlightText)}>
+        <p className={cn("text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl", highlightText)}>
           {value}
         </p>
         <CardDescription className="mt-1">{subtitle}</CardDescription>
@@ -131,6 +134,7 @@ export function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isRoleLoading, setIsRoleLoading] = useState(true)
   const [roleError, setRoleError] = useState<string | null>(null)
+  const [roleAttempt, setRoleAttempt] = useState(0)
 
   useEffect(() => {
     if (isPlatformAdmin && !isInTenantEnvironment) {
@@ -170,7 +174,7 @@ export function DashboardPage() {
     return () => {
       isActive = false
     }
-  }, [isPlatformAdmin, isInTenantEnvironment, t])
+  }, [isPlatformAdmin, isInTenantEnvironment, t, roleAttempt])
 
   if (isPlatformAdmin && !isInTenantEnvironment) {
     return <SuperAdminDashboard />
@@ -182,9 +186,9 @@ export function DashboardPage() {
 
   if (isRoleLoading) {
     return (
-      <div className="space-y-6">
+      <div aria-busy="true" className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-8 w-64 max-w-full" />
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -202,6 +206,9 @@ export function DashboardPage() {
       <Alert variant="destructive">
         <AlertDescription>
           {roleError ?? t("dashboard.role.errors.loadFailed")}
+          <Button variant="outline" className="mt-3 min-h-11" onClick={() => setRoleAttempt((attempt) => attempt + 1)}>
+            {t("common.retry")}
+          </Button>
         </AlertDescription>
       </Alert>
     )
@@ -229,6 +236,7 @@ export function TenantAdminDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadAttempt, setLoadAttempt] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -280,7 +288,7 @@ export function TenantAdminDashboard() {
     return () => {
       cancelled = true
     }
-  }, [userId, t])
+  }, [userId, t, loadAttempt])
 
   const workOrderChartData = useMemo(() => {
     if (!metrics?.workOrders) {
@@ -339,7 +347,7 @@ export function TenantAdminDashboard() {
       metrics.rentals !== null)
 
   return (
-    <div className="space-y-8">
+    <div aria-busy={isLoading} className="mx-auto w-full min-w-0 max-w-7xl space-y-6 [overflow-wrap:anywhere] sm:space-y-8 [&_[data-slot=card]]:min-w-0">
       <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
 
       <RentalsReadinessCard />
@@ -356,14 +364,14 @@ export function TenantAdminDashboard() {
           description={t("dashboard.sections.customers.description")}
         />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {isLoading || !metrics ? (
+          {isLoading ? (
             <>
               <KpiSkeleton />
               <KpiSkeleton />
               <KpiSkeleton />
               <KpiSkeleton />
             </>
-          ) : (
+          ) : metrics ? (
             <>
               <KpiCard
                 title={t("dashboard.kpi.loggedInToday.title")}
@@ -386,14 +394,23 @@ export function TenantAdminDashboard() {
                 subtitle={t("dashboard.kpi.totalCustomers.subtitle")}
               />
             </>
+          ) : (
+            <Card className="sm:col-span-2 xl:col-span-4">
+              <CardContent>
+                <EmptyState
+                  size="sm"
+                  icon={BarChart3}
+                  title={t("dashboard.unavailable")}
+                  action={<Button variant="outline" className="min-h-11" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t("common.retry")}</Button>}
+                />
+              </CardContent>
+            </Card>
           )}
         </div>
       </section>
 
       {!isLoading && metrics && !hasModuleSections ? (
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.emptyModules")}
-        </p>
+        <EmptyState size="sm" icon={Layers} title={t("dashboard.emptyModules")} description={t("dashboard.emptyDescription")} />
       ) : null}
 
       {!isLoading && metrics?.assets ? (
@@ -436,11 +453,9 @@ export function TenantAdminDashboard() {
                   {t("dashboard.charts.assets.description")}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-72">
+              <CardContent className="h-64 min-w-0 sm:h-72">
                 {assetChartData.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                    {t("dashboard.charts.assets.empty")}
-                  </div>
+                  <EmptyState size="sm" className="h-full" icon={Boxes} title={t("dashboard.charts.assets.empty")} description={t("dashboard.emptyDescription")} />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -490,9 +505,7 @@ export function TenantAdminDashboard() {
               </CardHeader>
               <CardContent>
                 {metrics.assets.byFamily.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("dashboard.charts.families.empty")}
-                  </p>
+                  <EmptyState size="sm" icon={Layers} title={t("dashboard.charts.families.empty")} description={t("dashboard.emptyDescription")} />
                 ) : (
                   <ul className="divide-y divide-border">
                     {metrics.assets.byFamily.map((family) => (
@@ -500,8 +513,8 @@ export function TenantAdminDashboard() {
                         key={family.key}
                         className="flex items-center justify-between gap-3 py-2 text-sm"
                       >
-                        <span>{family.label}</span>
-                        <span className="font-medium tabular-nums">
+                        <span className="min-w-0">{family.label}</span>
+                        <span className="shrink-0 font-medium tabular-nums">
                           {family.count}
                         </span>
                       </li>
@@ -607,7 +620,10 @@ export function TenantAdminDashboard() {
                 {t("dashboard.charts.workOrders.description")}
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-72">
+            <CardContent className="h-64 min-w-0 sm:h-72">
+              {workOrderChartData.every((entry) => entry.value === 0) ? (
+                <EmptyState size="sm" className="h-full" icon={BarChart3} title={t("dashboard.workOrdersEmpty")} description={t("dashboard.emptyDescription")} />
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={workOrderChartData}
@@ -619,7 +635,7 @@ export function TenantAdminDashboard() {
                   />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 11 }}
                     className="fill-muted-foreground"
                   />
                   <YAxis
@@ -646,6 +662,7 @@ export function TenantAdminDashboard() {
                   />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </section>

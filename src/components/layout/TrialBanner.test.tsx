@@ -25,7 +25,7 @@ describe("TrialBanner shared profile", () => {
   it("renders from PermissionProvider profile without fetching /me", () => {
     render(
       <TestPermissionProvider currentUser={trialUser}>
-        <TrialBanner />
+        <TrialBanner informational />
       </TestPermissionProvider>,
     )
 
@@ -35,12 +35,38 @@ describe("TrialBanner shared profile", () => {
   it("hides when the shared profile is not on trial", () => {
     render(
       <TestPermissionProvider
-        currentUser={{ ...trialUser, isTrial: false }}
+        currentUser={{ ...trialUser, isTrial: false, isTrialReadOnly: true }}
       >
-        <TrialBanner />
+        <TrialBanner informational />
       </TestPermissionProvider>,
     )
 
     expect(screen.queryByText(/Período de teste/i)).not.toBeInTheDocument()
+  })
+
+  it("presents dashboard read-only access as a polite informational notice", () => {
+    render(
+      <TestPermissionProvider currentUser={{
+        ...trialUser,
+        isTrialReadOnly: true,
+        trialPurgeAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      }}>
+        <TrialBanner informational />
+      </TestPermissionProvider>,
+    )
+
+    expect(screen.getByRole("status")).toHaveTextContent("Você pode consultar seus dados")
+    expect(screen.getByRole("status")).toHaveTextContent("7")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("keeps the existing read-only notice outside the staff dashboard", () => {
+    render(
+      <TestPermissionProvider currentUser={{ ...trialUser, isTrialReadOnly: true }}>
+        <TrialBanner />
+      </TestPermissionProvider>,
+    )
+    expect(screen.getByText(/Teste encerrado — conta somente leitura/)).toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
   })
 })

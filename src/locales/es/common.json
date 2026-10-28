@@ -1996,6 +1996,15 @@
     }
   },
   "dashboard": {
+    "limitedTitle": "Información disponible para tu perfil",
+    "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
+    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",
+    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en este entorno.",
+    "unavailable": "Los indicadores no están disponibles en este momento.",
+    "workOrdersEmpty": "No hay órdenes de servicio para mostrar en este período.",
+    "viewOrders": "Ver órdenes de servicio",
+    "clientEmptyHint": "Las nuevas actividades vinculadas a tu perfil aparecerán aquí.",
+    "ordersEmptyHint": "Puedes consultar la lista de órdenes de servicio para seguir otras actividades.",
     "title": "Centro de Comando",
     "description": "Indicadores según los módulos y familias activos en este entorno.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
