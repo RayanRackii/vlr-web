@@ -194,7 +194,7 @@
     }
   },
   "auth": {
-    "sessionExpired": "Session expired. Sign in again.",
+    "sessionExpired": "Your session expired. Sign in again to continue.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "brandPanel": {
@@ -280,6 +280,7 @@
       "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp)."
     },
     "resetPassword": {
+      "success": "Password updated successfully.",
       "title": "New password",
       "subtitle": "Set a new password to access the platform.",
       "loading": "Validating link…",

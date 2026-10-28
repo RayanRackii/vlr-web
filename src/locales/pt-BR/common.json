@@ -194,7 +194,7 @@
     }
   },
   "auth": {
-    "sessionExpired": "Sessão expirada. Entre novamente.",
+    "sessionExpired": "Sua sessão expirou. Entre novamente para continuar.",
     "showPassword": "Mostrar senha",
     "hidePassword": "Ocultar senha",
     "brandPanel": {
@@ -280,6 +280,7 @@
       "resetCompanyFormat": "Use apenas letras minúsculas, números e hífens (ex.: acme ou rolvix-sp)."
     },
     "resetPassword": {
+      "success": "Senha atualizada com sucesso.",
       "title": "Nova senha",
       "subtitle": "Defina uma nova senha para acessar a plataforma.",
       "loading": "Validando link…",

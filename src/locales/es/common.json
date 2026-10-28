@@ -194,7 +194,7 @@
     }
   },
   "auth": {
-    "sessionExpired": "La sesión expiró. Inicia sesión de nuevo.",
+    "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo para continuar.",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "brandPanel": {
@@ -280,6 +280,7 @@
       "resetCompanyFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o rolvix-sp)."
     },
     "resetPassword": {
+      "success": "Contraseña actualizada correctamente.",
       "title": "Nueva contraseña",
       "subtitle": "Defina una nueva contraseña para acceder a la plataforma.",
       "loading": "Validando enlace…",

@@ -4,7 +4,6 @@ import {
 } from "@supabase/supabase-js"
 import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { z } from "zod"
-import { toast } from "sonner"
 
 import {
   logAuthSessionEvent,
@@ -49,6 +48,7 @@ type StaffRefreshResult =
   | { kind: "failed"; error: unknown }
 
 type StaffSessionSnapshot = {
+  tenantId: string | null
   userId: string
   refreshToken: string
   accessToken: string
@@ -373,7 +373,8 @@ async function readStaffSession(): Promise<StaffSessionSnapshot | null> {
     if (typeof accessToken !== "string" || accessToken.length === 0) {
       return null
     }
-    return { userId, refreshToken, accessToken }
+    const tenantId: unknown = session?.user?.app_metadata?.tenant_id
+    return { userId, refreshToken, accessToken, tenantId: typeof tenantId === "string" ? tenantId : null }
   } catch {
     return null
   }
@@ -450,18 +451,16 @@ function refreshStaffSession(
   return promise
 }
 
-function redirectExpiredStaffSession(): void {
+function redirectExpiredStaffSession(tenantId: string | null): void {
   if (staffSessionExpiryHandled || typeof window === "undefined") {
     return
   }
 
   staffSessionExpiryHandled = true
-  void import("@/lib/i18n").then(({ default: i18n }) => {
-    toast.error(i18n.t("auth.sessionExpired"))
-  })
   const currentPath = `${window.location.pathname}${window.location.search}`
   const nextPath = safeStaffNextPath(currentPath)
-  assignBrowserLocation(nextPath ? staffLoginPath(nextPath) : "/login")
+  const params = { reason: "session-expired", tenant: tenantId, company: new URLSearchParams(window.location.search).get("company") }
+  assignBrowserLocation(staffLoginPath(nextPath ?? "/dashboard", params))
 }
 
 function customerLoginPath(): string {
@@ -633,7 +632,7 @@ async function settleStaff401(
       } catch {
         // Keep rejecting the original 401 if local sign-out fails.
       }
-      redirectExpiredStaffSession()
+      redirectExpiredStaffSession(latest.tenantId)
     }
     return Promise.reject(error)
   }

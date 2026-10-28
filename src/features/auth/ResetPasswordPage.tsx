@@ -1,9 +1,10 @@
+import { toast } from "sonner"
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
 import { Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -42,6 +43,14 @@ type GateState = "loading" | "ready" | "invalid"
 export function ResetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [isSaved, setIsSaved] = useState(false)
+  useEffect(() => {
+    if (!isSaved) return
+    const timer = setTimeout(() => {
+      void navigate("/dashboard", { replace: true })
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [isSaved, navigate])
   const [gate, setGate] = useState<GateState>("loading")
   const schema = useMemo(() => createResetPasswordSchema(t), [t])
 
@@ -54,7 +63,7 @@ export function ResetPasswordPage() {
     mode: "onTouched",
   })
 
-  const watchedValues = form.watch()
+  const watchedValues = useWatch({ control: form.control })
   const isResetValid = schema.safeParse(watchedValues).success
   const isSubmitting = form.formState.isSubmitting
 
@@ -136,7 +145,8 @@ export function ResetPasswordPage() {
 
     // Staff and customer sessions are exclusive: a staff sign-in ends any leftover customer one.
     clearCustomerSession()
-    void navigate("/dashboard", { replace: true })
+    setIsSaved(true)
+    toast.success(t("auth.resetPassword.success"))
   }
 
   if (gate === "loading") {
@@ -238,7 +248,7 @@ export function ResetPasswordPage() {
           <FormPrimaryButton
             type="submit"
             className="h-11 w-full"
-            isValid={isResetValid}
+            isValid={isResetValid && !isSaved}
             loading={isSubmitting}
             loadingLabel={t("auth.resetPassword.submitting")}
           >

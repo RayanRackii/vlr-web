@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ClipboardCheck, Clock3, Play, Wrench } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -16,44 +16,50 @@ import {
 } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 
 export function TechnicianDashboard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canReadWorkOrders = can("os.work_orders.read")
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const loadWorkOrders = useCallback(async () => {
-    setIsLoading(true)
-    setLoadError(null)
-
-    try {
-      setWorkOrders(await getWorkOrders())
-    } catch (error: unknown) {
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : t("dashboard.technician.errors.loadFailed"),
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }, [t])
-
   useEffect(() => {
+    if (!canReadWorkOrders) return
+    let active = true
+
+    async function loadWorkOrders() {
+      try {
+        const orders = await getWorkOrders()
+        if (active) {
+          setWorkOrders(orders)
+          setLoadError(null)
+        }
+      } catch (error: unknown) {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : t("dashboard.technician.errors.loadFailed"))
+        }
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+
     void loadWorkOrders()
-  }, [loadWorkOrders])
+    return () => { active = false }
+  }, [t, canReadWorkOrders])
 
   const activeOrders = useMemo(
     () =>
-      workOrders.filter(
+      (canReadWorkOrders ? workOrders : []).filter(
         (workOrder) =>
           workOrder.status === "Pending" || workOrder.status === "InProgress",
       ),
-    [workOrders],
+    [workOrders, canReadWorkOrders],
   )
 
   const pendingCount = activeOrders.filter(
@@ -70,7 +76,7 @@ export function TechnicianDashboard() {
         description={t("dashboard.technician.description")}
       />
 
-      {loadError ? (
+      {canReadWorkOrders && loadError ? (
         <Alert variant="destructive">
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
@@ -81,19 +87,19 @@ export function TechnicianDashboard() {
           icon={Wrench}
           title={t("dashboard.technician.metrics.assigned")}
           value={activeOrders.length}
-          isLoading={isLoading}
+          isLoading={canReadWorkOrders && isLoading}
         />
         <MetricCard
           icon={Clock3}
           title={t("dashboard.technician.metrics.pending")}
           value={pendingCount}
-          isLoading={isLoading}
+          isLoading={canReadWorkOrders && isLoading}
         />
         <MetricCard
           icon={ClipboardCheck}
           title={t("dashboard.technician.metrics.inProgress")}
           value={inProgressCount}
-          isLoading={isLoading}
+          isLoading={canReadWorkOrders && isLoading}
         />
       </div>
 
@@ -105,7 +111,7 @@ export function TechnicianDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {canReadWorkOrders && isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />

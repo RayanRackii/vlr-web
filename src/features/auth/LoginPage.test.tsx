@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
@@ -25,12 +25,18 @@ vi.mock("@/features/users/services/staffTenantsService", async (orig) => ({
   }),
 }))
 
+function ReturnProbe() {
+  const location = useLocation()
+  return <div>{`${location.pathname}${location.search}`}</div>
+}
+
 function renderLogin(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<div>dashboard</div>} />
+        <Route path="/pmoc/novo" element={<ReturnProbe />} />
         <Route path="/os" element={<div>orders</div>} />
       </Routes>
     </MemoryRouter>,
@@ -52,6 +58,18 @@ describe("LoginPage next redirect", () => {
     await user.type(screen.getByLabelText("Senha"), "password1")
     await user.click(screen.getByRole("button", { name: "Entrar" }))
   }
+
+  it("shows expiry notice and returns to the same PMOC page and company", async () => {
+    renderLogin("/login?reason=session-expired&next=%2Fpmoc%2Fnovo%3Fcompany%3Dficc&company=ficc")
+    expect(screen.getByRole("alert")).toHaveTextContent("Sua sessão expirou. Entre novamente para continuar.")
+    await submitValidCredentials()
+    expect(await screen.findByText("/pmoc/novo?company=ficc")).toBeInTheDocument()
+  })
+
+  it("does not show an expiry notice on ordinary login", () => {
+    renderLogin("/login")
+    expect(screen.queryByText("Sua sessão expirou. Entre novamente para continuar.")).not.toBeInTheDocument()
+  })
 
   it("returns to a safe staff next path after login", async () => {
     resetStaffSessionRefreshForTests()

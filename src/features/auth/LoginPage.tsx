@@ -180,8 +180,10 @@ export function LoginPage() {
   // Accounts in more than one tenant choose where to land instead of
   // opening whichever tenant the token happens to carry.
   async function openTenantStep() {
+    let tokenTenantId: string | null = null
     try {
       const list = await listMyStaffTenants()
+      tokenTenantId = list.accessTokenTenantId
       if (list.memberships.length > 1) {
         const current = list.memberships.some(
           (membership) => membership.tenantId === list.accessTokenTenantId,
@@ -204,7 +206,7 @@ export function LoginPage() {
       }
     }
 
-    goAfterLogin()
+    goAfterLogin(tokenTenantId)
   }
 
   async function onRetryMemberships() {
@@ -222,15 +224,17 @@ export function LoginPage() {
     form.reset({ email: "", password: "" })
   }
 
-  function goAfterLogin() {
-    void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
+  function goAfterLogin(tenantId: string | null) {
+    const returnTenant = searchParams.get("tenant")
+    const sameTenant = !returnTenant || returnTenant === tenantId
+    void navigate((sameTenant ? safeStaffNextPath(searchParams.get("next")) : null) ?? "/dashboard")
   }
 
   async function onPickTenant(tenantId: string) {
     try {
       await selectMyStaffTenant(tenantId)
       await refreshAuthSession()
-      goAfterLogin()
+      goAfterLogin(tenantId)
     } catch {
       toast.error(t("auth.invite.pickerError"))
     }
@@ -330,6 +334,11 @@ export function LoginPage() {
           : t("auth.login.subtitle")
       }
     >
+      {searchParams.get("reason") === "session-expired" ? (
+        <p role="alert" className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:text-destructive-foreground">
+          {t("auth.sessionExpired")}
+        </p>
+      ) : null}
       {resetEmail ? (
         <Form {...companyForm}>
           <form

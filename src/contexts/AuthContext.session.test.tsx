@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react"
 import { AuthApiError, type AuthChangeEvent, type Session } from "@supabase/supabase-js"
 import { AxiosError, type AxiosResponse } from "axios"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
@@ -29,7 +29,7 @@ function staffSession(expiresAt: number): Session {
       aud: "authenticated",
       email: STAFF_EMAIL,
       phone: "+5511977776666",
-      app_metadata: {},
+      app_metadata: { tenant_id: "tenant-alpha" },
       user_metadata: {},
       created_at: "2026-10-15T00:00:00Z",
     },
@@ -44,13 +44,18 @@ function UserProbe() {
   return <div>user:{user?.id ?? "none"}</div>
 }
 
+function LoginProbe() {
+  const location = useLocation()
+  return <div>staff-login{location.search}</div>
+}
+
 function renderStaffApp() {
   return render(
     <MemoryRouter initialEntries={["/dashboard"]}>
       <AuthProvider>
         <UserProbe />
         <Routes>
-          <Route path="/login" element={<div>staff-login</div>} />
+          <Route path="/login" element={<LoginProbe />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<div>staff-dashboard</div>} />
           </Route>
@@ -92,7 +97,7 @@ describe("AuthContext session events", () => {
     renderStaffApp()
 
     expect(await screen.findByText("user:none")).toBeInTheDocument()
-    expect(await screen.findByText("staff-login")).toBeInTheDocument()
+    expect(await screen.findByText(/^staff-login/)).toBeInTheDocument()
     expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
@@ -138,9 +143,10 @@ describe("AuthContext session events", () => {
       listener?.("SIGNED_OUT", null)
     })
 
-    expect(await screen.findByText("staff-login")).toBeInTheDocument()
+    expect(await screen.findByText(/^staff-login/)).toBeInTheDocument()
     expect(screen.getByText("user:none")).toBeInTheDocument()
     expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
+    expect(screen.getByText(/^staff-login/)).toHaveTextContent("reason=session-expired&tenant=tenant-alpha")
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
 
@@ -186,7 +192,7 @@ describe("AuthContext session events", () => {
     act(() => {
       listener?.("SIGNED_OUT", null)
     })
-    expect(await screen.findByText("staff-login")).toBeInTheDocument()
+    expect(await screen.findByText(/^staff-login/)).toBeInTheDocument()
 
     await act(async () => {
       resolveSession({
@@ -198,7 +204,7 @@ describe("AuthContext session events", () => {
     await waitFor(() => {
       expect(screen.getByText("user:none")).toBeInTheDocument()
     })
-    expect(screen.getByText("staff-login")).toBeInTheDocument()
+    expect(screen.getByText(/^staff-login/)).toBeInTheDocument()
     expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
   })
 
@@ -269,7 +275,7 @@ describe("AuthContext session events", () => {
       })
 
       expect(await screen.findByText("user:none")).toBeInTheDocument()
-      expect(screen.getByText("staff-login")).toBeInTheDocument()
+      expect(screen.getByText(/^staff-login/)).toBeInTheDocument()
       expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
       expect(events).toEqual(["SIGNED_OUT"])
       expect(signOutOptions).toEqual({ scope: "local" })
