@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { customerNavHref } from "@/features/catalog/customerNav"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
-import { getEmailInitials } from "@/components/layout/navigation"
+import { getEmailInitials } from "@/lib/emailInitials"
 import { cn } from "@/lib/utils"
 
 export type CustomerNavItem = {

@@ -49,6 +49,7 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 - [x] Sem novas chamadas de API nem alteração dos handlers de reserva, contratos ou rotas. Disponibilidade de outros dias não é inventada: faixa sem barras enquanto esses dados não existem.
 - [ ] Validação visual em navegador nos tamanhos 1440×900, 2560×1440, 820×1180 e 393×852, incluindo vazio/escuro/cor alternativa. Sandbox desta sessão bloqueia Vite/Chromium (`EPERM`); renders do mockup inspecionados.
 - Verificação automatizada: typecheck e build aprovados; suíte completa do portal com 52 arquivos e 662 testes aprovados (Node 22, `--configLoader runner --no-cache` para preservar `node_modules`). ESLint dos arquivos alterados: 13 erros e 2 avisos já existentes na cópia anterior, sem novos apontamentos.
+- [x] Fix CI do PR #383: `getEmailInitials` extraído sem mudança de comportamento para um util sem dependências; sidebar e shell B2C deixam de importar a navegação staff, quebrando o ciclo que impedia carregar os testes de rotas admin. Node 22: 83 arquivos/869 testes de rotas admin, navegação staff, portal e catálogo aprovados; `npx tsc -b` aprovado; ESLint dos arquivos tocados idêntico à baseline (2 erros preexistentes). Sem mudança na API.
 - Próximo web: conferir visualmente este PR 1 em DEV e seguir para as demais telas do redesign. Próximo API: executar testes de arquitetura/contratos em ambiente com sockets e validar pendências locais do roadmap canônico; este PR não requer alteração de API.
 
 ## 2.5. Dashboard B2B dinâmico — FEITO (código)
