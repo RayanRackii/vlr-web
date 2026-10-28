@@ -3316,6 +3316,13 @@
       "previous": "Previous page",
       "next": "Next page"
     },
+    "mobileActions": {
+      "hint": "Tap a row to see actions.",
+      "editRole": "Name and permissions",
+      "editField": "Label, type and required status",
+      "editSystemRole": "System role: fixed name",
+      "deleteRole": "Only if it is not assigned to anyone"
+    },
     "roles": {
       "description": "System functions and custom access profiles for this environment.",
       "create": "New function",
