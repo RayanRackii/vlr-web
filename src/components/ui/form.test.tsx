@@ -12,7 +12,7 @@ import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
 const schema = z.object({ name: z.string().min(1, "Enter a name") })
 
-function ExampleForm({ live = true, description = false, message = true }: { live?: boolean; description?: boolean; message?: boolean }) {
+function ExampleForm({ live = true, description = false, message = true, helper }: { live?: boolean; description?: boolean; message?: boolean; helper?: string }) {
   const form = useForm({ resolver: zodResolver(schema), mode: "onSubmit", defaultValues: { name: "" } })
   const values = useWatch({ control: form.control })
   const validation = schema.safeParse(values)
@@ -27,7 +27,7 @@ function ExampleForm({ live = true, description = false, message = true }: { liv
             <FormControl><Input {...field} /></FormControl>
             {description && <FormDescription>Use your full name</FormDescription>}
             {live && <LiveFieldMessage message={issues?.issues[0]?.message} />}
-            {message && <FormMessage />}
+            {message && <FormMessage>{helper}</FormMessage>}
           </FormItem>
         )} />
         <button type="submit">Save</button>
@@ -37,6 +37,15 @@ function ExampleForm({ live = true, description = false, message = true }: { liv
 }
 
 describe("form error descriptions", () => {
+  it("describes static helper text without marking a pristine field invalid", () => {
+    render(<ExampleForm description helper="Enter your preferred name" />)
+    const input = screen.getByRole("textbox", { name: "Name" })
+    expect(screen.getByText("Use your full name")).toBeVisible()
+    expect(screen.getByText("Enter your preferred name")).toBeVisible()
+    expect(input).toHaveAccessibleDescription("Use your full name Enter your preferred name")
+    expect(input).toHaveAttribute("aria-invalid", "false")
+  })
+
   it("describes the visible blur error before submit, keeps one message after submit, and clears its id when corrected", async () => {
     const user = userEvent.setup()
     render(<ExampleForm />)

@@ -281,6 +281,7 @@
     },
     "resetPassword": {
       "success": "Contraseña actualizada correctamente.",
+      "redirecting": "Contraseña actualizada, redirigiendo…",
       "title": "Nueva contraseña",
       "subtitle": "Defina una nueva contraseña para acceder a la plataforma.",
       "loading": "Validando enlace…",
@@ -596,6 +597,8 @@
     "profile": {
       "title": "Mi perfil",
       "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
+      "eyebrow": "Cuenta",
+      "accountHint": "Para cambiar estos datos, hable con el equipo de {{tenant}}.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -611,6 +614,7 @@
       "hideSensitive": "Ocultar {{label}}",
       "address": "Dirección",
       "sections": {
+        "personal": "Datos personales",
         "account": "Datos de la cuenta"
       },
       "validation": {
@@ -619,6 +623,9 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Carrito y ayuda",
+      "resultCount_one": "{{count}} resultado",
+      "resultCount_other": "{{count}} resultados",
       "itemCount_one": "{{count}} artículo",
       "itemCount_other": "{{count}} artículos",
       "searchLabel": "Buscar productos",

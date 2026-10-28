@@ -281,6 +281,7 @@
     },
     "resetPassword": {
       "success": "Password updated successfully.",
+      "redirecting": "Password updated, redirecting…",
       "title": "New password",
       "subtitle": "Set a new password to access the platform.",
       "loading": "Validating link…",
@@ -596,6 +597,8 @@
     "profile": {
       "title": "My Profile",
       "subtitle": "Update your name and photo. Email, phone, account type and document cannot be changed here.",
+      "eyebrow": "Account",
+      "accountHint": "To change these details, contact the {{tenant}} team.",
       "save": "Save",
       "saving": "Saving...",
       "saved": "Profile updated.",
@@ -611,6 +614,7 @@
       "hideSensitive": "Hide {{label}}",
       "address": "Address",
       "sections": {
+        "personal": "Personal details",
         "account": "Account details"
       },
       "validation": {
@@ -619,6 +623,9 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Cart and help",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results",
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items",
       "searchLabel": "Search products",

@@ -572,6 +572,7 @@ export function RentalResourceSheet({
                         }}
                       />
                     </FormControl>
+                    <LiveFieldMessage message={issueMessageAt(visibleErrors, ["totalQuantity"])} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -653,6 +654,7 @@ export function RentalResourceSheet({
                         <FormControl>
                           <Input type="time" disabled={readOnly} {...field} />
                         </FormControl>
+                        <LiveFieldMessage message={issueMessageAt(visibleErrors, ["queueOpeningTime"])} />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -736,6 +738,7 @@ export function RentalResourceSheet({
                     <FormDescription>
                       {t("rentals.resources.validation.horizonRange")}
                     </FormDescription>
+                    <LiveFieldMessage message={issueMessageAt(visibleErrors, ["horizonDays"])} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -814,6 +817,7 @@ export function RentalResourceSheet({
                     <FormDescription>
                       {t("rentals.resources.validation.cancelCutoffRange")}
                     </FormDescription>
+                    <LiveFieldMessage message={issueMessageAt(visibleErrors, ["cancelCutoffHours"])} />
                     <FormMessage />
                   </FormItem>
                 )}
