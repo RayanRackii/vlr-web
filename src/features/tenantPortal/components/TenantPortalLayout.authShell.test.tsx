@@ -190,4 +190,43 @@ describe("tenant portal auth split shell", () => {
       screen.queryByText(i18n.t("tenantPortal.authPanel.poweredBy")),
     ).not.toBeInTheDocument()
   })
+
+  it.each([
+    ["", "tenantPortal.login.title"],
+    ["register", "tenantPortal.register.title"],
+    ["forgot-password", "tenantPortal.passwordReset.requestTitle"],
+    ["forgot-password/confirm", "tenantPortal.passwordReset.confirmTitle"],
+    ["verify-email", "tenantPortal.verify.title"],
+  ])("keeps the form inside the card and the brand as the single h1 on /%s", async (path, titleKey) => {
+    renderPortal(`/t/acme/${path}`)
+    const formHeading = await screen.findByRole("heading", { name: i18n.t(titleKey) })
+    // The form stays inside the branded auth card.
+    expect(formHeading.closest(".tenant-auth-form")).not.toBeNull()
+    // The form title is subordinate to the brand, which is the page's only h1.
+    expect(formHeading.tagName).toBe("H2")
+    const level1 = screen.getAllByRole("heading", { level: 1 })
+    expect(level1).toHaveLength(1)
+    expect(level1[0]).toHaveTextContent("Acme Club")
+  })
+
+  it("keeps the stale reset link inside the card with the recovery title as the single h1", async () => {
+    renderPortal("/t/acme/reset-password")
+    const alert = await screen.findByRole("alert")
+    // Recovery copy stays inside the shared auth card.
+    expect(alert.closest(".tenant-auth-form")).not.toBeNull()
+    const level1 = screen.getAllByRole("heading", { level: 1 })
+    expect(level1).toHaveLength(1)
+    expect(level1[0]).toHaveTextContent(i18n.t("tenantPortal.passwordReset.invalidLinkTitle"))
+    // The brand name is still shown, but no longer competes as a second h1.
+    expect(screen.getAllByText("Acme Club").length).toBeGreaterThan(0)
+  })
+
+  it("renders the recovery title as the single h1 on the branded 404", async () => {
+    renderPortal("/t/acme/missing-route")
+    await screen.findByRole("link", { name: i18n.t("landing.header.brandAria") })
+    const level1 = screen.getAllByRole("heading", { level: 1 })
+    expect(level1).toHaveLength(1)
+    expect(level1[0]).toHaveTextContent(i18n.t("notFound.title"))
+    expect(screen.getAllByText("Acme Club").length).toBeGreaterThan(0)
+  })
 })

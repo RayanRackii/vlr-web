@@ -54,7 +54,7 @@
   font-size: 36px;
 }
 
-.tenant-auth h1 {
+.tenant-auth .tenant-brand-name {
   max-width: 14ch;
   margin: 0 auto 12px;
   font-size: 28px;
@@ -172,7 +172,7 @@
     padding: clamp(19px, 2.24vw, 35px);
     font-size: clamp(44px, 4vw, 72px);
   }
-  .tenant-auth h1 { font-size: clamp(30px, 3.2vw, 52px); }
+  .tenant-auth .tenant-brand-name { font-size: clamp(30px, 3.2vw, 52px); }
   .tenant-welcome { font-size: clamp(16px, 1.25vw, 20px); }
   .tenant-brand-footer {
     display: block;
