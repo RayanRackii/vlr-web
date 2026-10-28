@@ -8,6 +8,15 @@ const css = readFileSync("src/features/users/people-access.css", "utf8")
 // delete button is replaced by the bottom action sheet, which carries the
 // delete action instead; at desktop widths the per-row button stays visible.
 describe("people-access.css", () => {
+  it("wraps mobile pills while leaving desktop underline tabs unchanged", () => {
+    const breakpoint = css.indexOf("@media (max-width: 700px)")
+    const mobile = css.slice(breakpoint)
+    expect(mobile).toMatch(/\.people-tabs\s*\{[^}]*flex-wrap:\s*wrap/)
+    expect(mobile).toMatch(/\.people-tabs\s*\{[^}]*gap:\s*6px/)
+    expect(mobile).toMatch(/\.people-tabs\s*\{[^}]*overflow-x:\s*visible/)
+    expect(css.slice(0, breakpoint)).not.toMatch(/\.people-tabs\s*\{[^}]*flex-wrap:\s*wrap/)
+  })
+
   it("replaces the per-row delete with the action sheet below 1024px", () => {
     const mobile = css.slice(css.indexOf("@media (max-width: 1023px)"))
     expect(mobile).toMatch(/\.people-delete-action\s*\{[^}]*display:\s*none/)

@@ -82,6 +82,8 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
     renderRoute(path, [permission])
     expect(screen.getByText(content)).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tablist")).toHaveClass("overflow-x-auto", "overflow-y-hidden", "px-0", "justify-start")
+    expect(screen.getAllByRole("tab")[0]).toHaveClass("first:pl-0")
     expect(screen.queryByRole("tab", { name: i18n.t(hidden) })).not.toBeInTheDocument()
     expect(screen.queryByText("route not found")).not.toBeInTheDocument()
   })

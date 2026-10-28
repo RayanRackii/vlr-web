@@ -19,8 +19,8 @@
 .reservations-timezone { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--muted-foreground); font-size: 12.5px; }
 .reservations-timezone svg { flex-shrink: 0; }
 .reservations-screen [data-slot="tabs"] { gap: 0; }
-.reservations-screen [data-slot="tabs"] > [data-slot="tabs-list"] { width: 100%; height: auto; justify-content: flex-start; gap: 4px; padding: 0; margin: 20px 0 18px; border-bottom: 1px solid var(--border); border-radius: 0; }
-.reservations-screen [role="tab"] { flex: none; min-height: 44px; padding: 10px 14px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-weight: 600; }
+.reservations-screen [data-slot="tabs"][data-orientation="horizontal"] > [data-slot="tabs-list"] { width: 100%; height: auto; justify-content: flex-start; gap: 4px; padding: 0; margin: 20px 0 18px; border-bottom: 1px solid var(--border); border-radius: 0; }
+.reservations-screen [role="tab"] { flex: none; min-height: 44px; padding: 10px 14px; margin-bottom: 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-weight: 600; }
 .reservations-screen [role="tab"]::after { display: none; }
 .reservations-screen [role="tab"][aria-selected="true"] { border-bottom-color: var(--brand-primary); color: var(--brand-primary); }
 .dark .reservations-screen [role="tab"][aria-selected="true"] { color: var(--foreground); border-bottom-color: color-mix(in srgb, var(--brand-primary) 60%, white); }

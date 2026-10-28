@@ -24,17 +24,32 @@ const professorPermissions = [
   "rentals.schedule.lessons.write",
 ]
 
-function renderSidebar(permissions: readonly string[], modules = ["rentals"], path = "/") {
+function renderSidebar(permissions: readonly string[], modules = ["rentals"], path = "/", props: { collapsed?: boolean; touchTargets?: boolean } = {}) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <TestPermissionProvider permissions={permissions} activeModules={modules}>
-        <Sidebar />
+        <Sidebar {...props} />
       </TestPermissionProvider>
     </MemoryRouter>,
   )
 }
 
 describe("Sidebar access by role permissions", () => {
+  it.each([
+    { collapsed: false },
+    { collapsed: true },
+    { touchTargets: true },
+  ])("separates consecutive navigation groups in mode %j", (props) => {
+    renderSidebar(["core.dashboard.read", "rentals.reservations.read", "core.users.read"], ["rentals"], "/", props)
+    const nav = screen.getByRole("navigation")
+    const groups = Array.from(nav.children).filter((child) => !child.matches('[data-slot="separator"]'))
+    const separators = nav.querySelectorAll('[data-slot="separator"]')
+    expect(groups.length).toBeGreaterThan(1)
+    expect(separators).toHaveLength(groups.length - 1)
+    expect(nav.firstElementChild).toBe(groups[0])
+    separators.forEach((separator) => expect(separator).toHaveClass("bg-[var(--sidebar-border)]"))
+  })
+
   it("does not show Recursos to a professor", () => {
     renderSidebar(professorPermissions)
 

@@ -1,4 +1,4 @@
-import { useId, useState } from "react"
+import { Fragment, useId, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ChevronDown, ChevronRight, Info, PanelLeftClose, PanelLeftOpen } from "lucide-react"
@@ -399,16 +399,18 @@ export function Sidebar({
         )}
         aria-busy={isLoading}
       >
-        {navigationSections.map((section) => (
-          <NavigationSection
-            key={section.titleKey}
-            section={section}
-            match={match}
-            activeIntroKey={activeIntro?.key}
-            onNavigate={onNavigate}
-            collapsed={collapsed}
-            touchTargets={touchTargets}
-          />
+        {navigationSections.map((section, index) => (
+          <Fragment key={section.titleKey}>
+            {index > 0 && <Separator className="-my-2.5 bg-[var(--sidebar-border)]" />}
+            <NavigationSection
+              section={section}
+              match={match}
+              activeIntroKey={activeIntro?.key}
+              onNavigate={onNavigate}
+              collapsed={collapsed}
+              touchTargets={touchTargets}
+            />
+          </Fragment>
         ))}
         {isLoading ? (
           <SidebarNavigationSkeleton

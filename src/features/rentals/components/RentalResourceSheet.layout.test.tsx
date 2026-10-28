@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react"
+import { readFileSync } from "node:fs"
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -62,6 +63,10 @@ describe("RentalResourceSheet tabs layout", () => {
 
     const tabList = document.querySelector('[data-slot="tabs-list"]')
     expect(tabList?.className).toContain("overflow-x-auto")
+    const css = readFileSync("src/features/rentals/components/rentalResources.css", "utf8")
+    expect(css).toMatch(/\.rental-resource-sheet \.resource-editor-tab-list\s*\{[^}]*overflow-y:\s*hidden/)
+    expect(css).toMatch(/\.rental-resource-sheet \.resource-editor-tab-list\s*\{[^}]*scrollbar-width:\s*none/)
+    expect(css).toMatch(/\.resource-editor-tab-list::-webkit-scrollbar\s*\{[^}]*display:\s*none/)
 
     for (const trigger of screen.getAllByRole("tab")) {
       expect(trigger.className).toContain("whitespace-nowrap")

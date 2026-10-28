@@ -50,5 +50,8 @@ describe("Tabs styling hooks", () => {
     expect(css).toMatch(/\.group\\\/tabs\[data-orientation="horizontal"\] \.group-data-horizontal\\\/tabs\\:h-8/)
     // active tab underline in the line variant
     expect(css).toMatch(/\[data-active\]::after ?\{ ?content: var\(--tw-content\); ?opacity: 1/)
+    // Keep the underline inside horizontally scrollable lists.
+    expect(css).toMatch(/::after ?\{ ?content: var\(--tw-content\); ?bottom: 0px/)
+    expect(css).not.toContain("bottom: -5px")
   })
 })
