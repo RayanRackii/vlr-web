@@ -967,6 +967,7 @@
       "inAppAlwaysOn": "En la app siempre activo",
       "toggleChannel": "Activar {{channel}} para {{event}}",
       "toastSaved": "Canal actualizado.",
+      "moduleTabs": "Módulos de notificaciones",
       "modules": {
         "catalog": "Catálogo y pedidos",
         "rentals": "Alquileres"
