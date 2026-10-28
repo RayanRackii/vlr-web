@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import i18n from "@/lib/i18n"
 import {
   StaffTenantError,
   listMyStaffTenants,
@@ -66,6 +67,15 @@ describe("LoginPage tenant selector", () => {
     } as never)
     vi.mocked(listMyStaffTenants).mockReset()
     vi.mocked(selectMyStaffTenant).mockReset()
+  })
+
+  it("announces loading while the tenant list is pending", async () => {
+    vi.mocked(listMyStaffTenants).mockReturnValue(new Promise(() => {}))
+    renderLogin()
+    await submit()
+
+    expect(screen.getByRole("status")).toHaveTextContent(i18n.t("auth.invite.pickerLoading"))
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
   })
 
   it("asks multi-tenant accounts which tenant to open", async () => {

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { InputWithIcon } from "@/components/ui/input-icon"
 import { PasswordInput } from "@/components/ui/password-input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { iconProps } from "@/lib/icon"
 import {
   loginSchema,
@@ -79,6 +80,7 @@ export function LoginPage() {
     initialTenantId: string
   } | null>(null)
   const [membershipError, setMembershipError] = useState(false)
+  const [loadingMemberships, setLoadingMemberships] = useState(false)
   const [retryingMemberships, setRetryingMemberships] = useState(false)
   const companyParam = searchParams.get("company")?.trim().toLowerCase() || null
   const resolvedSubdomain =
@@ -180,6 +182,7 @@ export function LoginPage() {
   // Accounts in more than one tenant choose where to land instead of
   // opening whichever tenant the token happens to carry.
   async function openTenantStep() {
+    setLoadingMemberships(true)
     let tokenTenantId: string | null
     try {
       const list = await listMyStaffTenants()
@@ -204,6 +207,8 @@ export function LoginPage() {
       }
       setMembershipError(true)
       return
+    } finally {
+      setLoadingMemberships(false)
     }
 
     goAfterLogin(tokenTenantId)
@@ -272,13 +277,28 @@ export function LoginPage() {
     await sendReset(resetEmail, values.subdomain)
   }
 
+  if (loadingMemberships) {
+    return (
+      <AuthLayout title={t("auth.invite.pickerTitle")}>
+        <div className="space-y-4">
+          <p role="status" className="text-sm text-muted-foreground">{t("auth.invite.pickerLoading")}</p>
+          <div aria-hidden="true" className="space-y-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        </div>
+      </AuthLayout>
+    )
+  }
+
   if (membershipError) {
     return (
       <AuthLayout
         title={t("auth.invite.pickerTitle")}
         subtitle={t("auth.invite.membershipError")}
       >
-        <p className="text-sm text-muted-foreground">
+        <p role="alert" className="mb-4 text-sm text-muted-foreground">
           {t("auth.invite.membershipErrorHint")}
         </p>
         <div className="flex flex-col gap-2">

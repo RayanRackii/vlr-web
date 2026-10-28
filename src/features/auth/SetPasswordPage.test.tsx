@@ -217,9 +217,14 @@ describe("SetPasswordPage", () => {
       "short",
     )
     await user.tab()
-    expect(
-      await screen.findByText(i18n.t("auth.invite.validation.passwordMin")),
-    ).toBeInTheDocument()
+    const passwordError = await screen.findByText(i18n.t("auth.invite.validation.passwordMin"))
+    const passwordField = screen.getByLabelText(i18n.t("auth.invite.passwordLabel"))
+    expect(passwordError).toBeInTheDocument()
+    expect(passwordField).toHaveAttribute("aria-invalid", "true")
+    expect(passwordField.getAttribute("aria-describedby")?.split(" ")).toContain(passwordError.id)
+    expect(passwordField).toHaveAccessibleDescription(
+      `${i18n.t("auth.invite.passwordHint")} ${i18n.t("auth.invite.validation.passwordMin")}`,
+    )
     expect(submitButton()).toBeDisabled()
 
     await user.clear(screen.getByLabelText(i18n.t("auth.invite.passwordLabel")))
@@ -232,9 +237,10 @@ describe("SetPasswordPage", () => {
       "password2",
     )
     await user.tab()
-    expect(
-      await screen.findByText(i18n.t("auth.invite.validation.mismatch")),
-    ).toBeInTheDocument()
+    const confirmError = await screen.findByText(i18n.t("auth.invite.validation.mismatch"))
+    const confirmField = screen.getByLabelText(i18n.t("auth.invite.confirmPasswordLabel"))
+    expect(confirmField).toHaveAttribute("aria-invalid", "true")
+    expect(confirmField.getAttribute("aria-describedby")?.split(" ")).toContain(confirmError.id)
     expect(submitButton()).toBeDisabled()
     expect(acceptNew).not.toHaveBeenCalled()
 
@@ -409,6 +415,11 @@ describe("SetPasswordPage", () => {
     expect(
       screen.getByLabelText(i18n.t("auth.invite.existingPasswordLabel")),
     ).toHaveValue("wrong-password")
+    const passwordField = screen.getByLabelText(i18n.t("auth.invite.existingPasswordLabel"))
+    const error = screen.getByRole("alert")
+    expect(passwordField.getAttribute("aria-describedby")?.split(" ")).toContain(error.id)
+    expect(passwordField).toHaveAttribute("aria-invalid", "true")
+    expect(passwordField).toHaveAccessibleDescription(i18n.t("auth.login.invalidCredentials"))
   })
 
   it("switches a 409 existing-account response to sign-in and does not send the new password again", async () => {
@@ -630,10 +641,13 @@ describe("SetPasswordPage", () => {
   it("treats a failed preview as an invalid link", async () => {
     preview.mockRejectedValue(new InviteAcceptError("INVALID_INVITE", 404))
     renderInvite("invite-token")
+    const status = screen.getByRole("status")
+    expect(status).toHaveTextContent(i18n.t("auth.invite.checking"))
 
     expect(
       await screen.findByRole("link", { name: i18n.t("auth.invite.goToLogin") }),
     ).toBeEnabled()
+    expect(screen.getByText(i18n.t("auth.invite.invalidLink"))).toBe(status)
     expect(
       screen.queryByLabelText(i18n.t("auth.invite.passwordLabel")),
     ).not.toBeInTheDocument()

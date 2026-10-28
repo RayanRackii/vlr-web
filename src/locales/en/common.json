@@ -235,6 +235,12 @@
         "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
         "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
       },
+      "pickerSearch": "Search environments by name or subdomain",
+      "pickerEmpty": "No environments available.",
+      "pickerNoResults": "No environments found. Try another name or subdomain.",
+      "pickerLoading": "Loading your environments...",
+      "passwordHint": "Use at least 8 characters.",
+      "confirmPasswordHint": "Repeat your new password to confirm.",
       "pickerTitle": "Choose an environment",
       "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
       "pickerSubmit": "Continue",
@@ -3105,6 +3111,9 @@
     "description": "You do not have permission to view this page."
   },
   "notFound": {
+    "staffDescription": "We could not find this page. Use the link below to continue.",
+    "dashboard": "Back to dashboard",
+    "login": "Go to login",
     "title": "Page not found",
     "description": "This address does not exist in this workspace.",
     "home": "Go to the home"
