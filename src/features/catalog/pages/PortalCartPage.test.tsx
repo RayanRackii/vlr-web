@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -200,7 +200,7 @@ describe("PortalCartPage validity gate", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("button", {
-          name: i18n.t("tenantPortal.catalog.submitting"),
+          name: i18n.t("tenantPortal.catalog.submitOrder"),
         }),
       ).toBeDisabled()
     })
@@ -223,6 +223,37 @@ describe("PortalCartPage validity gate", () => {
     ).toHaveValue(2)
     expect(screen.getByRole("link", { name: i18n.t("common.back") })).toBeEnabled()
     expect(createOrderMock).toHaveBeenCalledTimes(1)
+    const panel = screen.getByRole("alert")
+    expect(within(panel).getByText("Pedido recusado.")).toBeInTheDocument()
+    expect(within(panel).getByRole("heading", { name: "Não foi possível enviar o pedido" })).toBeInTheDocument()
+    expect(panel).not.toHaveTextContent(/Pedido #|PED-\d/)
+    await user.click(within(panel).getByRole("button", { name: "Tentar novamente" }))
+    await waitFor(() => expect(createOrderMock).toHaveBeenCalledTimes(2))
+    rejectOrder(new Error("Tente mais tarde."))
+    await screen.findByText("Tente mais tarde.")
+    await user.click(screen.getByRole("button", { name: "Dispensar" }))
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(note).toHaveValue("Entregar na portaria")
+  })
+
+  it("navigates with one-shot confirmation state after success without a redundant toast", async () => {
+    seedCart()
+    createOrderMock.mockResolvedValue({
+      id: "new-order", orderNumber: 12, displayNumber: "PED-12", status: "Requested",
+      customerId: CUSTOMER_ID, customerName: "Ana", customerEmail: null, customerPhone: null,
+      customerNote: null, totalAmount: 20, currency: "BRL", rejectedReason: null,
+      cancelledReason: null, createdAt: "2026-10-18T12:00:00Z", items: [], history: [],
+    })
+    const router = createMemoryRouter([
+      { element: <Outlet context={outletContext} />, children: [{ path: "/", element: <PortalCartPage /> }] },
+      { path: "/t/ficc/pedidos/:orderId", element: <div>order detail</div> },
+    ])
+    render(<RouterProvider router={router} />)
+    await userEvent.setup().click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.submitOrder") }))
+    await screen.findByText("order detail")
+    expect(router.state.location.state).toEqual({ justCreated: true })
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(window.sessionStorage.getItem(catalogCartStorageKey(SUBDOMAIN, CUSTOMER_ID))).toBeNull()
   })
 
   it("shows the line subtotal, a partial total, and removes only through the button", async () => {

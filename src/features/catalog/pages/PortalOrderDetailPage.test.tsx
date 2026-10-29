@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { StrictMode } from "react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
+import { createMemoryRouter, Outlet, RouterProvider } from "react-router-dom"
 
 import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
 import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
@@ -81,16 +82,13 @@ function mixedOrder(status: CatalogOrder["status"] = "Requested"): CatalogOrder 
   }
 }
 
-function renderDetail() {
-  return render(
-    <MemoryRouter initialEntries={[`/pedidos/${ORDER_ID}`]}>
-      <Routes>
-        <Route element={<Outlet context={outletContext} />}>
-          <Route path="/pedidos/:orderId" element={<PortalOrderDetailPage />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
-  )
+function renderDetail(state: Record<string, unknown> | null = null) {
+  const router = createMemoryRouter([
+    { element: <Outlet context={outletContext} />, children: [
+      { path: "/pedidos/:orderId", element: <PortalOrderDetailPage /> },
+    ] },
+  ], { initialEntries: [{ pathname: `/pedidos/${ORDER_ID}`, state }] })
+  return { ...render(<StrictMode><RouterProvider router={router} /></StrictMode>), router }
 }
 
 describe("PortalOrderDetailPage", () => {
@@ -99,6 +97,56 @@ describe("PortalOrderDetailPage", () => {
     getOrderMock.mockReset()
     cancelOrderMock.mockReset()
     getOrderMock.mockResolvedValue(mixedOrder())
+  })
+
+  it("shows a success hero once, consumes only its state with replace, and does not replay on remount", async () => {
+    const { router, unmount } = renderDetail({ justCreated: true, keep: "context" })
+    expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+    expect(screen.getByText("Pedido #12")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Continuar comprando" })).toHaveAttribute("href", "/t/clube/catalogo")
+    await waitFor(() => expect(router.state.location.state).toEqual({ keep: "context" }))
+    expect(router.state.historyAction).toBe("REPLACE")
+    await userEvent.setup().click(screen.getByRole("button", { name: "Acompanhar pedido" }))
+    expect(screen.getByRole("region", { name: "Acompanhamento" })).toHaveFocus()
+    unmount()
+    render(<RouterProvider router={router} />)
+    await screen.findByText("PED-12")
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    await act(async () => { await router.navigate("/pedidos/other") })
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["Requested", "Recebido"], ["Approved", "Confirmado"], ["Preparing", "Em preparo"],
+    ["Ready", "Pronto"], ["Completed", "Concluído"],
+  ] as const)("maps %s to the real tracking step without inventing timestamps", async (status, label) => {
+    getOrderMock.mockResolvedValue(mixedOrder(status))
+    renderDetail()
+    const tracking = await screen.findByRole("region", { name: "Acompanhamento" })
+    expect(within(tracking).getAllByRole("listitem")).toHaveLength(5)
+    const step = within(tracking).getByText(label).closest("li")
+    if (status === "Completed") {
+      expect(tracking.querySelector('[aria-current="step"]')).toBeNull()
+      expect(step).toHaveClass("is-done")
+    } else {
+      expect(step).toHaveAttribute("aria-current", "step")
+    }
+    expect(within(tracking).getAllByRole("time")).toHaveLength(1)
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+  })
+
+  it.each(["Cancelled", "Rejected"] as const)("shows %s as a terminal state and preserves the history reason", async (status) => {
+    const order = mixedOrder(status)
+    order.history = [{ id: "history-1", status, actorType: "System", actorId: null,
+      reason: "Item indisponível", createdAt: "2026-10-18T13:00:00Z" }]
+    getOrderMock.mockResolvedValue(order)
+    renderDetail()
+    const tracking = await screen.findByRole("region", { name: "Acompanhamento" })
+    expect(within(tracking).queryByText("Concluído")).not.toBeInTheDocument()
+    expect(within(within(tracking).getByRole("list", { name: "Acompanhamento" })).getAllByRole("listitem")).toHaveLength(2)
+    expect(within(tracking).getByText(status === "Cancelled" ? "Pedido cancelado" : "Pedido recusado").closest("li")).toHaveClass("is-terminal")
+    await userEvent.setup().click(screen.getByText(i18n.t("catalog.orders.timeline")))
+    expect(screen.getByText("Item indisponível")).toBeVisible()
   })
 
   it("shows the known sum plus the on-request note for a mixed order", async () => {

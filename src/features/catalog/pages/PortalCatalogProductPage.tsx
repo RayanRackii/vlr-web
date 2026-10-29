@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { PortalAddToCartButton } from "@/features/catalog/components/PortalAddToCartButton"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   CATALOG_CART_MAX_QUANTITY,
@@ -191,7 +191,7 @@ export function PortalCatalogProductPage() {
                 <Plus aria-hidden />
               </Button>
             </div>
-            <LoadingButton
+            <PortalAddToCartButton
               type="button"
               className="portal-catalog-button portal-catalog-primary min-w-0 flex-1 text-primary-foreground"
               style={{ backgroundColor: primary }}
@@ -201,7 +201,7 @@ export function PortalCatalogProductPage() {
               }}
             >
               {t("tenantPortal.catalog.addToCart")}
-            </LoadingButton>
+            </PortalAddToCartButton>
           </div>
         </div>
       </div>

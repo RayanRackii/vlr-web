@@ -698,6 +698,39 @@
       "submitOrder": "Submit order",
       "submitting": "Submitting...",
       "orderSubmitted": "Order submitted.",
+      "purchase": {
+        "errorTitle": "We couldn’t submit your order",
+        "retry": "Try again",
+        "dismiss": "Dismiss",
+        "successTitle": "Order received",
+        "orderNumber": "Order #{{number}}",
+        "successCopy": "Your order is with us. Follow the next steps here.",
+        "nextTitle": "What happens next",
+        "nextCopy": "The team will review your items and update your order’s progress.",
+        "track": "Track order",
+        "continueShopping": "Continue shopping",
+        "trackingTitle": "Order tracking",
+        "steps": {
+          "Requested": "Received",
+          "Approved": "Confirmed",
+          "Preparing": "Preparing",
+          "Ready": "Ready",
+          "Completed": "Completed"
+        },
+        "terminal": {
+          "Cancelled": "Order canceled",
+          "Rejected": "Order declined"
+        },
+        "stepCopy": {
+          "Requested": "We received your order for review.",
+          "Approved": "Your items have been reviewed and your order confirmed.",
+          "Preparing": "The team is preparing your items.",
+          "Ready": "Your order is ready for the next step.",
+          "Completed": "Order completed. Thank you for choosing us.",
+          "Cancelled": "The order has been closed. See the history for details.",
+          "Rejected": "We couldn’t fulfill this order. See the history for details."
+        }
+      },
       "requestCta": "Request a product",
       "requestTitle": "Request a product",
       "requestSubtitle": "Describe what you need. After you submit, the request is listed in My requests.",
