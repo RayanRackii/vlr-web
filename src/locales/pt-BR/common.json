@@ -699,6 +699,7 @@
       "submitting": "Enviando...",
       "orderSubmitted": "Pedido enviado.",
       "purchase": {
+        "reason": "Motivo: {{reason}}",
         "errorTitle": "Não foi possível enviar o pedido",
         "retry": "Tentar novamente",
         "dismiss": "Dispensar",
@@ -747,6 +748,7 @@
       "cancelling": "Cancelando...",
       "orderCancelled": "Pedido cancelado.",
       "lineSubtotal": "Subtotal",
+      "remove": "Remover",
       "removeItem": "Remover {{name}}",
       "cartTotal": "Total",
       "fromAmount": "A partir de {{amount}}",

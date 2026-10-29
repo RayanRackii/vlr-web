@@ -25,6 +25,14 @@ import {
 } from "@/features/catalog/services/catalogPortalService"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
+function hasOrderSuccess(identity: string): boolean {
+  try {
+    return sessionStorage.getItem(`portal-order-just-created:${identity}`) === "true"
+  } catch {
+    return false
+  }
+}
+
 export function PortalOrderDetailPage() {
   const { t, i18n } = useTranslation()
   const params = useParams()
@@ -38,23 +46,28 @@ export function PortalOrderDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
   const identity = `${subdomain}:${orderId}`
-  const [successIdentity, setSuccessIdentity] = useState<string | null>(() => location.state?.justCreated === true ? identity : null)
+  const [successIdentity, setSuccessIdentity] = useState<string | null>(() => (location.state?.justCreated === true || hasOrderSuccess(identity)) ? identity : null)
   const [seenIdentity, setSeenIdentity] = useState(identity)
   if (seenIdentity !== identity) {
     setSeenIdentity(identity)
     setOrder(null)
     setLoading(true)
     setLoadError(null)
-    setSuccessIdentity(location.state?.justCreated === true ? identity : null)
+    setSuccessIdentity((location.state?.justCreated === true || hasOrderSuccess(identity)) ? identity : null)
   }
   useEffect(() => {
     if (location.state?.justCreated !== true) return
+    try {
+      sessionStorage.setItem(`portal-order-just-created:${identity}`, "true")
+    } catch {
+      // Keep the banner available in memory when browser storage is blocked.
+    }
     const remainingState = { ...location.state } as Record<string, unknown>
     delete remainingState.justCreated
     void navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
       replace: true, state: Object.keys(remainingState).length > 0 ? remainingState : null,
     })
-  }, [location, navigate])
+  }, [identity, location, navigate])
   useEffect(() => {
     let stale = false
     setLoading(true)
@@ -131,8 +144,15 @@ export function PortalOrderDetailPage() {
     <div className="portal-record-detail space-y-4">
       {back}
 
-      {successIdentity === identity ? (
-        <PortalOrderSuccess number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} />
+      {successIdentity === identity && order.status !== "Cancelled" && order.status !== "Rejected" ? (
+        <PortalOrderSuccess number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} onDismiss={() => {
+          try {
+            sessionStorage.removeItem(`portal-order-just-created:${identity}`)
+          } catch {
+            // Dismiss for this mounted page even if browser storage is blocked.
+          }
+          setSuccessIdentity(null)
+        }} />
       ) : null}
 
       <section className="portal-record-panel space-y-5">

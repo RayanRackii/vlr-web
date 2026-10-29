@@ -159,3 +159,19 @@
 @media (max-width: 639px) {
   .portal-canvas .portal-legacy-board { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Keep the full booking summary in flow; only the mobile action is pinned. */
+@media (min-width: 1280px) {
+  .portal-booking-summary { position: static; }
+  .portal-generated-canvas .portal-legacy-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; aspect-ratio: auto; padding: 0; border: 0; background: transparent; }
+  .portal-generated-canvas .portal-legacy-board > [role="button"] { position: relative; inset: auto; width: auto; height: auto; min-height: 44px; }
+}
+
+@media (max-width: 767px) {
+  .portal-shell { --portal-bottom-nav-offset: calc(80px + env(safe-area-inset-bottom)); }
+  .portal-shell .portal-booking-summary { position: static; bottom: auto; }
+  .portal-booking-column { padding-bottom: 96px; }
+  .portal-booking-cta { position: fixed; inset: auto 0 var(--portal-bottom-nav-offset, calc(80px + env(safe-area-inset-bottom))); z-index: 20; display: flex; align-items: center; height: 64px; max-height: 72px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--card); }
+  .portal-booking-cta > button { width: 100%; min-height: 44px; }
+  .portal-booking-column input, .portal-booking-column [data-slot="select-trigger"], .portal-booking-column button { min-width: 44px; min-height: 44px; }
+}

@@ -146,7 +146,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent
             side="bottom"
-            className="max-h-[80vh] gap-0 rounded-t-2xl p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+            className="max-h-[80vh] gap-0 rounded-t-2xl p-3 pt-12 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>{t("notifications.inbox.title")}</SheetTitle>

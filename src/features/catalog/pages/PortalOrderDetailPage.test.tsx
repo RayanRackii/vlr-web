@@ -82,9 +82,9 @@ function mixedOrder(status: CatalogOrder["status"] = "Requested"): CatalogOrder 
   }
 }
 
-function renderDetail(state: Record<string, unknown> | null = null) {
+function renderDetail(state: Record<string, unknown> | null = null, context: CustomerAppOutletContext = outletContext) {
   const router = createMemoryRouter([
-    { element: <Outlet context={outletContext} />, children: [
+    { element: <Outlet context={context} />, children: [
       { path: "/pedidos/:orderId", element: <PortalOrderDetailPage /> },
     ] },
   ], { initialEntries: [{ pathname: `/pedidos/${ORDER_ID}`, state }] })
@@ -93,13 +93,15 @@ function renderDetail(state: Record<string, unknown> | null = null) {
 
 describe("PortalOrderDetailPage", () => {
   beforeEach(() => {
+    sessionStorage.clear()
     vi.mocked(getPortalCatalogPolicy).mockResolvedValue({ canCancelOrders: true, canCancelRequests: false, upToStatus: { orders: "Requested", requests: "Submitted" }, policyText: null })
     getOrderMock.mockReset()
     cancelOrderMock.mockReset()
     getOrderMock.mockResolvedValue(mixedOrder())
   })
 
-  it("shows a success hero once, consumes only its state with replace, and does not replay on remount", async () => {
+  it("persists success across theme remounts, consumes only navigation state, and isolates orders", async () => {
+    getOrderMock.mockResolvedValue(mixedOrder("Preparing"))
     const { router, unmount } = renderDetail({ justCreated: true, keep: "context" })
     expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
     expect(screen.getByText("Pedido #12")).toBeInTheDocument()
@@ -109,9 +111,10 @@ describe("PortalOrderDetailPage", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "Acompanhar pedido" }))
     expect(screen.getByRole("region", { name: "Acompanhamento" })).toHaveFocus()
     unmount()
+    document.documentElement.classList.add("dark")
     render(<RouterProvider router={router} />)
-    await screen.findByText("PED-12")
-    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+    document.documentElement.classList.remove("dark")
     await act(async () => { await router.navigate("/pedidos/other") })
     expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
   })
@@ -140,13 +143,57 @@ describe("PortalOrderDetailPage", () => {
     order.history = [{ id: "history-1", status, actorType: "System", actorId: null,
       reason: "Item indisponível", createdAt: "2026-10-18T13:00:00Z" }]
     getOrderMock.mockResolvedValue(order)
-    renderDetail()
+    renderDetail({ justCreated: true })
     const tracking = await screen.findByRole("region", { name: "Acompanhamento" })
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.catalog.purchase.nextTitle"))).not.toBeInTheDocument()
     expect(within(tracking).queryByText("Concluído")).not.toBeInTheDocument()
     expect(within(within(tracking).getByRole("list", { name: "Acompanhamento" })).getAllByRole("listitem")).toHaveLength(2)
     expect(within(tracking).getByText(status === "Cancelled" ? "Pedido cancelado" : "Pedido recusado").closest("li")).toHaveClass("is-terminal")
     await userEvent.setup().click(screen.getByText(i18n.t("catalog.orders.timeline")))
-    expect(screen.getByText("Item indisponível")).toBeVisible()
+    expect(screen.getByText("Motivo: Item indisponível")).toBeVisible()
+  })
+
+  it("does not replay success for the same order id under another tenant", async () => {
+    const first = renderDetail({ justCreated: true })
+    await screen.findByRole("heading", { name: "Pedido recebido" })
+    first.unmount()
+    const otherTenant = renderDetail(null, { ...outletContext, subdomain: "outro" })
+    await screen.findByText("PED-12")
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    otherTenant.unmount()
+    renderDetail()
+    expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+  })
+
+  it("keeps a dismissed banner hidden after remount", async () => {
+    const { unmount } = renderDetail({ justCreated: true })
+    await screen.findByRole("heading", { name: "Pedido recebido" })
+    await userEvent.setup().click(screen.getByRole("button", { name: "Dispensar" }))
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    unmount()
+    renderDetail()
+    await screen.findByText("PED-12")
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+  })
+
+  it.each(["Cancelled", "Rejected"] as const)("hides stored success when the real status becomes %s", async (status) => {
+    const { unmount } = renderDetail({ justCreated: true })
+    await screen.findByRole("heading", { name: "Pedido recebido" })
+    unmount()
+    getOrderMock.mockResolvedValue(mixedOrder(status))
+    renderDetail()
+    await screen.findByText("PED-12")
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.catalog.purchase.nextTitle"))).not.toBeInTheDocument()
+  })
+
+  it("labels the rejection reason even when history is unavailable", async () => {
+    getOrderMock.mockResolvedValue({ ...mixedOrder("Rejected"), rejectedReason: "Sem estoque" })
+    renderDetail({ justCreated: true })
+    expect(await screen.findByText("Motivo: Sem estoque")).toBeVisible()
+    expect(screen.queryByText(i18n.t("catalog.orders.timeline"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
   })
 
   it("shows the known sum plus the on-request note for a mixed order", async () => {
@@ -193,7 +240,8 @@ describe("PortalOrderDetailPage", () => {
   it("cancels only after confirmation", async () => {
     const user = userEvent.setup()
     cancelOrderMock.mockResolvedValue(mixedOrder("Cancelled"))
-    renderDetail()
+    renderDetail({ justCreated: true })
+    await screen.findByRole("heading", { name: "Pedido recebido" })
 
     await user.click(
       await screen.findByRole("button", {
@@ -210,6 +258,8 @@ describe("PortalOrderDetailPage", () => {
       expect(cancelOrderMock).toHaveBeenCalledWith(ORDER_ID)
     })
     expect(await screen.findByText("Cancelado")).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.catalog.purchase.nextTitle"))).not.toBeInTheDocument()
     expect(
       screen.queryByRole("button", {
         name: i18n.t("tenantPortal.catalog.cancelOrder"),
@@ -244,5 +294,7 @@ describe("PortalOrderDetailPage", () => {
     expect(cancelOrderMock).toHaveBeenCalledTimes(1)
     resolveCancel(mixedOrder("Cancelled"))
     expect(await screen.findByText("Cancelado")).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.catalog.purchase.nextTitle"))).not.toBeInTheDocument()
   })
 })

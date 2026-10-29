@@ -2368,7 +2368,7 @@ export function TenantPortalAgendaPage() {
           {visibleAssets.length === 0 ? (
             <PortalBookingEmptyState />
           ) : (
-            <div className="portal-canvas"><LayoutCanvasBoard
+            <div className={cn("portal-canvas", !hasAuthoredLayout && "portal-generated-canvas")}><LayoutCanvasBoard
               className="portal-legacy-board"
               mode="pick"
               aspectRatio={aspectRatio}
@@ -2700,7 +2700,7 @@ export function TenantPortalAgendaPage() {
           ) : null}
         </div>
 
-        <div className="portal-summary">
+        <div className="portal-summary portal-booking-summary">
           <div className="min-w-0 flex-1">
             {selectedAsset ? <p className="truncate font-semibold" title={selectedAsset.name}>{`${selectedAsset.name} · ${formatLocaleCivilDayMonth(date, moneyLocale)}`}</p> : null}
             {selectedSlot ? <p className="text-xs text-muted-foreground">{formatLocaleCivilDayMonth(date, moneyLocale)} · {formatScheduleTime(selectedSlot.startTime)}–{formatScheduleTime(selectedSlot.endTime)}</p> : null}
@@ -2761,7 +2761,7 @@ export function TenantPortalAgendaPage() {
 
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
-          <div className="shrink-0">
+          <div className="portal-booking-cta shrink-0">
             <LoadingButton
               type="button"
               className="min-h-11 w-full sm:w-auto"
