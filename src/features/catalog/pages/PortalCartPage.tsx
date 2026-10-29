@@ -227,7 +227,7 @@ export function PortalCartPage() {
                   </Button>
                 </div>
                 {product?.price != null ? (
-                  <p className="whitespace-nowrap text-xs text-muted-foreground">
+                  <p className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
                     {t("tenantPortal.catalog.unitPrice", {
                       price:
                         formatCatalogMoney(
@@ -256,7 +256,7 @@ export function PortalCartPage() {
                       <Minus aria-hidden />
                     </Button>
                     <CatalogQuantityField
-                      className="h-11 w-16 px-1 text-center"
+                      className="h-11 w-16 px-1 text-center tabular-nums"
                       quantity={item.quantity}
                       productName={product?.name ?? item.productId}
                       onCommit={(next) => {
@@ -279,7 +279,7 @@ export function PortalCartPage() {
                       <Plus aria-hidden />
                     </Button>
                   </div>
-                  <p className="whitespace-nowrap text-muted-foreground">
+                  <p className="whitespace-nowrap text-muted-foreground tabular-nums">
                     {t("tenantPortal.catalog.lineSubtotal")}:{" "}
                     {formatLineSubtotal(
                       product?.price ?? null,
@@ -320,7 +320,7 @@ export function PortalCartPage() {
               )}
             />
             <div className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
-              <p className="text-base font-semibold text-foreground">
+              <p className="text-base font-semibold text-foreground tabular-nums">
                 {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
               </p>
               <FormPrimaryButton

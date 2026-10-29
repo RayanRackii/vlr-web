@@ -48,7 +48,7 @@
 .portal-segmented { display: inline-flex; gap: 2px; padding: 4px; border-radius: 12px; background: var(--muted); max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
 .portal-segmented button { min-width: max-content; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 12px; border-radius: 9px; color: var(--muted-foreground); font-weight: 550; font-size: 14px; white-space: nowrap; transition: background .2s, transform .25s var(--portal-spring); }
 .portal-segmented button[aria-checked=true] { background: var(--card); color: var(--foreground); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
-.portal-count { background: color-mix(in srgb, var(--portal-free) 13%, transparent); color: var(--portal-free); border-radius: 99px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+.portal-count { background: color-mix(in srgb, var(--portal-free) 13%, transparent); color: var(--portal-free); border-radius: 99px; padding: 1px 7px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .portal-right-rail { display: none; }
 .portal-rail-card { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--portal-shadow); }
 .portal-rail-card h2 { font-weight: 650; font-size: 15px; margin-bottom: 12px; }
@@ -83,7 +83,7 @@
 .portal-resource-art { height: 80px; border-radius: 10px; margin: 12px 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--primary) 9%, var(--card)) 0 36px, color-mix(in srgb, var(--primary) 15%, var(--card)) 36px 72px); border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border)); }
 .portal-resource:nth-child(2) .portal-resource-art { height: 110px; }
 .portal-slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.portal-slot { min-height: 44px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); font-size: 14px; font-weight: 600; transition: transform .25s var(--portal-spring), background .2s, border-color .2s; }
+.portal-slot { min-height: 44px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); font-size: 14px; font-weight: 600; transition: transform .25s var(--portal-spring), background .2s, border-color .2s; font-variant-numeric: tabular-nums; }
 .portal-slot:hover:not(:disabled):not([aria-pressed=true]) { border-color: var(--primary); color: var(--primary); }
 .portal-slot:active:not(:disabled), .portal-segmented button:active { transform: scale(.95); }
 .portal-slot[aria-pressed=true] { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); animation: portal-slot-pop .3s var(--portal-spring); }
@@ -104,7 +104,7 @@
 @media (max-width: 639px) {
   .portal-recovery-actions > .portal-recovery-button { width: 100%; }
 }
-.portal-summary { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px 20px; margin-top: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); }
+.portal-summary { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px 20px; margin-top: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); font-variant-numeric: tabular-nums; }
 .portal-sheet { --portal-spring: cubic-bezier(.34, 1.56, .64, 1); --portal-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 8px 24px -14px rgb(0 0 0 / .18); }
 .portal-sheet .portal-summary { margin-top: 0; }
 .portal-summary > div:first-child { min-width: 0; flex: 1; }

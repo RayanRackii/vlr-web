@@ -20,7 +20,7 @@
   box-shadow: var(--portal-shadow);
   text-align: left;
   color: inherit;
-  transition: transform .25s var(--portal-spring), border-color .2s, box-shadow .2s;
+  transition: transform .25s var(--portal-spring), border-color var(--motion-duration-base), box-shadow var(--motion-duration-base);
 }
 .portal-record-card:hover {
   border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
@@ -40,9 +40,9 @@
 .portal-record-body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
 .portal-record-top { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 8px; }
 .portal-record-title { font-size: 16px; font-weight: 650; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.portal-record-meta { color: var(--muted-foreground); font-size: 13px; overflow-wrap: anywhere; }
+.portal-record-meta { color: var(--muted-foreground); font-size: 13px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .portal-record-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
-.portal-record-total { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.portal-record-total { font-weight: 700; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .portal-record-view { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--primary); font-size: 14px; font-weight: 600; }
 .portal-record-view svg { width: 16px; height: 16px; transition: transform .25s var(--portal-spring); }
 .portal-record-card:hover .portal-record-view svg { transform: translateX(3px); }
@@ -81,7 +81,7 @@
 .portal-timeline-entry:last-child .portal-timeline-line { display: none; }
 .portal-timeline-body { min-width: 0; flex: 1; padding-bottom: 2px; }
 .portal-timeline-status { font-weight: 600; font-size: 14px; }
-.portal-timeline-when { color: var(--muted-foreground); font-size: 13px; }
+.portal-timeline-when { color: var(--muted-foreground); font-size: 13px; font-variant-numeric: tabular-nums; }
 .portal-timeline-reason { margin-top: 4px; color: var(--muted-foreground); font-size: 13px; overflow-wrap: anywhere; }
 
 .portal-records :focus-visible, .portal-record-detail :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }

@@ -39,7 +39,7 @@ function BellGlyph({ unreadTotal, overflowLabel }: { unreadTotal: number; overfl
           aria-hidden="true"
           className={cn(
             "absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full",
-            "bg-primary px-1 text-[0.625rem] font-semibold leading-none text-primary-foreground",
+            "bg-primary px-1 text-[0.625rem] font-semibold leading-none text-primary-foreground tabular-nums",
           )}
         >
           {unreadTotal > 99 ? overflowLabel : unreadTotal}

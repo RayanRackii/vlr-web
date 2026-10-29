@@ -2267,7 +2267,7 @@ export function TenantPortalAgendaPage() {
                   schedulePending || slotsError || timeWindows.length === 0
                 }
               >
-                <SelectTrigger className="w-full" aria-busy={schedulePending}>
+                <SelectTrigger className="w-full tabular-nums" aria-busy={schedulePending}>
                   <SelectValue
                     placeholder={
                       schedulePending
@@ -2278,7 +2278,7 @@ export function TenantPortalAgendaPage() {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="w-[var(--anchor-width)] min-w-[max(12rem,var(--anchor-width))]">
+                <SelectContent className="w-[var(--anchor-width)] min-w-[max(12rem,var(--anchor-width))] tabular-nums">
                   {timeWindows.map((window) => {
                     const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
                       window.startTime,

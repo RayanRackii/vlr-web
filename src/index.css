@@ -13,6 +13,13 @@
     display: none;
   }
   :root {
+    --motion-duration-fast: 120ms;
+    --motion-duration-base: 200ms;
+    --motion-duration-panel: 300ms;
+    --motion-ease-standard: cubic-bezier(.2, 0, 0, 1);
+    --motion-ease-out: cubic-bezier(0, 0, .2, 1);
+    --motion-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+
     /* Rolvix brand identity (landing gradient / B2C portal fallback) — kept
        stable; the product UI "primary" below is decoupled on purpose. */
     --brand-primary: #4d6a92;
@@ -88,6 +95,15 @@
     --sidebar-accent-foreground: oklch(0.3 0.04 266);
     --sidebar-border: oklch(0.922 0.006 266);
     --sidebar-ring: var(--ring)
+  }
+  @supports (transition-timing-function: linear(0, 1)) {
+    :root {
+      --motion-ease-spring: linear(
+        0, .22 4%, .45 8%, .65 12%, .82 17%, .96 23%,
+        1.05 30%, 1.08 37%, 1.06 44%, 1.03 52%, 1.008 61%,
+        .996 70%, .997 80%, 1 90%, 1
+      );
+    }
   }
   .theme {
     --font-heading: var(--font-sans);
@@ -171,14 +187,16 @@
 }
 
 /* Respect users who prefer reduced motion: neutralise transitions/animations
-   globally while keeping the final (settled) state intact. */
+   and their delays globally while keeping the final (settled) state intact. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }
