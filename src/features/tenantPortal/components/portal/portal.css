@@ -1,12 +1,6 @@
-/* Single content width for every customer-portal page (pages center inside main). */
-.portal-shell { --portal-content-max: 80rem; --portal-content-max-qhd: 1560px; }
 /* Customer portal only; shared staff shell and tenant color tokens stay intact. */
 .portal-shell {
-  --portal-spring: cubic-bezier(.34, 1.56, .64, 1);
-  --portal-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 8px 24px -14px rgb(0 0 0 / .18);
   color-scheme: light;
-  --portal-free: light-dark(#168457, #50cf96);
-  --portal-few: light-dark(#986400, #efbb55);
   background: var(--muted);
 }
 .dark .portal-shell, .portal-shell.dark { color-scheme: dark; }
@@ -111,7 +105,6 @@
   .portal-recovery-actions > .portal-recovery-button { width: 100%; }
 }
 .portal-summary { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px 20px; margin-top: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); font-variant-numeric: tabular-nums; }
-.portal-sheet { --portal-spring: cubic-bezier(.34, 1.56, .64, 1); --portal-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 8px 24px -14px rgb(0 0 0 / .18); }
 .portal-sheet .portal-summary { margin-top: 0; }
 .portal-summary > div:first-child { min-width: 0; flex: 1; }
 .portal-canvas { margin-bottom: 16px; padding: 14px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); }

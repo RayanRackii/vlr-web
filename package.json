@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build --configLoader runner",
     "gen:api": "node scripts/generate-api.mjs",
     "check:api": "node scripts/generate-api.mjs --check",
+    "tokens:build": "node scripts/build-tokens.mjs",
+    "tokens:check": "node scripts/build-tokens.mjs --check",
     "lint": "eslint .",
     "lint:baseline": "node scripts/lint-ratchet.mjs --write-baseline",
     "lint:ratchet": "node scripts/lint-ratchet.mjs",
