@@ -52,7 +52,7 @@ export function TenantPicker({
 
   return (
     <form
-      className="space-y-5"
+      className="w-full min-w-0 space-y-5"
       noValidate
       onSubmit={(event) => {
         event.preventDefault()
@@ -88,11 +88,11 @@ export function TenantPicker({
             const secondary = membershipSecondary(membership)
             return (
               <li key={membership.tenantId}>
-                <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-3 text-sm transition-colors hover:bg-accent focus-within:ring-2 focus-within:ring-ring has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <label className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-4 text-sm motion-safe:transition-colors hover:border-primary/50 hover:bg-accent focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:disabled]:cursor-wait has-[:disabled]:opacity-60">
                   <input
                     type="radio"
                     name="tenant-picker"
-                    className="mt-0.5 size-4 shrink-0 accent-primary"
+                    className="size-4 shrink-0 accent-primary"
                     value={membership.tenantId}
                     checked={selectedTenantId === membership.tenantId}
                     disabled={submitting}
@@ -100,13 +100,16 @@ export function TenantPicker({
                       setSelectedTenantId(membership.tenantId)
                     }}
                   />
-                  <span className="min-w-0 [overflow-wrap:anywhere]">
+                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {label.charAt(0).toLocaleUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1 space-y-0.5 [overflow-wrap:anywhere]">
                     <span className="block font-medium">{label}</span>
                     {secondary ? (
-                      <span className="block text-muted-foreground">{secondary}</span>
+                      <span className="block text-xs leading-relaxed text-muted-foreground">{secondary}</span>
                     ) : null}
                     {membership.subdomain ? (
-                      <span className="block text-muted-foreground">{membership.subdomain}</span>
+                      <span className="block text-xs leading-relaxed text-muted-foreground">{membership.subdomain}</span>
                     ) : null}
                   </span>
                 </label>
@@ -123,7 +126,7 @@ export function TenantPicker({
 
       <FormPrimaryButton
         type="submit"
-        className="min-h-11 w-full"
+        className="touch-target min-h-11 w-full whitespace-normal"
         isValid={selected}
         loading={submitting}
         loadingLabel={t("auth.invite.pickerSubmitting")}

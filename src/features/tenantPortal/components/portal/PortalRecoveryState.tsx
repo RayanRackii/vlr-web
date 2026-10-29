@@ -28,11 +28,11 @@ export function PortalRecoveryState({ icon: Icon, title, description, primaryAct
         <p role={alert ? "alert" : undefined}>{description}</p>
       </header>
       <div className="portal-recovery-actions">
-        <Button className="portal-recovery-button" render={<Link to={primaryAction.to} />}>
+        <Button className="touch-target portal-recovery-button" render={<Link to={primaryAction.to} />}>
           {primaryAction.label}
         </Button>
         {secondaryAction && (
-          <Button variant="outline" className="portal-recovery-button" render={<Link to={secondaryAction.to} />}>
+          <Button variant="outline" className="touch-target portal-recovery-button" render={<Link to={secondaryAction.to} />}>
             {secondaryAction.label}
           </Button>
         )}

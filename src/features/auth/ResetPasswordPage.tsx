@@ -2,7 +2,7 @@ import { toast } from "sonner"
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { Check, Lock } from "lucide-react"
+import { Check, KeyRound, Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -162,16 +162,19 @@ export function ResetPasswordPage() {
   if (gate === "invalid") {
     return (
       <AuthLayout title={t("auth.resetPassword.title")}>
-        <div className="space-y-6">
+        <div className="flex flex-col items-center gap-5 rounded-xl border border-border bg-card p-6 text-center">
+          <div aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <KeyRound {...iconProps("xl")} />
+          </div>
           <p
-            className="text-sm text-destructive dark:text-destructive-foreground"
+            className="max-w-sm text-sm leading-relaxed text-muted-foreground"
             role="alert"
           >
             {t("auth.resetPassword.invalidLink")}
           </p>
           <Button
             type="button"
-            className="h-11 w-full"
+            className="touch-target min-h-11 w-full whitespace-normal"
             render={<Link to="/login" />}
           >
             {t("auth.resetPassword.backToLogin")}
