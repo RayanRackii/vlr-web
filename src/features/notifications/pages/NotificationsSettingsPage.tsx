@@ -4,6 +4,9 @@ import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
   Table,
@@ -177,14 +180,12 @@ export function NotificationsSettingsPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("notifications.settings.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("notifications.settings.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        icon={Bell}
+        title={t("notifications.settings.title")}
+        description={t("notifications.settings.subtitle")}
+        className="mb-0 sm:mb-0"
+      />
 
       {loadError ? (
         <p className="text-sm text-destructive">{loadError}</p>
@@ -205,20 +206,20 @@ export function NotificationsSettingsPage() {
           <TabsList
             variant="line"
             aria-label={t("notifications.settings.moduleTabs")}
-            className="w-full justify-start rounded-none border-b border-border p-0 group-data-horizontal/tabs:h-auto"
+            className="h-auto w-full flex-wrap justify-start rounded-none border-b border-border p-0 group-data-horizontal/tabs:h-auto"
           >
             {groups.map((group) => (
               <TabsTrigger
                 key={group.module}
                 value={group.module}
-                className="min-h-11 flex-none rounded-none px-4 py-2 max-[759.98px]:flex-1 max-[759.98px]:px-2 after:bg-primary data-active:text-primary dark:data-active:text-foreground group-data-horizontal/tabs:after:bottom-[-1px]"
+                className="touch-target min-h-11 flex-none rounded-none px-4 py-2 max-[759.98px]:flex-1 max-[759.98px]:px-2 after:bg-primary data-active:text-primary dark:data-active:text-foreground group-data-horizontal/tabs:after:bottom-[-1px]"
               >
                 {t(`notifications.settings.modules.${group.module}`, {
                   defaultValue: group.module,
                 })}
                 <span
                   aria-hidden
-                  className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground"
+                  className="rounded-full bg-muted px-1.5 tabular-nums text-xs text-muted-foreground"
                 >
                   {group.events.length}
                 </span>
@@ -235,9 +236,7 @@ export function NotificationsSettingsPage() {
         {loading ? (
           <PageContentSkeleton rows={5} />
         ) : groups.length === 0 && !loadError ? (
-          <p className="text-sm text-muted-foreground">
-            {t("notifications.settings.empty")}
-          </p>
+          <EmptyState icon={Bell} title={t("notifications.settings.empty")} />
         ) : (
           groups.filter((group) => group.module === activeModule).map((group) => {
             const groupChannels = visibleChannels(group.events)
@@ -250,7 +249,7 @@ export function NotificationsSettingsPage() {
                   defaultValue: group.module,
                 })}
               >
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <Card className="min-w-0 gap-0 overflow-hidden py-0 motion-reduce:transition-none">
                   <Table
                     aria-label={t(
                       `notifications.settings.modules.${group.module}`,
@@ -336,7 +335,7 @@ export function NotificationsSettingsPage() {
                                   {!item.configurable ? (
                                     item.isActive ? (
                                       <span
-                                        className="inline-flex size-7 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                        className="inline-flex size-7 items-center justify-center rounded-full bg-success/10 text-success"
                                         aria-label={t(
                                           "notifications.settings.inAppAlwaysOn",
                                         )}
@@ -384,7 +383,7 @@ export function NotificationsSettingsPage() {
                       })}
                     </TableBody>
                   </Table>
-                </div>
+                </Card>
               </TabsContent>
             )
           })

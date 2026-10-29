@@ -421,7 +421,7 @@ function ResourceFocusChips({
     <div
       role="group"
       aria-label={t("rentals.schedule.rentables")}
-      className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+      className="flex min-w-0 flex-wrap gap-2 pb-1"
     >
       {assets.map((asset) => {
         const isActive = asset.id === activeAssetId
@@ -433,7 +433,7 @@ function ResourceFocusChips({
             aria-pressed={isActive}
             onClick={() => onSelect(asset.id)}
             className={cn(
-              "flex shrink-0 min-h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors motion-safe:transition-colors",
+              "touch-target flex min-h-10 min-w-0 max-w-full items-center gap-1.5 rounded-full border px-3 text-sm font-medium motion-safe:transition-colors",
               isActive
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-foreground hover:bg-muted",
@@ -443,7 +443,7 @@ function ResourceFocusChips({
             {free > 0 ? (
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none",
+                  "rounded-full px-1.5 py-0.5 tabular-nums text-[11px] font-semibold leading-none",
                   isActive ? "bg-primary-foreground/20" : "bg-success/10 text-success",
                 )}
               >

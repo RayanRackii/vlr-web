@@ -254,7 +254,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
         <div className="reservations-filter-bar">
           <div role="group" aria-label={t("rentals.reservations.period")} className="reservations-segment">
             {(["day", "week", "month"] as const).map((value) => (
-              <button key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)}>
+              <button className="touch-target" key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)}>
                 {t(`rentals.reservations.view${value[0].toUpperCase()}${value.slice(1)}`)}
               </button>
             ))}
@@ -265,7 +265,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             </Button>
             <CalendarDays size={20} aria-hidden="true" className="reservations-date-icon" />
             <label htmlFor={dateId} className="sr-only">{t("rentals.reservations.date")}</label>
-            <LocaleDateInput id={dateId} value={date} locale={i18n.language} today={tenantTodayIsoDate(timeZoneId)} className="reservations-date-input" onChange={setDate} />
+            <LocaleDateInput id={dateId} value={date} locale={i18n.language} today={tenantTodayIsoDate(timeZoneId)} className="reservations-date-input tabular-nums" onChange={setDate} />
             <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.nextDay")} onClick={() => shiftDay(1)}>
               <ChevronRight aria-hidden="true" />
             </Button>
@@ -280,7 +280,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             { value: "" as const, label: t("rentals.reservations.statusAll") },
             ...reservationStatuses.map((value) => ({ value, label: t(`rentals.reservations.statuses.${value}`) })),
           ].map((option) => (
-            <button key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
+            <button className="touch-target" key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
               {option.value && <span className="reservation-filter-dot" data-status={option.value} aria-hidden="true" />}
               {option.label}
             </button>

@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -664,15 +666,15 @@ function AdminSchedulePage() {
     : scheduleTemplatesState.list
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6">
-      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
+      <div className="min-w-0 space-y-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("rentals.schedule.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("rentals.schedule.descriptionOperational")}
-          </p>
+          <PageHeader
+            icon={CalendarDays}
+            title={t("rentals.schedule.title")}
+            description={t("rentals.schedule.descriptionOperational")}
+            className="mb-0 sm:mb-0"
+          />
           <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
             {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
           </p>
@@ -681,7 +683,7 @@ function AdminSchedulePage() {
         <div
           role="group"
           aria-label={t("nav.menu")}
-          className="mx-auto grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
+          className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
         >
           {tabItems.map((item) => {
             const isActive = tab === item.id
@@ -694,7 +696,7 @@ function AdminSchedulePage() {
                   setTab(item.id)
                 }}
                 className={cn(
-                  "inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
+                  "touch-target inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium motion-safe:transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
                   isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
                 )}
               >
@@ -707,7 +709,8 @@ function AdminSchedulePage() {
         </div>
       </div>
 
-      <div className="mt-8">
+      <Card className="min-w-0 motion-reduce:transition-none">
+      <CardContent className="min-w-0 px-3 sm:px-5">
         {tab === "daily" ? (
           <DailyAgendaTab
             assets={assets}
@@ -786,7 +789,8 @@ function AdminSchedulePage() {
             }}
           />
         ) : null}
-      </div>
+      </CardContent>
+      </Card>
 
       <OccupancyKindSheet
         open={kindSheetOpen}
