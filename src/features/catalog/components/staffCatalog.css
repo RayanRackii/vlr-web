@@ -139,8 +139,4 @@
   .staff-catalog-tab-long { display: none; }
   .staff-catalog-tab-short { display: inline; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .staff-catalog *, .staff-catalog-editor, .staff-catalog-editor * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-  body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { animation: none !important; transition: none !important; }
-}
 body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { background: rgb(10 16 24 / 38%); }

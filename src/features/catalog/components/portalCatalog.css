@@ -9,11 +9,11 @@
 }
 
 .portal-catalog-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
-.portal-catalog-item-count { display: inline-block; color: var(--muted-foreground); font-size: .6em; font-weight: 500; letter-spacing: normal; }
+.portal-catalog-item-count { display: inline-block; color: var(--muted-foreground); font-size: .6em; font-weight: 500; letter-spacing: normal; font-variant-numeric: tabular-nums; }
 .portal-catalog-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .portal-catalog-button { min-height: 48px; height: auto; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 650; }
 .portal-catalog-primary { box-shadow: 0 8px 20px -10px var(--primary); }
-.portal-catalog-cart-count { display: inline-block; flex-shrink: 0; min-width: 23px; padding: 1px 7px; border-radius: 99px; background: var(--primary-foreground); color: var(--primary); font-size: 12px; }
+.portal-catalog-cart-count { display: inline-block; flex-shrink: 0; min-width: 23px; padding: 1px 7px; border-radius: 99px; background: var(--primary-foreground); color: var(--primary); font-size: 12px; font-variant-numeric: tabular-nums; }
 .portal-catalog-search { display: flex; align-items: center; gap: 12px; max-width: 560px; min-height: 50px; padding: 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
 .portal-catalog-search:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent); }
 .portal-catalog-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px; scrollbar-width: thin; }
@@ -30,12 +30,12 @@
 .portal-catalog-tag { max-width: 100%; border-radius: 6px; padding: 2px 8px; background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
 .portal-catalog-product-name { font-size: 16px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
 .portal-catalog-price-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
-.portal-catalog-price { min-width: 0; overflow-wrap: anywhere; font-size: 18px; font-weight: 750; letter-spacing: -.02em; }
+.portal-catalog-price { min-width: 0; overflow-wrap: anywhere; font-size: 18px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .portal-catalog-add { flex-shrink: 0; width: 44px; min-height: 44px; padding: 0; border-radius: 12px; }
 .portal-catalog-stepper { display: flex; align-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; }
 .portal-catalog-stepper:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent); }
 .portal-catalog-stepper > button { flex-shrink: 0; border: 0; border-radius: 0; background: transparent; }
-.portal-catalog-stepper > input { height: 44px; min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; text-align: center; font-weight: 650; box-shadow: none; appearance: textfield; }
+.portal-catalog-stepper > input { height: 44px; min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; text-align: center; font-weight: 650; box-shadow: none; appearance: textfield; font-variant-numeric: tabular-nums; }
 .portal-catalog-stepper > input::-webkit-inner-spin-button, .portal-catalog-stepper > input::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .portal-catalog-rail { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .portal-catalog-help { display: flex; gap: 12px; }
@@ -77,7 +77,7 @@
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .portal-catalog-card { transition: transform .3s var(--portal-spring); }
+  .portal-catalog-card { transition: transform var(--motion-duration-panel) var(--portal-spring); }
   .portal-catalog-card:hover { transform: translateY(-4px); }
 }
 

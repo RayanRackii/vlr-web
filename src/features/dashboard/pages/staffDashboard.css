@@ -41,7 +41,7 @@
 .staff-dashboard-hero h1 { font-size: clamp(24px, 2vw, 32px); font-weight: 700; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.025em; color: inherit; }
 .staff-dashboard-hero p { margin: 0; opacity: .92; max-width: 52ch; }
 .staff-dashboard-cta { display: flex; gap: 10px; flex-wrap: wrap; }
-.staff-dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 46px; padding: 11px 20px; border: 1px solid transparent; border-radius: 12px; font-weight: 650; transition: transform .25s var(--dashboard-spring), box-shadow .2s; }
+.staff-dashboard-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 46px; padding: 11px 20px; border: 1px solid transparent; border-radius: 12px; font-weight: 650; transition: transform .25s var(--dashboard-spring), box-shadow var(--motion-duration-base); }
 .staff-dashboard-button-primary { background: white; color: var(--dashboard-primary); box-shadow: 0 8px 20px -10px rgb(0 0 0 / .5); }
 .staff-dashboard-button-ghost { background: #ffffff1f; border-color: #ffffff55; color: white; }
 .staff-dashboard-button:hover { transform: translateY(-1px); }
@@ -64,7 +64,7 @@
 .staff-dashboard-section-heading h2 { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); }
 .staff-dashboard-section-heading p { margin: 6px 0 0; color: var(--muted-foreground); }
 .staff-dashboard-shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
-.staff-dashboard-tile { min-width: 0; display: flex; flex-direction: column; gap: 11px; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: inherit; box-shadow: var(--dashboard-shadow); animation: staff-dashboard-in .5s both; transition: transform .3s var(--dashboard-spring), box-shadow .2s, border-color .2s; }
+.staff-dashboard-tile { min-width: 0; display: flex; flex-direction: column; gap: 11px; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: inherit; box-shadow: var(--dashboard-shadow); animation: staff-dashboard-in .5s both; transition: transform var(--motion-duration-panel) var(--dashboard-spring), box-shadow var(--motion-duration-base), border-color var(--motion-duration-base); }
 .staff-dashboard-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--dashboard-primary) 45%, var(--border)); box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 16px 34px -20px rgb(16 24 40 / .45); }
 .staff-dashboard-tile-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--dashboard-soft); color: var(--dashboard-link); }
 .staff-dashboard-tile strong { font-size: 16px; letter-spacing: -.01em; font-weight: 650; }

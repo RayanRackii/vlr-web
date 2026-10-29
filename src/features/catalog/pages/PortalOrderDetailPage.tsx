@@ -163,7 +163,7 @@ export function PortalOrderDetailPage() {
             <p className="text-sm text-muted-foreground">
               {formatCatalogDate(order.createdAt, i18n.language)}
             </p>
-            <p className="text-sm font-medium">{totalLabel}</p>
+            <p className="text-sm font-medium tabular-nums">{totalLabel}</p>
           </div>
           <PortalStatusChip tone={catalogOrderStatusTone(order.status)}>
             {t(`catalog.status.${order.status}`)}
