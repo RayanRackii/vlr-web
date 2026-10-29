@@ -33,6 +33,7 @@ import {
   maskCustomerDocument,
 } from "@/features/tenantPortal/lib/masks"
 import { resolveCustomerPhotoUrl } from "@/features/tenantPortal/lib/profilePhoto"
+import { currentCustomerSessionIdentity } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import {
   buildCustomerProfileFormSchema,
   formatBrazilianPhone,
@@ -43,6 +44,7 @@ import {
 import {
   fetchCustomerProfile,
   fileToCompressedDataUrl,
+  setCustomerLabel,
   updateCustomerProfile,
   type UpdateCustomerProfileRequest,
 } from "@/features/tenantPortal/services/tenantPortalService"
@@ -119,6 +121,7 @@ export function TenantPortalProfilePage() {
   }
 
   function applyProfile(next: CustomerProfile) {
+    setCustomerLabel(next.name, next.email)
     setProfile(next)
     form.reset({ name: next.name })
     setPhotoPreview(photoFromProfile(next))
@@ -133,12 +136,13 @@ export function TenantPortalProfilePage() {
 
   async function loadProfile() {
     const generation = ++loadGenerationRef.current
+    const sessionIdentity = currentCustomerSessionIdentity()
     setLoading(true)
     setLoadError(null)
 
     try {
       const data = await fetchCustomerProfile()
-      if (generation !== loadGenerationRef.current) {
+      if (generation !== loadGenerationRef.current || sessionIdentity !== currentCustomerSessionIdentity()) {
         return
       }
       applyProfile(data)
@@ -213,6 +217,10 @@ export function TenantPortalProfilePage() {
       return
     }
 
+    const generation = loadGenerationRef.current
+    const sessionIdentity = currentCustomerSessionIdentity()
+    const isCurrent = () => generation === loadGenerationRef.current
+      && sessionIdentity === currentCustomerSessionIdentity()
     setSaving(true)
     try {
       const body: UpdateCustomerProfileRequest = {
@@ -223,22 +231,25 @@ export function TenantPortalProfilePage() {
       }
 
       const updated = await updateCustomerProfile(body)
+      if (!isCurrent()) return
       let next = updated
       try {
         next = await fetchCustomerProfile()
       } catch {
         // PATCH already succeeded; keep that payload if GET refresh fails.
       }
+      if (!isCurrent()) return
       applyProfile(next)
       toast.success(t("tenantPortal.profile.saved"))
     } catch (error) {
+      if (!isCurrent()) return
       toast.error(
         error instanceof Error
           ? error.message
           : t("tenantPortal.profile.saveError"),
       )
     } finally {
-      setSaving(false)
+      if (isCurrent()) setSaving(false)
     }
   }
 

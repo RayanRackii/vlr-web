@@ -45,13 +45,17 @@ export function groupLabelSlug(eventType: string): string | null {
   return GROUP_LABEL_RULES.find((rule) => rule.test(normalized))?.slug ?? null
 }
 
-/** Inbox DTOs expose event identity, but currently no order/reservation number. */
+/** Preserve the API's item-specific title, with localized text for blank titles. */
 export function notificationItemText(
   item: Pick<NotificationItem, "eventType" | "title">,
   t: TFunction,
 ): string {
+  const title = item.title.trim()
+  if (title) {
+    return title
+  }
   const slug = groupLabelSlug(item.eventType)
-  return slug ? t(`notifications.inbox.items.${slug}`) : item.title
+  return slug ? t(`notifications.inbox.items.${slug}`) : title
 }
 
 /** Module glyph shown beside each group; unknown modules fall back to the bell. */
@@ -84,6 +88,16 @@ export function resolveStaffRoute(module: string, targetRoute: string): string {
   const queryIndex = targetRoute.search(/[?#]/)
   const suffix = queryIndex === -1 ? "" : targetRoute.slice(queryIndex)
   return `${base}${suffix}`
+}
+
+export function resolveNotificationItemRoute(
+  item: Pick<NotificationItem, "module" | "eventType" | "aggregateId" | "targetRoute">,
+): string {
+  const orderId = item.aggregateId?.trim()
+  if (item.module === "catalog" && item.eventType.toLowerCase().includes("order") && orderId) {
+    return `/catalogo/pedidos/${encodeURIComponent(orderId)}`
+  }
+  return resolveStaffRoute(item.module, item.targetRoute)
 }
 
 const RELATIVE_THRESHOLDS: ReadonlyArray<{ limit: number; divisor: number; unit: Intl.RelativeTimeFormatUnit }> = [

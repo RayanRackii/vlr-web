@@ -36,6 +36,7 @@ import {
   listNotifications,
   markAllRead,
   markEventTypeRead,
+  markIdsRead,
 } from "@/features/notifications-inbox/services/notificationInboxService"
 
 const mockSummary = vi.mocked(getNotificationSummary)
@@ -93,6 +94,7 @@ describe("NotificationBell", () => {
     mockList.mockReset().mockResolvedValue({ items: [], nextCursor: null })
     mockMarkEventType.mockReset().mockResolvedValue({ updated: 3 })
     mockMarkAll.mockReset().mockResolvedValue({ updated: 5 })
+    vi.mocked(markIdsRead).mockReset().mockResolvedValue({ updated: 1 })
     setMatchMedia(false)
   })
 
@@ -175,6 +177,33 @@ describe("NotificationBell", () => {
     await user.click(await screen.findByRole("button"))
     await user.click(await screen.findByRole("button", { name: /Marcar tudo como lido/ }))
     expect(mockMarkAll).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ["catalog", "catalog.order.approved", "order-12", "/catalogo/pedidos/order-12"],
+    ["catalog", "catalog.order.approved", null, "/catalogo/pedidos?status=approved"],
+    ["rentals", "rentals.reservation.confirmed", "reservation-12", "/configuracoes/reservas?status=approved"],
+  ])("opens a recent %s item using its aggregate when an order detail is available", async (module, eventType, aggregateId, expectedRoute) => {
+    mockList.mockResolvedValue({
+      items: [{
+        id: "notification-12",
+        module,
+        eventType,
+        aggregateId,
+        title: "  Pedido #12 aprovado.  ",
+        createdAt: "2026-10-28T11:55:00.000Z",
+        readAt: null,
+        targetRoute: "/pedidos?status=approved",
+      }],
+      nextCursor: null,
+    })
+    const user = userEvent.setup()
+    renderBell()
+    await user.click(await screen.findByRole("button"))
+    await user.click(await screen.findByRole("button", { name: /Pedido #12 aprovado\./ }))
+
+    expect(markIdsRead).toHaveBeenCalledWith(["notification-12"])
+    expect(navigate).toHaveBeenCalledWith(expectedRoute)
   })
 
   it("hides groups whose module is not active", async () => {

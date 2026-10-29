@@ -12,6 +12,7 @@ import { getEmailInitials } from "@/lib/emailInitials"
 import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import { useCustomerLabel } from "@/features/tenantPortal/hooks/useCustomerLabel"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
@@ -29,7 +30,6 @@ import type {
 import {
   fetchTenantBranding,
   fetchTenantMenu,
-  getCustomerLabel,
   isCustomerSignedInForTenant,
   resolveTenantSubdomain,
   tenantPortalPath,
@@ -55,6 +55,7 @@ export function CustomerAppLayout() {
   const params = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const customerLabel = useCustomerLabel()
   const subdomain = useMemo(() => {
     const fromPath = params.subdomain?.toLowerCase()
     if (fromPath) {
@@ -183,7 +184,7 @@ export function CustomerAppLayout() {
   const pageTitle = isProfilePage
     ? t("tenantPortal.profile.title")
     : (activeItem?.label ?? branding.displayName)
-  const userLabel = getCustomerLabel() ?? t("account.userFallback")
+  const userLabel = customerLabel ?? t("account.userFallback")
 
   return (
     <div className="portal-shell min-h-screen bg-background text-foreground" style={themeStyle}>
@@ -195,7 +196,7 @@ export function CustomerAppLayout() {
             logoSvg={branding.logoSvg}
             primaryColor={branding.primaryColor}
             items={navItems}
-            userLabel={getCustomerLabel()}
+            userLabel={customerLabel}
             onNavigate={onNavigate}
           />
         )}
