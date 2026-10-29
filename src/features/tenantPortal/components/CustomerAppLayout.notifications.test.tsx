@@ -265,3 +265,25 @@ it("shows the API error when a customer cannot mark a notification read", async 
   expect(toast.error).toHaveBeenCalledWith("This notification is unavailable.")
   expect(router.state.location.pathname).toBe("/t/shop/app")
 })
+
+
+it.each([
+  ["pt-BR", "Não foi possível carregar as notificações.", "Tentar novamente"],
+  ["en", "Could not load notifications.", "Try again"],
+  ["es", "No se pudieron cargar las notificaciones.", "Intentar de nuevo"],
+])("recovers from a customer list failure using retry (%s)", async (language, message, retryLabel) => {
+  await i18n.changeLanguage(language)
+  vi.mocked(notifications.listNotifications).mockRejectedValueOnce(new Error("Unavailable"))
+  const user = userEvent.setup()
+  renderPortal()
+  await user.click(await screen.findByRole("button", { name: i18n.t("notifications.inbox.ariaLabel", { count: 2 }) }))
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(message)
+  expect(screen.queryByText(i18n.t("notifications.inbox.loading"))).not.toBeInTheDocument()
+  expect(notifications.getNotificationSummary).toHaveBeenCalledOnce()
+
+  await user.click(screen.getByRole("button", { name: retryLabel }))
+  expect(await screen.findByRole("button", { name: /Atualização disponível/ })).toBeInTheDocument()
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  expect(notifications.listNotifications).toHaveBeenCalledTimes(2)
+})

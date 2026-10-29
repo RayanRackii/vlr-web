@@ -61,6 +61,8 @@ export function NotificationPanel({
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const [recent, setRecent] = useState<NotificationItem[] | null>(null)
+  const [recentStatus, setRecentStatus] = useState<"loading" | "settled" | "error">("loading")
+  const [recentRetry, setRecentRetry] = useState(0)
 
   const recentVersion = showGroups ? null : summary
   const hasGroups = groups.length > 0
@@ -76,16 +78,19 @@ export function NotificationPanel({
       .then((list) => {
         if (active) {
           setRecent(list.items)
+          setRecentStatus("settled")
         }
       })
       .catch(() => {
-        // Recent list is best-effort; stay silent on failure.
+        if (active) {
+          setRecentStatus("error")
+        }
       })
     return () => {
       active = false
       controller.abort()
     }
-  }, [loadRecent, service, recentVersion, showGroups])
+  }, [loadRecent, service, recentVersion, showGroups, recentRetry])
 
   const recentToShow = useMemo(
     () => (recent ?? []).filter((item) => item.readAt === null),
@@ -112,10 +117,26 @@ export function NotificationPanel({
       </div>
 
       <div className="min-h-0 overflow-y-auto">
-        {(isLoading && !summary) || (!showGroups && recent === null) ? (
+        {(isLoading && !summary) || (!showGroups && recent === null && recentStatus === "loading") ? (
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">
             {t("notifications.inbox.loading")}
           </p>
+        ) : !showGroups && recentStatus === "error" ? (
+          <div role="alert" className="space-y-3 px-2 py-6 text-center text-sm text-muted-foreground">
+            <p>{t("notifications.inbox.loadError")}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[44px]"
+              onClick={() => {
+                setRecentStatus("loading")
+                setRecentRetry((attempt) => attempt + 1)
+              }}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : (showGroups ? !hasGroups : recentToShow.length === 0) ? (
           <p className="px-2 py-8 text-center text-sm text-muted-foreground">
             {t("notifications.inbox.empty")}

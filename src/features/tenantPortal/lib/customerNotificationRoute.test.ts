@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { sanitizeCustomerNotificationRoute } from "./customerNotificationRoute"
 
 
@@ -63,5 +63,57 @@ describe("sanitizeCustomerNotificationRoute allowlist", () => {
   })
   it("keeps the order detail", () => {
     expect(sanitizeCustomerNotificationRoute("/t/shop/pedidos/abc-123", "shop")).toBe("/t/shop/pedidos/abc-123")
+  })
+})
+
+
+describe.each([
+  { mode: "path", hostname: "localhost", orders: "/t/shop/pedidos" },
+  { mode: "host", hostname: "shop.rolvix.com.br", orders: "/pedidos" },
+])("customer notification destinations in $mode mode", ({ hostname, orders }) => {
+  beforeEach(() => vi.stubGlobal("window", { location: { hostname } }))
+  afterEach(() => vi.unstubAllGlobals())
+
+  it.each([
+    ["/t/shop/pedidos", ""],
+    ["/pedidos", ""],
+    ["/t/shop/pedidos/order-1", "/order-1"],
+    ["/pedidos/order-1", "/order-1"],
+  ])("maps %s to the active portal mode", (route, suffix) => {
+    expect(sanitizeCustomerNotificationRoute(route, "shop")).toBe(`${orders}${suffix}`)
+  })
+
+
+  it.each([
+    "",
+    "/t/other/pedidos/order-1",
+    "/t/shopx/pedidos/order-1",
+    "/t/SHOP/pedidos/order-1",
+    "/t/shop/dashboard",
+    "/dashboard",
+    "/catalogo/pedidos/order-1",
+    "https://evil.test/pedidos/order-1",
+    "https://shop.rolvix.com.br/pedidos/order-1",
+    "//evil.test/pedidos/order-1",
+    "javascript:alert(1)",
+    "/t/shop/pedidos/order-1?returnTo=/dashboard",
+    "/t/shop/pedidos/order-1#details",
+    "/pedidos/order-1?returnTo=/t/other/app",
+    "/pedidos/order-1#details",
+    "/t/shop/pedidos/../app",
+    "/pedidos/../dashboard",
+    "/pedidos/%2e%2e/dashboard",
+    "/pedidos/%2e%2e%2fdashboard",
+    "/pedidos/%5c",
+    "/pedidos/%0a",
+    "/pedidos/with space",
+    "/pedidos/order-1\n",
+    "/pedidos/order-1\r",
+    "/pedidos/order-1\t",
+    "/pedidos/\u0000",
+    "/pedidos/order-1/details",
+    "/pedidos/" + "a".repeat(65),
+  ])("uses the active-mode fallback for rejected destination %j", (route) => {
+    expect(sanitizeCustomerNotificationRoute(route, "shop")).toBe(orders)
   })
 })

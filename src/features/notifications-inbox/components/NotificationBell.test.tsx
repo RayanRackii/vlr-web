@@ -140,6 +140,19 @@ describe("NotificationBell", () => {
     ).toBeInTheDocument()
   })
 
+  it("keeps staff groups available when the optional recent list fails", async () => {
+    mockList.mockRejectedValueOnce(new Error("Unavailable"))
+    const user = userEvent.setup()
+    renderBell()
+    await user.click(await screen.findByRole("button"))
+
+    expect(await screen.findByText("3 novos pedidos")).toBeInTheDocument()
+    expect(screen.getByText("2 novas reservas confirmadas")).toBeInTheDocument()
+    expect(mockList).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tentar novamente" })).not.toBeInTheDocument()
+  })
+
   it("uses the generic fallback label for unknown event types", async () => {
     mockSummary.mockResolvedValue({
       unreadTotal: 1,

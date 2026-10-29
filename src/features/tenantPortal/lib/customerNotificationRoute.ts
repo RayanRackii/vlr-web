@@ -1,4 +1,6 @@
-const orderRoute = /^\/t\/([a-z0-9-]+)\/pedidos(?:\/([A-Za-z0-9-]{1,64}))?\/?$/
+import { tenantPortalPath } from "../services/tenantPortalService"
+
+const orderRoute = /^(?:\/t\/([a-z0-9-]+))?\/pedidos(?:\/([A-Za-z0-9-]{1,64}))?\/?$/
 
 /**
  * Restrict API-provided destinations to an allowlist inside the current customer
@@ -7,8 +9,8 @@ const orderRoute = /^\/t\/([a-z0-9-]+)\/pedidos(?:\/([A-Za-z0-9-]{1,64}))?\/?$/
  */
 export function sanitizeCustomerNotificationRoute(route: string, subdomain: string): string {
   const slug = subdomain.trim().toLowerCase()
-  const fallback = `/t/${slug}/pedidos`
+  const fallback = tenantPortalPath(slug, "pedidos")
   const match = orderRoute.exec(route)
-  if (!match || match[1] !== slug) return fallback
-  return match[2] ? `${fallback}/${match[2]}` : fallback
+  if (!match || (match[1] !== undefined && match[1] !== slug)) return fallback
+  return match[2] ? tenantPortalPath(slug, `pedidos/${match[2]}`) : fallback
 }
