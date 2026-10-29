@@ -359,7 +359,7 @@ export function AdminUsersPage() {
                 <div className="text-sm">
                   <p className="font-medium [overflow-wrap:anywhere]">{user.tenantLegalName}</p>
                   {user.tenantSubdomain ? (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="break-all text-xs text-muted-foreground">
                       {user.tenantSubdomain}
                     </p>
                   ) : null}
