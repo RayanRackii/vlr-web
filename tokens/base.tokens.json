@@ -1,0 +1,106 @@
+{
+  "motion": {
+    "$extensions": {"com.rolvix.css": {"selector": ":root", "layer": "base"}},
+    "motion-duration-fast": {"$type": "duration", "$value": {"value": 120, "unit": "ms"}},
+    "motion-duration-base": {"$type": "duration", "$value": {"value": 200, "unit": "ms"}},
+    "motion-duration-panel": {"$type": "duration", "$value": {"value": 300, "unit": "ms"}},
+    "motion-ease-standard": {"$type": "cubicBezier", "$value": [0.2, 0, 0, 1]},
+    "motion-ease-out": {"$type": "cubicBezier", "$value": [0, 0, 0.2, 1]},
+    "motion-ease-spring": {"$type": "cubicBezier", "$value": [0.34, 1.56, 0.64, 1], "$extensions": {"com.rolvix.css": {"supports": {"condition": "(transition-timing-function: linear(0, 1))", "value": "linear( 0, .22 4%, .45 8%, .65 12%, .82 17%, .96 23%, 1.05 30%, 1.08 37%, 1.06 44%, 1.03 52%, 1.008 61%, .996 70%, .997 80%, 1 90%, 1 )"}}}}
+  },
+  "brand": {
+    "$extensions": {"com.rolvix.css": {"selector": ":root", "layer": "base"}},
+    "$description": "Stable Rolvix identity; product primary and tenant runtime colors remain independent.",
+    "brand-primary": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.30196078431372547, 0.41568627450980394, 0.5725490196078431]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "brand-accent": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.35294117647058826, 0.5607843137254902, 0.6274509803921569]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "brand-complementary": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.6352941176470588, 0.7764705882352941, 0.9137254901960784]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}}
+  },
+  "light": {
+    "$extensions": {"com.rolvix.css": {"selector": ":root", "layer": "base"}},
+    "background": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.002, 264]}},
+    "foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.21, 0.015, 266]}},
+    "card": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [1, 0, 0]}},
+    "card-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.21, 0.015, 266]}},
+    "popover": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [1, 0, 0]}},
+    "popover-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.21, 0.015, 266]}},
+    "primary": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.54, 0.19, 264]}},
+    "primary-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.003, 264]}},
+    "secondary": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.967, 0.004, 264]}},
+    "secondary-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.3, 0.02, 266]}},
+    "muted": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.967, 0.004, 264]}},
+    "muted-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.52, 0.02, 266]}},
+    "accent": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.955, 0.015, 264]}},
+    "accent-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.3, 0.04, 266]}},
+    "destructive": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.577, 0.21, 27]}},
+    "destructive-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.01, 27]}},
+    "success": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.6, 0.13, 155]}},
+    "success-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.02, 155]}},
+    "warning": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.72, 0.15, 74]}},
+    "warning-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.28, 0.06, 74]}},
+    "info": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.58, 0.14, 240]}},
+    "info-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.02, 240]}},
+    "border": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.922, 0.006, 266]}},
+    "input": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.922, 0.006, 266]}},
+    "ring": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.54, 0.19, 264]}},
+    "chart-1": {"$type": "color", "$value": "{light.primary}"},
+    "chart-2": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.6, 0.14, 200]}},
+    "chart-3": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.7, 0.13, 155]}},
+    "chart-4": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.72, 0.15, 74]}},
+    "chart-5": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.6, 0.16, 320]}},
+    "shadow-color": {"$type": "color", "$value": {"colorSpace": "hsl", "components": [266, 30, 20]}, "$extensions": {"com.rolvix.css": {"channels": true}}},
+    "sidebar": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.985, 0.003, 264]}},
+    "sidebar-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.21, 0.015, 266]}},
+    "sidebar-primary": {"$type": "color", "$value": "{light.primary}"},
+    "sidebar-primary-foreground": {"$type": "color", "$value": "{light.primary-foreground}"},
+    "sidebar-accent": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.955, 0.015, 264]}},
+    "sidebar-accent-foreground": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.3, 0.04, 266]}},
+    "sidebar-border": {"$type": "color", "$value": {"colorSpace": "oklch", "components": [0.922, 0.006, 266]}},
+    "sidebar-ring": {"$type": "color", "$value": "{light.ring}"}
+  },
+  "radius": {
+    "$extensions": {"com.rolvix.css": {"selector": ":root", "layer": "base"}},
+    "radius": {"$type": "dimension", "$value": {"value": 0.625, "unit": "rem"}}
+  },
+  "elevation": {
+    "$extensions": {"com.rolvix.css": {"selector": ":root", "layer": "base"}},
+    "shadow-xs": {
+      "$type": "shadow",
+      "$extensions": {"com.rolvix.css": {"shadowColor": "--shadow-color"}},
+      "$value": [
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 1, "unit": "px"}, "blur": {"value": 2, "unit": "px"}, "spread": {"value": 0, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.05}}
+      ]
+    },
+    "shadow-sm": {
+      "$type": "shadow",
+      "$extensions": {"com.rolvix.css": {"shadowColor": "--shadow-color"}},
+      "$value": [
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 1, "unit": "px"}, "blur": {"value": 2, "unit": "px"}, "spread": {"value": -1, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.08}},
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 1, "unit": "px"}, "blur": {"value": 3, "unit": "px"}, "spread": {"value": 0, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.06}}
+      ]
+    },
+    "shadow-md": {
+      "$type": "shadow",
+      "$extensions": {"com.rolvix.css": {"shadowColor": "--shadow-color"}},
+      "$value": [
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 2, "unit": "px"}, "blur": {"value": 4, "unit": "px"}, "spread": {"value": -2, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.08}},
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 4, "unit": "px"}, "blur": {"value": 8, "unit": "px"}, "spread": {"value": -2, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.08}}
+      ]
+    },
+    "shadow-lg": {
+      "$type": "shadow",
+      "$extensions": {"com.rolvix.css": {"shadowColor": "--shadow-color"}},
+      "$value": [
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 4, "unit": "px"}, "blur": {"value": 6, "unit": "px"}, "spread": {"value": -3, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.09}},
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 10, "unit": "px"}, "blur": {"value": 20, "unit": "px"}, "spread": {"value": -4, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.1}}
+      ]
+    },
+    "shadow-xl": {
+      "$type": "shadow",
+      "$extensions": {"com.rolvix.css": {"shadowColor": "--shadow-color"}},
+      "$value": [
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 8, "unit": "px"}, "blur": {"value": 10, "unit": "px"}, "spread": {"value": -6, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.1}},
+        {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 20, "unit": "px"}, "blur": {"value": 32, "unit": "px"}, "spread": {"value": -8, "unit": "px"}, "color": {"colorSpace": "hsl", "components": [266, 30, 20], "alpha": 0.14}}
+      ]
+    }
+  }
+}
