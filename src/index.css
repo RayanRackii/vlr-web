@@ -150,7 +150,7 @@
 
 /* Native date/time segments do not always report :focus-visible on the host.
    These rules also take precedence over page-specific focus outlines. */
-:root :is(input[type="date"], input[type="time"], input[type="datetime-local"], select, [data-slot="input"], [data-slot="select-trigger"]):is(:focus, :focus-visible, :focus-within) {
+:root :is(input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select, [data-slot="input"], [data-slot="select-trigger"]):not([aria-invalid="true"]):is(:focus, :focus-visible, :focus-within) {
   border-color: var(--focus-ring, var(--ring));
   outline: 2px solid var(--focus-ring, var(--ring));
   outline-offset: 2px;

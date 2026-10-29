@@ -19,7 +19,7 @@ describe("PortalRightRail empty states", () => {
       <div id="portal-booking-spaces" tabIndex={-1}>
         <div role="button" tabIndex={0} aria-disabled="true">Recurso indisponível</div>
         <button disabled>Outro recurso indisponível</button>
-        <div role="button" tabIndex={0}>Recurso disponível</div>
+        <button>Recurso disponível</button>
       </div>
       <PortalRightRail reservationsHref="/t/loja/app/agenda/menu-id?date=2026-10-29#minhas-reservas" />
     </MemoryRouter>)
@@ -47,7 +47,7 @@ describe("PortalRightRail empty states", () => {
     vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }))
     render(<MemoryRouter>
       <div id="portal-booking-spaces" role="group" aria-label="Recursos" tabIndex={-1}>
-        <button disabled>Recurso indisponível</button>
+        <div role="button" tabIndex={0}>Recurso disponível no mapa</div><button disabled>Recurso indisponível</button>
       </div>
       <PortalRightRail reservationsHref="#minhas-reservas" />
     </MemoryRouter>)

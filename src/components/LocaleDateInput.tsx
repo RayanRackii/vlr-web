@@ -203,6 +203,7 @@ export function LocaleDateInput({
             // `max` stays off this control. Chrome drops a typed day past
             // max and the field snaps back with an empty value.
             onChange(event.target.value, "input")
+            setOpen(false)
           }}
           className="absolute inset-0 h-10 cursor-pointer opacity-0"
         />

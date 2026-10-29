@@ -2248,7 +2248,7 @@ export function TenantPortalAgendaPage() {
               {dateFeedback ? (
                 <p
                   id={dateFeedbackId}
-                  className="text-xs text-muted-foreground"
+                  className={cn("text-xs", dateRejection ? "text-destructive" : "text-muted-foreground")}
                   role="status"
                 >
                   {dateFeedback}

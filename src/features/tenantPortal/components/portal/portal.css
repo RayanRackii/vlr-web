@@ -177,3 +177,11 @@
   .portal-booking-column :is(input, [data-slot="select-trigger"], button) { min-width: 44px; min-height: 44px; }
   .portal-booking-column label + .relative > div, .portal-booking-column label + .relative > div > span { min-height: 44px; }
 }
+
+/* The rail can focus the chooser region when map tiles are custom controls.
+   Keep feedback inside its bounds so scroll containers cannot clip it. */
+:root #portal-booking-spaces:focus {
+  outline: 2px solid var(--focus-ring, var(--ring));
+  outline-offset: -2px;
+  border-radius: 12px;
+}

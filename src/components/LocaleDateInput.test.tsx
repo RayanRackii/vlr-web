@@ -83,8 +83,25 @@ describe("LocaleDateInput", () => {
 
     await user.click(screen.getByRole("button", { name: "20/10/2026" }))
     expect(seen).toEqual(["2026-10-20"])
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(screen.getByLabelText("Data")).toHaveAttribute("lang", "pt-BR")
     expect(screen.getByLabelText("Data")).not.toHaveAttribute("max")
+  })
+
+  it("dismisses the calendar on outside click, Escape and native date selection", async () => {
+    const user = userEvent.setup()
+    render(<><label htmlFor="day">Data</label><LocaleDateInput id="day" locale="pt-BR" value="2026-10-14" onChange={() => undefined} /><button>Outside</button></>)
+    const input = screen.getByLabelText("Data")
+    await user.click(input)
+    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Outside" }))
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    await user.click(input)
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    await user.click(input)
+    fireEvent.change(input, { target: { value: "2026-10-15" } })
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
   it("reports a typed day past max instead of clearing the field", () => {
