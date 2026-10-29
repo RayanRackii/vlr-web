@@ -9,9 +9,9 @@ import { FieldHelp } from "./field-label"
 import { Switch } from "./switch"
 
 describe("small control accessibility", () => {
-  it.each(["xs", "icon-xs"] as const)("expands the %s Button target without changing its visual size", (size) => {
+  it.each(["xs", "icon-xs", "icon-sm", "icon"] as const)("keeps %s Button (already >= 24px) free of the pseudo hit area so tight icon groups do not overlap", (size) => {
     render(<Button size={size}>Action</Button>)
-    expect(screen.getByRole("button", { name: "Action" })).toHaveClass("touch-target", size === "xs" ? "h-8" : "size-8")
+    expect(screen.getByRole("button", { name: "Action" })).not.toHaveClass("touch-target")
   })
 
   it("expands the field help target while keeping the 16px info button", () => {

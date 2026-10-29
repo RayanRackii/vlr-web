@@ -62,7 +62,6 @@
     --border: oklch(0.922 0.006 266);
     --input: oklch(0.922 0.006 266);
     --ring: oklch(0.54 0.19 264);
-    --focus-ring: var(--ring);
 
     --chart-1: var(--primary);
     --chart-2: oklch(0.6 0.14 200);
@@ -140,7 +139,6 @@
     --border: oklch(1 0 0 / 12%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.65 0.18 264);
-    --focus-ring: var(--ring);
     --chart-1: var(--primary);
     --chart-2: oklch(0.68 0.13 200);
     --chart-3: oklch(0.72 0.13 155);
@@ -160,7 +158,7 @@
     @apply border-border ;
   }
   :where(a[href], button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="switch"], [role="radio"], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
-    outline: 2px solid var(--focus-ring);
+    outline: 2px solid var(--focus-ring, var(--ring));
     outline-offset: 2px;
   }
   body {

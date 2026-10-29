@@ -110,7 +110,7 @@
 .tenant-auth input { background: var(--tenant-field); }
 .tenant-auth .text-primary { color: var(--tenant-link); }
 .tenant-auth :is(a, button):focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--focus-ring, var(--ring));
   outline-offset: 3px;
 }
 
@@ -118,7 +118,7 @@
 .tenant-auth input:focus-visible {
   outline: none;
   border-color: var(--tenant-link);
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--focus-ring);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--focus-ring, var(--ring));
 }
 
 /* Keep browser autofill from painting fields saturated blue. */
@@ -132,8 +132,8 @@
   transition: background-color 9999s ease-out 0s;
 }
 .tenant-auth input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px color-mix(in srgb, var(--tenant-link) 22%, transparent);
-  box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px color-mix(in srgb, var(--tenant-link) 22%, transparent);
+  -webkit-box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px var(--background), 0 0 0 4px var(--focus-ring, var(--ring));
+  box-shadow: 0 0 0 1000px var(--tenant-field) inset, 0 0 0 2px var(--background), 0 0 0 4px var(--focus-ring, var(--ring));
 }
 
 .tenant-auth-form h2 {

@@ -106,7 +106,7 @@ export function RentableMultiSelect({
               >
                 <input
                   type="checkbox"
-                  className="touch-target size-4 accent-primary"
+                  className="size-4 accent-primary"
                   checked={checked}
                   disabled={disabled}
                   onChange={() => {
