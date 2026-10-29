@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { AppShell } from "@/components/layout/AppShell"
-import { getEmailInitials } from "@/lib/emailInitials"
+import { customerDisplayInitials, customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
 import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { CustomerNotificationBell } from "./CustomerNotificationBell"
@@ -203,7 +203,7 @@ export function CustomerAppLayout() {
         )}
         pageTitle={pageTitle}
         userLabel={userLabel}
-        initials={getEmailInitials(userLabel)}
+        initials={customerDisplayInitials(customerDisplayName(userLabel))}
         profileTo={profileTo}
         headerActions={<CustomerNotificationBell subdomain={subdomain} />}
         enlargeHeaderTargets

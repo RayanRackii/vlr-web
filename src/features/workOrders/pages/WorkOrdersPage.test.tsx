@@ -280,6 +280,7 @@ describe("WorkOrdersPage empty states", () => {
     const user = userEvent.setup()
     renderList(["os.work_orders.read", ...(canCreate ? ["os.work_orders.create"] : [])], ["os"])
     const title = await screen.findByRole("heading", { name: i18n.t("workOrders.empty.Open") })
+    expect(title.closest('[data-slot="table-container"]')).toBeNull()
     const empty = within(title.closest('[data-slot="empty-state"]') as HTMLElement)
     expect(empty.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/maintenance")
     if (canCreate) {

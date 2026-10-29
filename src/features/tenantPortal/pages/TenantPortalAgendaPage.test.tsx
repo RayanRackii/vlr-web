@@ -3085,7 +3085,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(dateInput).toHaveValue("2026-10-20")
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
-    ).toBeInTheDocument()
+    ).toHaveClass("text-destructive")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
     fireEvent.blur(dateInput)
     expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()

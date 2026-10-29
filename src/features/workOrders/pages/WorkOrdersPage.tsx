@@ -194,7 +194,7 @@ function WorkOrdersTable({
   const filteredRows = table.getFilteredRowModel().rows
 
   return (
-    <div className="rounded-xl border border-border">
+    <div className="min-w-0 rounded-xl border border-border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -217,23 +217,6 @@ function WorkOrdersTable({
             <TableRowsSkeleton columns={columns.length} />
           ) : null}
 
-          {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 whitespace-normal text-center">
-                <EmptyState
-                  icon={ClipboardList}
-                  title={columnFilters.length ? t("emptyStates.noResults") : emptyLabel}
-                  description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
-                  example={columnFilters.length || isStatusFiltered ? undefined : emptyExample}
-                  learnMore={columnFilters.length || isStatusFiltered ? undefined : learnMore}
-                  action={columnFilters.length || isStatusFiltered ? (
-                    <Button onClick={() => { setColumnFilters([]); onClearStatus() }}>{t(columnFilters.length ? "emptyStates.clearFilters" : "workOrders.viewOpen")}</Button>
-                  ) : emptyAction}
-                />
-              </TableCell>
-            </TableRow>
-          ) : null}
-
           {!isLoading
             ? filteredRows.map((row) => (
                 <TableRow key={row.id}>
@@ -250,6 +233,18 @@ function WorkOrdersTable({
             : null}
         </TableBody>
       </Table>
+      {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title={columnFilters.length ? t("emptyStates.noResults") : emptyLabel}
+          description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
+          example={columnFilters.length || isStatusFiltered ? undefined : emptyExample}
+          learnMore={columnFilters.length || isStatusFiltered ? undefined : learnMore}
+          action={columnFilters.length || isStatusFiltered ? (
+            <Button className="min-h-11" onClick={() => { setColumnFilters([]); onClearStatus() }}>{t(columnFilters.length ? "emptyStates.clearFilters" : "workOrders.viewOpen")}</Button>
+          ) : emptyAction}
+        />
+      ) : null}
     </div>
   )
 }

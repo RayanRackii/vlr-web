@@ -320,6 +320,7 @@ describe("CustomerAppLayout session tenant", () => {
     })
 
     expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(2)
+    expect(screen.getAllByText("BS")).toHaveLength(2)
     expect(screen.getAllByText(i18n.t("tenantPortal.redesign.greetingName", { name: "Beatriz" }))).toHaveLength(2)
     expect(screen.queryByTitle("ana.email@example.test")).not.toBeInTheDocument()
   })
