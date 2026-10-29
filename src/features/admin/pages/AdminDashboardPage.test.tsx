@@ -76,8 +76,10 @@ describe("AdminDashboardPage", () => {
     await user.type(search, "inexistente")
     const empty = screen.getByRole("status")
     expect(within(empty).getByText(i18n.t("admin.dashboard.searchEmptyTitle"))).toBeInTheDocument()
+    // The Clear button sits outside the live region so it is not announced as status text.
+    expect(within(empty).queryByRole("button")).not.toBeInTheDocument()
     expect(screen.queryByText("Estúdio Aurora")).not.toBeInTheDocument()
-    await user.click(within(empty).getByRole("button", { name: i18n.t("admin.dashboard.clearSearch") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("admin.dashboard.clearSearch") }))
 
     expect(search).toHaveValue("")
     expect(screen.getByText("Estúdio Aurora")).toBeInTheDocument()

@@ -254,7 +254,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
 
       <section className="people-directory" aria-label={t("peopleAccess.tabs.users")}>
         <div className="people-list-heading">
-          <h2>{t("peopleAccess.users.teamCount", { count: total })}</h2>
+          {!isLoading ? <h2>{t("peopleAccess.users.teamCount", { count: total })}</h2> : null}
           <p>{t("peopleAccess.users.description")}</p>
         </div>
         {!isLoading && members.length === 0 && loadError === null ? (

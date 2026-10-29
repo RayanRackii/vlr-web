@@ -130,7 +130,7 @@ export function PeopleCustomersTab() {
 
       <section className="people-directory" aria-label={t("peopleAccess.tabs.customers")}>
         <div className="people-list-heading">
-          <h2>{t("peopleAccess.customers.customerCount", { count: total })}</h2>
+          {!isLoading ? <h2>{t("peopleAccess.customers.customerCount", { count: total })}</h2> : null}
           <p>{t("peopleAccess.customers.description")}</p>
         </div>
       {!isLoading && loadError === null && customers.length === 0 ? (
