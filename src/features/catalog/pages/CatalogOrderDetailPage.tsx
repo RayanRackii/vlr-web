@@ -223,7 +223,7 @@ export function CatalogOrderDetailPage() {
             type="button"
             variant="ghost"
             size="sm"
-            className="touch-target"
+            className="touch-target inline-flex min-h-11 px-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             onClick={() => {
               void navigate("/catalogo/pedidos")
             }}

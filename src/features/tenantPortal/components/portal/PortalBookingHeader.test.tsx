@@ -13,7 +13,7 @@ it.each([
 ])("derives the greeting and avatar from the display name for %s", (label, greeting, displayName, initials) => {
   persistCustomerSession("customer-token", "ficc", label)
   render(<MemoryRouter><PortalBookingHeader /><CustomerSidebar brandLabel="Club" items={[]} userLabel={label} /></MemoryRouter>)
-  expect(screen.getByText(`Olá, ${greeting} 👋`)).toBeInTheDocument()
+  expect(screen.getByText(`Olá, ${greeting}`)).toBeInTheDocument()
   expect(screen.getByTitle(displayName)).toHaveTextContent(displayName)
   expect(document.querySelector(".portal-avatar")).toHaveTextContent(initials)
 })

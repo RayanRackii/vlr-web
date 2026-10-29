@@ -17,7 +17,7 @@
 .portal-profile-badge svg { width: 14px; height: 14px; }
 .portal-profile-hint { margin: -6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
 
-.portal-profile-savebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; position: sticky; bottom: 0; padding-top: 2px; }
+.portal-profile-savebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 2px; }
 
 .portal-profile-layout :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
 
@@ -25,7 +25,6 @@
   .portal-profile-card { padding: 18px; }
   .portal-profile-identity .portal-profile-photo-actions { width: 100%; }
   .portal-profile-identity .portal-profile-photo-actions > * { flex: 1; }
-  .portal-profile-savebar { position: static; }
   .portal-profile-savebar > * { width: 100%; }
 }
 

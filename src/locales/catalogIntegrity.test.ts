@@ -22,6 +22,13 @@ function leafKeys(value: unknown, prefix = ""): string[] {
 }
 
 describe("translation catalog integrity", () => {
+  it.each(["pt-BR", "en", "es"])("keeps portal greetings free of the wave emoji in %s", (lng) => {
+    for (const key of ["tenantPortal.redesign.greeting", "tenantPortal.redesign.greetingName"]) {
+      expect(i18n.exists(key, { lng })).toBe(true)
+      expect(i18n.t(key, { lng, name: "Ana" })).not.toContain("👋")
+    }
+  })
+
   it.each(["pt-BR", "en", "es"])("translates staff sales navigation and new states in %s", (lng) => {
     const keys = [
       "nav.catalogRequests", "catalog.staff.allStatuses", "catalog.staff.productsSearch", "catalog.staff.ordersSearch",

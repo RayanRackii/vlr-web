@@ -345,6 +345,7 @@ export function TenantPortalProfilePage() {
                 type="button"
                 variant="outline"
                 size="sm"
+                className="touch-target"
                 disabled={saving || photoProcessing}
                 onClick={() => {
                   fileInputRef.current?.click()
@@ -359,7 +360,7 @@ export function TenantPortalProfilePage() {
                   variant="ghost"
                   size="sm"
                   disabled={saving || photoProcessing}
-                  className="text-muted-foreground"
+                  className="touch-target text-muted-foreground"
                   onClick={onRemovePhoto}
                 >
                   <Trash2 aria-hidden />
@@ -430,7 +431,7 @@ export function TenantPortalProfilePage() {
                 })}
               </p>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 {email.length > 0 ? (
                   <ReadOnlyValue
                     label={t("tenantPortal.fields.email")}
@@ -498,7 +499,7 @@ export function TenantPortalProfilePage() {
                   ? t("tenantPortal.profile.photoProcessing")
                   : t("tenantPortal.profile.saving")
               }
-              className="w-full sm:w-auto"
+              className="touch-target w-full sm:w-auto"
               style={{ backgroundColor: primary }}
             >
               {t("tenantPortal.profile.save")}

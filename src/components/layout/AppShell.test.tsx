@@ -8,6 +8,20 @@ import i18n from "@/lib/i18n"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
 import { AppShell } from "./AppShell"
 
+it("supports the account menu keyboard pattern: arrows reach items and Tab exits", async () => {
+  const user = userEvent.setup()
+  render(<MemoryRouter><AppShell sidebar={() => <nav>Links</nav>} pageTitle="Portal" userLabel="Ana" initials="AN" profileTo="/profile" onSignOut={vi.fn()}><button>Content action</button></AppShell></MemoryRouter>)
+  const trigger = screen.getByRole("button", { name: i18n.t("account.openMenu") })
+  trigger.focus()
+  await user.keyboard("{Enter}")
+  const profile = await screen.findByRole("menuitem", { name: i18n.t("account.profile") })
+  expect(profile).toHaveFocus()
+  await user.keyboard("{ArrowDown}")
+  expect(screen.getByRole("menuitem", { name: i18n.t("account.signOut") })).toHaveFocus()
+  await user.tab()
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+})
+
 it("keeps the staff hamburger and mobile drawer available by default", async () => {
   const user = userEvent.setup()
   render(<MemoryRouter><AppShell sidebar={() => <nav aria-label="Staff">Staff links</nav>} pageTitle="Staff" userLabel="Staff" initials="ST" onSignOut={vi.fn()}>Content</AppShell></MemoryRouter>)
