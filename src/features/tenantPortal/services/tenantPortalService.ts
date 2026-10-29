@@ -54,6 +54,12 @@ import {
 const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
   "rolvix.customer.pendingEmailVerification"
 const CUSTOMER_LABEL_EVENT = "rolvix:customer-label"
+let customerSessionGeneration = 0
+
+/** Distinguishes sessions even when the same customer signs in with the same token. */
+export function getCustomerSessionGeneration(): number {
+  return customerSessionGeneration
+}
 
 export type PendingEmailVerification = {
   email: string
@@ -620,6 +626,7 @@ export function persistCustomerSession(
   customerId?: string,
   tenantId?: string,
 ): void {
+  customerSessionGeneration += 1
   clearAgendaSelectionNotices()
   window.localStorage.setItem(CUSTOMER_TOKEN_STORAGE_KEY, token)
   window.localStorage.setItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY, subdomain.trim().toLowerCase())
@@ -638,6 +645,7 @@ export function persistCustomerSession(
 }
 
 export function clearCustomerSession(): void {
+  customerSessionGeneration += 1
   clearAgendaSelectionNotices()
   window.localStorage.removeItem(CUSTOMER_TOKEN_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY)
@@ -901,6 +909,7 @@ export async function fetchCustomerProfile(): Promise<CustomerProfile> {
 export async function updateCustomerProfile(
   body: UpdateCustomerProfileRequest,
 ): Promise<CustomerProfile> {
+  const sessionGeneration = getCustomerSessionGeneration()
   const sessionIdentity = currentCustomerSessionIdentity()
   const payload: UpdateCustomerProfileRequest = {}
   if (body.name !== undefined) {
@@ -926,7 +935,8 @@ export async function updateCustomerProfile(
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidResponse"))
   }
-  if (sessionIdentity === currentCustomerSessionIdentity()) {
+  if (sessionGeneration === getCustomerSessionGeneration()
+    && sessionIdentity === currentCustomerSessionIdentity()) {
     setCustomerLabel(parsed.data.name, parsed.data.email)
   }
   return parsed.data

@@ -151,6 +151,40 @@ describe("TenantPortalProfilePage validity gate", () => {
     expect(getCustomerLabel()).toBe(session === "logout" ? null : "Beatriz Souza")
   })
 
+  it.each(["load", "PATCH", "refresh"])("ignores a delayed %s after the same customer signs in again", async (stage) => {
+    const user = userEvent.setup()
+    persistCustomerSession("token", "ficc", "Ana Silva", profile.id, profile.tenantId)
+    let finish = () => {}
+    const pending = new Promise<void>((resolve) => { finish = resolve })
+    const delayedProfile = async () => {
+      await pending
+      return { ...profile, name: "Nome da sessão anterior" }
+    }
+    if (stage === "load") fetchProfile.mockImplementation(delayedProfile)
+    if (stage === "PATCH") updateProfile.mockImplementation(delayedProfile)
+    if (stage === "refresh") {
+      updateProfile.mockResolvedValue({ ...profile, name: "Ana Souza" })
+      fetchProfile.mockResolvedValueOnce(profile).mockImplementation(delayedProfile)
+    }
+    renderProfile()
+    if (stage === "load") {
+      await waitFor(() => expect(fetchProfile).toHaveBeenCalledOnce())
+    } else {
+      const name = await screen.findByLabelText(i18n.t("tenantPortal.fields.name"))
+      await user.clear(name)
+      await user.type(name, "Ana Souza")
+      await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.profile.save") }))
+      await waitFor(() => expect(stage === "PATCH" ? updateProfile : fetchProfile).toHaveBeenCalledTimes(stage === "PATCH" ? 1 : 2))
+    }
+    act(() => {
+      clearCustomerSession()
+      persistCustomerSession("token", "ficc", "Nome da nova sessão", profile.id, profile.tenantId)
+    })
+    await act(async () => { finish(); await pending })
+    expect(getCustomerLabel()).toBe("Nome da nova sessão")
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
   it("keeps Salvar disabled until the name passes the schema", async () => {
     const user = userEvent.setup()
     renderProfile()

@@ -83,6 +83,7 @@ Decisões: DTO próprio (`CustomerProfileDto`); PATCH só Nome + Foto; identidad
 - [x] Menu da conta via AppShell `profileTo` (B2B `MainLayout` sem o item)
 - [x] `GET`/`PATCH /api/customers/me` (nome + foto via file picker; `safeParse` em schema separado do login)
 - [x] Nome do Perfil como label da sessão (código local, sem Git): login e verificação preferem nome não vazio; carregar/salvar o Perfil sincroniza cabeçalho, sidebar e saudações sem reload, com e-mail apenas como fallback e assinatura de mudanças na aba/entre abas.
+- [x] Follow-up Medium do label (código local, sem Git): geração da sessão avança em login/verificação, logout e troca de tenant; cargas e PATCHes pendentes só sincronizam o nome na sessão de origem. Regressões com `customerId` preenchido e token reutilizado cobrem novo login do mesmo cliente e troca de tenant.
 - [x] Erro de carga: botão Tentar novamente (re-GET), sem sair do layout; sucesso recarrega via GET
 - FOLLOW_UP (fora deste MVP): e-mail com verificação; telefone com SMS; CPF; senha B2C (troca/recuperação); CEP/endereço; ExtraAttributes. Upload de foto **não** aberto — cadastro já comprime e persiste `PhotoUrl`.
 

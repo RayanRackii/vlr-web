@@ -94,8 +94,9 @@ describe("customer session tenant binding", () => {
     expect(getCustomerLabel()).toBeNull()
   })
 
-  it.each(["unchanged", "logout", "replacement"])("only syncs a successful profile update to its originating session (%s)", async (session) => {
-    persistCustomerSession("token", "portal", "Ana Silva")
+  it.each(["unchanged", "logout", "replacement", "same-customer-login", "tenant-switch"])("only syncs a successful profile update to its originating session (%s)", async (session) => {
+    const customerId = "11111111-1111-4111-8111-111111111111"
+    persistCustomerSession("token", "portal", "Ana Silva", customerId, TENANT_A)
     let finish = () => {}
     const pending = new Promise<void>((resolve) => { finish = resolve })
     vi.spyOn(customerApi, "patch").mockImplementation(async () => {
@@ -112,9 +113,16 @@ describe("customer session tenant binding", () => {
     const request = updateCustomerProfile({ name: "Beatriz Souza" })
     if (session === "logout") clearCustomerSession()
     if (session === "replacement") persistCustomerSession("new-token", "portal", "Carla Lima")
+    if (session === "same-customer-login") {
+      clearCustomerSession()
+      persistCustomerSession("token", "portal", "Carla Lima", customerId, TENANT_A)
+    }
+    if (session === "tenant-switch") {
+      persistCustomerSession("token", "other-club", "Carla Lima", customerId, TENANT_B)
+    }
     finish()
     await request
-    expect(getCustomerLabel()).toBe(session === "logout" ? null : session === "replacement" ? "Carla Lima" : "Beatriz Souza")
+    expect(getCustomerLabel()).toBe(session === "logout" ? null : session === "unchanged" ? "Beatriz Souza" : "Carla Lima")
   })
 
   it("keeps the current label when a profile update fails or returns invalid data", async () => {

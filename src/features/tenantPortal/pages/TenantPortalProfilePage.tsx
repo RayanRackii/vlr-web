@@ -44,6 +44,7 @@ import {
 import {
   fetchCustomerProfile,
   fileToCompressedDataUrl,
+  getCustomerSessionGeneration,
   setCustomerLabel,
   updateCustomerProfile,
   type UpdateCustomerProfileRequest,
@@ -136,13 +137,16 @@ export function TenantPortalProfilePage() {
 
   async function loadProfile() {
     const generation = ++loadGenerationRef.current
+    const sessionGeneration = getCustomerSessionGeneration()
     const sessionIdentity = currentCustomerSessionIdentity()
     setLoading(true)
     setLoadError(null)
 
     try {
       const data = await fetchCustomerProfile()
-      if (generation !== loadGenerationRef.current || sessionIdentity !== currentCustomerSessionIdentity()) {
+      if (generation !== loadGenerationRef.current
+        || sessionGeneration !== getCustomerSessionGeneration()
+        || sessionIdentity !== currentCustomerSessionIdentity()) {
         return
       }
       applyProfile(data)
@@ -218,8 +222,10 @@ export function TenantPortalProfilePage() {
     }
 
     const generation = loadGenerationRef.current
+    const sessionGeneration = getCustomerSessionGeneration()
     const sessionIdentity = currentCustomerSessionIdentity()
     const isCurrent = () => generation === loadGenerationRef.current
+      && sessionGeneration === getCustomerSessionGeneration()
       && sessionIdentity === currentCustomerSessionIdentity()
     setSaving(true)
     try {
