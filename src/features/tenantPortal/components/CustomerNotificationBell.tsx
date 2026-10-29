@@ -4,13 +4,10 @@ import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarge
 import * as customerNotificationService from "../services/customerNotificationService"
 import { getCustomerAccessToken, getCustomerSubdomain, isCustomerSignedInForTenant } from "../services/tenantPortalService"
 import { subscribeCustomerSession } from "@/lib/customerSessionEvents"
+import { sanitizeCustomerNotificationRoute } from "../lib/customerNotificationRoute"
 
 function sessionSnapshot() {
   return JSON.stringify([getCustomerSubdomain(), getCustomerAccessToken()])
-}
-
-function customerRoute(_module: string, targetRoute: string) {
-  return targetRoute
 }
 
 export function CustomerNotificationBell({ subdomain }: { subdomain: string }) {
@@ -39,6 +36,10 @@ export function CustomerNotificationBell({ subdomain }: { subdomain: string }) {
     }
   }, [session, subdomain])
   if (!isCustomerSignedInForTenant(subdomain)) return null
+
+  function customerRoute(_module: string, targetRoute: string) {
+    return sanitizeCustomerNotificationRoute(targetRoute, subdomain)
+  }
 
   // A new session gets fresh state, aborts pending reads and closes any open panel.
   return <NotificationBell

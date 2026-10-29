@@ -40,6 +40,7 @@ function renderPortal() {
   const router = createMemoryRouter([
     { path: "/t/:subdomain", element: <div>Login</div> },
     { path: "/t/:subdomain/app", element: <CustomerAppLayout /> },
+    { path: "/t/:subdomain/pedidos", element: <div>Orders</div> },
     { path: "/t/:subdomain/pedidos/:id", element: <div>Order details</div> },
   ], { initialEntries: ["/t/shop/app"] })
   const view = render(<ThemeProvider attribute="class"><RouterProvider router={router} /></ThemeProvider>)
@@ -73,6 +74,15 @@ describe("customer portal notification bell", () => {
 })
 
 describe("customer notification interactions", () => {
+  it.each(["/t/other/app", "/\n/evil.test/x"])("keeps an unsafe item target %j inside the current tenant", async (targetRoute) => {
+    vi.mocked(notifications.listNotifications).mockResolvedValue({ items: [{ ...item, targetRoute }], nextCursor: null })
+    const user = userEvent.setup()
+    const { router } = renderPortal()
+    await user.click(await screen.findByRole("button", { name: "Notificações: 2 não lidas" }))
+    await user.click(await screen.findByRole("button", { name: /Atualização disponível/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe("/t/shop/pedidos"))
+  })
+
   it.each([false, true])("marks a selected item read and follows its customer route (mobile=%s)", async (mobile) => {
     const originalMatchMedia = window.matchMedia
     window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: mobile })

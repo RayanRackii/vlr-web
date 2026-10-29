@@ -102,6 +102,7 @@ export function NotificationPanel({
           type="button"
           variant="ghost"
           size="xs"
+          className={cn(!showGroups && "min-h-[44px]")}
           onClick={onMarkAll}
           disabled={unreadTotal === 0}
         >

@@ -66,10 +66,11 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 ## 2.2. Inbox de notificações do cliente — código local
 
 - [x] Sino genérico no header do `CustomerAppLayout`, desktop/mobile, com alvo de 44px, contador acessível e painel limitado ao viewport; reutiliza tema claro/escuro e textos do inbox, com feedback de leitura traduzido em pt-BR/en/es.
-- [x] Serviço usa `customerApi` (JWT Customer), schemas compartilhados e endpoints `/api/me/customer-notifications`; leitura individual e read-all. Navegação usa `targetRoute` do cliente sem resolver de staff.
+- [x] Serviço usa `customerApi` (JWT Customer), schemas compartilhados e endpoints `/api/me/customer-notifications`; leitura individual e read-all. Navegação sanitiza `targetRoute` para a origem atual e o prefixo exato `/t/<subdomain>/`, com fallback para pedidos do tenant, sem resolver de staff.
 - [x] Polling compartilhado de 30s, pausa em aba oculta e retomada em foco/visibilidade. Troca de sessão/tenant e logout desmontam o sino, limpam painel/contador e descartam respostas antigas, inclusive entre abas.
 - [x] Regressões do transporte HTTP/token, layout, teclado, painel mobile, navegação, read-all, idiomas e isolamento de respostas pendentes; defaults e testes de staff preservados.
 - [x] Validação final: `npx tsc -b`, Vitest completo (2664 testes / 292 arquivos), `npm run lint:ratchet` (189 violações existentes) e `npm run build` aprovados. Review por snapshots: zero achados Critical/High/Medium pendentes. Build mantém avisos CSS existentes `@theme`/`@utility`; nenhum Git executado.
+- [x] Follow-up High de navegação (local, sem Git): sanitizador puro compartilhado pelos destinos de grupo e item rejeita controles/whitespace, barras invertidas, URLs externas/esquemas, outros tenants e segmentos `..` (também codificados); preserva caminhos válidos com query/hash. Ler todas no painel Customer tem altura mínima de 44px. `npx tsc -b`, 64 testes afetados em 3 arquivos e `npm run lint:ratchet` aprovados (189 violações existentes). Revisão canônica por snapshot: `SAFE`, sem Critical/High/Medium.
 - [ ] Smoke visual em DEV a 390px e desktop, claro/escuro; Chromium bloqueado neste sandbox. Próximo WEB: validar sino e abertura do pedido em DEV. Próximo API: CI com PostgreSQL e smoke DEV do inbox Customer (ROADMAP API, notificações B2C).
 
 ## 2.5. Dashboard B2B dinâmico — FEITO (código)
