@@ -79,8 +79,8 @@ export function PortalCatalogProductCard({
             {product.taxonomy.tags.map((tag) => <span key={tag.id} className="portal-catalog-tag">{tag.name}</span>)}
           </div>
         ) : null}
-        <Link to={detailTo} className="text-inherit no-underline">
-          {product.code ? <p className="mb-1 break-words text-xs text-muted-foreground">{product.code}</p> : null}
+        <Link to={detailTo} className="portal-catalog-product-link text-inherit no-underline">
+          {product.code ? <span className="block break-words text-xs text-muted-foreground">{product.code}</span> : null}
           <h2 className="portal-catalog-product-name">{product.name}</h2>
         </Link>
         <div className="portal-catalog-price-row">

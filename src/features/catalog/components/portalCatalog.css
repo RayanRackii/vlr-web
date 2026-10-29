@@ -29,11 +29,16 @@
 .portal-catalog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .portal-catalog-tag { max-width: 100%; border-radius: 6px; padding: 2px 8px; background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
 .portal-catalog-product-name { font-size: 16px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.portal-catalog-product-link { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.portal-catalog-product-link > * { max-width: 100%; }
 .portal-catalog-price-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
 .portal-catalog-price { min-width: 0; overflow-wrap: anywhere; font-size: 18px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .portal-catalog-add { flex-shrink: 0; width: 44px; min-height: 44px; padding: 0; border-radius: 12px; }
 .portal-catalog-stepper { display: flex; align-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; }
-.portal-catalog-stepper:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent); }
+.portal-catalog-stepper:focus-within { border-color: var(--focus-ring, var(--ring)); outline: 2px solid var(--focus-ring, var(--ring)); outline-offset: 2px; }
+/* Draw one ring around the stepper, outside its clipped inner controls. */
+:root .portal-catalog-stepper > :is(input, button):is(:focus, :focus-visible, :focus-within):not([aria-invalid="true"]) { outline: none; box-shadow: none; }
+:root .portal-catalog-stepper > :is(input, button):focus-visible:not([aria-invalid="true"]) { box-shadow: inset 0 0 0 2px var(--focus-ring, var(--ring)); }
 .portal-catalog-stepper > button { flex-shrink: 0; border: 0; border-radius: 0; background: transparent; }
 .portal-catalog-stepper > input { height: 44px; min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; text-align: center; font-weight: 650; box-shadow: none; appearance: textfield; font-variant-numeric: tabular-nums; }
 .portal-catalog-stepper > input::-webkit-inner-spin-button, .portal-catalog-stepper > input::-webkit-outer-spin-button { appearance: none; margin: 0; }
@@ -128,7 +133,7 @@
 
 @media (max-width: 767px) {
   .portal-catalog-stepper > input { min-width: 44px; min-height: 44px; }
-  .portal-catalog-body a { display: inline-flex; align-items: center; min-height: 44px; }
+  .portal-catalog-product-link { min-height: 44px; }
   .portal-cart-remove { min-width: 44px; min-height: 44px; white-space: normal; text-align: center; }
 }
 

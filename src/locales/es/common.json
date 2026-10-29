@@ -308,8 +308,8 @@
   "tenantPortal": {
     "redesign": {
       "resourceTimes": "Horarios de {{name}}",
-      "greeting": "Bienvenido 👋",
-      "greetingName": "Hola, {{name}} 👋",
+      "greeting": "Bienvenido",
+      "greetingName": "Hola, {{name}}",
       "title": "Reservar horario",
       "subtitle": "Elige el día, el recurso o espacio y el horario.",
       "subtitleTenant": "Elige el día, el recurso o espacio y el horario en {{tenant}}.",

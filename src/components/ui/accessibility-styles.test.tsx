@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs"
 import { render, screen } from "@testing-library/react"
 import { CircleHelp, LucideProvider } from "lucide-react"
+import { parse } from "postcss"
 import { describe, expect, it } from "vitest"
 
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
@@ -12,6 +14,50 @@ import { Select, SelectTrigger, SelectValue } from "./select"
 import { Textarea } from "./textarea"
 
 describe("small control accessibility", () => {
+  it("styles focused native segments and shared controls, with only destructive feedback when invalid", () => {
+    render(<>
+      <Input type="date" aria-label="Date" />
+      <Input type="time" aria-label="Time" />
+      <Input type="datetime-local" aria-label="Date and time" />
+      <select aria-label="Native select"><option>Option</option></select>
+      <Input aria-label="Name" />
+      <Select><SelectTrigger aria-label="Type"><SelectValue /></SelectTrigger></Select>
+    </>)
+    const css = parse(readFileSync("src/index.css", "utf8"))
+    for (const label of ["Date", "Time", "Date and time", "Native select", "Name", "Type"]) {
+      const control = screen.getByLabelText(label)
+      for (const invalid of [false, true]) {
+        control.setAttribute("aria-invalid", String(invalid))
+        control.focus()
+        const declarations: Record<string, string> = {}
+        css.walkRules((rule) => {
+          if (!rule.selector.startsWith(":root :is(") || !rule.selector.includes(":focus-within") || !control.matches(rule.selector)) return
+          rule.walkDecls((declaration) => { declarations[declaration.prop] = declaration.value })
+        })
+        const color = invalid ? "var(--destructive)" : "var(--focus-ring, var(--ring))"
+        expect(declarations, `${label}, invalid=${invalid}`).toMatchObject({ outline: `2px solid ${color}`, "outline-offset": "2px", "border-color": color, "--tw-ring-color": color })
+        if (invalid) expect(declarations["box-shadow"]).toBe("0 0 0 2px var(--background), 0 0 0 4px var(--destructive)")
+      }
+    }
+  })
+
+  it("gives touch targets a real 44px minimum box on coarse pointers and narrow screens", () => {
+    render(<><Input aria-label="Name" /><Select><SelectTrigger aria-label="Type"><SelectValue /></SelectTrigger></Select></>)
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveClass("touch-target")
+    expect(screen.getByRole("combobox", { name: "Type" })).toHaveClass("touch-target")
+
+    const css = parse(readFileSync("src/index.css", "utf8"))
+    let actualBox = false
+    css.walkRules((rule) => {
+      if (!rule.selector.startsWith(".touch-target:not(")) return
+      expect(rule.parent?.type === "atrule" && rule.parent.params).toBe("(pointer: coarse), (max-width: 767px)")
+      const declarations = Object.fromEntries(rule.nodes.filter((node) => node.type === "decl").map((node) => [node.prop, node.value]))
+      expect(declarations).toMatchObject({ "min-width": "44px", "min-height": "44px", "box-sizing": "border-box" })
+      actualBox = true
+    })
+    expect(actualBox).toBe(true)
+  })
+
   it.each(["xs", "icon-xs", "icon-sm", "icon"] as const)("keeps %s Button (already >= 24px) free of the pseudo hit area so tight icon groups do not overlap", (size) => {
     render(<Button size={size}>Action</Button>)
     expect(screen.getByRole("button", { name: "Action" })).not.toHaveClass("touch-target")

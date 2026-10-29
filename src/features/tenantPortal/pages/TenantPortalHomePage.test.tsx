@@ -63,7 +63,7 @@ describe("TenantPortalHomePage", () => {
     persistCustomerSession("token", "clube", "Marina Souza")
     renderHome([rentalsItem, catalogItem])
 
-    expect(screen.getByText("Olá, Marina 👋")).toBeInTheDocument()
+    expect(screen.getByText("Olá, Marina")).toBeInTheDocument()
     expect(
       screen.getByRole("heading", { level: 1, name: "Início" }),
     ).toBeInTheDocument()

@@ -189,6 +189,7 @@ export function PortalCartPage() {
             <Button
               type="button"
               variant="outline"
+              className="touch-target"
               render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
             >
               {t("tenantPortal.catalog.requestSentCatalog")}
