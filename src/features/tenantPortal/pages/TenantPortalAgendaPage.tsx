@@ -2375,6 +2375,7 @@ export function TenantPortalAgendaPage() {
             </span>
           </div>
 
+          <div id="portal-booking-spaces" role="group" aria-label={t("tenantPortal.agenda.chooseSpaceFirst")} tabIndex={-1}>
           {visibleAssets.length === 0 ? (
             <PortalBookingEmptyState />
           ) : (
@@ -2504,6 +2505,8 @@ export function TenantPortalAgendaPage() {
               </div>
             </div>
           ) : null}
+
+          </div>
 
           {queue.explanation ? (
             <p className="text-sm text-muted-foreground">{queue.explanation}</p>

@@ -219,7 +219,7 @@ function WorkOrdersTable({
 
           {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length} className="h-24 whitespace-normal text-center">
                 <EmptyState
                   icon={ClipboardList}
                   title={columnFilters.length ? t("emptyStates.noResults") : emptyLabel}

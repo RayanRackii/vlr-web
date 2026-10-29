@@ -7,7 +7,7 @@
 .portal-profile-avatar [data-slot="avatar-fallback"] { background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, var(--accent))); color: var(--primary-foreground); font-size: 24px; font-weight: 750; }
 .portal-profile-who { flex: 1; min-width: 0; }
 .portal-profile-name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.portal-profile-email { margin-top: 2px; color: var(--muted-foreground); font-size: 14px; overflow-wrap: anywhere; }
+.portal-profile-email { margin-top: 2px; color: var(--muted-foreground); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .portal-profile-photohint { margin-top: 2px; color: var(--muted-foreground); font-size: 13px; }
 .portal-profile-photo-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 

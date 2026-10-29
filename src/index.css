@@ -282,12 +282,35 @@
   --tw-ring-color: var(--focus-ring, var(--ring));
 }
 
-/* A validation error owns every layer of focus feedback, including outlines
-   supplied by page styles and the ring used by shared controls. */
-:root :is(input, select, textarea, [data-slot="select-trigger"])[aria-invalid="true"]:is(:focus, :focus-visible, :focus-within) {
-  border-color: var(--destructive);
-  outline: 2px solid var(--destructive);
+/* The native date input is transparent; paint focus on the visible field. */
+:root [data-slot="date-field"]:focus-within {
+  outline: 2px solid var(--focus-ring, var(--ring));
   outline-offset: 2px;
-  --tw-ring-color: var(--destructive);
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--destructive);
+}
+[data-slot="date-field"] > [aria-hidden="true"] { min-height: inherit; }
+:root [data-slot="date-field"][data-invalid="true"]:focus-within {
+  outline-color: var(--destructive);
+}
+@media (pointer: coarse), (max-width: 767px) {
+  [data-slot="date-field"] { min-height: 44px; }
+}
+
+/* Validation owns all feedback layers, even dark/page focus utilities. Reset
+   shadows immediately on blur so ring offsets and transitions cannot linger. */
+:root :is(input, select, textarea, [data-slot="select-trigger"])[aria-invalid="true"] {
+  border-color: var(--destructive) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-color: var(--destructive) !important;
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  transition-property: color, background-color, border-color !important;
+}
+:root :is(input, select, textarea, [data-slot="select-trigger"])[aria-invalid="true"]:is(:focus, :focus-visible, :focus-within) {
+  border-color: var(--destructive) !important;
+  outline: 2px solid var(--destructive) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+  --tw-ring-color: var(--destructive) !important;
 }
