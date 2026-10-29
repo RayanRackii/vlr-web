@@ -17,6 +17,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormInlineMessage,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
@@ -288,7 +289,11 @@ export function PlanTaskEditor({
                 ) : null}
 
                 {inputType === "SingleChoice" ? (
-                  <div className="space-y-3 sm:col-span-2">
+                  <div className="space-y-3 sm:col-span-2"
+                    role="group"
+                    aria-label={t("pmoc.create.tasks.options")}
+                    aria-describedby={optionsError ? optionsMessageId : undefined}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium">
                         {t("pmoc.create.tasks.options")}
@@ -297,6 +302,7 @@ export function PlanTaskEditor({
                         type="button"
                         variant="outline"
                         size="sm"
+                        aria-describedby={optionsError ? optionsMessageId : undefined}
                         onClick={() => {
                           setValue(
                             `tasks.${index}.options`,
@@ -353,10 +359,11 @@ export function PlanTaskEditor({
                         </div>
                       ))}
                     </div>
-                    <LiveFieldMessage
-                      id={optionsMessageId}
-                      message={optionsError}
-                    />
+                    {optionsError ? (
+                      <FormInlineMessage id={optionsMessageId} role="alert" className="text-sm text-destructive">
+                        {optionsError}
+                      </FormInlineMessage>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

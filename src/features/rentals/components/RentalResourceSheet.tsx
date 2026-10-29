@@ -422,7 +422,7 @@ export function RentalResourceSheet({
                 control={form.control}
                 name="unitId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem onBlur={field.onBlur}>
                     <FormLabel>{t("rentals.resources.form.unit")}</FormLabel>
                     {canCreateUnit ? (
                       <FormControl>
@@ -465,6 +465,7 @@ export function RentalResourceSheet({
                         </SelectContent>
                       </Select>
                     )}
+                    <LiveFieldMessage message={issueMessageAt(visibleErrors, ["unitId"])} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -475,7 +476,7 @@ export function RentalResourceSheet({
               control={form.control}
               name="categoryId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem onBlur={field.onBlur}>
                   <FormLabel>{t("rentals.resources.form.category")}</FormLabel>
                   <FormControl>
                     <InlineCreateSelect
@@ -497,6 +498,7 @@ export function RentalResourceSheet({
                       )}
                     />
                   </FormControl>
+                  <LiveFieldMessage message={issueMessageAt(visibleErrors, ["categoryId"])} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -508,7 +510,7 @@ export function RentalResourceSheet({
               control={form.control}
               name="familyId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem onBlur={field.onBlur}>
                   <FormLabel>{t("rentals.resources.form.family")}</FormLabel>
                   <Select
                     modal={false}
@@ -537,6 +539,7 @@ export function RentalResourceSheet({
                       ))}
                     </SelectContent>
                   </Select>
+                  <LiveFieldMessage message={issueMessageAt(visibleErrors, ["familyId"])} />
                   <FormMessage />
                 </FormItem>
               )}

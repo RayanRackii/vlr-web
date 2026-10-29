@@ -418,11 +418,20 @@ describe("CreatePlanPage validity gate", () => {
     const optionsError = i18n.t("pmoc.create.validation.optionsRequired")
     expect(screen.getAllByText(optionsError)).toHaveLength(1)
     const optionInputs = [1, 2].map((number) => screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number })))
+    await user.click(optionInputs[0]!)
+    await user.tab()
+    expect(screen.getByRole("group", { name: i18n.t("pmoc.create.tasks.options") })).toHaveAccessibleDescription(optionsError)
     for (const input of optionInputs) {
       expect(input).toHaveAccessibleDescription(optionsError)
       expect(input).toHaveAttribute("aria-invalid", "true")
       expect(document.getElementById(input.getAttribute("aria-describedby")!)).toHaveTextContent(optionsError)
     }
+
+    const addOption = screen.getByRole("button", { name: i18n.t("pmoc.create.tasks.addOption") })
+    expect(addOption).toHaveAccessibleDescription(optionsError)
+    const optionsMessage = document.getElementById(optionInputs[0]!.getAttribute("aria-describedby")!)!
+    expect(optionsMessage).toBeVisible()
+    expect(optionsMessage.closest('[role="alert"], [aria-live="polite"], [aria-live="assertive"]')).not.toBeNull()
 
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.create.tasks.optionLabel", { number: 1 })),
@@ -435,6 +444,7 @@ describe("CreatePlanPage validity gate", () => {
     )
     expect(save).toBeEnabled()
     expect(screen.queryByText(optionsError)).not.toBeInTheDocument()
+    expect(addOption).not.toHaveAttribute("aria-describedby")
     for (const input of optionInputs) {
       expect(input).not.toHaveAttribute("aria-describedby")
       expect(input).toHaveAttribute("aria-invalid", "false")
