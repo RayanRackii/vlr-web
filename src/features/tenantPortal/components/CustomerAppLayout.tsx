@@ -11,6 +11,7 @@ import { AppShell } from "@/components/layout/AppShell"
 import { getEmailInitials } from "@/lib/emailInitials"
 import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
+import { CustomerNotificationBell } from "./CustomerNotificationBell"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
 import { useCustomerLabel } from "@/features/tenantPortal/hooks/useCustomerLabel"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
@@ -204,6 +205,7 @@ export function CustomerAppLayout() {
         userLabel={userLabel}
         initials={getEmailInitials(userLabel)}
         profileTo={profileTo}
+        headerActions={<CustomerNotificationBell subdomain={subdomain} />}
         enlargeHeaderTargets
         showLanguageCode
         banner={

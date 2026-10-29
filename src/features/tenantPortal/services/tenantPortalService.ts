@@ -1,3 +1,4 @@
+import { notifyCustomerSessionChanged } from "@/lib/customerSessionEvents"
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { clearAgendaSelectionNotices } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import {
@@ -642,6 +643,7 @@ export function persistCustomerSession(
   } else {
     window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
   }
+  notifyCustomerSessionChanged()
 }
 
 export function clearCustomerSession(): void {
@@ -652,6 +654,7 @@ export function clearCustomerSession(): void {
   setCustomerLabel(null)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
+  notifyCustomerSessionChanged()
 }
 
 export function getCustomerAccessToken(): string | null {

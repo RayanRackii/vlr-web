@@ -59,6 +59,7 @@ export type AppShellProps = {
   collapsible?: boolean
   /** Center and cap the content width for a steady reading measure. */
   constrainContent?: boolean
+  headerActions?: ReactNode
   banner?: ReactNode
   children: ReactNode
 }
@@ -89,6 +90,7 @@ export function AppShell({
   contextLabel,
   collapsible = false,
   constrainContent = false,
+  headerActions,
   banner = null,
   children,
 }: AppShellProps) {
@@ -208,7 +210,7 @@ export function AppShell({
 
             {variant === "staff" ? (
               <NotificationBell className={headerIconClassName} />
-            ) : null}
+            ) : headerActions}
 
             <DropdownMenu>
               <DropdownMenuTrigger

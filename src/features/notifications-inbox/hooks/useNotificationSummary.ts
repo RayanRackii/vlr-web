@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { getNotificationSummary } from "@/features/notifications-inbox/services/notificationInboxService"
+import * as staffNotificationService from "@/features/notifications-inbox/services/notificationInboxService"
+import type { NotificationInboxService } from "@/features/notifications-inbox/services/notificationInboxService"
 import type { NotificationSummary } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
 
 const POLL_INTERVAL_MS = 30_000
@@ -24,21 +25,25 @@ export type UseNotificationSummaryResult = {
  * or when `enabled` flips to false (logout / non-staff). Never polls when
  * disabled, so the customer portal and permission-less users stay quiet.
  */
-export function useNotificationSummary(enabled: boolean): UseNotificationSummaryResult {
+export function useNotificationSummary(
+  enabled: boolean,
+  service: NotificationInboxService = staffNotificationService,
+): UseNotificationSummaryResult {
   const [summary, setSummary] = useState<NotificationSummary | null>(null)
   const [isInitialLoading, setIsInitialLoading] = useState(enabled)
+  const activeRef = useRef(false)
   const hasLoadedRef = useRef(false)
   const inFlightRef = useRef<AbortController | null>(null)
 
   const load = useCallback(async () => {
-    if (!enabled || documentHidden()) {
+    if (!enabled || !activeRef.current || documentHidden()) {
       return
     }
     inFlightRef.current?.abort()
     const controller = new AbortController()
     inFlightRef.current = controller
     try {
-      const next = await getNotificationSummary(controller.signal)
+      const next = await service.getNotificationSummary(controller.signal)
       if (controller.signal.aborted) {
         return
       }
@@ -51,9 +56,10 @@ export function useNotificationSummary(enabled: boolean): UseNotificationSummary
         setIsInitialLoading(false)
       }
     }
-  }, [enabled])
+  }, [enabled, service])
 
   useEffect(() => {
+    activeRef.current = enabled
     if (!enabled) {
       inFlightRef.current?.abort()
       inFlightRef.current = null
@@ -101,6 +107,7 @@ export function useNotificationSummary(enabled: boolean): UseNotificationSummary
     window.addEventListener("focus", onFocus)
 
     return () => {
+      activeRef.current = false
       stopPolling()
       document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener("focus", onFocus)
