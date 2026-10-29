@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { NotificationPanel } from "@/features/notifications-inbox/components/NotificationPanel"
 import { useNotificationSummary } from "@/features/notifications-inbox/hooks/useNotificationSummary"
 import { useViewportIsMobile } from "@/features/notifications-inbox/hooks/useViewportIsMobile"
-import { resolveStaffRoute } from "@/features/notifications-inbox/lib/notificationPresentation"
+import { resolveNotificationItemRoute, resolveStaffRoute } from "@/features/notifications-inbox/lib/notificationPresentation"
 import {
   markAllRead,
   markEventTypeRead,
@@ -102,7 +102,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     void markIdsRead([item.id])
       .then(refetch)
       .catch(() => undefined)
-    void navigate(resolveStaffRoute(item.module, item.targetRoute))
+    void navigate(resolveNotificationItemRoute(item))
     setOpen(false)
   }
 

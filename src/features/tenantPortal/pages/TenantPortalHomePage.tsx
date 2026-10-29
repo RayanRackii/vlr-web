@@ -8,7 +8,7 @@ import type { CustomerAppOutletContext } from "@/features/tenantPortal/component
 import type { CustomerNavItem } from "@/features/tenantPortal/components/CustomerSidebar"
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import { customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
-import { getCustomerLabel } from "@/features/tenantPortal/services/tenantPortalService"
+import { useCustomerLabel } from "@/features/tenantPortal/hooks/useCustomerLabel"
 
 const MY_RESERVATIONS_ID = "customer-my-reservations"
 const PROFILE_ID = "customer-profile"
@@ -39,7 +39,7 @@ export function TenantPortalHomePage() {
   const { subdomain, branding, menu } =
     useOutletContext<CustomerAppOutletContext>()
 
-  const name = customerDisplayName(getCustomerLabel()).split(/\s+/)[0]
+  const name = customerDisplayName(useCustomerLabel()).split(/\s+/)[0]
   const navItems = buildCustomerShellNavItems(subdomain, menu, t)
   const tiles = navItems
     .map((item) => ({ item, descriptionKey: tileDescriptionKey(item) }))

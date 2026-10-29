@@ -7,6 +7,7 @@ import {
   formatRelativeTime,
   groupLabelSlug,
   moduleIcon,
+  resolveNotificationItemRoute,
   resolveStaffRoute,
 } from "@/features/notifications-inbox/lib/notificationPresentation"
 
@@ -84,17 +85,35 @@ describe("formatRelativeTime", () => {
   })
 })
 
+describe("resolveNotificationItemRoute", () => {
+  it("opens the staff order detail with an encoded aggregate id", () => {
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "Catalog.Order.Approved", aggregateId: " order/12 ", targetRoute: "/pedidos?status=approved" })).toBe("/catalogo/pedidos/order%2F12")
+  })
+
+  it.each([null, undefined, "", "   "])("keeps the module route when aggregateId is %s", (aggregateId) => {
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.order.approved", aggregateId, targetRoute: "/pedidos?status=approved#recent" })).toBe("/catalogo/pedidos?status=approved#recent")
+  })
+
+  it("keeps non-order and unknown module routes", () => {
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.product.updated", aggregateId: "product-12", targetRoute: "/produtos" })).toBe("/catalogo/pedidos")
+    expect(resolveNotificationItemRoute({ module: "other", eventType: "other.order.created", aggregateId: "order-12", targetRoute: "/somewhere?x=1" })).toBe("/somewhere?x=1")
+  })
+})
+
 
 describe("notificationItemText", () => {
   it.each([
     ["pt-BR", "Pedido cancelado pelo cliente."],
     ["en", "Order cancelled by the customer."],
     ["es", "Pedido cancelado por el cliente."],
-  ])("localizes known event items in %s without relying on the API title", (language, expected) => {
-    const item = { eventType: "catalog.order.cancelledByCustomer", title: "Pedido #6 cancelado pelo cliente." }
+  ])("localizes known event items in %s when the API title is blank", (language, expected) => {
+    const item = { eventType: "catalog.order.cancelledByCustomer", title: " \n " }
     expect(notificationItemText(item, i18n.getFixedT(language))).toBe(expected)
   })
+  it.each(["pt-BR", "en", "es"])("prefers the trimmed API title for known events in %s", (language) => {
+    expect(notificationItemText({ eventType: "catalog.order.approved", title: "  Pedido #12 aprovado.  " }, i18n.getFixedT(language))).toBe("Pedido #12 aprovado.")
+  })
   it("keeps the API title for unknown events", () => {
-    expect(notificationItemText({ eventType: "unknown.event", title: "API fallback" }, i18n.t)).toBe("API fallback")
+    expect(notificationItemText({ eventType: "unknown.event", title: "  API fallback  " }, i18n.t)).toBe("API fallback")
   })
 })

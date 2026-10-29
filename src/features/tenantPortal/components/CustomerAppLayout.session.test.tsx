@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -14,6 +14,8 @@ import { AxiosError, AxiosHeaders } from "axios"
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
+import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
 import {
   commitPortalBooking,
   isOwnBookedSlot,
@@ -31,6 +33,7 @@ import {
   clearCustomerSession,
   getCustomerAccessToken,
   persistCustomerSession,
+  setCustomerLabel,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import {
   hasActiveStaffSession,
@@ -96,14 +99,14 @@ function ownReservation(): PortalReservation {
   }
 }
 
-function renderPortal(path: string) {
+function renderPortal(path: string, body = <div>agenda-body</div>) {
   return render(
     <ThemeProvider attribute="class" defaultTheme="light">
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/t/:subdomain" element={<div>login-form</div>} />
           <Route path="/t/:subdomain/agenda" element={<CustomerAppLayout />}>
-            <Route index element={<div>agenda-body</div>} />
+            <Route index element={body} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -295,6 +298,30 @@ describe("CustomerAppLayout session tenant", () => {
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
     expect(screen.queryByText("login-form")).not.toBeInTheDocument()
     expect(fetchBranding).toHaveBeenCalledWith("ficc")
+  })
+
+  it.each(["same tab", "another tab"])("updates the header, sidebar and greetings when the profile label changes in %s", async (source) => {
+    persistCustomerSession("customer-token", "ficc", "ana.email@example.test")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc", displayName: "Portal", logoSvg: null,
+      primaryColor: "#123456", accentColor: null, welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda", <><TenantPortalHomePage /><PortalBookingHeader /></>)
+    await screen.findByRole("heading", { name: i18n.t("tenantPortal.home.title") })
+
+    act(() => {
+      if (source === "same tab") {
+        setCustomerLabel("Beatriz Souza", "ana.email@example.test")
+      } else {
+        window.localStorage.setItem("rolvix.customer.label", "Beatriz Souza")
+        window.dispatchEvent(new StorageEvent("storage", { key: "rolvix.customer.label" }))
+      }
+    })
+
+    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(2)
+    expect(screen.getAllByText(i18n.t("tenantPortal.redesign.greetingName", { name: "Beatriz" }))).toHaveLength(2)
+    expect(screen.queryByTitle("ana.email@example.test")).not.toBeInTheDocument()
   })
 
   it.each([

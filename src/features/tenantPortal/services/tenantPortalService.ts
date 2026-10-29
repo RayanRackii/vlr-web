@@ -1,6 +1,7 @@
 import { PortalSessionExpiredError } from "@/features/tenantPortal/lib/portalSessionError"
 import { clearAgendaSelectionNotices } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import {
+  currentCustomerSessionIdentity,
   CUSTOMER_ID_STORAGE_KEY,
   CUSTOMER_LABEL_STORAGE_KEY,
   CUSTOMER_SUBDOMAIN_STORAGE_KEY,
@@ -52,6 +53,13 @@ import {
 /** Must match `CUSTOMER_TENANT_ID_STORAGE_KEY` in `src/lib/api.ts`. */
 const PENDING_EMAIL_VERIFICATION_KEY_PREFIX =
   "rolvix.customer.pendingEmailVerification"
+const CUSTOMER_LABEL_EVENT = "rolvix:customer-label"
+let customerSessionGeneration = 0
+
+/** Distinguishes sessions even when the same customer signs in with the same token. */
+export function getCustomerSessionGeneration(): number {
+  return customerSessionGeneration
+}
 
 export type PendingEmailVerification = {
   email: string
@@ -513,7 +521,7 @@ export async function verifyCustomerEmail(
     persistCustomerSession(
       parsed.data.token,
       subdomain,
-      parsed.data.customer.email ?? parsed.data.customer.name,
+      parsed.data.customer.name.trim() || parsed.data.customer.email || undefined,
       parsed.data.customer.id,
       parsed.data.customer.tenantId,
     )
@@ -585,7 +593,7 @@ export async function loginCustomer(
     persistCustomerSession(
       parsed.data.token,
       subdomain,
-      parsed.data.customer.email ?? parsed.data.customer.name,
+      parsed.data.customer.name.trim() || parsed.data.customer.email || undefined,
       parsed.data.customer.id,
       parsed.data.customer.tenantId,
     )
@@ -618,12 +626,11 @@ export function persistCustomerSession(
   customerId?: string,
   tenantId?: string,
 ): void {
+  customerSessionGeneration += 1
   clearAgendaSelectionNotices()
   window.localStorage.setItem(CUSTOMER_TOKEN_STORAGE_KEY, token)
   window.localStorage.setItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY, subdomain.trim().toLowerCase())
-  if (label && label.trim().length > 0) {
-    window.localStorage.setItem(CUSTOMER_LABEL_STORAGE_KEY, label.trim())
-  }
+  setCustomerLabel(label)
   if (customerId && customerId.trim().length > 0) {
     window.localStorage.setItem(CUSTOMER_ID_STORAGE_KEY, customerId.trim())
   } else {
@@ -638,10 +645,11 @@ export function persistCustomerSession(
 }
 
 export function clearCustomerSession(): void {
+  customerSessionGeneration += 1
   clearAgendaSelectionNotices()
   window.localStorage.removeItem(CUSTOMER_TOKEN_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_SUBDOMAIN_STORAGE_KEY)
-  window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
+  setCustomerLabel(null)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
 }
@@ -691,6 +699,28 @@ export function isCustomerSignedInForTenant(subdomain: string): boolean {
 
 export function getCustomerLabel(): string | null {
   return window.localStorage.getItem(CUSTOMER_LABEL_STORAGE_KEY)
+}
+
+export function setCustomerLabel(name: string | null | undefined, email?: string | null): void {
+  const label = name?.trim() || email?.trim() || null
+  if (label === getCustomerLabel()) {
+    return
+  }
+  if (label) {
+    window.localStorage.setItem(CUSTOMER_LABEL_STORAGE_KEY, label)
+  } else {
+    window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
+  }
+  window.dispatchEvent(new Event(CUSTOMER_LABEL_EVENT))
+}
+
+export function subscribeCustomerLabel(onStoreChange: () => void): () => void {
+  window.addEventListener(CUSTOMER_LABEL_EVENT, onStoreChange)
+  window.addEventListener("storage", onStoreChange)
+  return () => {
+    window.removeEventListener(CUSTOMER_LABEL_EVENT, onStoreChange)
+    window.removeEventListener("storage", onStoreChange)
+  }
 }
 
 export function getCustomerId(): string | null {
@@ -879,6 +909,8 @@ export async function fetchCustomerProfile(): Promise<CustomerProfile> {
 export async function updateCustomerProfile(
   body: UpdateCustomerProfileRequest,
 ): Promise<CustomerProfile> {
+  const sessionGeneration = getCustomerSessionGeneration()
+  const sessionIdentity = currentCustomerSessionIdentity()
   const payload: UpdateCustomerProfileRequest = {}
   if (body.name !== undefined) {
     payload.name = body.name
@@ -902,6 +934,10 @@ export async function updateCustomerProfile(
   const parsed = customerProfileSchema.safeParse(response.data)
   if (!parsed.success) {
     throw new Error(i18n.t("apiErrors.invalidResponse"))
+  }
+  if (sessionGeneration === getCustomerSessionGeneration()
+    && sessionIdentity === currentCustomerSessionIdentity()) {
+    setCustomerLabel(parsed.data.name, parsed.data.email)
   }
   return parsed.data
 }
