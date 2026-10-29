@@ -15,6 +15,7 @@ import { toast } from "sonner"
 
 import { DateStrip } from "@/features/tenantPortal/components/portal/DateStrip"
 import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
+import { focusBookingArea } from "@/features/tenantPortal/lib/focusBookingArea"
 import { PortalBookingEmptyState, PortalRightRail } from "@/features/tenantPortal/components/portal/PortalRightRail"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -2808,9 +2809,12 @@ export function TenantPortalAgendaPage() {
             </h3>
             {mine.length === 0 ? (
               <EmptyState
-                size="sm"
+                variant="portal"
                 icon={CalendarIcon}
                 title={t("tenantPortal.agenda.empty")}
+                description={t("emptyStates.bookingDescription")}
+                example={t("emptyStates.examples.bookings")}
+                action={<Button type="button" onClick={focusBookingArea}>{t("emptyStates.book")}</Button>}
               />
             ) : (
               <>

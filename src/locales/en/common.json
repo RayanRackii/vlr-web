@@ -3083,6 +3083,7 @@
     }
   },
   "workOrders": {
+    "viewOpen": "View open work orders",
     "title": "Work Orders",
     "description": "Run field checklists and track each work order status.",
     "loading": "Loading work orders...",
@@ -4442,6 +4443,7 @@
       "nextDay": "Next day",
       "today": "Today",
       "goToday": "Go to today",
+      "showWeek": "View the week",
       "emptyDescription": "Change the day, period or status to see other reservations.",
       "loading": "Loading reservations…",
       "count_one": "{{count}} reservation",
@@ -4617,5 +4619,28 @@
       "Fixed": "{{amount}} fixed"
     },
     "unitsLeft": "{{left}} of {{total}} available"
+  },
+  "emptyStates": {
+    "learnMore": "Learn more",
+    "noResults": "No results found",
+    "filterDescription": "Adjust the filters or clear the search to see items.",
+    "clearFilters": "Clear filters",
+    "clearSearch": "Clear search",
+    "firstPage": "Back to the first page",
+    "book": "Book",
+    "bookingDescription": "Choose a time for your next booking.",
+    "pmocDescription": "Create your first plan from the Rolvix Library",
+    "examples": {
+      "bookings": "E.g.: a room at 2 pm for 1 hour",
+      "workOrders": "E.g.: replace the reception air conditioner filter",
+      "pmoc": "E.g.: a monthly plan for air conditioning equipment",
+      "assets": "E.g.: a 12,000 BTU split air conditioner",
+      "users": "E.g.: invite the person working at reception",
+      "customers": "E.g.: a person who registered on the portal",
+      "roles": "E.g.: a role for the customer service team",
+      "portalOrders": "E.g.: cleaning supplies for reception",
+      "portalRequests": "E.g.: a cleaning product for reception",
+      "portalCatalog": "E.g.: everyday supplies for reception"
+    }
   }
 }

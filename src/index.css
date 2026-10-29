@@ -205,6 +205,17 @@
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .empty-state-enter {
+    animation: empty-state-enter var(--motion-duration-base) var(--motion-ease-out);
+  }
+}
+
+@keyframes empty-state-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes on-webkit-autofill {
   from {
     opacity: 0.999;

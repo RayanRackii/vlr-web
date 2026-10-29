@@ -37,6 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionKeyGroups } from "@/features/users/components/PermissionKeyGroups"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
 import { usePeopleMobileActions } from "@/features/users/hooks/usePeopleMobileActions"
 import { Can } from "@/features/users/permissions/Can"
@@ -71,6 +72,7 @@ export function PeopleRolesTab({
   onRolesChanged,
 }: PeopleRolesTabProps) {
   const { t } = useTranslation()
+  const learnMore = useModuleIntroLink("peoplePortal")
   const { can, activeModules, refresh } = usePermissions()
   const canManage = can("core.roles.manage")
   const visibleRoles = useMemo(() => listVisibleRoles(roles), [roles])
@@ -220,6 +222,9 @@ export function PeopleRolesTab({
           icon={ShieldCheck}
           title={t("peopleAccess.roles.empty")}
           description={t("peopleAccess.roles.emptyDescription")}
+          example={canManage ? t("emptyStates.examples.roles") : undefined}
+          learnMore={learnMore}
+          action={<Can permission="core.roles.manage"><Button onClick={openCreate}>{t("peopleAccess.roles.create")}</Button></Can>}
         />
       ) : (
         <>

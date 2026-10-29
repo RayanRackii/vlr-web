@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReservationsHeader } from "@/features/rentals/components/ReservationsHeader"
@@ -82,6 +83,7 @@ type ReservationsPageProps = {
 
 export function ReservationsPage({ showHeader = true, onDateChange }: ReservationsPageProps) {
   const { t, i18n } = useTranslation()
+  const learnMore = useModuleIntroLink("bookings")
   const { can } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
@@ -233,6 +235,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const dateLabel = date ? new Intl.DateTimeFormat(i18n.language, {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   }).format(new Date(`${date}T12:00:00`)) : ""
+  const hasActiveFilters = Boolean(status || date !== tenantTodayIsoDate(timeZoneId) || view !== "day")
   const listDateLabel = view === "day" ? dateLabel : range.from && range.to
     ? `${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.from}T12:00:00`))} – ${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.to}T12:00:00`))}`
     : ""
@@ -302,11 +305,19 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             ))}
           </section>
         ) : loadError && sortedRows.length === 0 ? null : sortedRows.length === 0 ? (
-          <EmptyState icon={CalendarRange} className="reservations-surface reservations-empty" title={t("rentals.reservations.empty")} description={t("rentals.reservations.emptyDescription")} action={
-            <Button variant="outline" className="reservations-today" onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)) }}>
-              {t("rentals.reservations.goToday")}
-            </Button>
-          } />
+          <EmptyState
+            icon={CalendarRange}
+            className="reservations-surface reservations-empty"
+            title={t("rentals.reservations.empty")}
+            description={t(hasActiveFilters ? "emptyStates.filterDescription" : "rentals.reservations.emptyDescription")}
+            example={hasActiveFilters ? undefined : t("emptyStates.examples.bookings")}
+            learnMore={hasActiveFilters ? undefined : learnMore}
+            action={hasActiveFilters ? (
+              <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
+            ) : (
+              <Button className="reservations-today" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
+            )}
+          />
         ) : (
           <ReservationsList rows={sortedRows} dateLabel={listDateLabel} showDates={view !== "day" || !date} actions={rowActions} />
         )}

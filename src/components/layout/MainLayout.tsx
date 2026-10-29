@@ -5,6 +5,8 @@ import { toast } from "sonner"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { AppShell } from "@/components/layout/AppShell"
+import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
+import { availableModuleIntros } from "@/components/layout/navigationIntros"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { BreadcrumbTitleProvider } from "@/components/layout/BreadcrumbTitleProvider"
@@ -17,6 +19,7 @@ import {
   getUserDisplayLabel,
   getUserInitials,
   RENTAL_RESOURCES_PERMISSIONS,
+  useAppNavigationSections,
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
@@ -47,6 +50,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { isPlatformAdmin, isInTenantEnvironment, activeTenantLabel } =
     usePlatformTenantSession()
   const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
+  const { sections } = useAppNavigationSections()
+  const introKeys = availableModuleIntros(sections).map((intro) => intro.key)
   const [isExiting, setIsExiting] = useState(false)
   const [hostBranding, setHostBranding] = useState<TenantBranding | null>(null)
   // The staff /me payload has no tenant slug; the tenant host's subdomain is the only source.
@@ -143,6 +148,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   }
 
   return (
+    <ModuleIntroLinksProvider keys={introKeys}>
     <AppShell
       sidebar={(opts) => <Sidebar {...opts} />}
       pageTitle={pageTitle}
@@ -201,6 +207,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       <Breadcrumb />
       {children ?? <Outlet />}
     </AppShell>
+    </ModuleIntroLinksProvider>
   )
 }
 
