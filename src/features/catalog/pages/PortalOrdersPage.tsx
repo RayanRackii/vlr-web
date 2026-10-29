@@ -54,8 +54,14 @@ export function PortalOrdersPage() {
   }, [t, reloadKey, subdomain])
 
   useEffect(() => {
+    // Throttle focus refreshes so repeated focus events cannot pile up list requests.
+    let lastRefreshAt = 0
     const refreshVisible = () => {
-      if (document.visibilityState === "visible") setReloadKey((value) => value + 1)
+      if (document.visibilityState !== "visible") return
+      const now = Date.now()
+      if (now - lastRefreshAt < 5000) return
+      lastRefreshAt = now
+      setReloadKey((value) => value + 1)
     }
     window.addEventListener("focus", refreshVisible)
     return () => window.removeEventListener("focus", refreshVisible)
