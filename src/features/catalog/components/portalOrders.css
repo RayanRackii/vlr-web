@@ -36,7 +36,7 @@
   background: color-mix(in srgb, var(--primary) 10%, var(--card));
   color: var(--primary);
 }
-.portal-record-icon svg { width: 22px; height: 22px; }
+.portal-record-icon svg { width: 24px; height: 24px; }
 .portal-record-body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
 .portal-record-top { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 8px; }
 .portal-record-title { font-size: 16px; font-weight: 650; letter-spacing: -.01em; overflow-wrap: anywhere; }
@@ -118,7 +118,7 @@
 .portal-order-stepper > li.is-done::after { transform: scaleY(1); }
 .portal-order-stepper > li:last-child::before, .portal-order-stepper > li:last-child::after { display: none; }
 .portal-order-step-node { position: relative; display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 2px solid var(--border); border-radius: 50%; background: var(--card); }
-.portal-order-step-node svg { width: 18px; height: 18px; stroke-width: 2; }
+.portal-order-step-node svg { width: 20px; height: 20px; stroke-width: 1.75; }
 .portal-order-stepper .is-done .portal-order-step-node { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--card)); }
 .portal-order-stepper .is-current .portal-order-step-node { background: var(--primary); border-color: var(--primary); }
 .portal-order-stepper .is-terminal .portal-order-step-node { color: var(--destructive); border-color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, var(--card)); }

@@ -14,7 +14,7 @@
 .portal-profile-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .portal-profile-section-head h2 { font-size: 15px; font-weight: 650; }
 .portal-profile-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; background: color-mix(in srgb, var(--primary) 11%, var(--card)); color: var(--primary); font-size: 11px; font-weight: 650; }
-.portal-profile-badge svg { width: 13px; height: 13px; }
+.portal-profile-badge svg { width: 14px; height: 14px; }
 .portal-profile-hint { margin: -6px 0 16px; color: var(--muted-foreground); font-size: 13px; }
 
 .portal-profile-savebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; position: sticky; bottom: 0; padding-top: 2px; }

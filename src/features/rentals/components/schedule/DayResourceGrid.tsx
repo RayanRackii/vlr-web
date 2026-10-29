@@ -305,13 +305,13 @@ function ScheduleGridLegend() {
         const Icon = STATUS_ICON[status]
         return (
           <li key={status} className="flex items-center gap-1.5">
-            <Icon className={cn("size-3.5", STATUS_TEXT_CLASS[status])} aria-hidden />
+            <Icon className={cn("size-4", STATUS_TEXT_CLASS[status])} aria-hidden />
             <span>{t(`rentals.schedule.occurrence.status.${status}`)}</span>
           </li>
         )
       })}
       <li className="flex items-center gap-1.5">
-        <Ban className="size-3.5 text-muted-foreground" aria-hidden />
+        <Ban className="size-4 text-muted-foreground" aria-hidden />
         <span>{t("rentals.schedule.grid.minimumLeadTime")}</span>
       </li>
     </ul>
@@ -501,7 +501,7 @@ function RowCells({
                       STATUS_TEXT_CLASS[item.status],
                     )}
                   >
-                    <StatusIcon className="size-2.5" aria-hidden />
+                    <StatusIcon className="size-3" aria-hidden />
                     {statusLabel}
                   </span>
                   {freeUnitsLabel ? (

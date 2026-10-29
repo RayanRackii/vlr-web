@@ -524,7 +524,7 @@ export function TenantEditForm({
                           >
                             {selected ? (
                               <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
-                                <Check className="size-3" />
+                                <Check className="size-4" />
                               </span>
                             ) : null}
                             <Icon className="size-5 text-foreground" />

@@ -54,7 +54,7 @@ export function Breadcrumb() {
           const current = index === visibleCrumbs.length - 1
           return (
             <li key={`${index}-${crumb.label}`} className="flex min-w-0 items-center gap-2">
-              {index > 0 && <ChevronRight className="size-3.5 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
+              {index > 0 && <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
               {current ? (
                 <span aria-current="page" className="truncate font-medium text-foreground">{crumb.label}</span>
               ) : crumb.to ? (
@@ -63,7 +63,7 @@ export function Breadcrumb() {
                   aria-label={narrow ? t("nav.backTo", { page: crumb.label }) : undefined}
                   className="inline-flex min-w-0 items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {narrow && <ArrowLeft className="size-3.5 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
+                  {narrow && <ArrowLeft className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
                   <span className="truncate">{crumb.label}</span>
                 </Link>
               ) : <span className="truncate">{crumb.label}</span>}

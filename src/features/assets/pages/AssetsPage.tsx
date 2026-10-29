@@ -360,7 +360,7 @@ export function AssetsPage() {
         header: ({ table }) => (
           <input
             type="checkbox"
-            className="size-4 accent-primary"
+            className="touch-target size-4 accent-primary"
             aria-label={t("assets.inventory.actions.selectAll")}
             checked={table.getIsAllPageRowsSelected()}
             ref={(element) => {
@@ -377,7 +377,7 @@ export function AssetsPage() {
         cell: ({ row }) => (
           <input
             type="checkbox"
-            className="size-4 accent-primary"
+            className="touch-target size-4 accent-primary"
             aria-label={t("assets.inventory.actions.selectRow", {
               tag: row.original.tag,
             })}

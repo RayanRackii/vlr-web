@@ -28,7 +28,7 @@ export function CatalogTabs({ active, counts = {} }: {
     <nav className="staff-catalog-tabs" aria-label={t("nav.catalog")}>
       {tabs.filter((tab) => can(tab.permission)).map(({ key, path, icon: Icon }) => (
         <Link key={key} to={path} aria-current={active === key ? "page" : undefined}>
-          <Icon size={18} aria-hidden="true" />
+          <Icon size={20} aria-hidden="true" />
           {key === "requests" ? <>
             <span className="staff-catalog-tab-long">{t("catalog.requests.title")}</span>
             <span className="staff-catalog-tab-short">{t("nav.catalogRequests")}</span>
@@ -65,7 +65,7 @@ export function CatalogSearch({ value, onChange, label }: {
 }) {
   return (
     <label className="staff-catalog-search">
-      <Search size={18} aria-hidden="true" />
+      <Search size={20} aria-hidden="true" />
       <Input type="search" aria-label={label} placeholder={label} value={value}
         onChange={(event) => onChange(event.target.value)} />
     </label>
@@ -105,7 +105,7 @@ export function CatalogEmptyState({ kind, filtered = false }: { kind: CatalogVie
   const Icon = kind === "requests" ? FileText : kind === "orders" ? ShoppingBag : Package
   return (
     <div className="staff-catalog-empty" role="status">
-      <span className="staff-catalog-empty-icon"><Icon size={28} aria-hidden="true" /></span>
+      <span className="staff-catalog-empty-icon"><Icon size={24} aria-hidden="true" /></span>
       <h2>{t(filtered ? "catalog.staff.noResults" : `catalog.${kind}.empty`)}</h2>
       <p>{t(filtered ? "catalog.staff.adjustFilters" : `catalog.staff.empty.${kind}`)}</p>
     </div>

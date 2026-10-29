@@ -278,7 +278,7 @@ export function OccupancyKindSheet({
             <div className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                className="size-4 accent-primary"
+                className="touch-target size-4 accent-primary"
                 checked={form.isBookableByCustomer}
                 disabled={readOnly || busy}
                 onChange={(event) => {
@@ -296,7 +296,7 @@ export function OccupancyKindSheet({
             <div className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                className="size-4 accent-primary"
+                className="touch-target size-4 accent-primary"
                 checked={form.blocksCapacity}
                 disabled={readOnly || busy}
                 onChange={(event) => {
@@ -314,7 +314,7 @@ export function OccupancyKindSheet({
             <div className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                className="size-4 accent-primary"
+                className="touch-target size-4 accent-primary"
                 checked={form.isActive}
                 disabled={readOnly || busy}
                 onChange={(event) => {

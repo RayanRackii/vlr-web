@@ -216,7 +216,7 @@ function DaySlotSheetForm({
                   <input
                     type="radio"
                     name="occurrence-scope"
-                    className="mt-0.5 size-4 accent-primary"
+                    className="touch-target mt-0.5 size-4 accent-primary"
                     checked={scope === "OnlyThisDay"}
                     disabled={busy || readOnly}
                     onChange={() => setScope("OnlyThisDay")}
@@ -227,7 +227,7 @@ function DaySlotSheetForm({
                   <input
                     type="radio"
                     name="occurrence-scope"
-                    className="mt-0.5 size-4 accent-primary"
+                    className="touch-target mt-0.5 size-4 accent-primary"
                     checked={scope === "EntireRecurrence"}
                     disabled={busy || readOnly || !supportsEntireRecurrence}
                     onChange={() => setScope("EntireRecurrence")}

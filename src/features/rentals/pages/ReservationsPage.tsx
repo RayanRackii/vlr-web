@@ -260,7 +260,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.previousDay")} onClick={() => shiftDay(-1)}>
               <ChevronLeft aria-hidden="true" />
             </Button>
-            <CalendarDays size={18} aria-hidden="true" className="reservations-date-icon" />
+            <CalendarDays size={20} aria-hidden="true" className="reservations-date-icon" />
             <label htmlFor={dateId} className="sr-only">{t("rentals.reservations.date")}</label>
             <LocaleDateInput id={dateId} value={date} locale={i18n.language} today={tenantTodayIsoDate(timeZoneId)} className="reservations-date-input" onChange={setDate} />
             <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.nextDay")} onClick={() => shiftDay(1)}>

@@ -35,7 +35,7 @@ export function FeatureRouteTabs({ labelKey, tabs, content, header }: FeatureRou
           const Icon = tab.icon
           return (
             <TabsTrigger key={tab.to} value={tab.to} className="first:pl-0">
-              {Icon && <Icon size={18} aria-hidden="true" />}
+              {Icon && <Icon size={20} aria-hidden="true" />}
               {t(tab.labelKey)}
             </TabsTrigger>
           )

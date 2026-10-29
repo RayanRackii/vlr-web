@@ -132,7 +132,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
           aria-label={t("bookingMap.area")}
           value={map.id}
           onChange={(event) => void fetchPublicBookingMap(subdomain, event.target.value).then(setMap)}
-          className="h-11 rounded-lg border border-input bg-background px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/45 focus-visible:outline-none"
+          className="h-11 rounded-lg border border-input bg-background px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
           {list.maps.map((entry) => (
             <option key={entry.id} value={entry.id}>

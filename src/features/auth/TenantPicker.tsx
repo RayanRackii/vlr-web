@@ -92,7 +92,7 @@ export function TenantPicker({
                   <input
                     type="radio"
                     name="tenant-picker"
-                    className="mt-0.5 size-4 shrink-0 accent-primary"
+                    className="touch-target mt-0.5 size-4 shrink-0 accent-primary"
                     value={membership.tenantId}
                     checked={selectedTenantId === membership.tenantId}
                     disabled={submitting}

@@ -14,7 +14,7 @@ export function ReservationsHeader({ date }: { date?: string }) {
       <h1>{t("rentals.reservations.title")}</h1>
       <p className="reservations-description">{t("rentals.reservations.description")}</p>
       <p className="reservations-timezone" data-testid="tenant-tz-label">
-        <Globe2 size={15} aria-hidden="true" />
+        <Globe2 size={16} aria-hidden="true" />
         {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
       </p>
     </header>

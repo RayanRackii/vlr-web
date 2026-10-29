@@ -698,7 +698,7 @@ function AdminSchedulePage() {
                   isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
                 )}
               >
-                <item.icon aria-hidden className="size-3.5 shrink-0" />
+                <item.icon aria-hidden className="size-4 shrink-0" />
                 <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
                 <span className="hidden sm:inline">{t(item.labelKey)}</span>
               </button>

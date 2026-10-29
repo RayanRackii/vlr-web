@@ -1284,7 +1284,7 @@ function PendingFileStatus({
   if (status === "sending") {
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+        <Loader2 className="size-4 animate-spin" aria-hidden />
         {t("catalog.products.files.sending")}
       </span>
     )
@@ -1293,7 +1293,7 @@ function PendingFileStatus({
   if (status === "sent") {
     return (
       <span className="inline-flex items-center gap-1">
-        <Check className="size-3.5" aria-hidden />
+        <Check className="size-4" aria-hidden />
         {t("catalog.products.files.sent")}
       </span>
     )
@@ -1301,7 +1301,7 @@ function PendingFileStatus({
 
   return (
     <span className="inline-flex max-w-56 items-center gap-1 text-destructive">
-      <CircleAlert className="size-3.5 shrink-0" aria-hidden />
+      <CircleAlert className="size-4 shrink-0" aria-hidden />
       <span className="truncate">{error ?? t("catalog.products.files.error")}</span>
     </span>
   )

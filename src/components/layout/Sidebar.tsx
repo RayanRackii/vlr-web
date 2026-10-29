@@ -29,7 +29,7 @@ type SidebarProps = {
   className?: string
 }
 
-const NAV_ICON_CLASS = "size-[1.125rem] shrink-0"
+const NAV_ICON_CLASS = "size-5 shrink-0"
 
 /** Soft-tinted active fill + rested/hover treatment, shared by leaf and child rows. */
 function rowClassName(isActive: boolean, touchTargets: boolean | undefined) {
@@ -287,7 +287,7 @@ function NavigationSection({
             onClick={() => setExpanded((value) => !value)}
             className={cn("flex shrink-0 items-center justify-center rounded-lg outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-9")}
           >
-            {expanded ? <ChevronDown className="size-3.5" aria-hidden="true" /> : <ChevronRight className="size-3.5" aria-hidden="true" />}
+            {expanded ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
           </button>
         )}
       </div>
@@ -328,7 +328,7 @@ function SidebarNavigationSkeleton({
               )}
               aria-hidden
             >
-              <Skeleton className="size-[1.125rem] shrink-0 rounded-md" />
+              <Skeleton className="size-5 shrink-0 rounded-md" />
               {!collapsed ? (
                 <Skeleton
                   className={cn("h-3", itemIndex % 2 === 0 ? "w-28" : "w-20")}
