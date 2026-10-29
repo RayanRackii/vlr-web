@@ -119,7 +119,7 @@ export function WorkOrderAssigneeField({
     canAssign && !isClosed && techniciansError === null && technicians !== null
 
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-muted-foreground">
         {t("workOrders.columns.assignee")}
       </p>
@@ -143,7 +143,7 @@ export function WorkOrderAssigneeField({
           disabled={isSaving}
         >
           <SelectTrigger
-            className="mt-1 w-full"
+            className="mt-1 w-full motion-reduce:transition-none"
             aria-label={t("workOrders.columns.assignee")}
           >
             <SelectValue />
@@ -160,7 +160,7 @@ export function WorkOrderAssigneeField({
           </SelectContent>
         </Select>
       ) : (
-        <p className="font-medium">
+        <p className="break-words font-medium">
           {canAssign &&
           !isClosed &&
           technicians === null &&

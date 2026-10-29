@@ -41,6 +41,7 @@ export function PeopleSearchForm({
         <Label className="sr-only" htmlFor={id}>{label}</Label>
         <Search aria-hidden strokeWidth={1.75} className="people-search-icon" />
         <Input
+          className="touch-target"
           id={id}
           value={value}
           placeholder={placeholder}
@@ -89,7 +90,7 @@ export function PeoplePager({
 
   return (
     <div className="people-pager">
-      <p className="text-xs text-muted-foreground">{summary}</p>
+      <p className="min-w-0 text-xs tabular-nums text-muted-foreground">{summary}</p>
       <div className="flex gap-2">
         <Button
           type="button"

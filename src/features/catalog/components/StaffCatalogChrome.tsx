@@ -4,6 +4,8 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import type { Column } from "@tanstack/react-table"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -27,7 +29,7 @@ export function CatalogTabs({ active, counts = {} }: {
   return (
     <nav className="staff-catalog-tabs" aria-label={t("nav.catalog")}>
       {tabs.filter((tab) => can(tab.permission)).map(({ key, path, icon: Icon }) => (
-        <Link key={key} to={path} aria-current={active === key ? "page" : undefined}>
+        <Link className="touch-target" key={key} to={path} aria-current={active === key ? "page" : undefined}>
           <Icon size={20} aria-hidden="true" />
           {key === "requests" ? <>
             <span className="staff-catalog-tab-long">{t("catalog.requests.title")}</span>
@@ -45,16 +47,9 @@ export function CatalogHeading({ title, description, actions }: {
   description: string
   actions?: ReactNode
 }) {
-  const { t } = useTranslation()
   return (
-    <header className="staff-catalog-heading">
-      <div>
-        <p className="staff-catalog-eyebrow">{t("nav.catalog")}</p>
-        <h1>{title}</h1>
-        <p className="staff-catalog-subtitle">{description}</p>
-      </div>
-      {actions ? <div className="staff-catalog-heading-actions">{actions}</div> : null}
-    </header>
+    <PageHeader className="staff-catalog-heading" title={title} description={description}
+      actions={actions ? <div className="staff-catalog-heading-actions">{actions}</div> : undefined} />
   )
 }
 
@@ -87,7 +82,7 @@ export function CatalogColumnFilter<T>({ column, title, options }: {
       <PopoverContent className="w-64" align="start">
         <label className="grid gap-2 text-sm font-medium">
           {title}
-          {options ? <select className="min-h-11 w-full rounded-lg border border-input bg-background px-3"
+          {options ? <select className="touch-target min-h-11 w-full rounded-lg border border-input bg-background px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={typeof value === "string" ? value : ""} onChange={(event) => column.setFilterValue(event.target.value)}>
             <option value="">{t("catalog.staff.allStatuses")}</option>
             {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -100,14 +95,13 @@ export function CatalogColumnFilter<T>({ column, title, options }: {
   )
 }
 
-export function CatalogEmptyState({ kind, filtered = false }: { kind: CatalogView; filtered?: boolean }) {
+export function CatalogEmptyState({ kind, filtered = false, action }: { kind: CatalogView; filtered?: boolean; action?: ReactNode }) {
   const { t } = useTranslation()
   const Icon = kind === "requests" ? FileText : kind === "orders" ? ShoppingBag : Package
   return (
     <div className="staff-catalog-empty" role="status">
-      <span className="staff-catalog-empty-icon"><Icon size={24} aria-hidden="true" /></span>
-      <h2>{t(filtered ? "catalog.staff.noResults" : `catalog.${kind}.empty`)}</h2>
-      <p>{t(filtered ? "catalog.staff.adjustFilters" : `catalog.staff.empty.${kind}`)}</p>
+      <EmptyState icon={Icon} className="border-0 p-0" title={t(filtered ? "catalog.staff.noResults" : `catalog.${kind}.empty`)}
+        description={t(filtered ? "catalog.staff.adjustFilters" : `catalog.staff.empty.${kind}`)} action={filtered ? undefined : action} />
     </div>
   )
 }

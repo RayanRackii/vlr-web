@@ -27,12 +27,12 @@ export function PermissionKeyGroups({
   const groups = groupPermissionsByModule(catalog, activeModules)
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {groups.map((group) => {
         const moduleKey = group.moduleKey ?? "core"
 
         return (
-          <section key={moduleKey} className="space-y-3">
+          <section key={moduleKey} className="min-w-0 space-y-3">
             <div className="space-y-1">
               <h3 className="text-sm font-semibold">
                 {t(`peopleAccess.modules.${moduleKey}`, {
@@ -40,7 +40,7 @@ export function PermissionKeyGroups({
                 })}
               </h3>
               {group.moduleInactive ? (
-                <p className="text-xs text-amber-800 dark:text-amber-200">
+                <p className="text-xs text-muted-foreground">
                   {t("peopleAccess.moduleInactive")}
                 </p>
               ) : null}
@@ -49,9 +49,9 @@ export function PermissionKeyGroups({
             {group.resources.map((resourceGroup) => (
               <fieldset
                 key={`${moduleKey}-${resourceGroup.resource}`}
-                className="space-y-2 rounded-lg border border-border p-3"
+                className="min-w-0 space-y-2 rounded-lg border border-border bg-card p-3"
               >
-                <legend className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <legend className="max-w-full break-words px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {t(`peopleAccess.resources.${resourceGroup.resource}`, {
                     defaultValue: resourceGroup.resource,
                   })}
@@ -64,7 +64,7 @@ export function PermissionKeyGroups({
                     return (
                       <div
                         key={item.key}
-                        className="flex items-start gap-2"
+                        className="flex min-w-0 items-start gap-3 py-1"
                       >
                         <Checkbox
                           id={inputId}
@@ -76,7 +76,7 @@ export function PermissionKeyGroups({
                         />
                         <Label
                           htmlFor={inputId}
-                          className="cursor-pointer font-normal leading-5"
+                          className="min-w-0 cursor-pointer break-words font-normal leading-5 [overflow-wrap:anywhere]"
                         >
                           {t(`peopleAccess.catalog.${item.key}`, {
                             defaultValue: item.name,

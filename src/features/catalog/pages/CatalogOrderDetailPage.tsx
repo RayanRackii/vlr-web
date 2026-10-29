@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -217,31 +218,23 @@ export function CatalogOrderDetailPage() {
 
   return (
     <div className="staff-catalog staff-catalog-detail space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="touch-target inline-flex min-h-11 px-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            onClick={() => {
-              void navigate("/catalogo/pedidos")
-            }}
-          >
-            {t("common.back")}
-          </Button>
-          <h1 className="text-xl font-semibold tracking-tight">
-            {order.displayNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {order.customerName}
-            {order.customerEmail ? ` · ${order.customerEmail}` : ""}
-          </p>
-        </div>
-        <span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="touch-target min-h-11 px-3"
+        onClick={() => { void navigate("/catalogo/pedidos") }}
+      >
+        {t("common.back")}
+      </Button>
+      <PageHeader
+        className="min-w-0 [&_h1]:tabular-nums"
+        title={order.displayNumber}
+        description={<>{order.customerName}{order.customerEmail ? ` · ${order.customerEmail}` : ""}</>}
+        actions={<span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
           {t(`catalog.status.${order.status}`)}
-        </span>
-      </div>
+        </span>}
+      />
 
       <CatalogTabs active="orders" />
 
@@ -337,8 +330,8 @@ export function CatalogOrderDetailPage() {
         ) : null}
       </Can>
 
-      <section className="space-y-2 rounded-xl border border-border p-4">
-        <p className="text-sm">
+      <section className="min-w-0 space-y-2 rounded-xl border border-border bg-card p-4 sm:p-6">
+        <p className="text-sm tabular-nums">
           <span className="text-muted-foreground">
             {t("catalog.orders.total")}:{" "}
           </span>
@@ -370,15 +363,15 @@ export function CatalogOrderDetailPage() {
         ) : null}
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.items")}</h2>
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="min-w-0 divide-y divide-border">
           {order.items.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+              className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm tabular-nums"
             >
-              <span>
+              <span className="min-w-0 break-words">
                 {item.productName}
                 {item.productCode ? ` (${item.productCode})` : ""} ×{" "}
                 {item.quantity}
@@ -395,7 +388,7 @@ export function CatalogOrderDetailPage() {
         </ul>
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
         <ol className="space-y-2">
           {order.history.map((entry) => (
@@ -406,7 +399,7 @@ export function CatalogOrderDetailPage() {
               <p className="font-medium">
                 {t(`catalog.status.${entry.status}`)}
               </p>
-              <p className="text-muted-foreground">
+              <p className="tabular-nums text-muted-foreground">
                 {t(`catalog.actor.${entry.actorType}`)} ·{" "}
                 {formatCatalogDate(entry.createdAt, i18n.language)}
               </p>

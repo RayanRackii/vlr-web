@@ -86,9 +86,9 @@ describe("CatalogProductsPage validity gate", () => {
 
   async function openCreateDialog(user: ReturnType<typeof userEvent.setup>) {
     await user.click(
-      await screen.findByRole("button", {
+      (await screen.findAllByRole("button", {
         name: i18n.t("catalog.products.create"),
-      }),
+      }))[0],
     )
     return screen.findByRole("dialog")
   }

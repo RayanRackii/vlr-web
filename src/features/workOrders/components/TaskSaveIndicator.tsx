@@ -21,7 +21,7 @@ export function TaskSaveIndicator({
     <p
       className={
         state === "retrying"
-          ? "text-xs text-amber-800 dark:text-amber-200"
+          ? "text-xs font-medium text-foreground"
           : "text-xs text-muted-foreground"
       }
       role="status"

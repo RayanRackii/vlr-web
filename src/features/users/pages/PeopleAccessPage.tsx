@@ -118,7 +118,7 @@ export function PeopleAccessPage() {
               <span>{t(item.labelKey)}</span>
             </>
           )
-          const className = cn("people-tab", onRegistration && "touch-target", isActive && "people-tab-active")
+          const className = cn("people-tab touch-target", isActive && "people-tab-active")
           return item.id === "registration" ? (
             <Link key={item.id} to="/configuracoes/cadastro" className={className} aria-current={isActive ? "page" : undefined}>
               {content}
@@ -175,7 +175,7 @@ export function PeopleAccessPage() {
                   <li key={role.id}>
                     <div className="min-w-0">
                       <p className="font-semibold break-words">{role.name}</p>
-                      <p className="text-xs text-muted-foreground">{t("peopleAccess.roleSummary.permissions", { count: role.permissionKeys.length })}</p>
+                      <p className="text-xs tabular-nums text-muted-foreground">{t("peopleAccess.roleSummary.permissions", { count: role.permissionKeys.length })}</p>
                     </div>
                     <span className="people-role-kind">{t(role.isSystemRole ? "peopleAccess.badges.system" : "peopleAccess.badges.custom")}</span>
                   </li>
