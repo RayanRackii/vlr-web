@@ -5,6 +5,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { ArrowRight, ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
@@ -85,12 +86,13 @@ export function PortalOrdersPage() {
           aria-label={t("tenantPortal.catalog.ordersLoading")}
         >
           {[0, 1, 2].map((index) => (
-            <li key={index} className="portal-record-card animate-pulse">
-              <span className="portal-record-icon" aria-hidden />
-              <span className="portal-record-body">
-                <span className="h-4 w-28 rounded bg-muted" />
-                <span className="h-3 w-40 rounded bg-muted" />
-              </span>
+            <li key={index} className="portal-record-card">
+              <Skeleton className="size-[46px] shrink-0 rounded-full" aria-hidden />
+              <div className="portal-record-body">
+                <Skeleton className="h-4 w-28 max-w-full" />
+                <Skeleton className="h-3 w-40 max-w-full" />
+              </div>
+              <Skeleton className="h-6 w-20 shrink-0 rounded-full" />
             </li>
           ))}
         </ul>

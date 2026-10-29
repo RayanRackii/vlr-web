@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
-import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
+import { RecordListSkeleton, TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -515,9 +515,7 @@ export function AdminAssetFamiliesPage() {
 
       <div className="space-y-2 lg:hidden">
         {isLoading ? (
-          <div className="rounded-xl border border-border p-4 text-center text-sm text-muted-foreground">
-            {t("common.loading")}
-          </div>
+          <RecordListSkeleton />
         ) : null}
 
         {!isLoading && table.getRowModel().rows.length === 0 ? (

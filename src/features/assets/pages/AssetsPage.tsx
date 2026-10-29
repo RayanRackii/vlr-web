@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
-import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
+import { RecordListSkeleton, TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { AssetWizard } from "@/features/assets/components/AssetWizard"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
@@ -838,9 +838,7 @@ export function AssetsPage() {
 
       <div className="space-y-2 sm:hidden">
         {isLoading ? (
-          <div className="rounded-xl border border-border p-4 text-center text-sm text-muted-foreground">
-            {t("common.loading")}
-          </div>
+          <RecordListSkeleton />
         ) : null}
 
         {!isLoading && filteredRows.length === 0 ? (
