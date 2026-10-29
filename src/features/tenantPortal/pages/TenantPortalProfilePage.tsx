@@ -348,7 +348,7 @@ export function TenantPortalProfilePage() {
             <div className="portal-profile-who">
               <p className="portal-profile-name">{displayName}</p>
               {email.length > 0 ? (
-                <p className="portal-profile-email">{email}</p>
+                <p className="portal-profile-email" title={email}>{email}</p>
               ) : null}
               {photoPreview ? null : (
                 <p className="portal-profile-photohint">

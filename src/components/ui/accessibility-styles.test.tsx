@@ -36,7 +36,7 @@ describe("small control accessibility", () => {
         })
         const color = invalid ? "var(--destructive)" : "var(--focus-ring, var(--ring))"
         expect(declarations, `${label}, invalid=${invalid}`).toMatchObject({ outline: `2px solid ${color}`, "outline-offset": "2px", "border-color": color, "--tw-ring-color": color })
-        if (invalid) expect(declarations["box-shadow"]).toBe("0 0 0 2px var(--background), 0 0 0 4px var(--destructive)")
+        if (invalid) expect(declarations["box-shadow"]).toBe("none")
       }
     }
   })
@@ -58,9 +58,9 @@ describe("small control accessibility", () => {
     expect(actualBox).toBe(true)
   })
 
-  it.each(["xs", "icon-xs", "icon-sm", "icon"] as const)("keeps %s Button (already >= 24px) free of the pseudo hit area so tight icon groups do not overlap", (size) => {
+  it.each(["default", "sm", "xs", "icon-xs", "icon-sm", "icon"] as const)("gives %s Button the shared touch-target so it reaches 44px on touch/narrow screens", (size) => {
     render(<Button size={size}>Action</Button>)
-    expect(screen.getByRole("button", { name: "Action" })).not.toHaveClass("touch-target")
+    expect(screen.getByRole("button", { name: "Action" })).toHaveClass("touch-target")
   })
 
   it("keeps invalid input, select and textarea borders and focus rings destructive in both themes", () => {

@@ -43,7 +43,7 @@ function EmptyState({
       data-slot="empty-state"
       role={variant === "portal" ? "status" : undefined}
       className={cn(
-        "empty-state-enter motion-reduce:animate-none",
+        "empty-state-enter min-w-0 max-w-full whitespace-normal break-words motion-reduce:animate-none",
         variant === "portal"
           ? "portal-empty"
           : "flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border text-center",
@@ -60,14 +60,14 @@ function EmptyState({
           />
         </div>
       ) : null)}
-      <div className="max-w-sm space-y-1">
+      <div className="w-full min-w-0 max-w-sm space-y-1">
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {description ? (
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}
         {example ? <p className="text-sm text-muted-foreground">{example}</p> : null}
       </div>
-      {action ? <div className="mt-1 flex flex-wrap items-center justify-center gap-2">{action}</div> : null}
+      {action ? <div className="mt-1 flex min-w-0 max-w-full flex-wrap items-center justify-center gap-2 [&>*]:max-w-full [&>*]:whitespace-normal">{action}</div> : null}
       {learnMore ? (
         <Button variant="link" render={<Link to={learnMore.to} />}>
           {learnMore.label}

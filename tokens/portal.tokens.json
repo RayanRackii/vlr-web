@@ -1,0 +1,25 @@
+{
+  "portal": {
+    "$extensions": {"com.rolvix.css": {"selector": ".portal-shell"}},
+    "$description": "Customer portal widths and availability colors; light-dark follows the existing color-scheme rules.",
+    "portal-content-max": {"$type": "dimension", "$value": {"value": 80, "unit": "rem"}},
+    "portal-content-max-qhd": {"$type": "dimension", "$value": {"value": 1560, "unit": "px"}},
+    "portal-free-light": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.08627450980392157, 0.5176470588235295, 0.3411764705882353]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "portal-free-dark": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.3137254901960784, 0.8117647058823529, 0.5882352941176471]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "portal-free": {"$type": "color", "$value": "{portal.portal-free-light}", "$extensions": {"com.rolvix.css": {"lightDark": "{portal.portal-free-dark}"}}},
+    "portal-few-light": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.596078431372549, 0.39215686274509803, 0]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "portal-few-dark": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0.9372549019607843, 0.7333333333333333, 0.3333333333333333]}, "$extensions": {"com.rolvix.css": {"format": "hex"}}},
+    "portal-few": {"$type": "color", "$value": "{portal.portal-few-light}", "$extensions": {"com.rolvix.css": {"lightDark": "{portal.portal-few-dark}"}}},
+    "surfaces": {
+      "$extensions": {"com.rolvix.css": {"selector": ".portal-shell, .portal-sheet"}},
+      "portal-spring": {"$type": "cubicBezier", "$value": [0.34, 1.56, 0.64, 1]},
+      "portal-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 1, "unit": "px"}, "blur": {"value": 2, "unit": "px"}, "spread": {"value": 0, "unit": "px"}, "color": {"colorSpace": "srgb", "components": [0, 0, 0], "alpha": 0.04}},
+          {"offsetX": {"value": 0, "unit": "px"}, "offsetY": {"value": 8, "unit": "px"}, "blur": {"value": 24, "unit": "px"}, "spread": {"value": -14, "unit": "px"}, "color": {"colorSpace": "srgb", "components": [0, 0, 0], "alpha": 0.18}}
+        ]
+      }
+    }
+  }
+}

@@ -165,14 +165,14 @@ export function LocaleDateInput({
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <div
-        className={cn(
-          "relative h-10 rounded-lg focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
-        )}
+        data-slot="date-field"
+        data-invalid={invalid || undefined}
+        className="relative min-h-10 rounded-lg"
       >
         <span
           aria-hidden="true"
           className={cn(
-            "flex h-10 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
+            "flex min-h-10 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
             invalid && "border-destructive",
           )}
         >

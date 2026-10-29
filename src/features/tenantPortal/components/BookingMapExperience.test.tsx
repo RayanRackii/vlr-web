@@ -41,7 +41,18 @@ vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReserva
 vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBookingIdleTimeout: () => undefined }))
 
 describe("BookingMapExperience", () => {
-  afterEach(() => vi.useRealTimers())
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+
+  it("returns from the rail to the first resource in the booking chooser", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }))
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} />)
+    const chooser = within(await screen.findByRole("group", { name: i18n.t("tenantPortal.agenda.chooseSpaceFirst") }))
+    const resource = await chooser.findByRole("button", { name: "Raquete" })
+    resource.scrollIntoView = vi.fn()
+    await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("emptyStates.book") }))
+    expect(resource).toHaveFocus()
+    expect(resource.scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "auto" })
+  })
 
   it("keeps fully booked resources without also showing the empty-state banner", async () => {
     const current = await fetchDailyAvailability("ficc", "2026-10-25", [RENTAL_ID])
