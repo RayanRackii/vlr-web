@@ -36,7 +36,7 @@ it("exposes stable portal parts for the visible sidebar and fixed mobile bottom 
     if (rule.selector === '.portal-shell [data-shell-part="sidebar"]') {
       rule.walkDecls("display", (declaration) => { sidebarVisible = declaration.value === "block" })
     }
-    if (rule.selector === ".portal-nav" && rule.parent?.type === "atrule" && rule.parent.params === "(max-width: 767px)") {
+    if (rule.selector === ".portal-nav" && rule.parent?.type === "atrule" && rule.parent.params === "(max-width: 1023px)") {
       const declarations = Object.fromEntries(rule.nodes.filter((node) => node.type === "decl").map((node) => [node.prop, node.value]))
       mobileBottomNav = declarations.position === "fixed" && declarations.inset === "auto 0 0" && declarations.display === "flex"
     }

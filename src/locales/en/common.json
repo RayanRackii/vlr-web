@@ -747,6 +747,7 @@
       "cancelOrder": "Cancel order",
       "cancelling": "Canceling...",
       "orderCancelled": "Order canceled.",
+      "orderNoLongerCancellable": "This order can no longer be cancelled.",
       "lineSubtotal": "Subtotal",
       "remove": "Remove",
       "removeItem": "Remove {{name}}",
@@ -974,6 +975,8 @@
         "rejectTitle": "Reject order",
         "cancelTitle": "Cancel order",
         "required": "A reason is required. The customer is notified only when external channels are enabled.",
+        "empty": "Enter a reason.",
+        "tooLong": "Use no more than 1000 characters.",
         "label": "Reason",
         "confirm": "Confirm"
       }
@@ -1030,6 +1033,19 @@
       }
     },
     "inbox": {
+      "items": {
+        "reservationConfirmed": "Reservation confirmed.",
+        "reservationPendingDeposit": "Reservation awaiting deposit.",
+        "reservationCompleted": "Reservation completed.",
+        "reservationReminder": "Reservation reminder.",
+        "reservationCanceled": "Reservation cancelled.",
+        "orderCreated": "New order.",
+        "orderApproved": "Order approved.",
+        "orderReady": "Order ready.",
+        "orderRejected": "Order rejected.",
+        "orderCancelledBySupplier": "Order cancelled by the supplier.",
+        "orderCancelledByCustomer": "Order cancelled by the customer."
+      },
       "title": "Notifications",
       "ariaLabelNone": "Notifications",
       "ariaLabel_one": "Notifications: {{count}} unread",

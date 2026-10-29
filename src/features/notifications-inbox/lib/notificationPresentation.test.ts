@@ -1,7 +1,9 @@
+import i18n from "@/lib/i18n"
 import { describe, expect, it } from "vitest"
 import { Bell, CalendarCheck, Package } from "lucide-react"
 
 import {
+  notificationItemText,
   formatRelativeTime,
   groupLabelSlug,
   moduleIcon,
@@ -79,5 +81,20 @@ describe("formatRelativeTime", () => {
 
   it("returns the raw value for an unparseable instant", () => {
     expect(formatRelativeTime("not-a-date", "en", now)).toBe("not-a-date")
+  })
+})
+
+
+describe("notificationItemText", () => {
+  it.each([
+    ["pt-BR", "Pedido cancelado pelo cliente."],
+    ["en", "Order cancelled by the customer."],
+    ["es", "Pedido cancelado por el cliente."],
+  ])("localizes known event items in %s without relying on the API title", (language, expected) => {
+    const item = { eventType: "catalog.order.cancelledByCustomer", title: "Pedido #6 cancelado pelo cliente." }
+    expect(notificationItemText(item, i18n.getFixedT(language))).toBe(expected)
+  })
+  it("keeps the API title for unknown events", () => {
+    expect(notificationItemText({ eventType: "unknown.event", title: "API fallback" }, i18n.t)).toBe("API fallback")
   })
 })

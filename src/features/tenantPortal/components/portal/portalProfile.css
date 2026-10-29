@@ -32,3 +32,8 @@
 @media (max-width: 767px) {
   .portal-profile-savebar button, .portal-profile-layout button[aria-label] { min-width: 44px; min-height: 44px; }
 }
+
+@media (pointer: coarse), (max-width: 767px) {
+  .portal-profile-layout :is(input:not([type="file"]), button) { min-height: 44px; }
+  .portal-profile-layout button { min-width: 44px; }
+}

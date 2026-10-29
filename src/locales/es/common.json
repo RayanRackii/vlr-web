@@ -747,6 +747,7 @@
       "cancelOrder": "Cancelar pedido",
       "cancelling": "Cancelando...",
       "orderCancelled": "Pedido cancelado.",
+      "orderNoLongerCancellable": "Este pedido ya no se puede cancelar.",
       "lineSubtotal": "Subtotal",
       "remove": "Quitar",
       "removeItem": "Quitar {{name}}",
@@ -974,6 +975,8 @@
         "rejectTitle": "Rechazar pedido",
         "cancelTitle": "Cancelar pedido",
         "required": "El motivo es obligatorio. El cliente se notifica solo si los canales externos están activos.",
+        "empty": "Indica el motivo.",
+        "tooLong": "Usa como máximo 1000 caracteres.",
         "label": "Motivo",
         "confirm": "Confirmar"
       }
@@ -1030,6 +1033,19 @@
       }
     },
     "inbox": {
+      "items": {
+        "reservationConfirmed": "Reserva confirmada.",
+        "reservationPendingDeposit": "Reserva pendiente de depósito.",
+        "reservationCompleted": "Reserva completada.",
+        "reservationReminder": "Recordatorio de reserva.",
+        "reservationCanceled": "Reserva cancelada.",
+        "orderCreated": "Nuevo pedido.",
+        "orderApproved": "Pedido aprobado.",
+        "orderReady": "Pedido listo.",
+        "orderRejected": "Pedido rechazado.",
+        "orderCancelledBySupplier": "Pedido cancelado por el proveedor.",
+        "orderCancelledByCustomer": "Pedido cancelado por el cliente."
+      },
       "title": "Notificaciones",
       "ariaLabelNone": "Notificaciones",
       "ariaLabel_one": "Notificaciones: {{count}} sin leer",
