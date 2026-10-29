@@ -11,6 +11,7 @@ import {
 import { ClipboardList, Eye, Play, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
@@ -105,7 +106,7 @@ function WorkOrdersTable({
           />
         ),
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{formatWorkOrderShortId(row.original.id)}</span>
+          <span className="font-mono text-xs tabular-nums">{formatWorkOrderShortId(row.original.id)}</span>
         ),
         filterFn: (row, _columnId, filterValue) => {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {
@@ -194,8 +195,8 @@ function WorkOrdersTable({
   const filteredRows = table.getFilteredRowModel().rows
 
   return (
-    <div className="min-w-0 rounded-xl border border-border">
-      <Table>
+    <div className="min-w-0 max-w-full rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+      <Table className="tabular-nums" containerClassName="min-w-0 max-w-full rounded-t-xl">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -221,7 +222,7 @@ function WorkOrdersTable({
             ? filteredRows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-normal">
+                    <TableCell key={cell.id} className="max-w-xs whitespace-normal break-words">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -339,18 +340,12 @@ export function WorkOrdersPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <WorkOrderOfflineBanner />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("workOrders.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("workOrders.description")}
-          </p>
-        </div>
-        {canCreateWorkOrder ? (
+      <PageHeader
+        title={t("workOrders.title")}
+        description={t("workOrders.description")}
+        actions={canCreateWorkOrder ? (
           <Button
             type="button"
             onClick={() => {
@@ -361,7 +356,7 @@ export function WorkOrdersPage() {
             {t("workOrders.create.action")}
           </Button>
         ) : null}
-      </div>
+      />
 
       {loadError !== null ? (
         <div
@@ -373,6 +368,7 @@ export function WorkOrdersPage() {
       ) : null}
 
       <Tabs
+        className="min-w-0"
         value={activeTab}
         onValueChange={(value) => {
           if (isWorkOrderListFilter(value)) {
@@ -380,7 +376,7 @@ export function WorkOrdersPage() {
           }
         }}
       >
-        <TabsList className="!h-auto flex-wrap justify-start">
+        <TabsList className="!h-auto max-w-full flex-wrap justify-start gap-1">
           {LIST_FILTERS.map((filter) => {
             const count = rowsForFilter(filter).length
             const label = t(`workOrders.tabs.${filter}`)
@@ -389,11 +385,11 @@ export function WorkOrdersPage() {
               <TabsTrigger
                 key={filter}
                 value={filter}
-                className="!h-auto min-h-8 px-2 py-1"
+                className="touch-target !h-auto min-h-8 px-2 py-1"
                 aria-label={t("workOrders.tabs.withCount", { label, count })}
               >
                 <span>{label}</span>
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1 tabular-nums">
                   {count}
                 </Badge>
               </TabsTrigger>
@@ -402,7 +398,7 @@ export function WorkOrdersPage() {
         </TabsList>
 
         {LIST_FILTERS.map((filter) => (
-          <TabsContent key={filter} value={filter} className="mt-4">
+          <TabsContent key={filter} value={filter} className="mt-4 min-w-0">
             <WorkOrdersTable
               rows={rowsForFilter(filter)}
               isLoading={isLoading}

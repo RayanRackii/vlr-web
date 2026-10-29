@@ -16,8 +16,8 @@
 .people-search-card, .people-directory, .people-role-list, .people-field-section, .people-role-summary {
   border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground); box-shadow: var(--people-shadow);
 }
-.people-search-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; }
-.people-search-input { position: relative; flex: 1; min-width: 0; max-width: 420px; }
+.people-search-card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+.people-search-input { position: relative; flex: 1 1 12rem; min-width: 0; max-width: 420px; }
 .people-search-input input { min-height: 44px; padding-left: 38px; border-radius: 12px; background: var(--card); }
 .people-search-icon { position: absolute; left: 12px; top: 14px; width: 16px; height: 16px; color: var(--muted-foreground); pointer-events: none; }
 .people-search-input [role="alert"] { margin-top: 6px; }
@@ -34,7 +34,7 @@
 .people-table th:nth-child(3) { width: 15%; }
 .people-table .people-actions-heading { width: 23%; text-align: right; }
 .people-person { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.people-avatar { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: color-mix(in oklch, var(--brand-accent) 80%, var(--brand-primary)); color: white; font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+.people-avatar { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: color-mix(in oklch, var(--primary) 10%, var(--card)); color: var(--primary); font-size: .75rem; font-weight: 700; text-transform: uppercase; }
 .people-person-name { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
 .people-person-email { margin-top: 2px; color: var(--muted-foreground); font-size: .8125rem; overflow-wrap: anywhere; }
 .people-role-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -44,7 +44,7 @@
 .people-table .people-status { height: auto; min-height: 22px; }
 .people-actions-cell { text-align: right; }
 .people-table .people-card-action { min-height: 36px; font-size: .75rem; }
-.people-date-cell { color: var(--muted-foreground); font-size: .8125rem; }
+.people-date-cell { font-variant-numeric: tabular-nums; color: var(--muted-foreground); font-size: .8125rem; }
 .people-mobile-date-label { display: none; }
 .people-pager { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding: 10px 16px; }
 .people-pager button { min-width: 40px; min-height: 40px; padding: 0; }
@@ -120,10 +120,10 @@
 .people-action-sheet[data-slot="sheet-content"] {
   gap: 0; max-width: 560px; max-height: calc(100dvh - 32px); overflow-y: auto; margin-inline: auto;
   border: 0; border-radius: 22px 22px 0 0; padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
-  background: var(--card); color: var(--card-foreground); box-shadow: 0 -12px 40px -10px rgb(0 0 0 / .35);
+  background: var(--card); color: var(--card-foreground); box-shadow: 0 -12px 40px -10px color-mix(in oklch, var(--foreground) 35%, transparent);
   --people-spring: var(--portal-spring, cubic-bezier(.34, 1.56, .64, 1));
 }
-[data-slot="sheet-overlay"]:has(~ .people-action-sheet) { background: rgb(8 14 22 / .45); backdrop-filter: none; }
+[data-slot="sheet-overlay"]:has(~ .people-action-sheet) { background: color-mix(in oklch, var(--foreground) 45%, transparent); backdrop-filter: none; }
 .people-sheet-grab { width: 40px; height: 5px; flex-shrink: 0; border-radius: 9px; background: var(--border); margin: 4px auto 12px; }
 .people-sheet-heading { display: flex; align-items: center; gap: 12px; padding: 4px 4px 14px; border-bottom: 1px solid var(--border); }
 .people-sheet-heading [data-slot="sheet-title"] { font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
@@ -186,3 +186,9 @@
 /* Registration settings keep navigation and field metadata within the page. */
 .people-access-registration .people-tabs { flex-wrap: wrap; overflow-x: visible; }
 .people-access-registration .people-field-row { flex-wrap: wrap; }
+
+/* Staff tabs wrap rather than moving the page sideways. Registration keeps its batch-2 layout. */
+.people-access:not(.people-access-registration) .people-tabs { flex-wrap: wrap; overflow-x: visible; }
+.people-access:not(.people-access-registration) .people-directory { min-width: 0; }
+.people-access:not(.people-access-registration) .people-list-heading { font-variant-numeric: tabular-nums; }
+.people-access:not(.people-access-registration) .people-bottom-nav a:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; border-radius: 8px; }

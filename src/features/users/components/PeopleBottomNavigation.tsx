@@ -18,18 +18,18 @@ export function PeopleBottomNavigation() {
   return (
     <nav className="people-bottom-nav" aria-label={t("peopleAccess.mobileNavigation")}>
       {can("core.dashboard.read") ? (
-        <Link to="/dashboard"><LayoutDashboard aria-hidden strokeWidth={1.75} /><span>{t("nav.dashboard")}</span></Link>
+        <Link className="touch-target" to="/dashboard"><LayoutDashboard aria-hidden strokeWidth={1.75} /><span>{t("nav.dashboard")}</span></Link>
       ) : null}
       {reservations ? (
-        <Link to={reservations.to}><CalendarCheck aria-hidden strokeWidth={1.75} /><span>{t("nav.reservations")}</span></Link>
+        <Link className="touch-target" to={reservations.to}><CalendarCheck aria-hidden strokeWidth={1.75} /><span>{t("nav.reservations")}</span></Link>
       ) : null}
       {hasWorkOrders ? (
-        <Link to="/os"><ClipboardList aria-hidden strokeWidth={1.75} /><span>{t("nav.workOrders")}</span></Link>
+        <Link className="touch-target" to="/os"><ClipboardList aria-hidden strokeWidth={1.75} /><span>{t("nav.workOrders")}</span></Link>
       ) : null}
       {people ? (
-        <Link to={people.to} aria-current="page"><Users aria-hidden strokeWidth={1.75} /><span>{t("nav.peopleAccess")}</span></Link>
+        <Link className="touch-target" to={people.to} aria-current="page"><Users aria-hidden strokeWidth={1.75} /><span>{t("nav.peopleAccess")}</span></Link>
       ) : null}
-      <Link to="/perfil"><UserRound aria-hidden strokeWidth={1.75} /><span>{t("account.profile")}</span></Link>
+      <Link className="touch-target" to="/perfil"><UserRound aria-hidden strokeWidth={1.75} /><span>{t("account.profile")}</span></Link>
     </nav>
   )
 }

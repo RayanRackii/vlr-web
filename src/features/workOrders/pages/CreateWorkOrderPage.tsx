@@ -7,14 +7,13 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   Form,
@@ -179,7 +178,7 @@ export function CreateWorkOrderPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6">
       <Button
         type="button"
         variant="ghost"
@@ -191,11 +190,11 @@ export function CreateWorkOrderPage() {
         {t("common.back")}
       </Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("workOrders.create.title")}</CardTitle>
-          <CardDescription>{t("workOrders.create.description")}</CardDescription>
-        </CardHeader>
+      <PageHeader
+        title={t("workOrders.create.title")}
+        description={t("workOrders.create.description")}
+      />
+      <Card className="min-w-0 motion-reduce:transition-none">
         <CardContent>
           {loadError ? (
             <div
@@ -216,29 +215,20 @@ export function CreateWorkOrderPage() {
           ) : null}
 
           {!isLoadingLookups && assets.length === 0 && !loadError ? (
-            <div
-              role="status"
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
-            >
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <ClipboardPen className="size-6" aria-hidden />
-              </div>
-              <div className="max-w-sm space-y-1">
-                <p className="text-sm font-medium text-foreground">
-                  {t("workOrders.create.emptyAssetsTitle")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t("workOrders.create.emptyAssetsDescription")}
-                </p>
-              </div>
+            <div role="status">
+              <EmptyState
+                icon={ClipboardPen}
+                title={t("workOrders.create.emptyAssetsTitle")}
+                description={t("workOrders.create.emptyAssetsDescription")}
+              />
             </div>
           ) : (
           <Form {...form}>
             <form
-              className="space-y-5"
+              className="min-w-0 space-y-5"
               onSubmit={form.handleSubmit(onSubmit)}
             >
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-5 sm:grid-cols-2 [&>*]:min-w-0">
                 <FormField
                   control={form.control}
                   name="assetId"
@@ -327,6 +317,7 @@ export function CreateWorkOrderPage() {
                       </FormLabel>
                       <FormControl>
                         <CivilDateInput
+                          className="tabular-nums motion-reduce:transition-none"
                           locale={i18n.resolvedLanguage ?? i18n.language}
                           disabled={isSubmitted}
                           {...field}
@@ -366,6 +357,7 @@ export function CreateWorkOrderPage() {
                     <FormLabel>{t("workOrders.create.form.notes")}</FormLabel>
                     <FormControl>
                       <Textarea
+                        className="touch-target min-w-0 motion-reduce:transition-none"
                         placeholder={t(
                           "workOrders.create.form.notesPlaceholder",
                         )}
@@ -378,7 +370,7 @@ export function CreateWorkOrderPage() {
                 )}
               />
 
-              <div className="flex justify-end">
+              <div className="flex flex-wrap justify-end border-t border-border pt-5 [&>button]:w-full sm:[&>button]:w-auto">
                 <FormPrimaryButton
                   type="submit"
                   isValid={isCreateValid}

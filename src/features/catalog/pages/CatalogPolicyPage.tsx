@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Card } from "@/components/ui/card"
 import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -57,28 +59,28 @@ export function CatalogPolicyPage() {
     } finally { savingRef.current = false; setSaving(false) }
   }
   if (!can("catalog.products.manage")) return <p>{t("catalog.policy.readOnly")}</p>
-  return <div className="mx-auto max-w-3xl space-y-6">
-    <h1 className="text-2xl font-semibold">{t("catalog.policy.title")}</h1>
-    <p className="text-sm text-muted-foreground">{t("catalog.policy.description")}</p>
+  return <div className="mx-auto min-w-0 max-w-3xl space-y-6">
+    <PageHeader title={t("catalog.policy.title")} description={t("catalog.policy.description")} />
     {loading ? <FormSkeleton fields={5} /> : error ? <div role="alert" className="space-y-3">
       <p>{error}</p>
       <Button onClick={() => setReload((value) => value + 1)}>{t("catalog.retry")}</Button>
     </div> :
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(submit)} className="space-y-6 rounded-lg border p-4">
-          <fieldset disabled={!canEdit || saving} className="space-y-6">
+        <Card className="min-w-0 gap-0 py-0">
+        <form onSubmit={form.handleSubmit(submit)} className="min-w-0 space-y-6 p-4 sm:p-6">
+          <fieldset disabled={!canEdit || saving} className="min-w-0 space-y-6">
             {!canEdit ? <p>{t("catalog.policy.readOnly")}</p> : null}
             <FormField control={form.control} name="customerCanCancelOrders" render={({ field }) => <FormItem className="flex items-center justify-between gap-3">
               <FormLabel>{t("catalog.policy.ordersEnabled")}</FormLabel>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                <Switch className="touch-target shrink-0" checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>} />
             <FormField control={form.control} name="orderCancelableUpToStatus" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.ordersUpTo")}</FormLabel>
               <Select value={field.value} onValueChange={field.onChange} disabled={!values.customerCanCancelOrders || !canEdit || saving} items={orderCancellationStatuses.map((value) => ({ value, label: t(`catalog.status.${value}`) }))}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="touch-target w-full min-w-0">
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
@@ -89,14 +91,14 @@ export function CatalogPolicyPage() {
             <FormField control={form.control} name="customerCanCancelRequests" render={({ field }) => <FormItem className="flex items-center justify-between gap-3">
               <FormLabel>{t("catalog.policy.requestsEnabled")}</FormLabel>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                <Switch className="touch-target shrink-0" checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>} />
             <FormField control={form.control} name="requestCancelableUpToStatus" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.requestsUpTo")}</FormLabel>
               <Select value={field.value} onValueChange={field.onChange} disabled={!values.customerCanCancelRequests || !canEdit || saving} items={[{ value: "Submitted", label: t("catalog.productRequestStatus.Submitted") }]}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="touch-target w-full min-w-0">
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
@@ -108,14 +110,17 @@ export function CatalogPolicyPage() {
             <FormField control={form.control} name="cancellationPolicyText" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.text")}</FormLabel>
               <FormControl>
-                <Textarea {...field} rows={5} maxLength={2000} placeholder={t("catalog.policy.placeholder")} />
+                <Textarea className="touch-target min-w-0" {...field} rows={5} maxLength={2000} placeholder={t("catalog.policy.placeholder")} />
               </FormControl>
-              <p className="text-xs text-muted-foreground">{t("catalog.policy.textHint", { length: values.cancellationPolicyText?.length ?? 0 })}</p>
+              <p className="text-xs tabular-nums text-muted-foreground">{t("catalog.policy.textHint", { length: values.cancellationPolicyText?.length ?? 0 })}</p>
               <FormMessage />
             </FormItem>} />
           </fieldset>
-          <FormPrimaryButton type="submit" isValid={catalogPolicyFormSchema.safeParse(values).success} disabled={!canEdit} loading={saving}>{t("common.save")}</FormPrimaryButton>
+          <div className="flex flex-wrap justify-end border-t border-border pt-4">
+          <FormPrimaryButton className="w-full sm:w-auto" type="submit" isValid={catalogPolicyFormSchema.safeParse(values).success} disabled={!canEdit} loading={saving}>{t("common.save")}</FormPrimaryButton>
+          </div>
         </form>
+        </Card>
       </Form>}
   </div>
 }

@@ -680,7 +680,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
           <TaxonomyFilterHeader kind="tags" title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
         </div>
         {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
-        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
+        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" action={<Can permission="catalog.products.manage"><Button type="button" onClick={openCreate}><Plus data-icon="inline-start" />{t("catalog.products.create")}</Button></Can>} filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
           <Table role="table" className="staff-catalog-table staff-catalog-products-table" aria-label={t("catalog.products.title")}>
             <TableHeader role="rowgroup">{table.getHeaderGroups().map((group) => (
               <TableRow role="row" key={group.id}>{group.headers.map((header) => (
@@ -736,11 +736,11 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
 
           <Form {...form}>
             <form
-              className="flex min-h-0 flex-1 flex-col"
+              className="flex min-h-0 min-w-0 flex-1 flex-col"
               onSubmit={form.handleSubmit(onSubmit)}
               noValidate
             >
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-1 py-1">
+              <div className="min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-1 py-1">
                 <FormField
                 control={form.control}
                 name="name"
@@ -821,6 +821,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                       <FormLabel>{t("catalog.products.form.price")}</FormLabel>
                       <FormControl>
                         <Input
+                          className="tabular-nums"
                           inputMode="decimal"
                           placeholder={t("catalog.priceOnRequest")}
                           {...field}
@@ -956,7 +957,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                         key={file.id}
                         className="flex flex-wrap items-center justify-between gap-2"
                       >
-                        <span className="truncate">
+                        <span className="min-w-0 max-w-full truncate">
                           {file.fileName}{" "}
                           <Badge variant="outline">
                             {file.visibility === "CustomerVisible"
@@ -1124,7 +1125,7 @@ function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unkn
     </span>
   </>
   return can("catalog.products.manage") ? (
-    <button type="button" className="staff-catalog-product-name staff-catalog-name-button" onClick={() => onEdit(product)}>{name}</button>
+    <button type="button" className="touch-target staff-catalog-product-name staff-catalog-name-button" onClick={() => onEdit(product)}>{name}</button>
   ) : <div className="staff-catalog-product-name">{name}</div>
 }
 
@@ -1137,7 +1138,7 @@ function CatalogProductStatusCell({ row, table }: CellContext<CatalogProduct, un
     {t(product.isActive ? "catalog.products.active" : "catalog.products.inactive")}
   </span>
   return can("catalog.products.manage") ? (
-    <button type="button" className="staff-catalog-status-button"
+    <button type="button" className="touch-target staff-catalog-status-button"
       aria-label={`${t(product.isActive ? "catalog.products.deactivate" : "catalog.products.activate")}: ${product.name}`}
       disabled={statusBusyId === product.id} aria-busy={statusBusyId === product.id}
       onClick={() => onToggleActive(product)}>{status}</button>
@@ -1302,7 +1303,7 @@ function PendingFileStatus({
   return (
     <span className="inline-flex max-w-56 items-center gap-1 text-destructive">
       <CircleAlert className="size-4 shrink-0" aria-hidden />
-      <span className="truncate">{error ?? t("catalog.products.files.error")}</span>
+      <span className="min-w-0 max-w-full truncate">{error ?? t("catalog.products.files.error")}</span>
     </span>
   )
 }

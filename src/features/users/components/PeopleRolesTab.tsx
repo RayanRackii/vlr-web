@@ -240,7 +240,7 @@ export function PeopleRolesTab({
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium">{role.name}</p>
+                    <p className="break-words text-sm font-medium [overflow-wrap:anywhere]">{role.name}</p>
                     <Badge
                       variant={role.isSystemRole ? "secondary" : "outline"}
                     >
@@ -333,7 +333,7 @@ export function PeopleRolesTab({
       >
         <SheetContent
           side="right"
-          className="w-full overflow-y-auto sm:max-w-xl"
+          className="w-full min-w-0 overflow-y-auto sm:max-w-xl"
           finalFocus={isMobile ? () => actionTriggerRef.current ?? true : undefined}
         >
           <SheetHeader>
@@ -351,7 +351,7 @@ export function PeopleRolesTab({
 
           <Form {...form}>
             <form
-              className="flex flex-1 flex-col gap-4 px-4 pb-4"
+              className="flex min-w-0 flex-1 flex-col gap-4 px-4 pb-4"
               onSubmit={(event) => {
                 void form.handleSubmit(handleSave)(event)
               }}

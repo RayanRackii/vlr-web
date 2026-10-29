@@ -395,7 +395,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                         const checked = field.value.includes(role.id)
 
                         return (
-                          <div key={role.id} className="flex items-center gap-2">
+                          <div key={role.id} className="flex min-w-0 items-center gap-3 py-1">
                             <Checkbox
                               id={inputId}
                               checked={checked}
@@ -404,7 +404,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                                 field.onChange(toggleUniqueId(field.value, role.id))
                               }}
                             />
-                            <Label htmlFor={inputId} className="font-normal">
+                            <Label htmlFor={inputId} className="min-w-0 break-words font-normal [overflow-wrap:anywhere]">
                               {role.name}
                             </Label>
                           </div>
@@ -470,7 +470,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                         const checked = field.value.includes(role.id)
 
                         return (
-                          <div key={role.id} className="flex items-center gap-2">
+                          <div key={role.id} className="flex min-w-0 items-center gap-3 py-1">
                             <Checkbox
                               id={inputId}
                               checked={checked}
@@ -479,7 +479,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                                 field.onChange(toggleUniqueId(field.value, role.id))
                               }}
                             />
-                            <Label htmlFor={inputId} className="font-normal">
+                            <Label htmlFor={inputId} className="min-w-0 break-words font-normal [overflow-wrap:anywhere]">
                               {role.name}
                             </Label>
                           </div>

@@ -187,7 +187,7 @@ export function WorkOrderTaskImageField({
     : t("workOrders.execution.imageChoose")
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3 break-words">
       {fileId == null && !uploading ? (
         <p className="text-sm text-muted-foreground">
           {t("workOrders.execution.imageEmpty")}
@@ -223,7 +223,7 @@ export function WorkOrderTaskImageField({
             className="h-2 overflow-hidden rounded-full bg-muted"
           >
             <div
-              className="h-full bg-primary transition-[width]"
+              className="h-full bg-primary motion-safe:transition-[width]"
               style={{ width: `${progress ?? 0}%` }}
             />
           </div>
@@ -262,7 +262,7 @@ export function WorkOrderTaskImageField({
       )}
 
       {!online ? (
-        <p className="text-sm text-amber-800 dark:text-amber-200">
+        <p className="text-sm text-muted-foreground">
           {t("workOrders.execution.imageOffline")}
         </p>
       ) : null}
