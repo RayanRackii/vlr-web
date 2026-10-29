@@ -698,6 +698,39 @@
       "submitOrder": "Enviar pedido",
       "submitting": "Enviando...",
       "orderSubmitted": "Pedido enviado.",
+      "purchase": {
+        "errorTitle": "Não foi possível enviar o pedido",
+        "retry": "Tentar novamente",
+        "dismiss": "Dispensar",
+        "successTitle": "Pedido recebido",
+        "orderNumber": "Pedido #{{number}}",
+        "successCopy": "Seu pedido chegou até nós. Acompanhe as próximas etapas por aqui.",
+        "nextTitle": "O que acontece agora",
+        "nextCopy": "A equipe vai conferir os itens e atualizar o andamento do pedido.",
+        "track": "Acompanhar pedido",
+        "continueShopping": "Continuar comprando",
+        "trackingTitle": "Acompanhamento",
+        "steps": {
+          "Requested": "Recebido",
+          "Approved": "Confirmado",
+          "Preparing": "Em preparo",
+          "Ready": "Pronto",
+          "Completed": "Concluído"
+        },
+        "terminal": {
+          "Cancelled": "Pedido cancelado",
+          "Rejected": "Pedido recusado"
+        },
+        "stepCopy": {
+          "Requested": "Recebemos seu pedido para conferência.",
+          "Approved": "Os itens foram conferidos e o pedido foi confirmado.",
+          "Preparing": "A equipe está preparando seus itens.",
+          "Ready": "Seu pedido está pronto para a próxima etapa.",
+          "Completed": "Pedido concluído. Obrigado pela preferência.",
+          "Cancelled": "O pedido foi encerrado. Consulte os detalhes no histórico.",
+          "Rejected": "Não foi possível atender ao pedido. Consulte os detalhes no histórico."
+        }
+      },
       "requestCta": "Solicitar produto",
       "requestTitle": "Solicitar produto",
       "requestSubtitle": "Descreva o que você precisa. Depois de enviar, a solicitação fica em Minhas solicitações.",

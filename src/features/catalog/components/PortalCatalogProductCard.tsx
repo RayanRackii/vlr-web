@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { PortalAddToCartButton } from "@/features/catalog/components/PortalAddToCartButton"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import {
   CATALOG_CART_MAX_QUANTITY,
@@ -91,7 +91,7 @@ export function PortalCatalogProductCard({
           ) : (
             <p className="portal-catalog-price">{priceLabel}</p>
           )}
-          <LoadingButton
+          <PortalAddToCartButton
             type="button"
             className="portal-catalog-add portal-catalog-primary text-primary-foreground hover:opacity-90"
             style={{ backgroundColor: primary }}
@@ -99,7 +99,7 @@ export function PortalCatalogProductCard({
             onClick={onAdd}
           >
             <Plus aria-hidden />
-          </LoadingButton>
+          </PortalAddToCartButton>
         </div>
         <div className="portal-catalog-stepper">
           <Button

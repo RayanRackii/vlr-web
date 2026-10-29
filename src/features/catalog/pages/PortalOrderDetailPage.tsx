@@ -1,7 +1,7 @@
 import "../components/portalOrders.css"
 
 import { useEffect, useState } from "react"
-import { Link, useOutletContext, useParams } from "react-router-dom"
+import { Link, useLocation, useNavigate, useOutletContext, useParams } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -9,6 +9,8 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
+import { PortalOrderSuccess } from "@/features/catalog/components/PortalOrderFeedback"
+import { PortalOrderStepper } from "@/features/catalog/components/PortalOrderStepper"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import { catalogOrderStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -26,6 +28,8 @@ import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalS
 export function PortalOrderDetailPage() {
   const { t, i18n } = useTranslation()
   const params = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { subdomain } = useOutletContext<CustomerAppOutletContext>()
   const orderId = params.orderId ?? ""
 
@@ -34,13 +38,23 @@ export function PortalOrderDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
   const identity = `${subdomain}:${orderId}`
+  const [successIdentity, setSuccessIdentity] = useState<string | null>(() => location.state?.justCreated === true ? identity : null)
   const [seenIdentity, setSeenIdentity] = useState(identity)
   if (seenIdentity !== identity) {
     setSeenIdentity(identity)
     setOrder(null)
     setLoading(true)
     setLoadError(null)
+    setSuccessIdentity(location.state?.justCreated === true ? identity : null)
   }
+  useEffect(() => {
+    if (location.state?.justCreated !== true) return
+    const remainingState = { ...location.state } as Record<string, unknown>
+    delete remainingState.justCreated
+    void navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
+      replace: true, state: Object.keys(remainingState).length > 0 ? remainingState : null,
+    })
+  }, [location, navigate])
   useEffect(() => {
     let stale = false
     setLoading(true)
@@ -107,9 +121,19 @@ export function PortalOrderDetailPage() {
     partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
   })
 
+  function trackOrder() {
+    const tracking = document.getElementById("portal-order-tracking")
+    tracking?.focus({ preventScroll: true })
+    tracking?.scrollIntoView?.({ behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" })
+  }
+
   return (
     <div className="portal-record-detail space-y-4">
       {back}
+
+      {successIdentity === identity ? (
+        <PortalOrderSuccess number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} />
+      ) : null}
 
       <section className="portal-record-panel space-y-5">
         <div className="portal-record-panel-head">
@@ -162,34 +186,12 @@ export function PortalOrderDetailPage() {
         </div>
       </section>
 
-      {order.history.length > 0 ? (
-        <section className="portal-record-panel">
-          <h2 className="portal-record-section-title">
-            {t("catalog.orders.timeline")}
-          </h2>
-          <ol className="portal-timeline">
-            {order.history.map((entry) => (
-              <li key={entry.id} className="portal-timeline-entry">
-                <span className="portal-timeline-rail" aria-hidden>
-                  <span className="portal-timeline-dot" />
-                  <span className="portal-timeline-line" />
-                </span>
-                <div className="portal-timeline-body">
-                  <p className="portal-timeline-status">
-                    {t(`catalog.status.${entry.status}`)}
-                  </p>
-                  <p className="portal-timeline-when">
-                    {formatCatalogDate(entry.createdAt, i18n.language)}
-                  </p>
-                  {entry.reason ? (
-                    <p className="portal-timeline-reason">{entry.reason}</p>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
+      <section id="portal-order-tracking" className="portal-record-panel portal-order-tracking" tabIndex={-1} aria-labelledby="portal-order-tracking-title">
+        <h2 id="portal-order-tracking-title" className="portal-record-section-title">
+          {t("tenantPortal.catalog.purchase.trackingTitle")}
+        </h2>
+        <PortalOrderStepper order={order} />
+      </section>
     </div>
   )
 }

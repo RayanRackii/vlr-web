@@ -13,7 +13,7 @@
 .portal-catalog-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .portal-catalog-button { min-height: 48px; height: auto; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 650; }
 .portal-catalog-primary { box-shadow: 0 8px 20px -10px var(--primary); }
-.portal-catalog-cart-count { min-width: 23px; padding: 1px 7px; border-radius: 99px; background: var(--primary-foreground); color: var(--primary); font-size: 12px; }
+.portal-catalog-cart-count { display: inline-block; flex-shrink: 0; min-width: 23px; padding: 1px 7px; border-radius: 99px; background: var(--primary-foreground); color: var(--primary); font-size: 12px; }
 .portal-catalog-search { display: flex; align-items: center; gap: 12px; max-width: 560px; min-height: 50px; padding: 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
 .portal-catalog-search:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent); }
 .portal-catalog-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px; scrollbar-width: thin; }
@@ -77,6 +77,51 @@
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .portal-catalog-card { transition: transform .3s var(--portal-spring), box-shadow .2s; }
+  .portal-catalog-card { transition: transform .3s var(--portal-spring); }
   .portal-catalog-card:hover { transform: translateY(-4px); }
+}
+
+.portal-add-to-cart {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition: transform 220ms cubic-bezier(.34, 1.25, .64, 1);
+}
+
+.portal-cart-ripple {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, currentColor, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: .22;
+  animation: portal-cart-ripple 500ms ease-out forwards;
+}
+
+@keyframes portal-cart-ripple {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+@keyframes portal-cart-count-pulse {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .portal-add-to-cart:active,
+  .portal-add-to-cart[data-pressing=true] {
+    transform: scale(.96);
+    translate: none;
+    transition-duration: 90ms;
+  }
+  .portal-cart-count-pulse { animation: portal-cart-count-pulse 250ms ease-out; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-add-to-cart { transition: none; transform: none; translate: none; }
+  .portal-cart-ripple { display: none; animation: none; }
+  .portal-cart-count-pulse { animation: none; }
 }

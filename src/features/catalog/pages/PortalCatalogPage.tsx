@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
+import { PortalCartCount } from "@/features/catalog/components/PortalCartCount"
 import {
   formatCartTotalText,
   formatLineSubtotal,
@@ -271,7 +272,7 @@ export function PortalCatalogPage() {
             >
               <ShoppingCart aria-hidden data-icon="inline-start" />
               {t("tenantPortal.catalog.cartTitle")}
-              {cart.totalQuantity > 0 ? <span className="portal-catalog-cart-count" aria-hidden="true">{cart.totalQuantity}</span> : null}
+              <PortalCartCount count={cart.totalQuantity} />
             </Button>
           </div>
         </header>
