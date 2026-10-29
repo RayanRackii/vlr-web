@@ -48,9 +48,9 @@ async function renderVisualTab() {
 
 describe("RentalResourceSheet visual validation", () => {
   it.each([
-    ["unit", false, "Invalid id"],
-    ["unit", true, "Invalid id"],
-    ["category", false, "Invalid id"],
+    ["unit", false, i18n.t("rentals.resources.validation.unitRequired")],
+    ["unit", true, i18n.t("rentals.resources.validation.unitRequired")],
+    ["category", false, i18n.t("rentals.resources.validation.categoryRequired")],
     ["family", false, i18n.t("rentals.resources.validation.familyRequired")],
   ])("links the empty %s selector error after blur (inline unit creation: %s)", async (field, inlineUnit, message) => {
     const user = userEvent.setup()
