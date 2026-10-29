@@ -993,6 +993,43 @@
         "catalog": "Catálogo y pedidos",
         "rentals": "Alquileres"
       }
+    },
+    "inbox": {
+      "title": "Notificaciones",
+      "ariaLabelNone": "Notificaciones",
+      "ariaLabel_one": "Notificaciones: {{count}} sin leer",
+      "ariaLabel_other": "Notificaciones: {{count}} sin leer",
+      "markAll": "Marcar todo como leído",
+      "empty": "Estás al día. No hay notificaciones nuevas.",
+      "loading": "Cargando notificaciones…",
+      "recent": "Recientes",
+      "countOverflow": "99+",
+      "groups": {
+        "fallback_one": "{{count}} notificación — {{eventType}}",
+        "fallback_other": "{{count}} notificaciones — {{eventType}}",
+        "orderCreated_one": "{{count}} pedido nuevo",
+        "orderCreated_other": "{{count}} pedidos nuevos",
+        "orderApproved_one": "{{count}} pedido aprobado",
+        "orderApproved_other": "{{count}} pedidos aprobados",
+        "orderReady_one": "{{count}} pedido listo",
+        "orderReady_other": "{{count}} pedidos listos",
+        "orderRejected_one": "{{count}} pedido rechazado",
+        "orderRejected_other": "{{count}} pedidos rechazados",
+        "orderCancelledBySupplier_one": "{{count}} pedido cancelado",
+        "orderCancelledBySupplier_other": "{{count}} pedidos cancelados",
+        "orderCancelledByCustomer_one": "{{count}} pedido cancelado por el cliente",
+        "orderCancelledByCustomer_other": "{{count}} pedidos cancelados por clientes",
+        "reservationConfirmed_one": "{{count}} nueva reserva confirmada",
+        "reservationConfirmed_other": "{{count}} nuevas reservas confirmadas",
+        "reservationPendingDeposit_one": "{{count}} reserva en espera de señal",
+        "reservationPendingDeposit_other": "{{count}} reservas en espera de señal",
+        "reservationCanceled_one": "{{count}} reserva cancelada",
+        "reservationCanceled_other": "{{count}} reservas canceladas",
+        "reservationCompleted_one": "{{count}} reserva completada",
+        "reservationCompleted_other": "{{count}} reservas completadas",
+        "reservationReminder_one": "{{count}} recordatorio de reserva",
+        "reservationReminder_other": "{{count}} recordatorios de reserva"
+      }
     }
   },
   "landing": {
