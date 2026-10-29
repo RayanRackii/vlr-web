@@ -3,6 +3,7 @@ import "./portalOrders.css"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
+import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
 
 export function PortalOrderFeedbackIcon({ error = false }: { error?: boolean }) {
   return (
@@ -41,22 +42,26 @@ export function PortalOrderSubmitError({ message, blocked, onRetry, onDismiss }:
   )
 }
 
-export function PortalOrderSuccess({ number, catalogTo, onTrack, onDismiss }: {
+export function PortalOrderSuccess({ status, number, catalogTo, onTrack, onDismiss }: {
+  status: CatalogOrder["status"]
   number: number
   catalogTo: string
   onTrack: () => void
   onDismiss: () => void
 }) {
   const { t } = useTranslation()
+  const copyKey = status === "Requested"
+    ? "tenantPortal.catalog.purchase"
+    : `tenantPortal.catalog.purchase.progress.${status}`
   return (
     <section className="portal-record-panel portal-order-success" aria-labelledby="portal-order-success-title">
       <PortalOrderFeedbackIcon />
-      <h2 id="portal-order-success-title">{t("tenantPortal.catalog.purchase.successTitle")}</h2>
+      <h2 id="portal-order-success-title">{t(`${copyKey}.successTitle`)}</h2>
       <p className="text-muted-foreground">{t("tenantPortal.catalog.purchase.orderNumber", { number })}</p>
-      <p className="portal-order-success-copy">{t("tenantPortal.catalog.purchase.successCopy")}</p>
+      <p className="portal-order-success-copy">{t(`${copyKey}.successCopy`)}</p>
       <div className="portal-order-next">
         <h3>{t("tenantPortal.catalog.purchase.nextTitle")}</h3>
-        <p>{t("tenantPortal.catalog.purchase.nextCopy")}</p>
+        <p>{t(`${copyKey}.nextCopy`)}</p>
       </div>
       <div className="portal-order-feedback-actions">
         <Button type="button" className="portal-order-track-button" onClick={onTrack}>

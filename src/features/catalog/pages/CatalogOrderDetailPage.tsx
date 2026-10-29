@@ -223,6 +223,7 @@ export function CatalogOrderDetailPage() {
             type="button"
             variant="ghost"
             size="sm"
+            className="touch-target"
             onClick={() => {
               void navigate("/catalogo/pedidos")
             }}
@@ -261,6 +262,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("approve") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "approve"}
                 onClick={() => {
                   void runAction("approve")
@@ -272,6 +274,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("preparing") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "preparing"}
                 onClick={() => {
                   void runAction("preparing")
@@ -283,6 +286,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("ready") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "ready"}
                 onClick={() => {
                   void runAction("ready")
@@ -294,6 +298,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("complete") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "complete"}
                 onClick={() => {
                   void runAction("complete")
@@ -305,6 +310,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("reject") ? (
               <Button
                 type="button"
+                className="touch-target"
                 variant="outline"
                 onClick={() => {
                   form.reset({ reason: "" })
@@ -317,6 +323,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("cancel") ? (
               <Button
                 type="button"
+                className="touch-target"
                 variant="outline"
                 onClick={() => {
                   form.reset({ reason: "" })

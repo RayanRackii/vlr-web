@@ -130,9 +130,10 @@ export function AppShell({
     }
   }
 
-  const headerIconClassName = enlargeHeaderTargets
-    ? headerTouchTargetClassName
-    : undefined
+  const headerIconClassName = cn(
+    variant === "staff" && "touch-target",
+    enlargeHeaderTargets && headerTouchTargetClassName,
+  )
 
   const collapsed = collapsible && isCollapsed
 

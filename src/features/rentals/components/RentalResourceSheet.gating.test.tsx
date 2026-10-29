@@ -49,7 +49,8 @@ describe("RentalResourceSheet inline dependency creation", () => {
     await user.type(name, " ")
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     await user.tab()
-    expect(screen.getByRole("alert")).toHaveTextContent(i18n.t("rentals.resources.validation.nameRequired"))
+    expect(name).toHaveAccessibleDescription(i18n.t("rentals.resources.validation.nameRequired"))
+    expect(screen.getAllByText(i18n.t("rentals.resources.validation.nameRequired"))).toHaveLength(1)
   })
 
   it("hides type creation without rentals assets write", () => {

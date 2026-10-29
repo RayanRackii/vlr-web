@@ -710,6 +710,28 @@
         "nextCopy": "A equipe vai conferir os itens e atualizar o andamento do pedido.",
         "track": "Acompanhar pedido",
         "continueShopping": "Continuar comprando",
+        "progress": {
+          "Approved": {
+            "successTitle": "Pedido confirmado",
+            "successCopy": "Seu pedido foi aprovado e está confirmado.",
+            "nextCopy": "A próxima etapa é a preparação dos itens. Acompanhe o andamento por aqui."
+          },
+          "Preparing": {
+            "successTitle": "Pedido em preparação",
+            "successCopy": "A equipe está preparando os itens do seu pedido.",
+            "nextCopy": "Acompanhe por aqui. O status será atualizado quando o pedido estiver pronto."
+          },
+          "Ready": {
+            "successTitle": "Pedido pronto",
+            "successCopy": "Os itens do seu pedido estão prontos.",
+            "nextCopy": "Siga as orientações da equipe para receber os itens."
+          },
+          "Completed": {
+            "successTitle": "Pedido concluído",
+            "successCopy": "Seu pedido foi concluído. Obrigado!",
+            "nextCopy": "Agradecemos a sua preferência. Você pode consultar os detalhes do pedido por aqui."
+          }
+        },
         "trackingTitle": "Acompanhamento",
         "steps": {
           "Requested": "Recebido",
