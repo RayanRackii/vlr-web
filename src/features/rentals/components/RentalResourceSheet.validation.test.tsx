@@ -195,6 +195,7 @@ describe("RentalResourceSheet visual validation", () => {
     expect(screen.queryByText(message)).not.toBeInTheDocument()
     await user.click(name)
     await user.tab()
+    expect(screen.getAllByText(message)).toHaveLength(1)
     expect(name.closest('[data-slot="form-item"]')).toHaveTextContent(message)
     expect(name).toHaveAccessibleDescription(message)
     expect(name).toHaveAttribute("aria-invalid", "true")

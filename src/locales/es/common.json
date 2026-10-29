@@ -705,11 +705,33 @@
         "dismiss": "Descartar",
         "successTitle": "Pedido recibido",
         "orderNumber": "Pedido #{{number}}",
-        "successCopy": "Ya recibimos tu pedido. Sigue los próximos pasos aquí.",
+        "successCopy": "Ya recibimos su pedido. Usted puede seguir los próximos pasos aquí.",
         "nextTitle": "Qué pasa ahora",
         "nextCopy": "El equipo revisará los artículos y actualizará el estado del pedido.",
         "track": "Seguir pedido",
         "continueShopping": "Seguir comprando",
+        "progress": {
+          "Approved": {
+            "successTitle": "Pedido confirmado",
+            "successCopy": "Su pedido ha sido aprobado y confirmado.",
+            "nextCopy": "El siguiente paso es preparar los artículos. Usted puede seguir el estado por aquí."
+          },
+          "Preparing": {
+            "successTitle": "Pedido en preparación",
+            "successCopy": "El equipo está preparando los artículos de su pedido.",
+            "nextCopy": "Usted puede seguir el estado por aquí. Se actualizará cuando su pedido esté listo."
+          },
+          "Ready": {
+            "successTitle": "Pedido listo",
+            "successCopy": "Los artículos de su pedido están listos.",
+            "nextCopy": "Siga las indicaciones del equipo para recibir sus artículos."
+          },
+          "Completed": {
+            "successTitle": "Pedido completado",
+            "successCopy": "Su pedido se ha completado. ¡Gracias!",
+            "nextCopy": "Gracias por su preferencia. Usted puede consultar los detalles de su pedido por aquí."
+          }
+        },
         "trackingTitle": "Seguimiento",
         "steps": {
           "Requested": "Recibido",

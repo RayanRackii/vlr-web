@@ -81,7 +81,7 @@ export function CatalogColumnFilter<T>({ column, title, options }: {
   const value = column.getFilterValue()
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="outline" className="staff-catalog-filter" data-active={column.getIsFiltered()} />}>
+      <PopoverTrigger render={<Button variant="outline" className="staff-catalog-filter touch-target" data-active={column.getIsFiltered()} />}>
         {title}<ChevronDown size={16} aria-hidden="true" />
       </PopoverTrigger>
       <PopoverContent className="w-64" align="start">

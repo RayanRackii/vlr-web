@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest"
+import postcss from "postcss"
+import tailwindcss from "tailwindcss"
+import config from "../../../tailwind.config"
 
 // Tailwind 3.4 does not generate the v4 CSS-variable shorthand (`w-(--x)`),
 // so such classes silently do nothing. Primitives must use `w-[var(--x)]`.
@@ -15,6 +18,19 @@ describe("ui primitives use Tailwind 3 arbitrary CSS-var syntax", () => {
       expect(source.match(V4_VAR_SHORTHAND) ?? []).toEqual([])
     })
   }
+
+  it("generates invalid borders and focused rings for the shared form controls in both themes", async () => {
+    const { root } = await postcss([tailwindcss({
+      ...config,
+      content: [{ raw: [sources["./input.tsx"], sources["./select.tsx"], sources["./textarea.tsx"]].join("\n"), extension: "tsx" }],
+    })]).process("@tailwind utilities;", { from: undefined })
+    const rules: { selector: string; declarations: string }[] = []
+    root.walkRules((rule) => { rules.push({ selector: rule.selector, declarations: rule.toString() }) })
+    const invalid = rules.filter(({ selector }) => selector.includes('[aria-invalid="true"]'))
+    expect(invalid.some(({ declarations }) => declarations.includes("border-color: var(--destructive)"))).toBe(true)
+    expect(invalid.some(({ selector, declarations }) => selector.includes(":focus-visible") && declarations.includes("--tw-ring-color: var(--destructive)"))).toBe(true)
+    expect(invalid.some(({ selector, declarations }) => selector.includes("dark") && selector.includes(":focus-visible") && declarations.includes("--tw-ring-color: var(--destructive)"))).toBe(true)
+  })
 
   it("select/dropdown popups are at least as wide as their trigger and capped to the viewport", () => {
     const select = sources["./select.tsx"]

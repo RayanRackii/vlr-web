@@ -187,7 +187,7 @@ export function PortalOrderDetailPage() {
       {back}
 
       {successIdentity === identity && order.status !== "Cancelled" && order.status !== "Rejected" ? (
-        <PortalOrderSuccess number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} onDismiss={() => {
+        <PortalOrderSuccess status={order.status} number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} onDismiss={() => {
           try {
             sessionStorage.removeItem(`portal-order-just-created:${identity}`)
           } catch {

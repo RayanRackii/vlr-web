@@ -710,6 +710,28 @@
         "nextCopy": "The team will review your items and update your order’s progress.",
         "track": "Track order",
         "continueShopping": "Continue shopping",
+        "progress": {
+          "Approved": {
+            "successTitle": "Order confirmed",
+            "successCopy": "Your order has been approved and confirmed.",
+            "nextCopy": "The next step is preparing your items. Follow the progress here."
+          },
+          "Preparing": {
+            "successTitle": "Order being prepared",
+            "successCopy": "The team is preparing the items in your order.",
+            "nextCopy": "Follow the progress here. The status will update when your order is ready."
+          },
+          "Ready": {
+            "successTitle": "Order ready",
+            "successCopy": "The items in your order are ready.",
+            "nextCopy": "Follow the team’s instructions to receive your items."
+          },
+          "Completed": {
+            "successTitle": "Order completed",
+            "successCopy": "Your order is complete. Thank you!",
+            "nextCopy": "Thank you for choosing us. You can review your order details here."
+          }
+        },
         "trackingTitle": "Order tracking",
         "steps": {
           "Requested": "Received",

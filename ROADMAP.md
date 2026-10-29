@@ -254,6 +254,8 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] QA R28 (2026-10-29, código local): banner e próximos passos do pedido acompanham o status no polling (pt-BR/en/es); inputs/selects/textareas inválidos mantêm borda e foco `destructive`; erros de campo dos recursos aparecem uma única vez; cabeçalho, filtros e ações/Voltar do staff usam a área de toque existente de 44px em touch/mobile. Sem mudança no `vlr-api`.
+
 - [x] QA R27 (WEB, local): Reservar com sidebar recolhida até 1023px, resumo em fluxo e chips sem truncamento; pedido B2C atualiza a cada 15s só com documento visível, para nos estados terminais e refaz GET após conflito 409 localizado; motivos staff válidos antes de confirmar, status compartilhado com a lista e alvos de toque de 44px sem ampliar desktop. Notificações conhecidas usam i18n; número depende de metadado ainda ausente no DTO.
 
 - [x] T1180 — redesign visual staff de Produtos/Pedidos/Solicitações conforme mockup aprovado: abas, busca/filtros locais, KPIs dos pedidos carregados, editor Dialog lateral e listas responsivas; mesma permissão `catalog.products.read` em `/catalogo/solicitacoes`, sem alterar serviços/contratos ou mutações. pt-BR/en/es e acessibilidade.

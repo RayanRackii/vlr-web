@@ -16,6 +16,10 @@ export default {
         vertical: 'orientation="vertical"',
         active: "active",
       },
+      // Tailwind 3 does not provide the aria-invalid shorthand by default.
+      aria: {
+        invalid: 'invalid="true"',
+      },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",

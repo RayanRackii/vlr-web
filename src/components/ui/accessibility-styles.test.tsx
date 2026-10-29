@@ -7,11 +7,26 @@ import { Button } from "./button"
 import { Checkbox } from "./checkbox"
 import { FieldHelp } from "./field-label"
 import { Switch } from "./switch"
+import { Input } from "./input"
+import { Select, SelectTrigger, SelectValue } from "./select"
+import { Textarea } from "./textarea"
 
 describe("small control accessibility", () => {
   it.each(["xs", "icon-xs", "icon-sm", "icon"] as const)("keeps %s Button (already >= 24px) free of the pseudo hit area so tight icon groups do not overlap", (size) => {
     render(<Button size={size}>Action</Button>)
     expect(screen.getByRole("button", { name: "Action" })).not.toHaveClass("touch-target")
+  })
+
+  it("keeps invalid input, select and textarea borders and focus rings destructive in both themes", () => {
+    render(<>
+      <Input aria-label="Name" aria-invalid="true" />
+      <Textarea aria-label="Notes" aria-invalid="true" />
+      <Select><SelectTrigger aria-label="Type" aria-invalid="true"><SelectValue /></SelectTrigger></Select>
+    </>)
+    for (const control of [screen.getByRole("textbox", { name: "Name" }), screen.getByRole("textbox", { name: "Notes" }), screen.getByRole("combobox", { name: "Type" })]) {
+      expect(control).toHaveClass("aria-invalid:border-destructive", "aria-invalid:focus-visible:border-destructive", "aria-invalid:focus-visible:ring-destructive", "dark:aria-invalid:focus-visible:ring-destructive")
+      expect(control).not.toHaveClass("dark:aria-invalid:border-destructive/50")
+    }
   })
 
   it("expands the field help target while keeping the 16px info button", () => {

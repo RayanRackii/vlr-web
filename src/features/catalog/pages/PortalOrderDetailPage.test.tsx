@@ -103,10 +103,49 @@ describe("PortalOrderDetailPage", () => {
     getOrderMock.mockResolvedValue(mixedOrder())
   })
 
+  it("updates the success title, body and next steps as the order advances through polling", async () => {
+    vi.useFakeTimers()
+    renderDetail({ justCreated: true })
+    await act(async () => {})
+    expect(screen.getByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+    expect(screen.getByText("A equipe vai conferir os itens e atualizar o andamento do pedido.")).toBeInTheDocument()
+
+    for (const [status, title, body, next] of [
+      ["Approved", "Pedido confirmado", "Seu pedido foi aprovado e está confirmado.", "A próxima etapa é a preparação dos itens. Acompanhe o andamento por aqui."],
+      ["Preparing", "Pedido em preparação", "A equipe está preparando os itens do seu pedido.", "Acompanhe por aqui. O status será atualizado quando o pedido estiver pronto."],
+      ["Ready", "Pedido pronto", "Os itens do seu pedido estão prontos.", "Siga as orientações da equipe para receber os itens."],
+      ["Completed", "Pedido concluído", "Seu pedido foi concluído. Obrigado!", "Agradecemos a sua preferência. Você pode consultar os detalhes do pedido por aqui."],
+    ] as const) {
+      getOrderMock.mockResolvedValue(mixedOrder(status))
+      await act(async () => { await vi.advanceTimersByTimeAsync(15000) })
+      const banner = screen.getByRole("heading", { name: title }).closest("section")!
+      expect(within(banner).getByText(body)).toBeInTheDocument()
+      expect(within(banner).getByText(next)).toBeInTheDocument()
+      expect(within(banner).queryByText("A equipe vai conferir os itens e atualizar o andamento do pedido.")).not.toBeInTheDocument()
+      expect(banner).toHaveClass("portal-order-success")
+    }
+  })
+
+  it.each([
+    ["en", "Order confirmed", "Your order has been approved and confirmed.", "The next step is preparing your items. Follow the progress here."],
+    ["es", "Pedido confirmado", "Su pedido ha sido aprobado y confirmado.", "El siguiente paso es preparar los artículos. Usted puede seguir el estado por aquí."],
+  ])("localizes the confirmed order feedback in %s", async (language, title, body, next) => {
+    try {
+      await i18n.changeLanguage(language)
+      getOrderMock.mockResolvedValue(mixedOrder("Approved"))
+      renderDetail({ justCreated: true })
+      expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument()
+      expect(screen.getByText(body)).toBeInTheDocument()
+      expect(screen.getByText(next)).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
   it("persists success across theme remounts, consumes only navigation state, and isolates orders", async () => {
     getOrderMock.mockResolvedValue(mixedOrder("Preparing"))
     const { router, unmount } = renderDetail({ justCreated: true, keep: "context" })
-    expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Pedido em preparação" })).toBeInTheDocument()
     expect(screen.getByText("Pedido #12")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Continuar comprando" })).toHaveAttribute("href", "/t/clube/catalogo")
     await waitFor(() => expect(router.state.location.state).toEqual({ keep: "context" }))
@@ -116,10 +155,10 @@ describe("PortalOrderDetailPage", () => {
     unmount()
     document.documentElement.classList.add("dark")
     render(<RouterProvider router={router} />)
-    expect(await screen.findByRole("heading", { name: "Pedido recebido" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Pedido em preparação" })).toBeInTheDocument()
     document.documentElement.classList.remove("dark")
     await act(async () => { await router.navigate("/pedidos/other") })
-    expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pedido em preparação" })).not.toBeInTheDocument()
   })
 
   it.each([

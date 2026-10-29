@@ -229,7 +229,8 @@ export function RentalResourceSheet({
   const validation = formSchema.safeParse(watched)
   const isValid = validation.success
   const visibleErrors = useVisibleFormIssues(validation.success ? undefined : validation.error, form)
-  const firstValidationError = visibleErrors?.issues[0]?.message ?? null
+  const footerError = form.formState.errors.root?.message
+    ?? visibleErrors?.issues.find((issue) => issue.path.length === 0)?.message
   const horizonItems = [
     { value: "inherit", label: t("rentals.resources.form.horizonInherit") },
     { value: "unlimited", label: t("rentals.resources.form.horizonUnlimited") },
@@ -923,9 +924,9 @@ export function RentalResourceSheet({
                   ? t("rentals.resources.saveEdit")
                   : t("rentals.resources.saveCreate")}
               </FormPrimaryButton>
-              {!isValid && firstValidationError ? (
+              {footerError ? (
                 <p className="basis-full text-sm text-destructive" role="alert">
-                  {firstValidationError}
+                  {footerError}
                 </p>
               ) : null}
             </SheetFooter>
