@@ -357,11 +357,8 @@ export function DailyAgendaTab({
             title={t("rentals.schedule.grid.noSelection")}
           />
         ) : surface === "grid-skeleton" ? (
-          <div role="status" aria-live="polite" className="space-y-2">
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
-              {t("common.loading")}
-            </p>
+          <div role="status" aria-busy="true" aria-live="polite" className="space-y-2">
+            <span className="sr-only">{t("common.loading")}</span>
             <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />
           </div>
         ) : (

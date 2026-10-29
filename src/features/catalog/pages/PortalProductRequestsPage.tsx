@@ -5,6 +5,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { ArrowRight, ClipboardList } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import {
@@ -90,12 +91,13 @@ export function PortalProductRequestsPage() {
           aria-label={t("tenantPortal.catalog.requestsLoading")}
         >
           {[0, 1, 2].map((index) => (
-            <li key={index} className="portal-record-card animate-pulse">
-              <span className="portal-record-icon" aria-hidden />
-              <span className="portal-record-body">
-                <span className="h-4 w-48 rounded bg-muted" />
-                <span className="h-3 w-32 rounded bg-muted" />
-              </span>
+            <li key={index} className="portal-record-card">
+              <Skeleton className="size-[46px] shrink-0 rounded-full" aria-hidden />
+              <div className="portal-record-body">
+                <Skeleton className="h-4 w-48 max-w-full" />
+                <Skeleton className="h-3 w-32 max-w-full" />
+              </div>
+              <Skeleton className="h-6 w-20 shrink-0 rounded-full" />
             </li>
           ))}
         </ul>

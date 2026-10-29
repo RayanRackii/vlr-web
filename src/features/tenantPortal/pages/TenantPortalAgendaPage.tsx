@@ -17,7 +17,7 @@ import { DateStrip } from "@/features/tenantPortal/components/portal/DateStrip"
 import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
 import { PortalBookingEmptyState, PortalRightRail } from "@/features/tenantPortal/components/portal/PortalRightRail"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
-import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   LocaleDateInput,
@@ -2204,7 +2204,16 @@ export function TenantPortalAgendaPage() {
       <PortalBookingHeader title={title} tenantName={branding.displayName} />
 
       {loading ? (
-        <FormSkeleton fields={4} />
+        <div className="space-y-6" role="status" aria-busy="true">
+          <span className="sr-only">{t("common.loading")}</span>
+          <div className="flex gap-2 overflow-hidden" aria-hidden>
+            {Array.from({ length: 7 }, (_, index) => (
+              <Skeleton key={index} className="h-28 w-20 shrink-0 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-11 w-full max-w-sm rounded-lg" aria-hidden />
+          <Skeleton className="aspect-[16/9] w-full rounded-2xl" aria-hidden />
+        </div>
       ) : (
         <div className="space-y-6">
         <div className="space-y-6">
