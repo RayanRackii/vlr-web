@@ -1073,6 +1073,8 @@
       "ariaLabel_one": "Notificações: {{count}} não lida",
       "ariaLabel_other": "Notificações: {{count}} não lidas",
       "markAll": "Marcar tudo como lido",
+      "readFailed": "Não foi possível marcar as notificações como lidas.",
+      "allReadSuccess": "Todas as notificações foram marcadas como lidas.",
       "empty": "Você está em dia. Nenhuma notificação nova.",
       "loading": "Carregando notificações…",
       "recent": "Recentes",

@@ -1,6 +1,8 @@
-import { useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
+import { getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import { Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,11 +15,8 @@ import { NotificationPanel } from "@/features/notifications-inbox/components/Not
 import { useNotificationSummary } from "@/features/notifications-inbox/hooks/useNotificationSummary"
 import { useViewportIsMobile } from "@/features/notifications-inbox/hooks/useViewportIsMobile"
 import { resolveNotificationItemRoute, resolveStaffRoute } from "@/features/notifications-inbox/lib/notificationPresentation"
-import {
-  markAllRead,
-  markEventTypeRead,
-  markIdsRead,
-} from "@/features/notifications-inbox/services/notificationInboxService"
+import * as staffNotificationService from "@/features/notifications-inbox/services/notificationInboxService"
+import type { NotificationInboxService } from "@/features/notifications-inbox/services/notificationInboxService"
 import type {
   NotificationItem,
   NotificationSummaryGroup,
@@ -27,6 +26,11 @@ const INBOX_MODULES = ["catalog", "rentals"] as const
 
 export type NotificationBellProps = {
   className?: string
+  service?: NotificationInboxService
+  resolveRoute?: typeof resolveStaffRoute
+  resolveItemRoute?: (item: NotificationItem) => string
+  enabled?: boolean
+  isCurrentSession?: () => boolean
 }
 
 /** Badge glyph plus the bell icon; `unreadTotal` caps the label at `99+`. */
@@ -49,13 +53,15 @@ function BellGlyph({ unreadTotal, overflowLabel }: { unreadTotal: number; overfl
   )
 }
 
-/**
- * Staff header bell: unread badge, 30s visibility-gated polling, and a desktop
- * popover / mobile bottom sheet. Renders nothing (and never polls) for tenants
- * without an inbox-capable active module, which keeps it off the customer
- * portal and quiet for permission-less staff.
- */
-export function NotificationBell({ className }: NotificationBellProps) {
+/** Shared header bell; staff permissions, transport and routes remain the defaults. */
+export function NotificationBell({
+  className,
+  service = staffNotificationService,
+  resolveRoute = resolveStaffRoute,
+  resolveItemRoute = resolveNotificationItemRoute,
+  enabled: enabledOverride,
+  isCurrentSession = () => true,
+}: NotificationBellProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const permissions = useOptionalPermissions()
@@ -66,12 +72,19 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const isMobile = useViewportIsMobile()
   const [open, setOpen] = useState(false)
 
-  const enabled = useMemo(
+  const staffEnabled = useMemo(
     () => INBOX_MODULES.some((module) => activeModules.includes(module)),
     [activeModules],
   )
 
-  const { summary, isInitialLoading, refetch } = useNotificationSummary(enabled)
+  const enabled = enabledOverride ?? staffEnabled
+  const showGroups = service.markEventTypeRead !== undefined
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+  const { summary, isInitialLoading, refetch } = useNotificationSummary(enabled, service)
 
   const groups = useMemo(() => {
     if (!summary) {
@@ -82,8 +95,8 @@ export function NotificationBell({ className }: NotificationBellProps) {
   }, [summary, activeModules])
 
   const unreadTotal = useMemo(
-    () => groups.reduce((total, group) => total + group.count, 0),
-    [groups],
+    () => showGroups ? groups.reduce((total, group) => total + group.count, 0) : (summary?.unreadTotal ?? 0),
+    [groups, showGroups, summary],
   )
 
   if (!enabled) {
@@ -91,25 +104,42 @@ export function NotificationBell({ className }: NotificationBellProps) {
   }
 
   function handleSelectGroup(group: NotificationSummaryGroup) {
-    void markEventTypeRead(group.eventType)
+    void service.markEventTypeRead?.(group.eventType)
       .then(refetch)
       .catch(() => undefined)
-    void navigate(resolveStaffRoute(group.module, group.targetRoute))
+    void navigate(resolveRoute(group.module, group.targetRoute))
     setOpen(false)
+  }
+
+  function handleReadError(error: unknown) {
+    if (showGroups || !mounted.current || !isCurrentSession() || (error instanceof DOMException && error.name === "AbortError")) return
+    toast.error(parseApiError(getAxiosErrorPayload(error), t("notifications.inbox.readFailed")))
   }
 
   function handleSelectItem(item: NotificationItem) {
-    void markIdsRead([item.id])
-      .then(refetch)
-      .catch(() => undefined)
-    void navigate(resolveNotificationItemRoute(item))
-    setOpen(false)
+    const select = () => {
+      if (!mounted.current || !isCurrentSession()) return
+      void navigate(resolveItemRoute(item))
+      setOpen(false)
+    }
+    void service.markIdsRead([item.id])
+      .then(() => {
+        if (!mounted.current || !isCurrentSession()) return
+        refetch()
+        if (!showGroups) select()
+      })
+      .catch(handleReadError)
+    if (showGroups) select()
   }
 
   function handleMarkAll() {
-    void markAllRead()
-      .then(refetch)
-      .catch(() => undefined)
+    void service.markAllRead()
+      .then(() => {
+        if (!mounted.current || !isCurrentSession()) return
+        refetch()
+        if (!showGroups) toast.success(t("notifications.inbox.allReadSuccess"))
+      })
+      .catch(handleReadError)
   }
 
   const ariaLabel =
@@ -125,6 +155,8 @@ export function NotificationBell({ className }: NotificationBellProps) {
       onSelectItem={handleSelectItem}
       onMarkAll={handleMarkAll}
       loadRecent={open}
+      service={service}
+      showGroups={showGroups}
     />
   )
 
@@ -177,7 +209,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="max-h-[min(32rem,70vh)] w-80 gap-0 p-2"
+        className="max-h-[min(32rem,70vh)] w-80 max-w-[calc(100vw-1rem)] gap-0 p-2"
       >
         {panel}
       </PopoverContent>

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 /**
- * Core, tenant-scoped in-app notification contract (staff/B2B only). Shapes mirror
+ * Core, tenant-scoped in-app notification contract shared by staff and customers. Shapes mirror
  * `GET /api/me/notifications/summary`, `GET /api/me/notifications`, and
  * `POST /api/me/notifications/read`. `module` stays an open string so a brand new
  * module surfaces with the generic fallback label instead of failing to parse.

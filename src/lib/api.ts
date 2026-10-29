@@ -1,3 +1,4 @@
+import { notifyCustomerSessionChanged } from "@/lib/customerSessionEvents"
 import {
   isAuthApiError,
   isAuthRetryableFetchError,
@@ -484,6 +485,7 @@ function clearCustomerSessionStorage(): void {
   window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
+  notifyCustomerSessionChanged()
 }
 
 function readStoredCustomerToken(): string | null {

@@ -65,3 +65,12 @@ export async function markAllRead(): Promise<MarkReadResponse> {
   const response = await api.post(READ_PATH, { all: true })
   return markReadResponseSchema.parse(response.data)
 }
+
+/** Common transport boundary. Group reads are available only to the staff inbox. */
+export type NotificationInboxService = {
+  getNotificationSummary: typeof getNotificationSummary
+  listNotifications: typeof listNotifications
+  markIdsRead: typeof markIdsRead
+  markAllRead: typeof markAllRead
+  markEventTypeRead?: typeof markEventTypeRead
+}

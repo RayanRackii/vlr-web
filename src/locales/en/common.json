@@ -1073,6 +1073,8 @@
       "ariaLabel_one": "Notifications: {{count}} unread",
       "ariaLabel_other": "Notifications: {{count}} unread",
       "markAll": "Mark all as read",
+      "readFailed": "Could not mark notifications as read.",
+      "allReadSuccess": "All notifications marked as read.",
       "empty": "You're all caught up. No new notifications.",
       "loading": "Loading notifications…",
       "recent": "Recent",

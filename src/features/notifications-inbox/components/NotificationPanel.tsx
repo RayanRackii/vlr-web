@@ -9,7 +9,8 @@ import type {
   NotificationSummary,
   NotificationSummaryGroup,
 } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
-import { listNotifications } from "@/features/notifications-inbox/services/notificationInboxService"
+import * as staffNotificationService from "@/features/notifications-inbox/services/notificationInboxService"
+import type { NotificationInboxService } from "@/features/notifications-inbox/services/notificationInboxService"
 import type { NotificationItem } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
 import {
   notificationItemText,
@@ -28,6 +29,8 @@ export type NotificationPanelProps = {
   onMarkAll: () => void
   /** Load the optional "recentes" list when the panel is visible. */
   loadRecent: boolean
+  service?: NotificationInboxService
+  showGroups?: boolean
 }
 
 function groupLabel(
@@ -52,11 +55,14 @@ export function NotificationPanel({
   onSelectItem,
   onMarkAll,
   loadRecent,
+  service = staffNotificationService,
+  showGroups = true,
 }: NotificationPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const [recent, setRecent] = useState<NotificationItem[] | null>(null)
 
+  const recentVersion = showGroups ? null : summary
   const hasGroups = groups.length > 0
   const unreadTotal = summary?.unreadTotal ?? 0
 
@@ -66,7 +72,7 @@ export function NotificationPanel({
     }
     let active = true
     const controller = new AbortController()
-    void listNotifications({ limit: 20 }, controller.signal)
+    void service.listNotifications(showGroups ? { limit: 20 } : { limit: 20, unreadOnly: true }, controller.signal)
       .then((list) => {
         if (active) {
           setRecent(list.items)
@@ -79,7 +85,7 @@ export function NotificationPanel({
       active = false
       controller.abort()
     }
-  }, [loadRecent])
+  }, [loadRecent, service, recentVersion, showGroups])
 
   const recentToShow = useMemo(
     () => (recent ?? []).filter((item) => item.readAt === null),
@@ -87,7 +93,7 @@ export function NotificationPanel({
   )
 
   return (
-    <div className="flex min-h-0 flex-col">
+    <div className="flex min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-1 pb-2">
         <p className="text-sm font-semibold tracking-tight text-foreground">
           {t("notifications.inbox.title")}
@@ -105,15 +111,15 @@ export function NotificationPanel({
       </div>
 
       <div className="min-h-0 overflow-y-auto">
-        {isLoading && !summary ? (
+        {(isLoading && !summary) || (!showGroups && recent === null) ? (
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">
             {t("notifications.inbox.loading")}
           </p>
-        ) : !hasGroups ? (
+        ) : (showGroups ? !hasGroups : recentToShow.length === 0) ? (
           <p className="px-2 py-8 text-center text-sm text-muted-foreground">
             {t("notifications.inbox.empty")}
           </p>
-        ) : (
+        ) : showGroups ? (
           <ul className="flex flex-col gap-0.5" aria-label={t("notifications.inbox.title")}>
             {groups.map((group) => {
               const Icon = moduleIcon(group.module)
@@ -143,10 +149,10 @@ export function NotificationPanel({
               )
             })}
           </ul>
-        )}
+        ) : null}
 
         {recentToShow.length > 0 ? (
-          <div className="mt-2 border-t border-border pt-2">
+          <div className={cn(showGroups && "mt-2 border-t border-border pt-2")}>
             <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("notifications.inbox.recent")}
             </p>
@@ -161,8 +167,8 @@ export function NotificationPanel({
                       "outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
                     )}
                   >
-                    <span className="line-clamp-2 text-sm text-foreground">
-                      {notificationItemText(item, t)}
+                    <span className="line-clamp-2 break-words text-sm text-foreground">
+                      {showGroups ? notificationItemText(item, t) : item.title}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(item.createdAt, locale)}
