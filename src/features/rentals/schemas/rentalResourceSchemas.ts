@@ -89,8 +89,8 @@ export function createRentalResourceFormSchema(messages: {
       // RentalAssetResponse does not expose the registry tag, so this UI-only
       // value must remain optional and cannot be sent back on an edit.
       tag: z.string(),
-      unitId: guidLikeIdSchema.min(1, messages.unitRequired),
-      categoryId: guidLikeIdSchema.min(1, messages.categoryRequired),
+      unitId: z.string().min(1, messages.unitRequired).pipe(guidLikeIdSchema),
+      categoryId: z.string().min(1, messages.categoryRequired).pipe(guidLikeIdSchema),
       familyId: z
         .string()
         .min(1, messages.familyRequired)

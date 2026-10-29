@@ -48,6 +48,42 @@ async function renderVisualTab() {
 
 describe("RentalResourceSheet visual validation", () => {
   it.each([
+    ["unit", false, i18n.t("rentals.resources.validation.unitRequired")],
+    ["unit", true, i18n.t("rentals.resources.validation.unitRequired")],
+    ["category", false, i18n.t("rentals.resources.validation.categoryRequired")],
+    ["family", false, i18n.t("rentals.resources.validation.familyRequired")],
+  ])("links the empty %s selector error after blur (inline unit creation: %s)", async (field, inlineUnit, message) => {
+    const user = userEvent.setup()
+    const otherId = "22222222-2222-2222-2222-222222222222"
+    render(
+      <AuthProvider><TestPermissionProvider permissions={["rentals.assets.write", ...(inlineUnit ? ["core.units.write"] : [])]}>
+        <RentalResourceSheet open onOpenChange={vi.fn()} editing={null}
+          units={[{ id, tenantId: id, name: "Matriz", isActive: true }, { id: otherId, tenantId: id, name: "Filial", isActive: true }]}
+          categories={[{ id, name: "Espaço" }, { id: otherId, name: "Outro espaço" }]}
+          families={[{ id, key: "spaces", label: "Espaços", fields: [], sortOrder: 0, isActive: true }, { id: otherId, key: "goods", label: "Bens", fields: [], sortOrder: 1, isActive: true }]}
+          busy={false} readOnly={false} onSubmit={vi.fn().mockResolvedValue(true)} />
+      </TestPermissionProvider></AuthProvider>,
+    )
+    const input = screen.getByRole("combobox", { name: i18n.t(`rentals.resources.form.${field}`) })
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+    // Focus and leave without opening the popup or submitting the form.
+    input.focus()
+    await user.tab()
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(message)
+    const error = document.getElementById(input.getAttribute("aria-describedby")!)
+    expect(error).toBeVisible()
+    expect(error).toHaveTextContent(message)
+    expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
+    await user.click(input)
+    await user.click(await screen.findByRole("option", { name: field === "unit" ? "Matriz" : field === "category" ? "Espaço" : "Espaços" }))
+    expect(input).toHaveAttribute("aria-invalid", "false")
+    expect(input).not.toHaveAttribute("aria-describedby")
+    expect(error).not.toBeInTheDocument()
+  })
+
+  it.each([
     ["horizonLabel", "horizonDaysMode", "horizonDays", "horizonRange", "3651"],
     ["cancelCutoffLabel", "cancelCutoffHours", "cancelCutoffHours", "cancelCutoffRange", "8761"],
   ])("shows %s errors on blur while keeping static guidance valid", async (modeLabel, optionLabel, fieldLabel, messageKey, invalidValue) => {
