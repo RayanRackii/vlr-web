@@ -1,6 +1,6 @@
 import "../components/portalOrders.css"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useLocation, useNavigate, useOutletContext, useParams } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -21,6 +21,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
   cancelPortalCatalogOrder,
+  CatalogOrderCancelConflictError,
   getPortalCatalogOrder,
 } from "@/features/catalog/services/catalogPortalService"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
@@ -45,6 +46,8 @@ export function PortalOrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
+  const pollingTimer = useRef<number | undefined>(undefined)
+  const orderVersion = useRef(0)
   const identity = `${subdomain}:${orderId}`
   const [successIdentity, setSuccessIdentity] = useState<string | null>(() => (location.state?.justCreated === true || hasOrderSuccess(identity)) ? identity : null)
   const [seenIdentity, setSeenIdentity] = useState(identity)
@@ -69,7 +72,13 @@ export function PortalOrderDetailPage() {
     })
   }, [identity, location, navigate])
   useEffect(() => {
+    return () => { orderVersion.current += 1 }
+  }, [identity])
+
+  useEffect(() => {
     let stale = false
+    let inFlight = false
+    let hasLoaded = false
     setLoading(true)
     setLoadError(null)
     if (!orderId) {
@@ -77,13 +86,46 @@ export function PortalOrderDetailPage() {
       setLoading(false)
       return
     }
-    void getPortalCatalogOrder(orderId).then((data) => {
-      if (!stale) setOrder(data)
-    }).catch((error: unknown) => {
-      if (!stale) setLoadError(error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"))
-    }).finally(() => { if (!stale) setLoading(false) })
-    return () => { stale = true }
+    async function refresh(initial = false) {
+      if (inFlight || stale || (!initial && document.visibilityState !== "visible")) return
+      inFlight = true
+      const version = orderVersion.current
+      try {
+        const data = await getPortalCatalogOrder(orderId)
+        if (stale || version !== orderVersion.current) return
+        hasLoaded = true
+        setOrder(data)
+        setLoadError(null)
+        if (["Completed", "Rejected", "Cancelled"].includes(data.status)) {
+          window.clearInterval(pollingTimer.current)
+        }
+      } catch (error) {
+        if (!stale && !hasLoaded) {
+          setLoadError(error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"))
+        }
+      } finally {
+        inFlight = false
+        if (!stale) setLoading(false)
+      }
+    }
+    const refreshVisible = () => { void refresh() }
+    pollingTimer.current = window.setInterval(refreshVisible, 15000)
+    window.addEventListener("focus", refreshVisible)
+    document.addEventListener("visibilitychange", refreshVisible)
+    void refresh(true)
+    return () => {
+      stale = true
+      window.clearInterval(pollingTimer.current)
+      window.removeEventListener("focus", refreshVisible)
+      document.removeEventListener("visibilitychange", refreshVisible)
+    }
   }, [orderId, subdomain, reload, t])
+
+  useEffect(() => {
+    if (order && ["Completed", "Rejected", "Cancelled"].includes(order.status)) {
+      window.clearInterval(pollingTimer.current)
+    }
+  }, [order])
 
   const back = (
     <Button
@@ -158,7 +200,6 @@ export function PortalOrderDetailPage() {
       <section className="portal-record-panel space-y-5">
         <div className="portal-record-panel-head">
           <div className="space-y-1">
-            <p className="portal-eyebrow">{t("tenantPortal.catalog.navOrders")}</p>
             <h1>{order.displayNumber}</h1>
             <p className="text-sm text-muted-foreground">
               {formatCatalogDate(order.createdAt, i18n.language)}
@@ -171,8 +212,18 @@ export function PortalOrderDetailPage() {
         </div>
 
         <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
-          const next = await cancelPortalCatalogOrder(order.id)
-          setOrder((current) => current?.id === next.id ? next : current)
+          const cancellationVersion = orderVersion.current
+          try {
+            const next = await cancelPortalCatalogOrder(order.id)
+            if (cancellationVersion !== orderVersion.current) return
+            orderVersion.current += 1
+            setOrder((current) => current?.id === next.id ? next : current)
+          } catch (error) {
+            if (cancellationVersion === orderVersion.current && error instanceof CatalogOrderCancelConflictError) {
+              setReload((value) => value + 1)
+            }
+            throw error
+          }
         }} />
 
         {order.customerNote ? (

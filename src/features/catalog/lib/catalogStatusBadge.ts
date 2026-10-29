@@ -24,3 +24,9 @@ export function catalogOrderStatusTone(
 export function productRequestStatusTone(status: string): PortalStatusTone {
   return status.trim().toLowerCase() === "cancelled" ? "danger" : "info"
 }
+
+/** Shared staff list/detail tones, including muted cancelled orders. */
+export const STAFF_ORDER_STATUS_TONE: Record<CatalogOrder["status"], string> = {
+  Requested: "warning", Approved: "info", Preparing: "info", Ready: "success",
+  Completed: "success", Rejected: "danger", Cancelled: "muted",
+}

@@ -12,6 +12,7 @@ import type {
 import { listNotifications } from "@/features/notifications-inbox/services/notificationInboxService"
 import type { NotificationItem } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
 import {
+  notificationItemText,
   formatRelativeTime,
   groupLabelSlug,
   moduleIcon,
@@ -161,7 +162,7 @@ export function NotificationPanel({
                     )}
                   >
                     <span className="line-clamp-2 text-sm text-foreground">
-                      {item.title}
+                      {notificationItemText(item, t)}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(item.createdAt, locale)}

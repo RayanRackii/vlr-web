@@ -1,3 +1,4 @@
+import { STAFF_ORDER_STATUS_TONE } from "../lib/catalogStatusBadge"
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -26,15 +27,10 @@ import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary
 import {
   formatCatalogDate,
   type CatalogOrder,
-  type CatalogOrderStatus,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listCatalogOrders } from "@/features/catalog/services/catalogService"
 import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 
-const ORDER_STATUS_TONE: Record<CatalogOrderStatus, string> = {
-  Requested: "warning", Approved: "info", Preparing: "info", Ready: "success",
-  Completed: "success", Rejected: "danger", Cancelled: "muted",
-}
 
 export function CatalogOrdersPage() {
   const { t, i18n } = useTranslation()
@@ -89,7 +85,7 @@ export function CatalogOrdersPage() {
         accessorKey: "status",
         header: t("catalog.orders.columns.status"),
         cell: ({ row }) => (
-          <span className="staff-catalog-status" data-tone={ORDER_STATUS_TONE[row.original.status]}>
+          <span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[row.original.status]}>
             {t(`catalog.status.${row.original.status}`)}
           </span>
         ),
@@ -97,7 +93,7 @@ export function CatalogOrdersPage() {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {
             return true
           }
-          if (filterValue in ORDER_STATUS_TONE) {
+          if (filterValue in STAFF_ORDER_STATUS_TONE) {
             return row.original.status === filterValue
           }
           return t(`catalog.status.${row.original.status}`)
@@ -183,7 +179,7 @@ export function CatalogOrdersPage() {
         <div className="staff-catalog-toolbar">
           <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.ordersSearch")} />
           <CatalogColumnFilter column={table.getColumn("status")!} title={t("catalog.orders.columns.status")}
-            options={Object.keys(ORDER_STATUS_TONE).map((status) => ({ value: status, label: t(`catalog.status.${status}`) }))} />
+            options={Object.keys(STAFF_ORDER_STATUS_TONE).map((status) => ({ value: status, label: t(`catalog.status.${status}`) }))} />
           <CatalogColumnFilter column={table.getColumn("total")!} title={t("catalog.orders.columns.total")} />
         </div>
         {loading ? <span className="sr-only" role="status">{t("catalog.staff.loading")}</span> : null}

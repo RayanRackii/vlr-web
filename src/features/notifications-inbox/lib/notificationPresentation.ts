@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next"
+import type { NotificationItem } from "../schemas/notificationInboxSchemas"
 import { CalendarCheck, Package, Bell, type LucideIcon } from "lucide-react"
 
 /**
@@ -41,6 +43,15 @@ function normalizeEventType(eventType: string): string {
 export function groupLabelSlug(eventType: string): string | null {
   const normalized = normalizeEventType(eventType)
   return GROUP_LABEL_RULES.find((rule) => rule.test(normalized))?.slug ?? null
+}
+
+/** Inbox DTOs expose event identity, but currently no order/reservation number. */
+export function notificationItemText(
+  item: Pick<NotificationItem, "eventType" | "title">,
+  t: TFunction,
+): string {
+  const slug = groupLabelSlug(item.eventType)
+  return slug ? t(`notifications.inbox.items.${slug}`) : item.title
 }
 
 /** Module glyph shown beside each group; unknown modules fall back to the bell. */

@@ -123,14 +123,10 @@
   .portal-resource:nth-child(2) .portal-resource-art { height: 170px; }
   .portal-date { min-height: 125px; }
 }
-@media (min-width: 768px) and (max-width: 1023px) {
-  .portal-shell [data-shell-part="sidebar"] { width: 224px; }
-  .portal-shell [data-shell-part="menu-toggle"] { display: none; }
-}
 @media (max-width: 1279px) {
   .portal-resource { grid-column: span 3; }
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .portal-shell [data-shell-part="sidebar"] { width: 0; border: 0; }
   .portal-shell [data-shell-part="main"] { padding: 20px 16px 24px; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
   .portal-shell [data-shell-part="menu-toggle"] { display: none; }
@@ -160,12 +156,14 @@
   .portal-canvas .portal-legacy-board { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Keep the full booking summary in flow; only the mobile action is pinned. */
-@media (min-width: 1280px) {
-  .portal-booking-summary { position: static; }
-  .portal-generated-canvas .portal-legacy-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; aspect-ratio: auto; padding: 0; border: 0; background: transparent; }
-  .portal-generated-canvas .portal-legacy-board > [role="button"] { position: relative; inset: auto; width: auto; height: auto; min-height: 44px; }
-}
+/* Keep the summary and generated resource chips in flow at every width. */
+.portal-shell .portal-booking-summary { position: static; bottom: auto; }
+.portal-booking-summary > div:first-child { flex-basis: 100%; }
+.portal-booking-summary > div:first-child > p { white-space: normal; overflow-wrap: anywhere; }
+.portal-generated-canvas .portal-legacy-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; aspect-ratio: auto; padding: 0; border: 0; background: transparent; }
+.portal-generated-canvas .portal-legacy-board > [role="button"] { position: relative; inset: auto; width: auto; height: auto; min-height: 44px; padding: 8px; }
+.portal-generated-canvas .portal-legacy-board > [role="button"] > span { position: static; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.portal-generated-canvas .portal-legacy-board .line-clamp-2 { display: block; -webkit-line-clamp: unset; }
 
 @media (max-width: 767px) {
   .portal-shell { --portal-bottom-nav-offset: calc(80px + env(safe-area-inset-bottom)); }
@@ -174,4 +172,9 @@
   .portal-booking-cta { position: fixed; inset: auto 0 var(--portal-bottom-nav-offset, calc(80px + env(safe-area-inset-bottom))); z-index: 20; display: flex; align-items: center; height: 64px; max-height: 72px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--card); }
   .portal-booking-cta > button { width: 100%; min-height: 44px; }
   .portal-booking-column input, .portal-booking-column [data-slot="select-trigger"], .portal-booking-column button { min-width: 44px; min-height: 44px; }
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .portal-booking-column :is(input, [data-slot="select-trigger"], button) { min-width: 44px; min-height: 44px; }
+  .portal-booking-column label + .relative > div, .portal-booking-column label + .relative > div > span { min-height: 44px; }
 }

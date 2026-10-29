@@ -1,6 +1,8 @@
+import { STAFF_ORDER_STATUS_TONE } from "../lib/catalogStatusBadge"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -8,9 +10,7 @@ import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge, type badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import type { VariantProps } from "class-variance-authority"
 import {
   Dialog,
   DialogContent,
@@ -51,18 +51,6 @@ import {
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
 
-const ORDER_STATUS_BADGE_VARIANT: Record<
-  CatalogOrder["status"],
-  NonNullable<VariantProps<typeof badgeVariants>["variant"]>
-> = {
-  Requested: "secondary",
-  Approved: "info",
-  Preparing: "info",
-  Ready: "warning",
-  Completed: "success",
-  Rejected: "destructive",
-  Cancelled: "destructive",
-}
 
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
@@ -86,6 +74,7 @@ export function CatalogOrderDetailPage() {
     resolver: zodResolver(catalogReasonFormSchema),
     defaultValues: { reason: "" },
   })
+  const reasonValues = useWatch({ control: form.control })
 
   async function load() {
     if (!orderId) {
@@ -194,11 +183,8 @@ export function CatalogOrderDetailPage() {
       form.reset({ reason: "" })
       toast.success(t("catalog.orders.toastUpdated"))
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.transitionCatalogOrder"),
-      )
+      const message = error instanceof Error ? error.message : t("apiErrors.transitionCatalogOrder")
+      toast.error(/^Invalid input\b/i.test(message) ? t("catalog.orders.reason.empty") : message)
     } finally {
       setBusyAction(null)
     }
@@ -251,9 +237,9 @@ export function CatalogOrderDetailPage() {
             {order.customerEmail ? ` · ${order.customerEmail}` : ""}
           </p>
         </div>
-        <Badge variant={ORDER_STATUS_BADGE_VARIANT[order.status]}>
+        <span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
           {t(`catalog.status.${order.status}`)}
-        </Badge>
+        </span>
       </div>
 
       <CatalogTabs active="orders" />
@@ -473,13 +459,14 @@ export function CatalogOrderDetailPage() {
                 >
                   {t("common.cancel")}
                 </Button>
-                <LoadingButton
+                <FormPrimaryButton
+                  isValid={catalogReasonFormSchema.safeParse(reasonValues).success}
                   type="submit"
                   loading={busyAction === "reject" || busyAction === "cancel"}
                   loadingLabel={t("catalog.orders.saving")}
                 >
                   {t("catalog.orders.reason.confirm")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </DialogFooter>
             </form>
           </Form>

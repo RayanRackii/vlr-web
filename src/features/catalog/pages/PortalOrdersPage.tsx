@@ -51,7 +51,15 @@ export function PortalOrdersPage() {
     return () => {
       cancelled = true
     }
-  }, [t, reloadKey])
+  }, [t, reloadKey, subdomain])
+
+  useEffect(() => {
+    const refreshVisible = () => {
+      if (document.visibilityState === "visible") setReloadKey((value) => value + 1)
+    }
+    window.addEventListener("focus", refreshVisible)
+    return () => window.removeEventListener("focus", refreshVisible)
+  }, [])
 
   return (
     <div className="portal-records">

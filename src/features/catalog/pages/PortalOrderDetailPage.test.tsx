@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { StrictMode } from "react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router-dom"
 
 import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
@@ -9,13 +9,15 @@ import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
 
-vi.mock("@/features/catalog/services/catalogPortalService", () => ({
+vi.mock("@/features/catalog/services/catalogPortalService", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/features/catalog/services/catalogPortalService")>(),
   getPortalCatalogOrder: vi.fn(),
   getPortalCatalogPolicy: vi.fn(),
   cancelPortalCatalogOrder: vi.fn(),
 }))
 
 import {
+  CatalogOrderCancelConflictError,
   cancelPortalCatalogOrder,
   getPortalCatalogPolicy,
   getPortalCatalogOrder,
@@ -92,6 +94,7 @@ function renderDetail(state: Record<string, unknown> | null = null, context: Cus
 }
 
 describe("PortalOrderDetailPage", () => {
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
   beforeEach(() => {
     sessionStorage.clear()
     vi.mocked(getPortalCatalogPolicy).mockResolvedValue({ canCancelOrders: true, canCancelRequests: false, upToStatus: { orders: "Requested", requests: "Submitted" }, policyText: null })
@@ -297,4 +300,66 @@ describe("PortalOrderDetailPage", () => {
     expect(screen.queryByRole("heading", { name: "Pedido recebido" })).not.toBeInTheDocument()
     expect(screen.queryByText(i18n.t("tenantPortal.catalog.purchase.nextTitle"))).not.toBeInTheDocument()
   })
+  it("polls visible active orders every 15 seconds, pauses hidden tabs and refreshes on focus", async () => {
+    vi.useFakeTimers()
+    renderDetail()
+    await act(async () => {})
+    expect(screen.getByRole("heading", { name: "PED-12" })).toBeInTheDocument()
+    const initialCalls = getOrderMock.mock.calls.length
+    await act(async () => { await vi.advanceTimersByTimeAsync(15000) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 1)
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden")
+    await act(async () => { await vi.advanceTimersByTimeAsync(30000); window.dispatchEvent(new Event("focus")) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 1)
+    visibility.mockReturnValue("visible")
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 2)
+    await act(async () => { window.dispatchEvent(new Event("focus")) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 3)
+  })
+
+  it.each(["Completed", "Rejected", "Cancelled"] as const)("stops polling after the order becomes %s", async (status) => {
+    vi.useFakeTimers()
+    renderDetail()
+    await act(async () => {})
+    getOrderMock.mockResolvedValue(mixedOrder(status))
+    const initialCalls = getOrderMock.mock.calls.length
+    await act(async () => { await vi.advanceTimersByTimeAsync(15000) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 1)
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000) })
+    expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 1)
+  })
+
+  it("refetches the order when cancellation conflicts and shows the localized refusal", async () => {
+    const user = userEvent.setup()
+    const { toast } = await import("sonner")
+    const errorToast = vi.spyOn(toast, "error")
+    cancelOrderMock.mockRejectedValue(new CatalogOrderCancelConflictError())
+    renderDetail()
+    await user.click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.cancelOrder") }))
+    const initialCalls = getOrderMock.mock.calls.length
+    getOrderMock.mockResolvedValue(mixedOrder("Preparing"))
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.cancelConfirmAction") }))
+    await waitFor(() => expect(getOrderMock).toHaveBeenCalledTimes(initialCalls + 1))
+    expect(errorToast).toHaveBeenCalledWith("Este pedido não pode mais ser cancelado.")
+    await waitFor(() => expect(screen.queryByRole("button", { name: i18n.t("tenantPortal.catalog.cancelOrder") })).not.toBeInTheDocument())
+  })
+
+  it("keeps a late cancellation on the previous order from invalidating the next order load", async () => {
+    const user = userEvent.setup()
+    let finishCancel: (value: CatalogOrder) => void = () => {}
+    let finishNextOrder: (value: CatalogOrder) => void = () => {}
+    cancelOrderMock.mockImplementation(() => new Promise((resolve) => { finishCancel = resolve }))
+    const nextOrder = new Promise<CatalogOrder>((resolve) => { finishNextOrder = resolve })
+    const { router } = renderDetail()
+    await user.click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.cancelOrder") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.cancelConfirmAction") }))
+    getOrderMock.mockReturnValue(nextOrder)
+    const nextId = "99999999-9999-4999-8999-999999999999"
+    await act(async () => { await router.navigate(`/pedidos/${nextId}`) })
+    await act(async () => { finishCancel(mixedOrder("Cancelled")) })
+    await act(async () => { finishNextOrder({ ...mixedOrder(), id: nextId, displayNumber: "PED-13" }) })
+    expect(await screen.findByRole("heading", { name: "PED-13" })).toBeInTheDocument()
+  })
+
 })

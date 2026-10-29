@@ -144,3 +144,7 @@
   body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { animation: none !important; transition: none !important; }
 }
 body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { background: rgb(10 16 24 / 38%); }
+
+@media (pointer: coarse), (max-width: 767px) {
+  .staff-catalog-detail button, .staff-catalog-filter { min-width: 44px; min-height: 44px; }
+}
