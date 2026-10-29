@@ -265,9 +265,9 @@ export function AdminUsersPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <p className="break-words font-medium">{user.fullName}</p>
-                      <p className="break-all text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
                     </TableCell>
-                    <TableCell className="break-all">
+                    <TableCell className="[overflow-wrap:anywhere]">
                       <div className="space-y-0.5">
                         <p>{user.tenantLegalName}</p>
                         {user.tenantSubdomain ? (
@@ -351,20 +351,20 @@ export function AdminUsersPage() {
               >
                 <div className="min-w-0">
                   <p className="break-words font-medium">{user.fullName}</p>
-                    <p className="break-all text-sm text-muted-foreground">
-                      {user.email}
-                    </p>
+                  <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                    {user.email}
+                  </p>
                 </div>
-  
-                <div className="break-all text-sm">
-                  <Badge variant="outline" className="h-auto min-h-5 max-w-full whitespace-normal break-all">{user.tenantLegalName}</Badge>
+
+                <div className="text-sm">
+                  <p className="font-medium [overflow-wrap:anywhere]">{user.tenantLegalName}</p>
                   {user.tenantSubdomain ? (
                     <p className="text-xs text-muted-foreground">
                       {user.tenantSubdomain}
                     </p>
                   ) : null}
                 </div>
-  
+
                 <div className="flex flex-wrap items-center gap-1">
                   {user.roles.map((role) => (
                     <Badge key={role} variant="secondary" className="h-auto min-h-5 max-w-full whitespace-normal break-all">

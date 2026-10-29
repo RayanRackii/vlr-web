@@ -308,8 +308,8 @@ export function AdminDashboardPage() {
       ) : null}
 
       {!isLoading && !loadError && tenants.length > 0 && filteredTenants.length === 0 ? (
-        <Card role="status">
-          <CardHeader>
+        <Card>
+          <CardHeader role="status">
             <CardTitle>{t("admin.dashboard.searchEmptyTitle")}</CardTitle>
             <CardDescription>
               {t("admin.dashboard.searchEmptyDescription")}
