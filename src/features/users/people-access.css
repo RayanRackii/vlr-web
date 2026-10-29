@@ -182,3 +182,7 @@
 @media (prefers-reduced-motion: reduce) {
   .people-access *, .people-fields-grid *, .people-access *::before, .people-access *::after { animation: none !important; transition: none !important; }
 }
+
+/* Registration settings keep navigation and field metadata within the page. */
+.people-access-registration .people-tabs { flex-wrap: wrap; overflow-x: visible; }
+.people-access-registration .people-field-row { flex-wrap: wrap; }

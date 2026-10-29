@@ -187,14 +187,14 @@ export function BookingPolicyPage() {
 
   return (
     <div
-      className="mx-auto w-full max-w-3xl space-y-6"
+      className="mx-auto w-full min-w-0 max-w-3xl space-y-6"
       data-testid="booking-policy-page"
     >
       <PageHeader
         icon={ShieldCheck}
         title={t("nav.bookingPolicy")}
         description={t("rentals.bookingPolicy.description")}
-        className="mb-0"
+        className="mb-0 sm:mb-0"
       />
       <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
         {formatTenantTimeZoneLabel(timeZoneId, i18n.language)}
@@ -224,7 +224,7 @@ export function BookingPolicyPage() {
       {!loading && !loadError ? (
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
-          <Card>
+          <Card className="min-w-0 motion-reduce:transition-none">
           <CardContent className="space-y-6">
             {!canEdit ? (
               <p className="text-sm text-muted-foreground">
@@ -242,6 +242,7 @@ export function BookingPolicyPage() {
                   </FormLabel>
                   <FormControl>
                     <Textarea
+                      className="touch-target"
                       {...field}
                       rows={6}
                       maxLength={BOOKING_POLICY_TEXT_MAX_LENGTH}
@@ -254,7 +255,7 @@ export function BookingPolicyPage() {
                   <FormDescription>
                     {t("rentals.bookingPolicy.cancellationHint")}
                   </FormDescription>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="tabular-nums text-xs text-muted-foreground">
                     {t("rentals.bookingPolicy.characterCount", {
                       count: watchedText.length,
                       max: BOOKING_POLICY_TEXT_MAX_LENGTH,
@@ -306,6 +307,7 @@ export function BookingPolicyPage() {
                     </FormLabel>
                     <FormControl>
                       <Input
+                        className="tabular-nums"
                         {...field}
                         inputMode="numeric"
                         disabled={!canEdit || saving}
@@ -371,6 +373,7 @@ export function BookingPolicyPage() {
                     </FormLabel>
                     <FormControl>
                       <Input
+                        className="tabular-nums"
                         {...field}
                         inputMode="numeric"
                         disabled={!canEdit || saving}
@@ -434,6 +437,7 @@ export function BookingPolicyPage() {
                     </FormLabel>
                     <FormControl>
                       <Input
+                        className="tabular-nums"
                         {...field}
                         inputMode="numeric"
                         disabled={!canEdit || saving}
@@ -451,7 +455,7 @@ export function BookingPolicyPage() {
             ) : null}
 
             {canEdit ? (
-              <FormPrimaryButton type="submit" isValid={isValid} loading={saving}>
+              <FormPrimaryButton className="w-full sm:w-auto" type="submit" isValid={isValid} loading={saving}>
                 {t("rentals.bookingPolicy.save")}
               </FormPrimaryButton>
             ) : null}

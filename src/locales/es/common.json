@@ -2085,6 +2085,10 @@
     }
   },
   "taxonomy": {
+    "emptyCategories": "Aún no hay categorías.",
+    "emptyCategoriesHint": "Organiza los elementos de tu negocio en categorías.",
+    "emptyTags": "Aún no hay etiquetas.",
+    "emptyTagsHint": "Usa etiquetas para identificar y encontrar elementos fácilmente.",
     "title": "Categorías y etiquetas",
     "sharedHint": "Estas definiciones se comparten con todos los consumidores de este tenant.",
     "categories": "Categorías",

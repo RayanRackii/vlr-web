@@ -286,7 +286,7 @@ export function RegistrationFieldsManager({
   )
 
   return (
-    <div className="people-fields-grid">
+    <div className="people-fields-grid min-w-0">
       <section className="people-field-section people-built-in space-y-4">
         <div className="space-y-1">
           <h2 className="text-base font-semibold tracking-tight">
@@ -300,7 +300,7 @@ export function RegistrationFieldsManager({
           {BUILT_IN_FIELDS.map((field) => (
             <li
               key={field.id}
-              className="people-built-in-row"
+              className="people-built-in-row flex-wrap"
             >
               <LockKeyhole aria-hidden strokeWidth={1.75} className="size-4 shrink-0 text-muted-foreground" />
               <p className="min-w-0 flex-1 text-sm font-medium">{t(field.labelKey)}</p>
@@ -346,7 +346,7 @@ export function RegistrationFieldsManager({
                     <p className="text-sm font-semibold break-words">{field.label}</p>
                     <p className="text-xs font-mono text-muted-foreground break-all">{field.fieldKey}</p>
                   </div>
-                  <div className="people-field-tags">
+                  <div className="people-field-tags min-w-0 max-w-full">
                     <Badge variant="outline">{t(registrationFieldTypeLabelKey(field.fieldType))}</Badge>
                     <Badge variant={field.isRequired ? "secondary" : "outline"}>
                       {t(field.isRequired ? "admin.registrationFields.required" : "admin.registrationFields.optional")}
@@ -482,7 +482,7 @@ export function RegistrationFieldsManager({
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Checkbox
                 id="registration-field-required"
                 {...form.register("isRequired")}

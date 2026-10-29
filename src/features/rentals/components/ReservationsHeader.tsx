@@ -1,4 +1,5 @@
-import { Globe2 } from "lucide-react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { CalendarDays, Globe2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -10,9 +11,12 @@ export function ReservationsHeader({ date }: { date?: string }) {
 
   return (
     <header className="reservations-heading">
-      <p className="reservations-eyebrow">{t("rentals.reservations.operation")}</p>
-      <h1>{t("rentals.reservations.title")}</h1>
-      <p className="reservations-description">{t("rentals.reservations.description")}</p>
+      <PageHeader
+        icon={CalendarDays}
+        title={t("rentals.reservations.title")}
+        description={t("rentals.reservations.description")}
+        className="mb-0 sm:mb-0"
+      />
       <p className="reservations-timezone" data-testid="tenant-tz-label">
         <Globe2 size={16} aria-hidden="true" />
         {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}

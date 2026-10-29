@@ -2085,6 +2085,10 @@
     }
   },
   "taxonomy": {
+    "emptyCategories": "No categories yet.",
+    "emptyCategoriesHint": "Organize your business items into categories.",
+    "emptyTags": "No tags yet.",
+    "emptyTagsHint": "Use tags to label and find items easily.",
     "title": "Categories and tags",
     "sharedHint": "These definitions are shared by every consumer in this tenant.",
     "categories": "Categories",

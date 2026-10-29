@@ -100,11 +100,11 @@ export function PeopleAccessPage() {
   if (onRegistration && !canReadRegistration) return <AccessDeniedPage />
 
   return (
-    <div className="people-access mx-auto w-full space-y-5">
+    <div className={cn("people-access mx-auto w-full min-w-0 space-y-5", onRegistration && "people-access-registration")}>
       <p className="people-eyebrow">{t("peopleAccess.eyebrow")}</p>
       <PageHeader
-        title={t("peopleAccess.title")}
-        description={t("peopleAccess.description")}
+        title={t(onRegistration ? "admin.registrationFields.tenantPageTitle" : "peopleAccess.title")}
+        description={t(onRegistration ? "admin.registrationFields.tenantPageDescription" : "peopleAccess.description")}
         className="mb-0 sm:mb-0"
       />
 
@@ -118,7 +118,7 @@ export function PeopleAccessPage() {
               <span>{t(item.labelKey)}</span>
             </>
           )
-          const className = cn("people-tab", isActive && "people-tab-active")
+          const className = cn("people-tab", onRegistration && "touch-target", isActive && "people-tab-active")
           return item.id === "registration" ? (
             <Link key={item.id} to="/configuracoes/cadastro" className={className} aria-current={isActive ? "page" : undefined}>
               {content}

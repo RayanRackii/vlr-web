@@ -2085,6 +2085,10 @@
     }
   },
   "taxonomy": {
+    "emptyCategories": "Nenhuma categoria cadastrada.",
+    "emptyCategoriesHint": "Organize os itens do seu negócio em categorias.",
+    "emptyTags": "Nenhuma tag cadastrada.",
+    "emptyTagsHint": "Use tags para identificar e encontrar itens com facilidade.",
     "title": "Categorias e tags",
     "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",
     "categories": "Categorias",
