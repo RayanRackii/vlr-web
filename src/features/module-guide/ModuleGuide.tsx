@@ -260,7 +260,7 @@ export function ModuleGuide({
                           justCompletedId === step.id && !reducedMotion && "scale-110",
                         )}
                       >
-                        {done ? <Check className="size-[18px]" strokeWidth={2.5} aria-hidden /> : index + 1}
+                        {done ? <Check className="size-5" aria-hidden /> : index + 1}
                       </span>
                       <span className="min-w-0 md:max-w-[9rem]">
                         <span
@@ -329,7 +329,7 @@ export function ModuleGuide({
                     !reducedMotion && "animate-in zoom-in",
                   )}
                 >
-                  <Check className="size-5" strokeWidth={2.75} aria-hidden />
+                  <Check className="size-5" aria-hidden />
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{t("moduleGuide.reward.title")}</p>
@@ -464,7 +464,7 @@ function LessonPanel({ lesson, target }: { lesson: GuideLesson; target: GuideTar
 
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
           <p className="flex items-center gap-2 text-[0.7rem] font-bold uppercase tracking-wide text-muted-foreground">
-            <Lightbulb className="size-3.5 text-primary" aria-hidden />
+            <Lightbulb className="size-4 text-primary" aria-hidden />
             {t("moduleGuide.lesson.whyTitle")}
           </p>
           <ul className="flex flex-col gap-1.5">
@@ -547,7 +547,7 @@ function DemoShell({ title, children }: { title: string; children: ReactNode }) 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex items-center gap-2 border-b border-border px-4 py-2.5 text-xs font-semibold text-muted-foreground">
-        <SlidersHorizontal className="size-3.5" aria-hidden />
+        <SlidersHorizontal className="size-4" aria-hidden />
         {title}
       </div>
       {children}
@@ -642,7 +642,7 @@ function WeeklyHoursDemo() {
                 </div>
               ))}
               <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-success">
-                <Check className="size-3.5" aria-hidden />
+                <Check className="size-4" aria-hidden />
                 {t("moduleGuide.demo.weekly.total", { count: total })}
               </p>
             </div>

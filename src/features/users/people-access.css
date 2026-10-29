@@ -9,7 +9,7 @@
 .people-tabs::-webkit-scrollbar { display: none; }
 .people-tab { display: inline-flex; flex-shrink: 0; align-items: center; gap: 8px; min-height: 46px; padding: 10px 14px; border-bottom: 2px solid transparent; font-size: .875rem; font-weight: 600; color: var(--muted-foreground); white-space: nowrap; }
 .people-tab-active { border-color: var(--primary); color: var(--primary); }
-.people-tab svg { width: 18px; height: 18px; }
+.people-tab svg { width: 20px; height: 20px; }
 .people-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; border-radius: 6px; }
 .people-tab:hover { color: var(--primary); }
 .people-content { min-width: 0; }
@@ -19,7 +19,7 @@
 .people-search-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; }
 .people-search-input { position: relative; flex: 1; min-width: 0; max-width: 420px; }
 .people-search-input input { min-height: 44px; padding-left: 38px; border-radius: 12px; background: var(--card); }
-.people-search-icon { position: absolute; left: 12px; top: 14px; width: 17px; height: 17px; color: var(--muted-foreground); pointer-events: none; }
+.people-search-icon { position: absolute; left: 12px; top: 14px; width: 16px; height: 16px; color: var(--muted-foreground); pointer-events: none; }
 .people-search-input [role="alert"] { margin-top: 6px; }
 .people-search-card .people-search-submit { min-height: 44px; border-radius: 10px; }
 .people-search-card .people-invite { margin-left: auto; min-height: 44px; border-radius: 10px; }
@@ -65,7 +65,7 @@
 .people-field-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--border); }
 .people-field-name { flex: 1; min-width: 0; }
 .people-field-icon { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px; background: color-mix(in oklch, var(--primary) 10%, var(--card)); color: var(--primary); }
-.people-field-icon svg { width: 18px; height: 18px; }
+.people-field-icon svg { width: 20px; height: 20px; }
 .people-field-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .people-field-tags [data-slot="badge"] { border-radius: 8px; }
 .people-bottom-nav { display: none; }
@@ -139,7 +139,7 @@
 .people-action-sheet button:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
 .people-sheet-confirm { text-align: center; }
 .people-sheet-danger-icon { display: grid; place-items: center; width: 52px; height: 52px; margin: 6px auto 10px; border-radius: 16px; color: var(--destructive); background: color-mix(in srgb, var(--destructive) 13%, transparent); }
-.people-sheet-danger-icon svg { width: 26px; height: 26px; }
+.people-sheet-danger-icon svg { width: 24px; height: 24px; }
 .people-sheet-confirm [data-slot="sheet-title"] { margin-bottom: 4px; font-size: 1.125rem; font-weight: 700; }
 .people-sheet-confirm [data-slot="sheet-description"] { max-width: 340px; margin: 0 auto 16px; font-size: .875rem; }
 .people-action-sheet .people-sheet-delete { min-height: 50px; border-radius: 14px; font-weight: 700; }

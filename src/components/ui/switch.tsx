@@ -16,8 +16,8 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "group relative inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors outline-none",
-        "focus-visible:ring-3 focus-visible:ring-ring/40",
+        "touch-target group relative inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "border-zinc-400 bg-zinc-400",
         "aria-checked:border-primary aria-checked:bg-primary",

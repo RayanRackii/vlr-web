@@ -289,7 +289,7 @@ export function StepOneGraphic({
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <CalendarCheck
-                    className="size-3.5 text-primary"
+                    className="size-4 text-primary"
                     aria-hidden="true"
                   />
                   <p className="text-[11px] font-semibold text-foreground">
@@ -343,7 +343,7 @@ export function StepOneGraphic({
             aria-hidden="true"
           />
           <div className="relative flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-[11px] font-bold text-emerald-700 shadow-lg shadow-emerald-500/20 backdrop-blur dark:text-emerald-300">
-            <ShieldCheck className="size-3.5" aria-hidden="true" />
+            <ShieldCheck className="size-4" aria-hidden="true" />
             {t("landing.features.mockups.stepOne.operational")}
           </div>
         </motion.div>

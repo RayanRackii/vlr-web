@@ -220,7 +220,7 @@ export function CustomerAppLayout() {
               </p>
               <button
                 type="button"
-                className="rounded-sm p-1 hover:bg-amber-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-50/10"
+                className="touch-target rounded-sm p-1 hover:bg-amber-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-50/10"
                 aria-label={t("common.close")}
                 onClick={() => clearAgendaSelectionNotice(subdomain)}
               >

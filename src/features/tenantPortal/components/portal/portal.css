@@ -110,7 +110,7 @@
 .portal-summary > div:first-child { min-width: 0; flex: 1; }
 .portal-canvas { margin-bottom: 16px; padding: 14px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); }
 
-.portal-shell :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+.portal-shell :focus-visible { outline: 2px solid var(--focus-ring, var(--ring)); outline-offset: 2px; }
 @keyframes portal-slot-pop { 50% { transform: scale(1.08); } }
 @media (min-width: 1280px) {
   .portal-booking-grid { grid-template-columns: minmax(0, 1fr) minmax(270px, 320px); }

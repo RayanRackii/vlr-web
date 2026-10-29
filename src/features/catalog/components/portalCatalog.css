@@ -24,7 +24,7 @@
 .portal-catalog-card { display: flex; height: 100%; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--portal-shadow); }
 .portal-catalog-image { flex-shrink: 0; aspect-ratio: 4 / 3; width: 100%; }
 .portal-catalog-placeholder { display: grid; place-items: center; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, var(--card)), color-mix(in srgb, var(--accent) 22%, var(--card))); color: var(--primary); }
-.portal-catalog-placeholder > svg { width: 48px; height: 48px; stroke-width: 1.4; }
+.portal-catalog-placeholder > svg { width: 48px; height: 48px; stroke-width: 1.75; }
 .portal-catalog-body { display: flex; flex: 1; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px 16px; }
 .portal-catalog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .portal-catalog-tag { max-width: 100%; border-radius: 6px; padding: 2px 8px; background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }

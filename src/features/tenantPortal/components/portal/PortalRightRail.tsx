@@ -28,7 +28,7 @@ export function PortalRightRail({ nextReservation, reservationsHref }: Props) {
           ))}
         </ul>
       </section>
-      <section className="portal-rail-card flex gap-3">
+      <section className="portal-rail-card flex items-center gap-3">
         <Lightbulb className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
         <div><h2>{t("tenantPortal.redesign.tip")}</h2><p className="text-sm text-muted-foreground">{t("tenantPortal.redesign.tipText")}</p></div>
       </section>

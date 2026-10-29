@@ -157,6 +157,10 @@
   * {
     @apply border-border ;
   }
+  :where(a[href], button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="switch"], [role="radio"], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--focus-ring, var(--ring));
+    outline-offset: 2px;
+  }
   body {
     @apply bg-background text-foreground;
     font-size: 0.9375rem; /* 15px comfortable body */
@@ -222,5 +226,29 @@
   }
   100% {
     transform: scaleX(0.92);
+  }
+}
+
+/* Transparent hit area; keep visual/layout dimensions. A plain utility layer
+   also works with the current Tailwind 3 compiler (and Tailwind 4). Zero
+   specificity preserves absolute/fixed positioning supplied by callers. */
+@layer utilities {
+  :where(.touch-target) {
+    position: relative;
+  }
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 24px);
+    height: max(100%, 24px);
+    transform: translate(-50%, -50%);
+  }
+  @media (pointer: coarse) {
+    .touch-target::after {
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+    }
   }
 }

@@ -2350,7 +2350,7 @@ export function TenantPortalAgendaPage() {
 
           {schedulePending ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="size-3 animate-spin" aria-hidden />
+              <Loader2 className="size-4 animate-spin" aria-hidden />
               {t("common.refreshing")}
             </span>
           ) : null}
@@ -2365,11 +2365,11 @@ export function TenantPortalAgendaPage() {
               {t("tenantPortal.agenda.legendUnavailable")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <Check className="size-3 shrink-0 rounded-sm border-2 border-primary bg-primary/10 p-px text-primary" />
+              <Check className="size-4 shrink-0 rounded-sm border-2 border-primary bg-primary/10 p-px text-primary" />
               {t("tenantPortal.agenda.legendSelected")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <CheckCheck className="size-3 shrink-0 rounded-sm border-2 border-primary/70 bg-primary/10 p-px text-primary" />
+              <CheckCheck className="size-4 shrink-0 rounded-sm border-2 border-primary/70 bg-primary/10 p-px text-primary" />
               {t("tenantPortal.agenda.yourReservation")}
             </span>
           </div>
@@ -2473,13 +2473,13 @@ export function TenantPortalAgendaPage() {
                       {!state.pending && state.available && state.selected ? (
                         <Check
                           aria-hidden
-                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
+                          className="absolute top-1.5 right-1.5 size-4 text-primary"
                         />
                       ) : null}
                       {!state.pending && !state.available && state.ownReservation ? (
                         <CheckCheck
                           aria-hidden
-                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
+                          className="absolute top-1.5 right-1.5 size-4 text-primary"
                         />
                       ) : null}
                       <span className="block truncate">
