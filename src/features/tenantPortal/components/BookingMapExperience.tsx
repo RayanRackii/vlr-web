@@ -142,6 +142,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
         </select>
       ) : null}
 
+      <div id="portal-booking-spaces" role="group" aria-label={t("tenantPortal.agenda.chooseSpaceFirst")} tabIndex={-1}>
       {view === "Map" ? <div className="portal-canvas">
         <LayoutCanvasBoard mode="pick" aspectRatio={map.aspectRatio} canvasWidthPercent={100} items={boardItems}
           onSelect={(id) => { setSelectedId(id); setSelectedWindow(null); setQuantity(1) }} />
@@ -188,6 +189,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
           )
         })}
       </ul>
+      </div>
       </section>
       <PortalRightRail nextReservation={nextReservation} reservationsHref={reservationsHref} />
 
