@@ -41,10 +41,11 @@ export function PortalOrderSubmitError({ message, blocked, onRetry, onDismiss }:
   )
 }
 
-export function PortalOrderSuccess({ number, catalogTo, onTrack }: {
+export function PortalOrderSuccess({ number, catalogTo, onTrack, onDismiss }: {
   number: number
   catalogTo: string
   onTrack: () => void
+  onDismiss: () => void
 }) {
   const { t } = useTranslation()
   return (
@@ -63,6 +64,9 @@ export function PortalOrderSuccess({ number, catalogTo, onTrack }: {
         </Button>
         <Button type="button" variant="outline" render={<Link to={catalogTo} />}>
           {t("tenantPortal.catalog.purchase.continueShopping")}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onDismiss}>
+          {t("tenantPortal.catalog.purchase.dismiss")}
         </Button>
       </div>
     </section>

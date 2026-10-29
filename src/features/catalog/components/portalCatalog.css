@@ -125,3 +125,13 @@
   .portal-cart-ripple { display: none; animation: none; }
   .portal-cart-count-pulse { animation: none; }
 }
+
+@media (max-width: 767px) {
+  .portal-catalog-stepper > input { min-width: 44px; min-height: 44px; }
+  .portal-catalog-body a { display: inline-flex; align-items: center; min-height: 44px; }
+  .portal-cart-remove { min-width: 44px; min-height: 44px; white-space: normal; text-align: center; }
+}
+
+@media (max-width: 380px) {
+  .portal-catalog-body { padding-inline: 10px; }
+}

@@ -28,3 +28,7 @@
   .portal-profile-savebar { position: static; }
   .portal-profile-savebar > * { width: 100%; }
 }
+
+@media (max-width: 767px) {
+  .portal-profile-savebar button, .portal-profile-layout button[aria-label] { min-width: 44px; min-height: 44px; }
+}

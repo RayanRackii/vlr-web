@@ -149,3 +149,7 @@
   .portal-purchase-cart .portal-purchase-submit-bar { bottom: calc(80px + env(safe-area-inset-bottom)); padding-bottom: 12px; }
   .portal-purchase-submit-bar p { overflow-wrap: anywhere; }
 }
+
+@media (max-width: 767px) {
+  .portal-record-back, .portal-record-detail button { min-width: 44px; min-height: 44px; }
+}

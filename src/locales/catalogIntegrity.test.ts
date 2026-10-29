@@ -48,6 +48,15 @@ describe("translation catalog integrity", () => {
     },
   )
 
+  it.each([
+    ["pt-BR", "Motivo: Indisponível", "R$ 10 / un"],
+    ["en", "Reason: Indisponível", "R$ 10 / unit"],
+    ["es", "Motivo: Indisponível", "R$ 10 / ud."],
+  ])("translates order reasons and unit prices in %s", (lng, reason, unitPrice) => {
+    expect(i18n.t("tenantPortal.catalog.purchase.reason", { lng, reason: "Indisponível" })).toBe(reason)
+    expect(i18n.t("tenantPortal.catalog.unitPrice", { lng, price: "R$ 10" })).toBe(unitPrice)
+  })
+
   it("keeps the assigned work order empty state in UTF-8", () => {
     expect(i18n.t("workOrders.emptyAssigned.Open", { lng: "pt-BR" })).toBe("Nenhuma OS aberta atribuída a você.")
   })

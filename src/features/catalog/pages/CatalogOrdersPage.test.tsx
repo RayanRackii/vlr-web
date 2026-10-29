@@ -58,6 +58,13 @@ describe("staff catalog orders presentation", () => {
     expect(listOrdersMock).toHaveBeenCalledTimes(1)
   })
 
+  it("uses the green success chip for completed orders", async () => {
+    listOrdersMock.mockResolvedValue([{ ...ORDER, status: "Completed" }])
+    renderPage()
+    const chip = await screen.findByText(i18n.t("catalog.status.Completed"))
+    expect(chip).toHaveAttribute("data-tone", "success")
+  })
+
   it("preserves on-request totals and opens the existing detail route", async () => {
     listOrdersMock.mockResolvedValue([{ ...ORDER, totalAmount: null, items: [
       { id: "item-1", productId: "product-1", productName: "Garrafa", productCode: null, unitPrice: 15, currency: "BRL", quantity: 1, subTotal: 15 },

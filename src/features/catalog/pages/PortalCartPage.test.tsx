@@ -307,11 +307,12 @@ describe("PortalCartPage validity gate", () => {
     fireEvent.blur(pricedQuantity)
     expect(pricedQuantity).toHaveValue(99)
 
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("tenantPortal.catalog.removeItem", { name: "Rede" }),
-      }),
-    )
+    const remove = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.catalog.removeItem", { name: "Rede" }),
+    })
+    expect(remove).toHaveTextContent(i18n.t("tenantPortal.catalog.remove"))
+    expect(remove).not.toHaveTextContent("Rede")
+    await user.click(remove)
     await waitFor(() => {
       expect(screen.queryByText("Rede")).not.toBeInTheDocument()
       expect(screen.getByText("Total: R$ 990,00")).toBeInTheDocument()

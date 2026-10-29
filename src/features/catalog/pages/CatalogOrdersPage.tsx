@@ -33,7 +33,7 @@ import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, 
 
 const ORDER_STATUS_TONE: Record<CatalogOrderStatus, string> = {
   Requested: "warning", Approved: "info", Preparing: "info", Ready: "success",
-  Completed: "muted", Rejected: "danger", Cancelled: "muted",
+  Completed: "success", Rejected: "danger", Cancelled: "muted",
 }
 
 export function CatalogOrdersPage() {

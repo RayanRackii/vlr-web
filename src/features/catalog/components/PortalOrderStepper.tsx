@@ -31,8 +31,8 @@ export function PortalOrderStepper({ order }: { order: CatalogOrder }) {
                 <h3>{t(`tenantPortal.catalog.purchase.${isTerminal ? "terminal" : "steps"}.${status}`)}</h3>
                 <p>{t(`tenantPortal.catalog.purchase.stepCopy.${status}`)}</p>
                 {timestamp ? <time dateTime={timestamp}>{formatCatalogDate(timestamp, i18n.language)}</time> : null}
-                {isTerminal && !entry?.reason && (order.cancelledReason || order.rejectedReason) ? (
-                  <p>{order.cancelledReason ?? order.rejectedReason}</p>
+                {isTerminal && !entry?.reason && (order.status === "Rejected" ? order.rejectedReason : order.cancelledReason) ? (
+                  <p>{t("tenantPortal.catalog.purchase.reason", { reason: order.status === "Rejected" ? order.rejectedReason : order.cancelledReason })}</p>
                 ) : null}
               </div>
             </li>
@@ -51,7 +51,7 @@ export function PortalOrderStepper({ order }: { order: CatalogOrder }) {
                 <div className="portal-timeline-body">
                   <p className="portal-timeline-status">{t(`catalog.status.${entry.status}`)}</p>
                   <p className="portal-timeline-when">{formatCatalogDate(entry.createdAt, i18n.language)}</p>
-                  {entry.reason ? <p className="portal-timeline-reason">{entry.reason}</p> : null}
+                  {entry.reason ? <p className="portal-timeline-reason">{t("tenantPortal.catalog.purchase.reason", { reason: entry.reason })}</p> : null}
                 </div>
               </li>
             ))}

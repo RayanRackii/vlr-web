@@ -213,16 +213,17 @@ export function PortalCartPage() {
                   </p>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-11 shrink-0"
+                    className="portal-cart-remove h-11 shrink-0"
+                    aria-label={t("tenantPortal.catalog.removeItem", {
+                      name: product?.name ?? item.productId,
+                    })}
                     onClick={() => {
                       cart.remove(item.productId)
                     }}
                   >
-                    {t("tenantPortal.catalog.removeItem", {
-                      name: product?.name ?? item.productId,
-                    })}
+                    {t("tenantPortal.catalog.remove")}
                   </Button>
                 </div>
                 {product?.price != null ? (
