@@ -132,6 +132,9 @@ describe("PortalOrdersPage", () => {
       screen.getByRole("link", {
         name: i18n.t("tenantPortal.catalog.requestSentCatalog"),
       }),
-    ).toBeInTheDocument()
+    ).toHaveAttribute("href", "/t/clube/catalogo")
+    expect(screen.getByText(i18n.t("emptyStates.examples.portalOrders"))).toBeVisible()
+    expect(screen.getByRole("status")).toHaveClass("portal-empty")
+    expect(screen.queryByRole("link", { name: i18n.t("emptyStates.learnMore") })).not.toBeInTheDocument()
   })
 })

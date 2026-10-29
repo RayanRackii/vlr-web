@@ -8,13 +8,15 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye, Play, Plus } from "lucide-react"
+import { ClipboardList, Eye, Play, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState, type EmptyStateProps } from "@/components/ui/empty-state"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import {
   Table,
   TableBody,
@@ -73,12 +75,20 @@ function WorkOrdersTable({
   isLoading,
   emptyLabel,
   emptyAction,
+  emptyExample,
+  learnMore,
+  isStatusFiltered,
+  onClearStatus,
   hideEmpty = false,
 }: {
   rows: WorkOrderTableRow[]
   isLoading: boolean
   emptyLabel: string
   emptyAction?: ReactNode
+  emptyExample?: string
+  learnMore?: EmptyStateProps["learnMore"]
+  isStatusFiltered: boolean
+  onClearStatus: () => void
   hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -210,8 +220,16 @@ function WorkOrdersTable({
           {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                {emptyLabel}
-                {emptyAction}
+                <EmptyState
+                  icon={ClipboardList}
+                  title={columnFilters.length ? t("emptyStates.noResults") : emptyLabel}
+                  description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
+                  example={columnFilters.length || isStatusFiltered ? undefined : emptyExample}
+                  learnMore={columnFilters.length || isStatusFiltered ? undefined : learnMore}
+                  action={columnFilters.length || isStatusFiltered ? (
+                    <Button onClick={() => { setColumnFilters([]); onClearStatus() }}>{t(columnFilters.length ? "emptyStates.clearFilters" : "workOrders.viewOpen")}</Button>
+                  ) : emptyAction}
+                />
               </TableCell>
             </TableRow>
           ) : null}
@@ -241,6 +259,7 @@ export function WorkOrdersPage() {
   const { session } = useAuth()
   const { can } = usePermissions()
   const navigate = useNavigate()
+  const learnMore = useModuleIntroLink("maintenance")
 
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -398,7 +417,18 @@ export function WorkOrdersPage() {
                   ? `workOrders.emptyAssigned.${filter}`
                   : `workOrders.empty.${filter}`,
               )}
-              emptyAction={filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
+              isStatusFiltered={filter !== "Open"}
+              onClearStatus={() => setActiveTab("Open")}
+              learnMore={learnMore}
+              emptyExample={canCreateWorkOrder ? t("emptyStates.examples.workOrders") : undefined}
+              emptyAction={canCreateWorkOrder ? (
+                <>
+                  <Button onClick={() => { void navigate("/os/nova") }}>{t("workOrders.create.action")}</Button>
+                  {filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
+                    <Button variant="outline" onClick={() => setActiveTab("Completed")}>{t("workOrders.actions.viewCompleted")}</Button>
+                  ) : null}
+                </>
+              ) : filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
                 <div className="mt-3">
                   <Button type="button" variant="outline" onClick={() => setActiveTab("Completed")}>
                     {t("workOrders.actions.viewCompleted")}

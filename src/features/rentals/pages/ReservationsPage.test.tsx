@@ -1,10 +1,17 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import type { ReactNode } from "react"
+import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { fireEvent, render as testingRender, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
+
+function render(ui: ReactNode) {
+  return testingRender(<AuthProvider>{ui}</AuthProvider>)
+}
 
 const trialState = vi.hoisted(() => ({ readOnly: false }))
 
@@ -97,7 +104,7 @@ function renderPage(permissions: readonly string[] = [COMPLETE_PERM]) {
   return render(
     <MemoryRouter>
       <TestPermissionProvider permissions={permissions} activeModules={["rentals"]}>
-        <ReservationsPage />
+        <ModuleIntroLinksProvider keys={["bookings"]}><ReservationsPage /></ModuleIntroLinksProvider>
       </TestPermissionProvider>
     </MemoryRouter>,
   )
@@ -340,6 +347,17 @@ describe("ReservationsPage filters and states", () => {
     completeMock.mockReset()
   })
 
+  it("expands an empty today view to the week", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: "Ver a semana" }))
+    expect(screen.getByRole("button", { name: "Semana" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => {
+      const query = listMock.mock.lastCall?.[0]
+      expect(query?.from).not.toBe(query?.to)
+    })
+  })
+
   it("moves between civil days, keeps the existing week/month/status queries and returns to today", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -362,6 +380,21 @@ describe("ReservationsPage filters and states", () => {
     await user.click(screen.getByRole("button", { name: "Hoje" }))
     expect(date).toHaveValue(today)
     expect(screen.getByRole("button", { name: "Mês" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("clears an empty filtered view and restores the example", async () => {
+    const user = userEvent.setup()
+    renderPage(["rentals.reservations.read"])
+    expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
+    expect(screen.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/bookings")
+    await user.click(screen.getByRole("button", { name: "Semana" }))
+    await user.click(screen.getByRole("button", { name: "Confirmada" }))
+    const clear = await screen.findByRole("button", { name: i18n.t("emptyStates.clearFilters") })
+    expect(screen.queryByText(i18n.t("emptyStates.examples.bookings"))).not.toBeInTheDocument()
+    await user.click(clear)
+    expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
+    expect(screen.getByRole("button", { name: "Dia" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("confirms a pending deposit and refreshes the existing list", async () => {
@@ -399,7 +432,7 @@ describe("ReservationsPage filters and states", () => {
     expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Semana" }))
     expect(await screen.findByText("Nenhuma reserva neste filtro.")).toBeInTheDocument()
-    expect(screen.getByText("Troque o dia, o período ou o status para ver outras reservas.")).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("emptyStates.filterDescription"))).toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 

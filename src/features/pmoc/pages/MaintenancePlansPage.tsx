@@ -8,13 +8,16 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Plus } from "lucide-react"
+import { ClipboardList, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   Table,
   TableBody,
@@ -43,6 +46,8 @@ export function MaintenancePlansPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
   const navigate = useNavigate()
+  const learnMore = useModuleIntroLink("pmoc")
+  const { can } = usePermissions()
 
   const [plans, setPlans] = useState<MaintenancePlan[]>([])
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
@@ -257,7 +262,20 @@ export function MaintenancePlansPage() {
             {!isLoading && filteredRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {t("pmoc.plans.empty")}
+                  <EmptyState
+                    icon={ClipboardList}
+                    title={columnFilters.length ? t("emptyStates.noResults") : t("pmoc.plans.empty")}
+                    description={columnFilters.length ? t("emptyStates.filterDescription") : can("pmoc.plans.write") && can("pmoc.templates.read") ? t("emptyStates.pmocDescription") : undefined}
+                    example={!columnFilters.length && can("pmoc.plans.write") ? t("emptyStates.examples.pmoc") : undefined}
+                    learnMore={columnFilters.length ? undefined : learnMore}
+                    action={columnFilters.length ? (
+                      <Button onClick={() => setColumnFilters([])}>{t("emptyStates.clearFilters")}</Button>
+                    ) : (
+                      <Can permission="pmoc.plans.write">
+                        <Button onClick={() => { void navigate(can("pmoc.templates.read") ? "/pmoc/biblioteca" : "/pmoc/novo") }}>{t(can("pmoc.templates.read") ? "nav.pmocLibrary" : "nav.pmocNew")}</Button>
+                      </Can>
+                    )}
+                  />
                 </TableCell>
               </TableRow>
             ) : null}

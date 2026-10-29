@@ -1,8 +1,12 @@
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { CalendarDays, Lightbulb } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { formatReservationRange } from "@/features/rentals/services/reservationsService"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import type { PortalReservation } from "@/features/tenantPortal/services/tenantPortalService"
+import { focusBookingArea } from "@/features/tenantPortal/lib/focusBookingArea"
 
 type Props = { nextReservation?: PortalReservation; reservationsHref: string }
 
@@ -17,7 +21,15 @@ export function PortalRightRail({ nextReservation, reservationsHref }: Props) {
           <>
             <strong className="mt-2 block text-lg">{`${nextReservation.items.map((item) => item.assetName).join(", ")} · ${formatReservationRange(nextReservation.startDateTime, nextReservation.endDateTime, timeZoneId)}`}</strong>
           </>
-        ) : <p className="my-3 text-sm">{t("tenantPortal.redesign.noNextBooking")}</p>}
+        ) : (
+          <EmptyState
+            variant="portal"
+            className="!border-0 !bg-transparent !p-0 [&_h2]:text-sm"
+            title={t("tenantPortal.redesign.noNextBooking")}
+            example={t("emptyStates.examples.bookings")}
+            action={<Button type="button" onClick={focusBookingArea}>{t("emptyStates.book")}</Button>}
+          />
+        )}
         <a className="portal-rail-link" href={reservationsHref}>{t("tenantPortal.redesign.viewBookings")}</a>
       </section>
       <section className="portal-rail-card">
@@ -29,7 +41,7 @@ export function PortalRightRail({ nextReservation, reservationsHref }: Props) {
         </ul>
       </section>
       <section className="portal-rail-card flex items-center gap-3">
-        <Lightbulb className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
+        <Lightbulb className="size-5 shrink-0 text-primary" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
         <div><h2>{t("tenantPortal.redesign.tip")}</h2><p className="text-sm text-muted-foreground">{t("tenantPortal.redesign.tipText")}</p></div>
       </section>
     </aside>
@@ -39,10 +51,11 @@ export function PortalRightRail({ nextReservation, reservationsHref }: Props) {
 export function PortalBookingEmptyState() {
   const { t } = useTranslation()
   return (
-    <div className="portal-empty" role="status">
-      <div className="portal-empty-icon"><CalendarDays strokeWidth={1.75} aria-hidden="true" /></div>
-      <h2>{t("tenantPortal.redesign.emptyTitle")}</h2>
-      <p>{t("tenantPortal.redesign.emptyHelp")}</p>
-    </div>
+    <EmptyState
+      variant="portal"
+      icon={CalendarDays}
+      title={t("tenantPortal.redesign.emptyTitle")}
+      description={t("tenantPortal.redesign.emptyHelp")}
+    />
   )
 }

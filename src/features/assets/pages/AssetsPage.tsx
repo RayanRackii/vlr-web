@@ -19,6 +19,8 @@ import { AssetWizard } from "@/features/assets/components/AssetWizard"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import {
   Dialog,
   DialogContent,
@@ -104,6 +106,7 @@ export function AssetsPage() {
   const { session } = useAuth()
   const { can } = usePermissions()
   const navigate = useNavigate()
+  const learnMore = useModuleIntroLink("maintenance")
   const { isTrialReadOnly } = useTrialStatus()
   const canWriteAssets = can("inventory.assets.write")
   const canWriteCategories = can("inventory.categories.write")
@@ -661,6 +664,24 @@ export function AssetsPage() {
     }
   }
 
+  const emptyState = (
+    <EmptyState
+      className="border-0"
+      title={columnFilters.length ? t("emptyStates.noResults") : categories.length === 0 && !categoriesDenied
+        ? tTone("assets.inventory.emptyNoTypes") : tTone("assets.inventory.empty")}
+      description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
+      example={!columnFilters.length && canWriteAssets ? t("emptyStates.examples.assets") : undefined}
+      learnMore={columnFilters.length ? undefined : learnMore}
+      action={columnFilters.length ? (
+        <Button onClick={() => setColumnFilters([])}>{t("emptyStates.clearFilters")}</Button>
+      ) : categories.length === 0 && !categoriesDenied && canWriteCategories ? (
+        <Button onClick={() => { void navigate("/ativos/categorias") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
+      ) : categories.length > 0 && canWriteAssets ? (
+        <Button disabled={!canOpenWizard} onClick={() => openWizard("create")}>{t("assets.inventory.emptyWithTypesCta")}</Button>
+      ) : undefined}
+    />
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -777,37 +798,7 @@ export function AssetsPage() {
             {!isLoading && filteredRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={tableColumns.length} className="h-24 text-center">
-                  <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-2">
-                    <p className="text-sm text-muted-foreground">
-                      {categories.length === 0 && !categoriesDenied
-                        ? tTone("assets.inventory.emptyNoTypes")
-                        : tTone("assets.inventory.empty")}
-                    </p>
-                    {categories.length === 0 &&
-                    !categoriesDenied &&
-                    canWriteCategories ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          void navigate("/ativos/categorias")
-                        }}
-                      >
-                        {t("assets.inventory.emptyNoTypesCta")}
-                      </Button>
-                    ) : null}
-                    {categories.length > 0 && canWriteAssets ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          openWizard("create")
-                        }}
-                      >
-                        {t("assets.inventory.emptyWithTypesCta")}
-                      </Button>
-                    ) : null}
-                  </div>
+                  {emptyState}
                 </TableCell>
               </TableRow>
             ) : null}
@@ -841,39 +832,7 @@ export function AssetsPage() {
           <RecordListSkeleton />
         ) : null}
 
-        {!isLoading && filteredRows.length === 0 ? (
-          <div className="rounded-xl border border-border p-4">
-            <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-2 text-center">
-              <p className="text-sm text-muted-foreground">
-                {categories.length === 0 && !categoriesDenied
-                  ? tTone("assets.inventory.emptyNoTypes")
-                  : tTone("assets.inventory.empty")}
-              </p>
-              {categories.length === 0 && !categoriesDenied && canWriteCategories ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    void navigate("/ativos/categorias")
-                  }}
-                >
-                  {t("assets.inventory.emptyNoTypesCta")}
-                </Button>
-              ) : null}
-              {categories.length > 0 && canWriteAssets ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    openWizard("create")
-                  }}
-                >
-                  {t("assets.inventory.emptyWithTypesCta")}
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
+        {!isLoading && filteredRows.length === 0 ? emptyState : null}
 
         {!isLoading
           ? filteredRows.map((row) => {

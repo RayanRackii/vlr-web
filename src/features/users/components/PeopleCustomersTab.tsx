@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import {
   DIRECTORY_PAGE_SIZE,
@@ -31,6 +33,7 @@ function formatCreatedAt(value: string, language: string) {
 
 export function PeopleCustomersTab() {
   const { t, i18n } = useTranslation()
+  const learnMore = useModuleIntroLink("peoplePortal")
   const [customers, setCustomers] = useState<TenantCustomer[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -136,6 +139,9 @@ export function PeopleCustomersTab() {
       {!isLoading && loadError === null && customers.length === 0 ? (
         <PeopleEmptyState
           icon={Users}
+          example={appliedQuery ? undefined : t("emptyStates.examples.customers")}
+          learnMore={appliedQuery ? undefined : learnMore}
+          action={appliedQuery ? <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button> : undefined}
           title={t(
             appliedQuery.length >= 2
               ? "peopleAccess.customers.emptySearch"

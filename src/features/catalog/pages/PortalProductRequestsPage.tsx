@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import {
   portalProductRequestRange,
@@ -132,28 +133,31 @@ export function PortalProductRequestsPage() {
           </Button>
         </div>
       ) : pageData != null && pageData.total === 0 ? (
-        <div className="portal-empty" role="status">
-          <div className="portal-empty-icon">
-            <ClipboardList strokeWidth={1.75} aria-hidden />
-          </div>
-          <h2>{t("tenantPortal.catalog.requestsEmpty")}</h2>
-          <p>{t("tenantPortal.catalog.requestsEmptyDescription")}</p>
-          <Button
-            type="button"
-            className="portal-catalog-button portal-catalog-primary mt-2"
-            render={
-              <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
-            }
-          >
-            {t("tenantPortal.catalog.requestCta")}
-          </Button>
-        </div>
+        <EmptyState
+          variant="portal"
+          icon={ClipboardList}
+          title={t("tenantPortal.catalog.requestsEmpty")}
+          description={t("tenantPortal.catalog.requestsEmptyDescription")}
+          example={t("emptyStates.examples.portalRequests")}
+          action={
+            <Button
+              type="button"
+              className="portal-catalog-button portal-catalog-primary mt-2"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />}
+            >
+              {t("tenantPortal.catalog.requestCta")}
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-4">
           {items.length === 0 ? (
-            <p className="rounded-xl border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground">
-              {t("tenantPortal.catalog.requestsPageEmpty")}
-            </p>
+            <EmptyState
+              variant="portal"
+              icon={ClipboardList}
+              title={t("tenantPortal.catalog.requestsPageEmpty")}
+              action={page > 1 ? <Button onClick={() => { setLoading(true); setPage(1) }}>{t("emptyStates.firstPage")}</Button> : undefined}
+            />
           ) : (
             <ul className="portal-records-list">
               {items.map((request) => (

@@ -11,7 +11,7 @@ export function PortalBookingHeader({ tenantName, title }: Props) {
   return (
     <header className="portal-booking-header">
       <p className="portal-eyebrow">{name ? t("tenantPortal.redesign.greetingName", { name }) : t("tenantPortal.redesign.greeting")}</p>
-      <h1>{title ?? t("tenantPortal.redesign.title")}</h1>
+      <h1 id="portal-booking-heading" tabIndex={-1}>{title ?? t("tenantPortal.redesign.title")}</h1>
       <p className="text-muted-foreground">{tenantName ? t("tenantPortal.redesign.subtitleTenant", { tenant: tenantName }) : t("tenantPortal.redesign.subtitle")}</p>
     </header>
   )

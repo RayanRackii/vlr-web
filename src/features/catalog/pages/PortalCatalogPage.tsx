@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { CardGridSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
@@ -49,7 +50,7 @@ export function PortalCatalogPage() {
     [categoryParam, tagsParam],
   )
   const search = searchParams.get("search") ?? ""
-  const hasActiveFilters = Boolean(search || taxonomyQuery.category || taxonomyQuery.tags?.length)
+  const hasActiveFilters = Boolean(search.trim() || taxonomyQuery.category || taxonomyQuery.tags?.length)
   const portalIdentity = `${subdomain}:${customerId ?? ""}`
 
   const [products, setProducts] = useState<PortalProduct[]>([])
@@ -313,27 +314,39 @@ export function PortalCatalogPage() {
           {loading ? (
             <CardGridSkeleton />
           ) : products.length === 0 ? (
-            <div className="portal-empty portal-catalog-empty">
-              <PortalCatalogEmptyIllustration />
-              <h2>
-                {search.trim()
-                  ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
-                  : t("tenantPortal.catalog.empty")}
-              </h2>
-              <p>
-                {search.trim() || taxonomyQuery.category || taxonomyQuery.tags?.length
-                  ? t("tenantPortal.catalog.filteredEmptyDescription")
-                  : t("tenantPortal.catalog.emptyDescription", { tenant: branding.displayName })}
-              </p>
-              <Button
-                type="button"
-                className="portal-catalog-button portal-catalog-primary mt-2"
-                render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />}
-              >
-                <Plus aria-hidden data-icon="inline-start" />
-                {t("tenantPortal.catalog.requestCta")}
-              </Button>
-            </div>
+            <EmptyState
+              variant="portal"
+              className="portal-catalog-empty"
+              illustration={<PortalCatalogEmptyIllustration />}
+              title={search.trim()
+                ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
+                : hasActiveFilters ? t("emptyStates.noResults") : t("tenantPortal.catalog.empty")}
+              description={hasActiveFilters
+                ? t("tenantPortal.catalog.filteredEmptyDescription")
+                : t("tenantPortal.catalog.emptyDescription", { tenant: branding.displayName })}
+              example={hasActiveFilters ? undefined : t("emptyStates.examples.portalCatalog")}
+              action={hasActiveFilters ? (
+                <Button
+                  className="portal-catalog-button portal-catalog-primary mt-2"
+                  onClick={() => {
+                    debouncedSearch.cancel()
+                    setSearchDraft("")
+                    updateQuery({ search: "", categoryId: null, tagIds: [] })
+                  }}
+                >
+                  {t(taxonomyQuery.category || taxonomyQuery.tags?.length ? "emptyStates.clearFilters" : "emptyStates.clearSearch")}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="portal-catalog-button portal-catalog-primary mt-2"
+                  render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />}
+                >
+                  <Plus aria-hidden data-icon="inline-start" />
+                  {t("tenantPortal.catalog.requestCta")}
+                </Button>
+              )}
+            />
           ) : (
             <ul className="portal-catalog-products">
               {products.map((product) => {

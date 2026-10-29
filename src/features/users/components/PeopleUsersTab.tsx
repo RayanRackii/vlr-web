@@ -35,6 +35,7 @@ import {
   PeopleSearchForm,
 } from "@/features/users/components/PeopleDirectoryControls"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { Can } from "@/features/users/permissions/Can"
 import {
   toggleUniqueId,
@@ -61,7 +62,8 @@ type PeopleUsersTabProps = {
 
 export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   const { t } = useTranslation()
-  const { currentUser, refresh } = usePermissions()
+  const learnMore = useModuleIntroLink("peoplePortal")
+  const { currentUser, refresh, can } = usePermissions()
   const [members, setMembers] = useState<TenantMember[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -203,6 +205,12 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     setAppliedQuery(next)
   }
 
+  function openInvite() {
+    inviteForm.reset({ fullName: "", email: "", roleIds: [] })
+    inviteForm.clearErrors()
+    setInviteOpen(true)
+  }
+
   function openAssign(member: TenantMember) {
     setAssigning(member)
     assignForm.reset({
@@ -223,11 +231,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
               type="button"
               size="sm"
               className="people-invite"
-              onClick={() => {
-                inviteForm.reset({ fullName: "", email: "", roleIds: [] })
-                inviteForm.clearErrors()
-                setInviteOpen(true)
-              }}
+              onClick={openInvite}
             >
               <UserPlus aria-hidden strokeWidth={1.75} />
               {t("peopleAccess.users.invite")}
@@ -258,7 +262,18 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
           <p>{t("peopleAccess.users.description")}</p>
         </div>
         {!isLoading && members.length === 0 && loadError === null ? (
-          <PeopleEmptyState icon={Users} title={t("peopleAccess.users.empty")} description={t("peopleAccess.users.emptyDescription")} />
+          <PeopleEmptyState
+            icon={Users}
+            title={t(appliedQuery ? "emptyStates.noResults" : "peopleAccess.users.empty")}
+            description={t(appliedQuery ? "emptyStates.filterDescription" : "peopleAccess.users.emptyDescription")}
+            example={!appliedQuery && can("core.users.invite") ? t("emptyStates.examples.users") : undefined}
+            learnMore={appliedQuery ? undefined : learnMore}
+            action={appliedQuery ? (
+              <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button>
+            ) : (
+              <Can permission="core.users.invite"><Button onClick={openInvite}>{t("peopleAccess.users.invite")}</Button></Can>
+            )}
+          />
         ) : members.length > 0 ? (
           <table className="people-table people-team-table" aria-label={t("peopleAccess.tabs.users")}>
             <thead><tr>

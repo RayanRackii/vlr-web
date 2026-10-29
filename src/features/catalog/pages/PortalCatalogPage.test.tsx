@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
@@ -126,6 +126,22 @@ describe("PortalCatalogPage search", () => {
     await waitFor(() => expect(listProductsMock).toHaveBeenLastCalledWith("   "))
     expect(await screen.findByText(emptyMessage)).toBeInTheDocument()
     expect(screen.queryByText(message)).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["/?search=limpeza", "emptyStates.clearSearch"],
+    ["/?category=11111111-1111-4111-8111-111111111111&search=limpeza", "emptyStates.clearFilters"],
+    ["/?tags=11111111-1111-4111-8111-111111111111", "emptyStates.clearFilters"],
+  ])("clears the empty catalog query at %s without showing a creation example", async (entry, labelKey) => {
+    renderPage(outletContext, entry)
+    await screen.findByRole("heading", { name: entry.includes("search=") ? i18n.t("tenantPortal.catalog.searchEmpty", { term: "limpeza" }) : i18n.t("emptyStates.noResults") })
+    const primary = document.querySelector('[data-slot="empty-state"]') as HTMLElement
+    expect(screen.queryByText(i18n.t("emptyStates.examples.portalCatalog"))).not.toBeInTheDocument()
+    fireEvent.click(within(primary).getByRole("button", { name: i18n.t(labelKey) }))
+    expect(await screen.findByText(i18n.t("tenantPortal.catalog.empty"))).toBeVisible()
+    expect(screen.getByText(i18n.t("emptyStates.examples.portalCatalog"))).toBeVisible()
+    expect(screen.getByRole("textbox", { name: i18n.t("tenantPortal.catalog.searchLabel") })).toHaveValue("")
+    expect(listProductsMock).toHaveBeenLastCalledWith("")
   })
 
   it.each(["impre", "dobradica", "IMPRESSORA", "Dobradiça"])(

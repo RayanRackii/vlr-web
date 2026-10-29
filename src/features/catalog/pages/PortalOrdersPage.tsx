@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
@@ -116,25 +117,22 @@ export function PortalOrdersPage() {
           </Button>
         </div>
       ) : orders.length === 0 ? (
-        <div className="portal-empty" role="status">
-          <div className="portal-empty-icon">
-            <ShoppingBag strokeWidth={1.75} aria-hidden />
-          </div>
-          <h2>{t("tenantPortal.catalog.ordersEmpty")}</h2>
-          <p>
-            {t("tenantPortal.catalog.ordersEmptyDescription", {
-              tenant: branding.displayName,
-            })}
-          </p>
-          <Button
-            type="button"
-            className="portal-catalog-button portal-catalog-primary mt-2"
-            render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
-          >
-            <ShoppingBag aria-hidden data-icon="inline-start" />
-            {t("tenantPortal.catalog.requestSentCatalog")}
-          </Button>
-        </div>
+        <EmptyState
+          variant="portal"
+          icon={ShoppingBag}
+          title={t("tenantPortal.catalog.ordersEmpty")}
+          description={t("tenantPortal.catalog.ordersEmptyDescription", { tenant: branding.displayName })}
+          example={t("emptyStates.examples.portalOrders")}
+          action={
+            <Button
+              type="button"
+              className="portal-catalog-button portal-catalog-primary mt-2"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
+            >
+              {t("tenantPortal.catalog.requestSentCatalog")}
+            </Button>
+          }
+        />
       ) : (
         <ul className="portal-records-list">
           {orders.map((order) => {

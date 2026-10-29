@@ -1,11 +1,18 @@
-import { render, screen, within } from "@testing-library/react"
+import type { ReactNode } from "react"
+import { MemoryRouter } from "react-router-dom"
+import { render as testingRender, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
+import i18n from "@/lib/i18n"
 import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
 import { fetchDailyAvailability } from "@/features/rentals/services/resourceVisualService"
 import type { PortalRentalAsset } from "@/features/tenantPortal/services/tenantPortalService"
+
+function render(ui: ReactNode) {
+  return testingRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 const RENTAL_ID = "11111111-1111-4111-8111-111111111111"
 const ASSET_ID = "22222222-2222-4222-8222-222222222222"
@@ -44,7 +51,7 @@ describe("BookingMapExperience", () => {
     })
     render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} />)
     expect(await screen.findByRole("button", { name: "Raquete" })).toBeInTheDocument()
-    expect(document.querySelector(".portal-empty")).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: i18n.t("tenantPortal.redesign.emptyTitle") })).not.toBeInTheDocument()
   })
 
   it("limits the date strip to the agenda booking horizon", async () => {

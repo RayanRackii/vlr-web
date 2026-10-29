@@ -3083,6 +3083,7 @@
     }
   },
   "workOrders": {
+    "viewOpen": "Ver OS abertas",
     "title": "Ordens de Serviço",
     "description": "Execute checklists em campo e acompanhe o status de cada OS.",
     "loading": "Carregando ordens de serviço...",
@@ -4442,6 +4443,7 @@
       "nextDay": "Próximo dia",
       "today": "Hoje",
       "goToday": "Ir para hoje",
+      "showWeek": "Ver a semana",
       "emptyDescription": "Troque o dia, o período ou o status para ver outras reservas.",
       "loading": "Carregando reservas…",
       "count_one": "{{count}} reserva",
@@ -4617,5 +4619,28 @@
       "Fixed": "{{amount}} fixo"
     },
     "unitsLeft": "{{left}} de {{total}} disponíveis"
+  },
+  "emptyStates": {
+    "learnMore": "Saiba mais",
+    "noResults": "Nenhum resultado encontrado",
+    "filterDescription": "Ajuste os filtros ou limpe a busca para ver os itens.",
+    "clearFilters": "Limpar filtros",
+    "clearSearch": "Limpar busca",
+    "firstPage": "Voltar à primeira página",
+    "book": "Reservar",
+    "bookingDescription": "Escolha um horário para sua próxima reserva.",
+    "pmocDescription": "Crie seu primeiro plano a partir da Biblioteca Rolvix",
+    "examples": {
+      "bookings": "Ex.: uma sala às 14h, por 1 hora",
+      "workOrders": "Ex.: troca de filtro do ar-condicionado da recepção",
+      "pmoc": "Ex.: um plano mensal para os equipamentos de climatização",
+      "assets": "Ex.: um ar-condicionado split de 12.000 BTUs",
+      "users": "Ex.: convide quem atende o balcão",
+      "customers": "Ex.: uma pessoa que se cadastrou no portal",
+      "roles": "Ex.: um perfil para a equipe de atendimento",
+      "portalOrders": "Ex.: materiais de limpeza para a recepção",
+      "portalRequests": "Ex.: um produto de limpeza para a recepção",
+      "portalCatalog": "Ex.: materiais de uso diário para a recepção"
+    }
   }
 }
