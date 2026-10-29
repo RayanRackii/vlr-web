@@ -23,6 +23,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { NotificationBell } from "@/features/notifications-inbox/components/NotificationBell"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
@@ -203,6 +204,10 @@ export function AppShell({
               showShortLabel={showLanguageCode}
             />
             <ThemeToggle className={headerIconClassName} />
+
+            {variant === "staff" ? (
+              <NotificationBell className={headerIconClassName} />
+            ) : null}
 
             <DropdownMenu>
               <DropdownMenuTrigger

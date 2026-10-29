@@ -993,6 +993,43 @@
         "catalog": "Catálogo e pedidos",
         "rentals": "Aluguéis"
       }
+    },
+    "inbox": {
+      "title": "Notificações",
+      "ariaLabelNone": "Notificações",
+      "ariaLabel_one": "Notificações: {{count}} não lida",
+      "ariaLabel_other": "Notificações: {{count}} não lidas",
+      "markAll": "Marcar tudo como lido",
+      "empty": "Você está em dia. Nenhuma notificação nova.",
+      "loading": "Carregando notificações…",
+      "recent": "Recentes",
+      "countOverflow": "99+",
+      "groups": {
+        "fallback_one": "{{count}} notificação — {{eventType}}",
+        "fallback_other": "{{count}} notificações — {{eventType}}",
+        "orderCreated_one": "{{count}} novo pedido",
+        "orderCreated_other": "{{count}} novos pedidos",
+        "orderApproved_one": "{{count}} pedido aprovado",
+        "orderApproved_other": "{{count}} pedidos aprovados",
+        "orderReady_one": "{{count}} pedido pronto",
+        "orderReady_other": "{{count}} pedidos prontos",
+        "orderRejected_one": "{{count}} pedido recusado",
+        "orderRejected_other": "{{count}} pedidos recusados",
+        "orderCancelledBySupplier_one": "{{count}} pedido cancelado",
+        "orderCancelledBySupplier_other": "{{count}} pedidos cancelados",
+        "orderCancelledByCustomer_one": "{{count}} pedido cancelado pelo cliente",
+        "orderCancelledByCustomer_other": "{{count}} pedidos cancelados pelo cliente",
+        "reservationConfirmed_one": "{{count}} nova reserva confirmada",
+        "reservationConfirmed_other": "{{count}} novas reservas confirmadas",
+        "reservationPendingDeposit_one": "{{count}} reserva aguardando sinal",
+        "reservationPendingDeposit_other": "{{count}} reservas aguardando sinal",
+        "reservationCanceled_one": "{{count}} reserva cancelada",
+        "reservationCanceled_other": "{{count}} reservas canceladas",
+        "reservationCompleted_one": "{{count}} reserva concluída",
+        "reservationCompleted_other": "{{count}} reservas concluídas",
+        "reservationReminder_one": "{{count}} lembrete de reserva",
+        "reservationReminder_other": "{{count}} lembretes de reserva"
+      }
     }
   },
   "landing": {

@@ -993,6 +993,43 @@
         "catalog": "Catalog and orders",
         "rentals": "Rentals"
       }
+    },
+    "inbox": {
+      "title": "Notifications",
+      "ariaLabelNone": "Notifications",
+      "ariaLabel_one": "Notifications: {{count}} unread",
+      "ariaLabel_other": "Notifications: {{count}} unread",
+      "markAll": "Mark all as read",
+      "empty": "You're all caught up. No new notifications.",
+      "loading": "Loading notifications…",
+      "recent": "Recent",
+      "countOverflow": "99+",
+      "groups": {
+        "fallback_one": "{{count}} notification — {{eventType}}",
+        "fallback_other": "{{count}} notifications — {{eventType}}",
+        "orderCreated_one": "{{count}} new order",
+        "orderCreated_other": "{{count}} new orders",
+        "orderApproved_one": "{{count}} order approved",
+        "orderApproved_other": "{{count}} orders approved",
+        "orderReady_one": "{{count}} order ready",
+        "orderReady_other": "{{count}} orders ready",
+        "orderRejected_one": "{{count}} order rejected",
+        "orderRejected_other": "{{count}} orders rejected",
+        "orderCancelledBySupplier_one": "{{count}} order cancelled",
+        "orderCancelledBySupplier_other": "{{count}} orders cancelled",
+        "orderCancelledByCustomer_one": "{{count}} order cancelled by the customer",
+        "orderCancelledByCustomer_other": "{{count}} orders cancelled by customers",
+        "reservationConfirmed_one": "{{count}} new reservation confirmed",
+        "reservationConfirmed_other": "{{count}} new reservations confirmed",
+        "reservationPendingDeposit_one": "{{count}} reservation awaiting deposit",
+        "reservationPendingDeposit_other": "{{count}} reservations awaiting deposit",
+        "reservationCanceled_one": "{{count}} reservation cancelled",
+        "reservationCanceled_other": "{{count}} reservations cancelled",
+        "reservationCompleted_one": "{{count}} reservation completed",
+        "reservationCompleted_other": "{{count}} reservations completed",
+        "reservationReminder_one": "{{count}} reservation reminder",
+        "reservationReminder_other": "{{count}} reservation reminders"
+      }
     }
   },
   "landing": {
