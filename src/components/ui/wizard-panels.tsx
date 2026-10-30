@@ -49,7 +49,7 @@ function StepIndexBadge({
       )}
     >
       {status === "complete" ? (
-        <Check className="size-3.5" aria-hidden strokeWidth={2.5} />
+        <Check className="size-4" aria-hidden />
       ) : (
         String(index + 1).padStart(2, "0")
       )}

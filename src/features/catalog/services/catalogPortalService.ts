@@ -119,6 +119,12 @@ export async function getPortalCatalogOrder(id: string): Promise<CatalogOrder> {
   }
 }
 
+export class CatalogOrderCancelConflictError extends Error {
+  constructor() {
+    super(i18n.t("tenantPortal.catalog.orderNoLongerCancellable"))
+  }
+}
+
 export async function cancelPortalCatalogOrder(
   id: string,
 ): Promise<CatalogOrder> {
@@ -130,6 +136,9 @@ export async function cancelPortalCatalogOrder(
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error
+    }
+    if (isAxiosError(error) && error.response?.status === 409) {
+      throw new CatalogOrderCancelConflictError()
     }
     throwPortalError(error, "apiErrors.cancelPortalOrder")
   }

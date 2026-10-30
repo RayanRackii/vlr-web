@@ -1,7 +1,9 @@
+import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, Plus } from "lucide-react"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -111,6 +113,7 @@ export function PmocPlanDetailPage() {
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  useBreadcrumbTitle(!isLoading && !loadError ? plan?.name : undefined)
   const [planInUse, setPlanInUse] = useState(false)
   const [isHeaderBusy, setIsHeaderBusy] = useState(false)
   const [isChecklistBusy, setIsChecklistBusy] = useState(false)
@@ -123,9 +126,11 @@ export function PmocPlanDetailPage() {
     () =>
       createPlanFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
+        nameTooLong: t("common.validation.maxLength", { count: 200 }),
         nameRequired: t("pmoc.create.validation.nameRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
@@ -161,12 +166,13 @@ export function PmocPlanDetailPage() {
   const watchedTasks = useWatch({ control, name: "tasks" })
   const watchedValues = useWatch({ control })
   const parsedForm = formSchema.safeParse(watchedValues)
-  const formError = parsedForm.success ? undefined : parsedForm.error
+  const allFormErrors = parsedForm.success ? undefined : parsedForm.error
+  const formError = useVisibleFormIssues(allFormErrors, form)
   const taskMessages = uniqueIssueMessages(
-    formError,
+    allFormErrors,
     (path) => String(path[0] ?? "") === "tasks",
   )
-  const headerMessages = uniqueIssueMessages(formError, (path) => {
+  const headerMessages = uniqueIssueMessages(allFormErrors, (path) => {
     const head = String(path[0] ?? "")
     return (
       head === "name" ||
@@ -526,7 +532,6 @@ export function PmocPlanDetailPage() {
                 intervalMessage={issueMessageAt(formError, ["intervalDays"])}
                 firstDueMessage={issueMessageAt(formError, ["firstDueDate"])}
               />
-              <FormValidationSummary messages={headerMessages} />
               <Button
                 type="submit"
                 disabled={
@@ -609,7 +614,7 @@ export function PmocPlanDetailPage() {
                 issueMessage={(path) => issueMessageAt(formError, path)}
               />
 
-              <FormValidationSummary messages={taskMessages} />
+              <FormValidationSummary messages={uniqueIssueMessages(formError, (path) => path.length === 1 && path[0] === "tasks")} />
 
               <div className="flex justify-end">
                 <FormPrimaryButton

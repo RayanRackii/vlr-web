@@ -41,13 +41,13 @@ export function WorkOrderOrigin({
   }
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+    <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1 break-words">
       <span>{text}</span>
       {pmocModuleActive ? (
         <Can permission="pmoc.plans.read">
           <Link
             to={`/pmoc/${maintenancePlanId}`}
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            className="touch-target inline-flex max-w-full items-center whitespace-normal rounded-md text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t("workOrders.origin.viewPlan")}
           </Link>

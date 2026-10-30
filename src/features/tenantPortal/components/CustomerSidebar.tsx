@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { customerNavHref } from "@/features/catalog/customerNav"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
-import { Separator } from "@/components/ui/separator"
+import { customerDisplayInitials, customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
 import { cn } from "@/lib/utils"
 
 export type CustomerNavItem = {
@@ -24,6 +24,7 @@ type CustomerSidebarProps = {
   items: readonly CustomerNavItem[]
   onNavigate?: () => void
   className?: string
+  userLabel?: string | null
 }
 
 export function CustomerSidebar({
@@ -33,28 +34,20 @@ export function CustomerSidebar({
   items,
   onNavigate,
   className,
+  userLabel,
 }: CustomerSidebarProps) {
   const { t } = useTranslation()
   const location = useLocation()
+  const displayName = customerDisplayName(userLabel)
 
   return (
-    <div className={cn("flex h-full flex-col", className)}>
-      <div className="flex h-14 items-center gap-2 px-4">
-        <TenantLogoMark
-          logoSvg={logoSvg}
-          displayName={brandLabel}
-          primaryColor={primaryColor}
-          size="sm"
-          className="mx-0 shrink-0"
-        />
-        <span className="truncate text-sm font-semibold tracking-tight">
-          {brandLabel}
-        </span>
+    <div className={cn("portal-sidebar flex h-full flex-col", className)}>
+      <div className="portal-brand">
+        <div className="portal-brand-tile"><TenantLogoMark logoSvg={logoSvg} displayName={brandLabel} primaryColor={primaryColor} size="sm" className="mx-0 shrink-0" /></div>
+        <div className="min-w-0"><span className="block truncate text-sm font-semibold" title={brandLabel}>{brandLabel}</span><small>{t("tenantPortal.redesign.customerPortal")}</small></div>
       </div>
-
-      <Separator />
-
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="portal-nav" aria-label={t("nav.menu")}>
+        <p className="portal-nav-heading">{t("tenantPortal.redesign.navigation")}</p>
         {items.length === 0 ? (
           <p className="px-3 py-2 text-sm text-muted-foreground">
             {t("tenantPortal.menu.empty")}
@@ -92,19 +85,17 @@ export function CustomerSidebar({
                 }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  "portal-nav-link", item.id === "customer-profile" && "portal-profile-link",
                 )}
               >
-                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                <Icon strokeWidth={1.75} className="size-5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{item.label}</span>
               </Link>
             )
           })
         )}
       </nav>
+      {userLabel ? <div className="portal-user-chip"><span className="portal-avatar" aria-hidden="true">{customerDisplayInitials(displayName)}</span><div className="min-w-0"><p className="truncate text-sm font-semibold" title={displayName}>{displayName}</p><p className="text-xs text-muted-foreground">{t("tenantPortal.redesign.customer")}</p></div></div> : null}
     </div>
   )
 }

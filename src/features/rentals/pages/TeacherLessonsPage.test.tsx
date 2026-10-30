@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
 import { resetRemovedTeacherLessonsForTests } from "@/features/rentals/hooks/useTeacherLessons"
+import i18n from "@/lib/i18n"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import {
@@ -104,6 +105,56 @@ async function confirmLessonRemoval(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("TeacherLessonsPage", () => {
+  it.each([
+    ["pt-BR", "07/10/2026", "Informe uma data em ou após 08/10/2026."],
+    ["en", "10/07/2026", "Enter a date on or after 10/08/2026."],
+    ["es", "07/10/2026", "Indique una fecha igual o posterior al 08/10/2026."],
+  ])("explains an out-of-range date in %s and blocks lesson creation", async (locale, text, message) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      render(<TeacherLessonsPage />)
+      const date = await screen.findByLabelText(i18n.t("rentals.teacherLessons.date"))
+      await user.clear(date)
+      await user.type(date, text)
+      await user.tab()
+      expect(await screen.findByText(message)).toBeInTheDocument()
+      expect(screen.queryByText(i18n.t("common.datePicker.invalid"))).not.toBeInTheDocument()
+      expect(screen.getByRole("button", { name: i18n.t("rentals.teacherLessons.create" ) })).toBeDisabled()
+      expect(createTeacherLesson).not.toHaveBeenCalled()
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("shows a partial date error only after blur and clears it when the date is complete", async () => {
+    const user = userEvent.setup()
+    render(<TeacherLessonsPage />)
+    const date = await screen.findByLabelText("Data")
+    await user.clear(date)
+    await user.type(date, "1")
+    expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument()
+    await user.type(date, "4/")
+    expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument()
+    await user.tab()
+    expect(await screen.findByText("Informe uma data válida.")).toBeInTheDocument()
+    await user.type(date, "10/2026")
+    await waitFor(() => expect(screen.queryByText("Informe uma data válida.")).not.toBeInTheDocument())
+    expect(date).toHaveValue("14/10/2026")
+  })
+
+  it("does not query the API with an incomplete localized date", async () => {
+    const user = userEvent.setup()
+    render(<TeacherLessonsPage />)
+    const date = await screen.findByLabelText("Data")
+    await waitFor(() => expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-08", [court.id]))
+    vi.mocked(fetchAdminScheduleDay).mockClear()
+    await user.clear(date)
+    await user.type(date, "14/")
+    expect(fetchAdminScheduleDay).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "Criar aula nesta data" })).toBeDisabled()
+  })
+
   beforeEach(() => {
     resetRemovedTeacherLessonsForTests()
     vi.useFakeTimers({
@@ -134,11 +185,11 @@ describe("TeacherLessonsPage", () => {
     expect(screen.queryByText(/Configuração semanal|Política da agenda|Tipos de ocupação/)).not.toBeInTheDocument()
   })
 
-  it("sets today as the earliest date and hides booked or cancelled lessons from removal", async () => {
+  it("displays today's localized date and hides booked or cancelled lessons from removal", async () => {
     render(<TeacherLessonsPage />)
 
     const date = await screen.findByLabelText("Data")
-    expect(date).toHaveAttribute("min", todayIsoDate())
+    expect(date).toHaveValue("08/10/2026")
     expect(await screen.findAllByRole("button", { name: /Remover aula/ })).toHaveLength(1)
   })
 
@@ -166,7 +217,7 @@ describe("TeacherLessonsPage", () => {
     render(<TeacherLessonsPage />)
 
     await waitFor(() => expect(pending).toHaveLength(1))
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-10-09" } })
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "09/10/2026" } })
     await waitFor(() => expect(pending).toHaveLength(2))
 
     await act(async () => pending[1]({ date: "2026-10-09", slots: [secondOpenSlot] }))
@@ -188,7 +239,7 @@ describe("TeacherLessonsPage", () => {
     await user.click(await screen.findByRole("combobox", { name: "Horário disponível" }))
     await user.click(await screen.findByRole("option", { name: "11:00–12:00" }))
     expect(screen.getByRole("combobox", { name: "Horário disponível" })).toHaveTextContent("11:00–12:00")
-    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-10-09" } })
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "09/10/2026" } })
     await waitFor(() => expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-09", [court.id]))
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Este horário não está mais disponível. Atualize a grade e escolha outro."))
@@ -481,7 +532,7 @@ describe("TeacherLessonsPage", () => {
 
     await user.keyboard("{Escape}")
     fireEvent.change(screen.getByLabelText("Data"), {
-      target: { value: "2026-10-16" },
+      target: { value: "16/10/2026" },
     })
     await waitFor(() => {
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-16", [court.id])
@@ -504,7 +555,7 @@ describe("TeacherLessonsPage", () => {
         "A data do link já passou. Os horários abaixo são de hoje.",
       ),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(todayIsoDate())
+    expect(screen.getByLabelText("Data")).toHaveValue("08/10/2026")
     await waitFor(() => {
       expect(fetchAdminScheduleDay).toHaveBeenCalledWith(todayIsoDate(), [court.id])
     })
@@ -537,7 +588,7 @@ describe("TeacherLessonsPage", () => {
 
     const first = render(<TeacherLessonsPage />)
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+    expect(screen.getByLabelText("Data")).toHaveValue("09/10/2026")
     expect(fetchAdminScheduleDay).toHaveBeenCalledWith(lessonDate, [court.id])
     expect(screen.queryByText("Nenhuma aula nesta data.")).not.toBeInTheDocument()
 
@@ -545,7 +596,7 @@ describe("TeacherLessonsPage", () => {
     window.history.replaceState(null, "", `/configuracoes/agenda?date=${lessonDate}`)
     render(<TeacherLessonsPage />)
     expect(await screen.findByText("Aula teste Bot4")).toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toHaveValue(lessonDate)
+    expect(screen.getByLabelText("Data")).toHaveValue("09/10/2026")
   })
 
   it("does not show an empty lesson list while the initial day read is still in flight", async () => {

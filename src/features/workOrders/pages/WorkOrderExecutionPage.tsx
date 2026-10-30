@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
+import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -367,7 +371,7 @@ function TaskField({
 
       return (
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
             <span className="text-sm text-muted-foreground">
               {t("workOrders.execution.checkboxHint")}
             </span>
@@ -390,6 +394,7 @@ function TaskField({
       return (
         <div className="space-y-2">
           <Textarea
+            className="touch-target min-w-0 motion-reduce:transition-none"
             value={task.value ?? ""}
             maxLength={1000}
             disabled={disabled}
@@ -409,7 +414,7 @@ function TaskField({
               }
             }}
           />
-          <p className="text-xs text-muted-foreground" aria-live="polite">
+          <p className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
             {t("workOrders.execution.textCharacterCount", {
               count: (task.value ?? "").length,
               max: 1000,
@@ -438,6 +443,7 @@ function TaskField({
           ) : null}
           <Input
             type="number"
+            className="tabular-nums motion-reduce:transition-none"
             inputMode="decimal"
             disabled={disabled}
             min={numberConfig?.min}
@@ -477,7 +483,7 @@ function TaskField({
       return (
         <div className="space-y-2">
           <select
-            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="touch-target h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={task.title}
             disabled={disabled}
             value={task.value ?? ""}
@@ -529,6 +535,14 @@ export function WorkOrderExecutionPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  useBreadcrumbTitle(
+    !isLoading && workOrder
+      ? t("workOrders.execution.breadcrumb", {
+          id: formatWorkOrderShortId(workOrder.id),
+          asset: workOrder.asset.name,
+        })
+      : undefined,
+  )
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -956,7 +970,7 @@ export function WorkOrderExecutionPage() {
 
   if (!workOrder) {
     return (
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <WorkOrderOfflineBanner />
         <SyncConflictList
           conflicts={visibleConflicts}
@@ -999,8 +1013,8 @@ export function WorkOrderExecutionPage() {
       data-work-order-execution
       className={
         showActionBar && actionBar.height === 0
-          ? "space-y-6 pb-28"
-          : "space-y-6"
+          ? "min-w-0 space-y-6 break-words pb-28"
+          : "min-w-0 space-y-6 break-words"
       }
       style={
         showActionBar && actionBar.height > 0
@@ -1022,12 +1036,10 @@ export function WorkOrderExecutionPage() {
         }}
       />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {t("workOrders.execution.title")}
-            </h1>
+      <PageHeader
+        title={
+          <span className="flex flex-wrap items-center gap-2">
+            <span>{t("workOrders.execution.title")}</span>
             <Badge
               variant={
                 workOrder.status === "Completed"
@@ -1039,16 +1051,13 @@ export function WorkOrderExecutionPage() {
             >
               {t(`workOrders.status.${workOrder.status}`)}
             </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t("workOrders.execution.subtitle", {
-              tag: workOrder.asset.tag,
-              name: workOrder.asset.name,
-            })}
-          </p>
-        </div>
-
-        <Button
+          </span>
+        }
+        description={t("workOrders.execution.subtitle", {
+          tag: workOrder.asset.tag,
+          name: workOrder.asset.name,
+        })}
+        actions={<Button
           type="button"
           variant="outline"
           onClick={() => {
@@ -1057,15 +1066,16 @@ export function WorkOrderExecutionPage() {
         >
           <ArrowLeft data-icon="inline-start" />
           {t("workOrders.execution.back")}
-        </Button>
-      </div>
+        </Button>}
+      />
 
-      <section className="grid gap-3 rounded-xl border border-border p-4 sm:grid-cols-2 sm:p-6">
+      <Card className="min-w-0 motion-reduce:transition-none">
+        <CardContent className="grid min-w-0 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.asset")}
           </p>
-          <p className="font-medium">
+          <p className="min-w-0 break-words font-medium tabular-nums">
             {workOrder.asset.tag} — {workOrder.asset.name}
           </p>
           {workOrder.asset.location ? (
@@ -1078,7 +1088,7 @@ export function WorkOrderExecutionPage() {
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.scheduledDate")}
           </p>
-          <p className="font-medium">
+          <p className="min-w-0 break-words font-medium tabular-nums">
             {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
           </p>
         </div>
@@ -1099,7 +1109,7 @@ export function WorkOrderExecutionPage() {
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.origin")}
           </p>
-          <p className="font-medium">
+          <p className="min-w-0 break-words font-medium tabular-nums">
             <WorkOrderOrigin
               maintenancePlanId={workOrder.maintenancePlanId}
               sourcePlanName={workOrder.sourcePlanName}
@@ -1110,7 +1120,7 @@ export function WorkOrderExecutionPage() {
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.id")}
           </p>
-          <p className="font-mono text-sm">{workOrder.id}</p>
+          <p className="break-all font-mono text-sm tabular-nums">{workOrder.id}</p>
         </div>
         <div className="sm:col-span-2">
           <p className="text-xs text-muted-foreground">
@@ -1126,13 +1136,14 @@ export function WorkOrderExecutionPage() {
           <p className="text-xs text-muted-foreground">
             {t("workOrders.execution.completedDate")}
           </p>
-          <p className="font-medium">
+          <p className="min-w-0 break-words font-medium tabular-nums">
             {workOrder.completedDate
               ? formatCompletedDate(workOrder.completedDate, i18n.language)
               : t("workOrders.execution.notCompleted")}
           </p>
         </div>
-      </section>
+        </CardContent>
+      </Card>
 
       <div
         role="status"
@@ -1142,13 +1153,13 @@ export function WorkOrderExecutionPage() {
         className={
           successMessage === null
             ? "sr-only"
-            : "rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-green-900 dark:text-green-300"
+            : "rounded-lg border border-success/30 bg-success/10 p-4 text-foreground"
         }
       >
         {successMessage === null ? null : (
           <div className="flex items-start gap-3">
             <CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <p className="font-medium">{successMessage}</p>
+            <p className="min-w-0 break-words font-medium tabular-nums">{successMessage}</p>
           </div>
         )}
       </div>
@@ -1162,7 +1173,7 @@ export function WorkOrderExecutionPage() {
         </div>
       ) : null}
 
-      <section className="space-y-4">
+      <section className="min-w-0 space-y-4">
         <div className="space-y-1">
           <h2 className="text-lg font-medium">
             {t("workOrders.execution.tasksTitle")}
@@ -1172,14 +1183,14 @@ export function WorkOrderExecutionPage() {
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {orderedTasks.map((task, index) => (
             <div
               key={task.id}
-              className="space-y-3 rounded-xl border border-border bg-muted/20 p-4"
+              className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-medium">
+                <h3 className="min-w-0 break-words font-medium tabular-nums">
                   {index + 1}. {task.title}
                 </h3>
                 {task.isMandatory ? (
@@ -1220,14 +1231,14 @@ export function WorkOrderExecutionPage() {
           data-work-order-action-bar
           className="fixed inset-x-0 bottom-0 z-20 flex max-h-[50dvh] flex-col border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         >
-          <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-col gap-3 p-4">
+          <div className="mx-auto flex min-h-0 min-w-0 w-full max-w-5xl flex-col gap-3 p-4">
             {missingTitles.length > 0 ? (
               <div
                 id="work-order-missing-tasks"
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="flex min-h-0 flex-col"
+                className="flex min-h-0 min-w-0 flex-col"
               >
                 <p id="work-order-missing-tasks-title" className="shrink-0 text-sm font-medium">
                   {t("workOrders.execution.mandatoryIncompleteTitle")}
@@ -1235,7 +1246,7 @@ export function WorkOrderExecutionPage() {
                 <ul
                   aria-labelledby="work-order-missing-tasks-title"
                   tabIndex={0}
-                  className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain pl-5 text-sm"
+                  className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain break-words rounded-md pl-5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {missingTitles.map((title) => (
                     <li key={title}>{title}</li>
@@ -1247,6 +1258,7 @@ export function WorkOrderExecutionPage() {
               {workOrder.status === "Pending" ? (
                 <LoadingButton
                   type="button"
+                  variant="outline"
                   loading={isUpdatingStatus}
                   onClick={() => {
                     void handleStart()

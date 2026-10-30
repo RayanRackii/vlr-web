@@ -185,6 +185,25 @@ describe("RentalResourcesPage", () => {
     })
   })
 
+  it("summarizes real resources by rental type, including pending deletions", async () => {
+    const space = {
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Sala", unitId: UNIT_ID,
+      isActive: true, requiresDeposit: true, schedulePolicy: "SlotGrid",
+      type: "Location", totalQuantity: 1, queueEnabled: false, queueOpeningTime: null,
+    } as const
+    listAssetsMock.mockResolvedValue([
+      { ...space, name: "Sala de reunião" },
+      { ...space, id: "space-2", assetId: "asset-2", name: "Sala de trabalho" },
+      { ...space, id: "good-1", assetId: "asset-3", name: "Projetor", type: "Good", totalQuantity: 6, scheduledDeletionAt: "2026-11-01T00:00:00Z" },
+    ])
+
+    renderPage()
+
+    expect(await screen.findByText("3 recursos")).toBeInTheDocument()
+    expect(screen.getByText("3 recursos").parentElement).toHaveTextContent("3 recursos · 2 espaços, 1 item")
+    expect(screen.getByRole("button", { name: /Projetor/ })).toHaveTextContent("Exclusão Pendente")
+  })
+
   it("lists rentables and offers create without inventory endpoints", async () => {
     listAssetsMock.mockResolvedValue([
       {
@@ -209,6 +228,43 @@ describe("RentalResourcesPage", () => {
     expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
     expect(listAssetsMock).toHaveBeenCalled()
     expectNoForbiddenCopy(container)
+  })
+
+  it.each([
+    ["pt-BR", "1 recurso · 0 espaços, 1 item"],
+    ["en", "1 resource · 0 spaces, 1 item"],
+    ["es", "1 recurso · 0 espacios, 1 artículo"],
+  ])("uses localized singulars and zero plurals in %s without counting stock as resources", async (language, summary) => {
+    await i18n.changeLanguage(language)
+    listAssetsMock.mockResolvedValue([{
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Projetor", unitId: UNIT_ID,
+      isActive: true, requiresDeposit: true, schedulePolicy: "SlotGrid",
+      type: "Good", totalQuantity: 6, queueEnabled: false, queueOpeningTime: null,
+    }])
+    const { unmount } = renderPage()
+    try {
+      await screen.findByRole("button", { name: /Projetor/ })
+      expect(screen.getByText(/1 recurso$|1 resource$/).parentElement).toHaveTextContent(summary)
+    } finally {
+      unmount()
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
+
+  it("announces loading without presenting a false empty state", async () => {
+    let resolveAssets!: (assets: Awaited<ReturnType<typeof listAdminRentalAssets>>) => void
+    listAssetsMock.mockReturnValue(new Promise((resolve) => { resolveAssets = resolve }))
+    renderPage()
+
+    expect(screen.getByRole("status")).toHaveAccessibleName(i18n.t("common.loading"))
+    expect(screen.queryByText(i18n.t("rentals.resources.emptyTitle"))).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: i18n.t("rentals.resources.add") })).toBeDisabled()
+
+    resolveAssets([])
+    expect(await screen.findByText(i18n.t("rentals.resources.emptyTitle"))).toBeInTheDocument()
+    for (const button of screen.getAllByRole("button", { name: i18n.t("rentals.resources.add") })) {
+      expect(button).toBeEnabled()
+    }
   })
 
   it("shows an existing resource's price, allowed durations, and capacity in the list and drawer", async () => {
@@ -334,9 +390,8 @@ describe("RentalResourcesPage", () => {
 
     await user.click(await screen.findByRole("button", { name: /Projetor Horario/ }))
     await openPricingTab(user)
-    await user.click(screen.getByRole("combobox", { name: i18n.t("rentals.resources.form.cancelCutoffLabel") }))
-    await user.click(await screen.findByRole("option", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }))
-    await user.type(screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours")), "1")
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }))
+    await user.type(screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }), "1")
     await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") }))
 
     await waitFor(() => expect(updateMock).toHaveBeenCalled())
@@ -529,12 +584,7 @@ describe("RentalResourcesPage", () => {
   ) {
     await openPricingTab(user)
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.resources.form.horizonLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", { name: i18n.t(optionKey) }),
+      screen.getByRole("radio", { name: i18n.t(optionKey) }),
     )
   }
 
@@ -735,8 +785,8 @@ describe("RentalResourcesPage", () => {
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
     await openPricingTab(user)
     expect(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.resources.form.horizonLabel"),
+      screen.getByRole("radio", {
+        name: i18n.t("rentals.resources.form.horizonInherit"),
       }),
     ).toBeDisabled()
     expect(
@@ -762,12 +812,7 @@ describe("RentalResourcesPage", () => {
   ) {
     await openPricingTab(user)
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", { name: i18n.t(optionKey) }),
+      screen.getByRole("radio", { name: i18n.t(optionKey) }),
     )
   }
 
@@ -797,7 +842,8 @@ describe("RentalResourcesPage", () => {
       expect(createMock).toHaveBeenCalled()
     })
     expect(createMock.mock.calls[0]?.[0]).toMatchObject({
-      cancelCutoffHours: null,
+      // "Sem prazo" is an explicit 0 so it overrides the tenant cutoff.
+      cancelCutoffHours: 0,
     })
   })
 
@@ -820,7 +866,7 @@ describe("RentalResourcesPage", () => {
     )
     await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffHours")
 
-    const days = screen.getByLabelText(i18n.t("rentals.resources.form.cancelCutoffHours"))
+    const days = screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.cancelCutoffHours") })
     const save = screen.getByRole("button", {
       name: i18n.t("rentals.resources.saveCreate"),
     })
@@ -931,8 +977,8 @@ describe("RentalResourcesPage", () => {
     await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
     await openPricingTab(user)
     expect(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.resources.form.cancelCutoffLabel"),
+      screen.getByRole("radio", {
+        name: i18n.t("rentals.resources.form.cancelCutoffInherit"),
       }),
     ).toBeDisabled()
     expect(

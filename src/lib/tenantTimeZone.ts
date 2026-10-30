@@ -66,6 +66,23 @@ function normalizeClockHms(value: string): string {
   return `${padClockPart(hour)}:${padClockPart(minute)}:${padClockPart(second)}`
 }
 
+/**
+ * The instant a civil date + clock represents in the tenant timezone.
+ * Guesses the instant as UTC, reads back what that guess looks like on the
+ * tenant clock, then corrects by the difference — the standard two-pass
+ * zoned-to-UTC conversion. Accurate except within a DST transition itself.
+ */
+export function tenantCivilInstant(
+  dateIso: string,
+  time: string,
+  timeZoneId: string,
+): Date {
+  const guess = new Date(`${dateIso}T${normalizeClockHms(time)}Z`)
+  const observed = tenantCivilParts(guess, timeZoneId)
+  const observedUtc = new Date(`${observed.date}T${observed.time}Z`)
+  return new Date(guess.getTime() + (guess.getTime() - observedUtc.getTime()))
+}
+
 /** True when this civil slot start is already reached on the tenant clock. */
 export function isTenantSlotStartInPast(
   dateIso: string,

@@ -12,6 +12,8 @@ export const tenantBrandingSchema = z.object({
   primaryColor: z.string().nullable(),
   accentColor: z.string().nullable(),
   welcomeTagline: z.string().nullable(),
+  secondaryColor: z.string().nullable().optional(),
+  welcomeText: z.string().nullable().optional(),
   newBookingUiEnabled: z.boolean().optional(),
   timeZoneId: z.string().optional(),
 })

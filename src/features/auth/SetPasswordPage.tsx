@@ -31,19 +31,16 @@ import {
   selectMyStaffTenant,
 } from "@/features/users/services/staffTenantsService"
 import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
+import { TenantPicker } from "@/features/auth/TenantPicker"
+import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
+  FormInlineMessage,
   FormItem,
   FormLabel,
   FormMessage,
@@ -54,6 +51,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { iconProps } from "@/lib/icon"
 import { noteStaffSignIn } from "@/lib/api"
+import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
 import { supabase } from "@/lib/supabase"
 
 type Phase =
@@ -95,24 +93,6 @@ function loginErrorMessage(
   }
 
   return t("auth.login.failed")
-}
-
-function membershipLabel(membership: StaffTenantMembership): string {
-  const trade = membership.tradeName?.trim() ?? ""
-  if (trade.length > 0) {
-    return trade
-  }
-
-  return membership.legalName
-}
-
-function membershipSecondary(membership: StaffTenantMembership): string | null {
-  const trade = membership.tradeName?.trim() ?? ""
-  if (trade.length === 0 || trade === membership.legalName) {
-    return null
-  }
-
-  return membership.legalName
 }
 
 // Per-tab copy of the invite token. The URL is cleaned right after the first
@@ -312,6 +292,8 @@ export function SetPasswordPage() {
         return
       }
 
+      // Staff and customer sessions are exclusive: a staff sign-in ends any leftover customer one.
+      clearCustomerSession()
       await openMembershipStep(preview.tenantId)
     } catch (error: unknown) {
       toast.error(messageForInvite(error, t))
@@ -343,6 +325,7 @@ export function SetPasswordPage() {
     if (signInError !== null) {
       return { message: signInError.message }
     }
+    clearCustomerSession()
 
     try {
       await acceptExistingAccountInvite({ token })
@@ -406,87 +389,60 @@ export function SetPasswordPage() {
               : t("auth.invite.pickerBody")
 
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center p-6 [background:var(--brand-gradient)]">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-0.5 text-2xl font-extrabold tracking-tighter text-foreground"
-            aria-label={t("landing.header.brandAria")}
-          >
-            Rolvix
-            <span className="text-primary" aria-hidden="true">
-              .
-            </span>
-          </Link>
+    <AuthLayout
+      title={title}
+      widthClassName="max-w-md min-w-0 [overflow-wrap:anywhere]"
+    >
+      <p role="status" className="mb-6 text-sm text-muted-foreground">{description}</p>
+      {phase.status === "invalid" ||
+      phase.status === "already-accepted" ? (
+        <Button type="button" className="min-h-11 w-full" render={<Link to="/login" />}>
+          {t("auth.invite.goToLogin")}
+        </Button>
+      ) : null}
+
+      {phase.status === "loading" ? (
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
         </div>
+      ) : null}
 
-        <Card className="border-border/80 shadow-lg shadow-black/5">
-          <CardHeader className="space-y-3 text-center">
-            <CardTitle className="text-2xl font-semibold tracking-tight">
-              {title}
-            </CardTitle>
-            <CardDescription
-              className="text-pretty text-base leading-relaxed"
-              role="status"
-            >
-              {description}
-            </CardDescription>
-          </CardHeader>
+      {phase.status === "password" ? (
+        <NewPasswordForm onSubmit={onCreatePassword} />
+      ) : null}
 
-          <CardContent>
-            {phase.status === "invalid" ||
-            phase.status === "already-accepted" ? (
-              <Button type="button" className="w-full" render={<Link to="/login" />}>
-                {t("auth.invite.goToLogin")}
-              </Button>
-            ) : null}
+      {phase.status === "sign-in" ? (
+        <ExistingAccountSignInForm
+          email={phase.preview.email}
+          onSubmit={onExistingSignIn}
+        />
+      ) : null}
 
-            {phase.status === "loading" ? (
-              <div className="space-y-3" aria-hidden="true">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-            ) : null}
+      {phase.status === "picker" ? (
+        <TenantPicker
+          memberships={phase.memberships}
+          initialTenantId={phase.initialTenantId}
+          onConfirm={onPickTenant}
+        />
+      ) : null}
 
-            {phase.status === "password" ? (
-              <NewPasswordForm onSubmit={onCreatePassword} />
-            ) : null}
-
-            {phase.status === "sign-in" ? (
-              <ExistingAccountSignInForm
-                email={phase.preview.email}
-                onSubmit={onExistingSignIn}
-              />
-            ) : null}
-
-            {phase.status === "picker" ? (
-              <TenantPicker
-                memberships={phase.memberships}
-                initialTenantId={phase.initialTenantId}
-                onConfirm={onPickTenant}
-              />
-            ) : null}
-
-            {phase.status === "membership-error" ? (
-              <Button
-                type="button"
-                className="w-full"
-                disabled={retryingMemberships}
-                onClick={() => {
-                  void onRetryMemberships()
-                }}
-              >
-                {retryingMemberships
-                  ? t("auth.invite.pickerSubmitting")
-                  : t("auth.invite.membershipRetry")}
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      {phase.status === "membership-error" ? (
+        <Button
+          type="button"
+          className="min-h-11 w-full"
+          disabled={retryingMemberships}
+          onClick={() => {
+            void onRetryMemberships()
+          }}
+        >
+          {retryingMemberships
+            ? t("auth.invite.pickerSubmitting")
+            : t("auth.invite.membershipRetry")}
+        </Button>
+      ) : null}
+    </AuthLayout>
   )
 }
 
@@ -532,12 +488,14 @@ function NewPasswordForm({
                 <PasswordInput
                   icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
+                  className="h-11"
                   placeholder={t("auth.invite.passwordPlaceholder")}
                   showLabel={t("auth.showPassword")}
                   hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
+              <FormDescription>{t("auth.invite.passwordHint")}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -553,12 +511,14 @@ function NewPasswordForm({
                 <PasswordInput
                   icon={<Lock {...iconProps("sm")} />}
                   autoComplete="new-password"
+                  className="h-11"
                   placeholder={t("auth.invite.confirmPasswordPlaceholder")}
                   showLabel={t("auth.showPassword")}
                   hideLabel={t("auth.hidePassword")}
                   {...field}
                 />
               </FormControl>
+              <FormDescription>{t("auth.invite.confirmPasswordHint")}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -566,7 +526,7 @@ function NewPasswordForm({
 
         <FormPrimaryButton
           type="submit"
-          className="w-full"
+          className="min-h-11 w-full"
           isValid={isPasswordValid}
           loading={form.formState.isSubmitting}
           loadingLabel={t("auth.invite.submitting")}
@@ -625,6 +585,7 @@ function ExistingAccountSignInForm({
           <Input
             id="invite-existing-email"
             type="email"
+            className="h-11"
             autoComplete="username"
             readOnly
             value={email}
@@ -641,6 +602,7 @@ function ExistingAccountSignInForm({
                 <PasswordInput
                   icon={<Lock {...iconProps("sm")} />}
                   autoComplete="current-password"
+                  className="h-11"
                   placeholder={t("auth.invite.existingPasswordPlaceholder")}
                   showLabel={t("auth.showPassword")}
                   hideLabel={t("auth.hidePassword")}
@@ -648,22 +610,21 @@ function ExistingAccountSignInForm({
                 />
               </FormControl>
               <FormMessage />
+              {form.formState.errors.root?.message ? (
+                <FormInlineMessage
+                  role="alert"
+                  className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                >
+                  {form.formState.errors.root.message}
+                </FormInlineMessage>
+              ) : null}
             </FormItem>
           )}
         />
 
-        {form.formState.errors.root?.message ? (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-          >
-            {form.formState.errors.root.message}
-          </p>
-        ) : null}
-
         <FormPrimaryButton
           type="submit"
-          className="w-full"
+          className="min-h-11 w-full"
           isValid={isValid}
           loading={form.formState.isSubmitting}
           loadingLabel={t("auth.invite.signInSubmitting")}
@@ -672,82 +633,5 @@ function ExistingAccountSignInForm({
         </FormPrimaryButton>
       </form>
     </Form>
-  )
-}
-
-function TenantPicker({
-  memberships,
-  initialTenantId,
-  onConfirm,
-}: {
-  memberships: StaffTenantMembership[]
-  initialTenantId: string
-  onConfirm: (tenantId: string) => Promise<void>
-}) {
-  const { t } = useTranslation()
-  const [selectedTenantId, setSelectedTenantId] = useState(initialTenantId)
-  const [submitting, setSubmitting] = useState(false)
-  const selected = memberships.some(
-    (membership) => membership.tenantId === selectedTenantId,
-  )
-
-  return (
-    <form
-      className="space-y-5"
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault()
-        if (!selected || submitting) {
-          return
-        }
-
-        setSubmitting(true)
-        void onConfirm(selectedTenantId).finally(() => {
-          setSubmitting(false)
-        })
-      }}
-    >
-      <fieldset className="space-y-2">
-        <legend className="sr-only">{t("auth.invite.pickerTitle")}</legend>
-        {memberships.map((membership) => {
-          const label = membershipLabel(membership)
-          const secondary = membershipSecondary(membership)
-          return (
-            <label
-              key={membership.tenantId}
-              className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"
-            >
-              <input
-                type="radio"
-                name="invite-tenant"
-                className="mt-0.5 size-4 accent-primary"
-                value={membership.tenantId}
-                checked={selectedTenantId === membership.tenantId}
-                disabled={submitting}
-                onChange={() => {
-                  setSelectedTenantId(membership.tenantId)
-                }}
-              />
-              <span>
-                <span className="block font-medium">{label}</span>
-                {secondary ? (
-                  <span className="block text-muted-foreground">{secondary}</span>
-                ) : null}
-              </span>
-            </label>
-          )
-        })}
-      </fieldset>
-
-      <FormPrimaryButton
-        type="submit"
-        className="w-full"
-        isValid={selected}
-        loading={submitting}
-        loadingLabel={t("auth.invite.pickerSubmitting")}
-      >
-        {t("auth.invite.pickerSubmit")}
-      </FormPrimaryButton>
-    </form>
   )
 }

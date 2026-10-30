@@ -1,6 +1,9 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AxiosError, type InternalAxiosRequestConfig } from "axios"
+
+import { publicApi } from "@/lib/api"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import i18n from "@/lib/i18n"
@@ -34,10 +37,53 @@ import {
   readPendingEmailVerification,
   registerCustomer,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 
 const fetchSchema = vi.mocked(fetchRegistrationSchema)
 const register = vi.mocked(registerCustomer)
 const toastError = vi.mocked(toast.error)
+
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
+  )
+}
+
+async function fillValidRegisterCore(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.name")),
+    "Ana Silva",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    "ana@club.test",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+    "password1",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.confirmPassword")),
+    "password1",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.phone")),
+    "11988880001",
+  )
+  await user.type(
+    screen.getByLabelText(i18n.t("tenantPortal.fields.cpf")),
+    "52998224725",
+  )
+}
 
 const outletContext: TenantPortalOutletContext = {
   subdomain: "ficc",
@@ -84,7 +130,9 @@ async function waitForRegisterForm() {
 
 describe("TenantPortalRegisterPage email verification", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     window.sessionStorage.clear()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
     fetchSchema.mockReset()
     register.mockReset()
     fetchSchema.mockResolvedValue({
@@ -105,6 +153,8 @@ describe("TenantPortalRegisterPage email verification", () => {
       verificationStarted: true,
     })
     toastError.mockReset()
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   it("renders the submit button and pairs name/phone in a two-column layout on md+", async () => {
@@ -260,6 +310,178 @@ describe("TenantPortalRegisterPage email verification", () => {
     expect(submit).toBeEnabled()
     expect(screen.queryByText("verify-email-page")).not.toBeInTheDocument()
     expect(loginLink).toHaveAttribute("href", "/t/ficc")
+  })
+
+  it("signs out a leftover staff session before registering the customer", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled()
+    })
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("keeps the staff session when registration is rejected", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    register.mockRejectedValue(new Error("Já existe uma conta com estes dados."))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
+  })
+
+  it("completes registration flow (persist pending verification + navigate) even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled()
+    })
+    expect(await screen.findByText("verify-email-page")).toBeInTheDocument()
+    expect(readPendingEmailVerification("ficc")).toEqual({
+      email: "ana@club.test",
+      verificationSendFailed: false,
+    })
+    expect(toastError).not.toHaveBeenCalled()
+  })
+})
+
+describe("TenantPortalRegisterPage duplicate field errors", () => {
+  beforeEach(async () => {
+    window.sessionStorage.clear()
+    fetchSchema.mockReset()
+    register.mockReset()
+    const actual = await vi.importActual<typeof import("@/features/tenantPortal/services/tenantPortalService")>(
+      "@/features/tenantPortal/services/tenantPortalService",
+    )
+    register.mockImplementation(actual.registerCustomer)
+    fetchSchema.mockResolvedValue({
+      coreFields: [
+        "name",
+        "email",
+        "password",
+        "confirmPassword",
+        "phone",
+        "customerType",
+        "document",
+      ],
+      fields: [],
+    })
+    toastError.mockReset()
+  })
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  function rejectRegistration(message: string) {
+    vi.spyOn(publicApi, "post").mockRejectedValue(
+      new AxiosError("Conflict", undefined, undefined, undefined, {
+        status: 409,
+        statusText: "Conflict",
+        data: { error: message },
+        headers: {},
+        config: { headers: {} } as InternalAxiosRequestConfig,
+      }),
+    )
+  }
+
+  it.each([
+    ["pt-BR", "email", "A customer with this email already exists.", "Já existe uma conta com este e-mail."],
+    ["en", "email", "A customer with this email already exists.", "An account with this email already exists."],
+    ["es", "email", "A customer with this email already exists.", "Ya existe una cuenta con este correo electrónico."],
+    ["pt-BR", "cpf", "A customer with this document already exists.", "Já existe uma conta com este CPF/CNPJ."],
+    ["en", "cpf", "A customer with this CPF already exists.", "An account with this CPF/CNPJ already exists."],
+    ["es", "cpf", "A customer with this document already exists.", "Ya existe una cuenta con este CPF/CNPJ."],
+  ] as const)("announces the duplicate %s %s input from the API response", async (language, field, serverMessage, message) => {
+    await i18n.changeLanguage(language)
+    rejectRegistration(serverMessage)
+    const user = userEvent.setup()
+    renderRegister()
+    await waitForRegisterForm()
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => expect(submit).toBeEnabled())
+    await user.click(submit)
+
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    const input = screen.getByLabelText(i18n.t(`tenantPortal.fields.${field}`))
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAccessibleDescription(message)
+    const other = field === "email" ? "cpf" : "email"
+    expect(screen.getByLabelText(i18n.t(`tenantPortal.fields.${other}`))).toHaveAttribute("aria-invalid", "false")
+  })
+
+  it("keeps a generic toast when the backend cannot name a single duplicate field", async () => {
+    const user = userEvent.setup()
+    rejectRegistration("A customer with the same email, document, or phone already exists.")
+    renderRegister()
+    await waitForRegisterForm()
+
+    await fillValidRegisterCore(user)
+    const submit = screen.getByRole("button", {
+      name: i18n.t("tenantPortal.register.submit"),
+    })
+    await waitFor(() => {
+      expect(submit).toBeEnabled()
+    })
+    await user.click(submit)
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Já existe uma conta com estes dados.",
+      )
+    })
+    expect(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+    ).not.toHaveAccessibleDescription("Já existe uma conta com estes dados.")
+    for (const field of ["email", "cpf"]) {
+      expect(screen.getByLabelText(i18n.t(`tenantPortal.fields.${field}`))).toHaveAttribute("aria-invalid", "false")
+    }
   })
 })
 

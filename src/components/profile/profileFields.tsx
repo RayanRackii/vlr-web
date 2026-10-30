@@ -37,7 +37,7 @@ export function ReadOnlyValue({
   return (
     <div className={cn("space-y-1.5", className)}>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm break-words">
+      <p className="min-h-11 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm break-words">
         {value}
       </p>
     </div>
@@ -63,12 +63,16 @@ export function SensitiveReadOnlyValue({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="relative">
+        <p className="min-h-11 rounded-md border border-border/60 bg-muted/40 py-2 pl-3 pr-14 text-sm break-words">
+          {visible ? revealed : masked}
+        </p>
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
+          className="touch-target absolute right-1 top-1/2 -translate-y-1/2"
           aria-pressed={visible}
           aria-label={visible ? hideLabel : showLabel}
           onClick={() => {
@@ -78,9 +82,6 @@ export function SensitiveReadOnlyValue({
           {visible ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
         </Button>
       </div>
-      <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm break-words">
-        {visible ? revealed : masked}
-      </p>
     </div>
   )
 }

@@ -24,6 +24,7 @@ import {
   resetStaffSessionRefreshForTests,
   staffAuthEpochForTests,
 } from "@/lib/api"
+import { persistCustomerSession, getCustomerAccessToken } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
@@ -216,9 +217,14 @@ describe("SetPasswordPage", () => {
       "short",
     )
     await user.tab()
-    expect(
-      await screen.findByText(i18n.t("auth.invite.validation.passwordMin")),
-    ).toBeInTheDocument()
+    const passwordError = await screen.findByText(i18n.t("auth.invite.validation.passwordMin"))
+    const passwordField = screen.getByLabelText(i18n.t("auth.invite.passwordLabel"))
+    expect(passwordError).toBeInTheDocument()
+    expect(passwordField).toHaveAttribute("aria-invalid", "true")
+    expect(passwordField.getAttribute("aria-describedby")?.split(" ")).toContain(passwordError.id)
+    expect(passwordField).toHaveAccessibleDescription(
+      `${i18n.t("auth.invite.passwordHint")} ${i18n.t("auth.invite.validation.passwordMin")}`,
+    )
     expect(submitButton()).toBeDisabled()
 
     await user.clear(screen.getByLabelText(i18n.t("auth.invite.passwordLabel")))
@@ -231,9 +237,10 @@ describe("SetPasswordPage", () => {
       "password2",
     )
     await user.tab()
-    expect(
-      await screen.findByText(i18n.t("auth.invite.validation.mismatch")),
-    ).toBeInTheDocument()
+    const confirmError = await screen.findByText(i18n.t("auth.invite.validation.mismatch"))
+    const confirmField = screen.getByLabelText(i18n.t("auth.invite.confirmPasswordLabel"))
+    expect(confirmField).toHaveAttribute("aria-invalid", "true")
+    expect(confirmField.getAttribute("aria-describedby")?.split(" ")).toContain(confirmError.id)
     expect(submitButton()).toBeDisabled()
     expect(acceptNew).not.toHaveBeenCalled()
 
@@ -288,6 +295,43 @@ describe("SetPasswordPage", () => {
     const acceptOrder = acceptNew.mock.invocationCallOrder.at(-1) ?? 0
     const signInOrder = signIn.mock.invocationCallOrder[0] ?? 0
     expect(acceptOrder).toBeLessThan(signInOrder)
+  })
+
+  it("clears a stale customer session when a new-account invite signs staff in", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    renderInvite("invite-token")
+
+    await user.type(
+      await screen.findByLabelText(i18n.t("auth.invite.passwordLabel")),
+      "password1",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("auth.invite.confirmPasswordLabel")),
+      "password1",
+    )
+    await user.click(submitButton())
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
+  })
+
+  it("clears a stale customer session when an existing account signs in to accept", async () => {
+    preview.mockResolvedValue(existingPreview)
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    const user = userEvent.setup()
+    renderInvite("invite-token")
+
+    await user.type(
+      await screen.findByLabelText(i18n.t("auth.invite.existingPasswordLabel")),
+      "current-secret",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("auth.invite.signInSubmit") }),
+    )
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
   })
 
   it("asks an existing account to sign in and accepts with the session, never a new password", async () => {
@@ -371,6 +415,11 @@ describe("SetPasswordPage", () => {
     expect(
       screen.getByLabelText(i18n.t("auth.invite.existingPasswordLabel")),
     ).toHaveValue("wrong-password")
+    const passwordField = screen.getByLabelText(i18n.t("auth.invite.existingPasswordLabel"))
+    const error = screen.getByRole("alert")
+    expect(passwordField.getAttribute("aria-describedby")?.split(" ")).toContain(error.id)
+    expect(passwordField).toHaveAttribute("aria-invalid", "true")
+    expect(passwordField).toHaveAccessibleDescription(i18n.t("auth.login.invalidCredentials"))
   })
 
   it("switches a 409 existing-account response to sign-in and does not send the new password again", async () => {
@@ -592,10 +641,13 @@ describe("SetPasswordPage", () => {
   it("treats a failed preview as an invalid link", async () => {
     preview.mockRejectedValue(new InviteAcceptError("INVALID_INVITE", 404))
     renderInvite("invite-token")
+    const status = screen.getByRole("status")
+    expect(status).toHaveTextContent(i18n.t("auth.invite.checking"))
 
     expect(
       await screen.findByRole("link", { name: i18n.t("auth.invite.goToLogin") }),
     ).toBeEnabled()
+    expect(screen.getByText(i18n.t("auth.invite.invalidLink"))).toBe(status)
     expect(
       screen.queryByLabelText(i18n.t("auth.invite.passwordLabel")),
     ).not.toBeInTheDocument()

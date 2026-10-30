@@ -42,6 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { isAxiosError } from "@/lib/api"
+import { ErrorState } from "@/components/ErrorState"
 
 const ALL_TENANTS_VALUE = "__all__"
 
@@ -150,7 +151,7 @@ export function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {t("admin.platformUsers.title")}
@@ -167,6 +168,7 @@ export function AdminUsersPage() {
           </Label>
           <Input
             id="platform-users-name"
+            className="min-h-11"
             value={nameFilter}
             onChange={(event) => setNameFilter(event.target.value)}
             placeholder={t("admin.platformUsers.filters.namePlaceholder")}
@@ -187,7 +189,7 @@ export function AdminUsersPage() {
             }}
             items={tenantItems}
           >
-            <SelectTrigger id="platform-users-tenant" className="w-full">
+            <SelectTrigger id="platform-users-tenant" className="min-h-11 w-full">
               <SelectValue
                 placeholder={t("admin.platformUsers.filters.tenantPlaceholder")}
               />
@@ -204,122 +206,197 @@ export function AdminUsersPage() {
       </div>
 
       {loadError ? (
-        <p className="text-sm text-destructive" role="alert">
-          {loadError}
-        </p>
+        <ErrorState message={loadError} onRetry={() => void loadUsers()} />
       ) : null}
 
-      <div className="rounded-lg border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("admin.platformUsers.columns.name")}</TableHead>
-              <TableHead>{t("admin.platformUsers.columns.email")}</TableHead>
-              <TableHead>{t("admin.platformUsers.columns.tenant")}</TableHead>
-              <TableHead>{t("admin.platformUsers.columns.roles")}</TableHead>
-              <TableHead>{t("admin.platformUsers.columns.status")}</TableHead>
-              <TableHead className="w-12 text-right">
-                <span className="sr-only">
-                  {t("admin.platformUsers.columns.actions")}
-                </span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`skeleton-${index}`}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-40" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-36" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-16" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="ml-auto h-8 w-8" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : users.length === 0 ? (
+      {!loadError ? (
+        <div className="hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <Table className="table-fixed [&_td]:whitespace-normal">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Users className="size-8 opacity-50" aria-hidden="true" />
-                    <p className="text-sm font-medium">
-                      {t("admin.platformUsers.emptyTitle")}
-                    </p>
-                    <p className="text-xs">
-                      {t("admin.platformUsers.emptyDescription")}
-                    </p>
-                  </div>
-                </TableCell>
+                <TableHead className="w-[32%]">{t("admin.platformUsers.columns.name")}</TableHead>
+                <TableHead className="w-[28%]">{t("admin.platformUsers.columns.tenant")}</TableHead>
+                <TableHead className="w-[18%]">{t("admin.platformUsers.columns.roles")}</TableHead>
+                <TableHead>{t("admin.platformUsers.columns.status")}</TableHead>
+                <TableHead className="w-16 text-right">
+                  <span className="sr-only">
+                    {t("admin.platformUsers.columns.actions")}
+                  </span>
+                </TableHead>
               </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.fullName}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.email}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-0.5">
-                      <p>{user.tenantLegalName}</p>
-                      {user.tenantSubdomain ? (
-                        <p className="text-xs text-muted-foreground">
-                          {user.tenantSubdomain}
-                        </p>
-                      ) : null}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-36" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="ml-auto h-8 w-8" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Users className="size-8 opacity-50" aria-hidden="true" />
+                      <p className="text-sm font-medium">
+                        {t("admin.platformUsers.emptyTitle")}
+                      </p>
+                      <p className="text-xs">
+                        {t("admin.platformUsers.emptyDescription")}
+                      </p>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.roles.length > 0 ? (
-                        user.roles.map((role) => (
-                          <Badge key={role} variant="secondary">
-                            {role}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.isActive ? "success" : "secondary"}>
-                      {user.isActive
-                        ? t("admin.platformUsers.statusActive")
-                        : t("admin.platformUsers.statusInactive")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("admin.platformUsers.actions.delete")}
-                      onClick={() => {
-                        setDeleteError(null)
-                        setUserPendingDelete(user)
-                      }}
-                    >
-                      <Trash2 className="size-4 text-muted-foreground transition-colors hover:text-destructive" />
-                    </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <p className="break-words font-medium">{user.fullName}</p>
+                      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
+                    </TableCell>
+                    <TableCell className="[overflow-wrap:anywhere]">
+                      <div className="space-y-0.5">
+                        <p>{user.tenantLegalName}</p>
+                        {user.tenantSubdomain ? (
+                          <p className="text-xs text-muted-foreground">
+                            {user.tenantSubdomain}
+                          </p>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles.length > 0 ? (
+                          user.roles.map((role) => (
+                            <Badge key={role} variant="secondary" className="h-auto min-h-5 max-w-full whitespace-normal break-all">
+                              {role}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.isActive ? "success" : "secondary"}>
+                        {user.isActive
+                          ? t("admin.platformUsers.statusActive")
+                          : t("admin.platformUsers.statusInactive")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="min-h-11 min-w-11"
+                        aria-label={t("admin.platformUsers.actions.deleteNamed", { email: user.email })}
+                        onClick={() => {
+                          setDeleteError(null)
+                          setUserPendingDelete(user)
+                        }}
+                      >
+                        <Trash2 className="size-4 text-muted-foreground transition-colors hover:text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
+
+      {!loadError ? (
+        <ul aria-label={t("admin.platformUsers.title")} className="space-y-2 lg:hidden">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <li
+                key={`skeleton-card-${index}`}
+                className="space-y-2 rounded-xl border border-border p-3"
+              >
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-5 w-16" />
+              </li>
+            ))
+          ) : users.length === 0 ? (
+            <li className="flex flex-col items-center gap-2 rounded-xl border border-border p-6 text-center text-muted-foreground">
+              <Users className="size-8 opacity-50" aria-hidden="true" />
+              <p className="text-sm font-medium">
+                {t("admin.platformUsers.emptyTitle")}
+              </p>
+              <p className="text-xs">
+                {t("admin.platformUsers.emptyDescription")}
+              </p>
+            </li>
+          ) : (
+            users.map((user) => (
+              <li
+                key={user.id}
+                className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-3 text-card-foreground"
+              >
+                <div className="min-w-0">
+                  <p className="break-words font-medium">{user.fullName}</p>
+                  <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                    {user.email}
+                  </p>
+                </div>
+
+                <div className="text-sm">
+                  <p className="font-medium [overflow-wrap:anywhere]">{user.tenantLegalName}</p>
+                  {user.tenantSubdomain ? (
+                    <p className="break-all text-xs text-muted-foreground">
+                      {user.tenantSubdomain}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1">
+                  {user.roles.map((role) => (
+                    <Badge key={role} variant="secondary" className="h-auto min-h-5 max-w-full whitespace-normal break-all">
+                      {role}
+                    </Badge>
+                  ))}
+                  <Badge variant={user.isActive ? "success" : "secondary"}>
+                    {user.isActive
+                      ? t("admin.platformUsers.statusActive")
+                      : t("admin.platformUsers.statusInactive")}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2 border-t border-border pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11"
+                    aria-label={t("admin.platformUsers.actions.deleteNamed", { email: user.email })}
+                    onClick={() => {
+                      setDeleteError(null)
+                      setUserPendingDelete(user)
+                    }}
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {t("admin.platformUsers.actions.delete")}
+                  </Button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+      ) : null}
 
       <AlertDialog
         open={userPendingDelete !== null}
@@ -343,6 +420,9 @@ export function AdminUsersPage() {
                   })
                 : null}
             </AlertDialogDescription>
+            {userPendingDelete ? (
+              <p className="break-all text-sm text-muted-foreground">{userPendingDelete.email}</p>
+            ) : null}
           </AlertDialogHeader>
 
           {deleteError ? (

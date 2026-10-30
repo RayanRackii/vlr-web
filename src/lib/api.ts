@@ -1,10 +1,10 @@
+import { notifyCustomerSessionChanged } from "@/lib/customerSessionEvents"
 import {
   isAuthApiError,
   isAuthRetryableFetchError,
 } from "@supabase/supabase-js"
 import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { z } from "zod"
-import { toast } from "sonner"
 
 import {
   logAuthSessionEvent,
@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase"
 import i18n from "@/lib/i18n"
 import { isModuleInactiveValue } from "@/lib/apiErrorText"
 import { safeStaffNextPath, staffLoginPath } from "@/lib/safeStaffNextPath"
+import { noteSignInStarted } from "@/lib/signOutMarker"
 
 declare module "axios" {
   interface AxiosRequestConfig {
@@ -48,6 +49,7 @@ type StaffRefreshResult =
   | { kind: "failed"; error: unknown }
 
 type StaffSessionSnapshot = {
+  tenantId: string | null
   userId: string
   refreshToken: string
   accessToken: string
@@ -172,7 +174,14 @@ export function resetStaffSessionRefreshForTests(): void {
  * A failed attempt bumps the epoch too and does not sign the current user out.
  */
 export function noteStaffSignIn(): void {
+  noteSignInStarted()
   staffAuthEpoch += 1
+  // Sair stops auto-refresh; a new login on the same page turns it back on.
+  try {
+    void supabase.auth.startAutoRefresh()?.catch?.(() => undefined)
+  } catch {
+    // Test double without startAutoRefresh.
+  }
 }
 
 /** Tests only. */
@@ -365,7 +374,8 @@ async function readStaffSession(): Promise<StaffSessionSnapshot | null> {
     if (typeof accessToken !== "string" || accessToken.length === 0) {
       return null
     }
-    return { userId, refreshToken, accessToken }
+    const tenantId: unknown = session?.user?.app_metadata?.tenant_id
+    return { userId, refreshToken, accessToken, tenantId: typeof tenantId === "string" ? tenantId : null }
   } catch {
     return null
   }
@@ -442,18 +452,16 @@ function refreshStaffSession(
   return promise
 }
 
-function redirectExpiredStaffSession(): void {
+function redirectExpiredStaffSession(tenantId: string | null): void {
   if (staffSessionExpiryHandled || typeof window === "undefined") {
     return
   }
 
   staffSessionExpiryHandled = true
-  void import("@/lib/i18n").then(({ default: i18n }) => {
-    toast.error(i18n.t("auth.sessionExpired"))
-  })
-  const currentPath = `${window.location.pathname}${window.location.search}`
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
   const nextPath = safeStaffNextPath(currentPath)
-  assignBrowserLocation(nextPath ? staffLoginPath(nextPath) : "/login")
+  const params = { reason: "session-expired", tenant: tenantId, company: new URLSearchParams(window.location.search).get("company") }
+  assignBrowserLocation(staffLoginPath(nextPath ?? "/dashboard", params))
 }
 
 function customerLoginPath(): string {
@@ -477,6 +485,7 @@ function clearCustomerSessionStorage(): void {
   window.localStorage.removeItem(CUSTOMER_LABEL_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_ID_STORAGE_KEY)
   window.localStorage.removeItem(CUSTOMER_TENANT_ID_STORAGE_KEY)
+  notifyCustomerSessionChanged()
 }
 
 function readStoredCustomerToken(): string | null {
@@ -625,7 +634,7 @@ async function settleStaff401(
       } catch {
         // Keep rejecting the original 401 if local sign-out fails.
       }
-      redirectExpiredStaffSession()
+      redirectExpiredStaffSession(latest.tenantId)
     }
     return Promise.reject(error)
   }

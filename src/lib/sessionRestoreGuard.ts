@@ -10,14 +10,18 @@ import {
   clearCustomerSession,
   getCustomerAccessToken,
   getHostTenantSubdomain,
+  getCustomerSubdomain,
   isCustomerSignedInForTenant,
   tenantPortalPath,
   tenantPortalPathMode,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { CUSTOMER_TOKEN_STORAGE_KEY } from "@/features/tenantPortal/lib/customerSessionIdentity"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
+import { staffLoginPath } from "@/lib/safeStaffNextPath"
 import appI18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
+import { removeSessionKeysAsSignedOut, resetSignOutMarkerForTests } from "@/lib/signOutMarker"
 import { persistLanguage } from "@/lib/uiLanguage"
 
 const CUSTOMER_ROOTS = ["app", "agenda", "catalogo", "pedidos"] as const
@@ -96,7 +100,7 @@ export function loginPathForAuthenticatedPath(
 ): string | null {
   const surface = authenticatedSurface(pathname, hostSubdomain)
   if (surface === "staff") {
-    return "/login"
+    return staffLoginPath(pathname)
   }
   if (surface !== "customer") {
     return null
@@ -207,7 +211,10 @@ function concealAuthenticatedShell(): void {
 }
 
 function blockAndLeave(pathname: string, hostSubdomain: string | null): void {
-  const target = loginPathForAuthenticatedPath(pathname, hostSubdomain)
+  const target = loginPathForAuthenticatedPath(
+    `${pathname}${window.location.search}${window.location.hash}`,
+    hostSubdomain,
+  )
   if (!target) {
     return
   }
@@ -307,38 +314,163 @@ export function resetSessionRestoreGuardForTests(): void {
   restoreBlocked = false
   signedOutStaffAccessToken = null
   hiddenSession = null
+  resetSignOutMarkerForTests()
 }
 
 function rememberStaffSignOut(): void {
   signedOutStaffAccessToken = readStaffAccessToken()
 }
 
-function cancelStaffSignOut(): void {
-  signedOutStaffAccessToken = null
-}
-
 function keepChosenLanguage(): void {
   persistLanguage(appI18n.resolvedLanguage ?? appI18n.language)
 }
 
+/** Bound for the server-side revoke. Sair never waits longer than this. */
+export const SERVER_SIGN_OUT_TIMEOUT_MS = 3000
+
+function staffStorageKeys(): string[] {
+  const keys: string[] = []
+  try {
+    const storage = window.localStorage
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index)
+      if (key && (STAFF_STORAGE_KEY.test(key) || /^sb-.+-auth-token-code-verifier$/.test(key))) {
+        keys.push(key)
+      }
+    }
+  } catch {
+    // Storage unavailable.
+  }
+  return keys
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | "timeout"> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve("timeout"), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
+}
+
+/**
+ * Ends the staff session. Order matters (QA R24 reload race):
+ * 1. synchronously drop the stored session and block auth writes, so a reload at any
+ *    moment after Sair finds nothing to restore;
+ * 2. stop scheduling token auto-refresh; the storage barrier rejects in-flight saves;
+ * 3. revoke server-side with the snapshot token (bounded), and clear the client's memory
+ *    with a local sign-out (emits SIGNED_OUT).
+ * The local session always ends; a failed or slow revoke does not keep the user signed in.
+ */
 export async function signOutStaffPortal(): Promise<boolean> {
   rememberStaffSignOut()
+  const accessToken = readStaffAccessToken()
   writeActiveTenantLabel(null)
   clearAuthenticatedQueryCaches()
-  const { error } = await supabase.auth.signOut()
-  keepChosenLanguage()
-  if (error !== null) {
-    cancelStaffSignOut()
-    return false
+  removeSessionKeysAsSignedOut(staffStorageKeys())
+  try {
+    void supabase.auth.stopAutoRefresh()
+  } catch {
+    // Older client or test double: the storage barrier still rejects late refresh writes.
   }
 
+  const revoke = accessToken
+    ? withTimeout(
+        Promise.resolve()
+          // Normal /logout endpoint with the user's JWT; no service role is used.
+          .then(() => supabase.auth.admin.signOut(accessToken, "global"))
+          .catch(() => null),
+        SERVER_SIGN_OUT_TIMEOUT_MS,
+      ).catch(() => null)
+    : Promise.resolve(null)
+  const local = withTimeout(
+    Promise.resolve()
+      .then(() => supabase.auth.signOut({ scope: "local" }))
+      .catch(() => null),
+    SERVER_SIGN_OUT_TIMEOUT_MS,
+  ).catch(() => null)
+  await Promise.all([revoke, local])
+
+  // A lock-held save inside the auth client can land after step 1; drop it again.
+  removeStoredStaffSessions()
+  keepChosenLanguage()
   clearPlatformTenantExited()
   return true
 }
 
-export function signOutCustomerPortal(subdomain: string): string {
+export function clearCustomerSessionAsSignedOut(): void {
+  removeSessionKeysAsSignedOut([CUSTOMER_TOKEN_STORAGE_KEY])
   clearCustomerSession()
+}
+
+export function signOutCustomerPortal(subdomain: string): string {
+  clearCustomerSessionAsSignedOut()
   clearAuthenticatedQueryCaches()
   keepChosenLanguage()
   return tenantPortalPath(subdomain)
+}
+
+/**
+ * Keeps staff and customer sessions exclusive: the customer surface never carries a leftover staff session.
+ * Best-effort: callers run this after a customer login/sign-up already succeeded, so a staff sign-out
+ * failure must never throw and abort that success path.
+ */
+export async function signOutStaffBeforeCustomerAuth(): Promise<void> {
+  if (!hasActiveStaffSession()) {
+    return
+  }
+  let signedOut: boolean
+  try {
+    signedOut = await signOutStaffPortal()
+  } catch {
+    signedOut = false
+  }
+  if (signedOut && !hasActiveStaffSession()) {
+    return
+  }
+
+  // The global sign-out can fail (network, revoked token, refresh race) and leave the staff
+  // session in storage. A customer login must still end it, so drop it locally.
+  writeActiveTenantLabel(null)
+  clearAuthenticatedQueryCaches()
+  try {
+    await supabase.auth.signOut({ scope: "local" })
+  } catch {
+    // Fall through to the storage cleanup below.
+  }
+  // hasActiveStaffSession() may already read false here (the token is marked signed out),
+  // while the stored session is still there for the staff AuthContext. Remove it outright.
+  removeStoredStaffSessions()
+}
+
+function removeStoredStaffSessions(): void {
+  try {
+    const storage = window.localStorage
+    const keys: string[] = []
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index)
+      if (key && STAFF_STORAGE_KEY.test(key)) {
+        keys.push(key)
+      }
+    }
+    keys.forEach((key) => storage.removeItem(key))
+  } catch {
+    // Storage unavailable: nothing more to clear.
+  }
+}
+
+/**
+ * Tenant slug of the signed-in customer, if any. Staff login always clears the customer session,
+ * so a customer session that coexists with a staff one is the most recent login and wins.
+ */
+export function signedInCustomerSubdomain(): string | null {
+  const slug = getCustomerSubdomain()
+  return slug && isCustomerSignedInForTenant(slug) ? slug : null
 }

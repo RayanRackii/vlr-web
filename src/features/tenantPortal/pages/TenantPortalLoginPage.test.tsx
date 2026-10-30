@@ -32,9 +32,29 @@ import {
   loginCustomer,
   persistCustomerSession,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import {
+  hasActiveStaffSession,
+  resetSessionRestoreGuardForTests,
+} from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 
 const login = vi.mocked(loginCustomer)
 const toastError = vi.mocked(toast.error)
+
+const AUTH_RESPONSE = {
+  token: "customer-token",
+  customer: {
+    id: "11111111-1111-4111-8111-111111111111",
+    tenantId: "22222222-2222-4222-8222-222222222222",
+    name: "Ana Souza",
+    phone: null,
+    email: "ana@club.test",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    phoneVerified: false,
+    emailVerified: true,
+    photoUrl: null,
+  },
+}
 
 const outletContext: TenantPortalOutletContext = {
   subdomain: "ficc",
@@ -49,28 +69,137 @@ const outletContext: TenantPortalOutletContext = {
   primary: "#D4FF00",
 }
 
-function renderLogin() {
+function renderLogin(initialPath = "/t/ficc") {
   return render(
-    <MemoryRouter initialEntries={["/t/ficc"]}>
+    <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route element={<Outlet context={outletContext} />}>
           <Route path="/t/:subdomain" element={<TenantPortalLoginPage />} />
           <Route path="/t/:subdomain/app" element={<div>customer-app</div>} />
+          <Route path="/t/:subdomain/agenda" element={<div>agenda-deep-link</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
   )
 }
 
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
+  )
+}
+
 describe("TenantPortalLoginPage", () => {
   beforeEach(() => {
+    resetSessionRestoreGuardForTests()
     login.mockReset()
     toastError.mockReset()
     clearCustomerSession()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   afterEach(() => {
     clearCustomerSession()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
+  })
+
+  it("signs out a leftover staff session before logging the customer in", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("navigates without error toast even if staff sign-out rejects", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error("network"))
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("keeps the staff session when customer login fails", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    login.mockRejectedValue(new Error("E-mail ou senha inválidos."))
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "wrong-password",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("E-mail ou senha inválidos.")
+    })
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(hasActiveStaffSession()).toBe(true)
+  })
+
+  it("does not call staff sign-out when there is no leftover staff session", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin()
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
 
   it("keeps Entrar disabled until email and password pass the schema", async () => {
@@ -227,6 +356,54 @@ describe("TenantPortalLoginPage", () => {
     expect(
       screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
     ).toBeInTheDocument()
+    expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
+  })
+
+  it("returns to the deep link after a successful login when returnTo is safe", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin("/t/ficc?returnTo=%2Ft%2Fficc%2Fagenda%3Freservation%3Dabc")
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("agenda-deep-link")).toBeInTheDocument()
+  })
+
+  it("ignores an unsafe returnTo and falls back to the app after login", async () => {
+    const user = userEvent.setup()
+    login.mockResolvedValue(AUTH_RESPONSE)
+    renderLogin("/t/ficc?returnTo=%2F%2Fevil.com")
+
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.email")),
+      "ana@club.test",
+    )
+    await user.type(
+      screen.getByLabelText(i18n.t("tenantPortal.fields.password")),
+      "password1",
+    )
+    await user.click(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.login.submit") }),
+    )
+
+    expect(await screen.findByText("customer-app")).toBeInTheDocument()
+  })
+
+  it("opens the deep link directly when already signed in with a safe returnTo", async () => {
+    persistCustomerSession("customer-token", "ficc", "Ana Souza")
+    renderLogin("/t/ficc?returnTo=%2Ft%2Fficc%2Fagenda%3Freservation%3Dabc")
+
+    expect(await screen.findByText("agenda-deep-link")).toBeInTheDocument()
     expect(screen.queryByText("customer-app")).not.toBeInTheDocument()
   })
 })

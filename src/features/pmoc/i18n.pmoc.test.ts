@@ -43,7 +43,7 @@ describe("pmoc i18n copy", () => {
 
   it("uses Biblioteca Rolvix, Modelos padrão, and the auto-generate label", () => {
     expect(ptBR.nav.pmocLibrary).toBe("Biblioteca Rolvix")
-    expect(ptBR.nav.pmocNew).toBe("Novo personalizado")
+    expect(ptBR.nav.pmocNew).toBe("Novo plano")
     expect(ptBR.pmoc.library.description).toMatch(/Modelos padrão/i)
     expect(ptBR.pmoc.templates.sourceReferences).toMatch(/Fontes e referências/i)
     expect(ptBR.pmoc.plans.autoGenerateEnabled).toBe(

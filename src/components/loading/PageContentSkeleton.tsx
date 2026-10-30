@@ -22,10 +22,7 @@ export function PageContentSkeleton({
       role="status"
       aria-busy="true"
     >
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
-        {t("common.loading")}
-      </p>
+      <span className="sr-only">{t("common.loading")}</span>
       <div className="space-y-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72 max-w-full" />
@@ -44,6 +41,26 @@ export function PageContentSkeleton({
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+/** Generic icon, two-line summary and trailing status placeholders. */
+export function RecordListSkeleton({ rows = 3, className }: PageContentSkeletonProps) {
+  const { t } = useTranslation()
+  return (
+    <div role="status" aria-busy="true" className={cn("space-y-2", className)}>
+      <span className="sr-only">{t("common.loading")}</span>
+      {Array.from({ length: rows }, (_, index) => (
+        <div key={index} className="flex items-center gap-3 rounded-xl border border-border p-4">
+          <Skeleton className="size-11 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-40 max-w-full" />
+            <Skeleton className="h-3 w-28 max-w-full" />
+          </div>
+          <Skeleton className="h-6 w-16 shrink-0 rounded-full" />
+        </div>
+      ))}
     </div>
   )
 }

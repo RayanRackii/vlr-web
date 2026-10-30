@@ -54,6 +54,10 @@ describe("tenantPortalManifest public routes", () => {
   it("shows an invalid-link message with a forgot-password link for /t/:subdomain/reset-password", () => {
     renderPublicRoutes("/t/ficc/reset-password")
 
+    expect(screen.getByRole("heading", {
+      level: 1,
+      name: i18n.t("tenantPortal.passwordReset.invalidLinkTitle"),
+    })).toBeVisible()
     expect(screen.getByRole("alert")).toHaveTextContent(
       i18n.t("tenantPortal.passwordReset.invalidLink"),
     )

@@ -1,13 +1,14 @@
 import { Navigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
-import { AuthenticatedNotFoundPage } from "@/components/layout/AuthenticatedNotFoundPage"
-import { MainLayout } from "@/components/layout/MainLayout"
+import { StaffNotFoundPage } from "@/components/layout/StaffNotFoundPage"
 import { useAuth } from "@/contexts/AuthContext"
+import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
+import { signedInCustomerSubdomain } from "@/lib/sessionRestoreGuard"
 
 /**
- * Public unknown URLs stay on the marketing home.
- * Signed-in staff stay in the app shell and see a not-found page.
+ * Staff and signed-out visitors see a branded 404 in the auth shell.
+ * A signed-in customer is sent back to their portal, even if a staff session lingers.
  */
 export function UnknownPathRoute() {
   const { t } = useTranslation()
@@ -21,13 +22,10 @@ export function UnknownPathRoute() {
     )
   }
 
-  if (user === null) {
-    return <Navigate to="/" replace />
+  const customerSubdomain = signedInCustomerSubdomain()
+  if (customerSubdomain) {
+    return <Navigate to={tenantPortalPath(customerSubdomain, "app")} replace />
   }
 
-  return (
-    <MainLayout>
-      <AuthenticatedNotFoundPage />
-    </MainLayout>
-  )
+  return <StaffNotFoundPage signedIn={user !== null} />
 }

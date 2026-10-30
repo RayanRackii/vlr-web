@@ -1,5 +1,6 @@
 import { Check, CheckCheck, ImageOff, type LucideIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import {
@@ -9,6 +10,8 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_CANVAS_WIDTH_PERCENT,
   orderCanvasItemsForReading,
+  snapMovePosition,
+  snapResizeSize,
 } from "@/features/rentals/components/layout/layoutCanvasModel"
 import {
   portalPickAvailableClass,
@@ -17,6 +20,8 @@ import {
   portalPickPendingClass,
   portalPickUnavailableClass,
 } from "@/features/rentals/components/layout/portalPickStyles"
+
+const editorFocusClass = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 
 export type CanvasBoardItem = {
   key: string
@@ -41,15 +46,23 @@ export type CanvasBoardItem = {
   artUrl?: string | null
   /** Optional semantic icon for tiles without visual art. */
   icon?: LucideIcon | null
+  /** The template's configured color, shown on the placeholder icon so unpublished shapes still read apart from each other. */
+  accentColor?: string | null
 }
 
-function CanvasTileArt({ artUrl, Icon }: { artUrl?: string | null; Icon?: LucideIcon | null }) {
+function CanvasTileArt({ artUrl, Icon, accentColor }: { artUrl?: string | null; Icon?: LucideIcon | null; accentColor?: string | null }) {
   const [failed, setFailed] = useState(false)
   if (artUrl && !failed) {
     return <img src={artUrl} alt="" onError={() => setFailed(true)} className="pointer-events-none absolute inset-0 size-full object-contain opacity-70" />
   }
   const Placeholder = Icon ?? ImageOff
-  return <Placeholder className="pointer-events-none size-5 text-muted-foreground/70" aria-hidden />
+  return (
+    <Placeholder
+      className="pointer-events-none size-5 text-muted-foreground/70"
+      style={Icon && accentColor ? { color: accentColor } : undefined}
+      aria-hidden
+    />
+  )
 }
 
 type TileDrag = {
@@ -84,6 +97,8 @@ type LayoutCanvasBoardProps = {
     heightPercent: number,
   ) => void
   onSelect?: (rentalAssetId: string) => void
+  /** Pick mode: called when an unavailable tile is clicked, so the page can explain why. */
+  onUnavailableSelect?: (rentalAssetId: string) => void
   onRemove?: (rentalAssetId: string) => void
   onFrameResize?: (aspectRatio: number, widthPercent: number) => void
 }
@@ -97,9 +112,11 @@ export function LayoutCanvasBoard({
   onMove,
   onResize,
   onSelect,
+  onUnavailableSelect,
   onRemove,
   onFrameResize,
 }: LayoutCanvasBoardProps) {
+  const { t } = useTranslation()
   const hostRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<HTMLDivElement>(null)
   const itemsRef = useRef(items)
@@ -135,18 +152,31 @@ export function LayoutCanvasBoard({
       const tileDrag = tileDragRef.current
       if (tileDrag) {
         const point = clientToPercent(event.clientX, event.clientY)
+        const siblings = itemsRef.current.filter(
+          (item) => item.rentalAssetId !== tileDrag.rentalAssetId,
+        )
         if (tileDrag.kind === "move") {
+          const snapped = snapMovePosition(
+            point.x - tileDrag.offsetX,
+            point.y - tileDrag.offsetY,
+            tileDrag.startW,
+            tileDrag.startH,
+            siblings,
+          )
           onMoveRef.current?.(
             tileDrag.rentalAssetId,
-            clampPercent(point.x - tileDrag.offsetX, tileDrag.startW),
-            clampPercent(point.y - tileDrag.offsetY, tileDrag.startH),
+            clampPercent(snapped.xPercent, tileDrag.startW),
+            clampPercent(snapped.yPercent, tileDrag.startH),
           )
           return
         }
+        const rawWidth = Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX))
+        const rawHeight = Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY))
+        const snappedSize = snapResizeSize(tileDrag.startX, tileDrag.startY, rawWidth, rawHeight, siblings)
         onResizeRef.current?.(
           tileDrag.rentalAssetId,
-          Math.min(100 - tileDrag.startX, Math.max(8, point.x - tileDrag.startX)),
-          Math.min(100 - tileDrag.startY, Math.max(8, point.y - tileDrag.startY)),
+          Math.min(100 - tileDrag.startX, snappedSize.widthPercent),
+          Math.min(100 - tileDrag.startY, snappedSize.heightPercent),
         )
         return
       }
@@ -233,10 +263,10 @@ export function LayoutCanvasBoard({
         <div
           ref={boardRef}
           className={cn(
-            "w-full overflow-hidden rounded-xl border border-border bg-muted/30",
+            "w-full rounded-xl border border-border bg-muted/30",
             mode === "pick"
-              ? "grid grid-cols-2 gap-2 p-2 sm:relative sm:block sm:gap-0 sm:p-0 sm:aspect-[var(--canvas-ar)]"
-              : "relative",
+              ? "overflow-hidden grid grid-cols-2 gap-2 p-2 sm:relative sm:block sm:gap-0 sm:p-0 sm:aspect-[var(--canvas-ar)]"
+              : "relative overflow-visible",
             className,
           )}
           style={
@@ -249,6 +279,10 @@ export function LayoutCanvasBoard({
             const picked = mode === "pick"
             const pending = picked && item.pending === true
             const unavailable = picked && item.disabled === true && !pending
+            // No free window today, distinct from `disabled` (which also covers being busy
+            // loading/locked): the tile still opens like the List view's equivalent row, but
+            // reads as taken instead of green so the map doesn't look fully available.
+            const bookedOut = picked && !unavailable && !pending && item.available === false
             const ownReservation = unavailable && item.ownReservation === true
             const selected = picked && item.selected === true && !unavailable && !pending
             const clickable = picked && !unavailable && !pending
@@ -270,11 +304,11 @@ export function LayoutCanvasBoard({
                   height: `${item.heightPercent}%`,
                   zIndex: item.zIndex + 1,
                 }
-            return (
+            const tileBody = (
               <div
                 key={item.key}
                 role={picked ? "button" : undefined}
-                tabIndex={clickable ? 0 : undefined}
+                tabIndex={clickable || (unavailable && onUnavailableSelect) ? 0 : undefined}
                 aria-label={accessibleName}
                 title={accessibleName}
                 aria-pressed={picked ? item.selected : undefined}
@@ -289,31 +323,36 @@ export function LayoutCanvasBoard({
                   // that space so the detail/reason line never renders underneath it.
                   picked && item.footer && "sm:pb-6",
                   mode === "edit" &&
-                    "absolute cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
+                    "absolute inset-0 cursor-grab border-primary/40 bg-primary/15 text-foreground active:cursor-grabbing",
                   mode === "edit" && item.selected && "ring-2 ring-primary ring-offset-2",
-                  clickable && !selected && !ownReservation && portalPickAvailableClass,
+                  clickable && !selected && !ownReservation && !bookedOut && portalPickAvailableClass,
                   selected && portalPickAvailableSelectedClass,
                   pending && portalPickPendingClass,
-                  unavailable && !ownReservation && portalPickUnavailableClass,
+                  (unavailable || bookedOut) && !ownReservation && portalPickUnavailableClass,
                   ownReservation && portalPickOwnReservationClass,
                 )}
-                style={tileStyle}
+                style={mode === "edit" ? undefined : tileStyle}
                 onPointerDown={(event) => {
                   startTileDrag(event, item, "move")
                 }}
                 onClick={() => {
                   if (clickable || mode === "edit") {
                     onSelect?.(item.rentalAssetId)
+                  } else if (unavailable) {
+                    onUnavailableSelect?.(item.rentalAssetId)
                   }
                 }}
                 onKeyDown={(event) => {
                   if (clickable && (event.key === "Enter" || event.key === " ")) {
                     event.preventDefault()
                     onSelect?.(item.rentalAssetId)
+                  } else if (unavailable && onUnavailableSelect && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault()
+                    onUnavailableSelect(item.rentalAssetId)
                   }
                 }}
               >
-                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} /> : null}
+                {(item.artUrl || item.icon) ? <CanvasTileArt key={item.artUrl ?? "placeholder"} artUrl={item.artUrl} Icon={item.icon} accentColor={item.accentColor} /> : null}
                 {item.footer ? null : (
                   <span className="line-clamp-2 min-w-0 max-w-full break-normal hyphens-none px-0.5">
                     {item.label}
@@ -344,11 +383,53 @@ export function LayoutCanvasBoard({
                     <span className="line-clamp-2 break-normal hyphens-none sm:line-clamp-1" title={item.footer}>{item.footer}</span>
                   </span>
                 ) : null}
-                {mode === "edit" && onRemove ? (
+              </div>
+            )
+
+            if (mode !== "edit") {
+              return tileBody
+            }
+
+            // Keep remove/resize outside the clipped artwork and clear of the
+            // move target, including blocks shorter than the minimum hit area.
+            return (
+              <div key={item.key} className="absolute" style={tileStyle}>
+                {tileBody}
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.moveBlock", { name: item.label })}
+                  className={cn("absolute inset-0 min-h-6 min-w-6 touch-none cursor-grab rounded-lg bg-transparent active:cursor-grabbing coarse:min-h-11 coarse:min-w-11", editorFocusClass)}
+                  onPointerDown={(event) => startTileDrag(event, item, "move")}
+                  onClick={() => onSelect?.(item.rentalAssetId)}
+                />
+                {onRemove ? (
                   <button
                     type="button"
-                    aria-label="remove"
-                    className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive"
+                    aria-label={t("rentals.layout.removeBlock", { name: item.label })}
+                    className={cn("absolute left-0 bottom-full z-10 mb-1 flex size-6 items-center justify-center rounded-sm bg-background/80 text-xs leading-none text-muted-foreground hover:text-destructive coarse:hidden", editorFocusClass)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onRemove(item.rentalAssetId)
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.resizeBlock", { name: item.label })}
+                  className={cn("absolute right-0 top-[max(100%,1.5rem)] z-10 mt-1 flex size-6 touch-none cursor-se-resize items-center justify-center rounded-sm coarse:hidden", editorFocusClass)}
+                  onPointerDown={(event) => startTileDrag(event, item, "resize")}
+                >
+                  <span aria-hidden className="pointer-events-none size-3 rounded-sm border-2 border-background bg-primary shadow-sm" />
+                </button>
+                {onRemove ? (
+                  <button
+                    type="button"
+                    aria-label={t("rentals.layout.removeBlock", { name: item.label })}
+                    className={cn("absolute left-0 bottom-full z-10 mb-1 hidden size-11 items-center justify-center rounded-sm bg-background/80 text-sm leading-none text-muted-foreground hover:text-destructive coarse:flex", editorFocusClass)}
                     onPointerDown={(event) => {
                       event.stopPropagation()
                     }}
@@ -361,15 +442,14 @@ export function LayoutCanvasBoard({
                     ×
                   </button>
                 ) : null}
-                {mode === "edit" ? (
-                  <span
-                    aria-hidden
-                    className="absolute right-0.5 bottom-0.5 size-3 cursor-se-resize rounded-sm bg-primary/70"
-                    onPointerDown={(event) => {
-                      startTileDrag(event, item, "resize")
-                    }}
-                  />
-                ) : null}
+                <button
+                  type="button"
+                  aria-label={t("rentals.layout.resizeBlock", { name: item.label })}
+                  className={cn("absolute right-0 top-[max(100%,2.75rem)] z-10 mt-1 hidden size-11 touch-none cursor-se-resize rounded-sm border-2 border-background bg-primary shadow-sm coarse:flex", editorFocusClass)}
+                  onPointerDown={(event) => {
+                    startTileDrag(event, item, "resize")
+                  }}
+                />
               </div>
             )
           })}
@@ -377,8 +457,8 @@ export function LayoutCanvasBoard({
         {mode === "edit" && onFrameResize ? (
           <button
             type="button"
-            aria-label="resize-canvas"
-            className="absolute -right-1 -bottom-1 z-20 size-5 cursor-se-resize rounded-sm border border-primary bg-background shadow-sm"
+            aria-label={t("rentals.layout.resizeCanvas")}
+            className={cn("absolute -right-1 -bottom-1 z-20 size-6 touch-none cursor-se-resize rounded-sm border border-primary bg-background shadow-sm coarse:size-11", editorFocusClass)}
             onPointerDown={startFrameDrag}
           />
         ) : null}

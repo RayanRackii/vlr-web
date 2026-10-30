@@ -6,17 +6,21 @@ import {
   createFromTemplateRequestSchema,
   createMaintenancePlanRequestSchema,
   createPlanFormSchema,
+  createFromTemplateFormSchema,
   maintenancePlanSchema,
   mapGlobalTemplateTaskToFormTask,
   updateMaintenancePlanRequestSchema,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { basePlanJson } from "@/features/pmoc/test/pmocFixtures"
+import i18n from "@/lib/i18n"
 
 const formMessages = {
   unitRequired: "unit",
   nameRequired: "name",
+  nameTooLong: "nameTooLong",
   intervalInvalid: "interval",
   firstDueRequired: "firstDue",
+  firstDueInvalid: "invalidDate",
   categoryRequired: "category",
   taskTitleRequired: "task",
   tasksRequired: "tasks",
@@ -25,6 +29,30 @@ const formMessages = {
   numberRangeInvalid: "range",
   optionsRequired: "options",
 }
+
+describe("localized form dates", () => {
+  it.each([
+    ["pt-BR", "Informe uma data válida."],
+    ["en", "Enter a valid date."],
+    ["es", "Indique una fecha válida."],
+  ])("keeps malformed date diagnostics localized in create/edit and template forms in %s", (locale, expected) => {
+    const messages = { ...formMessages, firstDueRequired: i18n.t("pmoc.scheduling.firstDueRequired", { lng: locale }), firstDueInvalid: i18n.t("common.datePicker.invalid", { lng: locale }) }
+    for (const schema of [createPlanFormSchema(messages), createFromTemplateFormSchema(messages)]) {
+      const empty = schema.safeParse({ ...basePlanJson, firstDueDate: "" })
+      expect(empty.success).toBe(false)
+      if (!empty.success) {
+        expect(empty.error.issues.filter((issue) => issue.path[0] === "firstDueDate").map((issue) => issue.message)).toEqual([messages.firstDueRequired])
+      }
+      for (const firstDueDate of ["2026-1", "2026-02-31", "2025-02-29"]) {
+        const result = schema.safeParse({ ...basePlanJson, firstDueDate })
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.issues.filter((issue) => issue.path[0] === "firstDueDate").map((issue) => issue.message)).toEqual([expected])
+        }
+      }
+    }
+  })
+})
 
 describe("maintenancePlanSchema Phase 1 fields", () => {
   it("parses originKind, source lineage, and autoGenerateEnabled", () => {

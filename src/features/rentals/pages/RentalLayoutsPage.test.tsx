@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import type { MapComposition } from "@/features/rentals/services/resourceVisualService"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
+import i18n from "@/lib/i18n"
 
 let isTrialReadOnly = false
 
@@ -55,6 +56,27 @@ describe("RentalLayoutsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     isTrialReadOnly = false
+  })
+
+  afterEach(async () => {
+    await i18n.changeLanguage("pt-BR")
+  })
+
+  it.each([
+    ["pt-BR", "Novo layout", "Novo layout (rascunho)"],
+    ["en", "New layout", "New layout (draft)"],
+    ["es", "Nuevo layout", "Nuevo layout (borrador)"],
+  ])("shows the translated draft label in the selector after creating a draft (%s)", async (language, createLabel, draftLabel) => {
+    await i18n.changeLanguage(language)
+    prepare(true)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole("button", { name: createLabel }))
+
+    const trigger = screen.getByRole("combobox", { name: "Layout" })
+    expect(trigger).toHaveTextContent(draftLabel)
+    expect(trigger).not.toHaveTextContent(/^new\b/)
   })
 
   it("blocks the first step until a space is selected, then follows the wizard", async () => {
@@ -133,5 +155,8 @@ describe("RentalLayoutsPage", () => {
     await user.click(await screen.findByText("Avançado"))
     expect(screen.getByRole("checkbox", { name: "Exibir preço no bloco" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Definir mapa padrão" })).toBeDisabled()
+    for (const input of document.querySelectorAll('input[type="color"]')) {
+      expect(input).toBeDisabled()
+    }
   })
 })

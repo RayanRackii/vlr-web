@@ -20,6 +20,22 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: [
+            "react-icons", "react-icons/*", "@heroicons/*", "@phosphor-icons/*",
+            "phosphor-react", "@tabler/icons*", "@radix-ui/react-icons",
+            "@fortawesome/*", "react-feather", "@mui/icons-material*",
+            "iconoir-react", "@iconify/*", "remixicon*", "@hugeicons/*",
+          ],
+          message: "Use lucide-react (see src/lib/icon.ts)",
+        }],
+      }],
+    },
+  },
+  {
     files: ["e2e/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {

@@ -1,0 +1,155 @@
+/* Customer portal: Pedidos + Minhas solicitações, in the portal design language. */
+.portal-records {
+  width: 100%;
+  max-width: var(--portal-content-max, 80rem);
+  margin-inline: auto;
+}
+@media (min-width: 2000px) { .portal-records { max-width: var(--portal-content-max-qhd, 1560px); } }
+.portal-records-header { margin-bottom: 20px; }
+.portal-records-list { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.portal-record-card {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--portal-shadow);
+  text-align: left;
+  color: inherit;
+  transition: transform .25s var(--portal-spring), border-color var(--motion-duration-base), box-shadow var(--motion-duration-base);
+}
+.portal-record-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 14px 30px -18px rgb(0 0 0 / .3);
+}
+.portal-record-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  color: var(--primary);
+}
+.portal-record-icon svg { width: 24px; height: 24px; }
+.portal-record-body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.portal-record-top { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 8px; }
+.portal-record-title { font-size: 16px; font-weight: 650; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.portal-record-meta { color: var(--muted-foreground); font-size: 13px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.portal-record-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
+.portal-record-total { font-weight: 700; font-size: 15px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.portal-record-view { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--primary); font-size: 14px; font-weight: 600; }
+.portal-record-view svg { width: 16px; height: 16px; transition: transform .25s var(--portal-spring); }
+.portal-record-card:hover .portal-record-view svg { transform: translateX(3px); }
+
+/* Detail view — a single centered panel, matching portal-catalog-detail. */
+.portal-record-detail { width: 100%; max-width: 720px; margin: 0 auto; }
+.portal-record-back { margin-bottom: 4px; }
+.portal-record-panel {
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--portal-shadow);
+}
+.portal-record-panel + .portal-record-panel { margin-top: 18px; }
+.portal-record-panel-head { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 12px; }
+.portal-record-panel-head h1 { font-size: clamp(22px, 1.8vw, 28px); font-weight: 700; letter-spacing: -.02em; }
+.portal-record-section-title { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); margin-bottom: 12px; }
+.portal-record-lines { list-style: none; margin: 0; padding: 0; }
+.portal-record-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.portal-record-line:first-child { border-top: 0; }
+.portal-record-line-name { min-width: 0; overflow-wrap: anywhere; }
+.portal-record-line-amount { flex-shrink: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.portal-record-files { list-style: none; margin: 0; padding: 0; }
+.portal-record-file { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--border); font-size: 14px; min-height: 44px; }
+.portal-record-file:first-child { border-top: 0; }
+
+/* Timeline — vertical connector with a dot per status change. */
+.portal-timeline { list-style: none; margin: 0; padding: 0; }
+.portal-timeline-entry { position: relative; display: flex; gap: 14px; padding-bottom: 18px; }
+.portal-timeline-entry:last-child { padding-bottom: 0; }
+.portal-timeline-rail { display: flex; flex-direction: column; align-items: center; }
+.portal-timeline-dot { width: 11px; height: 11px; margin-top: 3px; border-radius: 50%; background: color-mix(in srgb, var(--muted-foreground) 45%, transparent); flex-shrink: 0; }
+.portal-timeline-entry:first-child .portal-timeline-dot { background: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
+.portal-timeline-line { flex: 1; width: 2px; margin-top: 3px; background: var(--border); }
+.portal-timeline-entry:last-child .portal-timeline-line { display: none; }
+.portal-timeline-body { min-width: 0; flex: 1; padding-bottom: 2px; }
+.portal-timeline-status { font-weight: 600; font-size: 14px; }
+.portal-timeline-when { color: var(--muted-foreground); font-size: 13px; font-variant-numeric: tabular-nums; }
+.portal-timeline-reason { margin-top: 4px; color: var(--muted-foreground); font-size: 13px; overflow-wrap: anywhere; }
+
+.portal-records :focus-visible, .portal-record-detail :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+
+@media (max-width: 767px) {
+  .portal-record-view { margin-left: 0; }
+}
+
+/* Purchase feedback uses semantic colors independently of the tenant palette. */
+.portal-order-feedback-icon { position: relative; display: inline-grid; place-items: center; width: 80px; height: 80px; flex: none; border-radius: 50%; color: var(--success); background: color-mix(in srgb, var(--success) 12%, var(--card)); }
+.portal-order-feedback-icon.is-error { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, var(--card)); }
+.portal-order-feedback-icon svg { width: 48px; height: 48px; }
+.portal-order-feedback-icon path { stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.portal-order-feedback-ring { position: absolute; inset: -5px; border: 2px solid currentColor; border-radius: inherit; opacity: 0; }
+.portal-order-success { text-align: center; }
+.portal-order-success h2 { margin-top: 20px; margin-bottom: 6px; font-size: clamp(24px, 4vw, 30px); font-weight: 750; letter-spacing: -.025em; }
+.portal-order-success-copy { max-width: 380px; margin: 20px auto; color: var(--muted-foreground); line-height: 1.65; }
+.portal-order-next { max-width: 420px; margin: 20px auto; padding: 16px; text-align: left; background: var(--muted); border-radius: 12px; font-size: 14px; line-height: 1.6; }
+.portal-order-next h3 { margin-bottom: 6px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); }
+.portal-order-feedback-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.portal-order-feedback-actions > button, .portal-order-feedback-actions > a { min-height: 44px; max-width: 100%; height: auto; white-space: normal; overflow-wrap: anywhere; }
+.portal-order-success .portal-order-feedback-actions { max-width: 420px; margin: 24px auto 0; flex-direction: column; }
+.portal-order-success .portal-order-track-button { background: var(--success); color: var(--success-foreground); }
+.portal-order-error { display: flex; align-items: start; gap: 16px; border-color: color-mix(in srgb, var(--destructive) 35%, var(--border)); }
+.portal-order-error .portal-order-feedback-icon { width: 48px; height: 48px; }
+.portal-order-error .portal-order-feedback-icon svg { width: 32px; height: 32px; }
+.portal-order-error p { overflow-wrap: anywhere; }
+.portal-order-tracking { scroll-margin-top: 24px; }
+.portal-order-stepper { list-style: none; padding: 8px 0 0; margin: 0; }
+.portal-order-stepper > li { position: relative; display: flex; align-items: start; gap: 16px; padding-bottom: 28px; }
+.portal-order-stepper > li:last-child { padding-bottom: 0; }
+.portal-order-stepper > li::before, .portal-order-stepper > li::after { content: ""; position: absolute; left: 15px; top: 36px; bottom: 4px; width: 2px; background: var(--border); }
+.portal-order-stepper > li::after { background: var(--success); transform: scaleY(0); transform-origin: top; }
+.portal-order-stepper > li.is-done::after { transform: scaleY(1); }
+.portal-order-stepper > li:last-child::before, .portal-order-stepper > li:last-child::after { display: none; }
+.portal-order-step-node { position: relative; display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 2px solid var(--border); border-radius: 50%; background: var(--card); }
+.portal-order-step-node svg { width: 20px; height: 20px; stroke-width: 1.75; }
+.portal-order-stepper .is-done .portal-order-step-node { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--card)); }
+.portal-order-stepper .is-current .portal-order-step-node { background: var(--primary); border-color: var(--primary); }
+.portal-order-stepper .is-terminal .portal-order-step-node { color: var(--destructive); border-color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, var(--card)); }
+.portal-order-stepper .is-terminal h3 { color: var(--destructive); }
+.portal-order-step-body { min-width: 0; padding-top: 3px; overflow-wrap: anywhere; }
+.portal-order-step-body h3 { font-weight: 650; margin-bottom: 4px; }
+.portal-order-step-body p, .portal-order-step-body time { color: var(--muted-foreground); font-size: 14px; line-height: 1.6; }
+.portal-order-step-body time { display: block; margin-top: 5px; font-size: 12px; }
+.portal-order-stepper .is-upcoming h3 { color: var(--muted-foreground); }
+.portal-order-history { margin-top: 24px; border-top: 1px solid var(--border); }
+.portal-order-history summary { display: list-item; cursor: pointer; padding: 14px 0; min-height: 44px; font-size: 14px; font-weight: 600; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .portal-order-feedback-icon path { animation: portal-order-draw 550ms ease-out both; }
+  .portal-order-feedback-ring { animation: portal-order-ring 700ms ease-out both; }
+  .portal-order-feedback-icon.is-error .portal-order-feedback-ring { animation: none; }
+  .portal-order-stepper > li::after { transition: transform 600ms ease-out; }
+  .portal-order-stepper > li.is-done::after { animation: portal-order-connector 600ms ease-out both; }
+  .portal-order-stepper .is-current .portal-order-step-node::after { content: ""; position: absolute; inset: -7px; border-radius: inherit; background: var(--primary); animation: portal-order-halo 2.1s ease-out infinite; }
+}
+@keyframes portal-order-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes portal-order-ring { from { opacity: .35; transform: scale(.9); } to { opacity: 0; transform: scale(1.25); } }
+@keyframes portal-order-connector { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes portal-order-halo { from { transform: scale(.8); opacity: .16; } to { transform: scale(1.3); opacity: 0; } }
+
+@media (max-width: 767px) {
+  .portal-purchase-cart { padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
+  .portal-purchase-cart .portal-purchase-submit-bar { bottom: calc(80px + env(safe-area-inset-bottom)); padding-bottom: 12px; }
+  .portal-purchase-submit-bar p { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 767px) {
+  .portal-record-back, .portal-record-detail button { min-width: 44px; min-height: 44px; }
+}

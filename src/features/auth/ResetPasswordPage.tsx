@@ -1,9 +1,10 @@
+import { toast } from "sonner"
 import { AuthError } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { TFunction } from "i18next"
-import { Lock } from "lucide-react"
+import { Check, KeyRound, Lock } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -24,6 +25,9 @@ import {
   createResetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/features/auth/resetPasswordSchema"
+import { clearCustomerSession } from "@/features/tenantPortal/services/tenantPortalService"
+import { noteStaffSignIn } from "@/lib/api"
+import { purgeSignedOutSessions, removeSessionKeysAsSignedOut } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 function getResetErrorMessage(error: AuthError, t: TFunction): string {
@@ -39,6 +43,14 @@ type GateState = "loading" | "ready" | "invalid"
 export function ResetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [isSaved, setIsSaved] = useState(false)
+  useEffect(() => {
+    if (!isSaved) return
+    const timer = setTimeout(() => {
+      void navigate("/dashboard", { replace: true })
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [isSaved, navigate])
   const [gate, setGate] = useState<GateState>("loading")
   const schema = useMemo(() => createResetPasswordSchema(t), [t])
 
@@ -51,7 +63,7 @@ export function ResetPasswordPage() {
     mode: "onTouched",
   })
 
-  const watchedValues = form.watch()
+  const watchedValues = useWatch({ control: form.control })
   const isResetValid = schema.safeParse(watchedValues).success
   const isSubmitting = form.formState.isSubmitting
 
@@ -64,7 +76,7 @@ export function ResetPasswordPage() {
       const type = params.get("type")
 
       if (tokenHash && type === "recovery") {
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
         })
@@ -73,10 +85,25 @@ export function ResetPasswordPage() {
           return
         }
 
-        if (error !== null) {
+        if (error !== null || !data.session) {
           setGate("invalid")
           return
         }
+
+        noteStaffSignIn()
+        // Verification ran behind the sign-out barrier. Save the verified session
+        // again so storage and AuthProvider receive it after the barrier is lifted.
+        try {
+          const { error: sessionError } = await supabase.auth.setSession(data.session)
+          if (sessionError !== null) throw sessionError
+        } catch {
+          removeSessionKeysAsSignedOut([])
+          purgeSignedOutSessions()
+          void supabase.auth.stopAutoRefresh()
+          if (!cancelled) setGate("invalid")
+          return
+        }
+        if (cancelled) return
 
         // Drop secrets from the address bar after establishing the session.
         window.history.replaceState({}, document.title, "/reset-password")
@@ -91,6 +118,7 @@ export function ResetPasswordPage() {
       }
 
       if (data.session) {
+        noteStaffSignIn()
         setGate("ready")
         return
       }
@@ -115,7 +143,10 @@ export function ResetPasswordPage() {
       return
     }
 
-    void navigate("/dashboard", { replace: true })
+    // Staff and customer sessions are exclusive: a staff sign-in ends any leftover customer one.
+    clearCustomerSession()
+    setIsSaved(true)
+    toast.success(t("auth.resetPassword.success"))
   }
 
   if (gate === "loading") {
@@ -131,16 +162,19 @@ export function ResetPasswordPage() {
   if (gate === "invalid") {
     return (
       <AuthLayout title={t("auth.resetPassword.title")}>
-        <div className="space-y-6">
+        <div className="flex flex-col items-center gap-5 rounded-xl border border-border bg-card p-6 text-center">
+          <div aria-hidden="true" className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <KeyRound {...iconProps("xl")} />
+          </div>
           <p
-            className="text-sm text-destructive dark:text-destructive-foreground"
+            className="max-w-sm text-sm leading-relaxed text-muted-foreground"
             role="alert"
           >
             {t("auth.resetPassword.invalidLink")}
           </p>
           <Button
             type="button"
-            className="h-11 w-full"
+            className="touch-target min-h-11 w-full whitespace-normal"
             render={<Link to="/login" />}
           >
             {t("auth.resetPassword.backToLogin")}
@@ -217,11 +251,16 @@ export function ResetPasswordPage() {
           <FormPrimaryButton
             type="submit"
             className="h-11 w-full"
-            isValid={isResetValid}
+            isValid={isResetValid && !isSaved}
             loading={isSubmitting}
             loadingLabel={t("auth.resetPassword.submitting")}
           >
-            {t("auth.resetPassword.submit")}
+            {isSaved ? (
+              <>
+                <Check aria-hidden {...iconProps("sm")} />
+                {t("auth.resetPassword.redirecting")}
+              </>
+            ) : t("auth.resetPassword.submit")}
           </FormPrimaryButton>
         </form>
       </Form>

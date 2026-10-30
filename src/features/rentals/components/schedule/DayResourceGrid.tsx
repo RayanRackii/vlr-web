@@ -1,6 +1,6 @@
 import { displayEndClock } from "@/lib/tenantTimeZone"
 import { Ban, CalendarCheck2, CircleCheck } from "lucide-react"
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -68,7 +68,34 @@ type DayResourceGridProps = {
   onCellClick: (payload: ScheduleGridCellPayload) => void
 }
 
-export function DayResourceGrid({
+const TABLET_QUERY = "(min-width: 768px) and (max-width: 1023px)"
+
+function subscribeToTabletViewport(onChange: () => void) {
+  const media = window.matchMedia?.(TABLET_QUERY)
+  media?.addEventListener("change", onChange)
+  return () => media?.removeEventListener("change", onChange)
+}
+
+function isTabletViewport() {
+  return window.matchMedia?.(TABLET_QUERY).matches ?? false
+}
+
+export function DayResourceGrid(props: DayResourceGridProps) {
+  const isTablet = useSyncExternalStore(subscribeToTabletViewport, isTabletViewport, () => false)
+  if (!isTablet || props.assets.length <= 2) return <ResourceGrid {...props} />
+
+  // Keep readable resource widths by wrapping pairs into full-width grids on tablets.
+  return (
+    <div className="min-w-0 space-y-4">
+      {Array.from({ length: Math.ceil(props.assets.length / 2) }, (_, index) => {
+        const assets = props.assets.slice(index * 2, index * 2 + 2)
+        return <ResourceGrid key={assets[0].id} {...props} assets={assets} />
+      })}
+    </div>
+  )
+}
+
+function ResourceGrid({
   assets,
   occupancies,
   busyTargetKey,
@@ -78,6 +105,25 @@ export function DayResourceGrid({
   onCellClick,
 }: DayResourceGridProps) {
   const { t } = useTranslation()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const updateScrollCues = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 1)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }
+
+  useEffect(() => {
+    updateScrollCues()
+    const el = scrollRef.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(updateScrollCues)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [assets, occupancies])
 
   const axis = useMemo(() => {
     const starts = occupancies.map((item) => timeToMinutes(item.startTime))
@@ -163,7 +209,12 @@ export function DayResourceGrid({
   return (
     <div className="min-w-0 space-y-2">
       <ScheduleGridLegend />
-      <div className="min-w-0 max-h-[70vh] w-full overflow-x-auto overflow-y-auto rounded-xl border border-border bg-background shadow-sm">
+      <div className="relative min-w-0">
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollCues}
+          className="min-w-0 max-h-[70vh] w-full overflow-x-auto overflow-y-auto rounded-xl border border-border bg-background shadow-sm"
+        >
         <div className="relative w-max min-w-full">
           <div
             role="grid"
@@ -222,6 +273,20 @@ export function DayResourceGrid({
             </div>
           ) : null}
         </div>
+        </div>
+        {canScrollLeft ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background/90 to-transparent"
+            style={{ left: TIME_COLUMN_WIDTH }}
+          />
+        ) : null}
+        {canScrollRight ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background/90 to-transparent shadow-[inset_-8px_0_8px_-8px_rgba(0,0,0,0.25)]"
+          />
+        ) : null}
       </div>
     </div>
   )
@@ -240,13 +305,13 @@ function ScheduleGridLegend() {
         const Icon = STATUS_ICON[status]
         return (
           <li key={status} className="flex items-center gap-1.5">
-            <Icon className={cn("size-3.5", STATUS_TEXT_CLASS[status])} aria-hidden />
+            <Icon className={cn("size-4", STATUS_TEXT_CLASS[status])} aria-hidden />
             <span>{t(`rentals.schedule.occurrence.status.${status}`)}</span>
           </li>
         )
       })}
       <li className="flex items-center gap-1.5">
-        <Ban className="size-3.5 text-muted-foreground" aria-hidden />
+        <Ban className="size-4 text-muted-foreground" aria-hidden />
         <span>{t("rentals.schedule.grid.minimumLeadTime")}</span>
       </li>
     </ul>
@@ -436,7 +501,7 @@ function RowCells({
                       STATUS_TEXT_CLASS[item.status],
                     )}
                   >
-                    <StatusIcon className="size-2.5" aria-hidden />
+                    <StatusIcon className="size-3" aria-hidden />
                     {statusLabel}
                   </span>
                   {freeUnitsLabel ? (

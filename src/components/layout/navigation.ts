@@ -1,10 +1,11 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  FormInput,
   MenuSquare,
 } from "lucide-react"
 
+import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
+import { matchModuleIntro, type ModuleIntro, type ModuleIntroKey } from "./navigationIntros"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
@@ -33,16 +34,21 @@ export type AppNavigationChildItem = {
     | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
     | "nav.catalogOrders"
+    | "nav.catalogRequests"
     | "nav.catalogNotifications"
     | "nav.catalogSettings"
     | "nav.taxonomy"
   to: string
+  icon?: LucideIcon
+  /** Internal destinations, never sidebar children. */
+  tabs?: readonly NavigationTab[]
   /** Every key is required. An entry with none is hidden. */
   permission?: string
   permissions?: readonly string[]
 }
 
 export type AppNavigationItem = {
+  introKey?: ModuleIntroKey
   labelKey:
     | "nav.dashboard"
     | "nav.peopleAccess"
@@ -60,7 +66,13 @@ export type AppNavigationItem = {
     | "nav.catalog"
     | "nav.notifications"
     | "nav.taxonomy"
+    | "nav.catalogProducts"
+    | "nav.catalogOrders"
+    | "nav.catalogRequests"
+    | "nav.catalogSettings"
+    | "nav.catalogNotifications"
   to: string
+  tabs?: readonly NavigationTab[]
   icon: LucideIcon
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
@@ -73,10 +85,13 @@ export type AppNavigationItem = {
 export type AppNavigationSectionTitleKey =
   | "nav.sections.overview"
   | "nav.sections.peoplePortal"
-  | "nav.sections.operations"
+  | "nav.sections.bookings"
+  | "nav.sections.maintenance"
+  | "nav.sections.sales"
   | "nav.sections.platform"
 
 export type AppNavigationSection = {
+  introKey?: ModuleIntroKey
   titleKey: AppNavigationSectionTitleKey
   items: readonly AppNavigationItem[]
 }
@@ -91,13 +106,6 @@ const overviewItem = dashboardManifest.navigationItems[0]
 const peoplePortalItems: readonly AppNavigationItem[] = [
   ...usersManifest.navigationItems,
   {
-    labelKey: "nav.registrationFields",
-    to: "/configuracoes/cadastro",
-    icon: FormInput,
-    modules: ["rentals", "catalog"],
-    permission: "core.registration_fields.read",
-  },
-  {
     labelKey: "nav.moduleMenu",
     to: "/configuracoes/menu",
     icon: MenuSquare,
@@ -108,20 +116,39 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
   ...notificationsManifest.navigationItems,
 ]
 
-const operationsItems: readonly AppNavigationItem[] = [
+const maintenanceItems: readonly AppNavigationItem[] = [
   ...assetsManifest.navigationItems,
   ...pmocManifest.navigationItems,
   ...workOrdersManifest.navigationItems,
-  ...rentalsManifest.navigationItems,
-  ...catalogManifest.navigationItems,
 ]
+
+const bookingsItems: readonly AppNavigationItem[] = rentalsManifest.navigationItems
+const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems.flatMap(
+  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: item.modules })),
+)
 
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
   overviewItem,
+  ...bookingsItems,
+  ...maintenanceItems,
+  ...salesItems,
   ...peoplePortalItems,
-  ...operationsItems,
 ]
+
+const productNavigationSections: readonly AppNavigationSection[] = [
+  { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
+  { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
+  { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
+  { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
+  { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
+]
+
+const platformNavigationSection: AppNavigationSection = {
+  introKey: "platform",
+  titleKey: "nav.sections.platform",
+  items: adminManifest.navigationItems,
+}
 
 export function declaredPermissionKeys(entry: {
   permission?: string
@@ -186,15 +213,24 @@ export function filterNavigationItemsByAccess(
         return []
       }
 
-      const children = item.children.filter((child) =>
-        hasDeclaredAccess(child, permissions),
-      )
+      const children = item.children.flatMap((child) => {
+        if (child.tabs) {
+          const tabs = filterNavigationTabs(child.tabs, activeModules, permissions)
+          return tabs[0] ? [{ ...child, tabs, to: tabs[0].to }] : []
+        }
+        return hasDeclaredAccess(child, permissions) ? [child] : []
+      })
 
       if (children.length === 0) {
         return []
       }
 
       return [{ ...item, children }]
+    }
+
+    if (item.tabs) {
+      const tabs = filterNavigationTabs(item.tabs, activeModules, permissions)
+      return tabs[0] ? [{ ...item, tabs, to: tabs[0].to }] : []
     }
 
     if (!hasDeclaredAccess(item, permissions)) {
@@ -205,49 +241,14 @@ export function filterNavigationItemsByAccess(
   })
 }
 
-function buildProductSections(
+export function buildProductSections(
   activeModules: readonly string[],
   permissions: readonly string[],
 ): AppNavigationSection[] {
-  const sections: AppNavigationSection[] = []
-
-  const overview = filterNavigationItemsByAccess(
-    [overviewItem],
-    activeModules,
-    permissions,
-  )
-  if (overview.length > 0) {
-    sections.push({
-      titleKey: "nav.sections.overview",
-      items: overview,
-    })
-  }
-
-  const people = filterNavigationItemsByAccess(
-    peoplePortalItems,
-    activeModules,
-    permissions,
-  )
-  if (people.length > 0) {
-    sections.push({
-      titleKey: "nav.sections.peoplePortal",
-      items: people,
-    })
-  }
-
-  const operations = filterNavigationItemsByAccess(
-    operationsItems,
-    activeModules,
-    permissions,
-  )
-  if (operations.length > 0) {
-    sections.push({
-      titleKey: "nav.sections.operations",
-      items: operations,
-    })
-  }
-
-  return sections
+  return productNavigationSections.flatMap((section) => {
+    const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
+    return items.length ? [{ ...section, items }] : []
+  })
 }
 
 /** First sidebar route the user may open, in product-nav order. */
@@ -279,13 +280,11 @@ export function useAppNavigationSections(): AppNavigationState {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
+          introKey: "overview",
           titleKey: "nav.sections.overview",
           items: [overviewItem],
         },
-        {
-          titleKey: "nav.sections.platform",
-          items: adminManifest.navigationItems,
-        },
+        platformNavigationSection,
       ]
     }
 
@@ -318,10 +317,15 @@ export function getPageTitleKey(
 ):
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
+  | ModuleIntro["titleKey"]
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
+  | NavigationTab["labelKey"]
   | "account.profile"
   | "app.name" {
+  const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
+  if (intro) return intro.titleKey
+
   if (pathname === "/perfil") {
     return "account.profile"
   }
@@ -340,6 +344,10 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/catalogo/notificacoes")) {
     return "nav.catalogNotifications"
+  }
+
+  if (pathname.startsWith("/catalogo/solicitacoes")) {
+    return "nav.catalogRequests"
   }
 
   if (pathname.startsWith("/catalogo/pedidos")) {
@@ -371,7 +379,14 @@ export function getPageTitleKey(
   }
 
   for (const item of appNavigationItems) {
+    const matchedTab = item.tabs?.find((tab) => tab.to === pathname)
+    if (matchedTab) return matchedTab.labelKey
+
     if (item.children) {
+      const childTab = item.children.flatMap((child) => child.tabs ?? []).find((tab) => tab.to === pathname)
+      // The custom-plan tab keeps the existing page title for its original URL.
+      if (childTab) return pathname === "/pmoc/novo" ? "nav.pmocNew" : childTab.labelKey
+
       const matchedChild = item.children.find((child) => child.to === pathname)
 
       if (matchedChild) {
@@ -387,29 +402,47 @@ export function getPageTitleKey(
   return "app.name"
 }
 
-export function getEmailInitials(email: string | null | undefined): string {
-  if (!email) {
-    return "?"
-  }
-
-  const localPart = email.split("@")[0]?.trim() ?? ""
-
-  if (localPart.length === 0) {
-    return "?"
-  }
-
-  const segments = localPart
-    .split(/[._-]+/)
-    .filter((segment) => segment.length > 0)
-
-  if (segments.length >= 2) {
-    const first = segments[0]?.[0]
-    const second = segments[1]?.[0]
-
+export function getUserInitials(
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+): string {
+  const trimmedName = fullName?.trim() ?? ""
+  if (trimmedName.length > 0) {
+    const parts = trimmedName.split(/\s+/).filter((part) => part.length > 0)
+    const first = parts[0]?.[0]
+    const second = parts[1]?.[0]
     if (first && second) {
       return `${first}${second}`.toUpperCase()
     }
+    if (first) {
+      return first.toUpperCase()
+    }
   }
 
-  return localPart.slice(0, 2).toUpperCase()
+  const trimmedEmail = email?.trim() ?? ""
+  if (trimmedEmail.length > 0) {
+    return trimmedEmail[0]!.toUpperCase()
+  }
+
+  return "?"
 }
+
+export function getUserDisplayLabel(
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+  fallback: string,
+): string {
+  const trimmedName = fullName?.trim() ?? ""
+  if (trimmedName.length > 0) {
+    return trimmedName
+  }
+
+  const trimmedEmail = email?.trim() ?? ""
+  if (trimmedEmail.length > 0) {
+    return trimmedEmail
+  }
+
+  return fallback
+}
+
+export { getEmailInitials } from "@/lib/emailInitials"

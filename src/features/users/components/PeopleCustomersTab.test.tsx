@@ -1,4 +1,9 @@
-import { act, render, screen, waitFor } from "@testing-library/react"
+import type { ReactNode } from "react"
+import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
+import { MemoryRouter } from "react-router-dom"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
+import { act, render as testingRender, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -14,6 +19,10 @@ import i18n from "@/lib/i18n"
 vi.mock("@/features/users/services/usersService", () => ({
   listTenantCustomers: vi.fn(),
 }))
+
+function render(ui: ReactNode) {
+  return testingRender(<AuthProvider><MemoryRouter><TestPermissionProvider permissions={["core.customers.read", "core.users.read"]}><ModuleIntroLinksProvider keys={["peoplePortal"]}>{ui}</ModuleIntroLinksProvider></TestPermissionProvider></MemoryRouter></AuthProvider>)
+}
 
 const listTenantCustomersMock = vi.mocked(listTenantCustomers)
 
@@ -73,6 +82,19 @@ describe("PeopleCustomersTab", () => {
     listTenantCustomersMock.mockReset()
   })
 
+  it("presents real customer data in the responsive directory without adding actions or filters", async () => {
+    listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
+    render(<PeopleCustomersTab />)
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(3)
+    expect(within(table).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(table).getByText(CUSTOMER.email!)).toBeInTheDocument()
+    expect(within(table).getByText(i18n.t("peopleAccess.customers.verified"))).toBeInTheDocument()
+    expect(within(table).queryByRole("button")).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
+    expect(listTenantCustomersMock).toHaveBeenCalledTimes(1)
+  })
+
   it("shows the environment empty state when there are no customers and no search", async () => {
     listTenantCustomersMock.mockResolvedValue(customerPage([]))
     render(<PeopleCustomersTab />)
@@ -111,6 +133,22 @@ describe("PeopleCustomersTab", () => {
         expect.any(AbortSignal),
       )
     })
+  })
+
+  it("clears a search with no results without offering customer creation", async () => {
+    const user = userEvent.setup()
+    listTenantCustomersMock.mockResolvedValue(customerPage([]))
+    render(<PeopleCustomersTab />)
+    await screen.findByText(environmentEmpty)
+    expect(screen.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/peoplePortal")
+    await user.type(screen.getByLabelText(i18n.t("peopleAccess.customers.searchLabel")), "zz")
+    await user.click(screen.getByRole("button", { name: i18n.t("peopleAccess.customers.searchAction") }))
+    const clear = await screen.findByRole("button", { name: i18n.t("emptyStates.clearSearch") })
+    expect(screen.queryByText(i18n.t("emptyStates.examples.customers"))).not.toBeInTheDocument()
+    await user.click(clear)
+    expect(await screen.findByText(environmentEmpty)).toBeVisible()
+    expect(screen.getByLabelText(i18n.t("peopleAccess.customers.searchLabel"))).toHaveValue("")
+    expect(screen.queryByRole("button", { name: /criar|adicionar/i })).not.toBeInTheDocument()
   })
 
   it("keeps the latest list when an older empty search resolves afterwards", async () => {

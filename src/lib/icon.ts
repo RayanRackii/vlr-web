@@ -10,6 +10,8 @@ export const ICON_STROKE_WIDTH = 1.75
  * Size tokens for lucide icons, keyed to the control scale. Use as a className
  * (`<Icon className={ICON_SIZE.sm} />`) so sizing stays consistent with the
  * primitives (inputs/buttons default to the `sm` glyph).
+ * UI grid: 16/20/24px (sm/md/lg). xs (14px) is dense-only for text-xs
+ * chips/badges and xs controls; xl (32px) is for decorative illustrations.
  */
 export const ICON_SIZE = {
   xs: "size-3.5",

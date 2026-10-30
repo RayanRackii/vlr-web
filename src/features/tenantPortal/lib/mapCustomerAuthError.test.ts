@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  customerDuplicateField,
   localizeCustomerAuthError,
   parseCustomerAuthError,
+  parseCustomerAuthErrorField,
 } from "@/features/tenantPortal/lib/mapCustomerAuthError"
 
 describe("mapCustomerAuthError", () => {
@@ -50,5 +52,60 @@ describe("mapCustomerAuthError", () => {
         "Não foi possível entrar.",
       ),
     ).toBe("E-mail ou senha inválidos.")
+  })
+
+  it("names the email field when the backend flags a duplicate e-mail", () => {
+    expect(
+      localizeCustomerAuthError("A customer with this email already exists."),
+    ).toBe("Já existe uma conta com este e-mail.")
+    expect(
+      customerDuplicateField("A customer with this email already exists."),
+    ).toBe("email")
+  })
+
+  it("names the document field for a duplicate CPF or document", () => {
+    expect(
+      localizeCustomerAuthError(
+        "A customer with this document already exists.",
+      ),
+    ).toBe("Já existe uma conta com este CPF/CNPJ.")
+    expect(
+      customerDuplicateField("A customer with this document already exists."),
+    ).toBe("document")
+    expect(
+      customerDuplicateField("A customer with this CPF already exists."),
+    ).toBe("document")
+  })
+
+  it("names the phone field for a duplicate phone", () => {
+    expect(
+      localizeCustomerAuthError("A customer with this phone already exists."),
+    ).toBe("Já existe uma conta com este telefone.")
+    expect(
+      customerDuplicateField("A customer with this phone already exists."),
+    ).toBe("phone")
+  })
+
+  it("has no specific field when the backend cannot narrow the duplicate down", () => {
+    expect(
+      customerDuplicateField(
+        "A customer with the same email, document, or phone already exists.",
+      ),
+    ).toBeNull()
+    expect(
+      parseCustomerAuthErrorField({
+        error:
+          "A customer with the same email, document, or phone already exists.",
+      }),
+    ).toBeNull()
+  })
+
+  it("resolves a duplicate field from the raw API payload", () => {
+    expect(
+      parseCustomerAuthErrorField({
+        error: "A customer with this email already exists.",
+      }),
+    ).toBe("email")
+    expect(parseCustomerAuthErrorField({ status: 500 })).toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { AuthSplitShell } from "@/components/layout/AuthSplitShell"
 import { Button } from "@/components/ui/button"
+import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
@@ -15,6 +16,7 @@ import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/Ten
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { isTenantAuthPagePath } from "@/features/tenantPortal/lib/tenantAuthPagePath"
+import { readReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
 import { sanitizeTenantLogoSvg } from "@/features/tenantPortal/lib/sanitizeTenantLogoSvg"
 import { getTenantBaseDomain } from "@/lib/tenantDomain"
 import { isAxiosError } from "@/lib/api"
@@ -25,8 +27,18 @@ import {
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import "./tenantPortalAuth.css"
 
 type PortalLoadError = "missingSubdomain" | "notFound" | "loadFailed"
+
+/**
+ * Auth-shell routes whose own content (a `PortalRecoveryState`) renders the
+ * page `<h1>`. On these the brand name must stay a `<p>` so the page keeps a
+ * single `<h1>`; the form routes keep the brand name as their `<h1>`.
+ */
+function isTenantAuthRecoveryPath(pathname: string): boolean {
+  return /^\/(?:t\/[a-z0-9-]+)?\/?reset-password\/?$/i.test(pathname)
+}
 
 /** Login and register only. Verify-email and password reset stay reachable. */
 function isCustomerAuthEntryPath(pathname: string): boolean {
@@ -55,6 +67,14 @@ export function TenantPortalLayout() {
   const [error, setError] = useState<PortalLoadError | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryNonce, setRetryNonce] = useState(0)
+  useTenantDocumentMeta(
+    branding && {
+      slug: branding.subdomain || subdomain,
+      name: branding.displayName,
+      logoSvg: branding.logoSvg,
+      primaryColor: branding.primaryColor,
+    },
+  )
 
   const redirectSignedIn =
     Boolean(subdomain) &&
@@ -121,8 +141,9 @@ export function TenantPortalLayout() {
   )
   const { tokens, style: themeStyle } = useTenantThemeStyle(
     branding?.primaryColor,
-    branding?.accentColor,
+    branding?.secondaryColor ?? branding?.accentColor,
     {
+      auth: isTenantAuthPagePath(location.pathname),
       logoBackgroundColor: logoInspection.backgroundColor,
       logoBackgroundIsDark:
         logoInspection.hasEmbeddedBackground && logoInspection.backgroundIsDark,
@@ -130,7 +151,8 @@ export function TenantPortalLayout() {
   )
 
   if (redirectSignedIn && subdomain) {
-    return <Navigate to={tenantPortalPath(subdomain, "app")} replace />
+    const returnTo = readReturnToParam(new URLSearchParams(location.search))
+    return <Navigate to={returnTo ?? tenantPortalPath(subdomain, "app")} replace />
   }
 
   if (loading) {
@@ -157,7 +179,7 @@ export function TenantPortalLayout() {
           portalBasePath={portalBasePath}
         />
         <main className="flex min-h-screen items-center justify-center p-6 pt-24">
-          <PortalNotFoundRoute />
+          <PortalNotFoundRoute tenantExists={false} />
         </main>
       </div>
     )
@@ -215,54 +237,38 @@ export function TenantPortalLayout() {
   }
 
   if (isTenantAuthPagePath(location.pathname)) {
-    const hasCustomBrand = Boolean(branding.primaryColor)
-    const brandPanelStyle = hasCustomBrand
-      ? {
-          background: `linear-gradient(135deg, color-mix(in srgb, ${tokens.primary} 14%, var(--background)) 0%, color-mix(in srgb, ${tokens.accent} 10%, var(--background)) 100%)`,
-        }
-      : undefined
-
     return (
-      <div className="min-h-screen text-foreground" style={themeStyle}>
+      <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
         <AuthSplitShell
-          brandPanelStyle={brandPanelStyle}
+          variant="tenant"
+          brandPanelClassName="tenant-brand"
           brandPanel={
-            <div className="max-w-md space-y-6">
+            <div className="tenant-brand-content">
               <TenantLogoMark
                 logoSvg={branding.logoSvg}
                 displayName={branding.displayName}
                 primaryColor={branding.primaryColor}
                 size="lg"
-                className="mx-0"
+                className="tenant-auth-logo"
               />
-              <div className="space-y-2">
-                <h2 className="break-words text-4xl font-semibold tracking-tight text-foreground">
-                  {branding.displayName}
-                </h2>
-                <p className="text-base leading-relaxed text-foreground/85">
-                  {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
+              <div>
+                {isTenantAuthRecoveryPath(location.pathname) ? (
+                  <p className="tenant-brand-name">{branding.displayName}</p>
+                ) : (
+                  <h1 className="tenant-brand-name">{branding.displayName}</h1>
+                )}
+                <p className="tenant-welcome">
+                  {branding.welcomeText?.trim() || branding.welcomeTagline?.trim() || t("tenantPortal.login.welcomeDefault")}
                 </p>
               </div>
             </div>
           }
           brandFootnote={
-            <p className="text-xs text-foreground/80">
+            <p className="tenant-brand-footer">
               {t("tenantPortal.authPanel.poweredBy")}
             </p>
           }
-          mobileBrand={
-            <div className="flex min-w-0 items-center gap-2">
-              <TenantLogoMark
-                logoSvg={branding.logoSvg}
-                displayName={branding.displayName}
-                primaryColor={branding.primaryColor}
-                size="sm"
-              />
-              <span className="min-w-0 truncate text-sm font-semibold text-foreground">
-                {branding.displayName}
-              </span>
-            </div>
-          }
+          mobileBrand={null}
           headerActions={
             <>
               <LanguageSwitcher
@@ -282,13 +288,13 @@ export function TenantPortalLayout() {
   }
 
   return (
-    <div className="min-h-screen text-foreground" style={themeStyle}>
+    <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
       <TenantPortalChromeHeader
         subdomain={subdomain}
         portalBasePath={portalBasePath}
       />
       <main className="relative flex min-h-screen w-full items-center justify-center p-6 pt-24">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-3xl space-y-6">
           <div className="space-y-4 text-center">
             <TenantLogoMark
               logoSvg={branding.logoSvg}
@@ -297,29 +303,18 @@ export function TenantPortalLayout() {
               size="lg"
             />
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <p className="text-2xl font-semibold tracking-tight text-foreground">
                 {branding.displayName}
-              </h1>
+              </p>
               <p className="text-sm text-muted-foreground">
                 {branding.welcomeTagline ?? t("tenantPortal.defaultTagline")}
               </p>
             </div>
           </div>
 
-          <div
-            className="rounded-xl border p-6 shadow-sm"
-            style={{
-              backgroundColor: tokens.surface,
-              borderColor: tokens.border,
-              borderTopColor: tokens.accent,
-              borderTopWidth: 3,
-              color: tokens.text,
-            }}
-          >
-            <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
-              <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
-            </TenantTimeZoneProvider>
-          </div>
+          <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
+            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+          </TenantTimeZoneProvider>
         </div>
       </main>
     </div>

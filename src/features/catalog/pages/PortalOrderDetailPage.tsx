@@ -1,13 +1,18 @@
-import { useEffect, useState } from "react"
-import { Link, useOutletContext, useParams } from "react-router-dom"
+import "../components/portalOrders.css"
+
+import { useEffect, useRef, useState } from "react"
+import { Link, useLocation, useNavigate, useOutletContext, useParams } from "react-router-dom"
+import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalCancelAction } from "@/features/catalog/components/PortalCancelAction"
+import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
+import { PortalOrderSuccess } from "@/features/catalog/components/PortalOrderFeedback"
+import { PortalOrderStepper } from "@/features/catalog/components/PortalOrderStepper"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
-import { catalogOrderStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
+import { catalogOrderStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
   formatCatalogDate,
@@ -16,14 +21,24 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
   cancelPortalCatalogOrder,
+  CatalogOrderCancelConflictError,
   getPortalCatalogOrder,
 } from "@/features/catalog/services/catalogPortalService"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
-import { cn } from "@/lib/utils"
+
+function hasOrderSuccess(identity: string): boolean {
+  try {
+    return sessionStorage.getItem(`portal-order-just-created:${identity}`) === "true"
+  } catch {
+    return false
+  }
+}
 
 export function PortalOrderDetailPage() {
   const { t, i18n } = useTranslation()
   const params = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { subdomain } = useOutletContext<CustomerAppOutletContext>()
   const orderId = params.orderId ?? ""
 
@@ -31,16 +46,39 @@ export function PortalOrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
+  const pollingTimer = useRef<number | undefined>(undefined)
+  const orderVersion = useRef(0)
   const identity = `${subdomain}:${orderId}`
+  const [successIdentity, setSuccessIdentity] = useState<string | null>(() => (location.state?.justCreated === true || hasOrderSuccess(identity)) ? identity : null)
   const [seenIdentity, setSeenIdentity] = useState(identity)
   if (seenIdentity !== identity) {
     setSeenIdentity(identity)
     setOrder(null)
     setLoading(true)
     setLoadError(null)
+    setSuccessIdentity((location.state?.justCreated === true || hasOrderSuccess(identity)) ? identity : null)
   }
   useEffect(() => {
+    if (location.state?.justCreated !== true) return
+    try {
+      sessionStorage.setItem(`portal-order-just-created:${identity}`, "true")
+    } catch {
+      // Keep the banner available in memory when browser storage is blocked.
+    }
+    const remainingState = { ...location.state } as Record<string, unknown>
+    delete remainingState.justCreated
+    void navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
+      replace: true, state: Object.keys(remainingState).length > 0 ? remainingState : null,
+    })
+  }, [identity, location, navigate])
+  useEffect(() => {
+    return () => { orderVersion.current += 1 }
+  }, [identity])
+
+  useEffect(() => {
     let stale = false
+    let inFlight = false
+    let hasLoaded = false
     setLoading(true)
     setLoadError(null)
     if (!orderId) {
@@ -48,33 +86,87 @@ export function PortalOrderDetailPage() {
       setLoading(false)
       return
     }
-    void getPortalCatalogOrder(orderId).then((data) => {
-      if (!stale) setOrder(data)
-    }).catch((error: unknown) => {
-      if (!stale) setLoadError(error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"))
-    }).finally(() => { if (!stale) setLoading(false) })
-    return () => { stale = true }
+    async function refresh(initial = false) {
+      if (inFlight || stale || (!initial && document.visibilityState !== "visible")) return
+      inFlight = true
+      const version = orderVersion.current
+      try {
+        const data = await getPortalCatalogOrder(orderId)
+        if (stale || version !== orderVersion.current) return
+        hasLoaded = true
+        setOrder(data)
+        setLoadError(null)
+        if (["Completed", "Rejected", "Cancelled"].includes(data.status)) {
+          window.clearInterval(pollingTimer.current)
+        }
+      } catch (error) {
+        if (!stale && !hasLoaded) {
+          setLoadError(error instanceof Error ? error.message : t("apiErrors.loadPortalOrder"))
+        }
+      } finally {
+        inFlight = false
+        if (!stale) setLoading(false)
+      }
+    }
+    const refreshVisible = () => { void refresh() }
+    pollingTimer.current = window.setInterval(refreshVisible, 15000)
+    window.addEventListener("focus", refreshVisible)
+    document.addEventListener("visibilitychange", refreshVisible)
+    void refresh(true)
+    return () => {
+      stale = true
+      window.clearInterval(pollingTimer.current)
+      window.removeEventListener("focus", refreshVisible)
+      document.removeEventListener("visibilitychange", refreshVisible)
+    }
   }, [orderId, subdomain, reload, t])
 
+  useEffect(() => {
+    if (order && ["Completed", "Rejected", "Cancelled"].includes(order.status)) {
+      window.clearInterval(pollingTimer.current)
+    }
+  }, [order])
+
+  const back = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="portal-record-back"
+      render={<Link to={tenantPortalPath(subdomain, "pedidos")} />}
+    >
+      <ArrowLeft aria-hidden data-icon="inline-start" />
+      {t("common.back")}
+    </Button>
+  )
+
   if (loading) {
-    return <PageContentSkeleton rows={4} />
+    return (
+      <div className="portal-record-detail space-y-4">
+        {back}
+        <PageContentSkeleton rows={4} />
+      </div>
+    )
   }
 
   if (loadError || !order) {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-destructive">
-          {loadError ?? t("apiErrors.loadPortalOrder")}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setReload((value) => value + 1)
-          }}
-        >
-          {t("catalog.retry")}
-        </Button>
+      <div className="portal-record-detail space-y-4">
+        {back}
+        <div role="alert" className="space-y-4">
+          <p className="text-sm text-destructive">
+            {loadError ?? t("apiErrors.loadPortalOrder")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setReload((value) => value + 1)
+            }}
+          >
+            {t("catalog.retry")}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -84,92 +176,93 @@ export function PortalOrderDetailPage() {
     partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
   })
 
+  function trackOrder() {
+    const tracking = document.getElementById("portal-order-tracking")
+    tracking?.focus({ preventScroll: true })
+    tracking?.scrollIntoView?.({ behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" })
+  }
+
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        render={<Link to={tenantPortalPath(subdomain, "pedidos")} />}
-      >
-        {t("common.back")}
-      </Button>
+    <div className="portal-record-detail space-y-4">
+      {back}
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">
-            {order.displayNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">{totalLabel}</p>
-        </div>
-        <Badge variant={catalogOrderStatusBadgeVariant(order.status)}>
-          {t(`catalog.status.${order.status}`)}
-        </Badge>
-      </div>
-
-      <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
-        const next = await cancelPortalCatalogOrder(order.id)
-        setOrder((current) => current?.id === next.id ? next : current)
-      }} />
-
-      {order.customerNote ? (
-        <p className="text-sm text-muted-foreground">
-          {t("catalog.orders.customerNote")}: {order.customerNote}
-        </p>
+      {successIdentity === identity && order.status !== "Cancelled" && order.status !== "Rejected" ? (
+        <PortalOrderSuccess status={order.status} number={order.orderNumber} catalogTo={tenantPortalPath(subdomain, "catalogo")} onTrack={trackOrder} onDismiss={() => {
+          try {
+            sessionStorage.removeItem(`portal-order-just-created:${identity}`)
+          } catch {
+            // Dismiss for this mounted page even if browser storage is blocked.
+          }
+          setSuccessIdentity(null)
+        }} />
       ) : null}
 
-      <ul className="divide-y rounded-xl border border-border">
-        {order.items.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center justify-between gap-2 px-4 py-3 text-sm transition-colors duration-150 ease-out hover:bg-muted/40"
-          >
-            <span className="min-w-0 break-words">
-              {item.productName} × {item.quantity}
-            </span>
-            <span className="shrink-0 font-medium tabular-nums">
-              {formatCatalogMoney(item.subTotal, item.currency, i18n.language) ??
-                t("catalog.priceOnRequest")}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <section className="portal-record-panel space-y-5">
+        <div className="portal-record-panel-head">
+          <div className="space-y-1">
+            <h1>{order.displayNumber}</h1>
+            <p className="text-sm text-muted-foreground">
+              {formatCatalogDate(order.createdAt, i18n.language)}
+            </p>
+            <p className="text-sm font-medium tabular-nums">{totalLabel}</p>
+          </div>
+          <PortalStatusChip tone={catalogOrderStatusTone(order.status)}>
+            {t(`catalog.status.${order.status}`)}
+          </PortalStatusChip>
+        </div>
 
-      {order.history.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
-          <ol className="space-y-4">
-            {order.history.map((entry, index) => (
-              <li key={entry.id} className="relative flex gap-3 pl-1">
-                <div className="flex flex-col items-center">
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "size-2.5 shrink-0 rounded-full",
-                      index === 0 ? "bg-primary" : "bg-muted-foreground/40",
-                    )}
-                  />
-                  {index < order.history.length - 1 ? (
-                    <span
-                      aria-hidden
-                      className="mt-1 w-px flex-1 bg-border"
-                    />
-                  ) : null}
-                </div>
-                <div className="min-w-0 flex-1 pb-1 text-sm">
-                  <p className="font-medium">{t(`catalog.status.${entry.status}`)}</p>
-                  <p className="text-muted-foreground">
-                    {formatCatalogDate(entry.createdAt, i18n.language)}
-                  </p>
-                  {entry.reason ? (
-                    <p className="mt-1 text-muted-foreground">{entry.reason}</p>
-                  ) : null}
-                </div>
+        <PortalCancelAction key={`${subdomain}:${order.id}`} kind="orders" status={order.status} cancel={async () => {
+          const cancellationVersion = orderVersion.current
+          try {
+            const next = await cancelPortalCatalogOrder(order.id)
+            if (cancellationVersion !== orderVersion.current) return
+            orderVersion.current += 1
+            setOrder((current) => current?.id === next.id ? next : current)
+          } catch (error) {
+            if (cancellationVersion === orderVersion.current && error instanceof CatalogOrderCancelConflictError) {
+              setReload((value) => value + 1)
+            }
+            throw error
+          }
+        }} />
+
+        {order.customerNote ? (
+          <div className="space-y-1">
+            <h2 className="portal-record-section-title">
+              {t("catalog.orders.customerNote")}
+            </h2>
+            <p className="whitespace-pre-wrap break-words text-sm">
+              {order.customerNote}
+            </p>
+          </div>
+        ) : null}
+
+        <div>
+          <h2 className="portal-record-section-title">
+            {t("catalog.orders.items")}
+          </h2>
+          <ul className="portal-record-lines">
+            {order.items.map((item) => (
+              <li key={item.id} className="portal-record-line">
+                <span className="portal-record-line-name">
+                  {item.productName} × {item.quantity}
+                </span>
+                <span className="portal-record-line-amount">
+                  {formatCatalogMoney(item.subTotal, item.currency, i18n.language) ??
+                    t("catalog.priceOnRequest")}
+                </span>
               </li>
             ))}
-          </ol>
-        </section>
-      ) : null}
+          </ul>
+        </div>
+      </section>
+
+      <section id="portal-order-tracking" className="portal-record-panel portal-order-tracking" tabIndex={-1} aria-labelledby="portal-order-tracking-title">
+        <h2 id="portal-order-tracking-title" className="portal-record-section-title">
+          {t("tenantPortal.catalog.purchase.trackingTitle")}
+        </h2>
+        <PortalOrderStepper order={order} />
+      </section>
     </div>
   )
 }

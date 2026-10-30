@@ -1,27 +1,55 @@
 import { CompassIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useParams } from "react-router-dom"
+import { useOutletContext, useParams } from "react-router-dom"
 
-import { Button } from "@/components/ui/button"
-import { ICON_STROKE_WIDTH } from "@/lib/icon"
-import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
+import type { CustomerAppOutletContext } from "./CustomerAppLayout"
+import { PortalRecoveryState } from "./portal/PortalRecoveryState"
+import type { ModuleMenuItem } from "../schemas/tenantPortalSchemas"
+import { fetchTenantMenu, isCustomerSignedInForTenant, menuItemAgendaPath, tenantPortalPath } from "../services/tenantPortalService"
+
+type PortalNotFoundRouteProps = {
+  /** Set when the tenant slug itself does not exist, so "home" leaves the dead subdomain instead of looping back to it. */
+  tenantExists?: boolean
+}
 
 /** Portal-only fallback; it never redirects into the staff application. */
-export function PortalNotFoundRoute() {
+export function PortalNotFoundRoute({
+  tenantExists = true,
+}: PortalNotFoundRouteProps) {
   const { t } = useTranslation()
-  const { subdomain } = useParams<{ subdomain: string }>()
-  const home = subdomain ? tenantPortalPath(subdomain) : "/"
+  const params = useParams<{ subdomain: string }>()
+  const context = useOutletContext<Partial<CustomerAppOutletContext> | undefined>()
+  const subdomain = params.subdomain ?? context?.subdomain
+  const signedIn = Boolean(tenantExists && subdomain && isCustomerSignedInForTenant(subdomain))
+  const [loadedMenu, setLoadedMenu] = useState<{ subdomain: string; items: ModuleMenuItem[] } | null>(null)
+  const contextMenu = context?.menu
+
+  useEffect(() => {
+    if (!signedIn || !subdomain || contextMenu) return
+    let cancelled = false
+    void fetchTenantMenu(subdomain).then((items) => {
+      if (!cancelled) setLoadedMenu({ subdomain, items })
+    }).catch(() => {
+      // The recovery action remains usable when optional menu discovery fails.
+    })
+    return () => { cancelled = true }
+  }, [signedIn, subdomain, contextMenu])
+
+  const menu = contextMenu ?? (loadedMenu && loadedMenu.subdomain === subdomain ? loadedMenu.items : [])
+  const booking = signedIn ? menu.find((item) => item.isActive && item.moduleName.toLowerCase() === "rentals") : undefined
+  const home = subdomain && tenantExists ? tenantPortalPath(subdomain, signedIn ? "app" : "") : "/"
 
   return (
-    <section className="mx-auto flex min-h-64 w-full max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <CompassIcon className="size-6" strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-      </div>
-      <h1 className="text-xl font-semibold text-foreground">{t("notFound.title")}</h1>
-      <p className="text-sm text-muted-foreground">{t("notFound.description")}</p>
-      <Button size="sm" render={<Link to={home} />}>
-        {t("notFound.home")}
-      </Button>
-    </section>
+    <PortalRecoveryState
+      icon={CompassIcon}
+      title={t("notFound.title")}
+      description={t("tenantPortal.notFound.description")}
+      primaryAction={{ to: home, label: t("notFound.home") }}
+      secondaryAction={booking && subdomain ? {
+        to: menuItemAgendaPath(subdomain, booking.id),
+        label: t("tenantPortal.notFound.book"),
+      } : undefined}
+    />
   )
 }

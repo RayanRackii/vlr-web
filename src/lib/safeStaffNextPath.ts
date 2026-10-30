@@ -25,11 +25,12 @@ export function isSafeStaffNextPath(
   if (value.includes("\\") || value.includes("://")) {
     return false
   }
+  // eslint-disable-next-line no-control-regex -- Return URLs must reject control characters.
   if (/[\u0000-\u001F\u007F]/.test(value)) {
     return false
   }
 
-  const pathname = value.split("?")[0] ?? value
+  const pathname = value.split(/[?#]/)[0] ?? value
   if (!pathname.startsWith("/") || pathname === "/") {
     return false
   }
@@ -48,8 +49,23 @@ export function safeStaffNextPath(
   return isSafeStaffNextPath(value) ? value : null
 }
 
-export function staffLoginPath(nextPath: string): string {
+export function staffLoginPath(
+  nextPath: string,
+  extraParams?: Record<string, string | null | undefined>,
+): string {
+  if (!isSafeStaffNextPath(nextPath)) {
+    return "/login"
+  }
   const params = new URLSearchParams()
   params.set("next", nextPath)
+  const company = new URL(nextPath, "https://staff.invalid").searchParams.get("company")
+  if (company) {
+    params.set("company", company)
+  }
+  for (const [key, value] of Object.entries(extraParams ?? {})) {
+    if (value) {
+      params.set(key, value)
+    }
+  }
   return `/login?${params.toString()}`
 }

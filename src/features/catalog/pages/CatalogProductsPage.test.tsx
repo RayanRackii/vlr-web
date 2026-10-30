@@ -86,9 +86,9 @@ describe("CatalogProductsPage validity gate", () => {
 
   async function openCreateDialog(user: ReturnType<typeof userEvent.setup>) {
     await user.click(
-      await screen.findByRole("button", {
+      (await screen.findAllByRole("button", {
         name: i18n.t("catalog.products.create"),
-      }),
+      }))[0],
     )
     return screen.findByRole("dialog")
   }
@@ -96,6 +96,112 @@ describe("CatalogProductsPage validity gate", () => {
   function replaceValue(element: HTMLElement, value: string) {
     fireEvent.change(element, { target: { value } })
   }
+
+  it("keeps requests out of the products list", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    listRequestsMock.mockResolvedValue([{
+      id: "request-1", customerId: "customer-1", description: "Suporte para equipamento",
+      quantity: 2, note: "Para sábado", status: "Submitted", createdAt: "2026-10-27T14:10:00Z", files: [],
+    }])
+    renderPage()
+    await screen.findByText(PRODUCT.name)
+    expect(screen.queryByText("Suporte para equipamento")).not.toBeInTheDocument()
+    expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
+  })
+
+  it("shows read-only requests in their own view with the existing loader", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    listRequestsMock.mockResolvedValue([{
+      id: "request-1", customerId: "customer-1", description: "Suporte para equipamento",
+      quantity: 2, note: "Para sábado", status: "Submitted", createdAt: "2026-10-27T14:10:00Z", files: [],
+    }])
+    render(
+      <MemoryRouter initialEntries={["/catalogo/solicitacoes"]}>
+        <TestPermissionProvider permissions={["catalog.products.read"]}>
+          <CatalogProductsPage view="requests" />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByText("Suporte para equipamento")).toBeInTheDocument()
+    expect(screen.getByRole("table", { name: i18n.t("catalog.requests.title") })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: new RegExp(i18n.t("catalog.requests.title")) })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.products.create") })).not.toBeInTheDocument()
+    expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
+  })
+
+  it("searches loaded products by name or code without reloading data", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "second", name: "Garrafa", code: "BEB-001" }])
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("Garrafa")
+    const search = screen.getByRole("searchbox", { name: i18n.t("catalog.staff.productsSearch") })
+    await user.type(search, "beb-001")
+    expect(screen.getByText("Garrafa")).toBeInTheDocument()
+    expect(screen.queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+    await user.clear(search)
+    expect(screen.getByText(PRODUCT.name)).toBeInTheDocument()
+    await user.type(search, "does not exist")
+    expect(screen.getByText(i18n.t("catalog.staff.noResults"))).toBeInTheDocument()
+  })
+
+  it("filters active products separately from inactive products in the toolbar", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }])
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("Item inativo")
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.columns.status") }))
+    await user.selectOptions(screen.getByRole("combobox", { name: i18n.t("catalog.products.columns.status") }), "true")
+    expect(screen.getByText(PRODUCT.name)).toBeInTheDocument()
+    expect(screen.queryByText("Item inativo")).not.toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("pins product actions on tablets and keeps editing available", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage()
+    const edit = await screen.findByRole("button", { name: i18n.t("common.edit") })
+    const actions = edit.closest("td")
+    const header = screen.getByRole("columnheader", { name: i18n.t("catalog.products.columns.actions") })
+    expect(actions).toHaveClass("md:max-lg:sticky", "md:max-lg:right-0", "md:max-lg:bg-card")
+    expect(header).toHaveClass("md:max-lg:right-0")
+    await user.click(edit)
+    expect(within(await screen.findByRole("dialog")).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue(PRODUCT.name)
+  })
+
+  it.each(["pt-BR", "en", "es"])("shows no errors on open and explains a blurred name beside the field in %s", async (locale) => {
+    await i18n.changeLanguage(locale)
+    try {
+      const user = userEvent.setup()
+      renderPage()
+      const dialog = await openCreateDialog(user)
+      const message = i18n.t("catalog.products.validation.nameRequired")
+      const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
+      expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument()
+      expect(name).toHaveAttribute("aria-invalid", "false")
+      const files = within(dialog).getByText(i18n.t("catalog.products.files.title"))
+      expect(files).toBeVisible()
+      expect(within(dialog).getByLabelText(i18n.t("catalog.products.files.select"))).toBeEnabled()
+      await user.click(name)
+      await user.tab()
+      expect(within(dialog).getAllByText(message)).toHaveLength(1)
+      expect(name.closest('[data-slot="form-item"]')).toHaveTextContent(message)
+      expect(name).toHaveAttribute("aria-invalid", "true")
+      expect(name).toHaveAccessibleDescription(message)
+      await user.type(name, "Produto de teste")
+      expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
+      expect(name).toHaveAttribute("aria-invalid", "false")
+      await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
+      const reopened = await openCreateDialog(user)
+      expect(within(reopened).queryByText(message)).not.toBeInTheDocument()
+      expect(within(reopened).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("")
+    } finally {
+      await i18n.changeLanguage("pt-BR")
+    }
+  })
 
   it("keeps Salvar disabled until the product schema passes and leaves Cancelar and Fechar free", async () => {
     const user = userEvent.setup()

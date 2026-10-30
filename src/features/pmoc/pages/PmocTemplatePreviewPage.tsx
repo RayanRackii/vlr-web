@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft } from "lucide-react"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -64,6 +65,7 @@ export function PmocTemplatePreviewPage() {
   )
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  useBreadcrumbTitle(!isLoading && !loadError ? template?.name : undefined)
   const [isCloneOpen, setIsCloneOpen] = useState(false)
   const [units, setUnits] = useState<Unit[]>([])
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
@@ -75,9 +77,11 @@ export function PmocTemplatePreviewPage() {
     () =>
       createFromTemplateFormSchema({
         unitRequired: t("pmoc.create.validation.unitRequired"),
+        nameTooLong: t("common.validation.maxLength", { count: 200 }),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
         intervalInvalid: t("pmoc.scheduling.intervalInvalid"),
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
+        firstDueInvalid: t("common.datePicker.invalid"),
       }),
     [t],
   )

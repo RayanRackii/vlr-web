@@ -183,6 +183,16 @@ export function usePermissions(): PermissionContextValue {
   return context
 }
 
+/**
+ * Non-throwing variant for chrome that may mount outside a PermissionProvider
+ * (e.g. the staff header bell rendered by AppShell in isolation tests). Returns
+ * null when there is no provider so the caller can degrade quietly.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useOptionalPermissions(): PermissionContextValue | null {
+  return useContext(PermissionContext)
+}
+
 export function useCan(permission: string): boolean {
   const { can } = usePermissions()
   return can(permission)

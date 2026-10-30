@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+import { ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -5,6 +7,7 @@ import { Label } from "@/components/ui/label"
 export const DIRECTORY_PAGE_SIZE = 20
 
 type PeopleSearchFormProps = {
+  actions?: ReactNode
   id: string
   label: string
   placeholder: string
@@ -16,6 +19,7 @@ type PeopleSearchFormProps = {
 }
 
 export function PeopleSearchForm({
+  actions,
   id,
   label,
   placeholder,
@@ -27,15 +31,17 @@ export function PeopleSearchForm({
 }: PeopleSearchFormProps) {
   return (
     <form
-      className="flex flex-col gap-2 sm:flex-row sm:items-end"
+      className="people-search-card"
       onSubmit={(event) => {
         event.preventDefault()
         onSubmit()
       }}
     >
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <Label htmlFor={id}>{label}</Label>
+      <div className="people-search-input">
+        <Label className="sr-only" htmlFor={id}>{label}</Label>
+        <Search aria-hidden strokeWidth={1.75} className="people-search-icon" />
         <Input
+          className="touch-target"
           id={id}
           value={value}
           placeholder={placeholder}
@@ -49,9 +55,10 @@ export function PeopleSearchForm({
           </p>
         ) : null}
       </div>
-      <Button type="submit" variant="outline" size="sm">
+      <Button className="people-search-submit" type="submit" variant="outline" size="sm">
         {actionLabel}
       </Button>
+      {actions}
     </form>
   )
 }
@@ -82,8 +89,8 @@ export function PeoplePager({
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
 
   return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-xs text-muted-foreground">{summary}</p>
+    <div className="people-pager">
+      <p className="min-w-0 text-xs tabular-nums text-muted-foreground">{summary}</p>
       <div className="flex gap-2">
         <Button
           type="button"
@@ -94,7 +101,8 @@ export function PeoplePager({
             onPageChange(page - 1)
           }}
         >
-          {previousLabel}
+          <ChevronLeft aria-hidden strokeWidth={1.75} />
+          <span className="sr-only">{previousLabel}</span>
         </Button>
         <Button
           type="button"
@@ -105,7 +113,8 @@ export function PeoplePager({
             onPageChange(page + 1)
           }}
         >
-          {nextLabel}
+          <ChevronRight aria-hidden strokeWidth={1.75} />
+          <span className="sr-only">{nextLabel}</span>
         </Button>
       </div>
     </div>

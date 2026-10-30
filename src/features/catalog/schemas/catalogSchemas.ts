@@ -1,4 +1,5 @@
 import { z } from "zod"
+import i18n from "@/lib/i18n"
 
 import {
   formatLocaleCurrency,
@@ -144,7 +145,9 @@ export type CatalogOrder = z.infer<typeof catalogOrderSchema>
 export const catalogOrderListSchema = z.array(catalogOrderSchema)
 
 export const catalogReasonFormSchema = z.object({
-  reason: z.string().trim().min(1).max(1000),
+  reason: z.string({ error: () => i18n.t("catalog.orders.reason.empty") }).trim()
+    .min(1, { error: () => i18n.t("catalog.orders.reason.empty") })
+    .max(1000, { error: () => i18n.t("catalog.orders.reason.tooLong") }),
 })
 
 export type CatalogReasonFormValues = z.infer<typeof catalogReasonFormSchema>

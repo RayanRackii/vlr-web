@@ -16,7 +16,16 @@
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
     "refreshing": "Updating...",
+    "validation": {
+      "maxLength": "Use at most {{count}} characters."
+    },
     "datePicker": {
+      "required": "Enter the date.",
+      "min": "Enter a date on or after {{date}}.",
+      "max": "Enter a date on or before {{date}}.",
+      "invalid": "Enter a valid date.",
+      "format": "mm/dd/yyyy",
+      "open": "Open calendar",
       "today": "Today",
       "clear": "Clear",
       "previousMonth": "Previous month",
@@ -185,7 +194,7 @@
     }
   },
   "auth": {
-    "sessionExpired": "Session expired. Sign in again.",
+    "sessionExpired": "Your session expired. Sign in again to continue.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "brandPanel": {
@@ -226,13 +235,21 @@
         "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
         "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
       },
+      "pickerSearch": "Search environments by name or subdomain",
+      "pickerEmpty": "No environments available.",
+      "pickerNoResults": "No environments found. Try another name or subdomain.",
+      "pickerLoading": "Loading your environments...",
+      "passwordHint": "Use at least 8 characters.",
+      "confirmPasswordHint": "Repeat your new password to confirm.",
       "pickerTitle": "Choose an environment",
       "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
       "pickerSubmit": "Continue",
       "pickerSubmitting": "Opening...",
       "pickerError": "Could not switch environments. Please try again.",
       "membershipError": "Could not load your environments. Please try again.",
-      "membershipRetry": "Try again"
+      "membershipErrorHint": "This may be a temporary connection issue. Try again or sign out and sign back in.",
+      "membershipRetry": "Try again",
+      "membershipSignOut": "Sign out"
     },
     "login": {
       "invalidCredentials": "Invalid email or password.",
@@ -269,6 +286,8 @@
       "resetCompanyFormat": "Use lowercase letters, numbers, and hyphens only (e.g. acme or rolvix-sp)."
     },
     "resetPassword": {
+      "success": "Password updated successfully.",
+      "redirecting": "Password updated, redirecting…",
       "title": "New password",
       "subtitle": "Set a new password to access the platform.",
       "loading": "Validating link…",
@@ -287,6 +306,34 @@
     }
   },
   "tenantPortal": {
+    "redesign": {
+      "resourceTimes": "Times for {{name}}",
+      "greeting": "Welcome",
+      "greetingName": "Hello, {{name}}",
+      "title": "Book a time",
+      "subtitle": "Choose a day, a resource or space, and a time.",
+      "subtitleTenant": "Choose a day, a resource or space, and a time at {{tenant}}.",
+      "customerPortal": "Customer portal",
+      "customer": "Customer",
+      "navigation": "Bookings and purchases",
+      "bookingInfo": "Booking information",
+      "nextBooking": "Your next booking",
+      "noNextBooking": "You do not have an upcoming booking yet.",
+      "viewBookings": "View my bookings",
+      "legend": "Legend",
+      "legend_free": "Available times",
+      "legend_few": "Last available times",
+      "legend_full": "Fully booked or occupied",
+      "legend_selected": "Your selection",
+      "tip": "Tip",
+      "tipText": "Select a day and a period to find your time. Availability may change until confirmation.",
+      "emptyTitle": "No available times here",
+      "emptyHelp": "There are no available times for this selection. Try another day or period.",
+      "view": "Resource view",
+      "status_free": "Available",
+      "status_few": "Last times",
+      "status_full": "Fully booked"
+    },
     "sessionExpired": "Session expired",
     "defaultTagline": "Sign in to book and get updates.",
     "authPanel": {
@@ -336,6 +383,8 @@
     },
     "login": {
       "title": "Sign in",
+      "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
+      "emailPlaceholder": "you@email.com",
       "subtitle": "Use your email and password for this company.",
       "submit": "Sign in",
       "submitting": "Signing in...",
@@ -349,6 +398,10 @@
       "noAccount": "No account yet?",
       "registerLink": "Register",
       "forgotPassword": "Forgot password"
+    },
+    "notFound": {
+      "description": "We couldn’t find the page you’re looking for.",
+      "book": "Book a time"
     },
     "passwordReset": {
       "requestTitle": "Forgot password",
@@ -373,8 +426,9 @@
       "resendToast": "If an account exists for this email, we sent a new code.",
       "backToLogin": "Back to sign in",
       "rateLimited": "Too many attempts. Try again shortly.",
-      "invalidLink": "Invalid or expired link. Request a new code.",
-      "requestNewLink": "Request a new code"
+      "invalidLinkTitle": "Invalid or expired link",
+      "invalidLink": "This link can no longer be used to reset your password.",
+      "requestNewLink": "Request a new link"
     },
     "register": {
       "title": "Create account",
@@ -392,7 +446,10 @@
       "requiredMark": "required",
       "blockedHint": "Fill in the required fields to continue.",
       "photoRequired": "Upload the profile photo to continue.",
-      "duplicateCustomer": "An account with this information already exists."
+      "duplicateCustomer": "An account with this information already exists.",
+      "duplicateEmail": "An account with this email already exists.",
+      "duplicateDocument": "An account with this CPF/CNPJ already exists.",
+      "duplicatePhone": "An account with this phone number already exists."
     },
     "verify": {
       "title": "Confirm email",
@@ -421,6 +478,25 @@
       "signOut": "Sign out",
       "goLogin": "Go to sign in",
       "goAgenda": "Open schedule"
+    },
+    "home": {
+      "title": "Home",
+      "subtitle": "Everything you can do at {{tenant}}, in one place.",
+      "emptySubtitle": "Welcome to the {{tenant}} portal.",
+      "emptyDescription": "{{tenant}} hasn't set up any portal items yet. As soon as there's something new, it will show up here.",
+      "heroEyebrow": "Start here",
+      "heroTitle": "What would you like to do today?",
+      "heroSubtitle": "Book a time or browse the {{tenant}} catalog — all in one place.",
+      "heroSubtitleCatalog": "Browse the {{tenant}} catalog and send your request in a few taps.",
+      "quickActions": "Quick actions",
+      "open": "Open",
+      "descReservar": "Pick the day, the resource and the time that suits you.",
+      "descCatalog": "See what's available and build your order.",
+      "descOrders": "Track your orders and the status of each one.",
+      "descRequests": "Request an item that isn't in the catalog yet.",
+      "descReservations": "Review and manage your bookings.",
+      "tipTitle": "Tip",
+      "tipText": "Use the sidebar anytime to move between bookings and purchases."
     },
     "agenda": {
       "title": "Schedule",
@@ -523,10 +599,15 @@
       "cancelEffectiveCutoff_one": "Cancellation cutoff: {{count}} hour before the start.",
       "cancelEffectiveCutoff_other": "Cancellation cutoff: {{count}} hours before the start.",
       "cancelCutoffPassed": "The cancellation cutoff of {{hours}} hours before the start has passed.",
+      "cancelCutoffBookingWarning_one": "Heads up: this booking starts inside the {{count}} hour cancellation cutoff and cannot be canceled once confirmed.",
+      "cancelCutoffBookingWarning_other": "Heads up: this booking starts inside the {{count}} hour cancellation cutoff and cannot be canceled once confirmed.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duration",
-      "yourReservationUnits": "Your reservation · {{count}} of {{total}} units",
-      "yourReservationUnitsReason": "To book more units, cancel and book again with the quantity you want.",
+      "yourReservationUnits": "Your booking · you hold {{count}} of the {{total}} units",
+      "yourReservationUnitsReason": "To change the quantity, cancel and book again; availability depends on other bookings.",
+      "chooseTimeFirst": "Choose a time first.",
+      "chooseSpaceFirst": "Choose a space to continue.",
+      "quantityMaxReached": "Maximum available at this time: {{count}}.",
       "cancelCutoffReason": "Cancellation window closed",
       "days": "Days",
       "daysSummary": "{{count}} days · until {{until}}",
@@ -536,7 +617,7 @@
       "reservationDaysSuffix_other": "{{count}} days",
       "quoteFixedLine_one": "{{price}} (fixed total)",
       "quoteFixedLine_other": "{{price}} · {{count}} units (fixed total)",
-      "quoteUnitMultiplier": "× {{count}}"
+      "quoteUnitMultiplier": "× {{formatted}}"
     },
     "menu": {
       "empty": "No modules available.",
@@ -546,6 +627,8 @@
     "profile": {
       "title": "My Profile",
       "subtitle": "Update your name and photo. Email, phone, account type and document cannot be changed here.",
+      "eyebrow": "Account",
+      "accountHint": "To change these details, contact the {{tenant}} team.",
       "save": "Save",
       "saving": "Saving...",
       "saved": "Profile updated.",
@@ -561,6 +644,7 @@
       "hideSensitive": "Hide {{label}}",
       "address": "Address",
       "sections": {
+        "personal": "Personal details",
         "account": "Account details"
       },
       "validation": {
@@ -569,13 +653,30 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Cart and help",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "searchLabel": "Search products",
+      "emptyDescription": "{{tenant}} has not published any catalog items yet. Need something? Send a request and the team will reply here.",
+      "filteredEmptyDescription": "Try another search or adjust the filters. If you cannot find what you need, request a product from the team.",
+      "cartEmptyHint": "Empty for now. Items you add will appear here.",
+      "howItWorks": "How it works",
+      "howItWorksDescription": "Add items to your cart, review the quantities and submit your order. Then track its progress in Orders.",
+      "filtersLabel": "Catalog filters",
+      "categoryLabel": "Category",
+      "allCategories": "All",
+      "tagsLabel": "Tags",
+      "tagsHint": "Matches all selected tags.",
+      "clearFilters": "Clear filters",
       "navCatalog": "Catalog",
       "navOrders": "Orders",
       "navRequests": "My requests",
       "title": "Catalog",
-      "subtitle": "Products available to request.",
+      "subtitle": "Explore the available items and place your order.",
       "searchPlaceholder": "Search by name or code",
-      "empty": "No active products right now.",
+      "empty": "There are no products for sale yet",
       "searchEmpty": "No products found for \"{{term}}\"",
       "priceOnRequest": "On request",
       "quantity": "Quantity",
@@ -597,6 +698,62 @@
       "submitOrder": "Submit order",
       "submitting": "Submitting...",
       "orderSubmitted": "Order submitted.",
+      "purchase": {
+        "reason": "Reason: {{reason}}",
+        "errorTitle": "We couldn’t submit your order",
+        "retry": "Try again",
+        "dismiss": "Dismiss",
+        "successTitle": "Order received",
+        "orderNumber": "Order #{{number}}",
+        "successCopy": "Your order is with us. Follow the next steps here.",
+        "nextTitle": "What happens next",
+        "nextCopy": "The team will review your items and update your order’s progress.",
+        "track": "Track order",
+        "continueShopping": "Continue shopping",
+        "progress": {
+          "Approved": {
+            "successTitle": "Order confirmed",
+            "successCopy": "Your order has been approved and confirmed.",
+            "nextCopy": "The next step is preparing your items. Follow the progress here."
+          },
+          "Preparing": {
+            "successTitle": "Order being prepared",
+            "successCopy": "The team is preparing the items in your order.",
+            "nextCopy": "Follow the progress here. The status will update when your order is ready."
+          },
+          "Ready": {
+            "successTitle": "Order ready",
+            "successCopy": "The items in your order are ready.",
+            "nextCopy": "Follow the team’s instructions to receive your items."
+          },
+          "Completed": {
+            "successTitle": "Order completed",
+            "successCopy": "Your order is complete. Thank you!",
+            "nextCopy": "Thank you for choosing us. You can review your order details here."
+          }
+        },
+        "trackingTitle": "Order tracking",
+        "steps": {
+          "Requested": "Received",
+          "Approved": "Confirmed",
+          "Preparing": "Preparing",
+          "Ready": "Ready",
+          "Completed": "Completed"
+        },
+        "terminal": {
+          "Cancelled": "Order canceled",
+          "Rejected": "Order declined"
+        },
+        "stepCopy": {
+          "Requested": "We received your order for review.",
+          "Approved": "Your items have been reviewed and your order confirmed.",
+          "Preparing": "The team is preparing your items.",
+          "Ready": "Your order is ready for the next step.",
+          "Completed": "Order completed. Thank you for choosing us.",
+          "Cancelled": "The order has been closed. See the history for details.",
+          "Rejected": "We couldn’t fulfill this order. See the history for details."
+        }
+      },
       "requestCta": "Request a product",
       "requestTitle": "Request a product",
       "requestSubtitle": "Describe what you need. After you submit, the request is listed in My requests.",
@@ -612,7 +769,9 @@
       "cancelOrder": "Cancel order",
       "cancelling": "Canceling...",
       "orderCancelled": "Order canceled.",
+      "orderNoLongerCancellable": "This order can no longer be cancelled.",
       "lineSubtotal": "Subtotal",
+      "remove": "Remove",
       "removeItem": "Remove {{name}}",
       "cartTotal": "Total",
       "fromAmount": "From {{amount}}",
@@ -642,11 +801,36 @@
       "cancelRequestBody": "Confirm cancellation of this request. This action cannot be undone.",
       "requestCancelled": "Request canceled.",
       "cancelRequestError": "Could not cancel the request.",
-      "unitPrice": "{{price}} / un"
+      "unitPrice": "{{price}} / unit",
+      "ordersEmptyDescription": "When you place an order from the {{tenant}} catalog, it shows up here so you can track it.",
+      "ordersLoading": "Loading orders...",
+      "orderCardLabel": "Order {{number}}",
+      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here."
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
   "catalog": {
+    "staff": {
+      "allStatuses": "All statuses",
+      "productsSearch": "Search by name or code",
+      "ordersSearch": "Search by number or customer",
+      "loading": "Loading sales…",
+      "noResults": "No results found.",
+      "adjustFilters": "Adjust the search or filters to see other results.",
+      "orderSummary": "Order summary",
+      "noNote": "No note",
+      "empty": {
+        "products": "Create the first product so customers can place orders.",
+        "orders": "Customer orders appear here as soon as they are placed.",
+        "requests": "When a customer requests an item outside the catalog, it appears here."
+      },
+      "kpis": {
+        "Requested": "Requested",
+        "Approved": "Approved",
+        "Preparing": "Preparing",
+        "Ready": "Ready"
+      }
+    },
     "retry": "Try again",
     "priceOnRequest": "On request",
     "knownPlusOnRequest": "{{amount}} · On request",
@@ -813,6 +997,8 @@
         "rejectTitle": "Reject order",
         "cancelTitle": "Cancel order",
         "required": "A reason is required. The customer is notified only when external channels are enabled.",
+        "empty": "Enter a reason.",
+        "tooLong": "Use no more than 1000 characters.",
         "label": "Reason",
         "confirm": "Confirm"
       }
@@ -862,9 +1048,63 @@
       "inAppAlwaysOn": "In-app always on",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "toastSaved": "Channel updated.",
+      "moduleTabs": "Notification modules",
       "modules": {
-        "catalog": "Catalog & Orders",
+        "catalog": "Catalog and orders",
         "rentals": "Rentals"
+      }
+    },
+    "inbox": {
+      "items": {
+        "reservationConfirmed": "Reservation confirmed.",
+        "reservationPendingDeposit": "Reservation awaiting deposit.",
+        "reservationCompleted": "Reservation completed.",
+        "reservationReminder": "Reservation reminder.",
+        "reservationCanceled": "Reservation cancelled.",
+        "orderCreated": "New order.",
+        "orderApproved": "Order approved.",
+        "orderReady": "Order ready.",
+        "orderRejected": "Order rejected.",
+        "orderCancelledBySupplier": "Order cancelled by the supplier.",
+        "orderCancelledByCustomer": "Order cancelled by the customer."
+      },
+      "title": "Notifications",
+      "ariaLabelNone": "Notifications",
+      "ariaLabel_one": "Notifications: {{count}} unread",
+      "ariaLabel_other": "Notifications: {{count}} unread",
+      "markAll": "Mark all as read",
+      "loadError": "Could not load notifications.",
+      "readFailed": "Could not mark notifications as read.",
+      "allReadSuccess": "All notifications marked as read.",
+      "empty": "You're all caught up. No new notifications.",
+      "loading": "Loading notifications…",
+      "recent": "Recent",
+      "countOverflow": "99+",
+      "groups": {
+        "fallback_one": "{{count}} notification — {{eventType}}",
+        "fallback_other": "{{count}} notifications — {{eventType}}",
+        "orderCreated_one": "{{count}} new order",
+        "orderCreated_other": "{{count}} new orders",
+        "orderApproved_one": "{{count}} order approved",
+        "orderApproved_other": "{{count}} orders approved",
+        "orderReady_one": "{{count}} order ready",
+        "orderReady_other": "{{count}} orders ready",
+        "orderRejected_one": "{{count}} order rejected",
+        "orderRejected_other": "{{count}} orders rejected",
+        "orderCancelledBySupplier_one": "{{count}} order cancelled",
+        "orderCancelledBySupplier_other": "{{count}} orders cancelled",
+        "orderCancelledByCustomer_one": "{{count}} order cancelled by the customer",
+        "orderCancelledByCustomer_other": "{{count}} orders cancelled by customers",
+        "reservationConfirmed_one": "{{count}} new reservation confirmed",
+        "reservationConfirmed_other": "{{count}} new reservations confirmed",
+        "reservationPendingDeposit_one": "{{count}} reservation awaiting deposit",
+        "reservationPendingDeposit_other": "{{count}} reservations awaiting deposit",
+        "reservationCanceled_one": "{{count}} reservation cancelled",
+        "reservationCanceled_other": "{{count}} reservations cancelled",
+        "reservationCompleted_one": "{{count}} reservation completed",
+        "reservationCompleted_other": "{{count}} reservations completed",
+        "reservationReminder_one": "{{count}} reservation reminder",
+        "reservationReminder_other": "{{count}} reservation reminders"
       }
     }
   },
@@ -904,7 +1144,7 @@
         "maintenance": "Maintenance",
         "documents": "Documents",
         "reports": "Reports",
-        "reservations": "Reservations",
+        "reservations": "Bookings",
         "multiUnit": "Multi-unit",
         "notifications": "Notifications",
         "integrations": "Integrations"
@@ -1148,31 +1388,35 @@
     }
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "assets": "Assets",
-    "assetsInventory": "Resources",
-    "assetsCategories": "Types",
-    "pmoc": "PMOC",
-    "pmocPlans": "My PMOCs",
-    "pmocLibrary": "Rolvix Library",
+    "breadcrumbLabel": "Breadcrumb",
+    "details": "Details",
+    "backTo": "Back to {{page}}",
+    "dashboard": "Home",
+    "assets": "Equipment",
+    "assetsInventory": "Equipment",
+    "assetsCategories": "Equipment types",
+    "pmoc": "Maintenance plans",
+    "pmocPlans": "My plans",
+    "pmocLibrary": "Rolvix library",
     "pmocTemplatePreview": "Template",
     "pmocPlanDetail": "Plan",
-    "pmocNew": "New custom",
-    "workOrders": "Work Orders",
-    "registrationFields": "Portal registration",
-    "moduleMenu": "Portal menu",
-    "schedule": "Schedule",
-    "layout": "Layout",
-    "reservations": "Reservations",
-    "bookingPolicy": "Booking policy",
+    "pmocNew": "New plan",
+    "workOrders": "Work orders",
+    "registrationFields": "Sign-up form",
+    "moduleMenu": "Customer menu",
+    "schedule": "Hours",
+    "layout": "Space map",
+    "reservations": "Bookings",
+    "bookingPolicy": "Booking rules",
     "rentalsResources": "Resources",
-    "catalog": "Catalog & Orders",
+    "catalog": "Sales",
     "catalogProducts": "Products",
     "catalogOrders": "Orders",
-    "catalogNotifications": "Catalog notifications",
-    "taxonomy": "Categories and tags",
-    "notifications": "Notifications",
-    "peopleAccess": "People and access",
+    "catalogRequests": "Requests",
+    "catalogNotifications": "Sales alerts",
+    "taxonomy": "Categories & tags",
+    "notifications": "General alerts",
+    "peopleAccess": "People & access",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
     "adminUsers": "Users",
@@ -1183,15 +1427,668 @@
     "collapseMenu": "Collapse menu",
     "expandMenu": "Expand menu",
     "sections": {
-      "overview": "Overview",
+      "overview": "Home",
       "peoplePortal": "People & portal",
       "operations": "Operations",
-      "platform": "Platform"
+      "platform": "Platform",
+      "bookings": "Bookings",
+      "maintenance": "Maintenance",
+      "sales": "Sales"
     },
     "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
-    "catalogSettings": "Settings"
+    "catalogSettings": "Sales settings",
+    "pmocCustom": "Start custom plan",
+    "pmocTooltip": "Maintenance plans"
+  },
+  "moduleIntro": {
+    "title": "Introduction",
+    "shortcuts": "Shortcuts",
+    "relatedModules": "Related modules",
+    "open": "About {{module}}",
+    "expand": "Expand {{module}}",
+    "collapse": "Collapse {{module}}",
+    "modules": {
+      "overview": {
+        "summary": "See a summary of your business and find what needs your attention.",
+        "how1": "Check the indicators available to your access level.",
+        "how2": "Open screens from the menu to see details and take action.",
+        "how3": "Bookings, maintenance, sales and people organize the other areas of your business."
+      },
+      "bookings": {
+        "summary": "Organize what customers can book, available hours and their bookings.",
+        "how1": "Add bookable resources and arrange how they appear on the space map.",
+        "how2": "Set available hours. Track requests in Bookings and adjust limits in Booking rules.",
+        "how3": "People & portal brings customers together. Maintenance covers equipment; Sales handles products and orders separately."
+      },
+      "maintenance": {
+        "summary": "Organize equipment that needs care, maintenance plans and work orders.",
+        "how1": "Add items to maintain in Equipment. Equipment types groups those items; Resources under Bookings defines what customers can book.",
+        "how2": "Use Maintenance plans to organize preventive care and Work orders to track the work.",
+        "how3": "Consider maintenance needs when organizing resource availability in Bookings."
+      },
+      "sales": {
+        "summary": "Organize products and track orders placed by customers.",
+        "how1": "Add products and track orders in the Sales screens.",
+        "how2": "Adjust sales settings and order alerts in their respective screens.",
+        "how3": "People & portal organizes customers and portal access. Products and orders are separate from resources and bookings."
+      },
+      "peoplePortal": {
+        "summary": "Manage people, staff access and the customer portal experience.",
+        "how1": "Track staff and customers in People & access. The sign-up form defines the details requested during registration.",
+        "how2": "Organize the customer menu, categories and tags, and general alerts in the available screens.",
+        "how3": "The portal gives access to resources from Bookings and products from Sales, according to the enabled modules."
+      },
+      "pmoc": {
+        "summary": "Plan preventive care for equipment and keep track of your plans.",
+        "how1": "View existing maintenance plans in My plans.",
+        "how2": "In New plan, start a custom plan or use a template from the Rolvix library.",
+        "how3": "Plans relate to equipment and work orders in Maintenance."
+      },
+      "platform": {
+        "summary": "Manage customer environments and shared platform records.",
+        "how1": "Browse customers and open the environment you need to manage.",
+        "how2": "Manage platform users and equipment families in the available screens.",
+        "how3": "Inside an environment, the menu shows the areas available to that customer."
+      }
+    }
+  },
+  "moduleGuide": {
+    "roadmapTitle": "Guide roadmap",
+    "progressShort": "of {{total}}",
+    "soundLabel": "Sound",
+    "soundToggle": "Reward sounds",
+    "markDone": "Mark as done",
+    "reset": "Reset guide",
+    "replay": "Replay guide",
+    "timeEstimate": "~{{minutes}} min",
+    "nextAction": {
+      "eyebrow": "Recommended next action",
+      "goToScreen": "Go to the screen",
+      "allDone": "Guide completed!",
+      "allDoneDescription": "All steps done — great work!"
+    },
+    "reward": {
+      "title": "Nice!",
+      "stepProgress": "Step {{completed}} of {{total}} completed.",
+      "allDone": "You completed every step of the guide.",
+      "announcement": "Step completed: {{step}}."
+    },
+    "roadmap": {
+      "stepLabel": "Step {{index}} of {{total}}: {{title}} — {{state}}",
+      "state": {
+        "done": "completed",
+        "active": "current step",
+        "todo": "pending"
+      }
+    },
+    "lesson": {
+      "chip": "Mini-lesson",
+      "whyTitle": "Why this matters",
+      "seeInPractice": "See it in practice",
+      "opens": "Opens: {{target}}",
+      "allDoneChip": "All set",
+      "allDoneHeadline": "You made it through the whole {{module}} guide",
+      "allDoneBody": "Come back to any step in the roadmap above whenever you like — it stays saved. Use the shortcuts below to get straight to work."
+    },
+    "demo": {
+      "weekly": {
+        "title": "Interactive example — adjust and watch the schedule change",
+        "resourceHours": "Resource hours",
+        "customerView": "What the customer sees in the schedule",
+        "morning": {
+          "label": "Morning",
+          "range": "08:00–12:00"
+        },
+        "afternoon": {
+          "label": "Afternoon",
+          "range": "14:00–18:00"
+        },
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat",
+          "Sun"
+        ],
+        "total": "{{count}} bookable slots per week",
+        "empty": "No open hours — the customer sees no slots to book."
+      },
+      "freq": {
+        "title": "Interactive example — choose the frequency",
+        "planFrequency": "Plan frequency",
+        "upcoming": "Upcoming generated orders",
+        "description": "The frequency sets how often Rolvix creates a new work order for the equipment.",
+        "options": {
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "biannual": "Biannual"
+        },
+        "orderTitle": "Work order",
+        "orderCaption": "filter change and inspection",
+        "months": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ]
+      },
+      "resource": {
+        "title": "Registration preview",
+        "youFill": "You fill in",
+        "nameLabel": "Resource name",
+        "typeLabel": "Type",
+        "customerSees": "Customer sees on the map",
+        "availableCaption": "Available to book"
+      },
+      "connections": {
+        "title": "This module's connections"
+      },
+      "screen": {
+        "title": "Screen preview"
+      }
+    },
+    "lessons": {
+      "generic": {
+        "learn": {
+          "headline": "How this step works",
+          "d1": {
+            "t": "Concept",
+            "c": "What you'll set up"
+          },
+          "d2": {
+            "t": "Setup",
+            "c": "Adjust it to your business"
+          },
+          "d3": {
+            "t": "Connections",
+            "c": "How it links to other areas"
+          },
+          "d4": {
+            "t": "Ready",
+            "c": "Visible to your operation"
+          },
+          "why1": "Each step lays the groundwork for the next — follow them in order.",
+          "why2": "Setting things up carefully now avoids rework later.",
+          "why3": "Understanding the why helps you make the best decisions."
+        },
+        "visit": {
+          "headline": "See the module with real data",
+          "explanation": "The guide teaches the concept; the real screen is where the work happens. Open a module screen to recognize where everything lives and act on real data.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Where the work happens"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Your records"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Create, edit, complete"
+          },
+          "why1": "Seeing it with real data cements learning better than just reading.",
+          "why2": "You recognize where to carry out each day-to-day action.",
+          "why3": "Filters and searches speed up your routine on screen."
+        },
+        "related": {
+          "headline": "Connect this module to the rest of the business",
+          "explanation": "No module works alone. Explore a related area to see how data flows between them and expand the value of what you've already set up.",
+          "d1": {
+            "t": "This module",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "People & portal",
+            "c": "Who uses the system"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Revenue and orders"
+          },
+          "d4": {
+            "t": "Next step",
+            "c": "Expand your usage"
+          },
+          "why1": "Connecting modules avoids duplicate work across areas.",
+          "why2": "Data flows between bookings, sales, people, and maintenance.",
+          "why3": "Exploring the neighbor reveals gains you aren't using yet."
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "short": "What can be booked",
+          "headline": "How a resource becomes bookable",
+          "explanation": "A resource is anything a customer can book. Once you register it with a name, type, and capacity, it exists on the space map and is visible to book — nothing appears to the customer before this step.",
+          "d1": {
+            "t": "Resource",
+            "c": "Court, room, equipment"
+          },
+          "d2": {
+            "t": "Details",
+            "c": "Name, type, capacity"
+          },
+          "d3": {
+            "t": "Space map",
+            "c": "Where it appears"
+          },
+          "d4": {
+            "t": "Customer sees",
+            "c": "Ready to book"
+          },
+          "why1": "Without a registered resource, there's nothing to book — it's the foundation of the whole module.",
+          "why2": "Type and capacity define how the resource is shown and filtered.",
+          "why3": "Organizing it on the map helps the customer find the right space quickly.",
+          "demoName": "Court 1 — 5-a-side",
+          "demoType": "Court"
+        },
+        "learn2": {
+          "short": "When it's available",
+          "headline": "How operating hours work",
+          "explanation": "You choose the days and shifts when the resource operates. Rolvix automatically splits each shift into booking windows — and only those windows appear in the customer schedule. Change a day or shift here and the schedule changes with it.",
+          "d1": {
+            "t": "Resource",
+            "c": "Court 1"
+          },
+          "d2": {
+            "t": "Hours",
+            "c": "Open days and shifts"
+          },
+          "d3": {
+            "t": "Booking windows",
+            "c": "Split into time slots"
+          },
+          "d4": {
+            "t": "Customer schedule",
+            "c": "Bookable slots"
+          },
+          "why1": "The customer schedule shows exactly the hours you open — nothing more.",
+          "why2": "Closing a day or shift removes the matching slots right away.",
+          "why3": "Well-defined shifts prevent bookings at times you don't serve."
+        },
+        "learn3": {
+          "short": "Bookings in the business flow",
+          "headline": "Where bookings connect",
+          "explanation": "A booking rarely lives alone. It can generate a charge in Sales, stays linked to the customer in People, and respects blocks created by Maintenance. Understanding these bridges avoids schedule conflicts.",
+          "d1": {
+            "t": "Booking",
+            "c": "Customer confirms"
+          },
+          "d2": {
+            "t": "Sales",
+            "c": "Optional charge"
+          },
+          "d3": {
+            "t": "People",
+            "c": "Who booked"
+          },
+          "d4": {
+            "t": "Maintenance",
+            "c": "Blocks for repairs"
+          },
+          "why1": "Charging for the booking keeps payment and schedule in one place.",
+          "why2": "Linking the booking to the customer gives history and contact for notices.",
+          "why3": "Maintenance blocks prevent booking an unavailable resource.",
+          "c1": {
+            "t": "Sales",
+            "c": "Generate a charge when the booking is confirmed"
+          },
+          "c2": {
+            "t": "People & portal",
+            "c": "Link the booking to the customer record"
+          },
+          "c3": {
+            "t": "Maintenance",
+            "c": "Respect blocks on resources under repair"
+          }
+        },
+        "visit": {
+          "short": "See it with real data",
+          "headline": "What you see on the Bookings screen",
+          "explanation": "The guide teaches the concept; the real screen is where the work happens. In Bookings you see the day's list, filter by resource, and confirm or reschedule each request. Open the screen to recognize where everything lives.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Bookings list"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Your bookings for the day"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Confirm, reschedule"
+          },
+          "why1": "Seeing it with real data cements learning better than just reading.",
+          "why2": "You spot where to confirm, reschedule, and cancel bookings.",
+          "why3": "Filters by resource and date speed up your daily routine.",
+          "r1": {
+            "t": "Carlos Lima · Court 1",
+            "s": "Today · 18:00–19:00",
+            "tag": "Confirmed"
+          },
+          "r2": {
+            "t": "Marina Souza · Room 2",
+            "s": "Today · 19:00–20:00",
+            "tag": "Pending"
+          },
+          "r3": {
+            "t": "João Alves · Court 2",
+            "s": "Tomorrow · 08:00–09:00",
+            "tag": "Confirmed"
+          }
+        },
+        "related": {
+          "short": "Expand your usage",
+          "headline": "Where to go after Bookings",
+          "explanation": "With Bookings live, neighboring modules add value: the portal lets customers book on their own, Maintenance keeps resources in shape, and Sales organizes revenue. Choose the next step based on your priority.",
+          "d1": {
+            "t": "Bookings",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "People & portal",
+            "c": "Customers book on their own"
+          },
+          "d3": {
+            "t": "Maintenance",
+            "c": "Takes care of resources"
+          },
+          "d4": {
+            "t": "Sales",
+            "c": "Revenue from bookings"
+          },
+          "why1": "The portal cuts down calls — customers book directly, 24/7.",
+          "why2": "Preventive maintenance avoids canceling bookings over breakdowns.",
+          "why3": "Sales consolidates the revenue generated by bookings.",
+          "c1": {
+            "t": "People & portal",
+            "c": "Publish the booking link for customers"
+          },
+          "c2": {
+            "t": "Maintenance",
+            "c": "Create plans for your most-used resources"
+          },
+          "c3": {
+            "t": "Sales",
+            "c": "Track the revenue from paid bookings"
+          }
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "short": "What needs care",
+          "headline": "How equipment enters maintenance",
+          "explanation": "Equipment is any asset that needs care. With its specs and location recorded, it gains a history and can receive plans and work orders — nothing can be planned before this registration.",
+          "d1": {
+            "t": "Equipment",
+            "c": "Air conditioner, pump"
+          },
+          "d2": {
+            "t": "Specs",
+            "c": "Model, serial no."
+          },
+          "d3": {
+            "t": "Location",
+            "c": "Where it's installed"
+          },
+          "d4": {
+            "t": "History",
+            "c": "Ready to plan"
+          },
+          "why1": "Without registered equipment, there's nothing to tie maintenance to.",
+          "why2": "Location and serial number speed up whoever performs the service.",
+          "why3": "The history centralizes everything already done to the asset.",
+          "demoName": "Air conditioner — Room 2",
+          "demoType": "HVAC"
+        },
+        "learn2": {
+          "short": "Automatic prevention",
+          "headline": "How a plan generates work orders",
+          "explanation": "A plan links equipment to tasks that repeat. You set the frequency and Rolvix creates the work orders automatically on the right dates — prevention no longer depends on your memory.",
+          "d1": {
+            "t": "Equipment",
+            "c": "Air conditioner"
+          },
+          "d2": {
+            "t": "Maintenance plan",
+            "c": "Recurring tasks"
+          },
+          "d3": {
+            "t": "Frequency",
+            "c": "Every X months"
+          },
+          "d4": {
+            "t": "Work order",
+            "c": "Generated on its own"
+          },
+          "why1": "Preventive maintenance avoids breakdowns and unexpected downtime.",
+          "why2": "Orders generated on their own ensure nothing gets forgotten.",
+          "why3": "Adjusting the frequency reschedules all future orders instantly."
+        },
+        "learn3": {
+          "short": "Maintenance in the flow",
+          "headline": "Where maintenance connects",
+          "explanation": "A work order crosses other modules: it can block a resource in Bookings while the repair happens, record costs in Sales, and be assigned to an owner in People.",
+          "d1": {
+            "t": "Work order",
+            "c": "Service to do"
+          },
+          "d2": {
+            "t": "Bookings",
+            "c": "Blocks the resource"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Cost of parts"
+          },
+          "d4": {
+            "t": "People",
+            "c": "Responsible technician"
+          },
+          "why1": "Blocking the resource avoids booking something under repair.",
+          "why2": "Recording costs keeps maintenance spending visible.",
+          "why3": "Assigning an owner makes it clear who performs each order.",
+          "c1": {
+            "t": "Bookings",
+            "c": "Block the resource during the service"
+          },
+          "c2": {
+            "t": "Sales",
+            "c": "Log the cost of parts and labor"
+          },
+          "c3": {
+            "t": "People & portal",
+            "c": "Assign the order to a technician"
+          }
+        },
+        "visit": {
+          "short": "See it with real data",
+          "headline": "What you see in Work orders",
+          "explanation": "The Work orders screen is the team's queue: open, in-progress, and completed orders, with due date and owner. Open it to recognize where to prioritize and close out each service.",
+          "d1": {
+            "t": "Guide",
+            "c": "You are here"
+          },
+          "d2": {
+            "t": "Real screen",
+            "c": "Order queue"
+          },
+          "d3": {
+            "t": "Real data",
+            "c": "Open orders"
+          },
+          "d4": {
+            "t": "Action",
+            "c": "Perform, complete"
+          },
+          "why1": "Seeing the real queue shows what's overdue and what's urgent.",
+          "why2": "You learn where to complete orders and attach what was done.",
+          "why3": "Filters by equipment and status organize the team's day.",
+          "r1": {
+            "t": "Filter change · Air conditioner R2",
+            "s": "Due today",
+            "tag": "Open"
+          },
+          "r2": {
+            "t": "Pump inspection · Pool",
+            "s": "In 3 days",
+            "tag": "Scheduled"
+          },
+          "r3": {
+            "t": "Lubrication · Gate",
+            "s": "Completed yesterday",
+            "tag": "Completed"
+          }
+        },
+        "related": {
+          "short": "Expand your usage",
+          "headline": "Where to go after Maintenance",
+          "explanation": "With maintenance in place, the neighbors benefit: Bookings runs on reliable resources, Sales tracks asset costs, and People organizes the technical team. Choose the next step by your priority.",
+          "d1": {
+            "t": "Maintenance",
+            "c": "Groundwork ready"
+          },
+          "d2": {
+            "t": "Bookings",
+            "c": "Resources always ready"
+          },
+          "d3": {
+            "t": "Sales",
+            "c": "Costs under control"
+          },
+          "d4": {
+            "t": "People & portal",
+            "c": "Organized team"
+          },
+          "why1": "Well-maintained resources reduce booking cancellations.",
+          "why2": "Tracking costs helps decide whether to repair or replace an asset.",
+          "why3": "A well-assigned team meets the orders' deadlines.",
+          "c1": {
+            "t": "Bookings",
+            "c": "Keep your most-booked resources in shape"
+          },
+          "c2": {
+            "t": "Sales",
+            "c": "Analyze total maintenance cost"
+          },
+          "c3": {
+            "t": "People & portal",
+            "c": "Organize technicians and owners"
+          }
+        }
+      }
+    },
+    "steps": {
+      "overview": {
+        "learn1": {
+          "title": "Check your indicators"
+        },
+        "learn2": {
+          "title": "Browse screens from the menu"
+        },
+        "learn3": {
+          "title": "Get to know the other areas"
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "title": "Add your bookable resources"
+        },
+        "learn2": {
+          "title": "Set your available hours"
+        },
+        "learn3": {
+          "title": "Connect with other modules"
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "title": "Add your equipment"
+        },
+        "learn2": {
+          "title": "Set up plans and work orders"
+        },
+        "learn3": {
+          "title": "Align maintenance with bookings"
+        }
+      },
+      "sales": {
+        "learn1": {
+          "title": "Add your products"
+        },
+        "learn2": {
+          "title": "Adjust your sales settings"
+        },
+        "learn3": {
+          "title": "Connect with other modules"
+        }
+      },
+      "peoplePortal": {
+        "learn1": {
+          "title": "Track staff and customers"
+        },
+        "learn2": {
+          "title": "Organize the customer menu"
+        },
+        "learn3": {
+          "title": "Connect bookings and sales"
+        }
+      },
+      "pmoc": {
+        "learn1": {
+          "title": "Review your plans"
+        },
+        "learn2": {
+          "title": "Create a new plan"
+        },
+        "learn3": {
+          "title": "Link plans to work orders"
+        }
+      },
+      "platform": {
+        "learn1": {
+          "title": "Browse your customers"
+        },
+        "learn2": {
+          "title": "Manage users and families"
+        },
+        "learn3": {
+          "title": "Explore the environment menu"
+        }
+      },
+      "visit": {
+        "title": "Visit a module screen"
+      },
+      "related": {
+        "title": "Explore a related module"
+      },
+      "wrapUp": {
+        "title": "Ready to use"
+      }
+    }
   },
   "taxonomy": {
+    "emptyCategories": "No categories yet.",
+    "emptyCategoriesHint": "Organize your business items into categories.",
+    "emptyTags": "No tags yet.",
+    "emptyTagsHint": "Use tags to label and find items easily.",
     "title": "Categories and tags",
     "sharedHint": "These definitions are shared by every consumer in this tenant.",
     "categories": "Categories",
@@ -1250,6 +2147,27 @@
     }
   },
   "dashboard": {
+    "home": {
+      "quickAccess": "Quick access",
+      "open": "Open",
+      "freeSlots_one": "{{count}} available",
+      "freeSlots_other": "{{count}} available",
+      "shortcuts": {
+        "reservations": "Manage reservations, confirmations and occupancy for the day.",
+        "workOrders": "Track and carry out open work orders.",
+        "assets": "Check inventory and equipment status.",
+        "pmoc": "Maintenance plans and the work orders they generate."
+      }
+    },
+    "limitedTitle": "Information available to your profile",
+    "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
+    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
+    "emptyDescription": "Indicators will appear here as activity is recorded in this workspace.",
+    "unavailable": "Indicators are currently unavailable.",
+    "workOrdersEmpty": "No work orders to display for this period.",
+    "viewOrders": "View work orders",
+    "clientEmptyHint": "New activity linked to your profile will appear here.",
+    "ordersEmptyHint": "You can view the work order list to follow other activity.",
     "title": "Command Center",
     "description": "KPIs based on the modules and asset families active in this environment.",
     "emptyModules": "No operational modules active beyond the customer portal.",
@@ -1598,7 +2516,7 @@
       },
       "description": {
         "rentals": "Resources you offer (spaces, goods…). Register each one and mark what can be booked.",
-        "spaces": "Rentable spaces such as rooms and outdoor areas. Register each one and mark what can be booked.",
+        "spaces": "Business spaces and installations. Register each one and organize them by type.",
         "goods": "Goods and items (dumpsters…). Register each one and organize them by type.",
         "electrical": "Site electrical equipment. Use types and attributes (voltage, manufacturer).",
         "maintenance": "Site equipment and installations. Use types to organize and link maintenance.",
@@ -1696,6 +2614,8 @@
         "stockQuantity": "Stock quantity"
       },
       "validation": {
+        "pricingWindowInvalid": "End time must be after start time.",
+        "attributeInvalid": "Enter a valid value.",
         "unitRequired": "Unit is required.",
         "categoryRequired": "Type is required.",
         "familyRequired": "Family is required.",
@@ -1728,7 +2648,7 @@
         "deleteBlockedByWorkOrders": "This resource cannot be deleted because it has work orders."
       },
       "flags": {
-        "rentable": "Rental",
+        "rentable": "Bookable",
         "maintenance": "Maintenance"
       }
     },
@@ -1742,24 +2662,24 @@
         "capacity": "Capacity"
       },
       "placeholders": {
-        "name": "e.g. Space 1 — indoor",
-        "tag": "e.g. C-01",
+        "name": "e.g. Equipment 1",
+        "tag": "e.g. EQ-01",
         "location": "e.g. Block A, ground floor"
       },
       "help": {
         "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
         "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
-        "name": "Friendly name shown in the schedule and lists.",
-        "tag": "Short unique code for the resource (e.g. C-01).",
+        "name": "Equipment or resource name shown in lists.",
+        "tag": "Short unique code for the resource (e.g. EQ-01).",
         "location": "Where it is on site (block, wing). Optional.",
         "status": "Active = available; Inactive = hidden; Maintenance = out of service.",
         "baseLocation": "Location applied equally to every item in the batch (no numbering).",
-        "baseTag": "Tag prefix; the range number is appended (e.g. C- + 01).",
+        "baseTag": "Tag prefix; the range number is appended (e.g. EQ- + 01).",
         "startNumber": "First number in the generated sequence.",
         "endNumber": "Last number in the sequence (inclusive).",
         "requiresMaintenance": "When on, the resource enters maintenance/PMOC/work-order flows.",
-        "isRentable": "When on, the resource can be booked in rentals/schedule.",
+        "isRentable": "When on, the resource can be booked in the schedule.",
         "requiresDeposit": "When on, the booking waits for admin payment confirmation. When off, it is confirmed immediately and holds the time slot.",
         "queueEnabled": "When on, customers join a FIFO queue to book this space at opening time. Off by default.",
         "queueOpeningTime": "Time of day when reservations open (Brasília timezone). The waiting room opens 30 minutes earlier.",
@@ -1780,10 +2700,26 @@
         "review": "Review"
       },
       "pricing": {
-        "priceErrors": {"required": "Enter a price.", "invalid": "Invalid price. Use the format 12.50.", "notPositive": "The price must be greater than zero.", "tooLarge": "The maximum price is R$ {{max}}."},
+        "priceErrors": {
+          "required": "Enter a price.",
+          "invalid": "Invalid price. Use the format 12.50.",
+          "notPositive": "The price must be greater than zero.",
+          "tooLarge": "The maximum price is R$ {{max}}."
+        },
         "unitLabel": "Pricing unit",
-        "units": {"Hour": "Per hour", "Slot": "Per slot", "Day": "Per day", "Fixed": "Fixed", "mixed": "Different units per day (pick one to unify)"},
-        "priceLabels": {"Hour": "Price per hour", "Slot": "Price per slot", "Day": "Price per day", "Fixed": "Fixed price"},
+        "units": {
+          "Hour": "Per hour",
+          "Slot": "Per slot",
+          "Day": "Per day",
+          "Fixed": "Fixed",
+          "mixed": "Different units per day (pick one to unify)"
+        },
+        "priceLabels": {
+          "Hour": "Price per hour",
+          "Slot": "Price per slot",
+          "Day": "Price per day",
+          "Fixed": "Fixed price"
+        },
         "patternLabel": "How the price repeats through the week",
         "everydayPrice": "Price per hour",
         "everydayPriceHelp": "The same amount applies every day in the window below.",
@@ -1816,7 +2752,12 @@
         "pricingUnitLabel": "Pricing unit",
         "priceLabel": "Price",
         "perDayPricesLabel": "Per-day prices",
-        "unitPrice": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"}
+        "unitPrice": {
+          "Hour": "{{amount}}/hour",
+          "Slot": "{{amount}}/slot",
+          "Day": "{{amount}}/day",
+          "Fixed": "{{amount}} fixed"
+        }
       },
       "success": {
         "create": "Resource created successfully.",
@@ -1840,7 +2781,7 @@
       },
       "tabs": {
         "general": "General",
-        "rental": "Rental",
+        "rental": "Bookings",
         "maintenance": "Maintenance"
       },
       "fields": {
@@ -1850,12 +2791,12 @@
         "category": "Type",
         "location": "Location",
         "status": "Status",
-        "isRentable": "Available for booking / rental",
+        "isRentable": "Available for booking",
         "requiresDeposit": "Is prior payment required?",
         "queueEnabled": "Reservation queue",
         "queueOpeningTime": "Reservation queue opening time",
         "requiresMaintenance": "Requires maintenance",
-        "rentalType": "Rental type",
+        "rentalType": "Resource type",
         "totalQuantity": "Total quantity"
       },
       "rentalTypes": {
@@ -2149,6 +3090,7 @@
     }
   },
   "workOrders": {
+    "viewOpen": "View open work orders",
     "title": "Work Orders",
     "description": "Run field checklists and track each work order status.",
     "loading": "Loading work orders...",
@@ -2188,6 +3130,7 @@
       "Canceled": "Canceled"
     },
     "actions": {
+      "viewCompleted": "View completed work orders",
       "execute": "Execute",
       "view": "View",
       "open": "Open"
@@ -2223,6 +3166,7 @@
       "redirecting": "Work order created"
     },
     "execution": {
+      "breadcrumb": "WO {{id}} · {{asset}}",
       "title": "Work Order Execution",
       "subtitle": "Asset {{tag}} — {{name}}",
       "loading": "Loading work order...",
@@ -2323,6 +3267,9 @@
     "description": "You do not have permission to view this page."
   },
   "notFound": {
+    "staffDescription": "We could not find this page. Use the link below to continue.",
+    "dashboard": "Back to dashboard",
+    "login": "Go to login",
     "title": "Page not found",
     "description": "This address does not exist in this workspace.",
     "home": "Go to the home"
@@ -2346,6 +3293,18 @@
     }
   },
   "peopleAccess": {
+    "eyebrow": "Directory",
+    "mobileNavigation": "Main navigation",
+    "columns": {
+      "roles": "Roles",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "roleSummary": {
+      "description": "Who can do what in this environment.",
+      "permissions_one": "{{count}} permission",
+      "permissions_other": "{{count}} permissions"
+    },
     "title": "People and access",
     "description": "Manage users in this environment and their access profiles.",
     "tabs": {
@@ -2456,6 +3415,8 @@
       }
     },
     "users": {
+      "teamCount_one": "{{count}} person on the team",
+      "teamCount_other": "{{count}} people on the team",
       "description": "Invite people and assign one or more functions.",
       "invite": "Invite user",
       "inviteTitle": "Invite user",
@@ -2476,6 +3437,8 @@
       "searchTooShort": "Type at least 2 characters."
     },
     "customers": {
+      "customerCount_one": "{{count}} portal customer",
+      "customerCount_other": "{{count}} portal customers",
       "description": "Customers who sign in through this environment's portal.",
       "empty": "No portal customers in this environment.",
       "emptyDescription": "When someone creates a portal account, they show up here.",
@@ -2494,6 +3457,13 @@
       "previous": "Previous page",
       "next": "Next page"
     },
+    "mobileActions": {
+      "hint": "Tap a row to see actions.",
+      "editRole": "Name and permissions",
+      "editField": "Label, type and required status",
+      "editSystemRole": "System role: fixed name",
+      "deleteRole": "Only if it is not assigned to anyone"
+    },
     "roles": {
       "description": "System functions and custom access profiles for this environment.",
       "create": "New function",
@@ -2510,6 +3480,7 @@
       "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
     },
     "validation": {
+      "duplicateEmail": "A person with this email already exists.",
       "fullNameRequired": "Enter a name.",
       "emailInvalid": "Enter a valid email.",
       "rolesRequired": "Select at least one function.",
@@ -2671,6 +3642,11 @@
       "noModules": "No active modules",
       "emptyTitle": "No clients yet",
       "emptyDescription": "Provision the first tenant using the onboarding wizard.",
+      "searchLabel": "Search clients",
+      "clearSearch": "Clear search",
+      "searchPlaceholder": "Search by name or subdomain...",
+      "searchEmptyTitle": "No clients found",
+      "searchEmptyDescription": "Adjust the search by name or subdomain.",
       "metrics": {
         "totalTenants": "Total tenants",
         "activeTenants": "Active tenants",
@@ -2771,7 +3747,8 @@
       "emptyTitle": "No users found",
       "emptyDescription": "Adjust the filters or invite users from a client.",
       "actions": {
-        "delete": "Delete user"
+        "delete": "Delete user",
+        "deleteNamed": "Delete user {{email}}"
       },
       "delete": {
         "title": "Delete user",
@@ -3256,6 +4233,22 @@
       },
       "typeLocation": "Space",
       "typeGood": "Rentable item",
+      "eyebrow": "Registry",
+      "editHint": "Click to edit",
+      "summaryBreakdown": " · {{spaces}}, {{items}}",
+      "quantitySummary": "Quantity: {{count}}",
+      "summaryResources_one": "{{count}} resource",
+      "summaryResources_other": "{{count}} resources",
+      "summarySpaces_one": "{{count}} space",
+      "summarySpaces_other": "{{count}} spaces",
+      "summaryItems_one": "{{count}} item",
+      "summaryItems_other": "{{count}} items",
+      "summaryResources_zero": "{{count}} resources",
+      "summaryResources_many": "{{count}} resources",
+      "summarySpaces_zero": "{{count}} spaces",
+      "summarySpaces_many": "{{count}} spaces",
+      "summaryItems_zero": "{{count}} items",
+      "summaryItems_many": "{{count}} items",
       "sheetTabs": {
         "basic": "Basic",
         "pricingRules": "Pricing & rules",
@@ -3263,7 +4256,20 @@
       },
       "details": {
         "pricePerHour": "From: {{amount}}/h",
-        "prices": {"Hour": "From: {{amount}} per hour", "Slot": "From: {{amount}} per slot", "Day": "From: {{amount}} per day", "Fixed": "From: {{amount}} fixed"},
+        "prices": {
+          "Hour": "From: {{amount}} per hour",
+          "Slot": "From: {{amount}} per slot",
+          "Day": "From: {{amount}} per day",
+          "Fixed": "From: {{amount}} fixed"
+        },
+        "noPrice": "no price",
+        "priceCaption": "from · {{unit}}",
+        "priceUnits": {
+          "Hour": "per hour",
+          "Slot": "per slot",
+          "Day": "per day",
+          "Fixed": "fixed"
+        },
         "allowedDurations": "Durations: {{durations}}",
         "capacity_one": "Capacity: {{count}} person",
         "capacity_other": "Capacity: {{count}} people",
@@ -3300,7 +4306,7 @@
         "horizonEffectiveDays": "In effect: {{count}} days ahead.",
         "cancelCutoffLabel": "Cancellation cutoff",
         "cancelCutoffInherit": "Inherit policy",
-        "cancelCutoffNone": "No cutoff (use policy)",
+        "cancelCutoffNone": "No cutoff (overrides policy)",
         "cancelCutoffHours": "Hours before the start",
         "cancelCutoffEffectiveNone": "Effective: no cutoff",
         "cancelCutoffEffectiveHours_one": "Effective: {{count}} hour before the start",
@@ -3361,6 +4367,10 @@
       "paletteEmpty": "Every space is already on the map.",
       "clickToRemove": "Use × on a block to remove it from the map.",
       "resizeCanvasHelp": "Drag the map corner (square at the bottom right) to resize the layout.",
+      "moveBlock": "Move block {{name}}",
+      "resizeBlock": "Resize block {{name}}",
+      "removeBlock": "Remove block {{name}}",
+      "resizeCanvas": "Resize map",
       "blockSize": "Block size",
       "width": "Width",
       "height": "Height",
@@ -3403,7 +4413,7 @@
     },
     "reservations": {
       "title": "Reservations",
-      "description": "Confirm deposits and cancel B2C portal reservations.",
+      "description": "Confirm deposits, complete and cancel reservations made through the portal.",
       "date": "Date",
       "status": "Status",
       "statusAll": "All",
@@ -3432,7 +4442,29 @@
         "Canceled": "Canceled",
         "Completed": "Completed"
       },
-      "multiDayRange": "{{start}} – {{end}} ({{days}} days)"
+      "multiDayRange": "{{start}} – {{end}} ({{days}} days)",
+      "operation": "Operations",
+      "filters": "Reservation filters",
+      "period": "Period",
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "today": "Today",
+      "goToday": "Go to today",
+      "showWeek": "View the week",
+      "emptyDescription": "Change the day, period or status to see other reservations.",
+      "loading": "Loading reservations…",
+      "count_one": "{{count}} reservation",
+      "count_other": "{{count}} reservations",
+      "orderedByTime": "Ordered by time",
+      "time": "Time",
+      "customer": "Customer",
+      "resources": "Resources",
+      "total": "Total",
+      "actions": "Actions",
+      "noActions": "No actions available",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}min",
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
     },
     "bookingPolicy": {
       "title": "Booking policy",
@@ -3467,7 +4499,17 @@
       "cancelCutoffHoursMode": "N hours before the start",
       "cancelCutoffHours": "Hours before the start",
       "cancelCutoffHint": "Customers can cancel until this many hours before the start.",
-      "categories": {"title": "By category", "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.", "horizonDays": "Max advance (days)", "cancelCutoffHours": "Cancel up to (hours before)", "inherit": "General", "save": "Save", "saved": "Category policy saved.", "invalid": "Use a whole number or leave blank.", "empty": "No categories with bookable resources."}
+      "categories": {
+        "title": "By category",
+        "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.",
+        "horizonDays": "Max advance (days)",
+        "cancelCutoffHours": "Cancel up to (hours before)",
+        "inherit": "General",
+        "save": "Save",
+        "saved": "Category policy saved.",
+        "invalid": "Use a whole number or leave blank.",
+        "empty": "No categories with bookable resources."
+      }
     }
   },
   "resourceVisual": {
@@ -3484,6 +4526,20 @@
     "revision": "New revision",
     "floor": "Floor SVG art",
     "lines": "Line SVG art",
+    "net": "Divider SVG art (optional)",
+    "preview": "Preview",
+    "previewAlt": "Preview combining floor, lines and divider",
+    "shapePresetsLabel": "Start from a shape",
+    "shapePresetsHelp": "Fills floor, lines, color and icon — keep editing freely afterward.",
+    "shapePresets": {
+      "rectangleArea": "Rectangular area",
+      "courtWithLines": "Court with lines",
+      "roundTable": "Round table",
+      "squareTable": "Square table",
+      "chair": "Chair",
+      "seat": "Seat/bench",
+      "equipmentBox": "Equipment"
+    },
     "publish": "Publish",
     "draft": "Draft",
     "publishedStatus": "Published",
@@ -3494,6 +4550,8 @@
     "validation": "Enter a name and slug.",
     "deleteTagTitle": "Delete tag?",
     "deleteTagDescription": "This action cannot be undone.",
+    "deleteTemplateTitle": "Delete template?",
+    "deleteTemplateDescription": "Delete \"{{name}}\"? This action cannot be undone.",
     "segmentsTitle": "Tenant segments",
     "segmentsHelp": "Set the segments shown first when selecting a template.",
     "enabledTemplates": "Enabled templates",
@@ -3507,6 +4565,7 @@
     "showFewerTags": "Show fewer",
     "noTemplate": "No template",
     "capacityPeople": "People capacity (optional)",
+    "capacityRange": "Enter a whole number between 1 and 100000.",
     "applySuggestions": "Apply template suggestions",
     "applySuggestionsHelp": "Fills the capacity and time suggestions from the template.",
     "tagKindSegment": "Segment",
@@ -3523,6 +4582,8 @@
     "fromTime": "From time",
     "availableColor": "Available color",
     "takenColor": "Taken color",
+    "unavailableColor": "Unavailable color",
+    "selectedColor": "Selected color",
     "setDefaultMap": "Set default map"
   },
   "bookingMap": {
@@ -3534,10 +4595,10 @@
     "dateStrip": "Dates",
     "today": "Today",
     "periods": "Periods",
-    "all": "All ({{count}})",
-    "morning": "Morning ({{count}})",
-    "afternoon": "Afternoon ({{count}})",
-    "night": "Night ({{count}})",
+    "all": "All",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "night": "Night",
     "map": "Map",
     "list": "List",
     "freeFrom": "{{count}} free · from {{amount}}",
@@ -3558,7 +4619,35 @@
       "Unpriced": "No price",
       "Available": "Available"
     },
-    "prices": {"Hour": "{{amount}}/hour", "Slot": "{{amount}}/slot", "Day": "{{amount}}/day", "Fixed": "{{amount}} fixed"},
+    "prices": {
+      "Hour": "{{amount}}/hour",
+      "Slot": "{{amount}}/slot",
+      "Day": "{{amount}}/day",
+      "Fixed": "{{amount}} fixed"
+    },
     "unitsLeft": "{{left}} of {{total}} available"
+  },
+  "emptyStates": {
+    "learnMore": "Learn more",
+    "noResults": "No results found",
+    "filterDescription": "Adjust the filters or clear the search to see items.",
+    "clearFilters": "Clear filters",
+    "clearSearch": "Clear search",
+    "firstPage": "Back to the first page",
+    "book": "Book",
+    "bookingDescription": "Choose a time for your next booking.",
+    "pmocDescription": "Create your first plan from the Rolvix Library",
+    "examples": {
+      "bookings": "E.g.: a room at 2 pm for 1 hour",
+      "workOrders": "E.g.: replace the reception air conditioner filter",
+      "pmoc": "E.g.: a monthly plan for air conditioning equipment",
+      "assets": "E.g.: a 12,000 BTU split air conditioner",
+      "users": "E.g.: invite the person working at reception",
+      "customers": "E.g.: a person who registered on the portal",
+      "roles": "E.g.: a role for the customer service team",
+      "portalOrders": "E.g.: cleaning supplies for reception",
+      "portalRequests": "E.g.: a cleaning product for reception",
+      "portalCatalog": "E.g.: everyday supplies for reception"
+    }
   }
 }

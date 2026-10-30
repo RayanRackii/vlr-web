@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -14,6 +14,8 @@ import { AxiosError, AxiosHeaders } from "axios"
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
+import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
 import {
   commitPortalBooking,
   isOwnBookedSlot,
@@ -31,11 +33,14 @@ import {
   clearCustomerSession,
   getCustomerAccessToken,
   persistCustomerSession,
+  setCustomerLabel,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import {
+  hasActiveStaffSession,
   installSessionRestoreGuard,
   resetSessionRestoreGuardForTests,
 } from "@/lib/sessionRestoreGuard"
+import { supabase } from "@/lib/supabase"
 import { UI_LANGUAGE_STORAGE_KEY } from "@/lib/uiLanguage"
 
 vi.mock("@/lib/browserLocation", () => ({
@@ -94,18 +99,29 @@ function ownReservation(): PortalReservation {
   }
 }
 
-function renderPortal(path: string) {
+function renderPortal(path: string, body = <div>agenda-body</div>) {
   return render(
     <ThemeProvider attribute="class" defaultTheme="light">
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/t/:subdomain" element={<div>login-form</div>} />
           <Route path="/t/:subdomain/agenda" element={<CustomerAppLayout />}>
-            <Route index element={<div>agenda-body</div>} />
+            <Route index element={body} />
           </Route>
         </Routes>
       </MemoryRouter>
     </ThemeProvider>,
+  )
+}
+
+function storeStaffSession(): void {
+  window.localStorage.setItem(
+    "sb-rolvix-auth-token",
+    JSON.stringify({
+      access_token: "leftover-staff-token",
+      refresh_token: "refresh-token",
+      expires_at: 1_900_000_000,
+    }),
   )
 }
 
@@ -124,6 +140,8 @@ describe("CustomerAppLayout session tenant", () => {
         dispatchEvent: () => false,
       }),
     })
+    vi.mocked(supabase.auth.signOut).mockReset()
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
   })
 
   afterEach(async () => {
@@ -131,6 +149,7 @@ describe("CustomerAppLayout session tenant", () => {
     clearAgendaSelectionNotice("ficc")
     resetAgendaQueryClientForTests()
     resetSessionRestoreGuardForTests()
+    window.localStorage.removeItem("sb-rolvix-auth-token")
     window.history.pushState({}, "", "/")
     fetchBranding.mockReset()
     fetchMenu.mockReset()
@@ -143,6 +162,31 @@ describe("CustomerAppLayout session tenant", () => {
     expect(await screen.findByText("login-form")).toBeInTheDocument()
     expect(screen.queryByText("agenda-body")).not.toBeInTheDocument()
     expect(fetchBranding).not.toHaveBeenCalled()
+  })
+
+  it("sends a signed-out visit to a deep link to the login form with a safe returnTo", async () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/t/:subdomain", element: <div>login-form</div> },
+        {
+          path: "/t/:subdomain/agenda",
+          element: <CustomerAppLayout />,
+          children: [{ index: true, element: <div>agenda-body</div> }],
+        },
+      ],
+      { initialEntries: ["/t/ficc/agenda?reservation=abc"] },
+    )
+    render(
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <RouterProvider router={router} />
+      </ThemeProvider>,
+    )
+
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/t/ficc")
+    expect(router.state.location.search).toBe(
+      `?returnTo=${encodeURIComponent("/t/ficc/agenda?reservation=abc")}`,
+    )
   })
 
   it("renders the branded portal 404 when the catalog menu returns HTTP 404", async () => {
@@ -256,6 +300,31 @@ describe("CustomerAppLayout session tenant", () => {
     expect(fetchBranding).toHaveBeenCalledWith("ficc")
   })
 
+  it.each(["same tab", "another tab"])("updates the header, sidebar and greetings when the profile label changes in %s", async (source) => {
+    persistCustomerSession("customer-token", "ficc", "ana.email@example.test")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc", displayName: "Portal", logoSvg: null,
+      primaryColor: "#123456", accentColor: null, welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda", <><TenantPortalHomePage /><PortalBookingHeader /></>)
+    await screen.findByRole("heading", { name: i18n.t("tenantPortal.home.title") })
+
+    act(() => {
+      if (source === "same tab") {
+        setCustomerLabel("Beatriz Souza", "ana.email@example.test")
+      } else {
+        window.localStorage.setItem("rolvix.customer.label", "Beatriz Souza")
+        window.dispatchEvent(new StorageEvent("storage", { key: "rolvix.customer.label" }))
+      }
+    })
+
+    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(2)
+    expect(screen.getAllByText("BS")).toHaveLength(2)
+    expect(screen.getAllByText(i18n.t("tenantPortal.redesign.greetingName", { name: "Beatriz" }))).toHaveLength(2)
+    expect(screen.queryByTitle("ana.email@example.test")).not.toBeInTheDocument()
+  })
+
   it.each([
     ["expired", "tenantPortal.agenda.selectionExpired"],
     ["unavailable", "tenantPortal.agenda.selectionUnavailable"],
@@ -313,8 +382,7 @@ describe("CustomerAppLayout session tenant", () => {
     })
   })
 
-  it("lists book, my reservations, and profile in the mobile menu", async () => {
-    const user = userEvent.setup()
+  it("renders the portal sidebar and mobile bottom navigation without a hamburger", async () => {
     const menuItemId = "11111111-1111-4111-8111-111111111111"
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
@@ -339,8 +407,11 @@ describe("CustomerAppLayout session tenant", () => {
 
     expect(await screen.findByText("agenda-body")).toBeInTheDocument()
 
-    const openMenu = screen.getByRole("button", { name: i18n.t("nav.openMenu") })
-    expect(openMenu).toHaveClass(...headerTouchTargetClassName.split(" "))
+    expect(screen.queryByRole("button", { name: i18n.t("nav.openMenu") })).not.toBeInTheDocument()
+    const navigation = screen.getByRole("navigation", { name: i18n.t("nav.menu") })
+    expect(navigation).toHaveClass("portal-nav")
+    expect(navigation.closest('[data-shell-part="sidebar"]')).toBeInTheDocument()
+    expect(navigation.closest('[data-shell-variant="portal"]')).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("theme.toggle") }),
     ).toHaveClass(...headerTouchTargetClassName.split(" "))
@@ -353,9 +424,7 @@ describe("CustomerAppLayout session tenant", () => {
     expect(language).toHaveTextContent("PT")
     expect(language.querySelector("span")).not.toHaveClass("hidden")
 
-    await user.click(openMenu)
-
-    const dialog = await screen.findByRole("dialog")
+    const dialog = navigation
     const book = within(dialog).getByRole("link", {
       name: i18n.t("admin.moduleMenu.suggestedLabelRentals"),
     })
@@ -464,6 +533,60 @@ describe("CustomerAppLayout session tenant", () => {
     expect(recentPortalReservations("ficc")).toEqual([])
     expect(isOwnBookedSlot(civil.date, OWN_ASSET_ID, civil.time)).toBe(false)
     expect(fetchBranding).toHaveBeenCalledTimes(1)
+  })
+
+  it("signs out a leftover staff session too when Sair is used", async () => {
+    const user = userEvent.setup()
+    storeStaffSession()
+    expect(hasActiveStaffSession()).toBe(true)
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+    )
+
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+    expect(getCustomerAccessToken()).toBeNull()
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
+  })
+
+  it("does not call staff sign-out from Sair when there is no leftover staff session", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    fetchBranding.mockResolvedValue({
+      subdomain: "ficc",
+      displayName: "Club",
+      logoSvg: null,
+      primaryColor: "#123456",
+      accentColor: null,
+      welcomeTagline: null,
+    })
+    fetchMenu.mockResolvedValue([])
+    renderPortal("/t/ficc/agenda")
+
+    expect(await screen.findByText("agenda-body")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("account.openMenu") }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("account.signOut") }),
+    )
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+    expect(await screen.findByText("login-form")).toBeInTheDocument()
   })
 
   it("does not render the agenda or call the API when history restore has no session", async () => {

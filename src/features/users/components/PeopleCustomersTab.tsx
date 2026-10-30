@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import {
   DIRECTORY_PAGE_SIZE,
@@ -31,6 +33,7 @@ function formatCreatedAt(value: string, language: string) {
 
 export function PeopleCustomersTab() {
   const { t, i18n } = useTranslation()
+  const learnMore = useModuleIntroLink("peoplePortal")
   const [customers, setCustomers] = useState<TenantCustomer[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -109,15 +112,6 @@ export function PeopleCustomersTab() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold tracking-tight">
-          {t("peopleAccess.tabs.customers")}
-        </h2>
-        <p className="max-w-xl text-sm text-muted-foreground">
-          {t("peopleAccess.customers.description")}
-        </p>
-      </div>
-
       <PeopleSearchForm
         id="portal-customer-search"
         label={t("peopleAccess.customers.searchLabel")}
@@ -137,9 +131,17 @@ export function PeopleCustomersTab() {
         </Alert>
       ) : null}
 
+      <section className="people-directory" aria-label={t("peopleAccess.tabs.customers")}>
+        <div className="people-list-heading">
+          {!isLoading ? <h2>{t("peopleAccess.customers.customerCount", { count: total })}</h2> : null}
+          <p>{t("peopleAccess.customers.description")}</p>
+        </div>
       {!isLoading && loadError === null && customers.length === 0 ? (
         <PeopleEmptyState
           icon={Users}
+          example={appliedQuery ? undefined : t("emptyStates.examples.customers")}
+          learnMore={appliedQuery ? undefined : learnMore}
+          action={appliedQuery ? <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button> : undefined}
           title={t(
             appliedQuery.length >= 2
               ? "peopleAccess.customers.emptySearch"
@@ -154,30 +156,35 @@ export function PeopleCustomersTab() {
       ) : null}
 
       {!isLoading && customers.length > 0 ? (
-        <ul className="space-y-2">
-          {customers.map((customer) => (
-            <li
-              key={customer.id}
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm motion-safe:transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 space-y-1">
-                <p className="truncate text-sm font-medium">{customer.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {customer.email ?? "—"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("peopleAccess.customers.createdAt")}{" "}
-                  {formatCreatedAt(customer.createdAt, i18n.language)}
-                </p>
-              </div>
-              <Badge variant={customer.emailVerified ? "success" : "secondary"}>
-                {customer.emailVerified
-                  ? t("peopleAccess.customers.verified")
-                  : t("peopleAccess.customers.unverified")}
-              </Badge>
-            </li>
-          ))}
-        </ul>
+        <table className="people-table people-customers-table" aria-label={t("peopleAccess.tabs.customers")}>
+          <thead><tr>
+            <th scope="col">{t("peopleAccess.users.fullName")}</th>
+            <th scope="col">{t("peopleAccess.customers.createdAt")}</th>
+            <th scope="col">{t("peopleAccess.columns.status")}</th>
+          </tr></thead>
+          <tbody>
+            {customers.map((customer) => (
+              <tr key={customer.id}>
+                <td className="people-identity-cell">
+                  <div className="people-person">
+                    <span className="people-avatar" aria-hidden>{customer.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
+                    <div className="min-w-0">
+                      <p className="people-person-name">{customer.name}</p>
+                      <p className="people-person-email">{customer.email ?? "—"}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="people-date-cell"><span className="people-mobile-date-label">{t("peopleAccess.customers.createdAt")}{" "}</span>{formatCreatedAt(customer.createdAt, i18n.language)}</td>
+                <td className="people-status-cell">
+                  <Badge className="people-status" variant={customer.emailVerified ? "success" : "warning"}>
+                    <span className="people-status-dot" aria-hidden />
+                    {t(customer.emailVerified ? "peopleAccess.customers.verified" : "peopleAccess.customers.unverified")}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : null}
 
       {!isLoading && loadError === null ? (
@@ -191,6 +198,7 @@ export function PeopleCustomersTab() {
           onPageChange={setPage}
         />
       ) : null}
+      </section>
     </div>
   )
 }

@@ -183,7 +183,7 @@ export function CatalogNotificationsPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-8">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold tracking-tight">
           {t("catalog.notifications.title")}

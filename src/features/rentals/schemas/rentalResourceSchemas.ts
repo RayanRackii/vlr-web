@@ -11,6 +11,9 @@ import {
   parseHorizonDaysInput,
 } from "@/features/rentals/schemas/bookingPolicySchemas"
 
+// Matches ResourceVisualCatalogService metadata validation in vlr-api; generic people capacity.
+export const RESOURCE_CAPACITY_PEOPLE_MAX = 100_000
+
 export const rentalTypeValues = ["Location", "Good"] as const
 
 export type RentalType = (typeof rentalTypeValues)[number]
@@ -75,6 +78,7 @@ export function createRentalResourceFormSchema(messages: {
   categoryRequired: string
   familyRequired: string
   quantityMin: string
+  capacityRange: string
   queueOpeningTimeRequired: string
   horizonRange: string
   cancelCutoffRange?: string
@@ -85,8 +89,8 @@ export function createRentalResourceFormSchema(messages: {
       // RentalAssetResponse does not expose the registry tag, so this UI-only
       // value must remain optional and cannot be sent back on an edit.
       tag: z.string(),
-      unitId: guidLikeIdSchema.min(1, messages.unitRequired),
-      categoryId: guidLikeIdSchema.min(1, messages.categoryRequired),
+      unitId: z.string().min(1, messages.unitRequired).pipe(guidLikeIdSchema),
+      categoryId: z.string().min(1, messages.categoryRequired).pipe(guidLikeIdSchema),
       familyId: z
         .string()
         .min(1, messages.familyRequired)
@@ -107,7 +111,11 @@ export function createRentalResourceFormSchema(messages: {
       horizonMode: z.enum(resourceHorizonModes),
       horizonDays: z.string(),
       visualTemplateRevisionId: z.string(),
-      capacityPeople: z.string(),
+      capacityPeople: z.string().refine((value) => {
+        if (value.trim() === "") return true
+        const capacity = Number(value)
+        return Number.isInteger(capacity) && capacity >= 1 && capacity <= RESOURCE_CAPACITY_PEOPLE_MAX
+      }, messages.capacityRange),
       confirmVisualSuggestions: z.boolean(),
     })
     .superRefine((values, ctx) => {
@@ -208,7 +216,7 @@ export function toCreateRentableRequest(
         : null,
     location: values.location.trim() ? values.location.trim() : null,
   }
-  const cutoff = resolveCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
+  const cutoff = resolveResourceCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
   if (cutoff !== undefined) payload.cancelCutoffHours = cutoff
   const horizonWrite = resolveResourceHorizonWrite(
     values.horizonMode,
@@ -234,4 +242,17 @@ export function toCreateRentableRequest(
     payload.confirmVisualSuggestions = true
   }
   return createRentableRequestSchema.parse(payload)
+}
+
+/**
+ * Resource layer: null inherits (category, then tenant); an explicit 0 overrides any inherited
+ * cutoff with "no cutoff" (PolicyResolver: resource ?? category ?? tenant; 0 => no deadline).
+ */
+export function resolveResourceCancelCutoffWrite(
+  mode: "inherit" | "none" | "hours" | undefined,
+  input: string | undefined,
+  stored: number | null | undefined,
+): number | null | undefined {
+  if (mode === "none") return stored === 0 ? undefined : 0
+  return resolveCancelCutoffWrite(mode, input, stored)
 }

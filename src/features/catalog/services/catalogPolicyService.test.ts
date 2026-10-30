@@ -44,9 +44,9 @@ describe("catalog policy API contract", () => {
     expect(customerApi.post).toHaveBeenCalledWith(`/api/catalog/portal/product-requests/${id}/cancel`)
   })
   for (const status of [400, 409]) {
-    it(`preserves server messages for both cancellation endpoints on ${status}`, async () => {
+    it(`handles cancellation errors on ${status}`, async () => {
       vi.mocked(customerApi.post).mockRejectedValue(serverError(status))
-      await expect(cancelPortalCatalogOrder(id)).rejects.toThrow("Cancellation is no longer allowed.")
+      await expect(cancelPortalCatalogOrder(id)).rejects.toThrow(status === 409 ? i18n.t("tenantPortal.catalog.orderNoLongerCancellable") : "Cancellation is no longer allowed.")
       await expect(cancelPortalProductRequest(id)).rejects.toThrow("Cancellation is no longer allowed.")
       expect(customerApi.post).toHaveBeenCalledWith(`/api/catalog/portal/orders/${id}/cancel`)
       expect(customerApi.post).toHaveBeenCalledWith(`/api/catalog/portal/product-requests/${id}/cancel`)

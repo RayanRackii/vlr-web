@@ -4,14 +4,13 @@ import {
   CalendarCheck,
   CalendarClock,
   Map,
-  ScrollText,
 } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { BookingPolicyPage } from "@/features/rentals/pages/BookingPolicyPage"
+import { reservationTabs } from "@/features/rentals/navigationTabs"
+import { ReservationsScreen } from "@/features/rentals/pages/ReservationsScreen"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
-import { ReservationsPage } from "@/features/rentals/pages/ReservationsPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 
 type FeatureRoute = {
@@ -48,13 +47,6 @@ export const rentalsManifest = {
       permissions: RENTAL_RESOURCES_PERMISSIONS,
     },
     {
-      labelKey: "nav.schedule",
-      to: "/configuracoes/agenda",
-      icon: CalendarClock,
-      modules: ["rentals"],
-      permission: "rentals.schedule.read",
-    },
-    {
       labelKey: "nav.layout",
       to: "/configuracoes/layout",
       icon: Map,
@@ -62,19 +54,20 @@ export const rentalsManifest = {
       permission: "rentals.layouts.read",
     },
     {
+      labelKey: "nav.schedule",
+      to: "/configuracoes/agenda",
+      icon: CalendarClock,
+      modules: ["rentals"],
+      permission: "rentals.schedule.read",
+    },
+    {
       labelKey: "nav.reservations",
       to: "/configuracoes/reservas",
       icon: CalendarCheck,
       modules: ["rentals"],
-      permission: "rentals.reservations.read",
+      tabs: reservationTabs,
     },
-    {
-      labelKey: "nav.bookingPolicy",
-      to: "/configuracoes/politica-reservas",
-      icon: ScrollText,
-      modules: ["rentals"],
-      permission: "rentals.booking_policy.read",
-    },
+
   ] satisfies readonly AppNavigationItem[],
   routes: {
     staff: [
@@ -95,12 +88,12 @@ export const rentalsManifest = {
       },
       {
         path: "/configuracoes/reservas",
-        element: <ReservationsPage />,
+        element: <ReservationsScreen />,
         permissions: ["rentals.reservations.read"],
       },
       {
         path: "/configuracoes/politica-reservas",
-        element: <BookingPolicyPage />,
+        element: <ReservationsScreen />,
         permissions: ["rentals.booking_policy.read"],
       },
     ] satisfies readonly FeatureRoute[],

@@ -1,15 +1,17 @@
+import { STAFF_ORDER_STATUS_TONE } from "../lib/catalogStatusBadge"
+import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge, type badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import type { VariantProps } from "class-variance-authority"
 import {
   Dialog,
   DialogContent,
@@ -50,18 +52,6 @@ import {
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
 
-const ORDER_STATUS_BADGE_VARIANT: Record<
-  CatalogOrder["status"],
-  NonNullable<VariantProps<typeof badgeVariants>["variant"]>
-> = {
-  Requested: "secondary",
-  Approved: "info",
-  Preparing: "info",
-  Ready: "warning",
-  Completed: "success",
-  Rejected: "destructive",
-  Cancelled: "destructive",
-}
 
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
@@ -85,6 +75,7 @@ export function CatalogOrderDetailPage() {
     resolver: zodResolver(catalogReasonFormSchema),
     defaultValues: { reason: "" },
   })
+  const reasonValues = useWatch({ control: form.control })
 
   async function load() {
     if (!orderId) {
@@ -193,11 +184,8 @@ export function CatalogOrderDetailPage() {
       form.reset({ reason: "" })
       toast.success(t("catalog.orders.toastUpdated"))
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.transitionCatalogOrder"),
-      )
+      const message = error instanceof Error ? error.message : t("apiErrors.transitionCatalogOrder")
+      toast.error(/^Invalid input\b/i.test(message) ? t("catalog.orders.reason.empty") : message)
     } finally {
       setBusyAction(null)
     }
@@ -229,31 +217,26 @@ export function CatalogOrderDetailPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void navigate("/catalogo/pedidos")
-            }}
-          >
-            {t("common.back")}
-          </Button>
-          <h1 className="text-xl font-semibold tracking-tight">
-            {order.displayNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {order.customerName}
-            {order.customerEmail ? ` · ${order.customerEmail}` : ""}
-          </p>
-        </div>
-        <Badge variant={ORDER_STATUS_BADGE_VARIANT[order.status]}>
+    <div className="staff-catalog staff-catalog-detail space-y-6">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="touch-target min-h-11 px-3"
+        onClick={() => { void navigate("/catalogo/pedidos") }}
+      >
+        {t("common.back")}
+      </Button>
+      <PageHeader
+        className="min-w-0 [&_h1]:tabular-nums"
+        title={order.displayNumber}
+        description={<>{order.customerName}{order.customerEmail ? ` · ${order.customerEmail}` : ""}</>}
+        actions={<span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
           {t(`catalog.status.${order.status}`)}
-        </Badge>
-      </div>
+        </span>}
+      />
+
+      <CatalogTabs active="orders" />
 
       {inactiveNamesForApproval.length > 0 ? (
         <Alert variant="warning">
@@ -272,6 +255,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("approve") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "approve"}
                 onClick={() => {
                   void runAction("approve")
@@ -283,6 +267,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("preparing") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "preparing"}
                 onClick={() => {
                   void runAction("preparing")
@@ -294,6 +279,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("ready") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "ready"}
                 onClick={() => {
                   void runAction("ready")
@@ -305,6 +291,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("complete") ? (
               <LoadingButton
                 type="button"
+                className="touch-target"
                 loading={busyAction === "complete"}
                 onClick={() => {
                   void runAction("complete")
@@ -316,6 +303,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("reject") ? (
               <Button
                 type="button"
+                className="touch-target"
                 variant="outline"
                 onClick={() => {
                   form.reset({ reason: "" })
@@ -328,6 +316,7 @@ export function CatalogOrderDetailPage() {
             {actions.includes("cancel") ? (
               <Button
                 type="button"
+                className="touch-target"
                 variant="outline"
                 onClick={() => {
                   form.reset({ reason: "" })
@@ -341,8 +330,8 @@ export function CatalogOrderDetailPage() {
         ) : null}
       </Can>
 
-      <section className="space-y-2 rounded-xl border border-border p-4">
-        <p className="text-sm">
+      <section className="min-w-0 space-y-2 rounded-xl border border-border bg-card p-4 sm:p-6">
+        <p className="text-sm tabular-nums">
           <span className="text-muted-foreground">
             {t("catalog.orders.total")}:{" "}
           </span>
@@ -374,15 +363,15 @@ export function CatalogOrderDetailPage() {
         ) : null}
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.items")}</h2>
-        <ul className="divide-y rounded-xl border border-border">
+        <ul className="min-w-0 divide-y divide-border">
           {order.items.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+              className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm tabular-nums"
             >
-              <span>
+              <span className="min-w-0 break-words">
                 {item.productName}
                 {item.productCode ? ` (${item.productCode})` : ""} ×{" "}
                 {item.quantity}
@@ -399,7 +388,7 @@ export function CatalogOrderDetailPage() {
         </ul>
       </section>
 
-      <section className="space-y-2">
+      <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
         <ol className="space-y-2">
           {order.history.map((entry) => (
@@ -410,7 +399,7 @@ export function CatalogOrderDetailPage() {
               <p className="font-medium">
                 {t(`catalog.status.${entry.status}`)}
               </p>
-              <p className="text-muted-foreground">
+              <p className="tabular-nums text-muted-foreground">
                 {t(`catalog.actor.${entry.actorType}`)} ·{" "}
                 {formatCatalogDate(entry.createdAt, i18n.language)}
               </p>
@@ -470,13 +459,14 @@ export function CatalogOrderDetailPage() {
                 >
                   {t("common.cancel")}
                 </Button>
-                <LoadingButton
+                <FormPrimaryButton
+                  isValid={catalogReasonFormSchema.safeParse(reasonValues).success}
                   type="submit"
                   loading={busyAction === "reject" || busyAction === "cancel"}
                   loadingLabel={t("catalog.orders.saving")}
                 >
                   {t("catalog.orders.reason.confirm")}
-                </LoadingButton>
+                </FormPrimaryButton>
               </DialogFooter>
             </form>
           </Form>

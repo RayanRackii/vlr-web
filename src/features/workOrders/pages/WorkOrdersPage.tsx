@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   flexRender,
@@ -8,13 +8,16 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { Eye, Play, Plus } from "lucide-react"
+import { ClipboardList, Eye, Play, Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { PageHeader } from "@/components/layout/PageHeader"
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState, type EmptyStateProps } from "@/components/ui/empty-state"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import {
   Table,
   TableBody,
@@ -31,6 +34,7 @@ import {
   type WorkOrderStatus,
 } from "@/features/workOrders/schemas/workOrderSchemas"
 import { WorkOrderOfflineBanner } from "@/features/workOrders/components/WorkOrderOfflineBanner"
+import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { WorkOrderOrigin, formatWorkOrderOriginText } from "@/features/workOrders/components/WorkOrderOrigin"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { isAxiosError } from "@/lib/api"
@@ -54,10 +58,6 @@ function isWorkOrderListFilter(value: string): value is WorkOrderListFilter {
   return (LIST_FILTERS as readonly string[]).includes(value)
 }
 
-function formatShortId(id: string): string {
-  return id.slice(0, 8).toUpperCase()
-}
-
 function formatScheduledDate(value: string, locale: string): string {
   const date = new Date(`${value}T00:00:00`)
   if (Number.isNaN(date.getTime())) {
@@ -75,11 +75,21 @@ function WorkOrdersTable({
   rows,
   isLoading,
   emptyLabel,
+  emptyAction,
+  emptyExample,
+  learnMore,
+  isStatusFiltered,
+  onClearStatus,
   hideEmpty = false,
 }: {
   rows: WorkOrderTableRow[]
   isLoading: boolean
   emptyLabel: string
+  emptyAction?: ReactNode
+  emptyExample?: string
+  learnMore?: EmptyStateProps["learnMore"]
+  isStatusFiltered: boolean
+  onClearStatus: () => void
   hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -96,7 +106,7 @@ function WorkOrdersTable({
           />
         ),
         cell: ({ row }) => (
-          <span className="font-mono text-xs">{formatShortId(row.original.id)}</span>
+          <span className="font-mono text-xs tabular-nums">{formatWorkOrderShortId(row.original.id)}</span>
         ),
         filterFn: (row, _columnId, filterValue) => {
           if (typeof filterValue !== "string" || filterValue.trim() === "") {
@@ -185,8 +195,8 @@ function WorkOrdersTable({
   const filteredRows = table.getFilteredRowModel().rows
 
   return (
-    <div className="rounded-xl border border-border">
-      <Table>
+    <div className="min-w-0 max-w-full rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+      <Table className="tabular-nums" containerClassName="min-w-0 max-w-full rounded-t-xl">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -208,19 +218,11 @@ function WorkOrdersTable({
             <TableRowsSkeleton columns={columns.length} />
           ) : null}
 
-          {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                {emptyLabel}
-              </TableCell>
-            </TableRow>
-          ) : null}
-
           {!isLoading
             ? filteredRows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-normal">
+                    <TableCell key={cell.id} className="max-w-xs whitespace-normal break-words">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -232,6 +234,18 @@ function WorkOrdersTable({
             : null}
         </TableBody>
       </Table>
+      {!isLoading && !hideEmpty && filteredRows.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title={columnFilters.length ? t("emptyStates.noResults") : emptyLabel}
+          description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
+          example={columnFilters.length || isStatusFiltered ? undefined : emptyExample}
+          learnMore={columnFilters.length || isStatusFiltered ? undefined : learnMore}
+          action={columnFilters.length || isStatusFiltered ? (
+            <Button className="min-h-11" onClick={() => { setColumnFilters([]); onClearStatus() }}>{t(columnFilters.length ? "emptyStates.clearFilters" : "workOrders.viewOpen")}</Button>
+          ) : emptyAction}
+        />
+      ) : null}
     </div>
   )
 }
@@ -241,6 +255,7 @@ export function WorkOrdersPage() {
   const { session } = useAuth()
   const { can } = usePermissions()
   const navigate = useNavigate()
+  const learnMore = useModuleIntroLink("maintenance")
 
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -283,7 +298,11 @@ export function WorkOrdersPage() {
   }, [session, t])
 
   useEffect(() => {
-    void loadWorkOrders()
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void loadWorkOrders()
+    })
+    return () => { cancelled = true }
   }, [loadWorkOrders])
 
   const tableRowsByStatus = useMemo(() => {
@@ -321,18 +340,12 @@ export function WorkOrdersPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <WorkOrderOfflineBanner />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("workOrders.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("workOrders.description")}
-          </p>
-        </div>
-        {canCreateWorkOrder ? (
+      <PageHeader
+        title={t("workOrders.title")}
+        description={t("workOrders.description")}
+        actions={canCreateWorkOrder ? (
           <Button
             type="button"
             onClick={() => {
@@ -343,7 +356,7 @@ export function WorkOrdersPage() {
             {t("workOrders.create.action")}
           </Button>
         ) : null}
-      </div>
+      />
 
       {loadError !== null ? (
         <div
@@ -355,6 +368,7 @@ export function WorkOrdersPage() {
       ) : null}
 
       <Tabs
+        className="min-w-0"
         value={activeTab}
         onValueChange={(value) => {
           if (isWorkOrderListFilter(value)) {
@@ -362,7 +376,7 @@ export function WorkOrdersPage() {
           }
         }}
       >
-        <TabsList className="!h-auto flex-wrap justify-start">
+        <TabsList className="!h-auto max-w-full flex-wrap justify-start gap-1">
           {LIST_FILTERS.map((filter) => {
             const count = rowsForFilter(filter).length
             const label = t(`workOrders.tabs.${filter}`)
@@ -371,11 +385,11 @@ export function WorkOrdersPage() {
               <TabsTrigger
                 key={filter}
                 value={filter}
-                className="!h-auto min-h-8 px-2 py-1"
+                className="touch-target !h-auto min-h-8 px-2 py-1"
                 aria-label={t("workOrders.tabs.withCount", { label, count })}
               >
                 <span>{label}</span>
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1 tabular-nums">
                   {count}
                 </Badge>
               </TabsTrigger>
@@ -384,7 +398,7 @@ export function WorkOrdersPage() {
         </TabsList>
 
         {LIST_FILTERS.map((filter) => (
-          <TabsContent key={filter} value={filter} className="mt-4">
+          <TabsContent key={filter} value={filter} className="mt-4 min-w-0">
             <WorkOrdersTable
               rows={rowsForFilter(filter)}
               isLoading={isLoading}
@@ -394,6 +408,24 @@ export function WorkOrdersPage() {
                   ? `workOrders.emptyAssigned.${filter}`
                   : `workOrders.empty.${filter}`,
               )}
+              isStatusFiltered={filter !== "Open"}
+              onClearStatus={() => setActiveTab("Open")}
+              learnMore={learnMore}
+              emptyExample={canCreateWorkOrder ? t("emptyStates.examples.workOrders") : undefined}
+              emptyAction={canCreateWorkOrder ? (
+                <>
+                  <Button onClick={() => { void navigate("/os/nova") }}>{t("workOrders.create.action")}</Button>
+                  {filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
+                    <Button variant="outline" onClick={() => setActiveTab("Completed")}>{t("workOrders.actions.viewCompleted")}</Button>
+                  ) : null}
+                </>
+              ) : filter === "Open" && tableRowsByStatus.Completed.length > 0 ? (
+                <div className="mt-3">
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("Completed")}>
+                    {t("workOrders.actions.viewCompleted")}
+                  </Button>
+                </div>
+              ) : undefined}
             />
           </TabsContent>
         ))}

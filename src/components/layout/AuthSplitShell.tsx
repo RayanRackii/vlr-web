@@ -22,6 +22,8 @@ type AuthSplitShellProps = {
   children: ReactNode
   /** Override the default form column width (e.g. a wizard needs more room). */
   widthClassName?: string
+  /** Tenant auth keeps the brand panel on mobile, above an overlapping form card. */
+  variant?: "default" | "tenant"
 }
 
 export function AuthSplitShell({
@@ -35,25 +37,26 @@ export function AuthSplitShell({
   subtitle,
   children,
   widthClassName = "max-w-md",
+  variant = "default",
 }: AuthSplitShellProps) {
   return (
-    <main className="grid min-h-screen w-full lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
+    <main className={cn("grid min-h-screen w-full lg:h-screen lg:grid-cols-2 lg:overflow-hidden", variant === "tenant" && "tenant-auth")}>
       <div
         className={cn(
-          "relative hidden flex-col overflow-y-auto p-10 lg:flex",
+          "auth-brand relative hidden flex-col overflow-y-auto p-10 lg:flex",
           brandPanelClassName ?? "[background:var(--brand-gradient)]",
         )}
         style={brandPanelStyle}
       >
-        <div className="flex flex-1 flex-col items-start justify-center">
+        <div className="auth-brand-content flex flex-1 flex-col items-center justify-center text-center">
           {brandPanel}
         </div>
         {brandFootnote}
       </div>
 
-      <div className="flex flex-col lg:h-screen lg:overflow-y-auto">
-        <div className="flex items-center justify-between gap-2 p-4 sm:p-6">
-          <div className="min-w-0 lg:hidden">{mobileBrand}</div>
+      <div className="auth-side flex flex-col lg:h-screen lg:overflow-y-auto">
+        <div className="auth-tools flex items-center justify-between gap-2 p-4 sm:p-6">
+          {variant === "default" ? <div className="min-w-0 lg:hidden">{mobileBrand}</div> : null}
           <div className="ml-auto flex shrink-0 items-center gap-1">
             {headerActions ?? (
               <>
@@ -67,10 +70,11 @@ export function AuthSplitShell({
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center p-6 pt-0 sm:p-8 sm:pt-0">
+        <div className="auth-center flex flex-1 items-center justify-center p-6 pt-0 sm:p-8 sm:pt-0">
           <div
             className={cn(
-              "w-full animate-in fade-in slide-in-from-bottom-2 duration-500",
+              "auth-card w-full animate-in fade-in slide-in-from-bottom-2 duration-500 motion-reduce:animate-none",
+              variant === "tenant" && "tenant-auth-form",
               widthClassName,
             )}
           >

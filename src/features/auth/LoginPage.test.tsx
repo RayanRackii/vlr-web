@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LoginPage } from "@/features/auth/LoginPage"
+import {
+  clearCustomerSession,
+  getCustomerAccessToken,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import {
   resetStaffSessionRefreshForTests,
   staffAuthEpochForTests,
@@ -11,12 +16,29 @@ import {
 import i18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
+import { listMyStaffTenants, PLATFORM_ADMIN_USES_ENTER, StaffTenantError } from "@/features/users/services/staffTenantsService"
+
+// Single-tenant accounts keep the direct login flow.
+vi.mock("@/features/users/services/staffTenantsService", async (orig) => ({
+  ...(await orig<object>()),
+  listMyStaffTenants: vi.fn().mockResolvedValue({
+    memberships: [],
+    accessTokenTenantId: null,
+  }),
+}))
+
+function ReturnProbe() {
+  const location = useLocation()
+  return <div>{`${location.pathname}${location.search}`}</div>
+}
+
 function renderLogin(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<div>dashboard</div>} />
+        <Route path="/pmoc/novo" element={<ReturnProbe />} />
         <Route path="/os" element={<div>orders</div>} />
       </Routes>
     </MemoryRouter>,
@@ -39,6 +61,18 @@ describe("LoginPage next redirect", () => {
     await user.click(screen.getByRole("button", { name: "Entrar" }))
   }
 
+  it("shows expiry notice and returns to the same PMOC page and company", async () => {
+    renderLogin("/login?reason=session-expired&next=%2Fpmoc%2Fnovo%3Fcompany%3Dficc&company=ficc")
+    expect(screen.getByRole("alert")).toHaveTextContent("Sua sessão expirou. Entre novamente para continuar.")
+    await submitValidCredentials()
+    expect(await screen.findByText("/pmoc/novo?company=ficc")).toBeInTheDocument()
+  })
+
+  it("does not show an expiry notice on ordinary login", () => {
+    renderLogin("/login")
+    expect(screen.queryByText("Sua sessão expirou. Entre novamente para continuar.")).not.toBeInTheDocument()
+  })
+
   it("returns to a safe staff next path after login", async () => {
     resetStaffSessionRefreshForTests()
     renderLogin("/login?next=/os")
@@ -47,10 +81,73 @@ describe("LoginPage next redirect", () => {
     expect(staffAuthEpochForTests()).toBe(1)
   })
 
+  it("preserves a platform admin's safe next path with a tenant parameter", async () => {
+    vi.mocked(listMyStaffTenants).mockRejectedValueOnce(
+      new StaffTenantError(PLATFORM_ADMIN_USES_ENTER, 403),
+    )
+    renderLogin("/login?tenant=tenant-a&next=%2Fpmoc%2Fnovo%3Fcompany%3Dficc&company=ficc")
+    await submitValidCredentials()
+    expect(await screen.findByText("/pmoc/novo?company=ficc")).toBeInTheDocument()
+  })
+
   it("ignores an open-redirect next URL", async () => {
     renderLogin("/login?next=https://evil.example")
     await submitValidCredentials()
     expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+
+  it("keeps the tenant context from next when redirecting after login", async () => {
+    resetStaffSessionRefreshForTests()
+    renderLogin("/login?next=%2Fdashboard%3Fcompany%3Dficc&company=ficc")
+    await submitValidCredentials()
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+  })
+})
+
+describe("LoginPage exclusive sessions", () => {
+  beforeEach(() => {
+    vi.mocked(supabase.auth.signInWithPassword).mockReset()
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+      data: { user: { id: "1" }, session: {} },
+      error: null,
+    } as never)
+    clearCustomerSession()
+  })
+
+  afterEach(() => {
+    clearCustomerSession()
+  })
+
+  it("clears a leftover customer session once staff sign-in succeeds", async () => {
+    resetStaffSessionRefreshForTests()
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    expect(getCustomerAccessToken()).toBe("customer-token")
+
+    const user = userEvent.setup()
+    renderLogin("/login")
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.type(screen.getByLabelText("Senha"), "password1")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
+  })
+
+  it("keeps the customer session untouched when staff sign-in fails", async () => {
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { message: "Invalid login credentials" },
+    } as never)
+    persistCustomerSession("customer-token", "ficc", "Ana")
+
+    const user = userEvent.setup()
+    renderLogin("/login")
+    await user.type(screen.getByLabelText("E-mail"), "admin@clube.com")
+    await user.type(screen.getByLabelText("Senha"), "wrong-password")
+    await user.click(screen.getByRole("button", { name: "Entrar" }))
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBe("customer-token")
   })
 })
 

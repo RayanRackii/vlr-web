@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router-do
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
 import { MainLayout } from "@/components/layout/MainLayout"
+import { ModuleIntroPage } from "@/components/layout/ModuleIntroPage"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
@@ -44,6 +45,16 @@ function RedirectVerifyPhoneToEmail() {
   )
 }
 
+/** Carries the tenant slug forward as `?company=` so a later sign-out/sign-in redirect can still find it. */
+function withCompanyParam(search: string, subdomain: string | undefined): string {
+  const params = new URLSearchParams(search)
+  if (subdomain && !params.has("company")) {
+    params.set("company", subdomain)
+  }
+  const next = params.toString()
+  return next ? `?${next}` : ""
+}
+
 function RedirectTenantStaffRoute() {
   const location = useLocation()
   const { subdomain } = useParams<{ subdomain: string }>()
@@ -51,7 +62,12 @@ function RedirectTenantStaffRoute() {
   const rootPath = location.pathname.startsWith(prefix)
     ? location.pathname.slice(prefix.length) || "/dashboard"
     : "/dashboard"
-  return <Navigate to={`${rootPath}${location.search}`} replace />
+  return (
+    <Navigate
+      to={`${rootPath}${withCompanyParam(location.search, subdomain)}${location.hash}`}
+      replace
+    />
+  )
 }
 
 /** `perfil/*` favors the signed-in customer's profile; staff only wins when no customer session exists. */
@@ -110,6 +126,7 @@ export function AppRoutes() {
         <Route path="ativos/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
         <Route path="os/*" element={<RedirectTenantStaffRoute />} />
+        <Route path="modulos/*" element={<RedirectTenantStaffRoute />} />
         <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
         <Route path="perfil/*" element={<RedirectPerfilRoute />} />
         <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
@@ -139,6 +156,7 @@ export function AppRoutes() {
         </Route>
 
         <Route element={<MainLayout />}>
+          <Route path="/modulos/:moduleKey" element={<ModuleIntroPage />} />
           <Route element={<DashboardHomeRoute />}>
             {dashboardManifest.routes.staff.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />

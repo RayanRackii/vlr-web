@@ -1,3 +1,5 @@
+import "./portal/portal.css"
+
 import { X } from "lucide-react"
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
@@ -6,10 +8,12 @@ import { useTranslation } from "react-i18next"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { AppShell } from "@/components/layout/AppShell"
-import { getEmailInitials } from "@/components/layout/navigation"
+import { customerDisplayInitials, customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
 import { isAxiosError } from "@/lib/api"
 import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
+import { CustomerNotificationBell } from "./CustomerNotificationBell"
 import { CustomerSidebar } from "@/features/tenantPortal/components/CustomerSidebar"
+import { useCustomerLabel } from "@/features/tenantPortal/hooks/useCustomerLabel"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { getAgendaSessionGeneration } from "@/features/tenantPortal/lib/agendaQueryClient"
@@ -19,6 +23,7 @@ import {
   subscribeAgendaSelectionNotice,
 } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
+import { appendReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
 import type {
   ModuleMenuItem,
   TenantBranding,
@@ -26,7 +31,6 @@ import type {
 import {
   fetchTenantBranding,
   fetchTenantMenu,
-  getCustomerLabel,
   isCustomerSignedInForTenant,
   resolveTenantSubdomain,
   tenantPortalPath,
@@ -34,8 +38,10 @@ import {
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import appI18n from "@/lib/i18n"
 import {
+  hasActiveStaffSession,
   isAuthenticatedRestoreBlocked,
   signOutCustomerPortal,
+  signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
 
 export type CustomerAppOutletContext = {
@@ -50,6 +56,7 @@ export function CustomerAppLayout() {
   const params = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const customerLabel = useCustomerLabel()
   const subdomain = useMemo(() => {
     const fromPath = params.subdomain?.toLowerCase()
     if (fromPath) {
@@ -124,9 +131,11 @@ export function CustomerAppLayout() {
   }
 
   if (!signedIn) {
+    const loginPath = subdomain ? tenantPortalPath(subdomain) : "/"
+    const returnTo = `${location.pathname}${location.search}`
     return (
       <Navigate
-        to={subdomain ? tenantPortalPath(subdomain) : "/"}
+        to={subdomain ? appendReturnToParam(loginPath, returnTo) : loginPath}
         replace
       />
     )
@@ -176,24 +185,27 @@ export function CustomerAppLayout() {
   const pageTitle = isProfilePage
     ? t("tenantPortal.profile.title")
     : (activeItem?.label ?? branding.displayName)
-  const userLabel = getCustomerLabel() ?? t("account.userFallback")
+  const userLabel = customerLabel ?? t("account.userFallback")
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={themeStyle}>
+    <div className="portal-shell min-h-screen bg-background text-foreground" style={themeStyle}>
       <AppShell
+        variant="portal"
         sidebar={({ onNavigate }) => (
           <CustomerSidebar
             brandLabel={branding.displayName}
             logoSvg={branding.logoSvg}
             primaryColor={branding.primaryColor}
             items={navItems}
+            userLabel={customerLabel}
             onNavigate={onNavigate}
           />
         )}
         pageTitle={pageTitle}
         userLabel={userLabel}
-        initials={getEmailInitials(userLabel)}
+        initials={customerDisplayInitials(customerDisplayName(userLabel))}
         profileTo={profileTo}
+        headerActions={<CustomerNotificationBell subdomain={subdomain} />}
         enlargeHeaderTargets
         showLanguageCode
         banner={
@@ -211,7 +223,7 @@ export function CustomerAppLayout() {
               </p>
               <button
                 type="button"
-                className="rounded-sm p-1 hover:bg-amber-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-50/10"
+                className="touch-target rounded-sm p-1 hover:bg-amber-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-50/10"
                 aria-label={t("common.close")}
                 onClick={() => clearAgendaSelectionNotice(subdomain)}
               >
@@ -220,8 +232,12 @@ export function CustomerAppLayout() {
             </div>
           ) : null
         }
-        onSignOut={() => {
+        onSignOut={async () => {
+          // Customer storage goes first (sync), then any leftover staff session.
           const path = signOutCustomerPortal(subdomain)
+          if (hasActiveStaffSession()) {
+            await signOutStaffPortal()
+          }
           void navigate(path, { replace: true })
         }}
       >

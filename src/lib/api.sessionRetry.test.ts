@@ -177,7 +177,25 @@ describe("staff api 401 retry", () => {
 
   afterEach(() => {
     window.localStorage.removeItem(STAFF_MARKER)
+    window.history.replaceState({}, "", "/")
     resetStaffSessionRefreshForTests()
+  })
+
+  it("keeps the tenant and original staff URL when an expired session cannot refresh", async () => {
+    window.history.replaceState({}, "", "/os?company=ficc&status=open#details")
+    installAdapter(api, [{ kind: "status", status: 401 }])
+    vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Refresh token expired", 400, "refresh_token_not_found"),
+    } as never)
+
+    await expect(api.get("/api/users/me")).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+
+    expect(assignBrowserLocation).toHaveBeenCalledWith(
+      "/login?next=%2Fos%3Fcompany%3Dficc%26status%3Dopen%23details&company=ficc&reason=session-expired",
+    )
   })
 
   it("retries once after a successful refresh and does not sign out", async () => {
@@ -219,6 +237,32 @@ describe("staff api 401 retry", () => {
     expect(logged).toContain("\"requestPath\":\"/api/users/me\"")
   })
 
+  it("keeps the PMOC edit path, company and tenant with a persistent expiry reason", async () => {
+    window.history.replaceState({}, "", "/pmoc/novo?company=alpha")
+    installAdapter(api, [{ kind: "status", status: 401 }])
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: {
+        access_token: OLD_STAFF_TOKEN, refresh_token: REFRESH_SECRET,
+        user: { id: "user-1", app_metadata: { tenant_id: "tenant-alpha" } },
+      } }, error: null,
+    } as never)
+    vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+      data: { session: null, user: null },
+      error: new AuthApiError("Invalid Refresh Token", 400, "refresh_token_not_found"),
+    } as never)
+    try {
+      await expect(api.get("/api/users/me")).rejects.toMatchObject({ response: { status: 401 } })
+      const destination = new URL(vi.mocked(assignBrowserLocation).mock.calls[0]![0], window.location.origin)
+      expect(destination.pathname).toBe("/login")
+      expect(destination.searchParams.get("next")).toBe("/pmoc/novo?company=alpha")
+      expect(destination.searchParams.get("company")).toBe("alpha")
+      expect(destination.searchParams.get("tenant")).toBe("tenant-alpha")
+      expect(destination.searchParams.get("reason")).toBe("session-expired")
+    } finally {
+      window.history.replaceState({}, "", "/")
+    }
+  })
+
   it("signs out locally when refresh returns refresh_token_not_found", async () => {
     const calls = installAdapter(api, [{ kind: "status", status: 401 }])
     vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
@@ -239,7 +283,7 @@ describe("staff api 401 retry", () => {
     expect(supabase.auth.refreshSession).toHaveBeenCalledWith()
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
     expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: "local" })
-    expect(assignBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(assignBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fdashboard&reason=session-expired")
     expect(window.localStorage.getItem(STAFF_MARKER)).toBe("keep-staff-session")
     const logged = loggedText(info)
     expect(logged).toContain("\"errorName\":\"AuthApiError\"")

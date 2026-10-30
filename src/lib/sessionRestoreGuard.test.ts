@@ -29,8 +29,10 @@ import {
   installSessionRestoreGuard,
   isAuthenticatedRestoreBlocked,
   loginPathForAuthenticatedPath,
+  hasActiveStaffSession,
   resetSessionRestoreGuardForTests,
   signOutCustomerPortal,
+  signOutStaffBeforeCustomerAuth,
   signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
 
@@ -137,12 +139,21 @@ describe("authenticated surface", () => {
     expect(loginPathForAuthenticatedPath("/app/perfil", "ficc")).toBe("/")
     expect(loginPathForAuthenticatedPath("/agenda/menu", "ficc")).toBe("/")
     expect(loginPathForAuthenticatedPath("/t/ficc/pedidos/1")).toBe("/t/ficc")
-    expect(loginPathForAuthenticatedPath("/configuracoes/reservas")).toBe("/login")
-    expect(loginPathForAuthenticatedPath("/catalogo/pedidos")).toBe("/login")
+    expect(loginPathForAuthenticatedPath("/configuracoes/reservas")).toBe("/login?next=%2Fconfiguracoes%2Freservas")
+    expect(loginPathForAuthenticatedPath("/catalogo/pedidos")).toBe("/login?next=%2Fcatalogo%2Fpedidos")
   })
 })
 
 describe("session restore guard", () => {
+  it.each(["pageshow", "popstate"])("keeps tenant and return path on a logged-out %s", (eventType) => {
+    window.history.pushState({}, "", "/os?company=ficc&status=open#details")
+    window.dispatchEvent(eventType === "pageshow" ? pageShow(true) : new PopStateEvent("popstate"))
+
+    expect(replaceBrowserLocation).toHaveBeenCalledWith(
+      "/login?next=%2Fos%3Fcompany%3Dficc%26status%3Dopen%23details&company=ficc",
+    )
+  })
+
   beforeEach(() => {
     resetSessionRestoreGuardForTests()
     resetAgendaQueryClientForTests()
@@ -167,8 +178,8 @@ describe("session restore guard", () => {
     ["/t/ficc/app/perfil", "/t/ficc"],
     ["/t/ficc/agenda/menu-id", "/t/ficc"],
     ["/t/ficc/pedidos/order-id", "/t/ficc"],
-    ["/configuracoes/reservas", "/login"],
-    ["/catalogo/pedidos", "/login"],
+    ["/configuracoes/reservas", "/login?next=%2Fconfiguracoes%2Freservas"],
+    ["/catalogo/pedidos", "/login?next=%2Fcatalogo%2Fpedidos"],
   ])(
     "pageshow persisted on %s replaces to %s without calling the network",
     (path, login) => {
@@ -272,7 +283,7 @@ describe("session restore guard", () => {
     window.dispatchEvent(new PopStateEvent("popstate"))
 
     expect(bubble).not.toHaveBeenCalled()
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fcatalogo%2Fpedidos")
     expect(document.getElementById("root")?.textContent).toBe("")
     window.removeEventListener("popstate", bubble)
   })
@@ -361,20 +372,23 @@ describe("portal sign out", () => {
 
     window.history.pushState({}, "", "/configuracoes/reservas")
     window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fconfiguracoes%2Freservas")
   })
 
-  it("keeps the staff session usable when sign-out fails", async () => {
+  it("still ends the local staff session when the server sign-out fails", async () => {
     storeStaffSession("still-here")
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
       error: { name: "AuthError", message: "network" },
     } as never)
+    vi.mocked(supabase.auth.admin.signOut).mockRejectedValueOnce(new Error("network"))
     const signedOut = await signOutStaffPortal()
 
-    expect(signedOut).toBe(false)
+    expect(signedOut).toBe(true)
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
+    expect(hasActiveStaffSession()).toBe(false)
     window.history.pushState({}, "", "/dashboard")
     window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(replaceBrowserLocation).not.toHaveBeenCalled()
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fdashboard")
   })
 
   it("returns the customer login path and clears that session and caches", async () => {
@@ -392,5 +406,53 @@ describe("portal sign out", () => {
     expect(window.localStorage.getItem("rolvix.customer.token")).toBeNull()
     expect(peekCurrentUserCacheForTests()).toBeNull()
     expect(isOwnBookedSlot(civil.date, ASSET_ID, civil.time)).toBe(false)
+  })
+
+  it("signs out a leftover staff session before a customer authenticates", async () => {
+    storeStaffSession("leftover-staff-token")
+    expect(hasActiveStaffSession()).toBe(true)
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("does nothing when there is no staff session to sign out", async () => {
+    expect(hasActiveStaffSession()).toBe(false)
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).not.toHaveBeenCalled()
+  })
+
+  it("does not throw when staff sign-out fails/rejects", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error("network"))
+
+    await expect(signOutStaffBeforeCustomerAuth()).resolves.toBeUndefined()
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("scenario A: drops the staff session locally when the global sign-out returns an error", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockResolvedValueOnce({
+      error: new Error("network") as never,
+    })
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(supabase.auth.signOut).toHaveBeenLastCalledWith({ scope: "local" })
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
+    expect(hasActiveStaffSession()).toBe(false)
+  })
+
+  it("scenario A: removes the stored staff session when the global sign-out rejects", async () => {
+    storeStaffSession("leftover-staff-token")
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error("network"))
+
+    await signOutStaffBeforeCustomerAuth()
+
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBeNull()
   })
 })

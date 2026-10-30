@@ -165,14 +165,14 @@ export function LocaleDateInput({
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <div
-        className={cn(
-          "relative h-10 rounded-lg focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
-        )}
+        data-slot="date-field"
+        data-invalid={invalid || undefined}
+        className="relative min-h-10 rounded-lg"
       >
         <span
           aria-hidden="true"
           className={cn(
-            "flex h-10 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
+            "flex min-h-10 items-center rounded-lg border border-input px-2.5 text-sm text-foreground",
             invalid && "border-destructive",
           )}
         >
@@ -203,6 +203,7 @@ export function LocaleDateInput({
             // `max` stays off this control. Chrome drops a typed day past
             // max and the field snaps back with an empty value.
             onChange(event.target.value, "input")
+            setOpen(false)
           }}
           className="absolute inset-0 h-10 cursor-pointer opacity-0"
         />

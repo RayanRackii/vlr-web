@@ -1,11 +1,25 @@
 import type { Config } from "tailwindcss"
 import animate from "tailwindcss-animate"
+import plugin from "tailwindcss/plugin"
 
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      // Base UI exposes state as data attributes (data-orientation, data-active).
+      // The shadcn/Base UI components use Tailwind v4 shorthand variants
+      // (`data-horizontal:`, `group-data-vertical/tabs:`, `data-active:`); on
+      // Tailwind v3 those only exist when mapped here (also enables group-/peer-).
+      data: {
+        horizontal: 'orientation="horizontal"',
+        vertical: 'orientation="vertical"',
+        active: "active",
+      },
+      // Tailwind 3 does not provide the aria-invalid shorthand by default.
+      aria: {
+        invalid: 'invalid="true"',
+      },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
@@ -93,5 +107,12 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    // Touch pointers (phones/tablets) need larger hit targets than mouse pointers;
+    // `coarse:` lets editor controls grow only where there's no mouse precision.
+    plugin(({ addVariant }) => {
+      addVariant("coarse", "@media (pointer: coarse)")
+    }),
+  ],
 } satisfies Config

@@ -1,52 +1,34 @@
-import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useOutletContext } from "react-router-dom"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-} from "@tanstack/react-table"
-import { Eye, ShoppingBag } from "lucide-react"
+import "../components/portalOrders.css"
+
+import { useEffect, useState } from "react"
+import { Link, useOutletContext } from "react-router-dom"
+import { ArrowRight, ShoppingBag } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
-import { PageHeader } from "@/components/layout/PageHeader"
-import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
+import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import {
   formatCatalogDate,
   type CatalogOrder,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { listPortalCatalogOrders } from "@/features/catalog/services/catalogPortalService"
-import { catalogOrderStatusBadgeVariant } from "@/features/catalog/lib/catalogStatusBadge"
+import { catalogOrderStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalService"
 
 export function PortalOrdersPage() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const { subdomain } = useOutletContext<CustomerAppOutletContext>()
+  const { subdomain, branding } = useOutletContext<CustomerAppOutletContext>()
   const [orders, setOrders] = useState<CatalogOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     void listPortalCatalogOrders()
       .then((data) => {
         if (!cancelled) {
@@ -71,163 +53,133 @@ export function PortalOrdersPage() {
     return () => {
       cancelled = true
     }
-  }, [t])
+  }, [t, reloadKey, subdomain])
 
-  const columns = useMemo<ColumnDef<CatalogOrder>[]>(
-    () => [
-      {
-        accessorKey: "displayNumber",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.number")}
-          />
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.orders.columns.status")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Badge variant={catalogOrderStatusBadgeVariant(row.original.status)}>
-            {t(`catalog.status.${row.original.status}`)}
-          </Badge>
-        ),
-        filterFn: (row, _columnId, filterValue) => {
-          if (typeof filterValue !== "string" || filterValue.trim() === "") {
-            return true
-          }
-          return t(`catalog.status.${row.original.status}`)
-            .toLowerCase()
-            .includes(filterValue.trim().toLowerCase())
-        },
-      },
-      {
-        id: "total",
-        accessorFn: (row) =>
-          formatOrderTotalText(row, i18n.language, {
-            onRequest: t("catalog.priceOnRequest"),
-            partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
-          }),
-        header: t("catalog.orders.columns.total"),
-        enableColumnFilter: false,
-      },
-      {
-        accessorKey: "createdAt",
-        header: t("catalog.orders.columns.createdAt"),
-        enableColumnFilter: false,
-        cell: ({ row }) =>
-          formatCatalogDate(row.original.createdAt, i18n.language),
-      },
-      {
-        id: "actions",
-        enableColumnFilter: false,
-        header: t("catalog.orders.columns.actions"),
-        cell: ({ row }) => (
+  useEffect(() => {
+    // Throttle focus refreshes so repeated focus events cannot pile up list requests.
+    let lastRefreshAt = 0
+    const refreshVisible = () => {
+      if (document.visibilityState !== "visible") return
+      const now = Date.now()
+      if (now - lastRefreshAt < 5000) return
+      lastRefreshAt = now
+      setReloadKey((value) => value + 1)
+    }
+    window.addEventListener("focus", refreshVisible)
+    return () => window.removeEventListener("focus", refreshVisible)
+  }, [])
+
+  return (
+    <div className="portal-records">
+      <header className="portal-booking-header portal-records-header">
+        <p className="portal-eyebrow break-words">{branding.displayName}</p>
+        <h1>{t("tenantPortal.catalog.ordersTitle")}</h1>
+        <p className="text-muted-foreground">
+          {t("tenantPortal.catalog.ordersSubtitle")}
+        </p>
+      </header>
+
+      {loading ? (
+        <ul
+          className="portal-records-list"
+          role="status"
+          aria-busy="true"
+          aria-label={t("tenantPortal.catalog.ordersLoading")}
+        >
+          {[0, 1, 2].map((index) => (
+            <li key={index} className="portal-record-card">
+              <Skeleton className="size-[46px] shrink-0 rounded-full" aria-hidden />
+              <div className="portal-record-body">
+                <Skeleton className="h-4 w-28 max-w-full" />
+                <Skeleton className="h-3 w-40 max-w-full" />
+              </div>
+              <Skeleton className="h-6 w-20 shrink-0 rounded-full" />
+            </li>
+          ))}
+        </ul>
+      ) : loadError ? (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          <p className="min-w-0">{loadError}</p>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="ml-auto"
             onClick={() => {
-              void navigate(
-                tenantPortalPath(subdomain, `pedidos/${row.original.id}`),
-              )
+              setLoading(true)
+              setReloadKey((value) => value + 1)
             }}
           >
-            <Eye data-icon="inline-start" />
-            {t("catalog.orders.view")}
+            {t("catalog.retry")}
           </Button>
-        ),
-      },
-    ],
-    [i18n.language, navigate, subdomain, t],
-  )
-
-  const table = useReactTable({
-    data: orders,
-    columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  })
-
-  return (
-    <div>
-      <PageHeader
-        title={t("tenantPortal.catalog.ordersTitle")}
-        description={t("tenantPortal.catalog.ordersSubtitle")}
-      />
-
-      {loadError ? (
-        <p className="mb-4 text-sm text-destructive">{loadError}</p>
-      ) : null}
-
-      {!loading && orders.length === 0 ? (
+        </div>
+      ) : orders.length === 0 ? (
         <EmptyState
+          variant="portal"
           icon={ShoppingBag}
           title={t("tenantPortal.catalog.ordersEmpty")}
+          description={t("tenantPortal.catalog.ordersEmptyDescription", { tenant: branding.displayName })}
+          example={t("emptyStates.examples.portalOrders")}
           action={
             <Button
               type="button"
-              variant="outline"
-              onClick={() => {
-                void navigate(tenantPortalPath(subdomain, "catalogo"))
-              }}
+              className="portal-catalog-button portal-catalog-primary mt-2"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
             >
               {t("tenantPortal.catalog.requestSentCatalog")}
             </Button>
           }
         />
       ) : (
-      <div className="overflow-hidden rounded-xl border border-border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRowsSkeleton columns={5} rows={4} />
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  {t("tenantPortal.catalog.ordersEmpty")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+        <ul className="portal-records-list">
+          {orders.map((order) => {
+            const totalLabel = formatOrderTotalText(order, i18n.language, {
+              onRequest: t("catalog.priceOnRequest"),
+              partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
+            })
+            const itemCount = order.items.reduce(
+              (sum, item) => sum + item.quantity,
+              0,
+            )
+            return (
+              <li key={order.id}>
+                <Link
+                  className="portal-record-card"
+                  to={tenantPortalPath(subdomain, `pedidos/${order.id}`)}
+                >
+                  <span className="portal-record-icon" aria-hidden>
+                    <ShoppingBag strokeWidth={1.75} />
+                  </span>
+                  <span className="portal-record-body">
+                    <span className="portal-record-top">
+                      <span className="portal-record-title">
+                        {order.displayNumber}
+                      </span>
+                      <PortalStatusChip tone={catalogOrderStatusTone(order.status)}>
+                        {t(`catalog.status.${order.status}`)}
+                      </PortalStatusChip>
+                    </span>
+                    <span className="portal-record-meta">
+                      {formatCatalogDate(order.createdAt, i18n.language)}
+                      {" · "}
+                      {t("tenantPortal.catalog.itemCount", { count: itemCount })}
+                    </span>
+                    <span className="portal-record-foot">
+                      <span className="portal-record-total">{totalLabel}</span>
+                      <span className="portal-record-view">
+                        {t("catalog.orders.view")}
+                        <ArrowRight aria-hidden />
+                      </span>
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )

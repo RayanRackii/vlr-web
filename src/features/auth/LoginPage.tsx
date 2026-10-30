@@ -7,6 +7,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { AuthLayout } from "@/components/layout/AuthLayout"
+import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { InputWithIcon } from "@/components/ui/input-icon"
 import { PasswordInput } from "@/components/ui/password-input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { iconProps } from "@/lib/icon"
 import {
   loginSchema,
@@ -30,10 +32,24 @@ import {
   type PasswordResetCompanyFormValues,
 } from "@/features/auth/passwordResetCompanySchema"
 import { requestPasswordReset } from "@/features/auth/passwordRecoveryService"
-import { resolveTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
+import { TenantPicker } from "@/features/auth/TenantPicker"
+import { refreshAuthSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import type { StaffTenantMembership } from "@/features/users/schemas/staffTenantSchemas"
+import {
+  PLATFORM_ADMIN_USES_ENTER,
+  StaffTenantError,
+  listMyStaffTenants,
+  selectMyStaffTenant,
+} from "@/features/users/services/staffTenantsService"
+import { toast } from "sonner"
+import {
+  clearCustomerSession,
+  resolveTenantSubdomain,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { noteStaffSignIn } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { safeStaffNextPath } from "@/lib/safeStaffNextPath"
+import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
 function getLoginErrorMessage(
   error: AuthError,
@@ -59,7 +75,16 @@ export function LoginPage() {
   const [resetInfo, setResetInfo] = useState<string | null>(null)
   const [resetEmail, setResetEmail] = useState<string | null>(null)
   const [showForgotEmailHint, setShowForgotEmailHint] = useState(false)
-  const resolvedSubdomain = resolveTenantSubdomain(location.pathname)
+  const [picker, setPicker] = useState<{
+    memberships: StaffTenantMembership[]
+    initialTenantId: string
+  } | null>(null)
+  const [membershipError, setMembershipError] = useState(false)
+  const [loadingMemberships, setLoadingMemberships] = useState(false)
+  const [retryingMemberships, setRetryingMemberships] = useState(false)
+  const companyParam = searchParams.get("company")?.trim().toLowerCase() || null
+  const resolvedSubdomain =
+    resolveTenantSubdomain(location.pathname) ?? companyParam
   const companySchema = useMemo(
     () =>
       buildPasswordResetCompanySchema({
@@ -150,7 +175,74 @@ export function LoginPage() {
       return
     }
 
-    void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
+    clearCustomerSession()
+    await openTenantStep()
+  }
+
+  // Accounts in more than one tenant choose where to land instead of
+  // opening whichever tenant the token happens to carry.
+  async function openTenantStep() {
+    setLoadingMemberships(true)
+    let tokenTenantId: string | null
+    try {
+      const list = await listMyStaffTenants()
+      tokenTenantId = list.accessTokenTenantId
+      if (list.memberships.length > 1) {
+        const current = list.memberships.some(
+          (membership) => membership.tenantId === list.accessTokenTenantId,
+        )
+          ? (list.accessTokenTenantId ?? "")
+          : ""
+        setMembershipError(false)
+        setPicker({ memberships: list.memberships, initialTenantId: current })
+        return
+      }
+    } catch (error: unknown) {
+      if (
+        error instanceof StaffTenantError &&
+        error.code === PLATFORM_ADMIN_USES_ENTER
+      ) {
+        void navigate(safeStaffNextPath(searchParams.get("next")) ?? "/dashboard")
+        return
+      }
+      setMembershipError(true)
+      return
+    } finally {
+      setLoadingMemberships(false)
+    }
+
+    goAfterLogin(tokenTenantId)
+  }
+
+  async function onRetryMemberships() {
+    setRetryingMemberships(true)
+    try {
+      await openTenantStep()
+    } finally {
+      setRetryingMemberships(false)
+    }
+  }
+
+  async function onSignOutFromMembershipError() {
+    await signOutStaffPortal()
+    setMembershipError(false)
+    form.reset({ email: "", password: "" })
+  }
+
+  function goAfterLogin(tenantId: string | null) {
+    const returnTenant = searchParams.get("tenant")
+    const sameTenant = !returnTenant || returnTenant === tenantId
+    void navigate((sameTenant ? safeStaffNextPath(searchParams.get("next")) : null) ?? "/dashboard")
+  }
+
+  async function onPickTenant(tenantId: string) {
+    try {
+      await selectMyStaffTenant(tenantId)
+      await refreshAuthSession()
+      goAfterLogin(tenantId)
+    } catch {
+      toast.error(t("auth.invite.pickerError"))
+    }
   }
 
   async function onForgotPassword() {
@@ -185,6 +277,72 @@ export function LoginPage() {
     await sendReset(resetEmail, values.subdomain)
   }
 
+  if (loadingMemberships) {
+    return (
+      <AuthLayout title={t("auth.invite.pickerTitle")}>
+        <div className="space-y-4">
+          <p role="status" className="text-sm text-muted-foreground">{t("auth.invite.pickerLoading")}</p>
+          <div aria-hidden="true" className="space-y-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  if (membershipError) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.membershipError")}
+      >
+        <p role="alert" className="mb-4 text-sm text-muted-foreground">
+          {t("auth.invite.membershipErrorHint")}
+        </p>
+        <div className="flex flex-col gap-2">
+          <LoadingButton
+            type="button"
+            className="h-11 w-full"
+            loading={retryingMemberships}
+            loadingLabel={t("auth.invite.pickerSubmitting")}
+            onClick={() => {
+              void onRetryMemberships()
+            }}
+          >
+            {t("auth.invite.membershipRetry")}
+          </LoadingButton>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full"
+            onClick={() => {
+              void onSignOutFromMembershipError()
+            }}
+          >
+            {t("auth.invite.membershipSignOut")}
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  if (picker) {
+    return (
+      <AuthLayout
+        title={t("auth.invite.pickerTitle")}
+        subtitle={t("auth.invite.pickerBody")}
+      >
+        <TenantPicker
+          memberships={picker.memberships}
+          initialTenantId={picker.initialTenantId}
+          onConfirm={onPickTenant}
+        />
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout
       title={
@@ -196,6 +354,11 @@ export function LoginPage() {
           : t("auth.login.subtitle")
       }
     >
+      {searchParams.get("reason") === "session-expired" ? (
+        <p role="alert" className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive dark:text-destructive-foreground">
+          {t("auth.sessionExpired")}
+        </p>
+      ) : null}
       {resetEmail ? (
         <Form {...companyForm}>
           <form

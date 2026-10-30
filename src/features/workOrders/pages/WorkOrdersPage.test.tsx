@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
+import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -43,10 +44,13 @@ function renderList(
         permissions={permissions}
         activeModules={activeModules}
       >
+        <ModuleIntroLinksProvider keys={activeModules.includes("os") ? ["maintenance"] : []}>
         <Routes>
           <Route path="/os" element={<WorkOrdersPage />} />
+          <Route path="/os/nova" element={<div>new-work-order</div>} />
           <Route path="/pmoc/:id" element={<div>pmoc-detail</div>} />
         </Routes>
+        </ModuleIntroLinksProvider>
       </TestPermissionProvider>
     </MemoryRouter>,
   )
@@ -56,6 +60,39 @@ describe("WorkOrdersPage origin", () => {
   beforeEach(() => {
     getWorkOrdersMock.mockReset()
     getPlanMock.mockClear()
+  })
+
+  it.each([
+    ["os.work_orders.read"],
+    ["os.work_orders.read", "os.work_orders.execute"],
+  ])("offers completed orders from the empty open list for %j", async (...permissions) => {
+    const user = userEvent.setup()
+    getWorkOrdersMock.mockResolvedValue([makeWorkOrder({ status: "Completed" })])
+    renderList(permissions, ["os"])
+
+    await user.click(await screen.findByRole("button", {
+      name: i18n.t("workOrders.actions.viewCompleted"),
+    }))
+
+    expect(screen.getByRole("tab", {
+      name: i18n.t("workOrders.tabs.withCount", {
+        label: i18n.t("workOrders.tabs.Completed"), count: 1,
+      }),
+    })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByRole("link", {
+      name: i18n.t("workOrders.actions.view"),
+    })).toHaveAttribute("href", `/os/${makeWorkOrder().id}`)
+    expect(getWorkOrdersMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not offer completed orders when none exist", async () => {
+    getWorkOrdersMock.mockResolvedValue([])
+    renderList(["os.work_orders.read"], ["os"])
+
+    await screen.findByText(i18n.t("workOrders.empty.Open"))
+    expect(screen.queryByRole("button", {
+      name: i18n.t("workOrders.actions.viewCompleted"),
+    })).not.toBeInTheDocument()
   })
 
   it("H/K: generated work orders show historical PMOC origin metadata", async () => {
@@ -221,5 +258,58 @@ describe("WorkOrdersPage origin", () => {
       screen.queryByText(i18n.t("workOrders.emptyAssigned.Open")),
     ).not.toBeInTheDocument()
     expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
+  })
+})
+
+describe("WorkOrdersPage empty states", () => {
+  beforeEach(() => getWorkOrdersMock.mockReset().mockResolvedValue([]))
+
+  it("offers open work orders when only the status tab has changed", async () => {
+    const user = userEvent.setup()
+    renderList(["os.work_orders.read"], ["os"])
+    await screen.findByRole("heading", { name: i18n.t("workOrders.empty.Open") })
+    await user.click(screen.getByRole("tab", { name: i18n.t("workOrders.tabs.withCount", {
+      label: i18n.t("workOrders.tabs.Completed"), count: 0,
+    }) }))
+    await user.click(await screen.findByRole("button", { name: "Ver OS abertas" }))
+    expect(await screen.findByRole("heading", { name: i18n.t("workOrders.empty.Open") })).toBeVisible()
+    expect(screen.queryByRole("button", { name: i18n.t("emptyStates.clearFilters") })).not.toBeInTheDocument()
+  })
+
+  it.each([true, false])("gates creation and its example with the existing permission (%s)", async (canCreate) => {
+    const user = userEvent.setup()
+    renderList(["os.work_orders.read", ...(canCreate ? ["os.work_orders.create"] : [])], ["os"])
+    const title = await screen.findByRole("heading", { name: i18n.t("workOrders.empty.Open") })
+    expect(title.closest('[data-slot="table-container"]')).toBeNull()
+    const empty = within(title.closest('[data-slot="empty-state"]') as HTMLElement)
+    expect(empty.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/maintenance")
+    if (canCreate) {
+      expect(empty.getByText(i18n.t("emptyStates.examples.workOrders"))).toBeVisible()
+      await user.click(empty.getByRole("button", { name: i18n.t("workOrders.create.action") }))
+      expect(await screen.findByText("new-work-order")).toBeVisible()
+    } else {
+      expect(empty.queryByRole("button", { name: i18n.t("workOrders.create.action") })).not.toBeInTheDocument()
+      expect(empty.queryByText(i18n.t("emptyStates.examples.workOrders"))).not.toBeInTheDocument()
+    }
+  })
+
+  it("omits the module link when that module is absent from filtered navigation", async () => {
+    renderList(["os.work_orders.read"], [])
+    await screen.findByRole("heading", { name: i18n.t("workOrders.empty.Open") })
+    expect(screen.queryByRole("link", { name: i18n.t("emptyStates.learnMore") })).not.toBeInTheDocument()
+  })
+
+  it("clears column filters instead of offering creation when no rows match", async () => {
+    const user = userEvent.setup()
+    getWorkOrdersMock.mockResolvedValue([makeWorkOrder({ status: "Pending" })])
+    renderList(["os.work_orders.read", "os.work_orders.create"], ["os"])
+    await screen.findByRole("link", { name: i18n.t("workOrders.actions.execute") })
+    await user.click(screen.getAllByRole("button", { name: i18n.t("common.filter") })[0])
+    await user.type(screen.getByPlaceholderText(i18n.t("common.searchPlaceholder")), "no-match")
+    await user.keyboard("{Escape}")
+    expect(await screen.findByText(i18n.t("emptyStates.noResults"))).toBeVisible()
+    expect(screen.queryByText(i18n.t("emptyStates.examples.workOrders"))).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("emptyStates.clearFilters") }))
+    expect(await screen.findByRole("link", { name: i18n.t("workOrders.actions.execute") })).toBeVisible()
   })
 })

@@ -6,6 +6,7 @@ import {
 } from "@/lib/brandColors"
 import {
   contrastForeground,
+  contrastRatio,
   formatHex,
   mixRgb,
   parseCssHex,
@@ -28,6 +29,14 @@ export type TenantThemeTokens = {
   primary: string
   primaryForeground: string
   accent: string
+  auth?: {
+    secondary: string
+    foreground: string
+    footerBackground: string
+    footerForeground: string
+    link: string
+    ctaEdge: string
+  }
 }
 
 const LIGHT_PAPER: Rgb = { r: 255, g: 255, b: 255 }
@@ -43,11 +52,40 @@ export function resolveTenantTheme(options: {
   logoBackgroundColor?: string | null
   logoBackgroundIsDark?: boolean
   resolvedTheme?: string | null
+  auth?: boolean
 }): TenantThemeTokens {
   const theme: TenantResolvedTheme =
     options.resolvedTheme === "dark" ? "dark" : "light"
   const primary =
     parseCssHex(options.primaryColor) ?? parseCssHex(ROLVIX_PRIMARY_COLOR)!
+  if (options.auth) {
+    const secondary = parseCssHex(options.secondaryColor) ?? mixRgb(primary, LIGHT_PAPER, 0.45)
+    const dark = theme === "dark"
+    const surface = dark ? "#191c16" : "#ffffff"
+    const primaryHex = formatHex(primary)
+    const footerBackground = formatHex(mixRgb(primary, secondary, 0.55))
+    return {
+      pageBackground: dark ? "#111310" : "#fbfbf7",
+      pageBackgroundBase: dark ? "#111310" : "#fbfbf7",
+      pageBackgroundAccent: formatHex(secondary),
+      surface,
+      surfaceMuted: dark ? "#20241c" : "#f6f7ef",
+      border: dark ? "#2b2f26" : "#e3e5d8",
+      text: dark ? "#f1f3e8" : "#1a1c14",
+      textMuted: dark ? "#a3a998" : "#5f6355",
+      primary: primaryHex,
+      primaryForeground: tenantReadableInk(primaryHex),
+      accent: formatHex(secondary),
+      auth: {
+        secondary: formatHex(secondary),
+        foreground: tenantReadableInk(primaryHex),
+        footerBackground,
+        footerForeground: tenantReadableInk(footerBackground),
+        link: tenantReadableLink(primaryHex, surface),
+        ctaEdge: formatHex(readableFill(primary, theme, parseCssHex(surface)!)),
+      },
+    }
+  }
   const secondary =
     parseCssHex(options.secondaryColor) ??
     parseCssHex(options.primaryColor) ??
@@ -59,8 +97,13 @@ export function resolveTenantTheme(options: {
   const logoCanvas =
     parsedLogo && relativeLuminance(parsedLogo) < 0.45 ? parsedLogo : null
 
-  const buttonFill = readableFill(primary, theme)
-  const accentFill = readableFill(secondary, theme)
+  // Only the light theme is prone to pale brand colors blending into the white surface
+  // and reading as "disabled" — dark-theme surfaces are already dark enough that this
+  // extra non-text contrast guard isn't needed and would fight the existing dark tests.
+  const fillSurface = theme === "light" ? LIGHT_PAPER : undefined
+
+  const buttonFill = readableFill(primary, theme, fillSurface)
+  const accentFill = readableFill(secondary, theme, fillSurface)
 
   if (theme === "dark" && logoCanvas) {
     const canvasHex = formatHex(logoCanvas)
@@ -130,7 +173,43 @@ export function tenantThemeStyle(tokens: TenantThemeTokens): CSSProperties {
     color: tokens.text,
     background: tokens.pageBackground,
     "--background": tokens.pageBackgroundBase,
+    ...(tokens.auth ? {
+      "--foreground": tokens.text,
+      "--muted-foreground": tokens.textMuted,
+      "--card": tokens.surface,
+      "--card-foreground": tokens.text,
+      "--input": tokens.border,
+      "--border": tokens.border,
+      "--ring": tokens.auth.link,
+      "--tenant-secondary": tokens.auth.secondary,
+      "--tenant-brand-ink": tokens.auth.foreground,
+      "--tenant-footer-ink": tokens.auth.footerForeground,
+      "--tenant-footer-background": tokens.auth.footerBackground,
+      "--tenant-link": tokens.auth.link,
+      "--tenant-cta-edge": tokens.auth.ctaEdge,
+      "--tenant-field": tokens.surfaceMuted,
+    } : {}),
   } as CSSProperties
+}
+
+/** Choose ink by WCAG luminance, with pure black/white for borderline colors. */
+export function tenantReadableInk(color: string): string {
+  const background = parseCssHex(color) ?? LIGHT_PAPER
+  const preferred = contrastForeground(background)
+  if (contrastRatio(background, parseCssHex(preferred)!) >= 4.5) return preferred
+  return contrastRatio(background, LIGHT_PAPER) >= 4.5 ? "#ffffff" : "#000000"
+}
+
+/** Preserve the hue as far as possible, checking rounded output at each step. */
+export function tenantReadableLink(primary: string, surface: string): string {
+  const color = parseCssHex(primary) ?? parseCssHex(ROLVIX_PRIMARY_COLOR)!
+  const paper = parseCssHex(surface) ?? LIGHT_PAPER
+  const toward = parseCssHex(tenantReadableInk(formatHex(paper)))!
+  for (let step = 0; step <= 100; step += 1) {
+    const candidate = formatHex(mixRgb(color, toward, step / 100))
+    if (contrastRatio(parseCssHex(candidate)!, paper) >= 4.5) return candidate
+  }
+  return formatHex(toward)
 }
 
 function lightGradient(

@@ -9,6 +9,7 @@ function Toaster({ ...props }: ToasterProps) {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       position="top-right"
+      mobileOffset={{ top: "calc(64px + env(safe-area-inset-top))", right: "16px", left: "16px" }}
       richColors
       closeButton
       toastOptions={{

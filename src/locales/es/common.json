@@ -16,7 +16,16 @@
     "searchPlaceholder": "Buscar...",
     "loading": "Cargando...",
     "refreshing": "Actualizando...",
+    "validation": {
+      "maxLength": "Use como máximo {{count}} caracteres."
+    },
     "datePicker": {
+      "required": "Indique la fecha.",
+      "min": "Indique una fecha igual o posterior al {{date}}.",
+      "max": "Indique una fecha igual o anterior al {{date}}.",
+      "invalid": "Indique una fecha válida.",
+      "format": "dd/mm/aaaa",
+      "open": "Abrir calendario",
       "today": "Hoy",
       "clear": "Borrar",
       "previousMonth": "Mes anterior",
@@ -185,7 +194,7 @@
     }
   },
   "auth": {
-    "sessionExpired": "La sesión expiró. Inicia sesión de nuevo.",
+    "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo para continuar.",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "brandPanel": {
@@ -226,13 +235,21 @@
         "accountMismatch": "La sesión actual es de otra cuenta. Entre con el correo de esta invitación para aceptar.",
         "identityConflict": "No se pudo confirmar la cuenta de esta invitación. No se cambió nada. Inténtelo de nuevo o hable con el soporte."
       },
+      "pickerSearch": "Buscar entorno por nombre o subdominio",
+      "pickerEmpty": "No hay entornos disponibles.",
+      "pickerNoResults": "No se encontraron entornos. Prueba otro nombre o subdominio.",
+      "pickerLoading": "Cargando tus entornos...",
+      "passwordHint": "Usa al menos 8 caracteres.",
+      "confirmPasswordHint": "Repite la nueva contraseña para confirmar.",
       "pickerTitle": "Elija el ambiente",
       "pickerBody": "Su cuenta participa de más de un ambiente. Elija cuál abrir ahora.",
       "pickerSubmit": "Continuar",
       "pickerSubmitting": "Abriendo...",
       "pickerError": "No se pudo cambiar de ambiente. Inténtelo de nuevo.",
       "membershipError": "No se pudieron cargar sus ambientes. Inténtelo de nuevo.",
-      "membershipRetry": "Intentar de nuevo"
+      "membershipErrorHint": "Esto puede ser una falla temporal de conexión. Inténtelo de nuevo o cierre sesión y vuelva a entrar.",
+      "membershipRetry": "Intentar de nuevo",
+      "membershipSignOut": "Cerrar sesión"
     },
     "login": {
       "invalidCredentials": "Correo o contraseña inválidos.",
@@ -269,6 +286,8 @@
       "resetCompanyFormat": "Use solo letras minúsculas, números y guiones (ej.: acme o rolvix-sp)."
     },
     "resetPassword": {
+      "success": "Contraseña actualizada correctamente.",
+      "redirecting": "Contraseña actualizada, redirigiendo…",
       "title": "Nueva contraseña",
       "subtitle": "Defina una nueva contraseña para acceder a la plataforma.",
       "loading": "Validando enlace…",
@@ -287,6 +306,34 @@
     }
   },
   "tenantPortal": {
+    "redesign": {
+      "resourceTimes": "Horarios de {{name}}",
+      "greeting": "Bienvenido",
+      "greetingName": "Hola, {{name}}",
+      "title": "Reservar horario",
+      "subtitle": "Elige el día, el recurso o espacio y el horario.",
+      "subtitleTenant": "Elige el día, el recurso o espacio y el horario en {{tenant}}.",
+      "customerPortal": "Portal del cliente",
+      "customer": "Cliente",
+      "navigation": "Reservas y compras",
+      "bookingInfo": "Información de la reserva",
+      "nextBooking": "Tu próxima reserva",
+      "noNextBooking": "Aún no tienes una próxima reserva.",
+      "viewBookings": "Ver mis reservas",
+      "legend": "Leyenda",
+      "legend_free": "Con horarios disponibles",
+      "legend_few": "Últimos horarios",
+      "legend_full": "Completo u ocupado",
+      "legend_selected": "Tu selección",
+      "tip": "Consejo",
+      "tipText": "Selecciona un día y un período para encontrar tu horario. La disponibilidad puede cambiar hasta la confirmación.",
+      "emptyTitle": "No hay horarios disponibles aquí",
+      "emptyHelp": "No hay horarios disponibles para esta selección. Prueba otro día o período.",
+      "view": "Vista de recursos",
+      "status_free": "Disponible",
+      "status_few": "Últimos horarios",
+      "status_full": "Completo"
+    },
     "sessionExpired": "Sesión expirada",
     "defaultTagline": "Inicie sesión para reservar y recibir avisos.",
     "authPanel": {
@@ -323,26 +370,28 @@
       "invalidCpf": "CPF inválido.",
       "invalidCnpj": "CNPJ inválido.",
       "emailInvalid": "Correo inválido.",
-      "passwordRequired": "Ingrese su contraseña.",
+      "passwordRequired": "Introduce tu contraseña.",
       "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
       "nameMin": "El nombre debe tener al menos 2 caracteres.",
       "nameMax": "El nombre puede tener como máximo 200 caracteres.",
-      "phoneInvalid": "Ingrese un celular válido.",
+      "phoneInvalid": "Introduce un celular válido.",
       "codeInvalid": "Código inválido.",
-      "documentRequired": "Ingrese el documento.",
+      "documentRequired": "Introduce el documento.",
       "invalidCep": "CEP inválido.",
-      "photoRequired": "Envíe una foto de perfil.",
-      "fieldRequired": "Complete este campo."
+      "photoRequired": "Envía una foto de perfil.",
+      "fieldRequired": "Completa este campo."
     },
     "login": {
       "title": "Entrar",
-      "subtitle": "Use el correo y la contraseña de su cuenta en esta empresa.",
+      "welcomeDefault": "¡Bienvenido de nuevo! Inicia sesión para hacer reservas y ver tus novedades.",
+      "emailPlaceholder": "tu@email.com",
+      "subtitle": "Usa el correo y la contraseña de tu cuenta en esta empresa.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "¡Sesión iniciada!",
       "toastError": "No fue posible entrar.",
       "invalidCredentials": "Correo o contraseña inválidos.",
-      "emailNotVerified": "Confirme su correo antes de entrar.",
+      "emailNotVerified": "Confirma tu correo antes de entrar.",
       "rateLimited": "Demasiados intentos. Inténtelo de nuevo más tarde.",
       "rateLimitedWithMinutes_one": "Demasiados intentos. Inténtelo de nuevo en {{count}} minuto.",
       "rateLimitedWithMinutes_other": "Demasiados intentos. Inténtelo de nuevo en {{count}} minutos.",
@@ -350,16 +399,20 @@
       "registerLink": "Regístrese",
       "forgotPassword": "Olvidé mi contraseña"
     },
+    "notFound": {
+      "description": "No encontramos la página que buscas.",
+      "book": "Reservar horario"
+    },
     "passwordReset": {
       "requestTitle": "Olvidé mi contraseña",
-      "requestSubtitle": "Indique el correo de su cuenta. Si existe, enviaremos un código para restablecer la contraseña.",
+      "requestSubtitle": "Indica el correo de tu cuenta. Si existe, enviaremos un código para restablecer la contraseña.",
       "requestSubmit": "Enviar código",
       "requestSubmitting": "Enviando...",
       "requestToast": "Si existe una cuenta con este correo, enviamos un código para restablecer la contraseña.",
       "requestError": "No fue posible enviar el código.",
       "confirmTitle": "Restablecer contraseña",
-      "confirmSubtitle": "Escriba el código de 6 dígitos enviado a {{maskedEmail}} y elija una nueva contraseña.",
-      "confirmSubtitleNoEmail": "Escriba el código de 6 dígitos y elija una nueva contraseña.",
+      "confirmSubtitle": "Escribe el código de 6 dígitos enviado a {{maskedEmail}} y elige una nueva contraseña.",
+      "confirmSubtitleNoEmail": "Escribe el código de 6 dígitos y elige una nueva contraseña.",
       "expiresHint": "El código expira en 15 minutos. Si no llega, reenvíelo después de la espera.",
       "newPassword": "Nueva contraseña",
       "confirmPassword": "Confirmar nueva contraseña",
@@ -373,30 +426,34 @@
       "resendToast": "Si existe una cuenta con este correo, enviamos un nuevo código.",
       "backToLogin": "Volver al inicio de sesión",
       "rateLimited": "Demasiados intentos. Inténtelo de nuevo en un momento.",
-      "invalidLink": "Enlace inválido o vencido. Solicita un nuevo código.",
-      "requestNewLink": "Solicitar nuevo código"
+      "invalidLinkTitle": "Enlace inválido o vencido",
+      "invalidLink": "Este enlace ya no se puede usar para restablecer tu contraseña.",
+      "requestNewLink": "Solicitar un nuevo enlace"
     },
     "register": {
       "title": "Crear cuenta",
-      "subtitle": "Registro exclusivo de esta empresa. Enviaremos un código de verificación a su correo.",
+      "subtitle": "Registro exclusivo de esta empresa. Enviaremos un código de verificación a tu correo.",
       "submit": "Continuar",
       "submitting": "Guardando...",
-      "toastSuccess": "Cuenta creada. Confirme el código enviado por correo.",
+      "toastSuccess": "Cuenta creada. Confirma el código enviado por correo.",
       "pendingContinue": "Cuenta guardada. El correo de verificación no se envió — reenvíe el código en la siguiente pantalla.",
       "toastError": "No fue posible registrarse.",
       "photoError": "No fue posible procesar la foto.",
       "schemaError": "No se pudo cargar el formulario de esta empresa.",
-      "selectPlaceholder": "Seleccione...",
+      "selectPlaceholder": "Selecciona...",
       "hasAccount": "¿Ya tiene cuenta?",
       "loginLink": "Entrar",
       "requiredMark": "obligatorio",
-      "blockedHint": "Complete los campos obligatorios para continuar.",
-      "photoRequired": "Envíe la foto de perfil para continuar.",
-      "duplicateCustomer": "Ya existe una cuenta con estos datos."
+      "blockedHint": "Completa los campos obligatorios para continuar.",
+      "photoRequired": "Envía la foto de perfil para continuar.",
+      "duplicateCustomer": "Ya existe una cuenta con estos datos.",
+      "duplicateEmail": "Ya existe una cuenta con este correo electrónico.",
+      "duplicateDocument": "Ya existe una cuenta con este CPF/CNPJ.",
+      "duplicatePhone": "Ya existe una cuenta con este teléfono."
     },
     "verify": {
       "title": "Confirmar correo",
-      "subtitle": "Ingrese el código de 6 dígitos enviado a {{maskedEmail}}.",
+      "subtitle": "Introduce el código de 6 dígitos enviado a {{maskedEmail}}.",
       "expiresHint_one": "El código caduca en {{count}} minuto. Si no llega, reenvíelo después de la espera.",
       "expiresHint_other": "El código caduca en {{count}} minutos. Si no llega, reenvíelo después de la espera.",
       "submit": "Confirmar",
@@ -405,13 +462,13 @@
       "resendIn": "Reenviar en {{seconds}}s",
       "resendSubmitting": "Reenviando...",
       "resendToastSuccess": "Se envió un nuevo código por correo.",
-      "resendReplaces": "Un código nuevo sustituye al anterior. Use el código del correo más reciente.",
+      "resendReplaces": "Un código nuevo sustituye al anterior. Usa el código del correo más reciente.",
       "resendSent": "Se envió un nuevo código. El código anterior ya no sirve.",
       "toastSuccess": "¡Correo verificado!",
       "toastError": "Código inválido.",
       "invalidOrExpired": "Código inválido o expirado.",
       "sendFailedTitle": "Cuenta creada, pero el correo de verificación no se envió.",
-      "sendFailedBody": "Su cuenta ya existe (o quedó pendiente), pero no se pudo enviar el código. Use Reenviar código para intentarlo de nuevo.",
+      "sendFailedBody": "Tu cuenta ya existe (o quedó pendiente), pero no se pudo enviar el código. Usa Reenviar código para intentarlo de nuevo.",
       "backToLogin": "Volver al inicio de sesión"
     },
     "app": {
@@ -422,11 +479,30 @@
       "goLogin": "Ir al inicio de sesión",
       "goAgenda": "Abrir agenda"
     },
+    "home": {
+      "title": "Inicio",
+      "subtitle": "Todo lo que puedes hacer en {{tenant}}, en un solo lugar.",
+      "emptySubtitle": "Bienvenido al portal de {{tenant}}.",
+      "emptyDescription": "{{tenant}} aún no configuró elementos para el portal. En cuanto haya novedades, aparecerán aquí.",
+      "heroEyebrow": "Empiece por aquí",
+      "heroTitle": "¿Qué quiere hacer hoy?",
+      "heroSubtitle": "Reserve un horario o explore el catálogo de {{tenant}}: todo en un solo lugar.",
+      "heroSubtitleCatalog": "Explora el catálogo de {{tenant}} y envía tu solicitud en pocos toques.",
+      "quickActions": "Acceso rápido",
+      "open": "Abrir",
+      "descReservar": "Elige el día, el recurso y el horario que mejor te convenga.",
+      "descCatalog": "Ve los artículos disponibles y arma tu pedido.",
+      "descOrders": "Sigue tus pedidos y el estado de cada uno.",
+      "descRequests": "Solicita un artículo que todavía no está en el catálogo.",
+      "descReservations": "Consulta y gestiona tus reservas.",
+      "tipTitle": "Consejo",
+      "tipText": "Usa el menú lateral en cualquier momento para navegar entre reservas y compras."
+    },
     "agenda": {
       "title": "Agenda",
-      "subtitle": "Consulte disponibilidad y reserve un horario.",
-      "subtitleSlots": "Elija un horario disponible en la escala del día.",
-      "subtitlePicker": "Elija la fecha y el horario. Luego seleccione un espacio disponible.",
+      "subtitle": "Consulta disponibilidad y reserva un horario.",
+      "subtitleSlots": "Elige un horario disponible en la escala del día.",
+      "subtitlePicker": "Elige la fecha y el horario. Luego selecciona un espacio disponible.",
       "court": "Espacio",
       "date": "Fecha",
       "time": "Horario",
@@ -452,8 +528,8 @@
       "noTimes": "No hay horarios en esta fecha",
       "pastSlotsHidden": "Los horarios que ya empezaron hoy quedan ocultos.",
       "horizonExceeded": "La fecha pedida supera el límite de reserva.",
-      "horizonExceededDays_one": "Puede reservar con hasta {{count}} día de antelación.",
-      "horizonExceededDays_other": "Puede reservar con hasta {{count}} días de antelación.",
+      "horizonExceededDays_one": "Puedes reservar con hasta {{count}} día de antelación.",
+      "horizonExceededDays_other": "Puedes reservar con hasta {{count}} días de antelación.",
       "horizonAdjusted": "Esa fecha está fuera del horizonte de reserva. Mostrando la última fecha que todavía se puede reservar.",
       "horizonHint": "Reservas disponibles hasta {{date}} ({{count}} días adelante)",
       "dateBeforeToday": "Esa fecha es anterior a hoy.",
@@ -479,15 +555,15 @@
       "cancellationPolicyLabel": "Política de cancelación",
       "dailyLimitReached": "Alcanzó el límite de {{count}} reservas activas en este día.",
       "dailyLimitReachedUnknown": "Alcanzó el límite diario de reservas activas.",
-      "slotJustTaken": "Este horario acaba de ser reservado. La agenda se actualizó — elija otro.",
+      "slotJustTaken": "Este horario acaba de ser reservado. La agenda se actualizó — elige otro.",
       "slotTaken": "No disponible",
       "allUnitsReserved": "Todas las unidades reservadas",
       "periodIncludesBookedDay": "El período incluye un día ya reservado",
       "timeReserved": "Reservado",
       "alreadyReserved": "Ya tiene esta reserva.",
       "alreadyCancelled": "Esta reserva ya estaba cancelada.",
-      "slotHeldByYou": "Usted ya reservó este horario. Véalo en",
-      "cancellationPolicyDefault": "Al cancelar, el horario vuelve a quedar disponible para otras personas. Consulte las reglas del establecimiento.",
+      "slotHeldByYou": "Ya reservaste este horario. Míralo en",
+      "cancellationPolicyDefault": "Al cancelar, el horario vuelve a quedar disponible para otras personas. Consulta las reglas del establecimiento.",
       "noAssets": "No hay espacios configurados",
       "backHome": "Volver",
       "queue": {
@@ -523,10 +599,15 @@
       "cancelEffectiveCutoff_one": "Plazo de cancelación: {{count}} hora antes del inicio.",
       "cancelEffectiveCutoff_other": "Plazo de cancelación: {{count}} horas antes del inicio.",
       "cancelCutoffPassed": "Ya pasó el plazo de cancelación de {{hours}} horas antes del inicio.",
+      "cancelCutoffBookingWarning_one": "Atención: esta reserva empieza dentro del plazo de cancelación de {{count}} hora y no podrá cancelarse una vez confirmada.",
+      "cancelCutoffBookingWarning_other": "Atención: esta reserva empieza dentro del plazo de cancelación de {{count}} horas y no podrá cancelarse una vez confirmada.",
       "unitsBadge": "x{{count}}",
       "durationLabel": "Duración",
-      "yourReservationUnits": "Tu reserva · {{count}} de {{total}} unidades",
-      "yourReservationUnitsReason": "Para más unidades, cancela y reserva de nuevo con la cantidad deseada.",
+      "yourReservationUnits": "Tu reserva · tienes {{count}} de las {{total}} unidades",
+      "yourReservationUnitsReason": "Para cambiar la cantidad, cancela y reserva de nuevo; la disponibilidad depende de otras reservas.",
+      "chooseTimeFirst": "Elige un horario primero.",
+      "chooseSpaceFirst": "Elige un espacio para continuar.",
+      "quantityMaxReached": "Máximo disponible en este horario: {{count}}.",
       "cancelCutoffReason": "Plazo de cancelación cerrado",
       "days": "Días",
       "daysSummary": "{{count}} días · hasta {{until}}",
@@ -536,7 +617,7 @@
       "reservationDaysSuffix_other": "{{count}} días",
       "quoteFixedLine_one": "{{price}} (total fijo)",
       "quoteFixedLine_other": "{{price}} · {{count}} unidades (total fijo)",
-      "quoteUnitMultiplier": "× {{count}}"
+      "quoteUnitMultiplier": "× {{formatted}}"
     },
     "menu": {
       "empty": "No hay módulos disponibles.",
@@ -545,7 +626,9 @@
     },
     "profile": {
       "title": "Mi perfil",
-      "subtitle": "Actualice su nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
+      "subtitle": "Actualiza tu nombre y foto. El correo, el celular, el tipo y el documento no se pueden cambiar aquí.",
+      "eyebrow": "Cuenta",
+      "accountHint": "Para cambiar estos datos, hable con el equipo de {{tenant}}.",
       "save": "Guardar",
       "saving": "Guardando...",
       "saved": "Perfil actualizado.",
@@ -561,6 +644,7 @@
       "hideSensitive": "Ocultar {{label}}",
       "address": "Dirección",
       "sections": {
+        "personal": "Datos personales",
         "account": "Datos de la cuenta"
       },
       "validation": {
@@ -569,13 +653,30 @@
       }
     },
     "catalog": {
+      "sidebarLabel": "Carrito y ayuda",
+      "resultCount_one": "{{count}} resultado",
+      "resultCount_other": "{{count}} resultados",
+      "itemCount_one": "{{count}} artículo",
+      "itemCount_other": "{{count}} artículos",
+      "searchLabel": "Buscar productos",
+      "emptyDescription": "{{tenant}} aún no ha publicado artículos en el catálogo. ¿Necesitas algo? Envía una solicitud y el equipo responderá por aquí.",
+      "filteredEmptyDescription": "Prueba otra búsqueda o ajusta los filtros. Si no encuentras lo que necesitas, solicita un producto al equipo.",
+      "cartEmptyHint": "Vacío por ahora. Los artículos que añadas aparecerán aquí.",
+      "howItWorks": "Cómo funciona",
+      "howItWorksDescription": "Añade artículos al carrito, revisa las cantidades y envía tu pedido. Después, sigue su estado en Pedidos.",
+      "filtersLabel": "Filtros del catálogo",
+      "categoryLabel": "Categoría",
+      "allCategories": "Todo",
+      "tagsLabel": "Etiquetas",
+      "tagsHint": "Coincide con todas las etiquetas seleccionadas.",
+      "clearFilters": "Limpiar filtros",
       "navCatalog": "Catálogo",
       "navOrders": "Pedidos",
       "navRequests": "Mis solicitudes",
       "title": "Catálogo",
-      "subtitle": "Productos disponibles para solicitar.",
+      "subtitle": "Explora los artículos disponibles y haz tu pedido.",
       "searchPlaceholder": "Buscar por nombre o código",
-      "empty": "No hay productos activos en este momento.",
+      "empty": "Aún no hay productos a la venta",
       "searchEmpty": "No se encontraron productos para \"{{term}}\"",
       "priceOnRequest": "Bajo consulta",
       "quantity": "Cantidad",
@@ -587,16 +688,72 @@
       "addedToCart": "Agregado al carrito.",
       "cartCount": "Carrito ({{count}})",
       "cartTitle": "Carrito",
-      "cartEmpty": "Su carrito está vacío.",
+      "cartEmpty": "Tu carrito está vacío.",
       "cartProductLoading": "Cargando información del producto…",
       "cartProductUnavailable": "No se pudo cargar este producto.",
       "cartTotalUnavailable": "Total no disponible hasta que se carguen los productos.",
       "checkout": "Revisar pedido",
-      "checkoutHint": "Confirme las cantidades. Se usarán los precios del servidor.",
+      "checkoutHint": "Confirma las cantidades. Se usarán los precios del servidor.",
       "customerNote": "Nota",
       "submitOrder": "Enviar pedido",
       "submitting": "Enviando...",
       "orderSubmitted": "Pedido enviado.",
+      "purchase": {
+        "reason": "Motivo: {{reason}}",
+        "errorTitle": "No se pudo enviar el pedido",
+        "retry": "Intentar de nuevo",
+        "dismiss": "Descartar",
+        "successTitle": "Pedido recibido",
+        "orderNumber": "Pedido #{{number}}",
+        "successCopy": "Ya recibimos su pedido. Usted puede seguir los próximos pasos aquí.",
+        "nextTitle": "Qué pasa ahora",
+        "nextCopy": "El equipo revisará los artículos y actualizará el estado del pedido.",
+        "track": "Seguir pedido",
+        "continueShopping": "Seguir comprando",
+        "progress": {
+          "Approved": {
+            "successTitle": "Pedido confirmado",
+            "successCopy": "Su pedido ha sido aprobado y confirmado.",
+            "nextCopy": "El siguiente paso es preparar los artículos. Usted puede seguir el estado por aquí."
+          },
+          "Preparing": {
+            "successTitle": "Pedido en preparación",
+            "successCopy": "El equipo está preparando los artículos de su pedido.",
+            "nextCopy": "Usted puede seguir el estado por aquí. Se actualizará cuando su pedido esté listo."
+          },
+          "Ready": {
+            "successTitle": "Pedido listo",
+            "successCopy": "Los artículos de su pedido están listos.",
+            "nextCopy": "Siga las indicaciones del equipo para recibir sus artículos."
+          },
+          "Completed": {
+            "successTitle": "Pedido completado",
+            "successCopy": "Su pedido se ha completado. ¡Gracias!",
+            "nextCopy": "Gracias por su preferencia. Usted puede consultar los detalles de su pedido por aquí."
+          }
+        },
+        "trackingTitle": "Seguimiento",
+        "steps": {
+          "Requested": "Recibido",
+          "Approved": "Confirmado",
+          "Preparing": "En preparación",
+          "Ready": "Listo",
+          "Completed": "Completado"
+        },
+        "terminal": {
+          "Cancelled": "Pedido cancelado",
+          "Rejected": "Pedido rechazado"
+        },
+        "stepCopy": {
+          "Requested": "Recibimos tu pedido para revisarlo.",
+          "Approved": "Los artículos se revisaron y el pedido está confirmado.",
+          "Preparing": "El equipo está preparando tus artículos.",
+          "Ready": "Tu pedido está listo para el siguiente paso.",
+          "Completed": "Pedido completado. Gracias por elegirnos.",
+          "Cancelled": "El pedido se cerró. Consulta los detalles en el historial.",
+          "Rejected": "No pudimos atender el pedido. Consulta los detalles en el historial."
+        }
+      },
       "requestCta": "Solicitar producto",
       "requestTitle": "Solicitar producto",
       "requestSubtitle": "Describa lo que necesita. Después de enviar, la solicitud queda en Mis solicitudes.",
@@ -607,12 +764,14 @@
       "requestSubmit": "Enviar solicitud",
       "requestSubmitted": "Solicitud enviada.",
       "ordersTitle": "Mis pedidos",
-      "ordersSubtitle": "Siga el estado de sus pedidos.",
+      "ordersSubtitle": "Sigue el estado de tus pedidos.",
       "ordersEmpty": "Todavía no ha hecho pedidos.",
       "cancelOrder": "Cancelar pedido",
       "cancelling": "Cancelando...",
       "orderCancelled": "Pedido cancelado.",
+      "orderNoLongerCancellable": "Este pedido ya no se puede cancelar.",
       "lineSubtotal": "Subtotal",
+      "remove": "Quitar",
       "removeItem": "Quitar {{name}}",
       "cartTotal": "Total",
       "fromAmount": "Desde {{amount}}",
@@ -621,7 +780,7 @@
       "cancelConfirmDismiss": "Mantener pedido",
       "cancelConfirmAction": "Confirmar cancelación",
       "requestSentTitle": "Solicitud enviada",
-      "requestSentBody": "Recibimos su solicitud. Sígalo en Mis solicitudes.",
+      "requestSentBody": "Recibimos tu solicitud. Síguela en Mis solicitudes.",
       "requestSentCatalog": "Volver al catálogo",
       "requestSentAnother": "Enviar otra solicitud",
       "requestsTitle": "Mis solicitudes",
@@ -642,11 +801,36 @@
       "cancelRequestBody": "Confirma la cancelación de la solicitud. Esta acción no se puede deshacer.",
       "requestCancelled": "Solicitud cancelada.",
       "cancelRequestError": "No se pudo cancelar la solicitud.",
-      "unitPrice": "{{price}} / un"
+      "unitPrice": "{{price}} / ud.",
+      "ordersEmptyDescription": "Cuando hagas un pedido en el catálogo de {{tenant}}, aparecerá aquí para que puedas seguirlo.",
+      "ordersLoading": "Cargando pedidos...",
+      "orderCardLabel": "Pedido {{number}}",
+      "requestsEmptyDescription": "¿Necesitas algo que no está en el catálogo? Envía una solicitud y el equipo responderá por aquí."
     },
     "timeZoneLabel": "hora de {{city}} ({{offset}})"
   },
   "catalog": {
+    "staff": {
+      "allStatuses": "Todos los estados",
+      "productsSearch": "Buscar por nombre o código",
+      "ordersSearch": "Buscar por número o cliente",
+      "loading": "Cargando ventas…",
+      "noResults": "No se encontraron resultados.",
+      "adjustFilters": "Ajuste la búsqueda o los filtros para ver otros resultados.",
+      "orderSummary": "Resumen de pedidos",
+      "noNote": "Sin observación",
+      "empty": {
+        "products": "Cree el primer producto para que los clientes puedan realizar pedidos.",
+        "orders": "Los pedidos de los clientes aparecen aquí en cuanto se realizan.",
+        "requests": "Cuando un cliente solicita un artículo que no está en el catálogo, aparece aquí."
+      },
+      "kpis": {
+        "Requested": "Solicitados",
+        "Approved": "Aprobados",
+        "Preparing": "En preparación",
+        "Ready": "Listos"
+      }
+    },
     "retry": "Intentar de nuevo",
     "priceOnRequest": "Bajo consulta",
     "knownPlusOnRequest": "{{amount}} · Bajo consulta",
@@ -758,7 +942,7 @@
         "typeRejected": "Este tipo de archivo no se acepta.",
         "contentMismatch": "El contenido del archivo no coincide con el tipo indicado.",
         "extensionRequired": "{{name}} necesita una extensión.",
-        "required": "Seleccione un archivo."
+        "required": "Selecciona un archivo."
       },
       "gallery": {
         "previous": "Imagen anterior",
@@ -780,7 +964,7 @@
     },
     "orders": {
       "title": "Pedidos",
-      "subtitle": "Apruebe, prepare y complete pedidos de clientes.",
+      "subtitle": "Aprueba, prepara y completa pedidos de clientes.",
       "empty": "Ningún pedido.",
       "view": "Ver",
       "total": "Total",
@@ -813,6 +997,8 @@
         "rejectTitle": "Rechazar pedido",
         "cancelTitle": "Cancelar pedido",
         "required": "El motivo es obligatorio. El cliente se notifica solo si los canales externos están activos.",
+        "empty": "Indica el motivo.",
+        "tooLong": "Usa como máximo 1000 caracteres.",
         "label": "Motivo",
         "confirm": "Confirmar"
       }
@@ -862,9 +1048,63 @@
       "inAppAlwaysOn": "En la app siempre activo",
       "toggleChannel": "Activar {{channel}} para {{event}}",
       "toastSaved": "Canal actualizado.",
+      "moduleTabs": "Módulos de notificaciones",
       "modules": {
         "catalog": "Catálogo y pedidos",
         "rentals": "Alquileres"
+      }
+    },
+    "inbox": {
+      "items": {
+        "reservationConfirmed": "Reserva confirmada.",
+        "reservationPendingDeposit": "Reserva pendiente de depósito.",
+        "reservationCompleted": "Reserva completada.",
+        "reservationReminder": "Recordatorio de reserva.",
+        "reservationCanceled": "Reserva cancelada.",
+        "orderCreated": "Nuevo pedido.",
+        "orderApproved": "Pedido aprobado.",
+        "orderReady": "Pedido listo.",
+        "orderRejected": "Pedido rechazado.",
+        "orderCancelledBySupplier": "Pedido cancelado por el proveedor.",
+        "orderCancelledByCustomer": "Pedido cancelado por el cliente."
+      },
+      "title": "Notificaciones",
+      "ariaLabelNone": "Notificaciones",
+      "ariaLabel_one": "Notificaciones: {{count}} sin leer",
+      "ariaLabel_other": "Notificaciones: {{count}} sin leer",
+      "markAll": "Marcar todo como leído",
+      "loadError": "No se pudieron cargar las notificaciones.",
+      "readFailed": "No se pudieron marcar las notificaciones como leídas.",
+      "allReadSuccess": "Todas las notificaciones se marcaron como leídas.",
+      "empty": "Estás al día. No hay notificaciones nuevas.",
+      "loading": "Cargando notificaciones…",
+      "recent": "Recientes",
+      "countOverflow": "99+",
+      "groups": {
+        "fallback_one": "{{count}} notificación — {{eventType}}",
+        "fallback_other": "{{count}} notificaciones — {{eventType}}",
+        "orderCreated_one": "{{count}} pedido nuevo",
+        "orderCreated_other": "{{count}} pedidos nuevos",
+        "orderApproved_one": "{{count}} pedido aprobado",
+        "orderApproved_other": "{{count}} pedidos aprobados",
+        "orderReady_one": "{{count}} pedido listo",
+        "orderReady_other": "{{count}} pedidos listos",
+        "orderRejected_one": "{{count}} pedido rechazado",
+        "orderRejected_other": "{{count}} pedidos rechazados",
+        "orderCancelledBySupplier_one": "{{count}} pedido cancelado",
+        "orderCancelledBySupplier_other": "{{count}} pedidos cancelados",
+        "orderCancelledByCustomer_one": "{{count}} pedido cancelado por el cliente",
+        "orderCancelledByCustomer_other": "{{count}} pedidos cancelados por clientes",
+        "reservationConfirmed_one": "{{count}} nueva reserva confirmada",
+        "reservationConfirmed_other": "{{count}} nuevas reservas confirmadas",
+        "reservationPendingDeposit_one": "{{count}} reserva en espera de señal",
+        "reservationPendingDeposit_other": "{{count}} reservas en espera de señal",
+        "reservationCanceled_one": "{{count}} reserva cancelada",
+        "reservationCanceled_other": "{{count}} reservas canceladas",
+        "reservationCompleted_one": "{{count}} reserva completada",
+        "reservationCompleted_other": "{{count}} reservas completadas",
+        "reservationReminder_one": "{{count}} recordatorio de reserva",
+        "reservationReminder_other": "{{count}} recordatorios de reserva"
       }
     }
   },
@@ -1148,30 +1388,34 @@
     }
   },
   "nav": {
-    "dashboard": "Panel",
-    "assets": "Activos",
-    "assetsInventory": "Recursos",
-    "assetsCategories": "Tipos",
-    "pmoc": "PMOC",
-    "pmocPlans": "Mis PMOCs",
+    "breadcrumbLabel": "Ruta de navegación",
+    "details": "Detalles",
+    "backTo": "Volver a {{page}}",
+    "dashboard": "Inicio",
+    "assets": "Equipos",
+    "assetsInventory": "Equipos",
+    "assetsCategories": "Tipos de equipo",
+    "pmoc": "Planes de mantenimiento",
+    "pmocPlans": "Mis planes",
     "pmocLibrary": "Biblioteca Rolvix",
     "pmocTemplatePreview": "Modelo",
     "pmocPlanDetail": "Plan",
-    "pmocNew": "Nuevo personalizado",
-    "workOrders": "OT",
-    "registrationFields": "Registro portal",
-    "moduleMenu": "Menú del portal",
-    "schedule": "Horarios / agenda",
-    "layout": "Layout",
+    "pmocNew": "Nuevo plan",
+    "workOrders": "Órdenes de trabajo",
+    "registrationFields": "Formulario de registro",
+    "moduleMenu": "Menú del cliente",
+    "schedule": "Horarios",
+    "layout": "Mapa del espacio",
     "reservations": "Reservas",
-    "bookingPolicy": "Política de reservas",
+    "bookingPolicy": "Reglas de reserva",
     "rentalsResources": "Recursos",
-    "catalog": "Catálogo y pedidos",
+    "catalog": "Ventas",
     "catalogProducts": "Productos",
     "catalogOrders": "Pedidos",
-    "catalogNotifications": "Notificaciones del catálogo",
+    "catalogRequests": "Solicitudes",
+    "catalogNotifications": "Avisos de ventas",
     "taxonomy": "Categorías y etiquetas",
-    "notifications": "Notificaciones",
+    "notifications": "Avisos generales",
     "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
@@ -1183,15 +1427,668 @@
     "collapseMenu": "Contraer menú",
     "expandMenu": "Expandir menú",
     "sections": {
-      "overview": "Visión general",
+      "overview": "Inicio",
       "peoplePortal": "Personas y portal",
       "operations": "Operación",
-      "platform": "Plataforma"
+      "platform": "Plataforma",
+      "bookings": "Reservas",
+      "maintenance": "Mantenimiento",
+      "sales": "Ventas"
     },
     "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso.",
-    "catalogSettings": "Configuración"
+    "catalogSettings": "Configuración de ventas",
+    "pmocCustom": "Empezar plan personalizado",
+    "pmocTooltip": "Planes de mantenimiento"
+  },
+  "moduleIntro": {
+    "title": "Presentación",
+    "shortcuts": "Accesos directos",
+    "relatedModules": "Módulos relacionados",
+    "open": "Sobre {{module}}",
+    "expand": "Expandir {{module}}",
+    "collapse": "Contraer {{module}}",
+    "modules": {
+      "overview": {
+        "summary": "Consulta un resumen de tu negocio y encuentra lo que necesitas revisar.",
+        "how1": "Consulta los indicadores disponibles para tu nivel de acceso.",
+        "how2": "Abre las pantallas desde el menú para ver detalles y actuar.",
+        "how3": "Reservas, mantenimiento, ventas y personas organizan las demás áreas del negocio."
+      },
+      "bookings": {
+        "summary": "Organiza lo que se puede reservar, los horarios y las reservas de los clientes.",
+        "how1": "Registra los recursos reservables y organiza cómo aparecen en el mapa del espacio.",
+        "how2": "Define los horarios disponibles. Revisa las solicitudes en Reservas y ajusta los límites en Reglas de reserva.",
+        "how3": "Personas y portal reúne a los clientes. Mantenimiento cuida los equipos; Ventas gestiona productos y pedidos por separado."
+      },
+      "maintenance": {
+        "summary": "Organiza los equipos que necesitan cuidados, los planes y las órdenes de trabajo.",
+        "how1": "Registra lo que vas a mantener en Equipos. Tipos de equipo agrupa esos registros; Recursos, en Reservas, define lo que los clientes pueden reservar.",
+        "how2": "Usa Planes de mantenimiento para organizar cuidados preventivos y Órdenes de trabajo para seguir su ejecución.",
+        "how3": "Ten en cuenta las necesidades de mantenimiento al organizar la disponibilidad de los recursos en Reservas."
+      },
+      "sales": {
+        "summary": "Organiza productos y sigue los pedidos de los clientes.",
+        "how1": "Registra los productos y sigue los pedidos en las pantallas de Ventas.",
+        "how2": "Ajusta la configuración de ventas y los avisos de pedidos en sus pantallas.",
+        "how3": "Personas y portal organiza a los clientes y el acceso al portal. Productos y pedidos son distintos de los recursos y las reservas."
+      },
+      "peoplePortal": {
+        "summary": "Gestiona personas, el acceso del equipo y la experiencia de los clientes en el portal.",
+        "how1": "Consulta el equipo y los clientes en Personas y acceso. El formulario define los datos pedidos durante el registro.",
+        "how2": "Organiza el menú del cliente, las categorías y etiquetas y los avisos generales en las pantallas disponibles.",
+        "how3": "El portal da acceso a los recursos de Reservas y a los productos de Ventas, según los módulos habilitados."
+      },
+      "pmoc": {
+        "summary": "Planifica los cuidados preventivos de los equipos y sigue tus planes.",
+        "how1": "Consulta los planes de mantenimiento existentes en Mis planes.",
+        "how2": "En Nuevo plan, empieza un plan personalizado o usa una plantilla de la Biblioteca Rolvix.",
+        "how3": "Los planes se relacionan con los equipos y las órdenes de trabajo de Mantenimiento."
+      },
+      "platform": {
+        "summary": "Administra los entornos de clientes y los registros compartidos de la plataforma.",
+        "how1": "Consulta los clientes y abre el entorno que necesitas administrar.",
+        "how2": "Gestiona los usuarios de la plataforma y las familias de equipos en las pantallas disponibles.",
+        "how3": "Dentro de un entorno, el menú muestra las áreas disponibles para ese cliente."
+      }
+    }
+  },
+  "moduleGuide": {
+    "roadmapTitle": "Ruta de la guía",
+    "progressShort": "de {{total}}",
+    "soundLabel": "Sonido",
+    "soundToggle": "Sonido de recompensas",
+    "markDone": "Marcar como hecho",
+    "reset": "Reiniciar guía",
+    "replay": "Rehacer guía",
+    "timeEstimate": "~{{minutes}} min",
+    "nextAction": {
+      "eyebrow": "Próxima acción recomendada",
+      "goToScreen": "Ir a la pantalla",
+      "allDone": "¡Guía completada!",
+      "allDoneDescription": "Todas las etapas hechas, ¡buen trabajo!"
+    },
+    "reward": {
+      "title": "¡Bien!",
+      "stepProgress": "Etapa {{completed}} de {{total}} completada.",
+      "allDone": "Has completado todas las etapas de la guía.",
+      "announcement": "Etapa completada: {{step}}."
+    },
+    "roadmap": {
+      "stepLabel": "Etapa {{index}} de {{total}}: {{title}} — {{state}}",
+      "state": {
+        "done": "completada",
+        "active": "etapa actual",
+        "todo": "pendiente"
+      }
+    },
+    "lesson": {
+      "chip": "Mini lección",
+      "whyTitle": "Por qué esto importa",
+      "seeInPractice": "Ver en la práctica",
+      "opens": "Abre: {{target}}",
+      "allDoneChip": "Todo listo",
+      "allDoneHeadline": "Has recorrido toda la guía de {{module}}",
+      "allDoneBody": "Vuelve cuando quieras a cualquier etapa de la ruta de arriba: queda guardada. Usa los atajos de abajo para ir directo al trabajo."
+    },
+    "demo": {
+      "weekly": {
+        "title": "Ejemplo interactivo — ajusta y ve cómo cambia la agenda",
+        "resourceHours": "Funcionamiento del recurso",
+        "customerView": "Lo que el cliente ve en la agenda",
+        "morning": {
+          "label": "Mañana",
+          "range": "08:00–12:00"
+        },
+        "afternoon": {
+          "label": "Tarde",
+          "range": "14:00–18:00"
+        },
+        "days": [
+          "Lun",
+          "Mar",
+          "Mié",
+          "Jue",
+          "Vie",
+          "Sáb",
+          "Dom"
+        ],
+        "total": "{{count}} horarios reservables por semana",
+        "empty": "Ningún horario abierto — el cliente no ve franjas para reservar."
+      },
+      "freq": {
+        "title": "Ejemplo interactivo — elige la frecuencia",
+        "planFrequency": "Frecuencia del plan",
+        "upcoming": "Próximas órdenes generadas",
+        "description": "La frecuencia define cada cuánto tiempo Rolvix crea una nueva orden de servicio para el equipo.",
+        "options": {
+          "monthly": "Mensual",
+          "quarterly": "Trimestral",
+          "biannual": "Semestral"
+        },
+        "orderTitle": "Orden de servicio",
+        "orderCaption": "cambio de filtro y revisión",
+        "months": [
+          "ene",
+          "feb",
+          "mar",
+          "abr",
+          "may",
+          "jun",
+          "jul",
+          "ago",
+          "sep",
+          "oct",
+          "nov",
+          "dic"
+        ]
+      },
+      "resource": {
+        "title": "Vista previa del registro",
+        "youFill": "Tú completas",
+        "nameLabel": "Nombre del recurso",
+        "typeLabel": "Tipo",
+        "customerSees": "El cliente ve en el mapa",
+        "availableCaption": "Disponible para reservar"
+      },
+      "connections": {
+        "title": "Conexiones de este módulo"
+      },
+      "screen": {
+        "title": "Vista previa de la pantalla"
+      }
+    },
+    "lessons": {
+      "generic": {
+        "learn": {
+          "headline": "Cómo funciona esta etapa",
+          "d1": {
+            "t": "Concepto",
+            "c": "Lo que vas a configurar"
+          },
+          "d2": {
+            "t": "Configuración",
+            "c": "Ajusta según tu negocio"
+          },
+          "d3": {
+            "t": "Conexiones",
+            "c": "Cómo se enlaza con otras áreas"
+          },
+          "d4": {
+            "t": "Listo",
+            "c": "Visible para tu operación"
+          },
+          "why1": "Cada etapa prepara la base para la siguiente: sigue el orden.",
+          "why2": "Configurar con cuidado ahora evita rehacer trabajo después.",
+          "why3": "Entender el porqué ayuda a tomar las mejores decisiones."
+        },
+        "visit": {
+          "headline": "Ve el módulo con datos reales",
+          "explanation": "La guía enseña el concepto; la pantalla real es donde ocurre el trabajo. Abre una pantalla del módulo para reconocer dónde está cada cosa y actuar con datos reales.",
+          "d1": {
+            "t": "Guía",
+            "c": "Estás aquí"
+          },
+          "d2": {
+            "t": "Pantalla real",
+            "c": "Donde ocurre el trabajo"
+          },
+          "d3": {
+            "t": "Datos reales",
+            "c": "Tus registros"
+          },
+          "d4": {
+            "t": "Acción",
+            "c": "Crea, edita, completa"
+          },
+          "why1": "Ver con datos reales fija el aprendizaje mejor que solo leer.",
+          "why2": "Reconoces dónde realizar cada acción del día a día.",
+          "why3": "Filtros y búsquedas agilizan la rutina en la pantalla."
+        },
+        "related": {
+          "headline": "Conecta este módulo con el resto del negocio",
+          "explanation": "Ningún módulo trabaja solo. Explora un área relacionada para ver cómo fluyen los datos entre ellas y ampliar el valor de lo que ya configuraste.",
+          "d1": {
+            "t": "Este módulo",
+            "c": "Base lista"
+          },
+          "d2": {
+            "t": "Personas y portal",
+            "c": "Quién usa el sistema"
+          },
+          "d3": {
+            "t": "Ventas",
+            "c": "Ingresos y pedidos"
+          },
+          "d4": {
+            "t": "Próximo paso",
+            "c": "Amplía el uso"
+          },
+          "why1": "Conectar módulos evita trabajo duplicado entre áreas.",
+          "why2": "Los datos fluyen entre reservas, ventas, personas y mantenimiento.",
+          "why3": "Explorar el vecino revela ganancias que aún no aprovechas."
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "short": "Lo que se puede reservar",
+          "headline": "Cómo un recurso se vuelve algo reservable",
+          "explanation": "Un recurso es todo aquello que el cliente puede reservar. Al registrarlo con nombre, tipo y capacidad, pasa a existir en el mapa del espacio y queda visible para reservar: nada aparece para el cliente antes de ese paso.",
+          "d1": {
+            "t": "Recurso",
+            "c": "Cancha, sala, equipo"
+          },
+          "d2": {
+            "t": "Detalles",
+            "c": "Nombre, tipo, capacidad"
+          },
+          "d3": {
+            "t": "Mapa del espacio",
+            "c": "Donde aparece"
+          },
+          "d4": {
+            "t": "El cliente ve",
+            "c": "Listo para reservar"
+          },
+          "why1": "Sin un recurso registrado, no hay qué reservar: es la base de todo el módulo.",
+          "why2": "El tipo y la capacidad definen cómo se muestra y se filtra el recurso.",
+          "why3": "Organizarlo en el mapa ayuda al cliente a encontrar el espacio correcto rápidamente.",
+          "demoName": "Sala 1 — Polivalente",
+          "demoType": "Sala"
+        },
+        "learn2": {
+          "short": "Cuándo está disponible",
+          "headline": "Cómo funcionan los horarios de funcionamiento",
+          "explanation": "Eliges los días y turnos en que el recurso funciona. Rolvix divide automáticamente cada turno en ventanas de reserva, y solo esas ventanas aparecen en la agenda del cliente. Cambia un día o turno aquí y la agenda cambia con ello.",
+          "d1": {
+            "t": "Recurso",
+            "c": "Sala 1"
+          },
+          "d2": {
+            "t": "Funcionamiento",
+            "c": "Días y turnos abiertos"
+          },
+          "d3": {
+            "t": "Ventanas de reserva",
+            "c": "Divididas en horarios"
+          },
+          "d4": {
+            "t": "Agenda del cliente",
+            "c": "Franjas reservables"
+          },
+          "why1": "La agenda del cliente muestra exactamente los horarios que abras: nada más.",
+          "why2": "Cerrar un día o turno quita al instante las franjas correspondientes.",
+          "why3": "Turnos bien definidos evitan reservas en horarios que no atiendes."
+        },
+        "learn3": {
+          "short": "Las reservas en el flujo del negocio",
+          "headline": "Dónde se conectan las reservas",
+          "explanation": "Una reserva rara vez vive sola. Puede generar un cobro en Ventas, queda ligada al cliente en Personas y respeta bloqueos creados por Mantenimiento. Entender esos puentes evita conflictos de agenda.",
+          "d1": {
+            "t": "Reserva",
+            "c": "El cliente confirma"
+          },
+          "d2": {
+            "t": "Ventas",
+            "c": "Cobro opcional"
+          },
+          "d3": {
+            "t": "Personas",
+            "c": "Quién reservó"
+          },
+          "d4": {
+            "t": "Mantenimiento",
+            "c": "Bloquea por reparación"
+          },
+          "why1": "Cobrar por la reserva mantiene pago y agenda en un solo lugar.",
+          "why2": "Ligar la reserva al cliente da historial y contacto para avisos.",
+          "why3": "Los bloqueos de mantenimiento impiden reservar un recurso no disponible.",
+          "c1": {
+            "t": "Ventas",
+            "c": "Generar cobro al confirmar la reserva"
+          },
+          "c2": {
+            "t": "Personas y portal",
+            "c": "Vincular la reserva al registro del cliente"
+          },
+          "c3": {
+            "t": "Mantenimiento",
+            "c": "Respetar bloqueos de recurso en reparación"
+          }
+        },
+        "visit": {
+          "short": "Ve con datos reales",
+          "headline": "Lo que ves en la pantalla de Reservas",
+          "explanation": "La guía enseña el concepto; la pantalla real es donde ocurre el trabajo. En Reservas ves la lista del día, filtras por recurso y confirmas o reprogramas cada solicitud. Abre la pantalla para reconocer dónde está cada cosa.",
+          "d1": {
+            "t": "Guía",
+            "c": "Estás aquí"
+          },
+          "d2": {
+            "t": "Pantalla real",
+            "c": "Lista de reservas"
+          },
+          "d3": {
+            "t": "Datos reales",
+            "c": "Tus reservas del día"
+          },
+          "d4": {
+            "t": "Acción",
+            "c": "Confirmar, reprogramar"
+          },
+          "why1": "Ver con datos reales fija el aprendizaje mejor que solo leer.",
+          "why2": "Identificas dónde confirmar, reprogramar y cancelar reservas.",
+          "why3": "Los filtros por recurso y fecha agilizan la rutina del día a día.",
+          "r1": {
+            "t": "Carlos Lima · Sala 1",
+            "s": "Hoy · 18:00–19:00",
+            "tag": "Confirmada"
+          },
+          "r2": {
+            "t": "Marina Souza · Sala 2",
+            "s": "Hoy · 19:00–20:00",
+            "tag": "Pendiente"
+          },
+          "r3": {
+            "t": "João Alves · Sala 2",
+            "s": "Mañana · 08:00–09:00",
+            "tag": "Confirmada"
+          }
+        },
+        "related": {
+          "short": "Amplía el uso",
+          "headline": "A dónde ir después de Reservas",
+          "explanation": "Con Reservas en marcha, los módulos vecinos suman valor: el portal deja que el cliente reserve solo, Mantenimiento mantiene los recursos al día y Ventas organiza los ingresos. Elige el próximo paso según tu prioridad.",
+          "d1": {
+            "t": "Reservas",
+            "c": "Base lista"
+          },
+          "d2": {
+            "t": "Personas y portal",
+            "c": "Los clientes reservan solos"
+          },
+          "d3": {
+            "t": "Mantenimiento",
+            "c": "Cuida los recursos"
+          },
+          "d4": {
+            "t": "Ventas",
+            "c": "Ingresos de las reservas"
+          },
+          "why1": "El portal reduce llamadas: el cliente reserva directo, 24h.",
+          "why2": "El mantenimiento preventivo evita cancelar reservas por averías.",
+          "why3": "Ventas consolida la facturación generada por las reservas.",
+          "c1": {
+            "t": "Personas y portal",
+            "c": "Publica el enlace de reservas para clientes"
+          },
+          "c2": {
+            "t": "Mantenimiento",
+            "c": "Crea planes para los recursos más usados"
+          },
+          "c3": {
+            "t": "Ventas",
+            "c": "Haz seguimiento de los ingresos de las reservas pagadas"
+          }
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "short": "Lo que necesita cuidado",
+          "headline": "Cómo un equipo entra en el mantenimiento",
+          "explanation": "Un equipo es cualquier activo que requiere cuidado. Con ficha técnica y ubicación registradas, obtiene un historial y puede recibir planes y órdenes de servicio: nada se puede planificar antes de ese registro.",
+          "d1": {
+            "t": "Equipo",
+            "c": "Aire acondicionado, bomba"
+          },
+          "d2": {
+            "t": "Ficha técnica",
+            "c": "Modelo, n.º de serie"
+          },
+          "d3": {
+            "t": "Ubicación",
+            "c": "Dónde está instalado"
+          },
+          "d4": {
+            "t": "Historial",
+            "c": "Listo para planificar"
+          },
+          "why1": "Sin el equipo registrado, no hay a qué asociar el mantenimiento.",
+          "why2": "La ubicación y el n.º de serie agilizan a quien va a ejecutar el servicio.",
+          "why3": "El historial centraliza todo lo que ya se hizo en el activo.",
+          "demoName": "Aire acondicionado — Sala 2",
+          "demoType": "Climatización"
+        },
+        "learn2": {
+          "short": "Prevención automática",
+          "headline": "Cómo un plan genera órdenes de servicio",
+          "explanation": "Un plan liga un equipo a tareas que se repiten. Defines la frecuencia y Rolvix crea las órdenes de servicio automáticamente en las fechas correctas: la prevención deja de depender de tu memoria.",
+          "d1": {
+            "t": "Equipo",
+            "c": "Aire acondicionado"
+          },
+          "d2": {
+            "t": "Plan de mantenimiento",
+            "c": "Tareas recurrentes"
+          },
+          "d3": {
+            "t": "Frecuencia",
+            "c": "Cada X meses"
+          },
+          "d4": {
+            "t": "Orden de servicio",
+            "c": "Generada sola"
+          },
+          "why1": "El mantenimiento preventivo evita averías y paradas inesperadas.",
+          "why2": "Las órdenes generadas solas garantizan que nada se olvide.",
+          "why3": "Ajustar la frecuencia reprograma al instante todas las órdenes futuras."
+        },
+        "learn3": {
+          "short": "El mantenimiento en el flujo",
+          "headline": "Dónde se conecta el mantenimiento",
+          "explanation": "Una orden de servicio cruza otros módulos: puede bloquear un recurso en Reservas mientras ocurre la reparación, registrar costos en Ventas y asignarse a un responsable en Personas.",
+          "d1": {
+            "t": "Orden de servicio",
+            "c": "Servicio por hacer"
+          },
+          "d2": {
+            "t": "Reservas",
+            "c": "Bloquea el recurso"
+          },
+          "d3": {
+            "t": "Ventas",
+            "c": "Costo de piezas"
+          },
+          "d4": {
+            "t": "Personas",
+            "c": "Responsable técnico"
+          },
+          "why1": "Bloquear el recurso evita reservar algo que está en reparación.",
+          "why2": "Registrar costos mantiene visible el gasto de mantenimiento.",
+          "why3": "Asignar un responsable deja claro quién ejecuta cada orden.",
+          "c1": {
+            "t": "Reservas",
+            "c": "Bloquear el recurso durante el servicio"
+          },
+          "c2": {
+            "t": "Ventas",
+            "c": "Registrar costo de piezas y mano de obra"
+          },
+          "c3": {
+            "t": "Personas y portal",
+            "c": "Asignar la orden a un técnico"
+          }
+        },
+        "visit": {
+          "short": "Ve con datos reales",
+          "headline": "Lo que ves en Órdenes de servicio",
+          "explanation": "La pantalla de Órdenes de servicio es la cola del equipo: órdenes abiertas, en curso y completadas, con plazo y responsable. Ábrela para reconocer dónde priorizar y dar de baja cada servicio.",
+          "d1": {
+            "t": "Guía",
+            "c": "Estás aquí"
+          },
+          "d2": {
+            "t": "Pantalla real",
+            "c": "Cola de órdenes"
+          },
+          "d3": {
+            "t": "Datos reales",
+            "c": "Órdenes abiertas"
+          },
+          "d4": {
+            "t": "Acción",
+            "c": "Ejecutar, completar"
+          },
+          "why1": "Ver la cola real muestra lo que está atrasado y lo que es urgente.",
+          "why2": "Aprendes dónde completar y adjuntar lo que se hizo.",
+          "why3": "Los filtros por equipo y estado organizan el día del equipo.",
+          "r1": {
+            "t": "Cambio de filtro · Aire acondicionado S2",
+            "s": "Vence hoy",
+            "tag": "Abierta"
+          },
+          "r2": {
+            "t": "Revisión bomba · Piscina",
+            "s": "En 3 días",
+            "tag": "Agendada"
+          },
+          "r3": {
+            "t": "Lubricación · Portón",
+            "s": "Completada ayer",
+            "tag": "Completada"
+          }
+        },
+        "related": {
+          "short": "Amplía el uso",
+          "headline": "A dónde ir después de Mantenimiento",
+          "explanation": "Con el mantenimiento estructurado, los vecinos ganan: Reservas opera con recursos confiables, Ventas sigue el costo de los activos y Personas organiza al equipo técnico. Elige el próximo paso según tu prioridad.",
+          "d1": {
+            "t": "Mantenimiento",
+            "c": "Base lista"
+          },
+          "d2": {
+            "t": "Reservas",
+            "c": "Recursos siempre listos"
+          },
+          "d3": {
+            "t": "Ventas",
+            "c": "Costos bajo control"
+          },
+          "d4": {
+            "t": "Personas y portal",
+            "c": "Equipo organizado"
+          },
+          "why1": "Los recursos bien mantenidos reducen las cancelaciones de reserva.",
+          "why2": "Seguir los costos ayuda a decidir si reparar o cambiar un activo.",
+          "why3": "Un equipo bien asignado cumple los plazos de las órdenes.",
+          "c1": {
+            "t": "Reservas",
+            "c": "Mantén al día los recursos más reservados"
+          },
+          "c2": {
+            "t": "Ventas",
+            "c": "Analiza el costo total de mantenimiento"
+          },
+          "c3": {
+            "t": "Personas y portal",
+            "c": "Organiza técnicos y responsables"
+          }
+        }
+      }
+    },
+    "steps": {
+      "overview": {
+        "learn1": {
+          "title": "Consulta los indicadores"
+        },
+        "learn2": {
+          "title": "Explora las pantallas del menú"
+        },
+        "learn3": {
+          "title": "Conoce las áreas del negocio"
+        }
+      },
+      "bookings": {
+        "learn1": {
+          "title": "Registra tus recursos"
+        },
+        "learn2": {
+          "title": "Define los horarios"
+        },
+        "learn3": {
+          "title": "Conéctate con otros módulos"
+        }
+      },
+      "maintenance": {
+        "learn1": {
+          "title": "Registra tus equipos"
+        },
+        "learn2": {
+          "title": "Organiza planes y órdenes"
+        },
+        "learn3": {
+          "title": "Alinea mantenimiento y reservas"
+        }
+      },
+      "sales": {
+        "learn1": {
+          "title": "Registra tus productos"
+        },
+        "learn2": {
+          "title": "Ajusta la configuración"
+        },
+        "learn3": {
+          "title": "Conéctate con otros módulos"
+        }
+      },
+      "peoplePortal": {
+        "learn1": {
+          "title": "Sigue al equipo y clientes"
+        },
+        "learn2": {
+          "title": "Organiza el menú del cliente"
+        },
+        "learn3": {
+          "title": "Conecta reservas y ventas"
+        }
+      },
+      "pmoc": {
+        "learn1": {
+          "title": "Consulta tus planes"
+        },
+        "learn2": {
+          "title": "Crea un nuevo plan"
+        },
+        "learn3": {
+          "title": "Conecta planes y órdenes"
+        }
+      },
+      "platform": {
+        "learn1": {
+          "title": "Consulta tus clientes"
+        },
+        "learn2": {
+          "title": "Gestiona usuarios y familias"
+        },
+        "learn3": {
+          "title": "Explora el menú del entorno"
+        }
+      },
+      "visit": {
+        "title": "Visita una pantalla del módulo"
+      },
+      "related": {
+        "title": "Explora un módulo relacionado"
+      },
+      "wrapUp": {
+        "title": "Listo para usar"
+      }
+    }
   },
   "taxonomy": {
+    "emptyCategories": "Aún no hay categorías.",
+    "emptyCategoriesHint": "Organiza los elementos de tu negocio en categorías.",
+    "emptyTags": "Aún no hay etiquetas.",
+    "emptyTagsHint": "Usa etiquetas para identificar y encontrar elementos fácilmente.",
     "title": "Categorías y etiquetas",
     "sharedHint": "Estas definiciones se comparten con todos los consumidores de este tenant.",
     "categories": "Categorías",
@@ -1250,6 +2147,27 @@
     }
   },
   "dashboard": {
+    "home": {
+      "quickAccess": "Acceso rápido",
+      "open": "Abrir",
+      "freeSlots_one": "{{count}} libre",
+      "freeSlots_other": "{{count}} libres",
+      "shortcuts": {
+        "reservations": "Gestiona las reservas, confirmaciones y ocupación del día.",
+        "workOrders": "Sigue y ejecuta las órdenes de servicio abiertas.",
+        "assets": "Consulta el inventario y el estado de los equipos.",
+        "pmoc": "Planes de mantenimiento y las órdenes que generan."
+      }
+    },
+    "limitedTitle": "Información disponible para tu perfil",
+    "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
+    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",
+    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en este entorno.",
+    "unavailable": "Los indicadores no están disponibles en este momento.",
+    "workOrdersEmpty": "No hay órdenes de servicio para mostrar en este período.",
+    "viewOrders": "Ver órdenes de servicio",
+    "clientEmptyHint": "Las nuevas actividades vinculadas a tu perfil aparecerán aquí.",
+    "ordersEmptyHint": "Puedes consultar la lista de órdenes de servicio para seguir otras actividades.",
     "title": "Centro de Comando",
     "description": "Indicadores según los módulos y familias activos en este entorno.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
@@ -1598,7 +2516,7 @@
       },
       "description": {
         "rentals": "Recursos que ofrece (espacios, bienes…). Registre cada uno y marque lo que puede reservarse.",
-        "spaces": "Espacios alquilables, como salas y áreas exteriores. Registre cada uno y marque lo que puede reservarse.",
+        "spaces": "Espacios e instalaciones del negocio. Registre cada uno y organícelos por tipo.",
         "goods": "Bienes y artículos (contenedores…). Registre cada uno y organícelos por tipo.",
         "electrical": "Equipos eléctricos del sitio. Use tipos y atributos (voltaje, fabricante).",
         "maintenance": "Equipos e instalaciones del sitio. Use tipos para organizar y vincular mantenimiento.",
@@ -1696,6 +2614,8 @@
         "stockQuantity": "Cantidad en stock"
       },
       "validation": {
+        "pricingWindowInvalid": "La hora final debe ser posterior a la inicial.",
+        "attributeInvalid": "Introduzca un valor válido.",
         "unitRequired": "La unidad es obligatoria.",
         "categoryRequired": "El tipo es obligatorio.",
         "familyRequired": "La familia es obligatoria.",
@@ -1728,7 +2648,7 @@
         "deleteBlockedByWorkOrders": "No se puede eliminar este recurso porque tiene órdenes de trabajo."
       },
       "flags": {
-        "rentable": "Alquiler",
+        "rentable": "Reservable",
         "maintenance": "Mantenimiento"
       }
     },
@@ -1742,24 +2662,24 @@
         "capacity": "Capacidad"
       },
       "placeholders": {
-        "name": "Ej.: Espacio 1 — cubierto",
-        "tag": "Ej.: C-01",
+        "name": "Ej.: Equipo 1",
+        "tag": "Ej.: EQ-01",
         "location": "Ej.: Bloque A, planta baja"
       },
       "help": {
         "unit": "Sitio físico de este recurso (sede, sucursal). Se crea automáticamente al registrar el cliente; la gestión de unidades vendrá después.",
         "category": "Tipo del recurso (ej.: Área exterior). Defina tipos en Activos → Tipos.",
         "family": "Familia de atributos (espacios, bienes, eléctricos…). Controla campos extra del formulario.",
-        "name": "Nombre amigable mostrado en la agenda y listas.",
-        "tag": "Código corto único (ej.: C-01).",
+        "name": "Nombre del equipo o recurso mostrado en las listas.",
+        "tag": "Código corto único para identificar el recurso (ej.: EQ-01).",
         "location": "Dónde está en el sitio (bloque, ala). Opcional.",
         "status": "Activo = disponible; Inactivo = oculto; Mantenimiento = fuera de servicio.",
         "baseLocation": "Ubicación aplicada por igual a todos los ítems del lote (sin numeración).",
-        "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: C- + 01).",
+        "baseTag": "Prefijo del tag; se añade el número de la franja (ej.: EQ- + 01).",
         "startNumber": "Primer número de la secuencia generada.",
         "endNumber": "Último número de la secuencia (inclusive).",
         "requiresMaintenance": "Si está activo, el recurso entra en mantenimiento/PMOC/OS.",
-        "isRentable": "Si está activo, el recurso se puede reservar en alquiler/agenda.",
+        "isRentable": "Si está activo, el recurso se puede reservar en la agenda.",
         "requiresDeposit": "Si está activo, la reserva espera la confirmación de pago del administrador. Si está desactivado, nace confirmada y ocupa el horario.",
         "queueEnabled": "Si está activo, los clientes entran en una fila FIFO para reservar este espacio a la hora de apertura. Desactivado por defecto.",
         "queueOpeningTime": "Hora del día en que abren las reservas (zona de Brasilia). La sala de espera abre 30 minutos antes.",
@@ -1780,10 +2700,26 @@
         "review": "Revisión"
       },
       "pricing": {
-        "priceErrors": {"required": "Ingrese el valor.", "invalid": "Valor inválido. Use el formato 12,50.", "notPositive": "El valor debe ser mayor que cero.", "tooLarge": "El valor máximo es R$ {{max}}."},
+        "priceErrors": {
+          "required": "Ingrese el valor.",
+          "invalid": "Valor inválido. Use el formato 12,50.",
+          "notPositive": "El valor debe ser mayor que cero.",
+          "tooLarge": "El valor máximo es R$ {{max}}."
+        },
         "unitLabel": "Unidad de precio",
-        "units": {"Hour": "Por hora", "Slot": "Por horario", "Day": "Por día", "Fixed": "Fijo", "mixed": "Unidades distintas por día (elige una para unificar)"},
-        "priceLabels": {"Hour": "Precio por hora", "Slot": "Precio por horario", "Day": "Precio por día", "Fixed": "Precio fijo"},
+        "units": {
+          "Hour": "Por hora",
+          "Slot": "Por horario",
+          "Day": "Por día",
+          "Fixed": "Fijo",
+          "mixed": "Unidades distintas por día (elige una para unificar)"
+        },
+        "priceLabels": {
+          "Hour": "Precio por hora",
+          "Slot": "Precio por horario",
+          "Day": "Precio por día",
+          "Fixed": "Precio fijo"
+        },
         "patternLabel": "Cómo se repite el precio en la semana",
         "everydayPrice": "Precio por hora",
         "everydayPriceHelp": "El mismo valor vale todos los días, en el intervalo de abajo.",
@@ -1816,7 +2752,12 @@
         "pricingUnitLabel": "Unidad de precio",
         "priceLabel": "Precio",
         "perDayPricesLabel": "Precios por día",
-        "unitPrice": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/turno", "Day": "{{amount}}/día", "Fixed": "{{amount}} fijo"}
+        "unitPrice": {
+          "Hour": "{{amount}}/hora",
+          "Slot": "{{amount}}/turno",
+          "Day": "{{amount}}/día",
+          "Fixed": "{{amount}} fijo"
+        }
       },
       "success": {
         "create": "Recurso creado con éxito.",
@@ -1840,7 +2781,7 @@
       },
       "tabs": {
         "general": "General",
-        "rental": "Alquiler",
+        "rental": "Reservas",
         "maintenance": "Mantenimiento"
       },
       "fields": {
@@ -1850,12 +2791,12 @@
         "category": "Tipo",
         "location": "Ubicación",
         "status": "Estado",
-        "isRentable": "Disponible para reserva / alquiler",
+        "isRentable": "Disponible para reserva",
         "requiresDeposit": "¿Es necesario un pago previo?",
         "queueEnabled": "Cola de reservas",
         "queueOpeningTime": "Hora de apertura de la fila de reservas",
         "requiresMaintenance": "Requiere mantenimiento",
-        "rentalType": "Tipo de alquiler",
+        "rentalType": "Tipo de recurso",
         "totalQuantity": "Cantidad total"
       },
       "rentalTypes": {
@@ -2149,6 +3090,7 @@
     }
   },
   "workOrders": {
+    "viewOpen": "Ver OT abiertas",
     "title": "Órdenes de Trabajo",
     "description": "Ejecute checklists en campo y siga el estado de cada OT.",
     "loading": "Cargando órdenes de trabajo...",
@@ -2188,6 +3130,7 @@
       "Canceled": "Cancelada"
     },
     "actions": {
+      "viewCompleted": "Ver órdenes completadas",
       "execute": "Ejecutar",
       "view": "Ver",
       "open": "Abrir"
@@ -2223,6 +3166,7 @@
       "redirecting": "OT creada"
     },
     "execution": {
+      "breadcrumb": "OT {{id}} · {{asset}}",
       "title": "Ejecución de OT",
       "subtitle": "Activo {{tag}} — {{name}}",
       "loading": "Cargando OT...",
@@ -2323,6 +3267,9 @@
     "description": "No tiene permiso para ver esta página."
   },
   "notFound": {
+    "staffDescription": "No encontramos esta página. Usa el enlace de abajo para continuar.",
+    "dashboard": "Volver al panel",
+    "login": "Ir al inicio de sesión",
     "title": "Página no encontrada",
     "description": "Esta dirección no existe en este entorno.",
     "home": "Ir al inicio"
@@ -2346,6 +3293,18 @@
     }
   },
   "peopleAccess": {
+    "eyebrow": "Directorio",
+    "mobileNavigation": "Navegación principal",
+    "columns": {
+      "roles": "Funciones",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "roleSummary": {
+      "description": "Quién puede hacer qué en este entorno.",
+      "permissions_one": "{{count}} permiso",
+      "permissions_other": "{{count}} permisos"
+    },
     "title": "Personas y acceso",
     "description": "Gestione usuarios del entorno y los perfiles de acceso.",
     "tabs": {
@@ -2456,6 +3415,8 @@
       }
     },
     "users": {
+      "teamCount_one": "{{count}} persona en el equipo",
+      "teamCount_other": "{{count}} personas en el equipo",
       "description": "Invite personas y asigne una o más funciones.",
       "invite": "Invitar usuario",
       "inviteTitle": "Invitar usuario",
@@ -2476,6 +3437,8 @@
       "searchTooShort": "Escriba al menos 2 caracteres."
     },
     "customers": {
+      "customerCount_one": "{{count}} cliente del portal",
+      "customerCount_other": "{{count}} clientes del portal",
       "description": "Clientes que entran por el portal de este entorno.",
       "empty": "Ningún cliente en este entorno.",
       "emptyDescription": "Cuando alguien cree una cuenta en el portal, aparece aquí.",
@@ -2494,6 +3457,13 @@
       "previous": "Página anterior",
       "next": "Página siguiente"
     },
+    "mobileActions": {
+      "hint": "Toque una fila para ver las acciones.",
+      "editRole": "Nombre y permisos",
+      "editField": "Etiqueta, tipo y obligatoriedad",
+      "editSystemRole": "Función del sistema: nombre fijo",
+      "deleteRole": "Solo si no está asignada a nadie"
+    },
     "roles": {
       "description": "Funciones de sistema y perfiles personalizados de este entorno.",
       "create": "Nueva función",
@@ -2510,6 +3480,7 @@
       "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
     },
     "validation": {
+      "duplicateEmail": "Ya existe una persona con este correo electrónico.",
       "fullNameRequired": "Informe el nombre.",
       "emailInvalid": "Informe un e-mail válido.",
       "rolesRequired": "Seleccione al menos una función.",
@@ -2671,6 +3642,11 @@
       "noModules": "Sin módulos activos",
       "emptyTitle": "Aún no hay clientes",
       "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
+      "searchLabel": "Buscar clientes",
+      "clearSearch": "Borrar búsqueda",
+      "searchPlaceholder": "Buscar por nombre o subdominio...",
+      "searchEmptyTitle": "No se encontraron clientes",
+      "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
       "metrics": {
         "totalTenants": "Total de tenants",
         "activeTenants": "Tenants activos",
@@ -2771,7 +3747,8 @@
       "emptyTitle": "No se encontraron usuarios",
       "emptyDescription": "Ajuste los filtros o invite usuarios desde un cliente.",
       "actions": {
-        "delete": "Eliminar usuario"
+        "delete": "Eliminar usuario",
+        "deleteNamed": "Eliminar usuario {{email}}"
       },
       "delete": {
         "title": "Eliminar usuario",
@@ -3256,6 +4233,22 @@
       },
       "typeLocation": "Espacio",
       "typeGood": "Ítem alquilable",
+      "eyebrow": "Registro",
+      "editHint": "Haz clic para editar",
+      "summaryBreakdown": " · {{spaces}}, {{items}}",
+      "quantitySummary": "Cantidad: {{count}}",
+      "summaryResources_one": "{{count}} recurso",
+      "summaryResources_other": "{{count}} recursos",
+      "summarySpaces_one": "{{count}} espacio",
+      "summarySpaces_other": "{{count}} espacios",
+      "summaryItems_one": "{{count}} artículo",
+      "summaryItems_other": "{{count}} artículos",
+      "summaryResources_zero": "{{count}} recursos",
+      "summaryResources_many": "{{count}} recursos",
+      "summarySpaces_zero": "{{count}} espacios",
+      "summarySpaces_many": "{{count}} espacios",
+      "summaryItems_zero": "{{count}} artículos",
+      "summaryItems_many": "{{count}} artículos",
       "sheetTabs": {
         "basic": "Básico",
         "pricingRules": "Precio y reglas",
@@ -3263,7 +4256,20 @@
       },
       "details": {
         "pricePerHour": "Desde: {{amount}}/h",
-        "prices": {"Hour": "Desde: {{amount}} por hora", "Slot": "Desde: {{amount}} por horario", "Day": "Desde: {{amount}} por día", "Fixed": "Desde: {{amount}} fijo"},
+        "prices": {
+          "Hour": "Desde: {{amount}} por hora",
+          "Slot": "Desde: {{amount}} por horario",
+          "Day": "Desde: {{amount}} por día",
+          "Fixed": "Desde: {{amount}} fijo"
+        },
+        "noPrice": "sin precio",
+        "priceCaption": "desde · {{unit}}",
+        "priceUnits": {
+          "Hour": "por hora",
+          "Slot": "por horario",
+          "Day": "por día",
+          "Fixed": "fijo"
+        },
         "allowedDurations": "Duraciones: {{durations}}",
         "capacity_one": "Capacidad: {{count}} persona",
         "capacity_other": "Capacidad: {{count}} personas",
@@ -3300,7 +4306,7 @@
         "horizonEffectiveDays": "En vigor: {{count}} días adelante.",
         "cancelCutoffLabel": "Plazo de cancelación",
         "cancelCutoffInherit": "Heredar de la política",
-        "cancelCutoffNone": "Sin plazo (usar política)",
+        "cancelCutoffNone": "Sin plazo (ignora la política)",
         "cancelCutoffHours": "Horas antes del inicio",
         "cancelCutoffEffectiveNone": "Efectivo: sin plazo",
         "cancelCutoffEffectiveHours_one": "Efectivo: {{count}} hora antes del inicio",
@@ -3361,6 +4367,10 @@
       "paletteEmpty": "Todos los espacios ya están en el mapa.",
       "clickToRemove": "Use × en el bloque para quitarlo del mapa.",
       "resizeCanvasHelp": "Arrastre la esquina del mapa (cuadrado inferior derecho) para cambiar el tamaño del layout.",
+      "moveBlock": "Mover bloque {{name}}",
+      "resizeBlock": "Cambiar tamaño del bloque {{name}}",
+      "removeBlock": "Eliminar bloque {{name}}",
+      "resizeCanvas": "Cambiar tamaño del mapa",
       "blockSize": "Tamaño del bloque",
       "width": "Ancho",
       "height": "Alto",
@@ -3403,7 +4413,7 @@
     },
     "reservations": {
       "title": "Reservas",
-      "description": "Confirme depósitos y cancele reservas del portal B2C.",
+      "description": "Confirma depósitos, completa y cancela reservas hechas a través del portal.",
       "date": "Fecha",
       "status": "Estado",
       "statusAll": "Todos",
@@ -3432,7 +4442,29 @@
         "Canceled": "Cancelada",
         "Completed": "Completada"
       },
-      "multiDayRange": "{{start}} – {{end}} ({{days}} días)"
+      "multiDayRange": "{{start}} – {{end}} ({{days}} días)",
+      "operation": "Operación",
+      "filters": "Filtros de reservas",
+      "period": "Período",
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente",
+      "today": "Hoy",
+      "goToday": "Ir a hoy",
+      "showWeek": "Ver la semana",
+      "emptyDescription": "Cambia el día, el período o el estado para ver otras reservas.",
+      "loading": "Cargando reservas…",
+      "count_one": "{{count}} reserva",
+      "count_other": "{{count}} reservas",
+      "orderedByTime": "Ordenadas por horario",
+      "time": "Horario",
+      "customer": "Cliente",
+      "resources": "Recursos",
+      "total": "Total",
+      "actions": "Acciones",
+      "noActions": "Sin acciones disponibles",
+      "durationHours": "{{hours}}h",
+      "durationMinutes": "{{minutes}}min",
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
     },
     "bookingPolicy": {
       "title": "Política de reservas",
@@ -3467,7 +4499,17 @@
       "cancelCutoffHoursMode": "N horas antes del inicio",
       "cancelCutoffHours": "Horas antes del inicio",
       "cancelCutoffHint": "El cliente puede cancelar hasta este plazo antes del inicio.",
-      "categories": {"title": "Por categoría", "description": "Se aplica a los recursos de la categoría. Déjelo en blanco para usar el valor general de arriba. Un valor definido en el propio recurso tiene prioridad.", "horizonDays": "Antelación máxima (días)", "cancelCutoffHours": "Cancelar hasta (horas antes)", "inherit": "General", "save": "Guardar", "saved": "Política de la categoría guardada.", "invalid": "Use un número entero o déjelo en blanco.", "empty": "No hay categorías con recursos reservables."}
+      "categories": {
+        "title": "Por categoría",
+        "description": "Se aplica a los recursos de la categoría. Déjelo en blanco para usar el valor general de arriba. Un valor definido en el propio recurso tiene prioridad.",
+        "horizonDays": "Antelación máxima (días)",
+        "cancelCutoffHours": "Cancelar hasta (horas antes)",
+        "inherit": "General",
+        "save": "Guardar",
+        "saved": "Política de la categoría guardada.",
+        "invalid": "Use un número entero o déjelo en blanco.",
+        "empty": "No hay categorías con recursos reservables."
+      }
     }
   },
   "resourceVisual": {
@@ -3484,6 +4526,20 @@
     "revision": "Nueva revisión",
     "floor": "Arte SVG del piso",
     "lines": "Arte SVG de líneas",
+    "net": "Arte SVG del divisor (opcional)",
+    "preview": "Vista previa",
+    "previewAlt": "Vista previa combinando piso, líneas y divisor",
+    "shapePresetsLabel": "Empezar desde una forma",
+    "shapePresetsHelp": "Rellena piso, líneas, color e ícono — sigue editando libremente después.",
+    "shapePresets": {
+      "rectangleArea": "Área rectangular",
+      "courtWithLines": "Cancha con líneas",
+      "roundTable": "Mesa redonda",
+      "squareTable": "Mesa cuadrada",
+      "chair": "Silla",
+      "seat": "Asiento/banco",
+      "equipmentBox": "Equipo"
+    },
     "publish": "Publicar",
     "draft": "Borrador",
     "publishedStatus": "Publicado",
@@ -3494,6 +4550,8 @@
     "validation": "Ingrese el nombre y el identificador.",
     "deleteTagTitle": "¿Eliminar etiqueta?",
     "deleteTagDescription": "Esta acción no se puede deshacer.",
+    "deleteTemplateTitle": "¿Eliminar modelo?",
+    "deleteTemplateDescription": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
     "segmentsTitle": "Segmentos del tenant",
     "segmentsHelp": "Defina los segmentos que aparecen primero al elegir un modelo.",
     "enabledTemplates": "Modelos habilitados",
@@ -3507,6 +4565,7 @@
     "showFewerTags": "Mostrar menos",
     "noTemplate": "Sin modelo",
     "capacityPeople": "Capacidad de personas (opcional)",
+    "capacityRange": "Indique un número entero entre 1 y 100000.",
     "applySuggestions": "Aplicar sugerencias del modelo",
     "applySuggestionsHelp": "Completa la capacidad y los horarios sugeridos por el modelo.",
     "tagKindSegment": "Segmento",
@@ -3523,31 +4582,33 @@
     "fromTime": "Desde el horario",
     "availableColor": "Color disponible",
     "takenColor": "Color ocupado",
+    "unavailableColor": "Color no disponible",
+    "selectedColor": "Color seleccionado",
     "setDefaultMap": "Definir mapa predeterminado"
   },
   "bookingMap": {
     "area": "Área",
     "quantity": "Cantidad",
     "title": "Reservar",
-    "help": "Elija una fecha, un recurso y un horario.",
+    "help": "Elige una fecha, un recurso y un horario.",
     "loading": "Cargando mapa…",
     "dateStrip": "Fechas",
     "today": "Hoy",
     "periods": "Períodos",
-    "all": "Todos ({{count}})",
-    "morning": "Mañana ({{count}})",
-    "afternoon": "Tarde ({{count}})",
-    "night": "Noche ({{count}})",
+    "all": "Todos",
+    "morning": "Mañana",
+    "afternoon": "Tarde",
+    "night": "Noche",
     "map": "Mapa",
     "list": "Lista",
     "freeFrom": "{{count}} libres · desde {{amount}}",
     "noAvailability": "Sin horarios libres",
-    "emptyPeriod": "No hay horarios libres en este período. Elija otro período u otra fecha.",
+    "emptyPeriod": "No hay horarios libres en este período. Elige otro período u otra fecha.",
     "showPast": "Mostrar finalizados ({{count}})",
     "hidePast": "Ocultar finalizados",
     "close": "Cerrar",
     "continue": "Continuar",
-    "chooseSlot": "Elija un horario",
+    "chooseSlot": "Elige un horario",
     "success": "Reserva creada.",
     "error": "No se pudo crear la reserva.",
     "state": {
@@ -3558,7 +4619,35 @@
       "Unpriced": "Sin precio",
       "Available": "Disponible"
     },
-    "prices": {"Hour": "{{amount}}/hora", "Slot": "{{amount}}/turno", "Day": "{{amount}}/día", "Fixed": "{{amount}} fijo"},
+    "prices": {
+      "Hour": "{{amount}}/hora",
+      "Slot": "{{amount}}/turno",
+      "Day": "{{amount}}/día",
+      "Fixed": "{{amount}} fijo"
+    },
     "unitsLeft": "{{left}} de {{total}} disponibles"
+  },
+  "emptyStates": {
+    "learnMore": "Más información",
+    "noResults": "No se encontraron resultados",
+    "filterDescription": "Ajusta los filtros o borra la búsqueda para ver los elementos.",
+    "clearFilters": "Limpiar filtros",
+    "clearSearch": "Limpiar búsqueda",
+    "firstPage": "Volver a la primera página",
+    "book": "Reservar",
+    "bookingDescription": "Elige un horario para tu próxima reserva.",
+    "pmocDescription": "Crea tu primer plan desde la Biblioteca Rolvix",
+    "examples": {
+      "bookings": "Ej.: una sala a las 14 h, por 1 hora",
+      "workOrders": "Ej.: cambiar el filtro del aire acondicionado de recepción",
+      "pmoc": "Ej.: un plan mensual para los equipos de climatización",
+      "assets": "Ej.: un aire acondicionado split de 12.000 BTU",
+      "users": "Ej.: invita a quien atiende la recepción",
+      "customers": "Ej.: una persona que se registró en el portal",
+      "roles": "Ej.: un perfil para el equipo de atención",
+      "portalOrders": "Ej.: materiales de limpieza para recepción",
+      "portalRequests": "Ej.: un producto de limpieza para recepción",
+      "portalCatalog": "Ej.: materiales de uso diario para recepción"
+    }
   }
 }

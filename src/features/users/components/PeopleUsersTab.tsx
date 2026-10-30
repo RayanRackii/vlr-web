@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Users } from "lucide-react"
+import { KeyRound, UserPlus, Users } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -35,9 +35,9 @@ import {
   PeopleSearchForm,
 } from "@/features/users/components/PeopleDirectoryControls"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { Can } from "@/features/users/permissions/Can"
 import {
-  formatAssignedRoles,
   toggleUniqueId,
 } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -62,7 +62,8 @@ type PeopleUsersTabProps = {
 
 export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   const { t } = useTranslation()
-  const { currentUser, refresh } = usePermissions()
+  const learnMore = useModuleIntroLink("peoplePortal")
+  const { currentUser, refresh, can } = usePermissions()
   const [members, setMembers] = useState<TenantMember[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -141,6 +142,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   }, [appliedQuery, page, t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Load the directory when its server query changes.
     void loadMembers()
   }, [loadMembers])
 
@@ -152,6 +154,15 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
       inviteForm.reset({ fullName: "", email: "", roleIds: [] })
       await loadMembers()
     } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "A user with this email already exists for the tenant."
+      ) {
+        const message = t("peopleAccess.validation.duplicateEmail")
+        inviteForm.setError("email", { type: "server", message })
+        toast.error(message)
+        return
+      }
       toast.error(
         error instanceof Error
           ? error.message
@@ -194,6 +205,12 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     setAppliedQuery(next)
   }
 
+  function openInvite() {
+    inviteForm.reset({ fullName: "", email: "", roleIds: [] })
+    inviteForm.clearErrors()
+    setInviteOpen(true)
+  }
+
   function openAssign(member: TenantMember) {
     setAssigning(member)
     assignForm.reset({
@@ -207,31 +224,20 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold tracking-tight">
-            {t("peopleAccess.tabs.users")}
-          </h2>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            {t("peopleAccess.users.description")}
-          </p>
-        </div>
-        <Can permission="core.users.invite">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              inviteForm.reset({ fullName: "", email: "", roleIds: [] })
-              inviteForm.clearErrors()
-              setInviteOpen(true)
-            }}
-          >
-            {t("peopleAccess.users.invite")}
-          </Button>
-        </Can>
-      </div>
-
       <PeopleSearchForm
+        actions={
+          <Can permission="core.users.invite">
+            <Button
+              type="button"
+              size="sm"
+              className="people-invite"
+              onClick={openInvite}
+            >
+              <UserPlus aria-hidden strokeWidth={1.75} />
+              {t("peopleAccess.users.invite")}
+            </Button>
+          </Can>
+        }
         id="team-member-search"
         label={t("peopleAccess.users.searchLabel")}
         placeholder={t("peopleAccess.users.searchPlaceholder")}
@@ -250,66 +256,74 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
         </Alert>
       ) : null}
 
-      {!isLoading && members.length === 0 && loadError === null ? (
-        <PeopleEmptyState
-          icon={Users}
-          title={t("peopleAccess.users.empty")}
-          description={t("peopleAccess.users.emptyDescription")}
-        />
-      ) : (
-        <ul className="space-y-2">
-          {members.map((member) => (
-            <li
-              key={member.id}
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm motion-safe:transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 space-y-1">
-                <p className="truncate text-sm font-medium">
-                  {member.fullName}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {member.email}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatAssignedRoles(member.roles) ||
-                    t("peopleAccess.users.noRoles")}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={member.isActive ? "success" : "secondary"}>
-                  {member.isActive
-                    ? t("peopleAccess.status.active")
-                    : t("peopleAccess.status.inactive")}
-                </Badge>
-                <Can permission="core.users.assign_roles">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      openAssign(member)
-                    }}
-                  >
-                    {t("peopleAccess.users.assign")}
-                  </Button>
-                </Can>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!isLoading && loadError === null ? (
-        <PeoplePager
-          page={page}
-          pageSize={DIRECTORY_PAGE_SIZE}
-          total={total}
-          summary={t("peopleAccess.pagination.summary", { from, to, total })}
-          previousLabel={t("peopleAccess.pagination.previous")}
-          nextLabel={t("peopleAccess.pagination.next")}
-          onPageChange={setPage}
-        />
-      ) : null}
+      <section className="people-directory" aria-label={t("peopleAccess.tabs.users")}>
+        <div className="people-list-heading">
+          {!isLoading ? <h2>{t("peopleAccess.users.teamCount", { count: total })}</h2> : null}
+          <p>{t("peopleAccess.users.description")}</p>
+        </div>
+        {!isLoading && members.length === 0 && loadError === null ? (
+          <PeopleEmptyState
+            icon={Users}
+            title={t(appliedQuery ? "emptyStates.noResults" : "peopleAccess.users.empty")}
+            description={t(appliedQuery ? "emptyStates.filterDescription" : "peopleAccess.users.emptyDescription")}
+            example={!appliedQuery && can("core.users.invite") ? t("emptyStates.examples.users") : undefined}
+            learnMore={appliedQuery ? undefined : learnMore}
+            action={appliedQuery ? (
+              <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button>
+            ) : (
+              <Can permission="core.users.invite"><Button onClick={openInvite}>{t("peopleAccess.users.invite")}</Button></Can>
+            )}
+          />
+        ) : members.length > 0 ? (
+          <table className="people-table people-team-table" aria-label={t("peopleAccess.tabs.users")}>
+            <thead><tr>
+              <th scope="col">{t("peopleAccess.users.fullName")}</th>
+              <th scope="col">{t("peopleAccess.columns.roles")}</th>
+              <th scope="col">{t("peopleAccess.columns.status")}</th>
+              <th scope="col" className="people-actions-heading">{t("peopleAccess.columns.actions")}</th>
+            </tr></thead>
+            <tbody>
+              {members.map((member) => (
+                <tr key={member.id}>
+                  <td className="people-identity-cell">
+                    <div className="people-person">
+                      <span className="people-avatar" aria-hidden>{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
+                      <div className="min-w-0">
+                        <p className="people-person-name">{member.fullName}</p>
+                        <p className="people-person-email">{member.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="people-roles-cell">
+                    <div className="people-role-chips">
+                      {member.roles.length > 0 ? member.roles.map((role) => <span className="people-role-chip" key={role.id}>{role.name}</span>) : <span className="people-no-roles">{t("peopleAccess.users.noRoles")}</span>}
+                    </div>
+                  </td>
+                  <td className="people-status-cell">
+                    <Badge className="people-status" variant={member.isActive ? "success" : "secondary"}>
+                      <span className="people-status-dot" aria-hidden />
+                      {t(member.isActive ? "peopleAccess.status.active" : "peopleAccess.status.inactive")}
+                    </Badge>
+                  </td>
+                  <td className="people-actions-cell">
+                    <Can permission="core.users.assign_roles">
+                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
+                        <KeyRound aria-hidden strokeWidth={1.75} />
+                        <span>{t("peopleAccess.users.assign")}</span>
+                      </Button>
+                    </Can>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+        {!isLoading && loadError === null ? (
+          <PeoplePager page={page} pageSize={DIRECTORY_PAGE_SIZE} total={total}
+            summary={t("peopleAccess.pagination.summary", { from, to, total })}
+            previousLabel={t("peopleAccess.pagination.previous")} nextLabel={t("peopleAccess.pagination.next")} onPageChange={setPage} />
+        ) : null}
+      </section>
 
       <Dialog
         open={inviteOpen}
@@ -381,7 +395,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                         const checked = field.value.includes(role.id)
 
                         return (
-                          <div key={role.id} className="flex items-center gap-2">
+                          <div key={role.id} className="flex min-w-0 items-center gap-3 py-1">
                             <Checkbox
                               id={inputId}
                               checked={checked}
@@ -390,7 +404,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                                 field.onChange(toggleUniqueId(field.value, role.id))
                               }}
                             />
-                            <Label htmlFor={inputId} className="font-normal">
+                            <Label htmlFor={inputId} className="min-w-0 break-words font-normal [overflow-wrap:anywhere]">
                               {role.name}
                             </Label>
                           </div>
@@ -456,7 +470,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                         const checked = field.value.includes(role.id)
 
                         return (
-                          <div key={role.id} className="flex items-center gap-2">
+                          <div key={role.id} className="flex min-w-0 items-center gap-3 py-1">
                             <Checkbox
                               id={inputId}
                               checked={checked}
@@ -465,7 +479,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
                                 field.onChange(toggleUniqueId(field.value, role.id))
                               }}
                             />
-                            <Label htmlFor={inputId} className="font-normal">
+                            <Label htmlFor={inputId} className="min-w-0 break-words font-normal [overflow-wrap:anywhere]">
                               {role.name}
                             </Label>
                           </div>

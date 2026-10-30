@@ -67,16 +67,16 @@ describe("PortalCatalogProductPage layout", () => {
     renderPage()
 
     const name = await screen.findByRole("heading", { name: "Raquete" })
-    const columns = name.closest("div.space-y-4")?.parentElement
+    const columns = name.closest("div.portal-catalog-detail-panel")?.parentElement
     expect(columns).not.toBeNull()
     expect(columns).toHaveClass("lg:grid-cols-2")
 
     const addToCart = screen.getByRole("button", {
       name: i18n.t("tenantPortal.catalog.addToCart"),
     })
-    const stickyRow = addToCart.closest("div.fixed")
+    const stickyRow = addToCart.closest("div.portal-catalog-detail-actions")
     expect(stickyRow).not.toBeNull()
-    expect(stickyRow).toHaveClass("fixed", "bottom-0", "md:static")
+    expect(stickyRow).toHaveClass("sticky", "bottom-[calc(80px+env(safe-area-inset-bottom))]", "md:static")
   })
 
   it("gives the quantity stepper buttons a 44px tap target", async () => {

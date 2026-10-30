@@ -1,10 +1,11 @@
+import "../components/portalCatalog.css"
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useOutletContext, useSearchParams } from "react-router-dom"
-import { ShoppingBag } from "lucide-react"
+import { ArrowRight, FileText, Lightbulb, Plus, Search, ShoppingCart, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { PageHeader } from "@/components/layout/PageHeader"
 import { CardGridSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
 import { PortalCatalogProductCard } from "@/features/catalog/components/PortalCatalogProductCard"
+import { PortalCartCount } from "@/features/catalog/components/PortalCartCount"
 import {
   formatCartTotalText,
   formatLineSubtotal,
@@ -19,7 +21,8 @@ import {
 import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { getPortalCatalogProduct, listPortalCatalogProducts } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
-import { TaxonomyFilters } from "@/features/taxonomy/components/TaxonomyFilters"
+import { PortalCatalogFilters } from "@/features/catalog/components/PortalCatalogFilters"
+import { PortalCatalogEmptyIllustration } from "@/features/catalog/components/PortalCatalogEmptyIllustration"
 import { taxonomyQueryFromSearch, setTaxonomySearchParams } from "@/features/taxonomy/lib/taxonomyQuery"
 import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { getPortalCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
@@ -33,7 +36,7 @@ type CartProductResolution = "loading" | "error"
 
 export function PortalCatalogPage() {
   const { t } = useTranslation()
-  const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
+  const { subdomain, primary, branding } = useOutletContext<CustomerAppOutletContext>()
   const customerId = getCustomerId()
   const cart = useCatalogCart(subdomain, customerId)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -47,6 +50,7 @@ export function PortalCatalogPage() {
     [categoryParam, tagsParam],
   )
   const search = searchParams.get("search") ?? ""
+  const hasActiveFilters = Boolean(search.trim() || taxonomyQuery.category || taxonomyQuery.tags?.length)
   const portalIdentity = `${subdomain}:${customerId ?? ""}`
 
   const [products, setProducts] = useState<PortalProduct[]>([])
@@ -227,112 +231,154 @@ export function PortalCatalogPage() {
   }, [search])
 
   return (
-    <div className="mx-auto w-full max-w-[1440px]">
-      <PageHeader
-        title={t("tenantPortal.catalog.title")}
-        description={t("tenantPortal.catalog.subtitle")}
-        actions={
-          <>
+    <div className="portal-catalog-layout">
+      <section className="min-w-0">
+        <header className="portal-booking-header portal-catalog-header">
+          <div className="min-w-0">
+            <p className="portal-eyebrow break-words">{branding.displayName}</p>
+            <h1>
+              {t("tenantPortal.catalog.title")}{" "}
+              {!loading && !loadError && products.length > 0 ? (
+                <span className="portal-catalog-item-count">
+                  {t(hasActiveFilters ? "tenantPortal.catalog.resultCount" : "tenantPortal.catalog.itemCount", { count: products.length })}
+                </span>
+              ) : null}
+            </h1>
+            <p className="text-muted-foreground">{t("tenantPortal.catalog.subtitle")}</p>
+          </div>
+          <div className="portal-catalog-actions">
             <Button
               type="button"
               variant="outline"
-              render={
-                <Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />
-              }
+              className="portal-catalog-button portal-catalog-requests"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitacoes")} />}
             >
-              {t("tenantPortal.catalog.requestCta")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              render={
-                <Link to={tenantPortalPath(subdomain, "catalogo/solicitacoes")} />
-              }
-            >
+              <FileText aria-hidden data-icon="inline-start" />
               {t("tenantPortal.catalog.navRequests")}
             </Button>
             <Button
               type="button"
               variant="outline"
+              className="portal-catalog-button"
+              render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />}
+            >
+              <Plus aria-hidden data-icon="inline-start" />
+              {t("tenantPortal.catalog.requestCta")}
+            </Button>
+            <Button
+              type="button"
+              className="portal-catalog-button portal-catalog-primary"
+              aria-label={t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}
               render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
             >
-              <ShoppingBag data-icon="inline-start" />
-              {t("tenantPortal.catalog.cartCount", { count: cart.totalQuantity })}
+              <ShoppingCart aria-hidden data-icon="inline-start" />
+              {t("tenantPortal.catalog.cartTitle")}
+              <PortalCartCount count={cart.totalQuantity} />
             </Button>
-          </>
-        }
-      />
-      <div className="space-y-4">
-        <Input
-          value={searchDraft}
-          placeholder={t("tenantPortal.catalog.searchPlaceholder")}
-          onChange={(event) => {
-            const value = event.target.value
-            setSearchDraft(value)
-            debouncedSearch(value)
-          }}
-        />
-        <TaxonomyFilters
-          options={taxonomyOptions}
-          categoryId={taxonomyQuery.category ?? null}
-          tagIds={taxonomyQuery.tags ?? []}
-          disabled={loading}
-          onChange={({ categoryId, tagIds }) => updateQuery({ categoryId, tagIds })}
-        />
-      </div>
-
-      {loadError ? (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          <p>{loadError}</p>
-          <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
-            {t("catalog.retry")}
-          </Button>
-        </div>
-      ) : null}
-
-      <div className="mt-6">
-        {loading ? (
-          <CardGridSkeleton />
-        ) : products.length === 0 ? (
-          <EmptyState
-            icon={ShoppingBag}
-            title={
-              search.trim()
-                ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
-                : t("tenantPortal.catalog.empty")
-            }
+          </div>
+        </header>
+        <div className="space-y-4">
+          <div className="portal-catalog-search">
+            <Search aria-hidden className="size-5 shrink-0" />
+            <Input
+              className="h-12 min-w-0 border-0 bg-transparent px-0 shadow-none dark:bg-transparent"
+              aria-label={t("tenantPortal.catalog.searchLabel")}
+              value={searchDraft}
+              placeholder={t("tenantPortal.catalog.searchPlaceholder")}
+              onChange={(event) => {
+                const value = event.target.value
+                setSearchDraft(value)
+                debouncedSearch(value)
+              }}
+            />
+          </div>
+          <PortalCatalogFilters
+            options={taxonomyOptions}
+            categoryId={taxonomyQuery.category ?? null}
+            tagIds={taxonomyQuery.tags ?? []}
+            disabled={loading}
+            onChange={({ categoryId, tagIds }) => updateQuery({ categoryId, tagIds })}
           />
-        ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => {
-              const qty = quantities[product.id] ?? 1
-              return (
-                <li key={product.id} className="min-h-0">
-                  <PortalCatalogProductCard
-                    product={product}
-                    subdomain={subdomain}
-                    quantity={qty}
-                    onQuantityChange={(next) => {
-                      setQuantities((current) => ({
-                        ...current,
-                        [product.id]: next,
-                      }))
-                    }}
-                    onAdd={() => {
-                      cart.add(product.id, qty)
-                      toast.success(t("tenantPortal.catalog.addedToCart"))
-                    }}
-                    primary={primary}
-                  />
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
+        </div>
 
-      {cart.items.length > 0 ? (
-        <div className="mt-6">
+        {loadError ? (
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <p>{loadError}</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
+              {t("catalog.retry")}
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="mt-5">
+          {loading ? (
+            <CardGridSkeleton />
+          ) : products.length === 0 ? (
+            <EmptyState
+              variant="portal"
+              className="portal-catalog-empty"
+              illustration={<PortalCatalogEmptyIllustration />}
+              title={search.trim()
+                ? t("tenantPortal.catalog.searchEmpty", { term: search.trim() })
+                : hasActiveFilters ? t("emptyStates.noResults") : t("tenantPortal.catalog.empty")}
+              description={hasActiveFilters
+                ? t("tenantPortal.catalog.filteredEmptyDescription")
+                : t("tenantPortal.catalog.emptyDescription", { tenant: branding.displayName })}
+              example={hasActiveFilters ? undefined : t("emptyStates.examples.portalCatalog")}
+              action={hasActiveFilters ? (
+                <Button
+                  className="portal-catalog-button portal-catalog-primary mt-2"
+                  onClick={() => {
+                    debouncedSearch.cancel()
+                    setSearchDraft("")
+                    updateQuery({ search: "", categoryId: null, tagIds: [] })
+                  }}
+                >
+                  {t(taxonomyQuery.category || taxonomyQuery.tags?.length ? "emptyStates.clearFilters" : "emptyStates.clearSearch")}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="portal-catalog-button portal-catalog-primary mt-2"
+                  render={<Link to={tenantPortalPath(subdomain, "catalogo/solicitar")} />}
+                >
+                  <Plus aria-hidden data-icon="inline-start" />
+                  {t("tenantPortal.catalog.requestCta")}
+                </Button>
+              )}
+            />
+          ) : (
+            <ul className="portal-catalog-products">
+              {products.map((product) => {
+                const qty = quantities[product.id] ?? 1
+                return (
+                  <li key={product.id} className="min-h-0">
+                    <PortalCatalogProductCard
+                      product={product}
+                      subdomain={subdomain}
+                      quantity={qty}
+                      onQuantityChange={(next) => {
+                        setQuantities((current) => ({
+                          ...current,
+                          [product.id]: next,
+                        }))
+                      }}
+                      onAdd={() => {
+                        cart.add(product.id, qty)
+                        toast.success(t("tenantPortal.catalog.addedToCart"))
+                      }}
+                      primary={primary}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
+      </section>
+      <aside className="portal-catalog-rail" aria-label={t("tenantPortal.catalog.sidebarLabel")}>
+        {cart.items.length > 0 ? (
           <PortalCartPanel
             subdomain={subdomain}
             products={mergeProducts(cartProducts, products)}
@@ -340,8 +386,20 @@ export function PortalCatalogPage() {
             onRetryProduct={retryCartProduct}
             cart={cart}
           />
-        </div>
-      ) : null}
+        ) : (
+          <section className="portal-rail-card">
+            <h2 className="flex items-center gap-2"><ShoppingCart aria-hidden className="size-5" />{t("tenantPortal.catalog.cartTitle")}</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">{t("tenantPortal.catalog.cartEmptyHint")}</p>
+          </section>
+        )}
+        <section className="portal-rail-card portal-catalog-help">
+          <Lightbulb aria-hidden className="size-5 shrink-0 text-primary" />
+          <div>
+            <h2>{t("tenantPortal.catalog.howItWorks")}</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">{t("tenantPortal.catalog.howItWorksDescription")}</p>
+          </div>
+        </section>
+      </aside>
     </div>
   )
 }
@@ -390,17 +448,17 @@ function PortalCartPanel({
   )
 
   return (
-    <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-      <h2 className="text-sm font-medium">{t("tenantPortal.catalog.cartTitle")}</h2>
-      <ul className="space-y-2 text-sm">
+    <section className="portal-rail-card portal-catalog-cart">
+      <h2 className="flex items-center gap-2"><ShoppingCart aria-hidden className="size-5" />{t("tenantPortal.catalog.cartTitle")}</h2>
+      <ul className="divide-y divide-border text-sm">
         {cart.items.map((item) => {
           const product = productMap.get(item.productId)
           const resolution = resolutions[item.productId]
           const name = product?.name ?? item.productId.slice(0, 8)
           return (
-            <li key={item.productId} className="flex items-center justify-between gap-2">
+            <li key={item.productId} className="space-y-2 py-3">
               <div className="min-w-0">
-                <p className="truncate">{name}</p>
+                <p className="break-words font-medium">{name}</p>
                 {product ? (
                   <p className="text-muted-foreground">
                     {t("tenantPortal.catalog.lineSubtotal")}:{" "}
@@ -425,7 +483,7 @@ function PortalCartPanel({
               </div>
               <div className="flex items-center gap-2">
                 <CatalogQuantityField
-                  className="w-16"
+                  className="h-11 w-16 rounded-xl"
                   quantity={item.quantity}
                   productName={name}
                   onCommit={(next) => {
@@ -435,27 +493,29 @@ function PortalCartPanel({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon-lg"
+                  aria-label={t("tenantPortal.catalog.removeItem", { name })}
                   onClick={() => {
                     cart.remove(item.productId)
                   }}
                 >
-                  {t("tenantPortal.catalog.removeItem", { name })}
+                  <Trash2 aria-hidden className="size-4" />
                 </Button>
               </div>
             </li>
           )
         })}
       </ul>
-      <p className="text-sm font-medium">
+      <p className="my-4 break-words text-lg font-bold">
         {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
       </p>
       <Button
         type="button"
-        className="w-full"
+        className="portal-catalog-button portal-catalog-primary w-full"
         render={<Link to={tenantPortalPath(subdomain, "catalogo/carrinho")} />}
       >
         {t("tenantPortal.catalog.checkout")}
+        <ArrowRight aria-hidden data-icon="inline-end" />
       </Button>
     </section>
   )

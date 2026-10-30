@@ -49,7 +49,7 @@ export function ModuleMockupCard({
           <span className="size-2 rounded-full bg-emerald-400" />
         </div>
         <div className="mx-auto flex -translate-x-4 items-center gap-1.5 text-[10px] font-semibold text-foreground/80">
-          <Icon className="size-3" />
+          <Icon className="size-4" />
           <span>{title}</span>
         </div>
       </div>
@@ -129,7 +129,7 @@ function PmocContent() {
         {[78, 92].map((progress) => (
           <div key={progress} className="rounded-md border border-border/35 bg-background/55 p-2">
             <div className="mb-2 flex items-center gap-1.5">
-              <Snowflake className="size-3 text-sky-500" />
+              <Snowflake className="size-4 text-sky-500" />
               <span className="h-1.5 w-16 rounded bg-foreground/25" />
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -187,7 +187,7 @@ function HrContent() {
         ))}
       </div>
       <div className="mt-2 flex items-center justify-center gap-1.5 rounded-md bg-emerald-500/15 py-1.5 text-[8px] font-semibold text-emerald-700 dark:text-emerald-300">
-        <ClipboardCheck className="size-3" />
+        <ClipboardCheck className="size-4" />
         {t("landing.hero.mockups.payrollProcessed")}
       </div>
     </div>

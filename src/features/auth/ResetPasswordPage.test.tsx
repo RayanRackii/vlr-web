@@ -1,11 +1,17 @@
+import { toast } from "sonner"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
+import { persistCustomerSession, getCustomerAccessToken } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
+import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+import { resetSignOutMarkerForTests, staffAuthStorage } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } }))
 
 function renderReset() {
   return render(
@@ -24,6 +30,11 @@ function saveButton() {
 }
 
 describe("ResetPasswordPage validity gate", () => {
+  afterEach(() => {
+    resetSignOutMarkerForTests()
+    window.history.replaceState({}, "", "/")
+  })
+
   beforeEach(() => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: "1" } } },
@@ -61,6 +72,33 @@ describe("ResetPasswordPage validity gate", () => {
     expect(saveButton()).toBeEnabled()
   })
 
+  it("re-enables staff sign-in for the legacy hash recovery branch after Sair", async () => {
+    await signOutStaffPortal()
+    window.history.replaceState({}, "", "/reset-password#access_token=recovery&refresh_token=recovery-refresh&type=recovery")
+    renderReset()
+
+    await screen.findByRole("button", { name: "Salvar senha" })
+    staffAuthStorage.setItem("sb-rolvix-auth-token", "recovery-session")
+    expect(window.localStorage.getItem("sb-rolvix-auth-token")).toBe("recovery-session")
+  })
+
+  it("clears a stale customer session when the staff password reset succeeds", async () => {
+    const user = userEvent.setup()
+    persistCustomerSession("stale-customer-token", "ficc", "Ana")
+    renderReset()
+
+    await screen.findByRole("button", { name: "Salvar senha" })
+    await user.type(screen.getByLabelText("Nova senha"), "password1")
+    await user.type(screen.getByLabelText("Confirmar senha"), "password1")
+    await user.click(saveButton())
+
+    expect(await screen.findByRole("button", { name: "Senha atualizada, redirecionando…" })).toBeDisabled()
+    expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith("Senha atualizada com sucesso.")
+    expect(await screen.findByText("dashboard", {}, { timeout: 4500 })).toBeInTheDocument()
+    expect(getCustomerAccessToken()).toBeNull()
+  })
+
   it("stays on the form after a server error and still allows a later save", async () => {
     const user = userEvent.setup()
     vi.mocked(supabase.auth.updateUser)
@@ -87,7 +125,8 @@ describe("ResetPasswordPage validity gate", () => {
     expect(screen.queryByText("dashboard")).not.toBeInTheDocument()
 
     await user.click(saveButton())
-    expect(await screen.findByText("dashboard")).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith("Senha atualizada com sucesso.")
+    expect(await screen.findByText("dashboard", {}, { timeout: 4500 })).toBeInTheDocument()
   })
 
   it("keeps Voltar ao login enabled when the recovery link is invalid", async () => {

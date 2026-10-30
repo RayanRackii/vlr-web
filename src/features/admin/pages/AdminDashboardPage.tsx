@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
-import { Building2, CircleCheck, CircleDollarSign, Plus, Power } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Building2, CircleCheck, CircleDollarSign, Plus, Power, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -22,6 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isAxiosError } from "@/lib/api"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
@@ -78,6 +80,7 @@ export function AdminDashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -85,6 +88,19 @@ export function AdminDashboardPage() {
     useState<TenantAdmin | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const normalizedSearch = searchQuery.trim().toLowerCase()
+  const filteredTenants = useMemo(() => {
+    if (!normalizedSearch) {
+      return tenants
+    }
+
+    return tenants.filter((tenant) =>
+      [tenant.legalName, tenant.subdomain ?? ""].some((value) =>
+        value.toLowerCase().includes(normalizedSearch),
+      ),
+    )
+  }, [normalizedSearch, tenants])
 
   const activeTenantCount = tenants.filter((tenant) => tenant.isActive).length
   const estimatedMonthlyRevenue = tenants.reduce(
@@ -173,7 +189,7 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">
@@ -186,6 +202,7 @@ export function AdminDashboardPage() {
 
         <Button
           type="button"
+          className="min-h-11"
           onClick={() => {
             void navigate("/admin/tenants/new")
           }}
@@ -210,37 +227,37 @@ export function AdminDashboardPage() {
       {loadError ? <ErrorState message={loadError} onRetry={() => void loadTenants()} /> : null}
 
       {!isLoading && !loadError ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <Card className="gap-2 py-3 sm:gap-5 sm:py-5">
+            <CardHeader className="flex-row items-center justify-between px-3 sm:px-5">
               <CardTitle className="text-sm">
                 {t("admin.dashboard.metrics.totalTenants")}
               </CardTitle>
               <Building2 className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-5">
               <p className="text-3xl font-semibold">{tenants.length}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
+          <Card className="gap-2 py-3 sm:gap-5 sm:py-5">
+            <CardHeader className="flex-row items-center justify-between px-3 sm:px-5">
               <CardTitle className="text-sm">
                 {t("admin.dashboard.metrics.activeTenants")}
               </CardTitle>
               <Power className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-5">
               <p className="text-3xl font-semibold">{activeTenantCount}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
+          <Card className="col-span-2 gap-2 py-3 sm:gap-5 sm:py-5 lg:col-span-1">
+            <CardHeader className="flex-row items-center justify-between px-3 sm:px-5">
               <CardTitle className="text-sm">
                 {t("admin.dashboard.metrics.estimatedRevenue")}
               </CardTitle>
               <CircleDollarSign className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-5">
               <p className="text-3xl font-semibold">
                 {formatLocaleCurrency(
                   estimatedMonthlyRevenue,
@@ -273,9 +290,42 @@ export function AdminDashboardPage() {
         </Card>
       ) : null}
 
-      {!isLoading && tenants.length > 0 ? (
+      {!isLoading && !loadError && tenants.length > 0 ? (
+        <div className="space-y-2 sm:max-w-sm">
+          <Label htmlFor="admin-tenant-search">{t("admin.dashboard.searchLabel")}</Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="admin-tenant-search"
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={t("admin.dashboard.searchPlaceholder")}
+              className="min-h-11 pl-9"
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {!isLoading && !loadError && tenants.length > 0 && filteredTenants.length === 0 ? (
+        <Card>
+          <CardHeader role="status">
+            <CardTitle>{t("admin.dashboard.searchEmptyTitle")}</CardTitle>
+            <CardDescription>
+              {t("admin.dashboard.searchEmptyDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button type="button" variant="outline" className="min-h-11" onClick={() => setSearchQuery("")}>
+              {t("admin.dashboard.clearSearch")}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {!isLoading && !loadError && filteredTenants.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {tenants.map((tenant) => (
+          {filteredTenants.map((tenant) => (
             <TenantAdminCard
               key={tenant.id}
               tenant={tenant}

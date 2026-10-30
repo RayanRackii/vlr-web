@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { civilDateFormSchema } from "@/lib/civilDate"
 
 import {
   taskInputTypeResponseSchema,
@@ -147,6 +148,7 @@ export type GenerateWorkOrderFromPlanRequest = z.infer<
 type GenerateWorkOrderFromPlanFormMessages = {
   assetRequired: string
   dateRequired: string
+  dateInvalid: string
 }
 
 export function generateWorkOrderFromPlanFormSchema(
@@ -155,7 +157,7 @@ export function generateWorkOrderFromPlanFormSchema(
   return z.object({
     assetId: z.string().uuid(messages.assetRequired),
     assignedUserId: z.string().uuid().optional(),
-    scheduledDate: z.string().min(1, messages.dateRequired),
+    scheduledDate: civilDateFormSchema(messages.dateRequired, messages.dateInvalid),
   })
 }
 
@@ -166,6 +168,7 @@ export type GenerateWorkOrderFromPlanFormValues = z.infer<
 type CreateWorkOrderFormMessages = {
   assetRequired: string
   dateRequired: string
+  dateInvalid: string
   taskRequired: string
 }
 
@@ -175,7 +178,7 @@ export function createWorkOrderFormSchema(
   return z.object({
     assetId: z.string().uuid(messages.assetRequired),
     assignedUserId: z.string().uuid().optional(),
-    scheduledDate: z.string().min(1, messages.dateRequired),
+    scheduledDate: civilDateFormSchema(messages.dateRequired, messages.dateInvalid),
     notes: z.string(),
     taskTitle: z.string().trim().min(1, messages.taskRequired),
   })

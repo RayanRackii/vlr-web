@@ -1,23 +1,35 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { AppShell } from "@/components/layout/AppShell"
+import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
+import { availableModuleIntros } from "@/components/layout/navigationIntros"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { Breadcrumb } from "@/components/layout/Breadcrumb"
+import { BreadcrumbTitleProvider } from "@/components/layout/BreadcrumbTitleProvider"
 import { staffHeaderContextLabel } from "@/components/layout/staffHeaderContextLabel"
 import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
 import { TrialBanner } from "@/components/layout/TrialBanner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
-  getEmailInitials,
   getPageTitleKey,
+  getUserDisplayLabel,
+  getUserInitials,
   RENTAL_RESOURCES_PERMISSIONS,
+  useAppNavigationSections,
 } from "@/components/layout/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
+import {
+  fetchTenantBranding,
+  getHostTenantSubdomain,
+} from "@/features/tenantPortal/services/tenantPortalService"
+import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
@@ -28,7 +40,7 @@ import {
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
-import { signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+import { clearCustomerSessionAsSignedOut, signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
@@ -38,7 +50,39 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { isPlatformAdmin, isInTenantEnvironment, activeTenantLabel } =
     usePlatformTenantSession()
   const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
+  const { sections } = useAppNavigationSections()
+  const introKeys = availableModuleIntros(sections).map((intro) => intro.key)
   const [isExiting, setIsExiting] = useState(false)
+  const [hostBranding, setHostBranding] = useState<TenantBranding | null>(null)
+  // The staff /me payload has no tenant slug; the tenant host's subdomain is the only source.
+  const [hostSubdomain] = useState(() => getHostTenantSubdomain())
+  useEffect(() => {
+    if (!hostSubdomain) {
+      return
+    }
+    let cancelled = false
+    fetchTenantBranding(hostSubdomain)
+      .then((branding) => {
+        if (!cancelled) setHostBranding(branding)
+      })
+      .catch(() => {
+        // Tab meta is cosmetic; keep the name/letter fallback.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [hostSubdomain])
+  const staffTenantName = staffHeaderContextLabel(currentUser, "")
+  useTenantDocumentMeta(
+    staffTenantName || hostSubdomain
+      ? {
+          slug: hostBranding?.subdomain || hostSubdomain,
+          name: staffTenantName,
+          logoSvg: hostBranding?.logoSvg,
+          primaryColor: hostBranding?.primaryColor,
+        }
+      : null,
+  )
   const resourcesAccess =
     location.pathname === "/configuracoes/recursos"
       ? resolvePermissionRouteAccess({
@@ -62,9 +106,13 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     )
   }
 
-  const userEmail = user?.email ?? t("account.userFallback")
+  const userLabel = getUserDisplayLabel(
+    currentUser?.fullName,
+    user?.email,
+    t("account.userFallback"),
+  )
   const pageTitle = t(getPageTitleKey(location.pathname))
-  const initials = getEmailInitials(user?.email)
+  const initials = getUserInitials(currentUser?.fullName, user?.email)
 
   async function handleExitEnvironment() {
     if (isExiting) {
@@ -100,10 +148,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   }
 
   return (
+    <ModuleIntroLinksProvider keys={introKeys}>
     <AppShell
       sidebar={(opts) => <Sidebar {...opts} />}
       pageTitle={pageTitle}
-      userLabel={userEmail}
+      userLabel={userLabel}
       initials={initials}
       profileTo="/perfil"
       collapsible
@@ -116,7 +165,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       banner={
         <>
           <StaffHomeRedirectNotice />
-          <TrialBanner />
+          <TrialBanner informational={!isPlatformAdmin && location.pathname === "/dashboard"} />
           {isPlatformAdmin && location.pathname.startsWith("/admin") ? (
             <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-sm text-foreground">
               {t("admin.support.platformPanel")}
@@ -147,16 +196,18 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         </>
       }
       onSignOut={async () => {
-        const signedOut = await signOutStaffPortal()
-        if (!signedOut) {
-          return
-        }
+        // Sair ends whichever session is active, so a leftover customer session goes too.
+        clearCustomerSessionAsSignedOut()
+        // Always ends the local session (storage first, bounded server revoke).
+        await signOutStaffPortal()
         void navigate("/login", { replace: true })
       }}
     >
       <WorkOrderSyncHost />
+      <Breadcrumb />
       {children ?? <Outlet />}
     </AppShell>
+    </ModuleIntroLinksProvider>
   )
 }
 
@@ -174,7 +225,9 @@ export function MainLayout({ children }: { children?: ReactNode }) {
   return (
     <PermissionProvider>
       <StaffTenantTimeZoneProvider>
-        <MainLayoutShell>{children}</MainLayoutShell>
+        <BreadcrumbTitleProvider>
+          <MainLayoutShell>{children}</MainLayoutShell>
+        </BreadcrumbTitleProvider>
       </StaffTenantTimeZoneProvider>
     </PermissionProvider>
   )

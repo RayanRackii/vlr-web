@@ -4,6 +4,11 @@ import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import { AppRoutes } from "@/routes/AppRoutes"
+import {
+  clearCustomerSession,
+  persistCustomerSession,
+} from "@/features/tenantPortal/services/tenantPortalService"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
 import {
   installSessionRestoreGuard,
@@ -14,6 +19,8 @@ vi.mock("@/lib/browserLocation", () => ({
   assignBrowserLocation: vi.fn(),
   replaceBrowserLocation: vi.fn(),
 }))
+
+vi.mock("@/features/auth/LoginPage", () => ({ LoginPage: LoginProbe }))
 
 const authState = {
   user: null as { id: string; email: string } | null,
@@ -27,7 +34,11 @@ vi.mock("@/contexts/AuthContext", () => ({
 
 function LoginProbe() {
   const [params] = useSearchParams()
-  return <div>{`login next=${params.get("next") ?? ""}`}</div>
+  return (
+    <div>
+      {`login next=${params.get("next") ?? ""} company=${params.get("company") ?? ""}`}
+    </div>
+  )
 }
 
 function renderRoutes(initialPath: string) {
@@ -37,6 +48,7 @@ function renderRoutes(initialPath: string) {
         <Route path="/" element={<div>landing</div>} />
         <Route path="/login" element={<LoginProbe />} />
         <Route path="/t/:subdomain" element={<div>b2c-login</div>} />
+        <Route path="/t/:subdomain/app" element={<div>customer-app</div>} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<div>staff-dashboard</div>} />
           <Route path="/os" element={<div>staff-orders</div>} />
@@ -56,9 +68,58 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
 
   it("sends unauthenticated protected URLs to /login with a safe next path", () => {
     renderRoutes("/os")
-    expect(screen.getByText("login next=/os")).toBeInTheDocument()
+    expect(screen.getByText("login next=/os company=")).toBeInTheDocument()
     expect(screen.queryByText("landing")).not.toBeInTheDocument()
     expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
+  })
+
+  it("scenario A: a customer who logged in after staff never sees the admin shell", () => {
+    authState.user = { id: "staff-1", email: "staff@clube.com" }
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderRoutes("/dashboard")
+    expect(screen.getByText("customer-app")).toBeInTheDocument()
+    expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
+  it("keeps staff on the admin shell when no customer session exists", () => {
+    authState.user = { id: "staff-1", email: "staff@clube.com" }
+    renderRoutes("/dashboard")
+    expect(screen.getByText("staff-dashboard")).toBeInTheDocument()
+  })
+
+  it("sends a signed-in customer (no staff session) back to their portal instead of staff login", () => {
+    persistCustomerSession("customer-token", "ficc", "Ana")
+    renderRoutes("/dashboard")
+    expect(screen.getByText("customer-app")).toBeInTheDocument()
+    expect(screen.queryByText(/^login/)).not.toBeInTheDocument()
+    expect(screen.queryByText("staff-dashboard")).not.toBeInTheDocument()
+    clearCustomerSession()
+  })
+
+  it("keeps the ?company= tenant context when redirecting to staff login", () => {
+    renderRoutes("/dashboard?company=ficc")
+    expect(
+      screen.getByText("login next=/dashboard?company=ficc company=ficc"),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps query and fragment in the original unauthenticated staff URL", () => {
+    renderRoutes("/os?company=ficc&status=open#details")
+    expect(
+      screen.getByText("login next=/os?company=ficc&status=open#details company=ficc"),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps the tenant from a /t/:subdomain staff route through the login redirect", async () => {
+    render(
+      <MemoryRouter initialEntries={["/t/ficc/os?status=open#details"]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    expect(
+      await screen.findByText("login next=/os?status=open&company=ficc#details company=ficc"),
+    ).toBeInTheDocument()
   })
 
   it("lets an authenticated user keep the protected URL", () => {
@@ -108,7 +169,7 @@ describe("ProtectedRoute unauthenticated staff routing", () => {
     expect(screen.queryByText("staff-orders")).not.toBeInTheDocument()
     expect(screen.queryByText("Carregando...")).not.toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
-    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login")
+    expect(replaceBrowserLocation).toHaveBeenCalledWith("/login?next=%2Fcatalogo%2Fpedidos")
     fetchSpy.mockRestore()
   })
 })

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -120,8 +120,12 @@ describe("PortalProductRequestsPage", () => {
     resolvePage(ready(pageOf("Replacement gasket", FIRST_ID, 1, 1)))
 
     expect(await screen.findByText("Replacement gasket")).toBeInTheDocument()
-    expect(screen.getByText("Enviada")).toBeInTheDocument()
-    expect(screen.getByText("2")).toBeInTheDocument()
+    const chip = screen.getByText("Enviada")
+    expect(chip).toHaveClass("portal-chip", "portal-chip-info")
+    const card = screen.getByRole("link", {
+      name: /Replacement gasket\s*Enviada\s*18\/10\/2026/,
+    })
+    expect(within(card).getByText(/\b2\b/)).toBeInTheDocument()
     expect(
       screen.queryByRole("status", {
         name: i18n.t("tenantPortal.catalog.requestsLoading"),
@@ -148,6 +152,8 @@ describe("PortalProductRequestsPage", () => {
       screen.queryByText(i18n.t("tenantPortal.catalog.requestsUnavailable")),
     ).not.toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("emptyStates.examples.portalRequests"))).toBeVisible()
+    expect(screen.getByRole("link", { name: i18n.t("tenantPortal.catalog.requestCta") })).toHaveAttribute("href", "/t/ficc/catalogo/solicitar")
   })
 
   it("shows unavailable instead of an empty inbox when the list endpoint is missing", async () => {
@@ -224,10 +230,22 @@ describe("PortalProductRequestsPage", () => {
       expect(listMock).toHaveBeenCalledWith(2)
     })
 
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("catalog.orders.view") }),
-    )
+    await user.click(screen.getByRole("link", { name: /Second gasket\s*Enviada/ }))
     expect(screen.getByText("detail-screen")).toBeInTheDocument()
+  })
+
+  it("recovers from an empty later page without treating the inbox as new", async () => {
+    const user = userEvent.setup()
+    listMock.mockImplementation(async (page) => page === 2
+      ? ready({ items: [], page: 2, pageSize: 1, total: 2 })
+      : ready(pageOf("First gasket", FIRST_ID, 1, 2)))
+    renderList()
+    await screen.findByText("First gasket")
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.requestsNext") }))
+    expect(await screen.findByText(i18n.t("tenantPortal.catalog.requestsPageEmpty"))).toBeVisible()
+    expect(screen.queryByText(i18n.t("emptyStates.examples.portalRequests"))).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("emptyStates.firstPage") }))
+    expect(await screen.findByText("First gasket")).toBeVisible()
   })
 
   it("translates the status when the language changes", async () => {

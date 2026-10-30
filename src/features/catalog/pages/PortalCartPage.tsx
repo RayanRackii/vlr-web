@@ -23,6 +23,7 @@ import {
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Textarea } from "@/components/ui/textarea"
 import { CatalogQuantityField } from "@/features/catalog/components/CatalogQuantityField"
+import { PortalOrderSubmitError } from "@/features/catalog/components/PortalOrderFeedback"
 import {
   CATALOG_CART_MAX_QUANTITY,
   CATALOG_CART_MIN_QUANTITY,
@@ -62,6 +63,7 @@ export function PortalCartPage() {
   const [products, setProducts] = useState<PortalProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -113,12 +115,14 @@ export function PortalCartPage() {
   })
 
   async function onSubmit(values: CheckoutFormValues) {
+    if (submitting) return
     if (cart.items.length === 0) {
       toast.error(t("tenantPortal.catalog.cartEmpty"))
       return
     }
     const generation = getAgendaSessionGeneration()
     setSubmitting(true)
+    setSubmitError(null)
     try {
       const order = await createPortalCatalogOrder({
         items: cart.items.map((item) => ({
@@ -134,17 +138,14 @@ export function PortalCartPage() {
         return
       }
       cart.clear()
-      toast.success(t("tenantPortal.catalog.orderSubmitted"))
-      void navigate(tenantPortalPath(subdomain, `pedidos/${order.id}`))
+      void navigate(tenantPortalPath(subdomain, `pedidos/${order.id}`), { state: { justCreated: true } })
     } catch (error) {
       if (generation !== getAgendaSessionGeneration()) {
         return
       }
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.submitPortalOrder"),
-      )
+      const message = error instanceof Error ? error.message : t("apiErrors.submitPortalOrder")
+      setSubmitError(message)
+      toast.error(message)
     } finally {
       if (generation === getAgendaSessionGeneration()) {
         setSubmitting(false)
@@ -157,7 +158,7 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
+    <div className="portal-purchase-cart mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
       <Button
         type="button"
         variant="outline"
@@ -171,6 +172,15 @@ export function PortalCartPage() {
         description={t("tenantPortal.catalog.checkoutHint")}
       />
 
+      {submitError ? (
+        <PortalOrderSubmitError
+          message={submitError}
+          blocked={submitting || !isCheckoutValid || cart.items.length === 0}
+          onRetry={() => { void form.handleSubmit(onSubmit)() }}
+          onDismiss={() => setSubmitError(null)}
+        />
+      ) : null}
+
       {cart.items.length === 0 ? (
         <EmptyState
           icon={ShoppingCartIcon}
@@ -179,6 +189,7 @@ export function PortalCartPage() {
             <Button
               type="button"
               variant="outline"
+              className="touch-target"
               render={<Link to={tenantPortalPath(subdomain, "catalogo")} />}
             >
               {t("tenantPortal.catalog.requestSentCatalog")}
@@ -203,20 +214,21 @@ export function PortalCartPage() {
                   </p>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-11 shrink-0"
+                    className="portal-cart-remove h-11 shrink-0"
+                    aria-label={t("tenantPortal.catalog.removeItem", {
+                      name: product?.name ?? item.productId,
+                    })}
                     onClick={() => {
                       cart.remove(item.productId)
                     }}
                   >
-                    {t("tenantPortal.catalog.removeItem", {
-                      name: product?.name ?? item.productId,
-                    })}
+                    {t("tenantPortal.catalog.remove")}
                   </Button>
                 </div>
                 {product?.price != null ? (
-                  <p className="whitespace-nowrap text-xs text-muted-foreground">
+                  <p className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
                     {t("tenantPortal.catalog.unitPrice", {
                       price:
                         formatCatalogMoney(
@@ -245,7 +257,7 @@ export function PortalCartPage() {
                       <Minus aria-hidden />
                     </Button>
                     <CatalogQuantityField
-                      className="h-11 w-16 px-1 text-center"
+                      className="h-11 w-16 px-1 text-center tabular-nums"
                       quantity={item.quantity}
                       productName={product?.name ?? item.productId}
                       onCommit={(next) => {
@@ -268,7 +280,7 @@ export function PortalCartPage() {
                       <Plus aria-hidden />
                     </Button>
                   </div>
-                  <p className="whitespace-nowrap text-muted-foreground">
+                  <p className="whitespace-nowrap text-muted-foreground tabular-nums">
                     {t("tenantPortal.catalog.lineSubtotal")}:{" "}
                     {formatLineSubtotal(
                       product?.price ?? null,
@@ -308,8 +320,8 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <div className="fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
-              <p className="text-base font-semibold text-foreground">
+            <div className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+              <p className="text-base font-semibold text-foreground tabular-nums">
                 {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
               </p>
               <FormPrimaryButton
@@ -317,6 +329,7 @@ export function PortalCartPage() {
                 className="h-11 w-full"
                 isValid={isCheckoutValid}
                 loading={submitting}
+                preserveLoadingLayout
                 disabled={cart.items.length === 0}
                 loadingLabel={t("tenantPortal.catalog.submitting")}
                 style={{ backgroundColor: primary }}

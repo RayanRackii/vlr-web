@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ShieldCheck } from "lucide-react"
+import { ChevronRight, ShieldCheck } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -37,6 +37,9 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { PermissionKeyGroups } from "@/features/users/components/PermissionKeyGroups"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
+import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
+import { usePeopleMobileActions } from "@/features/users/hooks/usePeopleMobileActions"
 import { Can } from "@/features/users/permissions/Can"
 import { toggleUniqueId } from "@/features/users/permissions/hasPermission"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -69,9 +72,11 @@ export function PeopleRolesTab({
   onRolesChanged,
 }: PeopleRolesTabProps) {
   const { t } = useTranslation()
+  const learnMore = useModuleIntroLink("peoplePortal")
   const { can, activeModules, refresh } = usePermissions()
   const canManage = can("core.roles.manage")
   const visibleRoles = useMemo(() => listVisibleRoles(roles), [roles])
+  const { isMobile, actionItem: actionRole, setActionItem: setActionRole, actionTriggerRef } = usePeopleMobileActions<RoleResponse>()
 
   const [editorRole, setEditorRole] = useState<RoleResponse | null | "create">(
     null,
@@ -116,6 +121,7 @@ export function PeopleRolesTab({
   const nameLocked = editorRole !== "create" && !policy.canRename
 
   function openCreate() {
+    actionTriggerRef.current = null
     setEditorRole("create")
     form.reset({ name: "", description: "", permissionKeys: [] })
     form.clearErrors()
@@ -176,6 +182,7 @@ export function PeopleRolesTab({
       await deleteRole(rolePendingDelete.id)
       toast.success(t("peopleAccess.toasts.roleDeleted"))
       setRolePendingDelete(null)
+      setActionRole(null)
       if (editingRole?.id === rolePendingDelete.id) {
         setEditorRole(null)
       }
@@ -215,20 +222,25 @@ export function PeopleRolesTab({
           icon={ShieldCheck}
           title={t("peopleAccess.roles.empty")}
           description={t("peopleAccess.roles.emptyDescription")}
+          example={canManage ? t("emptyStates.examples.roles") : undefined}
+          learnMore={learnMore}
+          action={<Can permission="core.roles.manage"><Button onClick={openCreate}>{t("peopleAccess.roles.create")}</Button></Can>}
         />
       ) : (
-        <ul className="space-y-2">
+        <>
+        <p className="people-actions-hint"><ChevronRight aria-hidden strokeWidth={1.75} />{t("peopleAccess.mobileActions.hint")}</p>
+        <ul className="people-role-list">
           {visibleRoles.map((role) => {
             const itemPolicy = getRoleEditorPolicy(role)
 
             return (
               <li
                 key={role.id}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm motion-safe:transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                className="people-role-row"
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium">{role.name}</p>
+                    <p className="break-words text-sm font-medium [overflow-wrap:anywhere]">{role.name}</p>
                     <Badge
                       variant={role.isSystemRole ? "secondary" : "outline"}
                     >
@@ -243,24 +255,34 @@ export function PeopleRolesTab({
                     </p>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="people-row-actions">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      openEdit(role)
+                    className="people-card-action"
+                    aria-label={isMobile ? role.name : itemPolicy.isFullyReadonly ? t("peopleAccess.roles.view") : t("common.edit")}
+                    aria-haspopup={isMobile ? "dialog" : undefined}
+                    aria-expanded={isMobile ? actionRole?.id === role.id : undefined}
+                    onClick={(event) => {
+                      if (isMobile) {
+                        actionTriggerRef.current = event.currentTarget
+                        setActionRole(role)
+                      } else {
+                        openEdit(role)
+                      }
                     }}
                   >
-                    {itemPolicy.isFullyReadonly
+                    <span>{itemPolicy.isFullyReadonly
                       ? t("peopleAccess.roles.view")
-                      : t("common.edit")}
+                      : t("common.edit")}</span>
                   </Button>
                   {itemPolicy.canDelete && canManage ? (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="people-delete-action"
                       onClick={() => {
                         setRolePendingDelete(role)
                       }}
@@ -269,11 +291,34 @@ export function PeopleRolesTab({
                     </Button>
                   ) : null}
                 </div>
+                <ChevronRight className="people-row-chevron" aria-hidden strokeWidth={1.75} />
               </li>
             )
           })}
         </ul>
+        </>
       )}
+
+      <PeopleMobileActionSheet
+        open={isMobile && actionRole !== null}
+        name={actionRole?.name ?? ""}
+        description={actionRole?.description}
+        icon={ShieldCheck}
+        editSubtitle={t(actionRole?.isSystemRole ? "peopleAccess.mobileActions.editSystemRole" : "peopleAccess.mobileActions.editRole")}
+        deleteSubtitle={t("peopleAccess.mobileActions.deleteRole")}
+        canDelete={actionRole !== null && getRoleEditorPolicy(actionRole).canDelete && canManage}
+        locked={actionRole?.isSystemRole}
+        confirming={rolePendingDelete !== null}
+        confirmTitle={t("peopleAccess.roles.deleteTitle")}
+        confirmDescription={t("peopleAccess.roles.deleteDescription", { name: rolePendingDelete?.name ?? "" })}
+        isDeleting={isDeleting}
+        returnFocus={actionTriggerRef}
+        restoreFocus={editorRole === null}
+        onClose={() => { setActionRole(null); setRolePendingDelete(null) }}
+        onEdit={() => { if (actionRole) { openEdit(actionRole); setActionRole(null) } }}
+        onRequestDelete={() => { setRolePendingDelete(actionRole) }}
+        onConfirmDelete={() => { void handleDelete() }}
+      />
 
       <Sheet
         open={editorRole !== null}
@@ -288,7 +333,8 @@ export function PeopleRolesTab({
       >
         <SheetContent
           side="right"
-          className="w-full overflow-y-auto sm:max-w-xl"
+          className="w-full min-w-0 overflow-y-auto sm:max-w-xl"
+          finalFocus={isMobile ? () => actionTriggerRef.current ?? true : undefined}
         >
           <SheetHeader>
             <SheetTitle>
@@ -305,7 +351,7 @@ export function PeopleRolesTab({
 
           <Form {...form}>
             <form
-              className="flex flex-1 flex-col gap-4 px-4 pb-4"
+              className="flex min-w-0 flex-1 flex-col gap-4 px-4 pb-4"
               onSubmit={(event) => {
                 void form.handleSubmit(handleSave)(event)
               }}
@@ -378,7 +424,7 @@ export function PeopleRolesTab({
       </Sheet>
 
       <AlertDialog
-        open={rolePendingDelete !== null}
+        open={rolePendingDelete !== null && (!isMobile || actionRole === null)}
         onOpenChange={(open) => {
           if (isDeleting) {
             return

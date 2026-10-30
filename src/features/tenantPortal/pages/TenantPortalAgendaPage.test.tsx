@@ -1273,6 +1273,17 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(popup).toHaveClass("min-w-[max(12rem,var(--anchor-width))]")
   })
 
+  it("explains that a space is still needed before Reservar can be used", async () => {
+    renderAgenda()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.chooseSpaceFirst")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
+    ).toBeDisabled()
+  })
+
   it("creates a reservation with the selected synthetic multi-slot range", async () => {
     const user = userEvent.setup()
     const asset = {
@@ -1419,8 +1430,9 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     // Quadra 1 only has a bookable slot at 08:00 in this day's schedule; 09:00
     // belongs to Quadra 2 only, so it is not bookable for the selected resource.
+    // The reason matches the asset tile's wording for the same case (#357).
     const reservedOption = await screen.findByRole("option", {
-      name: `09:00 – 10:00 · ${i18n.t("tenantPortal.agenda.timeReserved")}`,
+      name: `09:00 – 10:00 · ${i18n.t("tenantPortal.agenda.slotTaken")}`,
     })
     expect(reservedOption).toHaveAttribute("aria-disabled", "true")
     expect(
@@ -1628,6 +1640,35 @@ describe("TenantPortalAgendaPage time selector", () => {
         quantity: 1,
       }),
     )
+  })
+
+  it("warns before confirming when the slot starts inside the resource's cancellation cutoff", async () => {
+    const user = userEvent.setup()
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Quadra 1"), effectiveCancelCutoffHours: 24 },
+      makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Quadra 2"),
+    ])
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("tenantPortal.agenda.cancelCutoffBookingWarning", { count: 24 }),
+    )
+  })
+
+  it("does not warn when the resource has no cancellation cutoff", async () => {
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    await screen.findByText(
+      i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+    )
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.agenda.cancelCutoffBookingWarning", { count: 24 })),
+    ).not.toBeInTheDocument()
   })
 
   it("shows the estimate without a deposit note when the court does not require one", async () => {
@@ -1922,7 +1963,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(listMine).not.toHaveBeenCalled()
     expect(fetchDay).not.toHaveBeenCalled()
     expect(fetchQueue).not.toHaveBeenCalled()
-    expect(screen.queryByRole("listitem")).not.toBeInTheDocument()
+    expect(within(document.getElementById("minhas-reservas")!).queryByRole("listitem")).not.toBeInTheDocument()
     expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
   })
 
@@ -2002,7 +2043,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserving"),
       }),
     ).not.toBeInTheDocument()
-    const row = screen.getByRole("listitem")
+    const row = within(document.getElementById("minhas-reservas")!).getByRole("listitem")
     expect(row).toHaveTextContent("Quadra 1")
     expect(row).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
@@ -2309,7 +2350,11 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(await screen.findByRole("button", { name: /^Bola/ }))
     const increase = await screen.findByRole("button", { name: `${i18n.t("bookingMap.quantity")} +` })
     await user.click(increase)
-    await waitFor(() => expect(increase).toBeDisabled())
+    await waitFor(() => expect(increase).toHaveAttribute("aria-disabled", "true"))
+    // At the max the stepper explains why instead of going silent.
+    expect(
+      screen.getByText(i18n.t("tenantPortal.agenda.quantityMaxReached", { count: 2 })),
+    ).toBeVisible()
   })
 
   it("shows the days stepper only for Day-priced resources", async () => {
@@ -2703,7 +2748,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await waitFor(() => {
       expect(fetchDay.mock.calls.length).toBeGreaterThan(callsBeforeSettle)
     })
-    expect(await screen.findByRole("listitem")).toHaveTextContent(
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
     )
     expect(
@@ -2768,7 +2813,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       resolveBook(created)
     })
 
-    expect(await screen.findByRole("listitem")).toHaveTextContent(
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent(
       i18n.t("rentals.reservations.statuses.Confirmed"),
     )
     expect(bookSlot).toHaveBeenCalledTimes(1)
@@ -3040,7 +3085,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(dateInput).toHaveValue("2026-10-20")
     expect(
       screen.getByText(i18n.t("tenantPortal.agenda.dateBeforeToday")),
-    ).toBeInTheDocument()
+    ).toHaveClass("text-destructive")
     expect(fetchDay).not.toHaveBeenCalledWith("ficc", "2020-01-01")
     fireEvent.blur(dateInput)
     expect(screen.queryByText(i18n.t("tenantPortal.agenda.dateBeforeToday"))).not.toBeInTheDocument()
@@ -3537,7 +3582,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const user = userEvent.setup()
     renderAgenda()
 
-    expect(await screen.findByRole("listitem")).toHaveTextContent("Total R$ 80,00")
+    expect(await within(await screen.findByRole("region", { name: i18n.t("tenantPortal.agenda.myReservations") })).findByRole("listitem")).toHaveTextContent("Total R$ 80,00")
     await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
     expect(
       await screen.findByText("Disponível. Estimativa: R$ 80,00"),
@@ -3545,15 +3590,15 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     try {
       await i18n.changeLanguage("en")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80.00")
-      expect(screen.getByRole("listitem")).not.toHaveTextContent("80,00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).toHaveTextContent("Total R$ 80.00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).not.toHaveTextContent("80,00")
       expect(
         screen.getByText("Available. Estimate: R$ 80.00"),
       ).toBeInTheDocument()
 
       await i18n.changeLanguage("es")
-      expect(screen.getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
-      expect(screen.getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).toHaveTextContent("Total R$ 80,00")
+      expect(within(document.getElementById("minhas-reservas")!).getByRole("listitem")).not.toHaveTextContent("R$ 80.00")
       expect(
         screen.getByText("Disponible. Estimación: R$ 80,00"),
       ).toBeInTheDocument()
@@ -5022,7 +5067,7 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView")
   })
 
-  it("selects and scrolls to the customer's visible reservation without changing the day", async () => {
+  it("selects and scrolls to the customer's visible reservation, jumping the date picker to its day", async () => {
     const otherId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
     listMine.mockResolvedValue([
       makeReservation("Confirmed", FUTURE_ISO, {
@@ -5054,15 +5099,13 @@ describe("TenantPortalAgendaPage ?reservation=", () => {
     })
     expect(scrollIntoView.mock.instances).toContain(focused)
     expect(screen.getByLabelText(i18n.t("tenantPortal.agenda.date"))).toHaveValue(
-      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
+      "2099-01-15",
     )
-    expect(fetchDay).toHaveBeenCalledWith(
-      "ficc",
-      tenantTodayIsoDate(DEFAULT_TENANT_TIME_ZONE),
-    )
-    expect(
-      fetchDay.mock.calls.some((call) => String(call[1]).startsWith("2099")),
-    ).toBe(false)
+    await waitFor(() => {
+      expect(
+        fetchDay.mock.calls.some((call) => call[0] === "ficc" && call[1] === "2099-01-15"),
+      ).toBe(true)
+    })
     expect(document.body).not.toHaveTextContent(RESERVATION_ID)
   })
 

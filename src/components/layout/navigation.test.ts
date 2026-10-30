@@ -2,6 +2,7 @@ import { LayoutDashboard } from "lucide-react"
 import { describe, expect, it } from "vitest"
 
 import {
+  buildProductSections,
   declaredPermissionKeys,
   filterNavigationItemsByAccess,
   firstPermittedProductPath,
@@ -74,7 +75,7 @@ describe("filterNavigationItemsByAccess", () => {
     ])
   })
 
-  it("hides Catalogo & Pedidos when the catalog module is off", () => {
+  it("hides Sales when the catalog module is off", () => {
     const visible = filterNavigationItemsByAccess(
       appNavigationItems,
       ["rentals"],
@@ -101,11 +102,10 @@ describe("filterNavigationItemsByAccess", () => {
       ["catalog.products.read", "catalog.orders.read"],
     )
 
-    const catalog = visible.find((item) => item.labelKey === "nav.catalog")
-    expect(catalog).toBeDefined()
-    expect(catalog?.children?.map((child) => child.to)).toEqual([
+    expect(visible.map((item) => item.to)).toEqual([
       "/catalogo/produtos",
       "/catalogo/pedidos",
+      "/catalogo/solicitacoes",
     ])
   })
 
@@ -124,13 +124,12 @@ describe("filterNavigationItemsByAccess", () => {
 
   it.each(["catalog.products.manage"])("shows catalog settings with %s", (permission) => {
     const visible = filterNavigationItemsByAccess(appNavigationItems, ["catalog"], [permission])
-    const catalog = visible.find((item) => item.labelKey === "nav.catalog")
-    expect(catalog?.children?.some((item) => item.to === "/catalogo/configuracoes")).toBe(true)
+    expect(visible.some((item) => item.to === "/catalogo/configuracoes")).toBe(true)
     const disabled = filterNavigationItemsByAccess(appNavigationItems, [], [permission])
     expect(disabled.some((item) => item.labelKey === "nav.catalog")).toBe(false)
   })
 
-  it("shows Recursos and hides Ativos when rentals is on and inventory is off", () => {
+  it("shows Resources and hides Equipment when rentals is on and inventory is off", () => {
     const visible = filterNavigationItemsByAccess(
       appNavigationItems,
       ["rentals"],
@@ -152,7 +151,7 @@ describe("filterNavigationItemsByAccess", () => {
     )
   })
 
-  it("shows Ativos and hides Recursos when inventory is on and rentals is off", () => {
+  it("shows Equipment and hides Resources when inventory is on and rentals is off", () => {
     const visible = filterNavigationItemsByAccess(
       appNavigationItems,
       ["inventory"],
@@ -259,12 +258,20 @@ describe("staff menu permissions by role", () => {
     for (const item of appNavigationItems) {
       if (item.children && item.children.length > 0) {
         for (const child of item.children) {
-          expect(declaredPermissionKeys(child).length).toBeGreaterThan(0)
+          if (child.tabs) {
+            for (const tab of child.tabs) expect(declaredPermissionKeys(tab).length).toBeGreaterThan(0)
+          } else {
+            expect(declaredPermissionKeys(child).length).toBeGreaterThan(0)
+          }
         }
         continue
       }
 
-      expect(declaredPermissionKeys(item).length).toBeGreaterThan(0)
+      if (item.tabs) {
+        for (const tab of item.tabs) expect(declaredPermissionKeys(tab).length).toBeGreaterThan(0)
+      } else {
+        expect(declaredPermissionKeys(item).length).toBeGreaterThan(0)
+      }
     }
 
     expect(declaredPermissionKeys({
@@ -377,13 +384,13 @@ describe("firstPermittedProductPath", () => {
     )
   })
 
-  it("skips the dashboard and uses the first people route", () => {
+  it("skips the dashboard and uses the first bookings route", () => {
     expect(
       firstPermittedProductPath(
         ["rentals"],
         ["rentals.schedule.read", "core.users.read"],
       ),
-    ).toBe("/pessoas-e-acesso")
+    ).toBe("/configuracoes/agenda")
   })
 
   it("uses the first allowed child when the parent path is not permitted", () => {
@@ -399,6 +406,22 @@ describe("firstPermittedProductPath", () => {
 })
 
 describe("getPageTitleKey", () => {
+  it.each([
+    ["overview", "nav.sections.overview"],
+    ["bookings", "nav.sections.bookings"],
+    ["maintenance", "nav.sections.maintenance"],
+    ["sales", "nav.sections.sales"],
+    ["peoplePortal", "nav.sections.peoplePortal"],
+    ["pmoc", "nav.pmoc"],
+    ["platform", "nav.sections.platform"],
+  ])("resolves the %s module intro title", (key, titleKey) => {
+    expect(getPageTitleKey(`/modulos/${key}`)).toBe(titleKey)
+  })
+
+  it.each(["unknown", "bookings/unknown"])("keeps the fallback for an unknown intro: %s", (key) => {
+    expect(getPageTitleKey(`/modulos/${key}`)).toBe("app.name")
+  })
+
   it("resolves the rentals resources page", () => {
     expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
   })
@@ -439,7 +462,7 @@ describe("getPageTitleKey", () => {
 })
 
 describe("PMOC library nav", () => {
-  it("places Biblioteca Rolvix between plans and new, and hides it without templates.read", () => {
+  it("keeps only My plans and New plan as sidebar children", () => {
     const withLibrary = filterNavigationItemsByAccess(
       appNavigationItems,
       ["pmoc"],
@@ -448,7 +471,6 @@ describe("PMOC library nav", () => {
     const pmocWithLibrary = withLibrary.find((item) => item.labelKey === "nav.pmoc")
     expect(pmocWithLibrary?.children?.map((child) => child.to)).toEqual([
       "/pmoc",
-      "/pmoc/biblioteca",
       "/pmoc/novo",
     ])
 
@@ -464,5 +486,71 @@ describe("PMOC library nav", () => {
       "/pmoc",
       "/pmoc/novo",
     ])
+  })
+})
+
+
+describe("staff sidebar groups", () => {
+  const modules = ["rentals", "inventory", "pmoc", "os", "catalog"]
+  const permissions = [
+    "core.dashboard.read", "core.users.read", "core.registration_fields.read",
+    "core.module_menu.read", "core.taxonomy.read", "core.notifications.read",
+    "core.units.read", "rentals.assets.read", "rentals.layouts.read",
+    "rentals.schedule.read", "rentals.reservations.read", "rentals.booking_policy.read",
+    "inventory.assets.read", "inventory.categories.read", "pmoc.plans.read",
+    "pmoc.plans.write", "pmoc.templates.read", "os.work_orders.read",
+    "catalog.products.read", "catalog.orders.read", "catalog.products.manage", "catalog.notifications.read",
+  ]
+
+  it("composes the five groups in the approved order", () => {
+    const sections = buildProductSections(modules, permissions)
+    expect(sections.map((section) => section.titleKey)).toEqual([
+      "nav.sections.overview", "nav.sections.bookings", "nav.sections.maintenance",
+      "nav.sections.sales", "nav.sections.peoplePortal",
+    ])
+    expect(sections[1]?.items.map((item) => item.labelKey)).toEqual([
+      "nav.rentalsResources", "nav.layout", "nav.schedule", "nav.reservations",
+    ])
+    expect(sections[2]?.items.map((item) => item.labelKey)).toEqual([
+      "nav.assets", "nav.pmoc", "nav.workOrders",
+    ])
+    expect(sections[3]?.items.map((item) => item.labelKey)).toEqual([
+      "nav.catalogProducts", "nav.catalogOrders", "nav.catalogRequests", "nav.catalogSettings", "nav.catalogNotifications",
+    ])
+    expect(sections[4]?.items.map((item) => item.labelKey)).toEqual([
+      "nav.peopleAccess", "nav.moduleMenu", "nav.taxonomy", "nav.notifications",
+    ])
+    const sidebarLabels = sections.flatMap((section) => section.items.flatMap((item) =>
+      [item.labelKey, ...(item.children?.map((child) => child.labelKey) ?? [])],
+    ))
+    for (const hidden of ["nav.registrationFields", "nav.bookingPolicy", "nav.assetsCategories", "nav.pmocLibrary"]) {
+      expect(sidebarLabels).not.toContain(hidden)
+    }
+  })
+
+  it("hides empty groups and disabled modules even with stale grants", () => {
+    expect(buildProductSections([], permissions).map((section) => section.titleKey))
+      .toEqual(["nav.sections.overview", "nav.sections.peoplePortal"])
+    expect(buildProductSections(modules, [])).toEqual([])
+  })
+
+  it.each([
+    ["inventory", "inventory.categories.read", "nav.assets", "/ativos/categorias"],
+    ["rentals", "rentals.booking_policy.read", "nav.reservations", "/configuracoes/politica-reservas"],
+    ["catalog", "core.registration_fields.read", "nav.peopleAccess", "/configuracoes/cadastro"],
+  ])("keeps %s alternate-tab access without granting the main tab", (module, permission, label, path) => {
+    const visible = filterNavigationItemsByAccess(appNavigationItems, [module], [permission])
+    expect(visible).toHaveLength(1)
+    expect(visible[0]).toMatchObject({ labelKey: label, to: path })
+    expect(firstPermittedProductPath([module], [permission])).toBe(path)
+    expect(filterNavigationItemsByAccess(appNavigationItems, [], [permission])).toEqual([])
+  })
+
+  it("keeps library-only users under New plan without granting custom-plan creation", () => {
+    const visible = filterNavigationItemsByAccess(appNavigationItems, ["pmoc"], ["pmoc.templates.read"])
+    expect(visible[0]?.children).toMatchObject([
+      { labelKey: "nav.pmocNew", to: "/pmoc/biblioteca" },
+    ])
+    expect(firstPermittedProductPath(["pmoc"], ["pmoc.templates.read"])).toBe("/pmoc/biblioteca")
   })
 })

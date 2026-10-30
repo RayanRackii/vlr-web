@@ -189,7 +189,7 @@ describe("RegistrationFieldsManager", () => {
     await waitForListLoaded()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("admin.registrationFields.add") }),
+      screen.getByRole("button", { name: i18n.t("admin.registrationFields.createTitle") }),
     )
 
     const dialog = await screen.findByRole("dialog")
@@ -246,7 +246,7 @@ describe("RegistrationFieldsManager", () => {
     await waitForListLoaded()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("admin.registrationFields.add") }),
+      screen.getByRole("button", { name: i18n.t("admin.registrationFields.createTitle") }),
     )
 
     const dialog = await screen.findByRole("dialog")
@@ -290,7 +290,7 @@ describe("RegistrationFieldsManager", () => {
     await waitForListLoaded()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("admin.registrationFields.add") }),
+      screen.getByRole("button", { name: i18n.t("admin.registrationFields.createTitle") }),
     )
 
     const dialog = await screen.findByRole("dialog")

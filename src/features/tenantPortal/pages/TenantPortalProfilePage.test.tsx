@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
@@ -30,6 +30,9 @@ import { toast } from "sonner"
 import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
 import {
   fetchCustomerProfile,
+  getCustomerLabel,
+  clearCustomerSession,
+  persistCustomerSession,
   updateCustomerProfile,
 } from "@/features/tenantPortal/services/tenantPortalService"
 
@@ -86,10 +89,100 @@ function renderProfile() {
 
 describe("TenantPortalProfilePage validity gate", () => {
   beforeEach(() => {
+    window.localStorage.clear()
     fetchProfile.mockReset()
     updateProfile.mockReset()
+    vi.mocked(toast.success).mockReset()
     toastError.mockReset()
     fetchProfile.mockResolvedValue(profile)
+  })
+
+  it.each([
+    ["Ana Silva", "Ana Silva"],
+    ["   ", "ana@club.test"],
+  ])("syncs the loaded profile name with an email fallback (%s)", async (name, expected) => {
+    window.localStorage.setItem("rolvix.customer.label", "ana@club.test")
+    fetchProfile.mockResolvedValue({ ...profile, name })
+    renderProfile()
+    await screen.findByLabelText(i18n.t("tenantPortal.fields.name"))
+    expect(getCustomerLabel()).toBe(expected)
+  })
+
+  it("keeps the saved profile name when the refresh after PATCH fails", async () => {
+    const user = userEvent.setup()
+    fetchProfile.mockResolvedValueOnce(profile).mockRejectedValue(new Error("Offline"))
+    updateProfile.mockResolvedValue({ ...profile, name: "Ana Souza" })
+    renderProfile()
+    const name = await screen.findByLabelText(i18n.t("tenantPortal.fields.name"))
+    await user.clear(name)
+    await user.type(name, "Ana Souza")
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.profile.save") }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(i18n.t("tenantPortal.profile.saved")))
+    expect(getCustomerLabel()).toBe("Ana Souza")
+  })
+
+  it.each([
+    ["PATCH", "logout"], ["PATCH", "replacement"],
+    ["GET", "logout"], ["GET", "replacement"],
+  ])("ignores a pending %s response after leaving the profile and session %s", async (stage, session) => {
+    const user = userEvent.setup()
+    persistCustomerSession("token-a", "portal", "Ana Silva")
+    let finish = () => {}
+    const pending = new Promise<void>((resolve) => { finish = resolve })
+    const updated = { ...profile, name: "Ana Souza" }
+    updateProfile.mockImplementation(async () => {
+      if (stage === "PATCH") await pending
+      return updated
+    })
+    fetchProfile.mockResolvedValueOnce(profile).mockImplementation(async () => {
+      await pending
+      return updated
+    })
+    const view = renderProfile()
+    const name = await screen.findByLabelText(i18n.t("tenantPortal.fields.name"))
+    await user.clear(name)
+    await user.type(name, "Ana Souza")
+    await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.profile.save") }))
+    if (stage === "GET") await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(2))
+    view.unmount()
+    if (session === "logout") clearCustomerSession()
+    else persistCustomerSession("token-b", "portal", "Beatriz Souza")
+    await act(async () => { finish(); await pending })
+    expect(getCustomerLabel()).toBe(session === "logout" ? null : "Beatriz Souza")
+  })
+
+  it.each(["load", "PATCH", "refresh"])("ignores a delayed %s after the same customer signs in again", async (stage) => {
+    const user = userEvent.setup()
+    persistCustomerSession("token", "ficc", "Ana Silva", profile.id, profile.tenantId)
+    let finish = () => {}
+    const pending = new Promise<void>((resolve) => { finish = resolve })
+    const delayedProfile = async () => {
+      await pending
+      return { ...profile, name: "Nome da sessão anterior" }
+    }
+    if (stage === "load") fetchProfile.mockImplementation(delayedProfile)
+    if (stage === "PATCH") updateProfile.mockImplementation(delayedProfile)
+    if (stage === "refresh") {
+      updateProfile.mockResolvedValue({ ...profile, name: "Ana Souza" })
+      fetchProfile.mockResolvedValueOnce(profile).mockImplementation(delayedProfile)
+    }
+    renderProfile()
+    if (stage === "load") {
+      await waitFor(() => expect(fetchProfile).toHaveBeenCalledOnce())
+    } else {
+      const name = await screen.findByLabelText(i18n.t("tenantPortal.fields.name"))
+      await user.clear(name)
+      await user.type(name, "Ana Souza")
+      await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.profile.save") }))
+      await waitFor(() => expect(stage === "PATCH" ? updateProfile : fetchProfile).toHaveBeenCalledTimes(stage === "PATCH" ? 1 : 2))
+    }
+    act(() => {
+      clearCustomerSession()
+      persistCustomerSession("token", "ficc", "Nome da nova sessão", profile.id, profile.tenantId)
+    })
+    await act(async () => { finish(); await pending })
+    expect(getCustomerLabel()).toBe("Nome da nova sessão")
+    expect(toast.success).not.toHaveBeenCalled()
   })
 
   it("keeps Salvar disabled until the name passes the schema", async () => {

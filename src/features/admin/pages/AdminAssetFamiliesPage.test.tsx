@@ -62,9 +62,14 @@ const createMock = vi.mocked(createAdminAssetFamily)
 const updateMock = vi.mocked(updateAdminAssetFamily)
 const deleteMock = vi.mocked(deleteAdminAssetFamily)
 
+/** The data table is duplicated as mobile cards below md; scope text queries to the table to avoid ambiguous matches. */
+function table() {
+  return screen.getByRole("table")
+}
+
 async function renderLoaded() {
   render(<AdminAssetFamiliesPage />)
-  await screen.findByText("Quadras")
+  await within(table()).findByText("Quadras")
 }
 
 describe("AdminAssetFamiliesPage", () => {
@@ -94,8 +99,8 @@ describe("AdminAssetFamiliesPage", () => {
     await renderLoaded()
 
     expect(listMock).toHaveBeenCalledWith({ includeInactive: false })
-    expect(screen.getByText("Espaços")).toBeInTheDocument()
-    expect(screen.queryByText("Arquivo")).not.toBeInTheDocument()
+    expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+    expect(within(table()).queryByText("Arquivo")).not.toBeInTheDocument()
     expect(
       within(screen.getByRole("row", { name: /Espaços/ })).queryByRole("button", {
         name: i18n.t("admin.assetFamilies.actions.deleteNamed", {
@@ -110,7 +115,7 @@ describe("AdminAssetFamiliesPage", () => {
       }),
     )
 
-    await screen.findByText("Arquivo")
+    await within(table()).findByText("Arquivo")
     expect(listMock).toHaveBeenCalledWith({ includeInactive: true })
   })
 
@@ -305,7 +310,7 @@ describe("AdminAssetFamiliesPage", () => {
     listMock.mockResolvedValue([courts, dozen])
 
     render(<AdminAssetFamiliesPage />)
-    await screen.findByText("Doze")
+    await within(table()).findByText("Doze")
 
     const orderHeader = screen.getByRole("columnheader", { name: /Ordem/ })
     await user.click(
@@ -318,7 +323,7 @@ describe("AdminAssetFamiliesPage", () => {
       "12",
     )
 
-    expect(screen.getByText("Doze")).toBeInTheDocument()
-    expect(screen.queryByText("Quadras")).not.toBeInTheDocument()
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
   })
 })

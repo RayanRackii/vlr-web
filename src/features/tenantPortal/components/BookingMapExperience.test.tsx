@@ -1,10 +1,18 @@
-import { render, screen } from "@testing-library/react"
+import type { ReactNode } from "react"
+import { MemoryRouter } from "react-router-dom"
+import { render as testingRender, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
+import i18n from "@/lib/i18n"
 import { BookingMapExperience } from "@/features/tenantPortal/components/BookingMapExperience"
 import { fetchDailyAvailability } from "@/features/rentals/services/resourceVisualService"
+import type { PortalRentalAsset } from "@/features/tenantPortal/services/tenantPortalService"
+
+function render(ui: ReactNode) {
+  return testingRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 const RENTAL_ID = "11111111-1111-4111-8111-111111111111"
 const ASSET_ID = "22222222-2222-4222-8222-222222222222"
@@ -33,6 +41,40 @@ vi.mock("@/features/tenantPortal/hooks/useReservationQueue", () => ({ useReserva
 vi.mock("@/features/tenantPortal/hooks/useBookingIdleTimeout", () => ({ useBookingIdleTimeout: () => undefined }))
 
 describe("BookingMapExperience", () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+
+  it("returns from the rail to the first resource in the booking chooser", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }))
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} />)
+    const chooser = within(await screen.findByRole("group", { name: i18n.t("tenantPortal.agenda.chooseSpaceFirst") }))
+    const resource = await chooser.findByRole("button", { name: "Raquete" })
+    resource.scrollIntoView = vi.fn()
+    await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("emptyStates.book") }))
+    expect(resource).toHaveFocus()
+    expect(resource.scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "auto" })
+  })
+
+  it("keeps fully booked resources without also showing the empty-state banner", async () => {
+    const current = await fetchDailyAvailability("ficc", "2026-10-25", [RENTAL_ID])
+    vi.mocked(fetchDailyAvailability).mockResolvedValueOnce({
+      ...current,
+      resources: current.resources.map((resource) => ({ ...resource, windows: resource.windows.map((window) => ({ ...window, state: "Taken", availableQuantity: 0 })) })),
+    })
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} />)
+    expect(await screen.findByRole("button", { name: "Raquete" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: i18n.t("tenantPortal.redesign.emptyTitle") })).not.toBeInTheDocument()
+  })
+
+  it("limits the date strip to the agenda booking horizon", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-25T12:00:00Z"))
+    render(<BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" horizonMaxDate="2026-10-26" onUnavailable={vi.fn()} />)
+    await screen.findByRole("button", { name: "Raquete" })
+    const dates = within(screen.getByRole("group", { name: "Datas" })).getAllByRole("button")
+    expect(dates).toHaveLength(2)
+    expect(dates[1]).toHaveAccessibleName(/26/)
+  })
+
   it.each([
     ["Hour", "R$ 60,00/hora"],
     ["Slot", "R$ 120,00/horário"],
@@ -48,7 +90,7 @@ describe("BookingMapExperience", () => {
     })
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     expect(await screen.findByRole("button", { name: "Raquete" })).toHaveTextContent(expected)
   })
 
@@ -56,8 +98,40 @@ describe("BookingMapExperience", () => {
     const user = userEvent.setup()
     render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} /></TenantTimeZoneContext.Provider>)
 
-    await user.click(await screen.findByRole("button", { name: "Mapa" }))
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
     const tile = await screen.findByRole("button", { name: "Raquete" })
     expect(tile).toHaveTextContent("Raquete · R$ 20,00/hora · 3 de 4 disponíveis")
+  })
+
+  it("warns when the chosen slot starts inside the resource's cancellation cutoff", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-25T12:00:00Z"))
+    vi.mocked(fetchDailyAvailability).mockResolvedValueOnce({
+      date: "2026-10-25", timeZone: "America/Sao_Paulo", serverNow: "2026-10-25T12:00:00Z", quoteExpiresAt: "2099-10-25T12:00:00Z", currency: "BRL",
+      resources: [{ rentalAssetId: RENTAL_ID, assetId: ASSET_ID, unitId: UNIT_ID, name: "Raquete", type: "Location", totalQuantity: 1, requiresDeposit: false, queueEnabled: false, effectiveMaxAdvanceBookingDays: null, windows: [{ slotId: null, startTime: "14:00:00", endTime: "15:00:00", isDerived: true, state: "Available", reasonCode: null, availableQuantity: 1, totalAmount: 50 }] }],
+    })
+    const scopedAssets: PortalRentalAsset[] = [{
+      id: RENTAL_ID,
+      assetId: ASSET_ID,
+      tenantId: UNIT_ID,
+      unitId: UNIT_ID,
+      name: "Raquete",
+      type: "Location",
+      totalQuantity: 1,
+      isActive: true,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      effectiveCancelCutoffHours: 24,
+    } as PortalRentalAsset]
+    const user = userEvent.setup()
+    render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><BookingMapExperience subdomain="ficc" locale="pt-BR" initialDate="2026-10-25" onUnavailable={vi.fn()} scopedAssets={scopedAssets} /></TenantTimeZoneContext.Provider>)
+
+    await user.click(await screen.findByRole("radio", { name: "Mapa" }))
+    await user.click(await screen.findByRole("button", { name: "Raquete" }))
+    await user.click(await screen.findByRole("button", { name: "14:00–15:00 · R$ 50,00" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Atenção: esta reserva começa dentro do prazo de cancelamento de 24 horas e não poderá ser cancelada depois de confirmada.",
+    )
+    vi.useRealTimers()
   })
 })

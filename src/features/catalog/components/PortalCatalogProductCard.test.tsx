@@ -56,6 +56,8 @@ describe("PortalCatalogProductCard", () => {
     renderCard()
 
     expect(screen.getByText("CAD-01")).toBeInTheDocument()
+    expect(screen.getByText("CAD-01")).toHaveClass("block", "text-xs", "text-muted-foreground")
+    expect(screen.getByText("CAD-01").closest("a")).toHaveClass("portal-catalog-product-link")
     expect(screen.getByText("Cadeira de praia")).toBeInTheDocument()
     expect(screen.getByText(/42,50/)).toBeInTheDocument()
   })

@@ -13,8 +13,12 @@ import {
 } from "react-router-dom"
 import { toast } from "sonner"
 
-import { PageHeader } from "@/components/layout/PageHeader"
-import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
+import { DateStrip } from "@/features/tenantPortal/components/portal/DateStrip"
+import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
+import { focusBookingArea } from "@/features/tenantPortal/lib/focusBookingArea"
+import { PortalBookingEmptyState, PortalRightRail } from "@/features/tenantPortal/components/portal/PortalRightRail"
+import { useTenantThemeCssVars } from "@/lib/useTenantTheme"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   LocaleDateInput,
@@ -29,10 +33,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  PortalStatusChip,
+  type PortalStatusTone,
+} from "@/features/catalog/components/PortalStatusChip"
 import {
   Select,
   SelectContent,
@@ -95,12 +102,14 @@ import {
   showAgendaSelectionNotice,
 } from "@/features/tenantPortal/lib/agendaSelectionNotice"
 import { bookingIdleRedirectTarget } from "@/features/tenantPortal/lib/bookingIdleSettings"
+import { isWithinCancelCutoff } from "@/features/tenantPortal/lib/cancelCutoffWarning"
 import {
   agendaRefreshDates,
   agendaReservedSlotKey,
   customerHeldSlotQuantity,
   findVisibleAgendaReservation,
   isBlockingReservationStatus,
+  reservationCivilDate,
   reservationCivilStart,
   parseAgendaReservationQuery,
   reservedSlotKeysForDate,
@@ -176,11 +185,9 @@ function isCancelledReservationStatus(status: string): boolean {
   return normalized === "cancelled" || normalized === "canceled"
 }
 
-function reservationStatusBadgeVariant(
-  status: string,
-): "success" | "destructive" | "secondary" | "warning" {
+function reservationStatusTone(status: string): PortalStatusTone {
   if (isCancelledReservationStatus(status)) {
-    return "destructive"
+    return "danger"
   }
   const normalized = status.trim().toLowerCase()
   if (normalized === "confirmed") {
@@ -189,7 +196,7 @@ function reservationStatusBadgeVariant(
   if (normalized === "pendingdeposit") {
     return "warning"
   }
-  return "secondary"
+  return "neutral"
 }
 
 /** Day + short month in the tenant clock — the calendar chip on a reservation card. */
@@ -281,6 +288,7 @@ export function TenantPortalAgendaPage() {
   const { subdomain, primary, menu, branding } =
     useOutletContext<CustomerAppOutletContext>()
   const timeZoneId = useTenantTimeZone()
+  const { style: portalThemeStyle } = useTenantThemeCssVars(branding.primaryColor, branding.accentColor)
   const signedIn = isCustomerSignedInForTenant(subdomain)
 
   const menuItem = useMemo(
@@ -400,6 +408,7 @@ export function TenantPortalAgendaPage() {
   const [slotReloadNonce, setSlotReloadNonce] = useState(0)
   const horizonHintId = useId()
   const dateFeedbackId = useId()
+  const quantityMaxHintId = useId()
   const submittingRef = useRef(false)
   const joinAndReserveLock = useRef(false)
   const cancelingRef = useRef(false)
@@ -413,6 +422,7 @@ export function TenantPortalAgendaPage() {
   const replaceSelectionSearch = useRef(true)
   const focusedRowRef = useRef<HTMLLIElement | null>(null)
   const scrolledReservationIdRef = useRef<string | null>(null)
+  const jumpedReservationIdRef = useRef<string | null>(null)
   const [quote, setQuote] = useState<
     | { status: "idle" }
     | { status: "loading" }
@@ -1062,6 +1072,10 @@ export function TenantPortalAgendaPage() {
   const selectedAsset = visibleAssets.find(
     (asset) => asset.id === selectedRentalAssetId,
   )
+  const selectedSlotCutoffHours = selectedAsset?.effectiveCancelCutoffHours ?? null
+  const showCutoffWarning =
+    selectedSlot !== undefined &&
+    isWithinCancelCutoff(selectedSlotCutoffHours, date, selectedSlot.startTime, timeZoneId)
   const quoteAssetId = selectedAsset?.assetId ?? null
   const quoteStart = selectedSlot?.startTime.slice(0, 5) ?? null
   const quoteEnd = (selectedSlot ? bookingEndClock(selectedSlot.endTime) : null)
@@ -1256,18 +1270,30 @@ export function TenantPortalAgendaPage() {
     )
   }, signedIn)
 
-  const focusedReservationId =
-    findVisibleAgendaReservation(
-      mine,
-      parseAgendaReservationQuery(searchParams.get("reservation")),
-    )?.id ?? null
+  const focusedReservation = findVisibleAgendaReservation(
+    mine,
+    parseAgendaReservationQuery(searchParams.get("reservation")),
+  )
+  const focusedReservationId = focusedReservation?.id ?? null
 
   useEffect(() => {
-    if (loading || focusedReservationId === null) {
+    if (loading || focusedReservation === null) {
       return
     }
 
-    if (scrolledReservationIdRef.current === focusedReservationId) {
+    if (jumpedReservationIdRef.current !== focusedReservation.id) {
+      jumpedReservationIdRef.current = focusedReservation.id
+      const reservationDate = reservationCivilDate(
+        focusedReservation.startDateTime,
+        timeZoneId,
+      )
+      if (reservationDate !== null && reservationDate !== viewedDateRef.current) {
+        viewedDateRef.current = reservationDate
+        setDate(reservationDate)
+      }
+    }
+
+    if (scrolledReservationIdRef.current === focusedReservation.id) {
       return
     }
 
@@ -1277,8 +1303,8 @@ export function TenantPortalAgendaPage() {
     }
 
     row.scrollIntoView({ block: "center" })
-    scrolledReservationIdRef.current = focusedReservationId
-  }, [focusedReservationId, loading])
+    scrolledReservationIdRef.current = focusedReservation.id
+  }, [focusedReservation, loading, timeZoneId])
 
   useEffect(() => {
     if (loading || location.hash !== CUSTOMER_MY_RESERVATIONS_HASH) {
@@ -1805,40 +1831,43 @@ export function TenantPortalAgendaPage() {
     commitAgendaDate(attempt.date)
   }
 
-  function spaceState(rentalAssetId: string) {
-    if (schedulePending || slotsError) {
-      return {
-        available: false,
-        disabled: true,
-        selected: false,
-        pending: true,
-        detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
-        ownReservation: false,
-      }
-    }
-    const slot = startTime && effectiveDuration !== null
+  function explainUnavailableAsset(rentalAssetId: string) {
+    const state = spaceState(rentalAssetId)
+    toast.message(
+      state.detail ??
+        (startTime.length === 0
+          ? t("tenantPortal.agenda.chooseTimeFirst")
+          : t("tenantPortal.agenda.slotTaken")),
+    )
+  }
+
+  // Availability plus the reason text at one candidate start time — shared by
+  // the asset tiles (current `startTime`) and the Horário list (each option's
+  // own start time), so both surfaces explain a busy slot the same way.
+  function slotAvailabilityAt(rentalAssetId: string, startCandidate: string) {
+    const slot = startCandidate && effectiveDuration !== null
       ? findSlotAtStartAndDuration(
           slotsForView,
           rentalAssetId,
-          startTime,
+          startCandidate,
           effectiveDuration,
         )
       : undefined
     const reservedKey =
-      startTime.length > 0
-        ? agendaReservedSlotKey(date, rentalAssetId, startTime)
+      startCandidate.length > 0
+        ? agendaReservedSlotKey(date, rentalAssetId, startCandidate)
         : ""
     const ownReservation = customerAlreadyHoldsSlot(
       date,
       rentalAssetId,
-      startTime,
+      startCandidate,
       mine,
       timeZoneId,
     )
     const ownReservationUnits = customerHeldSlotQuantity(
       date,
       rentalAssetId,
-      startTime,
+      startCandidate,
       mine,
       timeZoneId,
     )
@@ -1847,13 +1876,8 @@ export function TenantPortalAgendaPage() {
       (optimisticReservedKeys.has(reservedKey) ||
         derivedReservedKeys.has(reservedKey) ||
         ownReservation ||
-        isPortalBookingInFlight(date, rentalAssetId, startTime))
+        isPortalBookingInFlight(date, rentalAssetId, startCandidate))
     const available = Boolean(slot) && !reserved
-    // Selecting a queued Location opens its waiting room even without a slot.
-    // Availability still controls booking; queue access only controls selection.
-    const queueSelectable = isLocationQueueEnabled(
-      visibleAssets.find((asset) => asset.id === rentalAssetId),
-    )
     const asset = visibleAssets.find((candidate) => candidate.id === rentalAssetId)
     const assetHorizonMaxDate = horizonEndDate(
       tenantTodayIsoDate(timeZoneId),
@@ -1861,7 +1885,7 @@ export function TenantPortalAgendaPage() {
     )
     const exceedsAssetHorizon = assetHorizonMaxDate !== null && date > assetHorizonMaxDate
     const detail =
-      startTime.length === 0 || available
+      startCandidate.length === 0 || available
         ? null
         : exceedsAssetHorizon
           ? t("tenantPortal.agenda.horizonExceeded")
@@ -1875,6 +1899,29 @@ export function TenantPortalAgendaPage() {
               : asset && asset.totalQuantity > 1
                 ? t("tenantPortal.agenda.allUnitsReserved")
                 : t("tenantPortal.agenda.slotTaken")
+    return { available, detail, ownReservation }
+  }
+
+  function spaceState(rentalAssetId: string) {
+    if (schedulePending || slotsError) {
+      return {
+        available: false,
+        disabled: true,
+        selected: false,
+        pending: true,
+        detail: t(slotsError ? "tenantPortal.agenda.slotsError" : "common.refreshing"),
+        ownReservation: false,
+      }
+    }
+    const { available, detail, ownReservation } = slotAvailabilityAt(
+      rentalAssetId,
+      startTime,
+    )
+    // Selecting a queued Location opens its waiting room even without a slot.
+    // Availability still controls booking; queue access only controls selection.
+    const queueSelectable = isLocationQueueEnabled(
+      visibleAssets.find((asset) => asset.id === rentalAssetId),
+    )
     return {
       available,
       disabled: !available && !queueSelectable,
@@ -1892,27 +1939,16 @@ export function TenantPortalAgendaPage() {
     if (!selectedRentalAssetId || effectiveDuration === null) {
       return true
     }
-    const slot = findSlotAtStartAndDuration(
-      slotsForView,
-      selectedRentalAssetId,
-      startCandidate,
-      effectiveDuration,
-    )
-    const reservedKey = agendaReservedSlotKey(date, selectedRentalAssetId, startCandidate)
-    const ownReservation = customerAlreadyHoldsSlot(
-      date,
-      selectedRentalAssetId,
-      startCandidate,
-      mine,
-      timeZoneId,
-    )
-    const reserved =
-      reservedKey.length > 0 &&
-      (optimisticReservedKeys.has(reservedKey) ||
-        derivedReservedKeys.has(reservedKey) ||
-        ownReservation ||
-        isPortalBookingInFlight(date, selectedRentalAssetId, startCandidate))
-    return Boolean(slot) && !reserved
+    return slotAvailabilityAt(selectedRentalAssetId, startCandidate).available
+  }
+
+  // Same reason text the asset tiles show for the currently selected start
+  // time, but for one Horário option's own start time.
+  function timeDetailForSelectedAsset(startCandidate: string): string | null {
+    if (!selectedRentalAssetId || effectiveDuration === null) {
+      return null
+    }
+    return slotAvailabilityAt(selectedRentalAssetId, startCandidate).detail
   }
 
   // The map flow books outside this page's handlers; refresh Minhas reservas
@@ -1934,8 +1970,14 @@ export function TenantPortalAgendaPage() {
 
   const isReservationRoute = searchParams.has("reservation") || location.hash === CUSTOMER_MY_RESERVATIONS_HASH
 
+  const nextReservation = mine
+    .filter((reservation) => !isCancelledReservationStatus(reservation.status) && !isPastReservation(reservation.endDateTime))
+    .slice()
+    .sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime))[0]
+  const reservationsHref = `${location.pathname}${location.search}${CUSTOMER_MY_RESERVATIONS_HASH}`
+
   if (branding.newBookingUiEnabled && !mapUiUnavailable && !isReservationRoute) {
-    return <BookingMapExperience subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
+    return <BookingMapExperience themeStyle={portalThemeStyle} tenantName={branding.displayName} nextReservation={nextReservation} reservationsHref={reservationsHref} subdomain={subdomain} locale={moneyLocale} scopedAssets={visibleAssets} scoped={menuItem !== null} initialDate={date} horizonMaxDate={horizonMaxDate} onUnavailable={() => setMapUiUnavailable(true)} onBooked={refreshMineAfterMapBooking} />
   }
 
   // Same rows as `mine`, grouped for scanning — no re-fetch, no status change.
@@ -1973,7 +2015,7 @@ export function TenantPortalAgendaPage() {
             }
             const units = quote.pricedUnits ?? quantity
             return units > 1
-              ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units })}`
+              ? `${priceText} ${t("tenantPortal.agenda.quoteUnitMultiplier", { count: units, formatted: new Intl.NumberFormat(moneyLocale, { maximumFractionDigits: 2 }).format(units) })}`
               : priceText
           }
           const unitPrice = unitPriceForWindow({
@@ -2050,7 +2092,7 @@ export function TenantPortalAgendaPage() {
         aria-current={focused ? "true" : undefined}
         data-reservation-focused={focused ? "true" : undefined}
         className={cn(
-          "scroll-mt-16 flex gap-3 rounded-xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
+          "scroll-mt-16 flex gap-3 rounded-2xl border bg-card p-3 text-sm shadow-sm transition-shadow duration-150 ease-out motion-safe:hover:shadow-md sm:p-4",
           focused
             ? "border-primary bg-primary/10 ring-2 ring-primary"
             : "border-border",
@@ -2059,12 +2101,17 @@ export function TenantPortalAgendaPage() {
       >
         <div
           aria-hidden
-          className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
+          className={cn(
+            "flex size-14 shrink-0 flex-col items-center justify-center rounded-xl",
+            cancelled
+              ? "bg-muted text-muted-foreground"
+              : "bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))] text-primary",
+          )}
         >
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
             {dateParts.month}
           </span>
-          <span className="text-lg leading-none font-semibold text-foreground">
+          <span className="text-lg leading-none font-bold">
             {dateParts.day}
           </span>
         </div>
@@ -2077,11 +2124,11 @@ export function TenantPortalAgendaPage() {
               )
               .join(", ")}
           </p>
-          <Badge variant={reservationStatusBadgeVariant(reservation.status)}>
+          <PortalStatusChip tone={reservationStatusTone(reservation.status)}>
             {t(`rentals.reservations.statuses.${reservation.status}`, {
               defaultValue: reservation.status,
             })}
-          </Badge>
+          </PortalStatusChip>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           {formatReservationRange(
@@ -2153,18 +2200,26 @@ export function TenantPortalAgendaPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <PageHeader
-        title={title}
-        description={t("tenantPortal.agenda.subtitlePicker")}
-      />
+    <div className="portal-booking-grid">
+      <section className="portal-booking-column">
+      <PortalBookingHeader title={title} tenantName={branding.displayName} />
 
       {loading ? (
-        <FormSkeleton fields={4} />
+        <div className="space-y-6" role="status" aria-busy="true">
+          <span className="sr-only">{t("common.loading")}</span>
+          <div className="flex gap-2 overflow-hidden" aria-hidden>
+            {Array.from({ length: 7 }, (_, index) => (
+              <Skeleton key={index} className="h-28 w-20 shrink-0 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-11 w-full max-w-sm rounded-lg" aria-hidden />
+          <Skeleton className="aspect-[16/9] w-full rounded-2xl" aria-hidden />
+        </div>
       ) : (
         <div className="space-y-6">
-        <div className="space-y-6 md:grid md:grid-cols-[1fr_320px] md:items-start md:gap-6 md:space-y-0">
         <div className="space-y-6">
+        <div className="space-y-6">
+          <DateStrip value={date} today={tenantTodayIsoDate(timeZoneId)} locale={moneyLocale} max={horizonMaxDate} onChange={(nextDate) => onDateChange(nextDate, "calendar")} />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1 text-sm">
               <label htmlFor={dateInputId}>{t("tenantPortal.agenda.date")}</label>
@@ -2193,7 +2248,7 @@ export function TenantPortalAgendaPage() {
               {dateFeedback ? (
                 <p
                   id={dateFeedbackId}
-                  className="text-xs text-muted-foreground"
+                  className={cn("text-xs", dateRejection ? "text-destructive" : "text-muted-foreground")}
                   role="status"
                 >
                   {dateFeedback}
@@ -2222,7 +2277,7 @@ export function TenantPortalAgendaPage() {
                   schedulePending || slotsError || timeWindows.length === 0
                 }
               >
-                <SelectTrigger className="w-full" aria-busy={schedulePending}>
+                <SelectTrigger className="w-full tabular-nums" aria-busy={schedulePending}>
                   <SelectValue
                     placeholder={
                       schedulePending
@@ -2233,11 +2288,15 @@ export function TenantPortalAgendaPage() {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="w-[var(--anchor-width)] min-w-[max(12rem,var(--anchor-width))]">
+                <SelectContent className="w-[var(--anchor-width)] min-w-[max(12rem,var(--anchor-width))] tabular-nums">
                   {timeWindows.map((window) => {
                     const reservedForSelectedAsset = !timeAvailableForSelectedAsset(
                       window.startTime,
                     )
+                    const reason = reservedForSelectedAsset
+                      ? timeDetailForSelectedAsset(window.startTime) ??
+                        t("tenantPortal.agenda.timeReserved")
+                      : null
                     return (
                       <SelectItem
                         key={window.startTime}
@@ -2246,9 +2305,7 @@ export function TenantPortalAgendaPage() {
                       >
                         {formatScheduleTime(window.startTime)} –{" "}
                         {formatScheduleTime(window.endTime)}
-                        {reservedForSelectedAsset
-                          ? ` · ${t("tenantPortal.agenda.timeReserved")}`
-                          : ""}
+                        {reason ? ` · ${reason}` : ""}
                       </SelectItem>
                     )
                   })}
@@ -2294,7 +2351,7 @@ export function TenantPortalAgendaPage() {
 
           {schedulePending ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="size-3 animate-spin" aria-hidden />
+              <Loader2 className="size-4 animate-spin" aria-hidden />
               {t("common.refreshing")}
             </span>
           ) : null}
@@ -2309,21 +2366,21 @@ export function TenantPortalAgendaPage() {
               {t("tenantPortal.agenda.legendUnavailable")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <Check className="size-3 shrink-0 rounded-sm border-2 border-primary bg-primary/10 p-px text-primary" />
+              <Check className="size-4 shrink-0 rounded-sm border-2 border-primary bg-primary/10 p-px text-primary" />
               {t("tenantPortal.agenda.legendSelected")}
             </span>
             <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-              <CheckCheck className="size-3 shrink-0 rounded-sm border-2 border-primary/70 bg-primary/10 p-px text-primary" />
+              <CheckCheck className="size-4 shrink-0 rounded-sm border-2 border-primary/70 bg-primary/10 p-px text-primary" />
               {t("tenantPortal.agenda.yourReservation")}
             </span>
           </div>
 
+          <div id="portal-booking-spaces" role="group" aria-label={t("tenantPortal.agenda.chooseSpaceFirst")} tabIndex={-1}>
           {visibleAssets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("tenantPortal.agenda.noAssets")}
-            </p>
+            <PortalBookingEmptyState />
           ) : (
-            <LayoutCanvasBoard
+            <div className={cn("portal-canvas", !hasAuthoredLayout && "portal-generated-canvas")}><LayoutCanvasBoard
+              className="portal-legacy-board"
               mode="pick"
               aspectRatio={aspectRatio}
               canvasWidthPercent={canvasWidthPercent}
@@ -2361,7 +2418,8 @@ export function TenantPortalAgendaPage() {
                 }
               })}
               onSelect={selectRentalAsset}
-            />
+              onUnavailableSelect={explainUnavailableAsset}
+            /></div>
           )}
 
           {hasAuthoredLayout && unplacedAssets.length > 0 ? (
@@ -2376,7 +2434,8 @@ export function TenantPortalAgendaPage() {
                     <button
                       key={asset.id}
                       type="button"
-                      disabled={state.disabled || submitting}
+                      disabled={submitting}
+                      aria-disabled={state.disabled || undefined}
                       aria-pressed={state.selected}
                       aria-busy={state.pending || undefined}
                       aria-label={
@@ -2406,19 +2465,23 @@ export function TenantPortalAgendaPage() {
                           portalPickOwnReservationClass,
                       )}
                       onClick={() => {
+                        if (state.disabled) {
+                          explainUnavailableAsset(asset.id)
+                          return
+                        }
                         selectRentalAsset(asset.id)
                       }}
                     >
                       {!state.pending && state.available && state.selected ? (
                         <Check
                           aria-hidden
-                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
+                          className="absolute top-1.5 right-1.5 size-4 text-primary"
                         />
                       ) : null}
                       {!state.pending && !state.available && state.ownReservation ? (
                         <CheckCheck
                           aria-hidden
-                          className="absolute top-1.5 right-1.5 size-3.5 text-primary"
+                          className="absolute top-1.5 right-1.5 size-4 text-primary"
                         />
                       ) : null}
                       <span className="block truncate">
@@ -2442,6 +2505,8 @@ export function TenantPortalAgendaPage() {
               </div>
             </div>
           ) : null}
+
+          </div>
 
           {queue.explanation ? (
             <p className="text-sm text-muted-foreground">{queue.explanation}</p>
@@ -2584,12 +2649,24 @@ export function TenantPortalAgendaPage() {
                 size="icon-lg"
                 variant="outline"
                 aria-label={`${t("bookingMap.quantity")} +`}
-                disabled={quantity >= quantityMax}
-                onClick={() => setQuantity((current) => Math.min(quantityMax, current + 1))}
+                aria-disabled={quantity >= quantityMax || undefined}
+                aria-describedby={quantity >= quantityMax ? quantityMaxHintId : undefined}
+                onClick={() => {
+                  if (quantity >= quantityMax) {
+                    toast.message(t("tenantPortal.agenda.quantityMaxReached", { count: quantityMax }))
+                    return
+                  }
+                  setQuantity((current) => Math.min(quantityMax, current + 1))
+                }}
               >
                 <Plus className="size-4" aria-hidden />
               </Button>
               <span className="text-xs text-muted-foreground">
+                {quantity >= quantityMax ? (
+                  <span id={quantityMaxHintId} className="block font-medium text-foreground">
+                    {t("tenantPortal.agenda.quantityMaxReached", { count: quantityMax })}
+                  </span>
+                ) : null}
                 {t("bookingMap.unitsLeft", {
                   left: Math.max(0, Math.min(selectedAssetQuantity, lastAvailableQuantity ?? selectedAssetQuantity)),
                   total: selectedAssetQuantity,
@@ -2636,10 +2713,19 @@ export function TenantPortalAgendaPage() {
           ) : null}
         </div>
 
-        {/* <md: `contents` + block parent so the sticky CTA's constraint box is the whole booking section, not a grid row. */}
-        <div className="space-y-3 max-md:contents md:sticky md:top-16 md:self-start">
-          {/* Fixed-height slot for the quote summary so the Reservar button below doesn't jump when it appears. */}
-          <div className="flex min-h-11 items-center max-md:mt-6">
+        <div className="portal-summary portal-booking-summary">
+          <div className="min-w-0 flex-1">
+            {selectedAsset ? <p className="truncate font-semibold" title={selectedAsset.name}>{`${selectedAsset.name} · ${formatLocaleCivilDayMonth(date, moneyLocale)}`}</p> : null}
+            {selectedSlot ? <p className="text-xs text-muted-foreground">{formatLocaleCivilDayMonth(date, moneyLocale)} · {formatScheduleTime(selectedSlot.startTime)}–{formatScheduleTime(selectedSlot.endTime)}</p> : null}
+          <div className="flex min-h-11 items-center">
+            {!selectedSlot && quote.status === "idle" ? (
+              <p className="text-sm text-muted-foreground">
+                {startTime.length === 0
+                  ? t("tenantPortal.agenda.chooseTimeFirst")
+                  : t("tenantPortal.agenda.chooseSpaceFirst")}
+              </p>
+            ) : null}
+
             {quote.status === "loading" ? (
               <p className="text-sm text-muted-foreground">
                 {t("tenantPortal.agenda.quoteLoading")}
@@ -2674,12 +2760,24 @@ export function TenantPortalAgendaPage() {
             ) : null}
           </div>
 
+          </div>
+          {showCutoffWarning ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-amber-500 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+            >
+              {t("tenantPortal.agenda.cancelCutoffBookingWarning", {
+                count: selectedSlotCutoffHours ?? 0,
+              })}
+            </p>
+          ) : null}
+
           {queue.hideReserveUi ||
           (queue.view.kind === "join" && queue.view.joinAndReserve) ? null : (
-          <div className="sticky bottom-0 z-10 border-t border-border bg-background py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:py-0 md:pb-0">
+          <div className="portal-booking-cta shrink-0">
             <LoadingButton
               type="button"
-              className="min-h-11 w-full md:w-auto"
+              className="min-h-11 w-full sm:w-auto"
               style={{ backgroundColor: primary }}
               loading={submitting}
               loadingLabel={t("tenantPortal.agenda.reserving")}
@@ -2705,6 +2803,8 @@ export function TenantPortalAgendaPage() {
 
           <div
             id="minhas-reservas"
+            role="region"
+            aria-label={t("tenantPortal.agenda.myReservations")}
             className="scroll-mt-16 space-y-4 border-t border-border pt-5"
           >
             <h3 className="text-lg font-semibold text-foreground">
@@ -2712,9 +2812,12 @@ export function TenantPortalAgendaPage() {
             </h3>
             {mine.length === 0 ? (
               <EmptyState
-                size="sm"
+                variant="portal"
                 icon={CalendarIcon}
                 title={t("tenantPortal.agenda.empty")}
+                description={t("emptyStates.bookingDescription")}
+                example={t("emptyStates.examples.bookings")}
+                action={<Button type="button" onClick={focusBookingArea}>{t("emptyStates.book")}</Button>}
               />
             ) : (
               <>
@@ -2841,6 +2944,8 @@ export function TenantPortalAgendaPage() {
           </AlertDialog>
         </div>
       )}
+      </section>
+      <PortalRightRail nextReservation={nextReservation} reservationsHref={reservationsHref} />
     </div>
   )
 }
