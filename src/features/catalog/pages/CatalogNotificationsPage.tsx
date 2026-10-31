@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { useEffect, useMemo, useState } from "react"
 import {
   flexRender,
@@ -36,6 +37,7 @@ import {
 
 export function CatalogNotificationsPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { can } = usePermissions()
   const canResend = can("catalog.notifications.resend")
 
@@ -148,7 +150,7 @@ export function CatalogNotificationsPage() {
         header: t("catalog.notifications.columns.createdAt"),
         enableColumnFilter: false,
         cell: ({ row }) =>
-          formatCatalogDate(row.original.createdAt, i18n.language),
+          formatCatalogDate(row.original.createdAt, i18n.language, timeZoneId),
       },
       {
         id: "actions",
@@ -170,7 +172,7 @@ export function CatalogNotificationsPage() {
           ) : null,
       },
     ],
-    [canResend, i18n.language, resendBusyId, t],
+    [canResend, i18n.language, resendBusyId, t, timeZoneId],
   )
 
   const table = useReactTable({

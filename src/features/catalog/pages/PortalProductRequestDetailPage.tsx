@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import "../components/portalOrders.css"
 
 import { useEffect, useState } from "react"
@@ -33,6 +34,7 @@ function httpFileUrl(url: string): string | null {
 
 export function PortalProductRequestDetailPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const params = useParams()
   const { subdomain } = useOutletContext<CustomerAppOutletContext>()
   const requestId = params.requestId ?? ""
@@ -143,7 +145,7 @@ export function PortalProductRequestDetailPage() {
                 </p>
                 <h1>{t("tenantPortal.catalog.requestDetailTitle")}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {formatCatalogDate(request.createdAt, i18n.language)}
+                  {formatCatalogDate(request.createdAt, i18n.language, timeZoneId)}
                 </p>
               </div>
               <PortalStatusChip tone={productRequestStatusTone(request.status)}>

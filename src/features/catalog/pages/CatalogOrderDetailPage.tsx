@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { STAFF_ORDER_STATUS_TONE } from "../lib/catalogStatusBadge"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
@@ -55,6 +56,7 @@ import {
 
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const navigate = useNavigate()
   const params = useParams()
   const orderId = params.orderId ?? ""
@@ -401,7 +403,7 @@ export function CatalogOrderDetailPage() {
               </p>
               <p className="tabular-nums text-muted-foreground">
                 {t(`catalog.actor.${entry.actorType}`)} ·{" "}
-                {formatCatalogDate(entry.createdAt, i18n.language)}
+                {formatCatalogDate(entry.createdAt, i18n.language, timeZoneId)}
               </p>
               {entry.reason ? (
                 <p className="mt-1 text-muted-foreground">{entry.reason}</p>
