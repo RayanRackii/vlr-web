@@ -353,6 +353,7 @@ export function formatCatalogMoney(
   return formatLocaleCurrency(amount, currency, locale)
 }
 
-export function formatCatalogDate(value: string, locale: string): string {
-  return formatLocaleDateTime(value, locale)
+/** Catalog instants on the tenant business clock (same zone as reservations). */
+export function formatCatalogDate(value: string, locale: string, timeZoneId: string): string {
+  return formatLocaleDateTime(value, locale, timeZoneId)
 }

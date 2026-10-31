@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import "../components/portalOrders.css"
 
 import { useEffect, useState } from "react"
@@ -21,6 +22,7 @@ import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalS
 
 export function PortalOrdersPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { subdomain, branding } = useOutletContext<CustomerAppOutletContext>()
   const [orders, setOrders] = useState<CatalogOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -163,7 +165,7 @@ export function PortalOrdersPage() {
                       </PortalStatusChip>
                     </span>
                     <span className="portal-record-meta">
-                      {formatCatalogDate(order.createdAt, i18n.language)}
+                      {formatCatalogDate(order.createdAt, i18n.language, timeZoneId)}
                       {" · "}
                       {t("tenantPortal.catalog.itemCount", { count: itemCount })}
                     </span>

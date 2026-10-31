@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import "../components/portalOrders.css"
 
 import { useState } from "react"
@@ -32,6 +33,7 @@ import { tenantPortalPath } from "@/features/tenantPortal/services/tenantPortalS
 
 export function PortalProductRequestPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const { subdomain, primary } = useOutletContext<CustomerAppOutletContext>()
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -107,7 +109,7 @@ export function PortalProductRequestPage() {
             <p className="text-sm text-muted-foreground">{submitted.note}</p>
           ) : null}
           <p className="text-sm text-muted-foreground">
-            {formatCatalogDate(submitted.createdAt, i18n.language)}
+            {formatCatalogDate(submitted.createdAt, i18n.language, timeZoneId)}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button

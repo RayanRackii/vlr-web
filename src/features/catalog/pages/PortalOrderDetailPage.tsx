@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import "../components/portalOrders.css"
 
 import { useEffect, useRef, useState } from "react"
@@ -36,6 +37,7 @@ function hasOrderSuccess(identity: string): boolean {
 
 export function PortalOrderDetailPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const params = useParams()
   const location = useLocation()
   const navigate = useNavigate()
@@ -202,7 +204,7 @@ export function PortalOrderDetailPage() {
           <div className="space-y-1">
             <h1>{order.displayNumber}</h1>
             <p className="text-sm text-muted-foreground">
-              {formatCatalogDate(order.createdAt, i18n.language)}
+              {formatCatalogDate(order.createdAt, i18n.language, timeZoneId)}
             </p>
             <p className="text-sm font-medium tabular-nums">{totalLabel}</p>
           </div>
