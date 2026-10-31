@@ -1,3 +1,4 @@
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { STAFF_ORDER_STATUS_TONE } from "../lib/catalogStatusBadge"
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -34,6 +35,7 @@ import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, 
 
 export function CatalogOrdersPage() {
   const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
   const navigate = useNavigate()
   const [orders, setOrders] = useState<CatalogOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -114,7 +116,7 @@ export function CatalogOrdersPage() {
         accessorKey: "createdAt",
         header: t("catalog.orders.columns.createdAt"),
         enableColumnFilter: false,
-        cell: ({ row }) => formatCatalogDate(row.original.createdAt, i18n.language),
+        cell: ({ row }) => formatCatalogDate(row.original.createdAt, i18n.language, timeZoneId),
       },
       {
         id: "actions",
@@ -135,7 +137,7 @@ export function CatalogOrdersPage() {
         ),
       },
     ],
-    [i18n.language, navigate, t],
+    [i18n.language, navigate, t, timeZoneId],
   )
 
   const table = useReactTable({

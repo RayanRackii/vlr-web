@@ -1,6 +1,7 @@
 import {
   DEFAULT_TENANT_TIME_ZONE,
   formatTenantDateTimeRange,
+  resolveTenantTimeZone,
 } from "@/lib/tenantTimeZone"
 
 const CIVIL_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -144,7 +145,7 @@ export function formatLocaleCivilDate(value: string, locale: string): string {
 }
 
 /** Instant shown as a short date and time in the active locale. */
-export function formatLocaleDateTime(value: string, locale: string): string {
+export function formatLocaleDateTime(value: string, locale: string, timeZoneId?: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
@@ -154,6 +155,7 @@ export function formatLocaleDateTime(value: string, locale: string): string {
     new Intl.DateTimeFormat(locale, {
       dateStyle: "short",
       timeStyle: "short",
+      ...(timeZoneId ? { timeZone: resolveTenantTimeZone(timeZoneId) } : {}),
     }).format(date),
   )
 }
