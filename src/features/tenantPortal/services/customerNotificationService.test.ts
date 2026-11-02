@@ -54,6 +54,16 @@ describe("customer notification operations", () => {
     }
   })
 
+  it("drops malformed items while preserving valid items and the cursor", async () => {
+    const valid = { id: "notice-1", eventType: "updated", module: "catalog", title: "Update",
+      createdAt: "2026-10-29T12:00:00Z", readAt: null, targetRoute: "/pedidos" }
+    customerApi.defaults.adapter = async (config) => ({
+      config, status: 200, statusText: "OK", headers: new AxiosHeaders(),
+      data: { items: [valid, { ...valid, targetRoute: undefined }, null], nextCursor: "next" },
+    })
+    await expect(listNotifications()).resolves.toEqual({ items: [valid], nextCursor: "next" })
+  })
+
   it("rejects invalid API payloads", async () => {
     customerApi.defaults.adapter = async (config) => ({
       config, status: 200, statusText: "OK", headers: new AxiosHeaders(), data: {},

@@ -268,6 +268,8 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] UI low-risk (2026-11-02, local): cabeçalhos com alvos de 44px até 767px; buscas staff curtas; sino B2C distingue lidas/não lidas e mantém itens após marcar todas; toast fecha em 3,5s sem bloquear área externa; imagem falha usa placeholder neutro; lista ignora AbortError e descarta itens inválidos individualmente. Sem Git ou alteração de contratos/sessão. Validação: TypeScript e build passaram; Vitest 295 arquivos/2835 testes; reabertura do sino 24/24. Lint global: 170 erros/19 avisos existentes; no escopo, erro preexistente de refs da galeria e dois avisos TanStack.
+
 - [x] QA R28 (2026-10-29, código local): banner e próximos passos do pedido acompanham o status no polling (pt-BR/en/es); inputs/selects/textareas inválidos mantêm borda e foco `destructive`; erros de campo dos recursos aparecem uma única vez; cabeçalho, filtros e ações/Voltar do staff usam a área de toque existente de 44px em touch/mobile. Sem mudança no `vlr-api`.
 
 - [x] QA R27 (WEB, local): Reservar com sidebar recolhida até 1023px, resumo em fluxo e chips sem truncamento; pedido B2C atualiza a cada 15s só com documento visível, para nos estados terminais e refaz GET após conflito 409 localizado; motivos staff válidos antes de confirmar, status compartilhado com a lista e alvos de toque de 44px sem ampliar desktop. Notificações conhecidas usam i18n; número depende de metadado ainda ausente no DTO.

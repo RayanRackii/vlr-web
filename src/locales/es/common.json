@@ -812,6 +812,8 @@
   "catalog": {
     "staff": {
       "allStatuses": "Todos los estados",
+      "productsSearchShort": "Buscar producto",
+      "ordersSearchShort": "Buscar pedido",
       "productsSearch": "Buscar por nombre o código",
       "ordersSearch": "Buscar por número o cliente",
       "loading": "Cargando ventas…",
