@@ -49,6 +49,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   const [rows, setRows] = useState<DraftRow[]>([])
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [loadedForProductId, setLoadedForProductId] = useState(productId)
 
   // Reset to loading when the product changes (adjust state during render, not in the effect).
@@ -127,6 +128,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
     }
 
     setSaving(true)
+    setSaveError(null)
     try {
       const response = await replaceCatalogProductResourceRequirements(productId, {
         expectedVersion,
@@ -148,11 +150,12 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         reload()
         return
       }
-      toast.error(
-        error instanceof Error
+      const message =
+        error instanceof Error && error.message
           ? error.message
-          : t("catalog.resourcePlanning.errors.saveRequirements"),
-      )
+          : t("catalog.resourcePlanning.errors.saveRequirements")
+      setSaveError(message)
+      toast.error(message)
     } finally {
       setSaving(false)
     }
@@ -297,6 +300,11 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
           {t("catalog.resourcePlanning.save")}
         </LoadingButton>
       </div>
+      {saveError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {saveError}
+        </p>
+      ) : null}
     </div>
   )
 }

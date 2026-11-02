@@ -1067,6 +1067,7 @@
       "errors": {
         "loadRequirements": "Could not load this product's resources.",
         "saveRequirements": "Could not save this product's resources.",
+        "singleRequirementOnly": "In this version, each product accepts only one required resource.",
         "resourceRequired": "Select a specific resource for each row.",
         "resourceUnavailable": "The selected resource is not available at that time.",
         "planningVersionConflict": "This order was updated by someone else. The page will reload.",

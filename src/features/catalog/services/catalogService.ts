@@ -73,6 +73,18 @@ function isPlanningVersionConflict(error: unknown): boolean {
   )
 }
 
+function hasCatalogErrorCode(error: unknown, code: string): boolean {
+  if (!isAxiosError(error)) {
+    return false
+  }
+  const payload = getAxiosErrorPayload(error)
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { code?: unknown }).code === code
+  )
+}
+
 function parseOrThrow<T>(
   parsed: { success: true; data: T } | { success: false },
 ): T {
@@ -259,6 +271,11 @@ export async function replaceCatalogProductResourceRequirements(
           i18n.t("catalog.resourcePlanning.errors.saveRequirements"),
         ),
       )
+    }
+    if (hasCatalogErrorCode(error, "unsupported_requirement_scope")) {
+      throw new Error(i18n.t("catalog.resourcePlanning.errors.singleRequirementOnly"), {
+        cause: error,
+      })
     }
     throwCatalogError(error, "catalog.resourcePlanning.errors.saveRequirements")
   }
