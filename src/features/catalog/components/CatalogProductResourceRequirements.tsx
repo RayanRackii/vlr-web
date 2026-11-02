@@ -49,10 +49,16 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   const [rows, setRows] = useState<DraftRow[]>([])
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [saving, setSaving] = useState(false)
+  const [loadedForProductId, setLoadedForProductId] = useState(productId)
+
+  // Reset to loading when the product changes (adjust state during render, not in the effect).
+  if (loadedForProductId !== productId) {
+    setLoadedForProductId(productId)
+    setLoading(true)
+  }
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     Promise.all([
       getCatalogProductResourceRequirements(productId),
       listAdminRentalAssets().catch(() => []),
