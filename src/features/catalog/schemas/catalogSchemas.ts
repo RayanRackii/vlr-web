@@ -101,6 +101,72 @@ export const catalogProductFormSchema = z.object({
 
 export type CatalogProductFormValues = z.infer<typeof catalogProductFormSchema>
 
+/** Order-resource planning (Phase 0): catalog.products.manage product requirement rows. */
+export const catalogProductResourceRequirementSchema = z.object({
+  id: z.string().uuid().nullable().optional(),
+  rentalAssetId: z.string().uuid().nullable(),
+  assetCategoryId: z.string().uuid().nullable(),
+  resourceQuantity: z.number().int().min(1),
+  durationMinutesPerUnit: z.number().int().min(1),
+  prepMinutes: z.number().int().min(0),
+  cleanupMinutes: z.number().int().min(0),
+})
+
+export type CatalogProductResourceRequirement = z.infer<
+  typeof catalogProductResourceRequirementSchema
+>
+
+export const catalogProductResourceRequirementsResponseSchema = z.object({
+  expectedVersion: z.number().int(),
+  requirements: z.array(catalogProductResourceRequirementSchema),
+})
+
+export type CatalogProductResourceRequirementsResponse = z.infer<
+  typeof catalogProductResourceRequirementsResponseSchema
+>
+
+export const productionSummaryStatusSchema = z.enum([
+  "NotRequired",
+  "Unscheduled",
+  "Scheduled",
+  "InProgress",
+  "Done",
+  "Blocked",
+  "Cancelled",
+])
+
+export type ProductionSummaryStatus = z.infer<
+  typeof productionSummaryStatusSchema
+>
+
+export const allocationStatusSchema = z.enum([
+  "Scheduled",
+  "Running",
+  "Cleaning",
+  "Released",
+  "Cancelled",
+])
+
+export type AllocationStatus = z.infer<typeof allocationStatusSchema>
+
+export const catalogOrderItemAllocationSchema = z.object({
+  id: z.string().uuid(),
+  requirementId: z.string().uuid(),
+  rentalAssetId: z.string().uuid(),
+  status: allocationStatusSchema,
+  plannedWorkStart: z.string(),
+  plannedWorkEnd: z.string(),
+  timeZoneId: z.string(),
+  actualStartAt: z.string().nullable(),
+  actualWorkFinishedAt: z.string().nullable(),
+  actualReleaseAt: z.string().nullable(),
+  planningRevision: z.number(),
+})
+
+export type CatalogOrderItemAllocation = z.infer<
+  typeof catalogOrderItemAllocationSchema
+>
+
 export const catalogOrderItemSchema = z.object({
   id: z.string().uuid(),
   productId: z.string().uuid(),
@@ -110,6 +176,9 @@ export const catalogOrderItemSchema = z.object({
   currency: z.string(),
   quantity: z.number(),
   subTotal: z.number().nullable(),
+  /** Absent/legacy responses have no scheduling, so default is NotRequired. */
+  productionSummary: productionSummaryStatusSchema.optional().default("NotRequired"),
+  allocation: catalogOrderItemAllocationSchema.nullable().optional().default(null),
 })
 
 export const catalogOrderHistorySchema = z.object({
@@ -138,6 +207,11 @@ export const catalogOrderSchema = z.object({
   createdAt: z.string(),
   items: z.array(catalogOrderItemSchema),
   history: z.array(catalogOrderHistorySchema),
+  /** Legacy/absent on pre-Phase-0 responses: default to the pre-planning contract values. */
+  orderVersion: z.string().optional().default("0"),
+  planningRevision: z.number().optional().default(0),
+  productionSummary: productionSummaryStatusSchema.optional().default("NotRequired"),
+  estimatedReadyAt: z.string().nullable().optional().default(null),
 })
 
 export type CatalogOrder = z.infer<typeof catalogOrderSchema>
@@ -325,6 +399,26 @@ export type B2BOrderAction =
   | "ready"
   | "complete"
   | "cancel"
+
+export const catalogOrderAllocationPreviewResponseSchema = z.object({
+  isFeasible: z.boolean(),
+  orderItemId: z.string().uuid().nullable(),
+  rentalAssetId: z.string().uuid().nullable(),
+  workStart: z.string().nullable(),
+  workEnd: z.string().nullable(),
+  occupiedStart: z.string().nullable(),
+  occupiedEnd: z.string().nullable(),
+  estimatedReadyAt: z.string().nullable(),
+  conflictCode: z.string().nullable(),
+  reason: z.string().nullable(),
+})
+
+export type CatalogOrderAllocationPreview = z.infer<
+  typeof catalogOrderAllocationPreviewResponseSchema
+>
+
+export const ALLOCATION_USAGE_ACTIONS = ["start", "work-finished", "release"] as const
+export type AllocationUsageAction = (typeof ALLOCATION_USAGE_ACTIONS)[number]
 
 export function parseOptionalPrice(raw: string): number | null {
   const trimmed = raw.trim()

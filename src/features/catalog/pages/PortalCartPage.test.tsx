@@ -243,6 +243,7 @@ describe("PortalCartPage validity gate", () => {
       customerId: CUSTOMER_ID, customerName: "Ana", customerEmail: null, customerPhone: null,
       customerNote: null, totalAmount: 20, currency: "BRL", rejectedReason: null,
       cancelledReason: null, createdAt: "2026-10-18T12:00:00Z", items: [], history: [],
+      orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired", estimatedReadyAt: null,
     })
     const router = createMemoryRouter([
       { element: <Outlet context={outletContext} />, children: [{ path: "/", element: <PortalCartPage /> }] },
@@ -390,6 +391,7 @@ describe("PortalCartPage validity gate", () => {
           customerId: CUSTOMER_ID, customerName: "Ana", customerEmail: null, customerPhone: null,
           customerNote: null, totalAmount: 20, currency: "BRL", rejectedReason: null,
           cancelledReason: null, createdAt: "2026-10-18T12:00:00Z", items: [], history: [],
+          orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired", estimatedReadyAt: null,
         })
       } else {
         rejectOrder(new Error("old checkout failed"))

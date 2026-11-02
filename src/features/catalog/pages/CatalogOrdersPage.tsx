@@ -119,6 +119,20 @@ export function CatalogOrdersPage() {
         cell: ({ row }) => formatCatalogDate(row.original.createdAt, i18n.language, timeZoneId),
       },
       {
+        id: "production",
+        accessorFn: (row) => row.productionSummary,
+        header: t("catalog.resourcePlanning.productionSummary.columnTitle"),
+        enableColumnFilter: false,
+        cell: ({ row }) =>
+          row.original.productionSummary === "NotRequired" ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <span>
+              {t(`catalog.resourcePlanning.productionSummary.status.${row.original.productionSummary}`)}
+            </span>
+          ),
+      },
+      {
         id: "actions",
         enableColumnFilter: false,
         header: t("catalog.orders.columns.actions"),

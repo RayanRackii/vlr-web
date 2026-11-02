@@ -17,6 +17,7 @@ const ORDER: CatalogOrder = {
   customerId: "customer-1", customerName: "Ana", customerEmail: null, customerPhone: null,
   customerNote: null, totalAmount: 15, currency: "BRL", rejectedReason: null,
   cancelledReason: null, createdAt: "2026-10-28T12:00:00Z", items: [], history: [],
+  orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired", estimatedReadyAt: null,
 }
 
 function renderPage() {
@@ -67,8 +68,8 @@ describe("staff catalog orders presentation", () => {
 
   it("preserves on-request totals and opens the existing detail route", async () => {
     listOrdersMock.mockResolvedValue([{ ...ORDER, totalAmount: null, items: [
-      { id: "item-1", productId: "product-1", productName: "Garrafa", productCode: null, unitPrice: 15, currency: "BRL", quantity: 1, subTotal: 15 },
-      { id: "item-2", productId: "product-2", productName: "Item personalizado", productCode: null, unitPrice: null, currency: "BRL", quantity: 1, subTotal: null },
+      { id: "item-1", productId: "product-1", productName: "Garrafa", productCode: null, unitPrice: 15, currency: "BRL", quantity: 1, subTotal: 15, productionSummary: "NotRequired", allocation: null },
+      { id: "item-2", productId: "product-2", productName: "Item personalizado", productCode: null, unitPrice: null, currency: "BRL", quantity: 1, subTotal: null, productionSummary: "NotRequired", allocation: null },
     ] }])
     const user = userEvent.setup()
     renderPage()

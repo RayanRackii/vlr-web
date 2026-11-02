@@ -44,6 +44,11 @@ const STATUS_TEXT_CLASS: Record<ScheduleGridOccupancy["status"], string> = {
   unavailable: "text-muted-foreground",
 }
 
+// Buffer portions of an internal-use cell: a hatch pattern over a faint tint so the
+// prep/cleanup windows read without relying on colour alone.
+const BUFFER_HATCH =
+  "repeating-linear-gradient(135deg, color-mix(in oklab, var(--muted-foreground) 32%, transparent) 0px, color-mix(in oklab, var(--muted-foreground) 32%, transparent) 1.5px, transparent 1.5px, transparent 6px)"
+
 export type ScheduleGridCellPayload = {
   rentalAssetId: string
   assetName: string
@@ -445,7 +450,37 @@ function RowCells({
                 (isStartClosed?.(item.startTime) === true && item.status !== "booked")
               const unavailableForLeadTime =
                 isStartClosed?.(item.startTime) === true && item.status !== "booked"
-              const ariaLabel = `${asset.name}, ${timeRangeLabel}, ${statusLabel}, ${itemLabel ? `${itemLabel}, ` : ""}${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}${freeUnitsLabel ? `, ${freeUnitsLabel}` : ""}`
+              const isInternalUse = item.isInternalUseOrigin === true
+              // Internal-use cells may carry a work window; the portions before workStart and
+              // after workEnd are prep/cleanup buffers, shaded within the card.
+              const spanStart = timeToMinutes(item.startTime)
+              const spanEnd = timeToMinutes(item.endTime)
+              const spanMinutes = spanEnd - spanStart
+              const workStartMin =
+                isInternalUse && item.workStartTime ? timeToMinutes(item.workStartTime) : null
+              const workEndMin =
+                isInternalUse && item.workEndTime ? timeToMinutes(item.workEndTime) : null
+              const prepPct =
+                workStartMin !== null && spanMinutes > 0
+                  ? Math.max(0, Math.min(100, ((workStartMin - spanStart) / spanMinutes) * 100))
+                  : 0
+              const cleanupPct =
+                workEndMin !== null && spanMinutes > 0
+                  ? Math.max(0, Math.min(100, ((spanEnd - workEndMin) / spanMinutes) * 100))
+                  : 0
+              const ariaLabel = [
+                asset.name,
+                timeRangeLabel,
+                statusLabel,
+                isInternalUse ? t("rentals.schedule.occurrence.internalUse") : null,
+                itemLabel || null,
+                `${t("rentals.schedule.occupancyKindLabel")}: ${kindLabel}`,
+                freeUnitsLabel,
+                prepPct > 0 ? t("rentals.schedule.occurrence.prepBuffer") : null,
+                cleanupPct > 0 ? t("rentals.schedule.occurrence.cleanupBuffer") : null,
+              ]
+                .filter(Boolean)
+                .join(", ")
               const cardClassName = cn(
                 "absolute top-1 overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                 overlapIndex > 0 && "translate-x-2",
@@ -474,6 +509,22 @@ function RowCells({
               const singleColumn = rowHeight === SINGLE_COLUMN_ROW_HEIGHT
               const cardContent = (
                 <>
+                  {prepPct > 0 ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 top-0 rounded-t-md bg-muted-foreground/10"
+                      style={{ height: `${prepPct}%`, backgroundImage: BUFFER_HATCH }}
+                    />
+                  ) : null}
+                  {cleanupPct > 0 ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-md bg-muted-foreground/10"
+                      style={{ height: `${cleanupPct}%`, backgroundImage: BUFFER_HATCH }}
+                    />
+                  ) : null}
+                  {/* Content sits above the absolutely-positioned buffer shades. */}
+                  <span className="relative block">
                   {/* Booked cards: the occupancy kind of a derived row is the open-hours kind
                       ("Aberto"), which reads like a free slot; show the time range instead so the
                       status pill fits in a one-row (46px) card. The kind itself drops the generic
@@ -504,6 +555,11 @@ function RowCells({
                     <StatusIcon className="size-3" aria-hidden />
                     {statusLabel}
                   </span>
+                  {isInternalUse ? (
+                    <span className="ml-1 inline-flex whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground/80">
+                      {t("rentals.schedule.occurrence.internalUse")}
+                    </span>
+                  ) : null}
                   {freeUnitsLabel ? (
                     <span className="ml-1 mt-1 inline-flex whitespace-nowrap items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[11px] font-semibold text-success">
                       {freeUnitsLabel}
@@ -519,6 +575,7 @@ function RowCells({
                       {t("rentals.schedule.inactive")}
                     </span>
                   ) : null}
+                  </span>
                 </>
               )
 

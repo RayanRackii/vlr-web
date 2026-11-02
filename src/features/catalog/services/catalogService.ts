@@ -1,6 +1,6 @@
 import { catalogPolicySchema, type CatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
 import i18n from "@/lib/i18n"
-import { api, getAxiosErrorPayload } from "@/lib/api"
+import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import {
   catalogChannelConfigListSchema,
@@ -8,20 +8,26 @@ import {
   catalogFileUrlSchema,
   catalogNotificationDeliveryListSchema,
   catalogNotificationDeliverySchema,
+  catalogOrderAllocationPreviewResponseSchema,
   catalogOrderListSchema,
   catalogOrderSchema,
   catalogProductFileSchema,
   catalogProductListSchema,
+  catalogProductResourceRequirementsResponseSchema,
   catalogProductSchema,
   productRequestListSchema,
+  type AllocationUsageAction,
   type CatalogChannelConfig,
   type CatalogFileUrl,
   type CatalogFileVisibility,
   type CatalogNotificationDelivery,
   type CatalogOrder,
+  type CatalogOrderAllocationPreview,
   type CatalogOrderStatus,
   type CatalogProduct,
   type CatalogProductFile,
+  type CatalogProductResourceRequirement,
+  type CatalogProductResourceRequirementsResponse,
   type NotificationChannel,
   type NotificationDeliveryStatus,
   type ProductRequest,
@@ -49,6 +55,21 @@ function throwCatalogError(error: unknown, fallbackKey: string): never {
       getAxiosErrorPayload(error),
       i18n.t(fallbackKey),
     ),
+  )
+}
+
+/** Thrown on 409 planning_version_conflict so callers can reload instead of just toasting. */
+export class CatalogPlanningVersionConflictError extends Error {}
+
+function isPlanningVersionConflict(error: unknown): boolean {
+  if (!isAxiosError(error) || error.response?.status !== 409) {
+    return false
+  }
+  const payload = getAxiosErrorPayload(error)
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    (payload as { code?: unknown }).code === "planning_version_conflict"
   )
 }
 
@@ -199,6 +220,50 @@ export async function getCatalogProductFileUrl(
   }
 }
 
+export async function getCatalogProductResourceRequirements(
+  productId: string,
+): Promise<CatalogProductResourceRequirementsResponse> {
+  try {
+    const response = await api.get(`/api/catalog/products/${productId}/resource-requirements`)
+    return parseOrThrow(
+      catalogProductResourceRequirementsResponseSchema.safeParse(response.data),
+    )
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.resourcePlanning.errors.loadRequirements")
+  }
+}
+
+export async function replaceCatalogProductResourceRequirements(
+  productId: string,
+  body: { expectedVersion: number; requirements: CatalogProductResourceRequirement[] },
+): Promise<CatalogProductResourceRequirementsResponse> {
+  try {
+    const response = await api.put(
+      `/api/catalog/products/${productId}/resource-requirements`,
+      body,
+    )
+    return parseOrThrow(
+      catalogProductResourceRequirementsResponseSchema.safeParse(response.data),
+    )
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    if (isPlanningVersionConflict(error)) {
+      throw new CatalogPlanningVersionConflictError(
+        localizeCatalogApiError(
+          getAxiosErrorPayload(error),
+          i18n.t("catalog.resourcePlanning.errors.saveRequirements"),
+        ),
+      )
+    }
+    throwCatalogError(error, "catalog.resourcePlanning.errors.saveRequirements")
+  }
+}
+
 export async function listProductRequests(options?: { signal?: AbortSignal }): Promise<ProductRequest[]> {
   try {
     const response = await api.get("/api/catalog/product-requests", options?.signal ? { signal: options.signal } : undefined)
@@ -258,6 +323,63 @@ async function postOrderTransition(
 
 export function approveCatalogOrder(id: string): Promise<CatalogOrder> {
   return postOrderTransition(id, "approve")
+}
+
+export async function previewCatalogOrderAllocation(
+  id: string,
+  body: { unitId: string; workStarts: { orderItemId: string; workStart: string }[] },
+): Promise<CatalogOrderAllocationPreview> {
+  try {
+    const response = await api.post(`/api/catalog/orders/${id}/allocation-preview`, body)
+    return parseOrThrow(
+      catalogOrderAllocationPreviewResponseSchema.safeParse(response.data),
+    )
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.resourcePlanning.errors.previewFailed")
+  }
+}
+
+export async function approveCatalogOrderWithPlanning(
+  id: string,
+  planning: { unitId: string; workStart: string; expectedVersion: number },
+): Promise<CatalogOrder> {
+  try {
+    const response = await api.post(`/api/catalog/orders/${id}/approve`, planning)
+    return parseOrThrow(catalogOrderSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    if (isPlanningVersionConflict(error)) {
+      throw new CatalogPlanningVersionConflictError(
+        localizeCatalogApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.transitionCatalogOrder")),
+      )
+    }
+    throwCatalogError(error, "apiErrors.transitionCatalogOrder")
+  }
+}
+
+export async function applyCatalogOrderAllocationUsage(
+  orderId: string,
+  allocationId: string,
+  action: AllocationUsageAction,
+  expectedVersion: number,
+): Promise<CatalogOrder> {
+  try {
+    const response = await api.post(
+      `/api/catalog/orders/${orderId}/allocations/${allocationId}/usage`,
+      { action, expectedVersion },
+    )
+    return parseOrThrow(catalogOrderSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.resourcePlanning.errors.usageActionFailed")
+  }
 }
 
 export function startPreparingCatalogOrder(id: string): Promise<CatalogOrder> {
