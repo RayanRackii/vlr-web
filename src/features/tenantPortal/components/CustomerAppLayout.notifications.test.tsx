@@ -69,7 +69,7 @@ describe("customer portal notification bell", () => {
     renderPortal()
     const bell = await screen.findByRole("button", { name: "Notificações: 2 não lidas" })
     expect(within(bell).getByText("2")).toBeInTheDocument()
-    expect(bell).toHaveClass("min-h-[44px]", "min-w-[44px]")
+    expect(bell).toHaveClass("max-md:min-h-[44px]", "max-md:min-w-[44px]")
   })
 })
 
@@ -110,8 +110,13 @@ describe("customer notification interactions", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("notifications.inbox.markAll") }))
     expect(notifications.markAllRead).toHaveBeenCalledOnce()
     await screen.findByRole("button", { name: i18n.t("notifications.inbox.ariaLabelNone") })
-    await waitFor(() => expect(screen.queryByRole("button", { name: /Atualização disponível/ })).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText("Atualização disponível")).not.toHaveClass("font-semibold"))
+    expect(screen.getByRole("button", { name: /Atualização disponível/ })).not.toHaveClass("bg-primary/5")
+    expect(toast.success).toHaveBeenCalledWith(i18n.t("notifications.inbox.allReadSuccess"), { duration: 3500 })
     expect(screen.getByRole("button", { name: i18n.t("notifications.inbox.markAll") })).toBeDisabled()
+    await user.keyboard("{Escape}")
+    await user.click(screen.getByRole("button", { name: i18n.t("notifications.inbox.ariaLabelNone") }))
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Atualização disponível/ })).not.toBeInTheDocument())
   })
 
   it("does not navigate when marking an unowned notification returns 404", async () => {
@@ -228,13 +233,13 @@ it("clears the panel on a customer session change from another tab", async () =>
   expect(screen.queryByRole("button", { name: /Atualização disponível/ })).not.toBeInTheDocument()
 })
 
-it("requests unread notifications so older unread items remain reachable behind newer read items", async () => {
+it("requests both read and unread notifications with a limit of 20", async () => {
   const user = userEvent.setup()
   renderPortal()
   await user.click(await screen.findByRole("button", { name: "Notificações: 2 não lidas" }))
   await screen.findByRole("button", { name: /Atualização disponível/ })
   expect(notifications.listNotifications).toHaveBeenCalledWith(
-    { limit: 20, unreadOnly: true }, expect.any(AbortSignal),
+    { limit: 20, unreadOnly: false }, expect.any(AbortSignal),
   )
 })
 
@@ -286,4 +291,28 @@ it.each([
   expect(await screen.findByRole("button", { name: /Atualização disponível/ })).toBeInTheDocument()
   expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   expect(notifications.listNotifications).toHaveBeenCalledTimes(2)
+})
+
+
+it("ignores an aborted customer list request", async () => {
+  vi.mocked(notifications.listNotifications).mockRejectedValueOnce(new DOMException("Cancelled", "AbortError"))
+  const user = userEvent.setup()
+  renderPortal()
+  await user.click(await screen.findByRole("button", { name: "Notificações: 2 não lidas" }))
+  await waitFor(() => expect(notifications.listNotifications).toHaveBeenCalledOnce())
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  expect(screen.queryByText(i18n.t("notifications.inbox.loadError"))).not.toBeInTheDocument()
+})
+
+it("shows read items normally and highlights unread items", async () => {
+  vi.mocked(notifications.listNotifications).mockResolvedValue({
+    items: [item, { ...item, id: "notice-read", title: "Atualização lida", readAt: "2026-10-29T13:00:00Z" }], nextCursor: null,
+  })
+  const user = userEvent.setup()
+  renderPortal()
+  await user.click(await screen.findByRole("button", { name: "Notificações: 2 não lidas" }))
+  expect(await screen.findByRole("button", { name: /Atualização disponível/ })).toHaveClass("bg-primary/5")
+  expect(screen.getByText("Atualização disponível")).toHaveClass("font-semibold")
+  expect(screen.getByRole("button", { name: /Atualização lida/ })).not.toHaveClass("bg-primary/5")
+  expect(screen.getByText("Atualização lida")).not.toHaveClass("font-semibold")
 })

@@ -673,7 +673,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       {loadError ? <Alert variant="destructive" className="staff-catalog-error"><AlertDescription>{loadError}</AlertDescription></Alert> : null}
       <div className="staff-catalog-card" aria-busy={loading}>
         <div className="staff-catalog-toolbar">
-          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.productsSearch")} />
+          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.productsSearch")} placeholder={t("catalog.staff.productsSearchShort")} />
           <CatalogColumnFilter column={table.getColumn("isActive")!} title={t("catalog.products.columns.status")}
             options={[{ value: "true", label: t("catalog.products.active") }, { value: "false", label: t("catalog.products.inactive") }]} />
           <TaxonomyFilterHeader kind="categories" title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
