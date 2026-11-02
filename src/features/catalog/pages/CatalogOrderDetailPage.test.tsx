@@ -20,6 +20,8 @@ const order = {
   customerId: "customer-1", customerName: "Ana", customerEmail: null, customerPhone: null,
   customerNote: null, totalAmount: 15, currency: "BRL", rejectedReason: null,
   cancelledReason: null, createdAt: "2026-10-28T12:00:00Z", items: [], history: [],
+  orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired" as const,
+  estimatedReadyAt: null,
 }
 function renderDetail() {
   return render(<MemoryRouter initialEntries={["/catalogo/pedidos/order-1"]}>

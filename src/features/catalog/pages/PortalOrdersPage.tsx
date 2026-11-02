@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { portalOrderReadinessText } from "@/features/catalog/lib/portalOrderReadiness"
 import {
   formatCatalogDate,
   type CatalogOrder,
@@ -146,6 +147,12 @@ export function PortalOrdersPage() {
               (sum, item) => sum + item.quantity,
               0,
             )
+            const readiness = portalOrderReadinessText(
+              order,
+              t,
+              i18n.language,
+              timeZoneId,
+            )
             return (
               <li key={order.id}>
                 <Link
@@ -169,6 +176,11 @@ export function PortalOrdersPage() {
                       {" · "}
                       {t("tenantPortal.catalog.itemCount", { count: itemCount })}
                     </span>
+                    {readiness ? (
+                      <span className="portal-record-readiness text-sm text-muted-foreground">
+                        {readiness}
+                      </span>
+                    ) : null}
                     <span className="portal-record-foot">
                       <span className="portal-record-total">{totalLabel}</span>
                       <span className="portal-record-view">

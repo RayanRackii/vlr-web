@@ -101,6 +101,12 @@ function DaySlotSheetForm({
       ),
     [draft.occupancyKindId, kinds],
   )
+  const isInternalUse = slot?.isInternalUseOrigin === true
+  const workStart = slot?.workStartTime ?? null
+  const workEnd = slot?.workEndTime ?? null
+  const owningOrderId = slot?.owningCatalogOrderId ?? null
+  const hasPrepBuffer = Boolean(workStart) && workStart !== target.startTime
+  const hasCleanupBuffer = Boolean(workEnd) && workEnd !== target.endTime
   const isBooked = slot?.status === "Booked" || Boolean(slot?.reservationId)
   const isUnavailable = slot?.status === "Cancelled"
   const isOverride = slot?.source === "DailyOverride"
@@ -152,7 +158,51 @@ function DaySlotSheetForm({
             ) : null}
           </div>
 
-          {isBooked ? (
+          {isInternalUse ? (
+            <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">{t("rentals.schedule.occurrence.internalUse")}</p>
+              {workStart && workEnd ? (
+                <p className="text-muted-foreground">
+                  {t("rentals.schedule.occurrence.workWindow")}:{" "}
+                  <span className="tabular-nums text-foreground">
+                    {formatScheduleTime(workStart)}–{formatScheduleTime(workEnd)}
+                  </span>
+                </p>
+              ) : null}
+              {hasPrepBuffer || hasCleanupBuffer ? (
+                <ul className="space-y-1 text-muted-foreground">
+                  {hasPrepBuffer ? (
+                    <li>
+                      {t("rentals.schedule.occurrence.prepBuffer")}:{" "}
+                      <span className="tabular-nums">
+                        {formatScheduleTime(target.startTime)}–{formatScheduleTime(workStart!)}
+                      </span>
+                    </li>
+                  ) : null}
+                  {hasCleanupBuffer ? (
+                    <li>
+                      {t("rentals.schedule.occurrence.cleanupBuffer")}:{" "}
+                      <span className="tabular-nums">
+                        {formatScheduleTime(workEnd!)}–{formatScheduleTime(target.endTime)}
+                      </span>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
+              {owningOrderId ? (
+                <Link
+                  to={`/catalogo/pedidos/${owningOrderId}`}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  {t("rentals.schedule.occurrence.viewOrder")}
+                </Link>
+              ) : (
+                <p className="text-muted-foreground">
+                  {t("rentals.schedule.occurrence.linkedToOrder")}
+                </p>
+              )}
+            </div>
+          ) : isBooked ? (
             <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
               <p className="font-medium">{t("rentals.schedule.occurrence.bookedTitle")}</p>
               <p>{t("rentals.schedule.occurrence.bookedDescription")}</p>
@@ -290,7 +340,7 @@ function DaySlotSheetForm({
         </div>
 
         <SheetFooter>
-          {isBooked ? (
+          {isBooked || isInternalUse ? (
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.close")}
             </Button>
