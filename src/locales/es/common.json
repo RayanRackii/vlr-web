@@ -1067,6 +1067,7 @@
       "errors": {
         "loadRequirements": "No se pudieron cargar los recursos de este producto.",
         "saveRequirements": "No se pudieron guardar los recursos de este producto.",
+        "singleRequirementOnly": "En esta versión, cada producto acepta solo un recurso necesario.",
         "resourceRequired": "Selecciona un recurso específico para cada fila.",
         "resourceUnavailable": "El recurso seleccionado no está disponible en ese horario.",
         "planningVersionConflict": "Este pedido fue actualizado por otra persona. La página se recargará.",

@@ -99,4 +99,28 @@ describe("CatalogProductResourceRequirements", () => {
     )
     await waitFor(() => expect(getCatalogProductResourceRequirements).toHaveBeenCalledTimes(2))
   })
+
+  it("shows the save error inline in the form when the API refuses the requirements", async () => {
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({
+      expectedVersion: 1,
+      requirements: [
+        {
+          id: null,
+          rentalAssetId: RESOURCE.id,
+          assetCategoryId: null,
+          resourceQuantity: 1,
+          durationMinutesPerUnit: 60,
+          prepMinutes: 0,
+          cleanupMinutes: 0,
+        },
+      ],
+    })
+    const message = i18n.t("catalog.resourcePlanning.errors.singleRequirementOnly")
+    vi.mocked(replaceCatalogProductResourceRequirements).mockRejectedValue(new Error(message))
+    const user = userEvent.setup()
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    expect(toast.error).toHaveBeenCalledWith(message)
+  })
 })
