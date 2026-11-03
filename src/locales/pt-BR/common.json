@@ -1189,6 +1189,30 @@
         "close": "Fechar",
         "empty": "Selecione um bloco para ver os detalhes."
       }
+    },
+    "todayAgenda": {
+      "title": "Agenda de hoje",
+      "subtitle": "{{date}} · recursos e produtos",
+      "viewAll": "Ver agenda",
+      "rowLink": "Ver agenda",
+      "seeAll": "Ver todos",
+      "empty": "Nada agendado para hoje.",
+      "reserved": "Reservado",
+      "status": {
+        "inUse": "Em uso",
+        "prep": "Preparo",
+        "cleaning": "Limpeza",
+        "overdue": "Atrasado",
+        "free": "Livre"
+      },
+      "sub": {
+        "inUse": "Agora: {{ref}} · até {{time}}",
+        "prep": "Preparo: {{ref}} · início {{time}}",
+        "cleaning": "Limpeza: {{ref}} · até {{time}}",
+        "overdue": "Atraso {{minutes}} min",
+        "freeNext": "Próximo: {{ref}} · {{time}}",
+        "freeNone": "Sem uso hoje"
+      }
     }
   },
   "notifications": {

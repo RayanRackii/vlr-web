@@ -1189,6 +1189,30 @@
         "close": "Close",
         "empty": "Select a block to see the details."
       }
+    },
+    "todayAgenda": {
+      "title": "Today's agenda",
+      "subtitle": "{{date}} · resources and products",
+      "viewAll": "View agenda",
+      "rowLink": "View agenda",
+      "seeAll": "View all",
+      "empty": "Nothing scheduled for today.",
+      "reserved": "Reserved",
+      "status": {
+        "inUse": "In use",
+        "prep": "Prep",
+        "cleaning": "Cleaning",
+        "overdue": "Overdue",
+        "free": "Free"
+      },
+      "sub": {
+        "inUse": "Now: {{ref}} · until {{time}}",
+        "prep": "Prep: {{ref}} · starts {{time}}",
+        "cleaning": "Cleaning: {{ref}} · until {{time}}",
+        "overdue": "{{minutes}} min late",
+        "freeNext": "Next: {{ref}} · {{time}}",
+        "freeNone": "No use today"
+      }
     }
   },
   "notifications": {

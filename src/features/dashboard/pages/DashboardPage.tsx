@@ -16,6 +16,7 @@ import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianD
 import { DashboardHero, DashboardQuickAccess, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
 import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts"
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
+import { TodayAgendaCard } from "@/features/catalog/components/agenda/TodayAgendaCard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
 import { hasSlotsToday, reservationsTodayTotal } from "@/features/dashboard/pages/dashboardMetrics"
@@ -202,6 +203,7 @@ export function TenantAdminDashboard() {
     <div aria-busy={isLoading} className="staff-dashboard">
       <DashboardHero metrics={visibleMetrics} />
       <div className="staff-dashboard-readiness"><RentalsReadinessCard /></div>
+      <div className="staff-dashboard-today-agenda"><TodayAgendaCard /></div>
 
       {loadError !== null ? (
         <Alert variant="destructive"><AlertDescription>{loadError}</AlertDescription></Alert>
