@@ -976,6 +976,7 @@
       "subtitle": "Approve, prepare, and complete customer orders.",
       "empty": "No orders.",
       "view": "View",
+      "views": { "list": "List", "agenda": "Agenda" },
       "total": "Total",
       "items": "Items",
       "timeline": "History",

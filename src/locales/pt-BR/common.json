@@ -976,6 +976,7 @@
       "subtitle": "Aprove, prepare e conclua pedidos dos clientes.",
       "empty": "Nenhum pedido.",
       "view": "Ver",
+      "views": { "list": "Lista", "agenda": "Agenda" },
       "total": "Total",
       "items": "Itens",
       "timeline": "Histórico",
