@@ -1,6 +1,7 @@
+import { z } from "zod"
 import i18n from "@/lib/i18n"
 import { customerApi } from "@/lib/api"
-import { markReadResponseSchema, notificationListSchema, notificationSummarySchema } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
+import { markReadResponseSchema, notificationItemSchema, notificationListSchema, notificationSummarySchema } from "@/features/notifications-inbox/schemas/notificationInboxSchemas"
 
 import type { ListNotificationsParams } from "@/features/notifications-inbox/services/notificationInboxService"
 
@@ -18,9 +19,15 @@ export async function listNotifications(
   signal?: AbortSignal,
 ) {
   const response = await customerApi.get(PATH, { params, signal })
-  const parsed = notificationListSchema.safeParse(response.data)
+  const parsed = notificationListSchema.extend({ items: z.array(z.unknown()) }).safeParse(response.data)
   if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidResponse"))
-  return parsed.data
+  return {
+    ...parsed.data,
+    items: parsed.data.items.flatMap((item) => {
+      const result = notificationItemSchema.safeParse(item)
+      return result.success ? [result.data] : []
+    }),
+  }
 }
 
 export async function markIdsRead(ids: string[]) {

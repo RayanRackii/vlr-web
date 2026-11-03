@@ -44,7 +44,7 @@ describe("CatalogProductImageGallery", () => {
       <CatalogProductImageGallery images={[]} alt="Cadeira" />,
     )
 
-    expect(screen.queryByRole("img")).not.toBeInTheDocument()
+    expect(screen.queryByRole("img", { name: "Cadeira" })).not.toBeInTheDocument()
     expect(container).toBeEmptyDOMElement()
   })
 
@@ -125,15 +125,15 @@ describe("CatalogProductImageGallery", () => {
     fireEvent.error(screen.getByRole("img"))
 
     expect(
-      screen.getByText("Não foi possível carregar a imagem"),
+      screen.getByRole("img", { name: "Sem imagem" }),
     ).toBeInTheDocument()
-    expect(screen.queryByRole("img")).not.toBeInTheDocument()
+    expect(screen.queryByRole("img", { name: "Cadeira" })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Próxima imagem" }))
 
     expect(screen.getByRole("img")).toHaveAttribute("src", second.url)
     expect(
-      screen.queryByText("Não foi possível carregar a imagem"),
+      screen.queryByRole("img", { name: "Sem imagem" }),
     ).not.toBeInTheDocument()
   })
 

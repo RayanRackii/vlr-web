@@ -13,6 +13,7 @@ import { PortalStatusChip } from "@/features/catalog/components/PortalStatusChip
 import { PortalOrderSuccess } from "@/features/catalog/components/PortalOrderFeedback"
 import { PortalOrderStepper } from "@/features/catalog/components/PortalOrderStepper"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { portalOrderReadinessText } from "@/features/catalog/lib/portalOrderReadiness"
 import { catalogOrderStatusTone } from "@/features/catalog/lib/catalogStatusBadge"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
@@ -178,6 +179,8 @@ export function PortalOrderDetailPage() {
     partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
   })
 
+  const readiness = portalOrderReadinessText(order, t, i18n.language, timeZoneId)
+
   function trackOrder() {
     const tracking = document.getElementById("portal-order-tracking")
     tracking?.focus({ preventScroll: true })
@@ -263,6 +266,11 @@ export function PortalOrderDetailPage() {
         <h2 id="portal-order-tracking-title" className="portal-record-section-title">
           {t("tenantPortal.catalog.purchase.trackingTitle")}
         </h2>
+        {readiness ? (
+          <p className="portal-order-readiness text-sm font-medium tabular-nums">
+            {readiness}
+          </p>
+        ) : null}
         <PortalOrderStepper order={order} />
       </section>
     </div>

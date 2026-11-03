@@ -119,6 +119,20 @@ export function CatalogOrdersPage() {
         cell: ({ row }) => formatCatalogDate(row.original.createdAt, i18n.language, timeZoneId),
       },
       {
+        id: "production",
+        accessorFn: (row) => row.productionSummary,
+        header: t("catalog.resourcePlanning.productionSummary.columnTitle"),
+        enableColumnFilter: false,
+        cell: ({ row }) =>
+          row.original.productionSummary === "NotRequired" ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <span>
+              {t(`catalog.resourcePlanning.productionSummary.status.${row.original.productionSummary}`)}
+            </span>
+          ),
+      },
+      {
         id: "actions",
         enableColumnFilter: false,
         header: t("catalog.orders.columns.actions"),
@@ -179,7 +193,7 @@ export function CatalogOrdersPage() {
 
       <div className="staff-catalog-card" aria-busy={loading}>
         <div className="staff-catalog-toolbar">
-          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.ordersSearch")} />
+          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.ordersSearch")} placeholder={t("catalog.staff.ordersSearchShort")} />
           <CatalogColumnFilter column={table.getColumn("status")!} title={t("catalog.orders.columns.status")}
             options={Object.keys(STAFF_ORDER_STATUS_TONE).map((status) => ({ value: status, label: t(`catalog.status.${status}`) }))} />
           <CatalogColumnFilter column={table.getColumn("total")!} title={t("catalog.orders.columns.total")} />

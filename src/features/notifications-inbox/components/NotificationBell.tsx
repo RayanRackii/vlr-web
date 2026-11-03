@@ -133,13 +133,17 @@ export function NotificationBell({
   }
 
   function handleMarkAll() {
-    void service.markAllRead()
+    return service.markAllRead()
       .then(() => {
-        if (!mounted.current || !isCurrentSession()) return
+        if (!mounted.current || !isCurrentSession()) return false
         refetch()
-        if (!showGroups) toast.success(t("notifications.inbox.allReadSuccess"))
+        if (!showGroups) toast.success(t("notifications.inbox.allReadSuccess"), { duration: 3500 })
+        return true
       })
-      .catch(handleReadError)
+      .catch((error: unknown) => {
+        handleReadError(error)
+        return false
+      })
   }
 
   const ariaLabel =

@@ -1,5 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Package } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -179,8 +179,8 @@ export function CatalogProductImageGallery({
         {wrapGalleryMedia(
           imageLinkTo,
           isBroken ? (
-            <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-muted-foreground">
-              {t("catalog.products.gallery.broken")}
+            <div role="img" aria-label={t("tenantPortal.catalog.noImage")} className="portal-catalog-placeholder h-full w-full">
+              <Package aria-hidden="true" />
             </div>
           ) : (
             <img

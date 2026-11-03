@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
-import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
+import {
+  formatCatalogDate,
+  type CatalogOrder,
+} from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
 
@@ -44,6 +47,10 @@ const mixedOrder: CatalogOrder = {
   rejectedReason: null,
   cancelledReason: null,
   createdAt: "2026-10-18T12:00:00.000Z",
+  orderVersion: "0",
+  planningRevision: 0,
+  productionSummary: "NotRequired",
+  estimatedReadyAt: null,
   items: [
     {
       id: "33333333-3333-4333-8333-333333333333",
@@ -54,6 +61,8 @@ const mixedOrder: CatalogOrder = {
       currency: "BRL",
       quantity: 1,
       subTotal: 15,
+      productionSummary: "NotRequired",
+      allocation: null,
     },
     {
       id: "55555555-5555-4555-8555-555555555555",
@@ -64,6 +73,8 @@ const mixedOrder: CatalogOrder = {
       currency: "BRL",
       quantity: 1,
       subTotal: null,
+      productionSummary: "NotRequired",
+      allocation: null,
     },
   ],
   history: [],
@@ -136,5 +147,53 @@ describe("PortalOrdersPage", () => {
     expect(screen.getByText(i18n.t("emptyStates.examples.portalOrders"))).toBeVisible()
     expect(screen.getByRole("status")).toHaveClass("portal-empty")
     expect(screen.queryByRole("link", { name: i18n.t("emptyStates.learnMore") })).not.toBeInTheDocument()
+  })
+
+  it("shows the ready-for-pickup date on the tenant time zone", async () => {
+    const readyAt = "2026-11-02T14:15:00.000Z"
+    listOrdersMock.mockResolvedValue([
+      { ...mixedOrder, productionSummary: "Scheduled", estimatedReadyAt: readyAt },
+    ])
+    renderList()
+
+    const expected = formatCatalogDate(readyAt, i18n.language, "America/Sao_Paulo")
+    expect(
+      await screen.findByText(`Pronto para retirada: ${expected}`),
+    ).toBeInTheDocument()
+  })
+
+  it("shows an estimate-to-confirm note when scheduling has no ready time yet", async () => {
+    listOrdersMock.mockResolvedValue([
+      { ...mixedOrder, productionSummary: "Unscheduled", estimatedReadyAt: null },
+    ])
+    renderList()
+
+    expect(await screen.findByText("Previsão a confirmar")).toBeInTheDocument()
+  })
+
+  it("shows a vague delay notice with no date for a blocked order", async () => {
+    const readyAt = "2026-11-02T14:15:00.000Z"
+    listOrdersMock.mockResolvedValue([
+      { ...mixedOrder, productionSummary: "Blocked", estimatedReadyAt: readyAt },
+    ])
+    renderList()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.catalog.readiness.delayed")),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Pronto para retirada/)).not.toBeInTheDocument()
+    const readyText = formatCatalogDate(readyAt, i18n.language, "America/Sao_Paulo")
+    expect(screen.queryByText(new RegExp(readyText))).not.toBeInTheDocument()
+  })
+
+  it("shows no readiness line when production is not required", async () => {
+    renderList()
+
+    await screen.findByText("R$ 15,00 · Sob consulta")
+    expect(screen.queryByText(/Pronto para retirada/)).not.toBeInTheDocument()
+    expect(screen.queryByText("Previsão a confirmar")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.catalog.readiness.delayed")),
+    ).not.toBeInTheDocument()
   })
 })

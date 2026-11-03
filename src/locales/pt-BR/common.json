@@ -40,7 +40,8 @@
       "saving": "Salvando…",
       "saved": "Salvo",
       "error": "Erro ao salvar"
-    }
+    },
+    "remove": "Remover"
   },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
@@ -754,6 +755,11 @@
           "Rejected": "Não foi possível atender ao pedido. Consulte os detalhes no histórico."
         }
       },
+      "readiness": {
+        "readyAt": "Pronto para retirada: {{date}}",
+        "toConfirm": "Previsão a confirmar",
+        "delayed": "Seu pedido está levando um pouco mais de tempo que o esperado. Avisaremos assim que houver novidades."
+      },
       "requestCta": "Solicitar produto",
       "requestTitle": "Solicitar produto",
       "requestSubtitle": "Descreva o que você precisa. Depois de enviar, a solicitação fica em Minhas solicitações.",
@@ -812,6 +818,8 @@
   "catalog": {
     "staff": {
       "allStatuses": "Todos os status",
+      "productsSearchShort": "Buscar produto",
+      "ordersSearchShort": "Buscar pedido",
       "productsSearch": "Buscar por nome ou código",
       "ordersSearch": "Buscar por número ou cliente",
       "loading": "Carregando vendas…",
@@ -1037,6 +1045,83 @@
       "loadError": "Não foi possível carregar a política do catálogo.",
       "saveError": "Não foi possível salvar a política do catálogo.",
       "readOnly": "Sem permissão para alterar a política do catálogo."
+    },
+    "resourcePlanning": {
+      "title": "Recursos necessários",
+      "description": "Defina quais recursos específicos este produto consome ao ser produzido, e por quanto tempo.",
+      "loading": "Carregando recursos...",
+      "emptyState": "Não exige agendamento",
+      "addRequirement": "Adicionar recurso",
+      "save": "Salvar recursos",
+      "toastSaved": "Recursos salvos com sucesso.",
+      "requirementLabel": "Recurso {{index}}",
+      "calculationHint": "Cada unidade ocupa o recurso por {{duration}} min, além do preparo e da limpeza.",
+      "fields": {
+        "resource": "Recurso",
+        "resourcePlaceholder": "Selecione um recurso",
+        "resourceQuantity": "Quantidade",
+        "durationMinutesPerUnit": "Duração por unidade (min)",
+        "prepMinutes": "Preparo (min)",
+        "cleanupMinutes": "Limpeza (min)"
+      },
+      "errors": {
+        "loadRequirements": "Não foi possível carregar os recursos deste produto.",
+        "saveRequirements": "Não foi possível salvar os recursos deste produto.",
+        "singleRequirementOnly": "Nesta versão, cada produto aceita apenas um recurso necessário.",
+        "resourceRequired": "Selecione um recurso específico para cada linha.",
+        "resourceUnavailable": "O recurso selecionado não está disponível nesse horário.",
+        "planningVersionConflict": "Este pedido foi atualizado por outra pessoa. A página será recarregada.",
+        "unsupportedWorkWindow": "O horário escolhido não é suportado para este agendamento.",
+        "notSupportedYet": "Agendamento por categoria ainda não é suportado; selecione um recurso específico.",
+        "previewFailed": "Não foi possível pré-visualizar o agendamento.",
+        "usageActionFailed": "Não foi possível atualizar o uso do recurso."
+      },
+      "approvalPanel": {
+        "title": "Aprovar e agendar",
+        "previewHint": "Escolha a unidade e o horário de início para verificar a disponibilidade antes de aprovar.",
+        "unit": "Unidade",
+        "unitPlaceholder": "Selecione uma unidade",
+        "workStart": "Início do trabalho",
+        "preview": "Pré-visualizar",
+        "workWindow": "Janela de trabalho",
+        "occupiedWindow": "Janela ocupada",
+        "estimatedReadyAt": "Previsão de conclusão",
+        "notFeasible": "Esse horário não é viável para o recurso selecionado.",
+        "approveAndAllocate": "Aprovar e alocar",
+        "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
+        "toastApproved": "Pedido aprovado e recurso alocado."
+      },
+      "activeUse": {
+        "title": "Uso do recurso",
+        "status": "Status",
+        "workWindow": "Janela de trabalho",
+        "start": "Iniciar",
+        "workFinished": "Concluir trabalho",
+        "release": "Liberar",
+        "cancelledHint": "Este pedido foi cancelado; finalize ou libere o recurso conforme necessário.",
+        "toastUpdated": "Uso do recurso atualizado."
+      },
+      "allocationStatus": {
+        "Scheduled": "Agendado",
+        "Running": "Em andamento",
+        "Cleaning": "Em limpeza",
+        "Released": "Liberado",
+        "Cancelled": "Cancelado"
+      },
+      "productionSummary": {
+        "title": "Produção",
+        "columnTitle": "Produção",
+        "estimatedReadyAt": "Previsão de conclusão",
+        "status": {
+          "NotRequired": "Não exige agendamento",
+          "Unscheduled": "Não agendado",
+          "Scheduled": "Agendado",
+          "InProgress": "Em andamento",
+          "Done": "Concluído",
+          "Blocked": "Bloqueado",
+          "Cancelled": "Cancelado"
+        }
+      }
     }
   },
   "notifications": {
@@ -4102,7 +4187,13 @@
         "source": {
           "weeklyDefault": "Padrão semanal",
           "dailyOverride": "Ajuste deste dia"
-        }
+        },
+        "internalUse": "Uso interno",
+        "workWindow": "Janela de trabalho",
+        "prepBuffer": "Preparação",
+        "cleanupBuffer": "Limpeza",
+        "viewOrder": "Ver pedido",
+        "linkedToOrder": "Vinculado a um pedido"
       },
       "policy": {
         "title": "Configuração dos horários",

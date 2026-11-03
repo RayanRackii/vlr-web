@@ -53,15 +53,16 @@ export function CatalogHeading({ title, description, actions }: {
   )
 }
 
-export function CatalogSearch({ value, onChange, label }: {
+export function CatalogSearch({ value, onChange, label, placeholder }: {
   value: string
   onChange: (value: string) => void
   label: string
+  placeholder: string
 }) {
   return (
     <label className="staff-catalog-search">
       <Search size={20} aria-hidden="true" />
-      <Input type="search" aria-label={label} placeholder={label} value={value}
+      <Input type="search" aria-label={label} title={label} placeholder={placeholder} className="min-w-0 placeholder:text-ellipsis" value={value}
         onChange={(event) => onChange(event.target.value)} />
     </label>
   )

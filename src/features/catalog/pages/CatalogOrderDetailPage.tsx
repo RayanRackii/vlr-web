@@ -32,6 +32,7 @@ import {
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { CatalogOrderAllocationPanel } from "@/features/catalog/components/CatalogOrderAllocationPanel"
 import { Can } from "@/features/users/permissions/Can"
 import {
   B2B_ORDER_ACTIONS,
@@ -212,6 +213,9 @@ export function CatalogOrderDetailPage() {
     )
   }
 
+  const needsResourceApproval = order.items.some(
+    (item) => item.productionSummary === "Unscheduled",
+  )
   const actions = B2B_ORDER_ACTIONS[order.status]
   const totalLabel = formatOrderTotalText(order, i18n.language, {
     onRequest: t("catalog.priceOnRequest"),
@@ -254,7 +258,7 @@ export function CatalogOrderDetailPage() {
       <Can permission="catalog.orders.manage">
         {actions.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {actions.includes("approve") ? (
+            {actions.includes("approve") && !needsResourceApproval ? (
               <LoadingButton
                 type="button"
                 className="touch-target"
@@ -364,6 +368,33 @@ export function CatalogOrderDetailPage() {
           </p>
         ) : null}
       </section>
+
+      {order.productionSummary !== "NotRequired" ? (
+        <section className="min-w-0 space-y-2 rounded-xl border border-border bg-card p-4 sm:p-6">
+          <h2 className="text-sm font-medium">{t("catalog.resourcePlanning.productionSummary.title")}</h2>
+          <p className="text-sm">
+            {t(`catalog.resourcePlanning.productionSummary.status.${order.productionSummary}`)}
+          </p>
+          {order.estimatedReadyAt ? (
+            <p className="text-sm tabular-nums">
+              <span className="text-muted-foreground">
+                {t("catalog.resourcePlanning.productionSummary.estimatedReadyAt")}:{" "}
+              </span>
+              {formatCatalogDate(order.estimatedReadyAt, i18n.language, timeZoneId)}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      <Can permission="catalog.orders.read">
+        <CatalogOrderAllocationPanel
+          order={order}
+          onOrderChange={setOrder}
+          onReloadNeeded={() => {
+            void load()
+          }}
+        />
+      </Can>
 
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.items")}</h2>

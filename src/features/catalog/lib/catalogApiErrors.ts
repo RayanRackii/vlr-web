@@ -29,6 +29,10 @@ const CODE_KEYS: Record<string, string> = {
   FILE_TOO_LARGE: "catalog.products.files.tooLarge",
   FILE_TYPE_NOT_ALLOWED: "catalog.products.files.typeRejected",
   FILE_CONTENT_MISMATCH: "catalog.products.files.contentMismatch",
+  resource_unavailable: "catalog.resourcePlanning.errors.resourceUnavailable",
+  planning_version_conflict: "catalog.resourcePlanning.errors.planningVersionConflict",
+  unsupported_work_window: "catalog.resourcePlanning.errors.unsupportedWorkWindow",
+  not_supported_yet: "catalog.resourcePlanning.errors.notSupportedYet",
 }
 
 export function localizeCatalogApiError(

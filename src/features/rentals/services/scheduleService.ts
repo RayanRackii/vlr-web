@@ -86,6 +86,13 @@ const scheduleSlotSchema = z.object({
   /** Staff day view only: reservation item quantity on this resource. */
   quantity: z.number().int().nullable().optional(),
   customerName: z.string().nullable().optional(),
+  /** Set when this cell exists because a catalog order reserved the resource for internal use. */
+  isInternalUseOrigin: z.boolean().optional(),
+  /** Catalog order behind an internal-use cell; null when the viewer lacks catalog.orders.read. */
+  owningCatalogOrderId: z.string().uuid().nullable().optional(),
+  /** Internal-use cells only: work window ("HH:mm:ss" local). [slot start, workStart) = prep, [workEnd, slot end) = cleanup. */
+  workStartTime: z.string().nullable().optional(),
+  workEndTime: z.string().nullable().optional(),
 })
 
 const dayScheduleSchema = z.object({

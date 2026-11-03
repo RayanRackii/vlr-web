@@ -57,6 +57,13 @@ export type ScheduleGridOccupancy = {
   unitsFree?: number | null
   /** The raw bookings this aggregated occupancy represents, for drilling into one of them. */
   members?: ScheduleGridOccupancy[] | null
+  /** Staff-only: this cell was created by a catalog order reserving the resource for internal use. */
+  isInternalUseOrigin?: boolean | null
+  /** Catalog order behind an internal-use cell; null when the viewer lacks catalog.orders.read. */
+  owningCatalogOrderId?: string | null
+  /** Internal-use cells only: work window ("HH:mm:ss"). Prep = [startTime, workStartTime); cleanup = [workEndTime, endTime). */
+  workStartTime?: string | null
+  workEndTime?: string | null
 }
 
 export function timeToMinutes(value: string): number {
@@ -136,12 +143,17 @@ export function occupancyFromDaySlot(slot: AdminDaySlot): ScheduleGridOccupancy 
     occupancyKindLabel: slot.occupancyKindLabel,
     occupancyKindKey: slot.occupancyKindKey,
     occupancyKindColorHex: slot.occupancyKindColorHex,
-    label: slot.label ?? bookingSummary(slot),
+    // Internal-use cells never expose a customer name; the grid shows a generic badge instead.
+    label: slot.isInternalUseOrigin ? null : (slot.label ?? bookingSummary(slot)),
     reservationId: slot.reservationId,
     quantity: slot.quantity ?? null,
-    customerName: slot.customerName ?? null,
+    customerName: slot.isInternalUseOrigin ? null : (slot.customerName ?? null),
     status: slotStatus(slot),
     badge: slot.source === "DailyOverride" ? "dailyOverride" : null,
+    isInternalUseOrigin: slot.isInternalUseOrigin ?? false,
+    owningCatalogOrderId: slot.owningCatalogOrderId ?? null,
+    workStartTime: slot.workStartTime ?? null,
+    workEndTime: slot.workEndTime ?? null,
   }
 }
 

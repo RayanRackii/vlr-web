@@ -40,7 +40,8 @@
       "saving": "Saving…",
       "saved": "Saved",
       "error": "Error saving"
-    }
+    },
+    "remove": "Remove"
   },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
@@ -754,6 +755,11 @@
           "Rejected": "We couldn’t fulfill this order. See the history for details."
         }
       },
+      "readiness": {
+        "readyAt": "Ready for pickup: {{date}}",
+        "toConfirm": "Estimated ready time to be confirmed",
+        "delayed": "Your order is taking a little longer than expected. We will update you as soon as there is news."
+      },
       "requestCta": "Request a product",
       "requestTitle": "Request a product",
       "requestSubtitle": "Describe what you need. After you submit, the request is listed in My requests.",
@@ -812,6 +818,8 @@
   "catalog": {
     "staff": {
       "allStatuses": "All statuses",
+      "productsSearchShort": "Search products",
+      "ordersSearchShort": "Search orders",
       "productsSearch": "Search by name or code",
       "ordersSearch": "Search by number or customer",
       "loading": "Loading sales…",
@@ -1037,6 +1045,83 @@
       "loadError": "Could not load the catalog policy.",
       "saveError": "Could not save the catalog policy.",
       "readOnly": "You do not have permission to change the catalog policy."
+    },
+    "resourcePlanning": {
+      "title": "Required resources",
+      "description": "Define which specific resources this product consumes when produced, and for how long.",
+      "loading": "Loading resources...",
+      "emptyState": "Does not require scheduling",
+      "addRequirement": "Add resource",
+      "save": "Save resources",
+      "toastSaved": "Resources saved successfully.",
+      "requirementLabel": "Resource {{index}}",
+      "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
+      "fields": {
+        "resource": "Resource",
+        "resourcePlaceholder": "Select a resource",
+        "resourceQuantity": "Quantity",
+        "durationMinutesPerUnit": "Duration per unit (min)",
+        "prepMinutes": "Prep (min)",
+        "cleanupMinutes": "Cleanup (min)"
+      },
+      "errors": {
+        "loadRequirements": "Could not load this product's resources.",
+        "saveRequirements": "Could not save this product's resources.",
+        "singleRequirementOnly": "In this version, each product accepts only one required resource.",
+        "resourceRequired": "Select a specific resource for each row.",
+        "resourceUnavailable": "The selected resource is not available at that time.",
+        "planningVersionConflict": "This order was updated by someone else. The page will reload.",
+        "unsupportedWorkWindow": "The chosen time is not supported for this scheduling.",
+        "notSupportedYet": "Scheduling by category is not supported yet; select a specific resource.",
+        "previewFailed": "Could not preview the scheduling.",
+        "usageActionFailed": "Could not update the resource usage."
+      },
+      "approvalPanel": {
+        "title": "Approve and schedule",
+        "previewHint": "Choose the unit and the start time to check availability before approving.",
+        "unit": "Unit",
+        "unitPlaceholder": "Select a unit",
+        "workStart": "Work start",
+        "preview": "Preview",
+        "workWindow": "Work window",
+        "occupiedWindow": "Occupied window",
+        "estimatedReadyAt": "Estimated ready at",
+        "notFeasible": "That time is not feasible for the selected resource.",
+        "approveAndAllocate": "Approve and allocate",
+        "approvalRule": "Approving reserves the resource for the order at that time.",
+        "toastApproved": "Order approved and resource allocated."
+      },
+      "activeUse": {
+        "title": "Resource usage",
+        "status": "Status",
+        "workWindow": "Work window",
+        "start": "Start",
+        "workFinished": "Finish work",
+        "release": "Release",
+        "cancelledHint": "This order was cancelled; finish or release the resource as needed.",
+        "toastUpdated": "Resource usage updated."
+      },
+      "allocationStatus": {
+        "Scheduled": "Scheduled",
+        "Running": "Running",
+        "Cleaning": "Cleaning",
+        "Released": "Released",
+        "Cancelled": "Cancelled"
+      },
+      "productionSummary": {
+        "title": "Production",
+        "columnTitle": "Production",
+        "estimatedReadyAt": "Estimated ready at",
+        "status": {
+          "NotRequired": "Does not require scheduling",
+          "Unscheduled": "Unscheduled",
+          "Scheduled": "Scheduled",
+          "InProgress": "In progress",
+          "Done": "Done",
+          "Blocked": "Blocked",
+          "Cancelled": "Cancelled"
+        }
+      }
     }
   },
   "notifications": {
@@ -4102,7 +4187,13 @@
         "source": {
           "weeklyDefault": "Weekly default",
           "dailyOverride": "This day’s adjustment"
-        }
+        },
+        "internalUse": "Internal use",
+        "workWindow": "Work window",
+        "prepBuffer": "Prep",
+        "cleanupBuffer": "Cleanup",
+        "viewOrder": "View order",
+        "linkedToOrder": "Linked to an order"
       },
       "policy": {
         "title": "Schedule setup",

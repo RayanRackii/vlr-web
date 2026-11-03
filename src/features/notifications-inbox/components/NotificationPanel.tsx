@@ -26,7 +26,7 @@ export type NotificationPanelProps = {
   groups: NotificationSummaryGroup[]
   onSelectGroup: (group: NotificationSummaryGroup) => void
   onSelectItem: (item: NotificationItem) => void
-  onMarkAll: () => void
+  onMarkAll: () => Promise<boolean>
   /** Load the optional "recentes" list when the panel is visible. */
   loadRecent: boolean
   service?: NotificationInboxService
@@ -74,14 +74,19 @@ export function NotificationPanel({
     }
     let active = true
     const controller = new AbortController()
-    void service.listNotifications(showGroups ? { limit: 20 } : { limit: 20, unreadOnly: true }, controller.signal)
+    void service.listNotifications(showGroups ? { limit: 20 } : { limit: 20, unreadOnly: false }, controller.signal)
       .then((list) => {
         if (active) {
-          setRecent(list.items)
+          setRecent((previous) => {
+            if (showGroups || previous === null) return list.items
+            const ids = new Set(list.items.map((item) => item.id))
+            return [...list.items, ...previous.filter((item) => !ids.has(item.id))].slice(0, 20)
+          })
           setRecentStatus("settled")
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return
         if (active) {
           setRecentStatus("error")
         }
@@ -93,8 +98,8 @@ export function NotificationPanel({
   }, [loadRecent, service, recentVersion, showGroups, recentRetry])
 
   const recentToShow = useMemo(
-    () => (recent ?? []).filter((item) => item.readAt === null),
-    [recent],
+    () => showGroups ? (recent ?? []).filter((item) => item.readAt === null) : (recent ?? []),
+    [recent, showGroups],
   )
 
   return (
@@ -108,7 +113,12 @@ export function NotificationPanel({
           variant="ghost"
           size="xs"
           className={cn(!showGroups && "min-h-[44px]")}
-          onClick={onMarkAll}
+          onClick={() => {
+            void onMarkAll().then((success) => {
+              if (!success || showGroups) return
+              setRecent((items) => items?.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() })) ?? null)
+            })
+          }}
           disabled={unreadTotal === 0}
         >
           <CheckCheck strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
@@ -187,9 +197,11 @@ export function NotificationPanel({
                     className={cn(
                       "flex min-h-11 w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left",
                       "outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+                      !showGroups && item.readAt === null && "bg-primary/5",
                     )}
                   >
-                    <span className="line-clamp-2 break-words text-sm text-foreground">
+                    <span className={cn("line-clamp-2 break-words text-sm text-foreground", !showGroups && item.readAt === null && "font-semibold")}>
+                      {!showGroups && item.readAt === null ? <span aria-hidden="true" className="mr-1.5 inline-block size-2 rounded-full bg-primary" /> : null}
                       {showGroups ? notificationItemText(item, t) : item.title}
                     </span>
                     <span className="text-xs text-muted-foreground">

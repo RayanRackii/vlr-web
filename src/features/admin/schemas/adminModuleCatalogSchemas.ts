@@ -1,7 +1,10 @@
 import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import { z } from "zod"
 
-const NEVER_SELECTABLE_KEYS = new Set(["asset-registry", "maintenance"])
+const NEVER_SELECTABLE_KEYS = new Set([
+  "asset-registry",
+  "maintenance",
+])
 
 export function isNeverSelectableModuleKey(moduleKey: string): boolean {
   return NEVER_SELECTABLE_KEYS.has(toCanonicalModuleName(moduleKey))
