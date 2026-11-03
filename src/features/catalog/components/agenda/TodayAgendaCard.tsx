@@ -226,10 +226,11 @@ function TodayAgendaCardContent() {
   const dateLabel = new Intl.DateTimeFormat(i18n.language, {
     day: "2-digit",
     month: "short",
-  }).format(new Date(range.from))
+    timeZone: "UTC",
+  }).format(new Date(`${range.today}T12:00:00Z`))
 
   function occupantRef(item: CatalogAgendaItem): string {
-    return item.displayNumber ? `#${item.displayNumber}` : reserved
+    return item.displayNumber ?? reserved
   }
 
   function subLine(state: RowState): string {

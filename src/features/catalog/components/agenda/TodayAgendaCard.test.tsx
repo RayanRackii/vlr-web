@@ -122,4 +122,21 @@ describe("TodayAgendaCard", () => {
     await waitFor(() => expect(listCatalogProductAgenda).toHaveBeenCalled())
     expect(listCatalogResourceAgenda).not.toHaveBeenCalled()
   })
+  it("labels the card with today's tenant date and shows the order number without a double #", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-03T15:00:00Z") })
+    try {
+      vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
+        resources: [{ id: "r1", name: "Palco A", category: null }],
+        items: [item({ rentalAssetId: "r1", displayNumber: "#22", allocationStatus: "Running" })],
+      })
+      renderCard(["rentals.schedule.read"])
+      expect(await screen.findByText("Palco A")).toBeInTheDocument()
+      expect(screen.getByText(/03 de nov/)).toBeInTheDocument()
+      expect(screen.queryByText(/01 de nov/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/##22/)).not.toBeInTheDocument()
+      expect(screen.getByText(/#22/)).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
