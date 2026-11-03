@@ -420,6 +420,50 @@ export type CatalogOrderAllocationPreview = z.infer<
 export const ALLOCATION_USAGE_ACTIONS = ["start", "work-finished", "release"] as const
 export type AllocationUsageAction = (typeof ALLOCATION_USAGE_ACTIONS)[number]
 
+/**
+ * One scheduled (or unscheduled) order occurrence on the product/resource agenda.
+ * `occupied` spans the full resource hold (prep + work + cleanup); `work` is the
+ * inner work block. Both are nullable so unscheduled orders still list cleanly.
+ */
+export const catalogAgendaItemSchema = z.object({
+  orderId: z.string().uuid(),
+  displayNumber: z.string().nullable(),
+  orderStatus: catalogOrderStatusSchema,
+  productId: z.string().uuid(),
+  productName: z.string(),
+  rentalAssetId: z.string().uuid().nullable(),
+  resourceName: z.string().nullable(),
+  customerName: z.string().nullable(),
+  workStart: z.string().nullable(),
+  workEnd: z.string().nullable(),
+  occupiedStart: z.string().nullable(),
+  occupiedEnd: z.string().nullable(),
+  allocationStatus: allocationStatusSchema.nullable(),
+  timeZoneId: z.string(),
+})
+
+export type CatalogAgendaItem = z.infer<typeof catalogAgendaItemSchema>
+
+export const catalogAgendaItemListSchema = z.array(catalogAgendaItemSchema)
+
+export const catalogAgendaResourceSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  category: z.string().nullable(),
+})
+
+export type CatalogAgendaResource = z.infer<typeof catalogAgendaResourceSchema>
+
+/** Resource-agenda endpoint pairs the occurrences with the resource roster. */
+export const catalogResourceAgendaResponseSchema = z.object({
+  items: catalogAgendaItemListSchema,
+  resources: z.array(catalogAgendaResourceSchema),
+})
+
+export type CatalogResourceAgendaResponse = z.infer<
+  typeof catalogResourceAgendaResponseSchema
+>
+
 export function parseOptionalPrice(raw: string): number | null {
   const trimmed = raw.trim()
   if (trimmed.length === 0) {

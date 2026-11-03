@@ -1,8 +1,10 @@
 import type { ReactElement } from "react"
-import { Bell, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
+import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { CatalogProductAgendaPage } from "@/features/catalog/pages/CatalogProductAgendaPage"
+import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResourceAgendaPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
@@ -29,6 +31,7 @@ export const catalogManifest = {
     "catalog.orders.read",
     "catalog.products.manage",
     "catalog.notifications.read",
+    "rentals.schedule.read",
   ],
   navigationItems: [
     {
@@ -48,6 +51,18 @@ export const catalogManifest = {
           icon: ShoppingBag,
           to: "/catalogo/pedidos",
           permission: "catalog.orders.read",
+        },
+        {
+          labelKey: "nav.catalogProductAgenda",
+          icon: CalendarDays,
+          to: "/catalogo/agenda-produto",
+          permission: "catalog.orders.read",
+        },
+        {
+          labelKey: "nav.catalogResourceAgenda",
+          icon: CalendarDays,
+          to: "/catalogo/agenda-recursos",
+          permission: "rentals.schedule.read",
         },
         {
           labelKey: "nav.catalogRequests",
@@ -104,6 +119,16 @@ export const catalogManifest = {
         path: "/catalogo/pedidos",
         element: <CatalogOrdersPage />,
         permission: "catalog.orders.read",
+      },
+      {
+        path: "/catalogo/agenda-produto",
+        element: <CatalogProductAgendaPage />,
+        permission: "catalog.orders.read",
+      },
+      {
+        path: "/catalogo/agenda-recursos",
+        element: <CatalogResourceAgendaPage />,
+        permission: "rentals.schedule.read",
       },
       {
         path: "/catalogo/pedidos/:orderId",
