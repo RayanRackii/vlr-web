@@ -51,6 +51,8 @@ describe("feature manifests", () => {
       "/catalogo/produtos",
       "/catalogo/solicitacoes",
       "/catalogo/pedidos",
+      "/catalogo/agenda-produto",
+      "/catalogo/agenda-recursos",
       "/catalogo/pedidos/:orderId",
       "/catalogo/notificacoes",
     ])
