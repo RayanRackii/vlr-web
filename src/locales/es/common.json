@@ -985,7 +985,10 @@
       "subtitle": "Aprueba, prepara y completa pedidos de clientes.",
       "empty": "Ningún pedido.",
       "view": "Ver",
-      "views": { "list": "Lista", "agenda": "Agenda" },
+      "views": {
+        "list": "Lista",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Ítems",
       "timeline": "Historial",
@@ -1020,6 +1023,10 @@
         "tooLong": "Usa como máximo 1000 caracteres.",
         "label": "Motivo",
         "confirm": "Confirmar"
+      },
+      "history": {
+        "workFinished": "Trabajo terminado",
+        "released": "Recurso liberado"
       }
     },
     "notifications": {
@@ -1109,7 +1116,6 @@
         "title": "Uso del recurso",
         "status": "Estado",
         "workWindow": "Ventana de trabajo",
-        "start": "Iniciar",
         "workFinished": "Finalizar trabajo",
         "release": "Liberar",
         "cancelledHint": "Este pedido fue cancelado; finaliza o libera el recurso según sea necesario.",

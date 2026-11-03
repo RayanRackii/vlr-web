@@ -35,7 +35,7 @@ function item(overrides: Partial<CatalogAgendaItem>): CatalogAgendaItem {
   }
 }
 
-function renderCard(permissions: string[], activeModules: string[] = ["catalog"]) {
+function renderCard(permissions: string[], activeModules: string[] = ["catalog", "rentals"]) {
   return render(
     <MemoryRouter>
       <TestPermissionProvider permissions={permissions} activeModules={activeModules}>
@@ -71,13 +71,22 @@ describe("TodayAgendaCard", () => {
     expect(listCatalogProductAgenda).not.toHaveBeenCalled()
   })
 
+  it("falls back to product mode when the rentals module is inactive", async () => {
+    vi.mocked(listCatalogProductAgenda).mockResolvedValue([
+      item({ orderId: "o8", productId: "p8", productName: "Bolo", allocationStatus: "Scheduled", workStart: "2999-01-01T09:00:00.000Z" }),
+    ])
+    renderCard(["rentals.schedule.read", "catalog.orders.read"], ["catalog"])
+    expect(await screen.findByText("Bolo")).toBeInTheDocument()
+    expect(listCatalogResourceAgenda).not.toHaveBeenCalled()
+  })
+
   it("refetches when the tenant changes (no stale rows from the previous tenant)", async () => {
     vi.mocked(listCatalogResourceAgenda)
       .mockResolvedValueOnce({ resources: [{ id: "r1", name: "Tenant A room", category: null }], items: [] })
       .mockResolvedValueOnce({ resources: [{ id: "r2", name: "Tenant B room", category: null }], items: [] })
     const user = (tenantId: string) => ({
       id: null, fullName: "T", email: "t@example.com", role: "USER" as const, tenantId,
-      activeModules: ["catalog"], activeAssetFamilies: [], isTrial: false, isTrialReadOnly: false,
+      activeModules: ["catalog", "rentals"], activeAssetFamilies: [], isTrial: false, isTrialReadOnly: false,
       notificationsEmailOnly: false, roles: [], permissions: ["rentals.schedule.read"],
     })
     const tree = (tenantId: string) => (

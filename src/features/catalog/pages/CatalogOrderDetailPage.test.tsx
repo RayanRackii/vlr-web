@@ -84,6 +84,22 @@ describe("staff order detail", () => {
     expect(screen.getByText(new RegExp(`^${i18n.t("catalog.actor.System")} ·`))).toBeInTheDocument()
   })
 
+  it("renders usage milestone history with friendly labels, actor, and no raw reason code", async () => {
+    vi.mocked(getCatalogOrder).mockResolvedValue({
+      ...order,
+      history: [
+        { id: "h1", status: "Preparing", actorType: "B2BUser", actorId: "u1", actorName: "Maria", reason: "usage.workFinished", createdAt: "2026-10-28T14:00:00Z" },
+        { id: "h2", status: "Ready", actorType: "B2BUser", actorId: "u1", actorName: "Maria", reason: "usage.released", createdAt: "2026-10-28T15:00:00Z" },
+      ],
+    })
+    renderDetail()
+    expect(await screen.findByText(i18n.t("catalog.orders.history.workFinished"))).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("catalog.orders.history.released"))).toBeInTheDocument()
+    // The raw reason code is hidden once it maps to a friendly milestone label.
+    expect(screen.queryByText("usage.workFinished")).not.toBeInTheDocument()
+    expect(screen.getAllByText(new RegExp(`^${i18n.t("catalog.actor.B2BUser")} · Maria`)).length).toBeGreaterThan(0)
+  })
+
   it("localizes an Invalid input response from a reason mutation", async () => {
     const user = userEvent.setup()
     vi.mocked(rejectCatalogOrder).mockRejectedValue(new Error("Invalid input"))

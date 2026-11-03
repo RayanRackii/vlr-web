@@ -44,6 +44,8 @@ export type AppNavigationChildItem = {
   icon?: LucideIcon
   /** Internal destinations, never sidebar children. */
   tabs?: readonly NavigationTab[]
+  /** Canonical tenant module keys that unlock this child. Empty/absent = inherits the parent. */
+  modules?: readonly string[]
   /** Every key is required. An entry with none is hidden. */
   permission?: string
   permissions?: readonly string[]
@@ -128,7 +130,7 @@ const maintenanceItems: readonly AppNavigationItem[] = [
 
 const bookingsItems: readonly AppNavigationItem[] = rentalsManifest.navigationItems
 const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems.flatMap(
-  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: item.modules })),
+  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: child.modules ?? item.modules })),
 )
 
 /** Flat catalog used for title resolution and module filtering helpers. */
@@ -218,6 +220,9 @@ export function filterNavigationItemsByAccess(
       }
 
       const children = item.children.flatMap((child) => {
+        if (!moduleIsEnabled(child.modules, activeModules)) {
+          return []
+        }
         if (child.tabs) {
           const tabs = filterNavigationTabs(child.tabs, activeModules, permissions)
           return tabs[0] ? [{ ...child, tabs, to: tabs[0].to }] : []

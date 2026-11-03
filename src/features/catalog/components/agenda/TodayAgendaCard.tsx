@@ -125,9 +125,12 @@ function TodayAgendaCardContent() {
 
   // The agenda endpoints sit behind the Catalog module gate.
   const catalogActive = activeModules.includes("catalog")
+  // Resource agenda lives behind the Rentals module, so it needs both the
+  // module active and the schedule permission; otherwise fall back to products.
+  const rentalsActive = activeModules.includes("rentals")
   const mode: AgendaMode | null = !catalogActive
     ? null
-    : can("rentals.schedule.read")
+    : rentalsActive && can("rentals.schedule.read")
     ? "resource"
     : can("catalog.orders.read")
       ? "product"

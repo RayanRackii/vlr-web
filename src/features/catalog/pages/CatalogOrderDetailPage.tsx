@@ -55,6 +55,12 @@ import {
 } from "@/features/catalog/services/catalogService"
 
 
+/** History reason codes that describe a usage milestone rather than a status change. */
+const USAGE_HISTORY_LABELS: Record<string, string> = {
+  "usage.workFinished": "catalog.orders.history.workFinished",
+  "usage.released": "catalog.orders.history.released",
+}
+
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
@@ -429,19 +435,22 @@ export function CatalogOrderDetailPage() {
               entry.actorType === "B2BUser" && entry.actorName
                 ? `${t("catalog.actor.B2BUser")} · ${entry.actorName}`
                 : t(`catalog.actor.${entry.actorType}`)
+            // Usage milestones carry a reason code instead of a status change;
+            // render them as their own friendly label and hide the raw code.
+            const usageLabelKey = USAGE_HISTORY_LABELS[entry.reason ?? ""]
             return (
             <li
               key={entry.id}
               className="rounded-lg border border-border px-4 py-2 text-sm"
             >
               <p className="font-medium">
-                {t(`catalog.status.${entry.status}`)}
+                {usageLabelKey ? t(usageLabelKey) : t(`catalog.status.${entry.status}`)}
               </p>
               <p className="tabular-nums text-muted-foreground">
                 {actorLabel} ·{" "}
                 {formatCatalogDate(entry.createdAt, i18n.language, timeZoneId)}
               </p>
-              {entry.reason ? (
+              {entry.reason && !usageLabelKey ? (
                 <p className="mt-1 text-muted-foreground">{entry.reason}</p>
               ) : null}
             </li>

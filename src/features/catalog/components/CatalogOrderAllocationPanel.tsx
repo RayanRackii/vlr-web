@@ -24,6 +24,7 @@ import {
   approveCatalogOrderWithPlanning,
   CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -163,7 +164,11 @@ function ApprovalPanel({
           : error instanceof Error
             ? error.message
             : t("apiErrors.transitionCatalogOrder")
-      setRefusal(message)
+      // Network/5xx failures are transient: show the error but keep the button
+      // enabled. Only a 403 or a business refusal (4xx) blocks the retry.
+      if (!(error instanceof CatalogRetryableError)) {
+        setRefusal(message)
+      }
       toast.error(message)
     } finally {
       setApproving(false)
@@ -301,9 +306,9 @@ function ActiveUsageCard({
   locale: string
   t: (key: string, options?: Record<string, unknown>) => string
 }) {
-  const [busyAction, setBusyAction] = useState<"start" | "work-finished" | "release" | null>(null)
+  const [busyAction, setBusyAction] = useState<"work-finished" | "release" | null>(null)
 
-  async function runUsage(action: "start" | "work-finished" | "release") {
+  async function runUsage(action: "work-finished" | "release") {
     setBusyAction(action)
     try {
       const next = await applyCatalogOrderAllocationUsage(
@@ -323,10 +328,8 @@ function ActiveUsageCard({
     }
   }
 
-  const canStart = order.status !== "Cancelled" && allocation.status === "Scheduled"
   const canFinish = allocation.status === "Running"
   const canRelease = allocation.status === "Cleaning"
-  const showStart = order.status !== "Cancelled"
 
   return (
     <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -346,16 +349,6 @@ function ActiveUsageCard({
         {formatCatalogDate(allocation.plannedWorkEnd, locale, timeZoneId)}
       </p>
       <div className="flex flex-wrap gap-2">
-        {showStart ? (
-          <LoadingButton
-            type="button"
-            loading={busyAction === "start"}
-            disabled={!canAllocate || !canStart}
-            onClick={() => void runUsage("start")}
-          >
-            {t("catalog.resourcePlanning.activeUse.start")}
-          </LoadingButton>
-        ) : null}
         <LoadingButton
           type="button"
           loading={busyAction === "work-finished"}

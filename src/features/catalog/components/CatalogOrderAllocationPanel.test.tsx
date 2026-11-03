@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { CatalogOrderAllocationPanel } from "./CatalogOrderAllocationPanel"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import {
-  applyCatalogOrderAllocationUsage,
   approveCatalogOrderWithPlanning,
   CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -21,6 +21,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock("@/features/catalog/services/catalogService", () => ({
   CatalogPlanningVersionConflictError: class extends Error {},
   CatalogForbiddenError: class extends Error {},
+  CatalogRetryableError: class extends Error {},
   previewCatalogOrderAllocation: vi.fn(),
   approveCatalogOrderWithPlanning: vi.fn(),
   applyCatalogOrderAllocationUsage: vi.fn(),
@@ -173,28 +174,27 @@ describe("CatalogOrderAllocationPanel", () => {
     expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
   })
 
-  it("posts the correct usage action body when starting an allocation", async () => {
-    const order: CatalogOrder = {
-      ...BASE_ORDER,
-      status: "Approved",
-      productionSummary: "Scheduled",
-      items: [{ ...BASE_ORDER.items[0], productionSummary: "Scheduled", allocation: ALLOCATION }],
-    }
-    vi.mocked(applyCatalogOrderAllocationUsage).mockResolvedValue(order)
-    const user = userEvent.setup()
-    renderPanel(order)
-    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.start") }))
-    await waitFor(() =>
-      expect(applyCatalogOrderAllocationUsage).toHaveBeenCalledWith(
-        order.id,
-        ALLOCATION.id,
-        "start",
-        ALLOCATION.planningRevision,
-      ),
+  it("keeps the approve button enabled after a retryable 5xx failure", async () => {
+    vi.mocked(approveCatalogOrderWithPlanning).mockRejectedValue(
+      new CatalogRetryableError(i18n.t("apiErrors.transitionCatalogOrder")),
     )
+    const user = userEvent.setup()
+    renderPanel(BASE_ORDER)
+    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
+    await user.type(input, "2026-11-02T13:00")
+    const approveName = i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")
+    await user.click(screen.getByRole("button", { name: approveName }))
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(i18n.t("apiErrors.transitionCatalogOrder")),
+    )
+    // Transient failure: no refusal alert, and the user may retry.
+    expect(
+      screen.queryByText(i18n.t("catalog.resourcePlanning.approvalPanel.refusalTitle")),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
   })
 
-  it("still shows release for a cancelled order with a cleaning allocation, but hides start", async () => {
+  it("has no start button; shows release for a cancelled order with a cleaning allocation", async () => {
     const order: CatalogOrder = {
       ...BASE_ORDER,
       status: "Cancelled",
@@ -210,8 +210,9 @@ describe("CatalogOrderAllocationPanel", () => {
     }
     renderPanel(order)
     expect(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.release") })).toBeEnabled()
+    // The "Iniciar" start action was removed; usage advances via work-finished/release only.
     expect(
-      screen.queryByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.start") }),
-    ).not.toBeInTheDocument()
+      screen.queryByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.workFinished") }),
+    ).toBeDisabled()
   })
 })

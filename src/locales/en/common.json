@@ -985,7 +985,10 @@
       "subtitle": "Approve, prepare, and complete customer orders.",
       "empty": "No orders.",
       "view": "View",
-      "views": { "list": "List", "agenda": "Agenda" },
+      "views": {
+        "list": "List",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Items",
       "timeline": "History",
@@ -1020,6 +1023,10 @@
         "tooLong": "Use no more than 1000 characters.",
         "label": "Reason",
         "confirm": "Confirm"
+      },
+      "history": {
+        "workFinished": "Work finished",
+        "released": "Resource released"
       }
     },
     "notifications": {
@@ -1109,7 +1116,6 @@
         "title": "Resource usage",
         "status": "Status",
         "workWindow": "Work window",
-        "start": "Start",
         "workFinished": "Finish work",
         "release": "Release",
         "cancelledHint": "This order was cancelled; finish or release the resource as needed.",

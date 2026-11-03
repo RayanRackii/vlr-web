@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import {
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   getCatalogProductResourceRequirements,
   replaceCatalogProductResourceRequirements,
 } from "@/features/catalog/services/catalogService"
@@ -50,7 +51,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   const [rows, setRows] = useState<DraftRow[]>([])
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<{ message: string; blocking: boolean } | null>(null)
   const [loadedForProductId, setLoadedForProductId] = useState(productId)
 
   // Reset to loading when the product changes (adjust state during render, not in the effect).
@@ -158,7 +159,9 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         error instanceof Error && error.message
           ? error.message
           : t("catalog.resourcePlanning.errors.saveRequirements")
-      setSaveError(message)
+      // Network/5xx failures are transient: show the error but keep Save enabled.
+      // Validation/business refusals (4xx) block re-saving the same rows.
+      setSaveError({ message, blocking: !(error instanceof CatalogRetryableError) })
       toast.error(message)
     } finally {
       setSaving(false)
@@ -299,7 +302,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
       {saveError ? (
         <Alert variant="destructive">
           <AlertTitle>{t("catalog.resourcePlanning.saveErrorTitle")}</AlertTitle>
-          <AlertDescription>{saveError}</AlertDescription>
+          <AlertDescription>{saveError.message}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -311,7 +314,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
           type="button"
           size="sm"
           loading={saving}
-          disabled={saveError != null}
+          disabled={saveError?.blocking ?? false}
           onClick={() => void save()}
         >
           {t("catalog.resourcePlanning.save")}

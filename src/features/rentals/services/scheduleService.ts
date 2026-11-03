@@ -666,13 +666,14 @@ export function roundScheduleTimeToMinute(value: string): string {
   }
   const seconds = match[3] ? Number(match[3]) : 0
   const minuteOfDay = Number(match[1]) * 60 + Number(match[2]) + Math.round(seconds / 60)
-  // Keep a rounded value within the same 24h day for display.
-  const total = Math.min(Math.max(minuteOfDay, 0), 23 * 60 + 59)
+  // Preserve end-of-day "24:00" (and any rounding that reaches it, e.g.
+  // "23:59:40") instead of clamping back into the previous minute.
+  const total = Math.min(Math.max(minuteOfDay, 0), 24 * 60)
   const hours = Math.floor(total / 60)
   const minutes = total % 60
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
 export function formatScheduleTime(value: string): string {
-  return roundScheduleTimeToMinute(value)
+  return value.length >= 5 ? value.slice(0, 5) : value
 }
