@@ -140,7 +140,8 @@
     "loadPortalProductRequest": "No se pudo cargar la solicitud.",
     "loadTaxonomy": "No se pudieron cargar las categorías y etiquetas.",
     "saveTaxonomy": "No se pudieron guardar las categorías y etiquetas.",
-    "deleteTaxonomy": "No se pudo eliminar la categoría o etiqueta."
+    "deleteTaxonomy": "No se pudo eliminar la categoría o etiqueta.",
+    "loadCatalogAgenda": "No se pudo cargar la agenda."
   },
   "trial": {
     "banner": {
@@ -1122,6 +1123,50 @@
           "Cancelled": "Cancelado"
         }
       }
+    },
+    "agenda": {
+      "title": "Agenda del producto",
+      "subtitle": "Disponibilidad y asignaciones de recursos para un producto, con preparación y limpieza.",
+      "productLabel": "Producto",
+      "noProducts": "Sin productos",
+      "requirementTitle": "Requisito de recurso",
+      "noRequirement": "Este producto no requiere recurso.",
+      "totalBlock": "Bloque total ocupado por pedido",
+      "units": "{{count}} un.",
+      "week": "Semana",
+      "day": "Día",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "today": "Hoy",
+      "viewLabel": "Modo de vista",
+      "free": "Libre",
+      "ordersCount": "{{count}} pedido",
+      "ordersCount_other": "{{count}} pedidos",
+      "unscheduled": "Sin programar",
+      "upcomingTitle": "Próximos pedidos",
+      "viewAll": "Ver todos",
+      "upcomingEmpty": "Sin pedidos en el período.",
+      "weekRange": "Semana del {{from}}–{{to}}",
+      "legend": {
+        "work": "Ocupado (trabajo)",
+        "prep": "Preparación",
+        "cleanup": "Limpieza",
+        "conflict": "Conflicto"
+      },
+      "segment": {
+        "prep": "Preparación",
+        "work": "Trabajo",
+        "cleanup": "Limpieza"
+      },
+      "columns": {
+        "start": "Inicio",
+        "end": "Fin"
+      },
+      "duration": {
+        "hoursMinutes": "{{hours}}h{{minutes}}",
+        "hours": "{{hours}}h",
+        "minutes": "{{minutes}} min"
+      }
     }
   },
   "notifications": {
@@ -1523,7 +1568,8 @@
     "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso.",
     "catalogSettings": "Configuración de ventas",
     "pmocCustom": "Empezar plan personalizado",
-    "pmocTooltip": "Planes de mantenimiento"
+    "pmocTooltip": "Planes de mantenimiento",
+    "catalogProductAgenda": "Agenda del producto"
   },
   "moduleIntro": {
     "title": "Presentación",

@@ -140,7 +140,8 @@
     "loadPortalProductRequest": "Could not load the request.",
     "loadTaxonomy": "Could not load categories and tags.",
     "saveTaxonomy": "Could not save categories and tags.",
-    "deleteTaxonomy": "Could not delete the category or tag."
+    "deleteTaxonomy": "Could not delete the category or tag.",
+    "loadCatalogAgenda": "Could not load the agenda."
   },
   "trial": {
     "banner": {
@@ -1122,6 +1123,51 @@
           "Cancelled": "Cancelled"
         }
       }
+    },
+    "agenda": {
+      "title": "Product agenda",
+      "subtitle": "Resource availability and allocations for a product, including prep and cleanup.",
+      "productLabel": "Product",
+      "noProducts": "No products",
+      "requirementTitle": "Resource requirement",
+      "noRequirement": "This product needs no resource.",
+      "totalBlock": "Total block held per order",
+      "units": "{{count}} unit",
+      "units_other": "{{count}} units",
+      "week": "Week",
+      "day": "Day",
+      "prev": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "viewLabel": "View mode",
+      "free": "Free",
+      "ordersCount": "{{count}} order",
+      "ordersCount_other": "{{count}} orders",
+      "unscheduled": "Unscheduled",
+      "upcomingTitle": "Upcoming orders",
+      "viewAll": "View all",
+      "upcomingEmpty": "No orders in this range.",
+      "weekRange": "Week of {{from}}–{{to}}",
+      "legend": {
+        "work": "Busy (work)",
+        "prep": "Prep",
+        "cleanup": "Cleanup",
+        "conflict": "Conflict"
+      },
+      "segment": {
+        "prep": "Prep",
+        "work": "Work",
+        "cleanup": "Cleanup"
+      },
+      "columns": {
+        "start": "Start",
+        "end": "End"
+      },
+      "duration": {
+        "hoursMinutes": "{{hours}}h{{minutes}}",
+        "hours": "{{hours}}h",
+        "minutes": "{{minutes}} min"
+      }
     }
   },
   "notifications": {
@@ -1523,7 +1569,8 @@
     "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
     "catalogSettings": "Sales settings",
     "pmocCustom": "Start custom plan",
-    "pmocTooltip": "Maintenance plans"
+    "pmocTooltip": "Maintenance plans",
+    "catalogProductAgenda": "Product agenda"
   },
   "moduleIntro": {
     "title": "Introduction",

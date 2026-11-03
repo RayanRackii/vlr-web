@@ -16,6 +16,7 @@ describe("staff sales navigation", () => {
       { path: "/catalogo/configuracoes", permission: "catalog.products.manage" },
       { path: "/catalogo/produtos", permission: "catalog.products.read" },
       { path: "/catalogo/pedidos", permission: "catalog.orders.read" },
+      { path: "/catalogo/agenda-produto", permission: "catalog.orders.read" },
       { path: "/catalogo/pedidos/:orderId", permission: "catalog.orders.read" },
       { path: "/catalogo/notificacoes", permission: "catalog.notifications.read" },
     ])

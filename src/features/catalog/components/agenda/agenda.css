@@ -1,0 +1,254 @@
+.agenda-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+.agenda-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.agenda-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.agenda-swatch[data-kind="work"] {
+  background: color-mix(in srgb, var(--info) 85%, var(--card));
+}
+.agenda-swatch[data-kind="prep"] {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--warning) 55%, transparent) 0 4px,
+    transparent 4px 8px
+  );
+}
+.agenda-swatch[data-kind="cleanup"] {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--muted-foreground) 35%, transparent) 0 4px,
+    transparent 4px 8px
+  );
+}
+.agenda-swatch[data-kind="conflict"] {
+  background: var(--destructive);
+}
+
+.agenda-days {
+  display: grid;
+  gap: 16px;
+}
+.agenda-day {
+  display: grid;
+  gap: 8px;
+}
+.agenda-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.agenda-day-count {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* Desktop horizontal track */
+.agenda-track {
+  position: relative;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+}
+.agenda-block {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  min-width: 10px;
+}
+.agenda-block[data-conflict="true"] {
+  outline: 2px solid var(--destructive);
+  outline-offset: -1px;
+}
+.agenda-seg {
+  height: 100%;
+}
+.agenda-seg[data-kind="work"] {
+  background: color-mix(in srgb, var(--info) 85%, var(--card));
+  color: var(--info-foreground, #fff);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.agenda-seg[data-kind="prep"] {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--warning) 55%, transparent) 0 4px,
+    transparent 4px 8px
+  );
+}
+.agenda-seg[data-kind="cleanup"] {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--muted-foreground) 35%, transparent) 0 4px,
+    transparent 4px 8px
+  );
+}
+.agenda-hours {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+/* Mobile stacked list */
+.agenda-stack {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+.agenda-stack-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+.agenda-stack-group[data-conflict="true"] {
+  border-color: var(--destructive);
+}
+.agenda-stack-title {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.agenda-stack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+.agenda-stack-row > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+}
+.agenda-stack-row > span::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.agenda-stack-row[data-kind="work"] > span::before {
+  background: color-mix(in srgb, var(--info) 85%, var(--card));
+}
+.agenda-stack-row[data-kind="prep"] > span::before {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--warning) 55%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+}
+.agenda-stack-row[data-kind="cleanup"] > span::before {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--muted-foreground) 35%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+}
+.agenda-conflict-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--destructive);
+}
+.agenda-empty-day {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  padding: 6px 2px;
+}
+
+@media (max-width: 767px) {
+  .agenda-track,
+  .agenda-hours {
+    display: none;
+  }
+  .agenda-stack {
+    display: flex;
+  }
+}
+
+/* "Próximos pedidos" list */
+.agenda-upcoming {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.agenda-upcoming th,
+.agenda-upcoming td {
+  text-align: start;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.agenda-upcoming th {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.agenda-upcoming a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .agenda-upcoming thead {
+    display: none;
+  }
+  .agenda-upcoming,
+  .agenda-upcoming tbody,
+  .agenda-upcoming tr,
+  .agenda-upcoming td {
+    display: block;
+    width: 100%;
+  }
+  .agenda-upcoming tr {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .agenda-upcoming td {
+    border: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+  }
+  .agenda-upcoming td::before {
+    content: attr(data-label);
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+  }
+}

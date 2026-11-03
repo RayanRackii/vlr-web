@@ -3,6 +3,7 @@ import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import {
+  catalogAgendaItemListSchema,
   catalogChannelConfigListSchema,
   catalogChannelConfigSchema,
   catalogFileUrlSchema,
@@ -15,8 +16,11 @@ import {
   catalogProductListSchema,
   catalogProductResourceRequirementsResponseSchema,
   catalogProductSchema,
+  catalogResourceAgendaResponseSchema,
   productRequestListSchema,
   type AllocationUsageAction,
+  type CatalogAgendaItem,
+  type CatalogResourceAgendaResponse,
   type CatalogChannelConfig,
   type CatalogFileUrl,
   type CatalogFileVisibility,
@@ -308,6 +312,48 @@ export async function listCatalogOrders(query?: {
       throw error
     }
     throwCatalogError(error, "apiErrors.loadCatalogOrders")
+  }
+}
+
+export type CatalogAgendaRange = {
+  /** ISO instants; the API caps the span at 42 days. */
+  from: string
+  to: string
+}
+
+export async function listCatalogProductAgenda(
+  query: CatalogAgendaRange & { productId?: string },
+  options?: { signal?: AbortSignal },
+): Promise<CatalogAgendaItem[]> {
+  try {
+    const response = await api.get("/api/catalog/agenda/products", {
+      params: query,
+      ...(options?.signal ? { signal: options.signal } : {}),
+    })
+    return parseOrThrow(catalogAgendaItemListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "apiErrors.loadCatalogAgenda")
+  }
+}
+
+export async function listCatalogResourceAgenda(
+  query: CatalogAgendaRange & { rentalAssetId?: string },
+  options?: { signal?: AbortSignal },
+): Promise<CatalogResourceAgendaResponse> {
+  try {
+    const response = await api.get("/api/catalog/agenda/resources", {
+      params: query,
+      ...(options?.signal ? { signal: options.signal } : {}),
+    })
+    return parseOrThrow(catalogResourceAgendaResponseSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "apiErrors.loadCatalogAgenda")
   }
 }
 

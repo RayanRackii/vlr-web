@@ -1,8 +1,9 @@
 import type { ReactElement } from "react"
-import { Bell, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
+import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { CatalogProductAgendaPage } from "@/features/catalog/pages/CatalogProductAgendaPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
@@ -47,6 +48,12 @@ export const catalogManifest = {
           labelKey: "nav.catalogOrders",
           icon: ShoppingBag,
           to: "/catalogo/pedidos",
+          permission: "catalog.orders.read",
+        },
+        {
+          labelKey: "nav.catalogProductAgenda",
+          icon: CalendarDays,
+          to: "/catalogo/agenda-produto",
           permission: "catalog.orders.read",
         },
         {
@@ -103,6 +110,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/pedidos",
         element: <CatalogOrdersPage />,
+        permission: "catalog.orders.read",
+      },
+      {
+        path: "/catalogo/agenda-produto",
+        element: <CatalogProductAgendaPage />,
         permission: "catalog.orders.read",
       },
       {
