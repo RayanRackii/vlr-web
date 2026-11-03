@@ -1167,6 +1167,28 @@
         "hours": "{{hours}}h",
         "minutes": "{{minutes}} min"
       }
+    },
+    "resourceAgenda": {
+      "title": "Agenda de recursos",
+      "subtitle": "Cuadrícula de ocupación de todos los recursos en el período.",
+      "categoryLabel": "Categoría",
+      "resourceLabel": "Recurso",
+      "allCategories": "Todas",
+      "allResources": "Todos",
+      "resourceColumn": "Recurso",
+      "reserved": "Reservado",
+      "noResources": "No hay recursos para los filtros seleccionados.",
+      "panel": {
+        "title": "Detalles del bloque",
+        "product": "Producto",
+        "status": "Estado",
+        "work": "Trabajo",
+        "prep": "Preparación",
+        "cleanup": "Limpieza",
+        "openOrder": "Abrir pedido",
+        "close": "Cerrar",
+        "empty": "Selecciona un bloque para ver los detalles."
+      }
     }
   },
   "notifications": {
@@ -1569,7 +1591,8 @@
     "catalogSettings": "Configuración de ventas",
     "pmocCustom": "Empezar plan personalizado",
     "pmocTooltip": "Planes de mantenimiento",
-    "catalogProductAgenda": "Agenda del producto"
+    "catalogProductAgenda": "Agenda del producto",
+    "catalogResourceAgenda": "Agenda de recursos"
   },
   "moduleIntro": {
     "title": "Presentación",

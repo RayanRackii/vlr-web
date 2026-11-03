@@ -1,4 +1,7 @@
-import type { CatalogAgendaItem } from "@/features/catalog/schemas/catalogSchemas"
+import type {
+  CatalogAgendaItem,
+  CatalogAgendaResource,
+} from "@/features/catalog/schemas/catalogSchemas"
 import { resolveTenantTimeZone } from "@/lib/tenantTimeZone"
 
 /** Visible timeline window (business hours). Occupied windows are clamped here. */
@@ -215,4 +218,89 @@ export function buildAgendaDays(
     blocks.sort((a, b) => a.leftPct - b.leftPct)
     return { key, label: formatDayLabel(key, locale), blocks }
   })
+}
+
+export type AgendaResourceBlock = {
+  item: CatalogAgendaItem
+  key: string
+  leftPct: number
+  widthPct: number
+  segments: AgendaSegment[]
+}
+
+export type AgendaResourceRow = {
+  resource: CatalogAgendaResource
+  blocks: AgendaResourceBlock[]
+}
+
+/** Prep/work/cleanup split as percentages of the full occupied block. */
+function segmentsFromInstants(item: CatalogAgendaItem): AgendaSegment[] {
+  const occStart = item.occupiedStart ? new Date(item.occupiedStart).getTime() : null
+  const occEnd = item.occupiedEnd ? new Date(item.occupiedEnd).getTime() : null
+  if (occStart == null || occEnd == null || occEnd <= occStart) {
+    return [{ kind: "work", widthPct: 100 }]
+  }
+  const total = occEnd - occStart
+  const workStart = clamp(item.workStart ? new Date(item.workStart).getTime() : occStart, occStart, occEnd)
+  const workEnd = clamp(item.workEnd ? new Date(item.workEnd).getTime() : occEnd, workStart, occEnd)
+  const prepPct = ((workStart - occStart) / total) * 100
+  const workPct = ((workEnd - workStart) / total) * 100
+  const cleanupPct = Math.max(0, 100 - prepPct - workPct)
+  const segments: AgendaSegment[] = []
+  if (prepPct > 0.01) segments.push({ kind: "prep", widthPct: prepPct })
+  segments.push({ kind: "work", widthPct: workPct > 0.01 ? workPct : 100 - prepPct - cleanupPct })
+  if (cleanupPct > 0.01) segments.push({ kind: "cleanup", widthPct: cleanupPct })
+  return segments
+}
+
+/** One row per resource (empty rows kept); blocks positioned on the day/week track. */
+export function buildResourceAgendaRows(
+  items: CatalogAgendaItem[],
+  resources: CatalogAgendaResource[],
+  columns: string[],
+  view: AgendaView,
+): AgendaResourceRow[] {
+  const colCount = Math.max(columns.length, 1)
+  return resources.map((resource) => {
+    const blocks: AgendaResourceBlock[] = []
+    for (const item of items) {
+      if (item.rentalAssetId !== resource.id || !item.occupiedStart) continue
+      const occStart = zonedDayAndMinutes(item.occupiedStart, item.timeZoneId)
+      if (!occStart) continue
+      const dayIndex = columns.indexOf(occStart.dayKey)
+      if (dayIndex === -1) continue
+
+      let leftPct: number
+      let widthPct: number
+      if (view === "day") {
+        const occEnd = item.occupiedEnd ? zonedDayAndMinutes(item.occupiedEnd, item.timeZoneId) : null
+        const startMin = clamp(occStart.minutes, WINDOW_START_MIN, WINDOW_END_MIN)
+        const endMin = clamp(
+          occEnd && occEnd.dayKey === occStart.dayKey ? occEnd.minutes : WINDOW_END_MIN,
+          startMin,
+          WINDOW_END_MIN,
+        )
+        leftPct = ((startMin - WINDOW_START_MIN) / WINDOW_SPAN_MIN) * 100
+        widthPct = Math.max(((endMin - startMin) / WINDOW_SPAN_MIN) * 100, 2)
+      } else {
+        leftPct = (dayIndex / colCount) * 100
+        widthPct = (1 / colCount) * 100
+      }
+
+      blocks.push({ item, key: item.orderId, leftPct, widthPct, segments: segmentsFromInstants(item) })
+    }
+    blocks.sort((a, b) => a.leftPct - b.leftPct)
+    return { resource, blocks }
+  })
+}
+
+/** Hour marks (day view) or civil-day labels (week view) for the grid header. */
+export function agendaColumnLabels(columns: string[], view: AgendaView, locale: string): string[] {
+  if (view === "day") {
+    return Array.from(
+      { length: AGENDA_DAY_END_HOUR - AGENDA_DAY_START_HOUR },
+      (_, index) => `${String(AGENDA_DAY_START_HOUR + index).padStart(2, "0")}h`,
+    )
+  }
+  return columns.map((key) => formatDayLabel(key, locale))
 }

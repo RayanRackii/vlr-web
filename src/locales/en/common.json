@@ -1168,6 +1168,28 @@
         "hours": "{{hours}}h",
         "minutes": "{{minutes}} min"
       }
+    },
+    "resourceAgenda": {
+      "title": "Resource agenda",
+      "subtitle": "Occupancy grid for every resource across the period.",
+      "categoryLabel": "Category",
+      "resourceLabel": "Resource",
+      "allCategories": "All",
+      "allResources": "All",
+      "resourceColumn": "Resource",
+      "reserved": "Reserved",
+      "noResources": "No resources for the selected filters.",
+      "panel": {
+        "title": "Block details",
+        "product": "Product",
+        "status": "Status",
+        "work": "Work",
+        "prep": "Prep",
+        "cleanup": "Cleanup",
+        "openOrder": "Open order",
+        "close": "Close",
+        "empty": "Select a block to see the details."
+      }
     }
   },
   "notifications": {
@@ -1570,7 +1592,8 @@
     "catalogSettings": "Sales settings",
     "pmocCustom": "Start custom plan",
     "pmocTooltip": "Maintenance plans",
-    "catalogProductAgenda": "Product agenda"
+    "catalogProductAgenda": "Product agenda",
+    "catalogResourceAgenda": "Resource agenda"
   },
   "moduleIntro": {
     "title": "Introduction",

@@ -200,6 +200,104 @@
   }
 }
 
+/* Resource occupancy grid (Agenda dos recursos) */
+.resource-agenda-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.resource-agenda {
+  min-width: 760px;
+}
+.resource-agenda-head,
+.resource-agenda-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.resource-agenda-head {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.resource-agenda-row:last-child {
+  border-bottom: 0;
+}
+.resource-agenda-labels {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+.resource-agenda-labels span {
+  padding: 8px 6px;
+  border-inline-start: 1px solid var(--border);
+  text-align: start;
+}
+.resource-cell {
+  padding: 10px 12px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+}
+.resource-cell strong {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.resource-cell span {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+.resource-track {
+  position: relative;
+  min-height: 52px;
+}
+.resource-gridlines {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+.resource-gridlines span {
+  border-inline-start: 1px solid var(--border);
+}
+.resource-block {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  min-width: 14px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.resource-block:focus-visible {
+  outline: 2px solid var(--ring, var(--primary));
+  outline-offset: 1px;
+}
+.resource-block[data-selected="true"] {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.resource-block .agenda-seg[data-kind="work"][data-reserved="true"] {
+  background: var(--primary);
+  color: var(--primary-foreground, #fff);
+}
+
+@media (max-width: 767px) {
+  .resource-agenda-panel {
+    position: fixed;
+    inset-inline: 12px;
+    bottom: 12px;
+    z-index: 40;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  }
+}
+
 /* "Próximos pedidos" list */
 .agenda-upcoming {
   width: 100%;

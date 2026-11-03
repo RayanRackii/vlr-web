@@ -1167,6 +1167,28 @@
         "hours": "{{hours}}h",
         "minutes": "{{minutes}} min"
       }
+    },
+    "resourceAgenda": {
+      "title": "Agenda dos recursos",
+      "subtitle": "Grade de ocupação de todos os recursos ao longo do período.",
+      "categoryLabel": "Categoria",
+      "resourceLabel": "Recurso",
+      "allCategories": "Todas",
+      "allResources": "Todos",
+      "resourceColumn": "Recurso",
+      "reserved": "Reservado",
+      "noResources": "Nenhum recurso para os filtros selecionados.",
+      "panel": {
+        "title": "Detalhes do bloco",
+        "product": "Produto",
+        "status": "Status",
+        "work": "Trabalho",
+        "prep": "Preparo",
+        "cleanup": "Limpeza",
+        "openOrder": "Abrir pedido",
+        "close": "Fechar",
+        "empty": "Selecione um bloco para ver os detalhes."
+      }
     }
   },
   "notifications": {
@@ -1569,7 +1591,8 @@
     "catalogSettings": "Configurações de vendas",
     "pmocCustom": "Começar plano personalizado",
     "pmocTooltip": "PMOC",
-    "catalogProductAgenda": "Agenda do produto"
+    "catalogProductAgenda": "Agenda do produto",
+    "catalogResourceAgenda": "Agenda dos recursos"
   },
   "moduleIntro": {
     "title": "Apresentação",
