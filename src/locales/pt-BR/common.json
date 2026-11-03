@@ -525,6 +525,15 @@
       "legendSelected": "Selecionado",
       "unplaced": "Outros espaços",
       "availabilityError": "Não foi possível verificar disponibilidade.",
+      "retry": "Tentar novamente",
+      "priceUndefined": "Valor não definido para esse horário",
+      "reason": {
+        "alreadyReserved": "Já reservado nesse horário",
+        "quantityUnavailable": "Quantidade indisponível",
+        "outsideHours": "Fora do horário de funcionamento",
+        "pastStart": "Esse horário já passou",
+        "generic": "Indisponível nesse horário"
+      },
       "slotsError": "Não foi possível carregar os horários do dia.",
       "noSlots": "Nenhum horário disponível nesta data. A equipe responsável ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",
@@ -976,6 +985,10 @@
       "subtitle": "Aprove, prepare e conclua pedidos dos clientes.",
       "empty": "Nenhum pedido.",
       "view": "Ver",
+      "views": {
+        "list": "Lista",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Itens",
       "timeline": "Histórico",
@@ -1010,6 +1023,10 @@
         "tooLong": "Use no máximo 1000 caracteres.",
         "label": "Motivo",
         "confirm": "Confirmar"
+      },
+      "history": {
+        "workFinished": "Trabalho concluído",
+        "released": "Recurso liberado"
       }
     },
     "notifications": {
@@ -1054,6 +1071,7 @@
       "emptyState": "Não exige agendamento",
       "addRequirement": "Adicionar recurso",
       "save": "Salvar recursos",
+      "saveErrorTitle": "Não foi possível salvar",
       "toastSaved": "Recursos salvos com sucesso.",
       "requirementLabel": "Recurso {{index}}",
       "calculationHint": "Cada unidade ocupa o recurso por {{duration}} min, além do preparo e da limpeza.",
@@ -1075,7 +1093,8 @@
         "unsupportedWorkWindow": "O horário escolhido não é suportado para este agendamento.",
         "notSupportedYet": "Agendamento por categoria ainda não é suportado; selecione um recurso específico.",
         "previewFailed": "Não foi possível pré-visualizar o agendamento.",
-        "usageActionFailed": "Não foi possível atualizar o uso do recurso."
+        "usageActionFailed": "Não foi possível atualizar o uso do recurso.",
+        "forbidden": "Você não tem permissão para esta ação."
       },
       "approvalPanel": {
         "title": "Aprovar e agendar",
@@ -1089,6 +1108,7 @@
         "estimatedReadyAt": "Previsão de conclusão",
         "notFeasible": "Esse horário não é viável para o recurso selecionado.",
         "approveAndAllocate": "Aprovar e alocar",
+        "refusalTitle": "Não é possível alocar",
         "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
         "toastApproved": "Pedido aprovado e recurso alocado."
       },
@@ -1096,7 +1116,6 @@
         "title": "Uso do recurso",
         "status": "Status",
         "workWindow": "Janela de trabalho",
-        "start": "Iniciar",
         "workFinished": "Concluir trabalho",
         "release": "Liberar",
         "cancelledHint": "Este pedido foi cancelado; finalize ou libere o recurso conforme necessário.",
@@ -1188,6 +1207,30 @@
         "openOrder": "Abrir pedido",
         "close": "Fechar",
         "empty": "Selecione um bloco para ver os detalhes."
+      }
+    },
+    "todayAgenda": {
+      "title": "Agenda de hoje",
+      "subtitle": "{{date}} · recursos e produtos",
+      "viewAll": "Ver agenda",
+      "rowLink": "Ver agenda",
+      "seeAll": "Ver todos",
+      "empty": "Nada agendado para hoje.",
+      "reserved": "Reservado",
+      "status": {
+        "inUse": "Em uso",
+        "prep": "Preparo",
+        "cleaning": "Limpeza",
+        "overdue": "Atrasado",
+        "free": "Livre"
+      },
+      "sub": {
+        "inUse": "Agora: {{ref}} · até {{time}}",
+        "prep": "Preparo: {{ref}} · início {{time}}",
+        "cleaning": "Limpeza: {{ref}} · até {{time}}",
+        "overdue": "Atraso {{minutes}} min",
+        "freeNext": "Próximo: {{ref}} · {{time}}",
+        "freeNone": "Sem uso hoje"
       }
     }
   },

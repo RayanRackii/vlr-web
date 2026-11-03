@@ -525,6 +525,15 @@
       "legendSelected": "Selected",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
+      "retry": "Try again",
+      "priceUndefined": "Price not set for this time",
+      "reason": {
+        "alreadyReserved": "Already booked at this time",
+        "quantityUnavailable": "Quantity unavailable",
+        "outsideHours": "Outside opening hours",
+        "pastStart": "This time has already passed",
+        "generic": "Unavailable at this time"
+      },
       "slotsError": "Could not load times for this day.",
       "noSlots": "No slots are available on this date. The responsible team may not have published the schedule yet.",
       "noTimes": "No times on this date",
@@ -976,6 +985,10 @@
       "subtitle": "Approve, prepare, and complete customer orders.",
       "empty": "No orders.",
       "view": "View",
+      "views": {
+        "list": "List",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Items",
       "timeline": "History",
@@ -1010,6 +1023,10 @@
         "tooLong": "Use no more than 1000 characters.",
         "label": "Reason",
         "confirm": "Confirm"
+      },
+      "history": {
+        "workFinished": "Work finished",
+        "released": "Resource released"
       }
     },
     "notifications": {
@@ -1054,6 +1071,7 @@
       "emptyState": "Does not require scheduling",
       "addRequirement": "Add resource",
       "save": "Save resources",
+      "saveErrorTitle": "Could not save",
       "toastSaved": "Resources saved successfully.",
       "requirementLabel": "Resource {{index}}",
       "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
@@ -1075,7 +1093,8 @@
         "unsupportedWorkWindow": "The chosen time is not supported for this scheduling.",
         "notSupportedYet": "Scheduling by category is not supported yet; select a specific resource.",
         "previewFailed": "Could not preview the scheduling.",
-        "usageActionFailed": "Could not update the resource usage."
+        "usageActionFailed": "Could not update the resource usage.",
+        "forbidden": "You do not have permission for this action."
       },
       "approvalPanel": {
         "title": "Approve and schedule",
@@ -1089,6 +1108,7 @@
         "estimatedReadyAt": "Estimated ready at",
         "notFeasible": "That time is not feasible for the selected resource.",
         "approveAndAllocate": "Approve and allocate",
+        "refusalTitle": "Cannot allocate",
         "approvalRule": "Approving reserves the resource for the order at that time.",
         "toastApproved": "Order approved and resource allocated."
       },
@@ -1096,7 +1116,6 @@
         "title": "Resource usage",
         "status": "Status",
         "workWindow": "Work window",
-        "start": "Start",
         "workFinished": "Finish work",
         "release": "Release",
         "cancelledHint": "This order was cancelled; finish or release the resource as needed.",
@@ -1188,6 +1207,30 @@
         "openOrder": "Open order",
         "close": "Close",
         "empty": "Select a block to see the details."
+      }
+    },
+    "todayAgenda": {
+      "title": "Today's agenda",
+      "subtitle": "{{date}} · resources and products",
+      "viewAll": "View agenda",
+      "rowLink": "View agenda",
+      "seeAll": "View all",
+      "empty": "Nothing scheduled for today.",
+      "reserved": "Reserved",
+      "status": {
+        "inUse": "In use",
+        "prep": "Prep",
+        "cleaning": "Cleaning",
+        "overdue": "Overdue",
+        "free": "Free"
+      },
+      "sub": {
+        "inUse": "Now: {{ref}} · until {{time}}",
+        "prep": "Prep: {{ref}} · starts {{time}}",
+        "cleaning": "Cleaning: {{ref}} · until {{time}}",
+        "overdue": "{{minutes}} min late",
+        "freeNext": "Next: {{ref}} · {{time}}",
+        "freeNone": "No use today"
       }
     }
   },

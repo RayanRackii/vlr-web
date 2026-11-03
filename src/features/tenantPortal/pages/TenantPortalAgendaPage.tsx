@@ -274,6 +274,36 @@ function effectiveCancelCutoffHours(reservation: PortalReservation | undefined):
 
 const MAX_MULTI_DAY_SPAN = 31
 
+/**
+ * Maps the availability API's English `reason` text to a customer-facing pt-BR
+ * (or active-locale) message. Never surfaces the raw English string, and keeps
+ * the copy generic for any bookable resource (no staff-facing wording).
+ */
+function portalQuoteUnavailableReason(
+  reason: string | null,
+  t: (key: string) => string,
+): string {
+  const text = (reason ?? "").toLowerCase()
+  if (text.includes("already reserved")) {
+    return t("tenantPortal.agenda.reason.alreadyReserved")
+  }
+  if (text.includes("insufficient quantity")) {
+    return t("tenantPortal.agenda.reason.quantityUnavailable")
+  }
+  if (
+    text.includes("not open for booking") ||
+    text.includes("open hour") ||
+    text.includes("open-hour") ||
+    text.includes("outside")
+  ) {
+    return t("tenantPortal.agenda.reason.outsideHours")
+  }
+  if (text.includes("past") || text.includes("already passed")) {
+    return t("tenantPortal.agenda.reason.pastStart")
+  }
+  return t("tenantPortal.agenda.reason.generic")
+}
+
 export function TenantPortalAgendaPage() {
   const { t, i18n } = useTranslation()
   const moneyLocale = i18n.resolvedLanguage ?? i18n.language
@@ -429,6 +459,8 @@ export function TenantPortalAgendaPage() {
     | {
         status: "ready"
         amount: number | null
+        isAvailable: boolean
+        reason: string | null
         pricingUnit: PricingUnit | null
         unitPrice: number | null
         pricedUnits: number | null
@@ -438,6 +470,7 @@ export function TenantPortalAgendaPage() {
       }
     | { status: "error" }
   >({ status: "idle" })
+  const [quoteRetry, setQuoteRetry] = useState(0)
   const [layoutItems, setLayoutItems] = useState<
     {
       rentalAssetId: string
@@ -1149,6 +1182,8 @@ export function TenantPortalAgendaPage() {
         setQuote({
           status: "ready",
           amount: result.isAvailable ? result.estimatedTotalAmount : null,
+          isAvailable: result.isAvailable,
+          reason: result.reason ?? null,
           pricingUnit: result.pricingUnit ?? null,
           unitPrice: result.unitPrice ?? null,
           pricedUnits: result.pricedUnits ?? null,
@@ -1174,7 +1209,7 @@ export function TenantPortalAgendaPage() {
     return () => {
       cancelled = true
     }
-  }, [date, endDate, quantity, quoteAssetId, quoteEnd, quoteSelectionKey, quoteStart, subdomain])
+  }, [date, endDate, quantity, quoteAssetId, quoteEnd, quoteRetry, quoteSelectionKey, quoteStart, subdomain])
 
   const queueEnabled = isLocationQueueEnabled(selectedAsset)
   const queue = useReservationQueue({
@@ -2745,18 +2780,36 @@ export function TenantPortalAgendaPage() {
               </div>
             ) : null}
 
-            {!schedulePending && quoteUnavailable ? (
+            {!schedulePending && quoteCurrent && quote.status === "ready" && !quote.isAvailable ? (
               <p className="text-sm text-muted-foreground">
-                {endDate && quote.status === "ready" && quote.availableQuantity === 0
+                {endDate && quote.availableQuantity === 0
                   ? t("tenantPortal.agenda.periodIncludesBookedDay")
-                  : t("tenantPortal.agenda.slotTaken")}
+                  : portalQuoteUnavailableReason(quote.reason, t)}
+              </p>
+            ) : null}
+
+            {!schedulePending && quoteCurrent && quote.status === "ready" &&
+            quote.isAvailable && quote.amount === null ? (
+              <p className="text-sm text-muted-foreground">
+                {t("tenantPortal.agenda.priceUndefined")}
               </p>
             ) : null}
 
             {quote.status === "error" ? (
-              <p className="text-sm text-muted-foreground">
-                {t("tenantPortal.agenda.availabilityError")}
-              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {t("tenantPortal.agenda.availabilityError")}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11"
+                  onClick={() => setQuoteRetry((current) => current + 1)}
+                >
+                  {t("tenantPortal.agenda.retry")}
+                </Button>
+              </div>
             ) : null}
           </div>
 

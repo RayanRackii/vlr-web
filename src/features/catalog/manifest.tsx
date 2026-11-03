@@ -22,6 +22,8 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  /** Canonical tenant module keys that unlock this route. Absent = catalog only. */
+  modules?: readonly string[]
 }
 
 export const catalogManifest = {
@@ -63,6 +65,7 @@ export const catalogManifest = {
           icon: CalendarDays,
           to: "/catalogo/agenda-recursos",
           permission: "rentals.schedule.read",
+          modules: ["rentals"],
         },
         {
           labelKey: "nav.catalogRequests",
@@ -129,6 +132,7 @@ export const catalogManifest = {
         path: "/catalogo/agenda-recursos",
         element: <CatalogResourceAgendaPage />,
         permission: "rentals.schedule.read",
+        modules: ["rentals"],
       },
       {
         path: "/catalogo/pedidos/:orderId",
@@ -140,6 +144,6 @@ export const catalogManifest = {
         element: <CatalogNotificationsPage />,
         permission: "catalog.notifications.read",
       },
-    ] satisfies readonly Required<FeatureRoute>[],
+    ] satisfies readonly (FeatureRoute & { permission: string })[],
   },
 } as const

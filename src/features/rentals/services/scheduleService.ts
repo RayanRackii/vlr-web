@@ -651,6 +651,29 @@ export async function seedDefaultHourlyTemplates(
   }
 }
 
+/**
+ * Rounds an "HH:mm", "HH:mm:ss", or "HH:mm:ss.fffffff" clock value to the
+ * nearest minute and returns it as "HH:mm". A schedule end time can arrive with
+ * fractional seconds after an early release (e.g. "06:38:26.4433560"); flooring
+ * would misreport the end and raw seconds would leak into minute math. Falls
+ * back to the leading "HH:mm" when the value is malformed so callers never get
+ * NaN or a fractional width.
+ */
+export function roundScheduleTimeToMinute(value: string): string {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?$/.exec(value.trim())
+  if (!match) {
+    return value.length >= 5 ? value.slice(0, 5) : value
+  }
+  const seconds = match[3] ? Number(match[3]) : 0
+  const minuteOfDay = Number(match[1]) * 60 + Number(match[2]) + Math.round(seconds / 60)
+  // Preserve end-of-day "24:00" (and any rounding that reaches it, e.g.
+  // "23:59:40") instead of clamping back into the previous minute.
+  const total = Math.min(Math.max(minuteOfDay, 0), 24 * 60)
+  const hours = Math.floor(total / 60)
+  const minutes = total % 60
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+}
+
 export function formatScheduleTime(value: string): string {
   return value.length >= 5 ? value.slice(0, 5) : value
 }

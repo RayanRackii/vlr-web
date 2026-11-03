@@ -186,6 +186,7 @@ export const catalogOrderHistorySchema = z.object({
   status: catalogOrderStatusSchema,
   actorType: catalogActorTypeSchema,
   actorId: z.string().uuid().nullable(),
+  actorName: z.string().nullable().optional().default(null),
   reason: z.string().nullable(),
   createdAt: z.string(),
 })
