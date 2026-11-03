@@ -111,7 +111,14 @@ function civilDayOf(ms: number, timeZoneId: string): string {
   }).format(new Date(ms))
 }
 
+/** Remounts per tenant + time zone so a tenant switch never shows the previous tenant's rows. */
 export function TodayAgendaCard() {
+  const { currentUser } = usePermissions()
+  const timeZoneId = useTenantTimeZone()
+  return <TodayAgendaCardContent key={`${currentUser?.tenantId ?? ""}|${timeZoneId}`} />
+}
+
+function TodayAgendaCardContent() {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const { can, activeModules } = usePermissions()

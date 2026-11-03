@@ -71,6 +71,30 @@ describe("TodayAgendaCard", () => {
     expect(listCatalogProductAgenda).not.toHaveBeenCalled()
   })
 
+  it("refetches when the tenant changes (no stale rows from the previous tenant)", async () => {
+    vi.mocked(listCatalogResourceAgenda)
+      .mockResolvedValueOnce({ resources: [{ id: "r1", name: "Tenant A room", category: null }], items: [] })
+      .mockResolvedValueOnce({ resources: [{ id: "r2", name: "Tenant B room", category: null }], items: [] })
+    const user = (tenantId: string) => ({
+      id: null, fullName: "T", email: "t@example.com", role: "USER" as const, tenantId,
+      activeModules: ["catalog"], activeAssetFamilies: [], isTrial: false, isTrialReadOnly: false,
+      notificationsEmailOnly: false, roles: [], permissions: ["rentals.schedule.read"],
+    })
+    const tree = (tenantId: string) => (
+      <MemoryRouter>
+        <TestPermissionProvider currentUser={user(tenantId)}>
+          <TodayAgendaCard />
+        </TestPermissionProvider>
+      </MemoryRouter>
+    )
+    const { rerender } = render(tree("11111111-1111-4111-8111-111111111111"))
+    expect(await screen.findByText("Tenant A room")).toBeInTheDocument()
+    rerender(tree("22222222-2222-4222-8222-222222222222"))
+    expect(await screen.findByText("Tenant B room")).toBeInTheDocument()
+    expect(screen.queryByText("Tenant A room")).not.toBeInTheDocument()
+    expect(listCatalogResourceAgenda).toHaveBeenCalledTimes(2)
+  })
+
   it("lists resources including idle ones, an in-use row, and redacts missing numbers", async () => {
     vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
       resources: [
