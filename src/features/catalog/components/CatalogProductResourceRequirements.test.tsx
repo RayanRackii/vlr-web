@@ -120,7 +120,12 @@ describe("CatalogProductResourceRequirements", () => {
     const user = userEvent.setup()
     render(<CatalogProductResourceRequirements productId="product-1" />)
     await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
-    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(message)
     expect(toast.error).toHaveBeenCalledWith(message)
+    const saveButton = screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") })
+    // The refusal sits above the action buttons and blocks re-saving the same rows.
+    expect(alert.compareDocumentPosition(saveButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(saveButton).toBeDisabled()
   })
 })

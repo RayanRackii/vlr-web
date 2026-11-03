@@ -7,6 +7,7 @@ import { TestPermissionProvider } from "@/features/users/permissions/PermissionC
 import {
   applyCatalogOrderAllocationUsage,
   approveCatalogOrderWithPlanning,
+  CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
@@ -19,6 +20,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 vi.mock("@/features/catalog/services/catalogService", () => ({
   CatalogPlanningVersionConflictError: class extends Error {},
+  CatalogForbiddenError: class extends Error {},
   previewCatalogOrderAllocation: vi.fn(),
   approveCatalogOrderWithPlanning: vi.fn(),
   applyCatalogOrderAllocationUsage: vi.fn(),
@@ -147,6 +149,28 @@ describe("CatalogOrderAllocationPanel", () => {
       expect(toast.error).toHaveBeenCalledWith(i18n.t("catalog.resourcePlanning.errors.planningVersionConflict")),
     )
     expect(onReloadNeeded).toHaveBeenCalled()
+  })
+
+  it("shows a refusal alert above a disabled approve button and a friendly 403 text", async () => {
+    const friendly = i18n.t("catalog.resourcePlanning.errors.forbidden")
+    vi.mocked(approveCatalogOrderWithPlanning).mockRejectedValue(new CatalogForbiddenError(friendly))
+    const user = userEvent.setup()
+    renderPanel(BASE_ORDER)
+    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
+    await user.type(input, "2026-11-02T13:00")
+    const approveName = i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")
+    await user.click(screen.getByRole("button", { name: approveName }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(friendly))
+    const alert = screen.getByText(i18n.t("catalog.resourcePlanning.approvalPanel.refusalTitle")).closest('[role="alert"]') ?? screen.getByText(friendly)
+    expect(alert).toHaveTextContent(friendly)
+    expect(screen.queryByText(/FORBIDDEN/)).not.toBeInTheDocument()
+    const approve = screen.getByRole("button", { name: approveName })
+    expect(alert.compareDocumentPosition(approve) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(approve).toBeDisabled()
+    await user.clear(input)
+    await user.type(input, "2026-11-02T14:00")
+    expect(screen.queryByText(friendly)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
   })
 
   it("posts the correct usage action body when starting an allocation", async () => {

@@ -1055,6 +1055,7 @@
       "emptyState": "Does not require scheduling",
       "addRequirement": "Add resource",
       "save": "Save resources",
+      "saveErrorTitle": "Could not save",
       "toastSaved": "Resources saved successfully.",
       "requirementLabel": "Resource {{index}}",
       "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
@@ -1076,7 +1077,8 @@
         "unsupportedWorkWindow": "The chosen time is not supported for this scheduling.",
         "notSupportedYet": "Scheduling by category is not supported yet; select a specific resource.",
         "previewFailed": "Could not preview the scheduling.",
-        "usageActionFailed": "Could not update the resource usage."
+        "usageActionFailed": "Could not update the resource usage.",
+        "forbidden": "You do not have permission for this action."
       },
       "approvalPanel": {
         "title": "Approve and schedule",
@@ -1090,6 +1092,7 @@
         "estimatedReadyAt": "Estimated ready at",
         "notFeasible": "That time is not feasible for the selected resource.",
         "approveAndAllocate": "Approve and allocate",
+        "refusalTitle": "Cannot allocate",
         "approvalRule": "Approving reserves the resource for the order at that time.",
         "toastApproved": "Order approved and resource allocated."
       },

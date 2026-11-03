@@ -424,7 +424,12 @@ export function CatalogOrderDetailPage() {
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.timeline")}</h2>
         <ol className="space-y-2">
-          {order.history.map((entry) => (
+          {order.history.map((entry) => {
+            const actorLabel =
+              entry.actorType === "B2BUser" && entry.actorName
+                ? `${t("catalog.actor.B2BUser")} · ${entry.actorName}`
+                : t(`catalog.actor.${entry.actorType}`)
+            return (
             <li
               key={entry.id}
               className="rounded-lg border border-border px-4 py-2 text-sm"
@@ -433,14 +438,15 @@ export function CatalogOrderDetailPage() {
                 {t(`catalog.status.${entry.status}`)}
               </p>
               <p className="tabular-nums text-muted-foreground">
-                {t(`catalog.actor.${entry.actorType}`)} ·{" "}
+                {actorLabel} ·{" "}
                 {formatCatalogDate(entry.createdAt, i18n.language, timeZoneId)}
               </p>
               {entry.reason ? (
                 <p className="mt-1 text-muted-foreground">{entry.reason}</p>
               ) : null}
             </li>
-          ))}
+            )
+          })}
         </ol>
       </section>
 

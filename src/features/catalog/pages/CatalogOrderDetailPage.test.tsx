@@ -71,6 +71,19 @@ describe("staff order detail", () => {
     const chip = await screen.findByText(i18n.t(`catalog.status.${status}`))
     expect(chip).toHaveAttribute("data-tone", tone)
   })
+  it("labels a B2BUser history entry with the actor name and System without one", async () => {
+    vi.mocked(getCatalogOrder).mockResolvedValue({
+      ...order,
+      history: [
+        { id: "h1", status: "Approved", actorType: "B2BUser", actorId: "u1", actorName: "João", reason: null, createdAt: "2026-10-28T12:00:00Z" },
+        { id: "h2", status: "Ready", actorType: "System", actorId: null, actorName: null, reason: null, createdAt: "2026-10-28T13:00:00Z" },
+      ],
+    })
+    renderDetail()
+    expect(await screen.findByText(new RegExp(`${i18n.t("catalog.actor.B2BUser")} · João`))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`^${i18n.t("catalog.actor.System")} ·`))).toBeInTheDocument()
+  })
+
   it("localizes an Invalid input response from a reason mutation", async () => {
     const user = userEvent.setup()
     vi.mocked(rejectCatalogOrder).mockRejectedValue(new Error("Invalid input"))

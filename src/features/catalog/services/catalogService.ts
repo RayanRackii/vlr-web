@@ -65,6 +65,13 @@ function throwCatalogError(error: unknown, fallbackKey: string): never {
 /** Thrown on 409 planning_version_conflict so callers can reload instead of just toasting. */
 export class CatalogPlanningVersionConflictError extends Error {}
 
+/** Thrown on HTTP 403 so callers can show a friendly permission message instead of a raw code. */
+export class CatalogForbiddenError extends Error {}
+
+function isForbidden(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 403
+}
+
 function isPlanningVersionConflict(error: unknown): boolean {
   if (!isAxiosError(error) || error.response?.status !== 409) {
     return false
@@ -420,6 +427,9 @@ export async function approveCatalogOrderWithPlanning(
       throw new CatalogPlanningVersionConflictError(
         localizeCatalogApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.transitionCatalogOrder")),
       )
+    }
+    if (isForbidden(error)) {
+      throw new CatalogForbiddenError(i18n.t("catalog.resourcePlanning.errors.forbidden"), { cause: error })
     }
     throwCatalogError(error, "apiErrors.transitionCatalogOrder")
   }

@@ -1055,6 +1055,7 @@
       "emptyState": "Não exige agendamento",
       "addRequirement": "Adicionar recurso",
       "save": "Salvar recursos",
+      "saveErrorTitle": "Não foi possível salvar",
       "toastSaved": "Recursos salvos com sucesso.",
       "requirementLabel": "Recurso {{index}}",
       "calculationHint": "Cada unidade ocupa o recurso por {{duration}} min, além do preparo e da limpeza.",
@@ -1076,7 +1077,8 @@
         "unsupportedWorkWindow": "O horário escolhido não é suportado para este agendamento.",
         "notSupportedYet": "Agendamento por categoria ainda não é suportado; selecione um recurso específico.",
         "previewFailed": "Não foi possível pré-visualizar o agendamento.",
-        "usageActionFailed": "Não foi possível atualizar o uso do recurso."
+        "usageActionFailed": "Não foi possível atualizar o uso do recurso.",
+        "forbidden": "Você não tem permissão para esta ação."
       },
       "approvalPanel": {
         "title": "Aprovar e agendar",
@@ -1090,6 +1092,7 @@
         "estimatedReadyAt": "Previsão de conclusão",
         "notFeasible": "Esse horário não é viável para o recurso selecionado.",
         "approveAndAllocate": "Aprovar e alocar",
+        "refusalTitle": "Não é possível alocar",
         "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
         "toastApproved": "Pedido aprovado e recurso alocado."
       },

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -107,16 +108,19 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   }
 
   function updateRow(clientId: string, patch: Partial<DraftRow>) {
+    setSaveError(null)
     setRows((current) =>
       current.map((row) => (row.clientId === clientId ? { ...row, ...patch } : row)),
     )
   }
 
   function removeRow(clientId: string) {
+    setSaveError(null)
     setRows((current) => current.filter((row) => row.clientId !== clientId))
   }
 
   function addRow() {
+    setSaveError(null)
     setRows((current) => [...current, emptyRow()])
   }
 
@@ -292,19 +296,27 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         </ul>
       )}
 
+      {saveError ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t("catalog.resourcePlanning.saveErrorTitle")}</AlertTitle>
+          <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           {t("catalog.resourcePlanning.addRequirement")}
         </Button>
-        <LoadingButton type="button" size="sm" loading={saving} onClick={() => void save()}>
+        <LoadingButton
+          type="button"
+          size="sm"
+          loading={saving}
+          disabled={saveError != null}
+          onClick={() => void save()}
+        >
           {t("catalog.resourcePlanning.save")}
         </LoadingButton>
       </div>
-      {saveError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {saveError}
-        </p>
-      ) : null}
     </div>
   )
 }

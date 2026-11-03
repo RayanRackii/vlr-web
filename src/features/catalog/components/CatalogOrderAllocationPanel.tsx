@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -22,6 +22,7 @@ import {
 import {
   applyCatalogOrderAllocationUsage,
   approveCatalogOrderWithPlanning,
+  CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
@@ -96,6 +97,7 @@ function ApprovalPanel({
   const [preview, setPreview] = useState<CatalogOrderAllocationPreview | null>(null)
   const [previewing, setPreviewing] = useState(false)
   const [approving, setApproving] = useState(false)
+  const [refusal, setRefusal] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -140,6 +142,7 @@ function ApprovalPanel({
       return
     }
     setApproving(true)
+    setRefusal(null)
     try {
       const next = await approveCatalogOrderWithPlanning(order.id, {
         unitId,
@@ -154,9 +157,14 @@ function ApprovalPanel({
         onReloadNeeded()
         return
       }
-      toast.error(
-        error instanceof Error ? error.message : t("apiErrors.transitionCatalogOrder"),
-      )
+      const message =
+        error instanceof CatalogForbiddenError
+          ? t("catalog.resourcePlanning.errors.forbidden")
+          : error instanceof Error
+            ? error.message
+            : t("apiErrors.transitionCatalogOrder")
+      setRefusal(message)
+      toast.error(message)
     } finally {
       setApproving(false)
     }
@@ -178,7 +186,10 @@ function ApprovalPanel({
             modal={false}
             value={unitId}
             onValueChange={(value) => {
-              if (typeof value === "string") setUnitId(value)
+              if (typeof value === "string") {
+                setUnitId(value)
+                setRefusal(null)
+              }
             }}
             items={units.map((unit) => ({ value: unit.id, label: unit.name }))}
           >
@@ -202,6 +213,7 @@ function ApprovalPanel({
             onChange={(event) => {
               setWorkStart(event.target.value)
               setPreview(null)
+              setRefusal(null)
             }}
           />
         </label>
@@ -248,10 +260,19 @@ function ApprovalPanel({
         )
       ) : null}
 
+      {refusal ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t("catalog.resourcePlanning.approvalPanel.refusalTitle")}</AlertTitle>
+          <AlertDescription>{refusal}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <LoadingButton
         type="button"
         loading={approving}
-        disabled={!unitId || !workStart || (preview != null && !preview.isFeasible)}
+        disabled={
+          !unitId || !workStart || refusal != null || (preview != null && !preview.isFeasible)
+        }
         onClick={() => void approve()}
       >
         {t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")}

@@ -1055,6 +1055,7 @@
       "emptyState": "No requiere programación",
       "addRequirement": "Agregar recurso",
       "save": "Guardar recursos",
+      "saveErrorTitle": "No se pudo guardar",
       "toastSaved": "Recursos guardados correctamente.",
       "requirementLabel": "Recurso {{index}}",
       "calculationHint": "Cada unidad ocupa el recurso durante {{duration}} min, además de la preparación y limpieza.",
@@ -1076,7 +1077,8 @@
         "unsupportedWorkWindow": "El horario elegido no es compatible con esta programación.",
         "notSupportedYet": "La programación por categoría aún no es compatible; selecciona un recurso específico.",
         "previewFailed": "No se pudo previsualizar la programación.",
-        "usageActionFailed": "No se pudo actualizar el uso del recurso."
+        "usageActionFailed": "No se pudo actualizar el uso del recurso.",
+        "forbidden": "No tienes permiso para esta acción."
       },
       "approvalPanel": {
         "title": "Aprobar y programar",
@@ -1090,6 +1092,7 @@
         "estimatedReadyAt": "Previsión de finalización",
         "notFeasible": "Ese horario no es viable para el recurso seleccionado.",
         "approveAndAllocate": "Aprobar y asignar",
+        "refusalTitle": "No se puede asignar",
         "approvalRule": "Al aprobar, el recurso se reserva para el pedido en ese horario.",
         "toastApproved": "Pedido aprobado y recurso asignado."
       },
