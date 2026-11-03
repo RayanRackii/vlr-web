@@ -525,6 +525,15 @@
       "legendSelected": "Selecionado",
       "unplaced": "Outros espaços",
       "availabilityError": "Não foi possível verificar disponibilidade.",
+      "retry": "Tentar novamente",
+      "priceUndefined": "Valor não definido para esse horário",
+      "reason": {
+        "alreadyReserved": "Já reservado nesse horário",
+        "quantityUnavailable": "Quantidade indisponível",
+        "outsideHours": "Fora do horário de funcionamento",
+        "pastStart": "Esse horário já passou",
+        "generic": "Indisponível nesse horário"
+      },
       "slotsError": "Não foi possível carregar os horários do dia.",
       "noSlots": "Nenhum horário disponível nesta data. A equipe responsável ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",

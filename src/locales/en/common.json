@@ -525,6 +525,15 @@
       "legendSelected": "Selected",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
+      "retry": "Try again",
+      "priceUndefined": "Price not set for this time",
+      "reason": {
+        "alreadyReserved": "Already booked at this time",
+        "quantityUnavailable": "Quantity unavailable",
+        "outsideHours": "Outside opening hours",
+        "pastStart": "This time has already passed",
+        "generic": "Unavailable at this time"
+      },
       "slotsError": "Could not load times for this day.",
       "noSlots": "No slots are available on this date. The responsible team may not have published the schedule yet.",
       "noTimes": "No times on this date",
