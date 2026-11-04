@@ -918,6 +918,16 @@
       "create": "Novo produto",
       "createTitle": "Novo produto",
       "editTitle": "Editar produto",
+      "tabs": {
+        "dados": "Dados",
+        "price": "Preço",
+        "access": "Visibilidade e acesso"
+      },
+      "editor": {
+        "breadcrumbRoot": "Catálogo",
+        "notFound": "Produto não encontrado.",
+        "back": "Voltar para produtos"
+      },
       "dialogDescription": "Preço em branco significa sob consulta.",
       "empty": "Nenhum produto cadastrado.",
       "save": "Salvar",

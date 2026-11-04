@@ -40,6 +40,8 @@ type CatalogProductAccessSectionProps = {
   canManage: boolean
   /** Customer search uses the directory API, which requires core.customers.read. */
   canSearchCustomers?: boolean
+  /** Notifies when the grant list diverges from the loaded baseline (for a shared save bar). */
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 function sameSet(a: readonly string[], b: readonly string[]): boolean {
@@ -53,7 +55,7 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 export const CatalogProductAccessSection = forwardRef<
   CatalogProductAccessSectionHandle,
   CatalogProductAccessSectionProps
->(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false }, ref) {
+>(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false, onDirtyChange }, ref) {
   const { t, i18n } = useTranslation()
 
   const [visibility, setVisibility] = useState<CatalogProductVisibility>("Public")
@@ -153,6 +155,10 @@ export const CatalogProductAccessSection = forwardRef<
     }
     return !sameSet(base.groupIds, groupIds) || !sameSet(base.customerIds, customerIds)
   }, [visibility, groupIds, customerIds])
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty())
+  }, [onDirtyChange, isDirty])
 
   useImperativeHandle(
     ref,

@@ -12,7 +12,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
 } from "@tanstack/react-table"
-import { useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Check, CircleAlert, Loader2, Package, Pencil, Plus, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -118,6 +118,7 @@ function emptyProductForm(): CatalogProductFormValues {
 export function CatalogProductsPage({ view = "products" }: { view?: "products" | "requests" }) {
   const { t, i18n } = useTranslation()
   const { can, activeModules } = usePermissions()
+  const navigate = useNavigate()
   const canManage = can("catalog.products.manage")
   const resourcePlanningActive = activeModules.includes("resource-planning")
 
@@ -249,24 +250,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }
 
   function openEdit(product: CatalogProduct) {
-    setCreatedProductId(null)
-    setPendingFiles([])
-    setFileError(null)
-    setCodeManuallyEdited(false)
-    setUploadVisibility("CustomerVisible")
-    setEditing(product)
-    form.reset({
-      name: product.name,
-      code: product.code ?? "",
-      description: product.description ?? "",
-      price: product.price == null ? "" : String(product.price),
-      currency: product.currency,
-      ...(product.taxonomy ? { taxonomy: {
-        categoryIds: product.taxonomy.categories.map((item) => item.id),
-        tagIds: product.taxonomy.tags.map((item) => item.id),
-      } } : {}),
-    })
-    setDialogOpen(true)
+    void navigate(`/catalogo/produtos/${product.id}`)
   }
 
   async function onSubmit(values: CatalogProductFormValues) {
