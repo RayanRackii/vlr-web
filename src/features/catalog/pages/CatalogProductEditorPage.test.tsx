@@ -140,9 +140,9 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it.each([
-    { language: "pt-BR", pending: "Envio pendente — remova para liberar a troca de visibilidade", failed: "Envio falhou — remova para liberar a troca de visibilidade" },
-    { language: "en", pending: "Upload pending — remove to allow visibility changes", failed: "Upload failed — remove to allow visibility changes" },
-    { language: "es", pending: "Envío pendiente — elimina el archivo para permitir cambios de visibilidad", failed: "El envío falló — elimina el archivo para permitir cambios de visibilidad" },
+    { language: "pt-BR", pending: "Envio pendente", failed: "Envio falhou" },
+    { language: "en", pending: "Upload pending", failed: "Upload failed" },
+    { language: "es", pending: "Envío pendiente", failed: "El envío falló" },
   ])("localizes unfinished file labels in $language", async ({ language, pending, failed }) => {
     const previousLanguage = i18n.language
     await i18n.changeLanguage(language)

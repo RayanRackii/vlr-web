@@ -976,9 +976,8 @@
         "currency": "Moeda"
       },
       "files": {
-        "pendingTooRecent": "Aguarde alguns minutos antes de remover este envio pendente",
-        "pendingRecord": "Envio pendente — remova para liberar a troca de visibilidade",
-        "failedRecord": "Envio falhou — remova para liberar a troca de visibilidade",
+        "pendingRecord": "Envio pendente",
+        "failedRecord": "Envio falhou",
         "title": "Arquivos",
         "customerVisible": "Visível ao cliente",
         "internal": "Interno (B2B)",
@@ -1010,7 +1009,7 @@
         "broken": "Não foi possível carregar a imagem"
       },
       "access": {
-        "filesPresent": "Para alterar a visibilidade, remova ou reenvie os arquivos do produto, incluindo imagens e arquivos internos.",
+        "filesPresent": "Para mudar de Público para Restrito, remova ou reenvie apenas os arquivos públicos legados do produto. Arquivos internos e novos envios não bloqueiam essa alteração.",
         "title": "Visibilidade",
         "public": "Público",
         "storedGrantsHint": "{{count}} liberação(ões) guardada(s). Voltam a valer se o produto ficar Restrito.",

@@ -17,7 +17,7 @@ describe("visibility file conflict", () => {
       vi.mocked(api.put).mockRejectedValue(new AxiosError("Conflict", undefined, undefined, undefined, {
         status: 409, statusText: "Conflict", headers: {},
         config: { headers: {} } as InternalAxiosRequestConfig,
-        data: { code: "catalog.visibility.filesPresent", error: "Remove or re-upload files before changing visibility." },
+        data: { code: "catalog.visibility.filesPresent", error: "Remove or re-upload legacy public files before changing from Public to Restricted." },
       }))
       const message = i18n.t("catalog.products.access.filesPresent")
       expect(message).not.toBe("catalog.products.access.filesPresent")

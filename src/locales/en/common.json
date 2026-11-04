@@ -976,9 +976,8 @@
         "currency": "Currency"
       },
       "files": {
-        "pendingTooRecent": "Wait a few minutes before removing this pending upload",
-        "pendingRecord": "Upload pending — remove to allow visibility changes",
-        "failedRecord": "Upload failed — remove to allow visibility changes",
+        "pendingRecord": "Upload pending",
+        "failedRecord": "Upload failed",
         "title": "Files",
         "customerVisible": "Customer visible",
         "internal": "Internal (B2B)",
@@ -1010,7 +1009,7 @@
         "broken": "Image could not be loaded"
       },
       "access": {
-        "filesPresent": "To change visibility, remove or re-upload the product files, including images and internal files.",
+        "filesPresent": "To change from Public to Restricted, remove or re-upload only the product’s legacy public files. Internal files and new uploads do not block this change.",
         "title": "Visibility",
         "public": "Public",
         "storedGrantsHint": "{{count}} stored grant(s). They apply again if the product becomes Restricted.",
