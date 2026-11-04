@@ -133,6 +133,8 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   // Create slider (quick create → full editor).
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const pendingCreatedId = useRef<string | null>(null)
+  const [createStatusFailed, setCreateStatusFailed] = useState(false)
   const [createActive, setCreateActive] = useState(true)
   const [codeManuallyEdited, setCodeManuallyEdited] = useState(false)
 
@@ -216,6 +218,8 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }, [])
 
   function openCreate() {
+    pendingCreatedId.current = null
+    setCreateStatusFailed(false)
     form.reset(emptyProductForm())
     setCodeManuallyEdited(false)
     setCreateActive(true)
@@ -256,16 +260,21 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
     const body = toCatalogProductWriteBody(values, price.value)
     setCreating(true)
     try {
-      const created = await createCatalogProduct(body)
+      const createdId = pendingCreatedId.current ?? (await createCatalogProduct(body)).id
+      pendingCreatedId.current = createdId
       if (!createActive) {
-        await deactivateCatalogProduct(created.id)
+        await deactivateCatalogProduct(createdId)
       }
+      pendingCreatedId.current = null
       toast.success(t("catalog.products.toastCreated"))
       setCreateOpen(false)
-      void navigate(`/catalogo/produtos/${created.id}`)
+      void navigate(`/catalogo/produtos/${createdId}`)
     } catch (error) {
+      setCreateStatusFailed(pendingCreatedId.current !== null)
       toast.error(
-        error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
+        pendingCreatedId.current
+          ? t("catalog.products.editor.createStatusFailed")
+          : error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
       )
     } finally {
       setCreating(false)
@@ -589,6 +598,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
             onSubmit={form.handleSubmit(onCreate)}
             noValidate
           >
+            <fieldset disabled={creating || createStatusFailed} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -690,6 +700,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                 ]}
               />
             </div>
+            </fieldset>
           </form>
         </Form>
       </QuickEditSheet>

@@ -929,6 +929,8 @@
         "history": "Historial"
       },
       "editor": {
+        "createStatusFailed": "Producto creado, pero sigue activo porque no se pudo desactivar. Inténtalo de nuevo para terminar.",
+        "accessSaveFailed": "No se pudo guardar el acceso. Inténtalo de nuevo.",
         "breadcrumbRoot": "Catálogo",
         "notFound": "Producto no encontrado.",
         "back": "Volver a productos"

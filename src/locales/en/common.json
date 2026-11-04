@@ -929,6 +929,8 @@
         "history": "History"
       },
       "editor": {
+        "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
+        "accessSaveFailed": "Could not save access. Try again.",
         "breadcrumbRoot": "Catalog",
         "notFound": "Product not found.",
         "back": "Back to products"

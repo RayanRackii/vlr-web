@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { toast } from "sonner"
@@ -43,6 +43,7 @@ import {
   getCatalogProductFileUrl,
   uploadCatalogProductFile,
   deleteCatalogProductFile,
+  deactivateCatalogProduct,
   getCatalogProductAccess,
   getCatalogProductAccessHistory,
   listCustomerGroups,
@@ -98,6 +99,7 @@ describe("CatalogProductEditorPage", () => {
     vi.mocked(getCatalogProductFileUrl).mockReset()
     vi.mocked(uploadCatalogProductFile).mockReset()
     vi.mocked(deleteCatalogProductFile).mockReset()
+    vi.mocked(deactivateCatalogProduct).mockReset()
     getProductMock.mockReset()
     updateProductMock.mockReset()
     getTaxonomyOptionsMock.mockReset()
@@ -154,6 +156,9 @@ describe("CatalogProductEditorPage", () => {
     await user.click(screen.getAllByRole("button", { name: i18n.t("common.delete") })[1]!)
     await waitFor(() => expect(screen.queryByRole("button", { name: i18n.t("catalog.products.gallery.next") })).not.toBeInTheDocument())
     expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/f1")
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [first, second] })
+    await user.upload(screen.getByLabelText(i18n.t("catalog.products.files.select")), new File(["second"], "second.webp", { type: "image/webp" }))
+    await waitFor(() => expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(3))
   })
 
   it("ignores signed preview failures and skips non-renderable files", async () => {
@@ -169,6 +174,84 @@ describe("CatalogProductEditorPage", () => {
     expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(1)
     expect(screen.queryByRole("img", { name: PRODUCT.name })).not.toBeInTheDocument()
     expect(toastError).not.toHaveBeenCalled()
+  })
+
+  it("guards breadcrumb and unload even while changed fields are invalid", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const user = userEvent.setup()
+    renderPage()
+    await user.clear(await screen.findByLabelText(i18n.t("catalog.products.form.name")))
+    const unload = new Event("beforeunload", { cancelable: true })
+    window.dispatchEvent(unload)
+    expect(unload.defaultPrevented).toBe(true)
+    await user.click(screen.getByRole("link", { name: i18n.t("catalog.products.title") }))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toBeInTheDocument()
+    confirm.mockRestore()
+  })
+
+  it("keeps unsaved fields when a file is deleted and status is changed", async () => {
+    const file = { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
+    getProductMock.mockResolvedValueOnce({ ...PRODUCT, files: [file] }).mockResolvedValue({ ...PRODUCT, files: [] })
+    const user = userEvent.setup()
+    renderPage()
+    await user.type(await screen.findByLabelText(i18n.t("catalog.products.form.name")), " draft")
+    await user.click(screen.getByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("common.delete") }))
+    await waitFor(() => expect(deleteCatalogProductFile).toHaveBeenCalled())
+    await waitFor(() => expect(screen.queryByText("photo.png")).not.toBeInTheDocument())
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete draft")
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)
+    getProductMock.mockResolvedValue({ ...PRODUCT, isActive: false, files: [] })
+    vi.mocked(deactivateCatalogProduct).mockResolvedValue({ ...PRODUCT, isActive: false })
+    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    await waitFor(() => expect(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") })).toBeChecked())
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete draft")
+    confirm.mockRestore()
+    await user.click(screen.getByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    vi.mocked(uploadCatalogProductFile).mockResolvedValue(file)
+    getProductMock.mockResolvedValue({ ...PRODUCT, isActive: false, files: [file] })
+    await user.upload(screen.getByLabelText(i18n.t("catalog.products.files.select")), new File(["photo"], "photo.png", { type: "image/png" }))
+    await screen.findByText("photo.png")
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete draft")
+  })
+
+  it("discards visibility and grant changes across tabs", async () => {
+    vi.mocked(listCustomerGroups).mockResolvedValue([{
+      id: "group-1", name: "Revenda", description: null, memberCustomerIds: [], createdAt: PRODUCT.createdAt, updatedAt: null,
+    }])
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    const restricted = await screen.findByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) })
+    await waitFor(() => expect(restricted).toBeEnabled())
+    await user.click(restricted)
+    await user.click(await screen.findByRole("checkbox", { name: "Revenda" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("fullPage.discard") }))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    expect(screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.public")) })).toBeChecked()
+    expect(save()).toBeDisabled()
+    expect(putCatalogProductAccess).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) }))
+    expect(screen.getByRole("checkbox", { name: "Revenda" })).not.toBeChecked()
+  })
+
+  it("refreshes a failed signed image only once", async () => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
+    ] })
+    vi.mocked(getCatalogProductFileUrl).mockResolvedValueOnce({ url: "https://example.test/expired", isPublic: false })
+      .mockResolvedValue({ url: "https://example.test/fresh", isPublic: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    fireEvent.error(await screen.findByRole("img", { name: PRODUCT.name }))
+    await waitFor(() => expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh"))
+    fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
+    expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(2)
   })
 
   it("loads the product into the form", async () => {
@@ -253,7 +336,7 @@ describe("CatalogProductEditorPage", () => {
     renderPage()
     await screen.findByLabelText(i18n.t("catalog.products.form.name"))
     await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.history") }))
-    expect(await screen.findByText(i18n.t("catalog.products.access.history.empty"))).toBeVisible()
+    expect(await within(screen.getByRole("tabpanel")).findByText(i18n.t("catalog.products.access.history.empty"))).toBeVisible()
     expect(screen.getByRole("tabpanel")).toHaveTextContent(i18n.t("catalog.products.access.history.title"))
     expect(getCatalogProductAccessHistory).toHaveBeenCalledWith(PRODUCT.id)
     expect(listCustomerGroups).toHaveBeenCalled()
@@ -276,6 +359,7 @@ describe("CatalogProductEditorPage", () => {
     await waitFor(() => expect(restricted).toBeEnabled())
     await user.click(restricted)
     await user.click(await screen.findByRole("checkbox", { name: "Revenda" }))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
     const historyCalls = vi.mocked(getCatalogProductAccessHistory).mock.calls.length
     await user.click(save())
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated")))

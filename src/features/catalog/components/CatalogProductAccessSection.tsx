@@ -31,6 +31,8 @@ import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 
 /** Lets the product editor persist access right after the product save. */
 export type CatalogProductAccessSectionHandle = {
+  /** Restores the last loaded or successfully saved access. */
+  reset: () => void
   /** PUTs the grant list only when it changed; resolves false on failure or when not loaded. */
   persist: () => Promise<boolean>
 }
@@ -150,9 +152,6 @@ export const CatalogProductAccessSection = forwardRef<
     if (base.visibility !== visibility) {
       return true
     }
-    if (visibility === "Public") {
-      return false
-    }
     return !sameSet(base.groupIds, groupIds) || !sameSet(base.customerIds, customerIds)
   }, [visibility, groupIds, customerIds])
 
@@ -163,6 +162,12 @@ export const CatalogProductAccessSection = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
+      reset: () => {
+        setVisibility(baselineRef.current.visibility)
+        setGroupIds(baselineRef.current.groupIds)
+        setCustomerIds(baselineRef.current.customerIds)
+        onDirtyChange?.(false)
+      },
       persist: async () => {
         if (!canManage) {
           return true

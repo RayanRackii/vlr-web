@@ -92,6 +92,7 @@ export function CatalogProductEditorPage() {
   const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
+  const refreshedImages = useRef(new Set<string>())
   const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
 
   const form = useForm<CatalogProductFormValues>({
@@ -106,6 +107,31 @@ export function CatalogProductEditorPage() {
   })
 
   const watchedValues = useWatch({ control: form.control })
+  const hasChanges = canManage && (form.formState.isDirty || accessDirty)
+
+  useEffect(() => {
+    if (!hasChanges) return
+    const unload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    const leave = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest("a[href]") : null
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" ||
+          event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0 ||
+          link.href === window.location.href) return
+      if (!window.confirm(t("fullPage.leaveConfirm"))) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+    window.addEventListener("beforeunload", unload)
+    document.addEventListener("click", leave, true)
+    return () => {
+      window.removeEventListener("beforeunload", unload)
+      document.removeEventListener("click", leave, true)
+    }
+  }, [hasChanges, t])
 
   const applyProduct = useCallback(
     (next: CatalogProduct) => {
@@ -177,11 +203,19 @@ export function CatalogProductEditorPage() {
     if (!id) return
     try {
       const next = await getCatalogProduct(id)
-      applyProduct(next)
+      setProduct((current) => current ? {
+        ...current, files: next.files, isActive: next.isActive,
+        visibility: next.visibility,
+      } : next)
+      const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
+      setSignedImageUrls((current) => Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key))))
+      for (const key of refreshedImages.current) {
+        if (!keys.has(key)) refreshedImages.current.delete(key)
+      }
     } catch {
       /* keep current values on refetch failure */
     }
-  }, [id, applyProduct])
+  }, [id])
 
   async function onSubmit(values: CatalogProductFormValues) {
     if (!product) return
@@ -201,8 +235,9 @@ export function CatalogProductEditorPage() {
     try {
       const updated = await updateCatalogProduct(product.id, body)
       applyProduct(updated)
-      const accessOk = (await accessSectionRef.current?.persist()) ?? true
+      const accessOk = accessSectionRef.current ? await accessSectionRef.current.persist() : !accessDirty
       if (!accessOk) {
+        toast.error(t("catalog.products.editor.accessSaveFailed"))
         await reload()
         return
       }
@@ -332,7 +367,7 @@ export function CatalogProductEditorPage() {
   const previewImages = selectCatalogProductImages(
     product.files.map((file) => ({
       ...file,
-      url: file.url?.trim() || signedImageUrls[`${product.id}:${file.id}`],
+      url: signedImageUrls[`${product.id}:${file.id}`] || file.url?.trim(),
     })),
   )
 
@@ -464,9 +499,21 @@ export function CatalogProductEditorPage() {
     label: t("catalog.products.files.title"),
     badge: product.files.length,
     content: (
-      <div className="min-w-0 w-full max-w-xl space-y-3">
+      <div className="min-w-0 w-full max-w-xl space-y-3" onErrorCapture={(event) => {
+        if (!(event.target instanceof HTMLImageElement)) return
+        const source = event.target.getAttribute("src")
+        const image = previewImages.find((item) => item.url === source)
+        if (!image) return
+        const key = `${product.id}:${image.id}`
+        if (refreshedImages.current.has(key)) return
+        refreshedImages.current.add(key)
+        void getCatalogProductFileUrl(product.id, image.id).then(({ url }) => {
+          setSignedImageUrls((current) => ({ ...current, [key]: url }))
+        }).catch(() => undefined)
+      }}>
         {previewImages.length > 0 ? (
           <CatalogProductImageGallery
+            key={previewImages.map((image) => image.url).join("|")}
             images={previewImages}
             alt={product.name}
             frameClassName="h-40 w-full rounded-lg"
@@ -558,16 +605,7 @@ export function CatalogProductEditorPage() {
   const accessTab: EntityTab = {
     value: "access",
     label: t("catalog.products.tabs.access"),
-    content: (
-      <CatalogProductAccessSection
-        key={product.id}
-        ref={accessSectionRef}
-        productId={product.id}
-        canManage={canManage}
-        canSearchCustomers={can("core.customers.read")}
-        onDirtyChange={setAccessDirty}
-      />
-    ),
+    content: null,
   }
 
   const historyTab: EntityTab = {
@@ -579,6 +617,7 @@ export function CatalogProductEditorPage() {
   return (
     <Form {...form}>
       <EntityPage
+        className={tab === "access" ? "pb-0" : undefined}
         breadcrumb={
           <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground" aria-label="breadcrumb">
             <span>{t("catalog.products.editor.breadcrumbRoot")}</span>
@@ -609,10 +648,23 @@ export function CatalogProductEditorPage() {
         dirty={dirty}
         unsavedCount={unsavedCount}
         onSave={canManage ? () => void form.handleSubmit(onSubmit)() : undefined}
-        onDiscard={canManage ? () => form.reset(productToForm(product)) : undefined}
+        onDiscard={canManage ? () => {
+          form.reset(productToForm(product))
+          accessSectionRef.current?.reset()
+        } : undefined}
         saving={saving}
         saveLabel={t("catalog.products.save")}
       />
+      <div hidden={tab !== "access"} className="pb-24">
+      <CatalogProductAccessSection
+        key={product.id}
+        ref={accessSectionRef}
+        productId={product.id}
+        canManage={canManage}
+        canSearchCustomers={can("core.customers.read")}
+        onDirtyChange={setAccessDirty}
+      />
+      </div>
     </Form>
   )
 }

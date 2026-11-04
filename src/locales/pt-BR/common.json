@@ -929,6 +929,8 @@
         "history": "Histórico"
       },
       "editor": {
+        "createStatusFailed": "Produto criado, mas continua ativo porque não foi possível desativá-lo. Tente novamente para concluir.",
+        "accessSaveFailed": "Não foi possível salvar o acesso. Tente novamente.",
         "breadcrumbRoot": "Catálogo",
         "notFound": "Produto não encontrado.",
         "back": "Voltar para produtos"
