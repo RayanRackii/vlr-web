@@ -122,6 +122,10 @@ export function CatalogCustomerGroupsPage() {
       return undefined
     }
     if (name === "name") {
+      const { touchedFields, dirtyFields, isSubmitted, errors } = form.formState
+      if (errors.name || !(touchedFields.name || dirtyFields.name || isSubmitted)) {
+        return undefined
+      }
       return issue.code === "too_big"
         ? t("catalog.customerGroups.validation.nameTooLong")
         : t("catalog.customerGroups.validation.nameRequired")
@@ -681,9 +685,9 @@ function GroupForm({
               <FormControl>
                 <Input autoComplete="off" maxLength={200} disabled={disabled} {...field} />
               </FormControl>
-              {fieldMessage("name") ? (
-                <p className="text-sm text-destructive">{fieldMessage("name")}</p>
-              ) : null}
+              <p className="min-h-5 text-sm text-destructive" aria-live="polite">
+                {fieldMessage("name") ?? ""}
+              </p>
               <FormMessage />
             </FormItem>
           )}

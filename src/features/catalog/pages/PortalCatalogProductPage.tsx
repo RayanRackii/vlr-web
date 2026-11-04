@@ -23,7 +23,7 @@ import {
   formatCatalogMoney,
   type PortalProduct,
 } from "@/features/catalog/schemas/catalogSchemas"
-import { getPortalCatalogProduct } from "@/features/catalog/services/catalogPortalService"
+import { getPortalCatalogProduct, PortalProductUnavailableError } from "@/features/catalog/services/catalogPortalService"
 import { useCatalogCart } from "@/features/catalog/useCatalogCart"
 import {
   getCustomerId,
@@ -41,6 +41,7 @@ export function PortalCatalogProductPage() {
   const [product, setProduct] = useState<PortalProduct | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [unavailable, setUnavailable] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const quantityRef = useRef(quantity)
   quantityRef.current = quantity
@@ -68,6 +69,7 @@ export function PortalCatalogProductPage() {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
+          setUnavailable(error instanceof PortalProductUnavailableError)
           setLoadError(
             error instanceof Error
               ? error.message
@@ -87,6 +89,24 @@ export function PortalCatalogProductPage() {
 
   if (loading) {
     return <PageContentSkeleton rows={4} />
+  }
+
+  if (unavailable) {
+    return (
+      <div className="portal-catalog-detail-panel space-y-4 min-w-0" role="status">
+        <h1 className="text-xl font-semibold">{t("tenantPortal.catalog.unavailableTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("tenantPortal.catalog.unavailableBody")}</p>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => {
+            void navigate(tenantPortalPath(subdomain, "catalogo"))
+          }}
+        >
+          {t("tenantPortal.catalog.backToCatalog")}
+        </Button>
+      </div>
+    )
   }
 
   if (loadError || !product) {
@@ -145,9 +165,12 @@ export function PortalCatalogProductPage() {
         <div className="portal-catalog-detail-panel space-y-6 min-w-0">
           <div className="space-y-2">
             {product.isExclusive ? (
-              <Badge variant="outline" className="w-fit">
-                {t("tenantPortal.catalog.exclusive")}
-              </Badge>
+              <div className="space-y-1">
+                <Badge variant="outline" className="w-fit">
+                  {t("tenantPortal.catalog.exclusive")}
+                </Badge>
+                <p className="text-xs text-muted-foreground">{t("tenantPortal.catalog.exclusiveWhy")}</p>
+              </div>
             ) : null}
             <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">{product.name}</h1>
             {product.code ? (
@@ -198,7 +221,7 @@ export function PortalCatalogProductPage() {
             </div>
             <PortalAddToCartButton
               type="button"
-              className="portal-catalog-button portal-catalog-primary min-w-0 flex-1 text-primary-foreground"
+              className="portal-catalog-button portal-catalog-primary min-w-[9rem] flex-1 whitespace-nowrap text-primary-foreground"
               style={{ backgroundColor: primary }}
               onClick={() => {
                 cart.add(product.id, quantityRef.current)

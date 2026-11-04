@@ -11,9 +11,10 @@ import i18n from "@/lib/i18n"
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   getPortalCatalogProduct: vi.fn(),
+  PortalProductUnavailableError: class PortalProductUnavailableError extends Error {},
 }))
 
-import { getPortalCatalogProduct } from "@/features/catalog/services/catalogPortalService"
+import { getPortalCatalogProduct, PortalProductUnavailableError } from "@/features/catalog/services/catalogPortalService"
 
 const getMock = vi.mocked(getPortalCatalogProduct)
 
@@ -135,5 +136,14 @@ describe("PortalCatalogProductPage layout", () => {
 
     expect(screen.getByLabelText(i18n.t("tenantPortal.catalog.noImage"))).toBeInTheDocument()
     expect(document.querySelector("img")).toBeNull()
+  })
+
+  it("shows a friendly unavailable state for hidden or missing products", async () => {
+    getMock.mockRejectedValue(new PortalProductUnavailableError("x"))
+    renderPage()
+
+    expect(await screen.findByRole("heading", { name: i18n.t("tenantPortal.catalog.unavailableTitle") })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.backToCatalog") })).toBeInTheDocument()
+    expect(screen.queryByRole("alert")).toBeNull()
   })
 })

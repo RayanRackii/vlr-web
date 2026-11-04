@@ -704,7 +704,7 @@
       "cartProductUnavailable": "No se pudo cargar este producto.",
       "cartTotalUnavailable": "Total no disponible hasta que se carguen los productos.",
       "checkout": "Revisar pedido",
-      "checkoutHint": "Confirma las cantidades. Se usarán los precios del servidor.",
+      "checkoutHint": "Confirma las cantidades. Los precios finales aparecen en el pedido.",
       "customerNote": "Nota",
       "submitOrder": "Enviar pedido",
       "submitting": "Enviando...",
@@ -822,7 +822,11 @@
       "ordersLoading": "Cargando pedidos...",
       "orderCardLabel": "Pedido {{number}}",
       "requestsEmptyDescription": "¿Necesitas algo que no está en el catálogo? Envía una solicitud y el equipo responderá por aquí.",
-      "exclusive": "Exclusivo para ti"
+      "exclusive": "Exclusivo para ti",
+      "unavailableTitle": "Producto no disponible o no encontrado",
+      "unavailableBody": "Este producto no está disponible para ti o ya no existe. Mira los otros artículos del catálogo.",
+      "backToCatalog": "Volver al catálogo",
+      "exclusiveWhy": "Habilitado para tu cuenta por la tienda."
     },
     "timeZoneLabel": "hora de {{city}} ({{offset}})"
   },
@@ -979,7 +983,7 @@
         "customers": "Clientes habilitados",
         "noGroups": "Aún no hay grupos.",
         "noCustomers": "No se encontraron clientes.",
-        "searchCustomers": "Buscar cliente",
+        "searchCustomers": "Buscar por nombre o correo",
         "emptyWarning": "Producto restringido sin nadie habilitado: ningún cliente lo verá.",
         "readOnlyHint": "Puedes ver, pero no cambiar, la visibilidad.",
         "toastSaved": "Visibilidad actualizada.",
@@ -987,7 +991,12 @@
           "title": "Historial de acceso",
           "empty": "No hay cambios registrados.",
           "actorTeam": "Equipo",
-          "loadError": "No se pudo cargar el historial."
+          "loadError": "No se pudo cargar el historial.",
+          "groupsAdded": "+ {{names}}",
+          "groupsRemoved": "− {{names}}",
+          "customers_one": "{{count}} cliente habilitado",
+          "customers_other": "{{count}} clientes habilitados",
+          "unknownGroup": "grupo eliminado"
         },
         "loadError": "No se pudo cargar la visibilidad de este producto.",
         "retry": "Intentar de nuevo",
