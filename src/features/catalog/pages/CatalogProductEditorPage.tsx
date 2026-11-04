@@ -30,7 +30,7 @@ import {
   type CatalogProduct,
   type CatalogProductFormValues,
 } from "@/features/catalog/schemas/catalogSchemas"
-import { CatalogProductAccessSection, type CatalogProductAccessSectionHandle } from "@/features/catalog/components/CatalogProductAccessSection"
+import { CatalogProductAccessSection, CatalogProductAccessHistoryView, type CatalogProductAccessSectionHandle } from "@/features/catalog/components/CatalogProductAccessSection"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
 import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
 import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
@@ -536,6 +536,12 @@ export function CatalogProductEditorPage() {
     ),
   }
 
+  const historyTab: EntityTab = {
+    value: "history",
+    label: t("catalog.products.tabs.history"),
+    content: <CatalogProductAccessHistoryView productId={product.id} />,
+  }
+
   return (
     <Form {...form}>
       <EntityPage
@@ -563,7 +569,7 @@ export function CatalogProductEditorPage() {
             ) : null}
           </>
         }
-        tabs={[dadosTab, priceTab, filesTab, accessTab]}
+        tabs={[dadosTab, priceTab, filesTab, accessTab, historyTab]}
         value={tab}
         onValueChange={setTab}
         dirty={dirty}

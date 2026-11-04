@@ -918,10 +918,15 @@
       "create": "New product",
       "createTitle": "New product",
       "editTitle": "Edit product",
+      "quickEdit": "Quick edit",
+      "quickEditTitle": "Quick edit",
+      "quickEditDescription": "Change name, price and status. For everything else, open the full editor.",
+      "createContinue": "Create and continue →",
       "tabs": {
         "dados": "Details",
         "price": "Price",
-        "access": "Visibility and access"
+        "access": "Visibility and access",
+        "history": "History"
       },
       "editor": {
         "breadcrumbRoot": "Catalog",
