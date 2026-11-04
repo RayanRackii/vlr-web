@@ -993,7 +993,10 @@
         "typeRejected": "This file type is not accepted.",
         "contentMismatch": "The file content does not match the declared type.",
         "extensionRequired": "{{name}} needs a file extension.",
-        "required": "Select a file."
+        "required": "Select a file.",
+        "whoSees": "Who sees it",
+        "customerShort": "Customer",
+        "internalShort": "Internal"
       },
       "gallery": {
         "previous": "Previous image",
