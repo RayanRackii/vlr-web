@@ -115,6 +115,54 @@ describe("CatalogProductEditorPage", () => {
     getTaxonomyOptionsMock.mockResolvedValue({ categories: [], tags: [] })
   })
 
+  it.each([
+    { status: "Pending" as const, key: "pendingRecord", url: null },
+    { status: "Failed" as const, key: "failedRecord", url: "https://example.test/failed.png" },
+    { status: "Pending" as const, key: "pendingRecord", url: "https://example.test/pending.png" },
+    { status: "Failed" as const, key: "failedRecord", url: null },
+  ])("labels and removes $status files without preview (url: $url)", async ({ status, key, url }) => {
+    const file = { id: "f1", fileName: "unfinished.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, status, url }
+    getProductMock.mockResolvedValueOnce({ ...PRODUCT, hasFiles: true, files: [file] }).mockResolvedValue({ ...PRODUCT, hasFiles: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    expect(screen.getByText("unfinished.png")).toBeVisible()
+    expect(screen.getByText(i18n.t(`catalog.products.files.${key}`))).toBeVisible()
+    expect(screen.queryByRole("img", { name: PRODUCT.name })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.products.files.open") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.products.files.retry") })).not.toBeInTheDocument()
+    expect(getCatalogProductFileUrl).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: i18n.t("common.delete") }))
+    await waitFor(() => expect(screen.queryByText("unfinished.png")).not.toBeInTheDocument())
+    expect(deleteCatalogProductFile).toHaveBeenCalledWith(PRODUCT.id, "f1")
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
+  })
+
+  it.each([
+    { language: "pt-BR", pending: "Envio pendente — remova para liberar a troca de visibilidade", failed: "Envio falhou — remova para liberar a troca de visibilidade" },
+    { language: "en", pending: "Upload pending — remove to allow visibility changes", failed: "Upload failed — remove to allow visibility changes" },
+    { language: "es", pending: "Envío pendiente — elimina el archivo para permitir cambios de visibilidad", failed: "El envío falló — elimina el archivo para permitir cambios de visibilidad" },
+  ])("localizes unfinished file labels in $language", async ({ language, pending, failed }) => {
+    const previousLanguage = i18n.language
+    await i18n.changeLanguage(language)
+    try {
+      getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+        { id: "pending", fileName: "pending.pdf", mimeType: "application/pdf", sizeBytes: 100, visibility: "InternalB2B", status: "Pending", url: null },
+        { id: "failed", fileName: "failed.pdf", mimeType: "application/pdf", sizeBytes: 100, visibility: "InternalB2B", status: "Failed", url: null },
+      ] })
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+      expect(screen.getByText(pending)).toBeVisible()
+      expect(screen.getByText(failed)).toBeVisible()
+      expect(screen.getAllByRole("button", { name: i18n.t("common.delete") })).toHaveLength(2)
+      expect(getCatalogProductFileUrl).not.toHaveBeenCalled()
+    } finally {
+      await i18n.changeLanguage(previousLanguage)
+    }
+  })
+
   it("keeps the upload controls within the files card", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -127,7 +175,7 @@ describe("CatalogProductEditorPage", () => {
 
   it("renders a signed preview for a restricted product image without a URL", async () => {
     getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [
-      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
     ] })
     vi.mocked(getCatalogProductFileUrl).mockResolvedValue({ url: "https://example.test/signed.png", isPublic: false })
     const user = userEvent.setup()
@@ -137,9 +185,47 @@ describe("CatalogProductEditorPage", () => {
     expect(getCatalogProductFileUrl).toHaveBeenCalledWith(PRODUCT.id, "f1")
   })
 
+  it.each(["transient", "empty", "permanent"])("retries initial %s signing failures and offers manual recovery", async (failure) => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
+    ] })
+    const signing = vi.mocked(getCatalogProductFileUrl)
+    let failInitial!: () => void
+    signing.mockImplementationOnce(() => new Promise((resolve, reject) => {
+      failInitial = () => failure === "empty"
+        ? resolve({ url: " ", isPublic: false })
+        : reject(new Error("Unavailable"))
+    }))
+    if (failure === "permanent") signing.mockRejectedValue(new Error("Unavailable"))
+    else signing.mockResolvedValue({ url: "https://example.test/recovered", isPublic: false })
+    const user = userEvent.setup()
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    vi.useFakeTimers()
+    try {
+      await act(async () => { failInitial() })
+      await act(async () => { await vi.advanceTimersByTimeAsync(500) })
+      expect(signing).toHaveBeenCalledTimes(2)
+      if (failure === "permanent") {
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000) })
+        expect(signing).toHaveBeenCalledTimes(3)
+        await act(async () => { await vi.advanceTimersByTimeAsync(5000) })
+        expect(signing).toHaveBeenCalledTimes(3)
+        signing.mockResolvedValue({ url: "https://example.test/recovered", isPublic: false })
+        await act(async () => { fireEvent.click(screen.getByRole("button", { name: i18n.t("catalog.products.files.retry") })) })
+        expect(signing).toHaveBeenCalledTimes(4)
+      }
+      expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/recovered")
+      expect(screen.queryByRole("button", { name: i18n.t("catalog.products.files.retry") })).not.toBeInTheDocument()
+    } finally {
+      unmount()
+      vi.useRealTimers()
+    }
+  })
+
   it("keeps both private previews after a second upload and removes deleted images", async () => {
-    const first = { id: "f1", fileName: "first.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: null }
-    const second = { ...first, id: "f2", fileName: "second.webp", mimeType: "image/webp", visibility: "InternalB2B" as const }
+    const first = { id: "f1", status: "Ready" as const, fileName: "first.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: null }
+    const second = { ...first, id: "f2", status: "Ready" as const, fileName: "second.webp", mimeType: "image/webp", visibility: "InternalB2B" as const }
     getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [] })
     vi.mocked(getCatalogProductFileUrl).mockImplementation(async (_productId, fileId) => ({ url: `https://example.test/${fileId}`, isPublic: false }))
     const user = userEvent.setup()
@@ -169,8 +255,8 @@ describe("CatalogProductEditorPage", () => {
 
   it("ignores signed preview failures and skips non-renderable files", async () => {
     getProductMock.mockResolvedValue({ ...PRODUCT, files: [
-      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "InternalB2B", url: null },
-      { id: "f2", fileName: "doc.pdf", mimeType: "application/pdf", sizeBytes: 100, visibility: "InternalB2B", url: null },
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "InternalB2B", url: null },
+      { id: "f2", status: "Ready" as const, fileName: "doc.pdf", mimeType: "application/pdf", sizeBytes: 100, visibility: "InternalB2B", url: null },
     ] })
     vi.mocked(getCatalogProductFileUrl).mockRejectedValue(new Error("unavailable"))
     const user = userEvent.setup()
@@ -241,7 +327,7 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it("keeps unsaved fields when a file is deleted and status is changed", async () => {
-    const file = { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
+    const file = { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
     getProductMock.mockResolvedValueOnce({ ...PRODUCT, files: [file] }).mockResolvedValue({ ...PRODUCT, files: [] })
     const user = userEvent.setup()
     renderPage()
@@ -291,7 +377,7 @@ describe("CatalogProductEditorPage", () => {
 
   it("refreshes the signed image again when a later URL expires", async () => {
     getProductMock.mockResolvedValue({ ...PRODUCT, files: [
-      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
     ] })
     vi.mocked(getCatalogProductFileUrl).mockResolvedValueOnce({ url: "https://example.test/expired", isPublic: false })
       .mockResolvedValueOnce({ url: "https://example.test/fresh-1", isPublic: false })
@@ -311,7 +397,7 @@ describe("CatalogProductEditorPage", () => {
   it.each(["transient", "permanent", "empty"])("retries a %s signing failure with bounded backoff", async (failure) => {
     const expired = "https://example.test/expired"
     getProductMock.mockResolvedValue({ ...PRODUCT, files: [
-      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: expired },
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: expired },
     ] })
     const signing = vi.mocked(getCatalogProductFileUrl)
     if (failure === "empty") signing.mockResolvedValueOnce({ url: "", isPublic: false })
@@ -340,9 +426,12 @@ describe("CatalogProductEditorPage", () => {
     }
   })
 
-  it.each(["inflight", "backoff"])("cancels preview retries on unmount during %s", async (phase) => {
+  it.each([
+    ["inflight", null], ["backoff", null],
+    ["inflight", "https://example.test/expired"], ["backoff", "https://example.test/expired"],
+  ])("cancels preview retries on unmount during %s for URL %s", async (phase, url) => {
     getProductMock.mockResolvedValue({ ...PRODUCT, files: [
-      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: "https://example.test/expired" },
+      { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url },
     ] })
     let rejectSigning!: (error: Error) => void
     vi.mocked(getCatalogProductFileUrl).mockImplementation(() => new Promise((_resolve, reject) => { rejectSigning = reject }))
@@ -351,7 +440,7 @@ describe("CatalogProductEditorPage", () => {
     await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
     vi.useFakeTimers()
     try {
-      fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
+      if (url) fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
       if (phase === "backoff") await act(async () => { rejectSigning(new Error("Signing failed")) })
       unmount()
       if (phase === "inflight") await act(async () => { rejectSigning(new Error("Signing failed")) })
@@ -484,8 +573,8 @@ describe("CatalogProductEditorPage", () => {
 
   it.each([
     { label: "DTO flag", hasFiles: true, files: [] },
-    { label: "internal file fallback", files: [{ id: "f1", fileName: "model.stl", mimeType: "application/octet-stream", sizeBytes: 100, visibility: "InternalB2B" as const, url: null }] },
-    { label: "image fallback", files: [{ id: "f2", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }] },
+    { label: "internal file fallback", files: [{ id: "f1", status: "Ready" as const, fileName: "model.stl", mimeType: "application/octet-stream", sizeBytes: 100, visibility: "InternalB2B" as const, url: null }] },
+    { label: "image fallback", files: [{ id: "f2", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }] },
   ])("locks visibility for $label", async (fileState) => {
     getProductMock.mockResolvedValue({ ...PRODUCT, ...fileState })
     const user = userEvent.setup()
@@ -497,7 +586,7 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it("unlocks visibility after deleting the last file and reloading hasFiles", async () => {
-    const file = { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
+    const file = { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
     getProductMock.mockResolvedValueOnce({ ...PRODUCT, hasFiles: true, files: [file] }).mockResolvedValue({ ...PRODUCT, hasFiles: false })
     const user = userEvent.setup()
     renderPage()

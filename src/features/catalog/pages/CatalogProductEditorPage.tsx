@@ -93,6 +93,7 @@ export function CatalogProductEditorPage() {
   const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
+  const [previewFailures, setPreviewFailures] = useState<Record<string, boolean>>({})
   // Bounded signed-preview refresh keyed by URL (not by file): a freshly signed
   // URL that later expires can be refreshed again, and a failed refresh may be
   // retried until MAX_PREVIEW_REFRESH_ATTEMPTS is reached for that URL.
@@ -127,9 +128,10 @@ export function CatalogProductEditorPage() {
   // signing request reschedules itself with a small linear backoff until the
   // budget is exhausted.
   const refreshSignedPreview = useCallback(
-    function retryPreview(source: string, productId: string, fileId: string) {
+    function retryPreview(source: string, productId: string, fileId: string, maxAttempts = MAX_PREVIEW_REFRESH_ATTEMPTS) {
       const refresh = previewRefreshAttempts.current.get(source) ?? { attempts: 0, pending: false }
-      if (refresh.pending || refresh.attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) return
+      if (refresh.pending || refresh.attempts >= maxAttempts) return
+      setPreviewFailures((current) => ({ ...current, [`${productId}:${fileId}`]: false }))
       refresh.attempts += 1
       refresh.pending = true
       previewRefreshAttempts.current.set(source, refresh)
@@ -142,14 +144,15 @@ export function CatalogProductEditorPage() {
         })
         .catch(() => {
           if (previewRefreshAttempts.current.get(source) !== refresh) return
-          if (refresh.attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) {
+          if (refresh.attempts >= maxAttempts) {
             refresh.pending = false
+            setPreviewFailures((current) => ({ ...current, [`${productId}:${fileId}`]: true }))
             return
           }
           const timer = setTimeout(() => {
             previewRefreshTimers.current.delete(timer)
             refresh.pending = false
-            retryPreview(source, productId, fileId)
+            retryPreview(source, productId, fileId, maxAttempts)
           }, 500 * refresh.attempts)
           previewRefreshTimers.current.add(timer)
         })
@@ -201,29 +204,15 @@ export function CatalogProductEditorPage() {
 
   useEffect(() => {
     if (!product) return
-    let active = true
     const candidates = selectCatalogProductImages(
       product.files
-        .filter((file) => !file.url?.trim() && !signedImageUrls[`${product.id}:${file.id}`])
+        .filter((file) => file.status !== "Pending" && file.status !== "Failed" && !file.url?.trim() && !signedImageUrls[`${product.id}:${file.id}`])
         .map((file) => ({ ...file, url: "pending" })),
     )
-    if (candidates.length === 0) return
-    void Promise.all(candidates.map(async (file) => {
-      try {
-        const { url } = await getCatalogProductFileUrl(product.id, file.id)
-        return url.trim() ? [`${product.id}:${file.id}`, url] as const : null
-      } catch {
-        return null // private previews are optional
-      }
-    })).then((results) => {
-      if (!active) return
-      const entries = results.filter((entry) => entry !== null)
-      if (entries.length > 0) {
-        setSignedImageUrls((current) => ({ ...current, ...Object.fromEntries(entries) }))
-      }
-    })
-    return () => { active = false }
-  }, [product, signedImageUrls])
+    for (const file of candidates) {
+      refreshSignedPreview(`initial:${product.id}:${file.id}`, product.id, file.id, 3)
+    }
+  }, [product, signedImageUrls, refreshSignedPreview])
 
   const reload = useCallback(async () => {
     if (!id) return
@@ -395,7 +384,7 @@ export function CatalogProductEditorPage() {
   const unsavedCount = (formDirty ? 1 : 0) + (accessDirty ? 1 : 0)
   const fieldsLocked = !canManage || saving
   const previewImages = selectCatalogProductImages(
-    product.files.map((file) => ({
+    product.files.filter((file) => file.status !== "Pending" && file.status !== "Failed").map((file) => ({
       ...file,
       url: signedImageUrls[`${product.id}:${file.id}`] || file.url?.trim(),
     })),
@@ -549,18 +538,36 @@ export function CatalogProductEditorPage() {
           <ul className="space-y-2 text-sm">
             {product.files.map((file) => (
               <li key={file.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                <span className="min-w-0 max-w-full truncate">
-                  {file.fileName}{" "}
-                  <Badge variant="outline">
-                    {file.visibility === "CustomerVisible"
-                      ? t("catalog.products.files.customerVisible")
-                      : t("catalog.products.files.internal")}
-                  </Badge>
-                </span>
+                <div className="min-w-0 max-w-full">
+                  <span className="block truncate">
+                    {file.fileName}{" "}
+                    <Badge variant="outline">
+                      {file.visibility === "CustomerVisible"
+                        ? t("catalog.products.files.customerVisible")
+                        : t("catalog.products.files.internal")}
+                    </Badge>
+                  </span>
+                  {file.status === "Pending" || file.status === "Failed" ? (
+                    <p className="text-sm text-destructive">
+                      {t(file.status === "Pending" ? "catalog.products.files.pendingRecord" : "catalog.products.files.failedRecord")}
+                    </p>
+                  ) : null}
+                </div>
                 <div className="flex min-w-0 flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => void onOpenFile(file.id)}>
-                    {t("catalog.products.files.open")}
-                  </Button>
+                  {file.status !== "Pending" && file.status !== "Failed" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => void onOpenFile(file.id)}>
+                      {t("catalog.products.files.open")}
+                    </Button>
+                  ) : null}
+                  {file.status !== "Pending" && file.status !== "Failed" && previewFailures[`${product.id}:${file.id}`] ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => {
+                      const source = `manual:${product.id}:${file.id}`
+                      previewRefreshAttempts.current.delete(source)
+                      refreshSignedPreview(source, product.id, file.id, 3)
+                    }}>
+                      {t("catalog.products.files.retry")}
+                    </Button>
+                  ) : null}
                   {canManage ? (
                     <Button
                       type="button"

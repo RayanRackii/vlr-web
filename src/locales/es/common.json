@@ -976,6 +976,8 @@
         "currency": "Moneda"
       },
       "files": {
+        "pendingRecord": "Envío pendiente — elimina el archivo para permitir cambios de visibilidad",
+        "failedRecord": "El envío falló — elimina el archivo para permitir cambios de visibilidad",
         "title": "Archivos",
         "customerVisible": "Visible al cliente",
         "internal": "Interno (B2B)",

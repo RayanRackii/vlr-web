@@ -52,12 +52,15 @@ export type NotificationDeliveryStatus = z.infer<
   typeof notificationDeliveryStatusSchema
 >
 
+export const catalogFileStatusSchema = z.enum(["Ready", "Pending", "Failed"])
+
 export const catalogProductFileSchema = z.object({
   id: z.string().uuid(),
   fileName: z.string(),
   mimeType: z.string(),
   sizeBytes: z.number(),
   visibility: catalogFileVisibilitySchema,
+  status: catalogFileStatusSchema.default("Ready"),
   url: z.string().nullable(),
 })
 
