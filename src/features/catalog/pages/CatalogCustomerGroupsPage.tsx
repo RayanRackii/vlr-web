@@ -178,7 +178,7 @@ export function CatalogCustomerGroupsPage() {
     void loadWhereUsed()
       .then(setWhereUsed)
       .catch(() => setWhereUsed({}))
-    void listTenantCustomers({ pageSize: 100 })
+    void listTenantCustomers({ pageSize: 50 })
       .then((page) => rememberCustomers(page.items))
       .catch(() => undefined)
   }, [rememberCustomers])
@@ -379,7 +379,7 @@ export function CatalogCustomerGroupsPage() {
           </div>
         ) : !loading && !loadError ? (
           <table
-            className="staff-catalog-table"
+            className="staff-catalog-table w-full"
             aria-label={t("catalog.customerGroups.title")}
           >
             <thead>
@@ -757,7 +757,7 @@ function MembersSection({
           onResolveCustomers={onResolveCustomers}
         />
       ) : null}
-      {group.memberCustomerIds.some((id) => !customersById[id]) ? (
+      {group.memberCustomerIds.some((id) => !customersById[id] && !group.memberNames?.[id]) ? (
         <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p>
       ) : null}
       {group.memberCustomerIds.length === 0 ? (
@@ -768,7 +768,7 @@ function MembersSection({
         <ul className="divide-y divide-border">
           {group.memberCustomerIds.map((id) => {
             const customer = customersById[id]
-            const name = customer?.name ?? t("catalog.customerGroups.members.unknown")
+            const name = customer?.name ?? group.memberNames?.[id] ?? t("catalog.customerGroups.members.unknown")
             return (
               <li
                 key={id}
