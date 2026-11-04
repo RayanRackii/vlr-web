@@ -984,6 +984,7 @@
         "noGroups": "No groups yet.",
         "noCustomers": "No customers found.",
         "searchCustomers": "Search by name or email",
+        "needCustomersPermission": "To search and add customers, you need the permission to view customers.",
         "emptyWarning": "Restricted product with nobody granted: no customer will see it.",
         "readOnlyHint": "You can view, but not change, visibility.",
         "toastSaved": "Visibility updated.",

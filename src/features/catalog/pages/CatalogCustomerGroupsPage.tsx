@@ -88,6 +88,8 @@ export function CatalogCustomerGroupsPage() {
   const { t, i18n } = useTranslation()
   const { can } = usePermissions()
   const canManage = can("catalog.products.manage")
+  // The customer directory (preload + member search) requires core.customers.read.
+  const canReadCustomers = can("core.customers.read")
 
   const [groups, setGroups] = useState<CustomerGroup[]>([])
   const [whereUsed, setWhereUsed] = useState<Record<string, string[]>>({})
@@ -182,10 +184,13 @@ export function CatalogCustomerGroupsPage() {
     void loadWhereUsed()
       .then(setWhereUsed)
       .catch(() => setWhereUsed({}))
+    if (!canReadCustomers) {
+      return
+    }
     void listTenantCustomers({ pageSize: 50 })
       .then((page) => rememberCustomers(page.items))
       .catch(() => undefined)
-  }, [rememberCustomers])
+  }, [rememberCustomers, canReadCustomers])
 
   const filteredGroups = useMemo(() => {
     const term = search.trim().toLocaleLowerCase(i18n.language)
@@ -522,6 +527,7 @@ export function CatalogCustomerGroupsPage() {
                   group={editing}
                   customersById={customersById}
                   canManage={canManage}
+                  canSearchCustomers={canReadCustomers}
                   memberBusyId={memberBusyId}
                   onAddMembers={onAddMembers}
                   onRequestRemove={(member) => setPendingRemove(member)}
@@ -733,6 +739,7 @@ function MembersSection({
   group,
   customersById,
   canManage,
+  canSearchCustomers,
   memberBusyId,
   onAddMembers,
   onRequestRemove,
@@ -741,6 +748,7 @@ function MembersSection({
   group: CustomerGroup
   customersById: Record<string, TenantCustomer>
   canManage: boolean
+  canSearchCustomers: boolean
   memberBusyId: string | null
   onAddMembers: (customers: TenantCustomer[]) => void | Promise<void>
   onRequestRemove: (member: { id: string; name: string }) => void
@@ -754,12 +762,15 @@ function MembersSection({
           count: group.memberCustomerIds.length,
         })}
       </p>
-      {canManage ? (
+      {canManage && canSearchCustomers ? (
         <AddMemberPicker
           excludeIds={group.memberCustomerIds}
           onAdd={onAddMembers}
           onResolveCustomers={onResolveCustomers}
         />
+      ) : null}
+      {canManage && !canSearchCustomers ? (
+        <p className="text-xs text-muted-foreground">{t("catalog.products.access.needCustomersPermission")}</p>
       ) : null}
       {group.memberCustomerIds.some((id) => !customersById[id] && !group.memberNames?.[id]) ? (
         <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p>

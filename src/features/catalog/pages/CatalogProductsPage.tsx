@@ -1071,6 +1071,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                   ref={accessSectionRef}
                   productId={editing.id}
                   canManage={canManage}
+                  canSearchCustomers={can("core.customers.read")}
                 />
               ) : (
                 <p className="text-xs text-muted-foreground">{t("catalog.products.access.createHint")}</p>

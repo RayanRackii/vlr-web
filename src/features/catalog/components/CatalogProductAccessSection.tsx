@@ -38,6 +38,8 @@ export type CatalogProductAccessSectionHandle = {
 type CatalogProductAccessSectionProps = {
   productId: string
   canManage: boolean
+  /** Customer search uses the directory API, which requires core.customers.read. */
+  canSearchCustomers?: boolean
 }
 
 function sameSet(a: readonly string[], b: readonly string[]): boolean {
@@ -51,7 +53,7 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 export const CatalogProductAccessSection = forwardRef<
   CatalogProductAccessSectionHandle,
   CatalogProductAccessSectionProps
->(function CatalogProductAccessSection({ productId, canManage }, ref) {
+>(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false }, ref) {
   const { t, i18n } = useTranslation()
 
   const [visibility, setVisibility] = useState<CatalogProductVisibility>("Public")
@@ -341,8 +343,11 @@ export const CatalogProductAccessSection = forwardRef<
             {missingNames ? (
               <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p>
             ) : null}
-            {!locked ? (
+            {!locked && canSearchCustomers ? (
               <CustomerGrantPicker excludeIds={customerIds} onAdd={addCustomer} />
+            ) : null}
+            {!locked && !canSearchCustomers ? (
+              <p className="text-xs text-muted-foreground">{t("catalog.products.access.needCustomersPermission")}</p>
             ) : null}
           </div>
         </div>

@@ -984,6 +984,7 @@
         "noGroups": "Aún no hay grupos.",
         "noCustomers": "No se encontraron clientes.",
         "searchCustomers": "Buscar por nombre o correo",
+        "needCustomersPermission": "Para buscar y agregar clientes, necesitas el permiso para ver clientes.",
         "emptyWarning": "Producto restringido sin nadie habilitado: ningún cliente lo verá.",
         "readOnlyHint": "Puedes ver, pero no cambiar, la visibilidad.",
         "toastSaved": "Visibilidad actualizada.",
