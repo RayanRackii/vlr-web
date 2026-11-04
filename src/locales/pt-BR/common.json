@@ -43,6 +43,19 @@
     },
     "remove": "Remover"
   },
+  "fullPage": {
+    "unsavedChanges_one": "{{count}} alteração não salva",
+    "unsavedChanges_other": "{{count}} alterações não salvas",
+    "discard": "Descartar",
+    "save": "Salvar",
+    "leaveConfirm": "Você tem alterações não salvas. Deseja sair mesmo assim?",
+    "openFullEdit": "Abrir edição completa →",
+    "advanced": {
+      "title": "Avançado",
+      "show": "Mostrar opções",
+      "hide": "Ocultar opções"
+    }
+  },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
     "loadUsers": "Não foi possível carregar os usuários.",

@@ -13,7 +13,7 @@ import {
   type ColumnFiltersState,
 } from "@tanstack/react-table"
 import { useSearchParams } from "react-router-dom"
-import { Check, ChevronDown, CircleAlert, Loader2, Package, Pencil, Plus, Power } from "lucide-react"
+import { Check, CircleAlert, Loader2, Package, Pencil, Plus, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -1240,7 +1240,7 @@ function TaxonomyFilterHeader({ kind, title, options, filter, onChange }: {
   return (
     <Popover>
       <PopoverTrigger render={<Button type="button" variant="outline" className="staff-catalog-filter" data-active={active} />}>
-        {title}<ChevronDown size={16} aria-hidden="true" />
+        {title}
       </PopoverTrigger>
       <PopoverContent className="w-72 space-y-3" align="start">
         {kind === "categories" ? <label className="grid gap-2 text-sm font-medium">
