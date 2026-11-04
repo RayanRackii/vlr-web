@@ -40,6 +40,8 @@ type CatalogProductAccessSectionProps = {
   canManage: boolean
   /** Customer search uses the directory API, which requires core.customers.read. */
   canSearchCustomers?: boolean
+  /** Notifies when the grant list diverges from the loaded baseline (for a shared save bar). */
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 function sameSet(a: readonly string[], b: readonly string[]): boolean {
@@ -53,7 +55,7 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 export const CatalogProductAccessSection = forwardRef<
   CatalogProductAccessSectionHandle,
   CatalogProductAccessSectionProps
->(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false }, ref) {
+>(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false, onDirtyChange }, ref) {
   const { t, i18n } = useTranslation()
 
   const [visibility, setVisibility] = useState<CatalogProductVisibility>("Public")
@@ -153,6 +155,10 @@ export const CatalogProductAccessSection = forwardRef<
     }
     return !sameSet(base.groupIds, groupIds) || !sameSet(base.customerIds, customerIds)
   }, [visibility, groupIds, customerIds])
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty())
+  }, [onDirtyChange, isDirty])
 
   useImperativeHandle(
     ref,
@@ -357,6 +363,50 @@ export const CatalogProductAccessSection = forwardRef<
     </section>
   )
 })
+
+/**
+ * Read-only access history, loaded standalone (history + group names) so it can
+ * render on its own tab without the editable access section. Does not touch the
+ * access section's save contract.
+ */
+export function CatalogProductAccessHistoryView({ productId }: { productId: string }) {
+  const { i18n } = useTranslation()
+  const [history, setHistory] = useState<CatalogAuditEntry[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [groups, setGroups] = useState<CustomerGroup[]>([])
+
+  useEffect(() => {
+    let active = true
+    void getCatalogProductAccessHistory(productId)
+      .then((entries) => {
+        if (!active) return
+        setFailed(false)
+        setHistory(entries)
+      })
+      .catch(() => {
+        if (!active) return
+        setFailed(true)
+        setHistory([])
+      })
+    void listCustomerGroups()
+      .then((list) => {
+        if (active) setGroups(list)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [productId])
+
+  return (
+    <AccessHistory
+      entries={history}
+      failed={failed}
+      locale={i18n.language}
+      groupNames={Object.fromEntries(groups.map((g) => [g.id, g.name]))}
+    />
+  )
+}
 
 function CustomerGrantPicker({
   excludeIds,

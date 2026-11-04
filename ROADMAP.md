@@ -268,6 +268,9 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] B2 QA (2026-11-04, local): testes de criação adaptados ao sheet “Criar e continuar”; navegação ao novo produto, edição rápida nome/preço/status com demais campos preservados e retenção após erro. Histórico visível na página; regressões de acesso cobrem payloads Público/Restrito e ordem produto → grants → histórico. Sem alteração de produção ou contrato. Validação: TypeScript e lint:ratchet aprovados; Vitest 312 arquivos/2934 testes aprovados com `--configLoader runner` (loader padrão bloqueado por EROFS em `node_modules/.vite-temp`). Expectativa de rota B2 no teste de manifests atualizada.
+- [ ] B2: smoke visual em DEV da página e dos sheets (desktop/mobile); API: nenhuma mudança necessária neste escopo.
+
 - [x] UI low-risk (2026-11-02, local): cabeçalhos com alvos de 44px até 767px; buscas staff curtas; sino B2C distingue lidas/não lidas e mantém itens após marcar todas; toast fecha em 3,5s sem bloquear área externa; imagem falha usa placeholder neutro; lista ignora AbortError e descarta itens inválidos individualmente. Sem Git ou alteração de contratos/sessão. Validação: TypeScript e build passaram; Vitest 295 arquivos/2835 testes; reabertura do sino 24/24. Lint global: 170 erros/19 avisos existentes; no escopo, erro preexistente de refs da galeria e dois avisos TanStack.
 
 - [x] QA R28 (2026-10-29, código local): banner e próximos passos do pedido acompanham o status no polling (pt-BR/en/es); inputs/selects/textareas inválidos mantêm borda e foco `destructive`; erros de campo dos recursos aparecem uma única vez; cabeçalho, filtros e ações/Voltar do staff usam a área de toque existente de 44px em touch/mobile. Sem mudança no `vlr-api`.

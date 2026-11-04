@@ -918,6 +918,21 @@
       "create": "Novo produto",
       "createTitle": "Novo produto",
       "editTitle": "Editar produto",
+      "quickEdit": "Edição rápida",
+      "quickEditTitle": "Edição rápida",
+      "quickEditDescription": "Altere nome, preço e status. Para tudo mais, abra a edição completa.",
+      "createContinue": "Criar e continuar →",
+      "tabs": {
+        "dados": "Dados",
+        "price": "Preço",
+        "access": "Visibilidade e acesso",
+        "history": "Histórico"
+      },
+      "editor": {
+        "breadcrumbRoot": "Catálogo",
+        "notFound": "Produto não encontrado.",
+        "back": "Voltar para produtos"
+      },
       "dialogDescription": "Preço em branco significa sob consulta.",
       "empty": "Nenhum produto cadastrado.",
       "save": "Salvar",
