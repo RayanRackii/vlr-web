@@ -230,7 +230,7 @@ export function CatalogProductEditorPage() {
     try {
       const next = await getCatalogProduct(id)
       setProduct((current) => current ? {
-        ...current, files: next.files, isActive: next.isActive,
+        ...current, files: next.files, hasFiles: next.hasFiles, isActive: next.isActive,
         visibility: next.visibility,
       } : next)
       const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
@@ -684,6 +684,7 @@ export function CatalogProductEditorPage() {
       />
       <div hidden={tab !== "access"} className="pb-24">
       <CatalogProductAccessSection
+        hasFiles={product.hasFiles ?? product.files.length > 0}
         key={product.id}
         ref={accessSectionRef}
         productId={product.id}

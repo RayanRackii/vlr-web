@@ -1007,6 +1007,7 @@
         "broken": "Image could not be loaded"
       },
       "access": {
+        "filesPresent": "To change visibility, remove or re-upload the product files, including images and internal files.",
         "title": "Visibility",
         "public": "Public",
         "storedGrantsHint": "{{count}} stored grant(s). They apply again if the product becomes Restricted.",

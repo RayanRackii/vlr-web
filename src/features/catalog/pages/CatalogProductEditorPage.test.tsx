@@ -482,6 +482,51 @@ describe("CatalogProductEditorPage", () => {
     expect(vi.mocked(getCatalogProductAccessHistory).mock.invocationCallOrder[historyCalls]).toBeGreaterThan(putOrder)
   })
 
+  it.each([
+    { label: "DTO flag", hasFiles: true, files: [] },
+    { label: "internal file fallback", files: [{ id: "f1", fileName: "model.stl", mimeType: "application/octet-stream", sizeBytes: 100, visibility: "InternalB2B" as const, url: null }] },
+    { label: "image fallback", files: [{ id: "f2", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }] },
+  ])("locks visibility for $label", async (fileState) => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, ...fileState })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    await waitFor(() => expect(getCatalogProductAccess).toHaveBeenCalled())
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
+    expect(await screen.findByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+  })
+
+  it("unlocks visibility after deleting the last file and reloading hasFiles", async () => {
+    const file = { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
+    getProductMock.mockResolvedValueOnce({ ...PRODUCT, hasFiles: true, files: [file] }).mockResolvedValue({ ...PRODUCT, hasFiles: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    expect(await screen.findByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+    await user.click(screen.getByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("common.delete") }))
+    await waitFor(() => expect(screen.queryByText("photo.png")).not.toBeInTheDocument())
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
+    expect(screen.queryByText(i18n.t("catalog.products.access.filesPresent"))).not.toBeInTheDocument()
+  })
+
+  it("shows the localized file conflict when access save fails", async () => {
+    const message = i18n.t("catalog.products.access.filesPresent")
+    vi.mocked(putCatalogProductAccess).mockRejectedValue(new Error(message))
+    updateProductMock.mockResolvedValue(PRODUCT)
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    const restricted = await screen.findByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) })
+    await waitFor(() => expect(restricted).toBeEnabled())
+    await user.click(restricted)
+    await user.click(save())
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith(message))
+    expect(restricted).toBeChecked()
+    expect(toastSuccess).not.toHaveBeenCalled()
+  })
+
   it("preserves grants when saving public visibility", async () => {
     vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })
     vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })

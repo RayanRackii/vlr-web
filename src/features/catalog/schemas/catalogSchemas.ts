@@ -79,6 +79,7 @@ export const catalogProductSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   files: z.array(catalogProductFileSchema),
+  hasFiles: z.boolean().optional(),
   taxonomy: taxonomyAssignmentSchema.optional(),
   /** Customer-group access (slice 1/2); absent on pre-feature responses. */
   visibility: catalogProductVisibilitySchema.optional().default("Public"),

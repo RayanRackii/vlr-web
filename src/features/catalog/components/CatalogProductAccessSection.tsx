@@ -40,6 +40,7 @@ export type CatalogProductAccessSectionHandle = {
 type CatalogProductAccessSectionProps = {
   productId: string
   canManage: boolean
+  hasFiles?: boolean
   /** Customer search uses the directory API, which requires core.customers.read. */
   canSearchCustomers?: boolean
   /** Notifies when the grant list diverges from the loaded baseline (for a shared save bar). */
@@ -57,7 +58,7 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 export const CatalogProductAccessSection = forwardRef<
   CatalogProductAccessSectionHandle,
   CatalogProductAccessSectionProps
->(function CatalogProductAccessSection({ productId, canManage, canSearchCustomers = false, onDirtyChange }, ref) {
+>(function CatalogProductAccessSection({ productId, canManage, hasFiles = false, canSearchCustomers = false, onDirtyChange }, ref) {
   const { t, i18n } = useTranslation()
 
   const [visibility, setVisibility] = useState<CatalogProductVisibility>("Public")
@@ -258,7 +259,8 @@ export const CatalogProductAccessSection = forwardRef<
       ) : null}
       <fieldset
         className="grid gap-2 sm:grid-cols-2"
-        disabled={locked}
+        disabled={locked || hasFiles}
+        aria-describedby={hasFiles ? `visibility-files-${productId}` : undefined}
         aria-label={t("catalog.products.access.title")}
       >
         {(["Public", "Restricted"] as const).map((option) => (
@@ -272,7 +274,7 @@ export const CatalogProductAccessSection = forwardRef<
               className="mt-0.5"
               value={option}
               checked={visibility === option}
-              disabled={locked}
+              disabled={locked || hasFiles}
               onChange={() => setVisibility(option)}
             />
             <span>
@@ -288,6 +290,11 @@ export const CatalogProductAccessSection = forwardRef<
           </label>
         ))}
       </fieldset>
+      {hasFiles ? (
+        <p id={`visibility-files-${productId}`} className="text-xs text-muted-foreground">
+          {t("catalog.products.access.filesPresent")}
+        </p>
+      ) : null}
 
       {visibility === "Public" && grantCount > 0 && !loadFailed && !loading ? (
         <p className="text-xs text-muted-foreground">
@@ -295,7 +302,7 @@ export const CatalogProductAccessSection = forwardRef<
         </p>
       ) : null}
 
-      {visibility === "Restricted" && !loadFailed && !loading ? (
+      {!loadFailed && !loading ? (
         <div className="space-y-3">
           {showEmptyWarning ? (
             <p

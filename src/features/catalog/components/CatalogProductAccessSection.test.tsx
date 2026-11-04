@@ -52,6 +52,20 @@ describe("CatalogProductAccessSection", () => {
     vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PID, visibility: "Restricted", customerIds: [], groupIds: ["g1"], restrictedWithoutGrants: false } as never)
   })
 
+  it.each(["Public", "Restricted"] as const)("locks visibility with files but keeps %s grants editable", async (visibility) => {
+    const user = userEvent.setup()
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PID, visibility, customerIds: [], groupIds: [], restrictedWithoutGrants: false })
+    const ref = createRef<CatalogProductAccessSectionHandle>()
+    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage hasFiles />)
+    const group = await screen.findByRole("checkbox", { name: "Revenda" })
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
+    expect(screen.getByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+    expect(group).toBeEnabled()
+    await user.click(group)
+    await act(async () => { expect(await ref.current!.persist()).toBe(true) })
+    expect(putCatalogProductAccess).toHaveBeenCalledWith(PID, { visibility, customerIds: [], groupIds: ["g1"] })
+  })
+
   it("saves a restricted grant with the selected group", async () => {
     const user = userEvent.setup()
     const ref = setup(true)
@@ -76,7 +90,7 @@ describe("CatalogProductAccessSection", () => {
     render(<CatalogProductAccessSection ref={ref} productId={PID} canManage onDirtyChange={onDirtyChange} />)
     expect(await screen.findByRole("checkbox", { name: "Revenda" })).toBeChecked()
     await user.click(screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.public")) }))
-    expect(screen.queryByRole("checkbox", { name: "Revenda" })).not.toBeInTheDocument()
+    expect(screen.getByRole("checkbox", { name: "Revenda" })).toBeChecked()
     expect(onDirtyChange).toHaveBeenLastCalledWith(true)
     await act(async () => { expect(await ref.current!.persist()).toBe(true) })
     expect(putCatalogProductAccess).toHaveBeenCalledWith(PID, { visibility: "Public", customerIds: ["c1"], groupIds: ["g1"] })

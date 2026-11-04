@@ -1007,6 +1007,7 @@
         "broken": "No se pudo cargar la imagen"
       },
       "access": {
+        "filesPresent": "Para cambiar la visibilidad, elimina o vuelve a subir los archivos del producto, incluidas las imágenes y los archivos internos.",
         "title": "Visibilidad",
         "public": "Público",
         "storedGrantsHint": "{{count}} permiso(s) guardado(s). Vuelven a aplicarse si el producto pasa a Restringido.",
