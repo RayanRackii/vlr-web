@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { createBrowserRouter, createMemoryRouter, RouterProvider, Route, Routes } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -73,16 +73,22 @@ const PRODUCT: CatalogProduct = {
   grantedGroupCount: 0,
 }
 
-function renderPage(permissions: string[] = ["catalog.products.manage"]) {
-  return render(
-    <MemoryRouter initialEntries={[`/catalogo/produtos/${PRODUCT.id}`]}>
+function renderPage(permissions: string[] = ["catalog.products.manage"], browser = false) {
+  const routes = [{
+    path: "*",
+    element: (
       <TestPermissionProvider permissions={permissions}>
         <Routes>
           <Route path="/catalogo/produtos/:id" element={<CatalogProductEditorPage />} />
+          <Route path="*" element={<div data-testid="destination" />} />
         </Routes>
       </TestPermissionProvider>
-    </MemoryRouter>,
-  )
+    ),
+  }]
+  const router = browser ? createBrowserRouter(routes) : createMemoryRouter(routes, {
+    initialEntries: [`/catalogo/produtos/${PRODUCT.id}`],
+  })
+  return { ...render(<RouterProvider router={router} />), router }
 }
 
 function save() {
@@ -190,16 +196,35 @@ describe("CatalogProductEditorPage", () => {
     confirm.mockRestore()
   })
 
-  it("confirms before browser Back when there are unsaved changes", async () => {
+  it.each([-2, -1, 1, "/programmatic"])("guards navigation %s and preserves the browser URL on cancel", async (target) => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const originalUrl = window.location.href
+    window.history.replaceState(null, "", "/catalogo/produtos")
     const user = userEvent.setup()
-    renderPage()
-    const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
-    await user.type(name, " pro")
-    window.dispatchEvent(new PopStateEvent("popstate"))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
-    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete pro")
-    confirm.mockRestore()
+    const { router, unmount } = renderPage(undefined, true)
+    try {
+      await act(async () => { await router.navigate("/middle") })
+      await act(async () => { await router.navigate(`/catalogo/produtos/${PRODUCT.id}`) })
+      await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+      await act(async () => { await router.navigate("/forward") })
+      await act(async () => { await router.navigate(-1) })
+      const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+      await user.type(name, " pro")
+      const navigateAway = () => typeof target === "number" ? router.navigate(target) : router.navigate(target)
+      await act(async () => { await navigateAway() })
+      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      await waitFor(() => expect(window.location.pathname).toBe(`/catalogo/produtos/${PRODUCT.id}`))
+      expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete pro")
+      confirm.mockReturnValue(true)
+      await act(async () => { await navigateAway() })
+      await screen.findByTestId("destination")
+      expect(window.location.pathname).toBe(typeof target === "string" ? target : target === 1 ? "/forward" : target === -1 ? "/middle" : "/catalogo/produtos")
+    } finally {
+      unmount()
+      router.dispose()
+      window.history.replaceState(null, "", originalUrl)
+      confirm.mockRestore()
+    }
   })
 
   it("keeps the discard bar reachable while a field is invalid", async () => {
@@ -281,6 +306,60 @@ describe("CatalogProductEditorPage", () => {
     fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
     await waitFor(() => expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh-2"))
     expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(3)
+  })
+
+  it.each(["transient", "permanent", "empty"])("retries a %s signing failure with bounded backoff", async (failure) => {
+    const expired = "https://example.test/expired"
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: expired },
+    ] })
+    const signing = vi.mocked(getCatalogProductFileUrl)
+    if (failure === "empty") signing.mockResolvedValueOnce({ url: "", isPublic: false })
+    else signing.mockRejectedValueOnce(new Error("Signing failed"))
+    if (failure === "permanent") signing.mockRejectedValue(new Error("Still unavailable"))
+    else signing.mockResolvedValue({ url: "https://example.test/fresh", isPublic: false })
+    const user = userEvent.setup()
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    const image = screen.getByRole("img", { name: PRODUCT.name })
+    vi.useFakeTimers()
+    try {
+      await act(async () => { fireEvent.error(image) })
+      expect(signing).toHaveBeenCalledTimes(1)
+      await act(async () => { await vi.advanceTimersByTimeAsync(499) })
+      expect(signing).toHaveBeenCalledTimes(1)
+      await act(async () => { await vi.advanceTimersByTimeAsync(1) })
+      expect(signing).toHaveBeenCalledTimes(2)
+      if (failure !== "permanent") expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh")
+      else fireEvent.error(image)
+      await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+      expect(signing).toHaveBeenCalledTimes(2)
+    } finally {
+      unmount()
+      vi.useRealTimers()
+    }
+  })
+
+  it.each(["inflight", "backoff"])("cancels preview retries on unmount during %s", async (phase) => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: "https://example.test/expired" },
+    ] })
+    let rejectSigning!: (error: Error) => void
+    vi.mocked(getCatalogProductFileUrl).mockImplementation(() => new Promise((_resolve, reject) => { rejectSigning = reject }))
+    const user = userEvent.setup()
+    const { unmount } = renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    vi.useFakeTimers()
+    try {
+      fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
+      if (phase === "backoff") await act(async () => { rejectSigning(new Error("Signing failed")) })
+      unmount()
+      if (phase === "inflight") await act(async () => { rejectSigning(new Error("Signing failed")) })
+      await act(async () => { await vi.advanceTimersByTimeAsync(10000) })
+      expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("loads the product into the form", async () => {

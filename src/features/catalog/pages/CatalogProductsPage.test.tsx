@@ -231,44 +231,38 @@ describe("CatalogProductsPage validity gate", () => {
     }
   })
 
-  it("retries failed inactive creation without creating a duplicate", async () => {
-    createProductMock.mockResolvedValue(PRODUCT)
-    vi.mocked(deactivateCatalogProduct).mockRejectedValueOnce(new Error("Falha ao desativar"))
-      .mockResolvedValueOnce({ ...PRODUCT, isActive: false })
-    const user = userEvent.setup()
-    renderPage()
-    const dialog = await openCreateSheet(user)
-    await user.type(within(dialog).getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
-    await user.click(within(dialog).getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
-    const submit = within(dialog).getByRole("button", { name: i18n.t("catalog.products.createContinue") })
-    await user.click(submit)
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith(i18n.t("catalog.products.editor.createStatusFailed")))
-    expect(within(dialog).getByRole("alert")).toHaveTextContent(i18n.t("catalog.products.editor.createStatusFailed"))
-    expect(within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))).toBeDisabled()
-    await user.click(submit)
-    await waitFor(() => expect(deactivateCatalogProduct).toHaveBeenCalledTimes(2))
-    expect(createProductMock).toHaveBeenCalledTimes(1)
-    expect(deactivateCatalogProduct).toHaveBeenLastCalledWith(PRODUCT.id)
-  })
-
-  it("starts a new creation after abandoning a failed status step", async () => {
-    createProductMock.mockResolvedValue(PRODUCT)
-    vi.mocked(deactivateCatalogProduct).mockRejectedValue(new Error("Falha ao desativar"))
+  it("creates an inactive product directly and opens its editor", async () => {
+    createProductMock.mockResolvedValue({ ...PRODUCT, isActive: false })
     const user = userEvent.setup()
     renderPage()
     const dialog = await openCreateSheet(user)
     await user.type(within(dialog).getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
     await user.click(within(dialog).getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
     await user.click(within(dialog).getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
-    await waitFor(() => expect(toastError).toHaveBeenCalled())
-    await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
-    const reopened = await openCreateSheet(user)
-    const name = within(reopened).getByLabelText(i18n.t("catalog.products.form.name"))
+    await waitFor(() => expect(createProductMock).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ name: "Raquete", status: "Inactive" })))
+    expect(deactivateCatalogProduct).not.toHaveBeenCalled()
+    expect(await screen.findByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`)
+  })
+
+  it("preserves inactive creation values after a failed create and permits retry", async () => {
+    createProductMock.mockRejectedValueOnce(new Error("Create failed"))
+      .mockResolvedValueOnce({ ...PRODUCT, isActive: false })
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openCreateSheet(user)
+    const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
+    await user.type(name, "Raquete")
+    await user.click(within(dialog).getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    const submit = within(dialog).getByRole("button", { name: i18n.t("catalog.products.createContinue") })
+    await user.click(submit)
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Create failed"))
     expect(name).toBeEnabled()
-    await user.type(name, "Outro produto")
-    await user.click(within(reopened).getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
+    expect(name).toHaveValue("Raquete")
+    expect(within(dialog).getByRole("radio", { name: i18n.t("catalog.products.inactive") })).toBeChecked()
+    await user.click(submit)
     await waitFor(() => expect(createProductMock).toHaveBeenCalledTimes(2))
-    expect(createProductMock).toHaveBeenLastCalledWith(expect.objectContaining({ name: "Outro produto" }))
+    expect(createProductMock).toHaveBeenLastCalledWith(expect.objectContaining({ status: "Inactive" }))
+    expect(deactivateCatalogProduct).not.toHaveBeenCalled()
   })
 
   it("keeps Criar e continuar disabled until the product schema passes and leaves Cancelar and Fechar free", async () => {
@@ -413,6 +407,7 @@ describe("CatalogProductsPage validity gate", () => {
       description: null,
       price: 10.5,
       currency: "BRL",
+      status: "Active",
     })
 
     createProductMock.mockResolvedValueOnce({
@@ -442,7 +437,7 @@ describe("CatalogProductsPage validity gate", () => {
     await user.click(within(sheet).getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${createdId}`))
     expect(createProductMock).toHaveBeenCalledTimes(1)
-    expect(createProductMock).toHaveBeenCalledWith({ name: "Raquete", code: "RAQ", description: null, price: null, currency: "BRL" })
+    expect(createProductMock).toHaveBeenCalledWith({ name: "Raquete", code: "RAQ", description: null, price: null, currency: "BRL", status: "Active" })
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 

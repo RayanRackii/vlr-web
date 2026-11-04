@@ -96,7 +96,9 @@ export function CatalogProductEditorPage() {
   // Bounded signed-preview refresh keyed by URL (not by file): a freshly signed
   // URL that later expires can be refreshed again, and a failed refresh may be
   // retried until MAX_PREVIEW_REFRESH_ATTEMPTS is reached for that URL.
-  const previewRefreshAttempts = useRef(new Map<string, number>())
+  const previewRefreshAttempts = useRef(new Map<string, { attempts: number; pending: boolean }>())
+  // Pending backoff timers for failed refreshes, cleared on unmount/file change.
+  const previewRefreshTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
   const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
 
   const form = useForm<CatalogProductFormValues>({
@@ -111,58 +113,6 @@ export function CatalogProductEditorPage() {
   })
 
   const watchedValues = useWatch({ control: form.control })
-  const hasChanges = canManage && (form.formState.isDirty || accessDirty)
-  const hasChangesRef = useRef(hasChanges)
-  useEffect(() => {
-    hasChangesRef.current = hasChanges
-  }, [hasChanges])
-
-  // Programmatic (in-app) navigation goes through this so it is guarded the
-  // same way as anchor clicks, popstate and tab/window close.
-  const guardedNavigate = useCallback(
-    (to: string, options?: { replace?: boolean }) => {
-      if (hasChangesRef.current && !window.confirm(t("fullPage.leaveConfirm"))) return
-      void navigate(to, options)
-    },
-    [navigate, t],
-  )
-
-  useEffect(() => {
-    if (!hasChanges) return
-    const unload = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-      event.returnValue = ""
-    }
-    const leave = (event: MouseEvent) => {
-      const link = event.target instanceof Element ? event.target.closest("a[href]") : null
-      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank" ||
-          event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0 ||
-          link.href === window.location.href) return
-      if (!window.confirm(t("fullPage.leaveConfirm"))) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-    }
-    // BrowserRouter is not a data router, so useBlocker is unavailable. Push a
-    // guard entry and confirm on popstate to cover browser Back/Forward.
-    window.history.pushState(null, "", window.location.href)
-    const popState = () => {
-      if (window.confirm(t("fullPage.leaveConfirm"))) {
-        window.removeEventListener("popstate", popState)
-        window.history.back()
-      } else {
-        window.history.pushState(null, "", window.location.href)
-      }
-    }
-    window.addEventListener("beforeunload", unload)
-    document.addEventListener("click", leave, true)
-    window.addEventListener("popstate", popState)
-    return () => {
-      window.removeEventListener("beforeunload", unload)
-      document.removeEventListener("click", leave, true)
-      window.removeEventListener("popstate", popState)
-    }
-  }, [hasChanges, t])
 
   const applyProduct = useCallback(
     (next: CatalogProduct) => {
@@ -172,9 +122,54 @@ export function CatalogProductEditorPage() {
     [form],
   )
 
+  // Re-sign an expired preview URL for a file, counting each try against the
+  // per-URL budget. A broken gallery emits no second error event, so a failed
+  // signing request reschedules itself with a small linear backoff until the
+  // budget is exhausted.
+  const refreshSignedPreview = useCallback(
+    function retryPreview(source: string, productId: string, fileId: string) {
+      const refresh = previewRefreshAttempts.current.get(source) ?? { attempts: 0, pending: false }
+      if (refresh.pending || refresh.attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) return
+      refresh.attempts += 1
+      refresh.pending = true
+      previewRefreshAttempts.current.set(source, refresh)
+      void getCatalogProductFileUrl(productId, fileId)
+        .then(({ url }) => {
+          if (previewRefreshAttempts.current.get(source) !== refresh) return
+          if (!url.trim()) throw new Error("Empty preview URL")
+          refresh.pending = false
+          setSignedImageUrls((current) => ({ ...current, [`${productId}:${fileId}`]: url }))
+        })
+        .catch(() => {
+          if (previewRefreshAttempts.current.get(source) !== refresh) return
+          if (refresh.attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) {
+            refresh.pending = false
+            return
+          }
+          const timer = setTimeout(() => {
+            previewRefreshTimers.current.delete(timer)
+            refresh.pending = false
+            retryPreview(source, productId, fileId)
+          }, 500 * refresh.attempts)
+          previewRefreshTimers.current.add(timer)
+        })
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const timers = previewRefreshTimers.current
+    const attempts = previewRefreshAttempts.current
+    return () => {
+      attempts.clear()
+      timers.forEach(clearTimeout)
+      timers.clear()
+    }
+  }, [id])
+
   useEffect(() => {
     if (!id) {
-      guardedNavigate(PRODUCTS_PATH, { replace: true })
+      void navigate(PRODUCTS_PATH, { replace: true })
       return
     }
     let active = true
@@ -196,7 +191,7 @@ export function CatalogProductEditorPage() {
     return () => {
       active = false
     }
-  }, [id, guardedNavigate, t, applyProduct])
+  }, [id, navigate, t, applyProduct])
 
   useEffect(() => {
     void getCatalogTaxonomyOptions()
@@ -240,8 +235,11 @@ export function CatalogProductEditorPage() {
       } : next)
       const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
       setSignedImageUrls((current) => Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key))))
-      // File set changed (upload/delete); reset the per-URL refresh budget.
+      // File set changed (upload/delete); reset the per-URL refresh budget and
+      // drop any pending backoff retries that target the old URLs.
       previewRefreshAttempts.current.clear()
+      previewRefreshTimers.current.forEach(clearTimeout)
+      previewRefreshTimers.current.clear()
     } catch {
       /* keep current values on refetch failure */
     }
@@ -537,13 +535,7 @@ export function CatalogProductEditorPage() {
         if (!source) return
         const image = previewImages.find((item) => item.url === source)
         if (!image) return
-        const attempts = previewRefreshAttempts.current.get(source) ?? 0
-        if (attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) return
-        previewRefreshAttempts.current.set(source, attempts + 1)
-        const key = `${product.id}:${image.id}`
-        void getCatalogProductFileUrl(product.id, image.id).then(({ url }) => {
-          setSignedImageUrls((current) => ({ ...current, [key]: url }))
-        }).catch(() => undefined)
+        refreshSignedPreview(source, product.id, image.id)
       }}>
         {previewImages.length > 0 ? (
           <CatalogProductImageGallery

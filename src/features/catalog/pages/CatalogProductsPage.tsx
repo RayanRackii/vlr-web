@@ -68,6 +68,7 @@ import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogP
 import {
   activateCatalogProduct,
   createCatalogProduct,
+  type CatalogProductWriteRequest,
   deactivateCatalogProduct,
   listCatalogProducts,
   listProductRequests,
@@ -133,8 +134,6 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   // Create slider (quick create → full editor).
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
-  const pendingCreatedId = useRef<string | null>(null)
-  const [createStatusFailed, setCreateStatusFailed] = useState(false)
   const [createActive, setCreateActive] = useState(true)
   const [codeManuallyEdited, setCodeManuallyEdited] = useState(false)
 
@@ -218,8 +217,6 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }, [])
 
   function openCreate() {
-    pendingCreatedId.current = null
-    setCreateStatusFailed(false)
     form.reset(emptyProductForm())
     setCodeManuallyEdited(false)
     setCreateActive(true)
@@ -257,24 +254,22 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       return
     }
 
-    const body = toCatalogProductWriteBody(values, price.value)
+    // Pass the initial status on create so an inactive product is never
+    // published first: the API creates it unpublished, no activate/deactivate
+    // round-trip (which could leave it published if the second call failed).
+    const body: CatalogProductWriteRequest = {
+      ...toCatalogProductWriteBody(values, price.value),
+      status: createActive ? "Active" : "Inactive",
+    }
     setCreating(true)
     try {
-      const createdId = pendingCreatedId.current ?? (await createCatalogProduct(body)).id
-      pendingCreatedId.current = createdId
-      if (!createActive) {
-        await deactivateCatalogProduct(createdId)
-      }
-      pendingCreatedId.current = null
+      const created = await createCatalogProduct(body)
       toast.success(t("catalog.products.toastCreated"))
       setCreateOpen(false)
-      void navigate(`/catalogo/produtos/${createdId}`)
+      void navigate(`/catalogo/produtos/${created.id}`)
     } catch (error) {
-      setCreateStatusFailed(pendingCreatedId.current !== null)
       toast.error(
-        pendingCreatedId.current
-          ? t("catalog.products.editor.createStatusFailed")
-          : error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
+        error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
       )
     } finally {
       setCreating(false)
@@ -598,7 +593,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
             onSubmit={form.handleSubmit(onCreate)}
             noValidate
           >
-            <fieldset disabled={creating || createStatusFailed} className="space-y-4">
+            <fieldset disabled={creating} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -701,11 +696,6 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
               />
             </div>
             </fieldset>
-            {createStatusFailed ? (
-              <p role="alert" className="text-sm text-destructive">
-                {t("catalog.products.editor.createStatusFailed")}
-              </p>
-            ) : null}
           </form>
         </Form>
       </QuickEditSheet>

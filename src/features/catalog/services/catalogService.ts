@@ -59,6 +59,8 @@ export type CatalogProductWriteRequest = {
   price?: number | null
   currency?: string
   taxonomy?: { categoryIds: string[]; tagIds: string[] }
+  /** Create-only: initial status. Omitting it defaults to Active on the API. */
+  status?: "Active" | "Inactive"
 }
 
 function throwCatalogError(error: unknown, fallbackKey: string): never {
