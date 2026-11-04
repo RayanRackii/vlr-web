@@ -33,6 +33,7 @@ export type AppNavigationChildItem = {
     | "nav.adminUsers"
     | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
+    | "nav.catalogCustomerGroups"
     | "nav.catalogOrders"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
@@ -76,6 +77,7 @@ export type AppNavigationItem = {
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
     | "nav.catalogSettings"
+    | "nav.catalogCustomerGroups"
     | "nav.catalogNotifications"
   to: string
   tabs?: readonly NavigationTab[]
@@ -349,6 +351,10 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/admin")) {
     return "nav.adminTenants"
+  }
+
+  if (pathname.startsWith("/catalogo/grupos")) {
+    return "nav.catalogCustomerGroups"
   }
 
   if (pathname.startsWith("/catalogo/notificacoes")) {

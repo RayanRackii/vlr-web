@@ -821,7 +821,8 @@
       "ordersEmptyDescription": "Quando você fizer um pedido no catálogo do {{tenant}}, ele aparece aqui para acompanhamento.",
       "ordersLoading": "Carregando pedidos...",
       "orderCardLabel": "Pedido {{number}}",
-      "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui."
+      "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui.",
+      "exclusive": "Exclusivo para você"
     },
     "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
@@ -967,6 +968,132 @@
         "next": "Próxima imagem",
         "imageOf": "{{current}} / {{total}}",
         "broken": "Não foi possível carregar a imagem"
+      },
+      "access": {
+        "title": "Visibilidade",
+        "public": "Público",
+        "publicHint": "Todos os clientes veem este produto.",
+        "restricted": "Restrito",
+        "restrictedHint": "Só os grupos e clientes liberados veem este produto.",
+        "groups": "Grupos liberados",
+        "customers": "Clientes liberados",
+        "noGroups": "Nenhum grupo cadastrado.",
+        "noCustomers": "Nenhum cliente encontrado.",
+        "searchCustomers": "Buscar cliente",
+        "emptyWarning": "Produto restrito sem ninguém liberado: nenhum cliente verá este produto.",
+        "readOnlyHint": "Você pode ver, mas não alterar, a visibilidade.",
+        "toastSaved": "Visibilidade atualizada.",
+        "history": {
+          "title": "Histórico de acesso",
+          "empty": "Nenhuma alteração registrada.",
+          "actorTeam": "Equipe",
+          "loadError": "Não foi possível carregar o histórico."
+        },
+        "loadError": "Não foi possível carregar a visibilidade deste produto.",
+        "retry": "Tentar novamente",
+        "createHint": "Depois de salvar o produto, você poderá definir quem pode vê-lo.",
+        "namesUnavailable": "Alguns nomes de clientes não puderam ser carregados."
+      },
+      "badges": {
+        "restricted": "Restrito · {{count}}"
+      },
+      "visibilityFilter": {
+        "title": "Visibilidade",
+        "public": "Público",
+        "restricted": "Restrito"
+      }
+    },
+    "customerGroups": {
+      "title": "Grupos de clientes",
+      "subtitle": "Agrupe clientes para liberar produtos exclusivos.",
+      "create": "Novo grupo",
+      "createTitle": "Novo grupo",
+      "editTitle": "Editar grupo",
+      "search": "Buscar por nome",
+      "searchShort": "Buscar grupo",
+      "empty": "Nenhum grupo cadastrado.",
+      "emptyHint": "Crie um grupo para liberar produtos a clientes específicos.",
+      "noDescription": "Sem descrição",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "toastCreated": "Grupo criado.",
+      "toastUpdated": "Grupo atualizado.",
+      "toastDeleted": "Grupo excluído.",
+      "columns": {
+        "name": "Grupo",
+        "description": "Descrição",
+        "members": "Membros",
+        "usage": "Uso",
+        "actions": "Ações"
+      },
+      "memberCount_one": "{{count}} membro",
+      "memberCount_other": "{{count}} membros",
+      "usage": {
+        "none": "Sem uso",
+        "products_one": "{{count}} produto",
+        "products_other": "{{count}} produtos"
+      },
+      "form": {
+        "name": "Nome",
+        "description": "Descrição"
+      },
+      "validation": {
+        "nameRequired": "Informe o nome do grupo.",
+        "nameTooLong": "O nome pode ter no máximo 200 caracteres.",
+        "descriptionTooLong": "A descrição pode ter no máximo 2000 caracteres."
+      },
+      "delete": "Excluir",
+      "deleteTitle": "Excluir grupo?",
+      "deleteBody": "{{name}} será removido. Os membros e as liberações de produtos ligadas a ele serão desfeitos. Pedidos já feitos não mudam.",
+      "deleteAffected": "Produtos que usam este grupo:",
+      "deleteNoAffected": "Nenhum produto usa este grupo.",
+      "tabs": {
+        "details": "Dados",
+        "members": "Membros",
+        "history": "Histórico"
+      },
+      "members": {
+        "title": "Membros ({{count}})",
+        "add": "Adicionar cliente",
+        "searchPlaceholder": "Buscar cliente por nome ou e-mail…",
+        "searchLabel": "Buscar cliente",
+        "selectHint": "Selecione um ou mais clientes para adicionar.",
+        "addSelected": "Adicionar selecionados",
+        "noResults": "Nenhum cliente encontrado.",
+        "empty": "Nenhum membro ainda.",
+        "hint": "Um cliente pode estar em vários grupos.",
+        "unknown": "Cliente",
+        "remove": "Remover",
+        "removeTitle": "Remover membro?",
+        "removeBody": "{{name}} deixa de fazer parte do grupo.",
+        "toastAdded": "Membros adicionados.",
+        "toastRemoved": "Membro removido."
+      },
+      "history": {
+        "title": "Histórico",
+        "empty": "Sem histórico.",
+        "actorTeam": "Equipe",
+        "actions": {
+          "created": "criou o grupo",
+          "updated": "atualizou os dados",
+          "deleted": "excluiu o grupo",
+          "membersAdded": "adicionou membros",
+          "memberRemoved": "removeu um membro",
+          "accessChanged": "alterou o acesso de um produto",
+          "unknown": "Alteração registrada"
+        }
+      },
+      "readOnlyHint": "Você não tem permissão para editar grupos de clientes.",
+      "errors": {
+        "load": "Não foi possível carregar os grupos de clientes.",
+        "save": "Não foi possível salvar o grupo.",
+        "delete": "Não foi possível excluir o grupo.",
+        "addMembers": "Não foi possível adicionar os membros.",
+        "removeMember": "Não foi possível remover o membro.",
+        "loadHistory": "Não foi possível carregar o histórico.",
+        "loadAccess": "Não foi possível carregar o acesso do produto.",
+        "saveAccess": "Não foi possível salvar o acesso do produto.",
+        "duplicateName": "Já existe um grupo com esse nome."
       }
     },
     "requests": {
@@ -1606,6 +1733,7 @@
     "rentalsResources": "Recursos",
     "catalog": "Vendas",
     "catalogProducts": "Produtos",
+    "catalogCustomerGroups": "Grupos de clientes",
     "catalogOrders": "Pedidos",
     "catalogRequests": "Solicitações",
     "catalogNotifications": "Avisos de vendas",
