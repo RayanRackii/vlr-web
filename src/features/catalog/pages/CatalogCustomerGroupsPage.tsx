@@ -169,7 +169,7 @@ export function CatalogCustomerGroupsPage() {
   }, [t])
 
   useEffect(() => {
-    void reload()
+    queueMicrotask(() => void reload())
     return () => loadAbortRef.current?.abort()
   }, [reload])
 
@@ -823,12 +823,11 @@ function AddMemberPicker({
   useEffect(() => {
     const term = query.trim()
     if (term.length === 0) {
-      setResults([])
       return
     }
     let active = true
-    setSearching(true)
     const timer = setTimeout(() => {
+      setSearching(true)
       void listTenantCustomers({ q: term, pageSize: 20 })
         .then((page) => {
           if (!active) {
@@ -856,7 +855,7 @@ function AddMemberPicker({
 
   const selectedIds = new Set(selected.map((customer) => customer.id))
   const excluded = new Set(excludeIds)
-  const visible = results.filter(
+  const visible = (query.trim().length === 0 ? [] : results).filter(
     (customer) => !excluded.has(customer.id) && !selectedIds.has(customer.id),
   )
 

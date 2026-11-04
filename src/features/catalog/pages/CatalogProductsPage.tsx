@@ -1067,6 +1067,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
 
               {editing ? (
                 <CatalogProductAccessSection
+                  key={editing.id}
                   ref={accessSectionRef}
                   productId={editing.id}
                   canManage={canManage}

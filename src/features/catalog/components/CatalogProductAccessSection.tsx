@@ -97,8 +97,6 @@ export const CatalogProductAccessSection = forwardRef<
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setLoadFailed(false)
     loadedRef.current = false
     void listCustomerGroups()
       .then((list) => {
@@ -237,7 +235,11 @@ export const CatalogProductAccessSection = forwardRef<
       {loadFailed ? (
         <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-destructive/40 p-2 text-sm">
           <span>{t("catalog.products.access.loadError")}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => {
+            setLoading(true)
+            setLoadFailed(false)
+            setReloadKey((k) => k + 1)
+          }}>
             {t("catalog.products.access.retry")}
           </Button>
         </div>
@@ -365,12 +367,11 @@ function CustomerGrantPicker({
   useEffect(() => {
     const term = query.trim()
     if (term.length === 0) {
-      setResults([])
       return
     }
     let active = true
-    setSearching(true)
     const timer = setTimeout(() => {
+      setSearching(true)
       void listTenantCustomers({ q: term, pageSize: 20 })
         .then((page) => {
           if (active) {
@@ -395,7 +396,7 @@ function CustomerGrantPicker({
   }, [query])
 
   const excluded = new Set(excludeIds)
-  const visible = results.filter((customer) => !excluded.has(customer.id))
+  const visible = (query.trim().length === 0 ? [] : results).filter((customer) => !excluded.has(customer.id))
 
   return (
     <div className="space-y-2 rounded-lg border border-border p-3">
