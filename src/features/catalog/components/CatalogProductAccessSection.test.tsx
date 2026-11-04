@@ -8,6 +8,7 @@ import {
   type CatalogProductAccessSectionHandle,
 } from "@/features/catalog/components/CatalogProductAccessSection"
 import i18n from "@/lib/i18n"
+import { toast } from "sonner"
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock("@/features/catalog/services/catalogService", () => ({
@@ -55,7 +56,9 @@ describe("CatalogProductAccessSection", () => {
     const ref = setup(true)
     await user.click(await screen.findByRole("radio", { name: new RegExp(restrictedLabel()) }))
     await user.click(await screen.findByRole("checkbox", { name: "Revenda" }))
-    await act(() => ref.current!.persist())
+    let ok: boolean | undefined
+    await act(async () => { ok = await ref.current!.persist() })
+    expect(ok).toBe(true)
     expect(putCatalogProductAccess).toHaveBeenCalledWith(
       PID,
       expect.objectContaining({ visibility: "Restricted", groupIds: ["g1"], customerIds: [] }),
@@ -73,5 +76,40 @@ describe("CatalogProductAccessSection", () => {
     expect(radio).toBeDisabled()
     await act(() => ref.current!.persist())
     await waitFor(() => expect(putCatalogProductAccess).not.toHaveBeenCalled())
+  })
+
+  it("returns false and shows no success toast when saving fails", async () => {
+    vi.mocked(putCatalogProductAccess).mockRejectedValue(new Error("Não foi possível salvar."))
+    const user = userEvent.setup()
+    const ref = setup(true)
+    await user.click(await screen.findByRole("radio", { name: new RegExp(restrictedLabel()) }))
+    let ok: boolean | undefined
+    await act(async () => { ok = await ref.current!.persist() })
+    expect(ok).toBe(false)
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar.")
+    expect(screen.getByRole("radio", { name: new RegExp(restrictedLabel()) })).toBeChecked()
+  })
+
+  it("shows retry on load failure, locks the form and refuses to save", async () => {
+    vi.mocked(getCatalogProductAccess).mockRejectedValueOnce(new Error("x"))
+    const ref = createRef<CatalogProductAccessSectionHandle>()
+    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage />)
+    const retry = await screen.findByRole("button", { name: i18n.t("catalog.products.access.retry") })
+    expect(screen.getByRole("radio", { name: new RegExp(restrictedLabel()) })).toBeDisabled()
+    let ok: boolean | undefined
+    await act(async () => { ok = await ref.current!.persist() })
+    expect(ok).toBe(false)
+    expect(putCatalogProductAccess).not.toHaveBeenCalled()
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PID, visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false } as never)
+    await userEvent.setup().click(retry)
+    await waitFor(() => expect(screen.getByRole("radio", { name: new RegExp(restrictedLabel()) })).toBeEnabled())
+  })
+
+  it("shows an error instead of an empty history when history fails", async () => {
+    vi.mocked(getCatalogProductAccessHistory).mockRejectedValue(new Error("x"))
+    setup(true)
+    expect(await screen.findByText(i18n.t("catalog.products.access.history.loadError"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.products.access.history.empty"))).not.toBeInTheDocument()
   })
 })

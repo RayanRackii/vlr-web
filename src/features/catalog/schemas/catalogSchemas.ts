@@ -536,9 +536,9 @@ const CATALOG_AUDIT_ACTION_I18N_KEYS: Record<string, string> = {
   "product.accessChanged": "catalog.customerGroups.history.actions.accessChanged",
 }
 
-/** Falls back to the raw action only when unknown; callers still localize via i18n. */
+/** Unknown actions fall back to a generic localized label (never the raw code). */
 export function catalogAuditActionI18nKey(action: string): string {
-  return CATALOG_AUDIT_ACTION_I18N_KEYS[action] ?? action
+  return CATALOG_AUDIT_ACTION_I18N_KEYS[action] ?? "catalog.customerGroups.history.actions.unknown"
 }
 
 export function parseOptionalPrice(raw: string): number | null {

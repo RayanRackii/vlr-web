@@ -100,7 +100,7 @@ export function CatalogCustomerGroupsPage() {
   const [editing, setEditing] = useState<CustomerGroup | null>(null)
   const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState("details")
-  const [history, setHistory] = useState<CatalogAuditEntry[] | null>(null)
+  const [history, setHistory] = useState<CatalogAuditEntry[] | "error" | null>(null)
   const [memberBusyId, setMemberBusyId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<CustomerGroup | null>(null)
   const [pendingRemove, setPendingRemove] = useState<TenantCustomer | { id: string; name: string } | null>(null)
@@ -213,7 +213,7 @@ export function CatalogCustomerGroupsPage() {
     setDialogOpen(true)
     void getCustomerGroupHistory(group.id)
       .then(setHistory)
-      .catch(() => setHistory([]))
+      .catch(() => setHistory("error"))
   }
 
   async function onSubmit(values: CustomerGroupFormValues) {
@@ -757,6 +757,9 @@ function MembersSection({
           onResolveCustomers={onResolveCustomers}
         />
       ) : null}
+      {group.memberCustomerIds.some((id) => !customersById[id]) ? (
+        <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p>
+      ) : null}
       {group.memberCustomerIds.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {t("catalog.customerGroups.members.empty")}
@@ -773,7 +776,7 @@ function MembersSection({
               >
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{name}</span>
-                  {customer?.email ? (
+                  {canManage && customer?.email ? (
                     <span className="block truncate text-muted-foreground">
                       {customer.email}
                     </span>
@@ -961,9 +964,16 @@ function AddMemberPicker({
 function HistorySection({
   entries,
 }: {
-  entries: CatalogAuditEntry[] | null
+  entries: CatalogAuditEntry[] | "error" | null
 }) {
   const { t, i18n } = useTranslation()
+  if (entries === "error") {
+    return (
+      <p role="alert" className="px-1 py-2 text-sm text-destructive">
+        {t("catalog.products.access.history.loadError")}
+      </p>
+    )
+  }
   if (entries === null) {
     return (
       <p className="flex items-center gap-2 px-1 py-2 text-sm text-muted-foreground">

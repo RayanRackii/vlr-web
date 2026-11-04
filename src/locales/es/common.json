@@ -986,8 +986,13 @@
         "history": {
           "title": "Historial de acceso",
           "empty": "No hay cambios registrados.",
-          "actorTeam": "Equipo"
-        }
+          "actorTeam": "Equipo",
+          "loadError": "No se pudo cargar el historial."
+        },
+        "loadError": "No se pudo cargar la visibilidad de este producto.",
+        "retry": "Intentar de nuevo",
+        "createHint": "Después de guardar el producto, podrás definir quién puede verlo.",
+        "namesUnavailable": "No se pudieron cargar algunos nombres de clientes."
       },
       "badges": {
         "restricted": "Restringido · {{count}}"
@@ -1074,7 +1079,8 @@
           "deleted": "eliminó el grupo",
           "membersAdded": "agregó miembros",
           "memberRemoved": "quitó un miembro",
-          "accessChanged": "cambió el acceso de un producto"
+          "accessChanged": "cambió el acceso de un producto",
+          "unknown": "Cambio registrado"
         }
       },
       "readOnlyHint": "No tienes permiso para editar grupos de clientes.",

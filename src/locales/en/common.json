@@ -986,8 +986,13 @@
         "history": {
           "title": "Access history",
           "empty": "No changes recorded.",
-          "actorTeam": "Team"
-        }
+          "actorTeam": "Team",
+          "loadError": "Couldn't load the history."
+        },
+        "loadError": "Couldn't load this product's visibility.",
+        "retry": "Try again",
+        "createHint": "After saving the product, you can choose who can see it.",
+        "namesUnavailable": "Some customer names couldn't be loaded."
       },
       "badges": {
         "restricted": "Restricted · {{count}}"
@@ -1074,7 +1079,8 @@
           "deleted": "deleted the group",
           "membersAdded": "added members",
           "memberRemoved": "removed a member",
-          "accessChanged": "changed a product's access"
+          "accessChanged": "changed a product's access",
+          "unknown": "Change recorded"
         }
       },
       "readOnlyHint": "You don't have permission to edit customer groups.",

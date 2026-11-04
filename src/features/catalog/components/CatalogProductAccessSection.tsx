@@ -30,8 +30,8 @@ import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 
 /** Lets the product editor persist access right after the product save. */
 export type CatalogProductAccessSectionHandle = {
-  /** PUTs the grant list only when it changed; resolves either way. */
-  persist: () => Promise<void>
+  /** PUTs the grant list only when it changed; resolves false on failure or when not loaded. */
+  persist: () => Promise<boolean>
 }
 
 type CatalogProductAccessSectionProps = {
@@ -60,6 +60,10 @@ export const CatalogProductAccessSection = forwardRef<
   const [customersById, setCustomersById] = useState<Record<string, TenantCustomer>>({})
   const [history, setHistory] = useState<CatalogAuditEntry[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [historyFailed, setHistoryFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+  const loadedRef = useRef(false)
   const baselineRef = useRef<{
     visibility: CatalogProductVisibility
     groupIds: string[]
@@ -81,13 +85,21 @@ export const CatalogProductAccessSection = forwardRef<
 
   const reloadHistory = useCallback(() => {
     void getCatalogProductAccessHistory(productId)
-      .then(setHistory)
-      .catch(() => setHistory([]))
+      .then((entries) => {
+        setHistoryFailed(false)
+        setHistory(entries)
+      })
+      .catch(() => {
+        setHistoryFailed(true)
+        setHistory([])
+      })
   }, [productId])
 
   useEffect(() => {
     let active = true
     setLoading(true)
+    setLoadFailed(false)
+    loadedRef.current = false
     void listCustomerGroups()
       .then((list) => {
         if (active) {
@@ -108,13 +120,18 @@ export const CatalogProductAccessSection = forwardRef<
           groupIds: access.groupIds,
           customerIds: access.customerIds,
         }
+        loadedRef.current = true
         if (access.customerIds.length > 0) {
           void listTenantCustomers({ pageSize: 100 })
             .then((page) => rememberCustomers(page.items))
             .catch(() => undefined)
         }
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (active) {
+          setLoadFailed(true)
+        }
+      })
       .finally(() => {
         if (active) {
           setLoading(false)
@@ -124,7 +141,7 @@ export const CatalogProductAccessSection = forwardRef<
     return () => {
       active = false
     }
-  }, [productId, rememberCustomers, reloadHistory])
+  }, [productId, rememberCustomers, reloadHistory, reloadKey])
 
   const isDirty = useCallback(() => {
     const base = baselineRef.current
@@ -141,8 +158,14 @@ export const CatalogProductAccessSection = forwardRef<
     ref,
     () => ({
       persist: async () => {
-        if (!canManage || !isDirty()) {
-          return
+        if (!canManage) {
+          return true
+        }
+        if (!loadedRef.current) {
+          return false
+        }
+        if (!isDirty()) {
+          return true
         }
         const payload =
           visibility === "Restricted"
@@ -160,18 +183,22 @@ export const CatalogProductAccessSection = forwardRef<
           }
           toast.success(t("catalog.products.access.toastSaved"))
           reloadHistory()
+          return true
         } catch (error) {
           toast.error(
             error instanceof Error
               ? error.message
               : t("catalog.customerGroups.errors.saveAccess"),
           )
+          return false
         }
       },
     }),
     [canManage, isDirty, visibility, customerIds, groupIds, productId, reloadHistory, t],
   )
 
+  const locked = !canManage || loading || loadFailed
+  const missingNames = customerIds.some((id) => !customersById[id])
   const grantCount = groupIds.length + customerIds.length
   const showEmptyWarning = visibility === "Restricted" && grantCount === 0
 
@@ -207,9 +234,17 @@ export const CatalogProductAccessSection = forwardRef<
         </p>
       ) : null}
 
+      {loadFailed ? (
+        <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-destructive/40 p-2 text-sm">
+          <span>{t("catalog.products.access.loadError")}</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+            {t("catalog.products.access.retry")}
+          </Button>
+        </div>
+      ) : null}
       <fieldset
         className="grid gap-2 sm:grid-cols-2"
-        disabled={!canManage}
+        disabled={locked}
         aria-label={t("catalog.products.access.title")}
       >
         {(["Public", "Restricted"] as const).map((option) => (
@@ -223,7 +258,7 @@ export const CatalogProductAccessSection = forwardRef<
               className="mt-0.5"
               value={option}
               checked={visibility === option}
-              disabled={!canManage}
+              disabled={locked}
               onChange={() => setVisibility(option)}
             />
             <span>
@@ -240,7 +275,7 @@ export const CatalogProductAccessSection = forwardRef<
         ))}
       </fieldset>
 
-      {visibility === "Restricted" ? (
+      {visibility === "Restricted" && !loadFailed ? (
         <div className="space-y-3">
           {showEmptyWarning ? (
             <p
@@ -266,7 +301,7 @@ export const CatalogProductAccessSection = forwardRef<
                     <label className="flex min-h-11 items-center gap-2 text-sm">
                       <Checkbox
                         checked={groupIds.includes(group.id)}
-                        disabled={!canManage}
+                        disabled={locked}
                         onChange={() => toggleGroup(group.id)}
                       />
                       {group.name}
@@ -289,7 +324,7 @@ export const CatalogProductAccessSection = forwardRef<
                       type="button"
                       variant="outline"
                       size="sm"
-                      disabled={!canManage}
+                      disabled={locked}
                       onClick={() => removeCustomer(id)}
                     >
                       {customersById[id]?.name ??
@@ -300,14 +335,17 @@ export const CatalogProductAccessSection = forwardRef<
                 ))}
               </ul>
             ) : null}
-            {canManage ? (
+            {missingNames ? (
+              <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p>
+            ) : null}
+            {!locked ? (
               <CustomerGrantPicker excludeIds={customerIds} onAdd={addCustomer} />
             ) : null}
           </div>
         </div>
       ) : null}
 
-      <AccessHistory entries={history} locale={i18n.language} />
+      <AccessHistory entries={history} failed={historyFailed} locale={i18n.language} />
     </section>
   )
 })
@@ -410,14 +448,24 @@ function CustomerGrantPicker({
 
 function AccessHistory({
   entries,
+  failed,
   locale,
 }: {
   entries: CatalogAuditEntry[] | null
+  failed: boolean
   locale: string
 }) {
   const { t } = useTranslation()
   if (entries === null) {
     return null
+  }
+  if (failed) {
+    return (
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{t("catalog.products.access.history.title")}</p>
+        <p role="alert" className="text-sm text-destructive">{t("catalog.products.access.history.loadError")}</p>
+      </div>
+    )
   }
   if (entries.length === 0) {
     return (

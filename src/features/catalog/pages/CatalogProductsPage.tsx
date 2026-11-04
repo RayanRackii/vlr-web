@@ -287,7 +287,11 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       if (editing) {
         const updated = await updateCatalogProduct(editing.id, body)
         setEditing(updated)
-        await accessSectionRef.current?.persist()
+        const accessOk = (await accessSectionRef.current?.persist()) ?? true
+        if (!accessOk) {
+          await reload()
+          return
+        }
         toast.success(t("catalog.products.toastUpdated"))
         await reload()
         return
@@ -1067,7 +1071,9 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                   productId={editing.id}
                   canManage={canManage}
                 />
-              ) : null}
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("catalog.products.access.createHint")}</p>
+              )}
 
               </div>
 
