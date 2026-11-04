@@ -1004,6 +1004,7 @@
       "access": {
         "title": "Visibilidad",
         "public": "Público",
+        "storedGrantsHint": "{{count}} permiso(s) guardado(s). Vuelven a aplicarse si el producto pasa a Restringido.",
         "publicHint": "Todos los clientes ven este producto.",
         "restricted": "Restringido",
         "restrictedHint": "Solo los grupos y clientes habilitados ven este producto.",

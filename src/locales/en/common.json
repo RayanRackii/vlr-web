@@ -1004,6 +1004,7 @@
       "access": {
         "title": "Visibility",
         "public": "Public",
+        "storedGrantsHint": "{{count}} stored grant(s). They apply again if the product becomes Restricted.",
         "publicHint": "All customers see this product.",
         "restricted": "Restricted",
         "restrictedHint": "Only granted groups and customers see this product.",

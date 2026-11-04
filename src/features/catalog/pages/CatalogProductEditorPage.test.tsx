@@ -40,6 +40,9 @@ vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
 
 import {
   getCatalogProduct,
+  getCatalogProductFileUrl,
+  uploadCatalogProductFile,
+  deleteCatalogProductFile,
   getCatalogProductAccess,
   getCatalogProductAccessHistory,
   listCustomerGroups,
@@ -92,6 +95,9 @@ describe("CatalogProductEditorPage", () => {
     vi.mocked(getCatalogProductAccessHistory).mockResolvedValue([])
     vi.mocked(listCustomerGroups).mockResolvedValue([])
     vi.mocked(putCatalogProductAccess).mockReset()
+    vi.mocked(getCatalogProductFileUrl).mockReset()
+    vi.mocked(uploadCatalogProductFile).mockReset()
+    vi.mocked(deleteCatalogProductFile).mockReset()
     getProductMock.mockReset()
     updateProductMock.mockReset()
     getTaxonomyOptionsMock.mockReset()
@@ -99,6 +105,70 @@ describe("CatalogProductEditorPage", () => {
     toastError.mockReset()
     getProductMock.mockResolvedValue(PRODUCT)
     getTaxonomyOptionsMock.mockResolvedValue({ categories: [], tags: [] })
+  })
+
+  it("keeps the upload controls within the files card", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    const input = screen.getByLabelText(i18n.t("catalog.products.files.select"))
+    expect(input).toHaveClass("min-w-0", "w-full")
+    expect(input.parentElement?.parentElement).not.toHaveClass("md:flex-row")
+    expect(input.parentElement?.parentElement).toHaveClass("min-w-0", "flex-wrap")
+  })
+
+  it("renders a signed preview for a restricted product image without a URL", async () => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [
+      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
+    ] })
+    vi.mocked(getCatalogProductFileUrl).mockResolvedValue({ url: "https://example.test/signed.png", isPublic: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    expect(await screen.findByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/signed.png")
+    expect(getCatalogProductFileUrl).toHaveBeenCalledWith(PRODUCT.id, "f1")
+  })
+
+  it("keeps both private previews after a second upload and removes deleted images", async () => {
+    const first = { id: "f1", fileName: "first.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: null }
+    const second = { ...first, id: "f2", fileName: "second.webp", mimeType: "image/webp", visibility: "InternalB2B" as const }
+    getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [] })
+    vi.mocked(getCatalogProductFileUrl).mockImplementation(async (_productId, fileId) => ({ url: `https://example.test/${fileId}`, isPublic: false }))
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [first] })
+    vi.mocked(uploadCatalogProductFile).mockResolvedValue(first)
+    await user.upload(screen.getByLabelText(i18n.t("catalog.products.files.select")), new File(["first"], "first.png", { type: "image/png" }))
+    expect(await screen.findByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/f1")
+    getProductMock.mockResolvedValue({ ...PRODUCT, visibility: "Restricted", files: [first, second] })
+    vi.mocked(uploadCatalogProductFile).mockResolvedValue(second)
+    await waitFor(() => expect(screen.getByLabelText(i18n.t("catalog.products.files.select"))).toBeEnabled())
+    await user.upload(screen.getByLabelText(i18n.t("catalog.products.files.select")), new File(["second"], "second.webp", { type: "image/webp" }))
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.gallery.next") }))
+    expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/f2")
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.gallery.previous") }))
+    expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/f1")
+    expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(2)
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [first] })
+    await user.click(screen.getAllByRole("button", { name: i18n.t("common.delete") })[1]!)
+    await waitFor(() => expect(screen.queryByRole("button", { name: i18n.t("catalog.products.gallery.next") })).not.toBeInTheDocument())
+    expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/f1")
+  })
+
+  it("ignores signed preview failures and skips non-renderable files", async () => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "InternalB2B", url: null },
+      { id: "f2", fileName: "doc.pdf", mimeType: "application/pdf", sizeBytes: 100, visibility: "InternalB2B", url: null },
+    ] })
+    vi.mocked(getCatalogProductFileUrl).mockRejectedValue(new Error("unavailable"))
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    await waitFor(() => expect(getCatalogProductFileUrl).toHaveBeenCalledWith(PRODUCT.id, "f1"))
+    expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole("img", { name: PRODUCT.name })).not.toBeInTheDocument()
+    expect(toastError).not.toHaveBeenCalled()
   })
 
   it("loads the product into the form", async () => {
@@ -220,9 +290,9 @@ describe("CatalogProductEditorPage", () => {
     expect(vi.mocked(getCatalogProductAccessHistory).mock.invocationCallOrder[historyCalls]).toBeGreaterThan(putOrder)
   })
 
-  it("clears grants when saving public visibility", async () => {
+  it("preserves grants when saving public visibility", async () => {
     vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })
-    vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false })
+    vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })
     updateProductMock.mockResolvedValue(PRODUCT)
     const user = userEvent.setup()
     renderPage()
@@ -233,7 +303,7 @@ describe("CatalogProductEditorPage", () => {
     await user.click(publicOption)
     await user.click(save())
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated")))
-    expect(putCatalogProductAccess).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, { visibility: "Public", customerIds: [], groupIds: [] })
+    expect(putCatalogProductAccess).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, { visibility: "Public", customerIds: ["customer-1"], groupIds: ["group-1"] })
     expect(updateProductMock.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(putCatalogProductAccess).mock.invocationCallOrder[0]!)
   })
 

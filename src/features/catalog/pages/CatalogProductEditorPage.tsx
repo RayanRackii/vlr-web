@@ -91,6 +91,7 @@ export function CatalogProductEditorPage() {
   const [fileBusy, setFileBusy] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
+  const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
   const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
 
   const form = useForm<CatalogProductFormValues>({
@@ -145,6 +146,32 @@ export function CatalogProductEditorPage() {
       .then(setTaxonomyOptions)
       .catch(() => setTaxonomyOptions({ categories: [], tags: [] }))
   }, [])
+
+  useEffect(() => {
+    if (!product) return
+    let active = true
+    const candidates = selectCatalogProductImages(
+      product.files
+        .filter((file) => !file.url?.trim() && !signedImageUrls[`${product.id}:${file.id}`])
+        .map((file) => ({ ...file, url: "pending" })),
+    )
+    if (candidates.length === 0) return
+    void Promise.all(candidates.map(async (file) => {
+      try {
+        const { url } = await getCatalogProductFileUrl(product.id, file.id)
+        return url.trim() ? [`${product.id}:${file.id}`, url] as const : null
+      } catch {
+        return null // private previews are optional
+      }
+    })).then((results) => {
+      if (!active) return
+      const entries = results.filter((entry) => entry !== null)
+      if (entries.length > 0) {
+        setSignedImageUrls((current) => ({ ...current, ...Object.fromEntries(entries) }))
+      }
+    })
+    return () => { active = false }
+  }, [product, signedImageUrls])
 
   const reload = useCallback(async () => {
     if (!id) return
@@ -302,7 +329,12 @@ export function CatalogProductEditorPage() {
   const dirty = canManage && isFormValid && (formDirty || accessDirty)
   const unsavedCount = (formDirty ? 1 : 0) + (accessDirty ? 1 : 0)
   const fieldsLocked = !canManage || saving
-  const previewImages = selectCatalogProductImages(product.files)
+  const previewImages = selectCatalogProductImages(
+    product.files.map((file) => ({
+      ...file,
+      url: file.url?.trim() || signedImageUrls[`${product.id}:${file.id}`],
+    })),
+  )
 
   const dadosTab: EntityTab = {
     value: "dados",
@@ -432,7 +464,7 @@ export function CatalogProductEditorPage() {
     label: t("catalog.products.files.title"),
     badge: product.files.length,
     content: (
-      <div className="max-w-xl space-y-3">
+      <div className="min-w-0 w-full max-w-xl space-y-3">
         {previewImages.length > 0 ? (
           <CatalogProductImageGallery
             images={previewImages}
@@ -443,7 +475,7 @@ export function CatalogProductEditorPage() {
         {product.files.length > 0 ? (
           <ul className="space-y-2 text-sm">
             {product.files.map((file) => (
-              <li key={file.id} className="flex flex-wrap items-center justify-between gap-2">
+              <li key={file.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                 <span className="min-w-0 max-w-full truncate">
                   {file.fileName}{" "}
                   <Badge variant="outline">
@@ -452,7 +484,7 @@ export function CatalogProductEditorPage() {
                       : t("catalog.products.files.internal")}
                   </Badge>
                 </span>
-                <div className="flex gap-2">
+                <div className="flex min-w-0 flex-wrap gap-2">
                   <Button type="button" size="sm" variant="outline" onClick={() => void onOpenFile(file.id)}>
                     {t("catalog.products.files.open")}
                   </Button>
@@ -475,12 +507,13 @@ export function CatalogProductEditorPage() {
           <p className="text-sm text-muted-foreground">{t("catalog.products.files.empty")}</p>
         )}
         {canManage ? (
-          <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-end">
-            <div className="space-y-1">
+          <div className="flex min-w-0 w-full flex-wrap gap-2">
+            <div className="min-w-0 max-w-full space-y-1">
               <span className="block text-sm font-medium">
                 {t("catalog.products.files.whoSees")}
               </span>
               <SegmentedControl
+                className="min-w-0 max-w-full flex-wrap"
                 label={t("catalog.products.files.whoSees")}
                 value={uploadVisibility}
                 disabled={fileBusy}
@@ -491,11 +524,12 @@ export function CatalogProductEditorPage() {
                 ]}
               />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
+            <div className="min-w-0 basis-64 flex-1 space-y-1">
               <label htmlFor="catalog-product-file-input" className="text-sm font-medium">
                 {t("catalog.products.files.select")}
               </label>
               <Input
+                className="min-w-0 w-full max-w-full"
                 id="catalog-product-file-input"
                 type="file"
                 disabled={fileBusy}

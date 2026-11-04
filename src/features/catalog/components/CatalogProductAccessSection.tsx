@@ -173,10 +173,7 @@ export const CatalogProductAccessSection = forwardRef<
         if (!isDirty()) {
           return true
         }
-        const payload =
-          visibility === "Restricted"
-            ? { visibility, customerIds, groupIds }
-            : { visibility, customerIds: [], groupIds: [] }
+        const payload = { visibility, customerIds, groupIds }
         try {
           const saved = await putCatalogProductAccess(productId, payload)
           setVisibility(saved.visibility)
@@ -188,6 +185,7 @@ export const CatalogProductAccessSection = forwardRef<
             groupIds: saved.groupIds,
             customerIds: saved.customerIds,
           }
+          onDirtyChange?.(false)
           toast.success(t("catalog.products.access.toastSaved"))
           reloadHistory()
           return true
@@ -201,7 +199,7 @@ export const CatalogProductAccessSection = forwardRef<
         }
       },
     }),
-    [canManage, isDirty, visibility, customerIds, groupIds, productId, reloadHistory, t],
+    [canManage, isDirty, visibility, customerIds, groupIds, productId, reloadHistory, t, onDirtyChange],
   )
 
   const locked = !canManage || loading || loadFailed
@@ -285,6 +283,12 @@ export const CatalogProductAccessSection = forwardRef<
           </label>
         ))}
       </fieldset>
+
+      {visibility === "Public" && grantCount > 0 && !loadFailed && !loading ? (
+        <p className="text-xs text-muted-foreground">
+          {t("catalog.products.access.storedGrantsHint", { count: grantCount })}
+        </p>
+      ) : null}
 
       {visibility === "Restricted" && !loadFailed && !loading ? (
         <div className="space-y-3">

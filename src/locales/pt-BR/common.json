@@ -1004,6 +1004,7 @@
       "access": {
         "title": "Visibilidade",
         "public": "Público",
+        "storedGrantsHint": "{{count}} liberação(ões) guardada(s). Voltam a valer se o produto ficar Restrito.",
         "publicHint": "Todos os clientes veem este produto.",
         "restricted": "Restrito",
         "restrictedHint": "Só os grupos e clientes liberados veem este produto.",
