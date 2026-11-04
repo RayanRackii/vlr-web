@@ -40,6 +40,10 @@ vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
 
 import {
   getCatalogProduct,
+  getCatalogProductAccess,
+  getCatalogProductAccessHistory,
+  listCustomerGroups,
+  putCatalogProductAccess,
   updateCatalogProduct,
 } from "@/features/catalog/services/catalogService"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
@@ -83,6 +87,11 @@ function save() {
 
 describe("CatalogProductEditorPage", () => {
   beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false })
+    vi.mocked(getCatalogProductAccessHistory).mockResolvedValue([])
+    vi.mocked(listCustomerGroups).mockResolvedValue([])
+    vi.mocked(putCatalogProductAccess).mockReset()
     getProductMock.mockReset()
     updateProductMock.mockReset()
     getTaxonomyOptionsMock.mockReset()
@@ -135,6 +144,7 @@ describe("CatalogProductEditorPage", () => {
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated"))
     })
+    expect(putCatalogProductAccess).not.toHaveBeenCalled()
   })
 
   it("keeps the entered values when the server rejects the save", async () => {
@@ -166,6 +176,65 @@ describe("CatalogProductEditorPage", () => {
     expect(
       await screen.findByText(i18n.t("catalog.products.access.history.title")),
     ).toBeInTheDocument()
+  })
+
+  it("shows the standalone history tab without saving product or access", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.history") }))
+    expect(await screen.findByText(i18n.t("catalog.products.access.history.empty"))).toBeVisible()
+    expect(screen.getByRole("tabpanel")).toHaveTextContent(i18n.t("catalog.products.access.history.title"))
+    expect(getCatalogProductAccessHistory).toHaveBeenCalledWith(PRODUCT.id)
+    expect(listCustomerGroups).toHaveBeenCalled()
+    expect(updateProductMock).not.toHaveBeenCalled()
+    expect(putCatalogProductAccess).not.toHaveBeenCalled()
+  })
+
+  it("saves the product before restricted grants and refreshes history afterward", async () => {
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: ["customer-1"], groupIds: [], restrictedWithoutGrants: false })
+    vi.mocked(listCustomerGroups).mockResolvedValue([{
+      id: "group-1", name: "Revenda", description: null, memberCustomerIds: [], createdAt: PRODUCT.createdAt, updatedAt: null,
+    }])
+    vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })
+    updateProductMock.mockResolvedValue(PRODUCT)
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    const restricted = await screen.findByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) })
+    await waitFor(() => expect(restricted).toBeEnabled())
+    await user.click(restricted)
+    await user.click(await screen.findByRole("checkbox", { name: "Revenda" }))
+    const historyCalls = vi.mocked(getCatalogProductAccessHistory).mock.calls.length
+    await user.click(save())
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated")))
+    expect(updateProductMock).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, {
+      name: "Raquete", code: "RAQ", description: "Carbono", price: 10.5, currency: "BRL",
+    })
+    expect(putCatalogProductAccess).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, {
+      visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"],
+    })
+    const putOrder = vi.mocked(putCatalogProductAccess).mock.invocationCallOrder[0]!
+    expect(updateProductMock.mock.invocationCallOrder[0]).toBeLessThan(putOrder)
+    expect(vi.mocked(getCatalogProductAccessHistory).mock.invocationCallOrder[historyCalls]).toBeGreaterThan(putOrder)
+  })
+
+  it("clears grants when saving public visibility", async () => {
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"], restrictedWithoutGrants: false })
+    vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PRODUCT.id, visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false })
+    updateProductMock.mockResolvedValue(PRODUCT)
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    const publicOption = await screen.findByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.public")) })
+    await waitFor(() => expect(publicOption).toBeEnabled())
+    await user.click(publicOption)
+    await user.click(save())
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated")))
+    expect(putCatalogProductAccess).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, { visibility: "Public", customerIds: [], groupIds: [] })
+    expect(updateProductMock.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(putCatalogProductAccess).mock.invocationCallOrder[0]!)
   })
 
   it("is read-only without the manage permission", async () => {

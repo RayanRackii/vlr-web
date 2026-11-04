@@ -41,6 +41,8 @@ vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
 }))
 
 import {
+  activateCatalogProduct,
+  deactivateCatalogProduct,
   createCatalogProduct,
   listCatalogProducts,
   listProductRequests,
@@ -77,6 +79,8 @@ describe("CatalogProductsPage validity gate", () => {
     listRequestsMock.mockReset()
     createProductMock.mockReset()
     updateProductMock.mockReset()
+    vi.mocked(activateCatalogProduct).mockReset()
+    vi.mocked(deactivateCatalogProduct).mockReset()
     getTaxonomyOptionsMock.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
@@ -96,7 +100,7 @@ describe("CatalogProductsPage validity gate", () => {
     )
   }
 
-  async function openCreateDialog(user: ReturnType<typeof userEvent.setup>) {
+  async function openCreateSheet(user: ReturnType<typeof userEvent.setup>) {
     await user.click(
       (await screen.findAllByRole("button", {
         name: i18n.t("catalog.products.create"),
@@ -202,15 +206,13 @@ describe("CatalogProductsPage validity gate", () => {
     try {
       const user = userEvent.setup()
       renderPage()
-      const dialog = await openCreateDialog(user)
+      const dialog = await openCreateSheet(user)
       const message = i18n.t("catalog.products.validation.nameRequired")
       const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
       expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
       expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument()
       expect(name).toHaveAttribute("aria-invalid", "false")
-      const files = within(dialog).getByText(i18n.t("catalog.products.files.title"))
-      expect(files).toBeVisible()
-      expect(within(dialog).getByLabelText(i18n.t("catalog.products.files.select"))).toBeEnabled()
+      expect(within(dialog).queryByLabelText(i18n.t("catalog.products.files.select"))).not.toBeInTheDocument()
       await user.click(name)
       await user.tab()
       expect(within(dialog).getAllByText(message)).toHaveLength(1)
@@ -221,7 +223,7 @@ describe("CatalogProductsPage validity gate", () => {
       expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
       expect(name).toHaveAttribute("aria-invalid", "false")
       await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
-      const reopened = await openCreateDialog(user)
+      const reopened = await openCreateSheet(user)
       expect(within(reopened).queryByText(message)).not.toBeInTheDocument()
       expect(within(reopened).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("")
     } finally {
@@ -229,20 +231,20 @@ describe("CatalogProductsPage validity gate", () => {
     }
   })
 
-  it("keeps Salvar disabled until the product schema passes and leaves Cancelar and Fechar free", async () => {
+  it("keeps Criar e continuar disabled until the product schema passes and leaves Cancelar and Fechar free", async () => {
     const user = userEvent.setup()
     renderPage()
-    const dialog = await openCreateDialog(user)
+    const dialog = await openCreateSheet(user)
 
     const save = () =>
       within(dialog).getByRole("button", {
-        name: i18n.t("catalog.products.save"),
+        name: i18n.t("catalog.products.createContinue"),
       })
     const cancel = within(dialog).getByRole("button", {
       name: i18n.t("common.cancel"),
     })
     const close = within(dialog).getByRole("button", {
-      name: i18n.t("common.close"),
+      name: "Close",
     })
     expect(save()).toBeDisabled()
     expect(cancel).toBeEnabled()
@@ -250,9 +252,6 @@ describe("CatalogProductsPage validity gate", () => {
 
     const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
     const code = within(dialog).getByLabelText(i18n.t("catalog.products.form.code"))
-    const description = within(dialog).getByLabelText(
-      i18n.t("catalog.products.form.description"),
-    )
     const price = within(dialog).getByLabelText(i18n.t("catalog.products.form.price"))
     const currency = within(dialog).getByLabelText(
       i18n.t("catalog.products.form.currency"),
@@ -289,11 +288,6 @@ describe("CatalogProductsPage validity gate", () => {
     await user.type(currency, "BRL")
     expect(save()).toBeEnabled()
 
-    replaceValue(description, "d".repeat(4001))
-    expect(save()).toBeDisabled()
-    await user.clear(description)
-    expect(save()).toBeEnabled()
-
     await user.type(price, "abc")
     expect(save()).toBeEnabled()
     expect(cancel).toBeEnabled()
@@ -311,7 +305,7 @@ describe("CatalogProductsPage validity gate", () => {
     expect(toastError).not.toHaveBeenCalled()
   })
 
-  it("re-enables Salvar after a duplicate-code error and keeps the entered values", async () => {
+  it("re-enables Criar e continuar after a duplicate-code error and keeps the entered values", async () => {
     const user = userEvent.setup()
     let rejectCreate: (reason: Error) => void = () => {
       throw new Error("missing reject")
@@ -323,20 +317,16 @@ describe("CatalogProductsPage validity gate", () => {
         }),
     )
     renderPage()
-    const dialog = await openCreateDialog(user)
+    const dialog = await openCreateSheet(user)
 
     const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
     const code = within(dialog).getByLabelText(i18n.t("catalog.products.form.code"))
-    const description = within(dialog).getByLabelText(
-      i18n.t("catalog.products.form.description"),
-    )
     const price = within(dialog).getByLabelText(i18n.t("catalog.products.form.price"))
     await user.type(name, "Raquete")
-    await user.type(description, "Carbono")
     await user.type(price, "10,50")
 
     const save = within(dialog).getByRole("button", {
-      name: i18n.t("catalog.products.save"),
+      name: i18n.t("catalog.products.createContinue"),
     })
     expect(save).toBeEnabled()
     expect(
@@ -347,7 +337,7 @@ describe("CatalogProductsPage validity gate", () => {
     await waitFor(() => {
       expect(
         within(dialog).getByRole("button", {
-          name: i18n.t("catalog.products.saving"),
+          name: i18n.t("catalog.products.createContinue"),
         }),
       ).toBeDisabled()
     })
@@ -357,14 +347,13 @@ describe("CatalogProductsPage validity gate", () => {
     await waitFor(() => {
       expect(
         within(dialog).getByRole("button", {
-          name: i18n.t("catalog.products.save"),
+          name: i18n.t("catalog.products.createContinue"),
         }),
       ).toBeEnabled()
     })
     expect(toastError).toHaveBeenCalledWith("Código já cadastrado.")
     expect(name).toHaveValue("Raquete")
     expect(code).toHaveValue("RAQ")
-    expect(description).toHaveValue("Carbono")
     expect(price).toHaveValue("10,50")
     expect(
       within(dialog).getByLabelText(i18n.t("catalog.products.form.currency")),
@@ -373,7 +362,7 @@ describe("CatalogProductsPage validity gate", () => {
       within(dialog).getByRole("button", { name: i18n.t("common.cancel") }),
     ).toBeEnabled()
     expect(
-      within(dialog).getByRole("button", { name: i18n.t("common.close") }),
+      within(dialog).getByRole("button", { name: "Close" }),
     ).toBeEnabled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(screen.getByRole("dialog")).toBeInTheDocument()
@@ -381,7 +370,7 @@ describe("CatalogProductsPage validity gate", () => {
     expect(createProductMock).toHaveBeenCalledWith({
       name: "Raquete",
       code: "RAQ",
-      description: "Carbono",
+      description: null,
       price: 10.5,
       currency: "BRL",
     })
@@ -389,11 +378,11 @@ describe("CatalogProductsPage validity gate", () => {
     createProductMock.mockResolvedValueOnce({
       ...PRODUCT,
       id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-      description: "Carbono",
+      description: null,
     })
     await user.click(
       within(dialog).getByRole("button", {
-        name: i18n.t("catalog.products.save"),
+        name: i18n.t("catalog.products.createContinue"),
       }),
     )
     await waitFor(() => {
@@ -401,6 +390,73 @@ describe("CatalogProductsPage validity gate", () => {
     })
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(createProductMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("creates from the sheet and navigates to the new product editor", async () => {
+    const createdId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+    createProductMock.mockResolvedValue({ ...PRODUCT, id: createdId })
+    const user = userEvent.setup()
+    renderPage()
+    const sheet = await openCreateSheet(user)
+    await user.type(within(sheet).getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
+    await user.click(within(sheet).getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${createdId}`))
+    expect(createProductMock).toHaveBeenCalledTimes(1)
+    expect(createProductMock).toHaveBeenCalledWith({ name: "Raquete", code: "RAQ", description: null, price: null, currency: "BRL" })
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("quick edits name, price and status while preserving the other product fields", async () => {
+    listProductsMock.mockResolvedValue([{
+      ...PRODUCT,
+      taxonomy: { categories: [{ id: "category-1", name: "Equipamento", slug: "equipamento", parentId: null, icon: null, sortOrder: 0 }], tags: [{ id: "tag-1", name: "Carbono", slug: "carbono" }] },
+    }])
+    updateProductMock.mockResolvedValue({ ...PRODUCT, name: "Raquete pro", price: 25.5 })
+    vi.mocked(deactivateCatalogProduct).mockResolvedValue({ ...PRODUCT, isActive: false })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.quickEdit") }))
+    const sheet = screen.getByRole("dialog")
+    replaceValue(within(sheet).getByLabelText(i18n.t("catalog.products.form.name")), "Raquete pro")
+    replaceValue(within(sheet).getByLabelText(i18n.t("catalog.products.form.price")), "25,50")
+    await user.click(within(sheet).getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    await user.click(within(sheet).getByRole("button", { name: i18n.t("common.save") }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(updateProductMock).toHaveBeenCalledTimes(1)
+    expect(updateProductMock).toHaveBeenCalledWith(PRODUCT.id, {
+      name: "Raquete pro", code: "RAQ", description: "Carbono", price: 25.5, currency: "BRL",
+      taxonomy: { categoryIds: ["category-1"], tagIds: ["tag-1"] },
+    })
+    expect(deactivateCatalogProduct).toHaveBeenCalledExactlyOnceWith(PRODUCT.id)
+    expect(updateProductMock.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(deactivateCatalogProduct).mock.invocationCallOrder[0]!)
+    expect(activateCatalogProduct).not.toHaveBeenCalled()
+  })
+
+  it("keeps quick edit values and permits retry after a server error", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    updateProductMock.mockRejectedValue(new Error("Não foi possível salvar."))
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.quickEdit") }))
+    const sheet = screen.getByRole("dialog")
+    const name = within(sheet).getByLabelText(i18n.t("catalog.products.form.name"))
+    const price = within(sheet).getByLabelText(i18n.t("catalog.products.form.price"))
+    replaceValue(name, "Raquete pro")
+    replaceValue(price, "25,50")
+    const inactive = within(sheet).getByRole("radio", { name: i18n.t("catalog.products.inactive") })
+    await user.click(inactive)
+    const save = within(sheet).getByRole("button", { name: i18n.t("common.save") })
+    await user.click(save)
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Não foi possível salvar."))
+    expect(sheet).toBeVisible()
+    expect(name).toHaveValue("Raquete pro")
+    expect(price).toHaveValue("25,50")
+    expect(inactive).toBeChecked()
+    expect(save).toBeEnabled()
+    expect(updateProductMock).toHaveBeenCalledTimes(1)
+    expect(deactivateCatalogProduct).not.toHaveBeenCalled()
+    expect(activateCatalogProduct).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it("restores taxonomy filters from the URL and sends them with product requests", async () => {
