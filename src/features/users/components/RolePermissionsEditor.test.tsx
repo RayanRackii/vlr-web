@@ -7,7 +7,7 @@ import { RolePermissionsEditor } from "./RolePermissionsEditor"
 
 const CATALOG = [
   { key: "catalog.zzitems.read", name: "Ver produtos", moduleKey: "catalog", resource: "products" },
-  { key: "catalog.zzitems.manage", name: "Gerenciar produtos", moduleKey: "catalog", resource: "products" },
+  { key: "catalog.zzitems.manage", name: "Gerenciar itens manage", moduleKey: "catalog", resource: "products" },
   { key: "core.zzpeople.read", name: "Ver pessoas", moduleKey: "core", resource: "users" },
 ]
 
@@ -41,4 +41,12 @@ it("search filters modules and opens the one with a match", async () => {
   await user.type(screen.getByLabelText("Buscar permissão"), "pessoas")
   expect(screen.getByText("Ver pessoas")).toBeVisible()
   expect(screen.queryByText("Ver produtos")).not.toBeInTheDocument()
+})
+
+it("select-all while searching only touches the visible permissions", async () => {
+  const user = userEvent.setup()
+  render(<Harness />)
+  await user.type(screen.getByLabelText("Buscar permissão"), "manage")
+  await user.click(screen.getByRole("checkbox", { name: /Marcar módulo todo: Cat/i }))
+  expect(screen.getByTestId("keys")).toHaveTextContent(/^catalog\.zzitems\.manage$/)
 })

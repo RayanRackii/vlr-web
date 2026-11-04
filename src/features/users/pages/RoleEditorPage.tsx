@@ -82,8 +82,18 @@ export function RoleEditorPage() {
         if (active) setIsLoading(false)
       })
 
-    listTenantMembers({ pageSize: 100 })
-      .then((page) => active && setMembers(page.items))
+    const loadAllMembers = async () => {
+      const pageSize = 100
+      const all: TenantMember[] = []
+      for (let page = 1; page <= 50; page += 1) {
+        const result = await listTenantMembers({ page, pageSize })
+        all.push(...result.items)
+        if (result.items.length < pageSize || all.length >= result.total) break
+      }
+      return all
+    }
+    loadAllMembers()
+      .then((items) => active && setMembers(items))
       .catch(() => active && setMembers([]))
 
     return () => {
@@ -100,8 +110,8 @@ export function RoleEditorPage() {
         kind: "custom" as const,
       }
   const canWrite = canManage && !policy.isFullyReadonly
-  const nameLocked = !policy.canRename || !canWrite
-  const permissionsLocked = !canWrite || !policy.canEditPermissions
+  const nameLocked = !policy.canRename || !canWrite || saving
+  const permissionsLocked = !canWrite || !policy.canEditPermissions || saving
 
   const roleMembers = useMemo(
     () => (members ?? []).filter((m) => m.roles.some((r) => r.id === role?.id)),

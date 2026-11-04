@@ -153,7 +153,7 @@ export function RolePermissionsEditor({
           const moduleKey = group.moduleKey ?? "core"
           const Icon = MODULE_ICONS[moduleKey] ?? Settings2
           const moduleItems = group.resources.flatMap((r) => r.items)
-          const moduleKeys = moduleItems.map((item) => item.key)
+          const moduleKeys = moduleItems.filter(itemMatches).map((item) => item.key)
           const selectedCount = moduleKeys.filter((key) =>
             hasPermission(selectedKeys, key),
           ).length
