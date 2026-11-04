@@ -43,6 +43,19 @@
     },
     "remove": "Remove"
   },
+  "fullPage": {
+    "unsavedChanges_one": "{{count}} unsaved change",
+    "unsavedChanges_other": "{{count}} unsaved changes",
+    "discard": "Discard",
+    "save": "Save",
+    "leaveConfirm": "You have unsaved changes. Leave anyway?",
+    "openFullEdit": "Open full edit →",
+    "advanced": {
+      "title": "Advanced",
+      "show": "Show options",
+      "hide": "Hide options"
+    }
+  },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
     "loadUsers": "Could not load users.",

@@ -36,6 +36,13 @@
     outline: 2px solid var(--focus-ring, var(--ring));
     outline-offset: 2px;
   }
+  /* Rolvix: no native dropdown arrow on any <select> (Rayan t1294u). */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+  }
   body {
     @apply bg-background text-foreground;
     font-size: 0.9375rem; /* 15px comfortable body */

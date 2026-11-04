@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { ChevronDown, FileText, Package, Search, ShoppingBag, Tag } from "lucide-react"
+import { FileText, Package, Search, ShoppingBag, Tag } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import type { Column } from "@tanstack/react-table"
@@ -78,7 +78,7 @@ export function CatalogColumnFilter<T>({ column, title, options }: {
   return (
     <Popover>
       <PopoverTrigger render={<Button variant="outline" className="staff-catalog-filter touch-target" data-active={column.getIsFiltered()} />}>
-        {title}<ChevronDown size={16} aria-hidden="true" />
+        {title}
       </PopoverTrigger>
       <PopoverContent className="w-64" align="start">
         <label className="grid gap-2 text-sm font-medium">

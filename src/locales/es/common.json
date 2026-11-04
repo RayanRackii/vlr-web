@@ -43,6 +43,19 @@
     },
     "remove": "Eliminar"
   },
+  "fullPage": {
+    "unsavedChanges_one": "{{count}} cambio sin guardar",
+    "unsavedChanges_other": "{{count}} cambios sin guardar",
+    "discard": "Descartar",
+    "save": "Guardar",
+    "leaveConfirm": "Tienes cambios sin guardar. ¿Salir de todos modos?",
+    "openFullEdit": "Abrir edición completa →",
+    "advanced": {
+      "title": "Avanzado",
+      "show": "Mostrar opciones",
+      "hide": "Ocultar opciones"
+    }
+  },
   "apiErrors": {
     "invalidResponse": "Respuesta inválida de la API.",
     "loadUsers": "No se pudieron cargar los usuarios.",
