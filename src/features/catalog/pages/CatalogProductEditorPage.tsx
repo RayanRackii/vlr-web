@@ -94,6 +94,7 @@ export function CatalogProductEditorPage() {
   const [accessDirty, setAccessDirty] = useState(false)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
   const [previewFailures, setPreviewFailures] = useState<Record<string, boolean>>({})
+  const [previewRevision, setPreviewRevision] = useState(0)
   // Bounded signed-preview refresh keyed by URL (not by file): a freshly signed
   // URL that later expires can be refreshed again, and a failed refresh may be
   // retried until MAX_PREVIEW_REFRESH_ATTEMPTS is reached for that URL.
@@ -141,6 +142,8 @@ export function CatalogProductEditorPage() {
           if (!url.trim()) throw new Error("Empty preview URL")
           refresh.pending = false
           setSignedImageUrls((current) => ({ ...current, [`${productId}:${fileId}`]: url }))
+          // Public URLs may be unchanged; still reset the gallery's failed image.
+          setPreviewRevision((current) => current + 1)
         })
         .catch(() => {
           if (previewRefreshAttempts.current.get(source) !== refresh) return
@@ -214,13 +217,13 @@ export function CatalogProductEditorPage() {
     }
   }, [product, signedImageUrls, refreshSignedPreview])
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async ({ filesOnly = false } = {}) => {
     if (!id) return
     try {
       const next = await getCatalogProduct(id)
       setProduct((current) => current ? {
-        ...current, files: next.files, hasFiles: next.hasFiles, isActive: next.isActive,
-        visibility: next.visibility,
+        ...current, files: next.files, hasFiles: next.hasFiles,
+        ...(filesOnly ? {} : { isActive: next.isActive, visibility: next.visibility }),
       } : next)
       const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
       setSignedImageUrls((current) => Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key))))
@@ -320,6 +323,7 @@ export function CatalogProductEditorPage() {
         error instanceof Error ? error.message : t("apiErrors.uploadCatalogFile")
       setFileError(message)
       toast.error(message)
+      await reload({ filesOnly: true })
     } finally {
       setFileBusy(false)
     }
@@ -525,10 +529,17 @@ export function CatalogProductEditorPage() {
         const image = previewImages.find((item) => item.url === source)
         if (!image) return
         refreshSignedPreview(source, product.id, image.id)
+        setPreviewFailures((current) => ({ ...current, [`${product.id}:${image.id}`]: true }))
+      }} onLoadCapture={(event) => {
+        if (!(event.target instanceof HTMLImageElement)) return
+        const source = event.target.getAttribute("src")
+        const image = previewImages.find((item) => item.url === source)
+        if (!image) return
+        setPreviewFailures((current) => ({ ...current, [`${product.id}:${image.id}`]: false }))
       }}>
         {previewImages.length > 0 ? (
           <CatalogProductImageGallery
-            key={previewImages.map((image) => image.url).join("|")}
+            key={`${previewRevision}:${previewImages.map((image) => image.url).join("|")}`}
             images={previewImages}
             alt={product.name}
             frameClassName="h-40 w-full rounded-lg"

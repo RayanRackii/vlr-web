@@ -163,6 +163,27 @@ describe("CatalogProductEditorPage", () => {
     }
   })
 
+  it("reloads retained files after a failed upload without discarding unsaved fields", async () => {
+    const file = { id: "f1", fileName: "pending.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, status: "Pending" as const, url: null }
+    getProductMock.mockResolvedValueOnce(PRODUCT).mockResolvedValue({ ...PRODUCT, hasFiles: true, files: [file] })
+    vi.mocked(uploadCatalogProductFile).mockRejectedValue(new Error("Upload failed"))
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.clear(name)
+    await user.type(name, "Unsaved product")
+    await user.click(screen.getByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    await user.upload(screen.getByLabelText(i18n.t("catalog.products.files.select")), new File(["photo"], "pending.png", { type: "image/png" }))
+    expect(await screen.findByText("pending.png")).toBeVisible()
+    expect(screen.getByText(i18n.t("catalog.products.files.pendingRecord"))).toBeVisible()
+    expect(screen.getByRole("button", { name: i18n.t("common.delete") })).toBeEnabled()
+    expect(screen.getByText("Upload failed")).toBeVisible()
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Unsaved product")
+  })
+
   it("keeps the upload controls within the files card", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -373,6 +394,33 @@ describe("CatalogProductEditorPage", () => {
     expect(putCatalogProductAccess).not.toHaveBeenCalled()
     await user.click(screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) }))
     expect(screen.getByRole("checkbox", { name: "Revenda" })).not.toBeChecked()
+  })
+
+  it("retries an unchanged public preview URL and keeps manual recovery until the image loads", async () => {
+    const url = "https://example.test/public.png"
+    getProductMock.mockResolvedValue({ ...PRODUCT, files: [
+      { id: "f1", status: "Ready", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url },
+    ] })
+    const signing = vi.mocked(getCatalogProductFileUrl).mockResolvedValue({ url, isPublic: true })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    const original = screen.getByRole("img", { name: PRODUCT.name })
+    await act(async () => { fireEvent.error(original) })
+    const refreshed = screen.getByRole("img", { name: PRODUCT.name })
+    expect(refreshed).not.toBe(original)
+    expect(refreshed).toHaveAttribute("src", url)
+    await act(async () => { fireEvent.error(refreshed) })
+    expect(screen.getByRole("button", { name: i18n.t("catalog.products.files.retry") })).toBeVisible()
+    await act(async () => { fireEvent.error(screen.getByRole("img", { name: PRODUCT.name })) })
+    expect(signing).toHaveBeenCalledTimes(2)
+    const retry = screen.getByRole("button", { name: i18n.t("catalog.products.files.retry") })
+    expect(retry).toBeVisible()
+    await user.click(retry)
+    expect(signing).toHaveBeenCalledTimes(3)
+    const recovered = screen.getByRole("img", { name: PRODUCT.name })
+    fireEvent.load(recovered)
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.products.files.retry") })).not.toBeInTheDocument()
   })
 
   it("refreshes the signed image again when a later URL expires", async () => {

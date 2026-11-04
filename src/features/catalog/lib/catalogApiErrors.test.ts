@@ -4,6 +4,22 @@ import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors
 import i18n from "@/lib/i18n"
 
 describe("localizeCatalogApiError", () => {
+  it("localizes pending-file removal cooldowns in pt-BR, en and es", async () => {
+    const previousLanguage = i18n.language
+    try {
+      for (const [language, message] of [
+        ["pt-BR", "Aguarde alguns minutos antes de remover este envio pendente"],
+        ["en", "Wait a few minutes before removing this pending upload"],
+        ["es", "Espera unos minutos antes de eliminar este envío pendiente"],
+      ]) {
+        await i18n.changeLanguage(language)
+        expect(localizeCatalogApiError({ code: "catalog.file.pendingTooRecent", error: "Pending upload is too recent." }, "fallback")).toBe(message)
+      }
+    } finally {
+      await i18n.changeLanguage(previousLanguage)
+    }
+  })
+
   it("translates a duplicate product code", () => {
     expect(
       localizeCatalogApiError(

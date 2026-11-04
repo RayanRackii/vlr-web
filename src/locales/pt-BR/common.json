@@ -976,6 +976,7 @@
         "currency": "Moeda"
       },
       "files": {
+        "pendingTooRecent": "Aguarde alguns minutos antes de remover este envio pendente",
         "pendingRecord": "Envio pendente — remova para liberar a troca de visibilidade",
         "failedRecord": "Envio falhou — remova para liberar a troca de visibilidade",
         "title": "Arquivos",

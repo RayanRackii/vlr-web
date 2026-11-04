@@ -976,6 +976,7 @@
         "currency": "Currency"
       },
       "files": {
+        "pendingTooRecent": "Wait a few minutes before removing this pending upload",
         "pendingRecord": "Upload pending — remove to allow visibility changes",
         "failedRecord": "Upload failed — remove to allow visibility changes",
         "title": "Files",
