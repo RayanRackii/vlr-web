@@ -1,3 +1,4 @@
+import { describeAccessChange } from "@/features/catalog/lib/describeAccessChange"
 import {
   forwardRef,
   useCallback,
@@ -99,7 +100,8 @@ export const CatalogProductAccessSection = forwardRef<
   useEffect(() => {
     let active = true
     loadedRef.current = false
-    void listCustomerGroups()
+    // Groups and access resolve together so the section renders once (no layout shift under the pointer).
+    const groupsLoad = listCustomerGroups()
       .then((list) => {
         if (active) {
           setGroups(list)
@@ -121,17 +123,13 @@ export const CatalogProductAccessSection = forwardRef<
           customerIds: access.customerIds,
         }
         loadedRef.current = true
-        if (access.customerIds.length > 0) {
-          void listTenantCustomers({ pageSize: 50 })
-            .then((page) => rememberCustomers(page.items))
-            .catch(() => undefined)
-        }
       })
       .catch(() => {
         if (active) {
           setLoadFailed(true)
         }
       })
+      .then(() => groupsLoad)
       .finally(() => {
         if (active) {
           setLoading(false)
@@ -141,7 +139,7 @@ export const CatalogProductAccessSection = forwardRef<
     return () => {
       active = false
     }
-  }, [productId, rememberCustomers, reloadHistory, reloadKey])
+  }, [productId, reloadHistory, reloadKey])
 
   const isDirty = useCallback(() => {
     const base = baselineRef.current
@@ -280,7 +278,7 @@ export const CatalogProductAccessSection = forwardRef<
         ))}
       </fieldset>
 
-      {visibility === "Restricted" && !loadFailed ? (
+      {visibility === "Restricted" && !loadFailed && !loading ? (
         <div className="space-y-3">
           {showEmptyWarning ? (
             <p
@@ -350,7 +348,7 @@ export const CatalogProductAccessSection = forwardRef<
         </div>
       ) : null}
 
-      <AccessHistory entries={history} failed={historyFailed} locale={i18n.language} />
+      <AccessHistory entries={history} failed={historyFailed} locale={i18n.language} groupNames={Object.fromEntries(groups.map((g) => [g.id, g.name]))} />
     </section>
   )
 })
@@ -454,10 +452,12 @@ function AccessHistory({
   entries,
   failed,
   locale,
+  groupNames,
 }: {
   entries: CatalogAuditEntry[] | null
   failed: boolean
   locale: string
+  groupNames: Record<string, string>
 }) {
   const { t } = useTranslation()
   if (entries === null) {
@@ -504,6 +504,9 @@ function AccessHistory({
             <li key={entry.id} className="border-b border-border pb-2 last:border-0">
               <span className="font-medium">{actor}</span>{" "}
               {t(catalogAuditActionI18nKey(entry.action))}
+              {describeAccessChange(entry, groupNames, t) ? (
+                <span className="block text-muted-foreground">{describeAccessChange(entry, groupNames, t)}</span>
+              ) : null}
               <span className="block text-xs text-muted-foreground">
                 {dateFormat.format(new Date(entry.createdAt))}
               </span>

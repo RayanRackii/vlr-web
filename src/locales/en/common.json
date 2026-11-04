@@ -704,7 +704,7 @@
       "cartProductUnavailable": "Could not load this product.",
       "cartTotalUnavailable": "Total unavailable until products load.",
       "checkout": "Review order",
-      "checkoutHint": "Confirm quantities. Server prices will be used.",
+      "checkoutHint": "Check the quantities. Final prices appear on the order.",
       "customerNote": "Note",
       "submitOrder": "Submit order",
       "submitting": "Submitting...",
@@ -822,7 +822,11 @@
       "ordersLoading": "Loading orders...",
       "orderCardLabel": "Order {{number}}",
       "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here.",
-      "exclusive": "Exclusive for you"
+      "exclusive": "Exclusive for you",
+      "unavailableTitle": "Product unavailable or not found",
+      "unavailableBody": "This product isn't available to you or no longer exists. Browse the other catalog items.",
+      "backToCatalog": "Back to catalog",
+      "exclusiveWhy": "Made available to your account by the store."
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
@@ -979,7 +983,7 @@
         "customers": "Granted customers",
         "noGroups": "No groups yet.",
         "noCustomers": "No customers found.",
-        "searchCustomers": "Search customer",
+        "searchCustomers": "Search by name or email",
         "emptyWarning": "Restricted product with nobody granted: no customer will see it.",
         "readOnlyHint": "You can view, but not change, visibility.",
         "toastSaved": "Visibility updated.",
@@ -987,7 +991,12 @@
           "title": "Access history",
           "empty": "No changes recorded.",
           "actorTeam": "Team",
-          "loadError": "Couldn't load the history."
+          "loadError": "Couldn't load the history.",
+          "groupsAdded": "+ {{names}}",
+          "groupsRemoved": "− {{names}}",
+          "customers_one": "{{count}} customer granted",
+          "customers_other": "{{count}} customers granted",
+          "unknownGroup": "deleted group"
         },
         "loadError": "Couldn't load this product's visibility.",
         "retry": "Try again",

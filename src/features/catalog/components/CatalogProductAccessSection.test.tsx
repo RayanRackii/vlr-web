@@ -7,6 +7,7 @@ import {
   CatalogProductAccessSection,
   type CatalogProductAccessSectionHandle,
 } from "@/features/catalog/components/CatalogProductAccessSection"
+import { describeAccessChange } from "@/features/catalog/lib/describeAccessChange"
 import i18n from "@/lib/i18n"
 import { toast } from "sonner"
 
@@ -121,5 +122,23 @@ describe("CatalogProductAccessSection", () => {
     render(<CatalogProductAccessSection productId={PID} canManage />)
     expect(await screen.findByText("Cliente Nove")).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("catalog.products.access.namesUnavailable"))).not.toBeInTheDocument()
+  })
+})
+
+describe("describeAccessChange", () => {
+  it("names added and removed groups from the audit snapshots", () => {
+    const text = describeAccessChange(
+      {
+        id: "00000000-0000-4000-8000-000000000001", action: "product.accessChanged", entityType: "product",
+        entityId: "00000000-0000-4000-8000-000000000002", actorType: "B2BUser", actorUserId: null, actorName: null,
+        beforeJson: JSON.stringify({ visibility: "Restricted", groupIds: ["g2"], customerIds: [] }),
+        afterJson: JSON.stringify({ visibility: "Restricted", groupIds: ["g1"], customerIds: ["c1"] }),
+        createdAt: "2026-11-03T00:00:00Z",
+      },
+      { g1: "VIP", g2: "Revenda" },
+      (key, o) => i18n.t(key, o),
+    )
+    expect(text).toContain("VIP")
+    expect(text).toContain("Revenda")
   })
 })

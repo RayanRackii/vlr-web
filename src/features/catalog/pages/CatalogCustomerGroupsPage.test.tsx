@@ -80,4 +80,13 @@ describe("CatalogCustomerGroupsPage", () => {
     expect(await screen.findByText(i18n.t("catalog.customerGroups.errors.duplicateName"))).toBeInTheDocument()
     expect(screen.queryByText(/FORBIDDEN|409/)).not.toBeInTheDocument()
   })
+
+  it("does not show the required-name error until the field is touched", async () => {
+    const user = userEvent.setup()
+    renderPage(["catalog.products.read", "catalog.products.manage"])
+    await screen.findAllByText("Revenda")
+    await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.customerGroups.create") })[0]!)
+    await screen.findByLabelText(i18n.t("catalog.customerGroups.form.name"))
+    expect(screen.queryByText(i18n.t("catalog.customerGroups.validation.nameRequired"))).toBeNull()
+  })
 })

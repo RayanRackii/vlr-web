@@ -704,7 +704,7 @@
       "cartProductUnavailable": "Não foi possível carregar este produto.",
       "cartTotalUnavailable": "Total indisponível até carregar os produtos.",
       "checkout": "Revisar pedido",
-      "checkoutHint": "Confirme as quantidades. Os preços do servidor serão usados.",
+      "checkoutHint": "Confirme as quantidades. Os preços finais aparecem no pedido.",
       "customerNote": "Observação",
       "submitOrder": "Enviar pedido",
       "submitting": "Enviando...",
@@ -822,7 +822,11 @@
       "ordersLoading": "Carregando pedidos...",
       "orderCardLabel": "Pedido {{number}}",
       "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui.",
-      "exclusive": "Exclusivo para você"
+      "exclusive": "Exclusivo para você",
+      "unavailableTitle": "Produto indisponível ou não encontrado",
+      "unavailableBody": "Este produto não está disponível para você ou não existe mais. Veja os outros itens do catálogo.",
+      "backToCatalog": "Voltar ao catálogo",
+      "exclusiveWhy": "Liberado para a sua conta pela loja."
     },
     "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
@@ -979,7 +983,7 @@
         "customers": "Clientes liberados",
         "noGroups": "Nenhum grupo cadastrado.",
         "noCustomers": "Nenhum cliente encontrado.",
-        "searchCustomers": "Buscar cliente",
+        "searchCustomers": "Buscar por nome ou e-mail",
         "emptyWarning": "Produto restrito sem ninguém liberado: nenhum cliente verá este produto.",
         "readOnlyHint": "Você pode ver, mas não alterar, a visibilidade.",
         "toastSaved": "Visibilidade atualizada.",
@@ -987,7 +991,12 @@
           "title": "Histórico de acesso",
           "empty": "Nenhuma alteração registrada.",
           "actorTeam": "Equipe",
-          "loadError": "Não foi possível carregar o histórico."
+          "loadError": "Não foi possível carregar o histórico.",
+          "groupsAdded": "+ {{names}}",
+          "groupsRemoved": "− {{names}}",
+          "customers_one": "{{count}} cliente liberado",
+          "customers_other": "{{count}} clientes liberados",
+          "unknownGroup": "grupo removido"
         },
         "loadError": "Não foi possível carregar a visibilidade deste produto.",
         "retry": "Tentar novamente",
