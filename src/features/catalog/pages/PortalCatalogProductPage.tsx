@@ -144,6 +144,11 @@ export function PortalCatalogProductPage() {
 
         <div className="portal-catalog-detail-panel space-y-6 min-w-0">
           <div className="space-y-2">
+            {product.isExclusive ? (
+              <Badge variant="outline" className="w-fit">
+                {t("tenantPortal.catalog.exclusive")}
+              </Badge>
+            ) : null}
             <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">{product.name}</h1>
             {product.code ? (
               <p className="text-sm text-muted-foreground">{product.code}</p>

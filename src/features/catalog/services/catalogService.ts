@@ -17,8 +17,16 @@ import {
   catalogProductResourceRequirementsResponseSchema,
   catalogProductSchema,
   catalogResourceAgendaResponseSchema,
+  catalogAuditEntryListSchema,
+  catalogProductAccessSchema,
+  customerGroupListSchema,
+  customerGroupSchema,
   productRequestListSchema,
   type AllocationUsageAction,
+  type CatalogAuditEntry,
+  type CatalogProductAccess,
+  type CatalogProductVisibility,
+  type CustomerGroup,
   type CatalogAgendaItem,
   type CatalogResourceAgendaResponse,
   type CatalogChannelConfig,
@@ -87,6 +95,10 @@ function isRetryableCatalogError(error: unknown): boolean {
 
 function isForbidden(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 403
+}
+
+function isConflict(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 409
 }
 
 function isPlanningVersionConflict(error: unknown): boolean {
@@ -586,6 +598,191 @@ export async function upsertCatalogNotificationChannel(body: {
       throw error
     }
     throwCatalogError(error, "apiErrors.saveCatalogChannel")
+  }
+}
+
+const CUSTOMER_GROUPS_PATH = "/api/catalog/customer-groups"
+
+/** Thrown on 409 when a group name already exists (case-insensitive) so the UI can hint inline. */
+export class CatalogDuplicateGroupNameError extends Error {}
+
+export async function listCustomerGroups(
+  options?: { signal?: AbortSignal },
+): Promise<CustomerGroup[]> {
+  try {
+    const response = await api.get(CUSTOMER_GROUPS_PATH, {
+      ...(options?.signal ? { signal: options.signal } : {}),
+    })
+    return parseOrThrow(customerGroupListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.load")
+  }
+}
+
+export async function getCustomerGroup(id: string): Promise<CustomerGroup> {
+  try {
+    const response = await api.get(`${CUSTOMER_GROUPS_PATH}/${id}`)
+    return parseOrThrow(customerGroupSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.load")
+  }
+}
+
+function throwOnDuplicateGroupName(error: unknown): void {
+  if (isConflict(error)) {
+    throw new CatalogDuplicateGroupNameError(
+      i18n.t("catalog.customerGroups.errors.duplicateName"),
+    )
+  }
+}
+
+export async function createCustomerGroup(body: {
+  name: string
+  description?: string | null
+}): Promise<CustomerGroup> {
+  try {
+    const response = await api.post(CUSTOMER_GROUPS_PATH, body)
+    return parseOrThrow(customerGroupSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwOnDuplicateGroupName(error)
+    throwCatalogError(error, "catalog.customerGroups.errors.save")
+  }
+}
+
+export async function updateCustomerGroup(
+  id: string,
+  body: { name: string; description?: string | null },
+): Promise<CustomerGroup> {
+  try {
+    const response = await api.put(`${CUSTOMER_GROUPS_PATH}/${id}`, body)
+    return parseOrThrow(customerGroupSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwOnDuplicateGroupName(error)
+    throwCatalogError(error, "catalog.customerGroups.errors.save")
+  }
+}
+
+export async function deleteCustomerGroup(id: string): Promise<void> {
+  try {
+    await api.delete(`${CUSTOMER_GROUPS_PATH}/${id}`)
+  } catch (error) {
+    throwCatalogError(error, "catalog.customerGroups.errors.delete")
+  }
+}
+
+export async function addCustomerGroupMembers(
+  id: string,
+  customerIds: string[],
+): Promise<CustomerGroup> {
+  try {
+    const response = await api.post(`${CUSTOMER_GROUPS_PATH}/${id}/members`, {
+      customerIds,
+    })
+    return parseOrThrow(customerGroupSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.addMembers")
+  }
+}
+
+export async function removeCustomerGroupMember(
+  id: string,
+  customerId: string,
+): Promise<CustomerGroup> {
+  try {
+    const response = await api.delete(
+      `${CUSTOMER_GROUPS_PATH}/${id}/members/${customerId}`,
+    )
+    return parseOrThrow(customerGroupSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.removeMember")
+  }
+}
+
+export async function getCustomerGroupHistory(
+  id: string,
+): Promise<CatalogAuditEntry[]> {
+  try {
+    const response = await api.get(`${CUSTOMER_GROUPS_PATH}/${id}/history`)
+    return parseOrThrow(catalogAuditEntryListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.loadHistory")
+  }
+}
+
+/** Slice-2 product access read; added here so the service stays the single catalog contract. */
+export async function getCatalogProductAccess(
+  productId: string,
+  options?: { signal?: AbortSignal },
+): Promise<CatalogProductAccess> {
+  try {
+    const response = await api.get(`/api/catalog/products/${productId}/access`, {
+      ...(options?.signal ? { signal: options.signal } : {}),
+    })
+    return parseOrThrow(catalogProductAccessSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.loadAccess")
+  }
+}
+
+export async function putCatalogProductAccess(
+  productId: string,
+  body: {
+    visibility: CatalogProductVisibility
+    customerIds?: string[]
+    groupIds?: string[]
+  },
+): Promise<CatalogProductAccess> {
+  try {
+    const response = await api.put(
+      `/api/catalog/products/${productId}/access`,
+      body,
+    )
+    return parseOrThrow(catalogProductAccessSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.saveAccess")
+  }
+}
+
+export async function getCatalogProductAccessHistory(
+  productId: string,
+): Promise<CatalogAuditEntry[]> {
+  try {
+    const response = await api.get(
+      `/api/catalog/products/${productId}/access/history`,
+    )
+    return parseOrThrow(catalogAuditEntryListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.customerGroups.errors.loadHistory")
   }
 }
 

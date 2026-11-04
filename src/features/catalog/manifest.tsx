@@ -1,5 +1,5 @@
 import type { ReactElement } from "react"
-import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
+import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
@@ -8,6 +8,7 @@ import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResou
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
+import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -46,6 +47,12 @@ export const catalogManifest = {
           labelKey: "nav.catalogProducts",
           icon: Tag,
           to: "/catalogo/produtos",
+          permission: "catalog.products.read",
+        },
+        {
+          labelKey: "nav.catalogCustomerGroups",
+          icon: Users,
+          to: "/catalogo/grupos",
           permission: "catalog.products.read",
         },
         {
@@ -116,6 +123,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/solicitacoes",
         element: <CatalogProductsPage view="requests" />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/grupos",
+        element: <CatalogCustomerGroupsPage />,
         permission: "catalog.products.read",
       },
       {

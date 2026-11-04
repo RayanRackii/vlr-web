@@ -26,6 +26,14 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   deleteCatalogProductFile: vi.fn(),
   getCatalogProductFileUrl: vi.fn(),
   uploadCatalogProductFile: vi.fn(),
+  getCatalogProductAccess: vi.fn().mockResolvedValue({ productId: "x", visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false }),
+  getCatalogProductAccessHistory: vi.fn().mockResolvedValue([]),
+  listCustomerGroups: vi.fn().mockResolvedValue([]),
+  putCatalogProductAccess: vi.fn(),
+}))
+
+vi.mock("@/features/users/services/usersService", () => ({
+  listTenantCustomers: vi.fn().mockResolvedValue({ items: [], totalCount: 0, page: 1, pageSize: 50 }),
 }))
 
 vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
@@ -58,6 +66,9 @@ const PRODUCT: CatalogProduct = {
   isActive: true,
   createdAt: "2026-10-14T00:00:00.000Z",
   files: [],
+      visibility: "Public",
+      grantedCustomerCount: 0,
+      grantedGroupCount: 0,
 }
 
 describe("CatalogProductsPage validity gate", () => {
@@ -96,6 +107,18 @@ describe("CatalogProductsPage validity gate", () => {
   function replaceValue(element: HTMLElement, value: string) {
     fireEvent.change(element, { target: { value } })
   }
+
+  it("badges restricted products and filters by visibility", async () => {
+    const restricted = { ...PRODUCT, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Kit VIP", visibility: "Restricted" as const, grantedCustomerCount: 1, grantedGroupCount: 2 }
+    listProductsMock.mockResolvedValue([PRODUCT, restricted])
+    const user = userEvent.setup()
+    renderPage()
+    expect((await screen.findAllByText(i18n.t("catalog.products.badges.restricted", { count: 3 }))).length).toBeGreaterThan(0)
+    await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.products.visibilityFilter.title") })[0]!)
+    await user.selectOptions(await screen.findByRole("combobox", { name: i18n.t("catalog.products.visibilityFilter.title") }), "Restricted")
+    await waitFor(() => expect(screen.queryAllByText("Raquete")).toHaveLength(0))
+    expect(screen.getAllByText("Kit VIP").length).toBeGreaterThan(0)
+  })
 
   it("keeps requests out of the products list", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])

@@ -821,7 +821,8 @@
       "ordersEmptyDescription": "When you place an order from the {{tenant}} catalog, it shows up here so you can track it.",
       "ordersLoading": "Loading orders...",
       "orderCardLabel": "Order {{number}}",
-      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here."
+      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here.",
+      "exclusive": "Exclusive for you"
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
@@ -967,6 +968,126 @@
         "next": "Next image",
         "imageOf": "{{current}} / {{total}}",
         "broken": "Image could not be loaded"
+      },
+      "access": {
+        "title": "Visibility",
+        "public": "Public",
+        "publicHint": "All customers see this product.",
+        "restricted": "Restricted",
+        "restrictedHint": "Only granted groups and customers see this product.",
+        "groups": "Granted groups",
+        "customers": "Granted customers",
+        "noGroups": "No groups yet.",
+        "noCustomers": "No customers found.",
+        "searchCustomers": "Search customer",
+        "emptyWarning": "Restricted product with nobody granted: no customer will see it.",
+        "readOnlyHint": "You can view, but not change, visibility.",
+        "toastSaved": "Visibility updated.",
+        "history": {
+          "title": "Access history",
+          "empty": "No changes recorded.",
+          "actorTeam": "Team"
+        }
+      },
+      "badges": {
+        "restricted": "Restricted · {{count}}"
+      },
+      "visibilityFilter": {
+        "title": "Visibility",
+        "public": "Public",
+        "restricted": "Restricted"
+      }
+    },
+    "customerGroups": {
+      "title": "Customer groups",
+      "subtitle": "Group customers to unlock exclusive products.",
+      "create": "New group",
+      "createTitle": "New group",
+      "editTitle": "Edit group",
+      "search": "Search by name",
+      "searchShort": "Search group",
+      "empty": "No groups yet.",
+      "emptyHint": "Create a group to unlock products for specific customers.",
+      "noDescription": "No description",
+      "save": "Save",
+      "saving": "Saving...",
+      "toastCreated": "Group created.",
+      "toastUpdated": "Group updated.",
+      "toastDeleted": "Group deleted.",
+      "columns": {
+        "name": "Group",
+        "description": "Description",
+        "members": "Members",
+        "usage": "Usage",
+        "actions": "Actions"
+      },
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "usage": {
+        "none": "Not used",
+        "products_one": "{{count}} product",
+        "products_other": "{{count}} products"
+      },
+      "form": {
+        "name": "Name",
+        "description": "Description"
+      },
+      "validation": {
+        "nameRequired": "Enter a group name.",
+        "nameTooLong": "The name can be at most 200 characters.",
+        "descriptionTooLong": "The description can be at most 2000 characters."
+      },
+      "delete": "Delete",
+      "deleteTitle": "Delete group?",
+      "deleteBody": "{{name}} will be removed. Its members and product grants will be undone. Existing orders are unchanged.",
+      "deleteAffected": "Products using this group:",
+      "deleteNoAffected": "No product uses this group.",
+      "tabs": {
+        "details": "Details",
+        "members": "Members",
+        "history": "History"
+      },
+      "members": {
+        "title": "Members ({{count}})",
+        "add": "Add customer",
+        "searchPlaceholder": "Search customer by name or email…",
+        "searchLabel": "Search customer",
+        "selectHint": "Select one or more customers to add.",
+        "addSelected": "Add selected",
+        "noResults": "No customer found.",
+        "empty": "No members yet.",
+        "hint": "A customer can be in several groups.",
+        "unknown": "Customer",
+        "remove": "Remove",
+        "removeTitle": "Remove member?",
+        "removeBody": "{{name}} will no longer be part of the group.",
+        "toastAdded": "Members added.",
+        "toastRemoved": "Member removed."
+      },
+      "history": {
+        "title": "History",
+        "empty": "No history.",
+        "actorTeam": "Team",
+        "actions": {
+          "created": "created the group",
+          "updated": "updated the details",
+          "deleted": "deleted the group",
+          "membersAdded": "added members",
+          "memberRemoved": "removed a member",
+          "accessChanged": "changed a product's access"
+        }
+      },
+      "readOnlyHint": "You don't have permission to edit customer groups.",
+      "errors": {
+        "load": "Could not load customer groups.",
+        "save": "Could not save the group.",
+        "delete": "Could not delete the group.",
+        "addMembers": "Could not add the members.",
+        "removeMember": "Could not remove the member.",
+        "loadHistory": "Could not load the history.",
+        "loadAccess": "Could not load the product access.",
+        "saveAccess": "Could not save the product access.",
+        "duplicateName": "A group with this name already exists."
       }
     },
     "requests": {
@@ -1606,6 +1727,7 @@
     "rentalsResources": "Resources",
     "catalog": "Sales",
     "catalogProducts": "Products",
+    "catalogCustomerGroups": "Customer groups",
     "catalogOrders": "Orders",
     "catalogRequests": "Requests",
     "catalogNotifications": "Sales alerts",

@@ -73,6 +73,11 @@ export function PortalCatalogProductCard({
         />
       )}
       <div className="portal-catalog-body">
+        {product.isExclusive ? (
+          <Badge variant="outline" className="w-fit">
+            {t("tenantPortal.catalog.exclusive")}
+          </Badge>
+        ) : null}
         {product.taxonomy?.categories.length || product.taxonomy?.tags.length ? (
           <div className="portal-catalog-tags">
             {product.taxonomy.categories.map((category) => <span key={category.id} className="portal-catalog-tag">{category.name}</span>)}

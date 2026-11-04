@@ -69,6 +69,7 @@ import {
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
+import { CatalogProductAccessSection, type CatalogProductAccessSectionHandle } from "@/features/catalog/components/CatalogProductAccessSection"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
 import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
 import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
@@ -153,6 +154,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
     useState<CatalogProduct | null>(null)
   const [codeManuallyEdited, setCodeManuallyEdited] = useState(false)
   const [operationInFlight, setOperationInFlight] = useState(false)
+  const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
   const saveLockRef = useRef<SaveCatalogProductCreateLock>({ inFlight: false })
   const loadGenerationRef = useRef(0)
   const loadAbortControllerRef = useRef<AbortController | null>(null)
@@ -285,6 +287,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       if (editing) {
         const updated = await updateCatalogProduct(editing.id, body)
         setEditing(updated)
+        await accessSectionRef.current?.persist()
         toast.success(t("catalog.products.toastUpdated"))
         await reload()
         return
@@ -511,6 +514,28 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         cell: ({ row }) => row.original.code ?? "—",
       },
       {
+        id: "visibility",
+        accessorFn: (row) => row.visibility ?? "Public",
+        header: t("catalog.products.access.title"),
+        cell: ({ row }) => {
+          const product = row.original
+          if ((product.visibility ?? "Public") !== "Restricted") {
+            return <span className="text-muted-foreground">{t("catalog.products.visibilityFilter.public")}</span>
+          }
+          return (
+            <Badge variant="outline">
+              {t("catalog.products.badges.restricted", {
+                count: (product.grantedCustomerCount ?? 0) + (product.grantedGroupCount ?? 0),
+              })}
+            </Badge>
+          )
+        },
+        filterFn: (row, _columnId, filterValue) =>
+          typeof filterValue !== "string" || filterValue.trim() === ""
+            ? true
+            : (row.original.visibility ?? "Public") === filterValue,
+      },
+      {
         id: "price",
         accessorFn: (row) =>
           formatCatalogMoney(row.price, row.currency, i18n.language) ??
@@ -678,6 +703,8 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
           <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.productsSearch")} placeholder={t("catalog.staff.productsSearchShort")} />
           <CatalogColumnFilter column={table.getColumn("isActive")!} title={t("catalog.products.columns.status")}
             options={[{ value: "true", label: t("catalog.products.active") }, { value: "false", label: t("catalog.products.inactive") }]} />
+          <CatalogColumnFilter column={table.getColumn("visibility")!} title={t("catalog.products.visibilityFilter.title")}
+            options={[{ value: "Public", label: t("catalog.products.visibilityFilter.public") }, { value: "Restricted", label: t("catalog.products.visibilityFilter.restricted") }]} />
           <TaxonomyFilterHeader kind="categories" title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
           <TaxonomyFilterHeader kind="tags" title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
         </div>
@@ -1032,6 +1059,14 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
 
               {canManage && editing && resourcePlanningActive ? (
                 <CatalogProductResourceRequirements productId={editing.id} />
+              ) : null}
+
+              {editing ? (
+                <CatalogProductAccessSection
+                  ref={accessSectionRef}
+                  productId={editing.id}
+                  canManage={canManage}
+                />
               ) : null}
 
               </div>

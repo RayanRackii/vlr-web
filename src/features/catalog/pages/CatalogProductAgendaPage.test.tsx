@@ -28,6 +28,9 @@ const PRODUCT: CatalogProduct = {
   name: "Sessão de gravação",
   code: null, description: null, price: null, currency: "BRL",
   isActive: true, createdAt: "2026-01-01T00:00:00Z", files: [],
+      visibility: "Public",
+      grantedCustomerCount: 0,
+      grantedGroupCount: 0,
 }
 
 const ITEM: CatalogAgendaItem = {

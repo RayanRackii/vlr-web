@@ -821,7 +821,8 @@
       "ordersEmptyDescription": "Cuando hagas un pedido en el catálogo de {{tenant}}, aparecerá aquí para que puedas seguirlo.",
       "ordersLoading": "Cargando pedidos...",
       "orderCardLabel": "Pedido {{number}}",
-      "requestsEmptyDescription": "¿Necesitas algo que no está en el catálogo? Envía una solicitud y el equipo responderá por aquí."
+      "requestsEmptyDescription": "¿Necesitas algo que no está en el catálogo? Envía una solicitud y el equipo responderá por aquí.",
+      "exclusive": "Exclusivo para ti"
     },
     "timeZoneLabel": "hora de {{city}} ({{offset}})"
   },
@@ -967,6 +968,126 @@
         "next": "Imagen siguiente",
         "imageOf": "{{current}} / {{total}}",
         "broken": "No se pudo cargar la imagen"
+      },
+      "access": {
+        "title": "Visibilidad",
+        "public": "Público",
+        "publicHint": "Todos los clientes ven este producto.",
+        "restricted": "Restringido",
+        "restrictedHint": "Solo los grupos y clientes habilitados ven este producto.",
+        "groups": "Grupos habilitados",
+        "customers": "Clientes habilitados",
+        "noGroups": "Aún no hay grupos.",
+        "noCustomers": "No se encontraron clientes.",
+        "searchCustomers": "Buscar cliente",
+        "emptyWarning": "Producto restringido sin nadie habilitado: ningún cliente lo verá.",
+        "readOnlyHint": "Puedes ver, pero no cambiar, la visibilidad.",
+        "toastSaved": "Visibilidad actualizada.",
+        "history": {
+          "title": "Historial de acceso",
+          "empty": "No hay cambios registrados.",
+          "actorTeam": "Equipo"
+        }
+      },
+      "badges": {
+        "restricted": "Restringido · {{count}}"
+      },
+      "visibilityFilter": {
+        "title": "Visibilidad",
+        "public": "Público",
+        "restricted": "Restringido"
+      }
+    },
+    "customerGroups": {
+      "title": "Grupos de clientes",
+      "subtitle": "Agrupa clientes para habilitar productos exclusivos.",
+      "create": "Nuevo grupo",
+      "createTitle": "Nuevo grupo",
+      "editTitle": "Editar grupo",
+      "search": "Buscar por nombre",
+      "searchShort": "Buscar grupo",
+      "empty": "Aún no hay grupos.",
+      "emptyHint": "Crea un grupo para habilitar productos a clientes específicos.",
+      "noDescription": "Sin descripción",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "toastCreated": "Grupo creado.",
+      "toastUpdated": "Grupo actualizado.",
+      "toastDeleted": "Grupo eliminado.",
+      "columns": {
+        "name": "Grupo",
+        "description": "Descripción",
+        "members": "Miembros",
+        "usage": "Uso",
+        "actions": "Acciones"
+      },
+      "memberCount_one": "{{count}} miembro",
+      "memberCount_other": "{{count}} miembros",
+      "usage": {
+        "none": "Sin uso",
+        "products_one": "{{count}} producto",
+        "products_other": "{{count}} productos"
+      },
+      "form": {
+        "name": "Nombre",
+        "description": "Descripción"
+      },
+      "validation": {
+        "nameRequired": "Ingresa el nombre del grupo.",
+        "nameTooLong": "El nombre puede tener como máximo 200 caracteres.",
+        "descriptionTooLong": "La descripción puede tener como máximo 2000 caracteres."
+      },
+      "delete": "Eliminar",
+      "deleteTitle": "¿Eliminar grupo?",
+      "deleteBody": "{{name}} se eliminará. Sus miembros y los accesos a productos se deshacen. Los pedidos ya realizados no cambian.",
+      "deleteAffected": "Productos que usan este grupo:",
+      "deleteNoAffected": "Ningún producto usa este grupo.",
+      "tabs": {
+        "details": "Datos",
+        "members": "Miembros",
+        "history": "Historial"
+      },
+      "members": {
+        "title": "Miembros ({{count}})",
+        "add": "Agregar cliente",
+        "searchPlaceholder": "Buscar cliente por nombre o correo…",
+        "searchLabel": "Buscar cliente",
+        "selectHint": "Selecciona uno o más clientes para agregar.",
+        "addSelected": "Agregar seleccionados",
+        "noResults": "No se encontró ningún cliente.",
+        "empty": "Aún no hay miembros.",
+        "hint": "Un cliente puede estar en varios grupos.",
+        "unknown": "Cliente",
+        "remove": "Quitar",
+        "removeTitle": "¿Quitar miembro?",
+        "removeBody": "{{name}} dejará de formar parte del grupo.",
+        "toastAdded": "Miembros agregados.",
+        "toastRemoved": "Miembro quitado."
+      },
+      "history": {
+        "title": "Historial",
+        "empty": "Sin historial.",
+        "actorTeam": "Equipo",
+        "actions": {
+          "created": "creó el grupo",
+          "updated": "actualizó los datos",
+          "deleted": "eliminó el grupo",
+          "membersAdded": "agregó miembros",
+          "memberRemoved": "quitó un miembro",
+          "accessChanged": "cambió el acceso de un producto"
+        }
+      },
+      "readOnlyHint": "No tienes permiso para editar grupos de clientes.",
+      "errors": {
+        "load": "No se pudieron cargar los grupos de clientes.",
+        "save": "No se pudo guardar el grupo.",
+        "delete": "No se pudo eliminar el grupo.",
+        "addMembers": "No se pudieron agregar los miembros.",
+        "removeMember": "No se pudo quitar el miembro.",
+        "loadHistory": "No se pudo cargar el historial.",
+        "loadAccess": "No se pudo cargar el acceso del producto.",
+        "saveAccess": "No se pudo guardar el acceso del producto.",
+        "duplicateName": "Ya existe un grupo con ese nombre."
       }
     },
     "requests": {
@@ -1606,6 +1727,7 @@
     "rentalsResources": "Recursos",
     "catalog": "Ventas",
     "catalogProducts": "Productos",
+    "catalogCustomerGroups": "Grupos de clientes",
     "catalogOrders": "Pedidos",
     "catalogRequests": "Solicitudes",
     "catalogNotifications": "Avisos de ventas",
