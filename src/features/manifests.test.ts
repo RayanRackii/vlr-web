@@ -161,6 +161,7 @@ describe("feature manifests", () => {
     expect(usersManifest.modules).toEqual([])
     expect(usersManifest.routes.staff.map((route) => route.path)).toEqual([
       "/pessoas-e-acesso",
+      "/pessoas-e-acesso/funcoes/:id",
       "/perfil",
     ])
     expect(workOrdersManifest.modules).toEqual(["os"])
