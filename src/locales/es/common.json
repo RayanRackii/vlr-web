@@ -3853,6 +3853,23 @@
       "createRole": "No se pudo crear la función.",
       "updateRole": "No se pudo actualizar la función.",
       "deleteRole": "No se pudo eliminar la función."
+    },
+    "roleEditor": {
+      "backToRoles": "Volver a funciones",
+      "breadcrumb": "Funciones",
+      "collapseAll": "Contraer todo",
+      "createContinue": "Crear y continuar →",
+      "expandAll": "Expandir todo",
+      "membersEmpty": "Nadie tiene esta función.",
+      "moduleCount": "{{selected}} de {{total}}",
+      "noResults": "No se encontraron permisos.",
+      "notFound": "Función no encontrada.",
+      "searchPlaceholder": "Buscar permiso",
+      "selectAllModule": "Marcar módulo completo",
+      "tabs": {
+        "dados": "Datos",
+        "members": "Miembros"
+      }
     }
   },
   "admin": {

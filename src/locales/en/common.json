@@ -3853,6 +3853,23 @@
       "createRole": "Could not create the function.",
       "updateRole": "Could not update the function.",
       "deleteRole": "Could not delete the function."
+    },
+    "roleEditor": {
+      "backToRoles": "Back to roles",
+      "breadcrumb": "Roles",
+      "collapseAll": "Collapse all",
+      "createContinue": "Create and continue →",
+      "expandAll": "Expand all",
+      "membersEmpty": "No one has this role.",
+      "moduleCount": "{{selected}} of {{total}}",
+      "noResults": "No permissions found.",
+      "notFound": "Role not found.",
+      "searchPlaceholder": "Search permission",
+      "selectAllModule": "Select whole module",
+      "tabs": {
+        "dados": "Details",
+        "members": "Members"
+      }
     }
   },
   "admin": {
