@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, useSearchParams } from "react-router-dom"
+import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -90,6 +90,7 @@ describe("CatalogProductsPage validity gate", () => {
       <MemoryRouter initialEntries={[initialEntry]}>
         <TestPermissionProvider permissions={["catalog.products.manage"]}>
           <CatalogProductsPage />
+          <LocationProbe />
         </TestPermissionProvider>
       </MemoryRouter>,
     )
@@ -191,7 +192,9 @@ describe("CatalogProductsPage validity gate", () => {
     expect(actions).toHaveClass("md:max-lg:sticky", "md:max-lg:right-0", "md:max-lg:bg-card")
     expect(header).toHaveClass("md:max-lg:right-0")
     await user.click(edit)
-    expect(within(await screen.findByRole("dialog")).getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue(PRODUCT.name)
+    expect(await screen.findByTestId("location")).toHaveTextContent(
+      `/catalogo/produtos/${PRODUCT.id}`,
+    )
   })
 
   it.each(["pt-BR", "en", "es"])("shows no errors on open and explains a blurred name beside the field in %s", async (locale) => {
@@ -400,150 +403,6 @@ describe("CatalogProductsPage validity gate", () => {
     expect(createProductMock).toHaveBeenCalledTimes(2)
   })
 
-  it("keeps Salvar disabled when editing until the schema passes again", async () => {
-    listProductsMock.mockResolvedValue([PRODUCT])
-    const user = userEvent.setup()
-    renderPage()
-
-    expect(await screen.findByText("Raquete")).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: i18n.t("common.edit") }))
-
-    const dialog = await screen.findByRole("dialog")
-    const save = () =>
-      within(dialog).getByRole("button", {
-        name: i18n.t("catalog.products.save"),
-      })
-    const cancel = within(dialog).getByRole("button", {
-      name: i18n.t("common.cancel"),
-    })
-    const close = within(dialog).getByRole("button", {
-      name: i18n.t("common.close"),
-    })
-    const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
-    const code = within(dialog).getByLabelText(i18n.t("catalog.products.form.code"))
-    expect(name).toHaveValue("Raquete")
-    expect(code).toHaveValue("RAQ")
-    expect(save()).toBeEnabled()
-    expect(cancel).toBeEnabled()
-    expect(close).toBeEnabled()
-
-    await user.clear(name)
-    expect(save()).toBeDisabled()
-    await user.type(name, "   ")
-    expect(save()).toBeDisabled()
-    expect(updateProductMock).not.toHaveBeenCalled()
-    expect(cancel).toBeEnabled()
-
-    await user.clear(name)
-    await user.type(name, "Raquete pro")
-    expect(code).toHaveValue("RAQ")
-    expect(save()).toBeEnabled()
-
-    replaceValue(code, "C".repeat(81))
-    expect(save()).toBeDisabled()
-    expect(close).toBeEnabled()
-    replaceValue(code, "RAQ")
-    expect(save()).toBeEnabled()
-    expect(cancel).toBeEnabled()
-  })
-
-  it("re-enables Salvar after an edit server error and keeps the entered values", async () => {
-    listProductsMock.mockResolvedValue([PRODUCT])
-    const user = userEvent.setup()
-    let rejectUpdate: (reason: Error) => void = () => {
-      throw new Error("missing reject")
-    }
-    updateProductMock.mockImplementation(
-      () =>
-        new Promise((_resolve, reject) => {
-          rejectUpdate = reject
-        }),
-    )
-    renderPage()
-    expect(await screen.findByText("Raquete")).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: i18n.t("common.edit") }))
-
-    const dialog = await screen.findByRole("dialog")
-    const name = within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))
-    const description = within(dialog).getByLabelText(
-      i18n.t("catalog.products.form.description"),
-    )
-    const price = within(dialog).getByLabelText(i18n.t("catalog.products.form.price"))
-    await user.clear(name)
-    await user.type(name, "Raquete pro")
-    await user.clear(description)
-    await user.type(description, "Carbono leve")
-    await user.clear(price)
-    await user.type(price, "12,00")
-
-    const save = within(dialog).getByRole("button", {
-      name: i18n.t("catalog.products.save"),
-    })
-    expect(save).toBeEnabled()
-    await user.click(save)
-
-    await waitFor(() => {
-      expect(
-        within(dialog).getByRole("button", {
-          name: i18n.t("catalog.products.saving"),
-        }),
-      ).toBeDisabled()
-    })
-
-    rejectUpdate(new Error("Nome já cadastrado."))
-
-    await waitFor(() => {
-      expect(
-        within(dialog).getByRole("button", {
-          name: i18n.t("catalog.products.save"),
-        }),
-      ).toBeEnabled()
-    })
-    expect(toastError).toHaveBeenCalledWith("Nome já cadastrado.")
-    expect(name).toHaveValue("Raquete pro")
-    expect(
-      within(dialog).getByLabelText(i18n.t("catalog.products.form.code")),
-    ).toHaveValue("RAQ")
-    expect(description).toHaveValue("Carbono leve")
-    expect(price).toHaveValue("12,00")
-    expect(
-      within(dialog).getByRole("button", { name: i18n.t("common.cancel") }),
-    ).toBeEnabled()
-    expect(
-      within(dialog).getByRole("button", { name: i18n.t("common.close") }),
-    ).toBeEnabled()
-    expect(toastSuccess).not.toHaveBeenCalled()
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
-    expect(updateProductMock).toHaveBeenCalledTimes(1)
-    expect(updateProductMock).toHaveBeenCalledWith(PRODUCT.id, {
-      name: "Raquete pro",
-      code: "RAQ",
-      description: "Carbono leve",
-      price: 12,
-      currency: "BRL",
-    })
-
-    updateProductMock.mockResolvedValueOnce({
-      ...PRODUCT,
-      name: "Raquete pro",
-      description: "Carbono leve",
-      price: 12,
-    })
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: i18n.t("catalog.products.save"),
-      }),
-    )
-    await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated"))
-    })
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
-    expect(name).toHaveValue("Raquete pro")
-    expect(description).toHaveValue("Carbono leve")
-    expect(price).toHaveValue("12,00")
-    expect(updateProductMock).toHaveBeenCalledTimes(2)
-  })
-
   it("restores taxonomy filters from the URL and sends them with product requests", async () => {
     const category = "11111111-1111-4111-8111-111111111111"
     const tag = "22222222-2222-4222-8222-222222222222"
@@ -583,6 +442,11 @@ describe("CatalogProductsPage validity gate", () => {
     expect(screen.queryByText("Old result")).not.toBeInTheDocument()
   })
 })
+
+function LocationProbe() {
+  const location = useLocation()
+  return <span data-testid="location">{location.pathname}</span>
+}
 
 function TaxonomyNavigation({ category }: { category: string }) {
   const [, setSearchParams] = useSearchParams()

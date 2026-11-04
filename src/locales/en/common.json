@@ -918,6 +918,16 @@
       "create": "New product",
       "createTitle": "New product",
       "editTitle": "Edit product",
+      "tabs": {
+        "dados": "Details",
+        "price": "Price",
+        "access": "Visibility and access"
+      },
+      "editor": {
+        "breadcrumbRoot": "Catalog",
+        "notFound": "Product not found.",
+        "back": "Back to products"
+      },
       "dialogDescription": "Leave price empty for on-request items.",
       "empty": "No products yet.",
       "save": "Save",

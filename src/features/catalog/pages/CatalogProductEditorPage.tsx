@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -104,6 +104,8 @@ export function CatalogProductEditorPage() {
     },
   })
 
+  const watchedValues = useWatch({ control: form.control })
+
   const applyProduct = useCallback(
     (next: CatalogProduct) => {
       setProduct(next)
@@ -118,7 +120,6 @@ export function CatalogProductEditorPage() {
       return
     }
     let active = true
-    setIsLoading(true)
     getCatalogProduct(id)
       .then((next) => {
         if (!active) return
@@ -297,7 +298,8 @@ export function CatalogProductEditorPage() {
   }
 
   const formDirty = form.formState.isDirty
-  const dirty = canManage && (formDirty || accessDirty)
+  const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
+  const dirty = canManage && isFormValid && (formDirty || accessDirty)
   const unsavedCount = (formDirty ? 1 : 0) + (accessDirty ? 1 : 0)
   const fieldsLocked = !canManage || saving
   const previewImages = selectCatalogProductImages(product.files)
@@ -334,25 +336,25 @@ export function CatalogProductEditorPage() {
               </FormItem>
             )}
           />
-          <FormItem>
-            <FormLabel>{t("catalog.products.columns.status")}</FormLabel>
-            <div>
-              <SegmentedControl
-                label={t("catalog.products.columns.status")}
-                value={product.isActive ? "active" : "inactive"}
-                disabled={!canManage || statusBusy}
-                onChange={(next) => {
-                  if ((next === "active") !== product.isActive) {
-                    void toggleActive()
-                  }
-                }}
-                options={[
-                  { value: "active", label: t("catalog.products.active") },
-                  { value: "inactive", label: t("catalog.products.inactive") },
-                ]}
-              />
-            </div>
-          </FormItem>
+          <div className="space-y-2">
+            <span className="block text-sm font-medium">
+              {t("catalog.products.columns.status")}
+            </span>
+            <SegmentedControl
+              label={t("catalog.products.columns.status")}
+              value={product.isActive ? "active" : "inactive"}
+              disabled={!canManage || statusBusy}
+              onChange={(next) => {
+                if ((next === "active") !== product.isActive) {
+                  void toggleActive()
+                }
+              }}
+              options={[
+                { value: "active", label: t("catalog.products.active") },
+                { value: "inactive", label: t("catalog.products.inactive") },
+              ]}
+            />
+          </div>
         </div>
         <FormField
           control={form.control}
