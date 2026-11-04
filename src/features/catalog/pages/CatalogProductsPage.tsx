@@ -68,6 +68,7 @@ import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogP
 import {
   activateCatalogProduct,
   createCatalogProduct,
+  type CatalogProductWriteRequest,
   deactivateCatalogProduct,
   listCatalogProducts,
   listProductRequests,
@@ -253,13 +254,16 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       return
     }
 
-    const body = toCatalogProductWriteBody(values, price.value)
+    // Pass the initial status on create so an inactive product is never
+    // published first: the API creates it unpublished, no activate/deactivate
+    // round-trip (which could leave it published if the second call failed).
+    const body: CatalogProductWriteRequest = {
+      ...toCatalogProductWriteBody(values, price.value),
+      status: createActive ? "Active" : "Inactive",
+    }
     setCreating(true)
     try {
       const created = await createCatalogProduct(body)
-      if (!createActive) {
-        await deactivateCatalogProduct(created.id)
-      }
       toast.success(t("catalog.products.toastCreated"))
       setCreateOpen(false)
       void navigate(`/catalogo/produtos/${created.id}`)
@@ -589,6 +593,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
             onSubmit={form.handleSubmit(onCreate)}
             noValidate
           >
+            <fieldset disabled={creating} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -690,6 +695,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
                 ]}
               />
             </div>
+            </fieldset>
           </form>
         </Form>
       </QuickEditSheet>

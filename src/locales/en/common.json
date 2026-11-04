@@ -929,6 +929,8 @@
         "history": "History"
       },
       "editor": {
+        "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
+        "accessSaveFailed": "Could not save access. Try again.",
         "breadcrumbRoot": "Catalog",
         "notFound": "Product not found.",
         "back": "Back to products"
@@ -974,6 +976,8 @@
         "currency": "Currency"
       },
       "files": {
+        "pendingRecord": "Upload pending",
+        "failedRecord": "Upload failed",
         "title": "Files",
         "customerVisible": "Customer visible",
         "internal": "Internal (B2B)",
@@ -993,7 +997,10 @@
         "typeRejected": "This file type is not accepted.",
         "contentMismatch": "The file content does not match the declared type.",
         "extensionRequired": "{{name}} needs a file extension.",
-        "required": "Select a file."
+        "required": "Select a file.",
+        "whoSees": "Who sees it",
+        "customerShort": "Customer",
+        "internalShort": "Internal"
       },
       "gallery": {
         "previous": "Previous image",
@@ -1002,8 +1009,10 @@
         "broken": "Image could not be loaded"
       },
       "access": {
+        "filesPresent": "To change from Public to Restricted, remove or re-upload only the product’s legacy public files. Internal files and new uploads do not block this change.",
         "title": "Visibility",
         "public": "Public",
+        "storedGrantsHint": "{{count}} stored grant(s). They apply again if the product becomes Restricted.",
         "publicHint": "All customers see this product.",
         "restricted": "Restricted",
         "restrictedHint": "Only granted groups and customers see this product.",

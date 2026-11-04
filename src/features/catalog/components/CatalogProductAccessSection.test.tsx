@@ -52,6 +52,19 @@ describe("CatalogProductAccessSection", () => {
     vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PID, visibility: "Restricted", customerIds: [], groupIds: ["g1"], restrictedWithoutGrants: false } as never)
   })
 
+  it.each(["Public", "Restricted"] as const)("keeps %s visibility and grants editable", async (visibility) => {
+    const user = userEvent.setup()
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PID, visibility, customerIds: [], groupIds: [], restrictedWithoutGrants: false })
+    const ref = createRef<CatalogProductAccessSectionHandle>()
+    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage />)
+    const group = await screen.findByRole("checkbox", { name: "Revenda" })
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
+    expect(group).toBeEnabled()
+    await user.click(group)
+    await act(async () => { expect(await ref.current!.persist()).toBe(true) })
+    expect(putCatalogProductAccess).toHaveBeenCalledWith(PID, { visibility, customerIds: [], groupIds: ["g1"] })
+  })
+
   it("saves a restricted grant with the selected group", async () => {
     const user = userEvent.setup()
     const ref = setup(true)
@@ -64,6 +77,28 @@ describe("CatalogProductAccessSection", () => {
       PID,
       expect.objectContaining({ visibility: "Restricted", groupIds: ["g1"], customerIds: [] }),
     )
+  })
+
+  it("preserves stored grants when saving Public and restores checked groups on Restricted", async () => {
+    const user = userEvent.setup()
+    const stored = { productId: PID, visibility: "Restricted" as const, customerIds: ["c1"], groupIds: ["g1"], restrictedWithoutGrants: false, customerNames: { c1: "Customer One" } }
+    vi.mocked(getCatalogProductAccess).mockResolvedValue(stored)
+    vi.mocked(putCatalogProductAccess).mockResolvedValue({ ...stored, visibility: "Public" })
+    const ref = createRef<CatalogProductAccessSectionHandle>()
+    const onDirtyChange = vi.fn()
+    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage onDirtyChange={onDirtyChange} />)
+    expect(await screen.findByRole("checkbox", { name: "Revenda" })).toBeChecked()
+    await user.click(screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.public")) }))
+    expect(screen.getByRole("checkbox", { name: "Revenda" })).toBeChecked()
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true)
+    await act(async () => { expect(await ref.current!.persist()).toBe(true) })
+    expect(putCatalogProductAccess).toHaveBeenCalledWith(PID, { visibility: "Public", customerIds: ["c1"], groupIds: ["g1"] })
+    expect(screen.getByText(i18n.t("catalog.products.access.storedGrantsHint", { count: 2 }))).toHaveClass("text-muted-foreground")
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false))
+    await user.click(screen.getByRole("radio", { name: new RegExp(restrictedLabel()) }))
+    expect(screen.getByRole("checkbox", { name: "Revenda" })).toBeChecked()
+    expect(screen.getByText("Customer One")).toBeInTheDocument()
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true)
   })
 
   it("warns when restricted with nobody granted", async () => {

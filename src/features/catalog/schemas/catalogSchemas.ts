@@ -52,12 +52,15 @@ export type NotificationDeliveryStatus = z.infer<
   typeof notificationDeliveryStatusSchema
 >
 
+export const catalogFileStatusSchema = z.enum(["Ready", "Pending", "Failed"])
+
 export const catalogProductFileSchema = z.object({
   id: z.string().uuid(),
   fileName: z.string(),
   mimeType: z.string(),
   sizeBytes: z.number(),
   visibility: catalogFileVisibilitySchema,
+  status: catalogFileStatusSchema.default("Ready"),
   url: z.string().nullable(),
 })
 
@@ -79,6 +82,7 @@ export const catalogProductSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   files: z.array(catalogProductFileSchema),
+  hasFiles: z.boolean().optional(),
   taxonomy: taxonomyAssignmentSchema.optional(),
   /** Customer-group access (slice 1/2); absent on pre-feature responses. */
   visibility: catalogProductVisibilitySchema.optional().default("Public"),

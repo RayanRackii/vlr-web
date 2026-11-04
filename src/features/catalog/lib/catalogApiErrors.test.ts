@@ -4,6 +4,10 @@ import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors
 import i18n from "@/lib/i18n"
 
 describe("localizeCatalogApiError", () => {
+  it("falls back for the removed pending-file cooldown code", () => {
+    expect(localizeCatalogApiError({ code: "catalog.file.pendingTooRecent" }, "fallback")).toBe("fallback")
+  })
+
   it("translates a duplicate product code", () => {
     expect(
       localizeCatalogApiError(

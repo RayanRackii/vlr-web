@@ -929,6 +929,8 @@
         "history": "Histórico"
       },
       "editor": {
+        "createStatusFailed": "Produto criado, mas continua ativo porque não foi possível desativá-lo. Tente novamente para concluir.",
+        "accessSaveFailed": "Não foi possível salvar o acesso. Tente novamente.",
         "breadcrumbRoot": "Catálogo",
         "notFound": "Produto não encontrado.",
         "back": "Voltar para produtos"
@@ -974,6 +976,8 @@
         "currency": "Moeda"
       },
       "files": {
+        "pendingRecord": "Envio pendente",
+        "failedRecord": "Envio falhou",
         "title": "Arquivos",
         "customerVisible": "Visível ao cliente",
         "internal": "Interno (B2B)",
@@ -993,7 +997,10 @@
         "typeRejected": "Este tipo de arquivo não é aceito.",
         "contentMismatch": "O conteúdo do arquivo não corresponde ao tipo informado.",
         "extensionRequired": "{{name}} precisa de uma extensão.",
-        "required": "Selecione um arquivo."
+        "required": "Selecione um arquivo.",
+        "whoSees": "Quem vê",
+        "customerShort": "Cliente",
+        "internalShort": "Interno"
       },
       "gallery": {
         "previous": "Imagem anterior",
@@ -1002,8 +1009,10 @@
         "broken": "Não foi possível carregar a imagem"
       },
       "access": {
+        "filesPresent": "Para mudar de Público para Restrito, remova ou reenvie apenas os arquivos públicos legados do produto. Arquivos internos e novos envios não bloqueiam essa alteração.",
         "title": "Visibilidade",
         "public": "Público",
+        "storedGrantsHint": "{{count}} liberação(ões) guardada(s). Voltam a valer se o produto ficar Restrito.",
         "publicHint": "Todos os clientes veem este produto.",
         "restricted": "Restrito",
         "restrictedHint": "Só os grupos e clientes liberados veem este produto.",
