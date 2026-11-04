@@ -112,4 +112,14 @@ describe("CatalogProductAccessSection", () => {
     expect(await screen.findByText(i18n.t("catalog.products.access.history.loadError"))).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("catalog.products.access.history.empty"))).not.toBeInTheDocument()
   })
+
+  it("shows granted customer names returned by the API", async () => {
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({
+      productId: PID, visibility: "Restricted", customerIds: ["c9"], groupIds: [], restrictedWithoutGrants: false,
+      customerNames: { c9: "Cliente Nove" },
+    } as never)
+    render(<CatalogProductAccessSection productId={PID} canManage />)
+    expect(await screen.findByText("Cliente Nove")).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.products.access.namesUnavailable"))).not.toBeInTheDocument()
+  })
 })

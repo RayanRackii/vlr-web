@@ -60,6 +60,7 @@ export const CatalogProductAccessSection = forwardRef<
   const [customersById, setCustomersById] = useState<Record<string, TenantCustomer>>({})
   const [history, setHistory] = useState<CatalogAuditEntry[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [apiNames, setApiNames] = useState<Record<string, string>>({})
   const [loadFailed, setLoadFailed] = useState(false)
   const [historyFailed, setHistoryFailed] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -113,6 +114,7 @@ export const CatalogProductAccessSection = forwardRef<
         setVisibility(access.visibility)
         setGroupIds(access.groupIds)
         setCustomerIds(access.customerIds)
+        setApiNames(access.customerNames ?? {})
         baselineRef.current = {
           visibility: access.visibility,
           groupIds: access.groupIds,
@@ -120,7 +122,7 @@ export const CatalogProductAccessSection = forwardRef<
         }
         loadedRef.current = true
         if (access.customerIds.length > 0) {
-          void listTenantCustomers({ pageSize: 100 })
+          void listTenantCustomers({ pageSize: 50 })
             .then((page) => rememberCustomers(page.items))
             .catch(() => undefined)
         }
@@ -174,6 +176,7 @@ export const CatalogProductAccessSection = forwardRef<
           setVisibility(saved.visibility)
           setGroupIds(saved.groupIds)
           setCustomerIds(saved.customerIds)
+          setApiNames((current) => ({ ...current, ...(saved.customerNames ?? {}) }))
           baselineRef.current = {
             visibility: saved.visibility,
             groupIds: saved.groupIds,
@@ -196,7 +199,7 @@ export const CatalogProductAccessSection = forwardRef<
   )
 
   const locked = !canManage || loading || loadFailed
-  const missingNames = customerIds.some((id) => !customersById[id])
+  const missingNames = customerIds.some((id) => !customersById[id] && !apiNames[id])
   const grantCount = groupIds.length + customerIds.length
   const showEmptyWarning = visibility === "Restricted" && grantCount === 0
 
@@ -329,7 +332,7 @@ export const CatalogProductAccessSection = forwardRef<
                       disabled={locked}
                       onClick={() => removeCustomer(id)}
                     >
-                      {customersById[id]?.name ??
+                      {customersById[id]?.name ?? apiNames[id] ??
                         t("catalog.customerGroups.members.unknown")}
                       <X size={14} aria-hidden="true" />
                     </Button>

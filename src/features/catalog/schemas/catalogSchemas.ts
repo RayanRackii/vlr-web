@@ -483,6 +483,7 @@ export const customerGroupSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   memberCustomerIds: z.array(z.string().uuid()),
+  memberNames: z.record(z.string(), z.string()).optional(),
   createdAt: z.string(),
   updatedAt: z.string().nullable().optional().default(null),
 })
@@ -505,6 +506,7 @@ export const catalogProductAccessSchema = z.object({
   customerIds: z.array(z.string().uuid()),
   groupIds: z.array(z.string().uuid()),
   restrictedWithoutGrants: z.boolean(),
+  customerNames: z.record(z.string(), z.string()).optional(),
 })
 
 export type CatalogProductAccess = z.infer<typeof catalogProductAccessSchema>
