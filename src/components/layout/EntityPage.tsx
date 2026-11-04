@@ -35,6 +35,8 @@ type EntityPageProps = {
   onSave?: () => void
   onDiscard?: () => void
   saving?: boolean
+  /** Disable the Save button while keeping the bar visible (e.g. invalid fields). */
+  saveDisabled?: boolean
   saveLabel?: string
   /** Guard navigation away while dirty (default true). */
   guardUnsaved?: boolean
@@ -74,6 +76,7 @@ export function EntityPage({
   onSave,
   onDiscard,
   saving = false,
+  saveDisabled = false,
   saveLabel,
   guardUnsaved = true,
   className,
@@ -95,7 +98,7 @@ export function EntityPage({
   }, [guard])
 
   const saveButton = onSave ? (
-    <LoadingButton type="button" loading={saving} disabled={!dirty} onClick={onSave}>
+    <LoadingButton type="button" loading={saving} disabled={!dirty || saveDisabled} onClick={onSave}>
       {saveLabel ?? t("fullPage.save")}
     </LoadingButton>
   ) : null

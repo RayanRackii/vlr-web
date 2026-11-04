@@ -701,6 +701,11 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
               />
             </div>
             </fieldset>
+            {createStatusFailed ? (
+              <p role="alert" className="text-sm text-destructive">
+                {t("catalog.products.editor.createStatusFailed")}
+              </p>
+            ) : null}
           </form>
         </Form>
       </QuickEditSheet>

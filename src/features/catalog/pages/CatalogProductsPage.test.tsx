@@ -243,6 +243,7 @@ describe("CatalogProductsPage validity gate", () => {
     const submit = within(dialog).getByRole("button", { name: i18n.t("catalog.products.createContinue") })
     await user.click(submit)
     await waitFor(() => expect(toastError).toHaveBeenCalledWith(i18n.t("catalog.products.editor.createStatusFailed")))
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(i18n.t("catalog.products.editor.createStatusFailed"))
     expect(within(dialog).getByLabelText(i18n.t("catalog.products.form.name"))).toBeDisabled()
     await user.click(submit)
     await waitFor(() => expect(deactivateCatalogProduct).toHaveBeenCalledTimes(2))

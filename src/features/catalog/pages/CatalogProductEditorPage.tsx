@@ -50,6 +50,7 @@ import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchema
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
 const PRODUCTS_PATH = "/catalogo/produtos"
+const MAX_PREVIEW_REFRESH_ATTEMPTS = 2
 const CUSTOMER_VISIBLE_FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
 const INTERNAL_FILE_ACCEPT = ".pdf,.stl,.step,.stp,.dxf,application/pdf"
@@ -92,7 +93,10 @@ export function CatalogProductEditorPage() {
   const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
-  const refreshedImages = useRef(new Set<string>())
+  // Bounded signed-preview refresh keyed by URL (not by file): a freshly signed
+  // URL that later expires can be refreshed again, and a failed refresh may be
+  // retried until MAX_PREVIEW_REFRESH_ATTEMPTS is reached for that URL.
+  const previewRefreshAttempts = useRef(new Map<string, number>())
   const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
 
   const form = useForm<CatalogProductFormValues>({
@@ -108,6 +112,20 @@ export function CatalogProductEditorPage() {
 
   const watchedValues = useWatch({ control: form.control })
   const hasChanges = canManage && (form.formState.isDirty || accessDirty)
+  const hasChangesRef = useRef(hasChanges)
+  useEffect(() => {
+    hasChangesRef.current = hasChanges
+  }, [hasChanges])
+
+  // Programmatic (in-app) navigation goes through this so it is guarded the
+  // same way as anchor clicks, popstate and tab/window close.
+  const guardedNavigate = useCallback(
+    (to: string, options?: { replace?: boolean }) => {
+      if (hasChangesRef.current && !window.confirm(t("fullPage.leaveConfirm"))) return
+      void navigate(to, options)
+    },
+    [navigate, t],
+  )
 
   useEffect(() => {
     if (!hasChanges) return
@@ -125,11 +143,24 @@ export function CatalogProductEditorPage() {
         event.stopPropagation()
       }
     }
+    // BrowserRouter is not a data router, so useBlocker is unavailable. Push a
+    // guard entry and confirm on popstate to cover browser Back/Forward.
+    window.history.pushState(null, "", window.location.href)
+    const popState = () => {
+      if (window.confirm(t("fullPage.leaveConfirm"))) {
+        window.removeEventListener("popstate", popState)
+        window.history.back()
+      } else {
+        window.history.pushState(null, "", window.location.href)
+      }
+    }
     window.addEventListener("beforeunload", unload)
     document.addEventListener("click", leave, true)
+    window.addEventListener("popstate", popState)
     return () => {
       window.removeEventListener("beforeunload", unload)
       document.removeEventListener("click", leave, true)
+      window.removeEventListener("popstate", popState)
     }
   }, [hasChanges, t])
 
@@ -143,7 +174,7 @@ export function CatalogProductEditorPage() {
 
   useEffect(() => {
     if (!id) {
-      void navigate(PRODUCTS_PATH, { replace: true })
+      guardedNavigate(PRODUCTS_PATH, { replace: true })
       return
     }
     let active = true
@@ -165,7 +196,7 @@ export function CatalogProductEditorPage() {
     return () => {
       active = false
     }
-  }, [id, navigate, t, applyProduct])
+  }, [id, guardedNavigate, t, applyProduct])
 
   useEffect(() => {
     void getCatalogTaxonomyOptions()
@@ -209,9 +240,8 @@ export function CatalogProductEditorPage() {
       } : next)
       const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
       setSignedImageUrls((current) => Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key))))
-      for (const key of refreshedImages.current) {
-        if (!keys.has(key)) refreshedImages.current.delete(key)
-      }
+      // File set changed (upload/delete); reset the per-URL refresh budget.
+      previewRefreshAttempts.current.clear()
     } catch {
       /* keep current values on refetch failure */
     }
@@ -361,7 +391,9 @@ export function CatalogProductEditorPage() {
 
   const formDirty = form.formState.isDirty
   const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
-  const dirty = canManage && isFormValid && (formDirty || accessDirty)
+  // Keep the save/discard bar visible whenever there are changes, even if a
+  // field is invalid, so Descartar stays reachable; Save is disabled instead.
+  const dirty = canManage && (formDirty || accessDirty)
   const unsavedCount = (formDirty ? 1 : 0) + (accessDirty ? 1 : 0)
   const fieldsLocked = !canManage || saving
   const previewImages = selectCatalogProductImages(
@@ -502,11 +534,13 @@ export function CatalogProductEditorPage() {
       <div className="min-w-0 w-full max-w-xl space-y-3" onErrorCapture={(event) => {
         if (!(event.target instanceof HTMLImageElement)) return
         const source = event.target.getAttribute("src")
+        if (!source) return
         const image = previewImages.find((item) => item.url === source)
         if (!image) return
+        const attempts = previewRefreshAttempts.current.get(source) ?? 0
+        if (attempts >= MAX_PREVIEW_REFRESH_ATTEMPTS) return
+        previewRefreshAttempts.current.set(source, attempts + 1)
         const key = `${product.id}:${image.id}`
-        if (refreshedImages.current.has(key)) return
-        refreshedImages.current.add(key)
         void getCatalogProductFileUrl(product.id, image.id).then(({ url }) => {
           setSignedImageUrls((current) => ({ ...current, [key]: url }))
         }).catch(() => undefined)
@@ -646,6 +680,7 @@ export function CatalogProductEditorPage() {
         value={tab}
         onValueChange={setTab}
         dirty={dirty}
+        saveDisabled={!isFormValid}
         unsavedCount={unsavedCount}
         onSave={canManage ? () => void form.handleSubmit(onSubmit)() : undefined}
         onDiscard={canManage ? () => {

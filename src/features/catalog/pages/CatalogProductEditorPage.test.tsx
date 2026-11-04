@@ -190,6 +190,31 @@ describe("CatalogProductEditorPage", () => {
     confirm.mockRestore()
   })
 
+  it("confirms before browser Back when there are unsaved changes", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.type(name, " pro")
+    window.dispatchEvent(new PopStateEvent("popstate"))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete pro")
+    confirm.mockRestore()
+  })
+
+  it("keeps the discard bar reachable while a field is invalid", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await user.clear(name)
+    const discard = screen.getByRole("button", { name: i18n.t("fullPage.discard") })
+    expect(discard).toBeInTheDocument()
+    expect(save()).toBeDisabled()
+    await user.click(discard)
+    expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete")
+    expect(updateProductMock).not.toHaveBeenCalled()
+  })
+
   it("keeps unsaved fields when a file is deleted and status is changed", async () => {
     const file = { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
     getProductMock.mockResolvedValueOnce({ ...PRODUCT, files: [file] }).mockResolvedValue({ ...PRODUCT, files: [] })
@@ -239,19 +264,23 @@ describe("CatalogProductEditorPage", () => {
     expect(screen.getByRole("checkbox", { name: "Revenda" })).not.toBeChecked()
   })
 
-  it("refreshes a failed signed image only once", async () => {
+  it("refreshes the signed image again when a later URL expires", async () => {
     getProductMock.mockResolvedValue({ ...PRODUCT, files: [
       { id: "f1", fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible", url: null },
     ] })
     vi.mocked(getCatalogProductFileUrl).mockResolvedValueOnce({ url: "https://example.test/expired", isPublic: false })
-      .mockResolvedValue({ url: "https://example.test/fresh", isPublic: false })
+      .mockResolvedValueOnce({ url: "https://example.test/fresh-1", isPublic: false })
+      .mockResolvedValue({ url: "https://example.test/fresh-2", isPublic: false })
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    // The initially-signed URL expired → refresh to fresh-1.
     fireEvent.error(await screen.findByRole("img", { name: PRODUCT.name }))
-    await waitFor(() => expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh"))
+    await waitFor(() => expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh-1"))
+    // fresh-1 later expires → refresh again (not blocked by once-per-file).
     fireEvent.error(screen.getByRole("img", { name: PRODUCT.name }))
-    expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/fresh-2"))
+    expect(getCatalogProductFileUrl).toHaveBeenCalledTimes(3)
   })
 
   it("loads the product into the form", async () => {
