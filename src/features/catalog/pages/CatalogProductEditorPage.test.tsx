@@ -179,7 +179,7 @@ describe("CatalogProductEditorPage", () => {
     expect(screen.getByRole("button", { name: i18n.t("common.delete") })).toBeEnabled()
     expect(screen.getByText("Upload failed")).toBeVisible()
     await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
-    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
     await user.click(screen.getByRole("tab", { name: i18n.t("catalog.products.tabs.dados") }))
     expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Unsaved product")
   })
@@ -237,6 +237,10 @@ describe("CatalogProductEditorPage", () => {
         expect(signing).toHaveBeenCalledTimes(4)
       }
       expect(screen.getByRole("img", { name: PRODUCT.name })).toHaveAttribute("src", "https://example.test/recovered")
+      if (failure === "permanent") {
+        expect(screen.getByRole("button", { name: i18n.t("catalog.products.files.retry") })).toBeVisible()
+      }
+      fireEvent.load(screen.getByRole("img", { name: PRODUCT.name }))
       expect(screen.queryByRole("button", { name: i18n.t("catalog.products.files.retry") })).not.toBeInTheDocument()
     } finally {
       unmount()
@@ -623,23 +627,30 @@ describe("CatalogProductEditorPage", () => {
     { label: "DTO flag", hasFiles: true, files: [] },
     { label: "internal file fallback", files: [{ id: "f1", status: "Ready" as const, fileName: "model.stl", mimeType: "application/octet-stream", sizeBytes: 100, visibility: "InternalB2B" as const, url: null }] },
     { label: "image fallback", files: [{ id: "f2", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }] },
-  ])("locks visibility for $label", async (fileState) => {
+  ])("allows visibility changes for $label", async (fileState) => {
     getProductMock.mockResolvedValue({ ...PRODUCT, ...fileState })
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
     await waitFor(() => expect(getCatalogProductAccess).toHaveBeenCalled())
-    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
-    expect(await screen.findByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+    await waitFor(() => {
+      for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
+    })
+    const restricted = screen.getByRole("radio", { name: new RegExp(i18n.t("catalog.products.access.restricted")) })
+    await user.click(restricted)
+    expect(restricted).toBeChecked()
+    expect(screen.queryByText(i18n.t("catalog.products.access.filesPresent"))).not.toBeInTheDocument()
   })
 
-  it("unlocks visibility after deleting the last file and reloading hasFiles", async () => {
+  it("keeps visibility editable before and after deleting the last file", async () => {
     const file = { id: "f1", status: "Ready" as const, fileName: "photo.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, url: "https://example.test/photo.png" }
     getProductMock.mockResolvedValueOnce({ ...PRODUCT, hasFiles: true, files: [file] }).mockResolvedValue({ ...PRODUCT, hasFiles: false })
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.access") }))
-    expect(await screen.findByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+    await waitFor(() => {
+      for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
+    })
     await user.click(screen.getByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
     await user.click(screen.getByRole("button", { name: i18n.t("common.delete") }))
     await waitFor(() => expect(screen.queryByText("photo.png")).not.toBeInTheDocument())

@@ -52,14 +52,13 @@ describe("CatalogProductAccessSection", () => {
     vi.mocked(putCatalogProductAccess).mockResolvedValue({ productId: PID, visibility: "Restricted", customerIds: [], groupIds: ["g1"], restrictedWithoutGrants: false } as never)
   })
 
-  it.each(["Public", "Restricted"] as const)("locks visibility with files but keeps %s grants editable", async (visibility) => {
+  it.each(["Public", "Restricted"] as const)("keeps %s visibility and grants editable", async (visibility) => {
     const user = userEvent.setup()
     vi.mocked(getCatalogProductAccess).mockResolvedValue({ productId: PID, visibility, customerIds: [], groupIds: [], restrictedWithoutGrants: false })
     const ref = createRef<CatalogProductAccessSectionHandle>()
-    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage hasFiles />)
+    render(<CatalogProductAccessSection ref={ref} productId={PID} canManage />)
     const group = await screen.findByRole("checkbox", { name: "Revenda" })
-    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled()
-    expect(screen.getByText(i18n.t("catalog.products.access.filesPresent"))).toBeVisible()
+    for (const radio of screen.getAllByRole("radio")) expect(radio).toBeEnabled()
     expect(group).toBeEnabled()
     await user.click(group)
     await act(async () => { expect(await ref.current!.persist()).toBe(true) })

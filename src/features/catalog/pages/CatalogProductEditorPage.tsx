@@ -132,7 +132,6 @@ export function CatalogProductEditorPage() {
     function retryPreview(source: string, productId: string, fileId: string, maxAttempts = MAX_PREVIEW_REFRESH_ATTEMPTS) {
       const refresh = previewRefreshAttempts.current.get(source) ?? { attempts: 0, pending: false }
       if (refresh.pending || refresh.attempts >= maxAttempts) return
-      setPreviewFailures((current) => ({ ...current, [`${productId}:${fileId}`]: false }))
       refresh.attempts += 1
       refresh.pending = true
       previewRefreshAttempts.current.set(source, refresh)
@@ -142,7 +141,7 @@ export function CatalogProductEditorPage() {
           if (!url.trim()) throw new Error("Empty preview URL")
           refresh.pending = false
           setSignedImageUrls((current) => ({ ...current, [`${productId}:${fileId}`]: url }))
-          // Public URLs may be unchanged; still reset the gallery's failed image.
+          // Re-signing may return the same URL; still reset the gallery's failed image.
           setPreviewRevision((current) => current + 1)
         })
         .catch(() => {
@@ -702,7 +701,6 @@ export function CatalogProductEditorPage() {
       />
       <div hidden={tab !== "access"} className="pb-24">
       <CatalogProductAccessSection
-        hasFiles={product.hasFiles ?? product.files.length > 0}
         key={product.id}
         ref={accessSectionRef}
         productId={product.id}
