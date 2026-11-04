@@ -62,6 +62,20 @@ describe("CatalogCustomerGroupsPage", () => {
     expect(screen.getAllByText(i18n.t("catalog.customerGroups.memberCount", { count: 2 })).length).toBeGreaterThan(0)
   })
 
+  it("does not call the customer directory without core.customers.read", async () => {
+    vi.mocked(listTenantCustomers).mockClear()
+    renderPage(["catalog.products.read", "catalog.products.manage"])
+    await screen.findAllByText("Revenda")
+    expect(listTenantCustomers).not.toHaveBeenCalled()
+  })
+
+  it("preloads customer names when core.customers.read is granted", async () => {
+    vi.mocked(listTenantCustomers).mockClear()
+    renderPage(["catalog.products.read", "catalog.products.manage", "core.customers.read"])
+    await screen.findAllByText("Revenda")
+    await waitFor(() => expect(listTenantCustomers).toHaveBeenCalled())
+  })
+
   it("hides the create action for read-only staff", async () => {
     renderPage(["catalog.products.read"])
     await screen.findAllByText("Revenda")

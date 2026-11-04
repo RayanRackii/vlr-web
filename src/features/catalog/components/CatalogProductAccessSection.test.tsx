@@ -125,6 +125,31 @@ describe("CatalogProductAccessSection", () => {
   })
 })
 
+describe("CatalogProductAccessSection customer search permission", () => {
+  beforeEach(() => {
+    vi.mocked(getCatalogProductAccessHistory).mockResolvedValue([] as never)
+    vi.mocked(listCustomerGroups).mockResolvedValue([] as never)
+    vi.mocked(listTenantCustomers).mockClear()
+    vi.mocked(listTenantCustomers).mockResolvedValue({ items: [], totalCount: 0, page: 1, pageSize: 50 } as never)
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({
+      productId: PID, visibility: "Restricted", customerIds: [], groupIds: [], restrictedWithoutGrants: true,
+    } as never)
+  })
+
+  it("hides the customer search without core.customers.read and never calls the directory", async () => {
+    render(<CatalogProductAccessSection productId={PID} canManage />)
+    expect(await screen.findByText(i18n.t("catalog.products.access.needCustomersPermission"))).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(i18n.t("catalog.products.access.searchCustomers"))).not.toBeInTheDocument()
+    expect(listTenantCustomers).not.toHaveBeenCalled()
+  })
+
+  it("shows the customer search when allowed", async () => {
+    render(<CatalogProductAccessSection productId={PID} canManage canSearchCustomers />)
+    expect(await screen.findByPlaceholderText(i18n.t("catalog.products.access.searchCustomers"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.products.access.needCustomersPermission"))).not.toBeInTheDocument()
+  })
+})
+
 describe("describeAccessChange", () => {
   it("names added and removed groups from the audit snapshots", () => {
     const text = describeAccessChange(
