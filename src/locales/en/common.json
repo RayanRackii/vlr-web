@@ -1052,6 +1052,23 @@
       }
     },
     "customerGroups": {
+      "page": {
+        "subtitle": "Group customers to grant access to exclusive catalog or bookable items.",
+        "emptyHint": "Create a group to grant specific customers access to items.",
+        "deleteBody": "{{name}} will be removed. Its members and linked item access will be removed. Existing orders stay unchanged.",
+        "deleteAffected": "Items using this group:",
+        "deleteNoAffected": "No items use this group.",
+        "inUse": "In use",
+        "whereUsed": "Used by items",
+        "breadcrumb": "Group navigation",
+        "sections": "Group sections",
+        "notFound": "Group not found.",
+        "saveFirst": "Save the group to add members.",
+        "leaveTitle": "Discard changes?",
+        "leaveBody": "This group has unsaved changes. Do you want to leave?",
+        "leave": "Discard and leave",
+        "accessChanged": "changed access to an item"
+      },
       "title": "Customer groups",
       "subtitle": "Group customers to unlock exclusive products.",
       "create": "New group",
