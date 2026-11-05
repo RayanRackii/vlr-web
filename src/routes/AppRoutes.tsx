@@ -92,7 +92,8 @@ export function HostTenantPrefixRedirect({ hostSubdomain }: { hostSubdomain: str
   if (subdomain?.toLowerCase() !== hostSubdomain.toLowerCase()) {
     return <Navigate to="/nao-encontrado" replace />
   }
-  const rest = location.pathname.slice(`/t/${subdomain}`.length) || "/"
+  // Strip by segment, not by decoded slug length (the raw path may be percent-encoded).
+  const rest = `/${location.pathname.split("/").slice(3).join("/")}`
   return <Navigate to={`${rest}${location.search}${location.hash}`} replace />
 }
 

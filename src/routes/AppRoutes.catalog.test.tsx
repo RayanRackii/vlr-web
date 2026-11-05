@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { MemoryRouter, Outlet } from "react-router-dom"
+import { MemoryRouter, Outlet, useLocation } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { AppRoutes } from "@/routes/AppRoutes"
@@ -57,8 +57,18 @@ describe("host mode /t/ prefix", () => {
   it("does not serve another tenant's /t/ prefix on this host", async () => {
     vi.mocked(getHostTenantSubdomain).mockReturnValue("demo")
     vi.mocked(getPortalCatalogProduct).mockReset()
-    render(<MemoryRouter initialEntries={["/t/other/catalogo/p1"]}><AppRoutes /></MemoryRouter>)
-    await new Promise((r) => setTimeout(r, 50))
+    function Where() { return <output data-testid="where">{useLocation().pathname}</output> }
+    render(<MemoryRouter initialEntries={["/t/other/catalogo/p1"]}><AppRoutes /><Where /></MemoryRouter>)
+    expect(await screen.findByText("/nao-encontrado")).toBeInTheDocument()
     expect(getPortalCatalogProduct).not.toHaveBeenCalled()
+  })
+
+  it("strips an encoded same-tenant prefix by segment", async () => {
+    vi.mocked(getHostTenantSubdomain).mockReturnValue("demo")
+    vi.mocked(getPortalCatalogProduct).mockReset()
+    vi.mocked(getPortalCatalogProduct).mockRejectedValue(new PortalProductUnavailableError())
+    render(<MemoryRouter initialEntries={["/t/%64emo/catalogo/p1"]}><AppRoutes /></MemoryRouter>)
+    expect(await screen.findByRole("heading", { name: i18n.t("tenantPortal.catalog.unavailableTitle") })).toBeInTheDocument()
+    expect(getPortalCatalogProduct).toHaveBeenCalledWith("p1")
   })
 })
