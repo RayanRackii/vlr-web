@@ -9,6 +9,8 @@ import { toast } from "sonner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import type { CatalogProductGalleryImage } from "@/features/catalog/lib/selectCatalogProductImages"
 import { PortalAddToCartButton } from "@/features/catalog/components/PortalAddToCartButton"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import {
@@ -42,6 +44,7 @@ export function PortalCatalogProductPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [unavailable, setUnavailable] = useState(false)
+  const [expandedImage, setExpandedImage] = useState<CatalogProductGalleryImage | null>(null)
   const [quantity, setQuantity] = useState(1)
   const quantityRef = useRef(quantity)
   quantityRef.current = quantity
@@ -136,6 +139,17 @@ export function PortalCatalogProductPage() {
 
   return (
     <div className="portal-catalog-detail min-w-0 space-y-6">
+      <Dialog open={expandedImage !== null} onOpenChange={(open) => { if (!open) setExpandedImage(null) }}>
+        <DialogContent showCloseButton={false} className="sm:max-w-3xl" aria-describedby={undefined}>
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle>{product.name}</DialogTitle>
+            <DialogClose render={<Button variant="outline" className="min-h-11" />}>
+              {t("common.close")}
+            </DialogClose>
+          </div>
+          {expandedImage ? <img src={expandedImage.url} alt={product.name} className="max-h-[75dvh] w-full object-contain" /> : null}
+        </DialogContent>
+      </Dialog>
       <Button
         type="button"
         variant="ghost"
@@ -157,6 +171,7 @@ export function PortalCatalogProductPage() {
         ) : (
           <CatalogProductImageGallery
             images={images}
+            onImageClick={setExpandedImage}
             alt={product.name}
             frameClassName="portal-catalog-image rounded-[18px] border border-border"
           />

@@ -163,6 +163,37 @@ describe("CatalogProductEditorPage", () => {
     }
   })
 
+  it("offers a localized keyboard file picker and announces the selected filename", async () => {
+    const user = userEvent.setup()
+    vi.mocked(uploadCatalogProductFile).mockImplementation(() => new Promise(() => {}))
+    renderPage()
+    await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
+    const input = screen.getByLabelText(i18n.t("catalog.products.files.select"))
+    expect(input).toHaveClass("sr-only")
+    expect(screen.getByRole("status")).toHaveTextContent("Nenhum arquivo selecionado")
+    const button = screen.getByRole("button", { name: i18n.t("catalog.products.files.select") })
+    const clicked = vi.spyOn(input, "click")
+    button.focus()
+    await user.keyboard("{Enter}")
+    expect(clicked).toHaveBeenCalledOnce()
+    await user.upload(input, new File(["photo"], "resource.png", { type: "image/png" }))
+    expect(screen.getByRole("status")).toHaveTextContent("resource.png")
+    expect(uploadCatalogProductFile).toHaveBeenCalledWith(PRODUCT.id, expect.any(File), "CustomerVisible")
+  })
+
+  it("wraps all five editor tabs without a scrolling container", async () => {
+    renderPage()
+    const tabs = await screen.findAllByRole("tab")
+    expect(tabs).toHaveLength(5)
+    const list = screen.getByRole("tablist")
+    expect(list).toHaveClass("!h-auto", "flex-wrap", "w-full")
+    expect(list.parentElement).not.toHaveClass("overflow-x-auto")
+    for (const tab of tabs) {
+      await userEvent.click(tab)
+      expect(tab).toHaveAttribute("aria-selected", "true")
+    }
+  })
+
   it("reloads retained files after a failed upload without discarding unsaved fields", async () => {
     const file = { id: "f1", fileName: "pending.png", mimeType: "image/png", sizeBytes: 100, visibility: "CustomerVisible" as const, status: "Pending" as const, url: null }
     getProductMock.mockResolvedValueOnce(PRODUCT).mockResolvedValue({ ...PRODUCT, hasFiles: true, files: [file] })
@@ -189,7 +220,7 @@ describe("CatalogProductEditorPage", () => {
     renderPage()
     await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
     const input = screen.getByLabelText(i18n.t("catalog.products.files.select"))
-    expect(input).toHaveClass("min-w-0", "w-full")
+    expect(input).toHaveClass("sr-only")
     expect(input.parentElement?.parentElement).not.toHaveClass("md:flex-row")
     expect(input.parentElement?.parentElement).toHaveClass("min-w-0", "flex-wrap")
   })

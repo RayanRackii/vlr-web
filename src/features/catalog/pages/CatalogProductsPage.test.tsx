@@ -427,7 +427,7 @@ describe("CatalogProductsPage validity gate", () => {
     expect(createProductMock).toHaveBeenCalledTimes(2)
   })
 
-  it("creates from the sheet and navigates to the new product editor", async () => {
+  it("creates from the sheet with the Portuguese product toast and opens the editor", async () => {
     const createdId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
     createProductMock.mockResolvedValue({ ...PRODUCT, id: createdId })
     const user = userEvent.setup()
@@ -438,6 +438,7 @@ describe("CatalogProductsPage validity gate", () => {
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${createdId}`))
     expect(createProductMock).toHaveBeenCalledTimes(1)
     expect(createProductMock).toHaveBeenCalledWith({ name: "Raquete", code: "RAQ", description: null, price: null, currency: "BRL", status: "Active" })
+    expect(toastSuccess).toHaveBeenCalledWith("Produto criado.")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
