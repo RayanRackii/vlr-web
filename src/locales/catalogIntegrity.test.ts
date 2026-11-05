@@ -36,6 +36,7 @@ describe("translation catalog integrity", () => {
       "catalog.staff.orderSummary", "catalog.staff.noNote", "catalog.staff.empty.products",
       "catalog.staff.empty.orders", "catalog.staff.empty.requests", "catalog.staff.kpis.Requested",
       "catalog.staff.kpis.Approved", "catalog.staff.kpis.Preparing", "catalog.staff.kpis.Ready",
+      "catalog.products.files.empty",
     ]
     for (const key of keys) {
       expect(i18n.exists(key, { lng })).toBe(true)

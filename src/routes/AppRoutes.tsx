@@ -85,6 +85,18 @@ export function RedirectPerfilRoute() {
   return <Navigate to={tenantPortalPath(subdomain ?? "")} replace />
 }
 
+/** Host mode: `/t/<host-slug>/...` is the path-mode URL of this same portal; strip the prefix. */
+export function HostTenantPrefixRedirect({ hostSubdomain }: { hostSubdomain: string }) {
+  const location = useLocation()
+  const { subdomain } = useParams<{ subdomain: string }>()
+  if (subdomain?.toLowerCase() !== hostSubdomain.toLowerCase()) {
+    return <Navigate to="/nao-encontrado" replace />
+  }
+  // Strip by segment, not by decoded slug length (the raw path may be percent-encoded).
+  const rest = `/${location.pathname.split("/").slice(3).join("/")}`
+  return <Navigate to={`${rest}${location.search}${location.hash}`} replace />
+}
+
 export function AppRoutes() {
   const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
 
@@ -107,6 +119,7 @@ export function AppRoutes() {
             {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
           </Route>
         </Route>
+        <Route path="/t/:subdomain/*" element={<HostTenantPrefixRedirect hostSubdomain={hostSubdomain} />} />
         <Route element={<TenantPortalLayout />}>
           <Route path="*" element={<PortalNotFoundRoute />} />
         </Route>
