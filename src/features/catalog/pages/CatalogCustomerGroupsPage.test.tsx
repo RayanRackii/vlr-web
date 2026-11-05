@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, Routes, Route } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
@@ -43,7 +44,10 @@ function renderPage(permissions: string[]) {
   return render(
     <MemoryRouter>
       <TestPermissionProvider permissions={permissions}>
-        <CatalogCustomerGroupsPage />
+        <Routes>
+          <Route path="/" element={<CatalogCustomerGroupsPage />} />
+          <Route path="/catalogo/grupos/novo" element={<CatalogCustomerGroupEditorPage />} />
+        </Routes>
       </TestPermissionProvider>
     </MemoryRouter>,
   )
@@ -89,7 +93,7 @@ describe("CatalogCustomerGroupsPage", () => {
     await screen.findAllByText("Revenda")
     await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.customerGroups.create") })[0]!)
     await user.type(await screen.findByLabelText(i18n.t("catalog.customerGroups.form.name")), "revenda")
-    await user.click(screen.getByRole("button", { name: i18n.t("catalog.customerGroups.save") }))
+    await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.customerGroups.save") })[0]!)
     await waitFor(() => expect(createCustomerGroup).toHaveBeenCalled())
     expect(await screen.findByText(i18n.t("catalog.customerGroups.errors.duplicateName"))).toBeInTheDocument()
     expect(screen.queryByText(/FORBIDDEN|409/)).not.toBeInTheDocument()

@@ -1052,6 +1052,23 @@
       }
     },
     "customerGroups": {
+      "page": {
+        "subtitle": "Agrupa clientes para dar acceso a artículos exclusivos del catálogo o reservables.",
+        "emptyHint": "Crea un grupo para dar acceso a artículos a clientes específicos.",
+        "deleteBody": "Se eliminará {{name}}. Se eliminarán sus miembros y los accesos a artículos vinculados. Los pedidos existentes no cambian.",
+        "deleteAffected": "Artículos que usan este grupo:",
+        "deleteNoAffected": "Ningún artículo usa este grupo.",
+        "inUse": "En uso",
+        "whereUsed": "En uso por artículos",
+        "breadcrumb": "Navegación del grupo",
+        "sections": "Secciones del grupo",
+        "notFound": "Grupo no encontrado.",
+        "saveFirst": "Guarda el grupo para añadir miembros.",
+        "leaveTitle": "¿Descartar cambios?",
+        "leaveBody": "Este grupo tiene cambios sin guardar. ¿Quieres salir?",
+        "leave": "Descartar y salir",
+        "accessChanged": "cambió el acceso de un artículo"
+      },
       "title": "Grupos de clientes",
       "subtitle": "Agrupa clientes para habilitar productos exclusivos.",
       "create": "Nuevo grupo",

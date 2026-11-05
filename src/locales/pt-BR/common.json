@@ -1052,6 +1052,23 @@
       }
     },
     "customerGroups": {
+      "page": {
+        "subtitle": "Agrupe clientes para liberar itens exclusivos do catálogo ou reserváveis.",
+        "emptyHint": "Crie um grupo para liberar itens a clientes específicos.",
+        "deleteBody": "{{name}} será removido. Os membros e os acessos a itens ligados ao grupo serão desfeitos. Pedidos já feitos não mudam.",
+        "deleteAffected": "Itens que usam este grupo:",
+        "deleteNoAffected": "Nenhum item usa este grupo.",
+        "inUse": "Em uso",
+        "whereUsed": "Em uso por itens",
+        "breadcrumb": "Navegação do grupo",
+        "sections": "Seções do grupo",
+        "notFound": "Grupo não encontrado.",
+        "saveFirst": "Salve o grupo para adicionar membros.",
+        "leaveTitle": "Descartar alterações?",
+        "leaveBody": "Há alterações não salvas neste grupo. Deseja sair?",
+        "leave": "Descartar e sair",
+        "accessChanged": "alterou o acesso de um item"
+      },
       "title": "Grupos de clientes",
       "subtitle": "Agrupe clientes para liberar produtos exclusivos.",
       "create": "Novo grupo",

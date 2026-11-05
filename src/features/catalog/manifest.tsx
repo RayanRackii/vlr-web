@@ -1,3 +1,4 @@
+import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import type { ReactElement } from "react"
 import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
 
@@ -134,6 +135,16 @@ export const catalogManifest = {
       {
         path: "/catalogo/grupos",
         element: <CatalogCustomerGroupsPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/grupos/novo",
+        element: <CatalogCustomerGroupEditorPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/grupos/:id",
+        element: <CatalogCustomerGroupEditorPage />,
         permission: "catalog.products.read",
       },
       {
