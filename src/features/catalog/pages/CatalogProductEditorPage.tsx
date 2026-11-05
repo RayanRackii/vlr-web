@@ -1,3 +1,5 @@
+import "../components/catalogProductEditor.css"
+
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
@@ -660,7 +662,7 @@ export function CatalogProductEditorPage() {
   return (
     <Form {...form}>
       <EntityPage
-        className={tab === "access" ? "pb-0" : undefined}
+        className={`catalog-product-editor min-w-0 ${tab === "access" ? "pb-0" : ""}`}
         breadcrumb={
           <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground" aria-label="breadcrumb">
             <span>{t("catalog.products.editor.breadcrumbRoot")}</span>

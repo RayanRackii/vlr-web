@@ -48,7 +48,15 @@
 .portal-catalog-illustration { width: 150px; height: 110px; flex-shrink: 0; margin-bottom: 6px; }
 .portal-catalog-detail { width: 100%; max-width: 1100px; margin: 0 auto; }
 .portal-catalog-detail-panel { padding: clamp(20px, 3vw, 36px); border: 1px solid var(--border); border-radius: 18px; background: var(--card); box-shadow: var(--portal-shadow); }
-.portal-catalog-detail-actions { position: sticky; bottom: calc(80px + env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); }
+.portal-catalog-detail-actions { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--portal-shadow); }
+.portal-catalog-detail-actions > .portal-catalog-stepper { align-self: flex-start; max-width: 100%; }
+.portal-catalog-detail-actions > button { width: 100%; }
+
+@media (min-width: 640px) {
+  .portal-catalog-detail-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .portal-catalog-detail-actions > button { width: auto; flex-basis: 9rem; }
+}
+
 .portal-catalog-layout :focus-visible, .portal-catalog-detail :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
 
 @media (min-width: 1280px) {
@@ -63,7 +71,7 @@
 }
 
 @media (min-width: 768px) {
-  .portal-catalog-detail-actions { position: static; padding: 0; border: 0; background: transparent; box-shadow: none; }
+  .portal-catalog-detail-actions { padding: 0; border: 0; background: transparent; box-shadow: none; }
 }
 
 @media (max-width: 640px) {

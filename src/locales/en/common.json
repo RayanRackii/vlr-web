@@ -976,6 +976,7 @@
         "currency": "Currency"
       },
       "files": {
+        "empty": "No files added.",
         "pendingRecord": "Upload pending",
         "failedRecord": "Upload failed",
         "title": "Files",
