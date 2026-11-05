@@ -281,7 +281,7 @@ export function RentalResourceEditorForm({
   return (
     <div className="rental-resource-editor">
       <nav className="resource-breadcrumb" aria-label={t("rentals.resources.editor.breadcrumb")}>
-        <Button variant="link" type="button" disabled={busy} onClick={onCancel}>{t("rentals.resources.title")}</Button>
+        <Button variant="link" className="min-h-[44px] -my-1" type="button" disabled={busy} onClick={onCancel}>{t("rentals.resources.title")}</Button>
         <span aria-hidden="true">/</span>
         <span aria-current="page">{editing ? editing.name : t("rentals.resources.add")}</span>
       </nav>
@@ -295,7 +295,7 @@ export function RentalResourceEditorForm({
         </div>
         <div className="resource-editor-actions">
           <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>{t("common.cancel")}</Button>
-          <FormPrimaryButton type="submit" form="rental-resource-form" isValid={isValid} loading={busy} disabled={readOnly || busy}>{t("common.save")}</FormPrimaryButton>
+          <FormPrimaryButton type="submit" form="rental-resource-form" isValid={isValid} loading={busy} disabled={readOnly || busy || (Boolean(editing) && !isDirty)}>{t("common.save")}</FormPrimaryButton>
         </div>
       </header>
         <Form {...form}>
@@ -885,7 +885,7 @@ export function RentalResourceEditorForm({
                 type="submit"
                 isValid={isValid}
                 loading={busy}
-                disabled={readOnly || busy}
+                disabled={readOnly || busy || (Boolean(editing) && !isDirty)}
               >
                 {editing
                   ? t("rentals.resources.saveEdit")

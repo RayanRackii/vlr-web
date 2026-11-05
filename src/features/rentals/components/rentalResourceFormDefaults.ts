@@ -70,7 +70,7 @@ export function buildRentalResourceFormValues(
 
   return {
     name: editing?.name ?? "",
-    tag: "",
+    tag: editing?.tag ?? "",
     unitId: editing?.unitId ?? pickSingleId(units),
     categoryId: editing?.categoryId ?? pickSingleId(categories),
     familyId: editing?.familyId ?? pickSingleId(families),

@@ -129,3 +129,9 @@ describe("staff breadcrumb", () => {
     expect(screen.getByText(i18n.t("account.profile"))).toHaveAttribute("aria-current", "page")
   })
 })
+
+
+it("gives breadcrumb links 44px tap targets without increasing the line height", () => {
+  renderBreadcrumb("/pmoc/plan-1", "Plano A")
+  expect(screen.getByRole("link", { name: "Meus planos" })).toHaveClass("min-h-[44px]", "-my-3")
+})

@@ -159,6 +159,7 @@ export function isPersistedSlotId(id: string | null | undefined): boolean {
 }
 
 export const rentalAssetSchema = z.object({
+  tag: z.string().nullable().optional(),
   id: z.string().uuid(),
   assetId: z.string().uuid(),
   name: z.string(),

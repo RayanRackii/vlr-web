@@ -61,7 +61,7 @@ export function Breadcrumb() {
                 <Link
                   to={crumb.to}
                   aria-label={narrow ? t("nav.backTo", { page: crumb.label }) : undefined}
-                  className="inline-flex min-w-0 items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex min-h-[44px] -my-3 min-w-0 items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {narrow && <ArrowLeft className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
                   <span className="truncate">{crumb.label}</span>

@@ -264,7 +264,9 @@ export function localizedOccupancyKindLabel(
   occupancyKindLabel: string,
   t: (key: string) => string,
 ): string {
-  const key = occupancyKindKey ?? ""
+  const key = occupancyKindKey ?? Object.keys(SEED_OCCUPANCY_KIND_LABELS).find(
+    (candidate) => SEED_OCCUPANCY_KIND_LABELS[candidate] === occupancyKindLabel,
+  ) ?? ""
   if (SEED_OCCUPANCY_KIND_LABELS[key] === occupancyKindLabel) {
     return t(`rentals.schedule.occupancyKinds.${key}`)
   }

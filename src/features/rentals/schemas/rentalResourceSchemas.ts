@@ -38,6 +38,7 @@ export type CreateRentalCategoryRequest = z.infer<
 >
 
 export const createRentableRequestSchema = z.object({
+  tag: z.string().optional(),
   name: z.string().trim().min(1),
   cancelCutoffHours: cancelCutoffHoursSchema,
   unitId: guidLikeIdSchema,
@@ -86,8 +87,7 @@ export function createRentalResourceFormSchema(messages: {
   return z
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
-      // RentalAssetResponse does not expose the registry tag, so this UI-only
-      // value must remain optional and cannot be sent back on an edit.
+      // Blank identifiers let the API generate on create or keep the stored tag on update.
       tag: z.string(),
       unitId: z.string().min(1, messages.unitRequired).pipe(guidLikeIdSchema),
       categoryId: z.string().min(1, messages.categoryRequired).pipe(guidLikeIdSchema),
@@ -216,6 +216,7 @@ export function toCreateRentableRequest(
         : null,
     location: values.location.trim() ? values.location.trim() : null,
   }
+  if (values.tag.trim()) payload.tag = values.tag.trim()
   const cutoff = resolveResourceCancelCutoffWrite(values.cancelCutoffMode, values.cancelCutoffHours, values.cancelCutoffStored)
   if (cutoff !== undefined) payload.cancelCutoffHours = cutoff
   const horizonWrite = resolveResourceHorizonWrite(
