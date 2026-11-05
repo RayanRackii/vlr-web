@@ -769,6 +769,43 @@ function AdminSchedulePage() {
               void onSeedSelected()
             }}
             onSavePolicy={onSavePolicy}
+            templateEditor={
+              <TemplateSheet
+                open={templateSheetOpen}
+                onOpenChange={(open) => {
+                  setTemplateSheetOpen(open)
+                  if (!open) {
+                    setEditingTemplate(null)
+                    setWeeklyTarget(null)
+                  }
+                }}
+                editing={editingTemplate}
+                assetName={weeklyTarget?.assetName}
+                lockDayOfWeek={Boolean(weeklyTarget)}
+                defaults={
+                  weeklyTarget && !editingTemplate
+                    ? {
+                        dayOfWeek: weeklyTarget.dayOfWeek,
+                        startTime: formatScheduleTime(weeklyTarget.startTime),
+                        endTime: formatScheduleTime(weeklyTarget.endTime),
+                      }
+                    : undefined
+                }
+                kinds={kinds}
+                defaultKindId={defaultKindId}
+                busy={busy}
+                busyAction={busyAction}
+                readOnly={isTrialReadOnly}
+                onSubmit={handleSaveTemplate}
+                onDelete={
+                  editingTemplate
+                    ? () => {
+                        void onDeleteTemplate(editingTemplate.id)
+                      }
+                    : undefined
+                }
+              />
+            }
             onApplyWeeklyRule={onApplyWeeklyRule}
           />
         ) : null}
@@ -806,41 +843,6 @@ function AdminSchedulePage() {
         onSubmit={handleSaveKind}
       />
 
-      <TemplateSheet
-        open={templateSheetOpen}
-        onOpenChange={(open) => {
-          setTemplateSheetOpen(open)
-          if (!open) {
-            setEditingTemplate(null)
-            setWeeklyTarget(null)
-          }
-        }}
-        editing={editingTemplate}
-        assetName={weeklyTarget?.assetName}
-        lockDayOfWeek={Boolean(weeklyTarget)}
-        defaults={
-          weeklyTarget && !editingTemplate
-            ? {
-                dayOfWeek: weeklyTarget.dayOfWeek,
-                startTime: formatScheduleTime(weeklyTarget.startTime),
-                endTime: formatScheduleTime(weeklyTarget.endTime),
-              }
-            : undefined
-        }
-        kinds={kinds}
-        defaultKindId={defaultKindId}
-        busy={busy}
-        busyAction={busyAction}
-        readOnly={isTrialReadOnly}
-        onSubmit={handleSaveTemplate}
-        onDelete={
-          editingTemplate
-            ? () => {
-                void onDeleteTemplate(editingTemplate.id)
-              }
-            : undefined
-        }
-      />
 
       <DaySlotSheet
         open={slotSheetOpen}

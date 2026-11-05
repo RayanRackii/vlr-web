@@ -1,5 +1,5 @@
 import { CalendarRange, ChevronLeft, ChevronRight, Settings2, SlidersHorizontal } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -10,13 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { scheduleChipClassName } from "./scheduleChipClassName"
 import {
   Sheet,
   SheetContent,
@@ -80,6 +74,7 @@ type WeeklyTemplatesTabProps = {
   onCellClick: (payload: WeeklyGridCellPayload) => void
   onSeedSelected: () => void
   onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
+  templateEditor?: ReactNode
   onApplyWeeklyRule: (draft: WeeklyRuleDraft) => Promise<boolean>
 }
 
@@ -104,6 +99,7 @@ export function WeeklyTemplatesTab({
   onSeedSelected,
   onSavePolicy,
   onApplyWeeklyRule,
+  templateEditor,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -195,33 +191,13 @@ export function WeeklyTemplatesTab({
             <ChevronRight aria-hidden />
           </Button>
         </div>
-        <Select
-          modal={false}
-          value={weekday}
-          onValueChange={(value) => {
-            if (typeof value === "string") {
-              onWeekdayChange(value as DayOfWeekName)
-            }
-          }}
-          items={DAY_NAMES.map((dayName) => ({
-            value: dayName,
-            label: t(`rentals.schedule.days.${dayName}`),
-          }))}
-        >
-          <SelectTrigger
-            className="w-auto"
-            aria-label={t("rentals.schedule.templates.dayOfWeek")}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {DAY_NAMES.map((dayName) => (
-              <SelectItem key={dayName} value={dayName}>
-                {t(`rentals.schedule.days.${dayName}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div role="group" aria-label={t("rentals.schedule.templates.dayOfWeek")} className="flex flex-wrap gap-2">
+          {DAY_NAMES.map((dayName) => (
+            <button key={dayName} type="button" aria-pressed={weekday === dayName} onClick={() => onWeekdayChange(dayName)} className={scheduleChipClassName(weekday === dayName)}>
+              {t(`rentals.schedule.days.${dayName}`)}
+            </button>
+          ))}
+        </div>
         <Popover>
           <PopoverTrigger
             render={<Button type="button" variant="outline" size="sm" />}
@@ -332,6 +308,22 @@ export function WeeklyTemplatesTab({
         )}
       </section>
 
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+        <WeeklyRuleSheet
+          open={ruleOpen}
+          onOpenChange={setRuleOpen}
+          selectedRentalAssetIds={selectedRentalAssetIds}
+          weekday={weekday}
+          kinds={kinds}
+          defaultKindId={defaultKindId}
+          busy={busy}
+          busyAction={busyAction}
+          readOnly={readOnly}
+          onApply={onApplyWeeklyRule}
+        />
+        {templateEditor}
+      </div>
+
       <Sheet open={policyOpen} onOpenChange={setPolicyOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md">
           <SheetHeader>
@@ -365,18 +357,7 @@ export function WeeklyTemplatesTab({
         </SheetContent>
       </Sheet>
 
-      <WeeklyRuleSheet
-        open={ruleOpen}
-        onOpenChange={setRuleOpen}
-        selectedRentalAssetIds={selectedRentalAssetIds}
-        weekday={weekday}
-        kinds={kinds}
-        defaultKindId={defaultKindId}
-        busy={busy}
-        busyAction={busyAction}
-        readOnly={readOnly}
-        onApply={onApplyWeeklyRule}
-      />
+
     </div>
   )
 }
