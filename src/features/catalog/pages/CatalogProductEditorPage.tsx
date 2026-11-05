@@ -92,6 +92,8 @@ export function CatalogProductEditorPage() {
   const [tab, setTab] = useState("dados")
   const [uploadVisibility, setUploadVisibility] = useState<CatalogFileVisibility>("CustomerVisible")
   const [fileBusy, setFileBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedFileName, setSelectedFileName] = useState("")
   const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
@@ -621,7 +623,10 @@ export function CatalogProductEditorPage() {
                 {t("catalog.products.files.select")}
               </label>
               <Input
-                className="min-w-0 w-full max-w-full"
+                ref={fileInputRef}
+                className="sr-only"
+                tabIndex={-1}
+                aria-describedby="catalog-product-file-name"
                 id="catalog-product-file-input"
                 type="file"
                 disabled={fileBusy}
@@ -631,10 +636,23 @@ export function CatalogProductEditorPage() {
                     : INTERNAL_FILE_ACCEPT
                 }
                 onChange={(event) => {
+                  setSelectedFileName(event.target.files?.[0]?.name ?? "")
                   void onUploadFile(event.target.files?.[0])
                   event.target.value = ""
                 }}
               />
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11"
+                disabled={fileBusy}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {t("catalog.products.files.select")}
+              </Button>
+              <p id="catalog-product-file-name" role="status" className="break-all text-sm text-muted-foreground">
+                {selectedFileName ? t("catalog.products.files.selectedFile", { name: selectedFileName }) : t("catalog.products.files.noFile")}
+              </p>
             </div>
           </div>
         ) : null}
@@ -687,6 +705,7 @@ export function CatalogProductEditorPage() {
             ) : null}
           </>
         }
+        wrapTabs
         tabs={[dadosTab, priceTab, filesTab, accessTab, historyTab]}
         value={tab}
         onValueChange={setTab}

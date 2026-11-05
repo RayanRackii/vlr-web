@@ -272,6 +272,9 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] QA R39 minor (2026-11-05, local): editor com abas em múltiplas linhas; detalhe B2C compacto até 400px sem sticky e com alvos de 44px; histórico restrito lista grupos atuais; seletor de arquivo localizado e acessível; lightbox modal da imagem. Toast do create existente confirmado por teste literal “Produto criado.”. pt-BR/en/es; sem mudança de contrato/API.
+- [ ] R39 — smoke visual do editor a 425 CSS px e detalhe B2C 360x740 com navegação inferior; confirmar imagem, quantidade e Adicionar, seletor de arquivo e lightbox por teclado. Próximo WEB: esse smoke; próximo API: testes de arquitetura com sockets conforme roadmap irmão.
+
 - [x] B2 grupos (2026-11-05, local, sem commit): editor em `/catalogo/grupos/novo` e `/catalogo/grupos/:id`, com as mesmas permissões da lista; Dados/Membros/Histórico em três colunas no desktop e uma no mobile, breadcrumb, barra fixa de salvar, chips, uso por itens expansível com Plus, confirmação modal de exclusão/remoção e proteção de saída suja ou durante salvamento. Serviços/contratos preservados; novas traduções pt-BR/en/es e regressões de página/rotas.
 - [ ] B2 grupos — smoke visual desktop/mobile claro/escuro e fluxo criar → membros → histórico. Como testar: abrir `/catalogo/grupos`, criar/editar um grupo, alterar nome/descrição, tentar sair e escolher ficar/descartar; salvar, buscar/adicionar/remover membro e cancelar a exclusão. Conferir leitura sem manage e sem acesso ao diretório. Próximo WEB: esse smoke local/DEV; próximo API: testes de arquitetura em ambiente com sockets conforme roadmap irmão; nenhuma mudança de API necessária para grupos.
 

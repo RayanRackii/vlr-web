@@ -147,3 +147,14 @@
 @media (max-width: 380px) {
   .portal-catalog-body { padding-inline: 10px; }
 }
+
+/* Keep the purchase controls in normal flow above the mobile navigation. */
+@media (max-width: 400px) {
+  .portal-catalog-detail > :not(:last-child) { margin-block-end: 12px; }
+  .portal-catalog-detail > .grid { gap: 12px; }
+  .portal-catalog-detail .portal-catalog-image { height: 160px; aspect-ratio: auto; }
+  .portal-catalog-detail-panel { padding: 12px; }
+  .portal-catalog-detail-panel > :not(:last-child) { margin-block-end: 12px; }
+  .portal-catalog-detail-actions { padding: 8px; gap: 8px; }
+  .portal-catalog-detail-actions > button { min-height: 44px; padding-block: 8px; }
+}
