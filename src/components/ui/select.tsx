@@ -61,12 +61,13 @@ function SelectContent({
   align = "start",
   alignOffset = 0,
   alignItemWithTrigger = false,
+  showScrollButtons = true,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+  > & { showScrollButtons?: boolean }) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner
@@ -86,9 +87,9 @@ function SelectContent({
           )}
           {...props}
         >
-          <SelectScrollUpButton />
+          {showScrollButtons ? <SelectScrollUpButton /> : null}
           <SelectPrimitive.List>{children}</SelectPrimitive.List>
-          <SelectScrollDownButton />
+          {showScrollButtons ? <SelectScrollDownButton /> : null}
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
     </SelectPrimitive.Portal>
@@ -109,10 +110,11 @@ function SelectLabel({
 }
 
 function SelectItem({
+  indicator = <CheckIcon className="pointer-events-none" />,
   className,
   children,
   ...props
-}: SelectPrimitive.Item.Props) {
+}: SelectPrimitive.Item.Props & { indicator?: React.ReactNode }) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -130,7 +132,7 @@ function SelectItem({
           <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center" />
         }
       >
-        <CheckIcon className="pointer-events-none" />
+        {indicator}
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   )

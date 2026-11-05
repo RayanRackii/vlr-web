@@ -4604,13 +4604,13 @@
     },
     "resources": {
       "title": "Resources",
-      "description": "Register spaces and rentable items for operations.",
+      "description": "Manage rooms, equipment, vehicles and spaces — any bookable resource.",
       "add": "Add resource",
       "edit": "Edit resource",
-      "formDescription": "A space (room or outdoor area) or rentable item. Do not use this screen for general inventory.",
+      "formDescription": "Configure this resource’s details, booking rules and appearance.",
       "saveCreate": "Create resource",
       "saveEdit": "Save resource",
-      "emptyTitle": "No resources available for rental",
+      "emptyTitle": "No resources registered",
       "emptyDescription": "Register your first space or resource to get started.",
       "emptyCategoriesTitle": "No types available",
       "emptyCategoriesDescription": "Space and resource types come from Super-Admin provisioning. Types cannot be created on this screen.",
@@ -4627,7 +4627,7 @@
         "server": "Server error. Please try again shortly."
       },
       "typeLocation": "Space",
-      "typeGood": "Rentable item",
+      "typeGood": "Item",
       "eyebrow": "Registry",
       "editHint": "Click to edit",
       "summaryBreakdown": " · {{spaces}}, {{items}}",
@@ -4683,7 +4683,7 @@
         "categoryPlaceholder": "Select a type",
         "family": "Family",
         "familyPlaceholder": "Select a family",
-        "rentalType": "Rental type",
+        "rentalType": "Resource type",
         "totalQuantity": "Quantity",
         "requiresDeposit": "Is prior payment required?",
         "queueEnabled": "Reservation queue",
@@ -4742,6 +4742,13 @@
         "queueOpeningTimeRequired": "Enter the queue opening time.",
         "horizonRange": "Enter an integer from 0 to 3650.",
         "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
+      },
+      "editor": {
+        "breadcrumb": "Resource navigation",
+        "sections": "Resource sections",
+        "saveBar": "Resource actions",
+        "readOnly": "You can view this resource, but cannot edit it.",
+        "notFound": "Resource not found."
       }
     },
     "layout": {

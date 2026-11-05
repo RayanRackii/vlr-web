@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
-import { Boxes, ChevronRight, DoorOpen, Package, Plus } from "lucide-react"
+import { Boxes, Pencil, DoorOpen, Package, Plus } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -8,24 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
-import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
-import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
-import type { Unit } from "@/features/assets/schemas/unitSchemas"
-import { getUnits } from "@/features/assets/services/unitsService"
 import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
-import {
-  toCreateRentableRequest,
-  type RegistryCategoryListItem,
-  type RentalResourceFormValues,
-} from "@/features/rentals/schemas/rentalResourceSchemas"
-import {
-  createRentalAsset,
-  listRentalAssetCategories,
-  listRentalAssetFamilies,
-  updateRentalAsset,
-} from "@/features/rentals/services/rentalResourcesService"
 import {
   listAdminRentalAssets,
   type AdminRentalAsset,
@@ -39,20 +25,14 @@ type ResourcePrice = Pick<RentalPricing, "pricePerHour" | "pricingUnit">
 
 export function RentalResourcesPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [priceByAssetId, setPriceByAssetId] = useState<Record<string, ResourcePrice>>({})
-  const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
-  const [families, setFamilies] = useState<AssetFamily[]>([])
-  const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [editing, setEditing] = useState<AdminRentalAsset | null>(null)
-
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
   const canReadPricing = can("rentals.pricing.read")
   const spaceCount = assets.filter((asset) => asset.type === "Location").length
@@ -61,12 +41,7 @@ export function RentalResourcesPage() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [assetList, categoryList, familyList, unitList] = await Promise.all([
-        listAdminRentalAssets(),
-        listRentalAssetCategories(),
-        listRentalAssetFamilies(),
-        getUnits(),
-      ])
+      const assetList = await listAdminRentalAssets()
       setAssets(assetList)
       if (canReadPricing) {
         const prices = await Promise.all(assetList.map(async (asset) => {
@@ -85,9 +60,6 @@ export function RentalResourcesPage() {
       } else {
         setPriceByAssetId({})
       }
-      setCategories(categoryList)
-      setFamilies(familyList)
-      setUnits(unitList)
     } catch (error) {
       const fallback = t("rentals.resources.loadError")
       const raw =
@@ -103,59 +75,17 @@ export function RentalResourcesPage() {
   }, [canReadPricing, t])
 
   useEffect(() => {
-    void load()
+    let current = true
+    void Promise.resolve().then(() => { if (current) return load() })
+    return () => { current = false }
   }, [load])
 
   function openCreate() {
-    setEditing(null)
-    setSheetOpen(true)
+    navigate("/configuracoes/recursos/novo")
   }
 
   function openEdit(asset: AdminRentalAsset) {
-    setEditing(asset)
-    setSheetOpen(true)
-  }
-
-  async function handleSubmit(
-    values: RentalResourceFormValues,
-  ): Promise<boolean> {
-    if (!canWrite) {
-      return false
-    }
-    setBusy(true)
-    try {
-      const body = toCreateRentableRequest(values, {
-        creating: editing === null,
-        stored: editing?.maxAdvanceBookingDays,
-        storedVisualTemplateRevisionId: editing?.visualTemplateRevisionId,
-        storedCapacityPeople: editing?.capacityPeople,
-      })
-      if (editing) {
-        const saved = await updateRentalAsset(editing.id, body)
-        // QA R18: an API that drops cancelCutoffHours answered 200; never report a silent non-save.
-        if (body.cancelCutoffHours !== undefined && (saved.cancelCutoffHours ?? null) !== body.cancelCutoffHours) {
-          toast.error(t("rentals.resources.cutoffNotSaved"))
-        } else {
-          toast.success(t("rentals.resources.updateSuccess"))
-        }
-      } else {
-        await createRentalAsset(body)
-        toast.success(t("rentals.resources.createSuccess"))
-      }
-      await load()
-      return true
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : editing
-            ? t("rentals.resources.updateError")
-            : t("rentals.resources.createError"),
-      )
-      return false
-    } finally {
-      setBusy(false)
-    }
+    navigate(`/configuracoes/recursos/${encodeURIComponent(asset.id)}`)
   }
 
   return (
@@ -263,8 +193,8 @@ export function RentalResourcesPage() {
                     showUnpriced={canReadPricing}
                   />
                 </div>
-                <ChevronRight
-                  className="resource-chevron size-4 shrink-0"
+                <Pencil
+                  className="resource-edit-icon size-4 shrink-0"
                   strokeWidth={ICON_STROKE_WIDTH}
                   aria-hidden
                 />
@@ -275,24 +205,6 @@ export function RentalResourcesPage() {
         </section>
       )}
 
-      <RentalResourceSheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          setSheetOpen(open)
-          if (!open) {
-            setEditing(null)
-          }
-        }}
-        editing={editing}
-        units={units}
-        categories={categories}
-        families={families}
-        busy={busy}
-        readOnly={!canWrite}
-        pricePerHour={priceByAssetId[editing?.assetId ?? ""]?.pricePerHour}
-        pricingUnit={priceByAssetId[editing?.assetId ?? ""]?.pricingUnit}
-        onSubmit={handleSubmit}
-      />
     </div>
   )
 }

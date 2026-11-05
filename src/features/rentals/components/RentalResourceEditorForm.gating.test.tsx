@@ -14,20 +14,19 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
 }))
 
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
-import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
+import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
 const id = "11111111-1111-1111-1111-111111111111"
 
-function renderSheet(options: { activeModules?: string[]; permissions?: string[]; isPlatformAdmin: boolean }) {
+function renderEditor(options: { activeModules?: string[]; permissions?: string[]; isPlatformAdmin: boolean }) {
   vi.mocked(useIsPlatformAdmin).mockReturnValue(options.isPlatformAdmin)
 
   return render(
     <TestPermissionProvider activeModules={options.activeModules} permissions={options.permissions}>
-      <RentalResourceSheet
-        open
-        onOpenChange={vi.fn()}
+      <RentalResourceEditorForm
+        onCancel={vi.fn()}
         editing={null}
         units={[{ id, tenantId: id, name: "Matriz", isActive: true }]}
         categories={[{ id, name: "Quadra" }]}
@@ -40,10 +39,10 @@ function renderSheet(options: { activeModules?: string[]; permissions?: string[]
   )
 }
 
-describe("RentalResourceSheet inline dependency creation", () => {
+describe("RentalResourceEditorForm inline dependency creation", () => {
   it("keeps pristine validation hidden and explains an empty name after blur", async () => {
     const user = userEvent.setup()
-    renderSheet({ permissions: ["rentals.assets.write"], isPlatformAdmin: false })
+    renderEditor({ permissions: ["rentals.assets.write"], isPlatformAdmin: false })
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     const name = screen.getByLabelText(i18n.t("rentals.resources.form.name"))
     await user.type(name, " ")
@@ -54,7 +53,7 @@ describe("RentalResourceSheet inline dependency creation", () => {
   })
 
   it("hides type creation without rentals assets write", () => {
-    renderSheet({
+    renderEditor({
       activeModules: ["rentals"],
       permissions: ["rentals.assets.read"],
       isPlatformAdmin: false,
@@ -64,7 +63,7 @@ describe("RentalResourceSheet inline dependency creation", () => {
   })
 
   it("shows type creation with rentals assets write", () => {
-    renderSheet({
+    renderEditor({
       permissions: ["rentals.assets.write"],
       isPlatformAdmin: false,
     })
@@ -75,9 +74,9 @@ describe("RentalResourceSheet inline dependency creation", () => {
 
   it("shows global template creation only for a super-admin", async () => {
     const user = userEvent.setup()
-    renderSheet({ activeModules: ["rentals"], isPlatformAdmin: true })
+    renderEditor({ activeModules: ["rentals"], isPlatformAdmin: true })
 
-    await user.click(screen.getByRole("tab", { name: "Visual" }))
+    await user.click(screen.getByRole("button", { name: "Visual" }))
 
     expect(screen.getByRole("button", { name: "+ criar modelo global (Rolvix)" })).toBeInTheDocument()
   })
