@@ -121,6 +121,8 @@ Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `
 
 ## 3.5. Agenda por Slots (Rentals genérico)
 
+- [x] B3 semanal (local): regra e modelo em módulos inline sob a grade; dias e tipos em chips, política de horários preservada em Sheet; regressões de navegação, edição e bloqueios.
+
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Admin B1 (WEB, local): editor de recurso em página completa (`/configuracoes/recursos/novo` e `/:id`), cartões Básico/Preço e regras/Visual com navegação por âncoras, ações no cabeçalho e barra fixa; lista com lápis e preço mobile. Campos, validação, permissões e criação inline preservados; sem mudança de API.

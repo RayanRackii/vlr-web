@@ -7,22 +7,9 @@ import { Time24Input } from "@/components/Time24Input"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { HH_MM } from "@/lib/time24"
-import { cn } from "@/lib/utils"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { InlineScheduleModule } from "./InlineScheduleModule"
+import { scheduleChipClassName } from "./scheduleChipClassName"
+import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import {
   DAY_NAMES,
@@ -73,169 +60,133 @@ export function WeeklyRuleSheet({
   const ruleKindId = occupancyKindId || defaultKindId
   const hasValidTimes = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
-  return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        if (next) {
-          setDays([weekday])
-          setOccupancyKindId(defaultKindId)
-        }
-        onOpenChange(next)
-      }}
-    >
-      <SheetContent side="right" className="w-full sm:max-w-[420px]">
-        <SheetHeader>
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Repeat className="size-4" aria-hidden />
-            </span>
-            <div className="space-y-0.5">
-              <SheetTitle>{t("rentals.schedule.weeklyRule.title")}</SheetTitle>
-              <SheetDescription>
-                {t("rentals.schedule.weeklyRule.sheetHint")}
-              </SheetDescription>
-            </div>
-          </div>
-        </SheetHeader>
+  const [wasOpen, setWasOpen] = useState(open)
+  if (wasOpen !== open) {
+    setWasOpen(open)
+    if (open) {
+      setDays([weekday])
+      setOccupancyKindId(defaultKindId)
+    }
+  }
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium">
-              {t("rentals.schedule.weeklyRule.days")}
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {DAY_NAMES.map((dayName) => {
-                const checked = days.includes(dayName)
-                return (
-                  <button
-                    key={dayName}
-                    type="button"
-                    aria-pressed={checked}
-                    disabled={busy || readOnly}
-                    onClick={() =>
-                      setDays((current) =>
-                        checked
-                          ? current.filter((day) => day !== dayName)
-                          : [...current, dayName],
-                      )
-                    }
-                    className={cn(
-                      "min-h-10 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+  return (
+    <InlineScheduleModule
+      title={t("rentals.schedule.weeklyRule.title")}
+      description={t("rentals.schedule.weeklyRule.sheetHint")}
+      icon={Repeat}
+      open={open}
+      disabled={busy}
+      onOpenChange={onOpenChange}
+    >
+      <div className="flex flex-col gap-4">
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium">
+            {t("rentals.schedule.weeklyRule.days")}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {DAY_NAMES.map((dayName) => {
+              const checked = days.includes(dayName)
+              return (
+                <button
+                  key={dayName}
+                  type="button"
+                  aria-pressed={checked}
+                  disabled={busy || readOnly}
+                  onClick={() =>
+                    setDays((current) =>
                       checked
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                    )}
-                  >
-                    {t(`rentals.schedule.days.${dayName}`)}
-                  </button>
-                )
-              })}
-            </div>
-          </fieldset>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="space-y-1 text-xs">
-              <span>{t("rentals.schedule.policy.openTime")}</span>
-              <Time24Input
-                value={openTime}
-                disabled={busy || readOnly}
-                onValueChange={(next) => setOpenTime(next)}
-              />
-            </label>
-            <label className="space-y-1 text-xs">
-              <span>{t("rentals.schedule.policy.closeTime")}</span>
-              <Time24Input
-                value={closeTime}
-                disabled={busy || readOnly}
-                onValueChange={(next) => setCloseTime(next)}
-              />
-            </label>
+                        ? current.filter((day) => day !== dayName)
+                        : [...current, dayName],
+                    )
+                  }
+                  className={scheduleChipClassName(checked)}
+                >
+                  {t(`rentals.schedule.days.${dayName}`)}
+                </button>
+              )
+            })}
           </div>
-          <label className="block space-y-1 text-xs">
-            <span>{t("rentals.schedule.policy.slotMinutes")}</span>
-            <Input
-              type="number"
-              min={15}
-              step={15}
-              value={slotMinutes}
+        </fieldset>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="space-y-1 text-xs">
+            <span>{t("rentals.schedule.policy.openTime")}</span>
+            <Time24Input
+              value={openTime}
               disabled={busy || readOnly}
-              onChange={(event) => setSlotMinutes(Number(event.target.value))}
+              onValueChange={(next) => setOpenTime(next)}
             />
           </label>
-          <label className="block space-y-1 text-xs">
-            <span>{t("rentals.schedule.templates.kind")}</span>
-            <Select
-              modal={false}
-              value={ruleKindId || null}
+          <label className="space-y-1 text-xs">
+            <span>{t("rentals.schedule.policy.closeTime")}</span>
+            <Time24Input
+              value={closeTime}
               disabled={busy || readOnly}
-              onValueChange={(value) => {
-                if (typeof value === "string") {
-                  setOccupancyKindId(value)
-                }
-              }}
-              items={kinds
-                .filter((kind) => kind.isActive)
-                .map((kind) => ({
-                  value: kind.id,
-                  label: kind.label,
-                }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {kinds
-                  .filter((kind) => kind.isActive)
-                  .map((kind) => (
-                    <SelectItem key={kind.id} value={kind.id}>
-                      {kind.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              onValueChange={(next) => setCloseTime(next)}
+            />
           </label>
         </div>
+        <label className="block space-y-1 text-xs">
+          <span>{t("rentals.schedule.policy.slotMinutes")}</span>
+          <Input
+            type="number"
+            min={15}
+            step={15}
+            value={slotMinutes}
+            disabled={busy || readOnly}
+            onChange={(event) => setSlotMinutes(Number(event.target.value))}
+          />
+        </label>
+        <fieldset className="space-y-2">
+          <legend className="text-xs font-medium">{t("rentals.schedule.templates.kind")}</legend>
+          <div className="flex flex-wrap gap-2">
+            {kinds.filter((kind) => kind.isActive).map((kind) => (
+              <button key={kind.id} type="button" aria-pressed={ruleKindId === kind.id} disabled={busy || readOnly} onClick={() => setOccupancyKindId(kind.id)} className={scheduleChipClassName(ruleKindId === kind.id)}>
+                {occupancyKindDisplayLabel(t, kind)}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      </div>
 
-        <SheetFooter>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={() => onOpenChange(false)}
-          >
-            {t("common.cancel")}
-          </Button>
-          <LoadingButton
-            type="button"
-            loading={busyAction === "weeklyRule"}
-            disabled={
-              busy ||
-              readOnly ||
-              selectedRentalAssetIds.length === 0 ||
-              days.length === 0 ||
-              !ruleKindId ||
-              !hasValidTimes ||
-              slotMinutes < 1
-            }
-            onClick={() => {
-              void onApply({
-                rentalAssetIds: selectedRentalAssetIds,
-                daysOfWeek: days,
-                openTime,
-                closeTime,
-                slotMinutes,
-                occupancyKindId: ruleKindId,
-              }).then((ok) => {
-                if (ok) {
-                  onOpenChange(false)
-                }
-              })
-            }}
-          >
-            {t("rentals.schedule.weeklyRule.apply")}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+      <footer className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => onOpenChange(false)}
+        >
+          {t("common.cancel")}
+        </Button>
+        <LoadingButton
+          type="button"
+          loading={busyAction === "weeklyRule"}
+          disabled={
+            busy ||
+            readOnly ||
+            selectedRentalAssetIds.length === 0 ||
+            days.length === 0 ||
+            !ruleKindId ||
+            !hasValidTimes ||
+            slotMinutes < 1
+          }
+          onClick={() => {
+            void onApply({
+              rentalAssetIds: selectedRentalAssetIds,
+              daysOfWeek: days,
+              openTime,
+              closeTime,
+              slotMinutes,
+              occupancyKindId: ruleKindId,
+            }).then((ok) => {
+              if (ok) {
+                onOpenChange(false)
+              }
+            })
+          }}
+        >
+          {t("rentals.schedule.weeklyRule.apply")}
+        </LoadingButton>
+      </footer>
+    </InlineScheduleModule>
   )
 }
