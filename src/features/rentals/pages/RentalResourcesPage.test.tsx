@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Routes, Route } from "react-router-dom"
+import { createMemoryRouter, RouterProvider, Routes, Route, Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -99,17 +99,25 @@ const getAssetPricingsMock = vi.mocked(getAssetPricings)
 const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write", "rentals.pricing.read"] as const
 
 function renderPage(permissions: readonly string[] = WRITE_PERMS, path = "/configuracoes/recursos") {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
+  const router = createMemoryRouter([{ path: "*", element: <>
+    <Link to="/dashboard">Dashboard</Link>
+    <TestRoutes />
+  </> }], { initialEntries: ["/dashboard", path], initialIndex: 1 })
+  function TestRoutes() {
+    const navigate = useNavigate()
+    return <>
+      <button onClick={() => navigate(-1)}>Back</button>
       <TestPermissionProvider permissions={permissions} activeModules={["rentals"]}>
         <Routes>
+          <Route path="/dashboard" element={<h1>Dashboard</h1>} />
           <Route path="/configuracoes/recursos" element={<RentalResourcesPage />} />
           <Route path="/configuracoes/recursos/novo" element={<RentalResourceEditorPage />} />
           <Route path="/configuracoes/recursos/:id" element={<RentalResourceEditorPage />} />
         </Routes>
       </TestPermissionProvider>
-    </MemoryRouter>,
-  )
+    </>
+  }
+  return { ...render(<RouterProvider router={router} />), router }
 }
 
 async function openPricingTab(user: ReturnType<typeof userEvent.setup>) {
@@ -201,10 +209,43 @@ describe("RentalResourcesPage", () => {
     expect(screen.getByRole("region", { name: "Visual" })).toBeVisible()
   })
 
-  it("does not schedule a redirect when a save resolves after Cancel", async () => {
+  it("protects dirty edits on unload, Cancel, breadcrumb, sidebar and Back until departure is confirmed", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
+    const name = await screen.findByRole("textbox", { name: i18n.t("rentals.resources.form.name") })
+    const unload = () => {
+      const event = new Event("beforeunload", { cancelable: true })
+      window.dispatchEvent(event)
+      return event.defaultPrevented
+    }
+    expect(unload()).toBe(false)
+    await user.type(name, "Sala nova")
+    expect(unload()).toBe(true)
+    for (const departure of [
+      screen.getAllByRole("button", { name: i18n.t("common.cancel") })[0]!,
+      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
+      screen.getByRole("link", { name: "Dashboard" }),
+      screen.getByRole("button", { name: "Back" }),
+    ]) {
+      await user.click(departure)
+      expect(await screen.findByRole("alertdialog")).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      await user.click(screen.getByRole("button", { name: i18n.t("common.cancel"), hidden: false }))
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument())
+      expect(name).toHaveValue("Sala nova")
+    }
+    await user.clear(name)
+    expect(unload()).toBe(false)
+    await user.type(name, "Sala nova")
+    await user.click(screen.getByRole("link", { name: "Dashboard" }))
+    await user.click(await screen.findByRole("button", { name: i18n.t("fullPage.discard") }))
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeVisible()
+    unmount()
+    expect(unload()).toBe(false)
+  })
+
+  it("blocks Cancel, breadcrumb and sidebar departure while saving, then refreshes the resource list", async () => {
     let resolveSave!: (value: Awaited<ReturnType<typeof createRentalAsset>>) => void
     const saved = { id: RENTAL_ID, assetId: ASSET_ID, name: "Sala nova", isActive: true, requiresDeposit: true, schedulePolicy: "SlotGrid", unitId: UNIT_ID, type: "Location", totalQuantity: 1, queueEnabled: false } as const
-    createMock.mockClear()
     createMock.mockReturnValue(new Promise((resolve) => { resolveSave = resolve }))
     const user = userEvent.setup()
     renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
@@ -212,14 +253,28 @@ describe("RentalResourcesPage", () => {
     await user.type(name, "Sala nova")
     await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }))
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1))
-    await user.click(screen.getAllByRole("button", { name: i18n.t("common.cancel") })[0]!)
-    await screen.findByRole("heading", { name: i18n.t("rentals.resources.title"), level: 1 })
-    const timerSpy = vi.spyOn(globalThis, "setTimeout")
+    for (const button of [
+      ...screen.getAllByRole("button", { name: i18n.t("common.cancel") }),
+      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
+    ]) {
+      expect(button).toBeDisabled()
+      await user.click(button)
+    }
+    await user.click(screen.getByRole("link", { name: "Dashboard" }))
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    expect(name).toHaveValue("Sala nova")
+    expect(listAssetsMock).not.toHaveBeenCalled()
+    listAssetsMock.mockResolvedValue([saved])
+    vi.useFakeTimers()
     try {
       await act(async () => { resolveSave(saved) })
-      expect(timerSpy.mock.calls.filter((call) => call[1] === 3000)).toHaveLength(0)
-      expect(screen.getByRole("heading", { name: i18n.t("rentals.resources.title"), level: 1 })).toBeVisible()
-    } finally { timerSpy.mockRestore() }
+      const unload = new Event("beforeunload", { cancelable: true })
+      window.dispatchEvent(unload)
+      expect(unload.defaultPrevented).toBe(false)
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
+    } finally { vi.useRealTimers() }
+    expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.title"), level: 1 })).toBeVisible()
+    expect(await screen.findByText("Sala nova")).toBeVisible()
   })
 
   it("does not turn a missing edit ID into resource creation", async () => {

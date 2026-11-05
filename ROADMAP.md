@@ -124,6 +124,7 @@ Spec: `vlr-api/docs/plans/active/2026-09-11-b2c-email-verification.md`. Branch `
 Backend API pronta (ver `vlr-api` `ROADMAP` §2.6 + ADR slots). Frontend:
 
 - [x] Admin B1 (WEB, local): editor de recurso em página completa (`/configuracoes/recursos/novo` e `/:id`), cartões Básico/Preço e regras/Visual com navegação por âncoras, ações no cabeçalho e barra fixa; lista com lápis e preço mobile. Campos, validação, permissões e criação inline preservados; sem mudança de API.
+- [x] Admin B1 review (WEB, local): editor protege alterações não salvas em reload/saída com confirmação traduzida e `useBlocker`; Cancelar/breadcrumb e navegação externa bloqueados durante salvamento. Duas regressões no teste de página; sem mudança de API.
 - [x] Admin mínimo: seed grade horária + publish/edit day list (`/configuracoes/agenda`)
 - [x] Admin completo: occupancy kinds CRUD + weekly template editor fino
 - [x] B2C agenda: listar slots do dia (inclui SlotGrid derivado da grade semanal) / book por `slotId` ou create-reservation

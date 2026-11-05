@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import { Link, UNSAFE_DataRouterContext as DataRouterContext, useBlocker, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { ErrorState } from "@/components/ErrorState"
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
@@ -32,10 +36,40 @@ import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 
 const RESOURCES_PATH = "/configuracoes/recursos"
 
+function LeaveConfirmation({ open, onStay, onLeave }: {
+  open: boolean
+  onStay: () => void
+  onLeave: () => void
+}) {
+  const { t } = useTranslation()
+  return <AlertDialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onStay() }}>
+    <AlertDialogContent>
+      <AlertDialogHeader><AlertDialogTitle>{t("fullPage.leaveConfirm")}</AlertDialogTitle></AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+        <AlertDialogAction onClick={onLeave}>{t("fullPage.discard")}</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+}
+
+function RouterLeaveGuard({ dirty, saving }: { dirty: boolean; saving: boolean }) {
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => (dirty || saving) && (
+    currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search
+  ))
+  useEffect(() => {
+    if (saving && blocker.state === "blocked") blocker.reset()
+  }, [blocker, saving])
+  return <LeaveConfirmation open={blocker.state === "blocked" && !saving}
+    onStay={() => blocker.state === "blocked" && blocker.reset()}
+    onLeave={() => blocker.state === "blocked" && blocker.proceed()} />
+}
+
 export function RentalResourceEditorPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
+  const hasDataRouter = useContext(DataRouterContext) != null
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
@@ -48,6 +82,19 @@ export function RentalResourceEditorPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+
+  useEffect(() => {
+    if (!dirty || saved) return
+    const preventUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", preventUnload)
+    return () => window.removeEventListener("beforeunload", preventUnload)
+  }, [dirty, saved])
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveInFlight = useRef(false)
   const lifetime = useRef({ active: true })
@@ -130,6 +177,7 @@ export function RentalResourceEditorPage() {
         if (!currentLifetime.active) return false
         toast.success(t("rentals.resources.createSuccess"))
       }
+      setSaved(true)
       redirectTimer.current = setTimeout(() => navigate(RESOURCES_PATH), 3000)
       return true
     } catch (error) {
@@ -144,7 +192,17 @@ export function RentalResourceEditorPage() {
   if (loading) return <Skeleton className="h-96 w-full" role="status" aria-label={t("common.loading")} />
   if (loadError) return <div className="space-y-4"><ErrorState message={loadError} onRetry={() => void load()} /><Link to={RESOURCES_PATH}>{t("rentals.resources.title")}</Link></div>
 
-  return <RentalResourceEditorForm key={id ?? "new"} editing={editing} units={units} categories={categories} families={families}
+  return <>
+    {hasDataRouter ? <RouterLeaveGuard dirty={dirty && !saved} saving={busy && !saved} /> : null}
+    <LeaveConfirmation open={confirmCancel} onStay={() => setConfirmCancel(false)}
+      onLeave={() => navigate(RESOURCES_PATH)} />
+    <RentalResourceEditorForm key={id ?? "new"} editing={editing} units={units} categories={categories} families={families}
     busy={busy} readOnly={!canWrite} pricePerHour={price?.pricePerHour} pricingUnit={price?.pricingUnit}
-    onCancel={() => navigate(RESOURCES_PATH)} onSubmit={handleSubmit} />
+    onDirtyChange={setDirty}
+    onCancel={() => {
+      if (saveInFlight.current) return
+      if (!hasDataRouter && dirty && !saved) setConfirmCancel(true)
+      else navigate(RESOURCES_PATH)
+    }} onSubmit={handleSubmit} />
+  </>
 }

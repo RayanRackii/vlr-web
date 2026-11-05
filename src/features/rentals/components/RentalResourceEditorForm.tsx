@@ -58,6 +58,7 @@ import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVi
 import "./rentalResources.css"
 
 type RentalResourceEditorFormProps = {
+  onDirtyChange?: (dirty: boolean) => void
   onCancel: () => void
   editing: AdminRentalAsset | null
   units: readonly Unit[]
@@ -97,6 +98,7 @@ function ResourceChoiceGroup({ name, label, value, options, onChange, onBlur, di
 }
 
 export function RentalResourceEditorForm({
+  onDirtyChange,
   onCancel,
   editing,
   units,
@@ -175,6 +177,9 @@ export function RentalResourceEditorForm({
     )
     editedTemplateFieldsRef.current = new Set()
   }, [categories, editing, families, form, units])
+
+  const { isDirty } = form.formState
+  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
 
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
@@ -276,7 +281,7 @@ export function RentalResourceEditorForm({
   return (
     <div className="rental-resource-editor">
       <nav className="resource-breadcrumb" aria-label={t("rentals.resources.editor.breadcrumb")}>
-        <Button variant="link" type="button" onClick={onCancel}>{t("rentals.resources.title")}</Button>
+        <Button variant="link" type="button" disabled={busy} onClick={onCancel}>{t("rentals.resources.title")}</Button>
         <span aria-hidden="true">/</span>
         <span aria-current="page">{editing ? editing.name : t("rentals.resources.add")}</span>
       </nav>
@@ -289,7 +294,7 @@ export function RentalResourceEditorForm({
           {readOnly ? <p className="text-sm text-muted-foreground">{t("rentals.resources.editor.readOnly")}</p> : null}
         </div>
         <div className="resource-editor-actions">
-          <Button variant="outline" type="button" onClick={onCancel}>{t("common.cancel")}</Button>
+          <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>{t("common.cancel")}</Button>
           <FormPrimaryButton type="submit" form="rental-resource-form" isValid={isValid} loading={busy} disabled={readOnly || busy}>{t("common.save")}</FormPrimaryButton>
         </div>
       </header>
@@ -869,6 +874,7 @@ export function RentalResourceEditorForm({
               <Button
                 type="button"
                 variant="outline"
+                disabled={busy}
                 onClick={() => {
                   onCancel()
                 }}
