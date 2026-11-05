@@ -5,9 +5,12 @@ import { toast } from "sonner"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AxiosError, type InternalAxiosRequestConfig } from "axios"
 
+import { Route, Routes } from "react-router-dom"
+
 import { AuthProvider } from "@/contexts/AuthContext"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
+import { RoleEditorPage } from "@/features/users/pages/RoleEditorPage"
 import type { RoleResponse } from "@/features/users/schemas/roleSchemas"
 import type {
   InviteTenantMemberResponse,
@@ -17,6 +20,7 @@ import type {
 import {
   createRole,
   deleteRole,
+  getRole,
   listPermissions,
   listRoles,
   patchRole,
@@ -33,6 +37,7 @@ import { api } from "@/lib/api"
 vi.mock("@/features/users/services/rolesService", () => ({
   listRoles: vi.fn(),
   listPermissions: vi.fn(),
+  getRole: vi.fn(),
   createRole: vi.fn(),
   patchRole: vi.fn(),
   replaceRolePermissions: vi.fn(),
@@ -156,6 +161,7 @@ const listTenantCustomersMock = vi.mocked(listTenantCustomers)
 const inviteTenantMemberMock = vi.mocked(inviteTenantMember)
 const assignUserRolesMock = vi.mocked(assignUserRoles)
 const createRoleMock = vi.mocked(createRole)
+const getRoleMock = vi.mocked(getRole)
 const patchRoleMock = vi.mocked(patchRole)
 const deleteRoleMock = vi.mocked(deleteRole)
 const toastError = vi.mocked(toast.error)
@@ -165,6 +171,22 @@ function renderPage(permissions: readonly string[], activeModules: readonly stri
   return render(
     <AuthProvider><TestPermissionProvider permissions={permissions} activeModules={activeModules}>
       <MemoryRouter initialEntries={["/pessoas-e-acesso"]}><PeopleAccessPage /></MemoryRouter>
+    </TestPermissionProvider></AuthProvider>,
+  )
+}
+
+function renderPageWithRoutes(
+  permissions: readonly string[],
+  activeModules: readonly string[] = [],
+) {
+  return render(
+    <AuthProvider><TestPermissionProvider permissions={permissions} activeModules={activeModules}>
+      <MemoryRouter initialEntries={["/pessoas-e-acesso"]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso" element={<PeopleAccessPage />} />
+          <Route path="/pessoas-e-acesso/funcoes/:id" element={<RoleEditorPage />} />
+        </Routes>
+      </MemoryRouter>
     </TestPermissionProvider></AuthProvider>,
   )
 }
@@ -589,12 +611,14 @@ describe("People users and roles validity gate", () => {
     inviteTenantMemberMock.mockReset()
     assignUserRolesMock.mockReset()
     createRoleMock.mockReset()
+    getRoleMock.mockReset()
     patchRoleMock.mockReset()
     deleteRoleMock.mockReset()
     toastError.mockReset()
     toastSuccess.mockReset()
 
     listRolesMock.mockResolvedValue([ADMIN_ROLE])
+    getRoleMock.mockResolvedValue(CUSTOM_ROLE)
     listPermissionsMock.mockResolvedValue([USERS_READ_PERMISSION])
     listTenantMembersMock.mockResolvedValue(memberPage([]))
     listTenantCustomersMock.mockResolvedValue(customerPage([]))
@@ -605,11 +629,6 @@ describe("People users and roles validity gate", () => {
     deleteRoleMock.mockResolvedValue(undefined)
   })
 
-  function permissionLabel() {
-    return i18n.t(`peopleAccess.catalog.${USERS_READ_PERMISSION.key}`, {
-      defaultValue: USERS_READ_PERMISSION.name,
-    })
-  }
 
   async function openInviteDialog(user: ReturnType<typeof userEvent.setup>) {
     await waitForUsersLoaded()
@@ -842,7 +861,7 @@ describe("People users and roles validity gate", () => {
     ).toBeInTheDocument()
   }
 
-  it("keeps Salvar disabled until the role name passes the schema, with permissions optional", async () => {
+  it("keeps the create role sheet's Salvar disabled until the name passes the schema", async () => {
     const user = userEvent.setup()
     renderPage(MANAGE_ROLES)
     await openRolesTab(user)
@@ -852,11 +871,13 @@ describe("People users and roles validity gate", () => {
     )
     const dialog = await screen.findByRole("dialog")
     const submit = within(dialog).getByRole("button", {
-      name: i18n.t("peopleAccess.roles.save"),
+      name: i18n.t("peopleAccess.roleEditor.createContinue"),
     })
-    const close = within(dialog).getByRole("button", { name: "Close" })
+    const cancel = within(dialog).getByRole("button", {
+      name: i18n.t("common.cancel"),
+    })
     expect(submit).toBeDisabled()
-    expect(close).toBeEnabled()
+    expect(cancel).toBeEnabled()
 
     const name = within(dialog).getByLabelText(i18n.t("peopleAccess.role"))
     await user.type(name, "A")
@@ -867,55 +888,29 @@ describe("People users and roles validity gate", () => {
     expect(name).toHaveValue("Ab")
     expect(submit).toBeEnabled()
 
-    const permission = within(dialog).getByRole("checkbox", {
-      name: permissionLabel(),
-    })
-    await user.click(permission)
-    expect(permission).toBeChecked()
-    expect(submit).toBeEnabled()
-    expect(close).toBeEnabled()
-
     await user.clear(name)
     expect(submit).toBeDisabled()
-    expect(close).toBeEnabled()
+    expect(cancel).toBeEnabled()
     expect(createRoleMock).not.toHaveBeenCalled()
   })
 
-  it("keeps Salvar disabled when editing a role until the name is valid again", async () => {
+  it("navigates from the roles tab to the full-page editor for an existing role", async () => {
     listRolesMock.mockResolvedValue([CUSTOM_ROLE])
+    getRoleMock.mockResolvedValue(CUSTOM_ROLE)
     const user = userEvent.setup()
-    renderPage(MANAGE_ROLES)
+    renderPageWithRoutes(MANAGE_ROLES)
     await openRolesTab(user)
 
     await user.click(screen.getByRole("button", { name: i18n.t("common.edit") }))
-    const dialog = await screen.findByRole("dialog")
-    const submit = within(dialog).getByRole("button", {
-      name: i18n.t("peopleAccess.roles.save"),
-    })
-    const name = within(dialog).getByLabelText(i18n.t("peopleAccess.role"))
-    const permission = within(dialog).getByRole("checkbox", {
-      name: permissionLabel(),
-    })
 
-    expect(name).toHaveValue("Recepção")
-    expect(permission).toBeChecked()
-    expect(submit).toBeEnabled()
-    expect(within(dialog).getByRole("button", { name: "Close" })).toBeEnabled()
-
-    await user.clear(name)
-    await user.type(name, "A")
-    expect(submit).toBeDisabled()
-    expect(patchRoleMock).not.toHaveBeenCalled()
-
-    await user.clear(name)
-    await user.type(name, "Recepção")
-    await user.click(permission)
-    expect(permission).not.toBeChecked()
-    expect(submit).toBeEnabled()
-    expect(within(dialog).getByRole("button", { name: "Close" })).toBeEnabled()
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Recepção" }),
+    ).toBeInTheDocument()
+    expect(getRoleMock).toHaveBeenCalledWith(CUSTOM_ROLE_ID)
+    expect(screen.getByLabelText(i18n.t("peopleAccess.role"))).toHaveValue("Recepção")
   })
 
-  it("re-enables Salvar after a role create server error and keeps name and permissions", async () => {
+  it("re-enables the create sheet's Salvar after a server error and keeps the entered values", async () => {
     const user = userEvent.setup()
     let rejectCreate: (reason: Error) => void = () => {
       throw new Error("missing reject")
@@ -938,12 +933,9 @@ describe("People users and roles validity gate", () => {
     )
     await user.type(name, "Portaria")
     await user.type(description, "Entrada")
-    await user.click(
-      within(dialog).getByRole("checkbox", { name: permissionLabel() }),
-    )
 
     const submit = within(dialog).getByRole("button", {
-      name: i18n.t("peopleAccess.roles.save"),
+      name: i18n.t("peopleAccess.roleEditor.createContinue"),
     })
     expect(submit).toBeEnabled()
     await user.click(submit)
@@ -957,24 +949,20 @@ describe("People users and roles validity gate", () => {
     await waitFor(() => {
       expect(
         within(dialog).getByRole("button", {
-          name: i18n.t("peopleAccess.roles.save"),
+          name: i18n.t("peopleAccess.roleEditor.createContinue"),
         }),
       ).toBeEnabled()
     })
     expect(toastError).toHaveBeenCalledWith("Nome já cadastrado.")
     expect(name).toHaveValue("Portaria")
     expect(description).toHaveValue("Entrada")
-    expect(
-      within(dialog).getByRole("checkbox", { name: permissionLabel() }),
-    ).toBeChecked()
-    expect(within(dialog).getByRole("button", { name: "Close" })).toBeEnabled()
     expect(toastSuccess).not.toHaveBeenCalled()
     expect(createRoleMock).toHaveBeenCalledTimes(1)
 
     createRoleMock.mockResolvedValueOnce(CREATED_ROLE)
     await user.click(
       within(dialog).getByRole("button", {
-        name: i18n.t("peopleAccess.roles.save"),
+        name: i18n.t("peopleAccess.roleEditor.createContinue"),
       }),
     )
     await waitFor(() => {
@@ -982,11 +970,10 @@ describe("People users and roles validity gate", () => {
         i18n.t("peopleAccess.toasts.roleCreated"),
       )
     })
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(createRoleMock).toHaveBeenLastCalledWith({
       name: "Portaria",
       description: "Entrada",
-      permissionKeys: [USERS_READ_PERMISSION.key],
+      permissionKeys: [],
     })
   })
 

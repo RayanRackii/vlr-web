@@ -43,6 +43,19 @@
     },
     "remove": "Remover"
   },
+  "fullPage": {
+    "unsavedChanges_one": "{{count}} alteração não salva",
+    "unsavedChanges_other": "{{count}} alterações não salvas",
+    "discard": "Descartar",
+    "save": "Salvar",
+    "leaveConfirm": "Você tem alterações não salvas. Deseja sair mesmo assim?",
+    "openFullEdit": "Abrir edição completa →",
+    "advanced": {
+      "title": "Avançado",
+      "show": "Mostrar opções",
+      "hide": "Ocultar opções"
+    }
+  },
   "apiErrors": {
     "invalidResponse": "Resposta inválida da API.",
     "loadUsers": "Não foi possível carregar os usuários.",
@@ -525,6 +538,15 @@
       "legendSelected": "Selecionado",
       "unplaced": "Outros espaços",
       "availabilityError": "Não foi possível verificar disponibilidade.",
+      "retry": "Tentar novamente",
+      "priceUndefined": "Valor não definido para esse horário",
+      "reason": {
+        "alreadyReserved": "Já reservado nesse horário",
+        "quantityUnavailable": "Quantidade indisponível",
+        "outsideHours": "Fora do horário de funcionamento",
+        "pastStart": "Esse horário já passou",
+        "generic": "Indisponível nesse horário"
+      },
       "slotsError": "Não foi possível carregar os horários do dia.",
       "noSlots": "Nenhum horário disponível nesta data. A equipe responsável ainda pode não ter publicado a escala.",
       "noTimes": "Nenhum horário nesta data",
@@ -695,7 +717,7 @@
       "cartProductUnavailable": "Não foi possível carregar este produto.",
       "cartTotalUnavailable": "Total indisponível até carregar os produtos.",
       "checkout": "Revisar pedido",
-      "checkoutHint": "Confirme as quantidades. Os preços do servidor serão usados.",
+      "checkoutHint": "Confirme as quantidades. Os preços finais aparecem no pedido.",
       "customerNote": "Observação",
       "submitOrder": "Enviar pedido",
       "submitting": "Enviando...",
@@ -812,7 +834,12 @@
       "ordersEmptyDescription": "Quando você fizer um pedido no catálogo do {{tenant}}, ele aparece aqui para acompanhamento.",
       "ordersLoading": "Carregando pedidos...",
       "orderCardLabel": "Pedido {{number}}",
-      "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui."
+      "requestsEmptyDescription": "Precisa de algo que não está no catálogo? Envie uma solicitação e a equipe responde por aqui.",
+      "exclusive": "Exclusivo para você",
+      "unavailableTitle": "Produto indisponível ou não encontrado",
+      "unavailableBody": "Este produto não está disponível para você ou não existe mais. Veja os outros itens do catálogo.",
+      "backToCatalog": "Voltar ao catálogo",
+      "exclusiveWhy": "Liberado para a sua conta pela loja."
     },
     "timeZoneLabel": "horário de {{city}} ({{offset}})"
   },
@@ -891,6 +918,23 @@
       "create": "Novo produto",
       "createTitle": "Novo produto",
       "editTitle": "Editar produto",
+      "quickEdit": "Edição rápida",
+      "quickEditTitle": "Edição rápida",
+      "quickEditDescription": "Altere nome, preço e status. Para tudo mais, abra a edição completa.",
+      "createContinue": "Criar e continuar →",
+      "tabs": {
+        "dados": "Dados",
+        "price": "Preço",
+        "access": "Visibilidade e acesso",
+        "history": "Histórico"
+      },
+      "editor": {
+        "createStatusFailed": "Produto criado, mas continua ativo porque não foi possível desativá-lo. Tente novamente para concluir.",
+        "accessSaveFailed": "Não foi possível salvar o acesso. Tente novamente.",
+        "breadcrumbRoot": "Catálogo",
+        "notFound": "Produto não encontrado.",
+        "back": "Voltar para produtos"
+      },
       "dialogDescription": "Preço em branco significa sob consulta.",
       "empty": "Nenhum produto cadastrado.",
       "save": "Salvar",
@@ -932,6 +976,8 @@
         "currency": "Moeda"
       },
       "files": {
+        "pendingRecord": "Envio pendente",
+        "failedRecord": "Envio falhou",
         "title": "Arquivos",
         "customerVisible": "Visível ao cliente",
         "internal": "Interno (B2B)",
@@ -951,13 +997,150 @@
         "typeRejected": "Este tipo de arquivo não é aceito.",
         "contentMismatch": "O conteúdo do arquivo não corresponde ao tipo informado.",
         "extensionRequired": "{{name}} precisa de uma extensão.",
-        "required": "Selecione um arquivo."
+        "required": "Selecione um arquivo.",
+        "whoSees": "Quem vê",
+        "customerShort": "Cliente",
+        "internalShort": "Interno"
       },
       "gallery": {
         "previous": "Imagem anterior",
         "next": "Próxima imagem",
         "imageOf": "{{current}} / {{total}}",
         "broken": "Não foi possível carregar a imagem"
+      },
+      "access": {
+        "filesPresent": "Para mudar de Público para Restrito, remova ou reenvie apenas os arquivos públicos legados do produto. Arquivos internos e novos envios não bloqueiam essa alteração.",
+        "title": "Visibilidade",
+        "public": "Público",
+        "storedGrantsHint": "{{count}} liberação(ões) guardada(s). Voltam a valer se o produto ficar Restrito.",
+        "publicHint": "Todos os clientes veem este produto.",
+        "restricted": "Restrito",
+        "restrictedHint": "Só os grupos e clientes liberados veem este produto.",
+        "groups": "Grupos liberados",
+        "customers": "Clientes liberados",
+        "noGroups": "Nenhum grupo cadastrado.",
+        "noCustomers": "Nenhum cliente encontrado.",
+        "searchCustomers": "Buscar por nome ou e-mail",
+        "needCustomersPermission": "Para buscar e adicionar clientes, você precisa da permissão de ver clientes.",
+        "emptyWarning": "Produto restrito sem ninguém liberado: nenhum cliente verá este produto.",
+        "readOnlyHint": "Você pode ver, mas não alterar, a visibilidade.",
+        "toastSaved": "Visibilidade atualizada.",
+        "history": {
+          "title": "Histórico de acesso",
+          "empty": "Nenhuma alteração registrada.",
+          "actorTeam": "Equipe",
+          "loadError": "Não foi possível carregar o histórico.",
+          "groupsAdded": "+ {{names}}",
+          "groupsRemoved": "− {{names}}",
+          "customers_one": "{{count}} cliente liberado",
+          "customers_other": "{{count}} clientes liberados",
+          "unknownGroup": "grupo removido"
+        },
+        "loadError": "Não foi possível carregar a visibilidade deste produto.",
+        "retry": "Tentar novamente",
+        "createHint": "Depois de salvar o produto, você poderá definir quem pode vê-lo.",
+        "namesUnavailable": "Alguns nomes de clientes não puderam ser carregados."
+      },
+      "badges": {
+        "restricted": "Restrito · {{count}}"
+      },
+      "visibilityFilter": {
+        "title": "Visibilidade",
+        "public": "Público",
+        "restricted": "Restrito"
+      }
+    },
+    "customerGroups": {
+      "title": "Grupos de clientes",
+      "subtitle": "Agrupe clientes para liberar produtos exclusivos.",
+      "create": "Novo grupo",
+      "createTitle": "Novo grupo",
+      "editTitle": "Editar grupo",
+      "search": "Buscar por nome",
+      "searchShort": "Buscar grupo",
+      "empty": "Nenhum grupo cadastrado.",
+      "emptyHint": "Crie um grupo para liberar produtos a clientes específicos.",
+      "noDescription": "Sem descrição",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "toastCreated": "Grupo criado.",
+      "toastUpdated": "Grupo atualizado.",
+      "toastDeleted": "Grupo excluído.",
+      "columns": {
+        "name": "Grupo",
+        "description": "Descrição",
+        "members": "Membros",
+        "usage": "Uso",
+        "actions": "Ações"
+      },
+      "memberCount_one": "{{count}} membro",
+      "memberCount_other": "{{count}} membros",
+      "usage": {
+        "none": "Sem uso",
+        "products_one": "{{count}} produto",
+        "products_other": "{{count}} produtos"
+      },
+      "form": {
+        "name": "Nome",
+        "description": "Descrição"
+      },
+      "validation": {
+        "nameRequired": "Informe o nome do grupo.",
+        "nameTooLong": "O nome pode ter no máximo 200 caracteres.",
+        "descriptionTooLong": "A descrição pode ter no máximo 2000 caracteres."
+      },
+      "delete": "Excluir",
+      "deleteTitle": "Excluir grupo?",
+      "deleteBody": "{{name}} será removido. Os membros e as liberações de produtos ligadas a ele serão desfeitos. Pedidos já feitos não mudam.",
+      "deleteAffected": "Produtos que usam este grupo:",
+      "deleteNoAffected": "Nenhum produto usa este grupo.",
+      "tabs": {
+        "details": "Dados",
+        "members": "Membros",
+        "history": "Histórico"
+      },
+      "members": {
+        "title": "Membros ({{count}})",
+        "add": "Adicionar cliente",
+        "searchPlaceholder": "Buscar cliente por nome ou e-mail…",
+        "searchLabel": "Buscar cliente",
+        "selectHint": "Selecione um ou mais clientes para adicionar.",
+        "addSelected": "Adicionar selecionados",
+        "noResults": "Nenhum cliente encontrado.",
+        "empty": "Nenhum membro ainda.",
+        "hint": "Um cliente pode estar em vários grupos.",
+        "unknown": "Cliente",
+        "remove": "Remover",
+        "removeTitle": "Remover membro?",
+        "removeBody": "{{name}} deixa de fazer parte do grupo.",
+        "toastAdded": "Membros adicionados.",
+        "toastRemoved": "Membro removido."
+      },
+      "history": {
+        "title": "Histórico",
+        "empty": "Sem histórico.",
+        "actorTeam": "Equipe",
+        "actions": {
+          "created": "criou o grupo",
+          "updated": "atualizou os dados",
+          "deleted": "excluiu o grupo",
+          "membersAdded": "adicionou membros",
+          "memberRemoved": "removeu um membro",
+          "accessChanged": "alterou o acesso de um produto",
+          "unknown": "Alteração registrada"
+        }
+      },
+      "readOnlyHint": "Você não tem permissão para editar grupos de clientes.",
+      "errors": {
+        "load": "Não foi possível carregar os grupos de clientes.",
+        "save": "Não foi possível salvar o grupo.",
+        "delete": "Não foi possível excluir o grupo.",
+        "addMembers": "Não foi possível adicionar os membros.",
+        "removeMember": "Não foi possível remover o membro.",
+        "loadHistory": "Não foi possível carregar o histórico.",
+        "loadAccess": "Não foi possível carregar o acesso do produto.",
+        "saveAccess": "Não foi possível salvar o acesso do produto.",
+        "duplicateName": "Já existe um grupo com esse nome."
       }
     },
     "requests": {
@@ -976,6 +1159,10 @@
       "subtitle": "Aprove, prepare e conclua pedidos dos clientes.",
       "empty": "Nenhum pedido.",
       "view": "Ver",
+      "views": {
+        "list": "Lista",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Itens",
       "timeline": "Histórico",
@@ -1010,6 +1197,10 @@
         "tooLong": "Use no máximo 1000 caracteres.",
         "label": "Motivo",
         "confirm": "Confirmar"
+      },
+      "history": {
+        "workFinished": "Trabalho concluído",
+        "released": "Recurso liberado"
       }
     },
     "notifications": {
@@ -1054,6 +1245,7 @@
       "emptyState": "Não exige agendamento",
       "addRequirement": "Adicionar recurso",
       "save": "Salvar recursos",
+      "saveErrorTitle": "Não foi possível salvar",
       "toastSaved": "Recursos salvos com sucesso.",
       "requirementLabel": "Recurso {{index}}",
       "calculationHint": "Cada unidade ocupa o recurso por {{duration}} min, além do preparo e da limpeza.",
@@ -1075,7 +1267,8 @@
         "unsupportedWorkWindow": "O horário escolhido não é suportado para este agendamento.",
         "notSupportedYet": "Agendamento por categoria ainda não é suportado; selecione um recurso específico.",
         "previewFailed": "Não foi possível pré-visualizar o agendamento.",
-        "usageActionFailed": "Não foi possível atualizar o uso do recurso."
+        "usageActionFailed": "Não foi possível atualizar o uso do recurso.",
+        "forbidden": "Você não tem permissão para esta ação."
       },
       "approvalPanel": {
         "title": "Aprovar e agendar",
@@ -1089,6 +1282,7 @@
         "estimatedReadyAt": "Previsão de conclusão",
         "notFeasible": "Esse horário não é viável para o recurso selecionado.",
         "approveAndAllocate": "Aprovar e alocar",
+        "refusalTitle": "Não é possível alocar",
         "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
         "toastApproved": "Pedido aprovado e recurso alocado."
       },
@@ -1096,7 +1290,6 @@
         "title": "Uso do recurso",
         "status": "Status",
         "workWindow": "Janela de trabalho",
-        "start": "Iniciar",
         "workFinished": "Concluir trabalho",
         "release": "Liberar",
         "cancelledHint": "Este pedido foi cancelado; finalize ou libere o recurso conforme necessário.",
@@ -1188,6 +1381,30 @@
         "openOrder": "Abrir pedido",
         "close": "Fechar",
         "empty": "Selecione um bloco para ver os detalhes."
+      }
+    },
+    "todayAgenda": {
+      "title": "Agenda de hoje",
+      "subtitle": "{{date}} · recursos e produtos",
+      "viewAll": "Ver agenda",
+      "rowLink": "Ver agenda",
+      "seeAll": "Ver todos",
+      "empty": "Nada agendado para hoje.",
+      "reserved": "Reservado",
+      "status": {
+        "inUse": "Em uso",
+        "prep": "Preparo",
+        "cleaning": "Limpeza",
+        "overdue": "Atrasado",
+        "free": "Livre"
+      },
+      "sub": {
+        "inUse": "Agora: {{ref}} · até {{time}}",
+        "prep": "Preparo: {{ref}} · início {{time}}",
+        "cleaning": "Limpeza: {{ref}} · até {{time}}",
+        "overdue": "Atraso {{minutes}} min",
+        "freeNext": "Próximo: {{ref}} · {{time}}",
+        "freeNone": "Sem uso hoje"
       }
     }
   },
@@ -1563,6 +1780,7 @@
     "rentalsResources": "Recursos",
     "catalog": "Vendas",
     "catalogProducts": "Produtos",
+    "catalogCustomerGroups": "Grupos de clientes",
     "catalogOrders": "Pedidos",
     "catalogRequests": "Solicitações",
     "catalogNotifications": "Avisos de vendas",
@@ -3659,6 +3877,23 @@
       "createRole": "Não foi possível criar a função.",
       "updateRole": "Não foi possível atualizar a função.",
       "deleteRole": "Não foi possível excluir a função."
+    },
+    "roleEditor": {
+      "backToRoles": "Voltar para funções",
+      "breadcrumb": "Funções",
+      "collapseAll": "Recolher tudo",
+      "createContinue": "Criar e continuar →",
+      "expandAll": "Expandir tudo",
+      "membersEmpty": "Nenhuma pessoa com esta função.",
+      "moduleCount": "{{selected}} de {{total}}",
+      "noResults": "Nenhuma permissão encontrada.",
+      "notFound": "Função não encontrada.",
+      "searchPlaceholder": "Buscar permissão",
+      "selectAllModule": "Marcar módulo todo",
+      "tabs": {
+        "dados": "Dados",
+        "members": "Membros"
+      }
     }
   },
   "admin": {

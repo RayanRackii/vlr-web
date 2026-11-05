@@ -30,6 +30,7 @@ import {
   resolveScheduleSurface,
   timeToMinutes,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
+import { roundScheduleTimeToMinute } from "@/features/rentals/services/scheduleService"
 import type {
   AdminDaySchedule,
   AdminRentalAsset,
@@ -190,7 +191,12 @@ export function DailyAgendaTab({
   const occupancies = useMemo(() => {
     const today = tenantTodayIsoDate(timeZoneId, now)
     return (day?.slots ?? []).map((slot) => {
-      const occupancy = occupancyFromDaySlot(slot)
+      // An early release can return an endTime with fractional seconds; round it
+      // to the nearest minute so the grid label and width math stay clean.
+      const occupancy = {
+        ...occupancyFromDaySlot(slot),
+        endTime: roundScheduleTimeToMinute(slot.endTime),
+      }
       if (
         date === today &&
         occupancy.status === "available" &&

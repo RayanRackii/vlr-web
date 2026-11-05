@@ -205,4 +205,12 @@ describe("PortalCatalogProductCard", () => {
       screen.queryByRole("link", { name: "Adicionar" }),
     ).not.toBeInTheDocument()
   })
+
+  it("shows the exclusive badge only for granted restricted products", () => {
+    const { unmount } = render(<MemoryRouter><PortalCatalogProductCard product={product({ isExclusive: true })} subdomain={SUBDOMAIN} quantity={1} onQuantityChange={vi.fn()} onAdd={vi.fn()} primary="#1a6b4a" /></MemoryRouter>)
+    expect(screen.getByText("Exclusivo para você")).toBeInTheDocument()
+    unmount()
+    renderCard()
+    expect(screen.queryByText("Exclusivo para você")).not.toBeInTheDocument()
+  })
 })

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { CatalogProductResourceRequirements } from "./CatalogProductResourceRequirements"
 import {
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   getCatalogProductResourceRequirements,
   replaceCatalogProductResourceRequirements,
 } from "@/features/catalog/services/catalogService"
@@ -16,6 +17,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 vi.mock("@/features/catalog/services/catalogService", () => ({
   CatalogPlanningVersionConflictError: class extends Error {},
+  CatalogRetryableError: class extends Error {},
   getCatalogProductResourceRequirements: vi.fn(),
   replaceCatalogProductResourceRequirements: vi.fn(),
 }))
@@ -120,7 +122,40 @@ describe("CatalogProductResourceRequirements", () => {
     const user = userEvent.setup()
     render(<CatalogProductResourceRequirements productId="product-1" />)
     await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
-    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(message)
     expect(toast.error).toHaveBeenCalledWith(message)
+    const saveButton = screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") })
+    // The refusal sits above the action buttons and blocks re-saving the same rows.
+    expect(alert.compareDocumentPosition(saveButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(saveButton).toBeDisabled()
+  })
+
+  it("keeps Save enabled after a retryable 5xx failure", async () => {
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({
+      expectedVersion: 1,
+      requirements: [
+        {
+          id: null,
+          rentalAssetId: RESOURCE.id,
+          assetCategoryId: null,
+          resourceQuantity: 1,
+          durationMinutesPerUnit: 60,
+          prepMinutes: 0,
+          cleanupMinutes: 0,
+        },
+      ],
+    })
+    const message = i18n.t("catalog.resourcePlanning.errors.saveRequirements")
+    vi.mocked(replaceCatalogProductResourceRequirements).mockRejectedValue(
+      new CatalogRetryableError(message),
+    )
+    const user = userEvent.setup()
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(message)
+    // Transient failure: the error shows but the user may retry the same save.
+    expect(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") })).toBeEnabled()
   })
 })

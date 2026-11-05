@@ -193,7 +193,7 @@ describe("PortalOrderDetailPage", () => {
 
   it.each(["Cancelled", "Rejected"] as const)("shows %s as a terminal state and preserves the history reason", async (status) => {
     const order = mixedOrder(status)
-    order.history = [{ id: "history-1", status, actorType: "System", actorId: null,
+    order.history = [{ id: "history-1", status, actorType: "System", actorId: null, actorName: null,
       reason: "Item indisponível", createdAt: "2026-10-18T13:00:00Z" }]
     getOrderMock.mockResolvedValue(order)
     renderDetail({ justCreated: true })

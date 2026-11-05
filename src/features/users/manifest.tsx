@@ -4,6 +4,7 @@ import { Users } from "lucide-react"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { peopleAccessTabs } from "@/features/users/navigationTabs"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
+import { RoleEditorPage } from "@/features/users/pages/RoleEditorPage"
 import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
 
 type FeatureRoute = {
@@ -29,6 +30,11 @@ export const usersManifest = {
         path: "/pessoas-e-acesso",
         element: <PeopleAccessPage />,
         permission: "core.users.read",
+      },
+      {
+        path: "/pessoas-e-acesso/funcoes/:id",
+        element: <RoleEditorPage />,
+        permission: "core.roles.read",
       },
       {
         path: "/perfil",

@@ -1,7 +1,7 @@
 import { Fragment, useId, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ChevronDown, ChevronRight, Info, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { Info, Minus, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -200,9 +200,9 @@ function NavigationLink({
             aria-expanded={expanded}
             aria-controls={childrenId}
             onClick={() => setExpanded((value) => !value)}
-            className={cn("flex shrink-0 items-center justify-center rounded-lg outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-9")}
+            className={cn("flex shrink-0 items-center justify-center rounded-full border border-sidebar-border outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-8")}
           >
-            {expanded ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
+            {expanded ? <Minus className="size-3.5" aria-hidden="true" /> : <Plus className="size-3.5" aria-hidden="true" />}
           </button>
         </div>
 
@@ -285,9 +285,9 @@ function NavigationSection({
             aria-expanded={expanded}
             aria-controls={itemsId}
             onClick={() => setExpanded((value) => !value)}
-            className={cn("flex shrink-0 items-center justify-center rounded-lg outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-9")}
+            className={cn("flex shrink-0 items-center justify-center rounded-full border border-sidebar-border outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-8")}
           >
-            {expanded ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
+            {expanded ? <Minus className="size-3.5" aria-hidden="true" /> : <Plus className="size-3.5" aria-hidden="true" />}
           </button>
         )}
       </div>

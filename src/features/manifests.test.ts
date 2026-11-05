@@ -48,8 +48,10 @@ describe("feature manifests", () => {
     ])
     expect(catalogManifest.routes.staff.map((route) => route.path)).toEqual([
       "/catalogo/configuracoes",
+      "/catalogo/produtos/:id",
       "/catalogo/produtos",
       "/catalogo/solicitacoes",
+      "/catalogo/grupos",
       "/catalogo/pedidos",
       "/catalogo/agenda-produto",
       "/catalogo/agenda-recursos",
@@ -160,6 +162,7 @@ describe("feature manifests", () => {
     expect(usersManifest.modules).toEqual([])
     expect(usersManifest.routes.staff.map((route) => route.path)).toEqual([
       "/pessoas-e-acesso",
+      "/pessoas-e-acesso/funcoes/:id",
       "/perfil",
     ])
     expect(workOrdersManifest.modules).toEqual(["os"])

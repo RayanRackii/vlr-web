@@ -1,5 +1,5 @@
 import type { ReactElement } from "react"
-import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag } from "lucide-react"
+import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
@@ -8,6 +8,8 @@ import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResou
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
+import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
+import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -22,6 +24,8 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  /** Canonical tenant module keys that unlock this route. Absent = catalog only. */
+  modules?: readonly string[]
 }
 
 export const catalogManifest = {
@@ -47,6 +51,12 @@ export const catalogManifest = {
           permission: "catalog.products.read",
         },
         {
+          labelKey: "nav.catalogCustomerGroups",
+          icon: Users,
+          to: "/catalogo/grupos",
+          permission: "catalog.products.read",
+        },
+        {
           labelKey: "nav.catalogOrders",
           icon: ShoppingBag,
           to: "/catalogo/pedidos",
@@ -63,6 +73,7 @@ export const catalogManifest = {
           icon: CalendarDays,
           to: "/catalogo/agenda-recursos",
           permission: "rentals.schedule.read",
+          modules: ["rentals"],
         },
         {
           labelKey: "nav.catalogRequests",
@@ -106,6 +117,11 @@ export const catalogManifest = {
         permission: "catalog.products.manage",
       },
       {
+        path: "/catalogo/produtos/:id",
+        element: <CatalogProductEditorPage />,
+        permission: "catalog.products.read",
+      },
+      {
         path: "/catalogo/produtos",
         element: <CatalogProductsPage />,
         permission: "catalog.products.read",
@@ -113,6 +129,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/solicitacoes",
         element: <CatalogProductsPage view="requests" />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/grupos",
+        element: <CatalogCustomerGroupsPage />,
         permission: "catalog.products.read",
       },
       {
@@ -129,6 +150,7 @@ export const catalogManifest = {
         path: "/catalogo/agenda-recursos",
         element: <CatalogResourceAgendaPage />,
         permission: "rentals.schedule.read",
+        modules: ["rentals"],
       },
       {
         path: "/catalogo/pedidos/:orderId",
@@ -140,6 +162,6 @@ export const catalogManifest = {
         element: <CatalogNotificationsPage />,
         permission: "catalog.notifications.read",
       },
-    ] satisfies readonly Required<FeatureRoute>[],
+    ] satisfies readonly (FeatureRoute & { permission: string })[],
   },
 } as const

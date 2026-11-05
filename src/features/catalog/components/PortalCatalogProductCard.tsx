@@ -83,6 +83,11 @@ export function PortalCatalogProductCard({
           {product.code ? <span className="block break-words text-xs text-muted-foreground">{product.code}</span> : null}
           <h2 className="portal-catalog-product-name">{product.name}</h2>
         </Link>
+        {product.isExclusive ? (
+          <Badge variant="outline" className="w-fit" title={t("tenantPortal.catalog.exclusiveWhy")}>
+            {t("tenantPortal.catalog.exclusive")}
+          </Badge>
+        ) : null}
         <div className="portal-catalog-price-row">
           {product.price == null ? (
             <Badge variant="warning" className="whitespace-normal">

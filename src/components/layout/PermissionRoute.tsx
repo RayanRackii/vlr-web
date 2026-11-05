@@ -9,6 +9,8 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 type PermissionRouteProps = {
   permission?: string
   permissions?: readonly string[]
+  /** Canonical tenant module keys that must be active. Absent/empty = no module gate. */
+  modules?: readonly string[]
 }
 
 function requiredPermissionKeys({
@@ -32,15 +34,18 @@ function requiredPermissionKeys({
 export function PermissionRoute({
   permission,
   permissions,
+  modules,
 }: PermissionRouteProps) {
-  const { can, isLoading } = usePermissions()
+  const { can, isLoading, activeModules } = usePermissions()
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
   const required = requiredPermissionKeys({ permission, permissions })
+  const moduleEnabled =
+    !modules || modules.length === 0 || modules.some((module) => activeModules.includes(module))
 
   const access = resolvePermissionRouteAccess({
     isLoading,
     hasPermission:
-      required.length > 0 && required.every((key) => can(key)),
+      moduleEnabled && required.length > 0 && required.every((key) => can(key)),
     isPlatformAdminOutsideTenant: isPlatformAdmin && !isInTenantEnvironment,
     permission: required[0] ?? "",
   })

@@ -52,16 +52,25 @@ export type NotificationDeliveryStatus = z.infer<
   typeof notificationDeliveryStatusSchema
 >
 
+export const catalogFileStatusSchema = z.enum(["Ready", "Pending", "Failed"])
+
 export const catalogProductFileSchema = z.object({
   id: z.string().uuid(),
   fileName: z.string(),
   mimeType: z.string(),
   sizeBytes: z.number(),
   visibility: catalogFileVisibilitySchema,
+  status: catalogFileStatusSchema.default("Ready"),
   url: z.string().nullable(),
 })
 
 export type CatalogProductFile = z.infer<typeof catalogProductFileSchema>
+
+export const catalogProductVisibilitySchema = z.enum(["Public", "Restricted"])
+
+export type CatalogProductVisibility = z.infer<
+  typeof catalogProductVisibilitySchema
+>
 
 export const catalogProductSchema = z.object({
   id: z.string().uuid(),
@@ -73,7 +82,12 @@ export const catalogProductSchema = z.object({
   isActive: z.boolean(),
   createdAt: z.string(),
   files: z.array(catalogProductFileSchema),
+  hasFiles: z.boolean().optional(),
   taxonomy: taxonomyAssignmentSchema.optional(),
+  /** Customer-group access (slice 1/2); absent on pre-feature responses. */
+  visibility: catalogProductVisibilitySchema.optional().default("Public"),
+  grantedCustomerCount: z.number().int().optional().default(0),
+  grantedGroupCount: z.number().int().optional().default(0),
 })
 
 export type CatalogProduct = z.infer<typeof catalogProductSchema>
@@ -186,6 +200,7 @@ export const catalogOrderHistorySchema = z.object({
   status: catalogOrderStatusSchema,
   actorType: catalogActorTypeSchema,
   actorId: z.string().uuid().nullable(),
+  actorName: z.string().nullable().optional().default(null),
   reason: z.string().nullable(),
   createdAt: z.string(),
 })
@@ -302,6 +317,8 @@ export const portalProductSchema = z.object({
   currency: z.string(),
   files: z.array(portalProductFileSchema),
   taxonomy: taxonomyAssignmentSchema.optional(),
+  /** True when this product is Restricted and visible to this customer. */
+  isExclusive: z.boolean().optional(),
 })
 
 export type PortalProduct = z.infer<typeof portalProductSchema>
@@ -463,6 +480,72 @@ export const catalogResourceAgendaResponseSchema = z.object({
 export type CatalogResourceAgendaResponse = z.infer<
   typeof catalogResourceAgendaResponseSchema
 >
+
+/** Staff customer group. `memberCustomerIds` lists the customers currently in it. */
+export const customerGroupSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  memberCustomerIds: z.array(z.string().uuid()),
+  memberNames: z.record(z.string(), z.string()).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional().default(null),
+})
+
+export type CustomerGroup = z.infer<typeof customerGroupSchema>
+
+export const customerGroupListSchema = z.array(customerGroupSchema)
+
+export const customerGroupFormSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000),
+})
+
+export type CustomerGroupFormValues = z.infer<typeof customerGroupFormSchema>
+
+/** Per-product access grant (used by slice 2; added here with the group service). */
+export const catalogProductAccessSchema = z.object({
+  productId: z.string().uuid(),
+  visibility: catalogProductVisibilitySchema,
+  customerIds: z.array(z.string().uuid()),
+  groupIds: z.array(z.string().uuid()),
+  restrictedWithoutGrants: z.boolean(),
+  customerNames: z.record(z.string(), z.string()).optional(),
+})
+
+export type CatalogProductAccess = z.infer<typeof catalogProductAccessSchema>
+
+/** Audit trail entry for groups and product access. `*Json` are opaque strings — never dumped raw. */
+export const catalogAuditEntrySchema = z.object({
+  id: z.string().uuid(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string().uuid(),
+  actorType: catalogActorTypeSchema,
+  actorUserId: z.string().uuid().nullable().optional().default(null),
+  actorName: z.string().nullable().optional().default(null),
+  beforeJson: z.string().nullable().optional().default(null),
+  afterJson: z.string().nullable().optional().default(null),
+  createdAt: z.string(),
+})
+
+export type CatalogAuditEntry = z.infer<typeof catalogAuditEntrySchema>
+
+export const catalogAuditEntryListSchema = z.array(catalogAuditEntrySchema)
+
+const CATALOG_AUDIT_ACTION_I18N_KEYS: Record<string, string> = {
+  "group.created": "catalog.customerGroups.history.actions.created",
+  "group.updated": "catalog.customerGroups.history.actions.updated",
+  "group.deleted": "catalog.customerGroups.history.actions.deleted",
+  "group.membersAdded": "catalog.customerGroups.history.actions.membersAdded",
+  "group.memberRemoved": "catalog.customerGroups.history.actions.memberRemoved",
+  "product.accessChanged": "catalog.customerGroups.history.actions.accessChanged",
+}
+
+/** Unknown actions fall back to a generic localized label (never the raw code). */
+export function catalogAuditActionI18nKey(action: string): string {
+  return CATALOG_AUDIT_ACTION_I18N_KEYS[action] ?? "catalog.customerGroups.history.actions.unknown"
+}
 
 export function parseOptionalPrice(raw: string): number | null {
   const trimmed = raw.trim()

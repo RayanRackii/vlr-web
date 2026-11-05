@@ -43,6 +43,19 @@
     },
     "remove": "Remove"
   },
+  "fullPage": {
+    "unsavedChanges_one": "{{count}} unsaved change",
+    "unsavedChanges_other": "{{count}} unsaved changes",
+    "discard": "Discard",
+    "save": "Save",
+    "leaveConfirm": "You have unsaved changes. Leave anyway?",
+    "openFullEdit": "Open full edit →",
+    "advanced": {
+      "title": "Advanced",
+      "show": "Show options",
+      "hide": "Hide options"
+    }
+  },
   "apiErrors": {
     "invalidResponse": "Invalid API response.",
     "loadUsers": "Could not load users.",
@@ -525,6 +538,15 @@
       "legendSelected": "Selected",
       "unplaced": "Other spaces",
       "availabilityError": "Could not check availability.",
+      "retry": "Try again",
+      "priceUndefined": "Price not set for this time",
+      "reason": {
+        "alreadyReserved": "Already booked at this time",
+        "quantityUnavailable": "Quantity unavailable",
+        "outsideHours": "Outside opening hours",
+        "pastStart": "This time has already passed",
+        "generic": "Unavailable at this time"
+      },
       "slotsError": "Could not load times for this day.",
       "noSlots": "No slots are available on this date. The responsible team may not have published the schedule yet.",
       "noTimes": "No times on this date",
@@ -695,7 +717,7 @@
       "cartProductUnavailable": "Could not load this product.",
       "cartTotalUnavailable": "Total unavailable until products load.",
       "checkout": "Review order",
-      "checkoutHint": "Confirm quantities. Server prices will be used.",
+      "checkoutHint": "Check the quantities. Final prices appear on the order.",
       "customerNote": "Note",
       "submitOrder": "Submit order",
       "submitting": "Submitting...",
@@ -812,7 +834,12 @@
       "ordersEmptyDescription": "When you place an order from the {{tenant}} catalog, it shows up here so you can track it.",
       "ordersLoading": "Loading orders...",
       "orderCardLabel": "Order {{number}}",
-      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here."
+      "requestsEmptyDescription": "Need something that is not in the catalog? Send a request and the team will reply here.",
+      "exclusive": "Exclusive for you",
+      "unavailableTitle": "Product unavailable or not found",
+      "unavailableBody": "This product isn't available to you or no longer exists. Browse the other catalog items.",
+      "backToCatalog": "Back to catalog",
+      "exclusiveWhy": "Made available to your account by the store."
     },
     "timeZoneLabel": "{{city}} time ({{offset}})"
   },
@@ -891,6 +918,23 @@
       "create": "New product",
       "createTitle": "New product",
       "editTitle": "Edit product",
+      "quickEdit": "Quick edit",
+      "quickEditTitle": "Quick edit",
+      "quickEditDescription": "Change name, price and status. For everything else, open the full editor.",
+      "createContinue": "Create and continue →",
+      "tabs": {
+        "dados": "Details",
+        "price": "Price",
+        "access": "Visibility and access",
+        "history": "History"
+      },
+      "editor": {
+        "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
+        "accessSaveFailed": "Could not save access. Try again.",
+        "breadcrumbRoot": "Catalog",
+        "notFound": "Product not found.",
+        "back": "Back to products"
+      },
       "dialogDescription": "Leave price empty for on-request items.",
       "empty": "No products yet.",
       "save": "Save",
@@ -932,6 +976,8 @@
         "currency": "Currency"
       },
       "files": {
+        "pendingRecord": "Upload pending",
+        "failedRecord": "Upload failed",
         "title": "Files",
         "customerVisible": "Customer visible",
         "internal": "Internal (B2B)",
@@ -951,13 +997,150 @@
         "typeRejected": "This file type is not accepted.",
         "contentMismatch": "The file content does not match the declared type.",
         "extensionRequired": "{{name}} needs a file extension.",
-        "required": "Select a file."
+        "required": "Select a file.",
+        "whoSees": "Who sees it",
+        "customerShort": "Customer",
+        "internalShort": "Internal"
       },
       "gallery": {
         "previous": "Previous image",
         "next": "Next image",
         "imageOf": "{{current}} / {{total}}",
         "broken": "Image could not be loaded"
+      },
+      "access": {
+        "filesPresent": "To change from Public to Restricted, remove or re-upload only the product’s legacy public files. Internal files and new uploads do not block this change.",
+        "title": "Visibility",
+        "public": "Public",
+        "storedGrantsHint": "{{count}} stored grant(s). They apply again if the product becomes Restricted.",
+        "publicHint": "All customers see this product.",
+        "restricted": "Restricted",
+        "restrictedHint": "Only granted groups and customers see this product.",
+        "groups": "Granted groups",
+        "customers": "Granted customers",
+        "noGroups": "No groups yet.",
+        "noCustomers": "No customers found.",
+        "searchCustomers": "Search by name or email",
+        "needCustomersPermission": "To search and add customers, you need the permission to view customers.",
+        "emptyWarning": "Restricted product with nobody granted: no customer will see it.",
+        "readOnlyHint": "You can view, but not change, visibility.",
+        "toastSaved": "Visibility updated.",
+        "history": {
+          "title": "Access history",
+          "empty": "No changes recorded.",
+          "actorTeam": "Team",
+          "loadError": "Couldn't load the history.",
+          "groupsAdded": "+ {{names}}",
+          "groupsRemoved": "− {{names}}",
+          "customers_one": "{{count}} customer granted",
+          "customers_other": "{{count}} customers granted",
+          "unknownGroup": "deleted group"
+        },
+        "loadError": "Couldn't load this product's visibility.",
+        "retry": "Try again",
+        "createHint": "After saving the product, you can choose who can see it.",
+        "namesUnavailable": "Some customer names couldn't be loaded."
+      },
+      "badges": {
+        "restricted": "Restricted · {{count}}"
+      },
+      "visibilityFilter": {
+        "title": "Visibility",
+        "public": "Public",
+        "restricted": "Restricted"
+      }
+    },
+    "customerGroups": {
+      "title": "Customer groups",
+      "subtitle": "Group customers to unlock exclusive products.",
+      "create": "New group",
+      "createTitle": "New group",
+      "editTitle": "Edit group",
+      "search": "Search by name",
+      "searchShort": "Search group",
+      "empty": "No groups yet.",
+      "emptyHint": "Create a group to unlock products for specific customers.",
+      "noDescription": "No description",
+      "save": "Save",
+      "saving": "Saving...",
+      "toastCreated": "Group created.",
+      "toastUpdated": "Group updated.",
+      "toastDeleted": "Group deleted.",
+      "columns": {
+        "name": "Group",
+        "description": "Description",
+        "members": "Members",
+        "usage": "Usage",
+        "actions": "Actions"
+      },
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "usage": {
+        "none": "Not used",
+        "products_one": "{{count}} product",
+        "products_other": "{{count}} products"
+      },
+      "form": {
+        "name": "Name",
+        "description": "Description"
+      },
+      "validation": {
+        "nameRequired": "Enter a group name.",
+        "nameTooLong": "The name can be at most 200 characters.",
+        "descriptionTooLong": "The description can be at most 2000 characters."
+      },
+      "delete": "Delete",
+      "deleteTitle": "Delete group?",
+      "deleteBody": "{{name}} will be removed. Its members and product grants will be undone. Existing orders are unchanged.",
+      "deleteAffected": "Products using this group:",
+      "deleteNoAffected": "No product uses this group.",
+      "tabs": {
+        "details": "Details",
+        "members": "Members",
+        "history": "History"
+      },
+      "members": {
+        "title": "Members ({{count}})",
+        "add": "Add customer",
+        "searchPlaceholder": "Search customer by name or email…",
+        "searchLabel": "Search customer",
+        "selectHint": "Select one or more customers to add.",
+        "addSelected": "Add selected",
+        "noResults": "No customer found.",
+        "empty": "No members yet.",
+        "hint": "A customer can be in several groups.",
+        "unknown": "Customer",
+        "remove": "Remove",
+        "removeTitle": "Remove member?",
+        "removeBody": "{{name}} will no longer be part of the group.",
+        "toastAdded": "Members added.",
+        "toastRemoved": "Member removed."
+      },
+      "history": {
+        "title": "History",
+        "empty": "No history.",
+        "actorTeam": "Team",
+        "actions": {
+          "created": "created the group",
+          "updated": "updated the details",
+          "deleted": "deleted the group",
+          "membersAdded": "added members",
+          "memberRemoved": "removed a member",
+          "accessChanged": "changed a product's access",
+          "unknown": "Change recorded"
+        }
+      },
+      "readOnlyHint": "You don't have permission to edit customer groups.",
+      "errors": {
+        "load": "Could not load customer groups.",
+        "save": "Could not save the group.",
+        "delete": "Could not delete the group.",
+        "addMembers": "Could not add the members.",
+        "removeMember": "Could not remove the member.",
+        "loadHistory": "Could not load the history.",
+        "loadAccess": "Could not load the product access.",
+        "saveAccess": "Could not save the product access.",
+        "duplicateName": "A group with this name already exists."
       }
     },
     "requests": {
@@ -976,6 +1159,10 @@
       "subtitle": "Approve, prepare, and complete customer orders.",
       "empty": "No orders.",
       "view": "View",
+      "views": {
+        "list": "List",
+        "agenda": "Agenda"
+      },
       "total": "Total",
       "items": "Items",
       "timeline": "History",
@@ -1010,6 +1197,10 @@
         "tooLong": "Use no more than 1000 characters.",
         "label": "Reason",
         "confirm": "Confirm"
+      },
+      "history": {
+        "workFinished": "Work finished",
+        "released": "Resource released"
       }
     },
     "notifications": {
@@ -1054,6 +1245,7 @@
       "emptyState": "Does not require scheduling",
       "addRequirement": "Add resource",
       "save": "Save resources",
+      "saveErrorTitle": "Could not save",
       "toastSaved": "Resources saved successfully.",
       "requirementLabel": "Resource {{index}}",
       "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
@@ -1075,7 +1267,8 @@
         "unsupportedWorkWindow": "The chosen time is not supported for this scheduling.",
         "notSupportedYet": "Scheduling by category is not supported yet; select a specific resource.",
         "previewFailed": "Could not preview the scheduling.",
-        "usageActionFailed": "Could not update the resource usage."
+        "usageActionFailed": "Could not update the resource usage.",
+        "forbidden": "You do not have permission for this action."
       },
       "approvalPanel": {
         "title": "Approve and schedule",
@@ -1089,6 +1282,7 @@
         "estimatedReadyAt": "Estimated ready at",
         "notFeasible": "That time is not feasible for the selected resource.",
         "approveAndAllocate": "Approve and allocate",
+        "refusalTitle": "Cannot allocate",
         "approvalRule": "Approving reserves the resource for the order at that time.",
         "toastApproved": "Order approved and resource allocated."
       },
@@ -1096,7 +1290,6 @@
         "title": "Resource usage",
         "status": "Status",
         "workWindow": "Work window",
-        "start": "Start",
         "workFinished": "Finish work",
         "release": "Release",
         "cancelledHint": "This order was cancelled; finish or release the resource as needed.",
@@ -1188,6 +1381,30 @@
         "openOrder": "Open order",
         "close": "Close",
         "empty": "Select a block to see the details."
+      }
+    },
+    "todayAgenda": {
+      "title": "Today's agenda",
+      "subtitle": "{{date}} · resources and products",
+      "viewAll": "View agenda",
+      "rowLink": "View agenda",
+      "seeAll": "View all",
+      "empty": "Nothing scheduled for today.",
+      "reserved": "Reserved",
+      "status": {
+        "inUse": "In use",
+        "prep": "Prep",
+        "cleaning": "Cleaning",
+        "overdue": "Overdue",
+        "free": "Free"
+      },
+      "sub": {
+        "inUse": "Now: {{ref}} · until {{time}}",
+        "prep": "Prep: {{ref}} · starts {{time}}",
+        "cleaning": "Cleaning: {{ref}} · until {{time}}",
+        "overdue": "{{minutes}} min late",
+        "freeNext": "Next: {{ref}} · {{time}}",
+        "freeNone": "No use today"
       }
     }
   },
@@ -1563,6 +1780,7 @@
     "rentalsResources": "Resources",
     "catalog": "Sales",
     "catalogProducts": "Products",
+    "catalogCustomerGroups": "Customer groups",
     "catalogOrders": "Orders",
     "catalogRequests": "Requests",
     "catalogNotifications": "Sales alerts",
@@ -3659,6 +3877,23 @@
       "createRole": "Could not create the function.",
       "updateRole": "Could not update the function.",
       "deleteRole": "Could not delete the function."
+    },
+    "roleEditor": {
+      "backToRoles": "Back to roles",
+      "breadcrumb": "Roles",
+      "collapseAll": "Collapse all",
+      "createContinue": "Create and continue →",
+      "expandAll": "Expand all",
+      "membersEmpty": "No one has this role.",
+      "moduleCount": "{{selected}} of {{total}}",
+      "noResults": "No permissions found.",
+      "notFound": "Role not found.",
+      "searchPlaceholder": "Search permission",
+      "selectAllModule": "Select whole module",
+      "tabs": {
+        "dados": "Details",
+        "members": "Members"
+      }
     }
   },
   "admin": {

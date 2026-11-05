@@ -1,4 +1,5 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react"
+import { MemoryRouter, Route, Routes, useParams } from "react-router-dom"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -57,10 +58,23 @@ function setViewport(width: number) {
   })))
 }
 
+function RoleEditorStub() {
+  const { id } = useParams()
+  return <div>role-editor:{id}</div>
+}
+
 function renderRoles(roles: RoleResponse[] = [customRole]) {
   return render(
     <TestPermissionProvider permissions={["core.roles.read", "core.roles.manage"]}>
-      <PeopleRolesTab roles={roles} catalog={[]} onRolesChanged={vi.fn()} />
+      <MemoryRouter initialEntries={["/pessoas-e-acesso"]}>
+        <Routes>
+          <Route
+            path="/pessoas-e-acesso"
+            element={<PeopleRolesTab roles={roles} catalog={[]} onRolesChanged={vi.fn()} />}
+          />
+          <Route path="/pessoas-e-acesso/funcoes/:id" element={<RoleEditorStub />} />
+        </Routes>
+      </MemoryRouter>
     </TestPermissionProvider>,
   )
 }
@@ -180,31 +194,25 @@ describe("People mobile actions", () => {
     await waitFor(() => expect(row).toHaveFocus())
   })
 
-  it("keeps direct editing and the original delete dialog at 1024px", async () => {
+  it("navigates to the full-page editor and keeps the original delete dialog at 1024px", async () => {
     setViewport(1024)
     const user = userEvent.setup()
     renderRoles()
     expect(screen.queryByRole("button", { name: "Recepção" })).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Editar" }))
-    expect(await screen.findByRole("dialog", { name: "Perfil de acesso" })).toBeInTheDocument()
-    await user.keyboard("{Escape}")
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
     await user.click(screen.getByRole("button", { name: "Excluir" }))
     expect(await screen.findByRole("alertdialog", { name: "Excluir função" })).toBeInTheDocument()
+    await user.keyboard("{Escape}")
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument())
+    await user.click(screen.getByRole("button", { name: "Editar" }))
+    expect(await screen.findByText("role-editor:reception")).toBeInTheDocument()
   })
 
-  it("opens the existing role editor from the sheet and returns focus to the row", async () => {
+  it("navigates to the full-page role editor from the sheet", async () => {
     const user = userEvent.setup()
     renderRoles()
-    const row = screen.getByRole("button", { name: "Recepção" })
-    await user.click(row)
+    await user.click(screen.getByRole("button", { name: "Recepção" }))
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: /^Editar/ }))
-    const editor = await screen.findByRole("dialog", { name: "Perfil de acesso" })
-    expect(within(editor).getByDisplayValue("Recepção")).toBeInTheDocument()
-    await waitFor(() => expect(editor).toContainElement(document.activeElement as HTMLElement))
-    await user.keyboard("{Escape}")
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    await waitFor(() => expect(row).toHaveFocus())
+    expect(await screen.findByText("role-editor:reception")).toBeInTheDocument()
   })
 
   it("opens the existing field editor from the sheet and returns focus to the row", async () => {

@@ -62,6 +62,9 @@ export async function listPortalCatalogProducts(
   }
 }
 
+/** Product missing or not visible to this customer (API answers 404/400 for both; never reveal which). */
+export class PortalProductUnavailableError extends Error {}
+
 export async function getPortalCatalogProduct(
   id: string,
   options?: { signal?: AbortSignal },
@@ -75,6 +78,10 @@ export async function getPortalCatalogProduct(
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error
+    }
+    const status = isAxiosError(error) ? error.response?.status : undefined
+    if (status === 404 || status === 400) {
+      throw new PortalProductUnavailableError(i18n.t("tenantPortal.catalog.unavailableTitle"))
     }
     throwPortalError(error, "apiErrors.loadPortalCatalogProduct")
   }

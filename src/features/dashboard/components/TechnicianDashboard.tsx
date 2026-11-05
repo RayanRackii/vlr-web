@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TodayAgendaCard } from "@/features/catalog/components/agenda/TodayAgendaCard"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
@@ -78,6 +79,8 @@ export function TechnicianDashboard() {
         title={t("dashboard.technician.title")}
         description={t("dashboard.technician.description")}
       />
+
+      <TodayAgendaCard />
 
       {canReadWorkOrders && loadError ? (
         <Alert variant="destructive">

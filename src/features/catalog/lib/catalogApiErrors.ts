@@ -25,6 +25,7 @@ const MESSAGE_KEYS: Record<string, string> = {
 }
 
 const CODE_KEYS: Record<string, string> = {
+  "catalog.visibility.filesPresent": "catalog.products.access.filesPresent",
   DUPLICATE_PRODUCT_CODE: "catalog.products.errors.duplicateCode",
   FILE_TOO_LARGE: "catalog.products.files.tooLarge",
   FILE_TYPE_NOT_ALLOWED: "catalog.products.files.typeRejected",

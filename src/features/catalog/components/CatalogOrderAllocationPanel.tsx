@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
@@ -22,7 +22,9 @@ import {
 import {
   applyCatalogOrderAllocationUsage,
   approveCatalogOrderWithPlanning,
+  CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -96,6 +98,7 @@ function ApprovalPanel({
   const [preview, setPreview] = useState<CatalogOrderAllocationPreview | null>(null)
   const [previewing, setPreviewing] = useState(false)
   const [approving, setApproving] = useState(false)
+  const [refusal, setRefusal] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -140,6 +143,7 @@ function ApprovalPanel({
       return
     }
     setApproving(true)
+    setRefusal(null)
     try {
       const next = await approveCatalogOrderWithPlanning(order.id, {
         unitId,
@@ -154,9 +158,18 @@ function ApprovalPanel({
         onReloadNeeded()
         return
       }
-      toast.error(
-        error instanceof Error ? error.message : t("apiErrors.transitionCatalogOrder"),
-      )
+      const message =
+        error instanceof CatalogForbiddenError
+          ? t("catalog.resourcePlanning.errors.forbidden")
+          : error instanceof Error
+            ? error.message
+            : t("apiErrors.transitionCatalogOrder")
+      // Network/5xx failures are transient: show the error but keep the button
+      // enabled. Only a 403 or a business refusal (4xx) blocks the retry.
+      if (!(error instanceof CatalogRetryableError)) {
+        setRefusal(message)
+      }
+      toast.error(message)
     } finally {
       setApproving(false)
     }
@@ -178,7 +191,10 @@ function ApprovalPanel({
             modal={false}
             value={unitId}
             onValueChange={(value) => {
-              if (typeof value === "string") setUnitId(value)
+              if (typeof value === "string") {
+                setUnitId(value)
+                setRefusal(null)
+              }
             }}
             items={units.map((unit) => ({ value: unit.id, label: unit.name }))}
           >
@@ -202,6 +218,7 @@ function ApprovalPanel({
             onChange={(event) => {
               setWorkStart(event.target.value)
               setPreview(null)
+              setRefusal(null)
             }}
           />
         </label>
@@ -248,10 +265,19 @@ function ApprovalPanel({
         )
       ) : null}
 
+      {refusal ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t("catalog.resourcePlanning.approvalPanel.refusalTitle")}</AlertTitle>
+          <AlertDescription>{refusal}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <LoadingButton
         type="button"
         loading={approving}
-        disabled={!unitId || !workStart || (preview != null && !preview.isFeasible)}
+        disabled={
+          !unitId || !workStart || refusal != null || (preview != null && !preview.isFeasible)
+        }
         onClick={() => void approve()}
       >
         {t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")}
@@ -280,9 +306,9 @@ function ActiveUsageCard({
   locale: string
   t: (key: string, options?: Record<string, unknown>) => string
 }) {
-  const [busyAction, setBusyAction] = useState<"start" | "work-finished" | "release" | null>(null)
+  const [busyAction, setBusyAction] = useState<"work-finished" | "release" | null>(null)
 
-  async function runUsage(action: "start" | "work-finished" | "release") {
+  async function runUsage(action: "work-finished" | "release") {
     setBusyAction(action)
     try {
       const next = await applyCatalogOrderAllocationUsage(
@@ -302,10 +328,8 @@ function ActiveUsageCard({
     }
   }
 
-  const canStart = order.status !== "Cancelled" && allocation.status === "Scheduled"
   const canFinish = allocation.status === "Running"
   const canRelease = allocation.status === "Cleaning"
-  const showStart = order.status !== "Cancelled"
 
   return (
     <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -325,16 +349,6 @@ function ActiveUsageCard({
         {formatCatalogDate(allocation.plannedWorkEnd, locale, timeZoneId)}
       </p>
       <div className="flex flex-wrap gap-2">
-        {showStart ? (
-          <LoadingButton
-            type="button"
-            loading={busyAction === "start"}
-            disabled={!canAllocate || !canStart}
-            onClick={() => void runUsage("start")}
-          >
-            {t("catalog.resourcePlanning.activeUse.start")}
-          </LoadingButton>
-        ) : null}
         <LoadingButton
           type="button"
           loading={busyAction === "work-finished"}

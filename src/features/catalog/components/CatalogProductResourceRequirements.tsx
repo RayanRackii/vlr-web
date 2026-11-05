@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import {
   CatalogPlanningVersionConflictError,
+  CatalogRetryableError,
   getCatalogProductResourceRequirements,
   replaceCatalogProductResourceRequirements,
 } from "@/features/catalog/services/catalogService"
@@ -49,7 +51,7 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   const [rows, setRows] = useState<DraftRow[]>([])
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<{ message: string; blocking: boolean } | null>(null)
   const [loadedForProductId, setLoadedForProductId] = useState(productId)
 
   // Reset to loading when the product changes (adjust state during render, not in the effect).
@@ -107,16 +109,19 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
   }
 
   function updateRow(clientId: string, patch: Partial<DraftRow>) {
+    setSaveError(null)
     setRows((current) =>
       current.map((row) => (row.clientId === clientId ? { ...row, ...patch } : row)),
     )
   }
 
   function removeRow(clientId: string) {
+    setSaveError(null)
     setRows((current) => current.filter((row) => row.clientId !== clientId))
   }
 
   function addRow() {
+    setSaveError(null)
     setRows((current) => [...current, emptyRow()])
   }
 
@@ -154,7 +159,9 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         error instanceof Error && error.message
           ? error.message
           : t("catalog.resourcePlanning.errors.saveRequirements")
-      setSaveError(message)
+      // Network/5xx failures are transient: show the error but keep Save enabled.
+      // Validation/business refusals (4xx) block re-saving the same rows.
+      setSaveError({ message, blocking: !(error instanceof CatalogRetryableError) })
       toast.error(message)
     } finally {
       setSaving(false)
@@ -292,19 +299,27 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         </ul>
       )}
 
+      {saveError ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t("catalog.resourcePlanning.saveErrorTitle")}</AlertTitle>
+          <AlertDescription>{saveError.message}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           {t("catalog.resourcePlanning.addRequirement")}
         </Button>
-        <LoadingButton type="button" size="sm" loading={saving} onClick={() => void save()}>
+        <LoadingButton
+          type="button"
+          size="sm"
+          loading={saving}
+          disabled={saveError?.blocking ?? false}
+          onClick={() => void save()}
+        >
           {t("catalog.resourcePlanning.save")}
         </LoadingButton>
       </div>
-      {saveError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {saveError}
-        </p>
-      ) : null}
     </div>
   )
 }

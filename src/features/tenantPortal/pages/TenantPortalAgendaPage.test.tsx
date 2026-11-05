@@ -1513,6 +1513,86 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(screen.getAllByText(i18n.t("tenantPortal.agenda.slotTaken")).length).toBeGreaterThan(0)
   })
 
+  it("shows a friendly pt-BR reason (not raw English) when the quote is unavailable", async () => {
+    checkAvailability.mockResolvedValue({
+      isAvailable: false,
+      requestedQuantity: 1,
+      availableQuantity: 0,
+      estimatedTotalAmount: null,
+      reason: "Location is already reserved for the requested interval.",
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    expect(
+      await screen.findByText(
+        i18n.t("tenantPortal.agenda.reason.alreadyReserved"),
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        "Location is already reserved for the requested interval.",
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows a price-not-set message and keeps Reservar disabled when available but unpriced", async () => {
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: null,
+      reason: null,
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.agenda.priceUndefined")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      }),
+    ).toBeDisabled()
+  })
+
+  it("re-runs the quote via Tentar novamente after an availability error", async () => {
+    checkAvailability.mockReset()
+    checkAvailability.mockRejectedValueOnce(new Error("network"))
+    checkAvailability.mockResolvedValue({
+      isAvailable: true,
+      requestedQuantity: 1,
+      availableQuantity: 1,
+      estimatedTotalAmount: 80,
+      reason: null,
+    })
+    const user = userEvent.setup()
+    renderAgenda()
+
+    await user.click(await screen.findByRole("button", { name: "Quadra 1" }))
+
+    const retry = await screen.findByRole("button", {
+      name: i18n.t("tenantPortal.agenda.retry"),
+    })
+    const callsBefore = checkAvailability.mock.calls.length
+
+    await user.click(retry)
+
+    await waitFor(() =>
+      expect(checkAvailability.mock.calls.length).toBeGreaterThan(callsBefore),
+    )
+    expect(
+      await screen.findByText(
+        i18n.t("tenantPortal.agenda.available", { amount: formatMoney(80) }),
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("refuses join-and-reserve when the selected quote is ready but unavailable", async () => {
     checkAvailability.mockResolvedValue({
       isAvailable: false,

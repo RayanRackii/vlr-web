@@ -11,6 +11,10 @@ import i18n from "@/lib/i18n"
 vi.mock("@/features/catalog/services/catalogService", () => ({ listCatalogOrders: vi.fn() }))
 import { listCatalogOrders } from "@/features/catalog/services/catalogService"
 
+vi.mock("@/features/catalog/components/agenda/TodayAgendaCard", () => ({
+  TodayAgendaCard: () => <div data-testid="today-agenda-card">Agenda card</div>,
+}))
+
 const listOrdersMock = vi.mocked(listCatalogOrders)
 const ORDER: CatalogOrder = {
   id: "order-1", displayNumber: "PED-12", orderNumber: 12, status: "Requested",
@@ -20,9 +24,9 @@ const ORDER: CatalogOrder = {
   orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired", estimatedReadyAt: null,
 }
 
-function renderPage() {
+function renderPage(entry = "/catalogo/pedidos") {
   return render(
-    <MemoryRouter initialEntries={["/catalogo/pedidos"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <TestPermissionProvider permissions={["catalog.orders.read"]}>
         <Routes>
           <Route path="/catalogo/pedidos" element={<CatalogOrdersPage />} />
@@ -77,6 +81,24 @@ describe("staff catalog orders presentation", () => {
     expect(screen.queryByRole("link", { name: i18n.t("catalog.products.title") })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.orders.view") }))
     expect(screen.getByText("Order detail destination")).toBeInTheDocument()
+  })
+
+  it("defaults to the list view and switches to the agenda card via the sub-tab", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText("PED-12")
+    expect(screen.queryByTestId("today-agenda-card")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("tab", { name: i18n.t("catalog.orders.views.agenda") }))
+    expect(await screen.findByTestId("today-agenda-card")).toBeInTheDocument()
+    expect(screen.queryByLabelText(i18n.t("catalog.staff.orderSummary"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument()
+  })
+
+  it("opens the agenda view directly from ?visao=agenda", async () => {
+    renderPage("/catalogo/pedidos?visao=agenda")
+    expect(await screen.findByTestId("today-agenda-card")).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: i18n.t("catalog.orders.views.agenda") })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("tab", { name: i18n.t("catalog.orders.views.list") })).toHaveAttribute("aria-selected", "false")
   })
 
   it("distinguishes loading, empty and error states", async () => {
