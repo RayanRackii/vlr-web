@@ -268,6 +268,8 @@ Historical Slice 5 note below. Spec: `vlr-api/docs/plans/active/2026-09-18-pmoc-
 
 ## 6. Catalog & Orders v1 — EM ANDAMENTO
 
+- [x] QA R38 (WEB, local): vazio de Arquivos traduzido em pt-BR/en/es; ações de quantidade/adicionar em fluxo e empilhadas abaixo de 640px; editor com abas em múltiplas linhas e Salvar em coluna própria. Regressão pela montagem real de AppRoutes confirma que host e `/t/:subdomain/catalogo/:productId` já exibem o mesmo estado de produto indisponível, com guard de módulo preservado. 71 testes afetados e `npx tsc -b` aprovados; ESLint dos arquivos TS/TSX alterados mantém somente dois erros preexistentes de hooks no detalhe B2C (confirmados em HEAD). Smoke visual 393/532px pendente. API: nenhuma mudança necessária.
+
 - [x] B2 QA (2026-11-04, local): testes de criação adaptados ao sheet “Criar e continuar”; navegação ao novo produto, edição rápida nome/preço/status com demais campos preservados e retenção após erro. Histórico visível na página; regressões de acesso cobrem payloads Público/Restrito e ordem produto → grants → histórico. Sem alteração de produção ou contrato. Validação: TypeScript e lint:ratchet aprovados; Vitest 312 arquivos/2934 testes aprovados com `--configLoader runner` (loader padrão bloqueado por EROFS em `node_modules/.vite-temp`). Expectativa de rota B2 no teste de manifests atualizada.
 - [ ] B2: smoke visual em DEV da página e dos sheets (desktop/mobile); API: nenhuma mudança necessária neste escopo.
 

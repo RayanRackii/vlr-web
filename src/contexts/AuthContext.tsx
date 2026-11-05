@@ -10,7 +10,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 
 import { syncCurrentUserCacheToAuthUser } from "@/features/users/services/currentUserCache"
 import { logAuthSessionEvent } from "@/lib/authSessionLog"
-import { isSigningOut, purgeSignedOutSessions } from "@/lib/signOutMarker"
+import { isSigningOut } from "@/lib/signOutMarker"
 import { supabase } from "@/lib/supabase"
 
 type AuthContextValue = {
@@ -110,9 +110,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      // After Sair, a refresh that was already in flight must not bring the user back.
+      // After Sair, a refresh that was already in flight must not bring the user
+      // back. The staff auth storage stays shared across tabs, so we only ignore
+      // the event for this page instead of purging the (possibly newly logged-in)
+      // session another tab just wrote.
       if (isSigningOut()) {
-        purgeSignedOutSessions()
         return
       }
 

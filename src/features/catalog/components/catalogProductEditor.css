@@ -1,0 +1,40 @@
+@media (max-width: 767px) {
+  .catalog-product-editor > header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .catalog-product-editor > header > h1 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .catalog-product-editor > header > .flex {
+    grid-column: 1;
+  }
+
+  .catalog-product-editor > header > .ml-auto {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+}
+
+.catalog-product-editor > [data-slot="tabs"] {
+  min-width: 0;
+}
+
+.catalog-product-editor [data-slot="tabs-list"] {
+  width: 100%;
+  height: auto;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.catalog-product-editor [data-slot="tabs-trigger"] {
+  flex: none;
+  height: auto;
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}

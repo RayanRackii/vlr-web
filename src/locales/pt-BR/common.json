@@ -976,6 +976,7 @@
         "currency": "Moeda"
       },
       "files": {
+        "empty": "Nenhum arquivo adicionado.",
         "pendingRecord": "Envio pendente",
         "failedRecord": "Envio falhou",
         "title": "Arquivos",

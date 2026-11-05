@@ -135,7 +135,7 @@ export function PortalCatalogProductPage() {
     t("tenantPortal.catalog.priceOnRequest")
 
   return (
-    <div className="portal-catalog-detail space-y-6">
+    <div className="portal-catalog-detail min-w-0 space-y-6">
       <Button
         type="button"
         variant="ghost"
@@ -179,14 +179,14 @@ export function PortalCatalogProductPage() {
             {product.price == null ? (
               <Badge variant="warning">{t("tenantPortal.catalog.priceOnRequest")}</Badge>
             ) : (
-              <p className="text-2xl font-bold tracking-tight text-foreground">{priceLabel}</p>
+              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground">{priceLabel}</p>
             )}
             {product.description ? (
               <p className="whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{product.description}</p>
             ) : null}
           </div>
 
-          <div className="portal-catalog-detail-actions sticky bottom-[calc(80px+env(safe-area-inset-bottom))] md:static">
+          <div className="portal-catalog-detail-actions min-w-0">
             <div className="portal-catalog-stepper">
               <Button
                 type="button"
@@ -221,7 +221,7 @@ export function PortalCatalogProductPage() {
             </div>
             <PortalAddToCartButton
               type="button"
-              className="portal-catalog-button portal-catalog-primary min-w-[9rem] flex-1 whitespace-nowrap text-primary-foreground"
+              className="portal-catalog-button portal-catalog-primary min-w-0 flex-1 text-primary-foreground"
               style={{ backgroundColor: primary }}
               onClick={() => {
                 cart.add(product.id, quantityRef.current)
