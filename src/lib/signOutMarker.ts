@@ -70,15 +70,17 @@ export function isSigningOut(): boolean {
 /** Supabase uses this adapter so even an already-running refresh cannot save new tokens. */
 export const staffAuthStorage = {
   getItem(key: string): string | null {
+    // While the barrier is active this page stays signed out, but the key is
+    // shared across tabs: never remove it, just hide it from this page.
     if (AUTH_STORAGE_KEY.test(key) && isSigningOut()) {
-      window.localStorage.removeItem(key)
       return null
     }
     return window.localStorage.getItem(key)
   },
   setItem(key: string, value: string): void {
+    // An in-flight refresh must not revive this page; skip the write without
+    // touching the shared key another tab may now own.
     if (AUTH_STORAGE_KEY.test(key) && isSigningOut()) {
-      window.localStorage.removeItem(key)
       return
     }
     window.localStorage.setItem(key, value)
@@ -99,7 +101,9 @@ export function resetSignOutMarkerForTests(): void {
 }
 
 if (typeof window !== "undefined") {
+  // Reloading a signed-out tab re-arms the in-memory barrier. We do NOT purge
+  // shared storage here: getItem returns null while signing out, so this tab
+  // stays signed out without deleting a session another tab may have written.
   signingOut = readMarker()
   writeMarker()
-  purgeSignedOutSessions()
 }

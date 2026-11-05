@@ -178,8 +178,55 @@ describe("Sair reload race", () => {
 
     vi.resetModules()
     const reloaded = await import("@/lib/signOutMarker")
-    expect(window.localStorage.getItem(KEY)).toBeNull()
+    // The shared key is no longer wiped on reload (another tab may own it), but
+    // this tab stays signed out because its adapter hides the key.
+    expect(reloaded.staffAuthStorage.getItem(KEY)).toBeNull()
     expect(reloaded.isSigningOut()).toBe(true)
+  })
+
+  it("(a) a SIGNED_IN from another tab after Sair must not wipe the shared session", async () => {
+    const server = deferred<{ data: null; error: null }>()
+    vi.mocked(supabase.auth.admin.signOut).mockReturnValue(server.promise as never)
+    let listener: ((event: AuthChangeEvent, s: Session | null) => void) | null = null
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((cb) => {
+      listener = cb as typeof listener
+      return { data: { subscription: { unsubscribe: vi.fn() } } } as never
+    })
+    void signOutStaffPortal()
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null } as never)
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(screen.getByText("user:none")).toBeInTheDocument())
+
+    // Another tab logs in and writes the SHARED auth key.
+    window.localStorage.setItem(KEY, storedValue("staff-b"))
+    // Supabase broadcasts SIGNED_IN to this signed-out tab; its adapter also runs.
+    act(() => listener?.("SIGNED_IN", session("staff-b")))
+    staffAuthStorage.getItem(KEY)
+    staffAuthStorage.setItem(KEY, storedValue("staff-b"))
+
+    // This tab stays signed out, but tab B's session survives for its Bearer.
+    expect(screen.getByText("user:none")).toBeInTheDocument()
+    expect(window.localStorage.getItem(KEY)).toBe(storedValue("staff-b"))
+
+    server.reject(new Error("offline"))
+  })
+
+  it("(b) a reload after Sair stays signed out without reviving an in-flight refresh", async () => {
+    await signOutStaffPortal()
+
+    vi.resetModules()
+    const reloaded = await import("@/lib/signOutMarker")
+    expect(reloaded.isSigningOut()).toBe(true)
+    // Nothing to read for this tab.
+    expect(reloaded.staffAuthStorage.getItem(KEY)).toBeNull()
+    // An in-flight refresh tries to save; it must not make this tab signed in.
+    reloaded.staffAuthStorage.setItem(KEY, storedValue("refreshed-after-logout"))
+    expect(reloaded.staffAuthStorage.getItem(KEY)).toBeNull()
   })
 
   it("(c) a failed or hanging server sign-out still ends the local session within the bound", async () => {
