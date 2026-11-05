@@ -1038,6 +1038,7 @@
           "noGroups": "nenhum",
           "groupsAdded": "+ {{names}}",
           "groupsRemoved": "− {{names}}",
+          "customers_zero": "nenhum cliente avulso",
           "customers_one": "{{count}} cliente liberado",
           "customers_other": "{{count}} clientes liberados",
           "unknownGroup": "grupo removido"

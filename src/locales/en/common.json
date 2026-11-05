@@ -1038,6 +1038,7 @@
           "noGroups": "none",
           "groupsAdded": "+ {{names}}",
           "groupsRemoved": "− {{names}}",
+          "customers_zero": "no individual customers",
           "customers_one": "{{count}} customer granted",
           "customers_other": "{{count}} customers granted",
           "unknownGroup": "deleted group"

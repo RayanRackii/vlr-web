@@ -618,11 +618,11 @@ export function CatalogProductEditorPage() {
                 ]}
               />
             </div>
-            <div className="min-w-0 basis-64 flex-1 space-y-1">
-              <label htmlFor="catalog-product-file-input" className="text-sm font-medium">
+            <div className="relative min-w-0 basis-64 flex-1 space-y-1">
+              <label htmlFor="catalog-product-file-input" className="sr-only">
                 {t("catalog.products.files.select")}
               </label>
-              <Input
+              <input
                 ref={fileInputRef}
                 className="sr-only"
                 tabIndex={-1}

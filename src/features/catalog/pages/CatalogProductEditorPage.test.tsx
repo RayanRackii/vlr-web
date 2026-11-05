@@ -186,7 +186,7 @@ describe("CatalogProductEditorPage", () => {
     const tabs = await screen.findAllByRole("tab")
     expect(tabs).toHaveLength(5)
     const list = screen.getByRole("tablist")
-    expect(list).toHaveClass("h-auto!", "flex-wrap", "w-full")
+    expect(list).toHaveClass("!h-auto", "flex-wrap", "w-full")
     expect(list.parentElement).not.toHaveClass("overflow-x-auto")
     for (const tab of tabs) {
       await userEvent.click(tab)
@@ -220,7 +220,7 @@ describe("CatalogProductEditorPage", () => {
     renderPage()
     await user.click(await screen.findByRole("tab", { name: new RegExp(i18n.t("catalog.products.files.title")) }))
     const input = screen.getByLabelText(i18n.t("catalog.products.files.select"))
-    expect(input).toHaveClass("min-w-0", "w-full")
+    expect(input).toHaveClass("sr-only")
     expect(input.parentElement?.parentElement).not.toHaveClass("md:flex-row")
     expect(input.parentElement?.parentElement).toHaveClass("min-w-0", "flex-wrap")
   })
