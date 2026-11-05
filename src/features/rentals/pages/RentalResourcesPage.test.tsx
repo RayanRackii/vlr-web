@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter } from "react-router-dom"
+import { createMemoryRouter, RouterProvider, Routes, Route, Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -72,6 +72,7 @@ vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
 
 import { getUnits } from "@/features/assets/services/unitsService"
 import { getAssetPricings } from "@/features/assets/services/rentalPricingService"
+import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourceEditorPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import {
   createRentalAsset,
@@ -97,19 +98,31 @@ const getAssetPricingsMock = vi.mocked(getAssetPricings)
 
 const WRITE_PERMS = ["rentals.assets.read", "rentals.assets.write", "rentals.pricing.read"] as const
 
-function renderPage(permissions: readonly string[] = WRITE_PERMS) {
-  return render(
-    <MemoryRouter>
+function renderPage(permissions: readonly string[] = WRITE_PERMS, path = "/configuracoes/recursos") {
+  const router = createMemoryRouter([{ path: "*", element: <>
+    <Link to="/dashboard">Dashboard</Link>
+    <TestRoutes />
+  </> }], { initialEntries: ["/dashboard", path], initialIndex: 1 })
+  function TestRoutes() {
+    const navigate = useNavigate()
+    return <>
+      <button onClick={() => navigate(-1)}>Back</button>
       <TestPermissionProvider permissions={permissions} activeModules={["rentals"]}>
-        <RentalResourcesPage />
+        <Routes>
+          <Route path="/dashboard" element={<h1>Dashboard</h1>} />
+          <Route path="/configuracoes/recursos" element={<RentalResourcesPage />} />
+          <Route path="/configuracoes/recursos/novo" element={<RentalResourceEditorPage />} />
+          <Route path="/configuracoes/recursos/:id" element={<RentalResourceEditorPage />} />
+        </Routes>
       </TestPermissionProvider>
-    </MemoryRouter>,
-  )
+    </>
+  }
+  return { ...render(<RouterProvider router={router} />), router }
 }
 
 async function openPricingTab(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
-    screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }),
+    screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }),
   )
 }
 
@@ -183,6 +196,92 @@ describe("RentalResourcesPage", () => {
       categoryId: CATEGORY_ID,
       categoryName: "Quadra",
     })
+  })
+
+  it("opens the create page directly with both save actions gated by validity", async () => {
+    renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
+    expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.add"), level: 1 })).toBeVisible()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: i18n.t("common.save") })).toBeDisabled()
+    expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
+    expect(screen.getByRole("region", { name: "Básico" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "Preço e regras" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "Visual" })).toBeVisible()
+  })
+
+  it("protects dirty edits on unload, Cancel, breadcrumb, sidebar and Back until departure is confirmed", async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
+    const name = await screen.findByRole("textbox", { name: i18n.t("rentals.resources.form.name") })
+    const unload = () => {
+      const event = new Event("beforeunload", { cancelable: true })
+      window.dispatchEvent(event)
+      return event.defaultPrevented
+    }
+    expect(unload()).toBe(false)
+    await user.type(name, "Sala nova")
+    expect(unload()).toBe(true)
+    for (const departure of [
+      screen.getAllByRole("button", { name: i18n.t("common.cancel") })[0]!,
+      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
+      screen.getByRole("link", { name: "Dashboard" }),
+      screen.getByRole("button", { name: "Back" }),
+    ]) {
+      await user.click(departure)
+      expect(await screen.findByRole("alertdialog")).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      await user.click(screen.getByRole("button", { name: i18n.t("common.cancel"), hidden: false }))
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument())
+      expect(name).toHaveValue("Sala nova")
+    }
+    await user.clear(name)
+    expect(unload()).toBe(false)
+    await user.type(name, "Sala nova")
+    await user.click(screen.getByRole("link", { name: "Dashboard" }))
+    await user.click(await screen.findByRole("button", { name: i18n.t("fullPage.discard") }))
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeVisible()
+    unmount()
+    expect(unload()).toBe(false)
+  })
+
+  it("blocks Cancel, breadcrumb and sidebar departure while saving, then refreshes the resource list", async () => {
+    let resolveSave!: (value: Awaited<ReturnType<typeof createRentalAsset>>) => void
+    const saved = { id: RENTAL_ID, assetId: ASSET_ID, name: "Sala nova", isActive: true, requiresDeposit: true, schedulePolicy: "SlotGrid", unitId: UNIT_ID, type: "Location", totalQuantity: 1, queueEnabled: false } as const
+    createMock.mockReturnValue(new Promise((resolve) => { resolveSave = resolve }))
+    const user = userEvent.setup()
+    renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
+    const name = await screen.findByRole("textbox", { name: i18n.t("rentals.resources.form.name") })
+    await user.type(name, "Sala nova")
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }))
+    await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1))
+    for (const button of [
+      ...screen.getAllByRole("button", { name: i18n.t("common.cancel") }),
+      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
+    ]) {
+      expect(button).toBeDisabled()
+      await user.click(button)
+    }
+    await user.click(screen.getByRole("link", { name: "Dashboard" }))
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    expect(name).toHaveValue("Sala nova")
+    expect(listAssetsMock).not.toHaveBeenCalled()
+    listAssetsMock.mockResolvedValue([saved])
+    vi.useFakeTimers()
+    try {
+      await act(async () => { resolveSave(saved) })
+      const unload = new Event("beforeunload", { cancelable: true })
+      window.dispatchEvent(unload)
+      expect(unload.defaultPrevented).toBe(false)
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
+    } finally { vi.useRealTimers() }
+    expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.title"), level: 1 })).toBeVisible()
+    expect(await screen.findByText("Sala nova")).toBeVisible()
+  })
+
+  it("does not turn a missing edit ID into resource creation", async () => {
+    renderPage(WRITE_PERMS, "/configuracoes/recursos/missing")
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("rentals.resources.editor.notFound"))
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+    expect(createMock).not.toHaveBeenCalled()
   })
 
   it("summarizes real resources by rental type, including pending deletions", async () => {
@@ -267,7 +366,7 @@ describe("RentalResourcesPage", () => {
     }
   })
 
-  it("shows an existing resource's price, allowed durations, and capacity in the list and drawer", async () => {
+  it("shows an existing resource's price, allowed durations, and capacity in the list and editor", async () => {
     listAssetsMock.mockResolvedValue([
       {
         id: RENTAL_ID,
@@ -318,7 +417,7 @@ describe("RentalResourcesPage", () => {
     expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
 
     await user.click(screen.getByRole("button", { name: /Quadra 1/ }))
-    expect(await screen.findAllByText(/A partir de: R\$ 45,00 por horário/)).toHaveLength(2)
+    expect(await screen.findAllByText(/A partir de: R\$ 45,00 por horário/)).toHaveLength(1)
   })
 
   it("shows empty rentables CTA when categories exist", async () => {
@@ -338,7 +437,7 @@ describe("RentalResourcesPage", () => {
   })
 
   it("replaces a raw FORBIDDEN load error with the translated denial", async () => {
-    getUnitsMock.mockRejectedValue(new Error("FORBIDDEN"))
+    listAssetsMock.mockRejectedValue(new Error("FORBIDDEN"))
     renderPage(["rentals.assets.read"])
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -349,13 +448,13 @@ describe("RentalResourcesPage", () => {
   })
 
   it("offers a retry after a loading failure", async () => {
-    getUnitsMock.mockRejectedValueOnce(new Error("network failed"))
+    listAssetsMock.mockRejectedValueOnce(new Error("network failed"))
     renderPage()
 
     const retry = await screen.findByRole("button", { name: i18n.t("common.retry") })
     await userEvent.setup().click(retry)
 
-    await waitFor(() => expect(getUnitsMock).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(listAssetsMock).toHaveBeenCalledTimes(2))
   })
 
   it("keeps resource creation available when there are no categories", async () => {
@@ -374,7 +473,7 @@ describe("RentalResourcesPage", () => {
   it.each([
     { label: "server stores it", storedAfter: 1, expectSuccess: true },
     { label: "server drops it (QA R18)", storedAfter: null, expectSuccess: false },
-  ])("sends cancelCutoffHours=1 from the drawer and toasts honestly when the $label", async ({ storedAfter, expectSuccess }) => {
+  ])("sends cancelCutoffHours=1 from the editor and toasts honestly when the $label", async ({ storedAfter, expectSuccess }) => {
     const existing = {
       id: RENTAL_ID, assetId: ASSET_ID, name: "Projetor Horario", isActive: true, requiresDeposit: true,
       schedulePolicy: "SlotGrid" as const, unitId: UNIT_ID, type: "Location" as const, totalQuantity: 1,
@@ -451,7 +550,7 @@ describe("RentalResourcesPage", () => {
   it("shows the unit field when the tenant has multiple units", async () => {
     const user = userEvent.setup()
     const secondUnitId = "ffffffff-ffff-4fff-8fff-ffffffffffff"
-    getUnitsMock.mockResolvedValueOnce([
+    getUnitsMock.mockResolvedValue([
       {
         id: UNIT_ID,
         tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
@@ -503,7 +602,7 @@ describe("RentalResourcesPage", () => {
   it("does not offer inline unit creation without core.units.write", async () => {
     const user = userEvent.setup()
     const secondUnitId = "ffffffff-ffff-4fff-8fff-ffffffffffff"
-    getUnitsMock.mockResolvedValueOnce([
+    getUnitsMock.mockResolvedValue([
       {
         id: UNIT_ID,
         tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",

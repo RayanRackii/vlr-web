@@ -24,7 +24,7 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   }] }),
 }))
 
-import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
+import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
@@ -35,18 +35,18 @@ async function renderVisualTab() {
   const user = userEvent.setup()
   render(
     <AuthProvider><TestPermissionProvider permissions={["rentals.assets.write"]}>
-      <RentalResourceSheet open onOpenChange={vi.fn()} editing={null}
+      <RentalResourceEditorForm onCancel={vi.fn()} editing={null}
         units={[{ id, tenantId: id, name: "Matriz", isActive: true }]}
         categories={[{ id, name: "Espaço" }]}
         families={[{ id, key: "spaces", label: "Espaços", fields: [], sortOrder: 0, isActive: true }]}
         busy={false} readOnly={false} onSubmit={vi.fn().mockResolvedValue(true)} />
     </TestPermissionProvider></AuthProvider>,
   )
-  await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.visual") }))
+  await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.visual") }))
   return user
 }
 
-describe("RentalResourceSheet visual validation", () => {
+describe("RentalResourceEditorForm visual validation", () => {
   it.each([
     ["unit", false, i18n.t("rentals.resources.validation.unitRequired")],
     ["unit", true, i18n.t("rentals.resources.validation.unitRequired")],
@@ -57,7 +57,7 @@ describe("RentalResourceSheet visual validation", () => {
     const otherId = "22222222-2222-2222-2222-222222222222"
     render(
       <AuthProvider><TestPermissionProvider permissions={["rentals.assets.write", ...(inlineUnit ? ["core.units.write"] : [])]}>
-        <RentalResourceSheet open onOpenChange={vi.fn()} editing={null}
+        <RentalResourceEditorForm onCancel={vi.fn()} editing={null}
           units={[{ id, tenantId: id, name: "Matriz", isActive: true }, { id: otherId, tenantId: id, name: "Filial", isActive: true }]}
           categories={[{ id, name: "Espaço" }, { id: otherId, name: "Outro espaço" }]}
           families={[{ id, key: "spaces", label: "Espaços", fields: [], sortOrder: 0, isActive: true }, { id: otherId, key: "goods", label: "Bens", fields: [], sortOrder: 1, isActive: true }]}
@@ -76,7 +76,10 @@ describe("RentalResourceSheet visual validation", () => {
     expect(error).toBeVisible()
     expect(error).toHaveTextContent(message)
     expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
+    expect(document.querySelector('[class*="chevron"]')).toBeNull()
+    if (field === "family") expect(input.querySelector(".lucide-tag")).not.toBeNull()
     await user.click(input)
+    expect(document.querySelector('[class*="chevron"]')).toBeNull()
     await user.click(await screen.findByRole("option", { name: field === "unit" ? "Matriz" : field === "category" ? "Espaço" : "Espaços" }))
     expect(input).toHaveAttribute("aria-invalid", "false")
     expect(input).not.toHaveAttribute("aria-describedby")
@@ -88,7 +91,7 @@ describe("RentalResourceSheet visual validation", () => {
     ["cancelCutoffLabel", "cancelCutoffHours", "cancelCutoffHours", "cancelCutoffRange", "8761"],
   ])("shows %s errors on blur while keeping static guidance valid", async (modeLabel, optionLabel, fieldLabel, messageKey, invalidValue) => {
     const user = await renderVisualTab()
-    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
     const choices = screen.getByRole("radiogroup", { name: i18n.t(`rentals.resources.form.${modeLabel}`) })
     await user.click(within(choices).getByRole("radio", { name: i18n.t(`rentals.resources.form.${optionLabel}`) }))
     const input = screen.getByRole("textbox", { name: i18n.t(`rentals.resources.form.${fieldLabel}`) })
@@ -118,7 +121,7 @@ describe("RentalResourceSheet visual validation", () => {
 
   it("links the empty queue opening time error after blur and removes it when corrected", async () => {
     const user = await renderVisualTab()
-    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.pricingRules") }))
     await user.click(screen.getByRole("switch", { name: i18n.t("rentals.resources.form.queueEnabled") }))
     const input = screen.getByLabelText(i18n.t("rentals.resources.form.queueOpeningTime"))
     const message = i18n.t("rentals.resources.validation.queueOpeningTimeRequired")
@@ -138,7 +141,7 @@ describe("RentalResourceSheet visual validation", () => {
 
   it("shows quantity errors after blur before submit and clears them when corrected", async () => {
     const user = await renderVisualTab()
-    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
     await user.click(screen.getByRole("radio", { name: i18n.t("rentals.resources.typeGood") }))
     const input = screen.getByRole("spinbutton", { name: i18n.t("rentals.resources.form.totalQuantity") })
     const message = i18n.t("rentals.resources.validation.quantityMin")
@@ -189,7 +192,7 @@ describe("RentalResourceSheet visual validation", () => {
 
   it("reveals a blank add-resource name beside the field with an invalid border after blur", async () => {
     const user = await renderVisualTab()
-    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.sheetTabs.basic") }))
     const name = screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.name") })
     const message = i18n.t("rentals.resources.validation.nameRequired")
     expect(screen.queryByText(message)).not.toBeInTheDocument()

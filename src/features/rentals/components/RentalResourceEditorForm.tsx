@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { CircleX, LayoutTemplate } from "lucide-react"
+import { CircleX, LayoutTemplate, Maximize2, Plus, Tag } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { InlineCreateSelect } from "@/components/inline-create/InlineCreateSelect"
@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -28,16 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -66,9 +57,9 @@ import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVisualIconMap"
 import "./rentalResources.css"
 
-type RentalResourceSheetProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+type RentalResourceEditorFormProps = {
+  onDirtyChange?: (dirty: boolean) => void
+  onCancel: () => void
   editing: AdminRentalAsset | null
   units: readonly Unit[]
   categories: readonly RegistryCategoryListItem[]
@@ -106,23 +97,9 @@ function ResourceChoiceGroup({ name, label, value, options, onChange, onBlur, di
   )
 }
 
-/** Form fields rendered outside the "basic" sheet tab, used to reveal the tab holding a validation error. */
-const SHEET_BASIC_FIELDS_EXCLUDED = {
-  pricing: new Set([
-    "cancelCutoffHours",
-    "cancelCutoffMode",
-    "horizonDays",
-    "horizonMode",
-    "queueEnabled",
-    "queueOpeningTime",
-    "requiresDeposit",
-  ]),
-  visual: new Set(["capacityPeople", "confirmVisualSuggestions", "visualTemplateRevisionId"]),
-}
-
-export function RentalResourceSheet({
-  open,
-  onOpenChange,
+export function RentalResourceEditorForm({
+  onDirtyChange,
+  onCancel,
   editing,
   units,
   categories,
@@ -132,7 +109,7 @@ export function RentalResourceSheet({
   pricePerHour,
   pricingUnit,
   onSubmit,
-}: RentalResourceSheetProps) {
+}: RentalResourceEditorFormProps) {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const isPlatformAdmin = useIsPlatformAdmin()
@@ -147,16 +124,15 @@ export function RentalResourceSheet({
   const [allSegments, setAllSegments] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [tagsExpanded, setTagsExpanded] = useState(false)
-  const [sheetTab, setSheetTab] = useState<"basic" | "pricing" | "visual">("basic")
+  const [activeModule, setActiveModule] = useState("basic")
   const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
   const TAG_COLLAPSE_COUNT = 6
 
   useEffect(() => {
-    if (!open) return
     void Promise.all([listVisualTemplates({ search: templateSearch, tagIds: selectedTagIds, allSegments }), listPickerTags()])
       .then(([page, tagList]) => { setTemplates(page.items); setTags(tagList) })
       .catch(() => { setTemplates([]); setTags([]) })
-  }, [allSegments, open, selectedTagIds, templateSearch])
+  }, [allSegments, selectedTagIds, templateSearch])
 
   if (categories !== previousCategories) {
     setPreviousCategories(categories)
@@ -196,25 +172,14 @@ export function RentalResourceSheet({
   })
 
   useEffect(() => {
-    if (!open) {
-      return
-    }
-
     form.reset(
       buildRentalResourceFormValues(editing, units, categories, families),
     )
     editedTemplateFieldsRef.current = new Set()
-  }, [categories, editing, families, form, open, units])
+  }, [categories, editing, families, form, units])
 
-  const sheetOpenKey = open ? (editing?.id ?? "__new__") : null
-  const [trackedSheetOpenKey, setTrackedSheetOpenKey] = useState<string | null>(null)
-  if (sheetOpenKey !== trackedSheetOpenKey) {
-    setTrackedSheetOpenKey(sheetOpenKey)
-    if (sheetOpenKey !== null) {
-      setSheetTab("basic")
-      setTagsExpanded(false)
-    }
-  }
+  const { isDirty } = form.formState
+  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
 
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
@@ -314,25 +279,28 @@ export function RentalResourceSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="rental-resource-sheet"
-      >
-        <SheetHeader>
-          <SheetTitle>
-            {editing
-              ? t("rentals.resources.edit")
-              : t("rentals.resources.add")}
-          </SheetTitle>
-          <SheetDescription>
-            {t("rentals.resources.formDescription")}
-          </SheetDescription>
+    <div className="rental-resource-editor">
+      <nav className="resource-breadcrumb" aria-label={t("rentals.resources.editor.breadcrumb")}>
+        <Button variant="link" type="button" disabled={busy} onClick={onCancel}>{t("rentals.resources.title")}</Button>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{editing ? editing.name : t("rentals.resources.add")}</span>
+      </nav>
+      <header className="resources-header resource-editor-header">
+        <div>
+          <p className="resources-eyebrow">{t("rentals.resources.eyebrow")}</p>
+          <h1>{editing ? t("rentals.resources.edit") : t("rentals.resources.add")}</h1>
+          <p className="resources-description">{t("rentals.resources.formDescription")}</p>
           {editing ? <RentalResourceDetails asset={editing} pricePerHour={pricePerHour} pricingUnit={pricingUnit} /> : null}
-        </SheetHeader>
-
+          {readOnly ? <p className="text-sm text-muted-foreground">{t("rentals.resources.editor.readOnly")}</p> : null}
+        </div>
+        <div className="resource-editor-actions">
+          <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>{t("common.cancel")}</Button>
+          <FormPrimaryButton type="submit" form="rental-resource-form" isValid={isValid} loading={busy} disabled={readOnly || busy}>{t("common.save")}</FormPrimaryButton>
+        </div>
+      </header>
         <Form {...form}>
           <form
+            id="rental-resource-form"
             className="resource-editor-form"
             onSubmit={(event) => {
               event.preventDefault()
@@ -341,43 +309,27 @@ export function RentalResourceSheet({
               }
               void form.handleSubmit(async (values) => {
                 // Template defaults are already shown above, so submit precisely these form values.
-                const ok = await onSubmit(values)
-                if (ok) {
-                  onOpenChange(false)
-                }
-              }, (errors) => {
-                const fields = Object.keys(errors)
-                const inBasic = fields.some(
-                  (name) =>
-                    !SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name) &&
-                    !SHEET_BASIC_FIELDS_EXCLUDED.visual.has(name),
-                )
-                setSheetTab(
-                  inBasic
-                    ? "basic"
-                    : fields.some((name) => SHEET_BASIC_FIELDS_EXCLUDED.pricing.has(name))
-                      ? "pricing"
-                      : "visual",
-                )
+                await onSubmit(values)
               })(event)
             }}
           >
-            <Tabs
-              value={sheetTab}
-              onValueChange={(value) => {
-                if (value === "basic" || value === "pricing" || value === "visual") {
-                  setSheetTab(value)
-                }
-              }}
-              className="resource-editor-tabs min-w-0 flex-col"
-            >
-              <TabsList className="resource-editor-tab-list min-w-0 overflow-x-auto">
-                <TabsTrigger value="basic" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.basic")}</TabsTrigger>
-                <TabsTrigger value="pricing" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.pricingRules")}</TabsTrigger>
-                <TabsTrigger value="visual" className="shrink-0 whitespace-nowrap px-1.5 py-1.5 text-xs sm:text-sm">{t("rentals.resources.sheetTabs.visual")}</TabsTrigger>
-              </TabsList>
-
-            <TabsContent value="basic" className="min-w-0 flex-1 space-y-4">
+            <nav className="resource-editor-segments" aria-label={t("rentals.resources.editor.sections")}>
+              {(["basic", "pricing", "visual"] as const).map((module) => (
+                <Button key={module} type="button" variant={activeModule === module ? "default" : "ghost"}
+                  aria-controls={`resource-module-${module}`} aria-pressed={activeModule === module}
+                  onClick={() => {
+                    setActiveModule(module)
+                    const target = document.getElementById(`resource-module-${module}`)
+                    target?.focus({ preventScroll: true })
+                    target?.scrollIntoView?.({ block: "start", behavior: "instant" })
+                  }}>
+                  {t(`rentals.resources.sheetTabs.${module === "pricing" ? "pricingRules" : module}`)}
+                </Button>
+              ))}
+            </nav>
+            <section id="resource-module-basic" tabIndex={-1} aria-labelledby="resource-heading-basic" className="resource-editor-card">
+              <h2 id="resource-heading-basic">{t("rentals.resources.sheetTabs.basic")}</h2>
+              <div className="resource-editor-grid">
             <FormField
               control={form.control}
               name="name"
@@ -387,7 +339,7 @@ export function RentalResourceSheet({
                   <FormControl>
                     <Input
                       autoComplete="off"
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       placeholder={t("rentals.resources.form.namePlaceholder")}
                       {...field}
                     />
@@ -407,7 +359,7 @@ export function RentalResourceSheet({
                   <FormControl>
                     <Input
                       autoComplete="off"
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       placeholder={t("rentals.resources.form.tagPlaceholder")}
                       {...field}
                     />
@@ -428,6 +380,8 @@ export function RentalResourceSheet({
                     {canCreateUnit ? (
                       <FormControl>
                         <InlineCreateSelect
+                          showScrollButtons={false}
+                          triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value}
                           onValueChange={(value) => {
                             field.onChange(value)
@@ -439,7 +393,7 @@ export function RentalResourceSheet({
                           createLabel={t("rentals.resources.inlineCreate.unitAction")}
                           drawerTitle={t("rentals.resources.inlineCreate.unitTitle")}
                           drawerDescription={t("rentals.resources.inlineCreate.unitDescription")}
-                          disabled={readOnly}
+                          disabled={readOnly || busy}
                           renderCreateForm={({ complete, close }) => (
                             <InlineCreateUnitForm complete={complete} close={close} />
                           )}
@@ -454,14 +408,15 @@ export function RentalResourceSheet({
                         }}
                         value={field.value}
                         items={unitItems}
-                        disabled={readOnly}
+                        disabled={readOnly || busy}
                       >
                         <FormControl>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
+                          <Tag aria-hidden="true" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent showScrollButtons={false}>
                           {unitOptions.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -481,6 +436,8 @@ export function RentalResourceSheet({
                   <FormLabel>{t("rentals.resources.form.category")}</FormLabel>
                   <FormControl>
                     <InlineCreateSelect
+                          showScrollButtons={false}
+                          triggerIcon={<Plus aria-hidden="true" />}
                       value={field.value}
                       onValueChange={(value) => {
                         field.onChange(value)
@@ -492,7 +449,7 @@ export function RentalResourceSheet({
                       createLabel={t("rentals.resources.inlineCreate.categoryAction")}
                       drawerTitle={t("rentals.resources.inlineCreate.categoryTitle")}
                       drawerDescription={t("rentals.resources.inlineCreate.categoryDescription")}
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       canCreate={canCreateCategory}
                       renderCreateForm={({ complete, close }) => (
                         <InlineCreateCategoryForm complete={complete} close={close} />
@@ -521,7 +478,7 @@ export function RentalResourceSheet({
                     }}
                     value={field.value}
                     items={familyItems}
-                    disabled={readOnly || families.length === 1}
+                    disabled={readOnly || busy || families.length === 1}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -530,11 +487,12 @@ export function RentalResourceSheet({
                             "rentals.resources.form.familyPlaceholder",
                           )}
                         />
+                      <Tag aria-hidden="true" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent showScrollButtons={false}>
                       {families.map((family) => (
-                        <SelectItem key={family.id} value={family.id}>
+                        <SelectItem key={family.id} value={family.id} indicator={<Tag aria-hidden="true" />}>
                           {family.label}
                         </SelectItem>
                       ))}
@@ -569,7 +527,7 @@ export function RentalResourceSheet({
                         }
                       }}
                       onBlur={field.onBlur}
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       segmented
                     />
                   </FormControl>
@@ -592,7 +550,7 @@ export function RentalResourceSheet({
                         type="number"
                         min={1}
                         inputMode="numeric"
-                        disabled={readOnly}
+                        disabled={readOnly || busy}
                         value={field.value}
                         onBlur={field.onBlur}
                         onChange={(event) => {
@@ -616,7 +574,7 @@ export function RentalResourceSheet({
                   <FormControl>
                     <Input
                       autoComplete="off"
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       placeholder={t(
                         "rentals.resources.form.locationPlaceholder",
                       )}
@@ -627,9 +585,12 @@ export function RentalResourceSheet({
                 </FormItem>
               )}
             />
-            </TabsContent>
+              </div>
+            </section>
 
-            <TabsContent value="pricing" className="min-w-0 flex-1 space-y-4">
+            <section id="resource-module-pricing" tabIndex={-1} aria-labelledby="resource-heading-pricing" className="resource-editor-card">
+              <h2 id="resource-heading-pricing">{t("rentals.resources.sheetTabs.pricingRules")}</h2>
+              <div className="space-y-4">
             <FormField
               control={form.control}
               name="requiresDeposit"
@@ -641,7 +602,7 @@ export function RentalResourceSheet({
                   <FormControl>
                     <Switch
                       checked={field.value}
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                       onCheckedChange={(checked) => { markTemplateFieldEdited("requiresDeposit"); field.onChange(checked) }}
                     />
                   </FormControl>
@@ -662,7 +623,7 @@ export function RentalResourceSheet({
                       <FormControl>
                         <Switch
                           checked={field.value}
-                          disabled={readOnly}
+                          disabled={readOnly || busy}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -680,7 +641,7 @@ export function RentalResourceSheet({
                           {t("rentals.resources.form.queueOpeningTime")}
                         </FormLabel>
                         <FormControl>
-                          <Input type="time" disabled={readOnly} {...field} />
+                          <Input type="time" disabled={readOnly || busy} {...field} />
                         </FormControl>
                         <LiveFieldMessage message={issueMessageAt(visibleErrors, ["queueOpeningTime"])} />
                         <FormMessage />
@@ -702,6 +663,7 @@ export function RentalResourceSheet({
                       name={field.name}
                       label={t("rentals.resources.form.horizonLabel")}
                       value={field.value}
+                      segmented
                       options={horizonItems}
                       onChange={(value) => {
                         if (value === "inherit" || value === "unlimited" || value === "days") {
@@ -711,7 +673,7 @@ export function RentalResourceSheet({
                         }
                       }}
                       onBlur={field.onBlur}
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                     />
                   </FormControl>
                   <FormDescription>
@@ -745,7 +707,7 @@ export function RentalResourceSheet({
                         {...field}
                         onChange={(event) => { markTemplateFieldEdited("horizon"); field.onChange(event) }}
                         inputMode="numeric"
-                        disabled={readOnly}
+                        disabled={readOnly || busy}
                         min={BOOKING_HORIZON_DAY_MIN}
                         max={BOOKING_HORIZON_DAY_MAX}
                       />
@@ -771,6 +733,7 @@ export function RentalResourceSheet({
                       name={field.name}
                       label={t("rentals.resources.form.cancelCutoffLabel")}
                       value={cancelCutoffMode}
+                      segmented
                       options={cancelCutoffItems}
                       onChange={(value) => {
                         if (value === "inherit" || value === "none" || value === "hours") {
@@ -779,7 +742,7 @@ export function RentalResourceSheet({
                         }
                       }}
                       onBlur={field.onBlur}
-                      disabled={readOnly}
+                      disabled={readOnly || busy}
                     />
                   </FormControl>
                   {editing &&
@@ -811,7 +774,7 @@ export function RentalResourceSheet({
                       <Input
                         {...field}
                         inputMode="numeric"
-                        disabled={readOnly}
+                        disabled={readOnly || busy}
                         min={0}
                         max={8760}
                       />
@@ -825,9 +788,11 @@ export function RentalResourceSheet({
                 )}
               />
             ) : null}
-            </TabsContent>
+              </div>
+            </section>
 
-            <TabsContent value="visual" className="min-w-0 flex-1 space-y-2">
+            <section id="resource-module-visual" tabIndex={-1} aria-labelledby="resource-heading-visual" className="resource-editor-card">
+              <h2 id="resource-heading-visual"><Maximize2 aria-hidden="true" />{t("rentals.resources.sheetTabs.visual")}</h2>
               <section className="resource-template-picker">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">{t("resourceVisual.pickerTitle")}</span>
@@ -860,6 +825,8 @@ export function RentalResourceSheet({
                       <FormLabel className="sr-only">{t("resourceVisual.pickerTitle")}</FormLabel>
                       <FormControl>
                         <InlineCreateSelect
+                          showScrollButtons={false}
+                          triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value || "__no-template__"}
                           onValueChange={selectTemplate}
                           options={templateOptions}
@@ -868,7 +835,7 @@ export function RentalResourceSheet({
                           createLabel={t("rentals.resources.inlineCreate.templateAction")}
                           drawerTitle={t("rentals.resources.inlineCreate.templateTitle")}
                           drawerDescription={t("rentals.resources.inlineCreate.templateDescription")}
-                          disabled={readOnly}
+                          disabled={readOnly || busy}
                           canCreate={canCreateGlobalTemplate}
                           renderCreateForm={({ complete, close }) => (
                             <InlineCreateVisualTemplateForm complete={async (option) => {
@@ -885,7 +852,7 @@ export function RentalResourceSheet({
                           const Icon = noTemplate ? CircleX : (VISUAL_ICON_MAP[revision?.defaultIcon ?? ""] ?? LayoutTemplate)
                           return (
                             <button key={option.value} type="button" className="resource-template-card"
-                              disabled={readOnly} aria-pressed={(field.value || "__no-template__") === option.value}
+                              disabled={readOnly || busy} aria-pressed={(field.value || "__no-template__") === option.value}
                               onClick={() => selectTemplate(option.value)}>
                               <span className="resource-template-art" aria-hidden="true"><Icon strokeWidth={ICON_STROKE_WIDTH} /></span>
                               <span>{option.label}</span>
@@ -898,18 +865,18 @@ export function RentalResourceSheet({
                     </FormItem>
                   )
                 }} />
-                <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} max={RESOURCE_CAPACITY_PEOPLE_MAX} step={1} {...field} onBlur={field.onBlur} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly} /></FormControl><LiveFieldMessage message={issueMessageAt(visibleErrors, ["capacityPeople"])} /><FormMessage /></FormItem>} />
-                <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="capacityPeople" render={({ field }) => <FormItem><FormLabel>{t("resourceVisual.capacityPeople")}</FormLabel><FormControl><Input type="number" min={1} max={RESOURCE_CAPACITY_PEOPLE_MAX} step={1} {...field} onBlur={field.onBlur} onChange={(event) => { markTemplateFieldEdited("capacityPeople"); field.onChange(event) }} disabled={readOnly || busy} /></FormControl><LiveFieldMessage message={issueMessageAt(visibleErrors, ["capacityPeople"])} /><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="confirmVisualSuggestions" render={({ field }) => <FormItem><label className="flex items-center gap-2 text-sm"><Switch checked={field.value} onCheckedChange={field.onChange} disabled={readOnly || busy}/>{t("resourceVisual.applySuggestions")}</label><FormDescription>{t("resourceVisual.applySuggestionsHelp")}</FormDescription><FormMessage /></FormItem>} />
               </section>
-            </TabsContent>
-            </Tabs>
+            </section>
 
-            <SheetFooter className="resource-editor-footer">
+            <footer className="resource-editor-footer" aria-label={t("rentals.resources.editor.saveBar")}>
               <Button
                 type="button"
                 variant="outline"
+                disabled={busy}
                 onClick={() => {
-                  onOpenChange(false)
+                  onCancel()
                 }}
               >
                 {t("common.cancel")}
@@ -918,7 +885,7 @@ export function RentalResourceSheet({
                 type="submit"
                 isValid={isValid}
                 loading={busy}
-                disabled={readOnly}
+                disabled={readOnly || busy}
               >
                 {editing
                   ? t("rentals.resources.saveEdit")
@@ -929,10 +896,9 @@ export function RentalResourceSheet({
                   {footerError}
                 </p>
               ) : null}
-            </SheetFooter>
+            </footer>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+    </div>
   )
 }

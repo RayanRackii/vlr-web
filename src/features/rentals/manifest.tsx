@@ -10,6 +10,7 @@ import type { AppNavigationItem } from "@/components/layout/navigation"
 import { reservationTabs } from "@/features/rentals/navigationTabs"
 import { ReservationsScreen } from "@/features/rentals/pages/ReservationsScreen"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
+import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourceEditorPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 
@@ -74,6 +75,16 @@ export const rentalsManifest = {
       {
         path: "/configuracoes/recursos",
         element: <RentalResourcesPage />,
+        permissions: RENTAL_RESOURCES_PERMISSIONS,
+      },
+      {
+        path: "/configuracoes/recursos/novo",
+        element: <RentalResourceEditorPage />,
+        permissions: RENTAL_RESOURCES_PERMISSIONS,
+      },
+      {
+        path: "/configuracoes/recursos/:id",
+        element: <RentalResourceEditorPage />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {

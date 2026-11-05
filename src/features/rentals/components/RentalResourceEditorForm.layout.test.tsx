@@ -15,7 +15,7 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   listVisualTemplates: vi.fn().mockResolvedValue({ items: [] }),
 }))
 
-import { RentalResourceSheet } from "@/features/rentals/components/RentalResourceSheet"
+import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { listPickerTags, listVisualTemplates } from "@/features/rentals/services/resourceVisualService"
 import { visualPageSchema, visualTagSchema } from "@/features/rentals/schemas/resourceVisualSchemas"
@@ -25,12 +25,11 @@ import i18n from "@/lib/i18n"
 
 const id = "11111111-1111-1111-1111-111111111111"
 
-function renderSheet(overrides: Partial<ComponentProps<typeof RentalResourceSheet>> = {}) {
+function renderEditor(overrides: Partial<ComponentProps<typeof RentalResourceEditorForm>> = {}) {
   return render(
     <TestPermissionProvider permissions={["rentals.assets.write"]}>
-      <RentalResourceSheet
-        open
-        onOpenChange={vi.fn()}
+      <RentalResourceEditorForm
+        onCancel={vi.fn()}
         editing={null}
         units={[{ id, tenantId: id, name: "Matriz", isActive: true }]}
         categories={[{ id, name: "Quadra" }]}
@@ -44,46 +43,45 @@ function renderSheet(overrides: Partial<ComponentProps<typeof RentalResourceShee
   )
 }
 
-describe("RentalResourceSheet tabs layout", () => {
+describe("RentalResourceEditorForm page layout", () => {
   beforeEach(() => {
     vi.mocked(listVisualTemplates).mockResolvedValue({ ...visualPageSchema.parse(templateFixture), items: [] })
     vi.mocked(listPickerTags).mockResolvedValue([])
   })
 
-  it("stacks the tab list above the panel instead of beside it", () => {
-    renderSheet()
-
-    const tabs = document.querySelector('[data-slot="tabs"]')
-    expect(tabs).not.toBeNull()
-    expect(tabs?.className).toContain("flex-col")
+  it.each(["pt-BR", "en"])("renders translated editor labels in %s", async (locale) => {
+    await i18n.changeLanguage(locale)
+    try {
+      renderEditor()
+      expect(screen.getByRole("navigation", { name: i18n.t("rentals.resources.editor.breadcrumb") }).textContent).not.toContain("rentals.")
+      expect(screen.getByRole("navigation", { name: i18n.t("rentals.resources.editor.sections") })).toHaveAccessibleName(locale === "en" ? "Resource sections" : "Seções do recurso")
+      expect(document.body.textContent).not.toContain("rentals.resources.editor.")
+    } finally { await i18n.changeLanguage("pt-BR") }
   })
 
-  it("keeps the tab list horizontally scrollable with non-wrapping triggers", () => {
-    renderSheet()
-
-    const tabList = document.querySelector('[data-slot="tabs-list"]')
-    expect(tabList?.className).toContain("overflow-x-auto")
-    const css = readFileSync("src/features/rentals/components/rentalResources.css", "utf8")
-    expect(css).toMatch(/\.rental-resource-sheet \.resource-editor-tab-list\s*\{[^}]*overflow-y:\s*hidden/)
-    expect(css).toMatch(/\.rental-resource-sheet \.resource-editor-tab-list\s*\{[^}]*scrollbar-width:\s*none/)
-    expect(css).toMatch(/\.resource-editor-tab-list::-webkit-scrollbar\s*\{[^}]*display:\s*none/)
-
-    for (const trigger of screen.getAllByRole("tab")) {
-      expect(trigger.className).toContain("whitespace-nowrap")
+  it("shows all modules together with jump buttons and no editor dialog", () => {
+    renderEditor()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    for (const name of ["Básico", "Preço e regras", "Visual"]) {
+      expect(screen.getByRole("button", { name })).toHaveAttribute("aria-controls")
     }
+    expect(screen.getByLabelText(i18n.t("rentals.resources.form.name"))).toBeVisible()
+    expect(screen.getByRole("switch", { name: i18n.t("rentals.resources.form.requiresDeposit") })).toBeVisible()
+    expect(screen.getByRole("spinbutton", { name: i18n.t("resourceVisual.capacityPeople") })).toBeVisible()
   })
 
-  it("lets keyboard users switch tabs and cancel from the persistent footer", async () => {
+  it("lets keyboard users jump to a module and cancel from the fixed footer", async () => {
     const user = userEvent.setup()
-    const onOpenChange = vi.fn()
-    renderSheet({ onOpenChange })
-    const basic = screen.getByRole("tab", { name: "Básico" })
-    basic.focus()
-    await user.keyboard("{ArrowRight}{Enter}")
-    expect(screen.getByRole("tab", { name: "Preço e regras" })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByRole("switch", { name: i18n.t("rentals.resources.form.requiresDeposit") })).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
-    expect(onOpenChange).toHaveBeenCalledWith(false)
+    const onCancel = vi.fn()
+    renderEditor({ onCancel })
+    const visual = screen.getByRole("button", { name: "Visual" })
+    visual.focus()
+    await user.keyboard("{Enter}")
+    expect(document.getElementById(visual.getAttribute("aria-controls")!)).toHaveFocus()
+    await user.click(screen.getAllByRole("button", { name: i18n.t("common.cancel") }).at(-1)!)
+    expect(onCancel).toHaveBeenCalledWith()
+    const css = readFileSync("src/features/rentals/components/rentalResources.css", "utf8")
+    expect(css).toMatch(/\.resource-editor-footer\s*\{[^}]*position:\s*fixed/)
   })
 
   it("keeps every loaded template available and applies defaults from its preview card", async () => {
@@ -95,8 +93,8 @@ describe("RentalResourceSheet tabs layout", () => {
       ...template, id: `template-${index}`, nameI18n: { "pt-BR": `Modelo ${index + 1}` },
       publishedRevision: { ...revision, id: `revision-${index}`, suggestedCapacityPeople: 8 },
     })) })
-    renderSheet()
-    await user.click(screen.getByRole("tab", { name: "Visual" }))
+    renderEditor()
+    await user.click(screen.getByRole("button", { name: "Visual" }))
     const grid = await screen.findByRole("group", { name: i18n.t("resourceVisual.pickerTitle") })
     expect(within(grid).getAllByRole("button")).toHaveLength(8)
     const card = within(grid).getByRole("button", { name: "Modelo 7" })
@@ -113,8 +111,8 @@ describe("RentalResourceSheet tabs layout", () => {
     vi.mocked(listPickerTags).mockResolvedValue(Array.from({ length: 8 }, (_, index) => ({
       ...tag, id: `tag-${index}`, slug: `tag-${index}`, nameI18n: { "pt-BR": `Filtro ${index + 1}` },
     })))
-    renderSheet()
-    await user.click(screen.getByRole("tab", { name: "Visual" }))
+    renderEditor()
+    await user.click(screen.getByRole("button", { name: "Visual" }))
     await user.type(screen.getByRole("textbox", { name: i18n.t("resourceVisual.searchTemplates") }), "sala")
     await user.click(await screen.findByRole("button", { name: "Filtro 1" }))
     await user.click(screen.getByRole("button", { name: i18n.t("resourceVisual.seeAll") }))
@@ -127,8 +125,8 @@ describe("RentalResourceSheet tabs layout", () => {
   it("keeps preview selection disabled for a read-only resource", async () => {
     const user = userEvent.setup()
     vi.mocked(listVisualTemplates).mockResolvedValue(visualPageSchema.parse(templateFixture))
-    renderSheet({ readOnly: true })
-    await user.click(screen.getByRole("tab", { name: "Visual" }))
+    renderEditor({ readOnly: true })
+    await user.click(screen.getByRole("button", { name: "Visual" }))
     const grid = await screen.findByRole("group", { name: i18n.t("resourceVisual.pickerTitle") })
     for (const card of within(grid).getAllByRole("button")) expect(card).toBeDisabled()
   })

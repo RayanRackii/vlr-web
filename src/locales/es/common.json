@@ -4605,13 +4605,13 @@
     },
     "resources": {
       "title": "Recursos",
-      "description": "Registre espacios e ítems alquilables de la operación.",
+      "description": "Gestiona salas, equipos, vehículos y espacios — cualquier recurso reservable.",
       "add": "Añadir recurso",
       "edit": "Editar recurso",
-      "formDescription": "Un espacio (sala o área exterior) o ítem alquilable. No use esta pantalla para inventario general.",
+      "formDescription": "Configura los datos, las reglas de reserva y la apariencia de este recurso.",
       "saveCreate": "Crear recurso",
       "saveEdit": "Guardar recurso",
-      "emptyTitle": "Ningún recurso disponible para alquiler",
+      "emptyTitle": "Ningún recurso registrado",
       "emptyDescription": "Registre su primer espacio o recurso para empezar.",
       "emptyCategoriesTitle": "Ningún tipo disponible",
       "emptyCategoriesDescription": "Los tipos de espacio y recurso vienen del aprovisionamiento del Super-Admin. No es posible crear tipos en esta pantalla.",
@@ -4628,7 +4628,7 @@
         "server": "Error del servidor. Inténtalo de nuevo en unos instantes."
       },
       "typeLocation": "Espacio",
-      "typeGood": "Ítem alquilable",
+      "typeGood": "Bien",
       "eyebrow": "Registro",
       "editHint": "Haz clic para editar",
       "summaryBreakdown": " · {{spaces}}, {{items}}",
@@ -4684,7 +4684,7 @@
         "categoryPlaceholder": "Seleccione el tipo",
         "family": "Familia",
         "familyPlaceholder": "Seleccione la familia",
-        "rentalType": "Tipo de alquiler",
+        "rentalType": "Tipo de recurso",
         "totalQuantity": "Cantidad",
         "requiresDeposit": "¿Es necesario un pago previo?",
         "queueEnabled": "Cola de reservas",
@@ -4743,6 +4743,13 @@
         "queueOpeningTimeRequired": "Informe la hora de apertura de la fila.",
         "horizonRange": "Indique un entero de 0 a 3650.",
         "cancelCutoffRange": "Introduce un número entero de 0 a 8760 horas."
+      },
+      "editor": {
+        "breadcrumb": "Navegación del recurso",
+        "sections": "Secciones del recurso",
+        "saveBar": "Acciones del recurso",
+        "readOnly": "Puedes consultar este recurso, pero no modificarlo.",
+        "notFound": "Recurso no encontrado."
       }
     },
     "layout": {
