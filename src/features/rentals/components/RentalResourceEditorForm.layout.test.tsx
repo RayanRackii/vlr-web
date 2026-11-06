@@ -131,3 +131,20 @@ describe("RentalResourceEditorForm page layout", () => {
     for (const card of within(grid).getAllByRole("button")) expect(card).toBeDisabled()
   })
 })
+
+
+it("keeps both save actions disabled until an edited resource changes and disables them after reverting", async () => {
+  const user = userEvent.setup()
+  const { rentalAssetSchema } = await import("@/features/rentals/services/scheduleService")
+  const editedId = "11111111-1111-4111-8111-111111111111"
+  renderEditor({ editing: rentalAssetSchema.parse({ id: editedId, assetId: editedId, unitId: editedId, categoryId: editedId, familyId: editedId, name: "Resource", type: "Location", isActive: true }) })
+  const saves = () => screen.getAllByRole("button").filter((button) => button.getAttribute("type") === "submit")
+  await waitFor(() => expect(saves()).toHaveLength(2))
+  saves().forEach((button) => expect(button).toBeDisabled())
+  const name = screen.getByLabelText(i18n.t("rentals.resources.form.name"))
+  await user.type(name, " updated")
+  await waitFor(() => saves().forEach((button) => expect(button).toBeEnabled()))
+  await user.clear(name)
+  await user.type(name, "Resource")
+  await waitFor(() => saves().forEach((button) => expect(button).toBeDisabled()))
+})

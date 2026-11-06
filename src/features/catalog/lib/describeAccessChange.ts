@@ -41,7 +41,7 @@ export function describeAccessChange(
       names: [...afterGroups].map(name).join(", ") || t("catalog.products.access.history.noGroups"),
     }))
   }
-  if (added.length > 0) {
+  if (after.visibility !== "Restricted" && added.length > 0) {
     parts.push(t("catalog.products.access.history.groupsAdded", { names: added.join(", ") }))
   }
   if (removed.length > 0) {
