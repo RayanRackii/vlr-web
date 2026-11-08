@@ -74,13 +74,15 @@ const product: PortalProduct = {
 
 function renderCart() {
   return render(
-    <MemoryRouter>
-      <Routes>
-        <Route element={<Outlet context={outletContext} />}>
-          <Route path="/" element={<PortalCartPage />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <main data-shell-part="main" style={{ overflowY: "auto" }}>
+      <MemoryRouter>
+        <Routes>
+          <Route element={<Outlet context={outletContext} />}>
+            <Route path="/" element={<PortalCartPage />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </main>,
   )
 }
 
@@ -201,6 +203,66 @@ describe("PortalCartPage validity gate", () => {
     } finally {
       measure.mockRestore()
       vi.unstubAllGlobals()
+    }
+  })
+
+  it.each([
+    { name: "reveals the counter clipped by 7px at 360px", footerTop: 555, position: "fixed", movement: 7 },
+    { name: "leaves the fitting 393px note in place", footerTop: 667, position: "fixed", movement: 0 },
+    { name: "leaves the desktop flow in place", footerTop: 555, position: "static", movement: 0 },
+    { name: "reveals the focused counter after the footer grows", footerTop: 555, position: "fixed", movement: 7, trigger: "footer" },
+    { name: "reveals the focused counter after the viewport resizes", footerTop: 555, position: "fixed", movement: 7, trigger: "viewport" },
+  ])("$name (explicit geometry; browser validation remains required)", async ({ footerTop, position, movement, trigger }) => {
+    let resizeFooter = () => {}
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback: () => void) { resizeFooter = callback }
+      observe = vi.fn()
+      disconnect = vi.fn()
+    })
+    let measuredFooterTop = trigger ? 667 : footerTop
+    seedCart()
+    renderCart()
+    const note = await screen.findByRole("textbox", { name: i18n.t("tenantPortal.catalog.customerNote") })
+    const group = note.closest('[data-slot="form-item"]')!
+    const main = note.closest<HTMLElement>('main[data-shell-part="main"]')!
+    const footer = screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.submitOrder") }).parentElement!
+    footer.style.position = position
+    Object.defineProperties(main, { scrollHeight: { configurable: true, value: 766 }, clientHeight: { configurable: true, value: 684 } })
+    const rect = (top: number, bottom: number) => ({ top, bottom, height: bottom - top, left: 0, right: 360, width: 360, x: 0, y: top, toJSON: () => ({}) })
+    const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function () {
+      if (this === footer) return rect(measuredFooterTop, 772)
+      if (this === main) return rect(0, 684)
+      if (this === note) return rect(460 - main.scrollTop, 538 - main.scrollTop)
+      if (this === group) return rect(440 - main.scrollTop, 562 - main.scrollTop)
+      return rect(0, 0)
+    })
+    const windowScroll = vi.spyOn(window, "scrollTo")
+    try {
+      await userEvent.setup().type(note, "Entregar aqui")
+      if (trigger) {
+        await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+        expect(main.scrollTop).toBe(0)
+        measuredFooterTop = footerTop
+        act(() => {
+          if (trigger === "footer") resizeFooter()
+          else window.dispatchEvent(new Event("resize"))
+        })
+      }
+      await waitFor(() => expect(main.scrollTop).toBe(movement))
+      // Flush the focus frame even in the no-movement cases.
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+      expect(main.scrollTop).toBe(movement)
+      expect(windowScroll).not.toHaveBeenCalled()
+      expect(note).toHaveFocus()
+      expect(note).toHaveValue("Entregar aqui")
+      act(() => note.blur())
+      measuredFooterTop = 500
+      act(() => window.dispatchEvent(new Event("resize")))
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+      expect(main.scrollTop).toBe(movement)
+    } finally {
+      measure.mockRestore()
+      windowScroll.mockRestore()
     }
   })
 

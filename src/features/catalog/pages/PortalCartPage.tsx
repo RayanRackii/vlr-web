@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -65,14 +65,50 @@ export function PortalCartPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
   const [submitBarHeight, setSubmitBarHeight] = useState(144)
+  const noteGroupRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!submitBar) return
-    const measure = () => setSubmitBarHeight(submitBar.getBoundingClientRect().height)
+    const noteGroup = noteGroupRef.current
+    let frame = 0
+    const revealFocusedNote = () => {
+      cancelAnimationFrame(frame)
+      // Native focus only reveals the textarea; wait for its scroll/layout before
+      // checking the whole field, including the counter beneath it.
+      frame = requestAnimationFrame(() => {
+        if (!noteGroup?.contains(document.activeElement)) return
+        if (getComputedStyle(submitBar).position !== "fixed") return
+        let scroller = noteGroup.parentElement
+        while (scroller) {
+          if (/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight) break
+          scroller = scroller.parentElement
+        }
+        if (!scroller) return
+        const visibleBottom = Math.min(
+          scroller.getBoundingClientRect().bottom,
+          submitBar.getBoundingClientRect().top,
+        )
+        const overlap = noteGroup.getBoundingClientRect().bottom - visibleBottom
+        if (overlap > 0) scroller.scrollTop += overlap
+      })
+    }
+    const measure = () => {
+      setSubmitBarHeight(submitBar.getBoundingClientRect().height)
+      revealFocusedNote()
+    }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(submitBar)
-    return () => observer.disconnect()
+    noteGroup?.addEventListener("focusin", revealFocusedNote)
+    window.addEventListener("resize", revealFocusedNote)
+    window.visualViewport?.addEventListener("resize", revealFocusedNote)
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+      noteGroup?.removeEventListener("focusin", revealFocusedNote)
+      window.removeEventListener("resize", revealFocusedNote)
+      window.visualViewport?.removeEventListener("resize", revealFocusedNote)
+    }
   }, [submitBar])
 
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -323,7 +359,7 @@ export function PortalCartPage() {
               control={form.control}
               name="customerNote"
               render={({ field }) => (
-                <FormItem>
+                <FormItem ref={noteGroupRef}>
                   <FormLabel>{t("tenantPortal.catalog.customerNote")}</FormLabel>
                   <FormControl>
                     <Textarea rows={3} maxLength={1000} {...field} />
