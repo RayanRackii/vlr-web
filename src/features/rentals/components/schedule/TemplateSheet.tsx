@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Clock3 } from "lucide-react"
 
@@ -36,6 +36,7 @@ type TemplateSheetProps = {
   readOnly: boolean
   onSubmit: (values: TemplateDraft) => Promise<boolean>
   onDelete?: () => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 export function TemplateSheet({
@@ -52,6 +53,7 @@ export function TemplateSheet({
   readOnly,
   onSubmit,
   onDelete,
+  onDirtyChange,
 }: TemplateSheetProps) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<TemplateDraft>(
@@ -60,34 +62,33 @@ export function TemplateSheet({
   const hasValidTimes =
     HH_MM.test(formatScheduleTime(draft.startTime)) && HH_MM.test(formatScheduleTime(draft.endTime))
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    if (editing) {
-      setDraft({
-        dayOfWeek: editing.dayOfWeek,
-        startTime: formatScheduleTime(editing.startTime),
-        endTime: formatScheduleTime(editing.endTime),
-        occupancyKindId: editing.occupancyKindId,
-        label: editing.label ?? "",
-        isActive: editing.isActive,
-      })
-      return
-    }
-    setDraft({
-      ...emptyTemplateDraft(defaultKindId),
-      ...defaults,
-    })
-  }, [
+  const initialDraft = useMemo<TemplateDraft>(() => editing ? {
+    dayOfWeek: editing.dayOfWeek,
+    startTime: formatScheduleTime(editing.startTime),
+    endTime: formatScheduleTime(editing.endTime),
+    occupancyKindId: editing.occupancyKindId,
+    label: editing.label ?? "",
+    isActive: editing.isActive,
+  } : { ...emptyTemplateDraft(defaultKindId), ...defaults }, [
     defaultKindId,
     defaults?.dayOfWeek,
     defaults?.endTime,
     defaults?.occupancyKindId,
     defaults?.startTime,
+    defaults?.label,
+    defaults?.isActive,
     editing,
-    open,
   ])
+
+  useEffect(() => {
+    if (open) setDraft(initialDraft)
+  }, [initialDraft, open])
+
+  useEffect(() => {
+    onDirtyChange?.(open && Object.keys(initialDraft).some(
+      (key) => draft[key as keyof TemplateDraft] !== initialDraft[key as keyof TemplateDraft],
+    ))
+  }, [draft, initialDraft, onDirtyChange, open])
 
   if (!open) return null
 

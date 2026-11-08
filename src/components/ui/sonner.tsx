@@ -10,7 +10,7 @@ function Toaster({ ...props }: ToasterProps) {
       className="toaster group pointer-events-none"
       style={{ pointerEvents: "none" }}
       position="top-right"
-      mobileOffset={{ top: "calc(64px + env(safe-area-inset-top))", right: "16px", left: "16px" }}
+      mobileOffset={{ top: "calc(64px + env(safe-area-inset-top))", bottom: "calc(80px + env(safe-area-inset-bottom))", right: "16px", left: "16px" }}
       richColors
       closeButton
       toastOptions={{

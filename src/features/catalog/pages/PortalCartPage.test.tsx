@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, MemoryRouter, Outlet, Route, RouterProvider, Routes } from "react-router-dom"
 
 import { CATALOG_CART_MAX_QUANTITY, catalogCartStorageKey } from "@/features/catalog/cart"
@@ -97,7 +97,12 @@ function replaceValue(element: HTMLElement, value: string) {
 }
 
 describe("PortalCartPage validity gate", () => {
+  afterEach(() => vi.unstubAllGlobals())
   beforeEach(() => {
+    vi.stubGlobal("ResizeObserver", class {
+      observe = vi.fn()
+      disconnect = vi.fn()
+    })
     window.sessionStorage.clear()
     listProductsMock.mockReset()
     createOrderMock.mockReset()
@@ -162,6 +167,41 @@ describe("PortalCartPage validity gate", () => {
     const stickyBar = submit.closest("div.fixed")
     expect(stickyBar).not.toBeNull()
     expect(stickyBar).toHaveClass("fixed", "bottom-0", "md:static")
+  })
+
+  it("reserves the measured mobile footer height plus a gap so the final note can scroll clear at 360px", async () => {
+    let resize = () => {}
+    const disconnect = vi.fn()
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(callback: () => void) { resize = callback }
+      observe = vi.fn()
+      disconnect = disconnect
+    })
+    let footerHeight = 156
+    const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({
+      height: footerHeight, width: 360, x: 0, y: 0, top: 0, bottom: footerHeight, left: 0, right: 360, toJSON: () => ({}),
+    }))
+    try {
+      seedCart()
+      const { unmount } = renderCart()
+      const note = await screen.findByRole("textbox", { name: i18n.t("tenantPortal.catalog.customerNote") })
+      const cart = note.closest(".portal-purchase-cart")
+      await waitFor(() => expect(cart).toHaveStyle({ "--cart-submit-height": "156px" }))
+      expect(cart).toHaveClass("pb-[calc(var(--cart-submit-height)+1rem)]", "md:pb-0")
+      footerHeight = 204
+      act(() => resize())
+      expect(cart).toHaveStyle({ "--cart-submit-height": "204px" })
+      const user = userEvent.setup()
+      await user.click(note)
+      await user.keyboard("Observação{Enter}Final")
+      expect(note).toHaveValue("Observação\nFinal")
+      expect(note).toHaveFocus()
+      unmount()
+      expect(disconnect).toHaveBeenCalledOnce()
+    } finally {
+      measure.mockRestore()
+      vi.unstubAllGlobals()
+    }
   })
 
   it("hides checkout controls when the cart is empty", async () => {

@@ -126,6 +126,7 @@ function AdminSchedulePage() {
   const [kindSheetOpen, setKindSheetOpen] = useState(false)
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
+  const [templateDirty, setTemplateDirty] = useState(false)
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
   const [weeklyTarget, setWeeklyTarget] =
@@ -761,6 +762,9 @@ function AdminSchedulePage() {
             onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
             onWeekdayChange={setWeekday}
             onCellClick={(target) => {
+              if (templateSheetOpen && weeklyTarget?.rentalAssetId === target.rentalAssetId &&
+                weeklyTarget.dayOfWeek === target.dayOfWeek && weeklyTarget.startTime === target.startTime) return
+              if (templateSheetOpen && templateDirty && !window.confirm(t("fullPage.leaveConfirm"))) return
               setWeeklyTarget(target)
               setEditingTemplate(target.template)
               setTemplateSheetOpen(true)
@@ -771,6 +775,7 @@ function AdminSchedulePage() {
             onSavePolicy={onSavePolicy}
             templateEditor={
               <TemplateSheet
+                key={`${weeklyTarget?.rentalAssetId}:${weeklyTarget?.dayOfWeek}:${weeklyTarget?.startTime}`}
                 open={templateSheetOpen}
                 onOpenChange={(open) => {
                   setTemplateSheetOpen(open)
@@ -779,6 +784,7 @@ function AdminSchedulePage() {
                     setWeeklyTarget(null)
                   }
                 }}
+                onDirtyChange={setTemplateDirty}
                 editing={editingTemplate}
                 assetName={weeklyTarget?.assetName}
                 lockDayOfWeek={Boolean(weeklyTarget)}
