@@ -240,7 +240,7 @@ export function PortalCatalogProductPage() {
               style={{ backgroundColor: primary }}
               onClick={() => {
                 cart.add(product.id, quantityRef.current)
-                toast.success(t("tenantPortal.catalog.addedToCart"))
+                toast.success(t("tenantPortal.catalog.addedToCart"), { position: "bottom-right" })
               }}
             >
               {t("tenantPortal.catalog.addToCart")}

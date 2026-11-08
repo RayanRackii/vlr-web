@@ -1,6 +1,8 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { toast } from "sonner"
+import { Toaster } from "@/components/ui/sonner"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { CATALOG_CART_MAX_QUANTITY } from "@/features/catalog/cart"
@@ -62,9 +64,32 @@ function renderPage() {
 }
 
 describe("PortalCatalogProductPage layout", () => {
+  afterEach(() => vi.unstubAllGlobals())
   beforeEach(() => {
     getMock.mockReset()
     getMock.mockResolvedValue(product)
+  })
+
+  it("places add-to-cart feedback below the product Back control and above mobile navigation", async () => {
+    vi.stubGlobal("matchMedia", vi.fn((media: string) => ({
+      media, matches: false, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+    })))
+    toast.dismiss()
+    render(<Toaster />)
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.addToCart") }))
+    const feedback = await screen.findByText(i18n.t("tenantPortal.catalog.addedToCart"))
+    const toaster = feedback.closest("[data-sonner-toaster]")
+    expect(toaster).toHaveAttribute("data-y-position", "bottom")
+    expect(toaster).toHaveStyle({ "--mobile-offset-bottom": "calc(80px + env(safe-area-inset-bottom))" })
+    const back = screen.getByRole("link", { name: i18n.t("common.back") })
+    back.focus()
+    await user.keyboard("{Enter}")
+    expect(await screen.findByText("list-screen")).toBeInTheDocument()
+    toast.dismiss()
   })
 
   it("opens the selected product image in a modal, traps focus, and closes with Escape", async () => {

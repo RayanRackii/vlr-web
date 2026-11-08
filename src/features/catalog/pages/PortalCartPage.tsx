@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -63,6 +63,18 @@ export function PortalCartPage() {
   const [products, setProducts] = useState<PortalProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
+  const [submitBarHeight, setSubmitBarHeight] = useState(144)
+
+  useEffect(() => {
+    if (!submitBar) return
+    const measure = () => setSubmitBarHeight(submitBar.getBoundingClientRect().height)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(submitBar)
+    return () => observer.disconnect()
+  }, [submitBar])
+
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<CheckoutFormValues>({
@@ -158,7 +170,10 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="portal-purchase-cart mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
+    <div
+      className="portal-purchase-cart mx-auto w-full max-w-2xl space-y-6 pb-[calc(var(--cart-submit-height)+1rem)] md:pb-0"
+      style={{ "--cart-submit-height": `${submitBarHeight}px` } as CSSProperties}
+    >
       <Button
         type="button"
         variant="outline"
@@ -320,7 +335,7 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <div className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+            <div ref={setSubmitBar} className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
               <p className="text-base font-semibold text-foreground tabular-nums">
                 {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
               </p>
