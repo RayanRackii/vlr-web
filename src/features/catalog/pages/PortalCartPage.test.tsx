@@ -229,7 +229,7 @@ describe("PortalCartPage validity gate", () => {
     footer.style.position = position
     Object.defineProperties(main, { scrollHeight: { configurable: true, value: 766 }, clientHeight: { configurable: true, value: 684 } })
     const rect = (top: number, bottom: number) => ({ top, bottom, height: bottom - top, left: 0, right: 360, width: 360, x: 0, y: top, toJSON: () => ({}) })
-    const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function () {
+    const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       if (this === footer) return rect(measuredFooterTop, 772)
       if (this === main) return rect(0, 684)
       if (this === note) return rect(460 - main.scrollTop, 538 - main.scrollTop)
