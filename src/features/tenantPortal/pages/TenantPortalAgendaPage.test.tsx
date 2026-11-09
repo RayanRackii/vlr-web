@@ -4410,7 +4410,14 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserving"),
       }),
     ).not.toBeInTheDocument()
-    const reserve = screen.getByRole("button", {
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("alertdialog", {
+          name: i18n.t("tenantPortal.agenda.reviewTitle"),
+        }),
+      ).not.toBeInTheDocument()
+    })
+    const reserve = await screen.findByRole("button", {
       name: i18n.t("tenantPortal.agenda.reserveSlot"),
     })
     expect(reserve).not.toHaveAttribute("aria-busy", "true")

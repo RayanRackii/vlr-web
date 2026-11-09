@@ -1610,8 +1610,10 @@ export function TenantPortalAgendaPage() {
           })
           if (heldByCustomer) {
             setSelectedRentalAssetId(null)
+            setReviewOpen(false)
           } else {
             clearUnavailableSelection(true)
+            setReviewOpen(false)
           }
         }
         return
@@ -1620,6 +1622,7 @@ export function TenantPortalAgendaPage() {
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
           clearUnavailableSelection(true)
+          setReviewOpen(false)
         }
         return
       }
