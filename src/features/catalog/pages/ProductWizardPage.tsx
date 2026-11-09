@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
+import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
@@ -34,23 +35,25 @@ import type { SellableChecklistItem } from "@/features/catalog/components/produc
  */
 function WizardLeaveGuard({ dirty, saving }: { dirty: boolean; saving: boolean }) {
   const { t } = useTranslation()
-  const message = t("fullPage.leaveConfirm")
   const blocker = useBlocker(dirty || saving)
+  const open = blocker.state === "blocked" && !saving
   useEffect(() => {
-    if (blocker.state !== "blocked") {
-      return
-    }
-    if (saving) {
-      blocker.reset()
-      return
-    }
-    if (window.confirm(message)) {
-      blocker.proceed()
-    } else {
+    if (blocker.state === "blocked" && saving) {
       blocker.reset()
     }
-  }, [blocker, message, saving])
-  return null
+  }, [blocker, saving])
+  return (
+    <LeaveConfirmDialog
+      open={open}
+      title={t("fullPage.leaveConfirm")}
+      onStay={() => {
+        if (blocker.state === "blocked") blocker.reset()
+      }}
+      onLeave={() => {
+        if (blocker.state === "blocked") blocker.proceed()
+      }}
+    />
+  )
 }
 
 export function ProductWizardPage() {
@@ -62,6 +65,7 @@ export function ProductWizardPage() {
   const wizard = useProductWizard(id)
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
   const stepIndex = PRODUCT_WIZARD_STEPS.indexOf(step)
 
@@ -89,9 +93,20 @@ export function ProductWizardPage() {
       return false
     }
     if (!hasDataRouter && stepDirty) {
-      return window.confirm(t("fullPage.leaveConfirm"))
+      return false
     }
     return true
+  }
+
+  function runOrAsk(action: () => void) {
+    if (stepSaving) {
+      return
+    }
+    if (!hasDataRouter && stepDirty) {
+      setPendingLeave(() => action)
+      return
+    }
+    action()
   }
 
   function guardLink(event: MouseEvent<HTMLAnchorElement>) {
@@ -104,23 +119,27 @@ export function ProductWizardPage() {
   }
 
   function go(next: ProductWizardStepId) {
-    if (stepSaving || next === step || !allowLeaveAttempt()) {
+    if (stepSaving || next === step) {
       return
     }
-    const nextParams = new URLSearchParams(params)
-    if (next === "status") {
-      nextParams.delete("passo")
-    } else {
-      nextParams.set("passo", next)
-    }
-    setParams(nextParams, { replace: true })
+    runOrAsk(() => {
+      const nextParams = new URLSearchParams(params)
+      if (next === "status") {
+        nextParams.delete("passo")
+      } else {
+        nextParams.set("passo", next)
+      }
+      setParams(nextParams, { replace: true })
+    })
   }
 
   function finish() {
-    if (stepSaving || !allowLeaveAttempt()) {
+    if (stepSaving) {
       return
     }
-    void navigate("/catalogo/produtos")
+    runOrAsk(() => {
+      void navigate("/catalogo/produtos")
+    })
   }
 
   function onChecklistAction(item: SellableChecklistItem) {
@@ -163,6 +182,16 @@ export function ProductWizardPage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-5xl pb-[max(1rem,env(safe-area-inset-bottom))]">
       {hasDataRouter ? <WizardLeaveGuard dirty={stepDirty} saving={stepSaving} /> : null}
+      <LeaveConfirmDialog
+        open={pendingLeave != null}
+        title={t("fullPage.leaveConfirm")}
+        onStay={() => setPendingLeave(null)}
+        onLeave={() => {
+          const action = pendingLeave
+          setPendingLeave(null)
+          action?.()
+        }}
+      />
       <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label={t("catalog.productWizard.breadcrumbLabel")}>
         <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to="/catalogo/produtos" onClick={guardLink}>
           {t("catalog.products.title")}

@@ -94,10 +94,24 @@ function renderPanel(order: CatalogOrder, permissions: readonly string[] = ["cat
   return { onOrderChange, onReloadNeeded }
 }
 
+async function fillWorkStart(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.day")), "02")
+  await user.type(screen.getByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.month")), "11")
+  await user.type(screen.getByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.year")), "2026")
+  await user.type(screen.getByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.hour")), "13")
+  await user.type(screen.getByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.minute")), "00")
+}
+
 describe("CatalogOrderAllocationPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getUnits).mockResolvedValue([UNIT])
+  })
+
+  it("does not use a locale-sensitive datetime field", async () => {
+    renderPanel(BASE_ORDER)
+    expect(await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.day"))).toBeInTheDocument()
+    expect(document.querySelector('input[type="datetime-local"]')).toBeNull()
   })
 
   it("renders the allocation preview when feasible", async () => {
@@ -115,8 +129,7 @@ describe("CatalogOrderAllocationPanel", () => {
     })
     const user = userEvent.setup()
     renderPanel(BASE_ORDER)
-    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
-    await user.type(input, "2026-11-02T13:00")
+    await fillWorkStart(user)
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.approvalPanel.preview") }))
     expect(await screen.findByText(new RegExp(i18n.t("catalog.resourcePlanning.approvalPanel.workWindow")))).toBeInTheDocument()
     expect(screen.getByText(new RegExp(i18n.t("catalog.resourcePlanning.approvalPanel.occupiedWindow")))).toBeInTheDocument()
@@ -129,8 +142,7 @@ describe("CatalogOrderAllocationPanel", () => {
     vi.mocked(previewCatalogOrderAllocation).mockRejectedValue(new Error(i18n.t(i18nKey)))
     const user = userEvent.setup()
     renderPanel(BASE_ORDER)
-    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
-    await user.type(input, "2026-11-02T13:00")
+    await fillWorkStart(user)
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.approvalPanel.preview") }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(i18n.t(i18nKey)))
   })
@@ -143,8 +155,7 @@ describe("CatalogOrderAllocationPanel", () => {
     )
     const user = userEvent.setup()
     const { onReloadNeeded } = renderPanel(BASE_ORDER)
-    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
-    await user.type(input, "2026-11-02T13:00")
+    await fillWorkStart(user)
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate") }))
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(i18n.t("catalog.resourcePlanning.errors.planningVersionConflict")),
@@ -157,8 +168,7 @@ describe("CatalogOrderAllocationPanel", () => {
     vi.mocked(approveCatalogOrderWithPlanning).mockRejectedValue(new CatalogForbiddenError(friendly))
     const user = userEvent.setup()
     renderPanel(BASE_ORDER)
-    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
-    await user.type(input, "2026-11-02T13:00")
+    await fillWorkStart(user)
     const approveName = i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")
     await user.click(screen.getByRole("button", { name: approveName }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(friendly))
@@ -168,8 +178,9 @@ describe("CatalogOrderAllocationPanel", () => {
     const approve = screen.getByRole("button", { name: approveName })
     expect(alert.compareDocumentPosition(approve) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(approve).toBeDisabled()
-    await user.clear(input)
-    await user.type(input, "2026-11-02T14:00")
+    const day = screen.getByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.day"))
+    await user.clear(day)
+    await user.type(day, "03")
     expect(screen.queryByText(friendly)).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
   })
@@ -180,8 +191,7 @@ describe("CatalogOrderAllocationPanel", () => {
     )
     const user = userEvent.setup()
     renderPanel(BASE_ORDER)
-    const input = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.workStart"), { exact: false })
-    await user.type(input, "2026-11-02T13:00")
+    await fillWorkStart(user)
     const approveName = i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")
     await user.click(screen.getByRole("button", { name: approveName }))
     await waitFor(() =>

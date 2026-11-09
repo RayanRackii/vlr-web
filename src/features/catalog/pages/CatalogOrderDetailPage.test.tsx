@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { CatalogOrderDetailPage } from "./CatalogOrderDetailPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { getCatalogOrder, listCatalogProducts, rejectCatalogOrder, cancelCatalogOrder } from "../services/catalogService"
+import { getCatalogOrder, getCatalogProductResourceRequirements, listCatalogProducts, rejectCatalogOrder, cancelCatalogOrder, approveCatalogOrder } from "../services/catalogService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 import i18n from "@/lib/i18n"
 import { toast } from "sonner"
 
@@ -14,6 +15,13 @@ vi.mock("../services/catalogService", () => ({
   getCatalogOrder: vi.fn(), listCatalogProducts: vi.fn(), rejectCatalogOrder: vi.fn(),
   cancelCatalogOrder: vi.fn(), approveCatalogOrder: vi.fn(), completeCatalogOrder: vi.fn(),
   markCatalogOrderReady: vi.fn(), startPreparingCatalogOrder: vi.fn(),
+  getCatalogProductResourceRequirements: vi.fn(),
+}))
+vi.mock("@/features/rentals/services/scheduleService", () => ({
+  listAdminRentalAssets: vi.fn(),
+}))
+vi.mock("@/features/assets/services/unitsService", () => ({
+  getUnits: vi.fn().mockResolvedValue([]),
 }))
 const order = {
   id: "order-1", displayNumber: "#7", orderNumber: 7, status: "Requested" as const,
@@ -35,6 +43,8 @@ describe("staff order detail", () => {
     vi.clearAllMocks()
     vi.mocked(getCatalogOrder).mockResolvedValue(order)
     vi.mocked(listCatalogProducts).mockResolvedValue([])
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 0, requirements: [] })
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([])
   })
   afterEach(async () => { await i18n.changeLanguage("pt-BR") })
   it.each(["reject", "cancel"] as const)("requires a nonblank %s reason before confirmation", async (action) => {
@@ -109,6 +119,70 @@ describe("staff order detail", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.orders.reason.confirm") }))
     expect(toast.error).toHaveBeenCalledWith("Informe o motivo.")
     expect(screen.getByRole("dialog")).toBeInTheDocument()
+  })
+
+  it("names the resource on the order and does not offer one-click approve", async () => {
+    const productId = "11111111-1111-4111-8111-111111111111"
+    const assetId = "22222222-2222-4222-8222-222222222222"
+    vi.mocked(getCatalogOrder).mockResolvedValue({
+      ...order,
+      productionSummary: "Unscheduled",
+      items: [{
+        id: "33333333-3333-4333-8333-333333333333",
+        productId,
+        productName: "Kit festa",
+        productCode: null,
+        unitPrice: 10,
+        currency: "BRL",
+        quantity: 1,
+        subTotal: 10,
+        productionSummary: "Unscheduled",
+        allocation: null,
+      }],
+    })
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({
+      expectedVersion: 1,
+      requirements: [{
+        rentalAssetId: assetId,
+        assetCategoryId: null,
+        resourceQuantity: 1,
+        durationMinutesPerUnit: 60,
+        prepMinutes: 0,
+        cleanupMinutes: 0,
+      }],
+    })
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([
+      { id: assetId, name: "Quadra coberta", unitId: "44444444-4444-4444-8444-444444444444" },
+    ] as never)
+    renderDetail()
+    expect(await screen.findByText(i18n.t("catalog.resourcePlanning.approvalPanel.resourceNamed", {
+      name: "Quadra coberta",
+      minutes: 60,
+    }))).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.orders.actions.approve") })).not.toBeInTheDocument()
+  })
+
+  it("approves in one click when the order does not book a resource", async () => {
+    vi.mocked(getCatalogOrder).mockResolvedValue({
+      ...order,
+      items: [{
+        id: "33333333-3333-4333-8333-333333333333",
+        productId: "11111111-1111-4111-8111-111111111111",
+        productName: "Suco",
+        productCode: null,
+        unitPrice: 10,
+        currency: "BRL",
+        quantity: 1,
+        subTotal: 10,
+        productionSummary: "NotRequired",
+        allocation: null,
+      }],
+    })
+    vi.mocked(approveCatalogOrder).mockResolvedValue({ ...order, status: "Approved" })
+    const user = userEvent.setup()
+    renderDetail()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.orders.actions.approve") }))
+    expect(approveCatalogOrder).toHaveBeenCalledWith(order.id)
   })
 
 })
