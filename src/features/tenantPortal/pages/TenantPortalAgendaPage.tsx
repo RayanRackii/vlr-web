@@ -1150,6 +1150,12 @@ export function TenantPortalAgendaPage() {
     quoteSelectionKeyRef.current = quoteSelectionKey
     quoteSelectionGenerationRef.current += 1
   }, [quoteSelectionKey])
+  // Drop a stale review key during render when the quote selection moves away
+  // (React "adjust state while rendering" pattern) so reselecting the old
+  // resource does not reopen review without an explicit Continuar click.
+  if (reviewSelectionKey !== null && reviewSelectionKey !== quoteSelectionKey) {
+    setReviewSelectionKey(null)
+  }
   const reviewOpen =
     reviewSelectionKey !== null && reviewSelectionKey === quoteSelectionKey
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
