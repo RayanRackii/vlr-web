@@ -2,6 +2,7 @@ import type { ComponentProps } from "react"
 import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { expect, it, vi } from "vitest"
+import { createMemoryRouter, RouterProvider } from "react-router-dom"
 import { SchedulePage } from "./SchedulePage"
 import type { WeeklyTemplatesTab } from "../components/schedule/WeeklyTemplatesTab"
 import i18n from "@/lib/i18n"
@@ -249,6 +250,33 @@ it("guards a dirty template when the resource filter changes, keeping it on canc
     expect(label()).toHaveValue("")
   } finally {
     confirm.mockRestore()
+  }
+})
+
+it("confirms a dirty template before the wizard return link leaves the page", async () => {
+  window.history.pushState({}, "", "/configuracoes/agenda?returnTo=%2Fconfiguracoes%2Frecursos%2Fabc%2Fassistente")
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const user = userEvent.setup()
+  const router = createMemoryRouter([
+    { path: "/configuracoes/agenda", element: <SchedulePage /> },
+    { path: "/configuracoes/recursos/:id/assistente", element: <h1>Assistente</h1> },
+  ], { initialEntries: ["/configuracoes/agenda"] })
+  try {
+    render(<RouterProvider router={router} />)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
+    await user.type(label(), "Rascunho")
+    await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(label()).toHaveValue("Rascunho")
+    expect(router.state.location.pathname).toBe("/configuracoes/agenda")
+    confirm.mockReturnValue(true)
+    await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
+    expect(router.state.location.pathname).toBe("/configuracoes/recursos/abc/assistente")
+  } finally {
+    confirm.mockRestore()
+    window.history.pushState({}, "", "/")
   }
 })
 

@@ -40,6 +40,7 @@ import {
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { describeApiError } from "@/features/users/permissions/rbacErrors"
 
 type WizardModel = {
   asset: AdminRentalAsset
@@ -103,7 +104,7 @@ export function useResourceWizard(rentalAssetId: string) {
       if (!active.current) {
         return
       }
-      const message = loadError instanceof Error ? loadError.message : t("rentals.resources.loadError")
+      const message = describeApiError(loadError, t("rentals.resources.loadError"))
       if (silent) {
         toast.error(message)
       } else {

@@ -711,7 +711,7 @@ function AdminSchedulePage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="min-w-0 space-y-4">
-        <StaffReturnLink />
+        <StaffReturnLink beforeNavigate={discardTemplateDraft} />
         <div className="space-y-1">
           <PageHeader
             icon={CalendarDays}

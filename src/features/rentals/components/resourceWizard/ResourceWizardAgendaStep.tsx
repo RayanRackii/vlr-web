@@ -104,6 +104,9 @@ export function ResourceWizardAgendaStep({
   }, [asset.id, canReadReservations, queueEnabled, queueRequest, timeZoneId])
 
   function showWeek(nextAnchor: string) {
+    if (mondayOfWeek(nextAnchor) === monday) {
+      return
+    }
     setLoading(true)
     setLoadError(false)
     setAnchor(nextAnchor)

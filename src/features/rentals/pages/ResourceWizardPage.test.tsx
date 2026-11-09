@@ -1,3 +1,4 @@
+import { AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -190,6 +191,37 @@ describe("ResourceWizardPage", () => {
     renderWizard(FULL_ACCESS.filter((permission) => permission !== "rentals.schedule.read"), `/configuracoes/recursos/${RENTAL_ID}/assistente?passo=rules`)
     expect(await screen.findByText(i18n.t("rentals.resourceWizard.permission"))).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("rentals.schedule.seedTemplates") })).not.toBeInTheDocument()
+  })
+
+  it("keeps the current week on screen when Esta semana is already selected", async () => {
+    const user = userEvent.setup()
+    renderWizard(FULL_ACCESS, `/configuracoes/recursos/${RENTAL_ID}/assistente?passo=agenda`)
+    expect(await screen.findByText(i18n.t("rentals.resourceWizard.agenda.queueUnavailable"))).toBeInTheDocument()
+    expect(screen.getAllByText(i18n.t("rentals.resourceWizard.agenda.emptyDay"))).not.toHaveLength(0)
+    expect(listAdminReservations).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resourceWizard.agenda.today") }))
+    expect(screen.getAllByText(i18n.t("rentals.resourceWizard.agenda.emptyDay"))).not.toHaveLength(0)
+    expect(screen.queryByLabelText(i18n.t("common.loading"))).not.toBeInTheDocument()
+    expect(listAdminReservations).toHaveBeenCalledTimes(1)
+  })
+
+  it("maps a forbidden resource load to the permission message", async () => {
+    vi.mocked(listAdminRentalAssets).mockRejectedValue(new AxiosError(
+      "Request failed with status code 403",
+      undefined,
+      undefined,
+      undefined,
+      {
+        status: 403,
+        data: {},
+        statusText: "Forbidden",
+        headers: {},
+        config: {} as InternalAxiosRequestConfig,
+      },
+    ))
+    renderWizard()
+    expect(await screen.findByText(i18n.t("rbac.errors.FORBIDDEN"))).toBeInTheDocument()
+    expect(screen.queryByText("Request failed with status code 403")).not.toBeInTheDocument()
   })
 
   it("hides the week's bookings when the person cannot read reservations", async () => {
