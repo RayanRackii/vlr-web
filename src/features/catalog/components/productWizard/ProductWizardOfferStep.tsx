@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useEffect, useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -31,11 +31,37 @@ type ProductWizardOfferStepProps = {
   product: CatalogProduct
   readOnly: boolean
   onSaved: () => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export function ProductWizardOfferStep({ product, readOnly, onSaved }: ProductWizardOfferStepProps) {
+function offerDraftIsValid(values: {
+  name?: string
+  code?: string
+  description?: string
+  price?: string
+  currency?: string
+}): boolean {
+  const price = (values.price ?? "").trim()
+  if (!catalogProductFormSchema.safeParse({
+    name: values.name ?? "",
+    code: values.code ?? "",
+    description: values.description ?? "",
+    price,
+    currency: values.currency ?? "",
+  }).success) {
+    return false
+  }
+  if (price.length === 0) {
+    return true
+  }
+  const amount = Number(price.replace(",", "."))
+  return Number.isFinite(amount) && amount >= 0
+}
+
+export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChange }: ProductWizardOfferStepProps) {
   const { t } = useTranslation()
   const [active, setActive] = useState(product.isActive)
+  const [savedActive, setSavedActive] = useState(product.isActive)
   const [saving, setSaving] = useState(false)
   const form = useForm<CatalogProductFormValues>({
     resolver: zodResolver(catalogProductFormSchema),
@@ -51,6 +77,15 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved }: ProductWi
       },
     },
   })
+  const draft = useWatch({ control: form.control })
+  const draftValid = offerDraftIsValid(draft)
+  const dirty = form.formState.isDirty || active !== savedActive
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
 
   async function onSubmit(values: CatalogProductFormValues) {
     if (readOnly || saving) {
@@ -76,6 +111,8 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved }: ProductWi
           await deactivateCatalogProduct(product.id)
         }
       }
+      form.reset(values)
+      setSavedActive(active)
       toast.success(t("catalog.products.toastUpdated"))
       onSaved()
     } catch (error) {
@@ -171,7 +208,7 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved }: ProductWi
           </div>
         </fieldset>
         {readOnly ? null : (
-          <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={saving}>
+          <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={saving || !draftValid}>
             {t("common.save")}
           </Button>
         )}

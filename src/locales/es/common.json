@@ -1274,6 +1274,8 @@
       "emptyGroup": "{{name}} no tiene miembros. Quien solo está en ese grupo no ve el producto.",
       "memberSearch": "Nombre o correo del cliente",
       "addMember": "Agregar al grupo",
+      "searchMembers": "Buscar",
+      "pickMember": "Agregar {{name}}",
       "memberAdded": "{{name}} entró al grupo.",
       "noCustomerMatch": "Ningún cliente con ese nombre o correo.",
       "noResources": "No hay recursos reservables en este lugar.",

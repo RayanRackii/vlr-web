@@ -1,16 +1,18 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { isSameTabPrimaryClick } from "@/features/catalog/components/productWizard/plainClick"
 import { productGroupDeepLink } from "@/features/catalog/components/productWizard/wizardSteps"
 import type { CatalogProductVisibility, CustomerGroup } from "@/features/catalog/schemas/catalogSchemas"
 import {
   addCustomerGroupMembers,
   putCatalogProductAccess,
 } from "@/features/catalog/services/catalogService"
+import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 import { listTenantCustomers } from "@/features/users/services/usersService"
 
 type ProductWizardAccessStepProps = {
@@ -23,6 +25,17 @@ type ProductWizardAccessStepProps = {
   readOnly: boolean
   canSearchCustomers: boolean
   onSaved: () => void
+  onDirtyChange?: (dirty: boolean) => void
+  /** Return false to stay. Only plain same-tab clicks ask. */
+  beforeNavigate?: () => boolean
+}
+
+function sameIds(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) {
+    return false
+  }
+  const ids = new Set(left)
+  return right.every((id) => ids.has(id))
 }
 
 export function ProductWizardAccessStep({
@@ -35,14 +48,26 @@ export function ProductWizardAccessStep({
   readOnly,
   canSearchCustomers,
   onSaved,
+  onDirtyChange,
+  beforeNavigate,
 }: ProductWizardAccessStepProps) {
   const { t } = useTranslation()
   const [visibility, setVisibility] = useState<CatalogProductVisibility>(initialVisibility)
   const [groupIds, setGroupIds] = useState<string[]>([...initialGroupIds])
-  const [memberQuery, setMemberQuery] = useState("")
-  const [memberNames, setMemberNames] = useState<string[]>([])
+  const [savedVisibility, setSavedVisibility] = useState(initialVisibility)
+  const [savedGroupIds, setSavedGroupIds] = useState<string[]>([...initialGroupIds])
+  const [queries, setQueries] = useState<Record<string, string>>({})
+  const [matches, setMatches] = useState<Record<string, TenantCustomer[]>>({})
+  const [searched, setSearched] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
-  const [adding, setAdding] = useState(false)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const dirty = visibility !== savedVisibility || !sameIds(groupIds, savedGroupIds)
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
 
   const emptyGroups = useMemo(
     () => groups.filter((group) => groupIds.includes(group.id) && group.memberCustomerIds.length === 0),
@@ -60,6 +85,8 @@ export function ProductWizardAccessStep({
         customerIds: [...customerIds],
         groupIds,
       })
+      setSavedVisibility(visibility)
+      setSavedGroupIds([...groupIds])
       toast.success(t("catalog.productWizard.accessSaved"))
       onSaved()
     } catch (error) {
@@ -69,42 +96,39 @@ export function ProductWizardAccessStep({
     }
   }
 
-  async function addFirstMatch(groupId: string) {
-    const query = memberQuery.trim()
-    if (query.length < 2 || adding) {
+  async function searchMembers(groupId: string) {
+    const query = (queries[groupId] ?? "").trim()
+    if (query.length < 2) {
+      setMatches((current) => ({ ...current, [groupId]: [] }))
+      setSearched((current) => ({ ...current, [groupId]: false }))
       return
     }
-    setAdding(true)
     try {
       const page = await listTenantCustomers({ q: query, page: 1, pageSize: 5 })
-      const customer = page.items[0]
-      if (!customer) {
-        setMemberNames([])
-        toast.error(t("catalog.productWizard.noCustomerMatch"))
-        return
-      }
+      setMatches((current) => ({ ...current, [groupId]: page.items }))
+    } catch {
+      setMatches((current) => ({ ...current, [groupId]: [] }))
+    } finally {
+      setSearched((current) => ({ ...current, [groupId]: true }))
+    }
+  }
+
+  async function addPickedMember(groupId: string, customer: TenantCustomer) {
+    if (addingId) {
+      return
+    }
+    setAddingId(customer.id)
+    try {
       await addCustomerGroupMembers(groupId, [customer.id])
       toast.success(t("catalog.productWizard.memberAdded", { name: customer.name }))
-      setMemberQuery("")
+      setQueries((current) => ({ ...current, [groupId]: "" }))
+      setMatches((current) => ({ ...current, [groupId]: [] }))
+      setSearched((current) => ({ ...current, [groupId]: false }))
       onSaved()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.addMembers"))
     } finally {
-      setAdding(false)
-    }
-  }
-
-  async function searchMembers() {
-    const query = memberQuery.trim()
-    if (query.length < 2) {
-      setMemberNames([])
-      return
-    }
-    try {
-      const page = await listTenantCustomers({ q: query, page: 1, pageSize: 5 })
-      setMemberNames(page.items.map((customer) => customer.name))
-    } catch {
-      setMemberNames([])
+      setAddingId(null)
     }
   }
 
@@ -167,31 +191,76 @@ export function ProductWizardAccessStep({
           })}
         </fieldset>
       ) : null}
-      {emptyGroups.map((group) => (
-        <div key={group.id} className="space-y-2 rounded-lg border border-border p-3">
-          <p className="text-sm">{t("catalog.productWizard.emptyGroup", { name: group.name })}</p>
-          {canSearchCustomers && !readOnly ? (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={memberQuery}
-                onChange={(event) => setMemberQuery(event.target.value)}
-                onBlur={() => void searchMembers()}
-                placeholder={t("catalog.productWizard.memberSearch")}
-                aria-label={t("catalog.productWizard.memberSearch")}
-              />
-              <Button type="button" className="min-h-11" disabled={adding || memberQuery.trim().length < 2} onClick={() => void addFirstMatch(group.id)}>
-                {t("catalog.productWizard.addMember")}
-              </Button>
-            </div>
-          ) : null}
-          {memberNames.length > 0 ? (
-            <p className="text-xs text-muted-foreground">{memberNames.join(", ")}</p>
-          ) : null}
-          <Link className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline" to={productGroupDeepLink(group.id, wizardPath)}>
-            {t("catalog.productWizard.actions.openGroup")}
-          </Link>
-        </div>
-      ))}
+      {emptyGroups.map((group) => {
+        const query = queries[group.id] ?? ""
+        const results = matches[group.id] ?? []
+        return (
+          <div key={group.id} className="space-y-2 rounded-lg border border-border p-3">
+            <p className="text-sm">{t("catalog.productWizard.emptyGroup", { name: group.name })}</p>
+            {canSearchCustomers && !readOnly ? (
+              <form
+                className="space-y-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void searchMembers(group.id)
+                }}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={query}
+                    onChange={(event) => {
+                      const next = event.target.value
+                      setQueries((current) => ({ ...current, [group.id]: next }))
+                      setMatches((current) => ({ ...current, [group.id]: [] }))
+                      setSearched((current) => ({ ...current, [group.id]: false }))
+                    }}
+                    placeholder={t("catalog.productWizard.memberSearch")}
+                    aria-label={t("catalog.productWizard.memberSearch")}
+                  />
+                  <Button type="submit" className="min-h-11" disabled={query.trim().length < 2}>
+                    {t("catalog.productWizard.searchMembers")}
+                  </Button>
+                </div>
+                {results.length > 0 ? (
+                  <ul className="space-y-2">
+                    {results.map((customer) => (
+                      <li key={customer.id}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="min-h-11 w-full justify-start whitespace-normal text-left"
+                          disabled={addingId !== null}
+                          onClick={() => void addPickedMember(group.id, customer)}
+                        >
+                          {t("catalog.productWizard.pickMember", { name: customer.name })}
+                          {customer.email ? <span className="text-muted-foreground"> · {customer.email}</span> : null}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {searched[group.id] && results.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("catalog.productWizard.noCustomerMatch")}</p>
+                ) : null}
+              </form>
+            ) : null}
+            <Link
+              className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline"
+              to={productGroupDeepLink(group.id, wizardPath)}
+              onClick={(event) => {
+                if (!beforeNavigate || !isSameTabPrimaryClick(event)) {
+                  return
+                }
+                if (!beforeNavigate()) {
+                  event.preventDefault()
+                }
+              }}
+            >
+              {t("catalog.productWizard.actions.openGroup")}
+            </Link>
+          </div>
+        )
+      })}
       {readOnly ? null : (
         <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={saving} onClick={() => void save()}>
           {t("common.save")}

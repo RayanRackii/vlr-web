@@ -18,6 +18,8 @@ import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals
 type CatalogProductResourceRequirementsProps = {
   productId: string
   readOnly?: boolean
+  onSaved?: () => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 type DraftRow = CatalogProductResourceRequirement & { clientId: string }
@@ -26,6 +28,16 @@ let clientIdCounter = 0
 function nextClientId(): string {
   clientIdCounter += 1
   return `requirement-${clientIdCounter}`
+}
+
+function rowSnapshot(rows: readonly DraftRow[]): string {
+  return JSON.stringify(rows.map((row) => ({
+    rentalAssetId: row.rentalAssetId,
+    resourceQuantity: row.resourceQuantity,
+    durationMinutesPerUnit: row.durationMinutesPerUnit,
+    prepMinutes: row.prepMinutes,
+    cleanupMinutes: row.cleanupMinutes,
+  })))
 }
 
 function emptyRow(): DraftRow {
@@ -41,7 +53,12 @@ function emptyRow(): DraftRow {
   }
 }
 
-export function CatalogProductResourceRequirements({ productId, readOnly = false }: CatalogProductResourceRequirementsProps) {
+export function CatalogProductResourceRequirements({
+  productId,
+  readOnly = false,
+  onSaved,
+  onDirtyChange,
+}: CatalogProductResourceRequirementsProps) {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -50,6 +67,7 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<{ message: string; blocking: boolean } | null>(null)
+  const [baseline, setBaseline] = useState<string | null>(null)
   const [loadedForProductId, setLoadedForProductId] = useState(productId)
 
   // Reset to loading when the product changes (adjust state during render, not in the effect).
@@ -67,7 +85,9 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
       .then(([response, assetList]) => {
         if (cancelled) return
         setExpectedVersion(response.expectedVersion)
-        setRows(response.requirements.map((row) => ({ ...row, clientId: nextClientId() })))
+        const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
+        setRows(nextRows)
+        setBaseline(rowSnapshot(nextRows))
         setAssets(assetList)
         setLoadError(null)
       })
@@ -92,8 +112,10 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
     setLoading(true)
     getCatalogProductResourceRequirements(productId)
       .then((response) => {
+        const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
         setExpectedVersion(response.expectedVersion)
-        setRows(response.requirements.map((row) => ({ ...row, clientId: nextClientId() })))
+        setRows(nextRows)
+        setBaseline(rowSnapshot(nextRows))
         setLoadError(null)
       })
       .catch((error: unknown) => {
@@ -105,6 +127,15 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
       })
       .finally(() => setLoading(false))
   }
+
+  useEffect(() => {
+    if (!onDirtyChange) {
+      return
+    }
+    onDirtyChange(!loading && baseline !== null && rowSnapshot(rows) !== baseline)
+  }, [baseline, loading, onDirtyChange, rows])
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
 
   function updateRow(clientId: string, patch: Partial<DraftRow>) {
     setSaveError(null)
@@ -144,9 +175,12 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
           cleanupMinutes: row.cleanupMinutes,
         })),
       })
+      const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
       setExpectedVersion(response.expectedVersion)
-      setRows(response.requirements.map((row) => ({ ...row, clientId: nextClientId() })))
+      setRows(nextRows)
+      setBaseline(rowSnapshot(nextRows))
       toast.success(t("catalog.resourcePlanning.toastSaved"))
+      onSaved?.()
     } catch (error) {
       if (error instanceof CatalogPlanningVersionConflictError) {
         toast.error(error.message)
@@ -224,7 +258,8 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
                           key={asset.id}
                           type="button"
                           variant={selected ? "default" : "outline"}
-                          className="min-h-11 justify-start"
+                          className="h-auto min-h-11 w-full min-w-0 justify-start whitespace-normal break-words text-left"
+                          title={asset.name}
                           aria-pressed={selected}
                           disabled={readOnly}
                           onClick={() => updateRow(row.clientId, { rentalAssetId: asset.id })}
@@ -242,6 +277,7 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
                   <Input
                     type="number"
                     min={1}
+                    disabled={readOnly}
                     value={row.resourceQuantity}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -255,6 +291,7 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
                   <Input
                     type="number"
                     min={1}
+                    disabled={readOnly}
                     value={row.durationMinutesPerUnit}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -268,6 +305,7 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
                   <Input
                     type="number"
                     min={0}
+                    disabled={readOnly}
                     value={row.prepMinutes}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -281,6 +319,7 @@ export function CatalogProductResourceRequirements({ productId, readOnly = false
                   <Input
                     type="number"
                     min={0}
+                    disabled={readOnly}
                     value={row.cleanupMinutes}
                     onChange={(event) =>
                       updateRow(row.clientId, {

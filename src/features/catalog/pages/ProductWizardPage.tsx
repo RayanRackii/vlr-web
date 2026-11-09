@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState, type MouseEvent } from "react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
+import { isSameTabPrimaryClick } from "@/features/catalog/components/productWizard/plainClick"
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
 import { ProductWizardStatusStep } from "@/features/catalog/components/productWizard/ProductWizardStatusStep"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import {
   moveProductWizardStep,
   PRODUCT_WIZARD_STEPS,
+  productWizardPath,
   productWizardStepFromQuery,
   type ProductWizardStepId,
 } from "@/features/catalog/components/productWizard/wizardSteps"
@@ -26,7 +28,20 @@ export function ProductWizardPage() {
   const [params, setParams] = useSearchParams()
   const step = productWizardStepFromQuery(params.get("passo"))
   const wizard = useProductWizard(id)
+  const [stepDirty, setStepDirty] = useState(false)
   const stepIndex = PRODUCT_WIZARD_STEPS.indexOf(step)
+
+  useEffect(() => {
+    if (!stepDirty) {
+      return
+    }
+    function warn(event: BeforeUnloadEvent) {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", warn)
+    return () => window.removeEventListener("beforeunload", warn)
+  }, [stepDirty])
   const steps = useMemo(
     () => PRODUCT_WIZARD_STEPS.map((wizardStep) => ({
       id: wizardStep,
@@ -35,7 +50,26 @@ export function ProductWizardPage() {
     [t],
   )
 
+  function confirmLeave(): boolean {
+    if (!stepDirty) {
+      return true
+    }
+    return window.confirm(t("fullPage.leaveConfirm"))
+  }
+
+  function guardLink(event: MouseEvent<HTMLAnchorElement>) {
+    if (!isSameTabPrimaryClick(event)) {
+      return
+    }
+    if (!confirmLeave()) {
+      event.preventDefault()
+    }
+  }
+
   function go(next: ProductWizardStepId) {
+    if (next === step || !confirmLeave()) {
+      return
+    }
     const nextParams = new URLSearchParams(params)
     if (next === "status") {
       nextParams.delete("passo")
@@ -43,6 +77,13 @@ export function ProductWizardPage() {
       nextParams.set("passo", next)
     }
     setParams(nextParams, { replace: true })
+  }
+
+  function finish() {
+    if (!confirmLeave()) {
+      return
+    }
+    void navigate("/catalogo/produtos")
   }
 
   function onChecklistAction(item: SellableChecklistItem) {
@@ -55,6 +96,9 @@ export function ProductWizardPage() {
       return
     }
     if (item.action.kind === "link") {
+      if (!confirmLeave()) {
+        return
+      }
       void navigate(item.action.href)
     }
   }
@@ -79,11 +123,11 @@ export function ProductWizardPage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-5xl pb-[max(1rem,env(safe-area-inset-bottom))]">
       <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label={t("catalog.productWizard.breadcrumbLabel")}>
-        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to="/catalogo/produtos">
+        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to="/catalogo/produtos" onClick={guardLink}>
           {t("catalog.products.title")}
         </Link>
         <span aria-hidden="true">/</span>
-        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to={`/catalogo/produtos/${encodeURIComponent(product.id)}`}>
+        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to={`/catalogo/produtos/${encodeURIComponent(product.id)}`} onClick={guardLink}>
           {product.name}
         </Link>
         <span aria-hidden="true">/</span>
@@ -137,6 +181,7 @@ export function ProductWizardPage() {
             key={`${product.id}:${product.isActive}:${product.name}:${product.price ?? ""}`}
             product={product}
             readOnly={!wizard.canManage}
+            onDirtyChange={setStepDirty}
             onSaved={() => void wizard.reload()}
           />
         ) : null}
@@ -147,9 +192,11 @@ export function ProductWizardPage() {
             customerIds={wizard.model.access.customerIds}
             groupIds={wizard.model.access.groupIds}
             groups={wizard.model.groups}
-            wizardPath={wizard.wizardPath}
+            wizardPath={productWizardPath(product.id, "access")}
             readOnly={!wizard.canManage}
             canSearchCustomers={wizard.canSearchCustomers}
+            onDirtyChange={setStepDirty}
+            beforeNavigate={confirmLeave}
             onSaved={() => void wizard.reload()}
           />
         ) : null}
@@ -168,7 +215,12 @@ export function ProductWizardPage() {
                   {t("catalog.productWizard.details.resource.inactiveModule")}
                 </p>
               ) : (
-                <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} />
+                <CatalogProductResourceRequirements
+                  productId={product.id}
+                  readOnly={!wizard.canManage}
+                  onDirtyChange={setStepDirty}
+                  onSaved={() => void wizard.reload()}
+                />
               )}
             </div>
           ) : (
@@ -188,7 +240,7 @@ export function ProductWizardPage() {
           {t("catalog.productWizard.back")}
         </Button>
         {step === "resource" ? (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => void navigate("/catalogo/produtos")}>
+          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={finish}>
             {t("catalog.productWizard.finish")}
           </Button>
         ) : (

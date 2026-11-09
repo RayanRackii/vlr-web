@@ -1274,6 +1274,8 @@
       "emptyGroup": "{{name}} has no members. Someone who is only in that group cannot see the product.",
       "memberSearch": "Customer name or email",
       "addMember": "Add to the group",
+      "searchMembers": "Search",
+      "pickMember": "Add {{name}}",
       "memberAdded": "{{name}} joined the group.",
       "noCustomerMatch": "No customer with that name or email.",
       "noResources": "This place has no bookable resources.",
