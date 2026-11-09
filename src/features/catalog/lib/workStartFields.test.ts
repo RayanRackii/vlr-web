@@ -13,6 +13,24 @@ describe("composeWorkStart", () => {
     })).toBe("2026-10-11T14:00")
   })
 
+  it("rejects a blank hour, a blank minute, or both", () => {
+    const date = { day: "11", month: "10", year: "2026" }
+    expect(composeWorkStart({ ...date, hour: "", minute: "30" })).toBeNull()
+    expect(composeWorkStart({ ...date, hour: "14", minute: "" })).toBeNull()
+    expect(composeWorkStart({ ...date, hour: "", minute: "" })).toBeNull()
+    expect(composeWorkStart({ ...date, hour: " ", minute: "  " })).toBeNull()
+  })
+
+  it("keeps an explicit midnight", () => {
+    expect(composeWorkStart({
+      day: "11",
+      month: "10",
+      year: "2026",
+      hour: "0",
+      minute: "0",
+    })).toBe("2026-10-11T00:00")
+  })
+
   it("rejects a swapped or impossible calendar date", () => {
     expect(composeWorkStart({
       day: "31",

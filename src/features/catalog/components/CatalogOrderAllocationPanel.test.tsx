@@ -108,6 +108,34 @@ describe("CatalogOrderAllocationPanel", () => {
     vi.mocked(getUnits).mockResolvedValue([UNIT])
   })
 
+  it("keeps approve disabled until hour and minute are both filled", async () => {
+    const user = userEvent.setup()
+    renderPanel(BASE_ORDER)
+    const approveName = i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate")
+    const day = i18n.t("catalog.resourcePlanning.approvalPanel.day")
+    const month = i18n.t("catalog.resourcePlanning.approvalPanel.month")
+    const year = i18n.t("catalog.resourcePlanning.approvalPanel.year")
+    const hour = i18n.t("catalog.resourcePlanning.approvalPanel.hour")
+    const minute = i18n.t("catalog.resourcePlanning.approvalPanel.minute")
+
+    await user.type(await screen.findByLabelText(day), "11")
+    await user.type(screen.getByLabelText(month), "10")
+    await user.type(screen.getByLabelText(year), "2026")
+    expect(screen.getByRole("button", { name: approveName })).toBeDisabled()
+
+    await user.type(screen.getByLabelText(hour), "14")
+    expect(screen.getByRole("button", { name: approveName })).toBeDisabled()
+
+    await user.clear(screen.getByLabelText(hour))
+    await user.type(screen.getByLabelText(minute), "30")
+    expect(screen.getByRole("button", { name: approveName })).toBeDisabled()
+
+    await user.type(screen.getByLabelText(hour), "0")
+    await user.clear(screen.getByLabelText(minute))
+    await user.type(screen.getByLabelText(minute), "0")
+    expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
+  })
+
   it("does not use a locale-sensitive datetime field", async () => {
     renderPanel(BASE_ORDER)
     expect(await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.day"))).toBeInTheDocument()

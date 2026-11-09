@@ -6,14 +6,22 @@ export type WorkStartParts = {
   minute: string
 }
 
+function readPart(value: string): number | null {
+  const trimmed = value.trim()
+  if (!/^\d+$/.test(trimmed)) {
+    return null
+  }
+  return Number(trimmed)
+}
+
 /** Local `YYYY-MM-DDTHH:mm`. Day and month are separate so a US locale cannot swap them. */
 export function composeWorkStart(parts: WorkStartParts): string | null {
-  const day = Number(parts.day)
-  const month = Number(parts.month)
-  const year = Number(parts.year)
-  const hour = Number(parts.hour)
-  const minute = Number(parts.minute)
-  if (![day, month, year, hour, minute].every((value) => Number.isInteger(value))) {
+  const day = readPart(parts.day)
+  const month = readPart(parts.month)
+  const year = readPart(parts.year)
+  const hour = readPart(parts.hour)
+  const minute = readPart(parts.minute)
+  if (day == null || month == null || year == null || hour == null || minute == null) {
     return null
   }
   if (year < 2000 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) {
