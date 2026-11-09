@@ -421,6 +421,7 @@ export function TenantPortalAgendaPage() {
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [reviewSelectionKey, setReviewSelectionKey] = useState<string | null>(null)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
   const [cancellationPolicyText, setCancellationPolicyText] = useState<
@@ -1140,6 +1141,23 @@ export function TenantPortalAgendaPage() {
   const quoteSelectionKey = quoteAssetId && quoteStart && quoteEnd
     ? `${date}:${endDate ?? ""}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
     : null
+  const quoteSelectionKeyRef = useRef(quoteSelectionKey)
+  const quoteSelectionGenerationRef = useRef(0)
+  useEffect(() => {
+    if (quoteSelectionKeyRef.current === quoteSelectionKey) {
+      return
+    }
+    quoteSelectionKeyRef.current = quoteSelectionKey
+    quoteSelectionGenerationRef.current += 1
+  }, [quoteSelectionKey])
+  // Drop a stale review key during render when the quote selection moves away
+  // (React "adjust state while rendering" pattern) so reselecting the old
+  // resource does not reopen review without an explicit Continuar click.
+  if (reviewSelectionKey !== null && reviewSelectionKey !== quoteSelectionKey) {
+    setReviewSelectionKey(null)
+  }
+  const reviewOpen =
+    reviewSelectionKey !== null && reviewSelectionKey === quoteSelectionKey
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
   const isMultiUnitGood = selectedAsset !== undefined &&
     selectedAsset.type.toLowerCase() === "good" && selectedAssetQuantity > 1
@@ -1404,6 +1422,7 @@ export function TenantPortalAgendaPage() {
 
   async function onReserve() {
     if (
+      !reviewOpen || !queue.canReserve ||
       schedulePending || slotsError ||
       !selectedAsset ||
       !selectedSlot ||
@@ -1421,6 +1440,7 @@ export function TenantPortalAgendaPage() {
     const quotePricingUnit = quoteCurrent ? quote.pricingUnit : null
 
     const applyReservationSuccess = (reservation: PortalReservation) => {
+      setReviewSelectionKey(null)
       rememberOwnBooking(reservation, timeZoneId)
       const unitPrice = unitPriceForWindow({
         startTime: slot.startTime,
@@ -1597,8 +1617,10 @@ export function TenantPortalAgendaPage() {
           })
           if (heldByCustomer) {
             setSelectedRentalAssetId(null)
+            setReviewSelectionKey(null)
           } else {
             clearUnavailableSelection(true)
+            setReviewSelectionKey(null)
           }
         }
         return
@@ -1607,6 +1629,7 @@ export function TenantPortalAgendaPage() {
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
           clearUnavailableSelection(true)
+          setReviewSelectionKey(null)
         }
         return
       }
@@ -1636,14 +1659,22 @@ export function TenantPortalAgendaPage() {
       return
     }
     const generation = getAgendaSessionGeneration()
+    // Event-handler ref sync (allowed): keep generation current before the await.
+    if (quoteSelectionKeyRef.current !== quoteSelectionKey) {
+      quoteSelectionKeyRef.current = quoteSelectionKey
+      quoteSelectionGenerationRef.current += 1
+    }
+    const selectionGeneration = quoteSelectionGenerationRef.current
+    const selectionKeyAtJoin = quoteSelectionKey
     joinAndReserveLock.current = true
     try {
       const next = await queue.join()
-      if (generation !== getAgendaSessionGeneration()) {
+      if (generation !== getAgendaSessionGeneration() ||
+        selectionGeneration !== quoteSelectionGenerationRef.current) {
         return
       }
       if (next?.phase === "Open" && next.myTicket?.status === "Active") {
-        await onReserve()
+        setReviewSelectionKey(selectionKeyAtJoin)
       }
     } finally {
       joinAndReserveLock.current = false
@@ -2844,7 +2875,7 @@ export function TenantPortalAgendaPage() {
                 quoteUnavailable
               }
               onClick={() => {
-                void onReserve()
+                setReviewSelectionKey(quoteSelectionKey)
               }}
             >
               {t("tenantPortal.agenda.reserveSlot")}
@@ -2907,6 +2938,56 @@ export function TenantPortalAgendaPage() {
               </>
             )}
           </div>
+
+          <AlertDialog
+            open={reviewOpen}
+            onOpenChange={(open) => {
+              if (!submittingRef.current && !open) setReviewSelectionKey(null)
+            }}
+          >
+            <AlertDialogContent className="max-h-[min(80vh,40rem)] overflow-y-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("tenantPortal.agenda.reviewTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t(selectedAsset?.requiresDeposit
+                    ? "tenantPortal.agenda.depositRequired"
+                    : "tenantPortal.agenda.reviewNoDeposit")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold">{selectedAsset?.name}</p>
+                {selectedSlot ? (
+                  <p>{formatLocaleCivilDayMonth(date, moneyLocale)}{endDate ? `–${formatLocaleCivilDayMonth(endDate, moneyLocale)}` : ""} · {formatScheduleTime(selectedSlot.startTime)}–{formatScheduleTime(selectedSlot.endTime)}</p>
+                ) : null}
+                {quoteCurrent && quote.amount !== null ? (
+                  <p>{t("tenantPortal.agenda.total", { amount: formatBookingMoney(quote.amount) })}</p>
+                ) : null}
+                {quoteUnitPriceText ? <p>{quoteUnitPriceText}</p> : null}
+                {isMultiUnitGood ? <p>{t("bookingMap.quantity")}: {quantity}</p> : null}
+                {queue.explanation ? <p>{queue.explanation}</p> : null}
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={submitting}>
+                  {t("tenantPortal.agenda.backHome")}
+                </AlertDialogCancel>
+                <LoadingButton
+                  type="button"
+                  loading={submitting}
+                  loadingLabel={t("tenantPortal.agenda.reserving")}
+                  disabled={schedulePending || slotsError || !selectedSlot ||
+                    !selectedAsset || !spaceState(selectedAsset.id).available ||
+                    !queue.canReserve || !quoteCurrent || quoteUnavailable}
+                  onClick={() => { void onReserve() }}
+                >
+                  {t(quoteCurrent && quote.amount !== null
+                    ? "tenantPortal.agenda.confirmReserve"
+                    : "tenantPortal.agenda.confirmReserveWithoutAmount", {
+                    amount: quoteCurrent && quote.amount !== null ? formatBookingMoney(quote.amount) : "",
+                  })}
+                </LoadingButton>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <AlertDialog
             open={pendingCancelId !== null}

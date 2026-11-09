@@ -1,11 +1,11 @@
 import type { ComponentProps } from "react"
-import { render, screen } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { expect, it, vi } from "vitest"
 import { SchedulePage } from "./SchedulePage"
 import type { WeeklyTemplatesTab } from "../components/schedule/WeeklyTemplatesTab"
 import i18n from "@/lib/i18n"
-import { listOccupancyKinds } from "../services/scheduleService"
+import { applyWeeklyRule, listAdminRentalAssets, listOccupancyKinds, listScheduleTemplates, type AdminRentalAsset, type ScheduleTemplate } from "../services/scheduleService"
 
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: () => ({ can: () => true }) }))
 vi.mock("@/features/users/hooks/useTrialStatus", () => ({ useTrialStatus: () => ({ isTrialReadOnly: false }) }))
@@ -13,10 +13,13 @@ vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) =>
   ...await importOriginal<typeof import("@/features/rentals/services/scheduleService")>(),
   listAdminRentalAssets: vi.fn().mockResolvedValue([]),
   listOccupancyKinds: vi.fn().mockResolvedValue([]),
+  listScheduleTemplates: vi.fn().mockResolvedValue([]),
+  fetchAdminScheduleDay: vi.fn().mockResolvedValue(null),
+  applyWeeklyRule: vi.fn().mockResolvedValue({ created: 1, updated: 0 }),
 }))
 vi.mock("@/features/rentals/components/schedule/DailyAgendaTab", () => ({ DailyAgendaTab: () => null }))
 vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
-  WeeklyTemplatesTab: ({ weekday, onWeekdayChange, onCellClick, templateEditor }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
+  WeeklyTemplatesTab: ({ weekday, onWeekdayChange, onCellClick, templateEditor, selectedRentalAssetIds, onSelectedRentalAssetIdsChange, templates, onApplyWeeklyRule, busy }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
     {(["Monday", "Tuesday"] as const).map((day) => <button key={day} aria-pressed={weekday === day} onClick={() => onWeekdayChange(day)}>Grade {day}</button>)}
     {["08:00", "10:00"].map((startTime) => <button key={startTime} onClick={() => onCellClick({
       rentalAssetId: "room", assetName: "Sala", dayOfWeek: weekday, startTime,
@@ -26,6 +29,14 @@ vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
       rentalAssetId: "other-room", assetName: "Outra sala", dayOfWeek: "Monday", startTime: "08:00",
       endTime: "11:00", origin: "empty", template: null,
     })}>Outra sala 08:00</button>
+    <output aria-label="Selected resources">{selectedRentalAssetIds.join(",")}</output>
+    <button onClick={() => onSelectedRentalAssetIdsChange([...selectedRentalAssetIds])}>Same filter</button>
+    <button onClick={() => onSelectedRentalAssetIdsChange(["other-room"])}>Filter other resource</button>
+    <output aria-label="Weekly templates">{templates.map((template) => template.label).join(",")}</output>
+    <button disabled={busy} onClick={() => { void onApplyWeeklyRule({
+      rentalAssetIds: selectedRentalAssetIds, daysOfWeek: [weekday], openTime: "08:00",
+      closeTime: "09:00", slotMinutes: 60, occupancyKindId: "open",
+    }) }}>Apply rule</button>
     {templateEditor}
   </>,
 }))
@@ -212,4 +223,68 @@ it("does not report a load error for a successfully loaded empty occupancy-kind 
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   await user.click(screen.getByRole("button", { name: "08:00" }))
   expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+})
+
+
+it("guards a dirty template when the resource filter changes, keeping it on cancel and closing on discard", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const user = userEvent.setup()
+  try {
+    render(<SchedulePage />)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
+    await user.type(label(), "Rascunho do recurso")
+    await user.click(screen.getByRole("button", { name: "Same filter" }))
+    expect(confirm).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "Filter other resource" }))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(screen.getByLabelText("Selected resources")).toHaveTextContent(/^$/)
+    expect(label()).toHaveValue("Rascunho do recurso")
+    confirm.mockReturnValue(true)
+    await user.click(screen.getByRole("button", { name: "Filter other resource" }))
+    expect(screen.getByLabelText("Selected resources")).toHaveTextContent("other-room")
+    expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    expect(label()).toHaveValue("")
+  } finally {
+    confirm.mockRestore()
+  }
+})
+
+it("keeps weekly templates visible while applying a rule and revisiting the grid during a slow refresh", async () => {
+  const asset: AdminRentalAsset = {
+    id: "room", assetId: "asset", name: "Sala", isActive: true, requiresDeposit: false,
+    unitId: "unit", type: "Location", totalQuantity: 1, schedulePolicy: "SlotGrid", queueEnabled: false,
+  }
+  const existing: ScheduleTemplate = {
+    id: "template", rentalAssetId: "room", assetName: "Sala", dayOfWeek: "Monday",
+    startTime: "08:00", endTime: "09:00", occupancyKindId: "open",
+    occupancyKindLabel: "Disponível", label: "Horário existente", isActive: true,
+  }
+  vi.mocked(listAdminRentalAssets).mockResolvedValue([asset])
+  vi.mocked(listScheduleTemplates).mockResolvedValue([existing])
+  const user = userEvent.setup()
+  let finishRefresh!: (templates: ScheduleTemplate[]) => void
+  const pending = new Promise<ScheduleTemplate[]>((resolve) => { finishRefresh = resolve })
+  try {
+    render(<SchedulePage />)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    await user.click(screen.getByRole("button", { name: "Grade Monday" }))
+    await waitFor(() => expect(screen.getByLabelText("Weekly templates")).toHaveTextContent("Horário existente"))
+    vi.mocked(listScheduleTemplates).mockReturnValue(pending)
+    await user.click(screen.getByRole("button", { name: "Apply rule" }))
+    await waitFor(() => expect(applyWeeklyRule).toHaveBeenCalled())
+    expect(screen.getByLabelText("Weekly templates")).toHaveTextContent("Horário existente")
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    expect(screen.getByLabelText("Weekly templates")).toHaveTextContent("Horário existente")
+    await act(async () => finishRefresh([{ ...existing, label: "Regra atualizada" }]))
+    await waitFor(() => expect(screen.getByLabelText("Weekly templates")).toHaveTextContent("Regra atualizada"))
+    expect(screen.getByRole("button", { name: "Apply rule" })).toBeEnabled()
+  } finally {
+    finishRefresh([existing])
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([])
+    vi.mocked(listScheduleTemplates).mockResolvedValue([])
+  }
 })
