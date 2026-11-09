@@ -47,6 +47,7 @@ import {
   getCatalogProductResourceRequirements,
   listCustomerGroups,
   replaceCatalogProductResourceRequirements,
+  updateCatalogProduct,
 } from "@/features/catalog/services/catalogService"
 import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tenantPortalService"
 import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
@@ -221,7 +222,12 @@ describe("ProductWizardPage", () => {
     await user.click(await screen.findByRole("button", { name: "Quadra society 1" }))
     const before = vi.mocked(getCatalogProduct).mock.calls.length
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
-    await waitFor(() => expect(vi.mocked(getCatalogProduct).mock.calls.length).toBeGreaterThan(before))
+    await waitFor(() => {
+      const status = screen.getAllByRole("button", { name: i18n.t("catalog.productWizard.steps.status") })
+        .find((button) => !button.hasAttribute("disabled"))
+      expect(status).toBeTruthy()
+      expect(vi.mocked(getCatalogProduct).mock.calls.length).toBeGreaterThan(before)
+    })
     const status = screen.getAllByRole("button", { name: i18n.t("catalog.productWizard.steps.status") })
       .find((button) => !button.hasAttribute("disabled"))
     if (!status) {
@@ -230,6 +236,109 @@ describe("ProductWizardPage", () => {
     await user.click(status)
     expect(await screen.findByText(i18n.t("catalog.productWizard.details.resource.done"))).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("catalog.productWizard.details.resource.missing"))).not.toBeInTheDocument()
+  })
+
+  it("blocks Next and the stepper while the offer save is in flight, then ignores a late reload", async () => {
+    const user = userEvent.setup()
+    const router = renderWizard()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.productWizard.next") }))
+    const name = await screen.findByRole("textbox", { name: i18n.t("catalog.products.form.name") })
+    await user.clear(name)
+    await user.type(name, "Nome salvo")
+
+    let releaseUpdate: () => void = () => {}
+    vi.mocked(updateCatalogProduct).mockImplementation(() => new Promise((resolve) => {
+      releaseUpdate = () => resolve({ id: PRODUCT_ID, name: "Nome salvo" } as never)
+    }))
+    let releaseReload: () => void = () => {}
+    vi.mocked(getCatalogProduct).mockImplementation(() => new Promise((resolve) => {
+      releaseReload = () => resolve({
+        id: PRODUCT_ID,
+        name: "Servidor antigo",
+        code: "FESTA-01",
+        description: null,
+        price: 10,
+        currency: "BRL",
+        isActive: true,
+        createdAt: "2026-11-09T12:00:00.000Z",
+        files: [],
+        visibility: "Restricted",
+      } as never)
+    }))
+
+    await user.click(screen.getByRole("button", { name: i18n.t("common.save") }))
+    const savingButtons = await screen.findAllByRole("button", { name: i18n.t("common.saveStatus.saving") })
+    expect(savingButtons.length).toBeGreaterThan(0)
+    for (const button of savingButtons) {
+      expect(button).toBeDisabled()
+      expect(button).toHaveAttribute("aria-busy", "true")
+    }
+    expect(router.state.location.search).toBe("?passo=offer")
+    for (const stepName of [
+      i18n.t("catalog.productWizard.steps.status"),
+      i18n.t("catalog.productWizard.steps.access"),
+      i18n.t("catalog.productWizard.steps.resource"),
+    ]) {
+      for (const button of screen.getAllByRole("button", { name: stepName })) {
+        expect(button).toBeDisabled()
+      }
+    }
+
+    const callsBeforeReload = vi.mocked(getCatalogProduct).mock.calls.length
+    releaseUpdate()
+    await waitFor(() => expect(vi.mocked(getCatalogProduct).mock.calls.length).toBeGreaterThan(callsBeforeReload))
+    expect(screen.getAllByRole("button", { name: i18n.t("common.saveStatus.saving") }).every((button) => button.hasAttribute("disabled"))).toBe(true)
+    expect(name).toHaveValue("Nome salvo")
+
+    releaseReload()
+    await waitFor(() => expect(screen.getByRole("button", { name: i18n.t("catalog.productWizard.next") })).toBeEnabled())
+    expect(name).toHaveValue("Nome salvo")
+
+    await user.type(name, " extra")
+    vi.mocked(updateCatalogProduct).mockResolvedValue({ id: PRODUCT_ID, name: "Nome salvo extra" } as never)
+    vi.mocked(getCatalogProduct).mockResolvedValue({
+      id: PRODUCT_ID,
+      name: "Ainda mais antigo",
+      code: "FESTA-01",
+      description: null,
+      price: 10,
+      currency: "BRL",
+      isActive: true,
+      createdAt: "2026-11-09T12:00:00.000Z",
+      files: [],
+      visibility: "Restricted",
+    } as never)
+    await user.click(screen.getByRole("button", { name: i18n.t("common.save") }))
+    await waitFor(() => expect(screen.getByRole("button", { name: i18n.t("catalog.productWizard.next") })).toBeEnabled())
+    expect(name).toHaveValue("Nome salvo extra")
+  })
+
+  it("blocks Finish while a resource save is in flight", async () => {
+    const assetId = "77777777-7777-4777-8777-777777777777"
+    let release: () => void = () => {}
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([{ id: assetId, name: "Quadra society 1" }] as never)
+    vi.mocked(replaceCatalogProductResourceRequirements).mockImplementation(() => new Promise((resolve) => {
+      release = () => resolve({
+        expectedVersion: 2,
+        requirements: [{
+          rentalAssetId: assetId,
+          assetCategoryId: null,
+          resourceQuantity: 1,
+          durationMinutesPerUnit: 60,
+          prepMinutes: 0,
+          cleanupMinutes: 0,
+        }],
+      })
+    }))
+    const user = userEvent.setup()
+    const router = renderWizard(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=resource`)
+    await user.click(await screen.findByRole("button", { name: "Quadra society 1" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
+    const saving = await screen.findByRole("button", { name: i18n.t("common.saveStatus.saving") })
+    expect(saving).toBeDisabled()
+    expect(router.state.location.search).toBe("?passo=resource")
+    release()
+    await waitFor(() => expect(screen.getByRole("button", { name: i18n.t("catalog.productWizard.finish") })).toBeEnabled())
   })
 
   it("opens a later step from the query without showing the others", async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -24,8 +24,9 @@ type ProductWizardAccessStepProps = {
   wizardPath: string
   readOnly: boolean
   canSearchCustomers: boolean
-  onSaved: () => void
+  onSaved: () => void | Promise<void>
   onDirtyChange?: (dirty: boolean) => void
+  onSavingChange?: (saving: boolean) => void
   /** Return false to stay. Only plain same-tab clicks ask. */
   beforeNavigate?: () => boolean
 }
@@ -49,6 +50,7 @@ export function ProductWizardAccessStep({
   canSearchCustomers,
   onSaved,
   onDirtyChange,
+  onSavingChange,
   beforeNavigate,
 }: ProductWizardAccessStepProps) {
   const { t } = useTranslation()
@@ -62,12 +64,18 @@ export function ProductWizardAccessStep({
   const [saving, setSaving] = useState(false)
   const [addingId, setAddingId] = useState<string | null>(null)
   const dirty = visibility !== savedVisibility || !sameIds(groupIds, savedGroupIds)
+  const draftRef = useRef({ visibility, groupIds })
+
+  useEffect(() => {
+    draftRef.current = { visibility, groupIds }
+  }, [visibility, groupIds])
 
   useEffect(() => {
     onDirtyChange?.(dirty)
   }, [dirty, onDirtyChange])
 
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+  useEffect(() => () => onSavingChange?.(false), [onSavingChange])
 
   const emptyGroups = useMemo(
     () => groups.filter((group) => groupIds.includes(group.id) && group.memberCustomerIds.length === 0),
@@ -78,21 +86,28 @@ export function ProductWizardAccessStep({
     if (readOnly || saving) {
       return
     }
+    const sentVisibility = visibility
+    const sentGroupIds = [...groupIds]
     setSaving(true)
+    onSavingChange?.(true)
     try {
       await putCatalogProductAccess(productId, {
-        visibility,
+        visibility: sentVisibility,
         customerIds: [...customerIds],
-        groupIds,
+        groupIds: sentGroupIds,
       })
-      setSavedVisibility(visibility)
-      setSavedGroupIds([...groupIds])
+      const current = draftRef.current
+      if (current.visibility === sentVisibility && sameIds(current.groupIds, sentGroupIds)) {
+        setSavedVisibility(sentVisibility)
+        setSavedGroupIds(sentGroupIds)
+      }
       toast.success(t("catalog.productWizard.accessSaved"))
-      onSaved()
+      await onSaved()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.saveAccess"))
     } finally {
       setSaving(false)
+      onSavingChange?.(false)
     }
   }
 
@@ -118,17 +133,19 @@ export function ProductWizardAccessStep({
       return
     }
     setAddingId(customer.id)
+    onSavingChange?.(true)
     try {
       await addCustomerGroupMembers(groupId, [customer.id])
       toast.success(t("catalog.productWizard.memberAdded", { name: customer.name }))
       setQueries((current) => ({ ...current, [groupId]: "" }))
       setMatches((current) => ({ ...current, [groupId]: [] }))
       setSearched((current) => ({ ...current, [groupId]: false }))
-      onSaved()
+      await onSaved()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.addMembers"))
     } finally {
       setAddingId(null)
+      onSavingChange?.(false)
     }
   }
 
@@ -144,7 +161,7 @@ export function ProductWizardAccessStep({
           variant={visibility === "Public" ? "default" : "outline"}
           className="min-h-11 justify-start"
           aria-pressed={visibility === "Public"}
-          disabled={readOnly}
+          disabled={readOnly || saving}
           onClick={() => setVisibility("Public")}
         >
           {t("catalog.products.visibilityFilter.public")}
@@ -154,7 +171,7 @@ export function ProductWizardAccessStep({
           variant={visibility === "Restricted" ? "default" : "outline"}
           className="min-h-11 justify-start"
           aria-pressed={visibility === "Restricted"}
-          disabled={readOnly}
+          disabled={readOnly || saving}
           onClick={() => setVisibility("Restricted")}
         >
           {t("catalog.products.visibilityFilter.restricted")}
@@ -173,7 +190,7 @@ export function ProductWizardAccessStep({
                   type="checkbox"
                   className="size-4"
                   checked={checked}
-                  disabled={readOnly}
+                  disabled={readOnly || saving}
                   onChange={() => {
                     setGroupIds((current) => checked
                       ? current.filter((id) => id !== group.id)
@@ -262,8 +279,8 @@ export function ProductWizardAccessStep({
         )
       })}
       {readOnly ? null : (
-        <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={saving} onClick={() => void save()}>
-          {t("common.save")}
+        <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={saving} aria-busy={saving} onClick={() => void save()}>
+          {saving ? t("common.saveStatus.saving") : t("common.save")}
         </Button>
       )}
     </div>

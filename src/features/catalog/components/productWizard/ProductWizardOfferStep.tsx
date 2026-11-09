@@ -30,8 +30,9 @@ import {
 type ProductWizardOfferStepProps = {
   product: CatalogProduct
   readOnly: boolean
-  onSaved: () => void
+  onSaved: () => void | Promise<void>
   onDirtyChange?: (dirty: boolean) => void
+  onSavingChange?: (saving: boolean) => void
 }
 
 function offerDraftIsValid(values: {
@@ -58,7 +59,15 @@ function offerDraftIsValid(values: {
   return Number.isFinite(amount) && amount >= 0
 }
 
-export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChange }: ProductWizardOfferStepProps) {
+function sameOfferDraft(left: CatalogProductFormValues, right: CatalogProductFormValues): boolean {
+  return left.name === right.name
+    && left.code === right.code
+    && left.description === right.description
+    && left.price === right.price
+    && left.currency === right.currency
+}
+
+export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChange, onSavingChange }: ProductWizardOfferStepProps) {
   const { t } = useTranslation()
   const [active, setActive] = useState(product.isActive)
   const [savedActive, setSavedActive] = useState(product.isActive)
@@ -86,6 +95,7 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChan
   }, [dirty, onDirtyChange])
 
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+  useEffect(() => () => onSavingChange?.(false), [onSavingChange])
 
   async function onSubmit(values: CatalogProductFormValues) {
     if (readOnly || saving) {
@@ -101,24 +111,30 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChan
       }
       price = parsed
     }
+    const activeAtSave = active
     setSaving(true)
+    onSavingChange?.(true)
     try {
       await updateCatalogProduct(product.id, toCatalogProductWriteBody(values, price))
-      if (active !== product.isActive) {
-        if (active) {
+      if (activeAtSave !== product.isActive) {
+        if (activeAtSave) {
           await activateCatalogProduct(product.id)
         } else {
           await deactivateCatalogProduct(product.id)
         }
       }
-      form.reset(values)
-      setSavedActive(active)
+      const current = form.getValues()
+      if (sameOfferDraft(current, values) && active === activeAtSave) {
+        form.reset(values)
+        setSavedActive(activeAtSave)
+      }
       toast.success(t("catalog.products.toastUpdated"))
-      onSaved()
+      await onSaved()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"))
     } finally {
       setSaving(false)
+      onSavingChange?.(false)
     }
   }
 
@@ -208,8 +224,8 @@ export function ProductWizardOfferStep({ product, readOnly, onSaved, onDirtyChan
           </div>
         </fieldset>
         {readOnly ? null : (
-          <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={saving || !draftValid}>
-            {t("common.save")}
+          <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={saving || !draftValid} aria-busy={saving}>
+            {saving ? t("common.saveStatus.saving") : t("common.save")}
           </Button>
         )}
       </form>

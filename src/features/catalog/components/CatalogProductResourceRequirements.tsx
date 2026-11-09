@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -18,8 +18,9 @@ import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals
 type CatalogProductResourceRequirementsProps = {
   productId: string
   readOnly?: boolean
-  onSaved?: () => void
+  onSaved?: () => void | Promise<void>
   onDirtyChange?: (dirty: boolean) => void
+  onSavingChange?: (saving: boolean) => void
 }
 
 type DraftRow = CatalogProductResourceRequirement & { clientId: string }
@@ -58,6 +59,7 @@ export function CatalogProductResourceRequirements({
   readOnly = false,
   onSaved,
   onDirtyChange,
+  onSavingChange,
 }: CatalogProductResourceRequirementsProps) {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
@@ -136,6 +138,12 @@ export function CatalogProductResourceRequirements({
   }, [baseline, loading, onDirtyChange, rows])
 
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+  useEffect(() => () => onSavingChange?.(false), [onSavingChange])
+
+  const rowsRef = useRef(rows)
+  useEffect(() => {
+    rowsRef.current = rows
+  }, [rows])
 
   function updateRow(clientId: string, patch: Partial<DraftRow>) {
     setSaveError(null)
@@ -155,18 +163,20 @@ export function CatalogProductResourceRequirements({
   }
 
   async function save() {
-    const invalid = rows.some((row) => !row.rentalAssetId)
+    const invalid = rowsRef.current.some((row) => !row.rentalAssetId)
     if (invalid) {
       toast.error(t("catalog.resourcePlanning.errors.resourceRequired"))
       return
     }
 
+    const sent = rowSnapshot(rowsRef.current)
     setSaving(true)
+    onSavingChange?.(true)
     setSaveError(null)
     try {
       const response = await replaceCatalogProductResourceRequirements(productId, {
         expectedVersion,
-        requirements: rows.map((row) => ({
+        requirements: rowsRef.current.map((row) => ({
           rentalAssetId: row.rentalAssetId,
           assetCategoryId: null,
           resourceQuantity: row.resourceQuantity,
@@ -175,12 +185,14 @@ export function CatalogProductResourceRequirements({
           cleanupMinutes: row.cleanupMinutes,
         })),
       })
-      const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
       setExpectedVersion(response.expectedVersion)
-      setRows(nextRows)
-      setBaseline(rowSnapshot(nextRows))
+      if (rowSnapshot(rowsRef.current) === sent) {
+        const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
+        setRows(nextRows)
+        setBaseline(rowSnapshot(nextRows))
+      }
       toast.success(t("catalog.resourcePlanning.toastSaved"))
-      onSaved?.()
+      await onSaved?.()
     } catch (error) {
       if (error instanceof CatalogPlanningVersionConflictError) {
         toast.error(error.message)
@@ -197,6 +209,7 @@ export function CatalogProductResourceRequirements({
       toast.error(message)
     } finally {
       setSaving(false)
+      onSavingChange?.(false)
     }
   }
 
@@ -239,6 +252,7 @@ export function CatalogProductResourceRequirements({
                     type="button"
                     variant="ghost"
                     size="sm"
+                    disabled={saving}
                     onClick={() => removeRow(row.clientId)}
                   >
                     {t("common.remove")}
@@ -261,7 +275,7 @@ export function CatalogProductResourceRequirements({
                           className="h-auto min-h-11 w-full min-w-0 justify-start whitespace-normal break-words text-left"
                           title={asset.name}
                           aria-pressed={selected}
-                          disabled={readOnly}
+                          disabled={readOnly || saving}
                           onClick={() => updateRow(row.clientId, { rentalAssetId: asset.id })}
                         >
                           {asset.name}
@@ -277,7 +291,7 @@ export function CatalogProductResourceRequirements({
                   <Input
                     type="number"
                     min={1}
-                    disabled={readOnly}
+                    disabled={readOnly || saving}
                     value={row.resourceQuantity}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -291,7 +305,7 @@ export function CatalogProductResourceRequirements({
                   <Input
                     type="number"
                     min={1}
-                    disabled={readOnly}
+                    disabled={readOnly || saving}
                     value={row.durationMinutesPerUnit}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -305,7 +319,7 @@ export function CatalogProductResourceRequirements({
                   <Input
                     type="number"
                     min={0}
-                    disabled={readOnly}
+                    disabled={readOnly || saving}
                     value={row.prepMinutes}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -319,7 +333,7 @@ export function CatalogProductResourceRequirements({
                   <Input
                     type="number"
                     min={0}
-                    disabled={readOnly}
+                    disabled={readOnly || saving}
                     value={row.cleanupMinutes}
                     onChange={(event) =>
                       updateRow(row.clientId, {
@@ -348,14 +362,14 @@ export function CatalogProductResourceRequirements({
 
       {readOnly ? null : (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={addRow}>
+          <Button type="button" variant="outline" size="sm" disabled={saving} onClick={addRow}>
             {t("catalog.resourcePlanning.addRequirement")}
           </Button>
           <LoadingButton
             type="button"
             size="sm"
             loading={saving}
-            disabled={saveError?.blocking ?? false}
+            disabled={saving || (saveError?.blocking ?? false)}
             onClick={() => void save()}
           >
             {t("catalog.resourcePlanning.save")}

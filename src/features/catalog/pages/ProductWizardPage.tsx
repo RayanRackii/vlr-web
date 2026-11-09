@@ -29,6 +29,7 @@ export function ProductWizardPage() {
   const step = productWizardStepFromQuery(params.get("passo"))
   const wizard = useProductWizard(id)
   const [stepDirty, setStepDirty] = useState(false)
+  const [stepSaving, setStepSaving] = useState(false)
   const stepIndex = PRODUCT_WIZARD_STEPS.indexOf(step)
 
   useEffect(() => {
@@ -51,6 +52,9 @@ export function ProductWizardPage() {
   )
 
   function confirmLeave(): boolean {
+    if (stepSaving) {
+      return false
+    }
     if (!stepDirty) {
       return true
     }
@@ -67,7 +71,7 @@ export function ProductWizardPage() {
   }
 
   function go(next: ProductWizardStepId) {
-    if (next === step || !confirmLeave()) {
+    if (stepSaving || next === step || !confirmLeave()) {
       return
     }
     const nextParams = new URLSearchParams(params)
@@ -80,13 +84,16 @@ export function ProductWizardPage() {
   }
 
   function finish() {
-    if (!confirmLeave()) {
+    if (stepSaving || !confirmLeave()) {
       return
     }
     void navigate("/catalogo/produtos")
   }
 
   function onChecklistAction(item: SellableChecklistItem) {
+    if (stepSaving) {
+      return
+    }
     if (item.action.kind === "createMenu") {
       void wizard.publishMenu()
       return
@@ -146,7 +153,7 @@ export function ProductWizardPage() {
           selection="any"
           connectors={false}
           ariaLabel={t("catalog.productWizard.stepperLabel")}
-          onStepClick={(index) => {
+          onStepClick={stepSaving ? undefined : (index) => {
             const next = PRODUCT_WIZARD_STEPS[index]
             if (next) go(next)
           }}
@@ -159,7 +166,7 @@ export function ProductWizardPage() {
           currentIndex={stepIndex}
           selection="any"
           ariaLabel={t("catalog.productWizard.stepperLabel")}
-          onStepClick={(index) => {
+          onStepClick={stepSaving ? undefined : (index) => {
             const next = PRODUCT_WIZARD_STEPS[index]
             if (next) go(next)
           }}
@@ -178,11 +185,11 @@ export function ProductWizardPage() {
         ) : null}
         {step === "offer" ? (
           <ProductWizardOfferStep
-            key={`${product.id}:${product.isActive}:${product.name}:${product.price ?? ""}`}
             product={product}
             readOnly={!wizard.canManage}
             onDirtyChange={setStepDirty}
-            onSaved={() => void wizard.reload()}
+            onSavingChange={setStepSaving}
+            onSaved={() => wizard.reload()}
           />
         ) : null}
         {step === "access" && wizard.model.access && wizard.model.groups ? (
@@ -196,8 +203,9 @@ export function ProductWizardPage() {
             readOnly={!wizard.canManage}
             canSearchCustomers={wizard.canSearchCustomers}
             onDirtyChange={setStepDirty}
+            onSavingChange={setStepSaving}
             beforeNavigate={confirmLeave}
-            onSaved={() => void wizard.reload()}
+            onSaved={() => wizard.reload()}
           />
         ) : null}
         {step === "access" && (!wizard.model.access || !wizard.model.groups) ? (
@@ -219,7 +227,8 @@ export function ProductWizardPage() {
                   productId={product.id}
                   readOnly={!wizard.canManage}
                   onDirtyChange={setStepDirty}
-                  onSaved={() => void wizard.reload()}
+                  onSavingChange={setStepSaving}
+                  onSaved={() => wizard.reload()}
                 />
               )}
             </div>
@@ -234,23 +243,24 @@ export function ProductWizardPage() {
           type="button"
           variant="outline"
           className="min-h-11 w-full sm:w-auto"
-          disabled={step === "status" || wizard.busy}
+          disabled={step === "status" || wizard.busy || stepSaving}
           onClick={() => go(moveProductWizardStep(step, -1))}
         >
           {t("catalog.productWizard.back")}
         </Button>
         {step === "resource" ? (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={finish}>
-            {t("catalog.productWizard.finish")}
+          <Button type="button" className="min-h-11 w-full sm:w-auto" aria-busy={stepSaving} disabled={wizard.busy || stepSaving} onClick={finish}>
+            {stepSaving ? t("common.saveStatus.saving") : t("catalog.productWizard.finish")}
           </Button>
         ) : (
           <Button
             type="button"
             className="min-h-11 w-full sm:w-auto"
-            disabled={wizard.busy}
+            aria-busy={stepSaving}
+            disabled={wizard.busy || stepSaving}
             onClick={() => go(moveProductWizardStep(step, 1))}
           >
-            {t("catalog.productWizard.next")}
+            {stepSaving ? t("common.saveStatus.saving") : t("catalog.productWizard.next")}
           </Button>
         )}
       </div>
