@@ -4446,6 +4446,7 @@
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid repeats weekly on {{day}}. Day agenda only changes one date.",
       "weeklyCellHint": "The change applies to this weekday on all future dates.",
+      "kindsLoadError": "Could not load occupancy types.",
       "weekly": {
         "configureHours": "Configure hours"
       },

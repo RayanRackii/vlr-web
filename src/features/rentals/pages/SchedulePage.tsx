@@ -110,6 +110,7 @@ function AdminSchedulePage() {
   const [day, setDay] = useState<AdminDaySchedule | null>(null)
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [loadingKinds, setLoadingKinds] = useState(true)
+  const [kindsLoadError, setKindsLoadError] = useState(false)
   const [loadingDay, setLoadingDay] = useState(false)
   const [showDaySkeleton, setShowDaySkeleton] = useState(false)
   const [loadingTemplates, setLoadingTemplates] = useState(false)
@@ -135,6 +136,16 @@ function AdminSchedulePage() {
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
 
+  useEffect(() => {
+    if (!templateSheetOpen || !templateDirty) return
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [templateSheetOpen, templateDirty])
+
   const defaultKindId = useMemo(
     () =>
       kinds.find((kind) => kind.isActive && kind.isBookableByCustomer)?.id ??
@@ -155,12 +166,23 @@ function AdminSchedulePage() {
     setBusyTargetId(null)
   }
 
+  function discardTemplateDraft() {
+    if (templateSheetOpen && templateDirty && !window.confirm(t("fullPage.leaveConfirm"))) return false
+    setTemplateSheetOpen(false)
+    setTemplateDirty(false)
+    setEditingTemplate(null)
+    setWeeklyTarget(null)
+    return true
+  }
+
   const loadKinds = useCallback(async () => {
     setLoadingKinds(true)
+    setKindsLoadError(false)
     try {
       const list = await listOccupancyKinds()
       setKinds(list)
     } catch (error) {
+      setKindsLoadError(true)
       toast.error(
         error instanceof Error
           ? error.message
@@ -694,6 +716,7 @@ function AdminSchedulePage() {
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => {
+                  if (item.id === tab || !discardTemplateDraft()) return
                   setTab(item.id)
                 }}
                 className={cn(
@@ -760,11 +783,14 @@ function AdminSchedulePage() {
             busyTargetId={busyTargetId}
             readOnly={isTrialReadOnly}
             onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
-            onWeekdayChange={setWeekday}
+            onWeekdayChange={(nextWeekday) => {
+              if (nextWeekday === weekday || !discardTemplateDraft()) return
+              setWeekday(nextWeekday)
+            }}
             onCellClick={(target) => {
               if (templateSheetOpen && weeklyTarget?.rentalAssetId === target.rentalAssetId &&
                 weeklyTarget.dayOfWeek === target.dayOfWeek && weeklyTarget.startTime === target.startTime) return
-              if (templateSheetOpen && templateDirty && !window.confirm(t("fullPage.leaveConfirm"))) return
+              if (!discardTemplateDraft()) return
               setWeeklyTarget(target)
               setEditingTemplate(target.template)
               setTemplateSheetOpen(true)
@@ -773,7 +799,12 @@ function AdminSchedulePage() {
               void onSeedSelected()
             }}
             onSavePolicy={onSavePolicy}
-            templateEditor={
+            templateEditor={<>
+              {templateSheetOpen && kindsLoadError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {t("rentals.schedule.kindsLoadError")}
+                </p>
+              ) : null}
               <TemplateSheet
                 key={`${weeklyTarget?.rentalAssetId}:${weeklyTarget?.dayOfWeek}:${weeklyTarget?.startTime}`}
                 open={templateSheetOpen}
@@ -811,7 +842,7 @@ function AdminSchedulePage() {
                     : undefined
                 }
               />
-            }
+            </>}
             onApplyWeeklyRule={onApplyWeeklyRule}
           />
         ) : null}
