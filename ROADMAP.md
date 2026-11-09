@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-09 | **Produtos sem rolagem a 1280 e guarda do assistente (WEB):** a tabela de produtos cabe ao lado da sidebar aberta em 1280 e 1440; ações viram ícones com nome acessível e o Assistente fica um botão na linha. Abaixo de 1440, categorias e tags saem da tabela. O assistente pergunta antes de sair por link da sidebar, mudança de passo, voltar do navegador e fechar a aba, nos passos Oferta, Quem compra e Recurso. |
+
 | 2026-11-09 | **Assistente do produto, save em andamento (WEB):** Avançar, o stepper e Concluir ficam bloqueados e mostram "Salvando…" enquanto o passo grava, inclusive o reload. Um reload tardio não remonta a oferta nem apaga um rascunho digitado depois. |
 
 | 2026-11-09 | **Revisão do assistente do produto (WEB):** o grupo só ganha o cliente escolhido na lista, sem o primeiro resultado da busca. Sair de Oferta, Quem compra ou Recurso com rascunho pede confirmação (clique simples; Ctrl/Cmd não). O link do grupo volta em `?passo=access`. Salvar o recurso atualiza a situação. Salvar a oferta fica desligado enquanto o rascunho é inválido. Nomes longos de recurso quebram no botão. Confirmado no vlr-api: `RequireActiveModule(ResourcePlanning)` no GET/PUT de resource-requirements; o 403 continua só como aviso e a API vai relaxar o gate à parte. |
