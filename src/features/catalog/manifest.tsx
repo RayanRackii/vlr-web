@@ -1,9 +1,9 @@
 import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import type { ReactElement } from "react"
-import { Bell, CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
+import { CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
+import { Navigate } from "react-router-dom"
 import { CatalogProductAgendaPage } from "@/features/catalog/pages/CatalogProductAgendaPage"
 import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResourceAgendaPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
@@ -89,12 +89,6 @@ export const catalogManifest = {
           to: "/catalogo/configuracoes",
           permission: "catalog.products.manage",
         },
-        {
-          labelKey: "nav.catalogNotifications",
-          icon: Bell,
-          to: "/catalogo/notificacoes",
-          permission: "catalog.notifications.read",
-        },
       ],
     },
   ] satisfies readonly AppNavigationItem[],
@@ -176,7 +170,7 @@ export const catalogManifest = {
       },
       {
         path: "/catalogo/notificacoes",
-        element: <CatalogNotificationsPage />,
+        element: <Navigate to="/configuracoes/notificacoes#entregas" replace />,
         permission: "catalog.notifications.read",
       },
     ] satisfies readonly (FeatureRoute & { permission: string })[],

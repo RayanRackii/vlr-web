@@ -3,12 +3,14 @@ import { Outlet } from "react-router-dom"
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
-import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
+import { holdsRoutePermission, resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 type PermissionRouteProps = {
   permission?: string
   permissions?: readonly string[]
+  /** Extra keys that also open the route. Any one of `permission` or these is enough. */
+  anyOf?: readonly string[]
   /** Canonical tenant module keys that must be active. Absent/empty = no module gate. */
   modules?: readonly string[]
 }
@@ -34,6 +36,7 @@ function requiredPermissionKeys({
 export function PermissionRoute({
   permission,
   permissions,
+  anyOf,
   modules,
 }: PermissionRouteProps) {
   const { can, isLoading, activeModules } = usePermissions()
@@ -44,10 +47,9 @@ export function PermissionRoute({
 
   const access = resolvePermissionRouteAccess({
     isLoading,
-    hasPermission:
-      moduleEnabled && required.length > 0 && required.every((key) => can(key)),
+    hasPermission: moduleEnabled && holdsRoutePermission({ permission, permissions, anyOf }, can),
     isPlatformAdminOutsideTenant: isPlatformAdmin && !isInTenantEnvironment,
-    permission: required[0] ?? "",
+    permission: required[0] ?? anyOf?.[0] ?? "",
   })
 
   if (access === "loading") {

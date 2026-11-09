@@ -35,7 +35,7 @@ import {
   resendCatalogNotification,
 } from "@/features/catalog/services/catalogService"
 
-export function CatalogNotificationsPage() {
+export function CatalogNotificationsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const { can } = usePermissions()
@@ -194,11 +194,18 @@ export function CatalogNotificationsPage() {
   })
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-8">
+    <div
+      id={embedded ? "entregas" : undefined}
+      className={embedded ? "space-y-3" : "mx-auto w-full min-w-0 max-w-7xl space-y-8"}
+    >
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t("catalog.notifications.title")}
-        </h1>
+        {embedded ? (
+          <h2 className="text-lg font-semibold">{t("notifications.settings.deliveries")}</h2>
+        ) : (
+          <h1 className="text-xl font-semibold tracking-tight">
+            {t("catalog.notifications.title")}
+          </h1>
+        )}
         <p className="text-sm text-muted-foreground">
           {t("catalog.notifications.subtitle")}
         </p>

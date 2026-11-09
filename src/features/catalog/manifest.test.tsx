@@ -1,3 +1,5 @@
+import { render, screen } from "@testing-library/react"
+import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import { catalogManifest } from "@/features/catalog/manifest"
@@ -26,5 +28,20 @@ describe("staff sales navigation", () => {
       { path: "/catalogo/pedidos/:orderId", permission: "catalog.orders.read" },
       { path: "/catalogo/notificacoes", permission: "catalog.notifications.read" },
     ])
+  })
+
+  it("sends the sales notifications path to the shared notifications page", () => {
+    const route = catalogManifest.routes.staff.find((item) => item.path === "/catalogo/notificacoes")
+    render(
+      <MemoryRouter initialEntries={["/catalogo/notificacoes"]}>
+        <Routes>
+          <Route path="/catalogo/notificacoes" element={route?.element} />
+          <Route path="/configuracoes/notificacoes" element={<h1>Notificações</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole("heading", { name: "Notificações" })).toBeInTheDocument()
+    const labels: string[] = (catalogManifest.navigationItems[0]?.children ?? []).map((item) => item.labelKey)
+    expect(labels).not.toContain("nav.catalogNotifications")
   })
 })

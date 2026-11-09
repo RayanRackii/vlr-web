@@ -1534,6 +1534,8 @@
     "settings": {
       "title": "Notificações",
       "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos neste ambiente.",
+      "subtitleBoth": "Canais de aviso e o histórico de entregas deste ambiente.",
+      "deliveries": "Entregas",
       "emailDefault": "As notificações por e-mail para clientes começam ligadas em organizações novas. Você pode desligá-las aqui.",
       "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
       "inAppAlwaysOn": "No app sempre ativo",
@@ -2682,6 +2684,14 @@
       "status": {
         "done": "Concluído",
         "pending": "Pendente"
+      }
+    },
+    "portalReadiness": {
+      "title": "Portal do cliente",
+      "description": "O cliente ainda não encontra o que pode reservar ou comprar.",
+      "items": {
+        "portalMenu": "Menu do cliente",
+        "emptyGroup": "Grupo sem clientes"
       }
     },
     "sections": {

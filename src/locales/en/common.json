@@ -1534,6 +1534,8 @@
     "settings": {
       "title": "Notifications",
       "subtitle": "Choose notification channels per event. Only active modules for this workspace are listed.",
+      "subtitleBoth": "Notification channels and the delivery history for this workspace.",
+      "deliveries": "Deliveries",
       "emailDefault": "Email notifications for customers start on for new organizations. You can turn them off here.",
       "empty": "No notification modules are active in this workspace.",
       "inAppAlwaysOn": "In-app always on",
@@ -2682,6 +2684,14 @@
       "status": {
         "done": "Completed",
         "pending": "Pending"
+      }
+    },
+    "portalReadiness": {
+      "title": "Customer portal",
+      "description": "Customers still cannot find what they can book or buy.",
+      "items": {
+        "portalMenu": "Customer menu",
+        "emptyGroup": "Group with no customers"
       }
     },
     "sections": {
