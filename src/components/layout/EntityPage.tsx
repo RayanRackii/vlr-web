@@ -5,6 +5,7 @@ import {
 } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -51,12 +52,19 @@ type EntityPageProps = {
  */
 function RouterLeaveGuard({ when, message }: { when: boolean; message: string }) {
   const blocker = useBlocker(when)
-  useEffect(() => {
-    if (blocker.state !== "blocked") return
-    if (window.confirm(message)) blocker.proceed()
-    else blocker.reset()
-  }, [blocker, message])
-  return null
+  const open = blocker.state === "blocked"
+  return (
+    <LeaveConfirmDialog
+      open={open}
+      title={message}
+      onStay={() => {
+        if (blocker.state === "blocked") blocker.reset()
+      }}
+      onLeave={() => {
+        if (blocker.state === "blocked") blocker.proceed()
+      }}
+    />
+  )
 }
 
 /**

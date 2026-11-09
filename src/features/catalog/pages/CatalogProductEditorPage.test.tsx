@@ -325,7 +325,7 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it("guards breadcrumb and unload even while changed fields are invalid", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const confirm = vi.spyOn(window, "confirm")
     const user = userEvent.setup()
     renderPage()
     await user.clear(await screen.findByLabelText(i18n.t("catalog.products.form.name")))
@@ -333,13 +333,16 @@ describe("CatalogProductEditorPage", () => {
     window.dispatchEvent(unload)
     expect(unload.defaultPrevented).toBe(true)
     await user.click(screen.getByRole("link", { name: i18n.t("catalog.products.title") }))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    const dialog = await screen.findByRole("alertdialog")
+    expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+    expect(confirm).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
     expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toBeInTheDocument()
     confirm.mockRestore()
   })
 
   it.each([-2, -1, 1, "/programmatic"])("guards navigation %s and preserves the browser URL on cancel", async (target) => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const confirm = vi.spyOn(window, "confirm")
     const originalUrl = window.location.href
     window.history.replaceState(null, "", "/catalogo/produtos")
     const user = userEvent.setup()
@@ -354,11 +357,14 @@ describe("CatalogProductEditorPage", () => {
       await user.type(name, " pro")
       const navigateAway = () => typeof target === "number" ? router.navigate(target) : router.navigate(target)
       await act(async () => { await navigateAway() })
-      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      const dialog = await screen.findByRole("alertdialog")
+      expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      expect(confirm).not.toHaveBeenCalled()
+      await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
       await waitFor(() => expect(window.location.pathname).toBe(`/catalogo/produtos/${PRODUCT.id}`))
       expect(screen.getByLabelText(i18n.t("catalog.products.form.name"))).toHaveValue("Raquete pro")
-      confirm.mockReturnValue(true)
       await act(async () => { await navigateAway() })
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: i18n.t("fullPage.leave") }))
       await screen.findByTestId("destination")
       expect(window.location.pathname).toBe(typeof target === "string" ? target : target === 1 ? "/forward" : target === -1 ? "/middle" : "/catalogo/produtos")
     } finally {

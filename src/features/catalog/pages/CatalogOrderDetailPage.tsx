@@ -32,6 +32,7 @@ import {
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
+import { orderResourceFact, type OrderResourceFact } from "@/features/catalog/lib/orderResourceFact"
 import { CatalogOrderAllocationPanel } from "@/features/catalog/components/CatalogOrderAllocationPanel"
 import { Can } from "@/features/users/permissions/Can"
 import {
@@ -48,11 +49,13 @@ import {
   cancelCatalogOrder,
   completeCatalogOrder,
   getCatalogOrder,
+  getCatalogProductResourceRequirements,
   listCatalogProducts,
   markCatalogOrderReady,
   rejectCatalogOrder,
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 
 
 /** History reason codes that describe a usage milestone rather than a status change. */
@@ -79,6 +82,7 @@ export function CatalogOrderDetailPage() {
   const [inactiveForOrderId, setInactiveForOrderId] = useState<string | null>(
     null,
   )
+  const [resources, setResources] = useState<Record<string, OrderResourceFact>>({})
 
   const form = useForm<CatalogReasonFormValues>({
     resolver: zodResolver(catalogReasonFormSchema),
@@ -143,6 +147,36 @@ export function CatalogOrderDetailPage() {
       cancelled = true
     }
   }, [order])
+
+  const resourceProductIds = order?.items
+    .filter((item) => item.productionSummary !== "NotRequired")
+    .map((item) => item.productId)
+    .join(",") ?? ""
+
+  useEffect(() => {
+    const ids = resourceProductIds.split(",").filter((id) => id.length > 0)
+    if (ids.length === 0) {
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const assets = await listAdminRentalAssets().catch(() => [])
+      const entries = await Promise.all(ids.map(async (productId) => {
+        try {
+          const data = await getCatalogProductResourceRequirements(productId)
+          return [productId, orderResourceFact(data.requirements, assets)] as const
+        } catch {
+          return [productId, { kind: "none" as const }] as const
+        }
+      }))
+      if (!cancelled) {
+        setResources(Object.fromEntries(entries))
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resourceProductIds])
 
   const inactiveNamesForApproval =
     order != null &&
@@ -395,6 +429,8 @@ export function CatalogOrderDetailPage() {
       <Can permission="catalog.orders.read">
         <CatalogOrderAllocationPanel
           order={order}
+          resourceName={Object.values(resources).find((fact) => fact.kind === "named")?.name ?? null}
+          preferredUnitId={Object.values(resources).find((fact) => fact.kind === "named")?.unitId ?? null}
           onOrderChange={setOrder}
           onReloadNeeded={() => {
             void load()
@@ -405,7 +441,9 @@ export function CatalogOrderDetailPage() {
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.items")}</h2>
         <ul className="min-w-0 divide-y divide-border">
-          {order.items.map((item) => (
+          {order.items.map((item) => {
+            const fact = resources[item.productId]
+            return (
             <li
               key={item.id}
               className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm tabular-nums"
@@ -414,6 +452,19 @@ export function CatalogOrderDetailPage() {
                 {item.productName}
                 {item.productCode ? ` (${item.productCode})` : ""} ×{" "}
                 {item.quantity}
+                {fact?.kind === "named" ? (
+                  <span className="mt-1 block text-muted-foreground">
+                    {t("catalog.resourcePlanning.approvalPanel.resourceNamed", {
+                      name: fact.name,
+                      minutes: fact.durationMinutesPerUnit,
+                    })}
+                  </span>
+                ) : null}
+                {fact?.kind === "unset" ? (
+                  <span className="mt-1 block text-muted-foreground">
+                    {t("catalog.resourcePlanning.approvalPanel.resourceUnset")}
+                  </span>
+                ) : null}
               </span>
               <span>
                 {formatCatalogMoney(
@@ -423,7 +474,8 @@ export function CatalogOrderDetailPage() {
                 ) ?? t("catalog.priceOnRequest")}
               </span>
             </li>
-          ))}
+            )
+          })}
         </ul>
       </section>
 
