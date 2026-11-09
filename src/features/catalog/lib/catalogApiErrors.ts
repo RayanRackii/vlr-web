@@ -8,6 +8,8 @@ import {
 const MESSAGE_KEYS: Record<string, string> = {
   "A product with this code already exists.":
     "catalog.products.errors.duplicateCode",
+  "Customer group is referenced by product access.":
+    "catalog.customerGroups.errors.inUse",
   "Customer-visible images must be between 1 byte and 5 MB.":
     "catalog.products.files.tooLargeCustomer",
   "Customer-visible files must be jpeg, png, or webp.":
@@ -27,6 +29,8 @@ const MESSAGE_KEYS: Record<string, string> = {
 const CODE_KEYS: Record<string, string> = {
   "catalog.visibility.filesPresent": "catalog.products.access.filesPresent",
   DUPLICATE_PRODUCT_CODE: "catalog.products.errors.duplicateCode",
+  CUSTOMER_GROUP_IN_USE: "catalog.customerGroups.errors.inUse",
+  GROUP_IN_USE: "catalog.customerGroups.errors.inUse",
   FILE_TOO_LARGE: "catalog.products.files.tooLarge",
   FILE_TYPE_NOT_ALLOWED: "catalog.products.files.typeRejected",
   FILE_CONTENT_MISMATCH: "catalog.products.files.contentMismatch",

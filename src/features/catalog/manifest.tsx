@@ -11,6 +11,7 @@ import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
+import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -116,6 +117,11 @@ export const catalogManifest = {
         path: "/catalogo/configuracoes",
         element: <CatalogPolicyPage />,
         permission: "catalog.products.manage",
+      },
+      {
+        path: "/catalogo/produtos/:id/assistente",
+        element: <ProductWizardPage />,
+        permission: "catalog.products.read",
       },
       {
         path: "/catalogo/produtos/:id",

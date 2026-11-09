@@ -345,7 +345,11 @@ export function NotificationsSettingsPage() {
                                           aria-hidden
                                         />
                                       </span>
-                                    ) : null
+                                    ) : (
+                                      <span className="text-sm text-muted-foreground">
+                                        {t("notifications.settings.channelUnavailable")}
+                                      </span>
+                                    )
                                   ) : (
                                     <label className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
                                       <Switch

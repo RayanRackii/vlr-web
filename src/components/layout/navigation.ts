@@ -334,6 +334,7 @@ export function getPageTitleKey(
   | NavigationTab["labelKey"]
   | "account.profile"
   | "nav.rentalsResourceWizard"
+  | "nav.catalogProductWizard"
   | "app.name" {
   const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
@@ -372,6 +373,10 @@ export function getPageTitleKey(
 
   if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
     return "nav.rentalsResourceWizard"
+  }
+
+  if (/^\/catalogo\/produtos\/[^/]+\/assistente\/?$/.test(pathname)) {
+    return "nav.catalogProductWizard"
   }
 
   if (pathname.startsWith("/catalogo")) {

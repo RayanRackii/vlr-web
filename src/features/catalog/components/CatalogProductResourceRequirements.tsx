@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   CatalogPlanningVersionConflictError,
   CatalogRetryableError,
   getCatalogProductResourceRequirements,
@@ -21,6 +14,11 @@ import {
 } from "@/features/catalog/services/catalogService"
 import type { CatalogProductResourceRequirement } from "@/features/catalog/schemas/catalogSchemas"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+
+type CatalogProductResourceRequirementsProps = {
+  productId: string
+  readOnly?: boolean
+}
 
 type DraftRow = CatalogProductResourceRequirement & { clientId: string }
 
@@ -43,7 +41,7 @@ function emptyRow(): DraftRow {
   }
 }
 
-export function CatalogProductResourceRequirements({ productId }: { productId: string }) {
+export function CatalogProductResourceRequirements({ productId, readOnly = false }: CatalogProductResourceRequirementsProps) {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -202,39 +200,42 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
                 <span className="text-sm font-medium">
                   {t("catalog.resourcePlanning.requirementLabel", { index: index + 1 })}
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeRow(row.clientId)}
-                >
-                  {t("common.remove")}
-                </Button>
+                {readOnly ? null : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeRow(row.clientId)}
+                  >
+                    {t("common.remove")}
+                  </Button>
+                )}
               </div>
-              <label className="grid gap-1 text-sm">
-                <span>{t("catalog.resourcePlanning.fields.resource")}</span>
-                <Select
-                  modal={false}
-                  value={row.rentalAssetId}
-                  onValueChange={(value) => {
-                    if (typeof value === "string") {
-                      updateRow(row.clientId, { rentalAssetId: value })
-                    }
-                  }}
-                  items={assets.map((asset) => ({ value: asset.id, label: asset.name }))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t("catalog.resourcePlanning.fields.resourcePlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assets.map((asset) => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
+              <fieldset className="space-y-2">
+                <legend className="text-sm">{t("catalog.resourcePlanning.fields.resource")}</legend>
+                {assets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("catalog.productWizard.noResources")}</p>
+                ) : (
+                  <div className="flex flex-col gap-2" role="radiogroup" aria-label={t("catalog.resourcePlanning.fields.resource")}>
+                    {assets.map((asset) => {
+                      const selected = row.rentalAssetId === asset.id
+                      return (
+                        <Button
+                          key={asset.id}
+                          type="button"
+                          variant={selected ? "default" : "outline"}
+                          className="min-h-11 justify-start"
+                          aria-pressed={selected}
+                          disabled={readOnly}
+                          onClick={() => updateRow(row.clientId, { rentalAssetId: asset.id })}
+                        >
+                          {asset.name}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                )}
+              </fieldset>
               <div className="grid gap-2 sm:grid-cols-4">
                 <label className="grid gap-1 text-sm">
                   <span>{t("catalog.resourcePlanning.fields.resourceQuantity")}</span>
@@ -306,20 +307,22 @@ export function CatalogProductResourceRequirements({ productId }: { productId: s
         </Alert>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={addRow}>
-          {t("catalog.resourcePlanning.addRequirement")}
-        </Button>
-        <LoadingButton
-          type="button"
-          size="sm"
-          loading={saving}
-          disabled={saveError?.blocking ?? false}
-          onClick={() => void save()}
-        >
-          {t("catalog.resourcePlanning.save")}
-        </LoadingButton>
-      </div>
+      {readOnly ? null : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={addRow}>
+            {t("catalog.resourcePlanning.addRequirement")}
+          </Button>
+          <LoadingButton
+            type="button"
+            size="sm"
+            loading={saving}
+            disabled={saveError?.blocking ?? false}
+            onClick={() => void save()}
+          >
+            {t("catalog.resourcePlanning.save")}
+          </LoadingButton>
+        </div>
+      )}
     </div>
   )
 }

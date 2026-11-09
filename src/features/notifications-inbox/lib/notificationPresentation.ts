@@ -51,11 +51,14 @@ export function notificationItemText(
   t: TFunction,
 ): string {
   const title = item.title.trim()
-  if (title) {
+  const titleIsRaw = title.length === 0 || title === item.eventType.trim()
+  if (!titleIsRaw) {
     return title
   }
   const slug = groupLabelSlug(item.eventType)
-  return slug ? t(`notifications.inbox.items.${slug}`) : title
+  return slug
+    ? t(`notifications.inbox.items.${slug}`)
+    : t("notifications.inbox.items.unknown")
 }
 
 /** Module glyph shown beside each group; unknown modules fall back to the bell. */

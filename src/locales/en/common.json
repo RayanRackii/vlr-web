@@ -1168,7 +1168,8 @@
         "loadHistory": "Could not load the history.",
         "loadAccess": "Could not load the product access.",
         "saveAccess": "Could not save the product access.",
-        "duplicateName": "A group with this name already exists."
+        "duplicateName": "A group with this name already exists.",
+        "inUse": "This group unlocks products. Remove it from those products before deleting it."
       }
     },
     "requests": {
@@ -1248,7 +1249,90 @@
         "recipient": "Recipient",
         "status": "Status",
         "createdAt": "Created",
-        "actions": "Actions"
+        "actions": "Actions",
+        "error": "Error"
+      }
+    },
+    "productWizard": {
+      "title": "Product setup",
+      "description": "One step at a time: what still stops a customer from buying.",
+      "breadcrumb": "Setup",
+      "breadcrumbLabel": "Product path",
+      "open": "Setup",
+      "openResource": "Set the resource in setup",
+      "notFound": "Product not found.",
+      "stepperLabel": "Setup steps",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish",
+      "checklistTitle": "What blocks a purchase",
+      "offerHint": "Name, price, and whether the item is for sale. The rest is on the other steps.",
+      "accessHint": "Public is every customer. Restricted is only the groups and customers you choose.",
+      "resourceHint": "Pick the resource this product holds, or leave it with none if buying does not book anything.",
+      "groupsLabel": "Allowed groups",
+      "noGroups": "There are no groups yet. Create one under Customer groups and come back from this link.",
+      "emptyGroup": "{{name}} has no members. Someone who is only in that group cannot see the product.",
+      "memberSearch": "Customer name or email",
+      "addMember": "Add to the group",
+      "memberAdded": "{{name}} joined the group.",
+      "noCustomerMatch": "No customer with that name or email.",
+      "noResources": "This place has no bookable resources.",
+      "accessSaved": "Who can buy was saved.",
+      "menuPublished": "The shop is on the customer menu.",
+      "steps": {
+        "status": "Status",
+        "offer": "Offer",
+        "access": "Who can buy",
+        "resource": "Resource"
+      },
+      "summary": {
+        "ready": "A customer who can open the portal can buy this item.",
+        "missing": "Something still stops a customer from buying.",
+        "unknown": "Not everything could be checked. The open items say what failed.",
+        "inactive": "The product is inactive. Customers do not see it in the shop."
+      },
+      "statusLabel": {
+        "done": "Ready",
+        "missing": "Missing",
+        "unavailable": "No access",
+        "notApplicable": "Does not apply"
+      },
+      "items": {
+        "listed": "For sale",
+        "portalMenu": "Customer menu",
+        "audience": "Who can buy",
+        "resource": "Resource"
+      },
+      "details": {
+        "listed": {
+          "done": "The product is active.",
+          "missing": "The product is inactive, so customers do not see it."
+        },
+        "portalMenu": {
+          "done": "The customer menu has an active shop item.",
+          "missing": "Without an active shop item on the menu, customers cannot find the product.",
+          "unavailable": "The customer menu could not be read."
+        },
+        "audience": {
+          "done": "The audience you set can see the product.",
+          "missing": "The product is restricted to a group with no members, or to nobody.",
+          "unavailable": "Who can buy could not be read."
+        },
+        "resource": {
+          "done": "This product's resource is chosen.",
+          "none": "This product uses no resource. Buying does not book anything.",
+          "missing": "A required resource has no item chosen.",
+          "unavailable": "This product's resource could not be read.",
+          "notApplicable": "This place does not use bookable resources.",
+          "inactiveModule": "The server does not allow linking a resource in this place yet. Buying does not depend on it."
+        }
+      },
+      "actions": {
+        "createMenu": "Publish on the menu",
+        "openMenu": "Open the menu",
+        "openGroup": "Open the group",
+        "openStep": "Fix here",
+        "reviewStep": "Review"
       }
     },
     "policy": {
@@ -1443,6 +1527,7 @@
       "emailDefault": "Email notifications for customers start on for new organizations. You can turn them off here.",
       "empty": "No notification modules are active in this workspace.",
       "inAppAlwaysOn": "In-app always on",
+      "channelUnavailable": "Unavailable",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "toastSaved": "Channel updated.",
       "moduleTabs": "Notification modules",
@@ -1463,7 +1548,8 @@
         "orderReady": "Order ready.",
         "orderRejected": "Order rejected.",
         "orderCancelledBySupplier": "Order cancelled by the supplier.",
-        "orderCancelledByCustomer": "Order cancelled by the customer."
+        "orderCancelledByCustomer": "Order cancelled by the customer.",
+        "unknown": "New notice."
       },
       "title": "Notifications",
       "ariaLabelNone": "Notifications",
@@ -1478,8 +1564,8 @@
       "recent": "Recent",
       "countOverflow": "99+",
       "groups": {
-        "fallback_one": "{{count}} notification — {{eventType}}",
-        "fallback_other": "{{count}} notifications — {{eventType}}",
+        "fallback_one": "{{count}} notice",
+        "fallback_other": "{{count}} notices",
         "orderCreated_one": "{{count}} new order",
         "orderCreated_other": "{{count}} new orders",
         "orderApproved_one": "{{count}} order approved",
@@ -1839,7 +1925,8 @@
     "pmocTooltip": "Maintenance plans",
     "catalogProductAgenda": "Product agenda",
     "catalogResourceAgenda": "Resource agenda",
-    "rentalsResourceWizard": "Resource setup"
+    "rentalsResourceWizard": "Resource setup",
+    "catalogProductWizard": "Product setup"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -3765,6 +3852,7 @@
       "core.roles.read": "View functions",
       "core.roles.manage": "Manage functions",
       "core.units.read": "View units",
+      "core.units.write": "Edit units",
       "core.registration_fields.read": "View registration fields",
       "core.registration_fields.write": "Edit registration fields",
       "core.module_menu.read": "View portal menu",
@@ -3791,6 +3879,9 @@
       "rentals.reservations.complete": "Complete reservations",
       "rentals.schedule.read": "View schedule",
       "rentals.schedule.write": "Edit schedule",
+      "rentals.schedule.lessons.write": "Create lessons on the schedule",
+      "rentals.booking_policy.read": "View booking rules",
+      "rentals.booking_policy.write": "Edit booking rules",
       "rentals.assets.read": "View rental resources",
       "rentals.assets.write": "Edit schedule policy",
       "rentals.pricing.read": "View pricing",
@@ -3807,7 +3898,8 @@
         },
         "orders": {
           "read": "View catalog orders",
-          "manage": "Manage catalog orders"
+          "manage": "Manage catalog orders",
+          "allocate": "Allocate order resources"
         },
         "notifications": {
           "read": "View catalog notifications",
@@ -4001,6 +4093,7 @@
       "editTitle": "Edit item",
       "inactive": "inactive",
       "suggestedLabelRentals": "Book a time",
+      "suggestedLabelCatalog": "Shop",
       "suggestedLabelRentalsAsset": "Book {{name}}",
       "previewCaption": "Customers will see something like this",
       "previewFallbackName": "Portal",

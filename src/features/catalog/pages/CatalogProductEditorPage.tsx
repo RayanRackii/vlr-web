@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { EntityPage, type EntityTab } from "@/components/layout/EntityPage"
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { AdvancedCard } from "@/components/ui/advanced-card"
+import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +34,6 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { CatalogProductAccessSection, CatalogProductAccessHistoryView, type CatalogProductAccessSectionHandle } from "@/features/catalog/components/CatalogProductAccessSection"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
-import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
 import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogProductWithFiles"
@@ -79,9 +78,8 @@ export function CatalogProductEditorPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { can, activeModules } = usePermissions()
+  const { can } = usePermissions()
   const canManage = can("catalog.products.manage")
-  const resourcePlanningActive = activeModules.includes("resource-planning")
 
   const [product, setProduct] = useState<CatalogProduct | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -470,11 +468,11 @@ export function CatalogProductEditorPage() {
             disabled={fieldsLocked}
           />
         </section>
-        {canManage && resourcePlanningActive ? (
-          <AdvancedCard>
-            <CatalogProductResourceRequirements productId={product.id} />
-          </AdvancedCard>
-        ) : null}
+        <p className="text-sm">
+          <Link className="text-primary underline-offset-4 hover:underline" to={productWizardPath(product.id, "resource")}>
+            {t("catalog.productWizard.openResource")}
+          </Link>
+        </p>
       </div>
     ),
   }

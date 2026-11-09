@@ -146,6 +146,15 @@ export function CatalogNotificationsPage() {
         ),
       },
       {
+        id: "errorMessage",
+        accessorFn: (row) => row.errorMessage ?? "",
+        header: t("catalog.notifications.columns.error"),
+        enableColumnFilter: false,
+        cell: ({ row }) => row.original.errorMessage?.trim()
+          ? <span className="block max-w-xs break-words text-sm text-muted-foreground">{row.original.errorMessage}</span>
+          : "—",
+      },
+      {
         accessorKey: "createdAt",
         header: t("catalog.notifications.columns.createdAt"),
         enableColumnFilter: false,

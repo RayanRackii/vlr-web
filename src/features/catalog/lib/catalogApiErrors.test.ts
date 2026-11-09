@@ -8,6 +8,21 @@ describe("localizeCatalogApiError", () => {
     expect(localizeCatalogApiError({ code: "catalog.file.pendingTooRecent" }, "fallback")).toBe("fallback")
   })
 
+  it("translates a group that is still used by a product", () => {
+    expect(
+      localizeCatalogApiError(
+        { error: "Customer group is referenced by product access." },
+        "fallback",
+      ),
+    ).toBe(i18n.t("catalog.customerGroups.errors.inUse"))
+    expect(
+      localizeCatalogApiError(
+        { code: "CUSTOMER_GROUP_IN_USE", error: "in use" },
+        "fallback",
+      ),
+    ).toBe(i18n.t("catalog.customerGroups.errors.inUse"))
+  })
+
   it("translates a duplicate product code", () => {
     expect(
       localizeCatalogApiError(

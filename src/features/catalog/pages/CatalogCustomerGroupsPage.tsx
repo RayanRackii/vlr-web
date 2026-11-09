@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { CatalogHeading, CatalogSearch } from "@/features/catalog/components/StaffCatalogChrome"
+import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
 import {
   catalogAuditActionI18nKey,
   customerGroupFormSchema,
@@ -361,6 +362,7 @@ export function CustomerGroupsView({ editor = false }: { editor?: boolean }) {
 
   return (
     <div className="staff-catalog">
+      <StaffReturnLink />
       {!editor ? <>
       <CatalogHeading
         title={t("catalog.customerGroups.title")}
