@@ -242,6 +242,15 @@ async function confirmCancel(user: ReturnType<typeof userEvent.setup>) {
   return dialog
 }
 
+async function confirmReservationReview(user: ReturnType<typeof userEvent.setup>) {
+  const review = await screen.findByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })
+  const confirm = within(review).getByRole("button", {
+    name: (name) => name.startsWith(i18n.t("tenantPortal.agenda.confirmReserveWithoutAmount")),
+  })
+  await waitFor(() => expect(confirm).toBeEnabled())
+  await user.click(confirm)
+}
+
 function completeButton() {
   return screen.queryByRole("button", {
     name: i18n.t("rentals.reservations.complete"),
@@ -1307,6 +1316,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(screen.getByRole("button", {
       name: i18n.t("tenantPortal.agenda.reserveSlot"),
     }))
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(createReservation).toHaveBeenCalledWith({
@@ -1695,6 +1705,43 @@ describe("TenantPortalAgendaPage time selector", () => {
     expect(trigger).not.toHaveTextContent(i18n.t("tenantPortal.agenda.noTimes"))
   })
 
+  it.each([[true, false], [false, false], [true, true], [false, true]])("requires review and explicit confirmation with deposit=%s and derived slot=%s, and locks double confirmation", async (requiresDeposit, isDerived) => {
+    const user = userEvent.setup()
+    fetchAssets.mockResolvedValue([{ ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Sala 1"), requiresDeposit }])
+    fetchDay.mockResolvedValue({ date: VIEWED_DATE, slots: [makeSlot({
+      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", rentalAssetId: ASSET_A_ID,
+      assetName: "Sala 1", startTime: "08:00:00", endTime: "09:00:00", isDerived,
+    })] })
+    let resolveBooking!: (reservation: PortalReservation) => void
+    const createBooking = isDerived ? createReservation : bookSlot
+    createBooking.mockReturnValue(new Promise((resolve) => { resolveBooking = resolve }))
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Sala 1" }))
+    const primary = screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })
+    await waitFor(() => expect(primary).toBeEnabled())
+    await user.click(primary)
+    const review = await screen.findByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })
+    expect(review).toHaveTextContent("Sala 1")
+    expect(review).toHaveTextContent("08:00–09:00")
+    expect(review).toHaveTextContent(formatMoney(80))
+    expect(review).toHaveTextContent(i18n.t(requiresDeposit
+      ? "tenantPortal.agenda.depositRequired"
+      : "tenantPortal.agenda.reviewNoDeposit"))
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    await user.click(within(review).getByRole("button", { name: i18n.t("tenantPortal.agenda.backHome") }))
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    await user.click(primary)
+    await user.dblClick(screen.getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }),
+    }))
+    expect(createBooking).toHaveBeenCalledTimes(1)
+    expect(isDerived ? bookSlot : createReservation).not.toHaveBeenCalled()
+    await act(async () => { resolveBooking(makeReservation("Confirmed", FUTURE_ISO)) })
+  })
+
   it("shows the estimate and the deposit note before booking a deposit court", async () => {
     const user = userEvent.setup()
     renderAgenda()
@@ -1803,6 +1850,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserveSlot"),
       }),
     )
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(bookSlot).toHaveBeenCalled()
@@ -1860,6 +1908,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserveSlot"),
       }),
     )
+    await confirmReservationReview(user)
 
     await waitFor(() => expect(bookSlot).toHaveBeenCalled())
     await waitFor(() => {
@@ -1907,6 +1956,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(
       screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
     )
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(bookSlot).toHaveBeenCalled()
@@ -2002,6 +2052,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         name: i18n.t("tenantPortal.agenda.reserveSlot"),
       }),
     )
+    await confirmReservationReview(user)
   }
 
   it.each(["resolved", "rejected"] as const)("silently discards a %s booking from the previous session", async (outcome) => {
@@ -2398,6 +2449,7 @@ describe("TenantPortalAgendaPage time selector", () => {
       )
     })
     await user.click(screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }))
+    await confirmReservationReview(user)
     await waitFor(() => {
       expect(bookSlot).toHaveBeenCalledWith(expect.objectContaining({
         quantity: 2,
@@ -2558,6 +2610,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(
       screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
     )
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(createReservation).toHaveBeenCalledWith(
@@ -2685,6 +2738,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(
       screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") }),
     )
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(createReservation).toHaveBeenCalledWith(
@@ -4593,6 +4647,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     const reserve = screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })
     await waitFor(() => expect(reserve).toBeEnabled())
     await user.click(reserve)
+    await confirmReservationReview(user)
     await waitFor(() => expect(bookSlot).toHaveBeenCalledTimes(1))
     vi.setSystemTime(Date.now() + 660_000)
     await act(async () => window.dispatchEvent(new Event("focus")))
@@ -4620,6 +4675,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     await user.click(screen.getByRole("button", {
       name: i18n.t("tenantPortal.agenda.reserveSlot"),
     }))
+    await confirmReservationReview(user)
     await waitFor(() => expect(bookSlot).toHaveBeenCalledTimes(1))
 
     vi.setSystemTime(new Date("2026-10-14T11:00:00.000Z"))
@@ -5726,7 +5782,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     }
   })
 
-  it("offers one join-and-reserve action when the queue is open and nobody is ahead", async () => {
+  it("joins an open queue and requires review before confirming a reservation", async () => {
     joinQueue.mockResolvedValue(
       queueStatus({ myTicket: queueTicket("Active") }),
     )
@@ -5751,6 +5807,10 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     ).not.toBeInTheDocument()
 
     await user.click(action)
+    await screen.findByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+    await confirmReservationReview(user)
 
     await waitFor(() => {
       expect(bookSlot).toHaveBeenCalledWith({
@@ -5770,6 +5830,47 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     expect(tile).not.toHaveTextContent(i18n.t("tenantPortal.agenda.slotTaken"))
   })
 
+  it("does not open review from a delayed queue join after changing the selected resource", async () => {
+    let finishJoin!: (status: ReservationQueueStatus) => void
+    joinQueue.mockReturnValue(new Promise((resolve) => { finishJoin = resolve }))
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    await user.click(await screen.findByRole("button", {
+      name: i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+    }))
+    await user.click(screen.getByRole("button", { name: "Quadra 2" }))
+    await act(async () => { finishJoin(queueStatus({ myTicket: queueTicket("Active") })) })
+    expect(screen.queryByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })).not.toBeInTheDocument()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it.each(["Waiting", "Expired"] as const)("disables confirmation when the ticket becomes %s during review", async (status) => {
+    vi.useFakeTimers({
+      toFake: ["Date", "setInterval", "clearInterval"],
+      now: new Date("2026-10-15T08:00:00.000Z"),
+    })
+    fetchQueue.mockResolvedValue(queueStatus({ myTicket: queueTicket("Active") }))
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Quadra 1")
+    const continueButton = await screen.findByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })
+    await waitFor(() => expect(continueButton).toBeEnabled())
+    await user.click(continueButton)
+    const review = await screen.findByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })
+    const confirm = within(review).getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }),
+    })
+    expect(confirm).toBeEnabled()
+    fetchQueue.mockResolvedValue(queueStatus({ myTicket: queueTicket(status) }))
+    await act(async () => { await vi.advanceTimersByTimeAsync(4000) })
+    expect(confirm).toBeDisabled()
+    await user.click(confirm)
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
   it("keeps a queued submission quiet through a slot-boundary refresh", async () => {
     vi.setSystemTime(new Date("2026-10-15T10:59:50.000Z"))
     joinQueue.mockResolvedValue(queueStatus({ myTicket: queueTicket("Active") }))
@@ -5785,6 +5886,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     await user.click(await screen.findByRole("button", {
       name: (name) => name === i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
     }))
+    await confirmReservationReview(user)
     await waitFor(() => expect(bookSlot).toHaveBeenCalledTimes(1))
 
     // The selected 08:00 slot has just begun in Sao Paulo. The refresh now
@@ -6004,7 +6106,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
     expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeDisabled()
   })
 
-  it("keeps the explanation and the one-step action in pt-BR, en, and es", () => {
+  it("keeps the ticket explanation and the join-to-review action in pt-BR, en, and es", () => {
     const copies = [
       ptBRCommon.tenantPortal.agenda.queue,
       enCommon.tenantPortal.agenda.queue,
@@ -6016,7 +6118,7 @@ describe("TenantPortalAgendaPage queue explainer", () => {
       expect(copy.joiningAndReserving.length).toBeGreaterThan(0)
     }
     expect(ptBRCommon.tenantPortal.agenda.queue.joinAndReserve).toBe(
-      "Entrar na fila e reservar",
+      "Entrar na fila e revisar reserva",
     )
     expect(enCommon.tenantPortal.agenda.queue.requiresTicket).not.toBe(
       ptBRCommon.tenantPortal.agenda.queue.requiresTicket,

@@ -317,7 +317,9 @@ export function useReservationQueue(options: {
 
   const queueGating =
     enabled && (status == null || status.queueEnabled === true)
-  const canReserve = !queueGating || view.kind === "active"
+  const canReserve = !queueGating || (
+    view.kind === "active" && status?.phase === "Open" && remainingMs > 0
+  )
   const hideReserveUi = view.kind === "expired"
 
   const join = useCallback(async (): Promise<ReservationQueueStatus | null> => {
