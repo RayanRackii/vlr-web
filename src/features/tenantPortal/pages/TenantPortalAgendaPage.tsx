@@ -1142,7 +1142,11 @@ export function TenantPortalAgendaPage() {
     ? `${date}:${endDate ?? ""}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
     : null
   const quoteSelectionKeyRef = useRef(quoteSelectionKey)
-  quoteSelectionKeyRef.current = quoteSelectionKey
+  const quoteSelectionGenerationRef = useRef(0)
+  if (quoteSelectionKeyRef.current !== quoteSelectionKey) {
+    quoteSelectionKeyRef.current = quoteSelectionKey
+    quoteSelectionGenerationRef.current += 1
+  }
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
   const isMultiUnitGood = selectedAsset !== undefined &&
     selectedAsset.type.toLowerCase() === "good" && selectedAssetQuantity > 1
@@ -1634,7 +1638,6 @@ export function TenantPortalAgendaPage() {
       if (generation === getAgendaSessionGeneration()) {
         submittingRef.current = false
         setSubmitting(false)
-        setReviewOpen(false)
       }
     }
   }
@@ -1646,12 +1649,12 @@ export function TenantPortalAgendaPage() {
       return
     }
     const generation = getAgendaSessionGeneration()
-    const selectionKey = quoteSelectionKey
+    const selectionGeneration = quoteSelectionGenerationRef.current
     joinAndReserveLock.current = true
     try {
       const next = await queue.join()
       if (generation !== getAgendaSessionGeneration() ||
-        selectionKey !== quoteSelectionKeyRef.current) {
+        selectionGeneration !== quoteSelectionGenerationRef.current) {
         return
       }
       if (next?.phase === "Open" && next.myTicket?.status === "Active") {

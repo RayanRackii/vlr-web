@@ -1742,6 +1742,30 @@ describe("TenantPortalAgendaPage time selector", () => {
     await act(async () => { resolveBooking(makeReservation("Confirmed", FUTURE_ISO)) })
   })
 
+  it("keeps review open after a failed booking and allows confirmation retry", async () => {
+    const user = userEvent.setup()
+    fetchAssets.mockResolvedValue([makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Sala 1")])
+    bookSlot.mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(makeReservation("Confirmed", FUTURE_ISO))
+    renderAgenda()
+    await user.click(await screen.findByRole("button", { name: "Sala 1" }))
+    const primary = screen.getByRole("button", { name: i18n.t("tenantPortal.agenda.reserveSlot") })
+    await waitFor(() => expect(primary).toBeEnabled())
+    await user.click(primary)
+    const review = await screen.findByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })
+    await confirmReservationReview(user)
+    await waitFor(() => expect(toastError).toHaveBeenCalled())
+    expect(review).toBeInTheDocument()
+    const confirm = within(review).getByRole("button", {
+      name: i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }),
+    })
+    await waitFor(() => expect(confirm).toBeEnabled())
+    await user.click(confirm)
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled())
+    expect(bookSlot).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
   it("shows the estimate and the deposit note before booking a deposit court", async () => {
     const user = userEvent.setup()
     renderAgenda()
@@ -2105,7 +2129,7 @@ describe("TenantPortalAgendaPage time selector", () => {
 
     await bookQuadra1(user)
     await waitFor(() => {
-      expect(buttonNamed(i18n.t("tenantPortal.agenda.reserveSlot"))).toBeEnabled()
+      expect(buttonNamed(i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }))).toBeEnabled()
     })
 
     expect(toastError).not.toHaveBeenCalled()
@@ -2763,7 +2787,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(toastSuccess).not.toHaveBeenCalled()
     const reserve = screen.getByRole("button", {
-      name: i18n.t("tenantPortal.agenda.reserveSlot"),
+      name: i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }),
     })
     expect(reserve).not.toHaveAttribute("aria-busy", "true")
     expect(reserve).toBeEnabled()
@@ -2973,7 +2997,7 @@ describe("TenantPortalAgendaPage time selector", () => {
     })
     expect(
       screen.getByRole("button", {
-        name: i18n.t("tenantPortal.agenda.reserveSlot"),
+        name: i18n.t("tenantPortal.agenda.confirmReserve", { amount: formatMoney(80) }),
       }),
     ).toBeEnabled()
   })
@@ -5840,6 +5864,32 @@ describe("TenantPortalAgendaPage queue explainer", () => {
       name: i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
     }))
     await user.click(screen.getByRole("button", { name: "Quadra 2" }))
+    await act(async () => { finishJoin(queueStatus({ myTicket: queueTicket("Active") })) })
+    expect(screen.queryByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })).not.toBeInTheDocument()
+    expect(bookSlot).not.toHaveBeenCalled()
+    expect(createReservation).not.toHaveBeenCalled()
+  })
+
+  it("does not open review from a delayed queue join after selecting A then B then A", async () => {
+    fetchAssets.mockResolvedValue([
+      { ...makeAsset(ASSET_A_ID, ASSET_A_ASSET_ID, "Sala 1"), queueEnabled: true,
+        queueOpeningTime: "07:30:00", requiresDeposit: false },
+      { ...makeAsset(ASSET_B_ID, ASSET_B_ASSET_ID, "Sala 2"), requiresDeposit: false },
+    ])
+    let finishJoin!: (status: ReservationQueueStatus) => void
+    joinQueue.mockReturnValue(new Promise((resolve) => { finishJoin = resolve }))
+    const user = userEvent.setup()
+    renderAgenda()
+    await chooseCourt(user, "Sala 1")
+    const join = await screen.findByRole("button", {
+      name: i18n.t("tenantPortal.agenda.queue.joinAndReserve"),
+    })
+    await waitFor(() => expect(join).toBeEnabled())
+    await user.click(join)
+    expect(joinQueue).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole("button", { name: "Sala 2" }))
+    await user.click(screen.getByRole("button", { name: "Sala 1" }))
+    expect(screen.getByRole("button", { name: "Sala 1" })).toHaveAttribute("aria-pressed", "true")
     await act(async () => { finishJoin(queueStatus({ myTicket: queueTicket("Active") })) })
     expect(screen.queryByRole("alertdialog", { name: i18n.t("tenantPortal.agenda.reviewTitle") })).not.toBeInTheDocument()
     expect(bookSlot).not.toHaveBeenCalled()
