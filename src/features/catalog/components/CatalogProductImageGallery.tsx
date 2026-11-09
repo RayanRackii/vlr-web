@@ -19,17 +19,24 @@ type CatalogProductImageGalleryProps = {
   controlsVisibility?: "always" | "hover"
   /** When set, wraps only the img / broken fallback in a Link. Controls stay siblings. */
   imageLinkTo?: string
+  /** Optional action for the current image; carousel controls remain separate. */
+  onImageClick?: (image: CatalogProductGalleryImage) => void
 }
 
 function stopParentNavigation(event: { stopPropagation: () => void }) {
   event.stopPropagation()
 }
 
-function wrapGalleryMedia(
-  imageLinkTo: string | undefined,
-  media: ReactNode,
-  onLinkClick?: (event: MouseEvent<HTMLAnchorElement>) => void,
-) {
+function GalleryMedia({ imageLinkTo, media, onLinkClick, onImageClick, imageButtonLabel }: {
+  imageLinkTo?: string
+  media: ReactNode
+  onLinkClick?: (event: MouseEvent<HTMLAnchorElement>) => void
+  onImageClick?: () => void
+  imageButtonLabel?: string
+}) {
+  if (onImageClick) {
+    return <button type="button" className="block h-full min-h-11 w-full cursor-zoom-in focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-4" aria-label={imageButtonLabel} onClick={onImageClick}>{media}</button>
+  }
   if (imageLinkTo == null || imageLinkTo.length === 0) {
     return media
   }
@@ -48,6 +55,7 @@ export function CatalogProductImageGallery({
   frameClassName,
   controlsVisibility = "always",
   imageLinkTo,
+  onImageClick,
 }: CatalogProductImageGalleryProps) {
   const { t } = useTranslation()
   const [index, setIndex] = useState(0)
@@ -176,9 +184,9 @@ export function CatalogProductImageGallery({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {wrapGalleryMedia(
-          imageLinkTo,
-          isBroken ? (
+        <GalleryMedia
+          imageLinkTo={imageLinkTo}
+          media={isBroken ? (
             <div role="img" aria-label={t("tenantPortal.catalog.noImage")} className="portal-catalog-placeholder h-full w-full">
               <Package aria-hidden="true" />
             </div>
@@ -198,9 +206,17 @@ export function CatalogProductImageGallery({
                 markFailed(current.id)
               }}
             />
-          ),
-          onMediaLinkClick,
-        )}
+          )}
+          onLinkClick={onMediaLinkClick}
+          onImageClick={onImageClick ? () => {
+            if (suppressNextClickRef.current) {
+              suppressNextClickRef.current = false
+              return
+            }
+            onImageClick(current)
+          } : undefined}
+          imageButtonLabel={t("tenantPortal.catalog.enlargeImage", { name: alt })}
+        />
 
         {isCarousel ? (
           <>

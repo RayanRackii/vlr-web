@@ -707,6 +707,7 @@
       "quantityFor": "Quantidade de {{name}}",
       "quantityDecrease": "Diminuir quantidade",
       "quantityIncrease": "Aumentar quantidade",
+      "enlargeImage": "Ampliar imagem: {{name}}",
       "noImage": "Sem imagem",
       "addToCart": "Adicionar",
       "addedToCart": "Adicionado ao carrinho.",
@@ -983,6 +984,8 @@
         "customerVisible": "Visível ao cliente",
         "internal": "Interno (B2B)",
         "open": "Abrir",
+        "selectedFile": "Arquivo selecionado: {{name}}",
+        "noFile": "Nenhum arquivo selecionado",
         "select": "Selecionar arquivos",
         "waiting": "Pronto para enviar",
         "sending": "Enviando...",
@@ -1031,8 +1034,11 @@
           "empty": "Nenhuma alteração registrada.",
           "actorTeam": "Equipe",
           "loadError": "Não foi possível carregar o histórico.",
+          "groups": "Grupos: {{names}}",
+          "noGroups": "nenhum",
           "groupsAdded": "+ {{names}}",
           "groupsRemoved": "− {{names}}",
+          "customers_zero": "nenhum cliente avulso",
           "customers_one": "{{count}} cliente liberado",
           "customers_other": "{{count}} clientes liberados",
           "unknownGroup": "grupo removido"
@@ -1052,6 +1058,23 @@
       }
     },
     "customerGroups": {
+      "page": {
+        "subtitle": "Agrupe clientes para liberar itens exclusivos do catálogo ou reserváveis.",
+        "emptyHint": "Crie um grupo para liberar itens a clientes específicos.",
+        "deleteBody": "{{name}} será removido. Os membros e os acessos a itens ligados ao grupo serão desfeitos. Pedidos já feitos não mudam.",
+        "deleteAffected": "Itens que usam este grupo:",
+        "deleteNoAffected": "Nenhum item usa este grupo.",
+        "inUse": "Em uso",
+        "whereUsed": "Em uso por itens",
+        "breadcrumb": "Navegação do grupo",
+        "sections": "Seções do grupo",
+        "notFound": "Grupo não encontrado.",
+        "saveFirst": "Salve o grupo para adicionar membros.",
+        "leaveTitle": "Descartar alterações?",
+        "leaveBody": "Há alterações não salvas neste grupo. Deseja sair?",
+        "leave": "Descartar e sair",
+        "accessChanged": "alterou o acesso de um item"
+      },
       "title": "Grupos de clientes",
       "subtitle": "Agrupe clientes para liberar produtos exclusivos.",
       "create": "Novo grupo",
@@ -4423,6 +4446,7 @@
       "dayOnlyBanner": "As alterações nesta grade valem somente para {{date}}. Para mudar a regra semanal, use Configuração semanal.",
       "weeklyBanner": "Esta grade se repete toda semana neste dia ({{day}}). A Agenda do dia só altera uma data.",
       "weeklyCellHint": "A mudança vale para este dia da semana, em todas as datas futuras.",
+      "kindsLoadError": "Não foi possível carregar os tipos de ocupação.",
       "weekly": {
         "configureHours": "Configurar horários"
       },
@@ -4605,13 +4629,13 @@
     },
     "resources": {
       "title": "Recursos",
-      "description": "Cadastre espaços e itens alugáveis da operação.",
+      "description": "Gerencie salas, equipamentos, veículos e espaços — qualquer recurso reservável.",
       "add": "Adicionar recurso",
       "edit": "Editar recurso",
-      "formDescription": "Espaço (sala ou área externa) ou item alugável. Não use esta tela para cadastro geral de inventário.",
+      "formDescription": "Configure os dados, as regras de reserva e o visual deste recurso.",
       "saveCreate": "Criar recurso",
       "saveEdit": "Salvar recurso",
-      "emptyTitle": "Nenhum recurso disponível para aluguel",
+      "emptyTitle": "Nenhum recurso cadastrado",
       "emptyDescription": "Cadastre seu primeiro espaço ou recurso para começar.",
       "emptyCategoriesTitle": "Nenhum tipo disponível",
       "emptyCategoriesDescription": "Os tipos de espaço e recurso vêm do provisionamento feito pelo Super-Admin. Não é possível criar tipos nesta tela.",
@@ -4628,7 +4652,7 @@
         "server": "Erro no servidor. Tente novamente em instantes."
       },
       "typeLocation": "Espaço",
-      "typeGood": "Item alugável",
+      "typeGood": "Bem",
       "eyebrow": "Cadastro",
       "editHint": "Clique para editar",
       "summaryBreakdown": " · {{spaces}}, {{items}}",
@@ -4684,7 +4708,7 @@
         "categoryPlaceholder": "Selecione o tipo",
         "family": "Família",
         "familyPlaceholder": "Selecione a família",
-        "rentalType": "Tipo de aluguel",
+        "rentalType": "Tipo de recurso",
         "totalQuantity": "Quantidade",
         "requiresDeposit": "É necessário pagamento prévio?",
         "queueEnabled": "Fila de reservas",
@@ -4743,6 +4767,13 @@
         "queueOpeningTimeRequired": "Informe o horário de abertura da fila.",
         "horizonRange": "Informe um inteiro de 0 a 3650.",
         "cancelCutoffRange": "Informe um número inteiro de 0 a 8760 horas."
+      },
+      "editor": {
+        "breadcrumb": "Navegação do recurso",
+        "sections": "Seções do recurso",
+        "saveBar": "Ações do recurso",
+        "readOnly": "Você pode consultar este recurso, mas não alterá-lo.",
+        "notFound": "Recurso não encontrado."
       }
     },
     "layout": {

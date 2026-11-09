@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -63,6 +63,54 @@ export function PortalCartPage() {
   const [products, setProducts] = useState<PortalProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
+  const [submitBarHeight, setSubmitBarHeight] = useState(144)
+  const noteGroupRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!submitBar) return
+    const noteGroup = noteGroupRef.current
+    let frame = 0
+    const revealFocusedNote = () => {
+      cancelAnimationFrame(frame)
+      // Native focus only reveals the textarea; wait for its scroll/layout before
+      // checking the whole field, including the counter beneath it.
+      frame = requestAnimationFrame(() => {
+        if (!noteGroup?.contains(document.activeElement)) return
+        if (getComputedStyle(submitBar).position !== "fixed") return
+        let scroller = noteGroup.parentElement
+        while (scroller) {
+          if (/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) && scroller.scrollHeight > scroller.clientHeight) break
+          scroller = scroller.parentElement
+        }
+        if (!scroller) return
+        const visibleBottom = Math.min(
+          scroller.getBoundingClientRect().bottom,
+          submitBar.getBoundingClientRect().top,
+        )
+        const overlap = noteGroup.getBoundingClientRect().bottom - visibleBottom
+        if (overlap > 0) scroller.scrollTop += overlap
+      })
+    }
+    const measure = () => {
+      setSubmitBarHeight(submitBar.getBoundingClientRect().height)
+      revealFocusedNote()
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(submitBar)
+    noteGroup?.addEventListener("focusin", revealFocusedNote)
+    window.addEventListener("resize", revealFocusedNote)
+    window.visualViewport?.addEventListener("resize", revealFocusedNote)
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+      noteGroup?.removeEventListener("focusin", revealFocusedNote)
+      window.removeEventListener("resize", revealFocusedNote)
+      window.visualViewport?.removeEventListener("resize", revealFocusedNote)
+    }
+  }, [submitBar])
+
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<CheckoutFormValues>({
@@ -158,7 +206,10 @@ export function PortalCartPage() {
   }
 
   return (
-    <div className="portal-purchase-cart mx-auto w-full max-w-2xl space-y-6 pb-36 md:pb-0">
+    <div
+      className="portal-purchase-cart mx-auto w-full max-w-2xl space-y-6 pb-[calc(var(--cart-submit-height)+1rem)] md:pb-0"
+      style={{ "--cart-submit-height": `${submitBarHeight}px` } as CSSProperties}
+    >
       <Button
         type="button"
         variant="outline"
@@ -308,7 +359,7 @@ export function PortalCartPage() {
               control={form.control}
               name="customerNote"
               render={({ field }) => (
-                <FormItem>
+                <FormItem ref={noteGroupRef}>
                   <FormLabel>{t("tenantPortal.catalog.customerNote")}</FormLabel>
                   <FormControl>
                     <Textarea rows={3} maxLength={1000} {...field} />
@@ -320,7 +371,7 @@ export function PortalCartPage() {
                 </FormItem>
               )}
             />
-            <div className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
+            <div ref={setSubmitBar} className="portal-purchase-submit-bar fixed inset-x-0 bottom-0 z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 border-t border-border bg-background px-4 pt-3 md:static md:z-auto md:pb-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
               <p className="text-base font-semibold text-foreground tabular-nums">
                 {t("tenantPortal.catalog.cartTotal")}: {cartTotalLabel}
               </p>

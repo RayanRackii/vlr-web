@@ -24,6 +24,8 @@ type EntityPageProps = {
   /** Status badges / chips shown next to the title. */
   badges?: ReactNode
   tabs?: readonly EntityTab[]
+  /** Opt in to multiple rows instead of the default horizontal scroll. */
+  wrapTabs?: boolean
   /** Controlled active tab. */
   value?: string
   defaultValue?: string
@@ -67,6 +69,7 @@ export function EntityPage({
   title,
   badges,
   tabs,
+  wrapTabs = false,
   value,
   defaultValue,
   onValueChange,
@@ -115,8 +118,8 @@ export function EntityPage({
 
       {tabs && tabs.length > 0 ? (
         <Tabs value={value} defaultValue={defaultValue ?? tabs[0]?.value} onValueChange={onValueChange}>
-          <div className="-mx-1 overflow-x-auto px-1">
-            <TabsList variant="line" className="w-max">
+          <div className={wrapTabs ? "min-w-0 px-1" : "-mx-1 overflow-x-auto px-1"}>
+            <TabsList variant="line" className={wrapTabs ? "!h-auto w-full flex-wrap justify-start" : "w-max"}>
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
                   {tab.label}

@@ -36,7 +36,12 @@ export function describeAccessChange(
   const name = (id: string) => groupNames[id] ?? t("catalog.products.access.history.unknownGroup")
   const added = [...afterGroups].filter((id) => !beforeGroups.has(id)).map(name)
   const removed = [...beforeGroups].filter((id) => !afterGroups.has(id)).map(name)
-  if (added.length > 0) {
+  if (after.visibility === "Restricted") {
+    parts.push(t("catalog.products.access.history.groups", {
+      names: [...afterGroups].map(name).join(", ") || t("catalog.products.access.history.noGroups"),
+    }))
+  }
+  if (after.visibility !== "Restricted" && added.length > 0) {
     parts.push(t("catalog.products.access.history.groupsAdded", { names: added.join(", ") }))
   }
   if (removed.length > 0) {

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { UNSAFE_DataRouterContext as DataRouterContext, useBlocker, useNavigate, useParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Loader2, Plus, Search, Trash2, Users, X } from "lucide-react"
+import { FileText, History, Loader2, Plus, Search, Trash2, Users, X } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,6 @@ import {
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -85,6 +85,15 @@ async function loadWhereUsed(): Promise<Record<string, string[]>> {
 }
 
 export function CatalogCustomerGroupsPage() {
+  return <CustomerGroupsView />
+}
+
+export function CustomerGroupsView({ editor = false }: { editor?: boolean }) {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const hasDataRouter = useContext(DataRouterContext) != null
+  const initializedId = useRef<string | null>(null)
+  const allowNavigation = useRef(false)
   const { t, i18n } = useTranslation()
   const { can } = usePermissions()
   const canManage = can("catalog.products.manage")
@@ -98,10 +107,10 @@ export function CatalogCustomerGroupsPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
-  const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CustomerGroup | null>(null)
   const [saving, setSaving] = useState(false)
-  const [tab, setTab] = useState("details")
+  const [redirectPending, setRedirectPending] = useState(false)
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [history, setHistory] = useState<CatalogAuditEntry[] | "error" | null>(null)
   const [memberBusyId, setMemberBusyId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<CustomerGroup | null>(null)
@@ -159,6 +168,14 @@ export function CatalogCustomerGroupsPage() {
         return
       }
       setGroups(nextGroups)
+      if (editor && id && initializedId.current !== id) {
+        const group = nextGroups.find((item) => item.id === id)
+        if (group) {
+          initializedId.current = id
+          setEditing(group)
+          form.reset({ name: group.name, description: group.description ?? "" })
+        }
+      }
       setLoadError(null)
     } catch (error) {
       if (controller.signal.aborted) {
@@ -172,7 +189,7 @@ export function CatalogCustomerGroupsPage() {
         setLoading(false)
       }
     }
-  }, [t])
+  }, [t, editor, id, form])
 
   useEffect(() => {
     queueMicrotask(() => void reload())
@@ -202,44 +219,61 @@ export function CatalogCustomerGroupsPage() {
     )
   }, [groups, search, i18n.language])
 
-  function resetDialog() {
-    setEditing(null)
-    setHistory(null)
-    setTab("details")
-    form.reset(emptyGroupForm())
+  const dirty = form.formState.isDirty
+  const busy = saving || redirectPending || memberBusyId !== null
+  useEffect(() => () => {
+    if (redirectTimer.current) clearTimeout(redirectTimer.current)
+  }, [])
+
+  function scheduleNavigation(path: string, replace = false) {
+    setRedirectPending(true)
+    redirectTimer.current = setTimeout(() => {
+      allowNavigation.current = true
+      navigate(path, { replace })
+    }, 3000)
   }
 
-  function openCreate() {
-    resetDialog()
-    setDialogOpen(true)
-  }
+  useEffect(() => {
+    if (!editor || (!dirty && !busy)) return
+    const preventUnload = (event: BeforeUnloadEvent) => {
+      if (allowNavigation.current) return
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", preventUnload)
+    return () => window.removeEventListener("beforeunload", preventUnload)
+  }, [editor, dirty, busy])
 
-  function openEdit(group: CustomerGroup) {
-    setEditing(group)
-    setHistory(null)
-    setTab("details")
-    form.reset({ name: group.name, description: group.description ?? "" })
-    setDialogOpen(true)
-    void getCustomerGroupHistory(group.id)
-      .then(setHistory)
-      .catch(() => setHistory("error"))
-  }
+  useEffect(() => {
+    if (!editor || !id) return
+    let active = true
+    void getCustomerGroupHistory(id).then((entries) => { if (active) setHistory(entries) })
+      .catch(() => { if (active) setHistory("error") })
+    return () => { active = false }
+  }, [editor, id])
+
+  function openCreate() { navigate("/catalogo/grupos/novo") }
+  function openEdit(group: CustomerGroup) { navigate(`/catalogo/grupos/${group.id}`) }
 
   async function onSubmit(values: CustomerGroupFormValues) {
     const body = {
       name: values.name.trim(),
       description: values.description.trim().length === 0 ? null : values.description.trim(),
     }
+    if (busy || !canManage) return
     setSaving(true)
     try {
       if (editing) {
         const updated = await updateCustomerGroup(editing.id, body)
         setEditing(updated)
+        form.reset({ name: updated.name, description: updated.description ?? "" })
+        void getCustomerGroupHistory(updated.id).then(setHistory).catch(() => setHistory("error"))
         toast.success(t("catalog.customerGroups.toastUpdated"))
       } else {
         const created = await createCustomerGroup(body)
         setEditing(created)
-        setTab("members")
+        form.reset({ name: created.name, description: created.description ?? "" })
+        scheduleNavigation(`/catalogo/grupos/${created.id}`, true)
         toast.success(t("catalog.customerGroups.toastCreated"))
       }
       await reload()
@@ -253,14 +287,16 @@ export function CatalogCustomerGroupsPage() {
       )
     } finally {
       setSaving(false)
+      allowNavigation.current = false
     }
   }
 
   async function onAddMembers(customers: TenantCustomer[]) {
-    if (!editing || customers.length === 0) {
+    if (!canManage || busy || !editing || customers.length === 0) {
       return
     }
     rememberCustomers(customers)
+    setSaving(true)
     try {
       const updated = await addCustomerGroupMembers(
         editing.id,
@@ -276,11 +312,13 @@ export function CatalogCustomerGroupsPage() {
           ? error.message
           : t("catalog.customerGroups.errors.addMembers"),
       )
+    } finally {
+      setSaving(false)
     }
   }
 
   async function onRemoveMember(customerId: string) {
-    if (!editing) {
+    if (!canManage || busy || !editing) {
       return
     }
     setMemberBusyId(customerId)
@@ -302,13 +340,13 @@ export function CatalogCustomerGroupsPage() {
   }
 
   async function onDelete(group: CustomerGroup) {
+    if (!canManage || busy) return
     setSaving(true)
     try {
       await deleteCustomerGroup(group.id)
       toast.success(t("catalog.customerGroups.toastDeleted"))
       if (editing?.id === group.id) {
-        setDialogOpen(false)
-        resetDialog()
+        scheduleNavigation("/catalogo/grupos")
       }
       await reload()
     } catch (error) {
@@ -323,9 +361,10 @@ export function CatalogCustomerGroupsPage() {
 
   return (
     <div className="staff-catalog">
+      {!editor ? <>
       <CatalogHeading
         title={t("catalog.customerGroups.title")}
-        description={t("catalog.customerGroups.subtitle")}
+        description={t("catalog.customerGroups.page.subtitle")}
         actions={
           <Can permission="catalog.products.manage">
             <Button type="button" onClick={openCreate}>
@@ -372,7 +411,7 @@ export function CatalogCustomerGroupsPage() {
               description={
                 groups.length > 0
                   ? t("catalog.staff.adjustFilters")
-                  : t("catalog.customerGroups.emptyHint")
+                  : t("catalog.customerGroups.page.emptyHint")
               }
               action={
                 groups.length > 0 ? undefined : (
@@ -426,9 +465,9 @@ export function CatalogCustomerGroupsPage() {
                       {group.description ?? "—"}
                     </td>
                     <td>
-                      {t("catalog.customerGroups.memberCount", {
+                      <span className="staff-catalog-status">{t("catalog.customerGroups.memberCount", {
                         count: group.memberCustomerIds.length,
-                      })}
+                      })}</span>
                     </td>
                     <td>
                       {usedBy.length > 0 ? (
@@ -437,9 +476,7 @@ export function CatalogCustomerGroupsPage() {
                           data-tone="success"
                           title={usedBy.join(", ")}
                         >
-                          {t("catalog.customerGroups.usage.products", {
-                            count: usedBy.length,
-                          })}
+                          {t("catalog.customerGroups.page.inUse")} · {usedBy.length}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">
@@ -471,90 +508,55 @@ export function CatalogCustomerGroupsPage() {
         ) : null}
       </div>
 
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          if (!open && saving) {
-            return
-          }
-          setDialogOpen(open)
-          if (!open) {
-            resetDialog()
-          }
-        }}
-      >
-        <DialogContent className="staff-catalog-editor flex flex-col overflow-hidden">
-          <DialogHeader className="shrink-0">
-            <DialogTitle>
-              {editing
-                ? t("catalog.customerGroups.editTitle")
-                : t("catalog.customerGroups.createTitle")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("catalog.customerGroups.subtitle")}
-            </DialogDescription>
-          </DialogHeader>
-
-          {editing ? (
-            <Tabs
-              value={tab}
-              onValueChange={setTab}
-              className="min-h-0 min-w-0 flex-1"
-            >
-              <TabsList>
-                <TabsTrigger value="details">
-                  {t("catalog.customerGroups.tabs.details")}
-                </TabsTrigger>
-                <TabsTrigger value="members">
-                  {t("catalog.customerGroups.tabs.members")}
-                </TabsTrigger>
-                <TabsTrigger value="history">
-                  {t("catalog.customerGroups.tabs.history")}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="details" className="overflow-y-auto">
-                <GroupForm
-                  form={form}
-                  fieldMessage={fieldMessage}
-                  isFormValid={isFormValid}
-                  saving={saving}
-                  disabled={!canManage}
-                  onSubmit={onSubmit}
-                />
-              </TabsContent>
-              <TabsContent value="members" className="overflow-y-auto">
-                <MembersSection
-                  group={editing}
-                  customersById={customersById}
-                  canManage={canManage}
-                  canSearchCustomers={canReadCustomers}
-                  memberBusyId={memberBusyId}
-                  onAddMembers={onAddMembers}
-                  onRequestRemove={(member) => setPendingRemove(member)}
-                  onResolveCustomers={rememberCustomers}
-                />
-              </TabsContent>
-              <TabsContent value="history" className="overflow-y-auto">
-                <HistorySection entries={history} />
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <GroupForm
-              form={form}
-              fieldMessage={fieldMessage}
-              isFormValid={isFormValid}
-              saving={saving}
-              disabled={!canManage}
-              onSubmit={onSubmit}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      </> : <>
+        {hasDataRouter ? <GroupLeaveGuard dirty={dirty} saving={busy} allowNavigation={allowNavigation} /> : null}
+        <nav aria-label={t("catalog.customerGroups.page.breadcrumb")} className="flex items-center gap-3 text-sm">
+          <Button variant="link" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("catalog.customerGroups.title")}</Button>
+          <span aria-hidden="true">/</span><span>{editing?.name ?? t("catalog.customerGroups.createTitle")}</span>
+        </nav>
+        <CatalogHeading title={t(id ? "catalog.customerGroups.editTitle" : "catalog.customerGroups.createTitle")}
+          description={t("catalog.customerGroups.page.subtitle")} actions={<>
+            <Button variant="outline" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("common.cancel")}</Button>
+            {canManage ? <FormPrimaryButton isValid={isFormValid && (!id || !!editing)} loading={busy} onClick={() => { void form.handleSubmit(onSubmit)() }}>{t("catalog.customerGroups.save")}</FormPrimaryButton> : null}
+          </>} />
+        {!canManage ? <p>{t("catalog.customerGroups.readOnlyHint")}</p> : null}
+        {loadError || (id && !loading && !editing) ? <Alert variant="destructive"><AlertDescription>{loadError ?? t("catalog.customerGroups.page.notFound")}</AlertDescription></Alert> : null}
+        {id && loading ? <p role="status">{t("catalog.staff.loading")}</p> : !id || editing ? <>
+        <nav className="flex flex-wrap gap-2" aria-label={t("catalog.customerGroups.page.sections")}>
+          {([["details", FileText], ["members", Users], ["history", History]] as const).map(([section, Icon]) => <Button key={section} variant="outline" onClick={() => document.getElementById(`group-${section}`)?.scrollIntoView({ behavior: "smooth" })}><Icon aria-hidden="true" />{t(`catalog.customerGroups.tabs.${section}`)}</Button>)}
+        </nav>
+        <div className="grid min-w-0 gap-4 pb-28 xl:grid-cols-3">
+          <section id="group-details" className="min-w-0 scroll-mt-4 rounded-xl border bg-card p-4">
+            <h2 className="font-semibold">{t("catalog.customerGroups.tabs.details")}</h2>
+            <GroupForm form={form} fieldMessage={fieldMessage} disabled={!canManage || busy} onSubmit={onSubmit} />
+            {editing ? <>
+              <details className="group rounded-lg border p-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">{t("catalog.customerGroups.page.whereUsed")}<Plus className="size-4" aria-hidden="true" /></summary>
+                {(whereUsed[editing.id] ?? []).length ? <ul className="mt-3 space-y-2">{whereUsed[editing.id].map((name) => <li key={name}>{name}</li>)}</ul> : <p className="mt-3 text-sm text-muted-foreground">{t("catalog.customerGroups.page.deleteNoAffected")}</p>}
+              </details>
+              {canManage ? <Button className="mt-4" variant="destructive" disabled={busy} onClick={() => setPendingDelete(editing)}><Trash2 aria-hidden="true" />{t("catalog.customerGroups.delete")}</Button> : null}
+            </> : null}
+          </section>
+          <section id="group-members" className="min-w-0 scroll-mt-4 rounded-xl border bg-card p-4">
+            <h2 className="flex items-center gap-2 font-semibold">{t("catalog.customerGroups.tabs.members")}<span className="staff-catalog-status">{editing?.memberCustomerIds.length ?? 0}</span></h2>
+            {editing ? <fieldset disabled={busy}><MembersSection group={editing} customersById={customersById} canManage={canManage} canSearchCustomers={canReadCustomers} memberBusyId={memberBusyId} onAddMembers={onAddMembers} onRequestRemove={setPendingRemove} onResolveCustomers={rememberCustomers} /></fieldset> : <p className="mt-3 text-sm text-muted-foreground">{t("catalog.customerGroups.page.saveFirst")}</p>}
+          </section>
+          <section id="group-history" className="min-w-0 scroll-mt-4 rounded-xl border bg-card p-4">
+            <h2 className="flex items-center gap-2 font-semibold">{t("catalog.customerGroups.tabs.history")}<span className="staff-catalog-status">{Array.isArray(history) ? history.length : 0}</span></h2>
+            <HistorySection entries={id ? history : []} />
+          </section>
+        </div>
+        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-end gap-3 border-t bg-background p-4">
+          <Button variant="outline" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("common.cancel")}</Button>
+          {canManage ? <FormPrimaryButton isValid={isFormValid} loading={busy} onClick={() => { void form.handleSubmit(onSubmit)() }}>{t("catalog.customerGroups.save")}</FormPrimaryButton> : null}
+        </div>
+        </> : null}
+      </>}
 
       <Dialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !busy) {
             setPendingDelete(null)
           }
         }}
@@ -563,7 +565,7 @@ export function CatalogCustomerGroupsPage() {
           <DialogHeader>
             <DialogTitle>{t("catalog.customerGroups.deleteTitle")}</DialogTitle>
             <DialogDescription>
-              {t("catalog.customerGroups.deleteBody", {
+              {t("catalog.customerGroups.page.deleteBody", {
                 name: pendingDelete?.name ?? "",
               })}
             </DialogDescription>
@@ -573,7 +575,7 @@ export function CatalogCustomerGroupsPage() {
               {(whereUsed[pendingDelete.id] ?? []).length > 0 ? (
                 <>
                   <p className="font-medium">
-                    {t("catalog.customerGroups.deleteAffected")}
+                    {t("catalog.customerGroups.page.deleteAffected")}
                   </p>
                   <ul className="list-disc pl-5">
                     {(whereUsed[pendingDelete.id] ?? []).map((name) => (
@@ -583,7 +585,7 @@ export function CatalogCustomerGroupsPage() {
                 </>
               ) : (
                 <p className="text-muted-foreground">
-                  {t("catalog.customerGroups.deleteNoAffected")}
+                  {t("catalog.customerGroups.page.deleteNoAffected")}
                 </p>
               )}
             </div>
@@ -592,6 +594,7 @@ export function CatalogCustomerGroupsPage() {
             <Button
               type="button"
               variant="outline"
+              disabled={busy}
               onClick={() => setPendingDelete(null)}
             >
               {t("common.cancel")}
@@ -662,15 +665,11 @@ export function CatalogCustomerGroupsPage() {
 function GroupForm({
   form,
   fieldMessage,
-  isFormValid,
-  saving,
   disabled,
   onSubmit,
 }: {
   form: ReturnType<typeof useForm<CustomerGroupFormValues>>
   fieldMessage: (name: "name" | "description") => string | undefined
-  isFormValid: boolean
-  saving: boolean
   disabled: boolean
   onSubmit: (values: CustomerGroupFormValues) => void | Promise<void>
 }) {
@@ -718,18 +717,6 @@ function GroupForm({
             </FormItem>
           )}
         />
-        {!disabled ? (
-          <div className="flex justify-end">
-            <FormPrimaryButton
-              type="submit"
-              isValid={isFormValid}
-              loading={saving}
-              loadingLabel={t("catalog.customerGroups.saving")}
-            >
-              {t("catalog.customerGroups.save")}
-            </FormPrimaryButton>
-          </div>
-        ) : null}
       </form>
     </Form>
   )
@@ -757,11 +744,7 @@ function MembersSection({
   const { t } = useTranslation()
   return (
     <div className="space-y-4 px-1 py-2">
-      <p className="text-sm font-medium">
-        {t("catalog.customerGroups.members.title", {
-          count: group.memberCustomerIds.length,
-        })}
-      </p>
+
       {canManage && canSearchCustomers ? (
         <AddMemberPicker
           excludeIds={group.memberCustomerIds}
@@ -1019,7 +1002,7 @@ function HistorySection({
         return (
           <li key={entry.id} className="border-b border-border pb-2 last:border-0">
             <span className="font-medium">{actor}</span>{" "}
-            {t(catalogAuditActionI18nKey(entry.action))}
+            {t(entry.action === "product.accessChanged" ? "catalog.customerGroups.page.accessChanged" : catalogAuditActionI18nKey(entry.action))}
             <span className="block text-xs text-muted-foreground">
               {dateFormat.format(new Date(entry.createdAt))}
             </span>
@@ -1028,4 +1011,22 @@ function HistorySection({
       })}
     </ul>
   )
+}
+
+function GroupLeaveGuard({ dirty, saving, allowNavigation }: {
+  dirty: boolean
+  saving: boolean
+  allowNavigation: { current: boolean }
+}) {
+  const { t } = useTranslation()
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => !allowNavigation.current && (dirty || saving) &&
+    (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search))
+  useEffect(() => {
+    if (saving && blocker.state === "blocked") blocker.reset()
+  }, [saving, blocker])
+  return <Dialog open={blocker.state === "blocked" && !saving} onOpenChange={(open) => { if (!open && blocker.state === "blocked") blocker.reset() }}>
+    <DialogContent><DialogHeader><DialogTitle>{t("catalog.customerGroups.page.leaveTitle")}</DialogTitle><DialogDescription>{t("catalog.customerGroups.page.leaveBody")}</DialogDescription></DialogHeader>
+      <DialogFooter><Button variant="outline" onClick={() => { if (blocker.state === "blocked") blocker.reset() }}>{t("common.cancel")}</Button><Button onClick={() => { if (blocker.state === "blocked") blocker.proceed() }}>{t("catalog.customerGroups.page.leave")}</Button></DialogFooter>
+    </DialogContent>
+  </Dialog>
 }

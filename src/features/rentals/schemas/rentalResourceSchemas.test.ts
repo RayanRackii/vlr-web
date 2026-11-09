@@ -7,6 +7,7 @@ import {
   toCreateRentableRequest,
   type RentalResourceFormValues,
 } from "@/features/rentals/schemas/rentalResourceSchemas"
+import { buildRentalResourceFormValues } from "@/features/rentals/components/rentalResourceFormDefaults"
 import { rentalAssetSchema } from "@/features/rentals/services/scheduleService"
 
 const UNIT_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -253,4 +254,18 @@ describe("resource cancellation cutoff", () => {
   it.each([0, 8760])("preserves boundary %i in requests", (hours) => {
     expect(createRentableRequestSchema.parse({ ...toCreateRentableRequest(base()), cancelCutoffHours: hours }).cancelCutoffHours).toBe(hours)
   })
+})
+
+
+it("round trips a stored identifier, trims writes and accepts legacy responses", () => {
+  const response = { id: UNIT_ID, assetId: UNIT_ID, unitId: UNIT_ID, name: "Space 1", isActive: true }
+  const asset = rentalAssetSchema.parse({ ...response, tag: "S-01" })
+  expect(buildRentalResourceFormValues(asset, [], [], []).tag).toBe("S-01")
+  const values = { ...formValues({ horizonMode: "inherit", horizonDays: "" }), tag: "  S-01  " }
+  expect(toCreateRentableRequest(values).tag).toBe("S-01")
+  expect(toCreateRentableRequest(values, { creating: false, stored: undefined }).tag).toBe("S-01")
+  for (const legacy of [response, { ...response, tag: null }]) {
+    expect(buildRentalResourceFormValues(rentalAssetSchema.parse(legacy), [], [], []).tag).toBe("")
+  }
+  expect(toCreateRentableRequest({ ...values, tag: "  " }, { creating: false, stored: undefined })).not.toHaveProperty("tag")
 })

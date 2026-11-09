@@ -1,7 +1,9 @@
+import i18n from "@/lib/i18n"
 import { describe, expect, it } from "vitest"
 
 import {
   aggregateMultiUnitOccupancies,
+  localizedOccupancyKindLabel,
   dedupeOpenHoursOccupancies,
   occupancyFromDaySlot,
   occupancyIdFromSlot,
@@ -406,4 +408,14 @@ describe("staff booking quantity (R13 agenda)", () => {
     expect(mapped.label).toBeNull()
     expect(aggregateMultiUnitOccupancies([mapped], 2)[0]).toMatchObject({ unitsBooked: 1, unitsFree: 1 })
   })
+})
+
+
+it("localizes weekly stock labels even without a kind key and preserves custom names", () => {
+  for (const [locale, label] of [["pt-BR", "Aberto"], ["en", "Open"], ["es", "Abierto"]]) {
+    const t = i18n.getFixedT(locale)
+    expect(localizedOccupancyKindLabel(null, "Open", t)).toBe(label)
+    expect(localizedOccupancyKindLabel("open", "Open", t)).toBe(label)
+    expect(localizedOccupancyKindLabel("open", "Custom resource", t)).toBe("Custom resource")
+  }
 })

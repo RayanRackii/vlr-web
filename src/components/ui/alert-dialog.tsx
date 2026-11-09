@@ -49,15 +49,17 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      <AlertDialogPrimitive.Popup
-        data-slot="alert-dialog-content"
-        data-size={size}
-        className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground border border-border shadow-lg duration-100 outline-none data-[size=default]:sm:max-w-md data-[size=sm]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className,
-        )}
-        {...props}
-      />
+      <div data-slot="alert-dialog-viewport" className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+        <AlertDialogPrimitive.Popup
+          data-slot="alert-dialog-content"
+          data-size={size}
+          className={cn(
+            "pointer-events-auto relative grid w-full max-h-full overflow-y-auto gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground border border-border shadow-lg duration-100 outline-none data-[size=default]:sm:max-w-md data-[size=sm]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            className,
+          )}
+          {...props}
+        />
+      </div>
     </AlertDialogPortal>
   )
 }

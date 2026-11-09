@@ -22,13 +22,20 @@ vi.mock("@/features/rentals/services/rentalLayoutService", () => ({
   listRentalLayouts: vi.fn(), createRentalLayout: vi.fn(), deleteRentalLayout: vi.fn(),
 }))
 vi.mock("@/features/rentals/services/scheduleService", () => ({ listAdminRentalAssets: vi.fn() }))
+vi.mock("@/features/assets/services/unitsService", () => ({ getUnits: vi.fn(), createUnit: vi.fn() }))
+vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
+  listRentalAssetCategories: vi.fn(), listRentalAssetFamilies: vi.fn(), createRentalAsset: vi.fn(), createRentalCategory: vi.fn(),
+}))
 vi.mock("@/features/rentals/services/resourceVisualService", () => ({
-  listVisualTemplates: vi.fn(), getComposition: vi.fn(), getBookingMapSettings: vi.fn(), saveBookingMapSettings: vi.fn(), saveComposition: vi.fn(),
+  listPickerTags: vi.fn().mockResolvedValue([]), listVisualTemplates: vi.fn(), getComposition: vi.fn(), getBookingMapSettings: vi.fn(), saveBookingMapSettings: vi.fn(), saveComposition: vi.fn(),
 }))
 
 const layoutService = await import("@/features/rentals/services/rentalLayoutService")
 const scheduleService = await import("@/features/rentals/services/scheduleService")
 const visualService = await import("@/features/rentals/services/resourceVisualService")
+
+const resourceService = await import("@/features/rentals/services/rentalResourcesService")
+const unitService = await import("@/features/assets/services/unitsService")
 
 const ID = "11111111-1111-4111-8111-111111111111"
 const ASSET_ID = "22222222-2222-4222-8222-222222222222"
@@ -89,6 +96,31 @@ describe("RentalLayoutsPage", () => {
     await user.click(screen.getByRole("checkbox", { name: /Sala A/ }))
     await user.click(screen.getByRole("button", { name: "Continuar" }))
     expect(screen.getByRole("heading", { name: "Tipo e modelo visual" })).toBeInTheDocument()
+  })
+
+  it.each(["cancel", "save"])("preserves the map draft and current wizard step after resource creation: %s", async (action) => {
+    prepare(true)
+    vi.mocked(unitService.getUnits).mockResolvedValue([{ id: ID, tenantId: ID, name: "Sede", isActive: true }])
+    vi.mocked(resourceService.listRentalAssetCategories).mockResolvedValue([{ id: ID, name: "Sala" }])
+    vi.mocked(resourceService.listRentalAssetFamilies).mockResolvedValue([{ id: ID, key: "spaces", label: "Espaços", fields: [], sortOrder: 0, isActive: true }])
+    vi.mocked(resourceService.createRentalAsset).mockResolvedValue({ id: REVISION_ID, assetId: REVISION_ID, name: "Sala B", isActive: true, requiresDeposit: true, schedulePolicy: "SlotGrid", unitId: ID, type: "Location", totalQuantity: 1, queueEnabled: false })
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Posicione os blocos" })
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.layout.back") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.layout.back") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.layout.createSpace") }))
+    const name = await screen.findByRole("textbox", { name: i18n.t("rentals.resources.form.name") })
+    if (action === "save") {
+      await user.type(name, "Sala B")
+      await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }))
+      expect(await screen.findByRole("checkbox", { name: /Sala B/ })).toBeChecked()
+    } else {
+      await user.click(screen.getAllByRole("button", { name: i18n.t("common.cancel") })[0]!)
+    }
+    expect(screen.getByRole("checkbox", { name: /Sala A/ })).toBeChecked()
+    expect(screen.getByRole("button", { name: i18n.t("rentals.layout.createSpace") })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "Posicione os blocos" })).not.toBeInTheDocument()
   })
 
   it("opens an existing layout directly on the map step", async () => {

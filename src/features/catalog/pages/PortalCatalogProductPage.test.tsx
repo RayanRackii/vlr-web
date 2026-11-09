@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { toast } from "sonner"
+import { Toaster } from "@/components/ui/sonner"
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import { CATALOG_CART_MAX_QUANTITY } from "@/features/catalog/cart"
@@ -8,6 +10,9 @@ import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalog
 import type { PortalProduct } from "@/features/catalog/schemas/catalogSchemas"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import i18n from "@/lib/i18n"
+import { readFileSync } from "node:fs"
+
+const portalCss = readFileSync("src/features/catalog/components/portalCatalog.css", "utf8")
 
 vi.mock("@/features/catalog/services/catalogPortalService", () => ({
   getPortalCatalogProduct: vi.fn(),
@@ -59,9 +64,60 @@ function renderPage() {
 }
 
 describe("PortalCatalogProductPage layout", () => {
+  afterEach(() => vi.unstubAllGlobals())
   beforeEach(() => {
     getMock.mockReset()
     getMock.mockResolvedValue(product)
+  })
+
+  it("places add-to-cart feedback below the product Back control and above mobile navigation", async () => {
+    vi.stubGlobal("matchMedia", vi.fn((media: string) => ({
+      media, matches: false, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+    })))
+    toast.dismiss()
+    render(<Toaster />)
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole("button", { name: i18n.t("tenantPortal.catalog.addToCart") }))
+    const feedback = await screen.findByText(i18n.t("tenantPortal.catalog.addedToCart"))
+    const toaster = feedback.closest("[data-sonner-toaster]")
+    expect(toaster).toHaveAttribute("data-y-position", "bottom")
+    expect(toaster).toHaveStyle({ "--mobile-offset-bottom": "calc(80px + env(safe-area-inset-bottom))" })
+    const back = screen.getByRole("link", { name: i18n.t("common.back") })
+    back.focus()
+    await user.keyboard("{Enter}")
+    expect(await screen.findByText("list-screen")).toBeInTheDocument()
+    toast.dismiss()
+  })
+
+  it("opens the selected product image in a modal, traps focus, and closes with Escape", async () => {
+    getMock.mockResolvedValue({ ...product, files: [
+      { id: "image-1", url: "https://example.test/resource.png", fileName: "resource.png", mimeType: "image/png", sizeBytes: 5 },
+    ] })
+    const user = userEvent.setup()
+    renderPage()
+    const open = await screen.findByRole("button", { name: "Ampliar imagem: Raquete" })
+    await user.click(open)
+    const dialog = await screen.findByRole("dialog", { name: "Raquete" })
+    expect(within(dialog).getByRole("img", { name: "Raquete" })).toHaveAttribute("src", "https://example.test/resource.png")
+    const close = within(dialog).getByRole("button", { name: i18n.t("common.close") })
+    close.focus()
+    await user.tab()
+    await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement))
+    await user.keyboard("{Escape}")
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(open).toHaveFocus()
+  })
+
+  it("reserves less vertical space on narrow screens while preserving touch targets and normal flow", async () => {
+    renderPage()
+    await screen.findByRole("heading", { name: product.name })
+    expect(portalCss).toMatch(/@media \(max-width: 400px\)/)
+    expect(portalCss).toMatch(/\.portal-catalog-detail \.portal-catalog-image\s*\{[^}]*height: 160px/)
+    expect(portalCss).toMatch(/\.portal-catalog-detail-actions > button\s*\{[^}]*min-height: 44px/)
+    expect(screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.addToCart") }).closest(".portal-catalog-detail-actions")).not.toHaveClass("sticky", "fixed")
   })
 
   it("lays the gallery and details side by side from lg and keeps the actions in normal flow", async () => {
