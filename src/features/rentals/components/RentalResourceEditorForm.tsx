@@ -2,12 +2,13 @@ import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { LiveFieldMessage } from "@/features/pmoc/components/FormValidationSummary"
 import { issueMessageAt } from "@/features/pmoc/lib/formIssues"
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
+import { Link } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { CircleX, LayoutTemplate, Maximize2, Plus, Tag } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { InlineCreateSelect } from "@/components/inline-create/InlineCreateSelect"
 import { FieldHelp } from "@/components/ui/field-label"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -68,6 +69,7 @@ type RentalResourceEditorFormProps = {
   readOnly: boolean
   pricePerHour?: number | null
   pricingUnit?: PricingUnit
+  assistantHref?: string
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
 }
 
@@ -108,6 +110,7 @@ export function RentalResourceEditorForm({
   readOnly,
   pricePerHour,
   pricingUnit,
+  assistantHref,
   onSubmit,
 }: RentalResourceEditorFormProps) {
   const { t } = useTranslation()
@@ -294,6 +297,11 @@ export function RentalResourceEditorForm({
           {readOnly ? <p className="text-sm text-muted-foreground">{t("rentals.resources.editor.readOnly")}</p> : null}
         </div>
         <div className="resource-editor-actions">
+          {assistantHref ? (
+            <Link className={`${buttonVariants({ variant: "outline" })} min-h-11`} to={assistantHref}>
+              {t("rentals.resourceWizard.open")}
+            </Link>
+          ) : null}
           <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>{t("common.cancel")}</Button>
           <FormPrimaryButton type="submit" form="rental-resource-form" isValid={isValid} loading={busy} disabled={readOnly || busy || (Boolean(editing) && !isDirty)}>{t("common.save")}</FormPrimaryButton>
         </div>

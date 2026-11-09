@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
+import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
 import { PortalModuleDiscovery } from "@/features/admin/components/PortalModuleDiscovery"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,7 @@ export function TenantModuleMenuPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
+      <StaffReturnLink />
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">

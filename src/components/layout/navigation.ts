@@ -333,6 +333,7 @@ export function getPageTitleKey(
   | "nav.pmocPlanDetail"
   | NavigationTab["labelKey"]
   | "account.profile"
+  | "nav.rentalsResourceWizard"
   | "app.name" {
   const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
@@ -367,6 +368,10 @@ export function getPageTitleKey(
 
   if (pathname.startsWith("/catalogo/pedidos")) {
     return "nav.catalogOrders"
+  }
+
+  if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
+    return "nav.rentalsResourceWizard"
   }
 
   if (pathname.startsWith("/catalogo")) {

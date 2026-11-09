@@ -1838,7 +1838,8 @@
     "pmocCustom": "Start custom plan",
     "pmocTooltip": "Maintenance plans",
     "catalogProductAgenda": "Product agenda",
-    "catalogResourceAgenda": "Resource agenda"
+    "catalogResourceAgenda": "Resource agenda",
+    "rentalsResourceWizard": "Resource setup"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -4941,6 +4942,145 @@
         "invalid": "Use a whole number or leave blank.",
         "empty": "No categories with bookable resources."
       }
+    },
+    "resourceWizard": {
+      "open": "Setup",
+      "title": "Resource setup",
+      "description": "One step at a time: what is missing, the rules, the prices, and this item's agenda.",
+      "breadcrumb": "Setup",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Done",
+      "stepperLabel": "Setup steps",
+      "steps": {
+        "status": "Status",
+        "rules": "Rules",
+        "prices": "Prices",
+        "agenda": "Agenda"
+      },
+      "summary": {
+        "ready": "Customers can already book this item.",
+        "missing": "Something is still missing before customers can book this item.",
+        "unknown": "Could not confirm whether this item is ready.",
+        "inactive": "This item is inactive and is not offered for booking."
+      },
+      "checklistTitle": "What this item needs",
+      "statusLabel": {
+        "done": "Ready",
+        "missing": "Missing",
+        "unavailable": "No access",
+        "notApplicable": "Does not apply"
+      },
+      "items": {
+        "portalMenu": "Customer menu",
+        "occupancyKinds": "Occupancy kind",
+        "schedule": "Hours",
+        "price": "Price",
+        "queue": "Queue"
+      },
+      "details": {
+        "portalMenu": {
+          "done": "An active bookings item is on the customer menu.",
+          "missing": "Without a bookings item on the menu, customers cannot find this resource.",
+          "unavailable": "You cannot view the customer menu."
+        },
+        "occupancyKinds": {
+          "done": "An active kind exists that customers can book.",
+          "missing": "The weekly grid needs a bookable occupancy kind.",
+          "unavailable": "You cannot view occupancy kinds.",
+          "notApplicable": "Continuous hours do not require an occupancy kind to allow booking."
+        },
+        "schedule": {
+          "done": "This item already has hours configured.",
+          "missing": "Set the weekly grid or the operating hours.",
+          "unavailable": "You cannot view the hours."
+        },
+        "price": {
+          "done": "There is a price greater than zero.",
+          "missing": "Without a price, the customer cannot finish the booking.",
+          "unavailable": "You cannot view prices."
+        },
+        "queue": {
+          "off": "The queue is off. Booking continues without a queue.",
+          "on": "The queue is on, with an opening time.",
+          "missing": "The queue is on, but the opening time is missing.",
+          "notApplicable": "The queue applies only to spaces, not to goods."
+        }
+      },
+      "actions": {
+        "openStep": "Fix here",
+        "reviewStep": "Open",
+        "createMenu": "Publish on the menu",
+        "openMenu": "Open customer menu",
+        "createKind": "Create bookable kind",
+        "openKinds": "Open occupancy kinds"
+      },
+      "permission": "You do not have permission to view this part.",
+      "rules": {
+        "title": "Rules for this item",
+        "description": "Operating hours or the weekly grid. The week's bookings are on the Agenda step.",
+        "templates": "Recurring hours",
+        "templatesEmpty": "No recurring hours for this item.",
+        "templatesCount": "Recurring hours: {{count}}",
+        "openSchedule": "Open this item's hours"
+      },
+      "prices": {
+        "title": "Prices and queue",
+        "description": "A price unlocks booking. The queue is optional and applies only to spaces.",
+        "empty": "No price saved.",
+        "amount": "Amount",
+        "start": "Start",
+        "end": "End",
+        "applyReplace": "Replace the week's prices",
+        "applyAdd": "Add the week's prices",
+        "replaceHint": "Saves the same amount on every day and replaces this item's price rows.",
+        "addHint": "Adds the same amount on every day without deleting the current rows.",
+        "saved": "Prices saved.",
+        "readOnly": "You can view prices, but not change them.",
+        "queueTitle": "Booking queue",
+        "queueHelp": "When on, the customer needs a place in the day's queue to book this space.",
+        "queueSaved": "Queue updated.",
+        "queueReadOnly": "You can view the queue, but not change it.",
+        "invalidPrice": "Enter an amount greater than zero.",
+        "invalidTime": "Enter a start and end as HH:mm, with the end after the start.",
+        "queueToggle": "Use queue"
+      },
+      "agenda": {
+        "title": "This week's bookings",
+        "description": "Bookings for this item this week. These are not the hour rules.",
+        "previous": "Previous week",
+        "today": "This week",
+        "next": "Next week",
+        "emptyDay": "No bookings",
+        "loadError": "Could not load the bookings.",
+        "retry": "Try again",
+        "queueTitle": "Today's queue",
+        "queueOff": "This space's queue is off.",
+        "queueUnavailable": "The staff queue list is not available yet. The setting stays on the Prices step.",
+        "queueForbidden": "You do not have permission to view the queue.",
+        "queueEmpty": "Nobody is in the queue right now.",
+        "queueRefresh": "Refresh queue",
+        "waiting": "{{count}} waiting",
+        "phase": {
+          "Closed": "Closed",
+          "WaitingRoom": "Waiting room",
+          "Open": "Open"
+        },
+        "ticketStatus": {
+          "Waiting": "Waiting",
+          "Active": "Being served",
+          "Completed": "Completed",
+          "Expired": "Expired",
+          "Cancelled": "Cancelled"
+        },
+        "position": "Position {{position}}",
+        "unknownCustomer": "Customer"
+      },
+      "defaultKindLabel": "Bookable",
+      "menuPublished": "Item published on the customer menu.",
+      "kindCreated": "Bookable occupancy kind created.",
+      "returnToWizard": "Back to setup",
+      "notFound": "Resource not found."
     }
   },
   "resourceVisual": {
