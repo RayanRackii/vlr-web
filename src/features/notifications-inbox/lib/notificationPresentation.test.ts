@@ -113,7 +113,15 @@ describe("notificationItemText", () => {
   it.each(["pt-BR", "en", "es"])("prefers the trimmed API title for known events in %s", (language) => {
     expect(notificationItemText({ eventType: "catalog.order.approved", title: "  Pedido #12 aprovado.  " }, i18n.getFixedT(language))).toBe("Pedido #12 aprovado.")
   })
-  it("keeps the API title for unknown events", () => {
+  it("keeps a human title for unknown events", () => {
     expect(notificationItemText({ eventType: "unknown.event", title: "  API fallback  " }, i18n.t)).toBe("API fallback")
+  })
+  it("does not show a raw event type when that is the only title", () => {
+    expect(notificationItemText({ eventType: "payments.invoice.paid", title: "payments.invoice.paid" }, i18n.getFixedT("pt-BR"))).toBe(
+      "Novo aviso.",
+    )
+    expect(notificationItemText({ eventType: "payments.invoice.paid", title: "  " }, i18n.getFixedT("pt-BR"))).toBe(
+      "Novo aviso.",
+    )
   })
 })

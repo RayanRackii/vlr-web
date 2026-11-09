@@ -1168,7 +1168,8 @@
         "loadHistory": "Não foi possível carregar o histórico.",
         "loadAccess": "Não foi possível carregar o acesso do produto.",
         "saveAccess": "Não foi possível salvar o acesso do produto.",
-        "duplicateName": "Já existe um grupo com esse nome."
+        "duplicateName": "Já existe um grupo com esse nome.",
+        "inUse": "Este grupo libera produtos. Tire o grupo desses produtos antes de excluir."
       }
     },
     "requests": {
@@ -1248,7 +1249,92 @@
         "recipient": "Destinatário",
         "status": "Status",
         "createdAt": "Criado em",
-        "actions": "Ações"
+        "actions": "Ações",
+        "error": "Erro"
+      }
+    },
+    "productWizard": {
+      "title": "Assistente do produto",
+      "description": "Um passo de cada vez: o que falta para um cliente conseguir comprar.",
+      "breadcrumb": "Assistente",
+      "breadcrumbLabel": "Caminho do produto",
+      "open": "Assistente",
+      "openResource": "Definir recurso no assistente",
+      "notFound": "Produto não encontrado.",
+      "stepperLabel": "Passos do assistente",
+      "back": "Voltar",
+      "next": "Avançar",
+      "finish": "Concluir",
+      "checklistTitle": "O que impede a compra",
+      "offerHint": "Nome, preço e se o item está à venda. O restante fica nos outros passos.",
+      "accessHint": "Público vale para todo cliente. Restrito só vale para os grupos e clientes escolhidos.",
+      "resourceHint": "Escolha o recurso que este produto ocupa, ou deixe sem recurso se a compra não agenda nada.",
+      "groupsLabel": "Grupos liberados",
+      "noGroups": "Ainda não há grupos. Crie um em Grupos de clientes e volte por este link.",
+      "emptyGroup": "{{name}} não tem membros. Quem está só nesse grupo não vê o produto.",
+      "memberSearch": "Nome ou e-mail do cliente",
+      "addMember": "Adicionar ao grupo",
+      "searchMembers": "Buscar",
+      "pickMember": "Adicionar {{name}}",
+      "memberAdded": "{{name}} entrou no grupo.",
+      "noCustomerMatch": "Nenhum cliente com esse nome ou e-mail.",
+      "noResources": "Não há recursos reserváveis neste ambiente.",
+      "accessSaved": "Quem pode comprar foi salvo.",
+      "menuPublished": "A loja entrou no menu do cliente.",
+      "steps": {
+        "status": "Situação",
+        "offer": "Oferta",
+        "access": "Quem compra",
+        "resource": "Recurso"
+      },
+      "summary": {
+        "ready": "Um cliente com acesso ao portal consegue comprar este item.",
+        "missing": "Ainda falta algo para o cliente conseguir comprar.",
+        "unknown": "Não deu para confirmar tudo. Os itens em aberto explicam o que faltou.",
+        "inactive": "O produto está inativo. O cliente não o vê na loja."
+      },
+      "statusLabel": {
+        "done": "Pronto",
+        "missing": "Pendente",
+        "unavailable": "Sem acesso",
+        "notApplicable": "Não se aplica"
+      },
+      "items": {
+        "listed": "À venda",
+        "portalMenu": "Menu do cliente",
+        "audience": "Quem pode comprar",
+        "resource": "Recurso"
+      },
+      "details": {
+        "listed": {
+          "done": "O produto está ativo.",
+          "missing": "O produto está inativo, então não aparece para o cliente."
+        },
+        "portalMenu": {
+          "done": "O menu do cliente tem um item ativo da loja.",
+          "missing": "Sem um item ativo da loja no menu, o cliente não encontra o produto.",
+          "unavailable": "Não foi possível ler o menu do cliente."
+        },
+        "audience": {
+          "done": "O público definido consegue ver o produto.",
+          "missing": "O produto está restrito a um grupo sem membros, ou a ninguém.",
+          "unavailable": "Não foi possível ler quem pode comprar."
+        },
+        "resource": {
+          "done": "O recurso deste produto está escolhido.",
+          "none": "Este produto não usa recurso. A compra não agenda nada.",
+          "missing": "Há um recurso necessário sem um item escolhido.",
+          "unavailable": "Não foi possível ler o recurso deste produto.",
+          "notApplicable": "Este ambiente não usa recursos reserváveis.",
+          "inactiveModule": "O servidor ainda não libera o vínculo de recurso neste ambiente. A compra não depende disso."
+        }
+      },
+      "actions": {
+        "createMenu": "Publicar no menu",
+        "openMenu": "Abrir o menu",
+        "openGroup": "Abrir o grupo",
+        "openStep": "Corrigir aqui",
+        "reviewStep": "Revisar"
       }
     },
     "policy": {
@@ -1443,6 +1529,7 @@
       "emailDefault": "As notificações por e-mail para clientes começam ligadas em organizações novas. Você pode desligá-las aqui.",
       "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
       "inAppAlwaysOn": "No app sempre ativo",
+      "channelUnavailable": "Indisponível",
       "toggleChannel": "Ativar {{channel}} para {{event}}",
       "toastSaved": "Canal atualizado.",
       "moduleTabs": "Módulos de notificações",
@@ -1463,7 +1550,8 @@
         "orderReady": "Pedido pronto.",
         "orderRejected": "Pedido recusado.",
         "orderCancelledBySupplier": "Pedido cancelado pelo fornecedor.",
-        "orderCancelledByCustomer": "Pedido cancelado pelo cliente."
+        "orderCancelledByCustomer": "Pedido cancelado pelo cliente.",
+        "unknown": "Novo aviso."
       },
       "title": "Notificações",
       "ariaLabelNone": "Notificações",
@@ -1478,8 +1566,8 @@
       "recent": "Recentes",
       "countOverflow": "99+",
       "groups": {
-        "fallback_one": "{{count}} notificação — {{eventType}}",
-        "fallback_other": "{{count}} notificações — {{eventType}}",
+        "fallback_one": "{{count}} aviso",
+        "fallback_other": "{{count}} avisos",
         "orderCreated_one": "{{count}} novo pedido",
         "orderCreated_other": "{{count}} novos pedidos",
         "orderApproved_one": "{{count}} pedido aprovado",
@@ -1839,7 +1927,8 @@
     "pmocTooltip": "PMOC",
     "catalogProductAgenda": "Agenda do produto",
     "catalogResourceAgenda": "Agenda dos recursos",
-    "rentalsResourceWizard": "Assistente do recurso"
+    "rentalsResourceWizard": "Assistente do recurso",
+    "catalogProductWizard": "Assistente do produto"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -3765,6 +3854,7 @@
       "core.roles.read": "Ver funções",
       "core.roles.manage": "Gerenciar funções",
       "core.units.read": "Ver unidades",
+      "core.units.write": "Editar unidades",
       "core.registration_fields.read": "Ver campos de cadastro",
       "core.registration_fields.write": "Editar campos de cadastro",
       "core.module_menu.read": "Ver menu do portal",
@@ -3791,6 +3881,9 @@
       "rentals.reservations.complete": "Concluir reservas",
       "rentals.schedule.read": "Ver agenda",
       "rentals.schedule.write": "Editar agenda",
+      "rentals.schedule.lessons.write": "Criar aulas na agenda",
+      "rentals.booking_policy.read": "Ver regras de reserva",
+      "rentals.booking_policy.write": "Editar regras de reserva",
       "rentals.assets.read": "Ver recursos de aluguel",
       "rentals.assets.write": "Editar política de escala",
       "rentals.pricing.read": "Ver preços",
@@ -3807,7 +3900,8 @@
         },
         "orders": {
           "read": "Ver pedidos do catálogo",
-          "manage": "Gerenciar pedidos do catálogo"
+          "manage": "Gerenciar pedidos do catálogo",
+          "allocate": "Alocar recursos do pedido"
         },
         "notifications": {
           "read": "Ver notificações do catálogo",
@@ -4001,6 +4095,7 @@
       "editTitle": "Editar item",
       "inactive": "inativo",
       "suggestedLabelRentals": "Reservar horário",
+      "suggestedLabelCatalog": "Loja",
       "suggestedLabelRentalsAsset": "Reservar {{name}}",
       "previewCaption": "Cliente verá algo assim",
       "previewFallbackName": "Portal",
