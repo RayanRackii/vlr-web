@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import i18n from "@/lib/i18n"
 import {
   groupPermissionsByModule,
+  holdsRoutePermission,
   MODULE_ORDER,
   resolvePermissionRouteAccess,
 } from "@/features/users/permissions/permissionGroups"
@@ -51,6 +52,24 @@ describe("permission grouping", () => {
 
   it("includes catalog in MODULE_ORDER", () => {
     expect(MODULE_ORDER).toContain("catalog")
+  })
+})
+
+describe("holdsRoutePermission", () => {
+  const can = (granted: readonly string[]) => (key: string) => granted.includes(key)
+
+  it("opens the notifications page for a catalog delivery reader", () => {
+    expect(holdsRoutePermission(
+      { permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
+      can(["catalog.notifications.read"]),
+    )).toBe(true)
+  })
+
+  it("still requires every key when no alternative is declared", () => {
+    expect(holdsRoutePermission(
+      { permissions: ["rentals.assets.read", "core.units.read"] },
+      can(["rentals.assets.read"]),
+    )).toBe(false)
   })
 })
 

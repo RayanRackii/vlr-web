@@ -8,6 +8,7 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission: string
+  anyOf?: readonly string[]
 }
 
 export const notificationsManifest = {
@@ -19,7 +20,8 @@ export const notificationsManifest = {
       to: "/configuracoes/notificacoes",
       icon: Bell,
       modules: ["catalog", "rentals"],
-      permission: "core.notifications.read",
+      permissions: ["core.notifications.read", "catalog.notifications.read"],
+      anyOf: true,
     },
   ] satisfies readonly AppNavigationItem[],
   routes: {
@@ -28,6 +30,7 @@ export const notificationsManifest = {
         path: "/configuracoes/notificacoes",
         element: <NotificationsSettingsPage />,
         permission: "core.notifications.read",
+        anyOf: ["catalog.notifications.read"],
       },
     ] satisfies readonly FeatureRoute[],
   },

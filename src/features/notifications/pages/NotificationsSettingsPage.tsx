@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { Bell, Check, Info, Mail, MessageCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
+
+import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -80,6 +82,8 @@ function patchChannelActive(
 export function NotificationsSettingsPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
+  const canReadChannels = can("core.notifications.read")
+  const canReadDeliveries = can("catalog.notifications.read")
   const canWrite = can("core.notifications.write")
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -96,6 +100,11 @@ export function NotificationsSettingsPage() {
     let cancelled = false
 
     async function load() {
+      if (!canReadChannels) {
+        setLoading(false)
+        setGroups([])
+        return
+      }
       setLoading(true)
       try {
         const next = await listNotificationChannelConfigs()
@@ -125,7 +134,7 @@ export function NotificationsSettingsPage() {
     return () => {
       cancelled = true
     }
-  }, [t])
+  }, [canReadChannels, t])
 
   async function onToggle(
     eventType: string,
@@ -183,7 +192,13 @@ export function NotificationsSettingsPage() {
       <PageHeader
         icon={Bell}
         title={t("notifications.settings.title")}
-        description={t("notifications.settings.subtitle")}
+        description={
+          canReadChannels && canReadDeliveries
+            ? t("notifications.settings.subtitleBoth")
+            : canReadDeliveries
+              ? t("catalog.notifications.subtitle")
+              : t("notifications.settings.subtitle")
+        }
         className="mb-0 sm:mb-0"
       />
 
@@ -191,7 +206,7 @@ export function NotificationsSettingsPage() {
         <p className="text-sm text-destructive">{loadError}</p>
       ) : null}
 
-      <Tabs
+      {canReadChannels ? <Tabs
         value={activeModule ?? ""}
         onValueChange={(value) => {
           setSearchParams((current) => {
@@ -392,7 +407,9 @@ export function NotificationsSettingsPage() {
             )
           })
         )}
-      </Tabs>
+      </Tabs> : null}
+
+      {canReadDeliveries ? <CatalogNotificationsPage embedded /> : null}
     </div>
   )
 }

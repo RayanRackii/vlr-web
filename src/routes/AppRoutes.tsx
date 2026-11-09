@@ -201,7 +201,7 @@ export function AppRoutes() {
             </Route>
           ))}
           {notificationsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
               <Route path={route.path} element={route.element} />
             </Route>
           ))}

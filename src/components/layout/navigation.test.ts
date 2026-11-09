@@ -41,6 +41,14 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).toEqual(["/pessoas-e-acesso"])
   })
 
+  it("shows the shared notifications page when the reader can only see deliveries", () => {
+    const sections = buildProductSections(["catalog"], ["catalog.notifications.read"])
+    const labels = sections.flatMap((section) => section.items.map((item) => item.labelKey))
+    expect(labels).toContain("nav.notifications")
+    expect(labels).not.toContain("nav.catalogNotifications")
+    expect(sections.flatMap((section) => section.items).find((item) => item.labelKey === "nav.notifications")?.to).toBe("/configuracoes/notificacoes")
+  })
+
   it("filters children by permission independently", () => {
     const items: AppNavigationItem[] = [
       {
@@ -523,7 +531,7 @@ describe("staff sidebar groups", () => {
       "nav.assets", "nav.pmoc", "nav.workOrders",
     ])
     expect(sections[3]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.catalogProducts", "nav.catalogCustomerGroups", "nav.catalogOrders", "nav.catalogProductAgenda", "nav.catalogResourceAgenda", "nav.catalogRequests", "nav.catalogSettings", "nav.catalogNotifications",
+      "nav.catalogProducts", "nav.catalogCustomerGroups", "nav.catalogOrders", "nav.catalogProductAgenda", "nav.catalogResourceAgenda", "nav.catalogRequests", "nav.catalogSettings",
     ])
     expect(sections[4]?.items.map((item) => item.labelKey)).toEqual([
       "nav.peopleAccess", "nav.moduleMenu", "nav.taxonomy", "nav.notifications",

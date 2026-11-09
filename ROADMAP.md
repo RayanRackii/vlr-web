@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-09 | **Uma página de notificações e prontidão do portal (WEB):** Avisos de vendas abre a mesma página de Avisos gerais, com canais e entregas. Quem só lê entregas também entra. A prontidão do início ganha o menu do cliente e o grupo sem clientes, mesmo quando os aluguéis já estão prontos. |
+
 | 2026-11-09 | **Página do cliente do portal (WEB):** `/pessoas-e-acesso/clientes/:id` junta pedidos, grupos e produtos exclusivos. O nome na lista abre essa página. Sem API nova. |
 
 | 2026-11-09 | **Pedido nomeia o recurso e saída com diálogo (WEB):** o pedido mostra o recurso e a duração; aprovar em um clique continua quando não há agendamento. O horário é dia, mês, ano, hora e minuto, sem `datetime-local`. Sair do editor ou do assistente com rascunho abre um diálogo do produto; Cancelar fica na página. O aviso de fechar a aba continua nativo. |
