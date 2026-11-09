@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { createMemoryRouter, RouterProvider } from "react-router-dom"
+import { createMemoryRouter, Link, RouterProvider } from "react-router-dom"
 
 import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -339,6 +339,105 @@ describe("ProductWizardPage", () => {
     expect(router.state.location.search).toBe("?passo=resource")
     release()
     await waitFor(() => expect(screen.getByRole("button", { name: i18n.t("catalog.productWizard.finish") })).toBeEnabled())
+  })
+
+  it("asks before a sidebar link or the browser back leaves a dirty offer", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const user = userEvent.setup()
+    const offerPath = `/catalogo/produtos/${PRODUCT_ID}/assistente?passo=offer`
+    const router = createMemoryRouter([
+      {
+        path: "/catalogo/produtos/:id/assistente",
+        element: (
+          <>
+            <Link to="/catalogo/pedidos">{i18n.t("nav.catalogOrders")}</Link>
+            <TestPermissionProvider
+              permissions={[
+                "catalog.products.read",
+                "catalog.products.manage",
+                "core.module_menu.read",
+                "core.module_menu.write",
+                "core.customers.read",
+              ]}
+              activeModules={["catalog", "rentals"]}
+            >
+              <ProductWizardPage />
+            </TestPermissionProvider>
+          </>
+        ),
+      },
+      { path: "/catalogo/pedidos", element: <h1>Pedidos</h1> },
+      { path: "/catalogo/produtos", element: <h1>Lista</h1> },
+    ], { initialEntries: ["/catalogo/produtos", offerPath], initialIndex: 1 })
+    render(<RouterProvider router={router} />)
+    try {
+      const description = await screen.findByRole("textbox", { name: i18n.t("catalog.products.form.description") })
+      await user.type(description, "Nova descrição")
+      const unload = new Event("beforeunload", { cancelable: true })
+      expect(window.dispatchEvent(unload)).toBe(false)
+      await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
+      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(router.state.location.pathname).toContain("/assistente")
+      expect(description).toHaveValue("Nova descrição")
+      confirm.mockClear()
+      await act(async () => { await router.navigate(-1) })
+      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(router.state.location.pathname).toContain("/assistente")
+      expect(description).toHaveValue("Nova descrição")
+    } finally {
+      confirm.mockRestore()
+    }
+  })
+
+  it("asks before leaving a dirty access step or a dirty resource step", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const user = userEvent.setup()
+    function renderAt(path: string) {
+      const router = createMemoryRouter([
+        {
+          path: "/catalogo/produtos/:id/assistente",
+          element: (
+            <>
+              <Link to="/catalogo/pedidos">{i18n.t("nav.catalogOrders")}</Link>
+              <TestPermissionProvider
+                permissions={[
+                  "catalog.products.read",
+                  "catalog.products.manage",
+                  "core.module_menu.read",
+                  "core.module_menu.write",
+                  "core.customers.read",
+                ]}
+                activeModules={["catalog", "rentals"]}
+              >
+                <ProductWizardPage />
+              </TestPermissionProvider>
+            </>
+          ),
+        },
+        { path: "/catalogo/pedidos", element: <h1>Pedidos</h1> },
+      ], { initialEntries: [path] })
+      const view = render(<RouterProvider router={router} />)
+      return { router, ...view }
+    }
+    try {
+      const access = renderAt(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=access`)
+      await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.visibilityFilter.public") }))
+      await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
+      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(access.router.state.location.search).toBe("?passo=access")
+      access.unmount()
+      confirm.mockClear()
+
+      const resource = renderAt(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=resource`)
+      const duration = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.fields.durationMinutesPerUnit"))
+      fireEvent.change(duration, { target: { value: "90" } })
+      await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
+      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(resource.router.state.location.search).toBe("?passo=resource")
+      resource.unmount()
+    } finally {
+      confirm.mockRestore()
+    }
   })
 
   it("opens a later step from the query without showing the others", async () => {

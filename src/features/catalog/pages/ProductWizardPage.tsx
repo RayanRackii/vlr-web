@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState, type MouseEvent } from "react"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { useContext, useEffect, useMemo, useState, type MouseEvent } from "react"
+import {
+  Link,
+  UNSAFE_DataRouterContext as DataRouterContext,
+  useBlocker,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
@@ -21,6 +28,31 @@ import {
 import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
 import type { SellableChecklistItem } from "@/features/catalog/components/productWizard/sellableChecklist"
 
+/**
+ * Same confirm-on-block behavior as the product editor's leave guard.
+ * Saving blocks the navigation without a second prompt.
+ */
+function WizardLeaveGuard({ dirty, saving }: { dirty: boolean; saving: boolean }) {
+  const { t } = useTranslation()
+  const message = t("fullPage.leaveConfirm")
+  const blocker = useBlocker(dirty || saving)
+  useEffect(() => {
+    if (blocker.state !== "blocked") {
+      return
+    }
+    if (saving) {
+      blocker.reset()
+      return
+    }
+    if (window.confirm(message)) {
+      blocker.proceed()
+    } else {
+      blocker.reset()
+    }
+  }, [blocker, message, saving])
+  return null
+}
+
 export function ProductWizardPage() {
   const { id = "" } = useParams()
   const { t } = useTranslation()
@@ -30,10 +62,11 @@ export function ProductWizardPage() {
   const wizard = useProductWizard(id)
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
+  const hasDataRouter = useContext(DataRouterContext) != null
   const stepIndex = PRODUCT_WIZARD_STEPS.indexOf(step)
 
   useEffect(() => {
-    if (!stepDirty) {
+    if (!stepDirty && !stepSaving) {
       return
     }
     function warn(event: BeforeUnloadEvent) {
@@ -42,7 +75,7 @@ export function ProductWizardPage() {
     }
     window.addEventListener("beforeunload", warn)
     return () => window.removeEventListener("beforeunload", warn)
-  }, [stepDirty])
+  }, [stepDirty, stepSaving])
   const steps = useMemo(
     () => PRODUCT_WIZARD_STEPS.map((wizardStep) => ({
       id: wizardStep,
@@ -51,27 +84,27 @@ export function ProductWizardPage() {
     [t],
   )
 
-  function confirmLeave(): boolean {
+  function allowLeaveAttempt(): boolean {
     if (stepSaving) {
       return false
     }
-    if (!stepDirty) {
-      return true
+    if (!hasDataRouter && stepDirty) {
+      return window.confirm(t("fullPage.leaveConfirm"))
     }
-    return window.confirm(t("fullPage.leaveConfirm"))
+    return true
   }
 
   function guardLink(event: MouseEvent<HTMLAnchorElement>) {
     if (!isSameTabPrimaryClick(event)) {
       return
     }
-    if (!confirmLeave()) {
+    if (!allowLeaveAttempt()) {
       event.preventDefault()
     }
   }
 
   function go(next: ProductWizardStepId) {
-    if (stepSaving || next === step || !confirmLeave()) {
+    if (stepSaving || next === step || !allowLeaveAttempt()) {
       return
     }
     const nextParams = new URLSearchParams(params)
@@ -84,7 +117,7 @@ export function ProductWizardPage() {
   }
 
   function finish() {
-    if (stepSaving || !confirmLeave()) {
+    if (stepSaving || !allowLeaveAttempt()) {
       return
     }
     void navigate("/catalogo/produtos")
@@ -103,7 +136,7 @@ export function ProductWizardPage() {
       return
     }
     if (item.action.kind === "link") {
-      if (!confirmLeave()) {
+      if (!allowLeaveAttempt()) {
         return
       }
       void navigate(item.action.href)
@@ -129,6 +162,7 @@ export function ProductWizardPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-5xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {hasDataRouter ? <WizardLeaveGuard dirty={stepDirty} saving={stepSaving} /> : null}
       <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label={t("catalog.productWizard.breadcrumbLabel")}>
         <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to="/catalogo/produtos" onClick={guardLink}>
           {t("catalog.products.title")}
@@ -204,7 +238,7 @@ export function ProductWizardPage() {
             canSearchCustomers={wizard.canSearchCustomers}
             onDirtyChange={setStepDirty}
             onSavingChange={setStepSaving}
-            beforeNavigate={confirmLeave}
+            beforeNavigate={allowLeaveAttempt}
             onSaved={() => wizard.reload()}
           />
         ) : null}

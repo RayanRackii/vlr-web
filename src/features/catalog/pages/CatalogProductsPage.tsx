@@ -836,7 +836,7 @@ function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unkn
       ) : <strong>{product.name}</strong>}
       {product.description ? <small className="staff-catalog-product-description">{product.description}</small> : null}
       <small className="staff-catalog-mobile-code">{product.code ?? "—"}</small>
-      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={productWizardPath(product.id)}>
+      <Link className="staff-catalog-assistant-inline" to={productWizardPath(product.id)}>
         {t("catalog.productWizard.open")}
       </Link>
     </span>
@@ -865,36 +865,56 @@ function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, u
   const { onEdit, onQuickEdit, onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
   const product = row.original
 
+  const quickEditLabel = t("catalog.products.quickEdit")
+  const editLabel = t("common.edit")
+  const activeLabel = product.isActive
+    ? t("catalog.products.deactivate")
+    : t("catalog.products.activate")
+
   return (
     <div className="staff-catalog-actions">
+      <Link
+        className="staff-catalog-assistant"
+        to={productWizardPath(product.id)}
+        aria-label={`${t("catalog.productWizard.open")}: ${product.name}`}
+        title={t("catalog.productWizard.open")}
+      >
+        {t("catalog.productWizard.open")}
+      </Link>
       <Can permission="catalog.products.manage">
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="staff-catalog-action"
+          aria-label={`${quickEditLabel}: ${product.name}`}
+          title={quickEditLabel}
           onClick={() => onQuickEdit(product)}
         >
-          <SlidersHorizontal size={16} aria-hidden="true" />{t("catalog.products.quickEdit")}
+          <SlidersHorizontal size={16} aria-hidden="true" />
         </Button>
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="staff-catalog-action"
+          aria-label={`${editLabel}: ${product.name}`}
+          title={editLabel}
           onClick={() => onEdit(product)}
         >
-          <Pencil size={16} aria-hidden="true" />{t("common.edit")}
+          <Pencil size={16} aria-hidden="true" />
         </Button>
         <LoadingButton
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="staff-catalog-action"
+          aria-label={`${activeLabel}: ${product.name}`}
+          title={activeLabel}
           loading={statusBusyId === product.id}
           onClick={() => onToggleActive(product)}
         >
           <Power size={16} aria-hidden="true" />
-          {product.isActive
-            ? t("catalog.products.deactivate")
-            : t("catalog.products.activate")}
         </LoadingButton>
       </Can>
     </div>
