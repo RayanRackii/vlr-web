@@ -5,6 +5,7 @@ import { expect, it, vi } from "vitest"
 import { SchedulePage } from "./SchedulePage"
 import type { WeeklyTemplatesTab } from "../components/schedule/WeeklyTemplatesTab"
 import i18n from "@/lib/i18n"
+import { listOccupancyKinds } from "../services/scheduleService"
 
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: () => ({ can: () => true }) }))
 vi.mock("@/features/users/hooks/useTrialStatus", () => ({ useTrialStatus: () => ({ isTrialReadOnly: false }) }))
@@ -15,9 +16,10 @@ vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) =>
 }))
 vi.mock("@/features/rentals/components/schedule/DailyAgendaTab", () => ({ DailyAgendaTab: () => null }))
 vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
-  WeeklyTemplatesTab: ({ onCellClick, templateEditor }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
+  WeeklyTemplatesTab: ({ weekday, onWeekdayChange, onCellClick, templateEditor }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
+    {(["Monday", "Tuesday"] as const).map((day) => <button key={day} aria-pressed={weekday === day} onClick={() => onWeekdayChange(day)}>Grade {day}</button>)}
     {["08:00", "10:00"].map((startTime) => <button key={startTime} onClick={() => onCellClick({
-      rentalAssetId: "room", assetName: "Sala", dayOfWeek: "Monday", startTime,
+      rentalAssetId: "room", assetName: "Sala", dayOfWeek: weekday, startTime,
       endTime: "11:00", origin: "empty", template: null,
     })}>{startTime}</button>)}
     <button onClick={() => onCellClick({
@@ -27,6 +29,35 @@ vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
     {templateEditor}
   </>,
 }))
+
+it("keeps a dirty draft when weekday navigation is cancelled and discards it when confirmed", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const user = userEvent.setup()
+  try {
+    render(<SchedulePage />)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    await user.click(screen.getByRole("button", { name: "Grade Monday" }))
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
+    await user.type(label(), "Rascunho de segunda")
+    await user.click(screen.getByRole("button", { name: "Grade Monday" }))
+    expect(confirm).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "Grade Tuesday" }))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(screen.getByRole("button", { name: "Grade Monday" })).toHaveAttribute("aria-pressed", "true")
+    expect(label()).toHaveValue("Rascunho de segunda")
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false)
+    confirm.mockReturnValue(true)
+    await user.click(screen.getByRole("button", { name: "Grade Tuesday" }))
+    expect(screen.getByRole("button", { name: "Grade Tuesday" })).toHaveAttribute("aria-pressed", "true")
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
+    expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    expect(label()).toHaveValue("")
+  } finally {
+    confirm.mockRestore()
+  }
+})
 
 it("preserves dirty weekly edits when switching is cancelled and discards only on confirmation or explicit Cancel", async () => {
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
@@ -55,6 +86,36 @@ it("preserves dirty weekly edits when switching is cancelled and discards only o
   expect(label()).toHaveValue("")
   expect(confirm).not.toHaveBeenCalled()
   confirm.mockRestore()
+})
+
+it("keeps a dirty draft when leaving the weekly tab is cancelled and discards it when confirmed", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const user = userEvent.setup()
+  try {
+    render(<SchedulePage />)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
+    await user.type(label(), "Rascunho semanal")
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    expect(confirm).not.toHaveBeenCalled()
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    expect(label()).toHaveValue("Rascunho semanal")
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false)
+    confirm.mockReturnValue(true)
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
+    expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
+    confirm.mockClear()
+    await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+    expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "08:00" }))
+    expect(label()).toHaveValue("")
+    expect(confirm).not.toHaveBeenCalled()
+  } finally {
+    confirm.mockRestore()
+  }
 })
 
 it("resets same-time weekly drafts only after confirming a different resource and discards on explicit Cancel", async () => {
@@ -94,4 +155,61 @@ it("resets same-time weekly drafts only after confirming a different resource an
   } finally {
     confirm.mockRestore()
   }
+})
+
+it("requests the browser reload warning only while a weekly draft is dirty and removes it on discard or unmount", async () => {
+  const user = userEvent.setup()
+  const reload = () => {
+    const event = new Event("beforeunload", { cancelable: true })
+    window.dispatchEvent(event)
+    return event.defaultPrevented
+  }
+  const { unmount } = render(<SchedulePage />)
+  expect(reload()).toBe(false)
+  await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+  await user.click(screen.getByRole("button", { name: "08:00" }))
+  expect(reload()).toBe(false)
+  const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
+  await user.type(label(), "Manter ao ficar")
+  expect(reload()).toBe(true)
+  expect(label()).toHaveValue("Manter ao ficar")
+  await user.clear(label())
+  expect(reload()).toBe(false)
+  await user.type(label(), "Descartar")
+  expect(reload()).toBe(true)
+  await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+  expect(reload()).toBe(false)
+  await user.click(screen.getByRole("button", { name: "08:00" }))
+  expect(label()).toHaveValue("")
+  await user.type(label(), "Sair")
+  expect(reload()).toBe(true)
+  unmount()
+  expect(reload()).toBe(false)
+})
+
+it("shows an inline occupancy-kind load error next to the weekly editor when the request fails", async () => {
+  vi.mocked(listOccupancyKinds).mockRejectedValueOnce(new Error("Unavailable"))
+  const user = userEvent.setup()
+  render(<SchedulePage />)
+  await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+  await user.click(screen.getByRole("button", { name: "08:00" }))
+  expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar os tipos de ocupação.")
+  for (const [language, message] of [
+    ["pt-BR", "Não foi possível carregar os tipos de ocupação."],
+    ["en", "Could not load occupancy types."],
+    ["es", "No se pudieron cargar los tipos de ocupación."],
+  ]) {
+    expect(i18n.getResource(language, "common", "rentals.schedule.kindsLoadError")).toBe(message)
+  }
+  expect(screen.getByText(i18n.t("rentals.schedule.templates.kind"))).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+})
+
+it("does not report a load error for a successfully loaded empty occupancy-kind list", async () => {
+  const user = userEvent.setup()
+  render(<SchedulePage />)
+  await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+  await user.click(screen.getByRole("button", { name: "08:00" }))
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
 })
