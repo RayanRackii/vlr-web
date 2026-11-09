@@ -1,4 +1,9 @@
 import { PageHeader } from "@/components/layout/PageHeader"
+import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
+import {
+  scheduleAssetIdFromSearch,
+  scheduleTabFromSearch,
+} from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -94,7 +99,9 @@ function AdminSchedulePage() {
   const { isTrialReadOnly } = useTrialStatus()
   const timeZoneId = useTenantTimeZone()
 
-  const [tab, setTab] = useState<ScheduleTab>("daily")
+  const [tab, setTab] = useState<ScheduleTab>(
+    () => scheduleTabFromSearch(window.location.search) ?? "daily",
+  )
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   const [selectedRentalAssetIds, setSelectedRentalAssetIds] = useState<string[]>(
     [],
@@ -214,6 +221,10 @@ function AdminSchedulePage() {
         }
         setAssets(assetList)
         setSelectedRentalAssetIds((current) => {
+          const requested = scheduleAssetIdFromSearch(window.location.search)
+          if (requested && assetList.some((asset) => asset.id === requested)) {
+            return [requested]
+          }
           const valid = current.filter((id) =>
             assetList.some((asset) => asset.id === id),
           )
@@ -700,6 +711,7 @@ function AdminSchedulePage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
       <div className="min-w-0 space-y-4">
+        <StaffReturnLink beforeNavigate={discardTemplateDraft} />
         <div className="space-y-1">
           <PageHeader
             icon={CalendarDays}

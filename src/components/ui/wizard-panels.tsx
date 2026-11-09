@@ -7,7 +7,8 @@ export type WizardPanelStep = {
   label: string
 }
 
-export type WizardPanelsStepperVariant = "horizontal" | "vertical" | "compact"
+export type WizardPanelsStepperVariant = "horizontal" | "vertical" | "compact" | "chips"
+export type WizardStepSelection = "previous" | "any"
 
 type WizardPanelsStepperProps = {
   steps: readonly WizardPanelStep[]
@@ -15,8 +16,38 @@ type WizardPanelsStepperProps = {
   onStepClick?: (index: number) => void
   className?: string
   variant?: WizardPanelsStepperVariant
+  /** `previous` keeps linear wizards. `any` lets a hub jump to every step. */
+  selection?: WizardStepSelection
+  /** Horizontal connectors. Off for steppers that must not use chevrons. */
+  connectors?: boolean
   ariaLabel?: string
   testId?: string
+}
+
+function stepIsClickable(
+  index: number,
+  currentIndex: number,
+  selection: WizardStepSelection,
+  enabled: boolean,
+): boolean {
+  if (!enabled || index === currentIndex) {
+    return false
+  }
+  if (selection === "any") {
+    return true
+  }
+  return index < currentIndex
+}
+
+function visibleStepStatus(
+  index: number,
+  currentIndex: number,
+  selection: WizardStepSelection,
+) {
+  if (selection === "any") {
+    return index === currentIndex ? "current" as const : "upcoming" as const
+  }
+  return stepStatus(index, currentIndex)
 }
 
 function stepStatus(index: number, currentIndex: number) {
@@ -64,9 +95,13 @@ export function WizardPanelsStepper({
   onStepClick,
   className,
   variant = "horizontal",
+  selection = "previous",
+  connectors = true,
   ariaLabel = "Progress",
   testId,
 }: WizardPanelsStepperProps) {
+  const clickableAt = (index: number) =>
+    stepIsClickable(index, currentIndex, selection, Boolean(onStepClick))
   return (
     <nav
       aria-label={ariaLabel}
@@ -82,8 +117,8 @@ export function WizardPanelsStepper({
       {variant === "vertical" ? (
         <ol className="flex flex-col gap-1">
           {steps.map((step, index) => {
-            const status = stepStatus(index, currentIndex)
-            const clickable = Boolean(onStepClick) && index < currentIndex
+            const status = visibleStepStatus(index, currentIndex, selection)
+            const clickable = clickableAt(index)
 
             return (
               <li key={step.id}>
@@ -123,8 +158,8 @@ export function WizardPanelsStepper({
       ) : variant === "compact" ? (
         <ol className="flex flex-wrap items-start gap-2">
           {steps.map((step, index) => {
-            const status = stepStatus(index, currentIndex)
-            const clickable = Boolean(onStepClick) && index < currentIndex
+            const status = visibleStepStatus(index, currentIndex, selection)
+            const clickable = clickableAt(index)
 
             return (
               <li key={step.id} className="min-w-0 max-w-full">
@@ -161,11 +196,42 @@ export function WizardPanelsStepper({
             )
           })}
         </ol>
+      ) : variant === "chips" ? (
+        <div className="space-y-2">
+          <ol className="flex flex-wrap gap-2">
+            {steps.map((step, index) => {
+              const status = visibleStepStatus(index, currentIndex, selection)
+              const clickable = clickableAt(index)
+              return (
+                <li key={step.id}>
+                  <button
+                    type="button"
+                    disabled={!clickable && status !== "current"}
+                    aria-current={status === "current" ? "step" : undefined}
+                    aria-label={step.label}
+                    onClick={() => {
+                      if (clickable) onStepClick?.(index)
+                    }}
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
+                      status === "upcoming" && "border border-border bg-card text-muted-foreground",
+                      status !== "upcoming" && "bg-primary text-primary-foreground",
+                      clickable && "cursor-pointer",
+                    )}
+                  >
+                    {status === "complete" ? <Check className="size-4" aria-hidden /> : String(index + 1)}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+          <p className="text-sm font-medium text-foreground">{steps[currentIndex]?.label}</p>
+        </div>
       ) : (
         <ol className="flex flex-wrap items-center gap-1">
           {steps.map((step, index) => {
-            const status = stepStatus(index, currentIndex)
-            const clickable = Boolean(onStepClick) && index < currentIndex
+            const status = visibleStepStatus(index, currentIndex, selection)
+            const clickable = clickableAt(index)
             const isLast = index === steps.length - 1
 
             return (
@@ -199,7 +265,7 @@ export function WizardPanelsStepper({
                     {step.label}
                   </span>
                 </button>
-                {!isLast ? (
+                {!isLast && connectors ? (
                   <ChevronRight
                     className="size-4 shrink-0 text-muted-foreground/40"
                     aria-hidden

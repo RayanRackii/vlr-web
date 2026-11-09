@@ -1838,7 +1838,8 @@
     "pmocCustom": "Empezar plan personalizado",
     "pmocTooltip": "Planes de mantenimiento",
     "catalogProductAgenda": "Agenda del producto",
-    "catalogResourceAgenda": "Agenda de recursos"
+    "catalogResourceAgenda": "Agenda de recursos",
+    "rentalsResourceWizard": "Asistente del recurso"
   },
   "moduleIntro": {
     "title": "Presentación",
@@ -4941,6 +4942,145 @@
         "invalid": "Use un número entero o déjelo en blanco.",
         "empty": "No hay categorías con recursos reservables."
       }
+    },
+    "resourceWizard": {
+      "open": "Asistente",
+      "title": "Asistente del recurso",
+      "description": "Un paso a la vez: lo que falta, las reglas, los precios y la agenda de este ítem.",
+      "breadcrumb": "Asistente",
+      "back": "Volver",
+      "next": "Avanzar",
+      "finish": "Concluir",
+      "stepperLabel": "Pasos del asistente",
+      "steps": {
+        "status": "Situación",
+        "rules": "Reglas",
+        "prices": "Precios",
+        "agenda": "Agenda"
+      },
+      "summary": {
+        "ready": "Los clientes ya pueden reservar este ítem.",
+        "missing": "Todavía falta algo para que los clientes reserven este ítem.",
+        "unknown": "No fue posible confirmar si este ítem está listo.",
+        "inactive": "Este ítem está inactivo y no se ofrece para reserva."
+      },
+      "checklistTitle": "Lo que este ítem necesita",
+      "statusLabel": {
+        "done": "Listo",
+        "missing": "Pendiente",
+        "unavailable": "Sin acceso",
+        "notApplicable": "No aplica"
+      },
+      "items": {
+        "portalMenu": "Menú del cliente",
+        "occupancyKinds": "Tipo de ocupación",
+        "schedule": "Horarios",
+        "price": "Precio",
+        "queue": "Fila"
+      },
+      "details": {
+        "portalMenu": {
+          "done": "Hay un ítem activo de reservas en el menú del cliente.",
+          "missing": "Sin un ítem de reservas en el menú, el cliente no encuentra este recurso.",
+          "unavailable": "No puedes ver el menú del cliente."
+        },
+        "occupancyKinds": {
+          "done": "Existe un tipo activo que el cliente puede reservar.",
+          "missing": "La grilla semanal necesita un tipo de ocupación reservable.",
+          "unavailable": "No puedes ver los tipos de ocupación.",
+          "notApplicable": "En el horario continuo, el tipo de ocupación no impide la reserva."
+        },
+        "schedule": {
+          "done": "Este ítem ya tiene horarios configurados.",
+          "missing": "Define la grilla semanal o el horario de funcionamiento.",
+          "unavailable": "No puedes ver los horarios."
+        },
+        "price": {
+          "done": "Hay un precio mayor que cero.",
+          "missing": "Sin precio, el cliente no puede concluir la reserva.",
+          "unavailable": "No puedes ver los precios."
+        },
+        "queue": {
+          "off": "La fila está apagada. La reserva sigue sin fila.",
+          "on": "La fila está encendida, con horario de apertura.",
+          "missing": "La fila está encendida, pero falta el horario de apertura.",
+          "notApplicable": "La fila vale solo para espacios, no para bienes."
+        }
+      },
+      "actions": {
+        "openStep": "Resolver aquí",
+        "reviewStep": "Abrir",
+        "createMenu": "Publicar en el menú",
+        "openMenu": "Abrir menú del cliente",
+        "createKind": "Crear tipo reservable",
+        "openKinds": "Abrir tipos de ocupación"
+      },
+      "permission": "No tienes permiso para ver esta parte.",
+      "rules": {
+        "title": "Reglas de este ítem",
+        "description": "Horario de funcionamiento o grilla semanal. Las reservas de la semana están en el paso Agenda.",
+        "templates": "Horarios recurrentes",
+        "templatesEmpty": "Ningún horario recurrente en este ítem.",
+        "templatesCount": "Horarios recurrentes: {{count}}",
+        "openSchedule": "Abrir horarios de este ítem"
+      },
+      "prices": {
+        "title": "Precios y fila",
+        "description": "El precio habilita la reserva. La fila es opcional y vale solo para espacios.",
+        "empty": "Ningún precio registrado.",
+        "amount": "Valor",
+        "start": "Inicio",
+        "end": "Fin",
+        "applyReplace": "Reemplazar precios de la semana",
+        "applyAdd": "Agregar precios de la semana",
+        "replaceHint": "Guarda el mismo valor todos los días y reemplaza las franjas de este ítem.",
+        "addHint": "Agrega el mismo valor todos los días, sin borrar las franjas actuales.",
+        "saved": "Precios guardados.",
+        "readOnly": "Puedes ver los precios, pero no cambiarlos.",
+        "queueTitle": "Fila de reservas",
+        "queueHelp": "Cuando está encendida, el cliente necesita un lugar en la fila del día para reservar este espacio.",
+        "queueSaved": "Fila actualizada.",
+        "queueReadOnly": "Puedes ver la fila, pero no cambiarla.",
+        "invalidPrice": "Informa un valor mayor que cero.",
+        "invalidTime": "Informa inicio y fin en formato HH:mm, con el fin después del inicio.",
+        "queueToggle": "Usar fila"
+      },
+      "agenda": {
+        "title": "Reservas de la semana",
+        "description": "Reservas de este ítem en la semana. No son las reglas de horario.",
+        "previous": "Semana anterior",
+        "today": "Esta semana",
+        "next": "Próxima semana",
+        "emptyDay": "Ninguna reserva",
+        "loadError": "No fue posible cargar las reservas.",
+        "retry": "Intentar de nuevo",
+        "queueTitle": "Fila de hoy",
+        "queueOff": "La fila de este espacio está apagada.",
+        "queueUnavailable": "La lista de la fila para el equipo todavía no está disponible. La configuración sigue en el paso Precios.",
+        "queueForbidden": "No tienes permiso para ver la fila.",
+        "queueEmpty": "Nadie en la fila ahora.",
+        "queueRefresh": "Actualizar fila",
+        "waiting": "{{count}} en espera",
+        "phase": {
+          "Closed": "Cerrada",
+          "WaitingRoom": "Sala de espera",
+          "Open": "Abierta"
+        },
+        "ticketStatus": {
+          "Waiting": "En espera",
+          "Active": "En atención",
+          "Completed": "Concluido",
+          "Expired": "Expirado",
+          "Cancelled": "Cancelado"
+        },
+        "position": "Posición {{position}}",
+        "unknownCustomer": "Cliente"
+      },
+      "defaultKindLabel": "Reservable",
+      "menuPublished": "Ítem publicado en el menú del cliente.",
+      "kindCreated": "Tipo de ocupación reservable creado.",
+      "returnToWizard": "Volver al asistente",
+      "notFound": "Recurso no encontrado."
     }
   },
   "resourceVisual": {
