@@ -3955,6 +3955,15 @@
       "emptySearch": "Ningún resultado para esta búsqueda.",
       "emptySearchDescription": "Ningún cliente coincide con ese nombre o e-mail."
     },
+    "customerPage": {
+      "notFound": "Cliente",
+      "orders": "Pedidos",
+      "groups": "Grupos",
+      "products": "Productos exclusivos",
+      "noOrders": "Este cliente no tiene pedidos.",
+      "noGroups": "No está en ningún grupo.",
+      "noProducts": "Ningún producto exclusivo."
+    },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",
       "previous": "Página anterior",

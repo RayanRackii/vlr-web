@@ -87,7 +87,10 @@ describe("PeopleCustomersTab", () => {
     render(<PeopleCustomersTab />)
     const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
     expect(within(table).getAllByRole("columnheader")).toHaveLength(3)
-    expect(within(table).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(table).getByRole("link", { name: CUSTOMER.name })).toHaveAttribute(
+      "href",
+      `/pessoas-e-acesso/clientes/${CUSTOMER.id}`,
+    )
     expect(within(table).getByText(CUSTOMER.email!)).toBeInTheDocument()
     expect(within(table).getByText(i18n.t("peopleAccess.customers.verified"))).toBeInTheDocument()
     expect(within(table).queryByRole("button")).not.toBeInTheDocument()

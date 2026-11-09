@@ -3955,6 +3955,15 @@
       "emptySearch": "No results for this search.",
       "emptySearchDescription": "No customer matches that name or email."
     },
+    "customerPage": {
+      "notFound": "Customer",
+      "orders": "Orders",
+      "groups": "Groups",
+      "products": "Exclusive products",
+      "noOrders": "This customer has no orders.",
+      "noGroups": "Not in any group.",
+      "noProducts": "No exclusive products."
+    },
     "pagination": {
       "summary": "{{from}}–{{to}} of {{total}}",
       "previous": "Previous page",
