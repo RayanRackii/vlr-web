@@ -175,6 +175,13 @@ function AdminSchedulePage() {
     return true
   }
 
+  function onSelectedRentalAssetIdsChange(ids: string[]) {
+    if (ids.length === selectedRentalAssetIds.length &&
+      ids.every((id) => selectedRentalAssetIds.includes(id))) return
+    if (!discardTemplateDraft()) return
+    setSelectedRentalAssetIds(ids)
+  }
+
   const loadKinds = useCallback(async () => {
     setLoadingKinds(true)
     setKindsLoadError(false)
@@ -255,14 +262,16 @@ function AdminSchedulePage() {
       setTemplates([])
       return
     }
-    loadedTemplateKeysRef.current.clear()
-    templatesCacheRef.current.clear()
     const key = templatesCacheKey(selectedRentalAssetIds, weekday)
     const list = await listScheduleTemplates(
       undefined,
       selectedRentalAssetIds,
       weekday,
     )
+    // Keep the visible day's cache available until its replacement is ready.
+    // Asset reloads or tab navigation can rerun the templates effect meanwhile.
+    loadedTemplateKeysRef.current.clear()
+    templatesCacheRef.current.clear()
     setTemplates(list)
     loadedTemplateKeysRef.current.add(key)
     templatesCacheRef.current.set(key, list)
@@ -750,7 +759,7 @@ function AdminSchedulePage() {
             busyAction={busyAction}
             busyTargetKey={busyTargetId}
             readOnly={isTrialReadOnly}
-            onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
+            onSelectedRentalAssetIdsChange={onSelectedRentalAssetIdsChange}
             onDateChange={setDate}
             onPublish={() => {
               void onPublish()
@@ -782,7 +791,7 @@ function AdminSchedulePage() {
             busyAction={busyAction}
             busyTargetId={busyTargetId}
             readOnly={isTrialReadOnly}
-            onSelectedRentalAssetIdsChange={setSelectedRentalAssetIds}
+            onSelectedRentalAssetIdsChange={onSelectedRentalAssetIdsChange}
             onWeekdayChange={(nextWeekday) => {
               if (nextWeekday === weekday || !discardTemplateDraft()) return
               setWeekday(nextWeekday)

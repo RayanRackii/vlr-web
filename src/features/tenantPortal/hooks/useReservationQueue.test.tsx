@@ -206,6 +206,18 @@ describe("useReservationQueue views", () => {
     )
   })
 
+  it.each(["elapsed", "closed"] as const)("blocks an Active ticket when its turn is %s even before the next refresh completes", async (condition) => {
+    fetchQueue.mockResolvedValueOnce(queueStatus({
+      phase: condition === "closed" ? "Closed" : "Open",
+      myTicket: queueTicket("Active", {
+        turnExpiresAt: condition === "elapsed" ? "2026-10-15T07:59:59.000Z" : "2026-10-15T08:01:30.000Z",
+      }),
+    })).mockImplementation(() => new Promise(() => {}))
+    const { result } = renderHook(() => useReservationQueue({ rentalAssetId: ASSET_ID, enabled: true }))
+    await waitFor(() => expect(result.current.view.kind).toBe("active"))
+    expect(result.current.canReserve).toBe(false)
+  })
+
   it("shows the expired view and hides reserve", async () => {
     fetchQueue.mockResolvedValue(
       queueStatus({ myTicket: queueTicket("Expired") }),

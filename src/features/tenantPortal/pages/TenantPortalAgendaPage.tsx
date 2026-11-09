@@ -421,6 +421,7 @@ export function TenantPortalAgendaPage() {
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
   const [cancellationPolicyText, setCancellationPolicyText] = useState<
@@ -1140,6 +1141,12 @@ export function TenantPortalAgendaPage() {
   const quoteSelectionKey = quoteAssetId && quoteStart && quoteEnd
     ? `${date}:${endDate ?? ""}:${quoteAssetId}:${quoteStart}:${quoteEnd}:${quantity}`
     : null
+  const quoteSelectionKeyRef = useRef(quoteSelectionKey)
+  const quoteSelectionGenerationRef = useRef(0)
+  if (quoteSelectionKeyRef.current !== quoteSelectionKey) {
+    quoteSelectionKeyRef.current = quoteSelectionKey
+    quoteSelectionGenerationRef.current += 1
+  }
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
   const isMultiUnitGood = selectedAsset !== undefined &&
     selectedAsset.type.toLowerCase() === "good" && selectedAssetQuantity > 1
@@ -1148,6 +1155,10 @@ export function TenantPortalAgendaPage() {
     : 1
   const quoteCurrent = quote.status === "ready" && quote.selectionKey === quoteSelectionKey
   const quoteUnavailable = quoteCurrent && quote.amount === null
+
+  useEffect(() => {
+    setReviewOpen(false)
+  }, [quoteSelectionKey])
 
   useEffect(() => {
     if (!quoteAssetId || !quoteStart || !quoteEnd || quoteSelectionKey === null) {
@@ -1404,6 +1415,7 @@ export function TenantPortalAgendaPage() {
 
   async function onReserve() {
     if (
+      !reviewOpen || !queue.canReserve ||
       schedulePending || slotsError ||
       !selectedAsset ||
       !selectedSlot ||
@@ -1421,6 +1433,7 @@ export function TenantPortalAgendaPage() {
     const quotePricingUnit = quoteCurrent ? quote.pricingUnit : null
 
     const applyReservationSuccess = (reservation: PortalReservation) => {
+      setReviewOpen(false)
       rememberOwnBooking(reservation, timeZoneId)
       const unitPrice = unitPriceForWindow({
         startTime: slot.startTime,
@@ -1636,14 +1649,16 @@ export function TenantPortalAgendaPage() {
       return
     }
     const generation = getAgendaSessionGeneration()
+    const selectionGeneration = quoteSelectionGenerationRef.current
     joinAndReserveLock.current = true
     try {
       const next = await queue.join()
-      if (generation !== getAgendaSessionGeneration()) {
+      if (generation !== getAgendaSessionGeneration() ||
+        selectionGeneration !== quoteSelectionGenerationRef.current) {
         return
       }
       if (next?.phase === "Open" && next.myTicket?.status === "Active") {
-        await onReserve()
+        setReviewOpen(true)
       }
     } finally {
       joinAndReserveLock.current = false
@@ -2844,7 +2859,7 @@ export function TenantPortalAgendaPage() {
                 quoteUnavailable
               }
               onClick={() => {
-                void onReserve()
+                setReviewOpen(true)
               }}
             >
               {t("tenantPortal.agenda.reserveSlot")}
@@ -2907,6 +2922,56 @@ export function TenantPortalAgendaPage() {
               </>
             )}
           </div>
+
+          <AlertDialog
+            open={reviewOpen}
+            onOpenChange={(open) => {
+              if (!submittingRef.current) setReviewOpen(open)
+            }}
+          >
+            <AlertDialogContent className="max-h-[min(80vh,40rem)] overflow-y-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("tenantPortal.agenda.reviewTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t(selectedAsset?.requiresDeposit
+                    ? "tenantPortal.agenda.depositRequired"
+                    : "tenantPortal.agenda.reviewNoDeposit")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold">{selectedAsset?.name}</p>
+                {selectedSlot ? (
+                  <p>{formatLocaleCivilDayMonth(date, moneyLocale)}{endDate ? `–${formatLocaleCivilDayMonth(endDate, moneyLocale)}` : ""} · {formatScheduleTime(selectedSlot.startTime)}–{formatScheduleTime(selectedSlot.endTime)}</p>
+                ) : null}
+                {quoteCurrent && quote.amount !== null ? (
+                  <p>{t("tenantPortal.agenda.total", { amount: formatBookingMoney(quote.amount) })}</p>
+                ) : null}
+                {quoteUnitPriceText ? <p>{quoteUnitPriceText}</p> : null}
+                {isMultiUnitGood ? <p>{t("bookingMap.quantity")}: {quantity}</p> : null}
+                {queue.explanation ? <p>{queue.explanation}</p> : null}
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={submitting}>
+                  {t("tenantPortal.agenda.backHome")}
+                </AlertDialogCancel>
+                <LoadingButton
+                  type="button"
+                  loading={submitting}
+                  loadingLabel={t("tenantPortal.agenda.reserving")}
+                  disabled={schedulePending || slotsError || !selectedSlot ||
+                    !selectedAsset || !spaceState(selectedAsset.id).available ||
+                    !queue.canReserve || !quoteCurrent || quoteUnavailable}
+                  onClick={() => { void onReserve() }}
+                >
+                  {t(quoteCurrent && quote.amount !== null
+                    ? "tenantPortal.agenda.confirmReserve"
+                    : "tenantPortal.agenda.confirmReserveWithoutAmount", {
+                    amount: quoteCurrent && quote.amount !== null ? formatBookingMoney(quote.amount) : "",
+                  })}
+                </LoadingButton>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <AlertDialog
             open={pendingCancelId !== null}
