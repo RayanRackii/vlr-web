@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Boxes, Pencil, DoorOpen, Package, Plus } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
+import { resourceWizardPath } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
 import {
@@ -150,6 +151,7 @@ export function RentalResourcesPage() {
             const Icon = asset.type === "Good" ? Package : DoorOpen
             return (
             <li key={asset.id} className="resource-list-item">
+              <div className="resource-row-wrap">
               <button
                 type="button"
                 className="resource-row"
@@ -199,6 +201,10 @@ export function RentalResourcesPage() {
                   aria-hidden
                 />
               </button>
+              <Link className="resource-wizard-link" to={resourceWizardPath(asset.id)}>
+                {t("rentals.resourceWizard.open")}
+              </Link>
+              </div>
             </li>
           )})}
         </ul>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
+import { resourceWizardPath } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -198,6 +199,7 @@ export function RentalResourceEditorPage() {
       onLeave={() => navigate(RESOURCES_PATH)} />
     <RentalResourceEditorForm key={id ?? "new"} editing={editing} units={units} categories={categories} families={families}
     busy={busy} readOnly={!canWrite} pricePerHour={price?.pricePerHour} pricingUnit={price?.pricingUnit}
+    assistantHref={editing ? resourceWizardPath(editing.id) : undefined}
     onDirtyChange={setDirty}
     onCancel={() => {
       if (saveInFlight.current) return

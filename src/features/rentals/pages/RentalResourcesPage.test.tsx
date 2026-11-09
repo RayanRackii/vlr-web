@@ -412,6 +412,10 @@ describe("RentalResourcesPage", () => {
     const user = userEvent.setup()
     renderPage()
 
+    expect(await screen.findByRole("link", { name: i18n.t("rentals.resourceWizard.open") })).toHaveAttribute(
+      "href",
+      `/configuracoes/recursos/${RENTAL_ID}/assistente`,
+    )
     const details = await screen.findByText(/A partir de: R\$ 45,00 por horário/)
     expect(details.parentElement).toHaveTextContent("Durações: 1 h, 90 min")
     expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
