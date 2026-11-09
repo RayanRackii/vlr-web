@@ -421,7 +421,7 @@ export function TenantPortalAgendaPage() {
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewSelectionKey, setReviewSelectionKey] = useState<string | null>(null)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [pendingCancelId, setPendingCancelId] = useState<string | null>(null)
   const [cancellationPolicyText, setCancellationPolicyText] = useState<
@@ -1143,10 +1143,15 @@ export function TenantPortalAgendaPage() {
     : null
   const quoteSelectionKeyRef = useRef(quoteSelectionKey)
   const quoteSelectionGenerationRef = useRef(0)
-  if (quoteSelectionKeyRef.current !== quoteSelectionKey) {
+  useEffect(() => {
+    if (quoteSelectionKeyRef.current === quoteSelectionKey) {
+      return
+    }
     quoteSelectionKeyRef.current = quoteSelectionKey
     quoteSelectionGenerationRef.current += 1
-  }
+  }, [quoteSelectionKey])
+  const reviewOpen =
+    reviewSelectionKey !== null && reviewSelectionKey === quoteSelectionKey
   const selectedAssetQuantity = selectedAsset?.totalQuantity ?? 1
   const isMultiUnitGood = selectedAsset !== undefined &&
     selectedAsset.type.toLowerCase() === "good" && selectedAssetQuantity > 1
@@ -1155,10 +1160,6 @@ export function TenantPortalAgendaPage() {
     : 1
   const quoteCurrent = quote.status === "ready" && quote.selectionKey === quoteSelectionKey
   const quoteUnavailable = quoteCurrent && quote.amount === null
-
-  useEffect(() => {
-    setReviewOpen(false)
-  }, [quoteSelectionKey])
 
   useEffect(() => {
     if (!quoteAssetId || !quoteStart || !quoteEnd || quoteSelectionKey === null) {
@@ -1433,7 +1434,7 @@ export function TenantPortalAgendaPage() {
     const quotePricingUnit = quoteCurrent ? quote.pricingUnit : null
 
     const applyReservationSuccess = (reservation: PortalReservation) => {
-      setReviewOpen(false)
+      setReviewSelectionKey(null)
       rememberOwnBooking(reservation, timeZoneId)
       const unitPrice = unitPriceForWindow({
         startTime: slot.startTime,
@@ -1610,10 +1611,10 @@ export function TenantPortalAgendaPage() {
           })
           if (heldByCustomer) {
             setSelectedRentalAssetId(null)
-            setReviewOpen(false)
+            setReviewSelectionKey(null)
           } else {
             clearUnavailableSelection(true)
-            setReviewOpen(false)
+            setReviewSelectionKey(null)
           }
         }
         return
@@ -1622,7 +1623,7 @@ export function TenantPortalAgendaPage() {
         if (viewedDateRef.current === dayDate) {
           setSlots((current) => dropScheduleSlot(current, slot))
           clearUnavailableSelection(true)
-          setReviewOpen(false)
+          setReviewSelectionKey(null)
         }
         return
       }
@@ -1652,7 +1653,13 @@ export function TenantPortalAgendaPage() {
       return
     }
     const generation = getAgendaSessionGeneration()
+    // Event-handler ref sync (allowed): keep generation current before the await.
+    if (quoteSelectionKeyRef.current !== quoteSelectionKey) {
+      quoteSelectionKeyRef.current = quoteSelectionKey
+      quoteSelectionGenerationRef.current += 1
+    }
     const selectionGeneration = quoteSelectionGenerationRef.current
+    const selectionKeyAtJoin = quoteSelectionKey
     joinAndReserveLock.current = true
     try {
       const next = await queue.join()
@@ -1661,7 +1668,7 @@ export function TenantPortalAgendaPage() {
         return
       }
       if (next?.phase === "Open" && next.myTicket?.status === "Active") {
-        setReviewOpen(true)
+        setReviewSelectionKey(selectionKeyAtJoin)
       }
     } finally {
       joinAndReserveLock.current = false
@@ -2862,7 +2869,7 @@ export function TenantPortalAgendaPage() {
                 quoteUnavailable
               }
               onClick={() => {
-                setReviewOpen(true)
+                setReviewSelectionKey(quoteSelectionKey)
               }}
             >
               {t("tenantPortal.agenda.reserveSlot")}
@@ -2929,7 +2936,7 @@ export function TenantPortalAgendaPage() {
           <AlertDialog
             open={reviewOpen}
             onOpenChange={(open) => {
-              if (!submittingRef.current) setReviewOpen(open)
+              if (!submittingRef.current && !open) setReviewSelectionKey(null)
             }}
           >
             <AlertDialogContent className="max-h-[min(80vh,40rem)] overflow-y-auto">
