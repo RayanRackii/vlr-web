@@ -14,6 +14,22 @@ describe("safeStaffReturnTo", () => {
     expect(safeStaffReturnTo("/configuracoes/recursos/abc")).toBe("/configuracoes/recursos/abc")
   })
 
+  it("keeps a product wizard path and its step", () => {
+    expect(
+      safeStaffReturnTo("/catalogo/produtos/abc/assistente?passo=access"),
+    ).toBe("/catalogo/produtos/abc/assistente?passo=access")
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/assistente")).toBe(
+      "/catalogo/produtos/abc/assistente",
+    )
+  })
+
+  it("rejects product paths that are not the wizard", () => {
+    expect(safeStaffReturnTo("/catalogo/produtos")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/assistente?passo=nope")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/grupos/abc")).toBeNull()
+  })
+
   it("rejects paths that leave the resource wizard", () => {
     expect(safeStaffReturnTo("https://evil.example/configuracoes/recursos")).toBeNull()
     expect(safeStaffReturnTo("//evil.example")).toBeNull()

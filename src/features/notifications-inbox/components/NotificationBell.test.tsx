@@ -170,7 +170,7 @@ describe("NotificationBell", () => {
     renderBell()
     await user.click(await screen.findByRole("button"))
     expect(
-      await screen.findByText("1 notificação — payments.invoice.paid"),
+      await screen.findByText("1 aviso"),
     ).toBeInTheDocument()
   })
 

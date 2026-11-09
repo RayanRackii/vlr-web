@@ -66,6 +66,10 @@ describe("CatalogProductResourceRequirements", () => {
     })
     const user = userEvent.setup()
     render(<CatalogProductResourceRequirements productId="product-1" />)
+    const choice = await screen.findByRole("button", { name: "Churrasqueira 1" })
+    expect(choice).toHaveAttribute("aria-pressed", "true")
+    expect(choice).toHaveAttribute("title", "Churrasqueira 1")
+    expect(document.querySelector(".lucide-chevron-down, .lucide-chevron-up")).toBeNull()
     await user.click(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.save") }))
     await waitFor(() => expect(replaceCatalogProductResourceRequirements).toHaveBeenCalledWith(
       "product-1",

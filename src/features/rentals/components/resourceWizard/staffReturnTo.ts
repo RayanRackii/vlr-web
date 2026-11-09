@@ -1,3 +1,4 @@
+import { isProductWizardStep } from "@/features/catalog/components/productWizard/wizardSteps"
 import { isResourceWizardStep } from "@/features/rentals/components/resourceWizard/wizardSteps"
 
 const MAX_DECODES = 5
@@ -47,6 +48,26 @@ function isResourceSegment(value: string): boolean {
   return /^[A-Za-z0-9_-]+$/.test(value)
 }
 
+function isAllowedProductWizardPath(path: string, query: string): boolean {
+  const parts = path.split("/")
+  if (parts[0] !== "" || parts[1] !== "catalogo" || parts[2] !== "produtos") {
+    return false
+  }
+  if (parts.length !== 5 || parts[4] !== "assistente") {
+    return false
+  }
+  const id = parts[3] ?? ""
+  if (!isResourceSegment(id)) {
+    return false
+  }
+  if (query.length === 0) {
+    return true
+  }
+  const params = new URLSearchParams(query)
+  const keys = [...params.keys()]
+  return keys.length === 1 && keys[0] === "passo" && isProductWizardStep(params.get("passo"))
+}
+
 function isAllowedResourcePath(path: string, query: string): boolean {
   const parts = path.split("/")
   if (parts[0] !== "" || parts[1] !== "configuracoes" || parts[2] !== "recursos") {
@@ -74,8 +95,9 @@ function isAllowedResourcePath(path: string, query: string): boolean {
 }
 
 /**
- * Same-origin return path for the resource wizard.
- * Only `/configuracoes/recursos`, the resource editor, and the wizard survive.
+ * Same-origin return path for a setup wizard.
+ * Resource paths stay limited to `/configuracoes/recursos`. Product paths stay
+ * limited to `/catalogo/produtos/:id/assistente`.
  */
 export function safeStaffReturnTo(value: string | null | undefined): string | null {
   if (value == null) {
@@ -85,8 +107,10 @@ export function safeStaffReturnTo(value: string | null | undefined): string | nu
   if (decoded == null) {
     return null
   }
+  const resourceReturn = decoded.startsWith("/configuracoes/recursos")
+  const productReturn = decoded.startsWith("/catalogo/produtos/")
   if (
-    !decoded.startsWith("/configuracoes/recursos") ||
+    (!resourceReturn && !productReturn) ||
     decoded.startsWith("//") ||
     decoded.includes("\\") ||
     decoded.includes("://") ||
@@ -102,6 +126,9 @@ export function safeStaffReturnTo(value: string | null | undefined): string | nu
   }
   const path = queryIndex >= 0 ? decoded.slice(0, queryIndex) : decoded
   const query = queryIndex >= 0 ? decoded.slice(queryIndex + 1) : ""
+  if (productReturn) {
+    return isAllowedProductWizardPath(path, query) ? decoded : null
+  }
   if (!isAllowedResourcePath(path, query)) {
     return null
   }

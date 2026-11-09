@@ -43,7 +43,6 @@ function groupLabel(
   }
   return t("notifications.inbox.groups.fallback", {
     count: group.count,
-    eventType: group.eventType,
   })
 }
 

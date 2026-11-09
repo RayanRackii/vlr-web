@@ -429,6 +429,9 @@ describe("getPageTitleKey", () => {
     expect(getPageTitleKey("/configuracoes/recursos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
       "nav.rentalsResourceWizard",
     )
+    expect(getPageTitleKey("/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
+      "nav.catalogProductWizard",
+    )
   })
 
   it("resolves the platform asset families page before the tenants title", () => {
