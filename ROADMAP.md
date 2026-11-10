@@ -340,6 +340,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 | 2026-11-10 | **Criar no campo sem loop de render (WEB):** o callback de rascunho é guardado num efeito, não durante o render. O ratchet do ESLint passa. |
 | 2026-11-10 | **Criar no campo não entra em loop nem salva no Cancelar (WEB):** o aviso de rascunho não depende da identidade do callback. Enter no campo salva; Enter em Cancelar cancela. |
 | 2026-11-10 | **Criar unidade, categoria ou modelo visual abre na ficha (WEB):** o formulário expande sob o campo, sem painel lateral. Um nome digitado pede confirmação antes de escolher outro item. Cancelar descarta. A ficha do recurso também trata esse rascunho como alteração ao sair da página. |
+| 2026-11-10 | **Sair descarta o mesmo horário (WEB):** clicar de novo no horário aberto e escolher Sair joga fora o rascunho. O formulário volta aos valores do horário. |
+| 2026-11-10 | **Horário do dia fica na página (WEB):** editar um horário abre uma seção na agenda, não um painel lateral. Mudar o rótulo, o tipo ou o alcance pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |
 | 2026-11-10 | **Agenda dos recursos no celular (WEB):** o título deixa de reservar 12rem de altura, então Dia/Semana fica logo abaixo da descrição. |
 | 2026-11-10 | **Produto inativo conta como rascunho (WEB):** marcar Inativo em Novo produto pede confirmação antes de sair. Voltar para Ativo limpa esse rascunho. Salvar ainda abre o assistente. |
 | 2026-11-10 | **Produto novo e edição rápida em página (WEB):** Novo produto abre `/catalogo/produtos/novo` e, ao criar, segue para o assistente. A edição rápida abre o passo Oferta. A lista deixa de usar o painel lateral. |
