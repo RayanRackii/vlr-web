@@ -101,6 +101,30 @@ describe("RoleCreatePage", () => {
     })
   })
 
+  it("redirects to the editor after create on a data router", async () => {
+    const user = userEvent.setup()
+    createRoleMock.mockResolvedValue({
+      id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      name: "Portaria",
+      description: null,
+      isSystemRole: false,
+      permissionKeys: [],
+    })
+    const router = createMemoryRouter([
+      { path: "/pessoas-e-acesso/funcoes/nova", element: <RoleCreatePage /> },
+      { path: "/pessoas-e-acesso/funcoes/:id", element: <p>Editor</p> },
+    ], { initialEntries: ["/pessoas-e-acesso/funcoes/nova"] })
+    render(
+      <TestPermissionProvider permissions={["core.roles.manage"]}>
+        <RouterProvider router={router} />
+      </TestPermissionProvider>,
+    )
+    await user.type(screen.getByLabelText(i18n.t("peopleAccess.role")), "Portaria")
+    await user.click(screen.getByRole("button", { name: i18n.t("peopleAccess.roleEditor.createContinue") }))
+    expect(await screen.findByText("Editor")).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/pessoas-e-acesso/funcoes/ffffffff-ffff-4fff-8fff-ffffffffffff")
+  })
+
   it("asks before leaving a typed name and stays when cancel is chosen", async () => {
     const user = userEvent.setup()
     const router = createMemoryRouter([

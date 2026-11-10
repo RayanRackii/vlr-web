@@ -72,13 +72,14 @@ export function RoleCreatePage() {
       setCreatedId(created.id)
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : t("peopleAccess.errors.createRole"))
+    } finally {
       setSaving(false)
     }
   }
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-xl space-y-6 pb-8">
-      {hasDataRouter ? <RoleCreateLeaveGuard when={dirty || saving} /> : null}
+      {hasDataRouter ? <RoleCreateLeaveGuard when={createdId == null && (dirty || saving)} /> : null}
       <Link
         className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline"
         to={ROLES_TAB_PATH}
