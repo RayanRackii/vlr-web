@@ -23,3 +23,11 @@ describe("staff catalog products table", () => {
     expect(desktop).toMatch(/\.staff-catalog-assistant-inline\s*\{[^}]*display:\s*none/)
   })
 })
+
+describe("staff catalog heading on a narrow screen", () => {
+  it("does not keep the title's 12rem row basis once the heading stacks", () => {
+    const start = css.indexOf("@media (max-width: 760px)")
+    const mobile = css.slice(start, css.indexOf("@media", start + 1))
+    expect(mobile).toMatch(/\.staff-catalog-heading > div:first-child\s*\{[^}]*flex:\s*0 1 auto/)
+  })
+})

@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Agenda dos recursos no celular (WEB):** o título deixa de reservar 12rem de altura, então Dia/Semana fica logo abaixo da descrição. |
 | 2026-11-10 | **Produto inativo conta como rascunho (WEB):** marcar Inativo em Novo produto pede confirmação antes de sair. Voltar para Ativo limpa esse rascunho. Salvar ainda abre o assistente. |
 | 2026-11-10 | **Produto novo e edição rápida em página (WEB):** Novo produto abre `/catalogo/produtos/novo` e, ao criar, segue para o assistente. A edição rápida abre o passo Oferta. A lista deixa de usar o painel lateral. |
 | 2026-11-10 | **Nova função segue para o editor (WEB):** depois de criar, o salvamento solta e o bloqueio de saída não segura o redirecionamento. Cancelar volta a funcionar. |
@@ -355,6 +356,10 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 | 2026-11-10 | **Exclusão e desativação no diálogo do produto (WEB):** excluir categoria ou tag, e desativar um produto no editor, pedem confirmação no diálogo da aplicação. Cancelar mantém o item. |
 
 | 2026-11-10 | **Regra semanal pede saída (WEB):** mudar a duração marca o rascunho. Abas, links, o voltar do assistente e o voltar do navegador abrem o diálogo Cancelar/Sair. Cancelar no formulário descarta. Recolher o formulário sujo pergunta. Fechar a aba continua com o aviso nativo. |
+
+| 2026-11-10 | **Horas nulas não sujam ao atualizar a grade (WEB):** o instantâneo do formulário trata hora vazia e o padrão (08:00, 22:00, 60) como iguais. Recarregar os modelos não marca um formulário intocado. |
+| 2026-11-10 | **Rascunho de horários sobrevive ao salvar e à grade (WEB):** "60, 90" e "60,90" são a mesma duração, então salvar não deixa o rascunho sujo. Aplicar a grade semanal atualiza os modelos sem remontar um rascunho de horários ainda aberto. |
+| 2026-11-10 | **Horários na própria página (WEB):** Configuração dos horários deixa o painel lateral e fica na Configuração semanal. Duração ou modo sujo pede Cancelar/Sair antes de aba, link ou voltar do navegador. |
 
 | 2026-11-10 | **Horários pede saída no diálogo do produto (WEB):** um rascunho sujo da grade semanal abre o diálogo Cancelar/Sair. Fechar a aba continua com o aviso nativo. |
 
