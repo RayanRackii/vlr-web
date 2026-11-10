@@ -22,6 +22,13 @@
     "grid": "Day grid",
     "gridLoading": "Loading the day grid…",
     "gridError": "The day grid could not be loaded.",
+    "sourceWarning": "{{source}} did not load into this grid.",
+    "sources": {
+      "assets": "Resources",
+      "orders": "Orders",
+      "reservations": "Reservations",
+      "schedule": "Schedule"
+    },
     "weekGrid": "Week grid",
     "weekLoading": "Loading the week…",
     "weekHint": "Each cell summarizes that day's occupancy by type. Choose Day to see the times and open the details.",

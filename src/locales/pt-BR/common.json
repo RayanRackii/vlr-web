@@ -22,6 +22,13 @@
     "grid": "Grade do dia",
     "gridLoading": "Carregando a grade do dia…",
     "gridError": "Não foi possível carregar a grade.",
+    "sourceWarning": "{{source}} não entrou nesta grade.",
+    "sources": {
+      "assets": "Recursos",
+      "orders": "Pedidos",
+      "reservations": "Reservas",
+      "schedule": "Horários"
+    },
     "weekGrid": "Grade da semana",
     "weekLoading": "Carregando a semana…",
     "weekHint": "Cada célula resume as ocupações do dia por tipo. Escolha Dia para ver os horários e abrir os detalhes.",

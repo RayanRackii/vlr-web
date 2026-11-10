@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
 import { agendaTypes } from "./urlState"
 import type { AgendaBlock, AgendaWeekRow } from "./dayGridModel"
+import type { AgendaSourceId } from "./useAgendaDay"
 
 const pipClass: Record<AgendaBlock["kind"], string> = {
   pedido: "border-primary bg-primary/15 text-foreground",
@@ -21,14 +22,14 @@ function weekdayLabel(civil: string, locale: string): string {
 
 type AgendaWeekProps = {
   loading: boolean
-  error: boolean
+  failedSources: AgendaSourceId[]
   days: string[]
   rows: AgendaWeekRow[]
   today: string
   onOpenDay: (date: string) => void
 }
 
-export function AgendaWeek({ loading, error, days, rows, today, onOpenDay }: AgendaWeekProps) {
+export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDay }: AgendaWeekProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
 
@@ -43,7 +44,11 @@ export function AgendaWeek({ loading, error, days, rows, today, onOpenDay }: Age
 
   return (
     <div className="space-y-3">
-      {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.gridError")}</p>}
+      {failedSources.map((source) => (
+        <p key={source} role="status" className="text-sm text-muted-foreground">
+          {t("staffAgenda.sourceWarning", { source: t(`staffAgenda.sources.${source}`) })}
+        </p>
+      ))}
       <section aria-label={t("staffAgenda.weekGrid")} className="overflow-hidden rounded-xl border bg-card text-card-foreground">
         <div className="hidden border-b sm:grid sm:grid-cols-[11rem_repeat(7,minmax(0,1fr))]">
           <span className="px-3 py-2 text-xs font-medium text-muted-foreground">{t("staffAgenda.recurso")}</span>

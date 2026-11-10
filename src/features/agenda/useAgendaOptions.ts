@@ -6,6 +6,7 @@ export type AgendaOption = { id: string; label: string }
 export const agendaOptionLoaders = {
   recurso: async () => (await listRentalAssetCategories()).map(({ id, name }) => ({ id, label: name })),
   produto: async () => (await listCatalogProducts()).map(({ id, name }) => ({ id, label: name })),
+  // No date range: GET /api/catalog/orders treats from/to as optional instants, not civil dates.
   pedido: async () => (await listCatalogOrders()).map(({ id, displayNumber, customerName }) => ({ id, label: `${displayNumber} · ${customerName}` })),
 }
 

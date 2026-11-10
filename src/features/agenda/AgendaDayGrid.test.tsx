@@ -6,7 +6,7 @@ import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { listAdminRentalAssets, fetchAdminScheduleDay, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
 import { listAdminReservations, type AdminReservation } from "@/features/rentals/services/reservationsService"
-import { listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
+import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { AgendaPage } from "./AgendaPage"
 import { asset, order, slot } from "./agendaFixtures"
 
@@ -74,6 +74,8 @@ it("renders resource hours, an empty row and selection detail below the entire g
   await user.click(within(detail).getByRole("button", { name: "Fechar detalhes" }))
   expect(screen.queryByRole("region", { name: "Detalhes do bloco selecionado" })).not.toBeInTheDocument()
   expect(listCatalogResourceAgenda).toHaveBeenCalledWith({ from: "2026-11-10T03:00:00.000Z", to: "2026-11-11T03:00:00.000Z" })
+  expect(listAdminReservations).toHaveBeenCalledWith({ from: "2026-11-10", to: "2026-11-10" })
+  expect(listCatalogOrders).toHaveBeenCalledWith()
 })
 
 it("links a reservation to the reservations screen", async () => {
@@ -121,11 +123,15 @@ it("shows a grid skeleton and skips sources the user cannot read", async () => {
   expect(listAdminReservations).not.toHaveBeenCalled()
 })
 
-it("keeps the day grid when one source fails", async () => {
-  vi.mocked(listAdminRentalAssets).mockRejectedValue(new Error("down"))
+it("keeps the other sources when reservations return 400", async () => {
+  vi.mocked(listAdminReservations).mockRejectedValue(new Error("400"))
   setup()
-  expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar a grade.")
+  expect(await screen.findByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ })).toBeInTheDocument()
+  expect(screen.queryByText("Recursos não entrou nesta grade.")).not.toBeInTheDocument()
+  expect(screen.getByText("Reservas não entrou nesta grade.")).toHaveClass("text-muted-foreground")
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   expect(screen.getByRole("region", { name: "Grade do dia" })).toBeInTheDocument()
+  expect(listAdminReservations).toHaveBeenCalledWith({ from: "2026-11-10", to: "2026-11-10" })
 })
 
 it("opens the clicked week day and keeps the chips", async () => {
@@ -137,6 +143,7 @@ it("opens the clicked week day and keeps the chips", async () => {
     from: "2026-11-09T03:00:00.000Z",
     to: "2026-11-16T03:00:00.000Z",
   })
+  expect(listAdminReservations).toHaveBeenCalledWith({ from: "2026-11-09", to: "2026-11-15" })
   await user.click(screen.getByRole("button", { name: /Estúdio A 2026-11-10 1 Pedido/ }))
   const params = new URLSearchParams(screen.getByTestId("search").textContent ?? "")
   expect(params.get("visao")).toBe("dia")

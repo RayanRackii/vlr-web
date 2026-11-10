@@ -105,7 +105,7 @@ export function AgendaPage() {
       {state.visao === "dia" ? (
         <AgendaDayGrid
           loading={isLoading || day.loading}
-          error={day.error}
+          failedSources={day.failedSources}
           rows={day.day.rows}
           start={day.day.start}
           end={day.day.end}
@@ -115,7 +115,7 @@ export function AgendaPage() {
       ) : (
         <AgendaWeek
           loading={isLoading || day.loading}
-          error={day.error}
+          failedSources={day.failedSources}
           days={day.week.days}
           rows={day.week.rows}
           today={today}
