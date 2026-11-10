@@ -24,14 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { InlineScheduleModule } from "@/features/rentals/components/schedule/InlineScheduleModule"
 import { emptyKindForm } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import type {
   OccupancyKind,
@@ -67,6 +60,36 @@ type OccupancyKindSheetProps = {
   busy: boolean
   readOnly: boolean
   onSubmit: (values: UpsertOccupancyKindInput) => Promise<boolean>
+  onDirtyChange?: (dirty: boolean) => void
+  /** Collapse and other non-Cancel closes. Cancel discards without asking. */
+  onRequestClose?: () => void
+}
+
+function formFromKind(editing: OccupancyKind | null): UpsertOccupancyKindInput {
+  if (!editing) return emptyKindForm()
+  return {
+    key: editing.key,
+    label: editing.label,
+    description: editing.description ?? "",
+    colorHex: editing.colorHex ?? "",
+    iconKey: editing.iconKey ?? "circle-check",
+    isBookableByCustomer: editing.isBookableByCustomer,
+    blocksCapacity: editing.blocksCapacity,
+    sortOrder: editing.sortOrder,
+    isActive: editing.isActive,
+  }
+}
+
+function kindFormDirty(form: UpsertOccupancyKindInput, baseline: UpsertOccupancyKindInput): boolean {
+  return form.key !== baseline.key
+    || form.label !== baseline.label
+    || (form.description ?? "") !== (baseline.description ?? "")
+    || (form.colorHex ?? "") !== (baseline.colorHex ?? "")
+    || (form.iconKey ?? "") !== (baseline.iconKey ?? "")
+    || form.isBookableByCustomer !== baseline.isBookableByCustomer
+    || form.blocksCapacity !== baseline.blocksCapacity
+    || Number(form.sortOrder) !== Number(baseline.sortOrder)
+    || form.isActive !== baseline.isActive
 }
 
 export function OccupancyKindSheet({
@@ -76,56 +99,43 @@ export function OccupancyKindSheet({
   busy,
   readOnly,
   onSubmit,
+  onDirtyChange,
+  onRequestClose,
 }: OccupancyKindSheetProps) {
   const { t } = useTranslation()
-  const [form, setForm] = useState<UpsertOccupancyKindInput>(emptyKindForm)
+  const [baseline] = useState(() => formFromKind(editing))
+  const [form, setForm] = useState<UpsertOccupancyKindInput>(baseline)
   const PreviewIcon =
     ICONS[(form.iconKey as (typeof ICON_KEYS)[number]) ?? "circle-check"] ??
     CheckCircle2
+  const dirty = kindFormDirty(form, baseline)
+  const title = editing
+    ? t("rentals.schedule.kinds.saveEdit")
+    : t("rentals.schedule.kinds.saveCreate")
 
   useEffect(() => {
-    if (!open) {
-      return
-    }
-    if (editing) {
-      setForm({
-        key: editing.key,
-        label: editing.label,
-        description: editing.description ?? "",
-        colorHex: editing.colorHex ?? "",
-        iconKey: editing.iconKey ?? "circle-check",
-        isBookableByCustomer: editing.isBookableByCustomer,
-        blocksCapacity: editing.blocksCapacity,
-        sortOrder: editing.sortOrder,
-        isActive: editing.isActive,
-      })
-      return
-    }
-    setForm(emptyKindForm())
-  }, [editing, open])
+    onDirtyChange?.(open && dirty)
+  }, [dirty, onDirtyChange, open])
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+
+  if (!open) return null
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <SheetHeader>
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Tag className="size-4" aria-hidden />
-            </span>
-            <div className="space-y-0.5">
-              <SheetTitle>
-                {editing
-                  ? t("rentals.schedule.kinds.saveEdit")
-                  : t("rentals.schedule.kinds.saveCreate")}
-              </SheetTitle>
-              <SheetDescription>
-                {t("rentals.schedule.kinds.description")}
-              </SheetDescription>
-            </div>
-          </div>
-        </SheetHeader>
-
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4">
+    <InlineScheduleModule
+      title={title}
+      description={t("rentals.schedule.kinds.description")}
+      icon={Tag}
+      open={open}
+      disabled={busy}
+      onOpenChange={(next) => {
+        if (!next && onRequestClose) {
+          onRequestClose()
+          return
+        }
+        onOpenChange(next)
+      }}
+    >
+        <div className="flex flex-col gap-5">
           <div className="space-y-4">
             <div className="space-y-1.5">
               <FieldLabel
@@ -332,7 +342,7 @@ export function OccupancyKindSheet({
           </div>
         </div>
 
-        <SheetFooter>
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
@@ -355,12 +365,9 @@ export function OccupancyKindSheet({
               })
             }}
           >
-            {editing
-              ? t("rentals.schedule.kinds.saveEdit")
-              : t("rentals.schedule.kinds.saveCreate")}
+            {title}
           </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+    </InlineScheduleModule>
   )
 }
