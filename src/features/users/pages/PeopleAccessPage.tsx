@@ -40,7 +40,7 @@ export function PeopleAccessPage() {
   const canReadRegistration = filterNavigationTabs(peopleAccessTabs, activeModules, permissions)
     .some((entry) => entry.to === "/configuracoes/cadastro")
   const canReadRoles = canReadUsers && can("core.roles.read")
-  const canReadCustomers = canReadUsers && can("core.customers.read")
+  const canReadCustomers = can("core.customers.read")
 
   const [roles, setRoles] = useState<RoleResponse[]>([])
   const [catalog, setCatalog] = useState<PermissionCatalogItemDto[]>([])
@@ -49,7 +49,10 @@ export function PeopleAccessPage() {
   const requestedTab = searchParams.get("tab")
   const tab: PeopleAccessTab = onRegistration ? "registration"
     : requestedTab === "roles" && canReadRoles ? "roles"
-    : requestedTab === "customers" && canReadCustomers ? "customers" : "users"
+    : requestedTab === "customers" && canReadCustomers ? "customers"
+    : canReadUsers ? "users"
+    : canReadCustomers ? "customers"
+    : "users"
 
   const loadRolesBundle = useCallback(async () => {
     if (!canReadRoles || onRegistration) {

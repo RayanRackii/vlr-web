@@ -916,7 +916,8 @@
       "orderPreparing": "Pedido em preparação",
       "orderReady": "Pedido pronto",
       "orderRejected": "Pedido recusado",
-      "orderCancelledBySupplier": "Pedido cancelado pelo fornecedor"
+      "orderCancelledBySupplier": "Pedido cancelado pelo fornecedor",
+      "orderCancelledByCustomer": "Pedido cancelado pelo cliente"
     },
     "products": {
       "title": "Produtos",

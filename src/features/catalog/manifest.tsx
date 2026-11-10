@@ -171,8 +171,7 @@ export const catalogManifest = {
       {
         path: "/catalogo/notificacoes",
         element: <Navigate to="/configuracoes/notificacoes#entregas" replace />,
-        permission: "catalog.notifications.read",
       },
-    ] satisfies readonly (FeatureRoute & { permission: string })[],
+    ] satisfies readonly FeatureRoute[],
   },
 } as const

@@ -372,6 +372,7 @@ export const CATALOG_EVENT_TYPES = [
   "catalog.order.ready",
   "catalog.order.rejected",
   "catalog.order.cancelled_by_supplier",
+  "catalog.order.cancelled_by_customer",
 ] as const
 
 export type CatalogEventType = (typeof CATALOG_EVENT_TYPES)[number]
@@ -383,6 +384,7 @@ const CATALOG_EVENT_I18N_KEYS: Record<CatalogEventType, string> = {
   "catalog.order.ready": "catalog.events.orderReady",
   "catalog.order.rejected": "catalog.events.orderRejected",
   "catalog.order.cancelled_by_supplier": "catalog.events.orderCancelledBySupplier",
+  "catalog.order.cancelled_by_customer": "catalog.events.orderCancelledByCustomer",
 }
 
 export function catalogEventI18nKey(eventType: string): string {
