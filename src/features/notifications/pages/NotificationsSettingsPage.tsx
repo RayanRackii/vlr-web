@@ -83,7 +83,7 @@ export function NotificationsSettingsPage() {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const canReadChannels = can("core.notifications.read")
-  const canReadDeliveries = can("catalog.notifications.read")
+  const canReadDeliveries = can("core.notifications.read") || can("catalog.notifications.read")
   const canWrite = can("core.notifications.write")
   const [searchParams, setSearchParams] = useSearchParams()
 

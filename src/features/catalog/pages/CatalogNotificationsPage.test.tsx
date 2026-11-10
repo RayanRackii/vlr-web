@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
@@ -8,18 +8,18 @@ import {
   catalogNotificationDeliveryListSchema,
   catalogNotificationDeliverySchema,
   formatCatalogDate,
-  type CatalogNotificationDelivery,
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
-  listCatalogNotifications,
-  resendCatalogNotification,
-} from "@/features/catalog/services/catalogService"
+  listNotificationDeliveries,
+  resendNotificationDelivery,
+} from "@/features/notifications/services/notificationDeliveryService"
+import type { NotificationDelivery } from "@/features/notifications/schemas/notificationDeliverySchemas"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
-vi.mock("@/features/catalog/services/catalogService", () => ({
-  listCatalogNotifications: vi.fn(),
-  resendCatalogNotification: vi.fn(),
+vi.mock("@/features/notifications/services/notificationDeliveryService", () => ({
+  listNotificationDeliveries: vi.fn(),
+  resendNotificationDelivery: vi.fn(),
 }))
 
 vi.mock("sonner", () => ({
@@ -30,16 +30,17 @@ vi.mock("sonner", () => ({
   },
 }))
 
-const listMock = vi.mocked(listCatalogNotifications)
-const resendMock = vi.mocked(resendCatalogNotification)
+const listMock = vi.mocked(listNotificationDeliveries)
+const resendMock = vi.mocked(resendNotificationDelivery)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
 const toastMessage = vi.mocked(toast.message)
 
-const failedDelivery: CatalogNotificationDelivery = {
+const failedDelivery: NotificationDelivery = {
   id: "11111111-1111-4111-8111-111111111111",
   notificationId: "22222222-2222-4222-8222-222222222222",
-  eventType: "catalog.order.created",
+  eventKey: "catalog.order.created",
+  module: "catalog",
   channel: "WhatsApp",
   recipientKind: "B2BUser",
   recipientId: null,
@@ -54,9 +55,14 @@ const readAndResend = ["catalog.notifications.read", "catalog.notifications.rese
 
 function renderPage(
   permissions: string[],
-  deliveries: CatalogNotificationDelivery[] = [],
+  deliveries: NotificationDelivery[] = [],
 ) {
-  listMock.mockResolvedValue(deliveries)
+  listMock.mockResolvedValue({
+    items: deliveries,
+    page: 1,
+    pageSize: 20,
+    totalCount: deliveries.length,
+  })
   return render(
     <TestPermissionProvider permissions={permissions}>
       <CatalogNotificationsPage />
@@ -72,7 +78,7 @@ describe("CatalogNotificationsPage", () => {
     toastSuccess.mockReset()
     toastError.mockReset()
     toastMessage.mockReset()
-    listMock.mockResolvedValue([])
+    listMock.mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 })
   })
 
   afterEach(() => {
@@ -201,9 +207,9 @@ describe("CatalogNotificationsPage", () => {
   })
 
   it("disables the row button and ignores a second click while the request is in flight", async () => {
-    let release: (delivery: CatalogNotificationDelivery) => void = () => {}
+    let release: (delivery: NotificationDelivery) => void = () => {}
     resendMock.mockImplementation(() => {
-      const pending = new Promise<CatalogNotificationDelivery>((resolve) => {
+      const pending = new Promise<NotificationDelivery>((resolve) => {
         release = resolve
       })
       if (resendMock.mock.calls.length === 1) {
@@ -319,13 +325,84 @@ describe("CatalogNotificationsPage", () => {
     expect(within(history).getByText(i18n.t("catalog.notifications.errors.whatsappMissing"))).toBeInTheDocument()
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
+
+  it("loads a page from the server and asks for the next one", async () => {
+    const user = userEvent.setup()
+    listMock.mockResolvedValue({
+      items: [failedDelivery],
+      page: 1,
+      pageSize: 20,
+      totalCount: 40,
+    })
+    render(
+      <TestPermissionProvider permissions={readAndResend}>
+        <CatalogNotificationsPage />
+      </TestPermissionProvider>,
+    )
+
+    expect(await screen.findByText("Equipe")).toBeInTheDocument()
+    expect(listMock).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 20 }))
+    await user.click(screen.getByRole("button", { name: i18n.t("peopleAccess.pagination.next") }))
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, pageSize: 20 }))
+    })
+  })
+
+  it("sends status, channel, event, and dates to the server", async () => {
+    const user = userEvent.setup()
+    renderPage(readAndResend, [failedDelivery])
+    expect(await screen.findByText("Equipe")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.deliveryStatus.Failed") }))
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith(expect.objectContaining({
+        status: "Failed",
+        page: 1,
+        pageSize: 20,
+      }))
+    })
+
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.channels.Email") }))
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith(expect.objectContaining({ channel: "Email", page: 1 }))
+    })
+
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.events.orderCreated") }))
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith(expect.objectContaining({
+        event: "catalog.order.created",
+        page: 1,
+      }))
+    })
+
+    fireEvent.change(screen.getByLabelText(i18n.t("catalog.notifications.filters.from")), {
+      target: { value: "2026-10-01" },
+    })
+    await waitFor(() => {
+      expect(listMock).toHaveBeenLastCalledWith(expect.objectContaining({
+        from: new Date("2026-10-01T00:00:00").toISOString(),
+        page: 1,
+      }))
+    })
+  })
+
+  it("shows the log and Reenviar for either the core or catalog permission", async () => {
+    const { unmount } = renderPage(["core.notifications.read"], [failedDelivery])
+    expect(await screen.findByText("Equipe")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("catalog.notifications.resend") })).not.toBeInTheDocument()
+    unmount()
+
+    renderPage(["catalog.notifications.read", "core.notifications.resend"], [failedDelivery])
+    expect(await screen.findByRole("button", { name: i18n.t("catalog.notifications.resend") })).toBeInTheDocument()
+    expect(listMock).toHaveBeenCalled()
+  })
 })
 
 describe("catalog notification delivery schema", () => {
   const payload = {
     id: failedDelivery.id,
     notificationId: failedDelivery.notificationId,
-    eventType: failedDelivery.eventType,
+    eventType: "catalog.order.created",
     channel: failedDelivery.channel,
     recipientKind: failedDelivery.recipientKind,
     recipientId: failedDelivery.recipientId,
@@ -389,7 +466,11 @@ describe("catalog notification delivery schema", () => {
     expect(parsed[0].attempts).toEqual([goodAttempt])
     expect(parsed[1].recipientName).toBe("Outra entrega")
 
-    renderPage(readAndResend, parsed)
+    renderPage(readAndResend, parsed.map((row) => ({
+      ...row,
+      eventKey: row.eventType,
+      module: "catalog",
+    })))
     expect(await screen.findByText("Outra entrega")).toBeInTheDocument()
     expect(screen.getByText("Equipe")).toBeInTheDocument()
     await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.notifications.attempts") })[0])

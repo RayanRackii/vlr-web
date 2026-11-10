@@ -152,9 +152,8 @@ describe("MainLayout current-user bootstrap", () => {
     await waitFor(() => {
       expect(listConfigs).toHaveBeenCalledTimes(1)
     })
-    expect(
-      await screen.findByText(i18n.t("catalog.events.orderCreated")),
-    ).toBeInTheDocument()
+    const labels = await screen.findAllByText(i18n.t("catalog.events.orderCreated"))
+    expect(labels.some((element) => element.closest("td"))).toBe(true)
 
     const meCalls = apiGet.mock.calls.filter((call) =>
       String(call[0]).includes("/api/users/me"),
