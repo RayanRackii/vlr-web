@@ -83,7 +83,7 @@ describe("catalog resource agenda page", () => {
     // Empty resource row still shown with no blocks.
     expect(screen.getAllByText("Kit vazio").length).toBeGreaterThan(0)
     // No displayNumber and no customerName -> redacted "Reservado" label (no PII).
-    expect(screen.getByRole("button", { name: i18n.t("catalog.resourceAgenda.reserved") })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: i18n.t("catalog.resourceAgenda.reserved") }).length).toBeGreaterThan(0)
   })
 
   it("opens the detail panel with the order link only when a displayNumber exists", async () => {
@@ -95,9 +95,18 @@ describe("catalog resource agenda page", () => {
     expect(link).toHaveAttribute("href", `/catalogo/pedidos/${ORDER_ITEM.orderId}`)
 
     // Redacted block: panel shows but the "open order" link is hidden.
-    await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourceAgenda.reserved") }))
+    await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.resourceAgenda.reserved") })[0])
     expect(
       screen.queryByRole("link", { name: i18n.t("catalog.resourceAgenda.panel.openOrder") }),
     ).not.toBeInTheDocument()
+  })
+
+  it("lists each resource's bookings in a stack the narrow layout can show without a wide grid", async () => {
+    renderPage()
+    const stack = await screen.findByTestId("resource-agenda-stack")
+    expect(stack.querySelector(".resource-agenda")).toBeNull()
+    expect(stack.textContent).toContain("PED-1042")
+    expect(stack.textContent).toContain("Kit vazio")
+    expect(stack.textContent).toContain(i18n.t("catalog.agenda.free"))
   })
 })

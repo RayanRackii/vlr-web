@@ -257,6 +257,7 @@ export function CatalogResourceAgendaPage() {
           ) : visibleResources.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("catalog.resourceAgenda.noResources")}</p>
           ) : (
+            <>
             <div className="resource-agenda-scroll">
               <div className="resource-agenda">
                 <div className="resource-agenda-head">
@@ -285,6 +286,39 @@ export function CatalogResourceAgendaPage() {
                 ))}
               </div>
             </div>
+            <div className="resource-agenda-stack" data-testid="resource-agenda-stack">
+              {rows.map((row) => (
+                <section key={row.resource.id} aria-label={row.resource.name}>
+                  <h3>{row.resource.name}</h3>
+                  {row.resource.category ? <p className="text-xs text-muted-foreground">{row.resource.category}</p> : null}
+                  {row.blocks.length === 0 ? (
+                    <p className="agenda-empty-day">{t("catalog.agenda.free")}</p>
+                  ) : row.blocks.map((block) => {
+                    const label = occupantLabel(block.item, t("catalog.resourceAgenda.reserved"))
+                    const zone = block.item.timeZoneId
+                    const work = block.item.workStart && block.item.workEnd
+                      ? `${formatZonedTime(block.item.workStart, i18n.language, zone)}–${formatZonedTime(block.item.workEnd, i18n.language, zone)}`
+                      : t("catalog.agenda.unscheduled")
+                    return (
+                      <button
+                        key={block.key}
+                        type="button"
+                        className="agenda-stack-group"
+                        aria-pressed={block.item.orderId === selectedId}
+                        onClick={() => setSelectedId(block.item.orderId)}
+                      >
+                        <span className="agenda-stack-title">{label}</span>
+                        <span className="agenda-stack-row">
+                          <span>{t("catalog.resourceAgenda.panel.work")}</span>
+                          <time>{work}</time>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </section>
+              ))}
+            </div>
+            </>
           )}
         </div>
 
