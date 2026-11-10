@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react"
 import { ChevronRight, ShieldCheck } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,11 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { QuickEditSheet } from "@/components/ui/quick-edit-sheet"
-import { Textarea } from "@/components/ui/textarea"
 import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
@@ -34,7 +30,7 @@ import type {
   PermissionCatalogItemDto,
   RoleResponse,
 } from "@/features/users/schemas/roleSchemas"
-import { createRole, deleteRole } from "@/features/users/services/rolesService"
+import { deleteRole } from "@/features/users/services/rolesService"
 
 type PeopleRolesTabProps = {
   roles: readonly RoleResponse[]
@@ -56,45 +52,11 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
     actionTriggerRef,
   } = usePeopleMobileActions<RoleResponse>()
 
-  const [creating, setCreating] = useState(false)
-  const [createName, setCreateName] = useState("")
-  const [createDescription, setCreateDescription] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [rolePendingDelete, setRolePendingDelete] = useState<RoleResponse | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  function openCreate() {
-    actionTriggerRef.current = null
-    setCreateName("")
-    setCreateDescription("")
-    setCreating(true)
-  }
-
   function openEdit(role: RoleResponse) {
     void navigate(`/pessoas-e-acesso/funcoes/${role.id}`)
-  }
-
-  async function handleCreate() {
-    if (createName.trim().length < 2) return
-    setIsSubmitting(true)
-    try {
-      const created = await createRole({
-        name: createName.trim(),
-        description: createDescription.trim() ? createDescription.trim() : undefined,
-        permissionKeys: [],
-      })
-      toast.success(t("peopleAccess.toasts.roleCreated"))
-      setCreating(false)
-      await onRolesChanged()
-      await refresh()
-      void navigate(`/pessoas-e-acesso/funcoes/${created.id}?tab=permissions`)
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : t("peopleAccess.errors.createRole"),
-      )
-    } finally {
-      setIsSubmitting(false)
-    }
   }
 
   async function handleDelete() {
@@ -128,9 +90,12 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
           </p>
         </div>
         <Can permission="core.roles.manage">
-          <Button type="button" size="sm" onClick={openCreate}>
+          <Link
+            to="/pessoas-e-acesso/funcoes/nova"
+            className={buttonVariants({ size: "sm" })}
+          >
             {t("peopleAccess.roles.create")}
-          </Button>
+          </Link>
         </Can>
       </div>
 
@@ -143,7 +108,9 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
           learnMore={learnMore}
           action={
             <Can permission="core.roles.manage">
-              <Button onClick={openCreate}>{t("peopleAccess.roles.create")}</Button>
+              <Link to="/pessoas-e-acesso/funcoes/nova" className={buttonVariants()}>
+                {t("peopleAccess.roles.create")}
+              </Link>
             </Can>
           }
         />
@@ -254,7 +221,7 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
         })}
         isDeleting={isDeleting}
         returnFocus={actionTriggerRef}
-        restoreFocus={!creating}
+        restoreFocus
         onClose={() => {
           setActionRole(null)
           setRolePendingDelete(null)
@@ -273,45 +240,6 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
           void handleDelete()
         }}
       />
-
-      <QuickEditSheet
-        open={creating}
-        onOpenChange={(open) => {
-          if (isSubmitting) return
-          if (!open) setCreating(false)
-        }}
-        title={t("peopleAccess.roles.createTitle")}
-        description={t("peopleAccess.roles.editorDescription")}
-        onSave={() => {
-          void handleCreate()
-        }}
-        saving={isSubmitting}
-        saveDisabled={createName.trim().length < 2}
-        saveLabel={t("peopleAccess.roleEditor.createContinue")}
-      >
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="new-role-name">{t("peopleAccess.role")}</Label>
-            <Input
-              id="new-role-name"
-              value={createName}
-              disabled={isSubmitting}
-              onChange={(event) => setCreateName(event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="new-role-description">
-              {t("peopleAccess.roles.descriptionLabel")}
-            </Label>
-            <Textarea
-              id="new-role-description"
-              value={createDescription}
-              disabled={isSubmitting}
-              onChange={(event) => setCreateDescription(event.target.value)}
-            />
-          </div>
-        </div>
-      </QuickEditSheet>
 
       <AlertDialog
         open={rolePendingDelete !== null && (!isMobile || actionRole === null)}

@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -30,6 +31,7 @@ export function TaxonomyPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingCategory, setEditingCategory] = useState<TaxonomyCategory | null>(null)
   const [editingTag, setEditingTag] = useState<TaxonomyTag | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ kind: "category" | "tag"; id: string; name: string } | null>(null)
   const categoryForm = useForm<TaxonomyMutationValues>({ resolver: zodResolver(taxonomyMutationSchema), defaultValues: emptyCategory() })
   const tagForm = useForm<TaxonomyTagMutationValues>({ resolver: zodResolver(taxonomyTagMutationSchema), defaultValues: emptyTag() })
   const categoryValid = taxonomyMutationSchema.safeParse(useWatch({ control: categoryForm.control })).success
@@ -50,10 +52,18 @@ export function TaxonomyPage() {
   const orderedTags = useMemo(() => [...tags].sort((a, b) => a.name.localeCompare(b.name)), [tags])
   const openCategory = (value: TaxonomyCategory | null) => { setEditingCategory(value); categoryForm.reset(value ? { name: value.name, slug: value.slug, parentId: value.parentId, icon: value.icon, sortOrder: value.sortOrder } : emptyCategory()) }
   const openTag = (value: TaxonomyTag | null) => { setEditingTag(value); tagForm.reset(value ? { name: value.name, slug: value.slug } : emptyTag()) }
-  const remove = async (kind: "category" | "tag", id: string, name: string) => {
-    if (!window.confirm(t("taxonomy.deleteConfirm", { name }))) return
-    try { if (kind === "category") await deleteTaxonomyCategory(id); else await deleteTaxonomyTag(id); await reload(); toast.success(t("taxonomy.deleted")) }
-    catch (caught) { toast.error(caught instanceof Error ? caught.message : t("apiErrors.deleteTaxonomy")) }
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    const target = pendingDelete
+    setPendingDelete(null)
+    try {
+      if (target.kind === "category") await deleteTaxonomyCategory(target.id)
+      else await deleteTaxonomyTag(target.id)
+      await reload()
+      toast.success(t("taxonomy.deleted"))
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : t("apiErrors.deleteTaxonomy"))
+    }
   }
 
   return <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
@@ -61,20 +71,32 @@ export function TaxonomyPage() {
     {error ? <div className="flex min-w-0 flex-wrap items-center gap-2 text-destructive"><p>{error}</p><Button type="button" size="sm" variant="outline" onClick={() => void reload()}>{t("catalog.retry")}</Button></div> : null}
     <section className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
       <Section isEmpty={orderedCategories.length === 0 && !error} emptyTitle={t("taxonomy.emptyCategories")} emptyDescription={t("taxonomy.emptyCategoriesHint")} title={t("taxonomy.categories")} addLabel={t("taxonomy.newCategory")} canManage={canManage} loading={loading} onAdd={() => openCategory(null)}>
-        <ul className="space-y-2">{orderedCategories.map((item) => <li key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"><span className="min-w-0 flex-1 break-words font-medium">{item.name}<small className="block break-all text-xs font-normal text-muted-foreground">{item.slug}</small></span>{canManage ? <Actions onEdit={() => openCategory(item)} onDelete={() => void remove("category", item.id, item.name)} /> : null}</li>)}</ul>
+        <ul className="space-y-2">{orderedCategories.map((item) => <li key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"><span className="min-w-0 flex-1 break-words font-medium">{item.name}<small className="block break-all text-xs font-normal text-muted-foreground">{item.slug}</small></span>{canManage ? <Actions onEdit={() => openCategory(item)} onDelete={() => setPendingDelete({ kind: "category", id: item.id, name: item.name })} /> : null}</li>)}</ul>
         {canManage ? <Form {...categoryForm}><form className="space-y-3 border-t pt-3" onSubmit={categoryForm.handleSubmit(async (values) => { try { if (editingCategory) await updateTaxonomyCategory(editingCategory.id, { name: values.name, parentId: values.parentId, icon: values.icon, sortOrder: values.sortOrder }); else await createTaxonomyCategory(values); openCategory(null); await reload(); toast.success(t("taxonomy.saved")) } catch (caught) { toast.error(caught instanceof Error ? caught.message : t("apiErrors.saveTaxonomy")) } })}>
           <CategoryFields form={categoryForm} ordered={orderedCategories} editing={editingCategory} t={t} />
           <FormPrimaryButton className="w-full sm:w-auto" type="submit" isValid={categoryValid} loading={categoryForm.formState.isSubmitting}>{t("catalog.products.save")}</FormPrimaryButton>
         </form></Form> : null}
       </Section>
       <Section isEmpty={orderedTags.length === 0 && !error} emptyTitle={t("taxonomy.emptyTags")} emptyDescription={t("taxonomy.emptyTagsHint")} title={t("taxonomy.tags")} addLabel={t("taxonomy.newTag")} canManage={canManage} loading={loading} onAdd={() => openTag(null)}>
-        <ul className="space-y-2">{orderedTags.map((item) => <li key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"><span className="min-w-0 flex-1 break-words font-medium">{item.name}<small className="block break-all text-xs font-normal text-muted-foreground">{item.slug}</small></span>{canManage ? <Actions onEdit={() => openTag(item)} onDelete={() => void remove("tag", item.id, item.name)} /> : null}</li>)}</ul>
+        <ul className="space-y-2">{orderedTags.map((item) => <li key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"><span className="min-w-0 flex-1 break-words font-medium">{item.name}<small className="block break-all text-xs font-normal text-muted-foreground">{item.slug}</small></span>{canManage ? <Actions onEdit={() => openTag(item)} onDelete={() => setPendingDelete({ kind: "tag", id: item.id, name: item.name })} /> : null}</li>)}</ul>
         {canManage ? <Form {...tagForm}><form className="space-y-3 border-t pt-3" onSubmit={tagForm.handleSubmit(async (values) => { try { if (editingTag) await updateTaxonomyTag(editingTag.id, { name: values.name }); else await createTaxonomyTag(values); openTag(null); await reload(); toast.success(t("taxonomy.saved")) } catch (caught) { toast.error(caught instanceof Error ? caught.message : t("apiErrors.saveTaxonomy")) } })}>
           <TagFields form={tagForm} editing={editingTag} t={t} />
           <FormPrimaryButton className="w-full sm:w-auto" type="submit" isValid={tagValid} loading={tagForm.formState.isSubmitting}>{t("catalog.products.save")}</FormPrimaryButton>
         </form></Form> : null}
       </Section>
     </section>
+    <Dialog open={pendingDelete != null} onOpenChange={(open) => { if (!open) setPendingDelete(null) }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("common.delete")}</DialogTitle>
+          <DialogDescription>{t("taxonomy.deleteConfirm", { name: pendingDelete?.name ?? "" })}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setPendingDelete(null)}>{t("common.cancel")}</Button>
+          <Button type="button" variant="destructive" onClick={() => void confirmDelete()}>{t("common.delete")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 }
 

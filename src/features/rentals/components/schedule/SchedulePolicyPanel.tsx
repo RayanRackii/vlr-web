@@ -1,6 +1,6 @@
 import { CheckCircle2 } from "lucide-react"
 import { slotDurationMinutes } from "@/features/tenantPortal/lib/agendaDurationSelection"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Time24Input } from "@/components/Time24Input"
@@ -27,6 +27,7 @@ type SchedulePolicyPanelProps = {
   embedded?: boolean
   onSave: (input: UpdateSchedulePolicyInput) => Promise<void>
   onSeedSlotGrid: () => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 function toTimeInput(value: string | null | undefined, fallback: string): string {
@@ -86,6 +87,11 @@ function parseDurations(value: string): string | null {
   return values.join(",")
 }
 
+/** Saved durations drop spaces ("60, 90" → "60,90"). Compare that form. */
+function normalizeDurations(value: string): string {
+  return parseDurations(value) ?? value.trim()
+}
+
 function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
   if (assets.length <= 1) {
     return false
@@ -106,18 +112,18 @@ export function SchedulePolicyPanel({
   embedded,
   onSave,
   onSeedSlotGrid,
+  onDirtyChange,
 }: SchedulePolicyPanelProps) {
   const mixed = useMemo(() => isMixedPolicy(assets), [assets])
+  // Templates are omitted: applying a weekly rule refreshes them and must not
+  // remount a dirty hours draft. Saved policy fields still reset the form.
   const selectionKey = assets
     .map(
       (asset) =>
         `${asset.id}:${asset.schedulePolicy ?? "SlotGrid"}:${asset.openTime ?? ""}:${asset.closeTime ?? ""}:${asset.allowedDurationMinutes ?? ""}`,
     )
     .sort()
-    .join("|") +
-    `${loadingTemplates}|${templates.map((template) => (
-      `${template.id}:${template.isActive}:${template.startTime}:${template.endTime}`
-    )).sort().join("|")}`
+    .join("|") + `|${loadingTemplates ? "loading" : "ready"}`
 
   if (assets.length === 0) {
     return null
@@ -136,6 +142,7 @@ export function SchedulePolicyPanel({
       embedded={embedded}
       onSave={onSave}
       onSeedSlotGrid={onSeedSlotGrid}
+      onDirtyChange={onDirtyChange}
     />
   )
 }
@@ -151,27 +158,41 @@ function SchedulePolicyPanelForm({
   embedded = false,
   onSave,
   onSeedSlotGrid,
+  onDirtyChange,
 }: SchedulePolicyPanelProps & { mixed: boolean }) {
   const { t } = useTranslation()
   const first = assets[0]
   const templateValues = templateScheduleValues(first, templates)
-  const [policy, setPolicy] = useState<SchedulePolicy | null>(
-    mixed ? null : (first?.schedulePolicy ?? "SlotGrid"),
-  )
-  const [openTime, setOpenTime] = useState(
-    toTimeInput(first?.openTime, templateValues?.openTime ?? "08:00"),
-  )
-  const [closeTime, setCloseTime] = useState(
-    toTimeInput(first?.closeTime, templateValues?.closeTime ?? "22:00"),
-  )
-  const [durationMinutes, setDurationMinutes] = useState(
-    first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60",
-  )
-  const [slotGridDurations, setSlotGridDurations] = useState(
-    (first?.schedulePolicy ?? "SlotGrid") === "SlotGrid"
-      ? (first?.allowedDurationMinutes ?? "")
-      : "",
-  )
+  const initialPolicy = mixed ? null : (first?.schedulePolicy ?? "SlotGrid")
+  const initialOpenTime = toTimeInput(first?.openTime, templateValues?.openTime ?? "08:00")
+  const initialCloseTime = toTimeInput(first?.closeTime, templateValues?.closeTime ?? "22:00")
+  const initialDurationMinutes = first?.allowedDurationMinutes ?? templateValues?.durationMinutes ?? "60"
+  const initialSlotGridDurations = (first?.schedulePolicy ?? "SlotGrid") === "SlotGrid"
+    ? (first?.allowedDurationMinutes ?? "")
+    : ""
+  const [policy, setPolicy] = useState<SchedulePolicy | null>(initialPolicy)
+  const [openTime, setOpenTime] = useState(initialOpenTime)
+  const [closeTime, setCloseTime] = useState(initialCloseTime)
+  const [durationMinutes, setDurationMinutes] = useState(initialDurationMinutes)
+  const [slotGridDurations, setSlotGridDurations] = useState(initialSlotGridDurations)
+  // Null asset hours display as these defaults. Later template refreshes must
+  // not move the snapshot, or an untouched form looks dirty.
+  const [baseline] = useState({
+    policy: initialPolicy,
+    openTime: initialOpenTime,
+    closeTime: initialCloseTime,
+    durationMinutes: initialDurationMinutes,
+    slotGridDurations: initialSlotGridDurations,
+  })
+  const dirty = policy !== baseline.policy
+    || openTime !== baseline.openTime
+    || closeTime !== baseline.closeTime
+    || normalizeDurations(durationMinutes) !== normalizeDurations(baseline.durationMinutes)
+    || normalizeDurations(slotGridDurations) !== normalizeDurations(baseline.slotGridDurations)
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
   const [durationError, setDurationError] = useState<string | null>(null)
   const hasValidOpenHours = HH_MM.test(openTime) && HH_MM.test(closeTime)
   const hasExistingSchedule = loadingTemplates ||

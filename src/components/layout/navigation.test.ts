@@ -405,9 +405,22 @@ describe("firstPermittedProductPath", () => {
     expect(
       firstPermittedProductPath(
         ["rentals"],
-        ["rentals.schedule.read", "core.users.read"],
+        ["rentals.schedule.read", "rentals.assets.read", "core.users.read"],
       ),
     ).toBe("/configuracoes/agenda")
+  })
+
+  it("does not open the staff agenda without asset read", () => {
+    expect(
+      firstPermittedProductPath(["rentals"], ["rentals.schedule.read"]),
+    ).toBe("/catalogo/agenda-recursos")
+    expect(
+      filterNavigationItemsByAccess(
+        appNavigationItems,
+        ["rentals"],
+        ["rentals.schedule.read"],
+      ).map((item) => item.to),
+    ).not.toContain("/configuracoes/agenda")
   })
 
   it("uses the first allowed child when the parent path is not permitted", () => {

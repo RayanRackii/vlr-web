@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Estimated ready at",
         "notFeasible": "That time is not feasible for the selected resource.",
         "approveAndAllocate": "Approve and allocate",
+        "unitsForbidden": "Without access to units, approval cannot choose where to allocate.",
         "refusalTitle": "Cannot allocate",
         "approvalRule": "Approving reserves the resource for the order at that time.",
         "toastApproved": "Order approved and resource allocated."
@@ -1415,6 +1416,7 @@
         "workWindow": "Work window",
         "workFinished": "Finish work",
         "release": "Release",
+        "openAgenda": "Open the resource agenda",
         "cancelledHint": "This order was cancelled; finish or release the resource as needed.",
         "toastUpdated": "Resource usage updated."
       },
@@ -3904,7 +3906,7 @@
       "rentals.booking_policy.read": "View booking rules",
       "rentals.booking_policy.write": "Edit booking rules",
       "rentals.assets.read": "View rental resources",
-      "rentals.assets.write": "Edit schedule policy",
+      "rentals.assets.write": "Edit rental resources",
       "rentals.pricing.read": "View pricing",
       "rentals.pricing.write": "Edit pricing",
       "rentals.pricing.bulk_write": "Bulk-edit pricing",
@@ -3973,7 +3975,8 @@
       "products": "Exclusive products",
       "noOrders": "This customer has no orders.",
       "noGroups": "Not in any group.",
-      "noProducts": "No exclusive products."
+      "noProducts": "No exclusive products.",
+      "catalogDenied": "Orders, groups, or exclusive products need catalog access."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} of {{total}}",

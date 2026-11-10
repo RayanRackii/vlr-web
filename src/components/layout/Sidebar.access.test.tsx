@@ -68,6 +68,12 @@ describe("Sidebar access by role permissions", () => {
     expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
 
+  it("hides the agenda when the reader cannot list rental assets", () => {
+    renderSidebar(["rentals.schedule.read"])
+
+    expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
+  })
+
   it("shows Recursos and the agenda to a club admin", () => {
     renderSidebar([
       "core.dashboard.read",
@@ -110,7 +116,10 @@ it.each([
   if (path.startsWith("/pmoc/")) {
     expect(screen.getByRole("link", { name: "Meus planos" })).toBeVisible()
     expect(screen.getByRole("link", { name: "Novo plano" })).toBeVisible()
-    expect(screen.getByText("Planos de manutenção").parentElement).toHaveClass("text-foreground")
+    const maintenance = screen.getByText("Planos de manutenção")
+    expect(maintenance.parentElement).toHaveClass("text-foreground")
+    expect(maintenance).not.toHaveClass("truncate")
+    expect(maintenance).toHaveClass("break-words")
   }
 })
 

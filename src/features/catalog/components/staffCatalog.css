@@ -15,7 +15,7 @@
 .staff-catalog-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; max-width: 100%; }
 .staff-catalog button,
 .staff-catalog-editor button { min-height: 44px; }
-.staff-catalog-heading-actions button { border-radius: 11px; padding-inline: 16px; background: var(--primary); color: var(--primary-foreground); }
+.staff-catalog-heading-actions :is(button, a) { border-radius: 11px; padding-inline: 16px; background: var(--primary); color: var(--primary-foreground); text-decoration: none; }
 .staff-catalog :is(button, a, input, select, textarea):focus-visible,
 .staff-catalog-editor :is(button, input, select, textarea):focus-visible { outline: 3px solid var(--catalog-accent); outline-offset: 3px; }
 .staff-catalog-tabs { display: flex; gap: 4px; flex-wrap: wrap; max-width: 100%; border-bottom: 1px solid var(--border); margin: 18px 0 16px; scrollbar-width: thin; }
@@ -63,7 +63,8 @@
 .staff-catalog-status[data-tone="danger"] { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 14%, var(--card)); }
 .staff-catalog-actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
 .staff-catalog-actions button { border-radius: 10px; padding-inline: 12px; font-size: 13px; }
-.staff-catalog-action { width: 44px; min-width: 44px; padding-inline: 0; }
+.staff-catalog-action { display: inline-flex; align-items: center; justify-content: center; width: 44px; min-width: 44px; min-height: 44px; padding-inline: 0; }
+.staff-catalog-actions a.staff-catalog-action { border: 1px solid var(--border); border-radius: 10px; background: var(--background); color: var(--foreground); text-decoration: none; }
 .staff-catalog-assistant,
 .staff-catalog-assistant-inline {
   display: inline-flex;

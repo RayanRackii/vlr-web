@@ -192,7 +192,7 @@ export function AppShell({
               {/* The page body already renders its own H1; keep the top-bar title for
                   mobile (sidebar/nav hidden there) and demote it on larger screens so it
                   doesn't read as a duplicate heading. */}
-              <p className="truncate text-sm font-semibold tracking-tight lg:hidden">
+              <p className="whitespace-normal break-words text-sm font-semibold tracking-tight lg:hidden">
                 {pageTitle}
               </p>
               <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react"
+import { MemoryRouter } from "react-router-dom"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -87,9 +88,11 @@ function renderPanel(order: CatalogOrder, permissions: readonly string[] = ["cat
   const onOrderChange = vi.fn()
   const onReloadNeeded = vi.fn()
   render(
-    <TestPermissionProvider permissions={permissions}>
-      <CatalogOrderAllocationPanel order={order} onOrderChange={onOrderChange} onReloadNeeded={onReloadNeeded} />
-    </TestPermissionProvider>,
+    <MemoryRouter>
+      <TestPermissionProvider permissions={permissions}>
+        <CatalogOrderAllocationPanel order={order} onOrderChange={onOrderChange} onReloadNeeded={onReloadNeeded} />
+      </TestPermissionProvider>
+    </MemoryRouter>,
   )
   return { onOrderChange, onReloadNeeded }
 }
@@ -134,6 +137,40 @@ describe("CatalogOrderAllocationPanel", () => {
     await user.clear(screen.getByLabelText(minute))
     await user.type(screen.getByLabelText(minute), "0")
     expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
+  })
+
+  it("explains a units 403 instead of an empty unit list", async () => {
+    vi.mocked(getUnits).mockRejectedValue(new Error(i18n.t("rbac.errors.FORBIDDEN")))
+    renderPanel(BASE_ORDER)
+    expect(await screen.findByText(i18n.t("catalog.resourcePlanning.approvalPanel.unitsForbidden"))).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: UNIT.name })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.approvalPanel.approveAndAllocate") })).toBeDisabled()
+  })
+
+  it("does not treat a units load failure as missing permission", async () => {
+    vi.mocked(getUnits).mockRejectedValue(new Error("network"))
+    renderPanel(BASE_ORDER)
+    await waitFor(() => expect(getUnits).toHaveBeenCalled())
+    expect(screen.queryByText(i18n.t("catalog.resourcePlanning.approvalPanel.unitsForbidden"))).not.toBeInTheDocument()
+  })
+
+  it("links an allocated order to the resource agenda only with schedule read", async () => {
+    const order: CatalogOrder = {
+      ...BASE_ORDER,
+      status: "Approved",
+      productionSummary: "Scheduled",
+      items: [{ ...BASE_ORDER.items[0], productionSummary: "Scheduled", allocation: ALLOCATION }],
+    }
+    const agendaName = i18n.t("catalog.resourcePlanning.activeUse.openAgenda")
+    renderPanel(order)
+    expect(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.release") })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: agendaName })).not.toBeInTheDocument()
+
+    renderPanel(order, ["catalog.orders.manage", "catalog.orders.allocate", "rentals.schedule.read"])
+    expect(await screen.findByRole("link", { name: agendaName })).toHaveAttribute(
+      "href",
+      "/catalogo/agenda-recursos?date=2026-11-02",
+    )
   })
 
   it("does not use a locale-sensitive datetime field", async () => {

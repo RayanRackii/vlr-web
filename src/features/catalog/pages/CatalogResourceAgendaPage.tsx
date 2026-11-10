@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { CalendarDays, X } from "lucide-react"
 
@@ -11,6 +11,7 @@ import {
   agendaColumnLabels,
   buildDayColumns,
   buildResourceAgendaRows,
+  civilDateParam,
   civilToday,
   columnsToRange,
   formatDayLabel,
@@ -41,9 +42,12 @@ function occupantLabel(item: CatalogAgendaItem, reserved: string): string {
 export function CatalogResourceAgendaPage() {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
+  const [searchParams] = useSearchParams()
 
   const [view, setView] = useState<AgendaView>(initialView)
-  const [anchor, setAnchor] = useState<string>(() => civilToday(timeZoneId))
+  const [anchor, setAnchor] = useState<string>(
+    () => civilDateParam(searchParams.get("date")) ?? civilToday(timeZoneId),
+  )
   const [items, setItems] = useState<CatalogAgendaItem[]>([])
   const [resources, setResources] = useState<CatalogAgendaResource[]>([])
   const [category, setCategory] = useState<string>("")

@@ -149,16 +149,8 @@ describe("CreatePlanPage validity gate", () => {
       await screen.findByLabelText(i18n.t("pmoc.create.form.name")),
       "PMOC Split",
     )
-    await user.click(
-      screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") }),
-    )
-    await user.click(await screen.findByRole("option", { name: "Sede" }))
-    await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("pmoc.create.form.category"),
-      }),
-    )
-    await user.click(await screen.findByRole("option", { name: "Split" }))
+    await user.click(screen.getByRole("button", { name: "Sede" }))
+    await user.click(screen.getByRole("button", { name: "Split" }))
     await user.type(
       screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }),
       "30",
@@ -197,7 +189,7 @@ describe("CreatePlanPage validity gate", () => {
     renderPage()
     const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
     await user.type(name, "Plano de manutenção{Enter}")
-    const unit = screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") })
+    const unit = screen.getByRole("radiogroup", { name: i18n.t("pmoc.create.form.unit") })
     await waitFor(() => expect(unit).toHaveFocus())
     expect(unit).toHaveAttribute("aria-invalid", "true")
     expect(unit).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.unitRequired"))

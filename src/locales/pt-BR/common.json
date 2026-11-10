@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Previsão de conclusão",
         "notFeasible": "Esse horário não é viável para o recurso selecionado.",
         "approveAndAllocate": "Aprovar e alocar",
+        "unitsForbidden": "Sem acesso às unidades, a aprovação não pode escolher onde alocar.",
         "refusalTitle": "Não é possível alocar",
         "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
         "toastApproved": "Pedido aprovado e recurso alocado."
@@ -1415,6 +1416,7 @@
         "workWindow": "Janela de trabalho",
         "workFinished": "Concluir trabalho",
         "release": "Liberar",
+        "openAgenda": "Abrir a agenda do recurso",
         "cancelledHint": "Este pedido foi cancelado; finalize ou libere o recurso conforme necessário.",
         "toastUpdated": "Uso do recurso atualizado."
       },
@@ -3904,7 +3906,7 @@
       "rentals.booking_policy.read": "Ver regras de reserva",
       "rentals.booking_policy.write": "Editar regras de reserva",
       "rentals.assets.read": "Ver recursos de aluguel",
-      "rentals.assets.write": "Editar política de escala",
+      "rentals.assets.write": "Editar recursos de aluguel",
       "rentals.pricing.read": "Ver preços",
       "rentals.pricing.write": "Editar preços",
       "rentals.pricing.bulk_write": "Editar preços em lote",
@@ -3973,7 +3975,8 @@
       "products": "Produtos exclusivos",
       "noOrders": "Nenhum pedido deste cliente.",
       "noGroups": "Não está em nenhum grupo.",
-      "noProducts": "Nenhum produto exclusivo."
+      "noProducts": "Nenhum produto exclusivo.",
+      "catalogDenied": "Pedidos, grupos ou produtos exclusivos precisam de acesso ao catálogo."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",

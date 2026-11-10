@@ -48,6 +48,7 @@ describe("feature manifests", () => {
     ])
     expect(catalogManifest.routes.staff.map((route) => route.path)).toEqual([
       "/catalogo/configuracoes",
+      "/catalogo/produtos/novo",
       "/catalogo/produtos/:id/assistente",
       "/catalogo/produtos/:id",
       "/catalogo/produtos",
@@ -166,6 +167,7 @@ describe("feature manifests", () => {
     expect(usersManifest.routes.staff.map((route) => route.path)).toEqual([
       "/pessoas-e-acesso/clientes/:id",
       "/pessoas-e-acesso",
+      "/pessoas-e-acesso/funcoes/nova",
       "/pessoas-e-acesso/funcoes/:id",
       "/perfil",
     ])
