@@ -79,7 +79,7 @@ export function AgendaPage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">{t("nav.agenda")}</h1>
         <div role="group" aria-label={t("staffAgenda.view")} className="flex w-full flex-wrap gap-2 sm:w-auto">
