@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Estimated ready at",
         "notFeasible": "That time is not feasible for the selected resource.",
         "approveAndAllocate": "Approve and allocate",
+        "unitsForbidden": "Without access to units, approval cannot choose where to allocate.",
         "refusalTitle": "Cannot allocate",
         "approvalRule": "Approving reserves the resource for the order at that time.",
         "toastApproved": "Order approved and resource allocated."
@@ -1415,6 +1416,7 @@
         "workWindow": "Work window",
         "workFinished": "Finish work",
         "release": "Release",
+        "openAgenda": "Open the resource agenda",
         "cancelledHint": "This order was cancelled; finish or release the resource as needed.",
         "toastUpdated": "Resource usage updated."
       },
