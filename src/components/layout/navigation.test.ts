@@ -437,6 +437,15 @@ describe("firstPermittedProductPath", () => {
 
 describe("getPageTitleKey", () => {
   it.each([
+    ["/catalogo/agenda-recursos", "nav.catalogResourceAgenda"],
+    ["/catalogo/produtos", "nav.catalogProducts"],
+    ["/catalogo/agenda-produto", "nav.catalogProductAgenda"],
+    ["/catalogo/configuracoes", "nav.catalogSettings"],
+  ])("resolves the navigation destination title for %s", (path, titleKey) => {
+    expect(getPageTitleKey(path)).toBe(titleKey)
+  })
+
+  it.each([
     ["overview", "nav.sections.overview"],
     ["bookings", "nav.sections.bookings"],
     ["maintenance", "nav.sections.maintenance"],
@@ -466,6 +475,13 @@ describe("getPageTitleKey", () => {
     expect(getPageTitleKey("/admin/asset-families")).toBe(
       "nav.adminAssetFamilies",
     )
+  })
+
+  it.each([
+    ["/admin/users", "nav.adminUsers"],
+    ["/admin", "nav.adminTenants"],
+  ])("preserves the admin title for %s", (path, titleKey) => {
+    expect(getPageTitleKey(path)).toBe(titleKey)
   })
 
   it("resolves the unified notifications settings page", () => {
