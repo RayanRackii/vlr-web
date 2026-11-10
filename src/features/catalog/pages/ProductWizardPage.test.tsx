@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, Link, RouterProvider } from "react-router-dom"
@@ -144,7 +144,7 @@ describe("ProductWizardPage", () => {
   })
 
   it("keeps an unsaved offer until the leave is confirmed, and ignores modified clicks", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const confirm = vi.spyOn(window, "confirm")
     const user = userEvent.setup()
     try {
       const router = renderWizard()
@@ -160,7 +160,10 @@ describe("ProductWizardPage", () => {
       await user.clear(screen.getByRole("textbox", { name: i18n.t("catalog.products.form.price") }))
 
       await user.click(screen.getByRole("button", { name: i18n.t("catalog.productWizard.next") }))
-      expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+      const dialog = await screen.findByRole("alertdialog")
+      expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      expect(confirm).not.toHaveBeenCalled()
+      await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
       expect(router.state.location.search).toBe("?passo=offer")
       expect(name).toHaveValue("Kit festa revisado")
       expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false)
@@ -171,7 +174,7 @@ describe("ProductWizardPage", () => {
       }
       fireEvent.click(products, { ctrlKey: true })
       fireEvent.click(products, { metaKey: true })
-      expect(confirm).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
       expect(router.state.location.pathname).toContain("/assistente")
 
       const stepper = screen.getAllByRole("button", { name: i18n.t("catalog.productWizard.steps.access") })
@@ -180,10 +183,11 @@ describe("ProductWizardPage", () => {
         throw new Error("missing access step")
       }
       await user.click(stepper)
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: i18n.t("common.cancel") }))
       expect(router.state.location.search).toBe("?passo=offer")
 
-      confirm.mockReturnValue(true)
       await user.click(screen.getByRole("button", { name: i18n.t("catalog.productWizard.next") }))
+      await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: i18n.t("fullPage.leave") }))
       expect(router.state.location.search).toBe("?passo=access")
       expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
     } finally {
@@ -342,7 +346,7 @@ describe("ProductWizardPage", () => {
   })
 
   it("asks before a sidebar link or the browser back leaves a dirty offer", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const confirm = vi.spyOn(window, "confirm")
     const user = userEvent.setup()
     const offerPath = `/catalogo/produtos/${PRODUCT_ID}/assistente?passo=offer`
     const router = createMemoryRouter([
@@ -376,12 +380,15 @@ describe("ProductWizardPage", () => {
       const unload = new Event("beforeunload", { cancelable: true })
       expect(window.dispatchEvent(unload)).toBe(false)
       await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
-      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      const dialog = await screen.findByRole("alertdialog")
+      expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      expect(confirm).not.toHaveBeenCalled()
+      await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
       expect(router.state.location.pathname).toContain("/assistente")
       expect(description).toHaveValue("Nova descrição")
-      confirm.mockClear()
       await act(async () => { await router.navigate(-1) })
-      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      const backDialog = await screen.findByRole("alertdialog")
+      await user.click(within(backDialog).getByRole("button", { name: i18n.t("common.cancel") }))
       expect(router.state.location.pathname).toContain("/assistente")
       expect(description).toHaveValue("Nova descrição")
     } finally {
@@ -390,7 +397,7 @@ describe("ProductWizardPage", () => {
   })
 
   it("asks before leaving a dirty access step or a dirty resource step", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const confirm = vi.spyOn(window, "confirm")
     const user = userEvent.setup()
     function renderAt(path: string) {
       const router = createMemoryRouter([
@@ -423,16 +430,18 @@ describe("ProductWizardPage", () => {
       const access = renderAt(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=access`)
       await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.visibilityFilter.public") }))
       await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
-      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(await screen.findByRole("alertdialog")).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      expect(confirm).not.toHaveBeenCalled()
+      await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
       expect(access.router.state.location.search).toBe("?passo=access")
       access.unmount()
-      confirm.mockClear()
 
       const resource = renderAt(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=resource`)
       const duration = await screen.findByLabelText(i18n.t("catalog.resourcePlanning.fields.durationMinutesPerUnit"))
       fireEvent.change(duration, { target: { value: "90" } })
       await user.click(screen.getByRole("link", { name: i18n.t("nav.catalogOrders") }))
-      await waitFor(() => expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm")))
+      expect(await screen.findByRole("alertdialog")).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+      await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
       expect(resource.router.state.location.search).toBe("?passo=resource")
       resource.unmount()
     } finally {

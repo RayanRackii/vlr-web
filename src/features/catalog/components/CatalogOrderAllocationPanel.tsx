@@ -3,15 +3,9 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
@@ -27,6 +21,7 @@ import {
   CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
+import { composeWorkStart, type WorkStartParts } from "@/features/catalog/lib/workStartFields"
 import { getUnits } from "@/features/assets/services/unitsService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 
@@ -34,12 +29,16 @@ type CatalogOrderAllocationPanelProps = {
   order: CatalogOrder
   onOrderChange: (order: CatalogOrder) => void
   onReloadNeeded: () => void
+  resourceName?: string | null
+  preferredUnitId?: string | null
 }
 
 export function CatalogOrderAllocationPanel({
   order,
   onOrderChange,
   onReloadNeeded,
+  resourceName = null,
+  preferredUnitId = null,
 }: CatalogOrderAllocationPanelProps) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
@@ -60,6 +59,8 @@ export function CatalogOrderAllocationPanel({
         <ApprovalPanel
           order={order}
           itemId={schedulableItem.id}
+          resourceName={resourceName}
+          preferredUnitId={preferredUnitId}
           onOrderChange={onOrderChange}
           onReloadNeeded={onReloadNeeded}
         />
@@ -79,14 +80,20 @@ export function CatalogOrderAllocationPanel({
   )
 }
 
+const EMPTY_WORK_START: WorkStartParts = { day: "", month: "", year: "", hour: "", minute: "" }
+
 function ApprovalPanel({
   order,
   itemId,
+  resourceName,
+  preferredUnitId,
   onOrderChange,
   onReloadNeeded,
 }: {
   order: CatalogOrder
   itemId: string
+  resourceName: string | null
+  preferredUnitId: string | null
   onOrderChange: (order: CatalogOrder) => void
   onReloadNeeded: () => void
 }) {
@@ -94,7 +101,8 @@ function ApprovalPanel({
   const timeZoneId = useTenantTimeZone()
   const [units, setUnits] = useState<Unit[]>([])
   const [unitId, setUnitId] = useState<string | null>(null)
-  const [workStart, setWorkStart] = useState("")
+  const [workParts, setWorkParts] = useState<WorkStartParts>(EMPTY_WORK_START)
+  const workStart = composeWorkStart(workParts) ?? ""
   const [preview, setPreview] = useState<CatalogOrderAllocationPreview | null>(null)
   const [previewing, setPreviewing] = useState(false)
   const [approving, setApproving] = useState(false)
@@ -106,7 +114,12 @@ function ApprovalPanel({
       .then((list) => {
         if (cancelled) return
         setUnits(list)
-        if (list.length === 1) {
+        const preferred = preferredUnitId && list.some((unit) => unit.id === preferredUnitId)
+          ? preferredUnitId
+          : null
+        if (preferred) {
+          setUnitId(preferred)
+        } else if (list.length === 1) {
           setUnitId(list[0].id)
         }
       })
@@ -116,7 +129,7 @@ function ApprovalPanel({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [preferredUnitId])
 
   async function runPreview() {
     if (!unitId || !workStart) {
@@ -178,6 +191,9 @@ function ApprovalPanel({
   return (
     <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
       <h2 className="text-sm font-medium">{t("catalog.resourcePlanning.approvalPanel.title")}</h2>
+      {resourceName ? (
+        <p className="text-sm">{resourceName}</p>
+      ) : null}
       <Alert>
         <AlertDescription>
           {t("catalog.resourcePlanning.approvalPanel.previewHint")}
@@ -187,41 +203,44 @@ function ApprovalPanel({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
           <span>{t("catalog.resourcePlanning.approvalPanel.unit")}</span>
-          <Select
-            modal={false}
-            value={unitId}
-            onValueChange={(value) => {
-              if (typeof value === "string") {
-                setUnitId(value)
-                setRefusal(null)
-              }
-            }}
-            items={units.map((unit) => ({ value: unit.id, label: unit.name }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("catalog.resourcePlanning.approvalPanel.unitPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {units.map((unit) => (
-                <SelectItem key={unit.id} value={unit.id}>
-                  {unit.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-2" role="radiogroup" aria-label={t("catalog.resourcePlanning.approvalPanel.unit")}>
+            {units.map((unit) => (
+              <Button
+                key={unit.id}
+                type="button"
+                variant={unitId === unit.id ? "default" : "outline"}
+                className="min-h-11 justify-start"
+                aria-pressed={unitId === unit.id}
+                onClick={() => {
+                  setUnitId(unit.id)
+                  setRefusal(null)
+                }}
+              >
+                {unit.name}
+              </Button>
+            ))}
+          </div>
         </label>
-        <label className="grid gap-1 text-sm">
-          <span>{t("catalog.resourcePlanning.approvalPanel.workStart")}</span>
-          <Input
-            type="datetime-local"
-            value={workStart}
-            onChange={(event) => {
-              setWorkStart(event.target.value)
-              setPreview(null)
-              setRefusal(null)
-            }}
-          />
-        </label>
+        <fieldset className="grid gap-2">
+          <legend className="text-sm">{t("catalog.resourcePlanning.approvalPanel.workStart")}</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {(["day", "month", "year", "hour", "minute"] as const).map((part) => (
+              <label key={part} className="grid gap-1 text-sm">
+                <span>{t(`catalog.resourcePlanning.approvalPanel.${part}`)}</span>
+                <Input
+                  inputMode="numeric"
+                  value={workParts[part]}
+                  onChange={(event) => {
+                    const value = event.target.value.replace(/\D/g, "").slice(0, part === "year" ? 4 : 2)
+                    setWorkParts((current) => ({ ...current, [part]: value }))
+                    setPreview(null)
+                    setRefusal(null)
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </div>
 
       <div className="flex flex-wrap gap-2">

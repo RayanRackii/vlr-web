@@ -47,9 +47,11 @@ export type AppNavigationChildItem = {
   tabs?: readonly NavigationTab[]
   /** Canonical tenant module keys that unlock this child. Empty/absent = inherits the parent. */
   modules?: readonly string[]
-  /** Every key is required. An entry with none is hidden. */
+  /** Every key is required, unless `anyOf` is set. An entry with none is hidden. */
   permission?: string
   permissions?: readonly string[]
+  /** When true, any one declared key shows the item. */
+  anyOf?: boolean
 }
 
 export type AppNavigationItem = {
@@ -85,9 +87,11 @@ export type AppNavigationItem = {
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
   modules?: readonly string[]
-  /** Every key is required. An entry with none is hidden. */
+  /** Every key is required, unless `anyOf` is set. An entry with none is hidden. */
   permission?: string
   permissions?: readonly string[]
+  /** When true, any one declared key shows the item. */
+  anyOf?: boolean
 }
 
 export type AppNavigationSectionTitleKey =
@@ -177,7 +181,7 @@ export function declaredPermissionKeys(entry: {
 }
 
 function hasDeclaredAccess(
-  entry: { permission?: string; permissions?: readonly string[] },
+  entry: { permission?: string; permissions?: readonly string[]; anyOf?: boolean },
   granted: readonly string[],
 ): boolean {
   const required = declaredPermissionKeys(entry)
@@ -185,7 +189,8 @@ function hasDeclaredAccess(
     return false
   }
 
-  return required.every((key) => hasPermission(granted, key))
+  const holds = (key: string) => hasPermission(granted, key)
+  return entry.anyOf ? required.some(holds) : required.every(holds)
 }
 
 function moduleIsEnabled(

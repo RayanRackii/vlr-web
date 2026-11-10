@@ -4,6 +4,7 @@ import { Users } from "lucide-react"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { peopleAccessTabs } from "@/features/users/navigationTabs"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
+import { PortalCustomerPage } from "@/features/users/pages/PortalCustomerPage"
 import { RoleEditorPage } from "@/features/users/pages/RoleEditorPage"
 import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
 
@@ -11,6 +12,7 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  anyOf?: readonly string[]
 }
 
 export const usersManifest = {
@@ -27,9 +29,15 @@ export const usersManifest = {
   routes: {
     staff: [
       {
+        path: "/pessoas-e-acesso/clientes/:id",
+        element: <PortalCustomerPage />,
+        permission: "core.customers.read",
+      },
+      {
         path: "/pessoas-e-acesso",
         element: <PeopleAccessPage />,
         permission: "core.users.read",
+        anyOf: ["core.customers.read"],
       },
       {
         path: "/pessoas-e-acesso/funcoes/:id",

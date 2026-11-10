@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Link } from "react-router-dom"
 import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -169,7 +170,9 @@ export function PeopleCustomersTab() {
                   <div className="people-person">
                     <span className="people-avatar" aria-hidden>{customer.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
                     <div className="min-w-0">
-                      <p className="people-person-name">{customer.name}</p>
+                      <Link className="people-person-name inline-flex min-h-11 items-center underline-offset-4 hover:underline" to={`/pessoas-e-acesso/clientes/${customer.id}`}>
+                        {customer.name}
+                      </Link>
                       <p className="people-person-email">{customer.email ?? "—"}</p>
                     </div>
                   </div>

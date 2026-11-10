@@ -21,6 +21,11 @@ vi.mock("@/features/notifications/services/notificationChannelConfigService", ()
   updateNotificationChannelConfig: vi.fn(),
 }))
 
+vi.mock("@/features/catalog/services/catalogService", () => ({
+  listCatalogNotifications: vi.fn().mockResolvedValue([]),
+  resendCatalogNotification: vi.fn(),
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -377,5 +382,15 @@ describe("NotificationsSettingsPage", () => {
     expect(
       screen.getByText(i18n.t("notifications.settings.emailDefault")),
     ).toBeInTheDocument()
+  })
+
+  it("shows channel controls and the delivery history on the same page", async () => {
+    renderPage([...WRITE_PERMS, "catalog.notifications.read"])
+
+    expect(await screen.findByRole("heading", { name: i18n.t("notifications.settings.deliveries") })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: i18n.t("notifications.settings.title") })).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("notifications.settings.subtitleBoth"))).toBeInTheDocument()
+    expect(screen.getByRole("switch", { name: toggleName("catalog.events.orderCreated", "Email") })).toBeInTheDocument()
+    expect(await screen.findByText(i18n.t("catalog.notifications.empty"))).toBeInTheDocument()
   })
 })

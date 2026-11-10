@@ -49,6 +49,7 @@
     "discard": "Discard",
     "save": "Save",
     "leaveConfirm": "You have unsaved changes. Leave anyway?",
+    "leave": "Leave",
     "openFullEdit": "Open full edit →",
     "advanced": {
       "title": "Advanced",
@@ -915,7 +916,8 @@
       "orderPreparing": "Order preparing",
       "orderReady": "Order ready",
       "orderRejected": "Order rejected",
-      "orderCancelledBySupplier": "Order canceled by supplier"
+      "orderCancelledBySupplier": "Order canceled by supplier",
+      "orderCancelledByCustomer": "Order canceled by the customer"
     },
     "products": {
       "title": "Products",
@@ -1390,6 +1392,13 @@
         "unit": "Unit",
         "unitPlaceholder": "Select a unit",
         "workStart": "Work start",
+        "day": "Day",
+        "month": "Month",
+        "year": "Year",
+        "hour": "Hour",
+        "minute": "Minute",
+        "resourceNamed": "Resource: {{name}} · {{minutes}} min",
+        "resourceUnset": "This item's resource has not been chosen yet.",
         "preview": "Preview",
         "workWindow": "Work window",
         "occupiedWindow": "Occupied window",
@@ -1526,6 +1535,8 @@
     "settings": {
       "title": "Notifications",
       "subtitle": "Choose notification channels per event. Only active modules for this workspace are listed.",
+      "subtitleBoth": "Notification channels and the delivery history for this workspace.",
+      "deliveries": "Deliveries",
       "emailDefault": "Email notifications for customers start on for new organizations. You can turn them off here.",
       "empty": "No notification modules are active in this workspace.",
       "inAppAlwaysOn": "In-app always on",
@@ -2674,6 +2685,14 @@
       "status": {
         "done": "Completed",
         "pending": "Pending"
+      }
+    },
+    "portalReadiness": {
+      "title": "Customer portal",
+      "description": "Customers still cannot find what they can book or buy.",
+      "items": {
+        "portalMenu": "Customer menu",
+        "emptyGroup": "Group with no customers"
       }
     },
     "sections": {
@@ -3946,6 +3965,15 @@
       "searchTooShort": "Type at least 2 characters.",
       "emptySearch": "No results for this search.",
       "emptySearchDescription": "No customer matches that name or email."
+    },
+    "customerPage": {
+      "notFound": "Customer",
+      "orders": "Orders",
+      "groups": "Groups",
+      "products": "Exclusive products",
+      "noOrders": "This customer has no orders.",
+      "noGroups": "Not in any group.",
+      "noProducts": "No exclusive products."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} of {{total}}",

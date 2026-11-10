@@ -13,12 +13,32 @@ vi.mock("@/features/rentals/services/scheduleService", () => ({
   listAdminRentalAssets: vi.fn(),
 }))
 
+vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({
+  listTenantModuleMenuItems: vi.fn(),
+}))
+
+vi.mock("@/features/catalog/services/catalogService", () => ({
+  listCatalogProducts: vi.fn(),
+  listCustomerGroups: vi.fn(),
+  getCatalogProductAccess: vi.fn(),
+}))
+
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
+import {
+  getCatalogProductAccess,
+  listCatalogProducts,
+  listCustomerGroups,
+} from "@/features/catalog/services/catalogService"
 import { getRentalsReadiness } from "@/features/rentals/services/rentalsReadinessService"
 import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tenantPortalService"
 
 const getReadiness = vi.mocked(getRentalsReadiness)
 const listAssets = vi.mocked(listAdminRentalAssets)
+const listMenu = vi.mocked(listTenantModuleMenuItems)
+const listProducts = vi.mocked(listCatalogProducts)
+const listGroups = vi.mocked(listCustomerGroups)
+const getAccess = vi.mocked(getCatalogProductAccess)
 
 function renderCard(options: {
   activeModules?: readonly string[]
@@ -40,7 +60,14 @@ describe("RentalsReadinessCard", () => {
   beforeEach(() => {
     getReadiness.mockReset()
     listAssets.mockReset()
+    listMenu.mockReset()
+    listProducts.mockReset()
+    listGroups.mockReset()
+    getAccess.mockReset()
     listAssets.mockResolvedValue([])
+    listMenu.mockResolvedValue([])
+    listProducts.mockResolvedValue([])
+    listGroups.mockResolvedValue([])
   })
 
   it("links each incomplete setup item to its configuration screen", async () => {
@@ -228,5 +255,41 @@ describe("RentalsReadinessCard", () => {
       expect(getReadiness).toHaveBeenCalledTimes(2)
     })
     expect(screen.queryByRole("heading", { name: i18n.t("dashboard.rentalsReadiness.title") })).not.toBeInTheDocument()
+  })
+
+  it("keeps the customer menu check when rentals setup is already ready", async () => {
+    getReadiness.mockResolvedValue({ ready: true, items: [] })
+    listMenu.mockResolvedValue([
+      { moduleName: "rentals", isActive: false },
+    ] as never)
+
+    renderCard({
+      activeModules: ["rentals"],
+      permissions: ["rentals.assets.read", "core.module_menu.read"],
+    })
+
+    expect(await screen.findByRole("link", { name: i18n.t("dashboard.portalReadiness.items.portalMenu") })).toHaveAttribute("href", "/configuracoes/menu")
+  })
+
+  it("flags an empty granted group for a catalog tenant", async () => {
+    listProducts.mockResolvedValue([
+      { id: "product-1", name: "Kit", visibility: "Restricted" },
+    ] as never)
+    listGroups.mockResolvedValue([
+      { id: "group-1", name: "Sócios", memberCustomerIds: [] },
+    ] as never)
+    getAccess.mockResolvedValue({
+      visibility: "Restricted",
+      customerIds: [],
+      groupIds: ["group-1"],
+    } as never)
+
+    renderCard({
+      activeModules: ["catalog"],
+      permissions: ["catalog.products.read"],
+    })
+
+    expect(await screen.findByRole("link", { name: i18n.t("dashboard.portalReadiness.items.emptyGroup") })).toHaveAttribute("href", "/catalogo/grupos/group-1")
+    expect(getReadiness).not.toHaveBeenCalled()
   })
 })

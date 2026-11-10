@@ -49,6 +49,7 @@
     "discard": "Descartar",
     "save": "Guardar",
     "leaveConfirm": "Tienes cambios sin guardar. ¿Salir de todos modos?",
+    "leave": "Salir",
     "openFullEdit": "Abrir edición completa →",
     "advanced": {
       "title": "Avanzado",
@@ -915,7 +916,8 @@
       "orderPreparing": "Pedido en preparación",
       "orderReady": "Pedido listo",
       "orderRejected": "Pedido rechazado",
-      "orderCancelledBySupplier": "Pedido cancelado por el proveedor"
+      "orderCancelledBySupplier": "Pedido cancelado por el proveedor",
+      "orderCancelledByCustomer": "Pedido cancelado por el cliente"
     },
     "products": {
       "title": "Productos",
@@ -1390,6 +1392,13 @@
         "unit": "Unidad",
         "unitPlaceholder": "Selecciona una unidad",
         "workStart": "Inicio del trabajo",
+        "day": "Día",
+        "month": "Mes",
+        "year": "Año",
+        "hour": "Hora",
+        "minute": "Minuto",
+        "resourceNamed": "Recurso: {{name}} · {{minutes}} min",
+        "resourceUnset": "El recurso de este ítem todavía no fue elegido.",
         "preview": "Previsualizar",
         "workWindow": "Ventana de trabajo",
         "occupiedWindow": "Ventana ocupada",
@@ -1526,6 +1535,8 @@
     "settings": {
       "title": "Notificaciones",
       "subtitle": "Elija los canales de aviso por evento. Solo aparecen los módulos activos de este entorno.",
+      "subtitleBoth": "Canales de aviso y el historial de entregas de este entorno.",
+      "deliveries": "Entregas",
       "emailDefault": "Las notificaciones por correo para los clientes empiezan activadas en organizaciones nuevas. Puede desactivarlas aquí.",
       "empty": "Ningún módulo con notificaciones está activo en este entorno.",
       "inAppAlwaysOn": "En la app siempre activo",
@@ -2674,6 +2685,14 @@
       "status": {
         "done": "Completado",
         "pending": "Pendiente"
+      }
+    },
+    "portalReadiness": {
+      "title": "Portal del cliente",
+      "description": "El cliente todavía no encuentra lo que puede reservar o comprar.",
+      "items": {
+        "portalMenu": "Menú del cliente",
+        "emptyGroup": "Grupo sin clientes"
       }
     },
     "sections": {
@@ -3946,6 +3965,15 @@
       "searchTooShort": "Escriba al menos 2 caracteres.",
       "emptySearch": "Ningún resultado para esta búsqueda.",
       "emptySearchDescription": "Ningún cliente coincide con ese nombre o e-mail."
+    },
+    "customerPage": {
+      "notFound": "Cliente",
+      "orders": "Pedidos",
+      "groups": "Grupos",
+      "products": "Productos exclusivos",
+      "noOrders": "Este cliente no tiene pedidos.",
+      "noGroups": "No está en ningún grupo.",
+      "noProducts": "Ningún producto exclusivo."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",

@@ -120,6 +120,31 @@ export function groupPermissionsByModule(
 
 export type PermissionRouteAccess = "loading" | "allow" | "deny"
 
+/** `anyOf` opens the route when the user holds any listed key. Otherwise every key is required. */
+export function holdsRoutePermission(
+  input: {
+    permission?: string
+    permissions?: readonly string[]
+    anyOf?: readonly string[]
+  },
+  can: (key: string) => boolean,
+): boolean {
+  const required: string[] = []
+  if (input.permission) {
+    required.push(input.permission)
+  }
+  for (const key of input.permissions ?? []) {
+    if (!required.includes(key)) {
+      required.push(key)
+    }
+  }
+  const alternatives = input.anyOf ?? []
+  if (alternatives.length > 0) {
+    return [...required, ...alternatives].some((key) => can(key))
+  }
+  return required.length > 0 && required.every((key) => can(key))
+}
+
 export function resolvePermissionRouteAccess(options: {
   isLoading: boolean
   hasPermission: boolean

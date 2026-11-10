@@ -49,6 +49,7 @@
     "discard": "Descartar",
     "save": "Salvar",
     "leaveConfirm": "Você tem alterações não salvas. Deseja sair mesmo assim?",
+    "leave": "Sair",
     "openFullEdit": "Abrir edição completa →",
     "advanced": {
       "title": "Avançado",
@@ -915,7 +916,8 @@
       "orderPreparing": "Pedido em preparação",
       "orderReady": "Pedido pronto",
       "orderRejected": "Pedido recusado",
-      "orderCancelledBySupplier": "Pedido cancelado pelo fornecedor"
+      "orderCancelledBySupplier": "Pedido cancelado pelo fornecedor",
+      "orderCancelledByCustomer": "Pedido cancelado pelo cliente"
     },
     "products": {
       "title": "Produtos",
@@ -1390,6 +1392,13 @@
         "unit": "Unidade",
         "unitPlaceholder": "Selecione uma unidade",
         "workStart": "Início do trabalho",
+        "day": "Dia",
+        "month": "Mês",
+        "year": "Ano",
+        "hour": "Hora",
+        "minute": "Minuto",
+        "resourceNamed": "Recurso: {{name}} · {{minutes}} min",
+        "resourceUnset": "O recurso deste item ainda não foi escolhido.",
         "preview": "Pré-visualizar",
         "workWindow": "Janela de trabalho",
         "occupiedWindow": "Janela ocupada",
@@ -1526,6 +1535,8 @@
     "settings": {
       "title": "Notificações",
       "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos neste ambiente.",
+      "subtitleBoth": "Canais de aviso e o histórico de entregas deste ambiente.",
+      "deliveries": "Entregas",
       "emailDefault": "As notificações por e-mail para clientes começam ligadas em organizações novas. Você pode desligá-las aqui.",
       "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
       "inAppAlwaysOn": "No app sempre ativo",
@@ -2674,6 +2685,14 @@
       "status": {
         "done": "Concluído",
         "pending": "Pendente"
+      }
+    },
+    "portalReadiness": {
+      "title": "Portal do cliente",
+      "description": "O cliente ainda não encontra o que pode reservar ou comprar.",
+      "items": {
+        "portalMenu": "Menu do cliente",
+        "emptyGroup": "Grupo sem clientes"
       }
     },
     "sections": {
@@ -3946,6 +3965,15 @@
       "searchTooShort": "Digite pelo menos 2 caracteres.",
       "emptySearch": "Nenhum resultado para esta busca.",
       "emptySearchDescription": "Nenhum cliente corresponde a esse nome ou e-mail."
+    },
+    "customerPage": {
+      "notFound": "Cliente",
+      "orders": "Pedidos",
+      "groups": "Grupos",
+      "products": "Produtos exclusivos",
+      "noOrders": "Nenhum pedido deste cliente.",
+      "noGroups": "Não está em nenhum grupo.",
+      "noProducts": "Nenhum produto exclusivo."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",

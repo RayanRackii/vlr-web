@@ -337,6 +337,14 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Diretório do cliente e aviso de cancelamento (WEB):** a ficha do cliente pagina o diretório de 50 em 50 e mostra erro quando uma lista falha. Pessoas e acesso abre para quem só tem `core.customers.read`; a aba Clientes depende só dessa chave. O Admin de sistema continua sem ela de propósito (grant explícito, fora do wildcard). `/catalogo/notificacoes` redireciona sem permissão própria. O evento `catalog.order.cancelled_by_customer` ganha tradução. |
+
+| 2026-11-09 | **Uma página de notificações e prontidão do portal (WEB):** Avisos de vendas abre a mesma página de Avisos gerais, com canais e entregas. Quem só lê entregas também entra. A prontidão do início ganha o menu do cliente e o grupo sem clientes, mesmo quando os aluguéis já estão prontos. |
+
+| 2026-11-09 | **Página do cliente do portal (WEB):** `/pessoas-e-acesso/clientes/:id` junta pedidos, grupos e produtos exclusivos. O nome na lista abre essa página. Sem API nova. |
+
+| 2026-11-09 | **Pedido nomeia o recurso e saída com diálogo (WEB):** o pedido mostra o recurso e a duração; aprovar em um clique continua quando não há agendamento. O horário é dia, mês, ano, hora e minuto, sem `datetime-local`. Sair do editor ou do assistente com rascunho abre um diálogo do produto; Cancelar fica na página. O aviso de fechar a aba continua nativo. |
+
 | 2026-11-09 | **Produtos sem rolagem a 1280 e guarda do assistente (WEB):** a tabela de produtos cabe ao lado da sidebar aberta em 1280 e 1440; ações viram ícones com nome acessível e o Assistente fica um botão na linha. Abaixo de 1440, categorias e tags saem da tabela. O assistente pergunta antes de sair por link da sidebar, mudança de passo, voltar do navegador e fechar a aba, nos passos Oferta, Quem compra e Recurso. |
 
 | 2026-11-09 | **Assistente do produto, save em andamento (WEB):** Avançar, o stepper e Concluir ficam bloqueados e mostram "Salvando…" enquanto o passo grava, inclusive o reload. Um reload tardio não remonta a oferta nem apaga um rascunho digitado depois. |

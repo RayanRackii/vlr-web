@@ -503,6 +503,16 @@ describe("PeopleAccessPage", () => {
     expect(toastError).toHaveBeenCalledWith(message)
   })
 
+  it("opens the customer directory for a reader who cannot list staff", async () => {
+    listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
+    renderPage(["core.customers.read"])
+
+    expect(await screen.findByRole("button", { name: i18n.t("peopleAccess.tabs.customers") })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
+    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(listTenantMembersMock).not.toHaveBeenCalled()
+  })
+
   it("hides the portal customers tab without core.customers.read", async () => {
     renderPage(READ_USERS)
 
