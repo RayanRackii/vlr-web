@@ -255,20 +255,24 @@ describe("People mobile actions", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
-  it.each([
-    ["role", "Recepção", "Nova função"],
-    ["field", "Data de nascimento", "Adicionar campo"],
-  ])("returns focus to creation after using a %s row", async (kind, name, createLabel) => {
+  it("links role creation after closing a row, and returns focus to field creation", async () => {
     const user = userEvent.setup()
-    if (kind === "role") renderRoles()
-    else render(<RegistrationFieldsManager canWrite />)
-    await user.click(await screen.findByRole("button", { name }))
+    renderRoles()
+    await user.click(await screen.findByRole("button", { name: "Recepção" }))
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancelar" }))
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(screen.getByRole("link", { name: "Nova função" })).toHaveAttribute(
+      "href",
+      "/pessoas-e-acesso/funcoes/nova",
+    )
 
-    const create = screen.getByRole("button", { name: createLabel })
+    render(<RegistrationFieldsManager canWrite />)
+    await user.click(await screen.findByRole("button", { name: "Data de nascimento" }))
+    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancelar" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    const create = screen.getByRole("button", { name: "Adicionar campo" })
     await user.click(create)
-    await screen.findByRole("dialog", { name: createLabel })
+    await screen.findByRole("dialog", { name: "Adicionar campo" })
     await user.keyboard("{Escape}")
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
     await waitFor(() => expect(create).toHaveFocus())
