@@ -6,6 +6,7 @@ import {
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
 import { matchModuleIntro, type ModuleIntro, type ModuleIntroKey } from "./navigationIntros"
+import { matchNavigationPath } from "./navigationMatching"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
@@ -393,52 +394,12 @@ export function getPageTitleKey(
     return "account.profile"
   }
 
-  if (pathname.startsWith("/admin/asset-families")) {
-    return "nav.adminAssetFamilies"
-  }
-
-  if (pathname.startsWith("/admin/users")) {
-    return "nav.adminUsers"
-  }
-
-  if (pathname.startsWith("/admin")) {
-    return "nav.adminTenants"
-  }
-
-  if (pathname.startsWith("/catalogo/grupos")) {
-    return "nav.catalogCustomerGroups"
-  }
-
-  if (pathname.startsWith("/catalogo/notificacoes")) {
-    return "nav.catalogNotifications"
-  }
-
-  if (pathname.startsWith("/catalogo/solicitacoes")) {
-    return "nav.catalogRequests"
-  }
-
-  if (pathname.startsWith("/catalogo/pedidos")) {
-    return "nav.catalogOrders"
-  }
-
   if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
     return "nav.rentalsResourceWizard"
   }
 
   if (/^\/catalogo\/produtos\/[^/]+\/assistente\/?$/.test(pathname)) {
     return "nav.catalogProductWizard"
-  }
-
-  if (pathname.startsWith("/catalogo")) {
-    return "nav.catalogProducts"
-  }
-
-  if (pathname.startsWith("/os/")) {
-    return "nav.workOrders"
-  }
-
-  if (pathname.startsWith("/pessoas-e-acesso")) {
-    return "nav.peopleAccess"
   }
 
   if (pathname.startsWith("/pmoc/biblioteca/")) {
@@ -453,26 +414,20 @@ export function getPageTitleKey(
     return "nav.pmocPlanDetail"
   }
 
-  for (const item of appNavigationItems) {
-    const matchedTab = item.tabs?.find((tab) => tab.to === pathname)
-    if (matchedTab) return matchedTab.labelKey
+  // Keep the custom-plan page title at its original URL.
+  if (pathname === "/pmoc/novo") return "nav.pmocNew"
 
-    if (item.children) {
-      const childTab = item.children.flatMap((child) => child.tabs ?? []).find((tab) => tab.to === pathname)
-      // The custom-plan tab keeps the existing page title for its original URL.
-      if (childTab) return pathname === "/pmoc/novo" ? "nav.pmocNew" : childTab.labelKey
+  const match = matchNavigationPath(appNavigationItems, pathname)
+  if (match) return match.tab?.labelKey ?? match.child?.labelKey ?? match.item.labelKey
 
-      const matchedChild = item.children.find((child) => child.to === pathname)
-
-      if (matchedChild) {
-        return matchedChild.labelKey
-      }
-    }
-
-    if (item.to === pathname) {
-      return item.labelKey
-    }
+  // Platform admin destinations are outside the app navigation catalog.
+  if (pathname === "/admin/asset-families" || pathname.startsWith("/admin/asset-families/")) {
+    return "nav.adminAssetFamilies"
   }
+  if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) {
+    return "nav.adminUsers"
+  }
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return "nav.adminTenants"
 
   return "app.name"
 }
