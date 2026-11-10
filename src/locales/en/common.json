@@ -92,6 +92,12 @@
     "audienceRestricted": "Restricted",
     "open": "Steps",
     "editAudience": "Edit on the product",
+    "openProduct": "Open product",
+    "openResource": "Open resource",
+    "resourceTitle": "Resource used",
+    "followsQueue": "The queue follows the resource.",
+    "queueOffSummary": "Queue off",
+    "queueOnSummary": "Queue on",
     "productsTitle": "Products that use this resource",
     "publication": {
       "published": "Customers can already find this item in the portal.",

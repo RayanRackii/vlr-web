@@ -401,7 +401,7 @@ export function getPageTitleKey(
     return "nav.rentalsResourceWizard"
   }
 
-  if (/^\/catalogo\/produtos\/[^/]+\/assistente\/?$/.test(pathname)) {
+  if (/^\/catalogo\/produtos\/[^/]+\/(assistente|passos)\/?$/.test(pathname)) {
     return "nav.catalogProductWizard"
   }
 
