@@ -902,6 +902,7 @@
     },
     "deliveryStatus": {
       "Queued": "Queued",
+      "Sending": "Sending",
       "Sent": "Sent",
       "Delivered": "Delivered",
       "Failed": "Failed"
@@ -1243,6 +1244,23 @@
       "empty": "No deliveries.",
       "resend": "Resend",
       "toastResent": "Resend queued.",
+      "toastResentSent": "Notification resent.",
+      "toastResendFailed": "The resend failed.",
+      "toastResendSending": "Resend in progress.",
+      "attempts": "Attempts",
+      "attemptsTitle": "Attempts",
+      "attemptCount": "{{count}}",
+      "attemptColumns": {
+        "number": "Attempt",
+        "date": "Date",
+        "outcome": "Outcome",
+        "error": "Error"
+      },
+      "attemptOutcome": {
+        "Success": "Success",
+        "TransientFailure": "Temporary failure",
+        "PermanentFailure": "Permanent failure"
+      },
       "toastChannelSaved": "Channel updated.",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "columns": {
