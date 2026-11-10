@@ -1,4 +1,43 @@
 {
+  "staffAgenda": {
+    "view": "Visão da agenda",
+    "dia": "Dia",
+    "semana": "Semana",
+    "dateNavigation": "Navegação por data",
+    "previous": "Anterior",
+    "today": "Hoje",
+    "next": "Próximo",
+    "filters": "Filtros da agenda",
+    "recurso": "Recurso",
+    "produto": "Produto",
+    "pedido": "Pedido",
+    "tipo": "Tipo",
+    "all": "Todos",
+    "clear": "Limpar filtros",
+    "applied_zero": "Nenhum filtro aplicado",
+    "applied_one": "{{count}} filtro aplicado",
+    "applied_other": "{{count}} filtros aplicados",
+    "loading": "Carregando opções de {{label}}…",
+    "loadError": "Não foi possível carregar opções de {{label}}.",
+    "placeholder": "A visão da semana estará disponível em breve.",
+    "grid": "Grade do dia",
+    "gridLoading": "Carregando a grade do dia…",
+    "gridError": "Não foi possível carregar a grade.",
+    "emptyDay": "Sem atividades neste dia",
+    "createReservation": "Criar reserva nesta sala",
+    "blockPeriod": "Bloquear período",
+    "detail": "Detalhes do bloco selecionado",
+    "closeDetail": "Fechar detalhes",
+    "openReservations": "Reservas",
+    "when": "Horário",
+    "customer": "Cliente",
+    "types": {
+      "reserva": "Reserva",
+      "pedido": "Pedido",
+      "manutencao": "Manutenção",
+      "bloqueio": "Bloqueio"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Área autenticada"
@@ -1917,6 +1956,17 @@
     }
   },
   "nav": {
+    "agenda": "Agenda",
+    "sidebar": {
+      "people": "Pessoas",
+      "groups": "Grupos",
+      "map": "Mapa",
+      "sales": "Vendas",
+      "notifications": "Notificações"
+    },
+    "customerHome": "Início",
+    "customerBook": "Reservar",
+    "customerActivities": "Minhas atividades",
     "breadcrumbLabel": "Caminho de navegação",
     "details": "Detalhes",
     "backTo": "Voltar para {{page}}",
@@ -1957,6 +2007,10 @@
     "collapseMenu": "Recolher menu",
     "expandMenu": "Expandir menu",
     "sections": {
+      "settings": "Configurações",
+      "portal": "Portal",
+      "customers": "Clientes",
+      "registration": "Cadastro",
       "overview": "Início",
       "peoplePortal": "Pessoas e portal",
       "operations": "Operação",

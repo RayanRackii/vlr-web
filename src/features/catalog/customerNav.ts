@@ -1,4 +1,4 @@
-import { CircleUser, ClipboardList, FileText, ListChecks, ShoppingBag } from "lucide-react"
+import { CircleUser, ClipboardList, FileText, House, ListChecks, ShoppingBag, ShoppingCart } from "lucide-react"
 import type { TFunction } from "i18next"
 
 import {
@@ -230,13 +230,43 @@ export function buildCustomerNavItems(
   return items
 }
 
-/**
- * Module links plus the signed-in account links.
- * Minhas reservas is present when the menu includes rentals and points at that
- * agenda with {@link CUSTOMER_MY_RESERVATIONS_HASH}. Perfil always points at
- * `app/perfil`.
- */
+/** Fixed shell destinations; menu/module availability is resolved before this builder. */
 export function buildCustomerShellNavItems(
+  subdomain: string,
+  menu: readonly ModuleMenuItem[],
+  t: TFunction,
+): CustomerNavItem[] {
+  const available = menu.filter((item) => item.isActive)
+  const rentals = available.find((item) => toCanonicalModuleName(item.moduleName) === "rentals")
+  const catalog = available.some((item) => isCatalogModuleName(item.moduleName))
+  const items: CustomerNavItem[] = [{
+    id: "customer-home", label: t("nav.customerHome"),
+    to: tenantPortalPath(subdomain, "app"), icon: House, end: true,
+  }]
+  if (rentals) items.push({
+    id: "customer-book", label: t("nav.customerBook"),
+    to: menuItemAgendaPath(subdomain, rentals.id), icon: iconForModule("rentals"),
+  })
+  if (catalog) items.push(
+    { id: "customer-catalog", label: t("tenantPortal.catalog.navCatalog"),
+      to: tenantPortalPath(subdomain, "catalogo"), icon: ShoppingBag },
+    { id: "customer-cart", label: t("tenantPortal.catalog.cartTitle"),
+      to: tenantPortalPath(subdomain, "catalogo/carrinho"), icon: ShoppingCart },
+  )
+  const activitiesTo = catalog ? tenantPortalPath(subdomain, "pedidos")
+    : rentals ? `${menuItemAgendaPath(subdomain, rentals.id)}${CUSTOMER_MY_RESERVATIONS_HASH}` : null
+  if (activitiesTo) items.push({
+    id: "customer-activities", label: t("nav.customerActivities"),
+    to: activitiesTo,
+    icon: ListChecks,
+  })
+  return items
+}
+/**
+ * Home tiles and hero CTAs. These keep the existing catalog/orders/requests/
+ * reservations destinations. The chrome shell uses {@link buildCustomerShellNavItems}.
+ */
+export function buildCustomerHomeNavItems(
   subdomain: string,
   menu: readonly ModuleMenuItem[],
   t: TFunction,

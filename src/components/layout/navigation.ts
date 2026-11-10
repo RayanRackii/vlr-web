@@ -6,7 +6,9 @@ import {
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
 import { matchModuleIntro, type ModuleIntro, type ModuleIntroKey } from "./navigationIntros"
+import { matchNavigationPath } from "./navigationMatching"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { agendaManifest } from "@/features/agenda/manifest"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
@@ -57,6 +59,7 @@ export type AppNavigationChildItem = {
 export type AppNavigationItem = {
   introKey?: ModuleIntroKey
   labelKey:
+    | "nav.agenda"
     | "nav.dashboard"
     | "nav.peopleAccess"
     | "nav.assets"
@@ -101,9 +104,16 @@ export type AppNavigationSectionTitleKey =
   | "nav.sections.maintenance"
   | "nav.sections.sales"
   | "nav.sections.platform"
+  | "nav.sections.operations"
+  | "nav.sections.registration"
+  | "nav.sections.customers"
+  | "nav.sections.portal"
+  | "nav.sections.settings"
 
 export type AppNavigationSection = {
   introKey?: ModuleIntroKey
+  defaultCollapsed?: boolean
+  standalone?: boolean
   titleKey: AppNavigationSectionTitleKey
   items: readonly AppNavigationItem[]
 }
@@ -141,6 +151,7 @@ const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems
 
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
+  ...agendaManifest.navigationItems,
   overviewItem,
   ...bookingsItems,
   ...maintenanceItems,
@@ -148,12 +159,34 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...peoplePortalItems,
 ]
 
-const productNavigationSections: readonly AppNavigationSection[] = [
+const legacyNavigationSections: readonly AppNavigationSection[] = [
   { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
   { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
   { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
   { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
   { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
+]
+
+// Reuse manifest entries so module, permission and internal-tab access stay intact.
+function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
+  return paths.flatMap((path) => appNavigationItems.filter((item) => item.to === path))
+}
+
+const productNavigationSections: readonly AppNavigationSection[] = [
+  { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
+  { titleKey: "nav.sections.operations", items: navigationItemsAt(
+    "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
+    "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
+  ) },
+  { titleKey: "nav.sections.registration", items: navigationItemsAt(
+    "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",
+    "/ativos", "/configuracoes/cadastro",
+  ) },
+  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/catalogo/grupos") },
+  { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
+  { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes",
+  ) },
 ]
 
 const platformNavigationSection: AppNavigationSection = {
@@ -257,22 +290,30 @@ export function filterNavigationItemsByAccess(
   })
 }
 
-export function buildProductSections(
+function sectionsFrom(
+  source: readonly AppNavigationSection[],
   activeModules: readonly string[],
   permissions: readonly string[],
 ): AppNavigationSection[] {
-  return productNavigationSections.flatMap((section) => {
+  return source.flatMap((section) => {
     const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
     return items.length ? [{ ...section, items }] : []
   })
 }
 
-/** First sidebar route the user may open, in product-nav order. */
+export function buildProductSections(
+  activeModules: readonly string[],
+  permissions: readonly string[],
+): AppNavigationSection[] {
+  return sectionsFrom(productNavigationSections, activeModules, permissions)
+}
+
+/** First route the user may open after a dashboard deny, in the previous landing order. */
 export function firstPermittedProductPath(
   activeModules: readonly string[],
   permissions: readonly string[],
 ): string | null {
-  for (const section of buildProductSections(activeModules, permissions)) {
+  for (const section of sectionsFrom(legacyNavigationSections, activeModules, permissions)) {
     for (const item of section.items) {
       const childPath = item.children?.[0]?.to
       if (childPath) {
@@ -286,7 +327,7 @@ export function firstPermittedProductPath(
   return null
 }
 
-export function useAppNavigationSections(): AppNavigationState {
+export function useAppNavigationSections(mode: "shell" | "module-intros" = "shell"): AppNavigationState {
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
   const { activeModules, permissions, isLoading } = usePermissions()
 
@@ -296,7 +337,8 @@ export function useAppNavigationSections(): AppNavigationState {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
-          introKey: "overview",
+          standalone: mode === "shell",
+          introKey: mode === "module-intros" ? "overview" : undefined,
           titleKey: "nav.sections.overview",
           items: [overviewItem],
         },
@@ -313,8 +355,15 @@ export function useAppNavigationSections(): AppNavigationState {
       ]
     }
 
+    if (mode === "module-intros") {
+      return legacyNavigationSections.flatMap((section) => {
+        const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
+        return items.length ? [{ ...section, items }] : []
+      })
+    }
     return buildProductSections(activeModules, permissions)
   }, [
+    mode,
     activeModules,
     isInTenantEnvironment,
     isLoading,
@@ -341,39 +390,11 @@ export function getPageTitleKey(
   | "nav.rentalsResourceWizard"
   | "nav.catalogProductWizard"
   | "app.name" {
-  const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
+  const intro = matchModuleIntro([...legacyNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
 
   if (pathname === "/perfil") {
     return "account.profile"
-  }
-
-  if (pathname.startsWith("/admin/asset-families")) {
-    return "nav.adminAssetFamilies"
-  }
-
-  if (pathname.startsWith("/admin/users")) {
-    return "nav.adminUsers"
-  }
-
-  if (pathname.startsWith("/admin")) {
-    return "nav.adminTenants"
-  }
-
-  if (pathname.startsWith("/catalogo/grupos")) {
-    return "nav.catalogCustomerGroups"
-  }
-
-  if (pathname.startsWith("/catalogo/notificacoes")) {
-    return "nav.catalogNotifications"
-  }
-
-  if (pathname.startsWith("/catalogo/solicitacoes")) {
-    return "nav.catalogRequests"
-  }
-
-  if (pathname.startsWith("/catalogo/pedidos")) {
-    return "nav.catalogOrders"
   }
 
   if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
@@ -382,18 +403,6 @@ export function getPageTitleKey(
 
   if (/^\/catalogo\/produtos\/[^/]+\/assistente\/?$/.test(pathname)) {
     return "nav.catalogProductWizard"
-  }
-
-  if (pathname.startsWith("/catalogo")) {
-    return "nav.catalogProducts"
-  }
-
-  if (pathname.startsWith("/os/")) {
-    return "nav.workOrders"
-  }
-
-  if (pathname.startsWith("/pessoas-e-acesso")) {
-    return "nav.peopleAccess"
   }
 
   if (pathname.startsWith("/pmoc/biblioteca/")) {
@@ -408,26 +417,20 @@ export function getPageTitleKey(
     return "nav.pmocPlanDetail"
   }
 
-  for (const item of appNavigationItems) {
-    const matchedTab = item.tabs?.find((tab) => tab.to === pathname)
-    if (matchedTab) return matchedTab.labelKey
+  // Keep the custom-plan page title at its original URL.
+  if (pathname === "/pmoc/novo") return "nav.pmocNew"
 
-    if (item.children) {
-      const childTab = item.children.flatMap((child) => child.tabs ?? []).find((tab) => tab.to === pathname)
-      // The custom-plan tab keeps the existing page title for its original URL.
-      if (childTab) return pathname === "/pmoc/novo" ? "nav.pmocNew" : childTab.labelKey
+  const match = matchNavigationPath(appNavigationItems, pathname)
+  if (match) return match.tab?.labelKey ?? match.child?.labelKey ?? match.item.labelKey
 
-      const matchedChild = item.children.find((child) => child.to === pathname)
-
-      if (matchedChild) {
-        return matchedChild.labelKey
-      }
-    }
-
-    if (item.to === pathname) {
-      return item.labelKey
-    }
+  // Platform admin destinations are outside the app navigation catalog.
+  if (pathname === "/admin/asset-families" || pathname.startsWith("/admin/asset-families/")) {
+    return "nav.adminAssetFamilies"
   }
+  if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) {
+    return "nav.adminUsers"
+  }
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return "nav.adminTenants"
 
   return "app.name"
 }

@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { customerNavHref } from "@/features/catalog/customerNav"
 import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
-import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
-import { customerDisplayInitials, customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
+import { PortalCartCount } from "@/features/catalog/components/PortalCartCount"
 import { cn } from "@/lib/utils"
 
 export type CustomerNavItem = {
@@ -24,30 +23,19 @@ type CustomerSidebarProps = {
   items: readonly CustomerNavItem[]
   onNavigate?: () => void
   className?: string
+  cartQuantity?: number
   userLabel?: string | null
 }
 
 export function CustomerSidebar({
-  brandLabel,
-  logoSvg,
-  primaryColor,
-  items,
-  onNavigate,
-  className,
-  userLabel,
+  items, onNavigate, className, cartQuantity = 0,
 }: CustomerSidebarProps) {
   const { t } = useTranslation()
   const location = useLocation()
-  const displayName = customerDisplayName(userLabel)
 
   return (
-    <div className={cn("portal-sidebar flex h-full flex-col", className)}>
-      <div className="portal-brand">
-        <div className="portal-brand-tile"><TenantLogoMark logoSvg={logoSvg} displayName={brandLabel} primaryColor={primaryColor} size="sm" className="mx-0 shrink-0" /></div>
-        <div className="min-w-0"><span className="block truncate text-sm font-semibold" title={brandLabel}>{brandLabel}</span><small>{t("tenantPortal.redesign.customerPortal")}</small></div>
-      </div>
+    <div className={cn("portal-sidebar", className)}>
       <nav className="portal-nav" aria-label={t("nav.menu")}>
-        <p className="portal-nav-heading">{t("tenantPortal.redesign.navigation")}</p>
         {items.length === 0 ? (
           <p className="px-3 py-2 text-sm text-muted-foreground">
             {t("tenantPortal.menu.empty")}
@@ -83,19 +71,18 @@ export function CustomerSidebar({
                   }
                   onNavigate?.()
                 }}
+                aria-label={item.id === "customer-cart" ? t("tenantPortal.catalog.cartCount", { count: cartQuantity }) : undefined}
                 aria-current={active ? "page" : undefined}
-                className={cn(
-                  "portal-nav-link", item.id === "customer-profile" && "portal-profile-link",
-                )}
+                className="portal-nav-link"
               >
                 <Icon strokeWidth={1.75} className="size-5 shrink-0" aria-hidden="true" />
-                <span className="truncate">{item.label}</span>
+                <span className="portal-nav-label">{item.label}</span>
+                {item.id === "customer-cart" ? <PortalCartCount count={cartQuantity} /> : null}
               </Link>
             )
           })
         )}
       </nav>
-      {userLabel ? <div className="portal-user-chip"><span className="portal-avatar" aria-hidden="true">{customerDisplayInitials(displayName)}</span><div className="min-w-0"><p className="truncate text-sm font-semibold" title={displayName}>{displayName}</p><p className="text-xs text-muted-foreground">{t("tenantPortal.redesign.customer")}</p></div></div> : null}
     </div>
   )
 }

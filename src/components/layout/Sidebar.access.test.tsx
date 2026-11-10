@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it, vi } from "vitest"
 
@@ -50,8 +51,9 @@ describe("Sidebar access by role permissions", () => {
     separators.forEach((separator) => expect(separator).toHaveClass("bg-[var(--sidebar-border)]"))
   })
 
-  it("does not show Recursos to a professor", () => {
+  it("does not show Recursos to a professor", async () => {
     renderSidebar(professorPermissions)
+    await userEvent.click(screen.getByRole("button", { name: "Expandir Configurações" }))
 
     expect(screen.queryByRole("link", { name: "Recursos" })).not.toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Horários" })).toBeInTheDocument()
@@ -74,7 +76,7 @@ describe("Sidebar access by role permissions", () => {
     expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
 
-  it("shows Recursos and the agenda to a club admin", () => {
+  it("shows Recursos and the agenda to a club admin", async () => {
     renderSidebar([
       "core.dashboard.read",
       "core.units.read",
@@ -82,6 +84,7 @@ describe("Sidebar access by role permissions", () => {
       "rentals.schedule.read",
     ])
 
+    await userEvent.click(screen.getByRole("button", { name: "Expandir Configurações" }))
     expect(screen.getByRole("link", { name: "Recursos" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Horários" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Início" })).toBeInTheDocument()
@@ -103,7 +106,7 @@ it.each([
   ["/pmoc/biblioteca/template-1", "Novo plano"],
   ["/ativos/categorias", "Equipamentos"],
   ["/configuracoes/politica-reservas", "Reservas"],
-  ["/configuracoes/cadastro", "Pessoas e acesso"],
+  ["/configuracoes/cadastro", "Pessoas"],
 ])("keeps only the owning sidebar entry active at %s", (path, label) => {
   renderSidebar([
     "pmoc.plans.read", "pmoc.plans.write", "pmoc.templates.read",
@@ -130,27 +133,35 @@ it("does not activate a sidebar entry for a partial segment", () => {
 
 
 it.each([
-  ["pt-BR", "Início", "Reservas", "Manutenção", "Vendas", "Pessoas e portal", "Equipamentos", "Planos de manutenção"],
-  ["en", "Home", "Bookings", "Maintenance", "Sales", "People & portal", "Equipment", "Maintenance plans"],
-  ["es", "Inicio", "Reservas", "Mantenimiento", "Ventas", "Personas y portal", "Equipos", "Planes de mantenimiento"],
-])("renders the approved staff names in %s and keeps secondary screens out of the sidebar", async (locale, home, bookings, maintenance, sales, people, equipment, plans) => {
+  ["pt-BR", "Início", "Operação", "Cadastro", "Clientes", "Configurações"],
+  ["en", "Home", "Operations", "Registration", "Customers", "Settings"],
+  ["es", "Inicio", "Operación", "Registro", "Clientes", "Configuración"],
+])("renders the approved groups in %s", async (locale, home, operations, registration, customers, settings) => {
   await i18n.changeLanguage(locale)
   try {
-    renderSidebar([
-      "core.dashboard.read", "rentals.reservations.read", "rentals.booking_policy.read",
-      "inventory.assets.read", "inventory.categories.read", "pmoc.plans.read", "pmoc.plans.write",
-      "pmoc.templates.read", "catalog.products.read", "core.users.read", "core.registration_fields.read",
-    ], ["rentals", "inventory", "catalog", "pmoc"])
-    expect(screen.getByRole("link", { name: home })).toBeInTheDocument()
-    for (const group of [bookings, maintenance, sales, people]) expect(screen.getAllByText(group, { exact: true }).length).toBeGreaterThan(0)
-    expect(screen.getByRole("link", { name: equipment })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: bookings })).toBeInTheDocument()
-    expect(screen.getByText(plans, { exact: true }).parentElement).toHaveAttribute("title", locale === "pt-BR" ? "PMOC" : plans)
-    for (const key of ["nav.assetsCategories", "nav.bookingPolicy", "nav.pmocLibrary", "nav.registrationFields"]) {
-      expect(screen.queryByRole("link", { name: i18n.t(key) })).not.toBeInTheDocument()
+    renderSidebar(["core.dashboard.read", "rentals.reservations.read", "inventory.assets.read", "core.users.read", "rentals.schedule.read", "rentals.assets.read", "core.module_menu.read"], ["rentals", "inventory"])
+    expect(screen.getByRole("link", { name: home })).toHaveAttribute("href", "/dashboard")
+    for (const group of [operations, registration, customers, "Portal", settings]) {
+      expect(screen.getByText(group, { exact: true })).toBeInTheDocument()
     }
-    expect(screen.queryByTitle("PMOC") !== null).toBe(locale === "pt-BR")
-  } finally {
-    await i18n.changeLanguage("pt-BR")
-  }
+    expect(screen.queryByRole("button", { name: i18n.t("moduleIntro.collapse", { module: home }) })).not.toBeInTheDocument()
+  } finally { await i18n.changeLanguage("pt-BR") }
+})
+
+it("starts settings collapsed and toggles groups only through dedicated plus/minus controls", async () => {
+  renderSidebar(["rentals.schedule.read", "rentals.assets.read", "rentals.reservations.read"])
+  const user = userEvent.setup()
+  const settings = screen.getByRole("button", { name: "Expandir Configurações" })
+  expect(settings).toHaveAttribute("aria-expanded", "false")
+  expect(settings.querySelector(".lucide-plus")).toBeInTheDocument()
+  expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
+  await user.click(settings)
+  expect(settings).toHaveAttribute("aria-expanded", "true")
+  expect(settings.querySelector(".lucide-minus")).toBeInTheDocument()
+  expect(screen.getByRole("link", { name: "Horários" })).toBeVisible()
+  const operations = screen.getByRole("button", { name: "Recolher Operação" })
+  await user.click(operations)
+  expect(screen.queryByRole("link", { name: "Reservas" })).not.toBeInTheDocument()
+  await user.click(operations)
+  expect(screen.getByRole("link", { name: "Reservas" })).toBeVisible()
 })

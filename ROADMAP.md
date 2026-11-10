@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Grade do dia na Agenda (WEB):** em visão dia, `/agenda` mostra cada recurso no horário em que abre e fecha. Pedido, reserva, manutenção e bloqueio abrem o detalhe na própria página, com links para as telas que já existem. Ordem de serviço não vira bloco: a lista não traz o recurso de reserva nem o começo e o fim. |
 | 2026-11-10 | **Entrar no tenant não abre o painel negado (WEB):** o guard espera o `/me` do tenant em que a sessão está atuando. Um perfil de fora, ou o primeiro `/me` ainda sem tenant, não decide a rota. Se a segunda leitura ainda for de outro tenant, a tela continua carregando. Sair e entrar de novo no mesmo tenant pede essa leitura outra vez. Sem a permissão do painel, a entrada segue para a primeira página permitida. |
 | 2026-11-10 | **Histórico de entregas na API de notificações (WEB):** a lista pede `GET /api/notifications/deliveries` com página e filtros no servidor. O rótulo vem da chave do evento. Quem lê ou reenvia pelo núcleo ou pelo catálogo vê o mesmo histórico. |
 | 2026-11-10 | **Erro desconhecido fica como veio (WEB):** a tradução só consulta as mensagens cadastradas. constructor, toString e __proto__ continuam o texto da API. Texto em branco segue vazio. |

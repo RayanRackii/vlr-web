@@ -15,7 +15,7 @@ const linkClassName = "flex min-h-11 items-center rounded-lg border border-borde
 export function ModuleIntroPage() {
   const { t } = useTranslation()
   const { moduleKey } = useParams<{ moduleKey: string }>()
-  const { sections, isLoading } = useAppNavigationSections()
+  const { sections, isLoading } = useAppNavigationSections("module-intros")
   const { currentUser } = usePermissions()
   const intros = availableModuleIntros(sections)
   const intro = intros.find((entry) => entry.key === moduleKey)

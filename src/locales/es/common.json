@@ -1,4 +1,43 @@
 {
+  "staffAgenda": {
+    "view": "Vista de la agenda",
+    "dia": "Día",
+    "semana": "Semana",
+    "dateNavigation": "Navegación por fecha",
+    "previous": "Anterior",
+    "today": "Hoy",
+    "next": "Siguiente",
+    "filters": "Filtros de la agenda",
+    "recurso": "Recurso",
+    "produto": "Producto",
+    "pedido": "Pedido",
+    "tipo": "Tipo",
+    "all": "Todos",
+    "clear": "Limpiar filtros",
+    "applied_zero": "Ningún filtro aplicado",
+    "applied_one": "{{count}} filtro aplicado",
+    "applied_other": "{{count}} filtros aplicados",
+    "loading": "Cargando opciones de {{label}}…",
+    "loadError": "No se pudieron cargar las opciones de {{label}}.",
+    "placeholder": "La vista de la semana estará disponible pronto.",
+    "grid": "Cuadrícula del día",
+    "gridLoading": "Cargando la cuadrícula del día…",
+    "gridError": "No se pudo cargar la cuadrícula.",
+    "emptyDay": "Sin actividad en este día",
+    "createReservation": "Crear una reserva en este recurso",
+    "blockPeriod": "Bloquear un período",
+    "detail": "Detalles del bloque seleccionado",
+    "closeDetail": "Cerrar detalles",
+    "openReservations": "Reservas",
+    "when": "Horario",
+    "customer": "Cliente",
+    "types": {
+      "reserva": "Reserva",
+      "pedido": "Pedido",
+      "manutencao": "Mantenimiento",
+      "bloqueio": "Bloqueo"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Zona autenticada"
@@ -1917,6 +1956,17 @@
     }
   },
   "nav": {
+    "agenda": "Agenda",
+    "sidebar": {
+      "people": "Personas",
+      "groups": "Grupos",
+      "map": "Mapa",
+      "sales": "Ventas",
+      "notifications": "Notificaciones"
+    },
+    "customerHome": "Inicio",
+    "customerBook": "Reservar",
+    "customerActivities": "Mis actividades",
     "breadcrumbLabel": "Ruta de navegación",
     "details": "Detalles",
     "backTo": "Volver a {{page}}",
@@ -1957,6 +2007,10 @@
     "collapseMenu": "Contraer menú",
     "expandMenu": "Expandir menú",
     "sections": {
+      "settings": "Configuración",
+      "portal": "Portal",
+      "customers": "Clientes",
+      "registration": "Registro",
       "overview": "Inicio",
       "peoplePortal": "Personas y portal",
       "operations": "Operación",

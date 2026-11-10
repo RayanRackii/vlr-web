@@ -29,12 +29,14 @@ import type {
   TenantBranding,
 } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import {
+  getCustomerId,
   fetchTenantBranding,
   fetchTenantMenu,
   isCustomerSignedInForTenant,
   resolveTenantSubdomain,
   tenantPortalPath,
 } from "@/features/tenantPortal/services/tenantPortalService"
+import { useCatalogCart } from "@/features/catalog/useCatalogCart"
 import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
 import appI18n from "@/lib/i18n"
 import {
@@ -64,6 +66,8 @@ export function CustomerAppLayout() {
     }
     return resolveTenantSubdomain(window.location.pathname)
   }, [params.subdomain])
+
+  const cart = useCatalogCart(subdomain ?? "", getCustomerId())
 
   const signedIn =
     subdomain !== null && isCustomerSignedInForTenant(subdomain)
@@ -197,11 +201,13 @@ export function CustomerAppLayout() {
             logoSvg={branding.logoSvg}
             primaryColor={branding.primaryColor}
             items={navItems}
+            cartQuantity={cart.totalQuantity}
             userLabel={customerLabel}
             onNavigate={onNavigate}
           />
         )}
         pageTitle={pageTitle}
+        contextLabel={branding.displayName}
         userLabel={userLabel}
         initials={customerDisplayInitials(customerDisplayName(userLabel))}
         profileTo={profileTo}

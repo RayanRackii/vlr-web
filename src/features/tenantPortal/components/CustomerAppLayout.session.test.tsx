@@ -13,6 +13,7 @@ import { AxiosError, AxiosHeaders } from "axios"
 
 import i18n from "@/lib/i18n"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
+import { useCatalogCart } from "@/features/catalog/useCatalogCart"
 import { CustomerAppLayout } from "@/features/tenantPortal/components/CustomerAppLayout"
 import { PortalBookingHeader } from "@/features/tenantPortal/components/portal/PortalBookingHeader"
 import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
@@ -319,8 +320,8 @@ describe("CustomerAppLayout session tenant", () => {
       }
     })
 
-    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(2)
-    expect(screen.getAllByText("BS")).toHaveLength(2)
+    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(1)
+    expect(screen.getAllByText("BS")).toHaveLength(1)
     expect(screen.getAllByText(i18n.t("tenantPortal.redesign.greetingName", { name: "Beatriz" }))).toHaveLength(2)
     expect(screen.queryByTitle("ana.email@example.test")).not.toBeInTheDocument()
   })
@@ -382,7 +383,7 @@ describe("CustomerAppLayout session tenant", () => {
     })
   })
 
-  it("renders the portal sidebar and mobile bottom navigation without a hamburger", async () => {
+  it("renders the portal top navigation and mobile bottom tabs without a hamburger", async () => {
     const menuItemId = "11111111-1111-4111-8111-111111111111"
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
@@ -410,7 +411,7 @@ describe("CustomerAppLayout session tenant", () => {
     expect(screen.queryByRole("button", { name: i18n.t("nav.openMenu") })).not.toBeInTheDocument()
     const navigation = screen.getByRole("navigation", { name: i18n.t("nav.menu") })
     expect(navigation).toHaveClass("portal-nav")
-    expect(navigation.closest('[data-shell-part="sidebar"]')).toBeInTheDocument()
+    expect(navigation.closest('[data-shell-part="header"]')).toBeInTheDocument()
     expect(navigation.closest('[data-shell-variant="portal"]')).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("theme.toggle") }),
@@ -426,21 +427,54 @@ describe("CustomerAppLayout session tenant", () => {
 
     const dialog = navigation
     const book = within(dialog).getByRole("link", {
-      name: i18n.t("admin.moduleMenu.suggestedLabelRentals"),
+      name: i18n.t("nav.customerBook"),
     })
     const mine = within(dialog).getByRole("link", {
-      name: i18n.t("tenantPortal.agenda.myReservations"),
+      name: i18n.t("nav.customerActivities"),
     })
-    const profile = within(dialog).getByRole("link", {
-      name: i18n.t("account.profile"),
-    })
+    expect(within(dialog).queryByRole("link", { name: i18n.t("account.profile") })).not.toBeInTheDocument()
 
     expect(book).toHaveAttribute("href", `/t/ficc/agenda/${menuItemId}`)
     expect(mine).toHaveAttribute(
       "href",
       `/t/ficc/agenda/${menuItemId}#minhas-reservas`,
     )
-    expect(profile).toHaveAttribute("href", "/t/ficc/app/perfil")
+    expect(within(dialog).getByRole("link", { name: i18n.t("nav.customerHome") })).toHaveAttribute("href", "/t/ficc/app")
+  })
+
+  it("shows five destinations and keeps the cart counter in sync with total quantity", async () => {
+    const customerId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+    persistCustomerSession("customer-token", "ficc", "Ana", customerId)
+    fetchBranding.mockResolvedValue({ subdomain: "ficc", displayName: "Club", logoSvg: null,
+      primaryColor: "#123456", accentColor: null, welcomeTagline: null })
+    fetchMenu.mockResolvedValue([
+      { id: "rentals-menu", moduleName: "rentals", label: "Reservar horário", sortOrder: 1, isActive: true, rentalAssetId: null },
+      { id: "catalog-menu", moduleName: "catalog", label: "Catálogo", sortOrder: 2, isActive: true, rentalAssetId: null },
+    ])
+    function CartActions() {
+      const cart = useCatalogCart("ficc", customerId)
+      const otherCart = useCatalogCart("other", customerId)
+      return <><button onClick={() => cart.add("product-a", 3)}>Add three</button>
+        <button onClick={() => cart.add("product-b", 2)}>Add two</button>
+        <button onClick={cart.clear}>Clear cart</button>
+        <button onClick={() => otherCart.add("product-c", 9)}>Other cart</button></>
+    }
+    renderPortal("/t/ficc/agenda", <CartActions />)
+    const user = userEvent.setup()
+    const nav = await screen.findByRole("navigation", { name: i18n.t("nav.menu") })
+    expect(within(nav).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
+      "/t/ficc/app", "/t/ficc/agenda/rentals-menu", "/t/ficc/catalogo", "/t/ficc/catalogo/carrinho", "/t/ficc/pedidos",
+    ])
+    expect(within(nav).getByRole("link", { name: "Carrinho (0)" })).not.toHaveTextContent("0")
+    await user.click(screen.getByRole("button", { name: "Add three" }))
+    expect(within(nav).getByRole("link", { name: "Carrinho (3)" })).toHaveTextContent("3")
+    await user.click(screen.getByRole("button", { name: "Add two" }))
+    expect(within(nav).getByRole("link", { name: "Carrinho (5)" })).toHaveTextContent("5")
+    await user.click(screen.getByRole("button", { name: "Other cart" }))
+    expect(within(nav).getByRole("link", { name: "Carrinho (5)" })).toHaveTextContent("5")
+    await user.click(screen.getByRole("button", { name: "Clear cart" }))
+    expect(within(nav).getByRole("link", { name: "Carrinho (0)" })).not.toHaveTextContent("5")
+    window.sessionStorage.removeItem(`rolvix.catalog.cart.other.${customerId}`)
   })
 
   it("keeps the signed-in page mounted when the language changes", async () => {
