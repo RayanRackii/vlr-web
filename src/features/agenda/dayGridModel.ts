@@ -1,7 +1,7 @@
 import type { CatalogResourceAgendaResponse } from "@/features/catalog/schemas/catalogSchemas"
 import type { AdminDaySlot, AdminRentalAsset, OccupancyKind } from "@/features/rentals/services/scheduleService"
 import type { AdminReservation } from "@/features/rentals/services/reservationsService"
-import { zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
+import { addCivilDays, startOfCivilWeek, zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
 import type { AgendaState } from "./urlState"
 
 export type AgendaDaySources = {
@@ -25,6 +25,7 @@ export type AgendaBlock = {
   productId?: string
   productName?: string
   displayNumber?: string | null
+  orderStatus?: string | null
   reservationId?: string | null
   customerName?: string | null
   label?: string | null
@@ -75,6 +76,7 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     row.categoryName ??= resource.category
   }
   const blocks: AgendaBlock[] = []
+  const catalogByOrder = new Map(data.catalog.items.map((item) => [item.orderId, item]))
   for (const item of data.catalog.items) {
     if (!item.rentalAssetId) continue
     const start = item.occupiedStart ?? item.workStart
@@ -82,7 +84,7 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     const window = dayWindow(start, end, state.date, zone)
     if (!window) continue
     ensure(item.rentalAssetId, item.resourceName ?? item.rentalAssetId)
-    blocks.push({ key: `pedido:${item.orderId}:${item.rentalAssetId}:${start}:${end}`, resourceId: item.rentalAssetId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
+    blocks.push({ key: `pedido:${item.orderId}:${item.rentalAssetId}:${start}:${end}`, resourceId: item.rentalAssetId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, orderStatus: item.orderStatus, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
   }
   for (const reservation of data.reservations) {
     if (["cancelled", "canceled"].includes(reservation.status.toLowerCase())) continue
@@ -117,7 +119,22 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
       else if (key === "closed" || (!slot.isBookableByCustomer && data.kinds.some((k) => k.id === slot.occupancyKindId && k.blocksCapacity))) kind = "bloqueio"
       else continue
     }
-    blocks.push({ key: `slot:${slot.id}:${slot.rentalAssetId}:${start}:${end}`, resourceId: slot.rentalAssetId, kind, ...window, orderId: slot.owningCatalogOrderId, reservationId: slot.reservationId, customerName: slot.customerName, label: slot.label ?? slot.occupancyKindLabel, color: slot.occupancyKindColorHex })
+    const linked = slot.owningCatalogOrderId ? catalogByOrder.get(slot.owningCatalogOrderId) : undefined
+    blocks.push({
+      key: `slot:${slot.id}:${slot.rentalAssetId}:${start}:${end}`,
+      resourceId: slot.rentalAssetId,
+      kind,
+      ...window,
+      orderId: slot.owningCatalogOrderId,
+      displayNumber: linked?.displayNumber,
+      orderStatus: linked?.orderStatus,
+      productId: linked?.productId,
+      productName: linked?.productName,
+      reservationId: slot.reservationId,
+      customerName: slot.customerName ?? linked?.customerName,
+      label: linked ? null : slot.label ?? slot.occupancyKindLabel,
+      color: slot.occupancyKindColorHex,
+    })
   }
   for (const block of blocks) {
     hours.push(block.start, block.end)
@@ -130,4 +147,46 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     start: hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null,
     end: hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null,
   }
+}
+
+export type AgendaWeekCell = {
+  date: string
+  counts: Record<AgendaBlock["kind"], number>
+}
+
+export type AgendaWeekRow = {
+  id: string
+  name: string
+  categoryName?: string | null
+  cells: AgendaWeekCell[]
+}
+
+/** Seven civil days starting Monday, with a count of each occupancy kind. */
+export function buildAgendaWeek(data: AgendaDaySources, state: AgendaState, zone: string) {
+  const days = Array.from({ length: 7 }, (_, index) => addCivilDays(startOfCivilWeek(state.date), index))
+  const byDay = days.map((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone))
+  const rows = new Map<string, AgendaWeekRow>()
+  for (const day of byDay) {
+    for (const row of day.rows) {
+      if (!rows.has(row.id)) {
+        rows.set(row.id, {
+          id: row.id,
+          name: row.name,
+          categoryName: row.categoryName,
+          cells: days.map((date) => ({
+            date,
+            counts: { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 },
+          })),
+        })
+      }
+    }
+  }
+  byDay.forEach((day, index) => {
+    for (const row of day.rows) {
+      const cell = rows.get(row.id)?.cells[index]
+      if (!cell) continue
+      for (const block of row.blocks) cell.counts[block.kind] += 1
+    }
+  })
+  return { days, rows: [...rows.values()] }
 }
