@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Criar no campo sem loop de render (WEB):** o callback de rascunho é guardado num efeito, não durante o render. O ratchet do ESLint passa. |
 | 2026-11-10 | **Criar no campo não entra em loop nem salva no Cancelar (WEB):** o aviso de rascunho não depende da identidade do callback. Enter no campo salva; Enter em Cancelar cancela. |
 | 2026-11-10 | **Criar unidade, categoria ou modelo visual abre na ficha (WEB):** o formulário expande sob o campo, sem painel lateral. Um nome digitado pede confirmação antes de escolher outro item. Cancelar descarta. A ficha do recurso também trata esse rascunho como alteração ao sair da página. |
 | 2026-11-10 | **Produto inativo conta como rascunho (WEB):** marcar Inativo em Novo produto pede confirmação antes de sair. Voltar para Ativo limpa esse rascunho. Salvar ainda abre o assistente. |

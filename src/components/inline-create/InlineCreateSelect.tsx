@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from "react"
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
@@ -70,7 +70,9 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
   const [pendingValue, setPendingValue] = useState<string | null>(null)
 
   const onDirtyChangeRef = useRef(onDirtyChange)
-  onDirtyChangeRef.current = onDirtyChange
+  useLayoutEffect(() => {
+    onDirtyChangeRef.current = onDirtyChange
+  }, [onDirtyChange])
   useEffect(() => {
     onDirtyChangeRef.current?.(open && draftDirty)
   }, [draftDirty, open])
