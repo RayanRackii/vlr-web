@@ -1,5 +1,7 @@
+import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
+import { safeStaffReturnTo } from "@/features/rentals/components/resourceWizard/staffReturnTo"
 import {
   scheduleAssetIdFromSearch,
   scheduleTabFromSearch,
@@ -8,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
@@ -96,6 +99,7 @@ export function SchedulePage() {
 
 function AdminSchedulePage() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const { isTrialReadOnly } = useTrialStatus()
   const timeZoneId = useTenantTimeZone()
 
@@ -140,6 +144,7 @@ function AdminSchedulePage() {
   const [weeklyTarget, setWeeklyTarget] =
     useState<WeeklyGridCellPayload | null>(null)
   const [slotSheetOpen, setSlotSheetOpen] = useState(false)
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
 
@@ -173,20 +178,43 @@ function AdminSchedulePage() {
     setBusyTargetId(null)
   }
 
-  function discardTemplateDraft() {
-    if (templateSheetOpen && templateDirty && !window.confirm(t("fullPage.leaveConfirm"))) return false
+  function clearTemplateDraft() {
     setTemplateSheetOpen(false)
     setTemplateDirty(false)
     setEditingTemplate(null)
     setWeeklyTarget(null)
+  }
+
+  function runOrAsk(action: () => void) {
+    const proceed = () => {
+      clearTemplateDraft()
+      action()
+    }
+    if (templateSheetOpen && templateDirty) {
+      setPendingLeave(() => proceed)
+      return
+    }
+    proceed()
+  }
+
+  function discardTemplateDraft() {
+    const href = safeStaffReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
+    const leave = () => {
+      clearTemplateDraft()
+      if (href) navigate(href)
+    }
+    if (templateSheetOpen && templateDirty) {
+      setPendingLeave(() => leave)
+      return false
+    }
+    clearTemplateDraft()
     return true
   }
 
   function onSelectedRentalAssetIdsChange(ids: string[]) {
     if (ids.length === selectedRentalAssetIds.length &&
       ids.every((id) => selectedRentalAssetIds.includes(id))) return
-    if (!discardTemplateDraft()) return
-    setSelectedRentalAssetIds(ids)
+    runOrAsk(() => setSelectedRentalAssetIds(ids))
   }
 
   const loadKinds = useCallback(async () => {
@@ -737,8 +765,8 @@ function AdminSchedulePage() {
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => {
-                  if (item.id === tab || !discardTemplateDraft()) return
-                  setTab(item.id)
+                  if (item.id === tab) return
+                  runOrAsk(() => setTab(item.id))
                 }}
                 className={cn(
                   "touch-target inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium motion-safe:transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
@@ -805,16 +833,17 @@ function AdminSchedulePage() {
             readOnly={isTrialReadOnly}
             onSelectedRentalAssetIdsChange={onSelectedRentalAssetIdsChange}
             onWeekdayChange={(nextWeekday) => {
-              if (nextWeekday === weekday || !discardTemplateDraft()) return
-              setWeekday(nextWeekday)
+              if (nextWeekday === weekday) return
+              runOrAsk(() => setWeekday(nextWeekday))
             }}
             onCellClick={(target) => {
               if (templateSheetOpen && weeklyTarget?.rentalAssetId === target.rentalAssetId &&
                 weeklyTarget.dayOfWeek === target.dayOfWeek && weeklyTarget.startTime === target.startTime) return
-              if (!discardTemplateDraft()) return
-              setWeeklyTarget(target)
-              setEditingTemplate(target.template)
-              setTemplateSheetOpen(true)
+              runOrAsk(() => {
+                setWeeklyTarget(target)
+                setEditingTemplate(target.template)
+                setTemplateSheetOpen(true)
+              })
             }}
             onSeedSelected={() => {
               void onSeedSelected()
@@ -902,6 +931,16 @@ function AdminSchedulePage() {
       />
 
 
+      <LeaveConfirmDialog
+        open={pendingLeave != null}
+        title={t("fullPage.leaveConfirm")}
+        onStay={() => setPendingLeave(null)}
+        onLeave={() => {
+          const action = pendingLeave
+          setPendingLeave(null)
+          action?.()
+        }}
+      />
       <DaySlotSheet
         open={slotSheetOpen}
         onOpenChange={(open) => {

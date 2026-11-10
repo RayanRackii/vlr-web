@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Horários pede saída no diálogo do produto (WEB):** um rascunho sujo da grade semanal abre o diálogo Cancelar/Sair. Fechar a aba continua com o aviso nativo. |
+
 | 2026-11-10 | **Agenda dos recursos no celular (WEB):** abaixo de 768px a grade de 760px sai e cada recurso vira uma lista de horários. O detalhe da reserva fica na página, sem painel fixo. |
 
 | 2026-11-10 | **Diretório do cliente e aviso de cancelamento (WEB):** a ficha do cliente pagina o diretório de 50 em 50 e mostra erro quando uma lista falha. Pessoas e acesso abre para quem só tem `core.customers.read`; a aba Clientes depende só dessa chave. O Admin de sistema continua sem ela de propósito (grant explícito, fora do wildcard). `/catalogo/notificacoes` redireciona sem permissão própria. O evento `catalog.order.cancelled_by_customer` ganha tradução. |
