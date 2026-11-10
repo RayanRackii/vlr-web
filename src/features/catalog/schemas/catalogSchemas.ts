@@ -43,6 +43,7 @@ export const notificationRecipientKindSchema = z.enum(["Customer", "B2BUser"])
 
 export const notificationDeliveryStatusSchema = z.enum([
   "Queued",
+  "Sending",
   "Sent",
   "Delivered",
   "Failed",
@@ -333,6 +334,23 @@ export const productRequestFormSchema = z.object({
 
 export type ProductRequestFormValues = z.infer<typeof productRequestFormSchema>
 
+export const notificationAttemptOutcomeSchema = z.enum([
+  "Success",
+  "TransientFailure",
+  "PermanentFailure",
+])
+
+export const catalogNotificationAttemptSchema = z.object({
+  attemptNumber: z.number().int(),
+  startedAt: z.string(),
+  finishedAt: z.string().nullable(),
+  outcome: notificationAttemptOutcomeSchema,
+  errorMessage: z.string().nullable(),
+  channel: z.enum(["InApp", "Email", "WhatsApp", "Sms", "Push"]),
+})
+
+export type CatalogNotificationAttempt = z.infer<typeof catalogNotificationAttemptSchema>
+
 export const catalogNotificationDeliverySchema = z.object({
   id: z.string().uuid(),
   notificationId: z.string().uuid(),
@@ -345,6 +363,19 @@ export const catalogNotificationDeliverySchema = z.object({
   attemptCount: z.number(),
   errorMessage: z.string().nullable(),
   createdAt: z.string(),
+  canResend: z.boolean().nullish(),
+  attempts: z.preprocess((value) => {
+    if (value == null) {
+      return undefined
+    }
+    if (!Array.isArray(value)) {
+      return []
+    }
+    return value.flatMap((item) => {
+      const parsed = catalogNotificationAttemptSchema.safeParse(item)
+      return parsed.success ? [parsed.data] : []
+    })
+  }, z.array(catalogNotificationAttemptSchema).optional()),
 })
 
 export type CatalogNotificationDelivery = z.infer<

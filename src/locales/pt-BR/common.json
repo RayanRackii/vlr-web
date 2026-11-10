@@ -902,6 +902,7 @@
     },
     "deliveryStatus": {
       "Queued": "Na fila",
+      "Sending": "Enviando",
       "Sent": "Enviado",
       "Delivered": "Entregue",
       "Failed": "Falhou"
@@ -1243,6 +1244,23 @@
       "empty": "Nenhuma entrega.",
       "resend": "Reenviar",
       "toastResent": "Reenvio enfileirado.",
+      "toastResentSent": "Notificação reenviada.",
+      "toastResendFailed": "O reenvio falhou.",
+      "toastResendSending": "Reenvio em andamento.",
+      "attempts": "Tentativas",
+      "attemptsTitle": "Tentativas",
+      "attemptCount": "{{count}}",
+      "attemptColumns": {
+        "number": "Tentativa",
+        "date": "Data",
+        "outcome": "Resultado",
+        "error": "Erro"
+      },
+      "attemptOutcome": {
+        "Success": "Sucesso",
+        "TransientFailure": "Falha temporária",
+        "PermanentFailure": "Falha permanente"
+      },
       "toastChannelSaved": "Canal atualizado.",
       "toggleChannel": "Ativar {{channel}} para {{event}}",
       "columns": {

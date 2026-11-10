@@ -1,5 +1,5 @@
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Table,
@@ -35,6 +36,49 @@ import {
   resendCatalogNotification,
 } from "@/features/catalog/services/catalogService"
 
+function DeliveryAttemptHistory({
+  delivery,
+}: {
+  delivery: CatalogNotificationDelivery
+}) {
+  const { t, i18n } = useTranslation()
+  const timeZoneId = useTenantTimeZone()
+  const attempts = [...(delivery.attempts ?? [])].sort((left, right) => left.attemptNumber - right.attemptNumber)
+
+  return (
+    <section
+      id={`delivery-attempts-${delivery.id}`}
+      aria-label={t("catalog.notifications.attemptsTitle")}
+      className="space-y-2 py-1"
+    >
+      {attempts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {t("catalog.notifications.attemptCount", { count: delivery.attemptCount })}
+        </p>
+      ) : (
+        <div className="grid grid-cols-[minmax(4.5rem,auto)_minmax(8rem,auto)_minmax(6rem,auto)_minmax(7rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
+          <span className="font-medium">{t("catalog.notifications.attemptColumns.number")}</span>
+          <span className="font-medium">{t("catalog.notifications.attemptColumns.date")}</span>
+          <span className="font-medium">{t("catalog.notifications.columns.channel")}</span>
+          <span className="font-medium">{t("catalog.notifications.attemptColumns.outcome")}</span>
+          <span className="font-medium">{t("catalog.notifications.attemptColumns.error")}</span>
+          {attempts.map((attempt) => (
+            <Fragment key={attempt.attemptNumber}>
+              <span>{attempt.attemptNumber}</span>
+              <span>{formatCatalogDate(attempt.finishedAt ?? attempt.startedAt, i18n.language, timeZoneId)}</span>
+              <span>{t(`catalog.channels.${attempt.channel}`, { defaultValue: attempt.channel })}</span>
+              <span>{t(`catalog.notifications.attemptOutcome.${attempt.outcome}`)}</span>
+              <span className="break-words text-muted-foreground">
+                {attempt.errorMessage?.trim() || "—"}
+              </span>
+            </Fragment>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
 export function CatalogNotificationsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
@@ -47,7 +91,9 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [resendBusyId, setResendBusyId] = useState<string | null>(null)
+  const [resendBusyIds, setResendBusyIds] = useState<ReadonlySet<string>>(() => new Set())
+  const [openHistoryId, setOpenHistoryId] = useState<string | null>(null)
+  const inFlightIds = useRef(new Set<string>())
 
   async function reload() {
     setLoading(true)
@@ -71,14 +117,32 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
   }, [])
 
-  async function onResend(id: string) {
-    setResendBusyId(id)
+  const onResend = useCallback(async (id: string) => {
+    if (inFlightIds.current.has(id)) {
+      return
+    }
+    inFlightIds.current.add(id)
+    setResendBusyIds(new Set(inFlightIds.current))
     try {
       const updated = await resendCatalogNotification(id)
       setDeliveries((current) =>
         current.map((item) => (item.id === id ? updated : item)),
       )
-      toast.success(t("catalog.notifications.toastResent"))
+      if (updated.status === "Sending") {
+        toast.message(t("catalog.notifications.toastResendSending"))
+        return
+      }
+      if (updated.status === "Queued") {
+        toast.success(t("catalog.notifications.toastResent"))
+        return
+      }
+      if (updated.status === "Sent" || updated.status === "Delivered") {
+        toast.success(t("catalog.notifications.toastResentSent"))
+        return
+      }
+      toast.error(
+        updated.errorMessage?.trim() || t("catalog.notifications.toastResendFailed"),
+      )
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -86,9 +150,10 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
           : t("apiErrors.resendCatalogNotification"),
       )
     } finally {
-      setResendBusyId(null)
+      inFlightIds.current.delete(id)
+      setResendBusyIds(new Set(inFlightIds.current))
     }
-  }
+  }, [t])
 
   const columns = useMemo<ColumnDef<CatalogNotificationDelivery>[]>(
     () => [
@@ -165,23 +230,44 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
         id: "actions",
         enableColumnFilter: false,
         header: t("catalog.notifications.columns.actions"),
-        cell: ({ row }) =>
-          row.original.status === "Failed" && canResend ? (
-            <LoadingButton
-              type="button"
-              size="sm"
-              variant="outline"
-              loading={resendBusyId === row.original.id}
-              onClick={() => {
-                void onResend(row.original.id)
-              }}
-            >
-              {t("catalog.notifications.resend")}
-            </LoadingButton>
-          ) : null,
+        cell: ({ row }) => {
+          const showResend = row.original.status === "Failed"
+            && canResend
+            && row.original.canResend !== false
+          const historyOpen = openHistoryId === row.original.id
+          return (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                aria-expanded={historyOpen}
+                aria-controls={`delivery-attempts-${row.original.id}`}
+                onClick={() => {
+                  setOpenHistoryId((current) => current === row.original.id ? null : row.original.id)
+                }}
+              >
+                {t("catalog.notifications.attempts")}
+              </Button>
+              {showResend ? (
+                <LoadingButton
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  loading={resendBusyIds.has(row.original.id)}
+                  onClick={() => {
+                    void onResend(row.original.id)
+                  }}
+                >
+                  {t("catalog.notifications.resend")}
+                </LoadingButton>
+              ) : null}
+            </div>
+          )
+        },
       },
     ],
-    [canResend, i18n.language, resendBusyId, t, timeZoneId],
+    [canResend, i18n.language, onResend, openHistoryId, resendBusyIds, t, timeZoneId],
   )
 
   const table = useReactTable({
@@ -245,16 +331,25 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
                 </TableRow>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                  <Fragment key={row.id}>
+                    <TableRow>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {openHistoryId === row.original.id ? (
+                      <TableRow>
+                        <TableCell colSpan={row.getVisibleCells().length}>
+                          <DeliveryAttemptHistory delivery={row.original} />
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </Fragment>
                 ))
               )}
             </TableBody>
