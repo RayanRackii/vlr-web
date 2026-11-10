@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { CalendarClock } from "lucide-react"
@@ -14,14 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { InlineScheduleModule } from "@/features/rentals/components/schedule/InlineScheduleModule"
 import type { DayResourceGridCellPayload } from "@/features/rentals/components/schedule/DayResourceGrid"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import {
@@ -52,16 +45,15 @@ type DaySlotSheetProps = {
   onMakeUnavailable: (scope: OccurrenceEditScope) => Promise<boolean>
   onRestoreWeeklyDefault: () => Promise<boolean>
   onGoWeeklySetup?: () => void
+  onDirtyChange?: (dirty: boolean) => void
+  /** Collapse and other non-Cancel closes. Cancel discards without asking. */
+  onRequestClose?: () => void
 }
 
 export function DaySlotSheet(props: DaySlotSheetProps) {
-  const { target, open, onOpenChange } = props
-  if (!target) {
-    return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-[420px]" />
-      </Sheet>
-    )
+  const { target } = props
+  if (!target || !props.open) {
+    return null
   }
 
   return (
@@ -86,12 +78,16 @@ function DaySlotSheetForm({
   onMakeUnavailable,
   onRestoreWeeklyDefault,
   onGoWeeklySetup,
+  onDirtyChange,
+  onRequestClose,
 }: DaySlotSheetProps & { target: DayResourceGridCellPayload }) {
   const { t } = useTranslation()
   const slot = target.slot
+  const initialKindId = slot?.occupancyKindId ?? defaultKindId
+  const initialLabel = slot?.label ?? ""
   const [draft, setDraft] = useState<DaySlotDraft>({
-    occupancyKindId: slot?.occupancyKindId ?? defaultKindId,
-    label: slot?.label ?? "",
+    occupancyKindId: initialKindId,
+    label: initialLabel,
   })
   const [scope, setScope] = useState<OccurrenceEditScope>("OnlyThisDay")
   const activeKinds = useMemo(
@@ -116,29 +112,41 @@ function DaySlotSheetForm({
     : isUnavailable || (slot && !slot.isBookableByCustomer)
       ? "unavailable"
       : "available"
+  const dirty = !isBooked && !isInternalUse && (
+    draft.occupancyKindId !== initialKindId
+    || draft.label !== initialLabel
+    || scope !== "OnlyThisDay"
+  )
+
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[420px]">
-        <SheetHeader className="border-b border-border">
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <CalendarClock className="size-4" aria-hidden />
-            </span>
-            <div className="space-y-0.5">
-              <SheetTitle>{t("rentals.schedule.occurrence.editTitle")}</SheetTitle>
-              <SheetDescription>
-                {target.assetName}
-                <span className="block">
-                  {formatDisplayDate(target.date)} · {formatScheduleTime(target.startTime)}–
-                  {formatScheduleTime(target.endTime)}
-                </span>
-              </SheetDescription>
-            </div>
-          </div>
-        </SheetHeader>
-
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4">
+    <InlineScheduleModule
+      title={t("rentals.schedule.occurrence.editTitle")}
+      description={(
+        <>
+          {target.assetName}
+          <span className="block">
+            {formatDisplayDate(target.date)} · {formatScheduleTime(target.startTime)}–
+            {formatScheduleTime(target.endTime)}
+          </span>
+        </>
+      )}
+      icon={CalendarClock}
+      open={open}
+      disabled={busy}
+      onOpenChange={(next) => {
+        if (!next && onRequestClose) {
+          onRequestClose()
+          return
+        }
+        onOpenChange(next)
+      }}
+    >
+        <div className="flex flex-col gap-5">
           <div className="flex items-center gap-2 text-sm">
             <span
               className={cn(
@@ -339,13 +347,13 @@ function DaySlotSheetForm({
           )}
         </div>
 
-        <SheetFooter>
+        <div className="flex gap-2">
           {isBooked || isInternalUse ? (
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.close")}
             </Button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-1 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -370,9 +378,8 @@ function DaySlotSheetForm({
               </LoadingButton>
             </div>
           )}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+    </InlineScheduleModule>
   )
 }
 
