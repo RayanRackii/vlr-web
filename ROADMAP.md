@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Escolhas sem seta de menu (WEB):** horizonte e corte da reserva, o limite de cancelamento de vendas e unidade, categoria e situação do plano de manutenção viram botões. A lista longa deixa de abrir um menu. |
+
 | 2026-11-10 | **Exclusão e desativação no diálogo do produto (WEB):** excluir categoria ou tag, e desativar um produto no editor, pedem confirmação no diálogo da aplicação. Cancelar mantém o item. |
 
 | 2026-11-10 | **Regra semanal pede saída (WEB):** mudar a duração marca o rascunho. Abas, links, o voltar do assistente e o voltar do navegador abrem o diálogo Cancelar/Sair. Cancelar no formulário descarta. Recolher o formulário sujo pergunta. Fechar a aba continua com o aviso nativo. |

@@ -9,7 +9,7 @@ import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { catalogPolicyFormSchema, orderCancellationStatuses, type CatalogPolicyFormValues } from "@/features/catalog/schemas/catalogPolicySchemas"
@@ -78,14 +78,14 @@ export function CatalogPolicyPage() {
             </FormItem>} />
             <FormField control={form.control} name="orderCancelableUpToStatus" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.ordersUpTo")}</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange} disabled={!values.customerCanCancelOrders || !canEdit || saving} items={orderCancellationStatuses.map((value) => ({ value, label: t(`catalog.status.${value}`) }))}>
-                <FormControl>
-                  <SelectTrigger className="touch-target w-full min-w-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>{orderCancellationStatuses.map((value) => <SelectItem key={value} value={value}>{t(`catalog.status.${value}`)}</SelectItem>)}</SelectContent>
-              </Select>
+              <SegmentedControl
+                className="flex flex-wrap"
+                label={t("catalog.policy.ordersUpTo")}
+                value={field.value}
+                disabled={!values.customerCanCancelOrders || !canEdit || saving}
+                onChange={field.onChange}
+                options={orderCancellationStatuses.map((value) => ({ value, label: t(`catalog.status.${value}`) }))}
+              />
               <FormMessage />
             </FormItem>} />
             <FormField control={form.control} name="customerCanCancelRequests" render={({ field }) => <FormItem className="flex items-center justify-between gap-3">
@@ -96,16 +96,13 @@ export function CatalogPolicyPage() {
             </FormItem>} />
             <FormField control={form.control} name="requestCancelableUpToStatus" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.requestsUpTo")}</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange} disabled={!values.customerCanCancelRequests || !canEdit || saving} items={[{ value: "Submitted", label: t("catalog.productRequestStatus.Submitted") }]}>
-                <FormControl>
-                  <SelectTrigger className="touch-target w-full min-w-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Submitted">{t("catalog.productRequestStatus.Submitted")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <SegmentedControl
+                label={t("catalog.policy.requestsUpTo")}
+                value={field.value}
+                disabled={!values.customerCanCancelRequests || !canEdit || saving}
+                onChange={field.onChange}
+                options={[{ value: "Submitted" as const, label: t("catalog.productRequestStatus.Submitted") }]}
+              />
             </FormItem>} />
             <FormField control={form.control} name="cancellationPolicyText" render={({ field }) => <FormItem>
               <FormLabel>{t("catalog.policy.text")}</FormLabel>
