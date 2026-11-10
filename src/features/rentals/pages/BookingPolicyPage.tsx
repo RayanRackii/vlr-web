@@ -21,13 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -330,29 +324,13 @@ export function BookingPolicyPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("rentals.bookingPolicy.horizonLabel")}</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      if (value === "unlimited" || value === "days") {
-                        field.onChange(value)
-                      }
-                    }}
+                  <SegmentedControl
+                    label={t("rentals.bookingPolicy.horizonLabel")}
                     value={field.value}
-                    items={horizonItems}
                     disabled={!canEdit || saving}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {horizonItems.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={field.onChange}
+                    options={horizonItems}
+                  />
                   <FormDescription>
                     {watchedHorizonMode === "days"
                       ? t("rentals.bookingPolicy.horizonHintDays")
@@ -396,29 +374,13 @@ export function BookingPolicyPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("rentals.bookingPolicy.cancelCutoffLabel")}</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      if (value === "none" || value === "hours") {
-                        field.onChange(value)
-                      }
-                    }}
+                  <SegmentedControl
+                    label={t("rentals.bookingPolicy.cancelCutoffLabel")}
                     value={field.value}
-                    items={cancelCutoffItems}
                     disabled={!canEdit || saving}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cancelCutoffItems.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={field.onChange}
+                    options={cancelCutoffItems}
+                  />
                   <FormDescription>
                     {t("rentals.bookingPolicy.cancelCutoffHint")}
                   </FormDescription>

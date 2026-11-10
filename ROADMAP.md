@@ -337,6 +337,15 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Alocação explica unidades e abre a agenda (WEB):** um 403 ao carregar unidades deixa claro que a aprovação não pode escolher onde alocar. Depois de alocado, quem lê a agenda vê o link para a agenda do recurso, no dia do trabalho. |
+
+| 2026-11-10 | **Proposta, sem código (WEB):** regras continuam em três editores; a sidebar e o título do layout passam a um nome só, Montagem do mapa. Mapa do espaço fica com a vista de reserva. Ver `docs/plans/active/2026-11-10-regras-e-mapa.md`. |
+| 2026-11-10 | **Rótulos que cabem (WEB):** Planos de manutenção quebra linha na sidebar. Regras de reserva quebra linha no título do celular. `rentals.assets.write` passa a dizer Editar recursos de aluguel. |
+
+| 2026-11-10 | **Escolhas sem seta de menu (WEB):** horizonte e corte da reserva, o limite de cancelamento de vendas e unidade, categoria e situação do plano de manutenção viram botões. A lista longa deixa de abrir um menu. |
+
+| 2026-11-10 | **Exclusão e desativação no diálogo do produto (WEB):** excluir categoria ou tag, e desativar um produto no editor, pedem confirmação no diálogo da aplicação. Cancelar mantém o item. |
+
 | 2026-11-10 | **Regra semanal pede saída (WEB):** mudar a duração marca o rascunho. Abas, links, o voltar do assistente e o voltar do navegador abrem o diálogo Cancelar/Sair. Cancelar no formulário descarta. Recolher o formulário sujo pergunta. Fechar a aba continua com o aviso nativo. |
 
 | 2026-11-10 | **Horários pede saída no diálogo do produto (WEB):** um rascunho sujo da grade semanal abre o diálogo Cancelar/Sair. Fechar a aba continua com o aviso nativo. |

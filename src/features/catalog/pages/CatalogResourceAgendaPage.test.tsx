@@ -52,9 +52,9 @@ const RESPONSE: CatalogResourceAgendaResponse = {
   ],
 }
 
-function renderPage() {
+function renderPage(path = "/catalogo/agenda-recursos") {
   return render(
-    <MemoryRouter initialEntries={["/catalogo/agenda-recursos"]}>
+    <MemoryRouter initialEntries={[path]}>
       <TestPermissionProvider permissions={["rentals.schedule.read"]}>
         <Routes>
           <Route path="/catalogo/agenda-recursos" element={<CatalogResourceAgendaPage />} />
@@ -75,6 +75,15 @@ describe("catalog resource agenda page", () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it("opens on the date from the query instead of today", async () => {
+    renderPage("/catalogo/agenda-recursos?date=2026-10-26")
+    await screen.findAllByText("Sala Estúdio A")
+    expect(agendaMock).toHaveBeenCalledWith({
+      from: "2026-10-26T00:00:00.000Z",
+      to: "2026-11-02T00:00:00.000Z",
+    })
   })
 
   it("renders every resource row, including empty ones, and redacts missing customer data", async () => {

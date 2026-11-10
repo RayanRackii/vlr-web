@@ -110,7 +110,10 @@ it.each([
   if (path.startsWith("/pmoc/")) {
     expect(screen.getByRole("link", { name: "Meus planos" })).toBeVisible()
     expect(screen.getByRole("link", { name: "Novo plano" })).toBeVisible()
-    expect(screen.getByText("Planos de manutenção").parentElement).toHaveClass("text-foreground")
+    const maintenance = screen.getByText("Planos de manutenção")
+    expect(maintenance.parentElement).toHaveClass("text-foreground")
+    expect(maintenance).not.toHaveClass("truncate")
+    expect(maintenance).toHaveClass("break-words")
   }
 })
 

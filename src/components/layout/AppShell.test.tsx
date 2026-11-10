@@ -22,6 +22,13 @@ it("supports the account menu keyboard pattern: arrows reach items and Tab exits
   expect(screen.queryByRole("menu")).not.toBeInTheDocument()
 })
 
+it("lets a long mobile title wrap instead of clipping", () => {
+  render(<MemoryRouter><AppShell sidebar={() => <nav>Links</nav>} pageTitle="Regras de reserva" userLabel="Ana" initials="AN" onSignOut={vi.fn()}>Content</AppShell></MemoryRouter>)
+  const title = screen.getByText("Regras de reserva")
+  expect(title).not.toHaveClass("truncate")
+  expect(title).toHaveClass("break-words")
+})
+
 it("keeps the staff hamburger and mobile drawer available by default", async () => {
   const user = userEvent.setup()
   render(<MemoryRouter><AppShell sidebar={() => <nav aria-label="Staff">Staff links</nav>} pageTitle="Staff" userLabel="Staff" initials="ST" onSignOut={vi.fn()}>Content</AppShell></MemoryRouter>)

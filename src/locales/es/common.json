@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Previsión de finalización",
         "notFeasible": "Ese horario no es viable para el recurso seleccionado.",
         "approveAndAllocate": "Aprobar y asignar",
+        "unitsForbidden": "Sin acceso a las unidades, la aprobación no puede elegir dónde asignar.",
         "refusalTitle": "No se puede asignar",
         "approvalRule": "Al aprobar, el recurso se reserva para el pedido en ese horario.",
         "toastApproved": "Pedido aprobado y recurso asignado."
@@ -1415,6 +1416,7 @@
         "workWindow": "Ventana de trabajo",
         "workFinished": "Finalizar trabajo",
         "release": "Liberar",
+        "openAgenda": "Abrir la agenda del recurso",
         "cancelledHint": "Este pedido fue cancelado; finaliza o libera el recurso según sea necesario.",
         "toastUpdated": "Uso del recurso actualizado."
       },
@@ -3904,7 +3906,7 @@
       "rentals.booking_policy.read": "Ver reglas de reserva",
       "rentals.booking_policy.write": "Editar reglas de reserva",
       "rentals.assets.read": "Ver recursos de alquiler",
-      "rentals.assets.write": "Editar política de horarios",
+      "rentals.assets.write": "Editar recursos de alquiler",
       "rentals.pricing.read": "Ver precios",
       "rentals.pricing.write": "Editar precios",
       "rentals.pricing.bulk_write": "Editar precios en lote",

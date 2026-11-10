@@ -256,8 +256,8 @@ describe("BookingPolicyPage", () => {
     expect(text).toBeDisabled()
     expect(text).toHaveValue("Bring a document.")
     expect(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      screen.getByRole("radio", {
+        name: i18n.t("rentals.bookingPolicy.horizonUnlimited"),
       }),
     ).toBeDisabled()
     expect(
@@ -284,8 +284,8 @@ describe("BookingPolicyPage", () => {
     expect(days).toBeDisabled()
     expect(days).toHaveValue("12")
     expect(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
+      screen.getByRole("radio", {
+        name: i18n.t("rentals.bookingPolicy.horizonUnlimited"),
       }),
     ).toBeDisabled()
   })
@@ -369,12 +369,7 @@ describe("BookingPolicyPage", () => {
 
     await screen.findByLabelText(i18n.t("rentals.bookingPolicy.horizonDays"))
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", {
+      screen.getByRole("radio", {
         name: i18n.t("rentals.bookingPolicy.horizonUnlimited"),
       }),
     )
@@ -406,12 +401,7 @@ describe("BookingPolicyPage", () => {
       i18n.t("rentals.bookingPolicy.cancellationLabel"),
     )
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.horizonLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", {
+      screen.getByRole("radio", {
         name: i18n.t("rentals.bookingPolicy.horizonDaysMode"),
       }),
     )
@@ -459,12 +449,7 @@ describe("BookingPolicyPage", () => {
 
     await screen.findByLabelText(i18n.t("rentals.bookingPolicy.cancelCutoffHours"))
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", {
+      screen.getByRole("radio", {
         name: i18n.t("rentals.bookingPolicy.cancelCutoffNone"),
       }),
     )
@@ -496,12 +481,7 @@ describe("BookingPolicyPage", () => {
       i18n.t("rentals.bookingPolicy.cancellationLabel"),
     )
     await user.click(
-      screen.getByRole("combobox", {
-        name: i18n.t("rentals.bookingPolicy.cancelCutoffLabel"),
-      }),
-    )
-    await user.click(
-      await screen.findByRole("option", {
+      screen.getByRole("radio", {
         name: i18n.t("rentals.bookingPolicy.cancelCutoffHoursMode"),
       }),
     )
