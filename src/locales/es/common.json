@@ -1,4 +1,32 @@
 {
+  "staffAgenda": {
+    "view": "Vista de la agenda",
+    "dia": "Día",
+    "semana": "Semana",
+    "dateNavigation": "Navegación por fecha",
+    "previous": "Anterior",
+    "today": "Hoy",
+    "next": "Siguiente",
+    "filters": "Filtros de la agenda",
+    "recurso": "Recurso",
+    "produto": "Producto",
+    "pedido": "Pedido",
+    "tipo": "Tipo",
+    "all": "Todos",
+    "clear": "Limpiar filtros",
+    "applied_zero": "Ningún filtro aplicado",
+    "applied_one": "{{count}} filtro aplicado",
+    "applied_other": "{{count}} filtros aplicados",
+    "loading": "Cargando opciones de {{label}}…",
+    "loadError": "No se pudieron cargar las opciones de {{label}}.",
+    "placeholder": "La cuadrícula de la agenda estará disponible pronto.",
+    "types": {
+      "reserva": "Reserva",
+      "pedido": "Pedido",
+      "manutencao": "Mantenimiento",
+      "bloqueio": "Bloqueo"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Zona autenticada"
@@ -1917,6 +1945,7 @@
     }
   },
   "nav": {
+    "agenda": "Agenda",
     "sidebar": {
       "people": "Personas",
       "groups": "Grupos",

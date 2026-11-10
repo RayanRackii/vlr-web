@@ -118,6 +118,7 @@ describe("filterNavigationItemsByAccess", () => {
     )
 
     expect(visible.map((item) => item.to)).toEqual([
+      "/agenda",
       "/catalogo/produtos",
       "/catalogo/grupos",
       "/catalogo/pedidos",
@@ -387,7 +388,7 @@ describe("staff menu permissions by role", () => {
       receptionistPermissions,
     )
 
-    expect(visible.map((item) => item.to)).toEqual(["/configuracoes/reservas"])
+    expect(visible.map((item) => item.to)).toEqual(["/agenda", "/configuracoes/reservas"])
     expect(
       firstPermittedProductPath(["rentals"], receptionistPermissions),
     ).toBe("/configuracoes/reservas")
@@ -561,7 +562,7 @@ describe("staff sidebar groups", () => {
       "nav.sections.customers", "nav.sections.portal", "nav.sections.settings",
     ])
     expect(sections.slice(1).map((section) => section.items.map((item) => item.to))).toEqual([
-      ["/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc"],
+      ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc"],
       ["/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags", "/ativos"],
       ["/pessoas-e-acesso", "/catalogo/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
@@ -600,5 +601,30 @@ describe("staff sidebar groups", () => {
       { labelKey: "nav.pmocNew", to: "/pmoc/biblioteca" },
     ])
     expect(firstPermittedProductPath(["pmoc"], ["pmoc.templates.read"])).toBe("/pmoc/biblioteca")
+  })
+})
+
+
+describe("staff agenda navigation", () => {
+  it("resolves the staff title and leaves the professor landing unchanged", () => {
+    expect(getPageTitleKey("/agenda")).toBe("nav.agenda")
+    expect(firstPermittedProductPath(["rentals"], ["rentals.schedule.read", "rentals.assets.read"]))
+      .toBe("/configuracoes/agenda")
+  })
+
+  it.each(["rentals.schedule.read", "rentals.assets.read", "rentals.reservations.read", "catalog.orders.read", "catalog.products.read"])("opens with just %s and an enabled module", (permission) => {
+    const sections = buildProductSections(["rentals", "catalog"], [permission])
+    const operations = sections.find((section) => section.titleKey === "nav.sections.operations")
+    expect(operations?.items[0]).toMatchObject({ to: "/agenda", labelKey: "nav.agenda" })
+    expect(sections.flatMap((section) => section.items).filter((item) => item.to === "/agenda")).toHaveLength(1)
+  })
+
+  it("requires both an enabled module and one permission", () => {
+    const agenda = appNavigationItems.filter((item) => item.to === "/agenda")
+    expect(agenda).toHaveLength(1)
+    expect(filterNavigationItemsByAccess(agenda, [], ["rentals.schedule.read"])).toEqual([])
+    expect(filterNavigationItemsByAccess(agenda, ["rentals"], [])).toEqual([])
+    expect(filterNavigationItemsByAccess(agenda, ["catalog"], ["catalog.orders.read"])).toHaveLength(1)
+    expect(filterNavigationItemsByAccess(agenda, ["rentals"], ["rentals.reservations.read"])).toHaveLength(1)
   })
 })

@@ -1,4 +1,32 @@
 {
+  "staffAgenda": {
+    "view": "Agenda view",
+    "dia": "Day",
+    "semana": "Week",
+    "dateNavigation": "Date navigation",
+    "previous": "Previous",
+    "today": "Today",
+    "next": "Next",
+    "filters": "Agenda filters",
+    "recurso": "Resource",
+    "produto": "Product",
+    "pedido": "Order",
+    "tipo": "Type",
+    "all": "All",
+    "clear": "Clear filters",
+    "applied_zero": "No filters applied",
+    "applied_one": "{{count}} filter applied",
+    "applied_other": "{{count}} filters applied",
+    "loading": "Loading {{label}} options…",
+    "loadError": "Could not load {{label}} options.",
+    "placeholder": "The agenda grid will be available soon.",
+    "types": {
+      "reserva": "Reservation",
+      "pedido": "Order",
+      "manutencao": "Maintenance",
+      "bloqueio": "Block"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Authenticated area"
@@ -1917,6 +1945,7 @@
     }
   },
   "nav": {
+    "agenda": "Agenda",
     "sidebar": {
       "people": "People",
       "groups": "Groups",
