@@ -82,6 +82,43 @@ describe("SchedulePolicyPanel", () => {
     await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
   })
 
+  it("does not mark untouched null asset hours dirty when templates refresh", async () => {
+    const onDirtyChange = vi.fn()
+    const props = {
+      assets: [{ ...asset, schedulePolicy: "OpenHours" as const, openTime: null, closeTime: null, allowedDurationMinutes: null }],
+      busy: false,
+      busyAction: null,
+      readOnly: false,
+      onSave: vi.fn(),
+      onSeedSlotGrid: vi.fn(),
+      onDirtyChange,
+      templates: [] as const,
+    }
+    const view = render(<SchedulePolicyPanel {...props} />)
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(false))
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.openTime"))).toHaveValue("08:00")
+    onDirtyChange.mockClear()
+    view.rerender(
+      <SchedulePolicyPanel
+        {...props}
+        templates={[{
+          id: "11111111-1111-4111-8111-111111111111",
+          rentalAssetId: asset.id,
+          assetName: asset.name,
+          dayOfWeek: "Monday",
+          startTime: "09:00:00",
+          endTime: "18:00:00",
+          occupancyKindId: "22222222-2222-4222-8222-222222222222",
+          occupancyKindLabel: "Aula",
+          label: null,
+          isActive: true,
+        }]}
+      />,
+    )
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.openTime"))).toHaveValue("08:00")
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true)
+  })
+
   it("does not stay dirty when a saved duration only differs by spaces", async () => {
     const onDirtyChange = vi.fn()
     render(

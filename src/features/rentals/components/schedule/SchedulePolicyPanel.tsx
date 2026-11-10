@@ -175,11 +175,20 @@ function SchedulePolicyPanelForm({
   const [closeTime, setCloseTime] = useState(initialCloseTime)
   const [durationMinutes, setDurationMinutes] = useState(initialDurationMinutes)
   const [slotGridDurations, setSlotGridDurations] = useState(initialSlotGridDurations)
-  const dirty = policy !== initialPolicy
-    || openTime !== initialOpenTime
-    || closeTime !== initialCloseTime
-    || normalizeDurations(durationMinutes) !== normalizeDurations(initialDurationMinutes)
-    || normalizeDurations(slotGridDurations) !== normalizeDurations(initialSlotGridDurations)
+  // Null asset hours display as these defaults. Later template refreshes must
+  // not move the snapshot, or an untouched form looks dirty.
+  const [baseline] = useState({
+    policy: initialPolicy,
+    openTime: initialOpenTime,
+    closeTime: initialCloseTime,
+    durationMinutes: initialDurationMinutes,
+    slotGridDurations: initialSlotGridDurations,
+  })
+  const dirty = policy !== baseline.policy
+    || openTime !== baseline.openTime
+    || closeTime !== baseline.closeTime
+    || normalizeDurations(durationMinutes) !== normalizeDurations(baseline.durationMinutes)
+    || normalizeDurations(slotGridDurations) !== normalizeDurations(baseline.slotGridDurations)
   useEffect(() => {
     onDirtyChange?.(dirty)
   }, [dirty, onDirtyChange])
