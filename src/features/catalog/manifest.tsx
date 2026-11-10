@@ -10,6 +10,7 @@ import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDet
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
+import { CatalogProductCreatePage } from "@/features/catalog/pages/CatalogProductCreatePage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
 import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
@@ -110,6 +111,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/configuracoes",
         element: <CatalogPolicyPage />,
+        permission: "catalog.products.manage",
+      },
+      {
+        path: "/catalogo/produtos/novo",
+        element: <CatalogProductCreatePage />,
         permission: "catalog.products.manage",
       },
       {
