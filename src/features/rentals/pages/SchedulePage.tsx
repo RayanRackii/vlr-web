@@ -8,9 +8,13 @@ import {
 } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, CalendarRange, Tag } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
+import {
+  UNSAFE_DataRouterContext as DataRouterContext,
+  useBlocker,
+  useNavigate,
+} from "react-router-dom"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
@@ -66,6 +70,23 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
 type ScheduleTab = "daily" | "templates" | "kinds"
+
+function ScheduleLeaveGuard({ dirty }: { dirty: boolean }) {
+  const { t } = useTranslation()
+  const blocker = useBlocker(dirty)
+  return (
+    <LeaveConfirmDialog
+      open={blocker.state === "blocked"}
+      title={t("fullPage.leaveConfirm")}
+      onStay={() => {
+        if (blocker.state === "blocked") blocker.reset()
+      }}
+      onLeave={() => {
+        if (blocker.state === "blocked") blocker.proceed()
+      }}
+    />
+  )
+}
 
 function dayCacheKey(rentalAssetIds: readonly string[], date: string): string {
   return `${[...rentalAssetIds].sort().join(",")}|${date}`
@@ -139,6 +160,8 @@ function AdminSchedulePage() {
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
   const [templateDirty, setTemplateDirty] = useState(false)
+  const [ruleOpen, setRuleOpen] = useState(false)
+  const [ruleDirty, setRuleDirty] = useState(false)
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
   const [weeklyTarget, setWeeklyTarget] =
@@ -147,16 +170,18 @@ function AdminSchedulePage() {
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
+  const hasDataRouter = useContext(DataRouterContext) != null
+  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty)
 
   useEffect(() => {
-    if (!templateSheetOpen || !templateDirty) return
+    if (!draftDirty) return
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault()
       event.returnValue = ""
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [templateSheetOpen, templateDirty])
+  }, [draftDirty])
 
   const defaultKindId = useMemo(
     () =>
@@ -185,30 +210,45 @@ function AdminSchedulePage() {
     setWeeklyTarget(null)
   }
 
+  function closeWeeklyRule() {
+    setRuleOpen(false)
+    setRuleDirty(false)
+  }
+
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
+      if (ruleDirty) closeWeeklyRule()
       action()
     }
-    if (templateSheetOpen && templateDirty) {
+    if (draftDirty) {
       setPendingLeave(() => proceed)
       return
     }
     proceed()
   }
 
+  function requestCloseRule() {
+    if (ruleOpen && ruleDirty) {
+      setPendingLeave(() => closeWeeklyRule)
+      return
+    }
+    setRuleOpen(false)
+  }
+
   function discardTemplateDraft() {
-    const href = safeStaffReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
-    const leave = () => {
+    if (!draftDirty) {
       clearTemplateDraft()
+      return true
+    }
+    if (hasDataRouter) return true
+    const href = safeStaffReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
+    setPendingLeave(() => () => {
+      clearTemplateDraft()
+      closeWeeklyRule()
       if (href) navigate(href)
-    }
-    if (templateSheetOpen && templateDirty) {
-      setPendingLeave(() => leave)
-      return false
-    }
-    clearTemplateDraft()
-    return true
+    })
+    return false
   }
 
   function onSelectedRentalAssetIdsChange(ids: string[]) {
@@ -766,7 +806,10 @@ function AdminSchedulePage() {
                 aria-pressed={isActive}
                 onClick={() => {
                   if (item.id === tab) return
-                  runOrAsk(() => setTab(item.id))
+                  runOrAsk(() => {
+                    if (item.id !== "templates") closeWeeklyRule()
+                    setTab(item.id)
+                  })
                 }}
                 className={cn(
                   "touch-target inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium motion-safe:transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
@@ -894,6 +937,10 @@ function AdminSchedulePage() {
               />
             </>}
             onApplyWeeklyRule={onApplyWeeklyRule}
+            ruleOpen={ruleOpen}
+            onRuleOpenChange={setRuleOpen}
+            onRuleDirtyChange={setRuleDirty}
+            onRuleRequestClose={requestCloseRule}
           />
         ) : null}
 
@@ -931,6 +978,7 @@ function AdminSchedulePage() {
       />
 
 
+      {hasDataRouter ? <ScheduleLeaveGuard dirty={draftDirty} /> : null}
       <LeaveConfirmDialog
         open={pendingLeave != null}
         title={t("fullPage.leaveConfirm")}
