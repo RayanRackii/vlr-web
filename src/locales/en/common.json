@@ -3975,7 +3975,8 @@
       "products": "Exclusive products",
       "noOrders": "This customer has no orders.",
       "noGroups": "Not in any group.",
-      "noProducts": "No exclusive products."
+      "noProducts": "No exclusive products.",
+      "catalogDenied": "Orders, groups, or exclusive products need catalog access."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} of {{total}}",

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
+  CatalogForbiddenError,
   getCatalogProductAccess,
   listCatalogOrders,
   listCatalogProducts,
@@ -36,6 +37,33 @@ async function findTenantCustomer(id: string): Promise<TenantCustomer | null> {
   return null
 }
 
+type CatalogSections = {
+  orders: boolean
+  groups: boolean
+  products: boolean
+}
+
+async function loadSection<T>(load: () => Promise<T>, fallback: T): Promise<{
+  value: T
+  denied: boolean
+  failed: boolean
+  message: string | null
+}> {
+  try {
+    return { value: await load(), denied: false, failed: false, message: null }
+  } catch (error) {
+    if (error instanceof CatalogForbiddenError) {
+      return { value: fallback, denied: true, failed: false, message: null }
+    }
+    return {
+      value: fallback,
+      denied: false,
+      failed: true,
+      message: error instanceof Error ? error.message : null,
+    }
+  }
+}
+
 export function PortalCustomerPage() {
   const { id = "" } = useParams()
   const { t } = useTranslation()
@@ -43,6 +71,7 @@ export function PortalCustomerPage() {
   const [orders, setOrders] = useState<CatalogOrder[]>([])
   const [groups, setGroups] = useState<CustomerGroup[]>([])
   const [products, setProducts] = useState<ExclusiveProduct[]>([])
+  const [denied, setDenied] = useState<CatalogSections>({ orders: false, groups: false, products: false })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,14 +80,14 @@ export function PortalCustomerPage() {
     void (async () => {
       setLoading(true)
       try {
-        const [found, orderList, groupList, productList] = await Promise.all([
-          findTenantCustomer(id),
-          listCatalogOrders({ customerId: id }),
-          listCustomerGroups(),
-          listCatalogProducts(),
+        const found = await findTenantCustomer(id)
+        const [orderResult, groupResult, productResult] = await Promise.all([
+          loadSection(() => listCatalogOrders({ customerId: id }), [] as CatalogOrder[]),
+          loadSection(() => listCustomerGroups(), [] as CustomerGroup[]),
+          loadSection(() => listCatalogProducts(), []),
         ])
-        const memberGroups = groupList.filter((group) => group.memberCustomerIds.includes(id))
-        const restricted = productList.filter((product) => product.visibility === "Restricted")
+        const memberGroups = groupResult.value.filter((group) => group.memberCustomerIds.includes(id))
+        const restricted = productResult.value.filter((product) => product.visibility === "Restricted")
         const accessEntries = await Promise.all(restricted.map(async (product) => {
           try {
             const access = await getCatalogProductAccess(product.id)
@@ -70,18 +99,29 @@ export function PortalCustomerPage() {
         const exclusive = exclusiveProductsForCustomer({
           customerId: id,
           groupIds: memberGroups.map((group) => group.id),
-          products: productList,
+          products: productResult.value,
           accessByProductId: Object.fromEntries(accessEntries),
         })
         if (!cancelled) {
           setCustomer(found)
-          setOrders(orderList)
+          setOrders(orderResult.value)
           setGroups(memberGroups)
           setProducts(exclusive)
-          setError(null)
+          setDenied({
+            orders: orderResult.denied,
+            groups: groupResult.denied,
+            products: productResult.denied,
+          })
+          setError(
+            [orderResult, groupResult, productResult].find((result) => result.failed)?.message
+              ?? (orderResult.failed || groupResult.failed || productResult.failed
+                ? t("peopleAccess.errors.loadCustomers")
+                : null),
+          )
         }
       } catch (loadError) {
         if (!cancelled) {
+          setCustomer(null)
           setError(loadError instanceof Error ? loadError.message : t("peopleAccess.errors.loadCustomers"))
         }
       } finally {
@@ -109,6 +149,12 @@ export function PortalCustomerPage() {
       ) : (
       <>
       <PageHeader title={name} description={customer?.email ?? undefined} />
+      {denied.orders || denied.groups || denied.products ? (
+        <Alert>
+          <AlertDescription>{t("peopleAccess.customerPage.catalogDenied")}</AlertDescription>
+        </Alert>
+      ) : null}
+      {denied.orders ? null : (
       <section className="space-y-2" aria-labelledby="customer-orders">
         <h2 id="customer-orders" className="text-lg font-semibold">{t("peopleAccess.customerPage.orders")}</h2>
         {orders.length === 0 ? <p className="text-sm text-muted-foreground">{t("peopleAccess.customerPage.noOrders")}</p> : (
@@ -124,6 +170,8 @@ export function PortalCustomerPage() {
           </ul>
         )}
       </section>
+      )}
+      {denied.groups ? null : (
       <section className="space-y-2" aria-labelledby="customer-groups">
         <h2 id="customer-groups" className="text-lg font-semibold">{t("peopleAccess.customerPage.groups")}</h2>
         {groups.length === 0 ? <p className="text-sm text-muted-foreground">{t("peopleAccess.customerPage.noGroups")}</p> : (
@@ -138,6 +186,8 @@ export function PortalCustomerPage() {
           </ul>
         )}
       </section>
+      )}
+      {denied.products ? null : (
       <section className="space-y-2" aria-labelledby="customer-products">
         <h2 id="customer-products" className="text-lg font-semibold">{t("peopleAccess.customerPage.products")}</h2>
         {products.length === 0 ? <p className="text-sm text-muted-foreground">{t("peopleAccess.customerPage.noProducts")}</p> : (
@@ -152,6 +202,7 @@ export function PortalCustomerPage() {
           </ul>
         )}
       </section>
+      )}
       </>
       )}
     </div>

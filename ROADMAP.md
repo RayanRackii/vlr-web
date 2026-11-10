@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Ficha do cliente sem catálogo (WEB):** quem só lê clientes continua vendo a pessoa. Pedidos, grupos e produtos exclusivos que respondem 403 viram um aviso, sem esvaziar a ficha nem trocar a página por erro. |
 | 2026-11-10 | **Intro de Reservas no teste de cabeçalho (WEB):** o teste da intro usa `rentals.schedule.read` e `rentals.assets.read`, o par que Horários exige. Quem só tem a agenda não é um papel real e não abre essa intro. |
 | 2026-11-10 | **Agenda exige leitura de recursos (WEB):** Horários só abre com `rentals.schedule.read` e `rentals.assets.read`. A lista de recursos da página é `GET /api/rental-assets`, então a chave da agenda sozinha levava a um 403. |
 | 2026-11-10 | **Alocação explica unidades e abre a agenda (WEB):** um 403 ao carregar unidades deixa claro que a aprovação não pode escolher onde alocar. Depois de alocado, quem lê a agenda vê o link para a agenda do recurso, no dia do trabalho. |
