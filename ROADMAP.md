@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Alocação explica unidades e abre a agenda (WEB):** um 403 ao carregar unidades deixa claro que a aprovação não pode escolher onde alocar. Depois de alocado, quem lê a agenda vê o link para a agenda do recurso, no dia do trabalho. |
+
 | 2026-11-10 | **Proposta, sem código (WEB):** regras continuam em três editores; a sidebar e o título do layout passam a um nome só, Montagem do mapa. Mapa do espaço fica com a vista de reserva. Ver `docs/plans/active/2026-11-10-regras-e-mapa.md`. |
 | 2026-11-10 | **Rótulos que cabem (WEB):** Planos de manutenção quebra linha na sidebar. Regras de reserva quebra linha no título do celular. `rentals.assets.write` passa a dizer Editar recursos de aluguel. |
 

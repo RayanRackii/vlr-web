@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Previsão de conclusão",
         "notFeasible": "Esse horário não é viável para o recurso selecionado.",
         "approveAndAllocate": "Aprovar e alocar",
+        "unitsForbidden": "Sem acesso às unidades, a aprovação não pode escolher onde alocar.",
         "refusalTitle": "Não é possível alocar",
         "approvalRule": "Ao aprovar, o recurso é reservado para o pedido nesse horário.",
         "toastApproved": "Pedido aprovado e recurso alocado."
@@ -1415,6 +1416,7 @@
         "workWindow": "Janela de trabalho",
         "workFinished": "Concluir trabalho",
         "release": "Liberar",
+        "openAgenda": "Abrir a agenda do recurso",
         "cancelledHint": "Este pedido foi cancelado; finalize ou libere o recurso conforme necessário.",
         "toastUpdated": "Uso do recurso atualizado."
       },

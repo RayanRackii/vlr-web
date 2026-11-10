@@ -1405,6 +1405,7 @@
         "estimatedReadyAt": "Previsión de finalización",
         "notFeasible": "Ese horario no es viable para el recurso seleccionado.",
         "approveAndAllocate": "Aprobar y asignar",
+        "unitsForbidden": "Sin acceso a las unidades, la aprobación no puede elegir dónde asignar.",
         "refusalTitle": "No se puede asignar",
         "approvalRule": "Al aprobar, el recurso se reserva para el pedido en ese horario.",
         "toastApproved": "Pedido aprobado y recurso asignado."
@@ -1415,6 +1416,7 @@
         "workWindow": "Ventana de trabajo",
         "workFinished": "Finalizar trabajo",
         "release": "Liberar",
+        "openAgenda": "Abrir la agenda del recurso",
         "cancelledHint": "Este pedido fue cancelado; finaliza o libera el recurso según sea necesario.",
         "toastUpdated": "Uso del recurso actualizado."
       },

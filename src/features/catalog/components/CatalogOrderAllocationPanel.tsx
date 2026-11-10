@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { isForbiddenError } from "@/features/users/permissions/rbacErrors"
 import {
   formatCatalogDate,
   type CatalogOrder,
@@ -21,9 +23,15 @@ import {
   CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
+import { zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
 import { composeWorkStart, type WorkStartParts } from "@/features/catalog/lib/workStartFields"
 import { getUnits } from "@/features/assets/services/unitsService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
+
+function resourceAgendaPath(plannedWorkStart: string, timeZoneId: string): string {
+  const day = zonedDayAndMinutes(plannedWorkStart, timeZoneId)?.dayKey
+  return day ? `/catalogo/agenda-recursos?date=${day}` : "/catalogo/agenda-recursos"
+}
 
 type CatalogOrderAllocationPanelProps = {
   order: CatalogOrder
@@ -71,6 +79,7 @@ export function CatalogOrderAllocationPanel({
           allocation={allocatedItem.allocation}
           onOrderChange={onOrderChange}
           canAllocate={can("catalog.orders.allocate") && can("catalog.orders.manage")}
+          canOpenAgenda={can("rentals.schedule.read")}
           timeZoneId={timeZoneId}
           locale={i18n.language}
           t={t}
@@ -100,6 +109,7 @@ function ApprovalPanel({
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const [units, setUnits] = useState<Unit[]>([])
+  const [unitsForbidden, setUnitsForbidden] = useState(false)
   const [unitId, setUnitId] = useState<string | null>(null)
   const [workParts, setWorkParts] = useState<WorkStartParts>(EMPTY_WORK_START)
   const workStart = composeWorkStart(workParts) ?? ""
@@ -113,6 +123,7 @@ function ApprovalPanel({
     void getUnits()
       .then((list) => {
         if (cancelled) return
+        setUnitsForbidden(false)
         setUnits(list)
         const preferred = preferredUnitId && list.some((unit) => unit.id === preferredUnitId)
           ? preferredUnitId
@@ -123,8 +134,11 @@ function ApprovalPanel({
           setUnitId(list[0].id)
         }
       })
-      .catch(() => {
-        if (!cancelled) setUnits([])
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setUnits([])
+          setUnitsForbidden(isForbiddenError(error))
+        }
       })
     return () => {
       cancelled = true
@@ -199,6 +213,12 @@ function ApprovalPanel({
           {t("catalog.resourcePlanning.approvalPanel.previewHint")}
         </AlertDescription>
       </Alert>
+
+      {unitsForbidden ? (
+        <Alert variant="destructive">
+          <AlertDescription>{t("catalog.resourcePlanning.approvalPanel.unitsForbidden")}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
@@ -313,6 +333,7 @@ function ActiveUsageCard({
   allocation,
   onOrderChange,
   canAllocate,
+  canOpenAgenda,
   timeZoneId,
   locale,
   t,
@@ -321,6 +342,7 @@ function ActiveUsageCard({
   allocation: NonNullable<CatalogOrder["items"][number]["allocation"]>
   onOrderChange: (order: CatalogOrder) => void
   canAllocate: boolean
+  canOpenAgenda: boolean
   timeZoneId: string
   locale: string
   t: (key: string, options?: Record<string, unknown>) => string
@@ -367,6 +389,14 @@ function ActiveUsageCard({
         {formatCatalogDate(allocation.plannedWorkStart, locale, timeZoneId)} –{" "}
         {formatCatalogDate(allocation.plannedWorkEnd, locale, timeZoneId)}
       </p>
+      {canOpenAgenda ? (
+        <Link
+          className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline"
+          to={resourceAgendaPath(allocation.plannedWorkStart, allocation.timeZoneId)}
+        >
+          {t("catalog.resourcePlanning.activeUse.openAgenda")}
+        </Link>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <LoadingButton
           type="button"
