@@ -89,7 +89,8 @@ export function CatalogProductCreatePage() {
   const parsedForm = catalogProductFormSchema.safeParse(watchedValues)
   const isFormValid = parsedForm.success
   const visibleIssues = useVisibleFormIssues(parsedForm.success ? undefined : parsedForm.error, form)
-  const dirty = form.formState.isDirty && createdPath == null
+  const statusDirty = !createActive
+  const dirty = createdPath == null && (form.formState.isDirty || statusDirty)
 
   function fieldMessage(name: string) {
     const key = CATALOG_PRODUCT_FIELD_ISSUE_KEYS[name]

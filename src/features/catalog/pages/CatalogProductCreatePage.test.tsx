@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
+import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes, useLocation } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -93,6 +93,48 @@ describe("CatalogProductCreatePage", () => {
     } finally {
       await i18n.changeLanguage("pt-BR")
     }
+  })
+
+  it("asks before leaving when only inactive was chosen", async () => {
+    const user = userEvent.setup()
+    const router = createMemoryRouter([
+      { path: "/catalogo/produtos/novo", element: <CatalogProductCreatePage /> },
+      { path: "/catalogo/produtos", element: <h1>Lista</h1> },
+    ], { initialEntries: ["/catalogo/produtos/novo"] })
+    render(
+      <TestPermissionProvider permissions={["catalog.products.manage"]}>
+        <RouterProvider router={router} />
+      </TestPermissionProvider>,
+    )
+    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    await user.click(screen.getByRole("link", { name: i18n.t("common.cancel") }))
+    const dialog = await screen.findByRole("alertdialog")
+    expect(router.state.location.pathname).toBe("/catalogo/produtos/novo")
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
+    expect(router.state.location.pathname).toBe("/catalogo/produtos/novo")
+
+    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.active") }))
+    await user.click(screen.getByRole("link", { name: i18n.t("common.cancel") }))
+    expect(await screen.findByRole("heading", { name: "Lista" })).toBeInTheDocument()
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it("opens the wizard after saving an inactive product on a data router", async () => {
+    const user = userEvent.setup()
+    const router = createMemoryRouter([
+      { path: "/catalogo/produtos/novo", element: <CatalogProductCreatePage /> },
+      { path: "/catalogo/produtos/:id/assistente", element: <h1>Assistente</h1> },
+    ], { initialEntries: ["/catalogo/produtos/novo"] })
+    render(
+      <TestPermissionProvider permissions={["catalog.products.manage"]}>
+        <RouterProvider router={router} />
+      </TestPermissionProvider>,
+    )
+    await user.type(screen.getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
+    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
+    expect(await screen.findByRole("heading", { name: "Assistente" })).toBeInTheDocument()
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
 
   it("creates an inactive product and opens the wizard", async () => {
