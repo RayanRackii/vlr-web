@@ -1268,6 +1268,12 @@
         "noProvider": "This channel has no external provider.",
         "unsupportedChannel": "Channel {{channel}} is not supported."
       },
+      "filters": {
+        "all": "All",
+        "from": "From",
+        "to": "To",
+        "pageSize": "Per page"
+      },
       "toastChannelSaved": "Channel updated.",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "columns": {

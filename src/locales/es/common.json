@@ -1268,6 +1268,12 @@
         "noProvider": "Este canal no tiene envío externo.",
         "unsupportedChannel": "El canal {{channel}} no es compatible."
       },
+      "filters": {
+        "all": "Todos",
+        "from": "Desde",
+        "to": "Hasta",
+        "pageSize": "Por página"
+      },
       "toastChannelSaved": "Canal actualizado.",
       "toggleChannel": "Activar {{channel}} para {{event}}",
       "columns": {

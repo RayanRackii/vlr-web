@@ -26,6 +26,16 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   resendCatalogNotification: vi.fn(),
 }))
 
+vi.mock("@/features/notifications/services/notificationDeliveryService", () => ({
+  listNotificationDeliveries: vi.fn().mockResolvedValue({
+    items: [],
+    page: 1,
+    pageSize: 20,
+    totalCount: 0,
+  }),
+  resendNotificationDelivery: vi.fn(),
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -106,14 +116,14 @@ async function waitForLoaded() {
   })
   await waitFor(() => {
     expect(
-      screen.getByText(i18n.t("notifications.settings.subtitle")),
+      screen.getByRole("heading", { name: i18n.t("notifications.settings.title") }),
     ).toBeInTheDocument()
   })
 }
 
 function eventRow(label: string) {
-  const cell = screen.getByText(label)
-  const row = cell.closest("tr")
+  const cell = screen.getAllByText(label).find((element) => element.closest("tr"))
+  const row = cell?.closest("tr")
   if (!row) {
     throw new Error(`Row for ${label} was not found.`)
   }
@@ -202,18 +212,18 @@ describe("NotificationsSettingsPage", () => {
       name: i18n.t("notifications.settings.modules.rentals"),
     })
     expect(catalogTab).toHaveAttribute("aria-selected", "true")
-    expect(screen.getAllByRole("table")).toHaveLength(1)
-    expect(screen.queryByText(i18n.t("rentals.events.reservationConfirmed"))).not.toBeInTheDocument()
+    expect(screen.getAllByRole("table")).toHaveLength(2)
+    expect(within(screen.getByRole("tabpanel")).queryByText(i18n.t("rentals.events.reservationConfirmed"))).not.toBeInTheDocument()
 
     await user.click(rentalsTab)
     expect(rentalsTab).toHaveAttribute("aria-selected", "true")
-    expect(screen.getAllByRole("table")).toHaveLength(1)
-    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
-    expect(screen.queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
+    expect(screen.getAllByRole("table")).toHaveLength(2)
+    expect(within(screen.getByRole("tabpanel")).getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+    expect(within(screen.getByRole("tabpanel")).queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
     expect(screen.getByLabelText("Current search")).toHaveTextContent("?keep=1&tab=rentals")
 
     await user.click(catalogTab)
-    expect(screen.getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
+    expect(within(screen.getByRole("tabpanel")).getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
     expect(screen.getByLabelText("Current search")).toHaveTextContent("?keep=1&tab=catalog")
     expect(listMock).toHaveBeenCalledTimes(1)
     expect(updateMock).not.toHaveBeenCalled()
@@ -226,7 +236,7 @@ describe("NotificationsSettingsPage", () => {
     expect(screen.getByRole("tab", {
       name: i18n.t("notifications.settings.modules.rentals"),
     })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+    expect(within(screen.getByRole("tabpanel")).getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
   })
 
   it("sends PUT when a configurable channel is toggled", async () => {
@@ -284,7 +294,7 @@ describe("NotificationsSettingsPage", () => {
       expect(emailSwitch).toHaveAttribute("aria-checked", "false")
     })
     expect(
-      screen.getByText(i18n.t("notifications.settings.subtitle")),
+      screen.getByText(i18n.t("notifications.settings.subtitleBoth")),
     ).toBeInTheDocument()
   })
 
@@ -297,10 +307,8 @@ describe("NotificationsSettingsPage", () => {
 
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
     expect(screen.queryByRole("tab")).not.toBeInTheDocument()
-    expect(screen.getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
-    expect(
-      screen.queryByText(i18n.t("rentals.events.reservationConfirmed")),
-    ).not.toBeInTheDocument()
+    expect(within(screen.getByRole("tabpanel")).getByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
+    expect(within(screen.getAllByRole("table")[0]).queryByText(i18n.t("rentals.events.reservationConfirmed"))).not.toBeInTheDocument()
   })
 
   it("shows the only active family even when the URL selects an inactive one", async () => {
@@ -309,8 +317,8 @@ describe("NotificationsSettingsPage", () => {
     await waitForLoaded()
 
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
-    expect(screen.getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
-    expect(screen.queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
+    expect(within(screen.getByRole("tabpanel")).getByText(i18n.t("rentals.events.reservationConfirmed"))).toBeInTheDocument()
+    expect(within(screen.getAllByRole("table")[0]).queryByText(i18n.t("catalog.events.orderCreated"))).not.toBeInTheDocument()
   })
 
   it("keeps configurable channels disabled without write permission", async () => {
