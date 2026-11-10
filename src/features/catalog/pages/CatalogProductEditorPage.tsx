@@ -16,6 +16,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Form,
   FormControl,
   FormField,
@@ -87,6 +95,7 @@ export function CatalogProductEditorPage() {
   const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
   const [saving, setSaving] = useState(false)
   const [statusBusy, setStatusBusy] = useState(false)
+  const [deactivateOpen, setDeactivateOpen] = useState(false)
   const [tab, setTab] = useState("dados")
   const [uploadVisibility, setUploadVisibility] = useState<CatalogFileVisibility>("CustomerVisible")
   const [fileBusy, setFileBusy] = useState(false)
@@ -273,14 +282,18 @@ export function CatalogProductEditorPage() {
     }
   }
 
-  async function toggleActive() {
+  function toggleActive() {
     if (!product || !canManage) return
-    if (
-      product.isActive &&
-      !window.confirm(t("catalog.products.deactivateConfirmBody", { name: product.name }))
-    ) {
+    if (product.isActive) {
+      setDeactivateOpen(true)
       return
     }
+    void commitActiveChange()
+  }
+
+  async function commitActiveChange() {
+    if (!product || !canManage) return
+    setDeactivateOpen(false)
     setStatusBusy(true)
     try {
       if (product.isActive) {
@@ -728,6 +741,29 @@ export function CatalogProductEditorPage() {
         onDirtyChange={setAccessDirty}
       />
       </div>
+      <Dialog
+        open={deactivateOpen}
+        onOpenChange={(open) => {
+          if (!statusBusy) setDeactivateOpen(open)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("catalog.products.deactivateConfirmTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("catalog.products.deactivateConfirmBody", { name: product.name })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeactivateOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => void commitActiveChange()}>
+              {t("catalog.products.deactivate")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Form>
   )
 }
