@@ -64,4 +64,30 @@ describe("fetchAdminScheduleDay", () => {
       },
     )
   })
+
+  it("keeps the readable slots when one slot does not match the contract", async () => {
+    const valid = {
+      id: "61111111-1111-4111-8111-111111111111",
+      rentalAssetId: ASSET_ID,
+      assetName: "Sala 1",
+      date: "2026-10-08",
+      startTime: "12:00:00",
+      endTime: "13:00:00",
+      occupancyKindId: "51111111-1111-4111-8111-111111111111",
+      occupancyKindKey: "lesson",
+      occupancyKindLabel: "Aula",
+      isBookableByCustomer: true,
+      status: "Available",
+      isDerived: true,
+      source: "WeeklyDefault",
+      schedulePolicy: "SlotGrid",
+      supportsEntireRecurrence: false,
+    }
+    apiGet.mockResolvedValue({
+      data: { date: "2026-10-08", slots: [{ ...valid, id: "not-a-guid" }, valid] },
+    })
+    const day = await fetchAdminScheduleDay("2026-10-08")
+    expect(day.slots).toHaveLength(1)
+    expect(day.slots[0]?.id).toBe(valid.id)
+  })
 })

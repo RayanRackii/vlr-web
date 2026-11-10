@@ -11,6 +11,12 @@ export type AgendaDaySources = {
   slots: AdminDaySlot[]
   kinds: OccupancyKind[]
 }
+export type AgendaOrderLabel = {
+  id: string
+  displayNumber: string
+  customerName: string
+}
+
 export type AgendaBlock = {
   key: string
   resourceId: string
@@ -56,7 +62,23 @@ function dayWindow(start: string | null, end: string | null, date: string, zone:
   return right > left ? { start: left, end: right } : null
 }
 
-export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone: string) {
+function withOrderLabel(block: AgendaBlock, labels: ReadonlyMap<string, AgendaOrderLabel>): AgendaBlock {
+  if (!block.orderId) return block
+  const order = labels.get(block.orderId)
+  if (!order) return block
+  return {
+    ...block,
+    displayNumber: block.displayNumber?.trim() ? block.displayNumber : order.displayNumber,
+    customerName: block.customerName?.trim() ? block.customerName : order.customerName,
+  }
+}
+
+export function buildAgendaDay(
+  data: AgendaDaySources,
+  state: AgendaState,
+  zone: string,
+  labels: ReadonlyMap<string, AgendaOrderLabel> = new Map(),
+) {
   const rows = new Map<string, AgendaRow>()
   const ensure = (id: string, name: string) => {
     if (!rows.has(id)) rows.set(id, { id, name, blocks: [] })
@@ -140,7 +162,7 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     hours.push(block.start, block.end)
     if (state.tipo && state.tipo !== block.kind) continue
     if (block.kind === "pedido" && ((state.produto && state.produto !== block.productId) || (state.pedido && state.pedido !== block.orderId))) continue
-    rows.get(block.resourceId)?.blocks.push(block)
+    rows.get(block.resourceId)?.blocks.push(withOrderLabel(block, labels))
   }
   return {
     rows: [...rows.values()].filter((row) => !state.recurso || row.categoryId === state.recurso),
@@ -162,9 +184,14 @@ export type AgendaWeekRow = {
 }
 
 /** Seven civil days starting Monday, with a count of each occupancy kind. */
-export function buildAgendaWeek(data: AgendaDaySources, state: AgendaState, zone: string) {
+export function buildAgendaWeek(
+  data: AgendaDaySources,
+  state: AgendaState,
+  zone: string,
+  labels: ReadonlyMap<string, AgendaOrderLabel> = new Map(),
+) {
   const days = Array.from({ length: 7 }, (_, index) => addCivilDays(startOfCivilWeek(state.date), index))
-  const byDay = days.map((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone))
+  const byDay = days.map((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone, labels))
   const rows = new Map<string, AgendaWeekRow>()
   for (const day of byDay) {
     for (const row of day.rows) {

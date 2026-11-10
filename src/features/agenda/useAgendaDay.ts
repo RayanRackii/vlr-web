@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { addCivilDays, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
-import { listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
+import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { listAdminReservations } from "@/features/rentals/services/reservationsService"
 import {
   fetchAdminScheduleDay,
@@ -9,7 +9,7 @@ import {
   type AdminDaySlot,
 } from "@/features/rentals/services/scheduleService"
 import { tenantCivilInstant } from "@/lib/tenantTimeZone"
-import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources } from "./dayGridModel"
+import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources, type AgendaOrderLabel } from "./dayGridModel"
 import type { AgendaState } from "./urlState"
 
 const emptySources = (): AgendaDaySources => ({
@@ -27,7 +27,7 @@ type AgendaAccess = {
   orders: boolean
 }
 
-export const agendaSourceIds = ["assets", "orders", "reservations", "schedule"] as const
+export const agendaSourceIds = ["assets", "orders", "reservations", "schedule", "kinds"] as const
 export type AgendaSourceId = (typeof agendaSourceIds)[number]
 
 /**
@@ -36,6 +36,7 @@ export type AgendaSourceId = (typeof agendaSourceIds)[number]
  */
 export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAccess, tenantId: string | null, enabled: boolean) {
   const [sources, setSources] = useState<AgendaDaySources>(emptySources)
+  const [orderLabels, setOrderLabels] = useState<AgendaOrderLabel[]>([])
   const [failedSources, setFailedSources] = useState<AgendaSourceId[]>([])
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const canLoad = enabled && (access.assets || access.schedule || access.reservations || access.orders)
@@ -73,17 +74,26 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
       access.reservations ? listAdminReservations({ from: rangeStart, to: reservationTo }) : Promise.resolve([]),
       schedulePromise,
       access.schedule ? listOccupancyKinds() : Promise.resolve([]),
+      access.orders
+        ? listCatalogOrders().then((orders) => orders.map((order) => ({
+            id: order.id,
+            displayNumber: order.displayNumber,
+            customerName: order.customerName,
+          })))
+        : Promise.resolve([]),
     ] as const
 
     void Promise.allSettled(pending).then((results) => {
       if (!active) return
-      const [assets, catalog, reservations, schedule, kinds] = results
+      const [assets, catalog, reservations, schedule, kinds, labels] = results
       const scheduleValue = schedule.status === "fulfilled" ? schedule.value : { slots: [], failed: true }
       const failed: AgendaSourceId[] = []
       if (assets.status === "rejected") failed.push("assets")
       if (catalog.status === "rejected") failed.push("orders")
       if (reservations.status === "rejected") failed.push("reservations")
-      if (schedule.status === "rejected" || scheduleValue.failed || kinds.status === "rejected") failed.push("schedule")
+      if (schedule.status === "rejected" || scheduleValue.failed) failed.push("schedule")
+      if (kinds.status === "rejected") failed.push("kinds")
+      setOrderLabels(labels.status === "fulfilled" ? labels.value : [])
       setFailedSources(failed)
       setSources({
         assets: assets.status === "fulfilled" ? assets.value : [],
@@ -101,10 +111,11 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   }, [access.assets, access.orders, access.reservations, access.schedule, canLoad, rangeDays, rangeStart, requestKey, zone])
 
   const ready = canLoad && loadedKey === requestKey ? sources : emptySources()
+  const labels = new Map((canLoad && loadedKey === requestKey ? orderLabels : []).map((order) => [order.id, order]))
   return {
     loading: canLoad && loadedKey !== requestKey,
     failedSources: canLoad && loadedKey === requestKey ? failedSources : [],
-    day: buildAgendaDay(ready, state, zone),
-    week: buildAgendaWeek(ready, state, zone),
+    day: buildAgendaDay(ready, state, zone, labels),
+    week: buildAgendaWeek(ready, state, zone, labels),
   }
 }
