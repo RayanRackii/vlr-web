@@ -24,6 +24,13 @@ function useReportNameDirty(name: string | undefined, reportDirty?: (dirty: bool
   }, [name, reportDirty])
 }
 
+function saveOnNameEnter(event: { key: string; target: EventTarget | null; preventDefault: () => void; stopPropagation: () => void }, save: () => void) {
+  if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement)) return
+  event.preventDefault()
+  event.stopPropagation()
+  save()
+}
+
 const nameSchema = z.object({ name: z.string().trim().min(1) })
 type NameValues = z.infer<typeof nameSchema>
 
@@ -64,7 +71,7 @@ export function InlineCreateCategoryForm({ complete, close, reportDirty }: Inlin
 
   return (
     <Form {...form}>
-      <div className="space-y-4" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void save() } }}>
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.categoryName")}</FormLabel>
@@ -105,7 +112,7 @@ export function InlineCreateUnitForm({ complete, close, reportDirty }: InlineCre
 
   return (
     <Form {...form}>
-      <div className="space-y-4" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void save() } }}>
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.unitName")}</FormLabel>
@@ -197,7 +204,7 @@ export function InlineCreateVisualTemplateForm({ complete, close, reportDirty }:
 
   return (
     <Form {...form}>
-      <div className="space-y-4" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void save() } }}>
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.templateName")}</FormLabel>
