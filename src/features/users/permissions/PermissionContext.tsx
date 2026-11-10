@@ -6,13 +6,18 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
+import {
+  readPlatformTenantExitedUserId,
+  subscribePlatformTenantExit,
+} from "@/features/admin/lib/platformTenantExit"
 import { hasPermission } from "@/features/users/permissions/hasPermission"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
-import { currentUserSessionFingerprint } from "@/features/users/services/currentUserCache"
+import { staffSessionFingerprint } from "@/features/users/services/currentUserCache"
 import { getCurrentUser } from "@/features/users/services/usersService"
 
 export type PermissionContextValue = {
@@ -26,6 +31,21 @@ export type PermissionContextValue = {
 }
 
 const PermissionContext = createContext<PermissionContextValue | null>(null)
+
+function profileTenantId(profile: CurrentUser | null): string {
+  return profile?.tenantId?.trim() ?? ""
+}
+
+function actingTenantFromFingerprint(fingerprint: string): string {
+  const separator = fingerprint.indexOf("|")
+  return separator === -1 ? "" : fingerprint.slice(separator + 1)
+}
+
+/** Empty acting tenant is the platform shell. Any other profile must name that tenant. */
+function profileMatchesSession(profile: CurrentUser, fingerprint: string): boolean {
+  const actingTenant = actingTenantFromFingerprint(fingerprint)
+  return actingTenant.length === 0 || profileTenantId(profile) === actingTenant
+}
 
 function buildValue(
   currentUser: CurrentUser | null,
@@ -53,29 +73,54 @@ type PermissionProviderProps = {
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
   const { user } = useAuth()
-  const sessionFingerprint = currentUserSessionFingerprint(user)
+  const exitedUserId = useSyncExternalStore(
+    subscribePlatformTenantExit,
+    readPlatformTenantExitedUserId,
+    () => null,
+  )
+  const sessionFingerprint = staffSessionFingerprint(user, exitedUserId)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [appliedFingerprint, setAppliedFingerprint] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const loadGenerationRef = useRef(0)
-  const sessionFingerprintRef = useRef<string | null>(null)
+  const seenFingerprintRef = useRef<string | null>(null)
+  const mismatchRetryRef = useRef<string | null>(null)
+  const sessionFingerprintRef = useRef(sessionFingerprint)
+  sessionFingerprintRef.current = sessionFingerprint
 
   const load = useCallback(async (force = false) => {
     const requestId = ++loadGenerationRef.current
+    const requestedFingerprint = sessionFingerprintRef.current
     setIsLoading(true)
     setError(null)
 
     try {
-      const profile = await getCurrentUser(force ? { force: true } : undefined)
+      let profile = await getCurrentUser(force ? { force: true } : undefined)
       if (requestId !== loadGenerationRef.current) {
         return
       }
+      if (
+        !profileMatchesSession(profile, requestedFingerprint)
+        && mismatchRetryRef.current !== requestedFingerprint
+      ) {
+        mismatchRetryRef.current = requestedFingerprint
+        profile = await getCurrentUser({ force: true })
+        if (requestId !== loadGenerationRef.current) {
+          return
+        }
+      }
+      if (!profileMatchesSession(profile, requestedFingerprint)) {
+        return
+      }
       setCurrentUser(profile)
+      setAppliedFingerprint(requestedFingerprint)
     } catch (caught: unknown) {
       if (requestId !== loadGenerationRef.current) {
         return
       }
       setCurrentUser(null)
+      setAppliedFingerprint(requestedFingerprint)
       setError(caught instanceof Error ? caught.message : null)
     } finally {
       if (requestId === loadGenerationRef.current) {
@@ -90,25 +135,26 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
 
   useEffect(() => {
     const identityChanged =
-      sessionFingerprintRef.current !== null &&
-      sessionFingerprintRef.current !== sessionFingerprint
-    sessionFingerprintRef.current = sessionFingerprint
+      seenFingerprintRef.current !== null &&
+      seenFingerprintRef.current !== sessionFingerprint
+    if (identityChanged) {
+      mismatchRetryRef.current = null
+    }
+    seenFingerprintRef.current = sessionFingerprint
     void load(identityChanged)
   }, [load, sessionFingerprint])
 
   const value = useMemo(
     () => {
-      const identityPending =
-        sessionFingerprintRef.current !== null &&
-        sessionFingerprintRef.current !== sessionFingerprint
+      const profilePending = appliedFingerprint !== sessionFingerprint
       return buildValue(
-        identityPending ? null : currentUser,
-        isLoading || identityPending,
-        identityPending ? null : error,
+        profilePending ? null : currentUser,
+        isLoading || profilePending,
+        profilePending ? null : error,
         refresh,
       )
     },
-    [currentUser, error, isLoading, refresh, sessionFingerprint],
+    [appliedFingerprint, currentUser, error, isLoading, refresh, sessionFingerprint],
   )
 
   return (
