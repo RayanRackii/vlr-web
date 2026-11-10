@@ -170,6 +170,7 @@ function AdminSchedulePage() {
     useState<WeeklyGridCellPayload | null>(null)
   const [slotSheetOpen, setSlotSheetOpen] = useState(false)
   const [slotDirty, setSlotDirty] = useState(false)
+  const [slotDraftKey, setSlotDraftKey] = useState(0)
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
@@ -889,6 +890,8 @@ function AdminSchedulePage() {
             }}
             onSlotOrCellClick={(target) => {
               const openCell = () => {
+                setSlotDraftKey((key) => key + 1)
+                setSlotDirty(false)
                 setEditingCell(target)
                 setSlotSheetOpen(true)
               }
@@ -900,6 +903,7 @@ function AdminSchedulePage() {
             }}
           />
           <DaySlotSheet
+            key={slotDraftKey}
             open={slotSheetOpen}
             onOpenChange={(open) => {
               if (!open) clearSlotDraft()
