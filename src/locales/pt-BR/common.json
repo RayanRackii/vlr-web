@@ -22,12 +22,12 @@
     "grid": "Grade do dia",
     "gridLoading": "Carregando a grade do dia…",
     "gridError": "Não foi possível carregar a grade.",
-    "sourceWarning": "{{source}} não entrou nesta grade.",
-    "sources": {
-      "assets": "Recursos",
-      "orders": "Pedidos",
-      "reservations": "Reservas",
-      "schedule": "Horários"
+    "sourceWarning": {
+      "assets": "Não foi possível carregar os recursos; o restante da agenda está atualizado.",
+      "orders": "Não foi possível carregar os pedidos; o restante da agenda está atualizado.",
+      "reservations": "Não foi possível carregar as reservas; o restante da agenda está atualizado.",
+      "schedule": "Não foi possível carregar horários; o restante da agenda está atualizado.",
+      "kinds": "Não foi possível carregar os tipos de ocupação; o restante da agenda está atualizado."
     },
     "weekGrid": "Grade da semana",
     "weekLoading": "Carregando a semana…",
@@ -43,6 +43,7 @@
     "timeRange": "{{start}} – {{end}}",
     "status": "Situação",
     "orderHeading": "Pedido {{number}}",
+    "orderWithCustomer": "Pedido {{number}} · {{customer}}",
     "customer": "Cliente",
     "types": {
       "reserva": "Reserva",

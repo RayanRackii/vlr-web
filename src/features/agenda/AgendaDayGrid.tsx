@@ -44,8 +44,26 @@ function narrowAgendaSnapshot() {
   return typeof window.matchMedia === "function" && window.matchMedia(NARROW_AGENDA).matches
 }
 
+const NARROW_COLUMN_PX = 640
+
 function useNarrowAgenda() {
-  return useSyncExternalStore(subscribeNarrowAgenda, narrowAgendaSnapshot, () => false)
+  const viewport = useSyncExternalStore(subscribeNarrowAgenda, narrowAgendaSnapshot, () => false)
+  const observerRef = useRef<ResizeObserver | null>(null)
+  const [width, setWidth] = useState(0)
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    observerRef.current?.disconnect()
+    observerRef.current = null
+    if (!node || typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver((entries) => {
+      const next = Math.round(entries[0]?.contentRect.width ?? 0)
+      setWidth((current) => (current === next ? current : next))
+    })
+    observer.observe(node)
+    observerRef.current = observer
+  }, [])
+  // The staff sidebar is a drawer below 1024px and a 16rem rail from there up.
+  // Viewport media queries miss a column that is already under 640px.
+  return { ref, narrow: viewport || (width > 0 && width < NARROW_COLUMN_PX) }
 }
 
 function orderNumber(block: AgendaBlock): string | null {
@@ -59,6 +77,8 @@ function blockHeading(block: AgendaBlock, kindLabel: string, t: (key: string, op
     const product = block.productName?.trim()
     if (product) return product
     const number = orderNumber(block)
+    const customer = block.customerName?.trim()
+    if (number && customer) return t("staffAgenda.orderWithCustomer", { number, customer })
     if (number) return t("staffAgenda.orderHeading", { number })
   }
   if (block.kind === "reserva") {
@@ -119,7 +139,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
   const span = Math.max(axisEnd - axisStart, 1)
   const { ref: trackRef, width: trackWidth } = useTrackWidth()
   const labels = visibleHourLabels(axisStart, axisEnd, trackWidth)
-  const phone = useNarrowAgenda()
+  const { ref: columnRef, narrow: phone } = useNarrowAgenda()
   const selected = selectedKey
     ? rows.flatMap((row) => row.blocks.map((block) => ({ block, row }))).find((item) => item.block.key === selectedKey) ?? null
     : null
@@ -135,10 +155,10 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={columnRef} className="space-y-4">
       {failedSources.map((source) => (
         <p key={source} role="status" className="text-sm text-muted-foreground">
-          {t("staffAgenda.sourceWarning", { source: t(`staffAgenda.sources.${source}`) })}
+          {t(`staffAgenda.sourceWarning.${source}`)}
         </p>
       ))}
       <section aria-label={t("staffAgenda.grid")} className={phone ? "rounded-xl border bg-card text-card-foreground" : "overflow-x-auto rounded-xl border bg-card text-card-foreground"}>
@@ -235,11 +255,11 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
 function EmptyRow({ canReserve, canBlock }: { canReserve: boolean; canBlock: boolean }) {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3">
+    <div className="flex max-w-full flex-col items-start gap-2 px-3 py-3">
       <p className="text-sm text-muted-foreground">{t("staffAgenda.emptyDay")}</p>
-      <div className="flex flex-wrap gap-3">
-        {canReserve && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/reservas">{t("staffAgenda.createReservation")}</Link>}
-        {canBlock && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/agenda">{t("staffAgenda.blockPeriod")}</Link>}
+      <div className="flex max-w-full flex-wrap gap-x-4 gap-y-1">
+        {canReserve && <Link className="inline-flex min-h-11 items-center whitespace-normal text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/reservas">{t("staffAgenda.createReservation")}</Link>}
+        {canBlock && <Link className="inline-flex min-h-11 items-center whitespace-normal text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/agenda">{t("staffAgenda.blockPeriod")}</Link>}
       </div>
     </div>
   )

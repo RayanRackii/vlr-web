@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Agenda no telefone e horários da semana (WEB):** a lista do dia entra quando a coluna da agenda fica abaixo de 640px, mesmo com a viewport mais larga por causa da sidebar. Os atalhos da linha vazia quebram a linha. A semana pede cada dia em `yyyy-MM-dd`. Um dia de horário que falha, ou a lista de tipos de ocupação, avisa só essa fonte. O bloco de pedido usa o número de exibição e o cliente quando a grade só tem o id. |
 | 2026-11-10 | **Reservas na grade usam a data civil (WEB):** a lista de reservas recebe `yyyy-MM-dd`, que é o que a API aceita. Um pedido que falha avisa só essa fonte; as outras continuam na grade. As opções de Pedido seguem sem intervalo de data. |
 | 2026-11-10 | **Grade do dia legível (WEB):** os horários da régua não se sobrepõem e 24:00 não é desenhado. O bloco e o detalhe usam o produto ou “Pedido #…” e a situação traduzida. O intervalo no detalhe fica em cor de texto, e o rótulo do bloco cabe numa linha com a dica completa. |
 | 2026-11-10 | **Semana e telefone na Agenda (WEB):** a visão semana resume cada recurso por dia, com a contagem de pedido, reserva, manutenção e bloqueio. Escolher o dia abre a grade daquele dia e mantém os filtros. Abaixo de 640px o dia vira uma lista, sem rolagem lateral, e o detalhe continua na página. |

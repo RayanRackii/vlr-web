@@ -46,7 +46,7 @@ export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDa
     <div className="space-y-3">
       {failedSources.map((source) => (
         <p key={source} role="status" className="text-sm text-muted-foreground">
-          {t("staffAgenda.sourceWarning", { source: t(`staffAgenda.sources.${source}`) })}
+          {t(`staffAgenda.sourceWarning.${source}`)}
         </p>
       ))}
       <section aria-label={t("staffAgenda.weekGrid")} className="overflow-hidden rounded-xl border bg-card text-card-foreground">
