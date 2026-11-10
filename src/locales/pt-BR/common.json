@@ -33,6 +33,9 @@
     "closeDetail": "Fechar detalhes",
     "openReservations": "Reservas",
     "when": "Horário",
+    "timeRange": "{{start}} – {{end}}",
+    "status": "Situação",
+    "orderHeading": "Pedido {{number}}",
     "customer": "Cliente",
     "types": {
       "reserva": "Reserva",

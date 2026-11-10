@@ -44,3 +44,13 @@ it("counts each kind on the civil days of the week that contains the date", () =
   expect(tuesday?.counts.pedido).toBe(1)
   expect(monday?.counts).toEqual({ reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 })
 })
+
+it("copies the order onto a slot block instead of keeping the raw slot label", () => {
+  const untitled = { ...order, occupiedStart: null, occupiedEnd: null, workStart: null, workEnd: null, productName: "Podcast", orderStatus: "Approved" as const }
+  const day = buildAgendaDay(sources({
+    catalog: { resources: [], items: [untitled] },
+    slots: [slot({ isInternalUseOrigin: true, owningCatalogOrderId: order.orderId, occupancyKindKey: "open", occupancyKindLabel: "Open", label: "Open" })],
+  }), state(), "America/Sao_Paulo")
+  expect(day.rows[0].blocks).toHaveLength(1)
+  expect(day.rows[0].blocks[0]).toMatchObject({ kind: "pedido", productName: "Podcast", orderStatus: "Approved", label: null })
+})

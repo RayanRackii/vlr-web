@@ -25,6 +25,7 @@ export type AgendaBlock = {
   productId?: string
   productName?: string
   displayNumber?: string | null
+  orderStatus?: string | null
   reservationId?: string | null
   customerName?: string | null
   label?: string | null
@@ -75,6 +76,7 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     row.categoryName ??= resource.category
   }
   const blocks: AgendaBlock[] = []
+  const catalogByOrder = new Map(data.catalog.items.map((item) => [item.orderId, item]))
   for (const item of data.catalog.items) {
     if (!item.rentalAssetId) continue
     const start = item.occupiedStart ?? item.workStart
@@ -82,7 +84,7 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     const window = dayWindow(start, end, state.date, zone)
     if (!window) continue
     ensure(item.rentalAssetId, item.resourceName ?? item.rentalAssetId)
-    blocks.push({ key: `pedido:${item.orderId}:${item.rentalAssetId}:${start}:${end}`, resourceId: item.rentalAssetId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
+    blocks.push({ key: `pedido:${item.orderId}:${item.rentalAssetId}:${start}:${end}`, resourceId: item.rentalAssetId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, orderStatus: item.orderStatus, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
   }
   for (const reservation of data.reservations) {
     if (["cancelled", "canceled"].includes(reservation.status.toLowerCase())) continue
@@ -117,7 +119,22 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
       else if (key === "closed" || (!slot.isBookableByCustomer && data.kinds.some((k) => k.id === slot.occupancyKindId && k.blocksCapacity))) kind = "bloqueio"
       else continue
     }
-    blocks.push({ key: `slot:${slot.id}:${slot.rentalAssetId}:${start}:${end}`, resourceId: slot.rentalAssetId, kind, ...window, orderId: slot.owningCatalogOrderId, reservationId: slot.reservationId, customerName: slot.customerName, label: slot.label ?? slot.occupancyKindLabel, color: slot.occupancyKindColorHex })
+    const linked = slot.owningCatalogOrderId ? catalogByOrder.get(slot.owningCatalogOrderId) : undefined
+    blocks.push({
+      key: `slot:${slot.id}:${slot.rentalAssetId}:${start}:${end}`,
+      resourceId: slot.rentalAssetId,
+      kind,
+      ...window,
+      orderId: slot.owningCatalogOrderId,
+      displayNumber: linked?.displayNumber,
+      orderStatus: linked?.orderStatus,
+      productId: linked?.productId,
+      productName: linked?.productName,
+      reservationId: slot.reservationId,
+      customerName: slot.customerName ?? linked?.customerName,
+      label: linked ? null : slot.label ?? slot.occupancyKindLabel,
+      color: slot.occupancyKindColorHex,
+    })
   }
   for (const block of blocks) {
     hours.push(block.start, block.end)

@@ -1,9 +1,10 @@
-import { useState, useSyncExternalStore } from "react"
+import { useCallback, useRef, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import type { AgendaBlock, AgendaRow } from "./dayGridModel"
+import { visibleHourLabels } from "./hourLabels"
 
 const DEFAULT_START_MINUTES = 6 * 60
 const DEFAULT_END_MINUTES = 23 * 60
@@ -16,16 +17,17 @@ const kindClass: Record<AgendaBlock["kind"], string> = {
 }
 
 function formatClock(minutes: number): string {
-  if (minutes >= 1440) return "24:00"
-  const hour = Math.floor(minutes / 60)
-  const minute = minutes % 60
+  const bounded = Math.min(Math.max(minutes, 0), 24 * 60)
+  if (bounded === 24 * 60) return "00:00"
+  const hour = Math.floor(bounded / 60)
+  const minute = bounded % 60
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
 }
 
-function hourMarks(start: number | null, end: number | null): number[] {
-  const first = Math.floor((start ?? DEFAULT_START_MINUTES) / 60)
-  const last = Math.max(first + 1, Math.ceil((end ?? DEFAULT_END_MINUTES) / 60))
-  return Array.from({ length: last - first + 1 }, (_, index) => first + index)
+function axisBounds(start: number | null, end: number | null) {
+  const axisStart = Math.floor((start ?? DEFAULT_START_MINUTES) / 60) * 60
+  const axisEnd = Math.max(axisStart + 60, Math.ceil((end ?? DEFAULT_END_MINUTES) / 60) * 60)
+  return { axisStart, axisEnd }
 }
 
 const NARROW_AGENDA = "(max-width: 639px)"
@@ -45,15 +47,30 @@ function useNarrowAgenda() {
   return useSyncExternalStore(subscribeNarrowAgenda, narrowAgendaSnapshot, () => false)
 }
 
-function orderLinkText(block: AgendaBlock): string | null {
+function orderNumber(block: AgendaBlock): string | null {
   if (!block.orderId) return null
   const number = block.displayNumber?.trim()
   return number ? number : block.orderId.slice(0, 8)
 }
 
-function blockTitle(block: AgendaBlock, kindLabel: string): string {
-  const name = block.productName || block.customerName || block.label || kindLabel
-  return `${kindLabel} ${formatClock(block.start)} ${formatClock(block.end)} ${name}`
+function blockHeading(block: AgendaBlock, kindLabel: string, t: (key: string, options?: Record<string, string>) => string): string {
+  if (block.kind === "pedido") {
+    const product = block.productName?.trim()
+    if (product) return product
+    const number = orderNumber(block)
+    if (number) return t("staffAgenda.orderHeading", { number })
+  }
+  if (block.kind === "reserva") {
+    const customer = block.customerName?.trim()
+    if (customer) return customer
+  }
+  const label = block.label?.trim()
+  if (label && !/^[A-Z][A-Za-z]+$/.test(label)) return label
+  return kindLabel
+}
+
+function blockTitle(block: AgendaBlock, kindLabel: string, heading: string): string {
+  return `${kindLabel} ${formatClock(block.start)} ${formatClock(block.end)} ${heading}`
 }
 
 function lanes(blocks: AgendaBlock[]): { block: AgendaBlock; lane: number }[] {
@@ -77,12 +94,30 @@ type AgendaDayGridProps = {
   canBlock: boolean
 }
 
+function useTrackWidth() {
+  const observerRef = useRef<ResizeObserver | null>(null)
+  const [width, setWidth] = useState(0)
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    observerRef.current?.disconnect()
+    observerRef.current = null
+    if (!node || typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver((entries) => {
+      const next = Math.round(entries[0]?.contentRect.width ?? 0)
+      setWidth((current) => (current === next ? current : next))
+    })
+    observer.observe(node)
+    observerRef.current = observer
+  }, [])
+  return { ref, width }
+}
+
 export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, canBlock }: AgendaDayGridProps) {
   const { t } = useTranslation()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const marks = hourMarks(start, end)
-  const origin = marks[0] * 60
-  const span = Math.max((marks[marks.length - 1] - marks[0]) * 60, 1)
+  const { axisStart, axisEnd } = axisBounds(start, end)
+  const span = Math.max(axisEnd - axisStart, 1)
+  const { ref: trackRef, width: trackWidth } = useTrackWidth()
+  const labels = visibleHourLabels(axisStart, axisEnd, trackWidth)
   const phone = useNarrowAgenda()
   const selected = selectedKey
     ? rows.flatMap((row) => row.blocks.map((block) => ({ block, row }))).find((item) => item.block.key === selectedKey) ?? null
@@ -105,12 +140,12 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
         <div className={phone ? "" : "min-w-[48rem]"}>
           {!phone && <div className="flex border-b">
             <span className="w-44 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">{t("staffAgenda.recurso")}</span>
-            <div className="relative h-8 min-w-0 flex-1">
-              {marks.map((hour, index) => {
-                const edge = index === 0 ? "0" : index === marks.length - 1 ? "-100%" : "-50%"
+            <div ref={trackRef} className="relative h-8 min-w-0 flex-1">
+              {labels.map((label) => {
+                const shift = label.align === "start" ? "0" : label.align === "end" ? "-100%" : "-50%"
                 return (
-                  <span key={hour} className="absolute top-2 text-xs tabular-nums text-muted-foreground" style={{ left: `${(index / Math.max(marks.length - 1, 1)) * 100}%`, transform: `translateX(${edge})` }}>
-                    {formatClock(hour * 60)}
+                  <span key={label.minutes} className="absolute top-2 whitespace-nowrap text-xs tabular-nums text-muted-foreground" style={{ left: `${label.leftPct}%`, transform: `translateX(${shift})` }}>
+                    {formatClock(label.minutes)}
                   </span>
                 )
               })}
@@ -128,15 +163,19 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
                       <h2 className="text-sm font-medium">{row.name}</h2>
                       {ordered.map((block) => {
                         const kindLabel = t(`staffAgenda.types.${block.kind}`)
+                        const heading = blockHeading(block, kindLabel, t)
+                        const name = blockTitle(block, kindLabel, heading)
                         return (
                           <button
                             key={block.key}
                             type="button"
                             aria-pressed={selectedKey === block.key}
-                            className={`block w-full rounded-md border px-3 py-2 text-left text-sm font-medium ${kindClass[block.kind]}`}
+                            aria-label={name}
+                            title={name}
+                            className={`flex min-h-11 w-full items-center rounded-md border px-3 py-2 text-left text-sm font-medium ${kindClass[block.kind]}`}
                             onClick={() => setSelectedKey(block.key)}
                           >
-                            {blockTitle(block, kindLabel)}
+                            <span className="truncate">{heading}</span>
                           </button>
                         )
                       })}
@@ -146,21 +185,26 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
                     <>
                       <div className="flex">
                         <h2 className="w-44 shrink-0 px-3 py-3 text-sm font-medium">{row.name}</h2>
-                        <div className="relative min-w-0 flex-1 border-l" style={{ minHeight: `${laneCount * 2.75}rem` }}>
+                        <div className="relative min-w-0 flex-1 border-l" style={{ minHeight: `${laneCount * 3}rem` }}>
                           {placed.map(({ block, lane }) => {
-                            const left = Math.max(0, ((block.start - origin) / span) * 100)
-                            const width = Math.max(1.5, ((Math.min(block.end, origin + span) - Math.max(block.start, origin)) / span) * 100)
+                            const left = Math.max(0, ((block.start - axisStart) / span) * 100)
+                            const width = Math.max(1.5, ((Math.min(block.end, axisStart + span) - Math.max(block.start, axisStart)) / span) * 100)
                             const kindLabel = t(`staffAgenda.types.${block.kind}`)
+                            const heading = blockHeading(block, kindLabel, t)
+                            const name = blockTitle(block, kindLabel, heading)
+                            const clamped = Math.min(width, 100 - left)
                             return (
                               <button
                                 key={block.key}
                                 type="button"
                                 aria-pressed={selectedKey === block.key}
-                                className={`absolute truncate rounded-md border px-2 text-left text-xs font-medium ${kindClass[block.kind]}`}
-                                style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%`, top: `${lane * 2.5 + 0.35}rem`, height: "2.15rem" }}
+                                aria-label={name}
+                                title={name}
+                                className={`absolute flex items-center overflow-hidden rounded-md border px-2 text-sm font-medium ${clamped >= 50 ? "justify-center text-center" : "justify-start text-left"} ${kindClass[block.kind]}`}
+                                style={{ left: `${left}%`, width: `${clamped}%`, top: `${lane * 2.75 + 0.25}rem`, height: "2.5rem" }}
                                 onClick={() => setSelectedKey(block.key)}
                               >
-                                {blockTitle(block, kindLabel)}
+                                <span className="truncate">{heading}</span>
                               </button>
                             )
                           })}
@@ -197,12 +241,13 @@ function EmptyRow({ canReserve, canBlock }: { canReserve: boolean; canBlock: boo
 }
 
 function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; resourceName: string; onClose: () => void }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const kindLabel = t(`staffAgenda.types.${block.kind}`)
+  const statusKey = block.orderStatus ? `catalog.status.${block.orderStatus}` : null
   return (
     <section aria-label={t("staffAgenda.detail")} aria-live="polite" className="rounded-xl border bg-card p-4 text-card-foreground">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold">{block.productName || block.customerName || block.label || kindLabel}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{blockHeading(block, kindLabel, t)}</h2>
         <Button type="button" variant="outline" onClick={onClose}>{t("staffAgenda.closeDetail")}</Button>
       </div>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -212,7 +257,7 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
         </div>
         <div>
           <dt className="text-muted-foreground">{t("staffAgenda.when")}</dt>
-          <dd className="tabular-nums">{formatClock(block.start)}–{formatClock(block.end)}</dd>
+          <dd className="font-medium text-foreground tabular-nums whitespace-nowrap">{t("staffAgenda.timeRange", { start: formatClock(block.start), end: formatClock(block.end) })}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">{t("staffAgenda.recurso")}</dt>
@@ -224,10 +269,16 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
             <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/produtos/${block.productId}`}>{block.productName}</Link></dd>
           </div>
         )}
-        {orderLinkText(block) && (
+        {orderNumber(block) && (
           <div>
             <dt className="text-muted-foreground">{t("staffAgenda.pedido")}</dt>
-            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/pedidos/${block.orderId}`}>{orderLinkText(block)}</Link></dd>
+            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/pedidos/${block.orderId}`}>{orderNumber(block)}</Link></dd>
+          </div>
+        )}
+        {statusKey && i18n.exists(statusKey) && (
+          <div>
+            <dt className="text-muted-foreground">{t("staffAgenda.status")}</dt>
+            <dd className="text-foreground">{t(statusKey)}</dd>
           </div>
         )}
         {block.kind === "reserva" && (

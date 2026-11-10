@@ -61,6 +61,8 @@ it("renders resource hours, an empty row and selection detail below the entire g
   expect(within(empty).getByRole("link", { name: "Criar reserva neste recurso" })).toHaveAttribute("href", "/configuracoes/reservas")
   expect(within(empty).getByRole("link", { name: "Bloquear período" })).toHaveAttribute("href", "/configuracoes/agenda")
   const block = within(grid).getByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ })
+  expect(block).toHaveClass("text-sm")
+  expect(block).toHaveAttribute("title", expect.stringMatching(/Podcast/))
   await user.click(block)
   const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
   expect(detail).toHaveAttribute("aria-live", "polite")
@@ -155,6 +157,39 @@ it("lists the day by resource on a narrow screen and keeps the detail below that
   const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
   expect(resource.compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(grid.contains(detail)).toBe(true)
+})
+
+it("does not overlap a full-day axis or draw 24:00", async () => {
+  vi.mocked(listAdminRentalAssets).mockResolvedValue([{ ...asset, openTime: "00:00:00", closeTime: "24:00:00" }])
+  vi.mocked(listCatalogResourceAgenda).mockResolvedValue({ resources: [], items: [] })
+  vi.mocked(fetchAdminScheduleDay).mockResolvedValue({ date: "2026-11-10", slots: [] })
+  setup()
+  const grid = await screen.findByRole("region", { name: "Grade do dia" })
+  expect(within(grid).getByText("00:00")).toBeInTheDocument()
+  expect(within(grid).queryByText("24:00")).not.toBeInTheDocument()
+  expect(within(grid).queryByText("01:00")).not.toBeInTheDocument()
+})
+
+it("titles an order with the product and the translated status, not the raw slot label", async () => {
+  const user = userEvent.setup()
+  vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
+    resources: [],
+    items: [{ ...order, occupiedStart: null, occupiedEnd: null, workStart: null, workEnd: null, productName: "Podcast", orderStatus: "Approved" }],
+  })
+  vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
+    date: "2026-11-10",
+    slots: [slot({ isInternalUseOrigin: true, owningCatalogOrderId: order.orderId, occupancyKindKey: "open", occupancyKindLabel: "Open", label: "Open", startTime: "00:00:00", endTime: "23:59:00" })],
+  })
+  setup()
+  await user.click(await screen.findByRole("button", { name: /Pedido.*Podcast/ }))
+  const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
+  expect(within(detail).getByRole("heading", { name: "Podcast" })).toBeInTheDocument()
+  expect(within(detail).getByText("Aprovado")).toBeInTheDocument()
+  expect(within(detail).queryByText("Open")).not.toBeInTheDocument()
+  expect(within(detail).queryByText("Approved")).not.toBeInTheDocument()
+  const time = within(detail).getByText("00:00 – 23:59")
+  expect(time).toHaveClass("text-foreground")
+  expect(time.className).not.toMatch(/line-through|text-muted-foreground/)
 })
 
 it("links an order that has no display number by its short id", async () => {

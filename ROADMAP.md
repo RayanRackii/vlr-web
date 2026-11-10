@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Grade do dia legível (WEB):** os horários da régua não se sobrepõem e 24:00 não é desenhado. O bloco e o detalhe usam o produto ou “Pedido #…” e a situação traduzida. O intervalo no detalhe fica em cor de texto, e o rótulo do bloco cabe numa linha com a dica completa. |
 | 2026-11-10 | **Semana e telefone na Agenda (WEB):** a visão semana resume cada recurso por dia, com a contagem de pedido, reserva, manutenção e bloqueio. Escolher o dia abre a grade daquele dia e mantém os filtros. Abaixo de 640px o dia vira uma lista, sem rolagem lateral, e o detalhe continua na página. |
 | 2026-11-10 | **Grade do dia na Agenda (WEB):** em visão dia, `/agenda` mostra cada recurso no horário em que abre e fecha. Pedido, reserva, manutenção e bloqueio abrem o detalhe na própria página, com links para as telas que já existem. Ordem de serviço não vira bloco: a lista não traz o recurso de reserva nem o começo e o fim. |
 | 2026-11-10 | **Entrar no tenant não abre o painel negado (WEB):** o guard espera o `/me` do tenant em que a sessão está atuando. Um perfil de fora, ou o primeiro `/me` ainda sem tenant, não decide a rota. Se a segunda leitura ainda for de outro tenant, a tela continua carregando. Sair e entrar de novo no mesmo tenant pede essa leitura outra vez. Sem a permissão do painel, a entrada segue para a primeira página permitida. |
