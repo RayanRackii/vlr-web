@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
@@ -9,6 +9,7 @@ import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import {
   clearPlatformTenantExited,
   markPlatformTenantExited,
+  readPlatformTenantExitedUserId,
 } from "@/features/admin/hooks/usePlatformTenantSession"
 import { PermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { getCurrentUser, type GetCurrentUserOptions } from "@/features/users/services/usersService"
@@ -63,19 +64,40 @@ const insideWithDashboard: CurrentUser = {
   permissions: ["core.dashboard.read", "core.users.read"],
 }
 
-function Harness({ onEnter }: { onEnter: () => void }) {
+function Harness({
+  onEnter,
+  onExit,
+}: {
+  onEnter?: () => void
+  onExit?: () => void
+}) {
+  const navigate = useNavigate()
   const [, setTick] = useState(0)
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => {
-          onEnter()
-          setTick((n) => n + 1)
-        }}
-      >
-        enter-tenant
-      </button>
+      {onEnter ? (
+        <button
+          type="button"
+          onClick={() => {
+            onEnter()
+            setTick((n) => n + 1)
+          }}
+        >
+          enter-tenant
+        </button>
+      ) : null}
+      {onExit ? (
+        <button
+          type="button"
+          onClick={() => {
+            onExit()
+            navigate("/dashboard")
+            setTick((n) => n + 1)
+          }}
+        >
+          exit-tenant
+        </button>
+      ) : null}
       <PermissionProvider>
         <Routes>
           <Route element={<DashboardHomeRoute />}>
@@ -90,10 +112,10 @@ function Harness({ onEnter }: { onEnter: () => void }) {
   )
 }
 
-function renderHome(onEnter: () => void) {
+function renderHome(onEnter?: () => void, onExit?: () => void) {
   return render(
     <MemoryRouter initialEntries={["/dashboard"]}>
-      <Harness onEnter={onEnter} />
+      <Harness onEnter={onEnter} onExit={onExit} />
     </MemoryRouter>,
   )
 }
@@ -218,5 +240,108 @@ describe("DashboardHomeRoute tenant enter", () => {
 
     expect(await screen.findByRole("heading", { name: "Pessoas" })).toBeInTheDocument()
     expect(denyHeading()).not.toBeInTheDocument()
+  })
+
+  it("shows the platform dashboard after leaving the tenant", async () => {
+    const user = userEvent.setup()
+    authState.user = {
+      ...authState.user,
+      app_metadata: { tenant_id: tenantId },
+    }
+    getCurrentUserMock.mockImplementation(() =>
+      Promise.resolve(
+        readPlatformTenantExitedUserId() === "user-a" ? outsideTenant : insideTenant,
+      ),
+    )
+
+    renderHome(undefined, () => {
+      markPlatformTenantExited("user-a")
+    })
+
+    expect(await screen.findByRole("heading", { name: "Pessoas" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "exit-tenant" }))
+
+    expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pessoas" })).not.toBeInTheDocument()
+    expect(denyHeading()).not.toBeInTheDocument()
+  })
+
+  it("retries a stale /me when the same tenant is entered again after exit", async () => {
+    const user = userEvent.setup()
+    let phase: "boot" | "in" | "out" | "back" = "boot"
+    const forceReads = { in: 0, back: 0 }
+    getCurrentUserMock.mockImplementation((options?: GetCurrentUserOptions) => {
+      if (phase === "boot" || phase === "out" || !options?.force) {
+        return Promise.resolve(outsideTenant)
+      }
+      const key = phase === "in" ? "in" : "back"
+      forceReads[key] += 1
+      return Promise.resolve(forceReads[key] === 1 ? outsideTenant : insideTenant)
+    })
+
+    renderHome(
+      () => {
+        phase = phase === "out" ? "back" : "in"
+        clearPlatformTenantExited()
+        authState.user = {
+          ...authState.user,
+          app_metadata: { tenant_id: tenantId },
+        }
+      },
+      () => {
+        phase = "out"
+        markPlatformTenantExited("user-a")
+      },
+    )
+
+    expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "enter-tenant" }))
+    expect(await screen.findByRole("heading", { name: "Pessoas" })).toBeInTheDocument()
+    expect(forceReads.in).toBeGreaterThanOrEqual(2)
+
+    await user.click(screen.getByRole("button", { name: "exit-tenant" }))
+    expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+    expect(denyHeading()).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "enter-tenant" }))
+    expect(await screen.findByRole("heading", { name: "Pessoas" })).toBeInTheDocument()
+    expect(forceReads.back).toBeGreaterThanOrEqual(2)
+    expect(denyHeading()).not.toBeInTheDocument()
+  })
+
+  it("keeps loading when the retried /me is still for another tenant", async () => {
+    const user = userEvent.setup()
+    let forcedReads = 0
+    getCurrentUserMock.mockImplementation((options?: GetCurrentUserOptions) => {
+      const activeTenant = authState.user.app_metadata.tenant_id
+      if (typeof activeTenant !== "string" || activeTenant.length === 0) {
+        return Promise.resolve(outsideTenant)
+      }
+      if (options?.force) {
+        forcedReads += 1
+      }
+      return Promise.resolve(outsideTenant)
+    })
+
+    renderHome(() => {
+      authState.user = {
+        ...authState.user,
+        app_metadata: { tenant_id: tenantId },
+      }
+    })
+
+    expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "enter-tenant" }))
+
+    await waitFor(() => {
+      expect(forcedReads).toBeGreaterThanOrEqual(2)
+    })
+    expect(screen.getByRole("status")).toBeInTheDocument()
+    expect(denyHeading()).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Painel" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Pessoas" })).not.toBeInTheDocument()
   })
 })

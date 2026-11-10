@@ -36,6 +36,17 @@ function profileTenantId(profile: CurrentUser | null): string {
   return profile?.tenantId?.trim() ?? ""
 }
 
+function actingTenantFromFingerprint(fingerprint: string): string {
+  const separator = fingerprint.indexOf("|")
+  return separator === -1 ? "" : fingerprint.slice(separator + 1)
+}
+
+/** Empty acting tenant is the platform shell. Any other profile must name that tenant. */
+function profileMatchesSession(profile: CurrentUser, fingerprint: string): boolean {
+  const actingTenant = actingTenantFromFingerprint(fingerprint)
+  return actingTenant.length === 0 || profileTenantId(profile) === actingTenant
+}
+
 function buildValue(
   currentUser: CurrentUser | null,
   isLoading: boolean,
@@ -89,15 +100,18 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       if (requestId !== loadGenerationRef.current) {
         return
       }
-      const actingTenant = requestedFingerprint.slice(requestedFingerprint.indexOf("|") + 1)
-      const profileIsForAnotherTenant = actingTenant.length > 0
-        && profileTenantId(profile) !== actingTenant
-      if (profileIsForAnotherTenant && mismatchRetryRef.current !== requestedFingerprint) {
+      if (
+        !profileMatchesSession(profile, requestedFingerprint)
+        && mismatchRetryRef.current !== requestedFingerprint
+      ) {
         mismatchRetryRef.current = requestedFingerprint
         profile = await getCurrentUser({ force: true })
         if (requestId !== loadGenerationRef.current) {
           return
         }
+      }
+      if (!profileMatchesSession(profile, requestedFingerprint)) {
+        return
       }
       setCurrentUser(profile)
       setAppliedFingerprint(requestedFingerprint)
@@ -123,6 +137,9 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     const identityChanged =
       seenFingerprintRef.current !== null &&
       seenFingerprintRef.current !== sessionFingerprint
+    if (identityChanged) {
+      mismatchRetryRef.current = null
+    }
     seenFingerprintRef.current = sessionFingerprint
     void load(identityChanged)
   }, [load, sessionFingerprint])
