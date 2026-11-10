@@ -337,8 +337,12 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Criar no campo sem loop de render (WEB):** o callback de rascunho é guardado num efeito, não durante o render. O ratchet do ESLint passa. |
+| 2026-11-10 | **Criar no campo não entra em loop nem salva no Cancelar (WEB):** o aviso de rascunho não depende da identidade do callback. Enter no campo salva; Enter em Cancelar cancela. |
+| 2026-11-10 | **Criar unidade, categoria ou modelo visual abre na ficha (WEB):** o formulário expande sob o campo, sem painel lateral. Um nome digitado pede confirmação antes de escolher outro item. Cancelar descarta. A ficha do recurso também trata esse rascunho como alteração ao sair da página. |
 | 2026-11-10 | **Novo tipo abre em branco (WEB):** Cancelar descarta o formulário. O próximo Novo não restaura o texto. |
 | 2026-11-10 | **Tipo de ocupação fica na página (WEB):** criar ou editar um tipo abre uma seção na aba, não um painel lateral. Alterar o formulário pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |
+
 | 2026-11-10 | **Sair descarta o mesmo horário (WEB):** clicar de novo no horário aberto e escolher Sair joga fora o rascunho. O formulário volta aos valores do horário. |
 | 2026-11-10 | **Horário do dia fica na página (WEB):** editar um horário abre uma seção na agenda, não um painel lateral. Mudar o rótulo, o tipo ou o alcance pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |
 | 2026-11-10 | **Agenda dos recursos no celular (WEB):** o título deixa de reservar 12rem de altura, então Dia/Semana fica logo abaixo da descrição. |

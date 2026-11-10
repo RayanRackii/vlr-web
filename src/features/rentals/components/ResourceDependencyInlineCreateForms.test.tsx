@@ -22,6 +22,19 @@ import * as visualService from "@/features/rentals/services/resourceVisualServic
 describe("ResourceDependencyInlineCreateForms", () => {
   beforeEach(() => vi.clearAllMocks())
 
+  it("does not save a category when Enter is pressed on Cancel", async () => {
+    const user = userEvent.setup()
+    const complete = vi.fn(async () => undefined)
+    const close = vi.fn()
+    render(<InlineCreateCategoryForm complete={complete} close={close} />)
+    await user.type(screen.getByLabelText("Nome do tipo"), "Quadra")
+    screen.getByRole("button", { name: "Cancelar" }).focus()
+    await user.keyboard("{Enter}")
+    expect(rentalResourcesService.createRentalCategory).not.toHaveBeenCalled()
+    expect(complete).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
   it("creates and selects a rental category through the Rentals service", async () => {
     const user = userEvent.setup()
     const complete = vi.fn(async () => undefined)
