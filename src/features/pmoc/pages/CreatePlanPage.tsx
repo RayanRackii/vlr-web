@@ -22,13 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Textarea } from "@/components/ui/textarea"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
 import { useAuth } from "@/contexts/AuthContext"
@@ -326,32 +320,32 @@ export function CreatePlanPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pmoc.create.form.unit")}</FormLabel>
-                      <Select
-                        modal={false}
-                        onValueChange={(value) => {
-                          field.onChange(value)
-                          field.onBlur()
-                        }}
-                        value={field.value}
-                        items={unitItems}
-                      >
-                        <FormControl>
-                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
-                            <SelectValue
-                              placeholder={t(
-                                "pmoc.create.form.unitPlaceholder",
-                              )}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {units.map((unit) => (
-                            <SelectItem key={unit.id} value={unit.id}>
-                              {unit.name}
-                            </SelectItem>
+                      <FormControl>
+                        <div
+                          role="radiogroup"
+                          aria-label={t("pmoc.create.form.unit")}
+                          ref={field.ref}
+                          tabIndex={-1}
+                          onBlur={field.onBlur}
+                          className="flex flex-wrap gap-2 rounded-md aria-invalid:border-destructive"
+                        >
+                          {unitItems.map((unit) => (
+                            <Button
+                              key={unit.value}
+                              type="button"
+                              size="sm"
+                              variant={field.value === unit.value ? "default" : "outline"}
+                              aria-pressed={field.value === unit.value}
+                              onClick={() => {
+                                field.onChange(unit.value)
+                                field.onBlur()
+                              }}
+                            >
+                              {unit.label}
+                            </Button>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      </FormControl>
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["unitId"])}
                       />
@@ -365,32 +359,32 @@ export function CreatePlanPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pmoc.create.form.category")}</FormLabel>
-                      <Select
-                        modal={false}
-                        onValueChange={(value) => {
-                          field.onChange(value)
-                          field.onBlur()
-                        }}
-                        value={field.value}
-                        items={categoryItems}
-                      >
-                        <FormControl>
-                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
-                            <SelectValue
-                              placeholder={t(
-                                "pmoc.create.form.categoryPlaceholder",
-                              )}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
+                      <FormControl>
+                        <div
+                          role="radiogroup"
+                          aria-label={t("pmoc.create.form.category")}
+                          ref={field.ref}
+                          tabIndex={-1}
+                          onBlur={field.onBlur}
+                          className="flex flex-wrap gap-2 rounded-md aria-invalid:border-destructive"
+                        >
+                          {categoryItems.map((category) => (
+                            <Button
+                              key={category.value}
+                              type="button"
+                              size="sm"
+                              variant={field.value === category.value ? "default" : "outline"}
+                              aria-pressed={field.value === category.value}
+                              onClick={() => {
+                                field.onChange(category.value)
+                                field.onBlur()
+                              }}
+                            >
+                              {category.label}
+                            </Button>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      </FormControl>
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["assetCategoryId"])}
                       />
@@ -410,29 +404,15 @@ export function CreatePlanPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pmoc.create.form.status")}</FormLabel>
-                      <Select
-                        modal={false}
-                        onValueChange={(value) => {
+                      <SegmentedControl
+                        label={t("pmoc.create.form.status")}
+                        value={field.value ? "true" : "false"}
+                        onChange={(value) => {
                           field.onChange(value === "true")
                           field.onBlur()
                         }}
-                        value={field.value ? "true" : "false"}
-                        items={statusItems}
-                      >
-                        <FormControl>
-                          <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="true">
-                            {t("pmoc.plans.status.active")}
-                          </SelectItem>
-                          <SelectItem value="false">
-                            {t("pmoc.plans.status.inactive")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                        options={statusItems}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
