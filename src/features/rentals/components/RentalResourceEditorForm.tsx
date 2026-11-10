@@ -182,7 +182,13 @@ export function RentalResourceEditorForm({
   }, [categories, editing, families, form, units])
 
   const { isDirty } = form.formState
-  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
+  const [inlineDirty, setInlineDirty] = useState({ unit: false, category: false, template: false })
+  const dependencyDirty = inlineDirty.unit || inlineDirty.category || inlineDirty.template
+  useEffect(() => { onDirtyChange?.(isDirty || dependencyDirty) }, [dependencyDirty, isDirty, onDirtyChange])
+
+  function markInlineDirty(key: keyof typeof inlineDirty, dirty: boolean) {
+    setInlineDirty((current) => current[key] === dirty ? current : { ...current, [key]: dirty })
+  }
 
   const watched = useWatch({ control: form.control })
   const rentalType = watched.rentalType ?? "Location"
@@ -402,8 +408,9 @@ export function RentalResourceEditorForm({
                           drawerTitle={t("rentals.resources.inlineCreate.unitTitle")}
                           drawerDescription={t("rentals.resources.inlineCreate.unitDescription")}
                           disabled={readOnly || busy}
-                          renderCreateForm={({ complete, close }) => (
-                            <InlineCreateUnitForm complete={complete} close={close} />
+                          onDirtyChange={(dirty) => markInlineDirty("unit", dirty)}
+                          renderCreateForm={({ complete, close, reportDirty }) => (
+                            <InlineCreateUnitForm complete={complete} close={close} reportDirty={reportDirty} />
                           )}
                         />
                       </FormControl>
@@ -459,8 +466,9 @@ export function RentalResourceEditorForm({
                       drawerDescription={t("rentals.resources.inlineCreate.categoryDescription")}
                       disabled={readOnly || busy}
                       canCreate={canCreateCategory}
-                      renderCreateForm={({ complete, close }) => (
-                        <InlineCreateCategoryForm complete={complete} close={close} />
+                      onDirtyChange={(dirty) => markInlineDirty("category", dirty)}
+                      renderCreateForm={({ complete, close, reportDirty }) => (
+                        <InlineCreateCategoryForm complete={complete} close={close} reportDirty={reportDirty} />
                       )}
                     />
                   </FormControl>
@@ -845,11 +853,16 @@ export function RentalResourceEditorForm({
                           drawerDescription={t("rentals.resources.inlineCreate.templateDescription")}
                           disabled={readOnly || busy}
                           canCreate={canCreateGlobalTemplate}
-                          renderCreateForm={({ complete, close }) => (
-                            <InlineCreateVisualTemplateForm complete={async (option) => {
-                              setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option])
-                              await complete(option)
-                            }} close={close} />
+                          onDirtyChange={(dirty) => markInlineDirty("template", dirty)}
+                          renderCreateForm={({ complete, close, reportDirty }) => (
+                            <InlineCreateVisualTemplateForm
+                              complete={async (option) => {
+                                setCreatedTemplateOptions((current) => [...current.filter((item) => item.value !== option.value), option])
+                                await complete(option)
+                              }}
+                              close={close}
+                              reportDirty={reportDirty}
+                            />
                           )}
                         />
                       </FormControl>

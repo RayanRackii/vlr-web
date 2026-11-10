@@ -157,6 +157,7 @@ function AdminSchedulePage() {
   const templatesCacheRef = useRef(new Map<string, ScheduleTemplate[]>())
 
   const [kindSheetOpen, setKindSheetOpen] = useState(false)
+  const [kindDirty, setKindDirty] = useState(false)
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
   const [templateDirty, setTemplateDirty] = useState(false)
@@ -169,11 +170,13 @@ function AdminSchedulePage() {
   const [weeklyTarget, setWeeklyTarget] =
     useState<WeeklyGridCellPayload | null>(null)
   const [slotSheetOpen, setSlotSheetOpen] = useState(false)
+  const [slotDirty, setSlotDirty] = useState(false)
+  const [slotDraftKey, setSlotDraftKey] = useState(0)
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
-  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty)
+  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty) || (slotSheetOpen && slotDirty) || (kindSheetOpen && kindDirty)
 
   useEffect(() => {
     if (!draftDirty) return
@@ -222,11 +225,57 @@ function AdminSchedulePage() {
     setPolicyDirty(false)
   }
 
+  function clearSlotDraft() {
+    setSlotSheetOpen(false)
+    setSlotDirty(false)
+    setEditingCell(null)
+  }
+
+  function requestCloseSlot() {
+    if (slotSheetOpen && slotDirty) {
+      setPendingLeave(() => clearSlotDraft)
+      return
+    }
+    clearSlotDraft()
+  }
+
+  function clearKindDraft() {
+    setKindSheetOpen(false)
+    setKindDirty(false)
+    setEditingKind(null)
+  }
+
+  function requestCloseKind() {
+    if (kindSheetOpen && kindDirty) {
+      setPendingLeave(() => clearKindDraft)
+      return
+    }
+    clearKindDraft()
+  }
+
+  function openKind(kind: OccupancyKind | null) {
+    const open = () => {
+      setEditingKind(kind)
+      setKindDirty(false)
+      setKindSheetOpen(true)
+    }
+    if (kindSheetOpen && kindDirty && (kind?.id ?? null) !== (editingKind?.id ?? null)) {
+      setPendingLeave(() => open)
+      return
+    }
+    if (kindSheetOpen && kindDirty && kind?.id === editingKind?.id) {
+      return
+    }
+    open()
+  }
+
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
       if (ruleDirty) closeWeeklyRule()
       if (policyDirty) closePolicy()
+      clearSlotDraft()
+      clearKindDraft()
       action()
     }
     if (draftDirty) {
@@ -848,6 +897,7 @@ function AdminSchedulePage() {
       <Card className="min-w-0 motion-reduce:transition-none">
       <CardContent className="min-w-0 px-3 sm:px-5">
         {tab === "daily" ? (
+          <>
           <DailyAgendaTab
             assets={assets}
             selectedRentalAssetIds={selectedRentalAssetIds}
@@ -867,12 +917,51 @@ function AdminSchedulePage() {
             onPublish={() => {
               void onPublish()
             }}
-            onGoWeeklySetup={() => setTab("templates")}
+            onGoWeeklySetup={() => {
+              runOrAsk(() => setTab("templates"))
+            }}
             onSlotOrCellClick={(target) => {
-              setEditingCell(target)
-              setSlotSheetOpen(true)
+              const openCell = () => {
+                setSlotDraftKey((key) => key + 1)
+                setSlotDirty(false)
+                setEditingCell(target)
+                setSlotSheetOpen(true)
+              }
+              if (slotSheetOpen && slotDirty) {
+                setPendingLeave(() => openCell)
+                return
+              }
+              openCell()
             }}
           />
+          <DaySlotSheet
+            key={slotDraftKey}
+            open={slotSheetOpen}
+            onOpenChange={(open) => {
+              if (!open) clearSlotDraft()
+            }}
+            onDirtyChange={setSlotDirty}
+            onRequestClose={requestCloseSlot}
+            target={editingCell}
+            kinds={kinds}
+            defaultKindId={defaultKindId}
+            busy={busy}
+            busyAction={busyAction}
+            readOnly={isTrialReadOnly}
+            onSave={(draft, scope) =>
+              handleSlotAction("Update", "slotUpdate", draft, scope)
+            }
+            onMakeUnavailable={(scope) =>
+              handleSlotAction("MakeUnavailable", "slotUnavailable", undefined, scope)
+            }
+            onRestoreWeeklyDefault={() =>
+              handleSlotAction("RestoreWeeklyDefault", "slotRestore")
+            }
+            onGoWeeklySetup={() => {
+              runOrAsk(() => setTab("templates"))
+            }}
+          />
+          </>
         ) : null}
 
         {tab === "templates" ? (
@@ -969,38 +1058,34 @@ function AdminSchedulePage() {
         ) : null}
 
         {tab === "kinds" ? (
+          <>
           <OccupancyKindsTab
             kinds={kinds}
             loading={loadingKinds}
             busy={busy}
             readOnly={isTrialReadOnly}
-            onAdd={() => {
-              setEditingKind(null)
-              setKindSheetOpen(true)
-            }}
-            onEdit={(kind) => {
-              setEditingKind(kind)
-              setKindSheetOpen(true)
-            }}
+            onAdd={() => openKind(null)}
+            onEdit={(kind) => openKind(kind)}
           />
+          {kindSheetOpen ? (
+          <OccupancyKindSheet
+            key={editingKind?.id ?? "new"}
+            open
+            onOpenChange={(open) => {
+              if (!open) clearKindDraft()
+            }}
+            onDirtyChange={setKindDirty}
+            onRequestClose={requestCloseKind}
+            editing={editingKind}
+            busy={busy}
+            readOnly={isTrialReadOnly}
+            onSubmit={handleSaveKind}
+          />
+          ) : null}
+          </>
         ) : null}
       </CardContent>
       </Card>
-
-      <OccupancyKindSheet
-        open={kindSheetOpen}
-        onOpenChange={(open) => {
-          setKindSheetOpen(open)
-          if (!open) {
-            setEditingKind(null)
-          }
-        }}
-        editing={editingKind}
-        busy={busy}
-        readOnly={isTrialReadOnly}
-        onSubmit={handleSaveKind}
-      />
-
 
       {hasDataRouter ? <ScheduleLeaveGuard dirty={draftDirty} /> : null}
       <LeaveConfirmDialog
@@ -1011,34 +1096,6 @@ function AdminSchedulePage() {
           const action = pendingLeave
           setPendingLeave(null)
           action?.()
-        }}
-      />
-      <DaySlotSheet
-        open={slotSheetOpen}
-        onOpenChange={(open) => {
-          setSlotSheetOpen(open)
-          if (!open) {
-            setEditingCell(null)
-          }
-        }}
-        target={editingCell}
-        kinds={kinds}
-        defaultKindId={defaultKindId}
-        busy={busy}
-        busyAction={busyAction}
-        readOnly={isTrialReadOnly}
-        onSave={(draft, scope) =>
-          handleSlotAction("Update", "slotUpdate", draft, scope)
-        }
-        onMakeUnavailable={(scope) =>
-          handleSlotAction("MakeUnavailable", "slotUnavailable", undefined, scope)
-        }
-        onRestoreWeeklyDefault={() =>
-          handleSlotAction("RestoreWeeklyDefault", "slotRestore")
-        }
-        onGoWeeklySetup={() => {
-          setSlotSheetOpen(false)
-          setTab("templates")
         }}
       />
     </div>

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -15,6 +15,20 @@ import { publishVisualRevision, saveVisualRevision, saveVisualTemplate } from "@
 type InlineCreateFormProps = {
   complete: (option: InlineCreateOption) => Promise<void>
   close: () => void
+  reportDirty?: (dirty: boolean) => void
+}
+
+function useReportNameDirty(name: string | undefined, reportDirty?: (dirty: boolean) => void) {
+  useEffect(() => {
+    reportDirty?.((name ?? "").trim().length > 0)
+  }, [name, reportDirty])
+}
+
+function saveOnNameEnter(event: { key: string; target: EventTarget | null; preventDefault: () => void; stopPropagation: () => void }, save: () => void) {
+  if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement)) return
+  event.preventDefault()
+  event.stopPropagation()
+  save()
 }
 
 const nameSchema = z.object({ name: z.string().trim().min(1) })
@@ -37,27 +51,27 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
-export function InlineCreateCategoryForm({ complete, close }: InlineCreateFormProps) {
+export function InlineCreateCategoryForm({ complete, close, reportDirty }: InlineCreateFormProps) {
   const { t } = useTranslation()
   const form = useForm<NameValues>({
     resolver: zodResolver(nameSchema),
     defaultValues: { name: "" },
   })
   const values = useWatch({ control: form.control })
+  useReportNameDirty(values.name, reportDirty)
+
+  const save = form.handleSubmit(async ({ name }) => {
+    try {
+      const created = await createRentalCategory({ name })
+      await complete({ value: created.id, label: created.name })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("rentals.resources.createError"))
+    }
+  })
 
   return (
     <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(async ({ name }) => {
-          try {
-            const created = await createRentalCategory({ name })
-            await complete({ value: created.id, label: created.name })
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : t("rentals.resources.createError"))
-          }
-        })}
-      >
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.categoryName")}</FormLabel>
@@ -71,33 +85,34 @@ export function InlineCreateCategoryForm({ complete, close }: InlineCreateFormPr
           isValid={nameSchema.safeParse(values).success}
           busy={form.formState.isSubmitting}
           onCancel={close}
+          onSave={() => { void save() }}
         />
-      </form>
+      </div>
     </Form>
   )
 }
 
-export function InlineCreateUnitForm({ complete, close }: InlineCreateFormProps) {
+export function InlineCreateUnitForm({ complete, close, reportDirty }: InlineCreateFormProps) {
   const { t } = useTranslation()
   const form = useForm<NameValues>({
     resolver: zodResolver(nameSchema),
     defaultValues: { name: "" },
   })
   const values = useWatch({ control: form.control })
+  useReportNameDirty(values.name, reportDirty)
+
+  const save = form.handleSubmit(async ({ name }) => {
+    try {
+      const created = await createUnit({ name })
+      await complete({ value: created.id, label: created.name })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("rentals.resources.inlineCreate.unitCreateError"))
+    }
+  })
 
   return (
     <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(async ({ name }) => {
-          try {
-            const created = await createUnit({ name })
-            await complete({ value: created.id, label: created.name })
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : t("rentals.resources.inlineCreate.unitCreateError"))
-          }
-        })}
-      >
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.unitName")}</FormLabel>
@@ -111,13 +126,14 @@ export function InlineCreateUnitForm({ complete, close }: InlineCreateFormProps)
           isValid={nameSchema.safeParse(values).success}
           busy={form.formState.isSubmitting}
           onCancel={close}
+          onSave={() => { void save() }}
         />
-      </form>
+      </div>
     </Form>
   )
 }
 
-export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreateFormProps) {
+export function InlineCreateVisualTemplateForm({ complete, close, reportDirty }: InlineCreateFormProps) {
   const { t } = useTranslation()
   const [progress, setProgress] = useState<VisualTemplateCreationProgress | null>(null)
   const form = useForm<NameValues>({
@@ -125,12 +141,9 @@ export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreate
     defaultValues: { name: "" },
   })
   const values = useWatch({ control: form.control })
+  useReportNameDirty(values.name, reportDirty)
 
-  return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(async ({ name }) => {
+  const save = form.handleSubmit(async ({ name }) => {
           try {
             const title = name.trim()
             let current = progress?.title === title ? progress : null
@@ -187,8 +200,11 @@ export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreate
           } catch (error) {
             toast.error(error instanceof Error ? error.message : t("resourceVisual.error"))
           }
-        })}
-      >
+  })
+
+  return (
+    <Form {...form}>
+      <div className="space-y-4" onKeyDown={(event) => saveOnNameEnter(event, () => { void save() })}>
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>{t("rentals.resources.inlineCreate.templateName")}</FormLabel>
@@ -202,8 +218,9 @@ export function InlineCreateVisualTemplateForm({ complete, close }: InlineCreate
           isValid={nameSchema.safeParse(values).success}
           busy={form.formState.isSubmitting}
           onCancel={close}
+          onSave={() => { void save() }}
         />
-      </form>
+      </div>
     </Form>
   )
 }
