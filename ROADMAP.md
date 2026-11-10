@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Produto inativo conta como rascunho (WEB):** marcar Inativo em Novo produto pede confirmação antes de sair. Voltar para Ativo limpa esse rascunho. Salvar ainda abre o assistente. |
+| 2026-11-10 | **Produto novo e edição rápida em página (WEB):** Novo produto abre `/catalogo/produtos/novo` e, ao criar, segue para o assistente. A edição rápida abre o passo Oferta. A lista deixa de usar o painel lateral. |
 | 2026-11-10 | **Nova função segue para o editor (WEB):** depois de criar, o salvamento solta e o bloqueio de saída não segura o redirecionamento. Cancelar volta a funcionar. |
 | 2026-11-10 | **Nova função é página (WEB):** criar uma função abre `/pessoas-e-acesso/funcoes/nova`. Nome ou descrição preenchidos pedem confirmação antes de sair. Cancelar no diálogo fica. |
 | 2026-11-10 | **Grupos ilegíveis não esvaziam produtos exclusivos (WEB):** se a lista de grupos responde 403, a ficha mostra o aviso de acesso ao catálogo em vez de "Nenhum produto exclusivo". Os pedidos que a pessoa pode ler continuam na página. |
