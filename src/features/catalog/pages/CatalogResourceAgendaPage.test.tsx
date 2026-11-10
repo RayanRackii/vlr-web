@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { formatDayLabel } from "@/features/catalog/components/agenda/agendaLayout"
 import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResourceAgendaPage"
 import type {
   CatalogAgendaItem,
@@ -108,5 +109,16 @@ describe("catalog resource agenda page", () => {
     expect(stack.textContent).toContain("PED-1042")
     expect(stack.textContent).toContain("Kit vazio")
     expect(stack.textContent).toContain(i18n.t("catalog.agenda.free"))
+  })
+
+  it("shows the day on each narrow booking when the view covers more than one day", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const day = formatDayLabel("2026-11-03", i18n.language)
+    const stack = await screen.findByTestId("resource-agenda-stack")
+    expect(stack.textContent).toContain(day)
+    expect(stack.textContent).toContain("PED-1042")
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.agenda.day") }))
+    expect(screen.getByTestId("resource-agenda-stack").textContent).not.toContain(day)
   })
 })

@@ -14,7 +14,7 @@ const WINDOW_SPAN_MIN = WINDOW_END_MIN - WINDOW_START_MIN
 export type AgendaView = "week" | "day"
 
 /** `YYYY-MM-DD` civil day plus minutes past midnight, in the given zone. */
-function zonedDayAndMinutes(
+export function zonedDayAndMinutes(
   iso: string,
   timeZoneId: string,
 ): { dayKey: string; minutes: number } | null {
